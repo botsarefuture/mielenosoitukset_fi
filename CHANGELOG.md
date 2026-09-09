@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Organization viewers no longer see member-role mutation, member-removal, or invitation-cancellation controls unless their scoped organization permissions allow those actions; server-side authorization remains authoritative.
 * The demonstration submitter modal now keeps stable loading, result, empty, and error regions across repeated opens, writes API values with `textContent`, restores focus to its trigger, and uses the shared admin modal contract instead of replacing its own DOM.
 * Demonstration approval and rejection now use one idempotent decision service across token, legacy, form, single-item API, and bulk API entry points: canonical status, related-case resolution, bearer-link revocation, history/audit metadata, and submitter email happen consistently without duplicate notifications or history on retries.
 * Demonstration edit links now enforce one server-side duration allowlist, matching registry expiry and signature lifetime, CSRF-protected generation and revocation, friendly expired/revoked states, and anonymous token saves without exposing approval controls; the recurring-series editor no longer offers a broken regular-demo edit-link action.
@@ -24,6 +25,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* Organization detail, member, invitation, profile, social-link, confirmation, and notification views now reuse shared admin detail, data-view, section-card, modal, toast, action, and status primitives in both themes instead of a page-specific palette and inline stylesheet.
 * The organization collection now follows the shared admin hero, summary, filter, data-view, entity-row, status, selection, empty-state, and pagination contracts instead of carrying a separate page palette and 200-line inline stylesheet.
 * Organization create/edit, invitation, and change-review workflows now use shared admin form, data-view, modal, selection, and sticky-action components instead of maintaining large template-local style systems; primary admin actions also use theme-safe semantic colors with accessible hover, focus, busy, and disabled states.
 * Merges to `main` now trigger a serialized, exact-commit production deployment with Gunicorn's graceful worker reload and public health verification, minimizing downtime without allowing an older workflow run to overwrite a newer release.

@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* The escalated-case summary card now applies the same label styling as the other case counters instead of emitting an invalid `aclass` attribute.
 * Organization viewers no longer see member-role mutation, member-removal, or invitation-cancellation controls unless their scoped organization permissions allow those actions; server-side authorization remains authoritative.
 * Production deployments no longer fail with SSH `Permission denied (publickey,password)` right after freshly adding the deploy key to the agent: the workflow no longer sets `IdentitiesOnly` without a matching `IdentityFile`, so the GitHub Actions agent can actually offer the dedicated deploy key to the server.
 * Pull request previews now use small deterministic Docker subnets and reliably remove MongoDB-owned data on teardown, preventing closed previews from exhausting the server's network address pools; preview status comments also expose failed runs clearly.
@@ -21,6 +22,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* Case listing/detail and demonstration merging now use the canonical admin hero, breadcrumbs, back-navigation, and shared status badges rather than bespoke page-header structures.
 * Analytics and service statistics now render titles, breadcrumbs, descriptions, and live/static summary metrics through the shared admin hero instead of maintaining separate hero geometries and color rules.
 * Admin event logs, demonstration audit/token/error views, developer access requests, and API-token requests now use the canonical hero, breadcrumb, and back-navigation hierarchy.
 * The admin landing page, background-job list/detail, and system-status view now share the canonical hero, breadcrumb, action, and back-navigation contract instead of mixing custom page headers.

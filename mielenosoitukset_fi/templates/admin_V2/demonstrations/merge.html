@@ -1,4 +1,5 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% macro render_field_value(demo, field) -%}
   {% set value = demo.get(field.key) %}
@@ -29,16 +30,14 @@
 
 {% block main_content %}
 <div class="admin-page">
-  <header class="admin-page-header">
-    <div>
-      <p class="admin-page-header__kicker">{{ _('Mielenosoitukset') }}</p>
-      <h1 class="admin-section-title mb-1">{{ _('Yhdistä mielenosoituksia') }}</h1>
-      <p class="text-muted mb-0">{{ _('Valittuja mielenosoituksia: %(count)s', count=demos|length) }}</p>
-    </div>
-    <div class="admin-page-header__actions"><a href="{{ url_for('admin_demo.demo_control') }}" class="btn btn-outline-secondary">
-      <i class="fa-solid fa-arrow-left me-2"></i>{{ _('Takaisin hallintapaneeliin') }}
-    </a></div>
-  </header>
+  {{ admin_page_hero(
+    _('Yhdistä mielenosoituksia'),
+    _('Valittuja mielenosoituksia: %(count)s', count=demos|length),
+    _('Mielenosoitukset'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (_('Yhdistä mielenosoituksia'), none)],
+    back_url=url_for('admin_demo.demo_control'),
+    back_label=_('Mielenosoitukset')
+  ) }}
 
   <div class="alert alert-warning">
     <i class="fa-solid fa-triangle-exclamation me-2"></i>

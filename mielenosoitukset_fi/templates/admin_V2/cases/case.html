@@ -1,4 +1,5 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 {% block title %}{{ _('Tapaus') }} #{{ case.running_num }}{% endblock %}
 
 {% block styles %}
@@ -6,24 +7,6 @@
   .case-page {
     display: grid;
     gap: 1.5rem;
-  }
-  .case-header {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(37, 99, 235, 0.34));
-    color: #eef4ff;
-    border-radius: 18px;
-    padding: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.2);
-  }
-  .case-header h1 {
-    margin: 0 0 0.4rem;
-    color: #fff;
-    font-size: clamp(1.6rem, 2.8vw, 2.3rem);
-  }
-  .case-header p {
-    margin: 0;
-    max-width: 52rem;
-    color: #d8e4ff;
   }
   .chip-row {
     display: flex;
@@ -241,23 +224,27 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="case-page">
-  <section class="case-header">
-    <h1>{{ _('Tapaus') }} #{{ case.running_num }}</h1>
-    <p>{{ _('Tama nakyma kokoaa tapauksen tilan, siihen liittyvat tiedot ja kasittelytoimet samaan paikkaan.') }}</p>
-    <div class="chip-row">
-      <span class="case-chip"><i class="fa-solid fa-folder"></i>{{ case_data.type_label }}</span>
-      <span class="case-chip {{ 'success' if case.meta.closed else 'info' }}">
-        <i class="fa-solid {{ 'fa-circle-check' if case.meta.closed else 'fa-clock' }}"></i>
-        {{ _('Suljettu') if case.meta.closed else _('Avoin') }}
-      </span>
-      {% if case.meta.superior_needed %}
-      <span class="case-chip danger"><i class="fa-solid fa-arrow-up-right-dots"></i>{{ _('Eskaloitu') }}</span>
-      {% endif %}
-      {% if demo and demo.status %}
-      <span class="case-chip {{ demo.status.tone }}"><i class="fa-solid fa-bullhorn"></i>{{ demo.status.label }}</span>
-      {% endif %}
-    </div>
-  </section>
+  {{ admin_page_hero(
+    _('Tapaus') ~ ' #' ~ case.running_num,
+    _('Tämä näkymä kokoaa tapauksen tilan, siihen liittyvät tiedot ja käsittelytoimet samaan paikkaan.'),
+    _('Tapaukset'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Tapaukset'), url_for('admin_case.cases')), (_('Tapaus') ~ ' #' ~ case.running_num, none)],
+    back_url=url_for('admin_case.cases'),
+    back_label=_('Tapaukset')
+  ) }}
+  <div class="chip-row" aria-label="{{ _('Tapauksen tila') }}">
+    <span class="case-chip"><i class="fa-solid fa-folder"></i>{{ case_data.type_label }}</span>
+    <span class="case-chip {{ 'success' if case.meta.closed else 'info' }}">
+      <i class="fa-solid {{ 'fa-circle-check' if case.meta.closed else 'fa-clock' }}"></i>
+      {{ _('Suljettu') if case.meta.closed else _('Avoin') }}
+    </span>
+    {% if case.meta.superior_needed %}
+    <span class="case-chip danger"><i class="fa-solid fa-arrow-up-right-dots"></i>{{ _('Eskaloitu') }}</span>
+    {% endif %}
+    {% if demo and demo.status %}
+    <span class="case-chip {{ demo.status.tone }}"><i class="fa-solid fa-bullhorn"></i>{{ demo.status.label }}</span>
+    {% endif %}
+  </div>
 
   <div class="case-layout">
     <div class="case-main">

@@ -414,6 +414,25 @@ def test_analytics_pages_use_shared_hero_metric_slot():
     assert ".stats-hero" not in stats_css
 
 
+def test_case_and_merge_pages_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/cases/all.html",
+        "mielenosoitukset_fi/templates/admin_V2/cases/case.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/merge.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+    for name in pages[1:]:
+        assert "back_url=" in Path(name).read_text(encoding="utf-8")
+    case_list = Path(pages[0]).read_text(encoding="utf-8")
+    assert "case-hero" not in case_list
+    assert "aclass=" not in case_list
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

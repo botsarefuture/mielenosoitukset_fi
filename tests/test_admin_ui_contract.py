@@ -252,6 +252,42 @@ def test_organization_workflows_use_shared_admin_components():
     assert "background: var(--admin-workspace-primary-hover);" in workspace
 
 
+def test_organization_collection_uses_shared_data_view_contract():
+    dashboard = Path(
+        "mielenosoitukset_fi/templates/admin_V2/organizations/dashboard.html"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in dashboard
+    assert "style=" not in dashboard
+    assert 'class="admin-page admin-workspace"' in dashboard
+    assert "admin-workspace-summary-card" in dashboard
+    assert "admin-filter-bar__primary--search" in dashboard
+    assert "admin-data-view__viewport" in dashboard
+    assert "admin-data-view__footer admin-pagination" in dashboard
+    assert "admin-pagination__info" in dashboard
+    assert "admin-entity-identity" in dashboard
+    assert "aria-selected" in dashboard
+
+
+def test_organization_detail_uses_shared_components_and_scoped_controls():
+    detail = Path(
+        "mielenosoitukset_fi/templates/admin_V2/organizations/view.html"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in detail
+    assert "style=" not in detail
+    assert "admin-detail-layout" in detail
+    assert detail.count("admin-data-view") >= 2
+    assert "admin-section-card" in detail
+    assert "admin-modal admin-workflow-modal" in detail
+    assert "admin-toast" in detail
+    assert "{% if can_edit_organization %}" in detail
+    assert "{% if can_invite_members %}" in detail
+    assert "bootstrap.Modal.getOrCreateInstance" in detail
+    assert "org-button" not in detail
+    assert "org-role-select" not in detail
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

@@ -1,17 +1,18 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block title %}{{ _('Käyttöliittymäkäännösten GitHub-synkit') }}{% endblock %}
 
 {% block main_content %}
 <div class="admin-page">
-  <header class="admin-page-header">
-    <div>
-      <p class="admin-page-header__kicker">{{ _('Sisällönhallinta') }}</p>
-      <h1>{{ _('Käyttöliittymäkäännösten GitHub-synkit') }}</h1>
-      <p>{{ _('Seuraa hyväksyttyjen UI-käännösten branch-, PR- ja merge-tilaa sekä jonota epäonnistuneet synkit uudelleen.') }}</p>
-    </div>
-    <a class="btn btn-outline-secondary" href="{{ url_for('admin.ui_translation_dashboard', locale=selected_locale) }}">{{ _('Takaisin käyttöliittymäkäännöksiin') }}</a>
-  </header>
+  {{ admin_page_hero(
+    _('Käyttöliittymäkäännösten GitHub-synkit'),
+    _('Seuraa hyväksyttyjen UI-käännösten branch-, PR- ja merge-tilaa sekä jonota epäonnistuneet synkit uudelleen.'),
+    _('Sisällönhallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttöliittymäkäännökset'), url_for('admin.ui_translation_dashboard', locale=selected_locale)), (_('GitHub-synkit'), none)],
+    back_url=url_for('admin.ui_translation_dashboard', locale=selected_locale),
+    back_label=_('Käyttöliittymäkäännökset')
+  ) }}
 
   <form method="GET" class="row g-3 align-items-end admin-panel">
     <div class="col-md-3">

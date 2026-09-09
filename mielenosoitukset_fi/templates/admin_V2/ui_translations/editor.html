@@ -1,22 +1,22 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block title %}{{ _('Käyttöliittymäkäännös') }}{% endblock %}
 
 {% block main_content %}
 <div class="admin-page">
-  <header class="admin-page-header">
-    <div>
-      <p class="admin-page-header__kicker">{{ _('Sisällönhallinta') }}</p>
-      <h1>{{ _('Käyttöliittymäkäännös') }}</h1>
-      <p>{{ locale_label }} · {{ _('Tarkista ja ehdota käännöstä yhdelle gettext-riville.') }}</p>
-    </div>
-    <div class="admin-page-header__actions">
+  {% call admin_page_hero(
+    _('Käyttöliittymäkäännös'),
+    locale_label ~ ' · ' ~ _('Tarkista ja ehdota käännöstä yhdelle gettext-riville.'),
+    _('Sisällönhallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttöliittymäkäännökset'), url_for('admin.ui_translation_dashboard', locale=locale)), (_('Muokkaa käännöstä'), none)],
+    back_url=url_for('admin.ui_translation_dashboard', locale=locale),
+    back_label=_('Käyttöliittymäkäännökset')
+  ) %}
       {% if ui_translation_sync_enabled and can_review_ui_translations %}
-      <a class="btn btn-outline-primary" href="{{ url_for('admin.ui_translation_sync_dashboard', locale=locale) }}">{{ _('GitHub-synkit') }}</a>
+      <a class="admin-page-hero__action" href="{{ url_for('admin.ui_translation_sync_dashboard', locale=locale) }}">{{ _('GitHub-synkit') }}</a>
       {% endif %}
-      <a class="btn btn-outline-secondary" href="{{ url_for('admin.ui_translation_dashboard', locale=locale) }}">{{ _('Takaisin listaan') }}</a>
-    </div>
-  </header>
+  {% endcall %}
 
   <div class="row g-4">
     <div class="col-lg-6">

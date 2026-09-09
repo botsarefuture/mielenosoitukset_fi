@@ -1,21 +1,19 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block title %}{{ _('Käyttöliittymäkäännökset') }}{% endblock %}
 
 {% block main_content %}
 <div class="admin-page">
-  <header class="admin-page-hero mb-4">
-    <div class="admin-page-hero__content">
-      <p class="admin-page-hero__kicker">{{ _('Sisällönhallinta') }}</p>
-      <h1 class="h2 mb-1">{{ _('Käyttöliittymäkäännökset') }}</h1>
-      <p class="text-muted mb-0">{{ _('Hallitse sivuston ydinkomponenttien gettext-käännöksiä ja tarkista ehdotukset ennen hyväksyntää.') }}</p>
-    </div>
-    {% if ui_translation_sync_enabled and can_review_ui_translations %}
-    <div class="admin-page-hero__actions">
+  {% call admin_page_hero(
+    _('Käyttöliittymäkäännökset'),
+    _('Hallitse sivuston ydinkomponenttien gettext-käännöksiä ja tarkista ehdotukset ennen hyväksyntää.'),
+    _('Sisällönhallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttöliittymäkäännökset'), none)],
+    actions_visible=ui_translation_sync_enabled and can_review_ui_translations
+  ) %}
       <a class="btn btn-outline-primary admin-page-hero__action" href="{{ url_for('admin.ui_translation_sync_dashboard') }}">{{ _('Avaa GitHub-synkit') }}</a>
-    </div>
-    {% endif %}
-  </header>
+  {% endcall %}
 
   <div class="row g-3 mb-4">
     {% for locale in locales %}

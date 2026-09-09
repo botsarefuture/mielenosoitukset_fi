@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block styles %}
 <style>
@@ -353,13 +354,12 @@
 
 {% block main_content %}
 <div class="container-fluid py-4 admin-dashboard-shell">
-  <header class="admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="admin-page-hero__kicker">{{ _('Admin-paneeli') }}</p>
-      <h1>{{ _('Hallintapaneeli') }}</h1>
-      <p>{{ _('Palvelun tilannekuva, sisällönhallinta ja sinulle sallitut ylläpitotyökalut yhdessä paikassa.') }}</p>
-    </div>
-  </header>
+  {{ admin_page_hero(
+    _('Hallintapaneeli'),
+    _('Palvelun tilannekuva, sisällönhallinta ja sinulle sallitut ylläpitotyökalut yhdessä paikassa.'),
+    _('Admin-paneeli'),
+    [(_('Hallintapaneeli'), none)]
+  ) }}
   {% if is_admin_user %}
   <div class="dashboard-grid">
     <section class="main-panel card-panel">

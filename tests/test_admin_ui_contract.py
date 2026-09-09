@@ -202,6 +202,36 @@ def test_secondary_editors_use_shared_form_primitives():
     assert 'class="admin-form"' in ui_editor
 
 
+def test_organization_workflows_use_shared_admin_components():
+    form = Path(
+        "mielenosoitukset_fi/templates/admin_V2/organizations/form.html"
+    ).read_text(encoding="utf-8")
+    review = Path(
+        "mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html"
+    ).read_text(encoding="utf-8")
+    macros = Path(
+        "mielenosoitukset_fi/templates/admin_V2/organizations/macros.html"
+    ).read_text(encoding="utf-8")
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+    for template in (form, review, macros):
+        assert "<style" not in template
+        assert "style=" not in template
+    assert "admin-form-layout" in form
+    assert "admin-form-section__header" in form
+    assert "admin-sticky-actions__buttons" in form
+    assert "{{ invite_modal(organization) }}" in form
+    assert "organization and can_invite_members" in form
+    assert "admin-data-view__viewport" in review
+    assert "admin-selection-checkbox field-checkbox" in review
+    assert "applyBtn.style" not in review
+    assert "--admin-workspace-on-primary: #ffffff;" in workspace
+    assert "background: var(--admin-workspace-primary-bg);" in workspace
+    assert "background: var(--admin-workspace-primary-hover);" in workspace
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

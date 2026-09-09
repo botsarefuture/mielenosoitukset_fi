@@ -20,6 +20,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* Organization create/edit, invitation, and change-review workflows now use shared admin form, data-view, modal, selection, and sticky-action components instead of maintaining large template-local style systems; primary admin actions also use theme-safe semantic colors with accessible hover, focus, busy, and disabled states.
 * Merges to `main` now trigger a serialized, exact-commit production deployment with Gunicorn's graceful worker reload and public health verification, minimizing downtime without allowing an older workflow run to overwrite a newer release.
 * Admin page heroes now enforce one shared content-group contract across governance, demonstrations, organizations, cities, cases, jobs, logs, analytics, statistics, translations, and dashboards, keeping each kicker, title, and description aligned as a single unit in light and dark mode.
 * Demonstration merging and UI translation editing now reuse the shared admin page, form section, field, inset, code block, and sticky-action primitives instead of maintaining separate editor surfaces.

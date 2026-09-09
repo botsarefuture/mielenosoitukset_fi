@@ -1,8 +1,5 @@
-{% if demo and demo._id %}
-<a href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}" class="btn btn-secondary"
-    style="float:right; margin-left: 10px;">Näytä muokkaushistoria</a>
-{% endif %}
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block styles %}
 <!-- Core CSS -->
@@ -130,20 +127,17 @@
 <div class="dashboard-container">
 
     <!-- Page intro -->
-    <section class="introduction editor-hero admin-page-hero">
-        <div class="admin-page-hero__content">
-            <p class="admin-page-hero__kicker">{{ _('Toistuvat mielenosoitukset') }}</p>
-            <h1 id="tabletitle" class="text-3xl font-bold">{{ title }}</h1>
-            <p class="text-muted max-w-xl">{{ _('Muokkaa sarjan perustietoja, toistuvuutta ja tulevia lapsimielenosoituksia samasta näkymästä.') }}</p>
-        </div>
-        <nav class="editor-section-nav admin-page-hero__nav" aria-label="{{ _('Lomakkeen osiot') }}">
-            <a href="#basic-info">{{ _('Perustiedot') }}</a>
-            <a href="#recurrence-settings">{{ _('Toistuvuus') }}</a>
-            <a href="#location-info">{{ _('Sijainti') }}</a>
-            <a href="#organizer-info">{{ _('Järjestäjät') }}</a>
-            {% if demo and demo._id %}<a href="#child-demos">{{ _('Lapsimielenosoitukset') }}</a>{% endif %}
-        </nav>
-    </section>
+    {{ admin_page_hero(
+        title,
+        _('Muokkaa sarjan perustietoja, toistuvuutta ja tulevia lapsimielenosoituksia samasta näkymästä.'),
+        _('Toistuvat mielenosoitukset'),
+        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Toistuvat mielenosoitukset'), url_for('admin_recu_demo.recu_demo_control')), (title, none)] if current_user.is_authenticated else [(title, none)],
+        back_url=url_for('admin_recu_demo.recu_demo_control') if current_user.is_authenticated else none,
+        back_label=_('Toistuvat mielenosoitukset'),
+        sections=[('basic-info', _('Perustiedot')), ('recurrence-settings', _('Toistuvuus')), ('location-info', _('Sijainti')), ('organizer-info', _('Järjestäjät'))] + ([('child-demos', _('Lapsimielenosoitukset'))] if demo and demo._id else []),
+        title_id='tabletitle',
+        hero_classes='introduction editor-hero'
+    ) }}
 
     {% if edit_demo_with_token %}
     <section class="alert alert-info" role="alert" id="alert1">

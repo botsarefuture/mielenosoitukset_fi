@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Added
+* New public `GET /api/v1/organizations` endpoint lists organizations (verified and unverified) with pagination and name/email search. Documented in `docs/api.md` and the OpenAPI spec.
 * The OpenAPI spec (`/api-docs/openapi.yaml`) now fully documents all public, externally-intended endpoints with schemas, auth, and error responses — including the `/api/` blueprint, the legacy `/api/v1` helpers (demonstrations, conflict check, organization search), and the `/users/auth` API-token management endpoints (create/list/revoke/status/request-access). Admin-scoped and session-only UI routes remain out of the public spec.
 * `docs/api.md` now documents `GET /users/auth/api_tokens/status` and the legacy `/api/v1` endpoints (demonstrations, check_demo_conflict, search_organizations).
 

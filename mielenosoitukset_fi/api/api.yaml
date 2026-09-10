@@ -667,6 +667,53 @@ paths:
                       type: string
                   required: [id, name, email, website, description]
 
+  /api/v1/organizations:
+    get:
+      tags: [API v1]
+      summary: List organizations (verified and unverified)
+      description: |
+        Public, paginated list of organizations sorted by name. Includes both
+        verified and unverified organizations. Search matches organization
+        name or email (case-insensitive substring).
+      operationId: apiV1Organizations
+      security: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: Page number.
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Items per page.
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Case-insensitive search on organization name or email.
+      responses:
+        "200":
+          description: Organization list and total pages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  organizations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/V1Organization"
+                  total_pages:
+                    type: integer
+                required: [organizations, total_pages]
+
   /users/auth/api_token:
     post:
       tags: [Tokens]
@@ -1158,3 +1205,26 @@ components:
           nullable: true
         cancelled:
           type: boolean
+
+    V1Organization:
+      type: object
+      description: Organization payload for the legacy /api/v1 list.
+      properties:
+        id:
+          type: string
+          description: Organization ObjectId.
+        name:
+          type: string
+        email:
+          type: string
+        website:
+          type: string
+        description:
+          type: string
+        verified:
+          type: boolean
+          description: Whether the organization has been verified.
+        logo:
+          type: string
+          nullable: true
+      required: [id, name, email, website, description, verified, logo]

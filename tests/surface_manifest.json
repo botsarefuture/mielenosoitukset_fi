@@ -253,12 +253,12 @@
       "sha256": "cd9c57924f5816feb8357cbf18c57d329adfbc411002a38a2ca96cdbcbc525b0"
     },
     "mielenosoitukset_fi/basic_routes.py": {
-      "count": 51,
+      "count": 52,
       "coverage": [
         "integration",
         "e2e-public"
       ],
-      "sha256": "763f92e9ad9e1c2dd5985b0656bbcc0bed005f12b51075c86551c996120f12c3"
+      "sha256": "f1c436c0b04d7aaffc3e7cd8fbcc6589854d38aa6bf18530bd8e5ccd05891dbc"
     },
     "mielenosoitukset_fi/developer_bp.py": {
       "count": 9,

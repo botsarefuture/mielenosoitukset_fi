@@ -507,6 +507,38 @@ Returns an empty array when `q` is missing or shorter than 2 characters.
 
 ---
 
+### GET `/v1/organizations`
+Paginated list of organizations sorted by name. Includes both verified and unverified organizations.
+
+Auth: none
+
+Query params:
+
+- `page` — page number (1-based, default 1)
+- `per_page` — items per page (default 20)
+- `search` — case-insensitive search on organization name or email
+
+Response:
+
+```json
+{
+  "organizations": [
+    {
+      "id": "...",
+      "name": "...",
+      "email": "...",
+      "website": "...",
+      "description": "...",
+      "verified": false,
+      "logo": null
+    }
+  ],
+  "total_pages": 3
+}
+```
+
+---
+
 ## Notifications
 
 These are served by the notifications blueprint at `/api/notifications`.

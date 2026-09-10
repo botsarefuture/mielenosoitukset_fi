@@ -109,6 +109,7 @@ class ApiContractTests(unittest.TestCase):
         self.assertIn("/api/v1/demonstrations", paths)
         self.assertIn("/api/v1/check_demo_conflict", paths)
         self.assertIn("/api/v1/search_organizations", paths)
+        self.assertIn("/api/v1/organizations", paths)
         self.assertIn("/users/auth/api_token", paths)
         self.assertIn("/users/auth/api_tokens/list", paths)
         self.assertIn("/users/auth/api_tokens/revoke", paths)

@@ -180,7 +180,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_base.html:336 mielenosoitukset_fi/templates/admin_base.html:357
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:141 mielenosoitukset_fi/templates/users/auth/token_ui.html:166
 msgid "Sulje"
-msgstr ""
+msgstr "Close"
 
 #: mielenosoitukset_fi/templates/admin_base.html:339
 msgid "Oletko varma, että haluat kirjautua ulos?"

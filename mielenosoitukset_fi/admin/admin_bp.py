@@ -532,7 +532,9 @@ def approve_ui_translation_proposal(locale):
         flash_message(_("Tälle käyttöliittymätekstille ei ole odottavaa käännösehdotusta."), "error")
         return _redirect_ui_translation_action_target(locale, msgid)
 
-    update_catalog_entry(locale, msgid, proposal.get("proposed_text", ""))
+    sync_enabled = _ui_translation_sync_enabled()
+    if not sync_enabled:
+        update_catalog_entry(locale, msgid, proposal.get("proposed_text", ""))
     sync_metadata = {
         "status": "queued",
         "queued_at": datetime.utcnow(),
@@ -553,15 +555,21 @@ def approve_ui_translation_proposal(locale):
                 "reviewed_by": str(getattr(current_user, "_id", "")),
                 "reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
                 "review_notes": review_notes,
-                "github_sync": sync_metadata if _ui_translation_sync_enabled() else {},
+                "github_sync": sync_metadata if sync_enabled else {},
             }
         },
     )
-    flash_message(
-        _("Käyttöliittymäkäännös hyväksyttiin ja kirjoitettiin kielikatalogiin."),
-        "success",
-    )
-    if _ui_translation_sync_enabled():
+    if sync_enabled:
+        flash_message(
+            _("Käyttöliittymäkäännös hyväksyttiin ja jonotettiin GitHub-synkkiä varten."),
+            "success",
+        )
+    else:
+        flash_message(
+            _("Käyttöliittymäkäännös hyväksyttiin ja kirjoitettiin kielikatalogiin."),
+            "success",
+        )
+    if sync_enabled:
         job_manager = current_app.extensions.get("job_manager")
         if job_manager is not None:
             job_manager.run_job_now(

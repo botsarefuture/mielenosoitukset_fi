@@ -167,8 +167,7 @@ def test_admin_can_approve_ui_translation_proposal(admin_client, app, db, seeded
 
     po_contents = (root / "en" / "LC_MESSAGES" / "messages.po").read_text(encoding="utf-8")
     assert 'msgid "Submit demonstration"' in po_contents
-    assert 'msgstr "Submit a demonstration"' in po_contents
-    assert (root / "en" / "LC_MESSAGES" / "messages.mo").exists()
+    assert 'msgstr "Submit a demonstration"' not in po_contents
 
     proposal = db.ui_translation_proposals.find_one(
         {"_id": proposal_key("en", "Submit demonstration")}
@@ -178,6 +177,45 @@ def test_admin_can_approve_ui_translation_proposal(admin_client, app, db, seeded
     assert proposal["github_sync"]["status"] == "queued"
     assert proposal["github_sync"]["branch_name"] == build_ui_translation_sync_branch_name("en", "Submit demonstration")
     assert queued["job_key"] == "process_ui_translation_sync"
+
+
+def test_admin_can_approve_ui_translation_proposal_with_local_write(admin_client, app, db, seeded_data, tmp_path):
+    root = _seed_translation_catalogs(app, tmp_path)
+    app.config["UI_TRANSLATION_SYNC_ENABLED"] = False
+    db.ui_translation_proposals.insert_one(
+        {
+            "_id": proposal_key("en", "Submit demonstration"),
+            "locale": "en",
+            "msgid": "Submit demonstration",
+            "current_msgstr": "",
+            "proposed_text": "Submit a demonstration",
+            "status": "pending",
+            "submitted_by": str(seeded_data["translator_id"]),
+            "submitted_by_name": "Translator User",
+        }
+    )
+
+    response = admin_client.post(
+        "/admin/ui-translations/en/approve",
+        data={
+            "msgid": "Submit demonstration",
+            "review_notes": "Looks good.",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+
+    po_contents = (root / "en" / "LC_MESSAGES" / "messages.po").read_text(encoding="utf-8")
+    assert 'msgid "Submit demonstration"' in po_contents
+    assert 'msgstr "Submit a demonstration"' in po_contents
+    assert (root / "en" / "LC_MESSAGES" / "messages.mo").exists()
+
+    proposal = db.ui_translation_proposals.find_one(
+        {"_id": proposal_key("en", "Submit demonstration")}
+    )
+    assert proposal["status"] == "approved"
+    assert proposal["review_notes"] == "Looks good."
 
 
 def test_admin_can_bulk_requeue_ui_translation_sync(admin_client, app, db):

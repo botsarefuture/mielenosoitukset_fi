@@ -1168,7 +1168,7 @@ msgstr "Privacy policy"
 
 #: mielenosoitukset_fi/templates/tag_list.html:445
 msgid "Tagi"
-msgstr ""
+msgstr "Tag"
 
 #: mielenosoitukset_fi/templates/tag_list.html:449
 msgid "Näet tässä vain mielenosoitukset, jotka on merkitty tagilla"

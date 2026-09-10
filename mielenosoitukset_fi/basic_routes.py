@@ -1385,6 +1385,59 @@ def init_routes(app):
         
         return jsonify(results)
 
+    @app.route("/api/v1/organizations", methods=["GET"])
+    def api_v1_organizations():
+        """
+        Public, paginated list of organizations (verified and unverified).
+
+        Query params: page, per_page, search (name/email), lang
+        Returns JSON: { organizations: [ { id, name, email, website,
+        description, verified, logo } ... ], total_pages }
+        """
+        try:
+            page = max(int(request.args.get("page", 1)), 1)
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            per_page = max(int(request.args.get("per_page", 20) or 20), 1)
+        except (TypeError, ValueError):
+            per_page = 20
+        search = (request.args.get("search") or "").strip()
+
+        query = {}
+        if search:
+            query = {
+                "$or": [
+                    {"name": {"$regex": search, "$options": "i"}},
+                    {"email": {"$regex": search, "$options": "i"}},
+                ]
+            }
+
+        total = mongo.organizations.count_documents(query)
+        total_pages = max((total + per_page - 1) // per_page, 1)
+        orgs_cursor = (
+            mongo.organizations.find(
+                query,
+                {"_id": 1, "name": 1, "email": 1, "website": 1, "description": 1, "verified": 1, "logo": 1},
+            )
+            .sort("name", 1)
+            .skip((page - 1) * per_page)
+            .limit(per_page)
+        )
+        organizations = [
+            {
+                "id": str(org["_id"]),
+                "name": org.get("name", ""),
+                "email": org.get("email", ""),
+                "website": org.get("website", ""),
+                "description": org.get("description", ""),
+                "verified": bool(org.get("verified", False)),
+                "logo": org.get("logo"),
+            }
+            for org in orgs_cursor
+        ]
+        return jsonify(organizations=organizations, total_pages=total_pages)
+
     @app.route("/submit", methods=["GET", "POST"])
     def submit():
         """

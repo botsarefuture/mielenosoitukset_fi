@@ -156,7 +156,7 @@ def test_user_role_forms_use_shared_admin_contract():
         "mielenosoitukset_fi/templates/admin_V2/_modals_users.html"
     ).read_text(encoding="utf-8")
 
-    assert 'class="admin-page-hero__content"' in edit
+    assert "admin_page_hero(" in edit
     assert 'class="admin-form admin-user-form"' in edit
     assert "admin-form-section" in edit
     assert "admin-sticky-actions" in edit
@@ -286,6 +286,270 @@ def test_organization_detail_uses_shared_components_and_scoped_controls():
     assert "bootstrap.Modal.getOrCreateInstance" in detail
     assert "org-button" not in detail
     assert "org-role-select" not in detail
+
+
+def test_organization_pages_use_canonical_hero_macro_and_navigation():
+    macro = Path("mielenosoitukset_fi/templates/admin_V2/macros.html").read_text(
+        encoding="utf-8"
+    )
+    pages = (
+        "dashboard.html",
+        "form.html",
+        "review_suggestion.html",
+        "view.html",
+    )
+
+    assert "macro admin_page_hero" in macro
+    assert 'class="admin-breadcrumbs"' in macro
+    assert 'class="admin-page-hero__content"' in macro
+    assert 'class="admin-page-hero__actions"' in macro
+    assert "admin-page-hero__back" in macro
+    assert macro.index("back_url") < macro.index("caller()")
+    for name in pages:
+        source = Path(
+            "mielenosoitukset_fi/templates/admin_V2/organizations", name
+        ).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+
+
+def test_city_admin_operational_pages_use_canonical_hero_macro():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/cities/index.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html",
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+    for name in pages[2:]:
+        source = Path(name).read_text(encoding="utf-8")
+        assert source.lstrip().startswith("{% extends")
+        assert "float:right" not in source
+    macro = Path(
+        "mielenosoitukset_fi/templates/admin_V2/macros.html"
+    ).read_text(encoding="utf-8")
+    assert 'class="admin-page-hero__nav editor-section-nav"' in macro
+
+
+def test_access_management_pages_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/user/list.html",
+        "mielenosoitukset_fi/templates/admin_V2/user/edit.html",
+        "mielenosoitukset_fi/templates/admin_V2/governance/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/governance/clearances.html",
+        "mielenosoitukset_fi/templates/admin_V2/governance/audit.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+    for name in pages[1:2] + pages[3:]:
+        assert "back_url=" in Path(name).read_text(encoding="utf-8")
+
+
+def test_translation_workspaces_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html",
+        "mielenosoitukset_fi/templates/admin_V2/ui_translations/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/ui_translations/editor.html",
+        "mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+    for name in pages[:2] + pages[3:]:
+        assert "back_url=" in Path(name).read_text(encoding="utf-8")
+    demo_dashboard = Path(pages[0]).read_text(encoding="utf-8")
+    assert "back_url=url_for('admin.admin_dashboard')" in demo_dashboard
+
+
+def test_system_workspaces_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/background_jobs.html",
+        "mielenosoitukset_fi/templates/admin_V2/background_job_detail.html",
+        "mielenosoitukset_fi/templates/admin_V2/status.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+    for name in pages[1:]:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "admin.admin_dashboard" in source
+    assert "back_url=" in Path(pages[2]).read_text(encoding="utf-8")
+
+
+def test_audit_and_developer_pages_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/logs.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/audit_log.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/audit_timeline.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/magic_tokens.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html",
+        "mielenosoitukset_fi/templates/admin_V2/developer/requests.html",
+        "mielenosoitukset_fi/templates/admin_V2/developer/user_apps.html",
+        "mielenosoitukset_fi/templates/admin_V2/user/api_tokens.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+    for name in pages[1:4] + pages[6:]:
+        assert "back_url=" in Path(name).read_text(encoding="utf-8")
+
+
+def test_analytics_pages_use_shared_hero_metric_slot():
+    macro = Path(
+        "mielenosoitukset_fi/templates/admin_V2/macros.html"
+    ).read_text(encoding="utf-8")
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/analytics.html",
+        "mielenosoitukset_fi/templates/admin_V2/stats.html",
+    )
+
+    assert "metric_value=none" in macro
+    assert 'class="admin-page-hero__metric"' in macro
+    assert "metric_id" in macro
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "metric_value=" in source
+        assert "admin.admin_dashboard" in source
+    assert "analytics-hero" not in Path(pages[0]).read_text(encoding="utf-8")
+    stats_css = Path(
+        "mielenosoitukset_fi/static/css/admin/stats.css"
+    ).read_text(encoding="utf-8")
+    assert ".stats-hero" not in stats_css
+
+
+def test_case_and_merge_pages_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/cases/all.html",
+        "mielenosoitukset_fi/templates/admin_V2/cases/case.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/merge.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+    for name in pages[1:]:
+        assert "back_url=" in Path(name).read_text(encoding="utf-8")
+    case_list = Path(pages[0]).read_text(encoding="utf-8")
+    assert "case-hero" not in case_list
+    assert "aclass=" not in case_list
+    case_detail = Path(pages[1]).read_text(encoding="utf-8")
+    assert "case-chip" not in case_detail
+    assert "admin-status-badge--danger" in case_detail
+    assert "admin-status-badge--info" in Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+
+def test_demo_command_center_separates_hero_copy_from_operational_context():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html"
+    ).read_text(encoding="utf-8")
+
+    assert "import admin_page_hero" in template
+    assert "admin_page_hero(" in template
+    assert "admin-page-hero--stacked" in template
+    assert "back_url=" in template
+    assert template.index("{% endcall %}") < template.index('class="status-badges"')
+    assert template.index("{% endcall %}") < template.index('class="hero-metadata"')
+    for legacy_class in (
+        ".hero-card",
+        ".hero-header",
+        ".hero-title",
+        ".hero-subtitle",
+        ".hero-links",
+        ".hero-link",
+    ):
+        assert legacy_class not in template
+    assert ".demo-command-center {\n    padding: 1rem;\n    display: grid;\n    gap: 1.5rem;" in template
+
+
+def test_destructive_confirmations_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/confirm_delete.html",
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/confirm_delete.html",
+        "mielenosoitukset_fi/templates/admin_V2/organizations/confirm_delete.html",
+        "mielenosoitukset_fi/templates/admin_V2/user/confirm.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+        assert "back_url=" in source
+        assert "title_id='confirm-title'" in source
+        assert source.count("<h1") == 0
+
+
+def test_specialist_admin_pages_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/kampanja/list.html",
+        "mielenosoitukset_fi/templates/admin_V2/overall_24h_analytics.html",
+        "mielenosoitukset_fi/templates/admin_V2/s3/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/s3/view_media.html",
+        "mielenosoitukset_fi/templates/admin_V2/super_audit/logs.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+    for name in (pages[1], pages[3], pages[4]):
+        assert "back_url=" in Path(name).read_text(encoding="utf-8")
+    campaign = Path(pages[0]).read_text(encoding="utf-8")
+    assert 'class="header' not in campaign
+    assert ".header" not in campaign
+
+
+def test_every_full_admin_v2_page_uses_canonical_hero_macro():
+    pages = []
+
+    for template in Path("mielenosoitukset_fi/templates/admin_V2").rglob("*.html"):
+        source = template.read_text(encoding="utf-8")
+        if "{% extends" not in source or "{% block main_content %}" not in source:
+            continue
+        pages.append(template)
+        assert "import admin_page_hero" in source, str(template)
+        assert "admin_page_hero(" in source, str(template)
+
+    assert len(pages) == 51
+    for locale in ("en", "fi", "sv"):
+        catalog = Path(
+            f"mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.po"
+        ).read_text(encoding="utf-8")
+        for message in (
+            "Tarkista poistettava mielenosoitus ennen peruuttamatonta toimintoa.",
+            "Tarkista poistettava toistuva mielenosoitus ennen peruuttamatonta toimintoa.",
+            "Tarkista poistettava organisaatio ennen peruuttamatonta toimintoa.",
+            "Tarkista käyttäjätili ja sen rooli ennen peruuttamatonta toimintoa.",
+        ):
+            assert f'msgid "{message}"' in catalog
 
 
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():

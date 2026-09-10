@@ -4006,4 +4006,19 @@ msgstr[1] ""
 
 #~ msgid "Seuraa"
 #~ msgstr ""
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/confirm_delete.html:7
+msgid "Tarkista poistettava mielenosoitus ennen peruuttamatonta toimintoa."
+msgstr "Review the demonstration to be deleted before the irreversible action."
+
+#: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/confirm_delete.html:9
+msgid "Tarkista poistettava toistuva mielenosoitus ennen peruuttamatonta toimintoa."
+msgstr "Review the recurring demonstration to be deleted before the irreversible action."
+
+#: mielenosoitukset_fi/templates/admin_V2/organizations/confirm_delete.html:7
+msgid "Tarkista poistettava organisaatio ennen peruuttamatonta toimintoa."
+msgstr "Review the organization to be deleted before the irreversible action."
+
+#: mielenosoitukset_fi/templates/admin_V2/user/confirm.html:7
+msgid "Tarkista käyttäjätili ja sen rooli ennen peruuttamatonta toimintoa."
+msgstr "Review the user account and its role before the irreversible action."
 

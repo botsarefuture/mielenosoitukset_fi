@@ -11,6 +11,7 @@
 
 ### Fixed
 * The developer app detail view (`/developer/apps/<id>`) no longer breaks its inline JavaScript with literal escape sequences, so "Luo 48h token", scope-request, and token-revocation buttons work again.
+* The escalated-case summary card now applies the same label styling as the other case counters instead of emitting an invalid `aclass` attribute.
 * Organization viewers no longer see member-role mutation, member-removal, or invitation-cancellation controls unless their scoped organization permissions allow those actions; server-side authorization remains authoritative.
 * The demonstration submitter modal now keeps stable loading, result, empty, and error regions across repeated opens, writes API values with `textContent`, restores focus to its trigger, and uses the shared admin modal contract instead of replacing its own DOM.
 * Demonstration approval and rejection now use one idempotent decision service across token, legacy, form, single-item API, and bulk API entry points: canonical status, related-case resolution, bearer-link revocation, history/audit metadata, and submitter email happen consistently without duplicate notifications or history on retries.
@@ -31,6 +32,18 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* Every full `admin_V2` page now renders its page identity through the canonical hero macro, including token decisions, per-demonstration analytics, and retained legacy utility/editor templates; a repository-wide contract prevents new standalone admin page headings.
+* Campaign management, 24-hour analytics, media upload/library, and super-audit pages now use the canonical admin hero, breadcrumb, back-action, and shared status treatment instead of standalone headings or custom header shells.
+* Demonstration, recurring-demonstration, organization, and user deletion confirmations now use the same canonical hero, breadcrumbs, and back-action placement as their parent admin workflows.
+* The demonstration command center now uses the canonical stacked admin hero: title copy, navigation actions, status badges, and technical metadata have explicit regions instead of sharing one bespoke hero content cell.
+* Case listing/detail and demonstration merging now use the canonical admin hero, breadcrumbs, back-navigation, and shared status badges rather than bespoke page-header structures.
+* Analytics and service statistics now render titles, breadcrumbs, descriptions, and live/static summary metrics through the shared admin hero instead of maintaining separate hero geometries and color rules.
+* Admin event logs, demonstration audit/token/error views, developer access requests, and API-token requests now use the canonical hero, breadcrumb, and back-navigation hierarchy.
+* The admin landing page, background-job list/detail, and system-status view now share the canonical hero, breadcrumb, action, and back-navigation contract instead of mixing custom page headers.
+* Demonstration and interface translation dashboards and editors now use the canonical admin hero, breadcrumb, and back-action hierarchy, so translator workflows match the rest of the administration workspace.
+* User list/edit and governance overview, clearance, and audit pages now use the canonical admin hero, breadcrumb, and back-action hierarchy, including the previously inconsistent “Hallinto ja käyttöoikeudet” introduction.
+* City administration plus demonstration and recurring-demonstration list/editor heroes now use the canonical breadcrumb, title, action, back-link, and section-navigation component; stray edit-history links that rendered before the editor layout have moved into the standard hero action area.
+* Organization admin pages now render their hero from one canonical Jinja component with consistent breadcrumbs, title grouping, and a back action that always occupies the same first position; the shared contract is ready for the remaining admin page migrations.
 * Organization detail, member, invitation, profile, social-link, confirmation, and notification views now reuse shared admin detail, data-view, section-card, modal, toast, action, and status primitives in both themes instead of a page-specific palette and inline stylesheet.
 * The organization collection now follows the shared admin hero, summary, filter, data-view, entity-row, status, selection, empty-state, and pagination contracts instead of carrying a separate page palette and 200-line inline stylesheet.
 * Organization create/edit, invitation, and change-review workflows now use shared admin form, data-view, modal, selection, and sticky-action components instead of maintaining large template-local style systems; primary admin actions also use theme-safe semantic colors with accessible hover, focus, busy, and disabled states.

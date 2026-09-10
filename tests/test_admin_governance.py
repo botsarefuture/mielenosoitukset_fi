@@ -1,3 +1,5 @@
+import re
+
 from tests.conftest import _client_for_user
 
 
@@ -80,10 +82,14 @@ def test_admin_management_views_share_workspace_design(app, seeded_data):
     city_page = client.get("/admin/cities/").get_data(as_text=True)
 
     assert "css/admin/workspace.css" in demonstration_page
-    assert "20260909-admin-ui-17" in demonstration_page
+    assert "20260909-admin-ui-29" in demonstration_page
     assert 'class="admin-workspace-hero admin-page-hero"' in demonstration_page
     assert demonstration_page.count("admin-workspace-summary-card") >= 4
-    assert 'class="city-admin-header admin-workspace-hero admin-page-hero"' in city_page
+    assert re.search(
+        r'class="(?=[^"]*\badmin-page-hero\b)(?=[^"]*\badmin-workspace-hero\b)'
+        r'(?=[^"]*\bcity-admin-header\b)[^"]*"',
+        city_page,
+    )
     assert city_page.count("admin-workspace-summary-card") >= 3
     assert 'class="admin-workspace-summary city-admin-overview"' in city_page
     assert city_page.count("city-admin-summary-copy") == 3

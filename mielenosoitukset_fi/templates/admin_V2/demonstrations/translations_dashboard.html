@@ -1,16 +1,17 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
 <section class="dashboard-container">
-  <header class="introduction admin-page-hero">
-    <div class="admin-page-hero__content">
-    <p class="admin-page-hero__kicker">{{ _('Sisällönhallinta') }}</p>
-    <h1 class="text-3xl font-bold">{{ _('Demojen käännökset') }}</h1>
-    <p class="text-muted max-w-xl">
-      {{ _('Kääntäjät tekevät täällä käännösehdotuksia. Moderaattori tai admin hyväksyy ne ennen julkaisua.') }}
-    </p>
-    </div>
-  </header>
+  {{ admin_page_hero(
+    _('Demojen käännökset'),
+    _('Kääntäjät tekevät täällä käännösehdotuksia. Moderaattori tai admin hyväksyy ne ennen julkaisua.'),
+    _('Sisällönhallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Demojen käännökset'), none)],
+    back_url=url_for('admin.admin_dashboard'),
+    back_label=_('Hallintapaneeli'),
+    hero_classes='introduction'
+  ) }}
 
   {% if can_review_demo_translations and pending_items %}
   <section class="dashboard-panel mb-4">

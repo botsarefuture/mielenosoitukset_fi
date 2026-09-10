@@ -1,41 +1,18 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block styles %}
 <style>
   .demo-command-center {
     padding: 1rem;
-  }
-
-  .hero-card {
-    background: light-dark(#ffffff, #101626);
-    border-radius: 20px;
-    padding: 2rem;
-    box-shadow: 0 15px 40px rgba(15, 23, 42, 0.12);
-    color: light-dark(#0f172a, #f5f7ff);
-    border: 1px solid light-dark(#dfe3ec, rgba(255,255,255,0.08));
-    margin-bottom: 2rem;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .hero-card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.25), transparent 55%);
-    pointer-events: none;
-  }
-
-  .hero-header {
-    position: relative;
-    z-index: 1;
+    display: grid;
+    gap: 1.5rem;
   }
 
   .status-badges {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-bottom: 1rem;
   }
 
   .status-badge {
@@ -53,41 +30,10 @@
   .status-badge.danger  { background: rgba(239,68,68,0.2); color: #b91c1c; }
   .status-badge.neutral { background: rgba(148,163,184,0.25); color: #1f2937; }
 
-  .hero-title {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.35rem;
-    color: light-dark(#0f172a, #f8fafc);
-  }
-
-  .hero-subtitle {
-    color: light-dark(#334155, #cddbff);
-    font-size: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .hero-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1rem;
-  }
-
-  .hero-link {
-    padding: 0.45rem 0.9rem;
-    border-radius: 999px;
-    background: light-dark(#eef2ff, rgba(255,255,255,0.12));
-    color: light-dark(#19154b, #e0e7ff);
-    font-size: 0.9rem;
-    text-decoration: none;
-    border: 1px solid light-dark(#c7d2fe, rgba(255,255,255,0.3));
-  }
-
   .hero-metadata {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
-    margin-top: 1.5rem;
   }
 
   .meta-item {
@@ -385,65 +331,57 @@
 
 {% block main_content %}
 <div class="demo-command-center">
-  <header class="hero-card admin-page-hero admin-page-hero--stacked">
-    <div class="hero-header admin-page-hero__content">
-      <p class="admin-page-hero__kicker">{{ _('Mielenosoitukset') }}</p>
-      <div class="status-badges">
-        {% if status_flags.approved %}
-        <span class="status-badge success"><i class="fa-solid fa-check"></i> {{ _('Hyväksytty') }}</span>
-        {% elif status_flags.needs_review %}
-        <span class="status-badge warning"><i class="fa-solid fa-hourglass-half"></i> {{ _('Odottaa käsittelyä') }}</span>
-        {% endif %}
-        {% if status_flags.rejected %}
-        <span class="status-badge danger"><i class="fa-solid fa-xmark"></i> {{ _('Hylätty') }}</span>
-        {% endif %}
-        {% if status_flags.hidden %}
-        <span class="status-badge neutral"><i class="fa-solid fa-eye-slash"></i> {{ _('Piilotettu') }}</span>
-        {% endif %}
-        {% if status_flags.recurring %}
-        <span class="status-badge neutral"><i class="fa-solid fa-rotate"></i> {{ _('Toistuva') }}</span>
-        {% endif %}
-        {% if status_flags.recommended %}
-        <span class="status-badge success"><i class="fa-solid fa-star"></i> {{ _('Suositeltu') }}</span>
-        {% endif %}
-        {% if status_flags.cancelled %}
-        <span class="status-badge danger"><i class="fa-solid fa-ban"></i> {{ _('Peruttu') }}</span>
-        {% elif status_flags.cancellation_requested %}
-        <span class="status-badge warning"><i class="fa-solid fa-triangle-exclamation"></i> {{ _('Peruutuspyyntö') }}</span>
-        {% endif %}
-      </div>
-      <h1 class="hero-title">{{ demo.title }}</h1>
-      <p class="hero-subtitle">
-        <i class="fa-solid fa-calendar-day me-2"></i>{{ demo.date }}
-        {% if demo.start_time %} · {{ demo.start_time }}{% if demo.end_time %} – {{ demo.end_time }}{% endif %}{% endif %}
-        {% if demo.city %} · {{ demo.city }}{% endif %}
-        {% if demo.address %} · {{ demo.address }}{% endif %}
-      </p>
-      <div class="hero-links">
-        <a href="{{ public_url }}" class="hero-link" target="_blank" rel="noopener">
+  {% call admin_page_hero(
+    demo.title,
+    demo.date ~ ((' · ' ~ demo.start_time ~ ((' – ' ~ demo.end_time) if demo.end_time else '')) if demo.start_time else '') ~ ((' · ' ~ demo.city) if demo.city else '') ~ ((' · ' ~ demo.address) if demo.address else ''),
+    _('Mielenosoitukset'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (demo.title, none)],
+    back_url=url_for('admin_demo.demo_control'),
+    back_label=_('Mielenosoitukset'),
+    hero_classes='admin-page-hero--stacked'
+  ) %}
+        <a href="{{ public_url }}" class="admin-page-hero__action" target="_blank" rel="noopener">
           <i class="fa-solid fa-arrow-up-right-from-square me-2"></i>{{ _('Avaa julkinen sivu') }}
         </a>
         {% if map_url %}
-        <a href="{{ map_url }}" class="hero-link" target="_blank" rel="noopener">
+        <a href="{{ map_url }}" class="admin-page-hero__action" target="_blank" rel="noopener">
           <i class="fa-solid fa-map-location-dot me-2"></i>{{ _('Näytä kartalla') }}
         </a>
         {% endif %}
-        <a href="{{ resource_links.edit }}" class="hero-link">
+        <a href="{{ resource_links.edit }}" class="admin-page-hero__action">
           <i class="fa-solid fa-pen-to-square me-2"></i>{{ _('Muokkaa lomakkeella') }}
         </a>
-        <a href="{{ resource_links.history }}" class="hero-link">
+        <a href="{{ resource_links.history }}" class="admin-page-hero__action">
           <i class="fa-solid fa-clock-rotate-left me-2"></i>{{ _('Muokkaushistoria') }}
         </a>
-        <a href="{{ resource_links.audit }}" class="hero-link">
+        <a href="{{ resource_links.audit }}" class="admin-page-hero__action">
           <i class="fa-solid fa-clipboard-list me-2"></i>{{ _('Audit-loki') }}
         </a>
         {% if permissions.can_view_analytics %}
-        <a href="{{ resource_links.analytics }}" class="hero-link">
+        <a href="{{ resource_links.analytics }}" class="admin-page-hero__action">
           <i class="fa-solid fa-chart-line me-2"></i>{{ _('Analytiikka') }}
         </a>
         {% endif %}
-      </div>
-    <div class="hero-metadata">
+  {% endcall %}
+
+  <div class="status-badges" aria-label="{{ _('Mielenosoituksen tila') }}">
+    {% if status_flags.approved %}
+    <span class="status-badge success"><i class="fa-solid fa-check"></i> {{ _('Hyväksytty') }}</span>
+    {% elif status_flags.needs_review %}
+    <span class="status-badge warning"><i class="fa-solid fa-hourglass-half"></i> {{ _('Odottaa käsittelyä') }}</span>
+    {% endif %}
+    {% if status_flags.rejected %}<span class="status-badge danger"><i class="fa-solid fa-xmark"></i> {{ _('Hylätty') }}</span>{% endif %}
+    {% if status_flags.hidden %}<span class="status-badge neutral"><i class="fa-solid fa-eye-slash"></i> {{ _('Piilotettu') }}</span>{% endif %}
+    {% if status_flags.recurring %}<span class="status-badge neutral"><i class="fa-solid fa-rotate"></i> {{ _('Toistuva') }}</span>{% endif %}
+    {% if status_flags.recommended %}<span class="status-badge success"><i class="fa-solid fa-star"></i> {{ _('Suositeltu') }}</span>{% endif %}
+    {% if status_flags.cancelled %}
+    <span class="status-badge danger"><i class="fa-solid fa-ban"></i> {{ _('Peruttu') }}</span>
+    {% elif status_flags.cancellation_requested %}
+    <span class="status-badge warning"><i class="fa-solid fa-triangle-exclamation"></i> {{ _('Peruutuspyyntö') }}</span>
+    {% endif %}
+  </div>
+
+  <div class="hero-metadata" aria-label="{{ _('Tekniset tiedot') }}">
       <div class="meta-item">
         <span>{{ _('Mongo ID') }}</span>
         {{ demo_id }}
@@ -464,9 +402,7 @@
         <span>{{ _('Muokattu viimeksi') }}</span>
         {{ demo_raw.get('last_modified')|datetimeformat("%d.%m.%Y %H:%M") if demo_raw.get('last_modified') else '-' }}
       </div>
-    </div>
-    </div>
-  </header>
+  </div>
 
   <div class="command-grid">
     <div class="primary-column">

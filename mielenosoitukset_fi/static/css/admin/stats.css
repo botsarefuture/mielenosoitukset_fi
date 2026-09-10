@@ -19,40 +19,6 @@
     color: var(--stats-text);
 }
 
-.stats-hero {
-    position: relative;
-    overflow: hidden;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 2rem;
-    align-items: end;
-    padding: clamp(1.75rem, 4vw, 3.25rem);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 1.5rem;
-    color: #fff;
-    background:
-        radial-gradient(circle at 92% 5%, rgba(255, 102, 0, 0.38), transparent 18rem),
-        linear-gradient(135deg, #00236e, #0033a0 70%, #164fc2);
-    box-shadow: 0 20px 50px rgba(0, 43, 137, 0.18);
-}
-
-.stats-hero::after {
-    content: "";
-    position: absolute;
-    right: -75px;
-    bottom: -125px;
-    width: 240px;
-    height: 240px;
-    border: 38px solid rgba(255, 255, 255, 0.08);
-    border-radius: 50%;
-}
-
-.stats-hero-copy,
-.stats-hero-note {
-    position: relative;
-    z-index: 1;
-}
-
 .stats-kicker {
     margin: 0 0 0.55rem;
     color: var(--stats-orange);
@@ -60,50 +26,6 @@
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-}
-
-.stats-hero .stats-kicker {
-    color: #ffd6bc;
-}
-
-.stats-hero h1 {
-    margin: 0;
-    color: #fff;
-    font-size: clamp(2rem, 4vw, 3.2rem);
-    letter-spacing: -0.035em;
-}
-
-.stats-lede {
-    max-width: 680px;
-    margin: 0.8rem 0 0;
-    color: rgba(255, 255, 255, 0.82);
-    font-size: 1rem;
-    line-height: 1.7;
-}
-
-.stats-hero-note {
-    min-width: 210px;
-    padding: 1rem 1.15rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(8px);
-}
-
-.stats-hero-note span,
-.stats-hero-note strong {
-    display: block;
-}
-
-.stats-hero-note span {
-    color: rgba(255, 255, 255, 0.72);
-    font-size: 0.82rem;
-}
-
-.stats-hero-note strong {
-    margin-top: 0.2rem;
-    color: #fff;
-    font-size: 1rem;
 }
 
 .stat-grid {
@@ -335,14 +257,6 @@
 }
 
 @media (max-width: 800px) {
-    .stats-hero {
-        grid-template-columns: 1fr;
-    }
-
-    .stats-hero-note {
-        min-width: 0;
-    }
-
     .panel-header {
         flex-direction: column;
     }

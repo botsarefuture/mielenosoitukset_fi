@@ -1,10 +1,14 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
 <div class="admin-page">
-  <header class="admin-page-header">
-    <div><p class="admin-page-header__kicker">{{ _('Käyttäjät ja hallinto') }}</p><h1>Kehittäjähallinta</h1><p>Hallinnoi kehittäjäoikeuksia ja sovellusten scope-pyyntöjä.</p></div>
-  </header>
+  {{ admin_page_hero(
+    _('Kehittäjähallinta'),
+    _('Hallinnoi kehittäjäoikeuksia ja sovellusten scope-pyyntöjä.'),
+    _('Käyttäjät ja hallinto'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Kehittäjähallinta'), none)]
+  ) }}
 
   <h4 class="mt-4 mb-3">Kehittäjäpaneelin avauspyynnöt</h4>
   <div class="table-responsive admin-data-view admin-workspace-table mb-4">

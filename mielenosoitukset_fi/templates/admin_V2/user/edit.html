@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block styles %}
 <style>
@@ -82,16 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 {% block main_content %}
 <div class="admin-user-page admin-page">
-    <header class="admin-page-hero">
-        <div class="admin-page-hero__content">
-            <p class="admin-page-hero__kicker">{{ _('Käyttäjähallinta') }}</p>
-            <h1>{{ _('Muokkaa käyttäjää') }}</h1>
-            <p>{{ _('Päivitä käyttäjän perustiedot, rooli ja sallitut käyttöoikeudet samasta näkymästä.') }}</p>
-        </div>
-        <div class="admin-page-hero__actions">
-            <a href="{{ url_for('admin_user.user_control') }}" class="admin-page-hero__action"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ _('Käyttäjät') }}</a>
-        </div>
-    </header>
+    {{ admin_page_hero(
+        _('Muokkaa käyttäjää'),
+        _('Päivitä käyttäjän perustiedot, rooli ja sallitut käyttöoikeudet samasta näkymästä.'),
+        _('Käyttäjähallinta'),
+        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttäjät'), url_for('admin_user.user_control')), (_('Muokkaa käyttäjää'), none)],
+        back_url=url_for('admin_user.user_control'),
+        back_label=_('Käyttäjät')
+    ) }}
 
     <form class="admin-form admin-user-form" method="POST" action="{{ url_for('admin_user.save_user', user_id=user.id) }}">
       <section class="admin-form-section">

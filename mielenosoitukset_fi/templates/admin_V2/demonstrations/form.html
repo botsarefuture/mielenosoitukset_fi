@@ -1,8 +1,5 @@
-{% if demo and demo._id %}
-<a href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}" class="btn btn-secondary"
-    style="float:right; margin-left: 10px;">Näytä muokkaushistoria</a>
-{% endif %}
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block styles %}
 <!-- Core CSS -->
@@ -151,26 +148,23 @@
 <div class="dashboard-container">
 
     <!-- Page intro -->
-    <section class="introduction editor-hero admin-page-hero">
-        <div class="admin-page-hero__content">
-            <p class="admin-page-hero__kicker">{{ _('Mielenosoitukset') }}</p>
-            <h1 id="tabletitle" class="text-3xl font-bold">{{ title }}</h1>
-            <p class="text-muted max-w-xl">{{ _('Muokkaa mielenosoituksen tietoja osio kerrallaan. Tallennuspainike pysyy saatavilla sivua selatessa.') }}</p>
-        </div>
-        {% if demo and demo._id %}
-        <div class="admin-page-hero__actions">
+    {% call admin_page_hero(
+        title,
+        _('Muokkaa mielenosoituksen tietoja osio kerrallaan. Tallennuspainike pysyy saatavilla sivua selatessa.'),
+        _('Mielenosoitukset'),
+        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (title, none)] if current_user.is_authenticated else [(title, none)],
+        back_url=url_for('admin_demo.demo_control') if current_user.is_authenticated else none,
+        back_label=_('Mielenosoitukset'),
+        actions_visible=current_user.is_authenticated and demo and demo._id,
+        sections=[('basic-info', _('Perustiedot')), ('location-info', _('Sijainti')), ('organizer-info', _('Järjestäjät')), ('approval-info', _('Hyväksyntä'))],
+        title_id='tabletitle',
+        hero_classes='introduction editor-hero'
+    ) %}
             <a class="admin-page-hero__action" href="{{ url_for('admin_demo.edit_demo_translations', demo_id=demo._id) }}">
                 <i class="fas fa-language me-1"></i>{{ _('Avaa käännöstyökalu') }}
             </a>
-        </div>
-        {% endif %}
-        <nav class="editor-section-nav admin-page-hero__nav" aria-label="{{ _('Lomakkeen osiot') }}">
-            <a href="#basic-info">{{ _('Perustiedot') }}</a>
-            <a href="#location-info">{{ _('Sijainti') }}</a>
-            <a href="#organizer-info">{{ _('Järjestäjät') }}</a>
-            <a href="#approval-info">{{ _('Hyväksyntä') }}</a>
-        </nav>
-    </section>
+            <a class="admin-page-hero__action" href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}"><i class="fas fa-clock-rotate-left me-1" aria-hidden="true"></i>{{ _('Muokkaushistoria') }}</a>
+    {% endcall %}
 
     {% if edit_demo_with_token %}
     <section class="alert alert-info" role="alert" id="alert1">

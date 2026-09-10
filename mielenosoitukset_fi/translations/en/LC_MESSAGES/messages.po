@@ -230,7 +230,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:158 mielenosoitukset_fi/templates/admin_base.html:364
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:229
 msgid "Kyllä"
-msgstr ""
+msgstr "Yes"
 
 #: mielenosoitukset_fi/templates/base.html:233
 msgid "Tietoa sivustosta"

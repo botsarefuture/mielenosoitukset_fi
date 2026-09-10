@@ -689,8 +689,14 @@ def bulk_requeue_ui_translation_sync():
     updated = 0
     requeued_ids = []
     for proposal in ui_translation_proposals.find({"_id": {"$in": selected_ids}}):
-        sync_status = ((proposal.get("github_sync") or {}).get("status") or "").strip()
-        if proposal.get("status") != "approved" or sync_status not in {"retry", "committed_local_branch"}:
+        github_sync = proposal.get("github_sync") or {}
+        sync_status = (github_sync.get("status") or "").strip()
+        merge_status = (github_sync.get("merge_status") or "").strip()
+        requeueable = sync_status in {"retry", "committed_local_branch"} or merge_status in {
+            "merge_blocked",
+            "merge_unknown",
+        }
+        if proposal.get("status") != "approved" or not requeueable:
             continue
         ui_translation_proposals.update_one(
             {"_id": proposal["_id"]},

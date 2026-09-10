@@ -16,7 +16,10 @@ def run(limit: int = 10):
         db.ui_translation_proposals.find(
             {
                 "status": "approved",
-                "github_sync.status": {"$in": ["queued", "retry"]},
+                "$or": [
+                    {"github_sync.status": {"$in": ["queued", "retry"]}},
+                    {"github_sync.merge_status": {"$in": ["merge_blocked", "merge_unknown"]}},
+                ],
             }
         )
         .sort("reviewed_at", 1)

@@ -325,6 +325,122 @@ def test_background_sync_can_push_approved_ui_translation_to_git(app, db, tmp_pa
     assert branch_sha == proposal["github_sync"]["commit_sha"]
 
 
+def test_sync_rebases_stale_branch_when_main_has_advanced(app, db, tmp_path):
+    workspace_root, remote_root = _init_sync_repo(tmp_path / "sync-rebase-repo")
+    app.config["UI_TRANSLATION_SYNC_REPO_PATH"] = str(workspace_root)
+    app.config["UI_TRANSLATION_SYNC_BASE_BRANCH"] = "main"
+    app.config["UI_TRANSLATION_SYNC_REMOTE"] = "origin"
+    app.config["UI_TRANSLATION_GITHUB_REPO"] = ""
+    app.config["UI_TRANSLATION_GITHUB_TOKEN"] = ""
+
+    branch_name = build_ui_translation_sync_branch_name("en", "Submit demonstration")
+
+    with app.app_context():
+        first = sync_ui_translation_to_git(
+            locale="en",
+            msgid="Submit demonstration",
+            translated_text="Submit a demonstration",
+        )
+
+    first_branch_sha = subprocess.run(
+        ["git", "--git-dir", str(remote_root), "rev-parse", f"refs/heads/{branch_name}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    translation_dir = workspace_root / "mielenosoitukset_fi" / "translations" / "en" / "LC_MESSAGES"
+    (translation_dir / "messages.po").write_text(
+        PO_TEMPLATE.format(locale="en", hello_translation="Hello world changed"),
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "-C", str(workspace_root), "add", "."], check=True)
+    subprocess.run(
+        ["git", "-C", str(workspace_root), "commit", "-m", "Upstream moved past sync branch"],
+        check=True,
+    )
+    subprocess.run(["git", "-C", str(workspace_root), "push", "origin", "HEAD:main"], check=True)
+
+    with app.app_context():
+        second = sync_ui_translation_to_git(
+            locale="en",
+            msgid="Submit demonstration",
+            translated_text="Submit a demonstration",
+        )
+
+    second_branch_sha = subprocess.run(
+        ["git", "--git-dir", str(remote_root), "rev-parse", f"refs/heads/{branch_name}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    assert first.status == "branch_pushed"
+    assert first_branch_sha == first.commit_sha
+    assert second.status == "branch_pushed"
+    assert second_branch_sha == second.commit_sha
+    assert second_branch_sha != first_branch_sha
+    base_is_ancestor = subprocess.run(
+        [
+            "git",
+            "--git-dir",
+            str(remote_root),
+            "merge-base",
+            "--is-ancestor",
+            "refs/heads/main",
+            f"refs/heads/{branch_name}",
+        ],
+        capture_output=True,
+    )
+    assert base_is_ancestor.returncode == 0
+    assert first_branch_sha != second_branch_sha
+
+
+def test_sync_skips_pushing_when_branch_is_already_current(app, tmp_path):
+    workspace_root, remote_root = _init_sync_repo(tmp_path / "sync-current-repo")
+    app.config["UI_TRANSLATION_SYNC_REPO_PATH"] = str(workspace_root)
+    app.config["UI_TRANSLATION_SYNC_BASE_BRANCH"] = "main"
+    app.config["UI_TRANSLATION_SYNC_REMOTE"] = "origin"
+    app.config["UI_TRANSLATION_GITHUB_REPO"] = ""
+    app.config["UI_TRANSLATION_GITHUB_TOKEN"] = ""
+
+    branch_name = build_ui_translation_sync_branch_name("en", "Submit demonstration")
+
+    with app.app_context():
+        first = sync_ui_translation_to_git(
+            locale="en",
+            msgid="Submit demonstration",
+            translated_text="Submit a demonstration",
+        )
+
+    first_branch_sha = subprocess.run(
+        ["git", "--git-dir", str(remote_root), "rev-parse", f"refs/heads/{branch_name}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    with app.app_context():
+        second = sync_ui_translation_to_git(
+            locale="en",
+            msgid="Submit demonstration",
+            translated_text="Submit a demonstration",
+        )
+
+    second_branch_sha = subprocess.run(
+        ["git", "--git-dir", str(remote_root), "rev-parse", f"refs/heads/{branch_name}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    assert first.status == "branch_pushed"
+    assert first_branch_sha == first.commit_sha
+    assert second.status == "branch_pushed"
+    assert second_branch_sha == first_branch_sha
+    assert second_branch_sha == second.commit_sha
+
+
 def test_sync_can_open_pr_and_attempt_auto_merge(app, tmp_path, monkeypatch):
     workspace_root, _ = _init_sync_repo(tmp_path / "sync-pr-repo")
     app.config["UI_TRANSLATION_SYNC_REPO_PATH"] = str(workspace_root)

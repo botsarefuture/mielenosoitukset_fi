@@ -3,19 +3,6 @@
 
 {% block title %}{{ _('Yhteensä katselukerrat viimeisen 24 tunnin aikana') }}{% endblock %}
 
-{% block styles %}
-<style>
-  .chart-container {
-    max-width: 900px;
-    margin: 2rem auto;
-    padding: 1rem;
-    background: var(--container_background);
-    border: 1px solid var(--border_color);
-    border-radius: 12px;
-  }
-</style>
-{% endblock %}
-
 {% block main_content %}
 <section class="dashboard-container">
   {{ admin_page_hero(

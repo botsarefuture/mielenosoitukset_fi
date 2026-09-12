@@ -3151,6 +3151,73 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
   font-size: .875rem;
 }
 
+/* Shared cues for sortable data columns and chronological activity views. */
+th.sortable {
+  position: relative;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+th.sortable::after {
+  position: absolute;
+  right: .75rem;
+  content: "\f0dc";
+  font-family: "Font Awesome 6 Free";
+  font-size: .7em;
+  font-weight: 900;
+  color: var(--admin-workspace-muted);
+}
+
+th.sortable.asc::after {
+  content: "\f0de";
+}
+
+th.sortable.desc::after {
+  content: "\f0dd";
+}
+
+.audit-list .list-group-item {
+  border-left: .25rem solid transparent;
+}
+
+.audit-list .list-group-item[data-action="edit_demo"] {
+  border-left-color: var(--admin-workspace-blue);
+}
+
+.audit-list .list-group-item[data-action="cancel_demo"] {
+  border-left-color: var(--admin-workspace-danger);
+}
+
+.audit-list .list-group-item[data-action="approve_demo"] {
+  border-left-color: var(--admin-workspace-success);
+}
+
+.audit-list .list-group-item[data-action="reject_demo"] {
+  border-left-color: var(--admin-workspace-orange);
+}
+
+.timeline-card {
+  border-left: .25rem solid var(--admin-workspace-blue);
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 1.5rem;
+  border-left: 3px solid var(--admin-workspace-border);
+}
+
+.timeline-item::before {
+  position: absolute;
+  top: 1.1rem;
+  left: -10px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  content: "";
+  background: var(--admin-workspace-blue);
+  box-shadow: 0 0 0 4px var(--admin-workspace-blue-soft);
+}
+
 @media (max-width: 1050px) {
   .admin-detail-layout {
     grid-template-columns: 1fr;

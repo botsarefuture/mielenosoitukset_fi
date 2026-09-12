@@ -557,6 +557,26 @@ def test_system_status_uses_shared_theme_aware_health_components():
     assert "var(--admin-workspace-border)" in workspace
 
 
+def test_stats_and_demo_audits_use_shared_data_cues():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/stats.html",
+        "mielenosoitukset_fi/templates/admin_V2/overall_24h_analytics.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/audit_log.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/audit_timeline.html",
+    )
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+    for name in pages:
+        assert "<style" not in Path(name).read_text(encoding="utf-8")
+    assert "th.sortable::after" in workspace
+    assert '.audit-list .list-group-item[data-action="approve_demo"]' in workspace
+    assert ".timeline-item::before" in workspace
+    assert "var(--admin-workspace-muted)" in workspace
+    assert "var(--admin-workspace-border)" in workspace
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

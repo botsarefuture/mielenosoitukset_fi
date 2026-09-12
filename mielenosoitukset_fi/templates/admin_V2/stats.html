@@ -4,24 +4,6 @@
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/stats.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/activities.css') }}">
-
-<style>
-  th.sortable {
-    cursor: pointer;
-    position: relative;
-  }
-  th.sortable::after {
-    content: "\f0dc";
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    font-size: 0.7em;
-    color: var(--stats-muted);
-    position: absolute;
-    right: 0.75rem;
-  }
-  th.sortable.asc::after { content: "\f0de"; }
-  th.sortable.desc::after { content: "\f0dd"; }
-</style>
 {% endblock %}
 
 {% block main_content %}

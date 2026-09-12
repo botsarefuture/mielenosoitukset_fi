@@ -1,25 +1,5 @@
 {% extends "admin_base.html" %}
 {% from 'admin_V2/macros.html' import admin_page_hero %}
-{% block styles %}
-<style>
-  .audit-list .list-group-item {
-    border-left: 4px solid transparent;
-  }
-  .audit-list .list-group-item[data-action="edit_demo"] {
-    border-left-color: var(--bs-primary);
-  }
-  .audit-list .list-group-item[data-action="cancel_demo"] {
-    border-left-color: var(--bs-danger);
-  }
-  .audit-list .list-group-item[data-action="approve_demo"] {
-    border-left-color: var(--bs-success);
-  }
-  .audit-list .list-group-item[data-action="reject_demo"] {
-    border-left-color: var(--bs-warning);
-  }
-</style>
-{% endblock %}
-
 {% block main_content %}
 <div class="admin-page">
   {{ admin_page_hero(

@@ -534,6 +534,29 @@ def test_media_admin_uses_shared_theme_aware_components():
     assert "var(--admin-workspace-border)" in workspace
 
 
+def test_system_status_uses_shared_theme_aware_health_components():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/status.html"
+    ).read_text(encoding="utf-8")
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in template
+    assert "prefers-color-scheme" not in template
+    assert template.count("style=") == 1
+    assert 'style="width:{{ server.disk.used_pct }}%"' in template
+    assert 'class="admin-health-grid"' in template
+    assert 'class="admin-health-panel' in template
+    assert 'class="admin-data-view__viewport"' in template
+    assert 'role="progressbar"' in template
+    assert ".admin-health-panel" in workspace
+    assert ".admin-health-service" in workspace
+    assert ".admin-health-errors" in workspace
+    assert "var(--admin-workspace-surface)" in workspace
+    assert "var(--admin-workspace-border)" in workspace
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

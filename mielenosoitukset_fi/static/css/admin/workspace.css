@@ -2937,6 +2937,220 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
   --text-soft: var(--admin-workspace-muted);
 }
 
+/* System health uses the same theme-aware surfaces and data-view geometry as
+   the rest of the workspace. The only template-local style left is the
+   dynamic disk-usage width supplied by the server. */
+.admin-health-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.admin-health-grid__full,
+.admin-health-banner,
+.admin-health-footer {
+  grid-column: 1 / -1;
+}
+
+.admin-health-panel,
+.admin-health-banner {
+  min-width: 0;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 1rem;
+  background: var(--admin-workspace-surface);
+  box-shadow: var(--admin-workspace-shadow);
+}
+
+.admin-health-panel {
+  padding: 1.15rem;
+}
+
+.admin-health-panel__title {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 750;
+  color: var(--admin-workspace-text);
+}
+
+.admin-health-panel__title i {
+  color: var(--admin-workspace-blue);
+}
+
+.admin-health-banner {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .9rem 1rem;
+  font-weight: 700;
+}
+
+.admin-health-banner.is-ok {
+  border-color: var(--admin-workspace-success);
+  color: var(--admin-workspace-success);
+  background: var(--admin-workspace-success-soft);
+}
+
+.admin-health-banner.is-error {
+  border-color: var(--admin-workspace-danger);
+  color: var(--admin-workspace-danger);
+  background: var(--admin-workspace-danger-soft);
+}
+
+.admin-health-banner__icon {
+  display: inline-grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+.admin-health-service {
+  display: grid;
+  grid-template-columns: auto minmax(7rem, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: .65rem;
+  padding: .75rem 0;
+  border-top: 1px solid var(--admin-workspace-border);
+}
+
+.admin-health-service:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.admin-health-service:last-child {
+  padding-bottom: 0;
+}
+
+.admin-health-service__dot {
+  width: .65rem;
+  height: .65rem;
+  border-radius: 50%;
+  background: var(--admin-workspace-danger);
+  box-shadow: 0 0 0 .2rem var(--admin-workspace-danger-soft);
+}
+
+.admin-health-service__dot.is-ok {
+  background: var(--admin-workspace-success);
+  box-shadow: 0 0 0 .2rem var(--admin-workspace-success-soft);
+}
+
+.admin-health-service__name,
+.admin-health-detail strong,
+.admin-health-metric strong {
+  color: var(--admin-workspace-text);
+}
+
+.admin-health-service__message,
+.admin-health-metric span,
+.admin-health-footer {
+  color: var(--admin-workspace-muted);
+}
+
+.admin-health-service__message {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-health-detail {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .65rem 0;
+  border-top: 1px solid var(--admin-workspace-border);
+}
+
+.admin-health-detail:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.admin-health-detail strong {
+  text-align: right;
+}
+
+.admin-health-disk {
+  padding-top: .1rem;
+}
+
+.admin-health-progress {
+  height: .6rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-health-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--admin-workspace-success);
+  transition: width .2s ease;
+}
+
+.admin-health-progress__fill.is-warning {
+  background: var(--admin-workspace-orange);
+}
+
+.admin-health-progress__fill.is-error {
+  background: var(--admin-workspace-danger);
+}
+
+.admin-health-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.admin-health-metric {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+  padding: .8rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .8rem;
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-health-metric strong {
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.admin-health-errors {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--admin-workspace-text);
+}
+
+.admin-health-errors :is(th, td) {
+  padding: .75rem;
+  border-bottom: 1px solid var(--admin-workspace-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-health-errors th {
+  color: var(--admin-workspace-muted);
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-health-errors td:last-child {
+  min-width: 18rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-health-footer {
+  padding: .25rem;
+  text-align: center;
+  font-size: .875rem;
+}
+
 @media (max-width: 1050px) {
   .admin-detail-layout {
     grid-template-columns: 1fr;
@@ -2961,6 +3175,18 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
 }
 
 @media (max-width: 760px) {
+  .admin-health-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-health-service {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .admin-health-service__message {
+    grid-column: 2;
+  }
+
   .admin-section-card__header {
     align-items: flex-start;
     flex-direction: column;
@@ -3051,6 +3277,20 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
 }
 
 @media (max-width: 520px) {
+  .admin-health-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-health-detail {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .25rem;
+  }
+
+  .admin-health-detail strong {
+    text-align: left;
+  }
+
   :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid, .campaign-admin-page .stats-grid) {
     grid-template-columns: 1fr;
   }

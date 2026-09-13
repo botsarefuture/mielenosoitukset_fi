@@ -32,6 +32,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* Admin UI contract checks now pin the exact remaining template-local style blocks and static/dynamic style attributes, so new inline CSS cannot silently increase the documented cleanup inventory while existing exceptions are removed in smaller domain batches.
 * The canonical admin hero macro now accepts only the documented stacked variant; eleven legacy/domain-specific hero class combinations have been removed from page calls, and dead page-local hero geometry has been deleted so titles, descriptions, actions, and mobile behavior resolve from one shared contract.
 * Removed two unreferenced admin experiment/copy templates and replaced the UI-translation sync dashboard's final legacy page-header action wrapper with the shared row-action primitive, reducing dead inline CSS without activating the abandoned control-panel prototype.
 * Campaign volunteer management now uses the shared admin summary, section, filter, data-view, status, pagination, modal, checkbox, and button contracts instead of a 597-line template-local design system; its client-side filters and pagination now keep the complete filtered result set stable across page changes.

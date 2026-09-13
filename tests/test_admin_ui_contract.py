@@ -82,6 +82,44 @@ def test_full_admin_templates_use_the_admin_shell():
     assert violations == []
 
 
+def test_admin_inline_style_debt_cannot_grow_without_review():
+    style_block_allowlist = {
+        "_users_table.html": 1,
+        "cases/all.html": 1,
+        "cases/case.html": 1,
+        "cities/index.html": 1,
+        "dashboard.html": 1,
+        "demonstrations/command_center.html": 1,
+        "demonstrations/dashboard.html": 1,
+        "demonstrations/translations_editor.html": 1,
+        "logs.html": 1,
+        "user/list.html": 1,
+    }
+    style_attribute_allowlist = {
+        "demonstrations/form.html": 1,
+        "demonstrations/translations_editor.html": 1,
+        "macros.html": 1,
+        "recu_demonstrations/_form.html": 3,
+        "recu_demonstrations/_form_v2.html": 10,
+        "status.html": 1,
+        "tag_form.html": 1,
+    }
+    root = Path("mielenosoitukset_fi/templates/admin_V2")
+    actual_blocks = {}
+    actual_attributes = {}
+
+    for template in root.rglob("*.html"):
+        source = template.read_text(encoding="utf-8")
+        relative = str(template.relative_to(root))
+        if count := source.count("<style"):
+            actual_blocks[relative] = count
+        if count := source.count("style="):
+            actual_attributes[relative] = count
+
+    assert actual_blocks == style_block_allowlist
+    assert actual_attributes == style_attribute_allowlist
+
+
 def test_admin_theme_is_applied_before_styles_and_controls_color_scheme():
     base = Path("mielenosoitukset_fi/templates/admin_base.html").read_text(
         encoding="utf-8"

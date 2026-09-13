@@ -1979,8 +1979,7 @@ main.flex-grow-1 {
 .dashboard-container > .introduction,
 .governance-hero,
 .logs-header,
-.case-hero,
-.campaign-admin-page > .header {
+.case-hero {
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
@@ -2106,8 +2105,7 @@ main.flex-grow-1 {
 .governance-hero h1,
 .logs-header h1,
 .logs-header h2,
-.case-hero h1,
-.campaign-admin-page > .header h1 {
+.case-hero h1 {
   margin: .25rem 0 .5rem;
   color: var(--admin-hero-foreground);
   font-size: clamp(2rem, 4vw, 3.2rem);
@@ -2121,8 +2119,7 @@ main.flex-grow-1 {
 .dashboard-container > .introduction p,
 .governance-hero p:not(.governance-eyebrow),
 .logs-header p,
-.case-hero p,
-.campaign-admin-page > .header p {
+.case-hero p {
   max-width: 720px;
   margin: 0;
   color: var(--admin-hero-muted-foreground);
@@ -2367,54 +2364,88 @@ main.flex-grow-1 {
   padding: 0;
 }
 
-.campaign-admin-page > :is(.header, .stats-grid, .export-section, .actions-bar, .table-container) {
+.campaign-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.campaign-admin-page .timeline-tags {
+  justify-content: flex-start;
+}
+
+.campaign-admin-page .export-buttons {
+  justify-content: flex-start;
+}
+
+.campaign-filters__grid {
+  grid-template-columns: minmax(14rem, 1.5fr) minmax(10rem, .7fr) minmax(10rem, .8fr) auto;
+}
+
+.campaign-filters__actions {
+  align-items: stretch;
+}
+
+.campaign-filters__actions .btn {
+  min-height: 2.7rem;
+}
+
+.campaign-volunteers .admin-data-view__table {
+  min-width: 68rem;
+}
+
+.campaign-volunteers .volunteer-name {
+  color: var(--admin-workspace-text);
+  font-weight: 750;
+}
+
+.campaign-volunteers .volunteer-email {
+  color: var(--admin-workspace-blue-dark);
+  overflow-wrap: anywhere;
+}
+
+.campaign-volunteers .admin-row-actions {
+  flex-wrap: nowrap;
+}
+
+.campaign-volunteers .admin-row-actions .btn {
+  display: inline-grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  place-items: center;
+}
+
+.campaign-admin-page .admin-result-summary {
   margin: 0;
 }
 
-.campaign-admin-page .stats-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: .8rem;
+@media (max-width: 1000px) {
+  .campaign-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .campaign-filters__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .campaign-filters__actions {
+    grid-column: 1 / -1;
+  }
 }
 
-.campaign-admin-page .stat-card {
-  min-height: 7rem;
-  padding: 1rem;
-  border: 1px solid var(--admin-workspace-border);
-  border-radius: 1rem;
-  color: var(--admin-workspace-text);
-  background: var(--admin-workspace-surface);
-  box-shadow: var(--admin-workspace-shadow);
-}
+@media (max-width: 640px) {
+  .campaign-summary,
+  .campaign-filters__grid {
+    grid-template-columns: 1fr;
+  }
 
-.campaign-admin-page .stat-card:hover {
-  transform: none;
-}
+  .campaign-filters__actions {
+    grid-column: auto;
+  }
 
-.campaign-admin-page .stat-icon {
-  width: 2.75rem;
-  height: 2.75rem;
-  margin-bottom: .65rem;
-  border-radius: .8rem;
-}
-
-.campaign-admin-page .stat-number {
-  color: var(--admin-workspace-text);
-  font-size: 1.7rem;
-}
-
-.campaign-admin-page .stat-label {
-  color: var(--admin-workspace-muted);
-  font-size: .78rem;
-  font-weight: 700;
-}
-
-.campaign-admin-page :is(.export-section, .actions-bar) {
-  padding: 1rem;
-  border: 1px solid var(--admin-workspace-border);
-  border-radius: 1rem;
-  color: var(--admin-workspace-text);
-  background: var(--admin-workspace-surface);
-  box-shadow: var(--admin-workspace-shadow);
+  .campaign-filters__actions .btn,
+  .campaign-admin-page .export-buttons .btn {
+    width: 100%;
+  }
 }
 
 /* Dashboard and case-management screens keep their information architecture,
@@ -3684,7 +3715,7 @@ th.sortable.desc::after {
     transform: none !important;
     margin-top: .4rem !important;
   }
-  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid, .campaign-admin-page .stats-grid) {
+  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .city-admin-shell .city-admin-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -3757,8 +3788,7 @@ th.sortable.desc::after {
   .dashboard-container > .introduction,
   .governance-hero,
   .logs-header,
-  .case-hero,
-  .campaign-admin-page > .header {
+  .case-hero {
     grid-template-columns: 1fr;
     min-height: 0;
   }
@@ -3822,7 +3852,7 @@ th.sortable.desc::after {
     text-align: left;
   }
 
-  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid, .campaign-admin-page .stats-grid) {
+  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid) {
     grid-template-columns: 1fr;
   }
   :is(

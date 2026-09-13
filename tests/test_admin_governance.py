@@ -82,7 +82,7 @@ def test_admin_management_views_share_workspace_design(app, seeded_data):
     city_page = client.get("/admin/cities/").get_data(as_text=True)
 
     assert "css/admin/workspace.css" in demonstration_page
-    assert "20260913-admin-ui-39" in demonstration_page
+    assert "20260913-admin-ui-40" in demonstration_page
     assert re.search(
         r'class="(?=[^"]*\badmin-page-hero\b)(?=[^"]*\badmin-workspace-hero\b)[^"]*"',
         demonstration_page,

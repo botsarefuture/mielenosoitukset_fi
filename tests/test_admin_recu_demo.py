@@ -91,6 +91,42 @@ def test_admin_can_create_recurring_demo_with_sparse_organizer_indexes(admin_cli
     assert created["organizers"][0]["organization_id"] == kept_org_id
 
 
+def test_editor_without_accept_permission_cannot_change_recurring_approval(
+    friend_client, db, seeded_data
+):
+    db.users.update_one(
+        {"_id": seeded_data["friend_id"]},
+        {
+            "$set": {
+                "role": "admin",
+                "global_permissions": ["EDIT_RECURRING_DEMO"],
+            }
+        },
+    )
+
+    edit_page = friend_client.get(
+        f"/admin/recu_demo/edit_recu_demo/{seeded_data['recu_demo_id']}"
+    )
+    assert edit_page.status_code == 200
+    assert 'id="approval-container"' not in edit_page.get_data(as_text=True)
+
+    response = friend_client.post(
+        f"/admin/recu_demo/edit_recu_demo/{seeded_data['recu_demo_id']}",
+        data={
+            "title": "Recurring Test Series",
+            "date": "2026-05-08",
+            "city": "Helsinki",
+            "recurrence_type": "weekly",
+            "recurrence_interval": "1",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    updated = db.recu_demos.find_one({"_id": seeded_data["recu_demo_id"]})
+    assert updated["approved"] is True
+
+
 def test_admin_can_bulk_update_selected_recurring_children(admin_client, db, seeded_data):
     parent_id = seeded_data["recu_demo_id"]
     db.recu_demos.update_one(

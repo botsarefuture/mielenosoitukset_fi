@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
 <!-- Include CSS and JS files -->
@@ -10,7 +11,14 @@
 
 <!-- Main content container -->
 <div class="container container-form">
-    <h2>{{ title }}</h2>
+    {{ admin_page_hero(
+        title,
+        _('Muokkaa toistuvan mielenosoituksen tietoja ja toistuvuusasetuksia.'),
+        _('Toistuvat mielenosoitukset'),
+        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Toistuvat mielenosoitukset'), url_for('admin_recu_demo.recu_demo_control')), (title, none)],
+        back_url=url_for('admin_recu_demo.recu_demo_control'),
+        back_label=_('Toistuvat mielenosoitukset')
+    ) }}
     <form method="POST" action="{{ form_action }}">
 
         <!-- Form fields with required indicators -->

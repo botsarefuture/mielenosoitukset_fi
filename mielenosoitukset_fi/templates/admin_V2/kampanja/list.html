@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block title %}{{ _('Kampanjan hallinta') }} – Mielenosoitukset.fi{% endblock %}
 
@@ -48,64 +49,10 @@
             padding: 2rem;
         }
 
-        /* Header */
-        .header {
-            background: var(--color-gradient-primary);
-            color: white;
-            padding: 3rem 2rem;
-            border-radius: var(--border-radius-lg);
-            margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-            pointer-events: none;
-        }
-
-        .header-content {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 2rem;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
         .timeline-tags {
             display: flex;
             gap: .5rem;
             flex-wrap: wrap;
-        }
-
-        .campaign-date-badge {
-            padding: .5rem .8rem;
-            border: 1px solid rgba(255, 255, 255, .24);
-            border-radius: .7rem;
-            color: #fff;
-            background: rgba(255, 255, 255, .12);
-            font-size: .8rem;
-            font-weight: 700;
         }
 
         /* Stats Cards */
@@ -604,20 +551,6 @@
                 padding: 1rem;
             }
 
-            .header {
-                padding: 2rem 1rem;
-                text-align: center;
-            }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-            }
-
             .actions-bar {
                 flex-direction: column;
                 align-items: stretch;
@@ -673,21 +606,19 @@
 {% block main_content %}
     <div class="container campaign-admin-page">
         <!-- Header -->
-        <div class="header animate-fade-in-up">
-            <div class="header-content">
-                <div>
-                    <h1>Kampanjan hallinta</h1>
-                    <p>Vapaaehtoisrekisteri - Kampanja 2026</p>
-                </div>
-                <div class="timeline-tags">
-                    <span class="campaign-date-badge campaign-date-badge--prep">
-                        <i class="fa-solid fa-clock"></i> Valmistelut 15.9.2025 → 29.2.2026
-                    </span>
-                    <span class="campaign-date-badge campaign-date-badge--active">
-                        <i class="fa-solid fa-calendar"></i> Kampanja 1.3.2026 → 1.6.2026
-                    </span>
-                </div>
-            </div>
+        {{ admin_page_hero(
+            _('Kampanjan hallinta'),
+            _('Vapaaehtoisrekisteri – Kampanja 2026'),
+            _('Kampanjat'),
+            [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Kampanjan hallinta'), none)]
+        ) }}
+        <div class="timeline-tags" aria-label="{{ _('Kampanjan aikataulu') }}">
+            <span class="admin-status-badge admin-status-badge--warning">
+                <i class="fa-solid fa-clock"></i> {{ _('Valmistelut 15.9.2025–29.2.2026') }}
+            </span>
+            <span class="admin-status-badge admin-status-badge--success">
+                <i class="fa-solid fa-calendar"></i> {{ _('Kampanja 1.3.2026–1.6.2026') }}
+            </span>
         </div>
 
 

@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block styles %}
 <style>
@@ -19,75 +20,6 @@
     max-width: 1450px;
     margin: 0 auto;
     color: var(--users-text);
-  }
-
-  .users-hero {
-    position: relative;
-    overflow: hidden;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 2rem;
-    align-items: end;
-    padding: clamp(1.75rem, 4vw, 3rem);
-    border-radius: 1.5rem;
-    color: #fff;
-    background:
-      radial-gradient(circle at 94% 8%, rgba(255, 102, 0, .42), transparent 18rem),
-      linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
-    box-shadow: 0 20px 50px rgba(0, 43, 137, .18);
-  }
-
-  .users-kicker {
-    margin: 0;
-    color: #ffd6bc;
-    font-size: .76rem;
-    font-weight: 800;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-  }
-
-  .users-hero h1 {
-    margin: .25rem 0 .5rem;
-    color: #fff;
-    font-size: clamp(2rem, 4vw, 3.2rem);
-    letter-spacing: -.035em;
-  }
-
-  .users-hero p:last-child {
-    max-width: 680px;
-    margin: 0;
-    color: rgba(255,255,255,.8);
-    line-height: 1.65;
-  }
-
-  .users-hero-actions {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    gap: .6rem;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  .users-hero-action {
-    display: inline-flex;
-    gap: .45rem;
-    align-items: center;
-    min-height: 2.65rem;
-    padding: .62rem .85rem;
-    border: 1px solid rgba(255,255,255,.22);
-    border-radius: .75rem;
-    color: #fff;
-    background: rgba(255,255,255,.1);
-    font-size: .84rem;
-    font-weight: 800;
-    text-decoration: none;
-  }
-
-  .users-hero-action:hover {
-    color: #fff;
-    background: rgba(255,255,255,.18);
   }
 
   .users-request-count {
@@ -204,14 +136,6 @@
     background: var(--users-blue);
     font-size: .84rem;
     font-weight: 800;
-  }
-
-  .users-table-shell {
-    overflow: visible;
-    border: 1px solid var(--users-border);
-    border-radius: 1.1rem;
-    background: var(--users-surface);
-    box-shadow: var(--users-shadow);
   }
 
   #toast-container {
@@ -549,8 +473,6 @@
   }
 
   @media (max-width: 760px) {
-    .users-hero { grid-template-columns: 1fr; }
-    .users-hero-actions { justify-content: flex-start; }
     .users-toolbar { align-items: stretch; flex-direction: column; }
     .users-search { grid-template-columns: auto 1fr; }
     .users-search { max-width: none; }
@@ -559,7 +481,6 @@
 
   @media (max-width: 520px) {
     .users-summary { grid-template-columns: 1fr; }
-    .users-hero-action { width: 100%; justify-content: center; }
     .create-user-grid { grid-template-columns: 1fr; }
     .create-user-field-wide { grid-column: auto; }
     .user-workflow-modal .modal-footer { align-items: stretch; flex-direction: column-reverse; }
@@ -570,13 +491,13 @@
 
 {% block main_content %}
 <div class="users-page">
-  <header class="users-hero admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="users-kicker admin-page-hero__kicker">{{ _('Käyttäjähallinta') }}</p>
-      <h1>{{ _('Käyttäjät') }}</h1>
-      <p>{{ _('Etsi käyttäjiä, tarkista käyttöoikeudet ja hoida käyttäjätilien tärkeimmät ylläpitotoimet.') }}</p>
-    </div>
-    <div class="users-hero-actions admin-page-hero__actions">
+  {% call admin_page_hero(
+    _('Käyttäjät'),
+    _('Etsi käyttäjiä, tarkista käyttöoikeudet ja hoida käyttäjätilien tärkeimmät ylläpitotoimet.'),
+    _('Käyttäjähallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttäjät'), none)],
+    hero_classes='users-hero'
+  ) %}
       <a href="{{ url_for('admin.manual_page', page='users') }}" target="_blank" class="users-hero-action admin-page-hero__action">
         <i class="fa-solid fa-book-open" aria-hidden="true"></i>{{ _('Käyttöohje') }}
       </a>
@@ -584,8 +505,7 @@
         <i class="fa-solid fa-key" aria-hidden="true"></i>{{ _('API-avainpyynnöt') }}
         {% if pending_token_requests %}<span class="users-request-count">{{ pending_token_requests }}</span>{% endif %}
       </a>
-    </div>
-  </header>
+  {% endcall %}
 
   <section class="users-summary" aria-label="{{ _('Käyttäjätilien yhteenveto') }}">
     <article class="users-summary-card">
@@ -618,7 +538,7 @@
     {% endif %}
   </section>
 
-  <div id="usersTableContainer" class="users-table-shell">
+  <div id="usersTableContainer" class="admin-data-view users-table-shell">
     {% include 'admin_V2/_users_table.html' %}
   </div>
 </div>

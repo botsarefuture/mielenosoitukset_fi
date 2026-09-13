@@ -141,7 +141,7 @@
 }
     </style>
     {% block styles %}{% endblock %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/workspace.css', v='20260908-admin-ui-11') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/workspace.css', v='20260913-admin-ui-36') }}">
 </head>
 
 <body class="min-vh-100 d-flex flex-column bg-body-tertiary">
@@ -303,7 +303,7 @@ function confirmAction(action, taskId) {
           </a>
         </li>
       {% endif %}
-      {% if current_user.has_city_admin_scope_grants() %}
+      {% if current_user.is_authenticated and current_user.has_city_admin_scope_grants() %}
         <li class="nav-item">
           <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.demo_control') }}">
             <i class="fas fa-location-dot me-2"></i>{{ _('Kaupunkiadminin näkymä') }}
@@ -592,6 +592,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
     </script>
+    <script src="{{ url_for('static', filename='js/admin_workspace.js', v='20260908-admin-ui-1') }}" defer></script>
     {% block scripts %}{% endblock %}
     <!-- Logout confirmation modal -->
 <div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmLabel" aria-hidden="true">

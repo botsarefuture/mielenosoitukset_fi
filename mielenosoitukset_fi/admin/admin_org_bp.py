@@ -383,6 +383,7 @@ def edit_organization(org_id):
         f"{_ADMIN_TEMPLATE_FOLDER}organizations/form.html",
         organization=organization,
         can_verify_organization=_can_verify_organization(current_user, org_id),
+        can_invite_members=_can_invite_to_organization(current_user, organization),
     )
 
 

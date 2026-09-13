@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block styles %}
 <style>
@@ -85,7 +86,14 @@
 
 {% block main_content %}
 <div class="dashboard-container">
-  <h2>{{ demo.title }} — {{ _('Analytiikka') }}</h2>
+  {{ admin_page_hero(
+    demo.title ~ ' — ' ~ _('Analytiikka'),
+    _('Tarkastele mielenosoituksen katselukertoja minuutti-, päivä- ja viikkotasolla.'),
+    _('Analytiikka'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (demo.title, none)],
+    back_url=url_for('admin_demo.demo_control'),
+    back_label=_('Mielenosoitukset')
+  ) }}
 
   <div class="summary">
     <div class="summary-item">

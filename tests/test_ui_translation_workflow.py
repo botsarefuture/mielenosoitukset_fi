@@ -167,8 +167,7 @@ def test_admin_can_approve_ui_translation_proposal(admin_client, app, db, seeded
 
     po_contents = (root / "en" / "LC_MESSAGES" / "messages.po").read_text(encoding="utf-8")
     assert 'msgid "Submit demonstration"' in po_contents
-    assert 'msgstr "Submit a demonstration"' in po_contents
-    assert (root / "en" / "LC_MESSAGES" / "messages.mo").exists()
+    assert 'msgstr "Submit a demonstration"' not in po_contents
 
     proposal = db.ui_translation_proposals.find_one(
         {"_id": proposal_key("en", "Submit demonstration")}
@@ -178,6 +177,45 @@ def test_admin_can_approve_ui_translation_proposal(admin_client, app, db, seeded
     assert proposal["github_sync"]["status"] == "queued"
     assert proposal["github_sync"]["branch_name"] == build_ui_translation_sync_branch_name("en", "Submit demonstration")
     assert queued["job_key"] == "process_ui_translation_sync"
+
+
+def test_admin_can_approve_ui_translation_proposal_with_local_write(admin_client, app, db, seeded_data, tmp_path):
+    root = _seed_translation_catalogs(app, tmp_path)
+    app.config["UI_TRANSLATION_SYNC_ENABLED"] = False
+    db.ui_translation_proposals.insert_one(
+        {
+            "_id": proposal_key("en", "Submit demonstration"),
+            "locale": "en",
+            "msgid": "Submit demonstration",
+            "current_msgstr": "",
+            "proposed_text": "Submit a demonstration",
+            "status": "pending",
+            "submitted_by": str(seeded_data["translator_id"]),
+            "submitted_by_name": "Translator User",
+        }
+    )
+
+    response = admin_client.post(
+        "/admin/ui-translations/en/approve",
+        data={
+            "msgid": "Submit demonstration",
+            "review_notes": "Looks good.",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+
+    po_contents = (root / "en" / "LC_MESSAGES" / "messages.po").read_text(encoding="utf-8")
+    assert 'msgid "Submit demonstration"' in po_contents
+    assert 'msgstr "Submit a demonstration"' in po_contents
+    assert (root / "en" / "LC_MESSAGES" / "messages.mo").exists()
+
+    proposal = db.ui_translation_proposals.find_one(
+        {"_id": proposal_key("en", "Submit demonstration")}
+    )
+    assert proposal["status"] == "approved"
+    assert proposal["review_notes"] == "Looks good."
 
 
 def test_admin_can_bulk_requeue_ui_translation_sync(admin_client, app, db):
@@ -285,6 +323,122 @@ def test_background_sync_can_push_approved_ui_translation_to_git(app, db, tmp_pa
         text=True,
     ).stdout.strip()
     assert branch_sha == proposal["github_sync"]["commit_sha"]
+
+
+def test_sync_rebases_stale_branch_when_main_has_advanced(app, db, tmp_path):
+    workspace_root, remote_root = _init_sync_repo(tmp_path / "sync-rebase-repo")
+    app.config["UI_TRANSLATION_SYNC_REPO_PATH"] = str(workspace_root)
+    app.config["UI_TRANSLATION_SYNC_BASE_BRANCH"] = "main"
+    app.config["UI_TRANSLATION_SYNC_REMOTE"] = "origin"
+    app.config["UI_TRANSLATION_GITHUB_REPO"] = ""
+    app.config["UI_TRANSLATION_GITHUB_TOKEN"] = ""
+
+    branch_name = build_ui_translation_sync_branch_name("en", "Submit demonstration")
+
+    with app.app_context():
+        first = sync_ui_translation_to_git(
+            locale="en",
+            msgid="Submit demonstration",
+            translated_text="Submit a demonstration",
+        )
+
+    first_branch_sha = subprocess.run(
+        ["git", "--git-dir", str(remote_root), "rev-parse", f"refs/heads/{branch_name}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    translation_dir = workspace_root / "mielenosoitukset_fi" / "translations" / "en" / "LC_MESSAGES"
+    (translation_dir / "messages.po").write_text(
+        PO_TEMPLATE.format(locale="en", hello_translation="Hello world changed"),
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "-C", str(workspace_root), "add", "."], check=True)
+    subprocess.run(
+        ["git", "-C", str(workspace_root), "commit", "-m", "Upstream moved past sync branch"],
+        check=True,
+    )
+    subprocess.run(["git", "-C", str(workspace_root), "push", "origin", "HEAD:main"], check=True)
+
+    with app.app_context():
+        second = sync_ui_translation_to_git(
+            locale="en",
+            msgid="Submit demonstration",
+            translated_text="Submit a demonstration",
+        )
+
+    second_branch_sha = subprocess.run(
+        ["git", "--git-dir", str(remote_root), "rev-parse", f"refs/heads/{branch_name}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    assert first.status == "branch_pushed"
+    assert first_branch_sha == first.commit_sha
+    assert second.status == "branch_pushed"
+    assert second_branch_sha == second.commit_sha
+    assert second_branch_sha != first_branch_sha
+    base_is_ancestor = subprocess.run(
+        [
+            "git",
+            "--git-dir",
+            str(remote_root),
+            "merge-base",
+            "--is-ancestor",
+            "refs/heads/main",
+            f"refs/heads/{branch_name}",
+        ],
+        capture_output=True,
+    )
+    assert base_is_ancestor.returncode == 0
+    assert first_branch_sha != second_branch_sha
+
+
+def test_sync_skips_pushing_when_branch_is_already_current(app, tmp_path):
+    workspace_root, remote_root = _init_sync_repo(tmp_path / "sync-current-repo")
+    app.config["UI_TRANSLATION_SYNC_REPO_PATH"] = str(workspace_root)
+    app.config["UI_TRANSLATION_SYNC_BASE_BRANCH"] = "main"
+    app.config["UI_TRANSLATION_SYNC_REMOTE"] = "origin"
+    app.config["UI_TRANSLATION_GITHUB_REPO"] = ""
+    app.config["UI_TRANSLATION_GITHUB_TOKEN"] = ""
+
+    branch_name = build_ui_translation_sync_branch_name("en", "Submit demonstration")
+
+    with app.app_context():
+        first = sync_ui_translation_to_git(
+            locale="en",
+            msgid="Submit demonstration",
+            translated_text="Submit a demonstration",
+        )
+
+    first_branch_sha = subprocess.run(
+        ["git", "--git-dir", str(remote_root), "rev-parse", f"refs/heads/{branch_name}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    with app.app_context():
+        second = sync_ui_translation_to_git(
+            locale="en",
+            msgid="Submit demonstration",
+            translated_text="Submit a demonstration",
+        )
+
+    second_branch_sha = subprocess.run(
+        ["git", "--git-dir", str(remote_root), "rev-parse", f"refs/heads/{branch_name}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    assert first.status == "branch_pushed"
+    assert first_branch_sha == first.commit_sha
+    assert second.status == "branch_pushed"
+    assert second_branch_sha == first_branch_sha
+    assert second_branch_sha == second.commit_sha
 
 
 def test_sync_can_open_pr_and_attempt_auto_merge(app, tmp_path, monkeypatch):

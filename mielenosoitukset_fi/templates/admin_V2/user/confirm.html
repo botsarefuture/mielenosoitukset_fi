@@ -1,10 +1,18 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
+{{ admin_page_hero(
+    _('Haluatko varmasti poistaa tämän käyttäjän?'),
+    _('Tarkista käyttäjätili ja sen rooli ennen peruuttamatonta toimintoa.'),
+    _('Käyttäjähallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttäjät'), url_for('admin_user.user_control')), (_('Vahvista poisto'), none)],
+    back_url=url_for('admin_user.user_control'),
+    back_label=_('Käyttäjät'),
+    title_id='confirm-title'
+) }}
 <section class="admin-confirm admin-confirm--danger" aria-labelledby="confirm-title">
     <span class="admin-confirm__icon"><i class="fas fa-user-xmark" aria-hidden="true"></i></span>
-    <p class="admin-confirm__eyebrow">{{ _('Käyttäjähallinta') }}</p>
-    <h1 id="confirm-title">{{ _('Haluatko varmasti poistaa tämän käyttäjän?') }}</h1>
     <p><strong>{{ _('Käyttäjänimi:') }}</strong> {{ user['username'] }}</p>
     <p><strong>{{ _('Sähköpostiosoite:') }}</strong> {{ user['email'] }}</p>
     <p><strong>{{ _('Rooli:') }}</strong> {{ user['role'] }}</p>

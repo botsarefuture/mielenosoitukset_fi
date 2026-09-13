@@ -1,8 +1,5 @@
-{% if demo and demo._id %}
-<a href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}" class="btn btn-secondary"
-    style="float:right; margin-left: 10px;">Näytä muokkaushistoria</a>
-{% endif %}
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block styles %}
 <!-- Core CSS -->
@@ -130,20 +127,17 @@
 <div class="dashboard-container">
 
     <!-- Page intro -->
-    <section class="introduction editor-hero admin-page-hero">
-        <div class="admin-page-hero__content">
-            <p class="admin-page-hero__kicker">{{ _('Toistuvat mielenosoitukset') }}</p>
-            <h1 id="tabletitle" class="text-3xl font-bold">{{ title }}</h1>
-            <p class="text-muted max-w-xl">{{ _('Muokkaa sarjan perustietoja, toistuvuutta ja tulevia lapsimielenosoituksia samasta näkymästä.') }}</p>
-        </div>
-        <nav class="editor-section-nav admin-page-hero__nav" aria-label="{{ _('Lomakkeen osiot') }}">
-            <a href="#basic-info">{{ _('Perustiedot') }}</a>
-            <a href="#recurrence-settings">{{ _('Toistuvuus') }}</a>
-            <a href="#location-info">{{ _('Sijainti') }}</a>
-            <a href="#organizer-info">{{ _('Järjestäjät') }}</a>
-            {% if demo and demo._id %}<a href="#child-demos">{{ _('Lapsimielenosoitukset') }}</a>{% endif %}
-        </nav>
-    </section>
+    {{ admin_page_hero(
+        title,
+        _('Muokkaa sarjan perustietoja, toistuvuutta ja tulevia lapsimielenosoituksia samasta näkymästä.'),
+        _('Toistuvat mielenosoitukset'),
+        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Toistuvat mielenosoitukset'), url_for('admin_recu_demo.recu_demo_control')), (title, none)] if current_user.is_authenticated else [(title, none)],
+        back_url=url_for('admin_recu_demo.recu_demo_control') if current_user.is_authenticated else none,
+        back_label=_('Toistuvat mielenosoitukset'),
+        sections=[('basic-info', _('Perustiedot')), ('recurrence-settings', _('Toistuvuus')), ('location-info', _('Sijainti')), ('organizer-info', _('Järjestäjät'))] + ([('child-demos', _('Lapsimielenosoitukset'))] if demo and demo._id else []),
+        title_id='tabletitle',
+        hero_classes='introduction editor-hero'
+    ) }}
 
     {% if edit_demo_with_token %}
     <section class="alert alert-info" role="alert" id="alert1">
@@ -892,21 +886,25 @@
 
 
         <!-- Approval Section -->
-        {% if current_user.is_authenticated %}
+        {% if can_approve_demo|default(false) %}
         <section id="approval-info" class="form-section dashboard-panel mb-8">
-            <div class="form-group" id="approval-container">
-                <label for="approved">{{ _('Hyväksytty') }}</label>
-                <div>
-                    <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo and
-                        demo.approved %}checked{% endif %}>
-                    <span id="approval-status" class="status-text">{% if demo and demo.approved %}{{ _('Kyllä') }}{%
-                        else %}{{ _('Ei') }}{% endif %}</span>
-                </div>
+            <div class="form-group admin-boolean-field" id="approval-container">
+                <label class="admin-check-row" for="approved">
+                    <input type="checkbox" id="approved" name="approved" class="form-check-input"
+                        data-admin-boolean aria-describedby="approval-help approval-status"
+                        {% if demo and demo.approved %}checked{% endif %}>
+                    <span class="admin-check-row__content">
+                        <strong class="admin-check-row__label">{{ _('Hyväksytty') }}</strong>
+                        <span id="approval-help" class="admin-check-row__help">{{ _('Hyväksytty sarja voidaan näyttää julkisissa näkymissä.') }}</span>
+                        <span id="approval-status" class="admin-check-row__status" aria-live="polite"
+                            data-true-label="{{ _('Kyllä') }}" data-false-label="{{ _('Ei') }}">{% if demo and demo.approved %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}</span>
+                    </span>
+                </label>
             </div>
         </section>
         {% else %}
         <input type="hidden" id="approved" name="approved"
-            value="{{ demo.approved if demo and demo.approved else '' }}">
+            value="{{ 'on' if demo and demo.approved else '' }}">
         {% endif %}
 
         <!-- Submit Section -->
@@ -1001,84 +999,15 @@
 </div>
 
 
-<!-- Edit Link Modal & Duplicate Button Section -->
+<!-- Duplicate Button Section -->
 {% if current_user.is_authenticated and demo and demo._id %}
 <div>
-    <div class="text-center mt-4" style="display: flex; gap: 1rem; justify-content: center;">
-        <button type="button" class="btn btn-secondary" id="generate-edit-link-btn">{{ _('Luo muokkauslinkki')
-            }}</button>
+    <div class="admin-sticky-actions__primary">
         <button type="button" class="btn btn-warning" id="duplicate-demo-btn">{{ _('Luo kopio mielenosoituksesta')
             }}</button>
     </div>
 
-    <div id="overlay" class="modal-overlay"></div>
-
-    <div class="legacy-admin-modal" id="editLinkModal" role="dialog" aria-labelledby="editLinkModalLabel" aria-hidden="true">
-        <div class="legacy-admin-modal__header">
-            <h2 class="modal-title" id="editLinkModalLabel">{{ _('Muokkauslinkki') }}</h2>
-            <button type="button" class="close" data-close-button><span aria-hidden="true">&times;</span></button>
-        </div>
-        <div class="legacy-admin-modal__body">
-            <p>{{ _('Kopioi alla oleva linkki ja jaa se tarvittaessa:') }}</p>
-            <input type="text" id="edit_link" class="form-control" readonly>
-            <hr>
-            <div class="form-group">
-                <label for="edit_link_email">{{ _('Lähetä sähköpostilla') }}</label>
-                <input type="email" id="edit_link_email" name="edit_link_email" class="form-control"
-                    placeholder="{{ _('Syötä sähköpostiosoite') }}">
-            </div>
-            <button type="button" class="btn btn-secondary" id="send_email_btn">{{ _('Lähetä') }}</button>
-        </div>
-        <div class="legacy-admin-modal__footer">
-            <button type="button" class="btn btn-secondary" data-close-button>{{ _('Sulje') }}</button>
-        </div>
-    </div>
-
     <script>
-        document.getElementById('generate-edit-link-btn').addEventListener('click', () => {
-            const demoId = "{{ demo._id if demo else '' }}";
-            if (demoId) {
-                fetch(`/admin/demo/generate_edit_link/${demoId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'OK') {
-                            document.getElementById('edit_link').value = data.edit_link;
-                            openModal($('#editLinkModal'));
-                        } else {
-                            alert(data.message);
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-            } else {
-                alert('{{ _("Mielenosoituksen tunniste puuttuu.") }}');
-            }
-        });
-
-        document.getElementById('send_email_btn').addEventListener('click', () => {
-            const email = document.getElementById('edit_link_email').value;
-            const editLink = document.getElementById('edit_link').value;
-            const demoId = "{{ demo._id if demo else '' }}";
-            if (email && demoId && editLink) {
-                fetch(`/admin/demo/send_edit_link_email/${demoId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, edit_link: editLink })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'OK') {
-                            alert('{{ _("Sähköposti lähetetty onnistuneesti!") }}');
-                            closeModal($('#editLinkModal'));
-                        } else {
-                            alert(data.message);
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-            } else {
-                alert('{{ _("Syötä ensin sähköpostiosoite!") }}');
-            }
-        });
-
         // Duplicate demonstration functionality
         document.getElementById('duplicate-demo-btn').addEventListener('click', function () {
             if (confirm('{{ _('Haluatko varmasti luoda kopion tästä mielenosoituksesta ? ') }}')) {
@@ -1104,7 +1033,6 @@
         });
     </script>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
 </div>
 {% endif %}
 

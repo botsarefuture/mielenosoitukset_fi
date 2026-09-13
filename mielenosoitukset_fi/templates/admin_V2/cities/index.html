@@ -6,79 +6,10 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/governance.css') }}">
-<style>
-  .city-admin-shell {
-    max-width: 1120px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-  }
-
-  .city-admin-card {
-    background: var(--bs-body-bg);
-    border: 1px solid var(--bs-border-color);
-    border-radius: 8px;
-    padding: 1rem;
-  }
-
-  .city-admin-summary {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-  }
-
-  .city-admin-summary-item {
-    border: 1px solid var(--bs-border-color);
-    border-radius: 8px;
-    padding: 0.8rem 1rem;
-  }
-
-  .city-admin-summary-value {
-    display: block;
-    font-size: 1.35rem;
-    font-weight: 700;
-    line-height: 1.2;
-  }
-
-  .city-admin-tools {
-    display: flex;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .city-admin-bulk-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .city-admin-save-state {
-    color: var(--bs-warning-text-emphasis);
-    font-weight: 700;
-  }
-
-  .city-admin-search {
-    min-width: 260px;
-    max-width: 420px;
-  }
-
-  .city-admin-table td,
-  .city-admin-table th {
-    vertical-align: middle;
-  }
-
-  @media (max-width: 720px) {
-    .city-admin-summary {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
 {% endblock %}
 
 {% block main_content %}
-<section class="city-admin-shell admin-workspace">
+<section class="city-admin-shell admin-workspace admin-page">
   {% call admin_page_hero(
     _('Kaupunkihallinta'),
     _('Ota käyttöön kaupungit, joihin on löytynyt yhteyshenkilö. Käyttäjäkohtaiset oikeudet annetaan edelleen Käyttäjien hallinnasta.'),
@@ -108,7 +39,7 @@
     </article>
   </section>
 
-  <form method="post" class="city-admin-card admin-workspace-toolbar" id="city-admin-form">
+  <form method="post" class="city-admin-card admin-section-card" id="city-admin-form">
 
     <div class="city-admin-tools">
       <div class="city-admin-filter-field city-admin-search-field">
@@ -146,8 +77,9 @@
       </button>
     </div>
 
-    <div class="table-responsive admin-workspace-table">
-      <table class="table table-hover city-admin-table">
+    <div class="admin-data-view admin-data-view--scrollable">
+      <div class="admin-data-view__viewport">
+      <table class="table table-hover city-admin-table admin-data-view__table">
         <thead>
           <tr>
             <th class="city-admin-toggle-column">{{ _('Käytössä') }}</th>
@@ -171,12 +103,13 @@
                 </div>
               </div>
             </td>
-            <td class="city-admin-metric-column"><a class="city-admin-metric" href="{{ url_for('city_demos', city=row.name) }}" target="_blank" rel="noopener">{{ row.demo_count }} <span class="visually-hidden">{{ _('Avaa julkinen kaupunkisivu') }}</span></a></td>
+            <td class="city-admin-metric-column"><a class="city-admin-metric" href="{{ url_for('city_demos', city=row.name) }}" target="_blank" rel="noopener noreferrer">{{ row.demo_count }} <span class="visually-hidden">{{ _('Avaa julkinen kaupunkisivu') }}</span></a></td>
             <td class="city-admin-metric-column"><span class="city-admin-metric">{{ row.grant_count }}</span></td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
+      </div>
     </div>
   </form>
 </section>

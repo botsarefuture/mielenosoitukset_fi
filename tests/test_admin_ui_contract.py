@@ -87,7 +87,6 @@ def test_full_admin_templates_use_the_admin_shell():
 def test_admin_inline_style_debt_cannot_grow_without_review():
     style_block_allowlist = {
         "_users_table.html": ("7d2b36160b76de688cd17b79eaf781963a3d1cc932d63a2b846c99b997f08053",),
-        "cities/index.html": ("3d27343693df99175c8ed03679c15a78ce9c031ece3180a1b89872f9f08f7d37",),
         "dashboard.html": ("b1946f48e192ef2949b4d5e8eed75989f46d50b07dd9eef9a2a0efead658f5f9",),
         "demonstrations/command_center.html": ("417fb57cd87fd0c1b3ff0068cd7dfed92acfc0e4cce58123d93fed347b22c345",),
         "demonstrations/dashboard.html": ("9f97a12eac3420515d3a71429da50bc5ebb130a30770a9b56c46221418abf622",),
@@ -426,6 +425,12 @@ def test_city_admin_operational_pages_use_canonical_hero_macro():
         "mielenosoitukset_fi/templates/admin_V2/macros.html"
     ).read_text(encoding="utf-8")
     assert 'class="admin-page-hero__nav editor-section-nav"' in macro
+    city_page = Path(pages[0]).read_text(encoding="utf-8")
+    assert "<style" not in city_page
+    assert "admin-section-card" in city_page
+    assert "admin-data-view admin-data-view--scrollable" in city_page
+    assert "admin-data-view__table" in city_page
+    assert 'rel="noopener noreferrer"' in city_page
 
 
 def test_access_management_pages_use_canonical_hero_navigation():

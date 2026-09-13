@@ -30,6 +30,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* The background-job collection now uses the shared admin page, section-card, status, filter, data-view, empty-state, disclosure, code-block, form, button, and pagination contracts instead of its 569-line template-local gradient and light-only style system; run history is server-paginated with a stable timestamp/ID order, and job cards remain readable and keyboard-friendly in both themes and responsive layouts.
 * Admin analytics pages now use shared workspace cards, metrics, actions, data tables, responsive chart frames, and semantic light/dark chart colors instead of two separate template-local style systems; chart colors also follow live admin theme changes and time-series canvases include accessible numeric data views.
 * Background-job metadata, traces, and change details now use the shared admin code-block and keyboard-focused disclosure primitives instead of template-local styling.
 * The recurring-demonstration collection now uses the shared admin filter bar, data-view table, status badge, empty state, action buttons, and modal contract in both themes instead of its own search and dark-modal palette.

@@ -736,6 +736,39 @@ def test_background_job_detail_uses_shared_code_and_disclosure_components():
     assert ".admin-disclosure > summary:focus-visible" in workspace
 
 
+def test_background_job_collection_uses_shared_workspace_components():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/background_jobs.html"
+    ).read_text(encoding="utf-8")
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+    admin_routes = Path(
+        "mielenosoitukset_fi/admin/admin_bp.py"
+    ).read_text(encoding="utf-8")
+    job_manager = Path(
+        "mielenosoitukset_fi/background_jobs/manager.py"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in template
+    assert "style=" not in template
+    assert 'class="jobs-container admin-page"' in template
+    assert "admin-section-card" in template
+    assert "admin-data-view" in template
+    assert "admin-filter-bar" in template
+    assert "admin-data-view__footer admin-pagination" in template
+    assert "admin-empty-state" in template
+    assert "admin-status-badge" in template
+    assert "admin-code-block" in template
+    assert "btn-modern" not in template
+    assert ".admin-jobs__layout" in workspace
+    assert ".admin-jobs__grid" in workspace
+    assert "@media (prefers-reduced-motion: reduce)" in workspace
+    assert "total_runs = job_manager.count_runs(selected_job)" in admin_routes
+    assert "skip=skip" in admin_routes
+    assert '.sort([("started_at", -1), ("_id", -1)])' in job_manager
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

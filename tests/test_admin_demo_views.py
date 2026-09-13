@@ -19,7 +19,7 @@ def test_edit_demo_shows_edit_only_controls(admin_client, seeded_data):
     assert "Luo muokkauslinkki" in page
     assert "Luo kopio mielenosoituksesta" in page
     assert 'class="editor-save-bar"' in page
-    assert 'class="editor-section-nav"' in page
+    assert 'class="editor-section-nav admin-page-hero__nav"' in page
 
 
 def test_demo_dashboard_filters_year_text_and_missing_tag(admin_client, db, seeded_data):

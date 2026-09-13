@@ -406,6 +406,11 @@ body {
   max-width: 100%;
 }
 
+.admin-data-view--scrollable .admin-data-view__viewport {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
 .admin-data-view__table {
   width: 100%;
   min-width: 920px;

@@ -627,13 +627,16 @@ def test_recurring_collection_uses_shared_filter_data_and_modal_contracts():
     assert "<style" not in template
     assert "style=" not in template
     assert 'class="admin-filter-bar"' in template
-    assert 'class="admin-data-view"' in template
+    assert 'class="admin-data-view admin-data-view--scrollable"' in template
     assert 'class="admin-data-view__table"' in template
     assert "admin-status-badge--success" in template
     assert 'class="admin-empty-state"' in template
     assert 'class="modal fade admin-modal"' in template
     assert "bootstrap.Modal.getOrCreateInstance" in template
     assert "modal-dark" not in template
+    assert ".admin-data-view--scrollable .admin-data-view__viewport" in Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
 
 
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():

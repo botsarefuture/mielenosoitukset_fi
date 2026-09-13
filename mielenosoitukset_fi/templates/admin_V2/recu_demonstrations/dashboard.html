@@ -31,8 +31,9 @@
         <div class="admin-field">
           <label for="approved">{{ _('Hyväksyntätila') }}</label>
           <select name="approved" id="approved" class="form-select" onchange="this.form.submit()">
-            <option value="true" {% if approved_status %}selected{% endif %}>{{ _('Vain hyväksytyt') }}</option>
-            <option value="false" {% if not approved_status %}selected{% endif %}>{{ _('Vain hyväksymättömät') }}</option>
+            <option value="all" {% if approved_status == 'all' %}selected{% endif %}>{{ _('Kaikki') }}</option>
+            <option value="true" {% if approved_status == 'true' %}selected{% endif %}>{{ _('Vain hyväksytyt') }}</option>
+            <option value="false" {% if approved_status == 'false' %}selected{% endif %}>{{ _('Vain hyväksymättömät') }}</option>
           </select>
         </div>
 
@@ -44,7 +45,7 @@
   </div>
 
   {% if recurring_demos %}
-  <div class="admin-data-view">
+  <div class="admin-data-view admin-data-view--scrollable">
     <div class="admin-data-view__viewport">
     <table class="admin-data-view__table">
       <thead>

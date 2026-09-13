@@ -131,6 +131,28 @@ def test_admin_page_heroes_keep_copy_in_one_content_group():
     assert violations == []
 
 
+def test_admin_hero_variants_are_limited_to_the_shared_stacked_contract():
+    macro = Path(
+        "mielenosoitukset_fi/templates/admin_V2/macros.html"
+    ).read_text(encoding="utf-8")
+    variant_calls = []
+
+    assert "hero_classes" not in macro
+    assert "allowed_variants = ('admin-page-hero--stacked',)" in macro
+    for template in Path("mielenosoitukset_fi/templates/admin_V2").rglob("*.html"):
+        if template.name == "macros.html":
+            continue
+        source = template.read_text(encoding="utf-8")
+        assert "hero_classes=" not in source, str(template)
+        if "variant=" in source:
+            variant_calls.append((template, source))
+
+    assert len(variant_calls) == 1
+    template, source = variant_calls[0]
+    assert template.name == "command_center.html"
+    assert "variant='admin-page-hero--stacked'" in source
+
+
 def test_admin_hero_foreground_and_data_view_surfaces_are_shared():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

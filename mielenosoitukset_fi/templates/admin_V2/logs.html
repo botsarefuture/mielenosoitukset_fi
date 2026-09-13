@@ -13,14 +13,6 @@
         padding: 0 0 3rem;
     }
 
-    .logs-header {
-        margin-bottom: 1.5rem;
-    }
-
-    .logs-header h2 {
-        margin-bottom: 0.35rem;
-    }
-
     .log-source-nav {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -346,7 +338,6 @@
         _('Selvitä kuka teki mitä ja milloin. Lokin katselu kirjataan tietosuojan ja jäljitettävyyden vuoksi.'),
         _('Lokit ja tietosuoja'),
         [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Hallinnan tapahtumaloki'), none)],
-        hero_classes='logs-header'
     ) }}
 
     <nav class="log-source-nav" aria-label="{{ _('Lokilähteet') }}">

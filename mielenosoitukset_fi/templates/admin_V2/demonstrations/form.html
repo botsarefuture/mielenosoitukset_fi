@@ -115,7 +115,6 @@
         actions_visible=current_user.is_authenticated and demo and demo._id,
         sections=[('basic-info', _('Perustiedot')), ('location-info', _('Sijainti')), ('organizer-info', _('Järjestäjät')), ('approval-info', _('Hyväksyntä'))],
         title_id='tabletitle',
-        hero_classes='introduction editor-hero'
     ) %}
             <a class="admin-page-hero__action" href="{{ url_for('admin_demo.edit_demo_translations', demo_id=demo._id) }}">
                 <i class="fas fa-language me-1"></i>{{ _('Avaa käännöstyökalu') }}

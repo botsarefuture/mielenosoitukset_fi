@@ -13,19 +13,6 @@
     padding: 0 1rem;
   }
 
-  .city-admin-header {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-  }
-
-  .city-admin-header h1 {
-    font-size: 1.8rem;
-    margin: 0;
-  }
-
   .city-admin-card {
     background: var(--bs-body-bg);
     border: 1px solid var(--bs-border-color);
@@ -83,10 +70,6 @@
   }
 
   @media (max-width: 720px) {
-    .city-admin-header {
-      flex-direction: column;
-    }
-
     .city-admin-summary {
       grid-template-columns: 1fr;
     }
@@ -102,7 +85,6 @@
     _('Hallinto'),
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Kaupunkihallinta'), none)],
     actions_visible=current_user.global_admin or current_user.has_permission('LIST_USERS'),
-    hero_classes='city-admin-header admin-workspace-hero'
   ) %}
       <a class="admin-workspace-hero-action admin-page-hero__action" href="{{ url_for('admin_user.user_control') }}">
         <i class="fa-solid fa-user-gear me-1" aria-hidden="true"></i>{{ _('Hallinnoi kaupunkioikeuksia') }}

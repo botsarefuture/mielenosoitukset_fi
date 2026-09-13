@@ -396,7 +396,6 @@
     _('Sisällönhallinta'),
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), none)],
     title_id='tabletitle',
-    hero_classes='admin-workspace-hero'
   ) %}
       {% if can_create_demo %}
       <a href="{{ url_for('admin_demo.create_demo') }}" class="admin-workspace-hero-action admin-page-hero__action">

@@ -14,7 +14,6 @@
     back_label=_('Mielenosoitukset'),
     actions_visible=current_user.has_permission("CREATE_RECURRING_DEMO"),
     title_id='tabletitle',
-    hero_classes='introduction'
   ) %}
     <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="admin-page-hero__action"><i class="fas fa-plus-circle" aria-hidden="true"></i>{{ _('Luo uusi toistuva mielenosoitus') }}</a>
   {% endcall %}

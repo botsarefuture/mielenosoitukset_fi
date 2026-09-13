@@ -136,7 +136,6 @@
         back_label=_('Toistuvat mielenosoitukset'),
         sections=[('basic-info', _('Perustiedot')), ('recurrence-settings', _('Toistuvuus')), ('location-info', _('Sijainti')), ('organizer-info', _('Järjestäjät'))] + ([('child-demos', _('Lapsimielenosoitukset'))] if demo and demo._id else []),
         title_id='tabletitle',
-        hero_classes='introduction editor-hero'
     ) }}
 
     {% if edit_demo_with_token %}

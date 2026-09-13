@@ -7,13 +7,6 @@
     --translation-accent: #4f46e5;
   }
 
-  .translation-editor .introduction {
-    padding: 1.5rem;
-    border-radius: 1rem;
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.16), rgba(14, 165, 233, 0.08));
-    border: 1px solid rgba(99, 102, 241, 0.24);
-  }
-
   .translation-eyebrow {
     color: var(--translation-accent);
     font-size: 0.78rem;
@@ -239,7 +232,6 @@
     margin: 0;
   }
 
-  .translation-editor:not(.accessibility-mode) .introduction,
   .translation-editor:not(.accessibility-mode) .dashboard-panel {
     padding: 1rem;
   }
@@ -316,7 +308,6 @@
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Demojen käännökset'), url_for('admin_demo.demo_translation_dashboard')), (demo.title or _('Nimetön mielenosoitus'), none)],
     back_url=url_for('admin_demo.demo_translation_dashboard'),
     back_label=_('Demojen käännökset'),
-    hero_classes='introduction'
   ) %}
       {% if is_recurring_source and (current_user.role in ['admin', 'global_admin'] or current_user.has_permission('EDIT_RECURRING_DEMO')) %}
       <a class="admin-page-hero__action" href="{{ url_for('admin_recu_demo.edit_recu_demo', demo_id=demo._id) }}">{{ _('Avaa toistuvan demon editori') }}</a>

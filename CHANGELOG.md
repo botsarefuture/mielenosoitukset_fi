@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Admin UI regression: an unclosed `@media` block in the shared `workspace.css` (dropped during the media-workspace merge conflict resolution) had swallowed most of the admin component styles into a `max-width: 640px` query, so most admin pages rendered unstyled/partially styled on desktop. The missing closing brace is restored, and the full shared admin component layer applies again at every viewport width.
 * Sparse admin media libraries now keep thumbnail-sized grid tracks, and both media upload forms retain the standard section-body inset instead of placing controls against card edges.
 * Recurring-demonstration approval filtering now distinguishes all, approved, and unapproved records correctly, and its shared table remains horizontally contained beside the admin sidebar at intermediate viewport widths.
 * The escalated-case summary card now applies the same label styling as the other case counters instead of emitting an invalid `aclass` attribute.

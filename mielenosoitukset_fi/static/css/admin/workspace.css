@@ -358,6 +358,17 @@ body {
   overflow-wrap: anywhere;
 }
 
+.admin-disclosure > summary {
+  width: fit-content;
+  cursor: pointer;
+}
+
+.admin-disclosure > summary:focus-visible {
+  border-radius: .35rem;
+  outline: 3px solid var(--admin-workspace-blue-soft);
+  outline-offset: 3px;
+}
+
 .admin-panel {
   padding: 1rem;
 }

@@ -538,7 +538,7 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
         assert "import admin_page_hero" in source, str(template)
         assert "admin_page_hero(" in source, str(template)
 
-    assert len(pages) == 51
+    assert len(pages) == 52
     for locale in ("en", "fi", "sv"):
         catalog = Path(
             f"mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.po"
@@ -655,7 +655,9 @@ def test_demo_editor_static_geometry_uses_shared_form_components():
     assert template.count('class="tags-wrapper admin-token-input"') == 2
     assert 'class="admin-form-image-preview"' in template
     assert 'class="row g-3 admin-coordinate-fields"' in template
-    assert 'class="admin-editor-secondary-actions"' in template
+    assert 'class="admin-form-section__header"' in template
+    assert 'data-bs-target="#editLinkModal"' in template
+    assert 'id="duplicate-demo-btn"' in template
     assert ".admin-token-input:focus-within" in workspace
     assert ':not(.admin-token-input__field), select, textarea)' in workspace
     assert 'input:not(.admin-token-input__field), select, textarea):focus' in workspace

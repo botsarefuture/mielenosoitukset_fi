@@ -1,12 +1,28 @@
-def _capture_decision_email(monkeypatch):
-    import mielenosoitukset_fi.admin.admin_demo_bp as demo_routes
+from importlib import import_module
 
+
+def _demo_routes_module():
+    """Import the route module, not the Blueprint exported by admin.__init__."""
+    return import_module("mielenosoitukset_fi.admin.admin_demo_bp")
+
+
+def _patch_demo_email_sender(monkeypatch, method, replacement):
+    """Patch both module aliases registered by the application test harness."""
+    modules = {
+        _demo_routes_module(),
+        import_module("admin.admin_demo_bp"),
+    }
+    for module in modules:
+        monkeypatch.setattr(module.email_sender, method, replacement)
+
+
+def _capture_decision_email(monkeypatch):
     queued = []
 
     def capture(**kwargs):
         queued.append(kwargs)
 
-    monkeypatch.setattr(demo_routes.email_sender, "queue_email", capture)
+    _patch_demo_email_sender(monkeypatch, "queue_email", capture)
     return queued
 
 
@@ -175,8 +191,6 @@ def test_admin_api_rejection_is_idempotent(admin_client, db, seeded_data, monkey
 def test_notification_delivery_can_retry_without_repeating_decision_effects(
     admin_client, db, seeded_data, monkeypatch
 ):
-    import mielenosoitukset_fi.admin.admin_demo_bp as demo_routes
-
     attempts = []
 
     def flaky_queue(**kwargs):
@@ -184,7 +198,7 @@ def test_notification_delivery_can_retry_without_repeating_decision_effects(
         if len(attempts) == 1:
             raise RuntimeError("temporary mail failure")
 
-    monkeypatch.setattr(demo_routes.email_sender, "queue_email", flaky_queue)
+    _patch_demo_email_sender(monkeypatch, "queue_email", flaky_queue)
     legacy_path = f"/admin/demo/accept_demo/{seeded_data['pending_demo_id']}"
     failed = admin_client.post(
         legacy_path, json={}, headers={"Content-Type": "application/json"}

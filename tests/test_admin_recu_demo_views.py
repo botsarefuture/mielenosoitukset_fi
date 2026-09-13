@@ -23,7 +23,8 @@ def test_edit_recu_demo_renders_shared_admin_form_with_org_selector(admin_client
     assert response.status_code == 200
     page = response.get_data(as_text=True)
     assert 'id="organization"' in page
-    assert "Luo muokkauslinkki" in page
+    assert "Luo muokkauslinkki" not in page
+    assert 'id="duplicate-demo-btn"' in page
     assert 'id="child-demos"' in page
     assert "Päivitä lapsimielenosoituksia" in page
     assert 'class="editor-save-bar"' in page

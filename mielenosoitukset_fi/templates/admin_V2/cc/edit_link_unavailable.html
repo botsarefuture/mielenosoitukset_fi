@@ -1,23 +1,28 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block title %}{{ _('Muokkauslinkki ei ole käytettävissä') }} – Mielenosoitukset.fi{% endblock %}
 
 {% block main_content %}
-<main class="admin-page">
-  <header class="admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="admin-page-hero__kicker">{{ _('Mielenosoituksen muokkaus') }}</p>
-      <h1>
-        {% if reason == 'expired' %}{{ _('Muokkauslinkki on vanhentunut') }}
-        {% elif reason == 'revoked' %}{{ _('Muokkauslinkki on mitätöity') }}
-        {% else %}{{ _('Muokkauslinkki ei kelpaa') }}{% endif %}
-      </h1>
-      <p>{{ _('Pyydä mielenosoituksen ylläpitäjältä uusi linkki, jos muokkaamista pitää jatkaa.') }}</p>
-    </div>
-  </header>
+{% if reason == 'expired' %}
+  {% set unavailable_title = _('Muokkauslinkki on vanhentunut') %}
+{% elif reason == 'revoked' %}
+  {% set unavailable_title = _('Muokkauslinkki on mitätöity') %}
+{% else %}
+  {% set unavailable_title = _('Muokkauslinkki ei kelpaa') %}
+{% endif %}
+<div class="admin-page">
+  {{ admin_page_hero(
+    unavailable_title,
+    _('Pyydä mielenosoituksen ylläpitäjältä uusi linkki, jos muokkaamista pitää jatkaa.'),
+    _('Mielenosoituksen muokkaus'),
+    [(_('Etusivu'), url_for('index')), (unavailable_title, none)],
+    back_url=url_for('index'),
+    back_label=_('Etusivu')
+  ) }}
   <section class="admin-form-section admin-empty-state" role="status">
     <p>{{ _('Linkillä ei voi enää avata tai tallentaa mielenosoituksen tietoja.') }}</p>
     <a class="btn btn-primary" href="{{ url_for('index') }}">{{ _('Palaa etusivulle') }}</a>
   </section>
-</main>
+</div>
 {% endblock %}

@@ -613,6 +613,8 @@ def test_demo_editor_static_geometry_uses_shared_form_components():
     assert 'class="row g-3 admin-coordinate-fields"' in template
     assert 'class="admin-editor-secondary-actions"' in template
     assert ".admin-token-input:focus-within" in workspace
+    assert ':not(.admin-token-input__field), select, textarea)' in workspace
+    assert 'input:not(.admin-token-input__field), select, textarea):focus' in workspace
     assert ".access-panel-card .list-group-item" in workspace
     assert "var(--admin-workspace-surface-muted)" in workspace
 

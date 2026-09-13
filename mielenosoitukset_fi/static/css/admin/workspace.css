@@ -1573,7 +1573,7 @@ main.flex-grow-1 :is(.alert, .badge) {
   font-weight: 750;
 }
 
-.admin-editor-form :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+.admin-editor-form :is(input:not([type="checkbox"]):not([type="radio"]):not(.admin-token-input__field), select, textarea) {
   width: 100%;
   min-height: 2.7rem;
   border: 1px solid var(--admin-workspace-border);
@@ -1583,7 +1583,7 @@ main.flex-grow-1 :is(.alert, .badge) {
   box-shadow: none;
 }
 
-.admin-editor-form :is(input, select, textarea):focus {
+.admin-editor-form :is(input:not(.admin-token-input__field), select, textarea):focus {
   border-color: var(--admin-workspace-blue);
   outline: none;
   box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .12));

@@ -33,6 +33,7 @@
 
 ### Changed
 * The admin inline-style debt ratchet now fingerprints the allowlisted style contents, so declarations and attribute values cannot expand unnoticed while the remaining exceptions are migrated.
+* Case listing and detail views now use the shared admin summary, filter, status, section-card, detail-layout, field, and action components instead of two template-local style systems; case rows are real keyboard-focusable links and client-side filters expose their selected state to assistive technology.
 * Admin UI contract checks now pin the exact remaining template-local style blocks and static/dynamic style attributes, so new inline CSS cannot silently increase the documented cleanup inventory while existing exceptions are removed in smaller domain batches.
 * The canonical admin hero macro now accepts only the documented stacked variant; eleven legacy/domain-specific hero class combinations have been removed from page calls, and dead page-local hero geometry has been deleted so titles, descriptions, actions, and mobile behavior resolve from one shared contract.
 * Removed two unreferenced admin experiment/copy templates and replaced the UI-translation sync dashboard's final legacy page-header action wrapper with the shared row-action primitive, reducing dead inline CSS without activating the abandoned control-panel prototype.

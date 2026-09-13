@@ -87,8 +87,6 @@ def test_full_admin_templates_use_the_admin_shell():
 def test_admin_inline_style_debt_cannot_grow_without_review():
     style_block_allowlist = {
         "_users_table.html": ("7d2b36160b76de688cd17b79eaf781963a3d1cc932d63a2b846c99b997f08053",),
-        "cases/all.html": ("16de3fe0658db809b40d9d4b09b5a967130c6db8b7896b5dc2f0c044e382d97f",),
-        "cases/case.html": ("b79b29b4fd9bddf4c8ab469007a8fc36d7b7dc24c111c4b7fda1a04805c42c59",),
         "cities/index.html": ("3d27343693df99175c8ed03679c15a78ce9c031ece3180a1b89872f9f08f7d37",),
         "dashboard.html": ("b1946f48e192ef2949b4d5e8eed75989f46d50b07dd9eef9a2a0efead658f5f9",),
         "demonstrations/command_center.html": ("417fb57cd87fd0c1b3ff0068cd7dfed92acfc0e4cce58123d93fed347b22c345",),
@@ -591,6 +589,27 @@ def test_case_and_merge_pages_use_canonical_hero_navigation():
     assert "admin-status-badge--info" in Path(
         "mielenosoitukset_fi/static/css/admin/workspace.css"
     ).read_text(encoding="utf-8")
+
+
+def test_case_views_use_shared_workspace_components_without_inline_css():
+    case_list = Path(
+        "mielenosoitukset_fi/templates/admin_V2/cases/all.html"
+    ).read_text(encoding="utf-8")
+    case_detail = Path(
+        "mielenosoitukset_fi/templates/admin_V2/cases/case.html"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in case_list
+    assert "<style" not in case_detail
+    assert "admin-workspace-summary" in case_list
+    assert "admin-filter-chip" in case_list
+    assert 'href="{{ url_for(\'admin_case.single_case\'' in case_list
+    assert "onclick=\"window.location" not in case_list
+    assert "aria-pressed" in case_list
+    assert "card.hidden = !visible" in case_list
+    assert "admin-detail-layout" in case_detail
+    assert case_detail.count("admin-section-card") >= 5
+    assert "admin-row-actions" in case_detail
 
 
 def test_demo_command_center_separates_hero_copy_from_operational_context():

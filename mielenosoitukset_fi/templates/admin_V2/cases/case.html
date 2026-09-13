@@ -2,201 +2,6 @@
 {% from 'admin_V2/macros.html' import admin_page_hero %}
 {% block title %}{{ _('Tapaus') }} #{{ case.running_num }}{% endblock %}
 
-{% block styles %}
-<style>
-  .case-page {
-    display: grid;
-    gap: 1.5rem;
-  }
-  .case-status-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    margin-top: 1rem;
-  }
-  .case-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.95fr);
-    gap: 1.25rem;
-    align-items: start;
-  }
-  .case-main,
-  .case-sidebar {
-    display: grid;
-    gap: 1rem;
-  }
-  .case-card {
-    background: var(--admin-workspace-surface);
-    border: 1px solid var(--admin-workspace-border);
-    border-radius: 18px;
-    box-shadow: var(--admin-workspace-shadow);
-    overflow: hidden;
-  }
-  .case-card-header {
-    padding: 1rem 1.15rem;
-    border-bottom: 1px solid var(--admin-workspace-border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.8rem;
-  }
-  .case-card-header h2,
-  .case-card-header h3 {
-    margin: 0;
-    font-size: 1.05rem;
-  }
-  .case-card-body {
-    padding: 1.1rem 1.15rem 1.2rem;
-    display: grid;
-    gap: 1rem;
-  }
-  .detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.9rem 1rem;
-  }
-  .detail-grid.single {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .detail-item {
-    display: grid;
-    gap: 0.25rem;
-  }
-  .detail-item strong {
-    font-size: 0.84rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--admin-workspace-muted);
-  }
-  .detail-item span,
-  .detail-item div {
-    color: var(--admin-workspace-text);
-    word-break: break-word;
-  }
-  .muted {
-    color: var(--admin-workspace-muted);
-  }
-  .description-box,
-  .note-box {
-    border: 1px solid var(--admin-workspace-border);
-    border-radius: 14px;
-    padding: 0.95rem 1rem;
-    background: var(--admin-workspace-surface-muted);
-  }
-  .description-box p:last-child {
-    margin-bottom: 0;
-  }
-  .pill-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .pill-list span {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.35rem 0.7rem;
-    border-radius: 999px;
-    border: 1px solid var(--admin-workspace-border);
-    background: var(--admin-workspace-blue-soft);
-    color: var(--admin-workspace-text);
-    font-size: 0.9rem;
-  }
-  .action-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-  .form-stack {
-    display: grid;
-    gap: 0.9rem;
-  }
-  .form-stack label {
-    display: grid;
-    gap: 0.35rem;
-    font-weight: 600;
-  }
-  .form-stack select,
-  .form-stack textarea {
-    width: 100%;
-    border: 1px solid var(--admin-workspace-border);
-    border-radius: 12px;
-    padding: 0.75rem 0.85rem;
-    font: inherit;
-    background: var(--admin-workspace-surface-muted);
-    color: var(--admin-workspace-text);
-  }
-  .form-stack textarea {
-    min-height: 120px;
-    resize: vertical;
-  }
-  .info-list {
-    display: grid;
-    gap: 0.85rem;
-  }
-  .log-list,
-  .timeline-list {
-    display: grid;
-    gap: 0.8rem;
-  }
-  .log-entry,
-  .timeline-entry {
-    border: 1px solid var(--admin-workspace-border);
-    border-radius: 14px;
-    padding: 0.9rem 1rem;
-    background: var(--admin-workspace-surface-muted);
-  }
-  .log-entry-header,
-  .timeline-entry-header {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.45rem;
-  }
-  .log-entry-header strong,
-  .timeline-entry-header strong {
-    color: var(--admin-workspace-text);
-  }
-  .empty-state {
-    padding: 1.25rem;
-    text-align: center;
-    color: var(--admin-workspace-muted);
-    border: 1px dashed var(--admin-workspace-border);
-    border-radius: 14px;
-  }
-  .change-list {
-    display: grid;
-    gap: 0.8rem;
-  }
-  .change-entry {
-    border: 1px solid var(--admin-workspace-border);
-    border-radius: 14px;
-    padding: 0.9rem 1rem;
-    background: var(--admin-workspace-surface-muted);
-  }
-  .change-entry strong {
-    display: block;
-    margin-bottom: 0.4rem;
-  }
-  .change-entry .before {
-    color: light-dark(#a61b1b, #ffaaa5);
-  }
-  .change-entry .after {
-    color: light-dark(#0f6538, #8ce0b4);
-  }
-  @media (max-width: 960px) {
-    .case-layout {
-      grid-template-columns: 1fr;
-    }
-  }
-  @media (max-width: 720px) {
-    .detail-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
-{% endblock %}
-
 {% block main_content %}
 {% set demo = case_data.demo if case_data.demo is defined else {} %}
 {% set submitter = case_data.submitter if case_data.submitter is defined else {} %}
@@ -207,7 +12,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<div class="case-page">
+<div class="case-page admin-page">
   {{ admin_page_hero(
     _('Tapaus') ~ ' #' ~ case.running_num,
     _('Tämä näkymä kokoaa tapauksen tilan, siihen liittyvät tiedot ja käsittelytoimet samaan paikkaan.'),
@@ -216,7 +21,7 @@
     back_url=url_for('admin_case.cases'),
     back_label=_('Tapaukset')
   ) }}
-  <div class="case-status-row" aria-label="{{ _('Tapauksen tila') }}">
+  <div class="admin-row-actions admin-case-statuses" aria-label="{{ _('Tapauksen tila') }}">
     <span class="admin-status-badge"><i class="fa-solid fa-folder"></i>{{ case_data.type_label }}</span>
     <span class="admin-status-badge admin-status-badge--{{ 'success' if case.meta.closed else 'info' }}">
       <i class="fa-solid {{ 'fa-circle-check' if case.meta.closed else 'fa-clock' }}"></i>
@@ -230,10 +35,10 @@
     {% endif %}
   </div>
 
-  <div class="case-layout">
-    <div class="case-main">
-      <section class="case-card">
-        <div class="case-card-header">
+  <div class="admin-detail-layout">
+    <div class="admin-stack">
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
           <h2>{{ _('Tapauksen tiedot') }}</h2>
           {% if demo and demo._id %}
           <a class="btn btn-outline-primary btn-sm" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}">
@@ -241,7 +46,7 @@
           </a>
           {% endif %}
         </div>
-        <div class="case-card-body">
+        <div class="admin-section-card__body admin-stack">
           {% if case.case_type == "new_demo" %}
           <div class="detail-grid">
             <div class="detail-item"><strong>{{ _('Otsikko') }}</strong><span>{{ demo.title or '-' }}</span></div>
@@ -306,7 +111,7 @@
             </div>
           </div>
 
-          <div class="action-row">
+          <div class="admin-row-actions">
             <button class="btn btn-success" type="button" onclick="sendDemoAction('accept')" {% if case.meta.superior_needed and current_user.role != 'global_admin' %}disabled{% endif %}>
               <i class="fa-solid fa-check me-1"></i>{{ _('Hyvaksy mielenosoitus') }}
             </button>
@@ -333,7 +138,7 @@
             <div class="note-box">{{ cancellation.reason or _('Ei syyta annettu') }}</div>
           </div>
           {% if not cancellation.cancelled %}
-          <div class="action-row">
+          <div class="admin-row-actions">
             <button class="btn btn-danger" type="button" onclick="approveCancellation()">
               <i class="fa-solid fa-ban me-1"></i>{{ _('Hyvaksy peruutus') }}
             </button>
@@ -377,12 +182,12 @@
         </div>
       </section>
 
-      <section class="case-card">
-        <div class="case-card-header">
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
           <h2>{{ _('Sisaiset muistiinpanot') }}</h2>
         </div>
-        <div class="case-card-body">
-          <form class="form-stack" method="POST" action="{{ url_for('admin_case.add_action', case_id=case._id) }}">
+        <div class="admin-section-card__body">
+          <form class="form-stack admin-stack" method="POST" action="{{ url_for('admin_case.add_action', case_id=case._id) }}">
             <label>
               {{ _('Merkinnan tyyppi') }}
               <select name="action_type">
@@ -405,12 +210,12 @@
       </section>
     </div>
 
-    <aside class="case-sidebar">
-      <section class="case-card">
-        <div class="case-card-header">
+    <aside class="admin-stack">
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
           <h3>{{ _('Tapausstatus') }}</h3>
         </div>
-        <div class="case-card-body">
+        <div class="admin-section-card__body admin-stack">
           <div class="detail-grid single">
             <div class="detail-item"><strong>{{ _('Tilanne') }}</strong><span>{{ _('Suljettu') if case.meta.closed else _('Avoin') }}</span></div>
             <div class="detail-item"><strong>{{ _('Luotu') }}</strong><span>{{ case.created_at|datetimeformat("%d.%m.%Y %H:%M") }}</span></div>
@@ -420,7 +225,7 @@
             <div class="detail-item"><strong>{{ _('Sulkemisen syy') }}</strong><span>{{ case.meta.closed_reason }}</span></div>
             {% endif %}
           </div>
-          <div class="action-row">
+          <div class="admin-row-actions">
             <button class="btn btn-outline-secondary" type="button" onclick="promptCaseAction('close')" {% if case.meta.closed %}disabled{% endif %}>
               <i class="fa-solid fa-folder-closed me-1"></i>{{ _('Sulje tapaus') }}
             </button>
@@ -436,11 +241,11 @@
         </div>
       </section>
 
-      <section class="case-card">
-        <div class="case-card-header">
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
           <h3>{{ _('Toimintaloki') }}</h3>
         </div>
-        <div class="case-card-body">
+        <div class="admin-section-card__body admin-stack">
           {% if case.action_logs %}
           <div class="log-list">
             {% for log in case.action_logs|reverse %}
@@ -460,11 +265,11 @@
         </div>
       </section>
 
-      <section class="case-card">
-        <div class="case-card-header">
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
           <h3>{{ _('Tapahtumahistoria') }}</h3>
         </div>
-        <div class="case-card-body">
+        <div class="admin-section-card__body admin-stack">
           {% if case.case_history %}
           <div class="timeline-list">
             {% for event in case.case_history|reverse %}

@@ -2451,21 +2451,20 @@ main.flex-grow-1 {
 /* Dashboard and case-management screens keep their information architecture,
    but use the same surfaces and typography as every other admin view. */
 .admin-dashboard-shell :is(.card-panel, .stat-card, .quick-card, .side-panel, .panic-card, .health-card, .login-entry),
-.case-page :is(.case-card, .detail-item, .description-box, .note-box, .change-entry, .timeline-entry, .log-entry) {
+.case-page :is(.detail-item, .description-box, .note-box, .change-entry, .timeline-entry, .log-entry) {
   border-color: var(--admin-workspace-border);
   color: var(--admin-workspace-text);
   background: var(--admin-workspace-surface);
   box-shadow: var(--admin-workspace-shadow);
 }
 
-.admin-dashboard-shell :is(.live-header, .side-header),
-.case-page :is(.case-card-header, .case-card-body) {
+.admin-dashboard-shell :is(.live-header, .side-header) {
   border-color: var(--admin-workspace-border);
   color: var(--admin-workspace-text);
 }
 
 .admin-dashboard-shell :is(.stat-value, .quick-card strong, .entry-heading, h2, h3, h4),
-.case-page :is(.case-card-header, .detail-item strong, .timeline-entry-header, .log-entry-header, h2, h3, h4) {
+.case-page :is(.detail-item strong, .timeline-entry-header, .log-entry-header, h2, h3, h4) {
   color: var(--admin-workspace-text);
 }
 
@@ -2481,24 +2480,142 @@ main.flex-grow-1 {
 }
 
 .case-page {
+  display: grid;
+  gap: 1.5rem;
   width: 100%;
   max-width: 1450px;
   margin: 0 auto;
   color: var(--admin-workspace-text);
 }
 
-.case-page .case-header {
-  border: 0;
-  border-radius: 1.5rem;
-  color: #fff;
-  background:
-    radial-gradient(circle at 94% 8%, rgba(255, 102, 0, .42), transparent 18rem),
-    linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
-  box-shadow: 0 20px 50px rgba(0, 43, 137, .18);
+.admin-case-statuses {
+  gap: .6rem;
 }
 
-.case-page .case-header :is(h1, h2, h3, p, span:not(.case-chip)) {
-  color: inherit;
+.case-page .detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .9rem 1rem;
+}
+
+.case-page .detail-grid.single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.case-page .detail-item {
+  display: grid;
+  gap: .25rem;
+  min-width: 0;
+  box-shadow: none;
+}
+
+.case-page .detail-item strong {
+  color: var(--admin-workspace-muted);
+  font-size: .84rem;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.case-page .detail-item :is(span, div, a) {
+  overflow-wrap: anywhere;
+}
+
+.case-page .muted {
+  color: var(--admin-workspace-muted);
+}
+
+.case-page :is(.description-box, .note-box, .change-entry, .timeline-entry, .log-entry) {
+  padding: .9rem 1rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .85rem;
+  background: var(--admin-workspace-surface-muted);
+  box-shadow: none;
+}
+
+.case-page .description-box p:last-child {
+  margin-bottom: 0;
+}
+
+.case-page :is(.pill-list, .info-list, .change-list, .timeline-list, .log-list) {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.case-page :is(.info-list, .change-list, .timeline-list, .log-list) {
+  display: grid;
+  gap: .8rem;
+  background: transparent;
+}
+
+.case-page .pill-list span {
+  display: inline-flex;
+  align-items: center;
+  padding: .35rem .7rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 999px;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-blue-soft);
+  font-size: .9rem;
+}
+
+.case-page :is(.log-entry-header, .timeline-entry-header) {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: .45rem;
+}
+
+.case-page .change-entry strong {
+  display: block;
+  margin-bottom: .4rem;
+}
+
+.case-page .change-entry .before {
+  color: var(--admin-workspace-danger);
+}
+
+.case-page .change-entry .after {
+  color: var(--admin-workspace-success);
+}
+
+.case-page .empty-state {
+  padding: 1.25rem;
+  border: 1px dashed var(--admin-workspace-border);
+  border-radius: .85rem;
+  color: var(--admin-workspace-muted);
+  text-align: center;
+}
+
+.case-page .form-stack label {
+  display: grid;
+  gap: .35rem;
+  color: var(--admin-workspace-text);
+  font-weight: 700;
+}
+
+.case-page .form-stack :is(select, textarea) {
+  width: 100%;
+  min-height: 2.7rem;
+  padding: .7rem .8rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .7rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+  font: inherit;
+}
+
+.case-page .form-stack textarea {
+  min-height: 7.5rem;
+  resize: vertical;
+}
+
+.case-page .form-stack :is(select, textarea):focus-visible {
+  border-color: var(--admin-workspace-blue);
+  outline: 3px solid var(--admin-workspace-blue-soft);
+  outline-offset: 1px;
 }
 
 .admin-workspace-toolbar,
@@ -2873,7 +2990,7 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
 .jobs-container :is(.job-card, .history-panel),
 .jobs-container :is(.filter-form, .history-item),
 .logs-shell :is(.log-card, .meta-item, .log-details),
-.case-shell :is(.stat-card, .case-card),
+.case-shell .case-card,
 .status-grid :is(.panel, .stat-mini) {
   border: 1px solid var(--admin-workspace-border);
   border-radius: 1rem;
@@ -2889,14 +3006,14 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
 
 .jobs-container :is(.job-title, .info-label, .history-title),
 .status-grid :is(.panel-title, .svc-name, .stat-mini .num),
-.case-shell :is(.case-title, .stat-card .value),
+.case-shell .case-title,
 .logs-shell :is(.path-block .path, .timestamp) {
   color: var(--admin-workspace-text);
 }
 
 .jobs-container :is(.job-description, .info-value, .history-empty),
 .status-grid :is(.svc-msg, .stat-mini .lbl, .dl),
-.case-shell :is(.case-desc, .case-footer, .stat-card .hint),
+.case-shell :is(.case-desc, .case-footer),
 .logs-shell :is(.path-block .endpoint, .timestamp small) {
   color: var(--admin-workspace-muted);
 }
@@ -3209,16 +3326,107 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
   }
 }
 
-.case-shell .stat-card.emphasis,
-.case-shell .stat-filter.active {
+.admin-case-summary__filter {
+  width: 100%;
+  color: var(--admin-workspace-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.admin-case-summary__filter small {
+  display: block;
+  margin-top: .25rem;
+  color: var(--admin-workspace-muted);
+  font-size: .75rem;
+}
+
+.admin-case-summary__filter:hover {
   border-color: var(--admin-workspace-blue);
+}
+
+.admin-case-summary__filter.active {
+  border-color: var(--admin-workspace-blue);
+  background: var(--admin-workspace-blue-soft);
+  box-shadow: 0 0 0 2px var(--admin-workspace-blue-soft), var(--admin-workspace-shadow);
+}
+
+.admin-case-summary__filter:focus-visible,
+.admin-case-filters .admin-filter-chip:focus-visible {
+  outline: 3px solid var(--admin-workspace-blue-soft);
+  outline-offset: 2px;
+}
+
+.admin-case-filters {
+  margin-top: 0;
+}
+
+.admin-case-filters .admin-filter-chip {
+  cursor: pointer;
+}
+
+.admin-case-filters .admin-filter-chip.active {
+  border-color: var(--admin-workspace-blue);
+  color: var(--admin-workspace-blue-dark);
   background: var(--admin-workspace-blue-soft);
 }
 
-.case-shell .filter-chip {
-  border-color: var(--admin-workspace-border);
+.case-shell .case-list {
+  display: grid;
+  gap: .75rem;
+}
+
+.case-shell .case-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .75rem;
+  align-items: start;
+  min-width: 0;
+  padding: 1rem;
   color: var(--admin-workspace-text);
-  background: var(--admin-workspace-surface);
+  text-decoration: none;
+}
+
+.case-shell .case-card:hover,
+.case-shell .case-card:focus-visible {
+  border-color: var(--admin-workspace-blue);
+  color: var(--admin-workspace-text);
+  box-shadow: 0 0 0 3px var(--admin-workspace-blue-soft), var(--admin-workspace-shadow);
+}
+
+.case-shell .case-card:focus-visible {
+  outline: none;
+}
+
+.case-shell .case-meta,
+.case-shell .case-footer {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.case-shell .case-title {
+  margin: .65rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.case-shell .case-desc {
+  margin: .2rem 0 0;
+}
+
+.case-shell .case-footer {
+  gap: 1rem;
+  margin-top: .65rem;
+  font-size: .82rem;
+}
+
+@media (max-width: 720px) {
+  .case-page .detail-grid,
+  .case-shell .case-card {
+    grid-template-columns: 1fr;
+  }
 }
 
 .logs-shell {

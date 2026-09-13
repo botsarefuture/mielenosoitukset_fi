@@ -82,7 +82,7 @@ def test_admin_management_views_share_workspace_design(app, seeded_data):
     city_page = client.get("/admin/cities/").get_data(as_text=True)
 
     assert "css/admin/workspace.css" in demonstration_page
-    assert "20260913-admin-ui-43" in demonstration_page
+    assert "20260913-admin-ui-44" in demonstration_page
     assert re.search(
         r'<header class="admin-page-hero(?: admin-page-hero--stacked)?"',
         demonstration_page,

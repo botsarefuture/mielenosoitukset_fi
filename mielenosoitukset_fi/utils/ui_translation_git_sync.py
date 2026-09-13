@@ -190,6 +190,15 @@ def sync_ui_translation_to_git(locale: str, msgid: str, translated_text: str) ->
     worktree_root = Path(tempfile.mkdtemp(prefix="ui-translation-sync-"))
     try:
         _run_git(repo_path, "fetch", remote_name, base_branch)
+        try:
+            _run_git(
+                repo_path,
+                "fetch",
+                remote_name,
+                f"+{branch_name}:refs/remotes/{remote_name}/{branch_name}",
+            )
+        except subprocess.CalledProcessError:
+            pass
         _run_git(repo_path, "worktree", "add", "--detach", str(worktree_root), f"{remote_name}/{base_branch}")
         _run_git(worktree_root, "checkout", "-B", branch_name)
         _run_git(worktree_root, "config", "user.name", _git_identity_name())
@@ -225,15 +234,47 @@ def sync_ui_translation_to_git(locale: str, msgid: str, translated_text: str) ->
         )
         commit_sha = _run_git(worktree_root, "rev-parse", "HEAD")
 
+        existing_branch_sha = None
         try:
-            _run_git(worktree_root, "push", "--force-with-lease", remote_name, f"HEAD:{branch_name}")
-        except subprocess.CalledProcessError as exc:
-            return UiTranslationGitSyncResult(
-                status="committed_local_branch",
-                branch_name=branch_name,
-                commit_sha=commit_sha,
-                message=exc.stderr.strip() or exc.stdout.strip() or "Failed to push the sync branch to the remote.",
+            existing_branch_sha = _run_git(
+                repo_path,
+                "rev-parse",
+                f"refs/remotes/{remote_name}/{branch_name}",
             )
+        except subprocess.CalledProcessError:
+            existing_branch_sha = None
+
+        branch_is_current = False
+        if existing_branch_sha:
+            try:
+                _run_git(
+                    repo_path,
+                    "merge-base",
+                    "--is-ancestor",
+                    f"{remote_name}/{base_branch}",
+                    existing_branch_sha,
+                )
+                if _run_git(worktree_root, "rev-parse", "HEAD^{tree}") == _run_git(
+                    repo_path,
+                    "rev-parse",
+                    f"{existing_branch_sha}^{{tree}}",
+                ):
+                    branch_is_current = True
+            except subprocess.CalledProcessError:
+                branch_is_current = False
+
+        pushed = False
+        if not branch_is_current:
+            try:
+                _run_git(worktree_root, "push", "--force-with-lease", remote_name, f"HEAD:{branch_name}")
+                pushed = True
+            except subprocess.CalledProcessError as exc:
+                return UiTranslationGitSyncResult(
+                    status="committed_local_branch",
+                    branch_name=branch_name,
+                    commit_sha=commit_sha,
+                    message=exc.stderr.strip() or exc.stdout.strip() or "Failed to push the sync branch to the remote.",
+                )
 
         pr_number, pr_url = _create_pull_request(branch_name, locale, msgid)
         merge_status = None

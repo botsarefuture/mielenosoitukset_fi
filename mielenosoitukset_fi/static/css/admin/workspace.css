@@ -625,6 +625,14 @@ body {
   .admin-media-upload .btn {
     width: 100%;
   }
+.admin-status-badge--danger {
+  color: var(--admin-workspace-danger);
+  background: var(--admin-workspace-danger-soft);
+}
+
+.admin-status-badge--info {
+  color: var(--admin-workspace-blue-dark);
+  background: var(--admin-workspace-blue-soft);
 }
 
 .admin-detail-layout {

@@ -601,7 +601,7 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
         assert "import admin_page_hero" in source, str(template)
         assert "admin_page_hero(" in source, str(template)
 
-    assert len(pages) == 52
+    assert len(pages) == 51
     for locale in ("en", "fi", "sv"):
         catalog = Path(
             f"mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.po"
@@ -613,6 +613,20 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
             "Tarkista käyttäjätili ja sen rooli ennen peruuttamatonta toimintoa.",
         ):
             assert f'msgid "{message}"' in catalog
+
+
+def test_dead_admin_template_copies_and_legacy_sync_actions_are_absent():
+    assert not Path(
+        "mielenosoitukset_fi/templates/admin_V2/_users_table copy.html"
+    ).exists()
+    assert not Path(
+        "mielenosoitukset_fi/templates/admin_V2/mac_test.html"
+    ).exists()
+    sync_dashboard = Path(
+        "mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html"
+    ).read_text(encoding="utf-8")
+    assert "admin-page-header__actions" not in sync_dashboard
+    assert "admin-row-actions" in sync_dashboard
 
 
 def test_media_admin_uses_shared_theme_aware_components():

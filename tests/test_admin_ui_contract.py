@@ -440,6 +440,42 @@ def test_analytics_pages_use_shared_hero_metric_slot():
     assert ".stats-hero" not in stats_css
 
 
+def test_analytics_pages_use_shared_theme_aware_components():
+    base = Path("mielenosoitukset_fi/templates/admin_base.html").read_text(
+        encoding="utf-8"
+    )
+    analytics_css = Path(
+        "mielenosoitukset_fi/static/css/admin/analytics.css"
+    ).read_text(encoding="utf-8")
+    pages = (
+        Path("mielenosoitukset_fi/templates/admin_V2/analytics.html"),
+        Path("mielenosoitukset_fi/templates/admin_V2/per_demo_analytics.html"),
+    )
+
+    assert "css/admin/analytics.css" in base
+    assert "admin:themechange" in base
+    assert "html.light" in analytics_css
+    assert "html.dark" in analytics_css
+    assert "--admin-chart-text" in analytics_css
+    assert "var(--admin-workspace-surface)" in analytics_css
+    assert "@media (max-width: 760px)" in analytics_css
+
+    for page in pages:
+        source = page.read_text(encoding="utf-8")
+        assert "<style" not in source
+        assert 'class="admin-page admin-analytics"' in source
+        assert "admin-section-card" in source
+        assert 'role="img"' in source
+        assert "getAdminChartColors" in source
+        assert "admin:themechange" in source
+
+    per_demo = pages[1].read_text(encoding="utf-8")
+    assert "admin-workspace-summary" in per_demo
+    assert "admin-analytics__data-disclosure" in per_demo
+    assert "admin-data-view__table" in per_demo
+    assert "prefers-reduced-motion: reduce" in per_demo
+
+
 def test_case_and_merge_pages_use_canonical_hero_navigation():
     pages = (
         "mielenosoitukset_fi/templates/admin_V2/cases/all.html",

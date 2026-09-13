@@ -313,12 +313,16 @@ def _collect_organizers(form, existing_organizers=None):
 def recu_demo_control():
     """Render the recurring demonstration control panel with a list of recurring demonstrations."""
     search_query = request.args.get("search", "")
-    approved_status = request.args.get("approved", "false").lower() == "true"
+    approved_status = request.args.get("approved", "all").lower()
+    if approved_status not in {"all", "true", "false"}:
+        approved_status = "all"
     # show_past = request.args.get("show_past", "false").lower() == "true"
     today = date.today()
 
     # Construct query based on approval status
-    query = {"approved": approved_status} if approved_status else {}
+    query = {}
+    if approved_status != "all":
+        query["approved"] = approved_status == "true"
     recurring_demos = []
     for recudemo in list(mongo.recu_demos.find(query)):
         try:

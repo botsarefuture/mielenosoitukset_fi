@@ -1,3 +1,6 @@
+from bson import ObjectId
+
+
 def test_create_recu_demo_uses_shared_admin_form(admin_client):
     response = admin_client.get("/admin/recu_demo/create_recu_demo")
 
@@ -67,3 +70,20 @@ def test_recu_demo_dashboard_lists_demos_with_migrated_city_key(
 
     assert response.status_code == 200
     assert "Recurring Test Series" in response.get_data(as_text=True)
+
+
+def test_recu_demo_dashboard_filters_approval_state(admin_client, db, seeded_data):
+    existing = db.recu_demos.find_one({"_id": seeded_data["recu_demo_id"]})
+    pending = {**existing, "_id": ObjectId(), "title": "Pending recurring series", "approved": False}
+    db.recu_demos.insert_one(pending)
+
+    all_page = admin_client.get("/admin/recu_demo/?approved=all").get_data(as_text=True)
+    approved_page = admin_client.get("/admin/recu_demo/?approved=true").get_data(as_text=True)
+    pending_page = admin_client.get("/admin/recu_demo/?approved=false").get_data(as_text=True)
+
+    assert "Recurring Test Series" in all_page
+    assert "Pending recurring series" in all_page
+    assert "Recurring Test Series" in approved_page
+    assert "Pending recurring series" not in approved_page
+    assert "Recurring Test Series" not in pending_page
+    assert "Pending recurring series" in pending_page

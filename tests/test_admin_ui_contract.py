@@ -619,6 +619,41 @@ def test_demo_editor_static_geometry_uses_shared_form_components():
     assert "var(--admin-workspace-surface-muted)" in workspace
 
 
+def test_recurring_collection_uses_shared_filter_data_and_modal_contracts():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in template
+    assert "style=" not in template
+    assert 'class="admin-filter-bar"' in template
+    assert 'class="admin-data-view admin-data-view--scrollable"' in template
+    assert 'class="admin-data-view__table"' in template
+    assert "admin-status-badge--success" in template
+    assert 'class="admin-empty-state"' in template
+    assert 'class="modal fade admin-modal"' in template
+    assert "bootstrap.Modal.getOrCreateInstance" in template
+    assert "modal-dark" not in template
+    assert ".admin-data-view--scrollable .admin-data-view__viewport" in Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+
+def test_background_job_detail_uses_shared_code_and_disclosure_components():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/background_job_detail.html"
+    ).read_text(encoding="utf-8")
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in template
+    assert template.count('class="admin-disclosure') == 3
+    assert template.count('class="admin-code-block') == 3
+    assert "metadata-block" not in template
+    assert ".admin-disclosure > summary:focus-visible" in workspace
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

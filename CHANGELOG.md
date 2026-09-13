@@ -6,6 +6,7 @@
 
 ### Fixed
 * Sparse admin media libraries now keep thumbnail-sized grid tracks, and both media upload forms retain the standard section-body inset instead of placing controls against card edges.
+* Recurring-demonstration approval filtering now distinguishes all, approved, and unapproved records correctly, and its shared table remains horizontally contained beside the admin sidebar at intermediate viewport widths.
 * The escalated-case summary card now applies the same label styling as the other case counters instead of emitting an invalid `aclass` attribute.
 * Organization viewers no longer see member-role mutation, member-removal, or invitation-cancellation controls unless their scoped organization permissions allow those actions; server-side authorization remains authoritative.
 * Production deployments no longer fail with SSH `Permission denied (publickey,password)` right after freshly adding the deploy key to the agent: the workflow no longer sets `IdentitiesOnly` without a matching `IdentityFile`, so the GitHub Actions agent can actually offer the dedicated deploy key to the server.
@@ -23,6 +24,8 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* Background-job metadata, traces, and change details now use the shared admin code-block and keyboard-focused disclosure primitives instead of template-local styling.
+* The recurring-demonstration collection now uses the shared admin filter bar, data-view table, status badge, empty state, action buttons, and modal contract in both themes instead of its own search and dark-modal palette.
 * The demonstration editor now uses shared theme-aware token-input, media-preview, coordinate, access-panel, and secondary-action primitives; its broad page-local list overrides and all static inline style attributes have been removed.
 * User identity, role, city-scope, and permission editing now gets its responsive section, field, selection, guidance, and sticky-action layout from the shared admin component layer instead of template-local CSS.
 * Statistics sorting and demonstration audit timelines now use shared theme-aware admin cues, and obsolete template-local analytics styling has been removed.

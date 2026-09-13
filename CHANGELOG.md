@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Test suite stability: the admin package is imported under two module names inside one process (`mielenosoitukset_fi.admin.*` and top-level `admin.*`), each copy keeping its own module-level MongoDB handle. Combined with per-test disposable databases this made token-based admin flows (approve/edit/reject links) randomly hit a stale database owned by a previously run test and fail with HTTP 400. The seeding fixture now rebinds the `mongo` handle on every project module to the disposable test database, and leftover `mielenosoitukset_test_*` databases from interrupted or crashed runs are dropped at session end so MongoDB does not accumulate hundreds of throwaway databases.
 * Admin UI regression: an unclosed `@media` block in the shared `workspace.css` (dropped during the media-workspace merge conflict resolution) had swallowed most of the admin component styles into a `max-width: 640px` query, so most admin pages rendered unstyled/partially styled on desktop. The missing closing brace is restored, and the full shared admin component layer applies again at every viewport width.
 * Sparse admin media libraries now keep thumbnail-sized grid tracks, and both media upload forms retain the standard section-body inset instead of placing controls against card edges.
 * Recurring-demonstration approval filtering now distinguishes all, approved, and unapproved records correctly, and its shared table remains horizontally contained beside the admin sidebar at intermediate viewport widths.

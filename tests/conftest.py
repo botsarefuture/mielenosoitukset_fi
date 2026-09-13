@@ -242,11 +242,25 @@ def _user_doc(username, email, password, **updates):
 def _seed_database(app, db):
     from mielenosoitukset_fi.admin.admin_demo_bp import _hash_token as hash_magic_token
     from mielenosoitukset_fi.admin.admin_demo_bp import _registry_upsert_initial, serializer
-    import mielenosoitukset_fi.admin.admin_demo_bp as admin_demo_bp
     from mielenosoitukset_fi.utils.auth import generate_confirmation_token, generate_reset_token
     from mielenosoitukset_fi.utils.demo_cancellation import _hash_token as hash_cancel_token
 
-    admin_demo_bp.mongo = db
+    # Some project modules (e.g. ``admin.admin_demo_bp``) get imported twice in a
+    # single process: once as ``mielenosoitukset_fi.admin.admin_demo_bp`` and once
+    # as a top-level ``admin.admin_demo_bp`` (``app.py`` imports the top-level
+    # name when the project root is on ``sys.path``). Rebinding ``mongo`` only on
+    # one of the copies leaves the other pointing at a stale/foreign database,
+    # which makes token-based admin flows flaky in a full test run. Rebinding the
+    # handle on every project module keeps seeding and routes on one database.
+    for _mod in list(sys.modules.values()):
+        _mod_file = getattr(_mod, "__file__", None)
+        if not _mod_file or not str(_mod_file).startswith(str(ROOT)):
+            continue
+        if getattr(_mod, "mongo", None) is not None:
+            try:
+                _mod.mongo = db
+            except Exception:
+                pass
 
     for collection_name in db.list_collection_names():
         if collection_name.startswith("system."):
@@ -766,6 +780,17 @@ def cleanup_test_resources():
     if instance is not None:
         try:
             instance.get_db().client.drop_database(TEST_DB_NAME)
+        except Exception:
+            pass
+        try:
+            # Drop any test databases left behind by earlier crashed sessions so
+            # MongoDB does not accumulate hundreds of disposable databases.
+            for _db_name in instance.get_db().client.list_database_names():
+                if _db_name.startswith("mielenosoitukset_test_"):
+                    try:
+                        instance.get_db().client.drop_database(_db_name)
+                    except Exception:
+                        pass
         except Exception:
             pass
         try:

@@ -24,3 +24,4 @@ config.compose.dev.yaml
 data/mailpit.db
 data/mailpit.db-shm
 data/mailpit.db-wal
+**/mailpit*

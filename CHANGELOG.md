@@ -23,6 +23,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* The demonstration editor now uses shared theme-aware token-input, media-preview, coordinate, access-panel, and secondary-action primitives; its broad page-local list overrides and all static inline style attributes have been removed.
 * User identity, role, city-scope, and permission editing now gets its responsive section, field, selection, guidance, and sticky-action layout from the shared admin component layer instead of template-local CSS.
 * Statistics sorting and demonstration audit timelines now use shared theme-aware admin cues, and obsolete template-local analytics styling has been removed.
 * The admin system-status dashboard now uses shared theme-aware health panels, service states, metrics, progress, empty-state, and data-view primitives instead of a template-local light/dark palette tied to the operating-system preference.

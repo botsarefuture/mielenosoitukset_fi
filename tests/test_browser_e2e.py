@@ -187,6 +187,34 @@ def test_admin_dashboard_redirects_through_login_in_real_browser(
 
 @pytest.mark.e2e
 @pytest.mark.integration
+def test_submitter_modal_can_be_closed_and_reopened(
+    app,
+    db,
+    live_server,
+    browser_page,
+):
+    seeded_data = _seed_database(app, db)
+    browser_page.goto(f"{live_server}/admin/demo/", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/demo/?$"))
+
+    row = browser_page.locator(f"#demo-{seeded_data['pending_demo_id']}")
+    actions_toggle = row.locator(".dropdown-toggle")
+    submitter_action = row.locator("button[onclick*='showSubmitterInfoModal']")
+    modal = browser_page.locator("#submitterInfoModal")
+
+    for _ in range(2):
+        actions_toggle.click()
+        submitter_action.click()
+        modal.locator("#submitterInfoResult").wait_for(state="visible")
+        assert modal.locator("#submitterName").text_content() == "Alice Tester"
+        modal.locator("#closeSubmitterInfo").click()
+        modal.wait_for(state="hidden")
+        assert actions_toggle.evaluate("element => element === document.activeElement")
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
 @pytest.mark.parametrize("viewport_width", [390, 1440])
 def test_admin_pages_share_responsive_theme_aware_heroes(
     app,

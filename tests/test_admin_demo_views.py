@@ -19,7 +19,7 @@ def test_edit_demo_shows_edit_only_controls(admin_client, seeded_data):
     assert "Luo muokkauslinkki" in page
     assert "Luo kopio mielenosoituksesta" in page
     assert 'class="editor-save-bar"' in page
-    assert 'class="editor-section-nav admin-page-hero__nav"' in page
+    assert 'class="admin-page-hero__nav editor-section-nav"' in page
 
 
 def test_editor_without_accept_permission_cannot_forge_demo_approval(

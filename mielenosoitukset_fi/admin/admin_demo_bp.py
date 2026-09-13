@@ -3209,7 +3209,7 @@ def send_edit_link(demo_id):
                 {"status": "ERROR", "message": _("Syötä kelvollinen sähköpostiosoite.")}
             ), 400
 
-        duration_key, _ = _edit_link_duration(data.get("duration"))
+        duration_key = _edit_link_duration(data.get("duration"))[0]
         edit_link, token_doc = _create_demo_edit_link(demo_id, duration_key)
         demo = Demonstration.load_by_id(demo_id)
         # Bearer links must not be persisted in the Mongo-backed email queue.
@@ -3263,7 +3263,7 @@ def generate_edit_link(demo_id):
                 {"status": "ERROR", "message": _("Istunnon turvatarkistus epäonnistui.")}
             ), 403
         data = request.get_json(silent=True) or {}
-        duration_key, _ = _edit_link_duration(data.get("duration"))
+        duration_key = _edit_link_duration(data.get("duration"))[0]
         edit_link, token_doc = _create_demo_edit_link(demo_id, duration_key)
         return jsonify(
             {

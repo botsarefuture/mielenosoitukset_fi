@@ -1,4 +1,5 @@
 from datetime import timedelta
+from importlib import import_module
 from urllib.parse import urlsplit
 
 
@@ -13,6 +14,15 @@ def _csrf_headers(client):
 
 def _token_from_url(edit_link):
     return urlsplit(edit_link).path.rsplit("/", 1)[-1]
+
+
+def _patch_demo_email_sender(monkeypatch, method, replacement):
+    modules = {
+        import_module("mielenosoitukset_fi.admin.admin_demo_bp"),
+        import_module("admin.admin_demo_bp"),
+    }
+    for module in modules:
+        monkeypatch.setattr(module.email_sender, method, replacement)
 
 
 def test_edit_link_duration_is_allowlisted_and_registry_expiry_matches(
@@ -112,17 +122,15 @@ def test_anonymous_edit_token_can_save_with_session_csrf(app, db, seeded_data):
 def test_send_edit_link_ignores_client_url_and_does_not_use_persistent_queue(
     admin_client, monkeypatch, seeded_data
 ):
-    import mielenosoitukset_fi.admin.admin_demo_bp as demo_routes
-
     sent = {}
 
     def capture_send_now(**kwargs):
         sent.update(kwargs)
         return True
 
-    monkeypatch.setattr(demo_routes.email_sender, "send_now", capture_send_now)
-    monkeypatch.setattr(
-        demo_routes.email_sender,
+    _patch_demo_email_sender(monkeypatch, "send_now", capture_send_now)
+    _patch_demo_email_sender(
+        monkeypatch,
         "queue_email",
         lambda **kwargs: (_ for _ in ()).throw(AssertionError("bearer link was queued")),
     )

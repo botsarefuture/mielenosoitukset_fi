@@ -12,7 +12,14 @@
     back_label=_('Lataa mediaa')
 ) }}
 <!-- New file input for uploading multiple photos -->
-<form id="upload-form" class="admin-form-section admin-media-upload" action="{{ url_for('admin_media_bp.upload_multiple') }}" method="post" enctype="multipart/form-data">
+<section class="admin-form-section">
+  <div class="admin-form-section__header">
+    <div>
+      <h2>{{ _('Lataa useita kuvia') }}</h2>
+      <p>{{ _('Lisää useita kuvatiedostoja mediakirjastoon samalla kertaa.') }}</p>
+    </div>
+  </div>
+<form id="upload-form" class="admin-form-section__body admin-media-upload" action="{{ url_for('admin_media_bp.upload_multiple') }}" method="post" enctype="multipart/form-data">
     <div class="admin-field">
         <label for="photos">{{ _('Lataa useita kuvia') }}</label>
         <input class="form-control" type="file" id="photos" name="photos" accept="image/*" multiple required>
@@ -20,6 +27,7 @@
     </div>
     <button class="btn btn-primary" type="submit"><i class="fas fa-upload" aria-hidden="true"></i>{{ _('Lataa kuvat') }}</button>
 </form>
+</section>
 <div class="admin-media-grid">
     {% for item in media %}
     <article class="admin-media-card">

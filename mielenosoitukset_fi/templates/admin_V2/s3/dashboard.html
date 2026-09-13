@@ -16,6 +16,7 @@
         <h2>{{ _('Ladattava tiedosto') }}</h2>
         <p>{{ _('Valitse kuva ja anna sille käyttötarkoitusta kuvaava tyyppi.') }}</p>
     </div>
+    <div class="admin-form-section__body">
     <form method="POST" class="admin-form" action="{{ url_for('admin_media_bp.upload_file') }}" enctype="multipart/form-data">
         <div class="admin-field">
             <label for="file">{{ _('Valitse ladattava tiedosto') }}</label>
@@ -33,6 +34,7 @@
 
     <div id="upload-result" class="alert alert-danger" role="status" hidden>
         <p class="mb-0">{{ _('Latauksen tulos näytetään tässä.') }}</p>
+    </div>
     </div>
 </section>
 </div>

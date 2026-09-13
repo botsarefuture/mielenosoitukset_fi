@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Sparse admin media libraries now keep thumbnail-sized grid tracks, and both media upload forms retain the standard section-body inset instead of placing controls against card edges.
 * The escalated-case summary card now applies the same label styling as the other case counters instead of emitting an invalid `aclass` attribute.
 * Organization viewers no longer see member-role mutation, member-removal, or invitation-cancellation controls unless their scoped organization permissions allow those actions; server-side authorization remains authoritative.
 * Production deployments no longer fail with SSH `Permission denied (publickey,password)` right after freshly adding the deploy key to the agent: the workflow no longer sets `IdentitiesOnly` without a matching `IdentityFile`, so the GitHub Actions agent can actually offer the dedicated deploy key to the server.

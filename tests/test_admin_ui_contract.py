@@ -526,10 +526,13 @@ def test_media_admin_uses_shared_theme_aware_components():
         assert "form.css" not in template
         assert "table.css" not in template
     assert "admin-form-section" in upload
+    assert 'class="admin-form-section__body"' in upload
+    assert 'class="admin-form-section__body admin-media-upload"' in library
     assert "admin-media-grid" in library
     assert "admin-media-card__preview" in library
     assert "onclick=" not in library
     assert ".admin-media-card" in workspace
+    assert "repeat(auto-fill, minmax(min(100%, 16rem), 1fr))" in workspace
     assert "var(--admin-workspace-surface)" in workspace
     assert "var(--admin-workspace-border)" in workspace
 

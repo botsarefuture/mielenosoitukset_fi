@@ -3218,6 +3218,105 @@ th.sortable.desc::after {
   box-shadow: 0 0 0 4px var(--admin-workspace-blue-soft);
 }
 
+/* User identity, role, and scoped-permission editor. */
+.admin-user-page {
+  max-width: 1200px;
+}
+
+.admin-user-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-user-form .admin-form-section {
+  padding: clamp(1rem, 2.5vw, 1.4rem);
+}
+
+.admin-user-form .admin-form-section__header {
+  margin-bottom: 1rem;
+  padding-bottom: .8rem;
+  border-bottom: 1px solid var(--admin-workspace-border);
+}
+
+.admin-user-form .admin-form-section__header h2 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+.admin-user-form .admin-form-section__header p {
+  margin: .25rem 0 0;
+  color: var(--admin-workspace-muted);
+  font-size: .8rem;
+}
+
+.admin-user-form .admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.admin-user-form .admin-field--wide {
+  grid-column: 1 / -1;
+}
+
+.admin-user-form .admin-check-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: .2rem .7rem;
+}
+
+.admin-user-form .admin-check-row input,
+.admin-user-form :is(.permission-item, .select-all) input {
+  margin-top: .2rem;
+}
+
+.admin-user-form .admin-check-row small {
+  grid-column: 2;
+  color: var(--admin-workspace-muted);
+}
+
+.admin-user-form .admin-form-note {
+  padding: .8rem 1rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .8rem;
+  color: var(--admin-workspace-muted);
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-user-form .permission-category {
+  margin-top: 1rem;
+}
+
+.admin-user-form .permission-category :is(h3, h4) {
+  margin: 0 0 .65rem;
+  color: var(--admin-workspace-text);
+  font-size: .9rem;
+}
+
+.admin-user-form .permission-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: .55rem;
+}
+
+.admin-user-form :is(.permission-item, .select-all) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: .65rem;
+  padding: .7rem .8rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .7rem;
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-user-form .admin-sticky-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .65rem;
+}
+
 @media (max-width: 1050px) {
   .admin-detail-layout {
     grid-template-columns: 1fr;
@@ -3252,6 +3351,19 @@ th.sortable.desc::after {
 
   .admin-health-service__message {
     grid-column: 2;
+  }
+
+  .admin-user-form .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-user-form .admin-field--wide {
+    grid-column: auto;
+  }
+
+  .admin-user-form .admin-sticky-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
   }
 
   .admin-section-card__header {

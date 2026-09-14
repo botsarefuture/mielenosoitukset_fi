@@ -1,3 +1,5 @@
+import hashlib
+import re
 from pathlib import Path
 from html.parser import HTMLParser
 
@@ -84,25 +86,40 @@ def test_full_admin_templates_use_the_admin_shell():
 
 def test_admin_inline_style_debt_cannot_grow_without_review():
     style_block_allowlist = {
-        "_users_table.html": 1,
-        "cases/all.html": 1,
-        "cases/case.html": 1,
-        "cities/index.html": 1,
-        "dashboard.html": 1,
-        "demonstrations/command_center.html": 1,
-        "demonstrations/dashboard.html": 1,
-        "demonstrations/translations_editor.html": 1,
-        "logs.html": 1,
-        "user/list.html": 1,
+        "_users_table.html": ("7d2b36160b76de688cd17b79eaf781963a3d1cc932d63a2b846c99b997f08053",),
+        "cases/all.html": ("16de3fe0658db809b40d9d4b09b5a967130c6db8b7896b5dc2f0c044e382d97f",),
+        "cases/case.html": ("b79b29b4fd9bddf4c8ab469007a8fc36d7b7dc24c111c4b7fda1a04805c42c59",),
+        "cities/index.html": ("3d27343693df99175c8ed03679c15a78ce9c031ece3180a1b89872f9f08f7d37",),
+        "dashboard.html": ("b1946f48e192ef2949b4d5e8eed75989f46d50b07dd9eef9a2a0efead658f5f9",),
+        "demonstrations/command_center.html": ("417fb57cd87fd0c1b3ff0068cd7dfed92acfc0e4cce58123d93fed347b22c345",),
+        "demonstrations/dashboard.html": ("9f97a12eac3420515d3a71429da50bc5ebb130a30770a9b56c46221418abf622",),
+        "demonstrations/translations_editor.html": ("a3ee7ec76c2da45da1fbcf3124c923ea93a1cdadd86b2d38767902ce696bf8c0",),
+        "logs.html": ("6264f7731e696f127a64ac39c798b23f723d9be595b6d35a0495ba39a2ee4b2e",),
+        "user/list.html": ("f0d93944cfcdd563188ba2482f2bcb08498697463f1d527b84754380128a8def",),
     }
     style_attribute_allowlist = {
-        "demonstrations/form.html": 1,
-        "demonstrations/translations_editor.html": 1,
-        "macros.html": 1,
-        "recu_demonstrations/_form.html": 3,
-        "recu_demonstrations/_form_v2.html": 10,
-        "status.html": 1,
-        "tag_form.html": 1,
+        "demonstrations/form.html": ("0207b1097d91cbd2db5ca3c9c2d4f4a078f88bba9b76d54e47851d88f540f363",),
+        "demonstrations/translations_editor.html": ("e5c4a4d9ceace908e840babc9cd36852b4c748b35a4c9ac632f1173443872df0",),
+        "macros.html": ("c51ec35a4e6a31e3a4433913317b3297d7bb5300f543c35c378b1b9c00f7ec78",),
+        "recu_demonstrations/_form.html": (
+            "d0466aa33fa8061c7b805e27bd8d9b4aaa06cb2e332e3345f920d05c6a7f66b6",
+            "2919379184ff8ef35568d89a979d13162e07c3613ff8fa65ea5b2826c8e87abc",
+            "72370f42eb03e9339d67d4860ac05f87660c3e706ca83a42f3d1075c04b56894",
+        ),
+        "recu_demonstrations/_form_v2.html": (
+            "002dc26c478b3c97f65ba75a55b91f5295a1e5eea02ef881a2f207cea85bec8e",
+            "734200fc2335cf7f0bae5ea327eba62129ac34fece3f87b24bc4e8d196f6c25c",
+            "65d1f1c3d796b67c546f79a4ead052fa02225543c4de918ce3bd247873c31651",
+            "65d1f1c3d796b67c546f79a4ead052fa02225543c4de918ce3bd247873c31651",
+            "5aa7a955a93e19ad6860cb2e79597f05760177b82c38c7413ab2b4f1f08eba84",
+            "8b7a90798426bdbc75fd87ba4774f38bcd8cf595792137a0c3b76d1b494bfe6b",
+            "ae7bf87ad3042f63e29ce68b156d3152d713fd714f7299dafb0026c2ad10ff00",
+            "0207b1097d91cbd2db5ca3c9c2d4f4a078f88bba9b76d54e47851d88f540f363",
+            "5aa7a955a93e19ad6860cb2e79597f05760177b82c38c7413ab2b4f1f08eba84",
+            "8b7a90798426bdbc75fd87ba4774f38bcd8cf595792137a0c3b76d1b494bfe6b",
+        ),
+        "status.html": ("fd8a8ba5d1e16400323c06329adb6dbbf433e7ecc6be7d3e3041c29a6228720f",),
+        "tag_form.html": ("d26dfcb508ff2a1ba922197b16b68b4d75dbb728205f0e2908ec3704db94d7c8",),
     }
     root = Path("mielenosoitukset_fi/templates/admin_V2")
     actual_blocks = {}
@@ -111,10 +128,25 @@ def test_admin_inline_style_debt_cannot_grow_without_review():
     for template in root.rglob("*.html"):
         source = template.read_text(encoding="utf-8")
         relative = str(template.relative_to(root))
-        if count := source.count("<style"):
-            actual_blocks[relative] = count
-        if count := source.count("style="):
-            actual_attributes[relative] = count
+        blocks = re.findall(
+            r"<style(?:\s[^>]*)?>(.*?)</style>", source, flags=re.IGNORECASE | re.DOTALL
+        )
+        attributes = [
+            match.group(2)
+            for match in re.finditer(
+                r'''style\s*=\s*(["'])(.*?)\1''',
+                source,
+                flags=re.IGNORECASE | re.DOTALL,
+            )
+        ]
+        if blocks:
+            actual_blocks[relative] = tuple(
+                hashlib.sha256(value.encode()).hexdigest() for value in blocks
+            )
+        if attributes:
+            actual_attributes[relative] = tuple(
+                hashlib.sha256(value.encode()).hexdigest() for value in attributes
+            )
 
     assert actual_blocks == style_block_allowlist
     assert actual_attributes == style_attribute_allowlist

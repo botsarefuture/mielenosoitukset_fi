@@ -39,6 +39,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* The demonstration translation workspace now uses shared section, field, checkbox, status, sticky-action, focus, light/dark, and responsive contracts plus a reusable translation stylesheet; this removes the final admin_V2 template-local style block and its last static style attribute.
 * The root admin dashboard now uses the shared page, panel, empty-state, status, focus, theme, and reduced-motion contracts plus a scoped dashboard stylesheet instead of a 351-line template-local palette and broad workspace overrides.
 * The admin inline-style debt guard now fingerprints every remaining style block and attribute value, so declarations cannot grow inside an allowlisted element without an explicit reviewed baseline update.
 * The demonstration collection now uses the shared data-view, grouped-row, status-icon, empty-state, pagination, and modal contracts plus the reusable demonstrations stylesheet instead of its 343-line template-local light/dark palette; delete animation also respects reduced-motion preferences.

@@ -85,12 +85,9 @@ def test_full_admin_templates_use_the_admin_shell():
 
 
 def test_admin_inline_style_debt_cannot_grow_without_review():
-    style_block_allowlist = {
-        "demonstrations/translations_editor.html": ("a3ee7ec76c2da45d",),
-    }
+    style_block_allowlist = {}
     style_attribute_allowlist = {
         "demonstrations/form.html": ("0207b1097d91cbd2",),
-        "demonstrations/translations_editor.html": ("e5c4a4d9ceace908",),
         "macros.html": ("c51ec35a4e6a31e3",),
         "recu_demonstrations/_form.html": (
             "d0466aa33fa8061c",
@@ -515,6 +512,24 @@ def test_translation_workspaces_use_canonical_hero_navigation():
         assert "back_url=" in Path(name).read_text(encoding="utf-8")
     demo_dashboard = Path(pages[0]).read_text(encoding="utf-8")
     assert "back_url=url_for('admin.admin_dashboard')" in demo_dashboard
+    demo_editor = Path(pages[1]).read_text(encoding="utf-8")
+    translation_css = Path(
+        "mielenosoitukset_fi/static/css/admin/translations.css"
+    ).read_text(encoding="utf-8")
+    assert "<style" not in demo_editor
+    assert "style=" not in demo_editor
+    assert "css/admin/translations.css" in demo_editor
+    assert "admin-page admin-workspace translation-editor" in demo_editor
+    assert demo_editor.count("admin-section-card") >= 3
+    assert "admin-panel-inset" in demo_editor
+    assert "admin-check-row" in demo_editor
+    assert "admin-status-badge" in demo_editor
+    assert "admin-form admin-section-card translation-step" in demo_editor
+    assert "admin-sticky-actions" in demo_editor
+    assert "{% block scripts %}" in demo_editor
+    assert "light-dark(" not in translation_css
+    assert "--translation-" not in translation_css
+    assert "--bs-" not in translation_css
 
 
 def test_system_workspaces_use_canonical_hero_navigation():

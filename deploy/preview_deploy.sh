@@ -148,6 +148,10 @@ start_mongo_container() {
     --network "$network" \
     --network-alias mongo \
     --restart unless-stopped \
+    --memory "${PREVIEW_MONGO_MEMORY_LIMIT:-512m}" \
+    --memory-swap "${PREVIEW_MONGO_SWAP_LIMIT:-768m}" \
+    --cpus "${PREVIEW_MONGO_CPU_LIMIT:-0.5}" \
+    --pids-limit 128 \
     -v "$mongo_data_dir:/data/db" \
     mongo:8 \
     mongod --bind_ip_all --port 27017 >/dev/null
@@ -163,6 +167,9 @@ start_mail_container() {
     --network "$network" \
     --network-alias mailserver \
     --restart unless-stopped \
+    --memory "${PREVIEW_MAIL_MEMORY_LIMIT:-128m}" \
+    --cpus "${PREVIEW_MAIL_CPU_LIMIT:-0.1}" \
+    --pids-limit 64 \
     reachfive/fake-smtp-server >/dev/null
 }
 
@@ -204,11 +211,16 @@ deploy_preview() {
   local db_name="${PREVIEW_MONGO_DBNAME_PREFIX:-preview_pr_}${pr_number}"
   local mongo_host="${mongo_container}"
   local mongo_data_dir="${preview_dir}/mongo"
+  local deploy_lock="${PREVIEW_DEPLOY_LOCK:-/tmp/mielenosoitukset-preview-deploy.lock}"
 
   mkdir -p "$preview_dir" "$snippets_dir"
   chmod 0750 "$preview_dir" "$snippets_dir"
   chgrp caddy "$snippets_dir"
   chmod 0770 "$snippets_dir"
+
+  echo "[preview] acquiring global deploy lock (${deploy_lock})"
+  exec 9>"$deploy_lock"
+  flock 9
 
   echo "[preview] creating isolated network and service containers"
   create_network "$network_name"
@@ -224,6 +236,10 @@ deploy_preview() {
 
   echo "[preview] seeding preview database if configured"
   seed_mongo_if_requested "$network_name" "$preview_dir" "$db_name" "$mongo_host"
+
+  echo "[preview] releasing global deploy lock"
+  flock -u 9
+  exec 9>&-
 
   echo "[preview] starting application container"
   docker rm -f "$container_name" >/dev/null 2>&1 || true

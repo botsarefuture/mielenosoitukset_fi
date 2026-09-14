@@ -8,6 +8,7 @@
 * Every full admin subpage now has a canonical breadcrumb trail, nested workflows use the hero's first shared back action, and a static contract documents the intentional top-level pages that rely on persistent navigation instead.
 * Admin demonstration, recurring-demonstration, tag, and shared table templates now express conditional visibility and form geometry through semantic markup and shared workspace components; the only remaining admin inline style is the server-driven disk-usage width.
 * The live admin dashboard now renders login-feed API values with DOM text nodes instead of HTML interpolation and exposes live health bars as accessible progress indicators.
+* Admin pages now contain intrinsically wide tables inside the shared workspace grid on mobile, and browser regression fixtures remain future-dated and aligned with the canonical summary-card components.
 * Small orange user-status and admin-role badges now use a contrast-safe semantic foreground in both themes instead of bright orange text on the soft orange surface.
 * Case summary cards and detail section headings now use the shared component wrappers, restoring the common label sizing, overflow behavior, and compact heading geometry.
 * Disabled demonstration hero actions now retain the canonical hero control geometry and expose their unavailable state to assistive technology after legacy hero classes are removed.

@@ -392,6 +392,9 @@ def _seed_database(app, db):
         ]
     )
 
+    upcoming_demo_date = utcnow().date() + timedelta(days=30)
+    recurring_demo_date = upcoming_demo_date + timedelta(days=7)
+
     organizer = {
         "name": "Test Organization",
         "email": "bob@example.test",
@@ -399,7 +402,7 @@ def _seed_database(app, db):
     }
     base_demo = {
         "title": "Climate March Helsinki",
-        "date": "2026-05-01",
+        "date": upcoming_demo_date.isoformat(),
         "start_time": "12:00",
         "end_time": "14:00",
         "city": "Helsinki",
@@ -420,7 +423,7 @@ def _seed_database(app, db):
         "last_modified": now,
         "running_number": 1001,
         "slug": "climate-march-helsinki",
-        "formatted_date": "01.05.2026",
+        "formatted_date": upcoming_demo_date.strftime("%d.%m.%Y"),
         "latitude": "60.1699",
         "longitude": "24.9384",
         "type": "other",
@@ -454,7 +457,7 @@ def _seed_database(app, db):
             "_id": recu_demo_id,
             "title": "Recurring Test Series",
             "description": "Series used in smoke tests.",
-            "date": "2026-05-08",
+            "date": recurring_demo_date.isoformat(),
             "start_time": "18:00",
             "end_time": "20:00",
             "city": "Helsinki",

@@ -35,6 +35,7 @@
 
 ### Changed
 * The admin inline-style debt ratchet now fingerprints the allowlisted style contents, so declarations and attribute values cannot expand unnoticed while the remaining exceptions are migrated.
+* The demonstration command center now uses the shared admin page, hero, status, section-card, button, and semantic theme contracts backed by the reusable demonstrations CSS module instead of a 325-line inline palette; external tools use isolated-tab links and a stray post-template CSS fragment has been removed.
 * User listing, identity rows, role badges, account workflows, and creation/login-history modals now combine the shared admin summary, section, data-view, field, button, modal, status, and semantic color contracts with a reusable users CSS module instead of 570 lines of template-local styling and legacy `--users-*` theme aliases.
 * The admin event-log center now uses a reusable audit stylesheet plus shared hero, breadcrumb, back-action, filter, field, button, section-card, empty-state, result-summary, and pagination components instead of a 327-line inline style block; technical disclosures also expose their expanded state and controls to assistive technology without runtime inline sizing.
 * City management now gets its responsive shell, section surface, table viewport, and light/dark data styling entirely from shared admin components instead of a duplicate inline stylesheet; its external city links also use the complete isolated-tab relationship contract.

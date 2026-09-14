@@ -87,7 +87,6 @@ def test_full_admin_templates_use_the_admin_shell():
 def test_admin_inline_style_debt_cannot_grow_without_review():
     style_block_allowlist = {
         "dashboard.html": ("b1946f48e192ef2949b4d5e8eed75989f46d50b07dd9eef9a2a0efead658f5f9",),
-        "demonstrations/command_center.html": ("417fb57cd87fd0c1b3ff0068cd7dfed92acfc0e4cce58123d93fed347b22c345",),
         "demonstrations/dashboard.html": ("9f97a12eac3420515d3a71429da50bc5ebb130a30770a9b56c46221418abf622",),
         "demonstrations/translations_editor.html": ("a3ee7ec76c2da45da1fbcf3124c923ea93a1cdadd86b2d38767902ce696bf8c0",),
     }
@@ -662,7 +661,7 @@ def test_demo_command_center_separates_hero_copy_from_operational_context():
     assert "admin_page_hero(" in template
     assert "admin-page-hero--stacked" in template
     assert "back_url=" in template
-    assert template.index("{% endcall %}") < template.index('class="status-badges"')
+    assert template.index("{% endcall %}") < template.index('class="status-badges admin-row-actions"')
     assert template.index("{% endcall %}") < template.index('class="hero-metadata"')
     for legacy_class in (
         ".hero-card",
@@ -673,7 +672,17 @@ def test_demo_command_center_separates_hero_copy_from_operational_context():
         ".hero-link",
     ):
         assert legacy_class not in template
-    assert ".demo-command-center {\n    padding: 1rem;\n    display: grid;\n    gap: 1.5rem;" in template
+    styles = Path(
+        "mielenosoitukset_fi/static/css/admin/demonstrations.css"
+    ).read_text(encoding="utf-8")
+    assert "<style" not in template
+    assert "css/admin/demonstrations.css" in template
+    assert "admin-page admin-workspace" in template
+    assert "admin-status-badge" in template
+    assert template.count("admin-section-card") >= 10
+    assert 'type="button" class="action-btn btn' in template
+    assert "--admin-workspace-surface" in styles
+    assert "light-dark(" not in styles
 
 
 def test_destructive_confirmations_use_canonical_hero_navigation():

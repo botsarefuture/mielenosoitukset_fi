@@ -1842,6 +1842,11 @@ main.flex-grow-1 :is(.alert, .badge) {
   text-transform: uppercase;
 }
 
+.dark .admin-modal .btn-close,
+.dark .admin-workflow-modal .btn-close {
+  filter: invert(1) grayscale(1) brightness(2);
+}
+
 @media (max-width: 760px) {
   .admin-form-layout,
   .admin-form-grid {

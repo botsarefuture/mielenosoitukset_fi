@@ -86,12 +86,10 @@ def test_full_admin_templates_use_the_admin_shell():
 
 def test_admin_inline_style_debt_cannot_grow_without_review():
     style_block_allowlist = {
-        "_users_table.html": ("7d2b36160b76de688cd17b79eaf781963a3d1cc932d63a2b846c99b997f08053",),
         "dashboard.html": ("b1946f48e192ef2949b4d5e8eed75989f46d50b07dd9eef9a2a0efead658f5f9",),
         "demonstrations/command_center.html": ("417fb57cd87fd0c1b3ff0068cd7dfed92acfc0e4cce58123d93fed347b22c345",),
         "demonstrations/dashboard.html": ("9f97a12eac3420515d3a71429da50bc5ebb130a30770a9b56c46221418abf622",),
         "demonstrations/translations_editor.html": ("a3ee7ec76c2da45da1fbcf3124c923ea93a1cdadd86b2d38767902ce696bf8c0",),
-        "user/list.html": ("f0d93944cfcdd563188ba2482f2bcb08498697463f1d527b84754380128a8def",),
     }
     style_attribute_allowlist = {
         "demonstrations/form.html": ("0207b1097d91cbd2db5ca3c9c2d4f4a078f88bba9b76d54e47851d88f540f363",),
@@ -243,12 +241,32 @@ def test_user_role_forms_use_shared_admin_contract():
     modals = Path(
         "mielenosoitukset_fi/templates/admin_V2/_modals_users.html"
     ).read_text(encoding="utf-8")
+    user_list = Path(
+        "mielenosoitukset_fi/templates/admin_V2/user/list.html"
+    ).read_text(encoding="utf-8")
+    user_table = Path(
+        "mielenosoitukset_fi/templates/admin_V2/_users_table.html"
+    ).read_text(encoding="utf-8")
+    users_css = Path(
+        "mielenosoitukset_fi/static/css/admin/users.css"
+    ).read_text(encoding="utf-8")
 
     assert "admin_page_hero(" in edit
     assert 'class="admin-form admin-user-form"' in edit
     assert "admin-form-section" in edit
     assert "admin-sticky-actions" in edit
     assert "modal fade admin-modal" in modals
+    assert "<style" not in user_list
+    assert "<style" not in user_table
+    assert "css/admin/users.css" in user_list
+    assert "admin-workspace-summary" in user_list
+    assert "admin-section-card" in user_list
+    assert "admin-data-view" in user_list
+    assert "--users-" not in users_css
+    assert "--admin-workspace-primary-bg" in users_css
+    assert ".dark .admin-modal .btn-close" in Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
 
 
 def test_demo_collection_uses_server_side_filter_and_pagination_contract():

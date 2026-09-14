@@ -1,89 +1,3 @@
-<style>
-  .user-identity {
-    display: flex;
-    gap: .7rem;
-    align-items: center;
-    min-width: 210px;
-  }
-
-  .user-avatar {
-    display: grid;
-    flex: 0 0 auto;
-    width: 2.45rem;
-    height: 2.45rem;
-    place-items: center;
-    border-radius: .75rem;
-    color: var(--users-blue);
-    background: var(--users-blue-soft);
-    font-weight: 900;
-    line-height: 1;
-    overflow: hidden;
-    text-transform: uppercase;
-  }
-
-  .user-identity strong,
-  .user-identity div span {
-    display: block;
-  }
-
-  .user-identity strong { color: var(--users-text); font-size: .9rem; }
-  .user-identity div span { color: var(--users-muted); font-size: .76rem; }
-
-  .user-email {
-    color: var(--users-muted);
-    font-size: .84rem;
-  }
-
-  .user-status {
-    display: inline-flex;
-    gap: .35rem;
-    align-items: center;
-    margin-top: .25rem;
-    color: var(--users-muted);
-    font-size: .7rem;
-  }
-
-  .user-status.confirmed { color: light-dark(#087f5b, #65d6ac); }
-
-  .user-role {
-    display: inline-flex;
-    gap: .35rem;
-    align-items: center;
-    padding: .28rem .58rem;
-    border-radius: 999px;
-    color: var(--users-muted);
-    background: var(--users-surface-muted);
-    font-size: .72rem;
-    font-weight: 800;
-  }
-
-  .user-role.admin { color: light-dark(#9a4d00, #ffd098); background: var(--users-orange-soft); }
-  .user-role.city-admin { color: var(--admin-workspace-blue-dark); background: var(--admin-workspace-blue-soft); }
-  .user-role.translator { color: light-dark(#075985, #7dd3fc); background: light-dark(#e0f2fe, rgba(14, 116, 144, .22)); }
-  .user-role.global-admin { color: var(--users-blue-dark); background: var(--users-blue-soft); }
-
-  .user-login {
-    color: var(--users-text);
-    font-size: .82rem;
-  }
-
-  .user-login.never { color: var(--users-muted); }
-
-  .user-actions-button {
-    display: inline-flex;
-    gap: .4rem;
-    align-items: center;
-    padding: .45rem .65rem;
-    border: 1px solid var(--users-border);
-    border-radius: .65rem;
-    color: var(--users-text);
-    background: var(--users-surface-muted);
-    font-size: .78rem;
-    font-weight: 800;
-  }
-
-</style>
-
 <div class="admin-data-view__header admin-result-summary">
   <span><strong>{{ total_users }}</strong> {{ _('käyttäjää löytyi') }}</span>
   {% if search_query %}<span>{{ _('Haku') }}: “{{ search_query }}”</span>{% endif %}
@@ -144,7 +58,7 @@
         <td>
           {% if current_user.has_permission("EDIT_USER") or current_user.has_permission("DELETE_USER") or current_user.has_permission("FORCE_PASSWORD_CHANGE") or current_user.has_permission("VIEW_USER") %}
           <div class="dropdown">
-            <button class="user-actions-button dropdown-toggle" type="button" id="userActions-{{ user._id }}" data-bs-toggle="dropdown" aria-expanded="false">
+            <button class="user-actions-button btn btn-outline-secondary dropdown-toggle" type="button" id="userActions-{{ user._id }}" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>{{ _('Toiminnot') }}
             </button>
             <ul class="dropdown-menu" aria-labelledby="userActions-{{ user._id }}">

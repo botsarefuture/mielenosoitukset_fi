@@ -2478,9 +2478,8 @@ main.flex-grow-1 {
   }
 }
 
-/* Dashboard and case-management screens keep their information architecture,
-   but use the same surfaces and typography as every other admin view. */
-.admin-dashboard-shell :is(.card-panel, .stat-card, .quick-card, .side-panel, .panic-card, .health-card, .login-entry),
+/* Case-management records use the same surfaces and typography as every
+   other admin detail view. */
 .case-page :is(.detail-item, .description-box, .note-box, .change-entry, .timeline-entry, .log-entry) {
   border-color: var(--admin-workspace-border);
   color: var(--admin-workspace-text);
@@ -2488,22 +2487,14 @@ main.flex-grow-1 {
   box-shadow: var(--admin-workspace-shadow);
 }
 
-.admin-dashboard-shell :is(.live-header, .side-header) {
-  border-color: var(--admin-workspace-border);
-  color: var(--admin-workspace-text);
-}
-
-.admin-dashboard-shell :is(.stat-value, .quick-card strong, .entry-heading, h2, h3, h4),
 .case-page :is(.detail-item strong, .timeline-entry-header, .log-entry-header, h2, h3, h4) {
   color: var(--admin-workspace-text);
 }
 
-.admin-dashboard-shell :is(.stat-label, .stat-sub, .health-label, .entry-meta, .empty-state),
 .case-page :is(.muted, .detail-item span, .empty-state) {
   color: var(--admin-workspace-muted);
 }
 
-.admin-dashboard-shell :is(.system-rows, .health-card, .progress-bar),
 .case-page :is(.info-list, .change-list, .timeline-list, .log-list) {
   border-color: var(--admin-workspace-border);
   background: var(--admin-workspace-surface-muted);

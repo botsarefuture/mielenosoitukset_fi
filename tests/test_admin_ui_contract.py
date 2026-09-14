@@ -86,7 +86,6 @@ def test_full_admin_templates_use_the_admin_shell():
 
 def test_admin_inline_style_debt_cannot_grow_without_review():
     style_block_allowlist = {
-        "dashboard.html": ("b1946f48e192ef29",),
         "demonstrations/translations_editor.html": ("a3ee7ec76c2da45d",),
     }
     style_attribute_allowlist = {
@@ -152,6 +151,31 @@ def test_admin_theme_is_applied_before_styles_and_controls_color_scheme():
     assert "html.light" in workspace and "color-scheme: light" in workspace
     assert "html.dark" in workspace and "color-scheme: dark" in workspace
     assert "modal-content, .modal-header, .modal-body, .modal-footer" not in base
+
+
+def test_root_admin_dashboard_uses_shared_components_and_safe_feed_rendering():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/dashboard.html"
+    ).read_text(encoding="utf-8")
+    stylesheet = Path(
+        "mielenosoitukset_fi/static/css/admin/dashboard.css"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in template
+    assert "style=" not in template
+    assert "css/admin/dashboard.css" in template
+    assert "admin-page admin-workspace admin-dashboard-shell" in template
+    assert template.count("admin-panel") >= 3
+    assert "admin-empty-state" in template
+    assert "admin-status-badge" in template
+    assert "admin-dashboard-progress" in template
+    assert "innerHTML" not in template
+    assert "replaceChildren" in template
+    assert "textContent" in template
+    assert "light-dark(" not in stylesheet
+    assert "--card-" not in stylesheet
+    assert "--border-muted" not in stylesheet
+    assert "@media (prefers-reduced-motion: reduce)" in stylesheet
 
 
 def test_legacy_dialog_does_not_override_bootstrap_modal():

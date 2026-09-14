@@ -87,7 +87,6 @@ def test_full_admin_templates_use_the_admin_shell():
 def test_admin_inline_style_debt_cannot_grow_without_review():
     style_block_allowlist = {
         "dashboard.html": ("b1946f48e192ef2949b4d5e8eed75989f46d50b07dd9eef9a2a0efead658f5f9",),
-        "demonstrations/dashboard.html": ("9f97a12eac3420515d3a71429da50bc5ebb130a30770a9b56c46221418abf622",),
         "demonstrations/translations_editor.html": ("a3ee7ec76c2da45da1fbcf3124c923ea93a1cdadd86b2d38767902ce696bf8c0",),
     }
     style_attribute_allowlist = {
@@ -284,8 +283,18 @@ def test_demo_collection_uses_server_side_filter_and_pagination_contract():
         "admin-result-summary",
         "admin-pagination",
         "admin-page-size",
+        "admin-data-view",
+        "admin-data-view__viewport",
+        "admin-data-view__table",
+        "admin-data-view__footer",
+        "admin-data-group-header",
+        "admin-data-row--attention",
+        "admin-modal",
     ):
         assert contract in template
+    assert "css/admin/demonstrations.css" in template
+    assert "<style" not in template
+    assert "modal-dark" not in template
     assert "filterRows" not in template
     assert '"priority": {"_sort_priority": 1, "date": 1, "_id": 1}' in route
     assert '"date_desc": {"date": -1, "_id": -1}' in route

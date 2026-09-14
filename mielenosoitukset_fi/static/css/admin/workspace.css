@@ -455,6 +455,30 @@ body {
   box-shadow: inset .25rem 0 0 var(--admin-workspace-blue);
 }
 
+.admin-data-view__table .admin-data-group-header td {
+  padding: .65rem 1rem;
+  border-left: .25rem solid var(--admin-workspace-blue);
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.admin-data-view__table .admin-data-group-header--success td {
+  border-left-color: var(--admin-workspace-success);
+}
+
+.admin-data-view__table .admin-data-row--attention {
+  background: var(--admin-workspace-danger-soft);
+}
+
+.admin-data-view__table .admin-data-row--attention:hover {
+  background: color-mix(in srgb, var(--admin-workspace-danger-soft) 78%, var(--admin-workspace-danger) 22%);
+}
+
+.admin-status-icon--success { color: var(--admin-workspace-success); }
+.admin-status-icon--danger { color: var(--admin-workspace-danger); }
+
 .admin-selection-status {
   justify-content: flex-start;
   color: var(--admin-workspace-blue-dark);

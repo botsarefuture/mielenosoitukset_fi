@@ -293,3 +293,14 @@
     position: static;
   }
 }
+
+.demo-management-page .admin-data-view__table tr.fade-out {
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-management-page .admin-data-view__table tr.fade-out {
+    transition: none;
+  }
+}

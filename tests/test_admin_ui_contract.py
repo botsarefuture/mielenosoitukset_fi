@@ -581,6 +581,9 @@ def test_campaign_collection_uses_shared_admin_components():
     assert "modal fade admin-modal" in template
     assert "admin-check-row" in template
     assert "bootstrap.Modal.getOrCreateInstance" in template
+    assert template.index("bootstrap.Modal.getOrCreateInstance") > template.index(
+        "function boot()"
+    )
     assert "campaign-modal" not in template
     assert "btn-icon" not in template
     assert ".campaign-filters__grid" in workspace

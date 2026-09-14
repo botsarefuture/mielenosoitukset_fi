@@ -243,7 +243,7 @@
 
         /* ====== Modal handling ====== */
         const editModalElement = qs('#edit-modal');
-        const editModal = bootstrap.Modal.getOrCreateInstance(editModalElement);
+        let editModal = null;
         const editForm = qs('#edit-form');
         const editName = qs('#edit-name');
         const editEmail = qs('#edit-email');
@@ -705,6 +705,7 @@
 
         /* ====== Boot ====== */
         function boot() {
+            editModal = bootstrap.Modal.getOrCreateInstance(editModalElement);
             refreshRowsCache();
             wireButtons();
             filterVolunteers(); // initial filter + stats + pagination

@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Campaign volunteer controls now initialize their shared Bootstrap modal after the bundle has loaded, so filtering, pagination, exports, editing, confirmation, and deletion remain operational on first page load.
 * Test and error-path stability: admin route tests now patch the actual demonstration route module rather than the Blueprint re-export, invalid edit-link durations return the intended translated 400 response instead of raising from a shadowed translation helper, and repository-root test collection is safe in temporary Git worktrees.
 * Test suite stability: the admin package is imported under two module names inside one process (`mielenosoitukset_fi.admin.*` and top-level `admin.*`), each copy keeping its own module-level MongoDB handle. Combined with per-test disposable databases this made token-based admin flows (approve/edit/reject links) randomly hit a stale database owned by a previously run test and fail with HTTP 400. The seeding fixture now rebinds the `mongo` handle on every project module to the disposable test database, and leftover `mielenosoitukset_test_*` databases from interrupted or crashed runs are dropped at session end so MongoDB does not accumulate hundreds of throwaway databases.
 * The expired or revoked demonstration edit-link view now uses the canonical admin hero, breadcrumbs, and back-navigation contract, and its static UI guard follows the current shared edit-link action section.

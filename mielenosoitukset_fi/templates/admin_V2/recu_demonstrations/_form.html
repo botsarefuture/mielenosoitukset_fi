@@ -66,7 +66,7 @@
         </div>
 
         <!-- March Route Input -->
-        <div id="march-route-container" class="form-group" {% if demo and demo.event_type != 'marssi' %}style="display:none;"{% endif %}>
+        <div id="march-route-container" class="form-group"{% if demo and demo.event_type != 'marssi' %} hidden{% endif %}>
             <label for="route">Reitti (marssin)</label>
             <input type="text" id="route" name="route" class="form-control" value="{{ demo.route if demo and demo.route else '' }}">
         </div>
@@ -142,7 +142,7 @@
     </div>
 
     <!-- Weekly options -->
-    <div id="weekly-options" class="form-group mt-4" style="display: {% if freq=='weekly' %}block{% else %}none{% endif %}">
+    <div id="weekly-options" class="form-group mt-4"{% if freq != 'weekly' %} hidden{% endif %}>
         <label class="block font-medium mb-1">{{ _('Valitse viikonpäivät') }}</label>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
             {% for day, label in [('mon', _('Ma')), ('tue', _('Ti')), ('wed', _('Ke')), ('thu', _('To')), ('fri', _('Pe')), ('sat', _('La')), ('sun', _('Su'))] %}
@@ -157,7 +157,7 @@
     </div>
 
     <!-- Monthly options -->
-    <div id="monthly-options" class="form-group mt-4" style="display: {% if freq=='monthly' %}block{% else %}none{% endif %}">
+    <div id="monthly-options" class="form-group mt-4"{% if freq != 'monthly' %} hidden{% endif %}>
         <label class="block font-medium mb-1">{{ _('Kuukauden vaihtoehto') }}</label>
         <select id="monthly_option" name="monthly_option" class="form-control w-full">
             {% set monthly_opt = demo.repeat_schedule.monthly_option if demo and demo.repeat_schedule else 'day_of_month' %}
@@ -203,8 +203,8 @@
         const monthlyOptions = document.getElementById('monthly-options');
 
         freqSelect.addEventListener('change', () => {
-            weeklyOptions.style.display = freqSelect.value === 'weekly' ? 'block' : 'none';
-            monthlyOptions.style.display = freqSelect.value === 'monthly' ? 'block' : 'none';
+            weeklyOptions.hidden = freqSelect.value !== 'weekly';
+            monthlyOptions.hidden = freqSelect.value !== 'monthly';
         });
     </script>
 </section>
@@ -276,7 +276,7 @@
     }
 
     document.getElementById('type').addEventListener('change', function () {
-        document.getElementById('march-route-container').style.display = this.value === 'marssi' ? 'block' : 'none';
+        document.getElementById('march-route-container').hidden = this.value !== 'marssi';
     });
 
     document.addEventListener('change', function (event) {

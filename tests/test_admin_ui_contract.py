@@ -87,27 +87,7 @@ def test_full_admin_templates_use_the_admin_shell():
 def test_admin_inline_style_debt_cannot_grow_without_review():
     style_block_allowlist = {}
     style_attribute_allowlist = {
-        "demonstrations/form.html": ("0207b1097d91cbd2",),
-        "macros.html": ("c51ec35a4e6a31e3",),
-        "recu_demonstrations/_form.html": (
-            "d0466aa33fa8061c",
-            "2919379184ff8ef3",
-            "72370f42eb03e933",
-        ),
-        "recu_demonstrations/_form_v2.html": (
-            "002dc26c478b3c97",
-            "734200fc2335cf7f",
-            "65d1f1c3d796b67c",
-            "65d1f1c3d796b67c",
-            "5aa7a955a93e19ad",
-            "8b7a90798426bdbc",
-            "ae7bf87ad3042f63",
-            "0207b1097d91cbd2",
-            "5aa7a955a93e19ad",
-            "8b7a90798426bdbc",
-        ),
         "status.html": ("fd8a8ba5d1e16400",),
-        "tag_form.html": ("d26dfcb508ff2a1b",),
     }
     root = Path("mielenosoitukset_fi/templates/admin_V2")
     actual_blocks = {}
@@ -932,8 +912,9 @@ def test_demo_editor_static_geometry_uses_shared_form_components():
     ).read_text(encoding="utf-8")
 
     assert "<style" not in template
-    assert template.count("style=") == 1
-    assert "event_type != 'MARCH'" in template
+    assert "style=" not in template
+    assert "event_type != 'MARCH'" in template and " hidden" in template
+    assert "marchRouteContainer.hidden = typeSelect.value !== 'MARCH'" in template
     assert template.count('class="tags-wrapper admin-token-input"') == 2
     assert 'class="admin-form-image-preview"' in template
     assert 'class="row g-3 admin-coordinate-fields"' in template
@@ -945,6 +926,22 @@ def test_demo_editor_static_geometry_uses_shared_form_components():
     assert 'input:not(.admin-token-input__field), select, textarea):focus' in workspace
     assert ".access-panel-card .list-group-item" in workspace
     assert "var(--admin-workspace-surface-muted)" in workspace
+
+
+def test_recurring_editor_static_geometry_uses_shared_form_components():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html"
+    ).read_text(encoding="utf-8")
+
+    assert "style=" not in template
+    assert template.count('class="tags-wrapper admin-token-input"') == 2
+    assert template.count('class="admin-token-input__field"') == 2
+    assert 'class="admin-form-image-preview"' in template
+    assert 'class="main-container admin-editor-richtext"' in template
+    assert 'class="admin-editor-spacer" aria-hidden="true"' in template
+    assert "weeklyOptions.hidden = freqSelect.value !== 'weekly'" in template
+    assert "monthlyOptions.hidden = freqSelect.value !== 'monthly'" in template
+    assert "marchRouteContainer.hidden = typeSelect.value !== 'MARCH'" in template
 
 
 def test_recurring_collection_uses_shared_filter_data_and_modal_contracts():

@@ -537,8 +537,7 @@
                 </script>
             </div>
 
-            <div id="march-route-container" class="form-group"
-                style="{% if not demo or demo.event_type != 'MARCH' %}display:none;{% endif %}">
+            <div id="march-route-container" class="form-group"{% if not demo or demo.event_type != 'MARCH' %} hidden{% endif %}>
                 <label>{{ _('Reitti (marssin)') }}</label>
                 <div id="route-tags-wrapper" class="tags-wrapper admin-token-input">
 
@@ -614,11 +613,7 @@
 
                     // Show/hide route container based on type selection
                     function updateRouteVisibility() {
-                        if (typeSelect.value === 'MARCH') {
-                            marchRouteContainer.style.display = 'block';
-                        } else {
-                            marchRouteContainer.style.display = 'none';
-                        }
+                        marchRouteContainer.hidden = typeSelect.value !== 'MARCH';
                     }
 
                     typeSelect.addEventListener('change', updateRouteVisibility);

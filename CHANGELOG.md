@@ -34,6 +34,7 @@
 
 ### Changed
 * The admin inline-style debt ratchet now fingerprints the allowlisted style contents, so declarations and attribute values cannot expand unnoticed while the remaining exceptions are migrated.
+* The admin event-log center now uses a reusable audit stylesheet plus shared hero, breadcrumb, back-action, filter, field, button, section-card, empty-state, result-summary, and pagination components instead of a 327-line inline style block; technical disclosures also expose their expanded state and controls to assistive technology without runtime inline sizing.
 * City management now gets its responsive shell, section surface, table viewport, and light/dark data styling entirely from shared admin components instead of a duplicate inline stylesheet; its external city links also use the complete isolated-tab relationship contract.
 * Case listing and detail views now use the shared admin summary, filter, status, section-card, detail-layout, field, and action components instead of two template-local style systems; case rows are real keyboard-focusable links and client-side filters expose their selected state to assistive technology.
 * Admin UI contract checks now pin the exact remaining template-local style blocks and static/dynamic style attributes, so new inline CSS cannot silently increase the documented cleanup inventory while existing exceptions are removed in smaller domain batches.

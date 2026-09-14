@@ -91,7 +91,6 @@ def test_admin_inline_style_debt_cannot_grow_without_review():
         "demonstrations/command_center.html": ("417fb57cd87fd0c1b3ff0068cd7dfed92acfc0e4cce58123d93fed347b22c345",),
         "demonstrations/dashboard.html": ("9f97a12eac3420515d3a71429da50bc5ebb130a30770a9b56c46221418abf622",),
         "demonstrations/translations_editor.html": ("a3ee7ec76c2da45da1fbcf3124c923ea93a1cdadd86b2d38767902ce696bf8c0",),
-        "logs.html": ("6264f7731e696f127a64ac39c798b23f723d9be595b6d35a0495ba39a2ee4b2e",),
         "user/list.html": ("f0d93944cfcdd563188ba2482f2bcb08498697463f1d527b84754380128a8def",),
     }
     style_attribute_allowlist = {
@@ -508,6 +507,22 @@ def test_audit_and_developer_pages_use_canonical_hero_navigation():
         assert "admin.admin_dashboard" in source
     for name in pages[1:4] + pages[6:]:
         assert "back_url=" in Path(name).read_text(encoding="utf-8")
+    logs = Path(pages[0]).read_text(encoding="utf-8")
+    audit_css = Path(
+        "mielenosoitukset_fi/static/css/admin/audit.css"
+    ).read_text(encoding="utf-8")
+    assert "back_url=" in logs
+    assert "<style" not in logs
+    assert "css/admin/audit.css" in logs
+    assert "admin-filter-bar" in logs
+    assert "admin-section-card" in logs
+    assert "admin-result-summary" in logs
+    assert "admin-pagination" in logs
+    assert 'aria-expanded="false"' in logs
+    assert "detail.hidden = !isOpen" in logs
+    assert "detail.style.maxHeight" not in logs
+    assert "--admin-workspace-primary-bg" in audit_css
+    assert "prefers-reduced-motion: reduce" in audit_css
 
 
 def test_analytics_pages_use_shared_hero_metric_slot():

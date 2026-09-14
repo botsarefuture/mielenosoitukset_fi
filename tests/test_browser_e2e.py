@@ -24,6 +24,44 @@ def _wait_for_url(page, pattern):
     page.wait_for_url(pattern, wait_until="domcontentloaded")
 
 
+def _install_bootstrap_modal_test_double(page):
+    """Keep modal flows testable while browser fixtures block remote CDNs."""
+    page.add_init_script(
+        """
+        (() => {
+          const instances = new WeakMap();
+          class Modal {
+            constructor(element) {
+              this.element = element;
+              instances.set(element, this);
+            }
+            show() {
+              this.element.style.display = 'block';
+              this.element.classList.add('show');
+              this.element.removeAttribute('aria-hidden');
+              this.element.dispatchEvent(new Event('shown.bs.modal'));
+            }
+            hide() {
+              this.element.style.display = 'none';
+              this.element.classList.remove('show');
+              this.element.setAttribute('aria-hidden', 'true');
+              this.element.dispatchEvent(new Event('hidden.bs.modal'));
+            }
+            static getOrCreateInstance(element) {
+              return instances.get(element) || new Modal(element);
+            }
+          }
+          window.bootstrap = { Modal };
+          document.addEventListener('click', event => {
+            const dismiss = event.target.closest('[data-bs-dismiss="modal"]');
+            const modal = dismiss?.closest('.modal');
+            if (modal) Modal.getOrCreateInstance(modal).hide();
+          });
+        })();
+        """
+    )
+
+
 @pytest.mark.e2e
 @pytest.mark.integration
 def test_public_pages_render_in_real_browser(app, db, live_server, browser_page):
@@ -193,6 +231,7 @@ def test_submitter_modal_can_be_closed_and_reopened(
     live_server,
     browser_page,
 ):
+    _install_bootstrap_modal_test_double(browser_page)
     seeded_data = _seed_database(app, db)
     browser_page.goto(f"{live_server}/admin/demo/", wait_until="domcontentloaded")
     _submit_login_form(browser_page, "admin", "AdminPass1!")
@@ -205,8 +244,15 @@ def test_submitter_modal_can_be_closed_and_reopened(
 
     for _ in range(2):
         actions_toggle.click()
-        submitter_action.click()
+        with browser_page.expect_response(
+            re.compile(r".*/admin/demo/get_submitter_info/.*")
+        ) as response_info:
+            submitter_action.click()
+        assert response_info.value.ok
         modal.locator("#submitterInfoResult").wait_for(state="visible")
+        browser_page.wait_for_function(
+            "() => document.querySelector('#submitterName')?.textContent === 'Alice Tester'"
+        )
         assert modal.locator("#submitterName").text_content() == "Alice Tester"
         modal.locator("#closeSubmitterInfo").click()
         modal.wait_for(state="hidden")
@@ -312,8 +358,8 @@ def test_admin_summary_cards_keep_icons_labels_and_values_separate(
         ("/admin/demo/", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
         ("/admin/cities/", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
         ("/admin/user/", ".users-summary-card", ".users-summary-icon", "div > span", "div > strong"),
-        ("/admin/organization/", ".orgs-summary-card", ".orgs-summary-icon", "div > span", "div > strong"),
-        (f"/admin/organization/view/{seeded_data['org_id']}", ".org-detail-summary-card", ".org-detail-summary-icon", "div > span", "div > strong"),
+        ("/admin/organization/", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
+        (f"/admin/organization/view/{seeded_data['org_id']}", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
         ("/admin/stats", ".stats-shell > .stat-grid .stat-card", ".stat-icon", ".stat-label", ".stat-value"),
     )
 

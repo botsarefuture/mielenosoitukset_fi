@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Admin pages now contain intrinsically wide tables inside the shared workspace grid on mobile, and browser regression fixtures remain future-dated and aligned with the canonical summary-card components.
 * Small orange user-status and admin-role badges now use a contrast-safe semantic foreground in both themes instead of bright orange text on the soft orange surface.
 * Case summary cards and detail section headings now use the shared component wrappers, restoring the common label sizing, overflow behavior, and compact heading geometry.
 * Disabled demonstration hero actions now retain the canonical hero control geometry and expose their unavailable state to assistive technology after legacy hero classes are removed.

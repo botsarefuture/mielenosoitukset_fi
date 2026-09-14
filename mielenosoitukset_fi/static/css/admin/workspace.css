@@ -74,6 +74,11 @@ body {
   margin-inline: auto;
 }
 
+.admin-page > * {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .admin-page-header {
   display: flex;
   gap: 1.25rem;

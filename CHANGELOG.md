@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Every full admin subpage now has a canonical breadcrumb trail, nested workflows use the hero's first shared back action, and a static contract documents the intentional top-level pages that rely on persistent navigation instead.
 * Admin demonstration, recurring-demonstration, tag, and shared table templates now express conditional visibility and form geometry through semantic markup and shared workspace components; the only remaining admin inline style is the server-driven disk-usage width.
 * The live admin dashboard now renders login-feed API values with DOM text nodes instead of HTML interpolation and exposes live health bars as accessible progress indicators.
 * Small orange user-status and admin-role badges now use a contrast-safe semantic foreground in both themes instead of bright orange text on the soft orange surface.

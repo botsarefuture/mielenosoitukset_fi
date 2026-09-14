@@ -800,6 +800,73 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
             assert f'msgid "{message}"' in catalog
 
 
+def test_full_admin_pages_use_breadcrumbs_and_standard_back_actions():
+    from jinja2 import Environment, nodes
+    from jinja2.visitor import NodeVisitor
+
+    top_level_without_back = {
+        "analytics.html",
+        "background_jobs.html",
+        "cases/all.html",
+        "dashboard.html",
+        "demonstrations/dashboard.html",
+        "governance/dashboard.html",
+        "kampanja/list.html",
+        "organizations/dashboard.html",
+        "s3/dashboard.html",
+        "stats.html",
+        "status.html",
+        "ui_translations/dashboard.html",
+        "user/list.html",
+    }
+
+    class HeroCallVisitor(NodeVisitor):
+        def __init__(self):
+            self.calls = []
+
+        def visit_Call(self, node):
+            if isinstance(node.node, nodes.Name) and node.node.name == "admin_page_hero":
+                self.calls.append(node)
+            self.generic_visit(node)
+
+    def breadcrumb_lengths(node):
+        if isinstance(node, (nodes.List, nodes.Tuple)):
+            return [len(node.items)]
+        if isinstance(node, nodes.CondExpr):
+            return breadcrumb_lengths(node.expr1) + breadcrumb_lengths(node.expr2)
+        return []
+
+    root = Path("mielenosoitukset_fi/templates/admin_V2")
+    environment = Environment()
+    seen = set()
+    for template in root.rglob("*.html"):
+        source = template.read_text(encoding="utf-8")
+        if "{% extends" not in source or "{% block main_content %}" not in source:
+            continue
+
+        relative = str(template.relative_to(root))
+        visitor = HeroCallVisitor()
+        visitor.visit(environment.parse(source))
+        assert len(visitor.calls) == 1, relative
+        call = visitor.calls[0]
+        assert len(call.args) >= 4, relative
+        lengths = breadcrumb_lengths(call.args[3])
+        assert lengths, relative
+        if relative == "dashboard.html":
+            assert lengths == [0]
+        else:
+            assert min(lengths) >= 2, relative
+
+        keyword_names = {keyword.key for keyword in call.kwargs}
+        if relative in top_level_without_back:
+            assert "back_url" not in keyword_names, relative
+        else:
+            assert "back_url" in keyword_names, relative
+        seen.add(relative)
+
+    assert seen >= top_level_without_back
+
+
 def test_dead_admin_template_copies_and_legacy_sync_actions_are_absent():
     assert not Path(
         "mielenosoitukset_fi/templates/admin_V2/_users_table copy.html"

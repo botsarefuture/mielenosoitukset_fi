@@ -15,6 +15,8 @@
     _('Ota käyttöön kaupungit, joihin on löytynyt yhteyshenkilö. Käyttäjäkohtaiset oikeudet annetaan edelleen Käyttäjien hallinnasta.'),
     _('Hallinto'),
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Kaupunkihallinta'), none)],
+    back_url=url_for('admin_governance.dashboard'),
+    back_label=_('Hallinto'),
     actions_visible=current_user.global_admin or current_user.has_permission('LIST_USERS'),
   ) %}
       <a class="admin-workspace-hero-action admin-page-hero__action" href="{{ url_for('admin_user.user_control') }}">

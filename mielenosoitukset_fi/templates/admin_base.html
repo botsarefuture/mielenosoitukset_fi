@@ -141,7 +141,8 @@
 }
     </style>
     {% block styles %}{% endblock %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/workspace.css', v='20260913-admin-ui-37') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/workspace.css', v='20260914-admin-ui-50') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/analytics.css', v='20260914-admin-ui-50') }}">
 </head>
 
 <body class="min-vh-100 d-flex flex-column bg-body-tertiary">
@@ -500,6 +501,9 @@ function confirmAction(action, taskId) {
                 localStorage.setItem('theme', normalizedTheme);
             }
             updateThemeToggleUI(normalizedTheme);
+            document.dispatchEvent(new CustomEvent('admin:themechange', {
+                detail: { theme: normalizedTheme }
+            }));
         }
 
         // Load theme preference from localStorage

@@ -1048,16 +1048,28 @@ def background_jobs():
         selected_job = None
 
     try:
-        limit = min(int(request.args.get("limit", 50)), 200)
+        limit = min(max(int(request.args.get("limit", 50)), 10), 200)
     except (TypeError, ValueError):
         limit = 50
 
-    runs = job_manager.get_recent_runs(selected_job, limit=limit)
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
+
+    total_runs = job_manager.count_runs(selected_job)
+    total_pages = max(1, (total_runs + limit - 1) // limit)
+    page = min(page, total_pages)
+    skip = (page - 1) * limit
+    runs = job_manager.get_recent_runs(selected_job, limit=limit, skip=skip)
+    result_start = skip + 1 if total_runs else 0
+    result_end = skip + len(runs)
 
     _log_admin_event(
         "background_jobs_view",
         selected_job=selected_job,
         limit=limit,
+        page=page,
         total_jobs=len(jobs),
     )
     return render_template(
@@ -1066,6 +1078,11 @@ def background_jobs():
         runs=runs,
         selected_job=selected_job,
         limit=limit,
+        page=page,
+        total_pages=total_pages,
+        total_runs=total_runs,
+        result_start=result_start,
+        result_end=result_end,
         scheduler_disabled=current_app.config.get("DISABLE_BACKGROUND_JOBS", False),
         can_manage=current_user.has_permission("MANAGE_BACKGROUND_JOBS"),
     )

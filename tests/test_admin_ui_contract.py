@@ -1,3 +1,5 @@
+import hashlib
+import re
 from pathlib import Path
 from html.parser import HTMLParser
 
@@ -82,6 +84,62 @@ def test_full_admin_templates_use_the_admin_shell():
     assert violations == []
 
 
+def test_admin_inline_style_debt_cannot_grow_without_review():
+    style_block_allowlist = {
+        "dashboard.html": ("b1946f48e192ef29",),
+        "demonstrations/translations_editor.html": ("a3ee7ec76c2da45d",),
+    }
+    style_attribute_allowlist = {
+        "demonstrations/form.html": ("0207b1097d91cbd2",),
+        "demonstrations/translations_editor.html": ("e5c4a4d9ceace908",),
+        "macros.html": ("c51ec35a4e6a31e3",),
+        "recu_demonstrations/_form.html": (
+            "d0466aa33fa8061c",
+            "2919379184ff8ef3",
+            "72370f42eb03e933",
+        ),
+        "recu_demonstrations/_form_v2.html": (
+            "002dc26c478b3c97",
+            "734200fc2335cf7f",
+            "65d1f1c3d796b67c",
+            "65d1f1c3d796b67c",
+            "5aa7a955a93e19ad",
+            "8b7a90798426bdbc",
+            "ae7bf87ad3042f63",
+            "0207b1097d91cbd2",
+            "5aa7a955a93e19ad",
+            "8b7a90798426bdbc",
+        ),
+        "status.html": ("fd8a8ba5d1e16400",),
+        "tag_form.html": ("d26dfcb508ff2a1b",),
+    }
+    root = Path("mielenosoitukset_fi/templates/admin_V2")
+    actual_blocks = {}
+    actual_attributes = {}
+
+    for template in root.rglob("*.html"):
+        source = template.read_text(encoding="utf-8")
+        relative = str(template.relative_to(root))
+        blocks = re.findall(r"<style(?:\s[^>]*)?>(.*?)</style>", source, re.I | re.S)
+        attributes = [
+            match.group(2)
+            for match in re.finditer(
+                r'''style\s*=\s*(["'])(.*?)\1''', source, re.I | re.S
+            )
+        ]
+        if blocks:
+            actual_blocks[relative] = tuple(
+                hashlib.sha256(value.encode()).hexdigest()[:16] for value in blocks
+            )
+        if attributes:
+            actual_attributes[relative] = tuple(
+                hashlib.sha256(value.encode()).hexdigest()[:16] for value in attributes
+            )
+
+    assert actual_blocks == style_block_allowlist
+    assert actual_attributes == style_attribute_allowlist
+
+
 def test_admin_theme_is_applied_before_styles_and_controls_color_scheme():
     base = Path("mielenosoitukset_fi/templates/admin_base.html").read_text(
         encoding="utf-8"
@@ -131,6 +189,28 @@ def test_admin_page_heroes_keep_copy_in_one_content_group():
     assert violations == []
 
 
+def test_admin_hero_variants_are_limited_to_the_shared_stacked_contract():
+    macro = Path(
+        "mielenosoitukset_fi/templates/admin_V2/macros.html"
+    ).read_text(encoding="utf-8")
+    variant_calls = []
+
+    assert "hero_classes" not in macro
+    assert "allowed_variants = ('admin-page-hero--stacked',)" in macro
+    for template in Path("mielenosoitukset_fi/templates/admin_V2").rglob("*.html"):
+        if template.name == "macros.html":
+            continue
+        source = template.read_text(encoding="utf-8")
+        assert "hero_classes=" not in source, str(template)
+        if "variant=" in source:
+            variant_calls.append((template, source))
+
+    assert len(variant_calls) == 1
+    template, source = variant_calls[0]
+    assert template.name == "command_center.html"
+    assert "variant='admin-page-hero--stacked'" in source
+
+
 def test_admin_hero_foreground_and_data_view_surfaces_are_shared():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"
@@ -155,12 +235,33 @@ def test_user_role_forms_use_shared_admin_contract():
     modals = Path(
         "mielenosoitukset_fi/templates/admin_V2/_modals_users.html"
     ).read_text(encoding="utf-8")
+    user_list = Path(
+        "mielenosoitukset_fi/templates/admin_V2/user/list.html"
+    ).read_text(encoding="utf-8")
+    user_table = Path(
+        "mielenosoitukset_fi/templates/admin_V2/_users_table.html"
+    ).read_text(encoding="utf-8")
+    users_css = Path(
+        "mielenosoitukset_fi/static/css/admin/users.css"
+    ).read_text(encoding="utf-8")
 
     assert "admin_page_hero(" in edit
     assert 'class="admin-form admin-user-form"' in edit
     assert "admin-form-section" in edit
     assert "admin-sticky-actions" in edit
     assert "modal fade admin-modal" in modals
+    assert "<style" not in user_list
+    assert "<style" not in user_table
+    assert "css/admin/users.css" in user_list
+    assert "admin-workspace-summary" in user_list
+    assert "admin-section-card" in user_list
+    assert "admin-data-view" in user_list
+    assert "--users-" not in users_css
+    assert "--admin-workspace-primary-bg" in users_css
+    assert "--admin-workspace-orange-strong" in users_css
+    assert ".dark .admin-modal .btn-close" in Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
 
 
 def test_demo_collection_uses_server_side_filter_and_pagination_contract():
@@ -178,8 +279,18 @@ def test_demo_collection_uses_server_side_filter_and_pagination_contract():
         "admin-result-summary",
         "admin-pagination",
         "admin-page-size",
+        "admin-data-view",
+        "admin-data-view__viewport",
+        "admin-data-view__table",
+        "admin-data-view__footer",
+        "admin-data-group-header",
+        "admin-data-row--attention",
+        "admin-modal",
     ):
         assert contract in template
+    assert "css/admin/demonstrations.css" in template
+    assert "<style" not in template
+    assert "modal-dark" not in template
     assert "filterRows" not in template
     assert '"priority": {"_sort_priority": 1, "date": 1, "_id": 1}' in route
     assert '"date_desc": {"date": -1, "_id": -1}' in route
@@ -336,6 +447,12 @@ def test_city_admin_operational_pages_use_canonical_hero_macro():
         "mielenosoitukset_fi/templates/admin_V2/macros.html"
     ).read_text(encoding="utf-8")
     assert 'class="admin-page-hero__nav editor-section-nav"' in macro
+    city_page = Path(pages[0]).read_text(encoding="utf-8")
+    assert "<style" not in city_page
+    assert "admin-section-card" in city_page
+    assert "admin-data-view admin-data-view--scrollable" in city_page
+    assert "admin-data-view__table" in city_page
+    assert 'rel="noopener noreferrer"' in city_page
 
 
 def test_access_management_pages_use_canonical_hero_navigation():
@@ -413,6 +530,22 @@ def test_audit_and_developer_pages_use_canonical_hero_navigation():
         assert "admin.admin_dashboard" in source
     for name in pages[1:4] + pages[6:]:
         assert "back_url=" in Path(name).read_text(encoding="utf-8")
+    logs = Path(pages[0]).read_text(encoding="utf-8")
+    audit_css = Path(
+        "mielenosoitukset_fi/static/css/admin/audit.css"
+    ).read_text(encoding="utf-8")
+    assert "back_url=" in logs
+    assert "<style" not in logs
+    assert "css/admin/audit.css" in logs
+    assert "admin-filter-bar" in logs
+    assert "admin-section-card" in logs
+    assert "admin-result-summary" in logs
+    assert "admin-pagination" in logs
+    assert 'aria-expanded="false"' in logs
+    assert "detail.hidden = !isOpen" in logs
+    assert "detail.style.maxHeight" not in logs
+    assert "--admin-workspace-primary-bg" in audit_css
+    assert "prefers-reduced-motion: reduce" in audit_css
 
 
 def test_analytics_pages_use_shared_hero_metric_slot():
@@ -440,6 +573,42 @@ def test_analytics_pages_use_shared_hero_metric_slot():
     assert ".stats-hero" not in stats_css
 
 
+def test_analytics_pages_use_shared_theme_aware_components():
+    base = Path("mielenosoitukset_fi/templates/admin_base.html").read_text(
+        encoding="utf-8"
+    )
+    analytics_css = Path(
+        "mielenosoitukset_fi/static/css/admin/analytics.css"
+    ).read_text(encoding="utf-8")
+    pages = (
+        Path("mielenosoitukset_fi/templates/admin_V2/analytics.html"),
+        Path("mielenosoitukset_fi/templates/admin_V2/per_demo_analytics.html"),
+    )
+
+    assert "css/admin/analytics.css" in base
+    assert "admin:themechange" in base
+    assert "html.light" in analytics_css
+    assert "html.dark" in analytics_css
+    assert "--admin-chart-text" in analytics_css
+    assert "var(--admin-workspace-surface)" in analytics_css
+    assert "@media (max-width: 760px)" in analytics_css
+
+    for page in pages:
+        source = page.read_text(encoding="utf-8")
+        assert "<style" not in source
+        assert 'class="admin-page admin-analytics"' in source
+        assert "admin-section-card" in source
+        assert 'role="img"' in source
+        assert "getAdminChartColors" in source
+        assert "admin:themechange" in source
+
+    per_demo = pages[1].read_text(encoding="utf-8")
+    assert "admin-workspace-summary" in per_demo
+    assert "admin-analytics__data-disclosure" in per_demo
+    assert "admin-data-view__table" in per_demo
+    assert "prefers-reduced-motion: reduce" in per_demo
+
+
 def test_case_and_merge_pages_use_canonical_hero_navigation():
     pages = (
         "mielenosoitukset_fi/templates/admin_V2/cases/all.html",
@@ -465,6 +634,29 @@ def test_case_and_merge_pages_use_canonical_hero_navigation():
     ).read_text(encoding="utf-8")
 
 
+def test_case_views_use_shared_workspace_components_without_inline_css():
+    case_list = Path(
+        "mielenosoitukset_fi/templates/admin_V2/cases/all.html"
+    ).read_text(encoding="utf-8")
+    case_detail = Path(
+        "mielenosoitukset_fi/templates/admin_V2/cases/case.html"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in case_list
+    assert "<style" not in case_detail
+    assert "admin-workspace-summary" in case_list
+    assert case_list.count("<div><span>") == 4
+    assert "admin-filter-chip" in case_list
+    assert 'href="{{ url_for(\'admin_case.single_case\'' in case_list
+    assert "onclick=\"window.location" not in case_list
+    assert "aria-pressed" in case_list
+    assert "card.hidden = !visible" in case_list
+    assert "admin-detail-layout" in case_detail
+    assert case_detail.count("admin-section-card") >= 5
+    assert case_detail.count('class="admin-section-card__title"') == 5
+    assert "admin-row-actions" in case_detail
+
+
 def test_demo_command_center_separates_hero_copy_from_operational_context():
     template = Path(
         "mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html"
@@ -474,7 +666,7 @@ def test_demo_command_center_separates_hero_copy_from_operational_context():
     assert "admin_page_hero(" in template
     assert "admin-page-hero--stacked" in template
     assert "back_url=" in template
-    assert template.index("{% endcall %}") < template.index('class="status-badges"')
+    assert template.index("{% endcall %}") < template.index('class="status-badges admin-row-actions"')
     assert template.index("{% endcall %}") < template.index('class="hero-metadata"')
     for legacy_class in (
         ".hero-card",
@@ -485,7 +677,17 @@ def test_demo_command_center_separates_hero_copy_from_operational_context():
         ".hero-link",
     ):
         assert legacy_class not in template
-    assert ".demo-command-center {\n    padding: 1rem;\n    display: grid;\n    gap: 1.5rem;" in template
+    styles = Path(
+        "mielenosoitukset_fi/static/css/admin/demonstrations.css"
+    ).read_text(encoding="utf-8")
+    assert "<style" not in template
+    assert "css/admin/demonstrations.css" in template
+    assert "admin-page admin-workspace" in template
+    assert "admin-status-badge" in template
+    assert template.count("admin-section-card") >= 10
+    assert 'type="button" class="action-btn btn' in template
+    assert "--admin-workspace-surface" in styles
+    assert "light-dark(" not in styles
 
 
 def test_destructive_confirmations_use_canonical_hero_navigation():
@@ -527,6 +729,33 @@ def test_specialist_admin_pages_use_canonical_hero_navigation():
     assert ".header" not in campaign
 
 
+def test_campaign_collection_uses_shared_admin_components():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/kampanja/list.html"
+    ).read_text(encoding="utf-8")
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in template
+    assert "style=" not in template
+    assert "admin-workspace-summary" in template
+    assert "admin-section-card" in template
+    assert "admin-filter-bar" in template
+    assert "admin-data-view admin-data-view--scrollable" in template
+    assert "admin-data-view__footer admin-pagination" in template
+    assert "modal fade admin-modal" in template
+    assert "admin-check-row" in template
+    assert "bootstrap.Modal.getOrCreateInstance" in template
+    assert template.index("bootstrap.Modal.getOrCreateInstance") > template.index(
+        "function boot()"
+    )
+    assert "campaign-modal" not in template
+    assert "btn-icon" not in template
+    assert ".campaign-filters__grid" in workspace
+    assert ".campaign-volunteers .admin-data-view__table" in workspace
+
+
 def test_every_full_admin_v2_page_uses_canonical_hero_macro():
     pages = []
 
@@ -538,7 +767,7 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
         assert "import admin_page_hero" in source, str(template)
         assert "admin_page_hero(" in source, str(template)
 
-    assert len(pages) == 52
+    assert len(pages) == 51
     for locale in ("en", "fi", "sv"):
         catalog = Path(
             f"mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.po"
@@ -550,6 +779,20 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
             "Tarkista käyttäjätili ja sen rooli ennen peruuttamatonta toimintoa.",
         ):
             assert f'msgid "{message}"' in catalog
+
+
+def test_dead_admin_template_copies_and_legacy_sync_actions_are_absent():
+    assert not Path(
+        "mielenosoitukset_fi/templates/admin_V2/_users_table copy.html"
+    ).exists()
+    assert not Path(
+        "mielenosoitukset_fi/templates/admin_V2/mac_test.html"
+    ).exists()
+    sync_dashboard = Path(
+        "mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html"
+    ).read_text(encoding="utf-8")
+    assert "admin-page-header__actions" not in sync_dashboard
+    assert "admin-row-actions" in sync_dashboard
 
 
 def test_media_admin_uses_shared_theme_aware_components():
@@ -698,6 +941,39 @@ def test_background_job_detail_uses_shared_code_and_disclosure_components():
     assert template.count('class="admin-code-block') == 3
     assert "metadata-block" not in template
     assert ".admin-disclosure > summary:focus-visible" in workspace
+
+
+def test_background_job_collection_uses_shared_workspace_components():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/background_jobs.html"
+    ).read_text(encoding="utf-8")
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+    admin_routes = Path(
+        "mielenosoitukset_fi/admin/admin_bp.py"
+    ).read_text(encoding="utf-8")
+    job_manager = Path(
+        "mielenosoitukset_fi/background_jobs/manager.py"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in template
+    assert "style=" not in template
+    assert 'class="jobs-container admin-page"' in template
+    assert "admin-section-card" in template
+    assert "admin-data-view" in template
+    assert "admin-filter-bar" in template
+    assert "admin-data-view__footer admin-pagination" in template
+    assert "admin-empty-state" in template
+    assert "admin-status-badge" in template
+    assert "admin-code-block" in template
+    assert "btn-modern" not in template
+    assert ".admin-jobs__layout" in workspace
+    assert ".admin-jobs__grid" in workspace
+    assert "@media (prefers-reduced-motion: reduce)" in workspace
+    assert "total_runs = job_manager.count_runs(selected_job)" in admin_routes
+    assert "skip=skip" in admin_routes
+    assert '.sort([("started_at", -1), ("_id", -1)])' in job_manager
 
 
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():

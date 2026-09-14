@@ -249,7 +249,7 @@ class BackgroundJobManager:
 
         cursor = (
             self._db.background_job_runs.find(query)
-            .sort("started_at", -1)
+            .sort([("started_at", -1), ("_id", -1)])
             .skip(max(0, skip))
             .limit(limit)
         )

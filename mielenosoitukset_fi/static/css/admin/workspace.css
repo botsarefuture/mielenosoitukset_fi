@@ -16,6 +16,7 @@ body {
   --admin-workspace-primary-hover: light-dark(#00267a, #416fbd);
   --admin-workspace-on-primary: #ffffff;
   --admin-workspace-orange: #ff6600;
+  --admin-workspace-orange-strong: light-dark(#9c3b00, #ffb078);
   --admin-workspace-orange-soft: light-dark(#fff2e8, #3a2418);
   --admin-workspace-surface: light-dark(#ffffff, #20252d);
   --admin-workspace-surface-muted: light-dark(#f6f8fb, #292f39);
@@ -454,6 +455,30 @@ body {
   box-shadow: inset .25rem 0 0 var(--admin-workspace-blue);
 }
 
+.admin-data-view__table .admin-data-group-header td {
+  padding: .65rem 1rem;
+  border-left: .25rem solid var(--admin-workspace-blue);
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.admin-data-view__table .admin-data-group-header--success td {
+  border-left-color: var(--admin-workspace-success);
+}
+
+.admin-data-view__table .admin-data-row--attention {
+  background: var(--admin-workspace-danger-soft);
+}
+
+.admin-data-view__table .admin-data-row--attention:hover {
+  background: color-mix(in srgb, var(--admin-workspace-danger-soft) 78%, var(--admin-workspace-danger) 22%);
+}
+
+.admin-status-icon--success { color: var(--admin-workspace-success); }
+.admin-status-icon--danger { color: var(--admin-workspace-danger); }
+
 .admin-selection-status {
   justify-content: flex-start;
   color: var(--admin-workspace-blue-dark);
@@ -546,7 +571,7 @@ body {
 }
 
 .admin-status-badge--warning {
-  color: var(--admin-workspace-orange);
+  color: var(--admin-workspace-orange-strong);
   background: var(--admin-workspace-orange-soft);
 }
 
@@ -1534,7 +1559,7 @@ main.flex-grow-1 :is(.alert, .badge) {
 }
 
 .admin-required {
-  color: var(--admin-workspace-orange);
+  color: var(--admin-workspace-orange-strong);
   font-weight: 850;
 }
 
@@ -1842,6 +1867,11 @@ main.flex-grow-1 :is(.alert, .badge) {
   text-transform: uppercase;
 }
 
+.dark .admin-modal .btn-close,
+.dark .admin-workflow-modal .btn-close {
+  filter: invert(1) grayscale(1) brightness(2);
+}
+
 @media (max-width: 760px) {
   .admin-form-layout,
   .admin-form-grid {
@@ -1978,10 +2008,8 @@ main.flex-grow-1 {
 .admin-workspace-hero,
 .dashboard-container > .introduction,
 .governance-hero,
-.jobs-container .page-header,
 .logs-header,
-.case-hero,
-.campaign-admin-page > .header {
+.case-hero {
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
@@ -2105,11 +2133,9 @@ main.flex-grow-1 {
 .admin-workspace-hero h1,
 .dashboard-container > .introduction h1,
 .governance-hero h1,
-.jobs-container .page-header h1,
 .logs-header h1,
 .logs-header h2,
-.case-hero h1,
-.campaign-admin-page > .header h1 {
+.case-hero h1 {
   margin: .25rem 0 .5rem;
   color: var(--admin-hero-foreground);
   font-size: clamp(2rem, 4vw, 3.2rem);
@@ -2122,10 +2148,8 @@ main.flex-grow-1 {
 .admin-workspace-hero p:not(.admin-workspace-kicker),
 .dashboard-container > .introduction p,
 .governance-hero p:not(.governance-eyebrow),
-.jobs-container .page-header p,
 .logs-header p,
-.case-hero p,
-.campaign-admin-page > .header p {
+.case-hero p {
   max-width: 720px;
   margin: 0;
   color: var(--admin-hero-muted-foreground);
@@ -2148,7 +2172,7 @@ main.flex-grow-1 {
 .admin-page-hero__action,
 .admin-workspace-hero-action,
 .admin-workspace-hero .new-item,
-.admin-workspace-hero .non-suffperm {
+.admin-page-hero .non-suffperm {
   display: inline-flex;
   gap: .45rem;
   align-items: center;
@@ -2238,7 +2262,7 @@ main.flex-grow-1 {
 }
 
 .admin-workspace-summary-card:last-child .admin-workspace-summary-icon {
-  color: var(--admin-workspace-orange);
+  color: var(--admin-workspace-orange-strong);
   background: var(--admin-workspace-orange-soft);
 }
 
@@ -2370,74 +2394,107 @@ main.flex-grow-1 {
   padding: 0;
 }
 
-.campaign-admin-page > :is(.header, .stats-grid, .export-section, .actions-bar, .table-container) {
+.campaign-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.campaign-admin-page .timeline-tags {
+  justify-content: flex-start;
+}
+
+.campaign-admin-page .export-buttons {
+  justify-content: flex-start;
+}
+
+.campaign-filters__grid {
+  grid-template-columns: minmax(14rem, 1.5fr) minmax(10rem, .7fr) minmax(10rem, .8fr) auto;
+}
+
+.campaign-filters__actions {
+  align-items: stretch;
+}
+
+.campaign-filters__actions .btn {
+  min-height: 2.7rem;
+}
+
+.campaign-volunteers .admin-data-view__table {
+  min-width: 68rem;
+}
+
+.campaign-volunteers .volunteer-name {
+  color: var(--admin-workspace-text);
+  font-weight: 750;
+}
+
+.campaign-volunteers .volunteer-email {
+  color: var(--admin-workspace-blue-dark);
+  overflow-wrap: anywhere;
+}
+
+.campaign-volunteers .admin-row-actions {
+  flex-wrap: nowrap;
+}
+
+.campaign-volunteers .admin-row-actions .btn {
+  display: inline-grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  place-items: center;
+}
+
+.campaign-admin-page .admin-result-summary {
   margin: 0;
 }
 
-.campaign-admin-page .stats-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: .8rem;
+@media (max-width: 1000px) {
+  .campaign-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .campaign-filters__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .campaign-filters__actions {
+    grid-column: 1 / -1;
+  }
 }
 
-.campaign-admin-page .stat-card {
-  min-height: 7rem;
-  padding: 1rem;
-  border: 1px solid var(--admin-workspace-border);
-  border-radius: 1rem;
-  color: var(--admin-workspace-text);
-  background: var(--admin-workspace-surface);
-  box-shadow: var(--admin-workspace-shadow);
-}
+@media (max-width: 640px) {
+  .campaign-summary,
+  .campaign-filters__grid {
+    grid-template-columns: 1fr;
+  }
 
-.campaign-admin-page .stat-card:hover {
-  transform: none;
-}
+  .campaign-filters__actions {
+    grid-column: auto;
+  }
 
-.campaign-admin-page .stat-icon {
-  width: 2.75rem;
-  height: 2.75rem;
-  margin-bottom: .65rem;
-  border-radius: .8rem;
-}
-
-.campaign-admin-page .stat-number {
-  color: var(--admin-workspace-text);
-  font-size: 1.7rem;
-}
-
-.campaign-admin-page .stat-label {
-  color: var(--admin-workspace-muted);
-  font-size: .78rem;
-  font-weight: 700;
-}
-
-.campaign-admin-page :is(.export-section, .actions-bar) {
-  padding: 1rem;
-  border: 1px solid var(--admin-workspace-border);
-  border-radius: 1rem;
-  color: var(--admin-workspace-text);
-  background: var(--admin-workspace-surface);
-  box-shadow: var(--admin-workspace-shadow);
+  .campaign-filters__actions .btn,
+  .campaign-admin-page .export-buttons .btn {
+    width: 100%;
+  }
 }
 
 /* Dashboard and case-management screens keep their information architecture,
    but use the same surfaces and typography as every other admin view. */
 .admin-dashboard-shell :is(.card-panel, .stat-card, .quick-card, .side-panel, .panic-card, .health-card, .login-entry),
-.case-page :is(.case-card, .detail-item, .description-box, .note-box, .change-entry, .timeline-entry, .log-entry) {
+.case-page :is(.detail-item, .description-box, .note-box, .change-entry, .timeline-entry, .log-entry) {
   border-color: var(--admin-workspace-border);
   color: var(--admin-workspace-text);
   background: var(--admin-workspace-surface);
   box-shadow: var(--admin-workspace-shadow);
 }
 
-.admin-dashboard-shell :is(.live-header, .side-header),
-.case-page :is(.case-card-header, .case-card-body) {
+.admin-dashboard-shell :is(.live-header, .side-header) {
   border-color: var(--admin-workspace-border);
   color: var(--admin-workspace-text);
 }
 
 .admin-dashboard-shell :is(.stat-value, .quick-card strong, .entry-heading, h2, h3, h4),
-.case-page :is(.case-card-header, .detail-item strong, .timeline-entry-header, .log-entry-header, h2, h3, h4) {
+.case-page :is(.detail-item strong, .timeline-entry-header, .log-entry-header, h2, h3, h4) {
   color: var(--admin-workspace-text);
 }
 
@@ -2453,24 +2510,142 @@ main.flex-grow-1 {
 }
 
 .case-page {
+  display: grid;
+  gap: 1.5rem;
   width: 100%;
   max-width: 1450px;
   margin: 0 auto;
   color: var(--admin-workspace-text);
 }
 
-.case-page .case-header {
-  border: 0;
-  border-radius: 1.5rem;
-  color: #fff;
-  background:
-    radial-gradient(circle at 94% 8%, rgba(255, 102, 0, .42), transparent 18rem),
-    linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
-  box-shadow: 0 20px 50px rgba(0, 43, 137, .18);
+.admin-case-statuses {
+  gap: .6rem;
 }
 
-.case-page .case-header :is(h1, h2, h3, p, span:not(.case-chip)) {
-  color: inherit;
+.case-page .detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .9rem 1rem;
+}
+
+.case-page .detail-grid.single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.case-page .detail-item {
+  display: grid;
+  gap: .25rem;
+  min-width: 0;
+  box-shadow: none;
+}
+
+.case-page .detail-item strong {
+  color: var(--admin-workspace-muted);
+  font-size: .84rem;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.case-page .detail-item :is(span, div, a) {
+  overflow-wrap: anywhere;
+}
+
+.case-page .muted {
+  color: var(--admin-workspace-muted);
+}
+
+.case-page :is(.description-box, .note-box, .change-entry, .timeline-entry, .log-entry) {
+  padding: .9rem 1rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .85rem;
+  background: var(--admin-workspace-surface-muted);
+  box-shadow: none;
+}
+
+.case-page .description-box p:last-child {
+  margin-bottom: 0;
+}
+
+.case-page :is(.pill-list, .info-list, .change-list, .timeline-list, .log-list) {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.case-page :is(.info-list, .change-list, .timeline-list, .log-list) {
+  display: grid;
+  gap: .8rem;
+  background: transparent;
+}
+
+.case-page .pill-list span {
+  display: inline-flex;
+  align-items: center;
+  padding: .35rem .7rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 999px;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-blue-soft);
+  font-size: .9rem;
+}
+
+.case-page :is(.log-entry-header, .timeline-entry-header) {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: .45rem;
+}
+
+.case-page .change-entry strong {
+  display: block;
+  margin-bottom: .4rem;
+}
+
+.case-page .change-entry .before {
+  color: var(--admin-workspace-danger);
+}
+
+.case-page .change-entry .after {
+  color: var(--admin-workspace-success);
+}
+
+.case-page .empty-state {
+  padding: 1.25rem;
+  border: 1px dashed var(--admin-workspace-border);
+  border-radius: .85rem;
+  color: var(--admin-workspace-muted);
+  text-align: center;
+}
+
+.case-page .form-stack label {
+  display: grid;
+  gap: .35rem;
+  color: var(--admin-workspace-text);
+  font-weight: 700;
+}
+
+.case-page .form-stack :is(select, textarea) {
+  width: 100%;
+  min-height: 2.7rem;
+  padding: .7rem .8rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .7rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+  font: inherit;
+}
+
+.case-page .form-stack textarea {
+  min-height: 7.5rem;
+  resize: vertical;
+}
+
+.case-page .form-stack :is(select, textarea):focus-visible {
+  border-color: var(--admin-workspace-blue);
+  outline: 3px solid var(--admin-workspace-blue-soft);
+  outline-offset: 1px;
 }
 
 .admin-workspace-toolbar,
@@ -2842,26 +3017,10 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
   background: transparent;
 }
 
-.jobs-container > .container-fluid {
-  padding: 0;
-}
-
-.jobs-container .page-header {
-  margin-bottom: 1rem;
-}
-
-.jobs-container .page-title {
-  color: #fff;
-  background: none;
-  -webkit-background-clip: initial;
-  background-clip: initial;
-  -webkit-text-fill-color: #fff;
-}
-
 .jobs-container :is(.job-card, .history-panel),
 .jobs-container :is(.filter-form, .history-item),
 .logs-shell :is(.log-card, .meta-item, .log-details),
-.case-shell :is(.stat-card, .case-card),
+.case-shell .case-card,
 .status-grid :is(.panel, .stat-mini) {
   border: 1px solid var(--admin-workspace-border);
   border-radius: 1rem;
@@ -2877,14 +3036,14 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
 
 .jobs-container :is(.job-title, .info-label, .history-title),
 .status-grid :is(.panel-title, .svc-name, .stat-mini .num),
-.case-shell :is(.case-title, .stat-card .value),
+.case-shell .case-title,
 .logs-shell :is(.path-block .path, .timestamp) {
   color: var(--admin-workspace-text);
 }
 
 .jobs-container :is(.job-description, .info-value, .history-empty),
 .status-grid :is(.svc-msg, .stat-mini .lbl, .dl),
-.case-shell :is(.case-desc, .case-footer, .stat-card .hint),
+.case-shell :is(.case-desc, .case-footer),
 .logs-shell :is(.path-block .endpoint, .timestamp small) {
   color: var(--admin-workspace-muted);
 }
@@ -2917,43 +3076,387 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
   color: var(--admin-workspace-muted);
 }
 
-.jobs-container .permission-notice {
-  margin-top: .75rem;
+.admin-jobs__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(20rem, .65fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.admin-jobs__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
+  gap: 1rem;
+}
+
+.jobs-container .job-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem;
+}
+
+.jobs-container .job-card.job-disabled {
+  opacity: .68;
+}
+
+.jobs-container .job-header,
+.jobs-container .history-item-header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.admin-jobs__identity {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.jobs-container .job-title,
+.jobs-container .history-title,
+.jobs-container .history-job-name {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  margin: 0;
+  color: var(--admin-workspace-text);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.jobs-container :is(.job-title, .history-title, .history-job-name) i {
+  color: var(--admin-workspace-blue-dark);
+}
+
+.jobs-container .job-description {
+  margin: .35rem 0 .7rem;
+  color: var(--admin-workspace-muted);
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.jobs-container .job-key-badge {
+  display: inline-flex;
+  gap: .35rem;
+  align-items: center;
+  max-width: 100%;
+  padding: .3rem .55rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .55rem;
+  color: var(--admin-workspace-muted);
+  background: var(--admin-workspace-surface-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .7rem;
+  overflow-wrap: anywhere;
+}
+
+.jobs-container .job-info {
+  display: grid;
+  gap: .7rem;
+  padding: .85rem;
   border: 1px solid var(--admin-workspace-border);
   border-radius: .8rem;
+  background: var(--admin-workspace-surface-muted);
 }
 
-.jobs-container .permission-notice i {
-  color: var(--admin-workspace-blue);
+.jobs-container .info-row {
+  display: grid;
+  grid-template-columns: 1.1rem minmax(5.5rem, auto) minmax(0, 1fr);
+  gap: .45rem;
+  align-items: start;
+  min-width: 0;
+  font-size: .78rem;
 }
 
-.jobs-container .btn-modern {
+.jobs-container .info-row > i {
+  margin-top: .15rem;
+  color: var(--admin-workspace-blue-dark);
+}
+
+.jobs-container .info-label {
+  font-weight: 750;
+}
+
+.jobs-container .info-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-jobs__actions {
+  align-items: stretch;
+}
+
+.admin-inline-form {
+  margin: 0;
+}
+
+.admin-jobs__actions :is(.btn, .admin-inline-form) {
+  flex: 1 1 9rem;
+}
+
+.admin-jobs__actions .admin-inline-form .btn {
+  width: 100%;
+  height: 100%;
+}
+
+.admin-jobs__schedule {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  padding: .85rem;
   border: 1px solid var(--admin-workspace-border);
-  border-radius: .7rem;
-  box-shadow: none;
+  border-radius: .8rem;
+  background: var(--admin-workspace-surface-muted);
 }
 
-.jobs-container .btn-logs {
+.admin-jobs__schedule .admin-field {
+  margin: 0;
+}
+
+.admin-jobs__schedule-action .btn {
+  min-height: 2.7rem;
+}
+
+.admin-jobs__notice {
+  display: flex;
+  gap: .65rem;
+  align-items: flex-start;
+  margin-top: .75rem;
+  font-size: .8rem;
+  line-height: 1.5;
+}
+
+.admin-jobs__notice > i {
+  margin-top: .15rem;
+  color: var(--admin-workspace-blue-dark);
+}
+
+.admin-jobs__notice strong,
+.admin-jobs__notice p {
+  display: block;
+  margin: 0;
+}
+
+.admin-jobs__notice--warning {
+  margin-top: 0;
+  border-color: var(--admin-workspace-orange);
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-orange-soft);
+}
+
+.admin-jobs__notice--warning > i {
+  color: var(--admin-workspace-orange-strong);
+}
+
+.jobs-container .history-panel {
+  min-width: 0;
+}
+
+.jobs-container .history-count {
+  color: var(--admin-workspace-muted);
+  font-size: .75rem;
+  font-weight: 750;
+}
+
+.jobs-container .history-body {
+  padding: 1rem;
+}
+
+.admin-jobs__filters {
+  grid-template-columns: minmax(0, 1fr) minmax(6rem, .35fr) auto;
+}
+
+.admin-jobs__filter-action .btn {
+  min-width: 2.7rem;
+  min-height: 2.7rem;
+}
+
+.jobs-container .history-item {
+  padding: .85rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .8rem;
+  background: var(--admin-workspace-surface);
+}
+
+.jobs-container .history-item + .history-item {
+  margin-top: .75rem;
+}
+
+.jobs-container .history-meta,
+.jobs-container .history-details {
+  display: flex;
+  gap: .6rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: .35rem;
+  color: var(--admin-workspace-muted);
+  font-size: .72rem;
+}
+
+.jobs-container .history-message {
+  margin-top: .7rem;
+  padding: .65rem;
+  border-left: .2rem solid var(--admin-workspace-blue);
+  border-radius: .45rem;
+  background: var(--admin-workspace-surface-muted);
+  font-size: .78rem;
+  overflow-wrap: anywhere;
+}
+
+.jobs-container .error-details {
+  margin-top: .7rem;
+}
+
+.jobs-container .error-details > summary {
+  color: var(--admin-workspace-danger);
+  font-size: .78rem;
+  font-weight: 750;
+}
+
+.jobs-container .admin-empty-state {
+  padding: 2rem 1rem;
+}
+
+.admin-status-badge--running {
+  animation: admin-job-status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes admin-job-status-pulse {
+  50% { opacity: .7; }
+}
+
+@media (max-width: 1100px) {
+  .admin-jobs__layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-jobs__schedule,
+  .admin-jobs__filters {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-jobs__schedule-action .btn,
+  .admin-jobs__filter-action .btn {
+    width: 100%;
+  }
+
+  .jobs-container .info-row {
+    grid-template-columns: 1.1rem minmax(0, 1fr);
+  }
+
+  .jobs-container .info-value {
+    grid-column: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-status-badge--running {
+    animation: none;
+  }
+}
+
+.admin-case-summary__filter {
+  width: 100%;
+  color: var(--admin-workspace-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.admin-case-summary__filter small {
+  display: block;
+  margin-top: .25rem;
+  color: var(--admin-workspace-muted);
+  font-size: .75rem;
+}
+
+.admin-case-summary__filter:hover {
+  border-color: var(--admin-workspace-blue);
+}
+
+.admin-case-summary__filter.active {
+  border-color: var(--admin-workspace-blue);
+  background: var(--admin-workspace-blue-soft);
+  box-shadow: 0 0 0 2px var(--admin-workspace-blue-soft), var(--admin-workspace-shadow);
+}
+
+.admin-case-summary__filter:focus-visible,
+.admin-case-filters .admin-filter-chip:focus-visible {
+  outline: 3px solid var(--admin-workspace-blue-soft);
+  outline-offset: 2px;
+}
+
+.admin-case-filters {
+  margin-top: 0;
+}
+
+.admin-case-filters .admin-filter-chip {
+  cursor: pointer;
+}
+
+.admin-case-filters .admin-filter-chip.active {
+  border-color: var(--admin-workspace-blue);
   color: var(--admin-workspace-blue-dark);
   background: var(--admin-workspace-blue-soft);
 }
 
-.jobs-container :is(.filter-input, .filter-select, .schedule-form input, .schedule-form select) {
-  border-color: var(--admin-workspace-border);
-  color: var(--admin-workspace-text);
-  background: var(--admin-workspace-surface-muted);
+.case-shell .case-list {
+  display: grid;
+  gap: .75rem;
 }
 
-.case-shell .stat-card.emphasis,
-.case-shell .stat-filter.active {
+.case-shell .case-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .75rem;
+  align-items: start;
+  min-width: 0;
+  padding: 1rem;
+  color: var(--admin-workspace-text);
+  text-decoration: none;
+}
+
+.case-shell .case-card:hover,
+.case-shell .case-card:focus-visible {
   border-color: var(--admin-workspace-blue);
-  background: var(--admin-workspace-blue-soft);
+  color: var(--admin-workspace-text);
+  box-shadow: 0 0 0 3px var(--admin-workspace-blue-soft), var(--admin-workspace-shadow);
 }
 
-.case-shell .filter-chip {
-  border-color: var(--admin-workspace-border);
-  color: var(--admin-workspace-text);
-  background: var(--admin-workspace-surface);
+.case-shell .case-card:focus-visible {
+  outline: none;
+}
+
+.case-shell .case-meta,
+.case-shell .case-footer {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.case-shell .case-title {
+  margin: .65rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.case-shell .case-desc {
+  margin: .2rem 0 0;
+}
+
+.case-shell .case-footer {
+  gap: 1rem;
+  margin-top: .65rem;
+  font-size: .82rem;
+}
+
+@media (max-width: 720px) {
+  .case-page .detail-grid,
+  .case-shell .case-card {
+    grid-template-columns: 1fr;
+  }
 }
 
 .logs-shell {
@@ -3450,7 +3953,7 @@ th.sortable.desc::after {
     transform: none !important;
     margin-top: .4rem !important;
   }
-  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid, .campaign-admin-page .stats-grid) {
+  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .city-admin-shell .city-admin-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -3522,10 +4025,8 @@ th.sortable.desc::after {
   .admin-workspace-hero,
   .dashboard-container > .introduction,
   .governance-hero,
-  .jobs-container .page-header,
   .logs-header,
-  .case-hero,
-  .campaign-admin-page > .header {
+  .case-hero {
     grid-template-columns: 1fr;
     min-height: 0;
   }
@@ -3589,7 +4090,7 @@ th.sortable.desc::after {
     text-align: left;
   }
 
-  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid, .campaign-admin-page .stats-grid) {
+  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid) {
     grid-template-columns: 1fr;
   }
   :is(

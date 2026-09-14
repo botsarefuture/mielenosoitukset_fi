@@ -1,6 +1,6 @@
 {% extends 'admin_base.html' %}
 {% from 'admin_V2/macros.html' import admin_page_hero %}
-{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demonstrations.css', v='20260914-admin-ui-49') }}">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demonstrations.css', v='20260914-admin-ui-50') }}">{% endblock %}
 {% block scripts %}
 <!--<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>-->
 <script>
@@ -63,9 +63,9 @@
         <i class="fas fa-plus"></i>{{ _('Uusi mielenosoitus') }}
       </a>
       {% else %}
-      <a class="admin-page-hero__action non-suffperm" aria-disabled="true" data-tooltip="Ei käyttöoikeutta">
+      <span class="admin-page-hero__action non-suffperm" aria-disabled="true" data-tooltip="Ei käyttöoikeutta">
         <i class="fas fa-ban"></i>{{ _('Uusi mielenosoitus') }}
-      </a>
+      </span>
       {% endif %}
 
       {% if can_create_recurring_demo %}
@@ -73,9 +73,9 @@
         <i class="fas fa-plus-circle"></i>{{ _('Uusi toistuva mielenosoitus') }}
       </a>
       {% else %}
-      <a class="admin-page-hero__action non-suffperm" aria-disabled="true" data-tooltip="Ei käyttöoikeutta">
+      <span class="admin-page-hero__action non-suffperm" aria-disabled="true" data-tooltip="Ei käyttöoikeutta">
         <i class="fas fa-ban"></i>{{ _('Uusi toistuva mielenosoitus') }}
-      </a>
+      </span>
       {% endif %}
 
       {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission('TRANSLATE_DEMO') or current_user.has_permission('REVIEW_DEMO_TRANSLATIONS') %}
@@ -190,7 +190,7 @@
   {% if demonstrations %}
   {% set column_count = 7
       + (1 if show_cancelled else 0) %}
-  <div class="admin-data-view">
+  <div class="admin-data-view admin-data-view--scrollable">
     <div class="admin-data-view__viewport">
     <table class="admin-data-view__table">
       <thead>
@@ -691,7 +691,13 @@
       function animateAndRemoveRow(rowEl) {
         if (!rowEl) return;
         rowEl.classList.add('fade-out');
-        rowEl.addEventListener('transitionend', () => rowEl.remove(), { once: true });
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          rowEl.remove();
+          return;
+        }
+        const removeRow = () => rowEl.remove();
+        rowEl.addEventListener('transitionend', removeRow, { once: true });
+        window.setTimeout(removeRow, 350);
       }
       // Open delete modal or fast-delete immediately if shift pressed
       window.openModal = (event, title, id) => {
@@ -1044,7 +1050,7 @@
           <h5 class="modal-title" id="freezeModalLabel">
             <i class="fa-solid fa-snowflake me-2"></i> Jäädytyksen hallinta
           </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Sulje"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sulje"></button>
         </div>
         <div class="modal-body text-center p-4">
           <p id="freezeStatusText" class="mb-4 fs-6 text-muted">Ladataan tila…</p>

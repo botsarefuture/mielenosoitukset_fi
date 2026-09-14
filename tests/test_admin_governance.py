@@ -82,16 +82,11 @@ def test_admin_management_views_share_workspace_design(app, seeded_data):
     city_page = client.get("/admin/cities/").get_data(as_text=True)
 
     assert "css/admin/workspace.css" in demonstration_page
-    assert "20260914-admin-ui-49" in demonstration_page
-    assert re.search(
-        r'<header class="admin-page-hero(?: admin-page-hero--stacked)?"',
-        demonstration_page,
-    )
+    assert "20260914-admin-ui-50" in demonstration_page
+    assert 'class="admin-page-hero"' in demonstration_page
     assert demonstration_page.count("admin-workspace-summary-card") >= 4
-    assert re.search(
-        r'<header class="admin-page-hero(?: admin-page-hero--stacked)?"',
-        city_page,
-    )
+    assert 'class="admin-page-hero"' in city_page
+    assert "city-admin-header" not in city_page
     assert city_page.count("admin-workspace-summary-card") >= 3
     assert 'class="admin-workspace-summary city-admin-overview"' in city_page
     assert city_page.count("city-admin-summary-copy") == 3

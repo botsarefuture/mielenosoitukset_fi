@@ -16,7 +16,7 @@ body {
   --admin-workspace-primary-hover: light-dark(#00267a, #416fbd);
   --admin-workspace-on-primary: #ffffff;
   --admin-workspace-orange: #ff6600;
-  --admin-workspace-orange-strong: light-dark(#963b00, #ffb37a);
+  --admin-workspace-orange-strong: light-dark(#9c3b00, #ffb078);
   --admin-workspace-orange-soft: light-dark(#fff2e8, #3a2418);
   --admin-workspace-surface: light-dark(#ffffff, #20252d);
   --admin-workspace-surface-muted: light-dark(#f6f8fb, #292f39);
@@ -571,7 +571,7 @@ body {
 }
 
 .admin-status-badge--warning {
-  color: var(--admin-workspace-orange);
+  color: var(--admin-workspace-orange-strong);
   background: var(--admin-workspace-orange-soft);
 }
 
@@ -1559,7 +1559,7 @@ main.flex-grow-1 :is(.alert, .badge) {
 }
 
 .admin-required {
-  color: var(--admin-workspace-orange);
+  color: var(--admin-workspace-orange-strong);
   font-weight: 850;
 }
 
@@ -2172,7 +2172,7 @@ main.flex-grow-1 {
 .admin-page-hero__action,
 .admin-workspace-hero-action,
 .admin-workspace-hero .new-item,
-.admin-workspace-hero .non-suffperm {
+.admin-page-hero .non-suffperm {
   display: inline-flex;
   gap: .45rem;
   align-items: center;
@@ -2262,7 +2262,7 @@ main.flex-grow-1 {
 }
 
 .admin-workspace-summary-card:last-child .admin-workspace-summary-icon {
-  color: var(--admin-workspace-orange);
+  color: var(--admin-workspace-orange-strong);
   background: var(--admin-workspace-orange-soft);
 }
 
@@ -3244,7 +3244,7 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
 }
 
 .admin-jobs__notice--warning > i {
-  color: var(--admin-workspace-orange);
+  color: var(--admin-workspace-orange-strong);
 }
 
 .jobs-container .history-panel {

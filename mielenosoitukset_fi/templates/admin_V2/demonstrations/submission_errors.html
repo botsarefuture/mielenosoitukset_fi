@@ -7,7 +7,9 @@
     _('Ilmoitusvirheet'),
     _('Viimeisimmät 200 virhettä mielenosoituksen ilmoittamisesta. Käytä virhekoodeja tukitiimin selvityksissä.'),
     _('Järjestelmä'),
-    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Ilmoitusvirheet'), none)]
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (_('Ilmoitusvirheet'), none)],
+    back_url=url_for('admin_demo.demo_control'),
+    back_label=_('Mielenosoitukset')
   ) }}
 
   <div class="row g-3 mb-4">

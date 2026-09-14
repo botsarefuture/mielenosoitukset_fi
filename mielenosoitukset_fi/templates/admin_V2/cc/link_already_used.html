@@ -12,10 +12,11 @@
   page_title,
   _('Tämä kertakäyttöinen linkki ei ole enää käytettävissä.'),
   _('Mielenosoitukset'),
-  [(page_title, none)],
+  [(_('Etusivu'), url_for('index')), (page_title, none)],
+  back_url=url_for('index'),
+  back_label=_('Etusivu'),
   actions_visible=true
 ) %}
-  <a href="{{ url_for('index') }}" class="admin-page-hero__action"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>{{ _('Etusivu') }}</a>
   <a href="{{ url_for('admin_demo.demo_control') }}" class="admin-page-hero__action"><i class="fa-solid fa-gauge" aria-hidden="true"></i>{{ _('Hallintapaneeli') }}</a>
 {% endcall %}
 <div class="container py-5">

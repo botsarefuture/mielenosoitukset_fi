@@ -109,9 +109,9 @@
         title,
         _('Muokkaa mielenosoituksen tietoja osio kerrallaan. Tallennuspainike pysyy saatavilla sivua selatessa.'),
         _('Mielenosoitukset'),
-        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (title, none)] if current_user.is_authenticated else [(title, none)],
-        back_url=url_for('admin_demo.demo_control') if current_user.is_authenticated else none,
-        back_label=_('Mielenosoitukset'),
+        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (title, none)] if current_user.is_authenticated else [(_('Etusivu'), url_for('index')), (title, none)],
+        back_url=url_for('admin_demo.demo_control') if current_user.is_authenticated else url_for('index'),
+        back_label=_('Mielenosoitukset') if current_user.is_authenticated else _('Etusivu'),
         actions_visible=current_user.is_authenticated and demo and demo._id,
         sections=[('basic-info', _('Perustiedot')), ('location-info', _('Sijainti')), ('organizer-info', _('Järjestäjät')), ('approval-info', _('Hyväksyntä'))],
         title_id='tabletitle',
@@ -537,8 +537,7 @@
                 </script>
             </div>
 
-            <div id="march-route-container" class="form-group"
-                style="{% if not demo or demo.event_type != 'MARCH' %}display:none;{% endif %}">
+            <div id="march-route-container" class="form-group"{% if not demo or demo.event_type != 'MARCH' %} hidden{% endif %}>
                 <label>{{ _('Reitti (marssin)') }}</label>
                 <div id="route-tags-wrapper" class="tags-wrapper admin-token-input">
 
@@ -614,11 +613,7 @@
 
                     // Show/hide route container based on type selection
                     function updateRouteVisibility() {
-                        if (typeSelect.value === 'MARCH') {
-                            marchRouteContainer.style.display = 'block';
-                        } else {
-                            marchRouteContainer.style.display = 'none';
-                        }
+                        marchRouteContainer.hidden = typeSelect.value !== 'MARCH';
                     }
 
                     typeSelect.addEventListener('change', updateRouteVisibility);

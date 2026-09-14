@@ -85,33 +85,9 @@ def test_full_admin_templates_use_the_admin_shell():
 
 
 def test_admin_inline_style_debt_cannot_grow_without_review():
-    style_block_allowlist = {
-        "dashboard.html": ("b1946f48e192ef29",),
-        "demonstrations/translations_editor.html": ("a3ee7ec76c2da45d",),
-    }
+    style_block_allowlist = {}
     style_attribute_allowlist = {
-        "demonstrations/form.html": ("0207b1097d91cbd2",),
-        "demonstrations/translations_editor.html": ("e5c4a4d9ceace908",),
-        "macros.html": ("c51ec35a4e6a31e3",),
-        "recu_demonstrations/_form.html": (
-            "d0466aa33fa8061c",
-            "2919379184ff8ef3",
-            "72370f42eb03e933",
-        ),
-        "recu_demonstrations/_form_v2.html": (
-            "002dc26c478b3c97",
-            "734200fc2335cf7f",
-            "65d1f1c3d796b67c",
-            "65d1f1c3d796b67c",
-            "5aa7a955a93e19ad",
-            "8b7a90798426bdbc",
-            "ae7bf87ad3042f63",
-            "0207b1097d91cbd2",
-            "5aa7a955a93e19ad",
-            "8b7a90798426bdbc",
-        ),
         "status.html": ("fd8a8ba5d1e16400",),
-        "tag_form.html": ("d26dfcb508ff2a1b",),
     }
     root = Path("mielenosoitukset_fi/templates/admin_V2")
     actual_blocks = {}
@@ -152,6 +128,31 @@ def test_admin_theme_is_applied_before_styles_and_controls_color_scheme():
     assert "html.light" in workspace and "color-scheme: light" in workspace
     assert "html.dark" in workspace and "color-scheme: dark" in workspace
     assert "modal-content, .modal-header, .modal-body, .modal-footer" not in base
+
+
+def test_root_admin_dashboard_uses_shared_components_and_safe_feed_rendering():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/dashboard.html"
+    ).read_text(encoding="utf-8")
+    stylesheet = Path(
+        "mielenosoitukset_fi/static/css/admin/dashboard.css"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in template
+    assert "style=" not in template
+    assert "css/admin/dashboard.css" in template
+    assert "admin-page admin-workspace admin-dashboard-shell" in template
+    assert template.count("admin-panel") >= 3
+    assert "admin-empty-state" in template
+    assert "admin-status-badge" in template
+    assert "admin-dashboard-progress" in template
+    assert "innerHTML" not in template
+    assert "replaceChildren" in template
+    assert "textContent" in template
+    assert "light-dark(" not in stylesheet
+    assert "--card-" not in stylesheet
+    assert "--border-muted" not in stylesheet
+    assert "@media (prefers-reduced-motion: reduce)" in stylesheet
 
 
 def test_legacy_dialog_does_not_override_bootstrap_modal():
@@ -491,6 +492,24 @@ def test_translation_workspaces_use_canonical_hero_navigation():
         assert "back_url=" in Path(name).read_text(encoding="utf-8")
     demo_dashboard = Path(pages[0]).read_text(encoding="utf-8")
     assert "back_url=url_for('admin.admin_dashboard')" in demo_dashboard
+    demo_editor = Path(pages[1]).read_text(encoding="utf-8")
+    translation_css = Path(
+        "mielenosoitukset_fi/static/css/admin/translations.css"
+    ).read_text(encoding="utf-8")
+    assert "<style" not in demo_editor
+    assert "style=" not in demo_editor
+    assert "css/admin/translations.css" in demo_editor
+    assert "admin-page admin-workspace translation-editor" in demo_editor
+    assert demo_editor.count("admin-section-card") >= 3
+    assert "admin-panel-inset" in demo_editor
+    assert "admin-check-row" in demo_editor
+    assert "admin-status-badge" in demo_editor
+    assert "admin-form admin-section-card translation-step" in demo_editor
+    assert "admin-sticky-actions" in demo_editor
+    assert "{% block scripts %}" in demo_editor
+    assert "light-dark(" not in translation_css
+    assert "--translation-" not in translation_css
+    assert "--bs-" not in translation_css
 
 
 def test_system_workspaces_use_canonical_hero_navigation():
@@ -781,6 +800,73 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
             assert f'msgid "{message}"' in catalog
 
 
+def test_full_admin_pages_use_breadcrumbs_and_standard_back_actions():
+    from jinja2 import Environment, nodes
+    from jinja2.visitor import NodeVisitor
+
+    top_level_without_back = {
+        "analytics.html",
+        "background_jobs.html",
+        "cases/all.html",
+        "dashboard.html",
+        "demonstrations/dashboard.html",
+        "governance/dashboard.html",
+        "kampanja/list.html",
+        "organizations/dashboard.html",
+        "s3/dashboard.html",
+        "stats.html",
+        "status.html",
+        "ui_translations/dashboard.html",
+        "user/list.html",
+    }
+
+    class HeroCallVisitor(NodeVisitor):
+        def __init__(self):
+            self.calls = []
+
+        def visit_Call(self, node):
+            if isinstance(node.node, nodes.Name) and node.node.name == "admin_page_hero":
+                self.calls.append(node)
+            self.generic_visit(node)
+
+    def breadcrumb_lengths(node):
+        if isinstance(node, (nodes.List, nodes.Tuple)):
+            return [len(node.items)]
+        if isinstance(node, nodes.CondExpr):
+            return breadcrumb_lengths(node.expr1) + breadcrumb_lengths(node.expr2)
+        return []
+
+    root = Path("mielenosoitukset_fi/templates/admin_V2")
+    environment = Environment()
+    seen = set()
+    for template in root.rglob("*.html"):
+        source = template.read_text(encoding="utf-8")
+        if "{% extends" not in source or "{% block main_content %}" not in source:
+            continue
+
+        relative = str(template.relative_to(root))
+        visitor = HeroCallVisitor()
+        visitor.visit(environment.parse(source))
+        assert len(visitor.calls) == 1, relative
+        call = visitor.calls[0]
+        assert len(call.args) >= 4, relative
+        lengths = breadcrumb_lengths(call.args[3])
+        assert lengths, relative
+        if relative == "dashboard.html":
+            assert lengths == [0]
+        else:
+            assert min(lengths) >= 2, relative
+
+        keyword_names = {keyword.key for keyword in call.kwargs}
+        if relative in top_level_without_back:
+            assert "back_url" not in keyword_names, relative
+        else:
+            assert "back_url" in keyword_names, relative
+        seen.add(relative)
+
+    assert seen >= top_level_without_back
+
+
 def test_dead_admin_template_copies_and_legacy_sync_actions_are_absent():
     assert not Path(
         "mielenosoitukset_fi/templates/admin_V2/_users_table copy.html"
@@ -893,8 +979,9 @@ def test_demo_editor_static_geometry_uses_shared_form_components():
     ).read_text(encoding="utf-8")
 
     assert "<style" not in template
-    assert template.count("style=") == 1
-    assert "event_type != 'MARCH'" in template
+    assert "style=" not in template
+    assert "event_type != 'MARCH'" in template and " hidden" in template
+    assert "marchRouteContainer.hidden = typeSelect.value !== 'MARCH'" in template
     assert template.count('class="tags-wrapper admin-token-input"') == 2
     assert 'class="admin-form-image-preview"' in template
     assert 'class="row g-3 admin-coordinate-fields"' in template
@@ -906,6 +993,22 @@ def test_demo_editor_static_geometry_uses_shared_form_components():
     assert 'input:not(.admin-token-input__field), select, textarea):focus' in workspace
     assert ".access-panel-card .list-group-item" in workspace
     assert "var(--admin-workspace-surface-muted)" in workspace
+
+
+def test_recurring_editor_static_geometry_uses_shared_form_components():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html"
+    ).read_text(encoding="utf-8")
+
+    assert "style=" not in template
+    assert template.count('class="tags-wrapper admin-token-input"') == 2
+    assert template.count('class="admin-token-input__field"') == 2
+    assert 'class="admin-form-image-preview"' in template
+    assert 'class="main-container admin-editor-richtext"' in template
+    assert 'class="admin-editor-spacer" aria-hidden="true"' in template
+    assert "weeklyOptions.hidden = freqSelect.value !== 'weekly'" in template
+    assert "monthlyOptions.hidden = freqSelect.value !== 'monthly'" in template
+    assert "marchRouteContainer.hidden = typeSelect.value !== 'MARCH'" in template
 
 
 def test_recurring_collection_uses_shared_filter_data_and_modal_contracts():

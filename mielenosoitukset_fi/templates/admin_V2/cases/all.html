@@ -28,19 +28,19 @@
   <div class="admin-workspace-summary admin-case-summary">
     <button type="button" class="admin-workspace-summary-card admin-case-summary__filter emphasis" data-filter="open" aria-pressed="false">
       <span class="admin-workspace-summary-icon"><i class="fas fa-layer-group" aria-hidden="true"></i></span>
-      <span><span>{{ _('Avoimet tapaukset') }}</span><strong>{{ open_count }}</strong><small>{{ _('Keskity näihin ensin') }}</small></span>
+      <div><span>{{ _('Avoimet tapaukset') }}</span><strong>{{ open_count }}</strong><small>{{ _('Keskity näihin ensin') }}</small></div>
     </button>
     <button type="button" class="admin-workspace-summary-card admin-case-summary__filter" data-filter="closed" aria-pressed="false">
       <span class="admin-workspace-summary-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span>
-      <span><span>{{ _('Suljetut') }}</span><strong>{{ closed_count }}</strong><small>{{ _('Automaattisesti suljetut') }}: {{ auto_closed }}</small></span>
+      <div><span>{{ _('Suljetut') }}</span><strong>{{ closed_count }}</strong><small>{{ _('Automaattisesti suljetut') }}: {{ auto_closed }}</small></div>
     </button>
     <button type="button" class="admin-workspace-summary-card admin-case-summary__filter" data-filter="escalated" aria-pressed="false">
       <span class="admin-workspace-summary-icon"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></span>
-      <span><span>{{ _('Eskaloinnit') }}</span><strong>{{ escalated_count }}</strong><small>{{ _('Vaatii seniorin') }}</small></span>
+      <div><span>{{ _('Eskaloinnit') }}</span><strong>{{ escalated_count }}</strong><small>{{ _('Vaatii seniorin') }}</small></div>
     </button>
     <button type="button" class="admin-workspace-summary-card admin-case-summary__filter" data-filter="all" aria-pressed="true">
       <span class="admin-workspace-summary-icon"><i class="fas fa-folder" aria-hidden="true"></i></span>
-      <span><span>{{ _('Kaikki tapaukset') }}</span><strong>{{ case_rows|length }}</strong><small>{{ _('Päivitetty') }}: {{ (case_rows[0].created_at if case_rows else none)|datetimeformat("%d.%m.%Y") }}</small></span>
+      <div><span>{{ _('Kaikki tapaukset') }}</span><strong>{{ case_rows|length }}</strong><small>{{ _('Päivitetty') }}: {{ (case_rows[0].created_at if case_rows else none)|datetimeformat("%d.%m.%Y") }}</small></div>
     </button>
   </div>
 

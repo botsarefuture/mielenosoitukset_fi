@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Case summary cards and detail section headings now use the shared component wrappers, restoring the common label sizing, overflow behavior, and compact heading geometry.
 * Disabled demonstration hero actions now retain the canonical hero control geometry and expose their unavailable state to assistive technology after legacy hero classes are removed.
 * Campaign volunteer controls now initialize their shared Bootstrap modal after the bundle has loaded, so filtering, pagination, exports, editing, confirmation, and deletion remain operational on first page load.
 * Test and error-path stability: admin route tests now patch the actual demonstration route module rather than the Blueprint re-export, invalid edit-link durations return the intended translated 400 response instead of raising from a shadowed translation helper, and repository-root test collection is safe in temporary Git worktrees.

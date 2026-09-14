@@ -39,7 +39,7 @@
     <div class="admin-stack">
       <section class="admin-section-card">
         <div class="admin-section-card__header">
-          <h2>{{ _('Tapauksen tiedot') }}</h2>
+          <div class="admin-section-card__title"><h2>{{ _('Tapauksen tiedot') }}</h2></div>
           {% if demo and demo._id %}
           <a class="btn btn-outline-primary btn-sm" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}">
             <i class="fa-solid fa-eye me-1"></i>{{ _('Avaa julkinen sivu') }}
@@ -184,7 +184,7 @@
 
       <section class="admin-section-card">
         <div class="admin-section-card__header">
-          <h2>{{ _('Sisaiset muistiinpanot') }}</h2>
+          <div class="admin-section-card__title"><h2>{{ _('Sisaiset muistiinpanot') }}</h2></div>
         </div>
         <div class="admin-section-card__body">
           <form class="form-stack admin-stack" method="POST" action="{{ url_for('admin_case.add_action', case_id=case._id) }}">
@@ -213,7 +213,7 @@
     <aside class="admin-stack">
       <section class="admin-section-card">
         <div class="admin-section-card__header">
-          <h3>{{ _('Tapausstatus') }}</h3>
+          <div class="admin-section-card__title"><h2>{{ _('Tapausstatus') }}</h2></div>
         </div>
         <div class="admin-section-card__body admin-stack">
           <div class="detail-grid single">
@@ -243,7 +243,7 @@
 
       <section class="admin-section-card">
         <div class="admin-section-card__header">
-          <h3>{{ _('Toimintaloki') }}</h3>
+          <div class="admin-section-card__title"><h2>{{ _('Toimintaloki') }}</h2></div>
         </div>
         <div class="admin-section-card__body admin-stack">
           {% if case.action_logs %}
@@ -267,7 +267,7 @@
 
       <section class="admin-section-card">
         <div class="admin-section-card__header">
-          <h3>{{ _('Tapahtumahistoria') }}</h3>
+          <div class="admin-section-card__title"><h2>{{ _('Tapahtumahistoria') }}</h2></div>
         </div>
         <div class="admin-section-card__body admin-stack">
           {% if case.case_history %}

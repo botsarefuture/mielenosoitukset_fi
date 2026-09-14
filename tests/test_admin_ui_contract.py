@@ -602,6 +602,7 @@ def test_case_views_use_shared_workspace_components_without_inline_css():
     assert "<style" not in case_list
     assert "<style" not in case_detail
     assert "admin-workspace-summary" in case_list
+    assert case_list.count("<div><span>") == 4
     assert "admin-filter-chip" in case_list
     assert 'href="{{ url_for(\'admin_case.single_case\'' in case_list
     assert "onclick=\"window.location" not in case_list
@@ -609,6 +610,7 @@ def test_case_views_use_shared_workspace_components_without_inline_css():
     assert "card.hidden = !visible" in case_list
     assert "admin-detail-layout" in case_detail
     assert case_detail.count("admin-section-card") >= 5
+    assert case_detail.count('class="admin-section-card__title"') == 5
     assert "admin-row-actions" in case_detail
 
 

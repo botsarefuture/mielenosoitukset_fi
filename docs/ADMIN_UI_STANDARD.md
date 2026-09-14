@@ -24,6 +24,9 @@ Use only the `--admin-workspace-*` semantic tokens for new shared UI:
 - `--admin-workspace-border` and `--admin-workspace-shadow`
 - `--admin-workspace-blue`, `--admin-workspace-blue-dark`, and
   `--admin-workspace-blue-soft`
+- `--admin-workspace-primary-bg`, `--admin-workspace-primary-hover`, and
+  `--admin-workspace-on-primary` for filled primary actions; accent blue is not
+  a safe filled-button background in every theme
 - `--admin-workspace-orange` and `--admin-workspace-orange-soft`
 
 Legacy token names are temporarily aliased in `workspace.css`. They are a
@@ -46,6 +49,17 @@ Use these shared classes:
   actions.
 - `.admin-workspace-table`: responsive table surface.
 - `.admin-confirm`: destructive or consequential confirmation page.
+
+New and migrated full pages render their introduction with the
+`admin_page_hero` macro from `admin_V2/macros.html`. Breadcrumbs live above the
+kicker inside the content column. Every full page except the admin root includes
+a breadcrumb trail from its root context to the current page. Workflow, detail,
+editor, confirmation, and nested tool pages pass their parent as `back_url`; the
+macro always renders that back action first in the shared action column.
+Top-level collections and workspaces intentionally omit the back action because
+the persistent admin navigation and root breadcrumb already provide their parent
+navigation. Additional actions belong in the macro caller block. Do not
+hand-build a different back-button position inside page content.
 
 Use a compact heading instead of a hero only for detail editors and short
 workflows. The first screenful must still have one clear title, a short purpose
@@ -77,6 +91,10 @@ exclusive option.
 
 - Use Bootstrap form markup; the shared layer supplies theme-aware controls,
   labels, help text, focus rings, and disabled states.
+- Compose larger forms with `.admin-form-page`, `.admin-form-layout`,
+  `.admin-form-section`, `.admin-form-grid`, `.admin-field`, and
+  `.admin-sticky-actions`; reusable repeaters, previews, and guidance use the
+  corresponding shared `admin-*` primitives rather than template-local CSS.
 - Use `.btn` variants rather than inventing page-specific buttons.
 - Primary is for the main forward action, secondary/outline for navigation,
   and danger only for destructive actions.
@@ -102,4 +120,3 @@ inherits the active admin theme.
 - Light and dark modes preserve readable text and identical layout.
 - Keyboard focus, labels, empty states, bulk selection, and mobile overflow are
   understandable without guessing.
-

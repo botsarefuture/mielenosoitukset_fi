@@ -780,6 +780,10 @@ class AnonymousUser(AnonymousUserMixin):
         """
         return False
 
+    def has_city_admin_scope_grants(self) -> bool:
+        """Anonymous visitors never have city-scoped administration grants."""
+        return False
+
     def is_following(self, user_id):
         """Check if this user is following another user.
 

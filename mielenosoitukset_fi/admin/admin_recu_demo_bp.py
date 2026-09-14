@@ -10,7 +10,11 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.classes import RecurringDemonstration, Organizer, RepeatSchedule
 from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.variables import CITY_LIST
-from mielenosoitukset_fi.utils.wrappers import permission_required, admin_required
+from mielenosoitukset_fi.utils.wrappers import (
+    admin_required,
+    has_demo_approval_permission,
+    permission_required,
+)
 
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
 from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo
@@ -97,6 +101,7 @@ def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None)
         child_counts=child_counts,
         frozen_child_ids=frozen_child_ids,
         today=date.today().isoformat(),
+        can_approve_demo=has_demo_approval_permission(current_user, demo),
     )
 
 
@@ -308,12 +313,16 @@ def _collect_organizers(form, existing_organizers=None):
 def recu_demo_control():
     """Render the recurring demonstration control panel with a list of recurring demonstrations."""
     search_query = request.args.get("search", "")
-    approved_status = request.args.get("approved", "false").lower() == "true"
+    approved_status = request.args.get("approved", "all").lower()
+    if approved_status not in {"all", "true", "false"}:
+        approved_status = "all"
     # show_past = request.args.get("show_past", "false").lower() == "true"
     today = date.today()
 
     # Construct query based on approval status
-    query = {"approved": approved_status} if approved_status else {}
+    query = {}
+    if approved_status != "all":
+        query["approved"] = approved_status == "true"
     recurring_demos = []
     for recudemo in list(mongo.recu_demos.find(query)):
         try:
@@ -541,6 +550,12 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "recurs": freq != "none",
         "organizers": organizers,
     }
+
+    approval_scope_demo = existing_demo if existing_demo else demonstration_data
+    if not has_demo_approval_permission(current_user, approval_scope_demo):
+        demonstration_data["approved"] = bool(
+            existing_demo and existing_demo.get("approved")
+        )
 
     # Ensure organizer IDs are ObjectId if present
     for org in demonstration_data["organizers"]:

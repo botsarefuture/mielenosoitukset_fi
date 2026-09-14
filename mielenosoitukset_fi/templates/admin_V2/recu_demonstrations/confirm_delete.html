@@ -1,12 +1,20 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block title %}{{ _('Vahvista poisto') }}{% endblock %}
 
 {% block main_content %}
+{{ admin_page_hero(
+    _('Vahvista mielenosoituksen poisto'),
+    _('Tarkista poistettava toistuva mielenosoitus ennen peruuttamatonta toimintoa.'),
+    _('Toistuvat mielenosoitukset'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Toistuvat mielenosoitukset'), url_for('admin_recu_demo.recu_demo_control')), (_('Vahvista poisto'), none)],
+    back_url=url_for('admin_recu_demo.recu_demo_control'),
+    back_label=_('Toistuvat mielenosoitukset'),
+    title_id='confirm-title'
+) }}
 <section class="admin-confirm admin-confirm--danger" aria-labelledby="confirm-title">
     <span class="admin-confirm__icon"><i class="fas fa-calendar-xmark" aria-hidden="true"></i></span>
-    <p class="admin-confirm__eyebrow">{{ _('Toistuvat mielenosoitukset') }}</p>
-    <h1 id="confirm-title">{{ _('Vahvista mielenosoituksen poisto') }}</h1>
     <p>{{ _('Oletko varma, että haluat poistaa seuraavan toistuvan mielenosoituksen?') }}</p>
     <div class="admin-confirm__details">
         <h2>{{ demo.title }}</h2>

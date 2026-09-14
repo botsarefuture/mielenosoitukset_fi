@@ -19,7 +19,37 @@ def test_edit_demo_shows_edit_only_controls(admin_client, seeded_data):
     assert "Luo muokkauslinkki" in page
     assert "Luo kopio mielenosoituksesta" in page
     assert 'class="editor-save-bar"' in page
-    assert 'class="editor-section-nav admin-page-hero__nav"' in page
+    assert 'class="admin-page-hero__nav editor-section-nav"' in page
+
+
+def test_editor_without_accept_permission_cannot_forge_demo_approval(
+    friend_client, db, seeded_data
+):
+    db.users.update_one(
+        {"_id": seeded_data["friend_id"]},
+        {"$set": {"role": "admin", "global_permissions": ["EDIT_DEMO"]}},
+    )
+
+    edit_page = friend_client.get(
+        f"/admin/demo/edit_demo/{seeded_data['pending_demo_id']}"
+    )
+    assert edit_page.status_code == 200
+    assert 'id="approval-container"' not in edit_page.get_data(as_text=True)
+
+    response = friend_client.post(
+        f"/admin/demo/edit_demo/{seeded_data['pending_demo_id']}",
+        data={
+            "title": "Pending Demonstration",
+            "date": "2026-05-01",
+            "city": "Helsinki",
+            "approved": "on",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    updated = db.demonstrations.find_one({"_id": seeded_data["pending_demo_id"]})
+    assert updated["approved"] is False
 
 
 def test_demo_dashboard_filters_year_text_and_missing_tag(admin_client, db, seeded_data):

@@ -1,39 +1,5 @@
 {% extends 'admin_base.html' %}
-
-{% block styles %}
-<style>
-    .admin-user-page { max-width: 1200px; }
-    .admin-user-form { display: grid; gap: 1rem; }
-    .admin-user-form .admin-form-section { padding: clamp(1rem, 2.5vw, 1.4rem); }
-    .admin-user-form .admin-form-section__header { margin-bottom: 1rem; padding-bottom: .8rem; border-bottom: 1px solid var(--admin-workspace-border); }
-    .admin-user-form .admin-form-section__header h2 { margin: 0; font-size: 1.08rem; }
-    .admin-user-form .admin-form-section__header p { margin: .25rem 0 0; color: var(--admin-workspace-muted); font-size: .8rem; }
-    .admin-user-form .admin-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-    .admin-user-form .admin-field--wide { grid-column: 1 / -1; }
-    .admin-user-form .admin-check-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .2rem .7rem; align-items: start; }
-    .admin-user-form .admin-check-row input { margin-top: .2rem; }
-    .admin-user-form .admin-check-row small { grid-column: 2; color: var(--admin-workspace-muted); }
-    .admin-user-form .admin-form-note { padding: .8rem 1rem; border: 1px solid var(--admin-workspace-border); border-radius: .8rem; color: var(--admin-workspace-muted); background: var(--admin-workspace-surface-muted); }
-    .admin-user-form .permission-category { margin-top: 1rem; }
-    .admin-user-form .permission-category h3,
-    .admin-user-form .permission-category h4 { margin: 0 0 .65rem; color: var(--admin-workspace-text); font-size: .9rem; }
-    .admin-user-form .permission-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: .55rem;
-    }
-    .admin-user-form .permission-item,
-    .admin-user-form .select-all { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .65rem; align-items: start; padding: .7rem .8rem; border: 1px solid var(--admin-workspace-border); border-radius: .7rem; background: var(--admin-workspace-surface-muted); }
-    .admin-user-form .permission-item input,
-    .admin-user-form .select-all input { margin-top: .2rem; }
-    .admin-user-form .admin-sticky-actions { display: flex; gap: .65rem; justify-content: flex-end; }
-    @media (max-width: 700px) {
-        .admin-user-form .admin-form-grid { grid-template-columns: 1fr; }
-        .admin-user-form .admin-field--wide { grid-column: auto; }
-        .admin-user-form .admin-sticky-actions { align-items: stretch; flex-direction: column-reverse; }
-    }
-</style>
-{% endblock %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block scripts %}
 <script>
@@ -82,16 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 {% block main_content %}
 <div class="admin-user-page admin-page">
-    <header class="admin-page-hero">
-        <div class="admin-page-hero__content">
-            <p class="admin-page-hero__kicker">{{ _('Käyttäjähallinta') }}</p>
-            <h1>{{ _('Muokkaa käyttäjää') }}</h1>
-            <p>{{ _('Päivitä käyttäjän perustiedot, rooli ja sallitut käyttöoikeudet samasta näkymästä.') }}</p>
-        </div>
-        <div class="admin-page-hero__actions">
-            <a href="{{ url_for('admin_user.user_control') }}" class="admin-page-hero__action"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ _('Käyttäjät') }}</a>
-        </div>
-    </header>
+    {{ admin_page_hero(
+        _('Muokkaa käyttäjää'),
+        _('Päivitä käyttäjän perustiedot, rooli ja sallitut käyttöoikeudet samasta näkymästä.'),
+        _('Käyttäjähallinta'),
+        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttäjät'), url_for('admin_user.user_control')), (_('Muokkaa käyttäjää'), none)],
+        back_url=url_for('admin_user.user_control'),
+        back_label=_('Käyttäjät')
+    ) }}
 
     <form class="admin-form admin-user-form" method="POST" action="{{ url_for('admin_user.save_user', user_id=user.id) }}">
       <section class="admin-form-section">

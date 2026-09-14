@@ -150,12 +150,12 @@
       "sha256": "651daec4ff338a32e0ee863fb56c268fe26cafac872b016a53066275b7490b46"
     },
     "mielenosoitukset_fi/admin/admin_demo_bp.py": {
-      "count": 46,
+      "count": 49,
       "coverage": [
         "integration",
         "e2e-admin"
       ],
-      "sha256": "8175e5fb53c35240dafa87601bd8073e8676c0227d53d951ae504bf2fc1a6d86"
+      "sha256": "148dcce50c0ceb79797f382975667b0c220413b38db73e27fb1ba5e7a887a826"
     },
     "mielenosoitukset_fi/admin/admin_dev_bp.py": {
       "count": 6,
@@ -253,12 +253,12 @@
       "sha256": "cd9c57924f5816feb8357cbf18c57d329adfbc411002a38a2ca96cdbcbc525b0"
     },
     "mielenosoitukset_fi/basic_routes.py": {
-      "count": 51,
+      "count": 52,
       "coverage": [
         "integration",
         "e2e-public"
       ],
-      "sha256": "763f92e9ad9e1c2dd5985b0656bbcc0bed005f12b51075c86551c996120f12c3"
+      "sha256": "f1c436c0b04d7aaffc3e7cd8fbcc6589854d38aa6bf18530bd8e5ccd05891dbc"
     },
     "mielenosoitukset_fi/developer_bp.py": {
       "count": 9,

@@ -1,10 +1,16 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
 <div class="admin-page">
-  <header class="admin-page-header">
-    <div><p class="admin-page-header__kicker">{{ _('Käyttäjät ja hallinto') }}</p><h1>API-avainten pyynnöt</h1><p>Hyväksy tai hylkää käyttäjien tekemät API-avainten avauspyynnöt.</p></div>
-  </header>
+  {{ admin_page_hero(
+    _('API-avainten pyynnöt'),
+    _('Hyväksy tai hylkää käyttäjien tekemät API-avainten avauspyynnöt.'),
+    _('Käyttäjät ja hallinto'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttäjät'), url_for('admin_user.user_control')), (_('API-avainten pyynnöt'), none)],
+    back_url=url_for('admin_user.user_control'),
+    back_label=_('Käyttäjät')
+  ) }}
 
   <div class="table-responsive admin-data-view admin-workspace-table">
     <table class="table table-striped align-middle">

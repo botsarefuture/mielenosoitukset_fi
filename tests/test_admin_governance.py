@@ -1,3 +1,5 @@
+import re
+
 from tests.conftest import _client_for_user
 
 
@@ -80,16 +82,18 @@ def test_admin_management_views_share_workspace_design(app, seeded_data):
     city_page = client.get("/admin/cities/").get_data(as_text=True)
 
     assert "css/admin/workspace.css" in demonstration_page
-    assert "20260908-admin-ui-11" in demonstration_page
-    assert 'class="admin-workspace-hero admin-page-hero"' in demonstration_page
+    assert "20260914-admin-ui-52" in demonstration_page
+    assert 'class="admin-page-hero"' in demonstration_page
     assert demonstration_page.count("admin-workspace-summary-card") >= 4
-    assert 'class="city-admin-header admin-workspace-hero admin-page-hero"' in city_page
+    assert 'class="admin-page-hero"' in city_page
+    assert "city-admin-header" not in city_page
     assert city_page.count("admin-workspace-summary-card") >= 3
     assert 'class="admin-workspace-summary city-admin-overview"' in city_page
     assert city_page.count("city-admin-summary-copy") == 3
     assert "city-admin-input-with-icon" in city_page
     assert "city-admin-city-identity" in city_page
-    assert "admin-workspace-table" in city_page
+    assert "admin-data-view admin-data-view--scrollable" in city_page
+    assert "admin-data-view__table" in city_page
 
 
 def test_governance_migration_preserves_existing_city_managers(db):

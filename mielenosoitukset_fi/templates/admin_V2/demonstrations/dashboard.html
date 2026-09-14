@@ -1,360 +1,19 @@
-{% extends 'admin_base.html' %} {% block styles %}
-
-<style>
-  .search-and-filter {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    align-items: flex-start;
-  }
-
-  .search-bar {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 0.75rem;
-    align-items: center;
-    max-width: 460px;
-    width: 100%;
-    flex: 1 1 320px;
-    padding: 0.9rem 1.1rem;
-    border-radius: 16px;
-    background: light-dark(#f8f9fb, #1f232f);
-    border: 1px solid light-dark(#d6dce8, rgba(255,255,255,0.08));
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-  }
-
-  .search-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-    color: light-dark(#4c5d7a, #b1b7c6);
-    background: light-dark(#e9edf6, rgba(255,255,255,0.06));
-    border: 1px solid light-dark(#d4daec, rgba(255,255,255,0.08));
-  }
-
-  .search-input {
-    border: none;
-    background: transparent;
-    font-size: 1rem;
-    color: light-dark(#111827, #f4f6ff);
-    padding: 0;
-  }
-
-  .search-input::placeholder {
-    color: light-dark(#9097a9, #7f879b);
-  }
-
-  .search-input:focus {
-    outline: none;
-  }
-
-  .search-button {
-    border: none;
-    border-radius: 12px;
-    padding: 0.65rem 1.3rem;
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
-    color: #fff;
-    font-weight: 600;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    box-shadow: 0 15px 25px rgba(37, 99, 235, 0.35);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .search-button i {
-    font-size: 0.9rem;
-  }
-
-  .search-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 18px 28px rgba(37, 99, 235, 0.45);
-  }
-
-  .filter-select,
-  .filter-input {
-    border-radius: 12px;
-    border: 1px solid light-dark(#d2d8e5, rgba(255,255,255,0.12));
-    background: light-dark(#ffffff, #1d2533);
-    color: light-dark(#111827, #f3f4ff);
-    padding: 0.55rem 0.9rem;
-    min-width: 110px;
-    transition: border 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-  }
-
-  .filter-select:focus,
-  .filter-input:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 12px 26px rgba(37, 99, 235, 0.18);
-  }
-
-  .filter-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: flex-start;
-    flex: 2 1 420px;
-  }
-
-  .filter-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    min-width: 190px;
-    flex: 1 1 200px;
-  }
-
-  .filter-field label {
-    font-weight: 500;
-    color: light-dark(#1f2937, #e5e7f4);
-  }
-
-  .filter-apply-button {
-    border: none;
-    border-radius: 12px;
-    padding: 0.58rem 1rem;
-    background: light-dark(#111827, #edf2ff);
-    color: light-dark(#ffffff, #111827);
-    font-weight: 600;
-    min-height: 42px;
-    align-self: end;
-  }
-
-  .actions-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .filter-field label {
-    font-weight: 500;
-    color: light-dark(#1f2937, #e5e7f4);
-  }
-
-  .modal-dark {
-    background-color: light-dark(#fff, #1e1e2f);
-    color: light-dark(#000, #eee);
-    border-color: light-dark(#ccc, #444);
-  }
-
-  .modal-dark .modal-header,
-  .modal-dark .modal-footer {
-    background-color: light-dark(#f8f9fa, #2a2a3d);
-    border-color: light-dark(#ccc, #444);
-    color: light-dark(#000, #eee);
-  }
-
-  .modal-dark .btn-close {
-    filter: none;
-    /* reset if needed */
-  }
-
-  .modal-dark .btn-danger {
-    background-color: light-dark(#dc3545, #e03e3e);
-    border-color: light-dark(#b02a37, #b32b2b);
-  }
-
-  .modal-dark .btn-danger:hover {
-    background-color: light-dark(#c82333, #c32b2b);
-    border-color: light-dark(#a71d2a, #912020);
-  }
-
-  .modal-dark .btn-secondary {
-    color: light-dark(#6c757d, #ccc);
-    border-color: light-dark(#6c757d, #666);
-  }
-
-  .modal-dark .btn-secondary:hover {
-    background-color: light-dark(#e2e6ea, #444);
-    color: light-dark(#000, #fff);
-  }
-
-  .submitter-info-body {
-    color: light-dark(#1f2937, #e5e7f4);
-  }
-
-  /* smooth fade/slide when a row is removed */
-  tr.fade‑out {
-    opacity: 0;
-    height: 0;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    transition: opacity 2s ease, height 2s ease, padding 2s ease;
-  }
-
-  /* --------------------------------------------------
-   Section headers that fit the current dashboard style
--------------------------------------------------- */
-
-.section-header td {
-    padding: 0.6rem 1rem;
-    font-weight: 600;
-    font-size: 0.95rem;
-    border-radius: 6px;
-
-    /* Accent strip on left */
-    border-left: 4px solid var(--bs-info);
-
-    /* Light/Dark adaptive background */
-    background-color: light-dark(#f2f4f7, #2a2d33);
-    color: light-dark(#222, #e5e5e5);
-
-    /* Slight top separation */
-    border-top: 1px solid light-dark(#d0d0d0, #3a3a3a);
-    margin-top: 6px;
-}
-
-/* Approved header gets a neutral accent */
-.section-header.approved td {
-    border-left-color: var(--bs-success);
-}
-
-
-/* --------------------------------------------------
-   Needs-attention row (pending approvals)
--------------------------------------------------- */
-
-.needs-attention {
-    background-color: light-dark(
-        rgba(255, 220, 220, 0.45),
-        rgba(120, 50, 50, 0.25)
-    );
-}
-
-.needs-attention:hover {
-    background-color: light-dark(
-        rgba(255, 220, 220, 0.55),
-        rgba(130, 60, 60, 0.32)
-    );
-}
-
-
-/* --------------------------------------------------
-   Table row hover improvements (subtle)
--------------------------------------------------- */
-
-.table-container table tbody tr {
-    transition: background-color 0.18s ease;
-}
-
-.table-container table tbody tr:hover {
-    background-color: light-dark(
-        rgba(0, 0, 0, 0.04),
-        rgba(255, 255, 255, 0.04)
-    );
-}
-
-
-/* --------------------------------------------------
-   Dropdown + buttons (subtle rounding only)
--------------------------------------------------- */
-
-.dropdown-menu {
-    border-radius: 8px;
-}
-
-.dropdown-item {
-    border-radius: 4px;
-}
-
-.dropdown-item:hover {
-    background-color: light-dark(
-        rgba(0, 0, 0, 0.08),
-        rgba(255, 255, 255, 0.08)
-    );
-}
-
-
-/* --------------------------------------------------
-   Status icons (professional but readable)
--------------------------------------------------- */
-
-.fa-check-circle {
-    color: var(--bs-success);
-}
-
-.fa-times-circle {
-    color: var(--bs-danger);
-}
-
-
-/* --------------------------------------------------
-   Dropdown Menu Styling
--------------------------------------------------- */
-
-/* Dropdown container */
-.dropdown-menu {
-    border-radius: 8px;
-    background-color: light-dark(#ffffff, #1f1f28);
-    border: 1px solid light-dark(#dcdcdc, #2c2c36);
-    padding: 0.25rem;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-}
-
-/* Items */
-.dropdown-item {
-    border-radius: 6px;
-    padding: 0.45rem 0.75rem;
-    transition: background-color 0.12s ease, color 0.12s ease, padding-left 0.12s ease;
-    color: light-dark(#333, #ddd);
-}
-
-/* Hover */
-.dropdown-item:hover {
-    background-color: light-dark(
-        rgba(0, 0, 0, 0.06),
-        rgba(255, 255, 255, 0.09)
-    );
-    padding-left: 0.95rem; /* subtle slide effect */
-}
-
-/* Active/pressed */
-.dropdown-item:active {
-    background-color: light-dark(
-        rgba(0, 0, 0, 0.12),
-        rgba(255, 255, 255, 0.16)
-    );
-}
-
-/* Disabled */
-.dropdown-item.disabled,
-.dropdown-item:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Divider consistency */
-.dropdown-divider {
-    border-color: light-dark(#ddd, #333);
-}
-
-/* Text-danger items */
-.dropdown-item.text-danger:hover {
-    background-color: light-dark(
-        rgba(255, 0, 0, 0.12),
-        rgba(255, 60, 60, 0.12)
-    );
-    color: light-dark(#b00020, #ff6b6b);
-}
-
-</style>
-{% endblock %} {% block scripts %}
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demonstrations.css', v='20260914-admin-ui-51') }}">{% endblock %}
+{% block scripts %}
 <!--<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>-->
 <script>
   function acceptSty(demoId) {
-    demo = document.getElementById(`demo-${demoId}`);
+    const demo = document.getElementById(`demo-${demoId}`);
+    const approvalCell = demo?.querySelector('[data-col="approved"]');
+    if (!demo || !approvalCell) return;
 
-    demo.children[4].innerText = "{{ _('Kyllä') }}";
-
-    demo.children[5].children[0].remove();
-
-    demo.classList.remove("needs-attention");
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-check-circle admin-status-icon admin-status-icon--success';
+    icon.setAttribute('aria-hidden', 'true');
+    approvalCell.replaceChildren(icon, document.createTextNode(" {{ _('Kyllä') }}"));
+    demo.classList.remove("admin-data-row--attention");
   }
 
   function acceptDemo(demoId) {
@@ -392,21 +51,21 @@
 
 
 <section class="dashboard-container admin-workspace demo-management-page">
-  <header class="admin-workspace-hero admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="admin-workspace-kicker admin-page-hero__kicker">{{ _('Sisällönhallinta') }}</p>
-      <h1 id="tabletitle">{{ _('Mielenosoitukset') }}</h1>
-      <p>{{ _('Hae, suodata ja hallitse mielenosoituksia, joihin sinulla on käyttöoikeus.') }}</p>
-    </div>
-    <div class="admin-workspace-hero-actions admin-page-hero__actions">
+  {% call admin_page_hero(
+    _('Mielenosoitukset'),
+    _('Hae, suodata ja hallitse mielenosoituksia, joihin sinulla on käyttöoikeus.'),
+    _('Sisällönhallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), none)],
+    title_id='tabletitle',
+  ) %}
       {% if can_create_demo %}
       <a href="{{ url_for('admin_demo.create_demo') }}" class="admin-workspace-hero-action admin-page-hero__action">
         <i class="fas fa-plus"></i>{{ _('Uusi mielenosoitus') }}
       </a>
       {% else %}
-      <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
+      <span class="admin-page-hero__action non-suffperm" aria-disabled="true" data-tooltip="Ei käyttöoikeutta">
         <i class="fas fa-ban"></i>{{ _('Uusi mielenosoitus') }}
-      </a>
+      </span>
       {% endif %}
 
       {% if can_create_recurring_demo %}
@@ -414,9 +73,9 @@
         <i class="fas fa-plus-circle"></i>{{ _('Uusi toistuva mielenosoitus') }}
       </a>
       {% else %}
-      <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
+      <span class="admin-page-hero__action non-suffperm" aria-disabled="true" data-tooltip="Ei käyttöoikeutta">
         <i class="fas fa-ban"></i>{{ _('Uusi toistuva mielenosoitus') }}
-      </a>
+      </span>
       {% endif %}
 
       {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission('TRANSLATE_DEMO') or current_user.has_permission('REVIEW_DEMO_TRANSLATIONS') %}
@@ -424,8 +83,7 @@
         <i class="fas fa-language"></i>{{ _('Käännöstyöjono') }}
       </a>
       {% endif %}
-    </div>
-  </header>
+  {% endcall %}
 
   <section class="admin-workspace-summary" aria-label="{{ _('Näkyvien mielenosoitusten yhteenveto') }}">
     <article class="admin-workspace-summary-card">
@@ -532,8 +190,9 @@
   {% if demonstrations %}
   {% set column_count = 7
       + (1 if show_cancelled else 0) %}
-  <div class="table-container admin-workspace-table">
-    <table>
+  <div class="admin-data-view admin-data-view--scrollable">
+    <div class="admin-data-view__viewport">
+    <table class="admin-data-view__table">
       <thead>
         <tr>
           <th class="select-col">
@@ -560,12 +219,12 @@
    PENDING SECTION
    ----------------------------- #}
 {% if pending %}
-<tr class="section-header">
+<tr class="admin-data-group-header">
     <td colspan="{{ column_count }}"><strong>{{ _('Odottaa hyväksyntää') }}</strong></td>
 </tr>
 
 {% for demo in pending %}
-<tr id="demo-{{ demo._id }}" class="needs-attention" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
+<tr id="demo-{{ demo._id }}" class="admin-data-row--attention" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
 
     <td class="select-col">
         <input type="checkbox" class="demo-select form-check-input admin-selection-checkbox" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }} {{ demo.title }}"{{ '' if current_user.has_permission('EDIT_DEMO') and 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) else ' disabled' }}>
@@ -577,14 +236,14 @@
 
     <td>
         {% if demo.recurs %}
-            <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}
+            <i class="fa-solid fa-check-circle admin-status-icon admin-status-icon--success"></i> {{ _('Kyllä') }}
         {% else %}
-            <i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}
+            <i class="fa-solid fa-times-circle admin-status-icon admin-status-icon--danger"></i> {{ _('Ei') }}
         {% endif %}
     </td>
 
     <td data-col="approved">
-        <i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}
+        <i class="fa-solid fa-times-circle admin-status-icon admin-status-icon--danger"></i> {{ _('Ei') }}
     </td>
 
     {% if show_cancelled %}
@@ -663,7 +322,7 @@
                     </a></li>
 
                     <li><button class="dropdown-item" type="button"
-                                onclick="showSubmitterInfoModal('{{ demo._id }}')">
+                                onclick="showSubmitterInfoModal('{{ demo._id }}', this)">
                         <i class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}
                     </button></li>
                 {% endif %}
@@ -718,7 +377,7 @@
    APPROVED SECTION
    ----------------------------- #}
 {% if approved %}
-<tr class="section-header approved">
+<tr class="admin-data-group-header admin-data-group-header--success">
     <td colspan="{{ column_count }}"><strong>{{ _('Hyväksytyt mielenosoitukset') }}</strong></td>
 </tr>
 
@@ -735,14 +394,14 @@
 
     <td>
         {% if demo.recurs %}
-            <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}
+            <i class="fa-solid fa-check-circle admin-status-icon admin-status-icon--success"></i> {{ _('Kyllä') }}
         {% else %}
-            <i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}
+            <i class="fa-solid fa-times-circle admin-status-icon admin-status-icon--danger"></i> {{ _('Ei') }}
         {% endif %}
     </td>
 
     <td data-col="approved">
-        <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}
+        <i class="fa-solid fa-check-circle admin-status-icon admin-status-icon--success"></i> {{ _('Kyllä') }}
     </td>
 
     {% if show_cancelled %}
@@ -806,7 +465,7 @@
                     </a></li>
 
                     <li><button class="dropdown-item" type="button"
-                                onclick="showSubmitterInfoModal('{{ demo._id }}')">
+                                onclick="showSubmitterInfoModal('{{ demo._id }}', this)">
                         <i class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}
                     </button></li>
                 {% endif %}
@@ -860,7 +519,8 @@
 </tbody>
 
     </table>
-    <div class="admin-pagination">
+    </div>
+    <div class="admin-pagination admin-data-view__footer">
     <label class="admin-page-size" for="page-size">{{ _('Rivejä sivulla') }}
       <select id="page-size" aria-label="{{ _('Rivejä sivulla') }}">{% for size in [20, 50, 100] %}<option value="{{ size }}" {% if per_page == size %}selected{% endif %}>{{ size }}</option>{% endfor %}</select>
     </label>
@@ -905,12 +565,12 @@
 
   </div>
   {% else %}
-  <div class="no-results">
+  <div class="no-results admin-empty-state admin-panel">
     <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei mielenosoituksia löytynyt.') }}
   </div>
   {% endif %}
   <!-- Delete Confirmation Modal -->
-  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal fade admin-modal" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content" id="deleteModalContent">
         <div class="modal-header">
@@ -931,25 +591,42 @@
     </div>
   </div>
   <!-- Submitter Info Modal -->
-  <div class="modal fade" id="submitterInfoModal" tabindex="-1" aria-labelledby="submitterInfoLabel" aria-hidden="true">
+  <div class="modal fade admin-modal" id="submitterInfoModal" tabindex="-1" aria-labelledby="submitterInfoLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg rounded-4" id="submitterInfoModalContent">
-        <div class="modal-header bg-info text-white rounded-top-4">
-          <h5 class="modal-title" id="submitterInfoLabel">
-            <i class="fa-solid fa-user me-2"></i> {{ _('Ilmoittajan tiedot') }}
-          </h5>
-          <button type="button" class="btn-close btn-close-white" aria-label="{{ _('Sulje') }}"
+      <div class="modal-content" id="submitterInfoModalContent">
+        <div class="modal-header">
+          <div>
+            <p class="admin-modal-kicker">{{ _('Mielenosoituksen hallinta') }}</p>
+            <h2 class="modal-title" id="submitterInfoLabel">
+              <i class="fa-solid fa-user me-2"></i> {{ _('Ilmoittajan tiedot') }}
+            </h2>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"
             id="submitterInfoCloseBtn"></button>
         </div>
-        <div class="modal-body p-4 text-center submitter-info-body" id="submitter-info-content">
-          <!-- Dynamically filled content -->
-          <div id="noSubmitterInfo" class="alert alert-warning d-none">
+        <div class="modal-body" id="submitter-info-content">
+          <div id="submitterInfoLoading" role="status" aria-live="polite">
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            {{ _('Haetaan ilmoittajan tietoja…') }}
+          </div>
+          <dl id="submitterInfoResult" class="row mb-0 d-none">
+            <dt class="col-sm-5">{{ _('Nimi') }}</dt><dd class="col-sm-7" id="submitterName"></dd>
+            <dt class="col-sm-5">{{ _('Sähköposti') }}</dt><dd class="col-sm-7" id="submitterEmail"></dd>
+            <dt class="col-sm-5">{{ _('Rooli') }}</dt><dd class="col-sm-7" id="submitterRole"></dd>
+            <dt class="col-sm-5">{{ _('Hyväksynyt ehdot') }}</dt><dd class="col-sm-7" id="submitterAcceptedTerms"></dd>
+            <dt class="col-sm-5">{{ _('Ilmoitettu') }}</dt><dd class="col-sm-7" id="submitterSubmittedAt"></dd>
+          </dl>
+          <div id="noSubmitterInfo" class="alert alert-warning d-none" role="status">
             <i class="fa-solid fa-circle-exclamation me-2"></i>
             {{ _('Ilmoittajan tietoja ei löytynyt.') }}
           </div>
+          <div id="submitterInfoError" class="alert alert-danger d-none" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            {{ _('Virhe haettaessa tietoja.') }}
+          </div>
         </div>
-        <div class="modal-footer justify-content-center">
-          <button type="button" class="btn btn-outline-info btn-lg px-4" id="closeSubmitterInfo">
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeSubmitterInfo">
             {{ _('Sulje') }}
           </button>
         </div>
@@ -971,19 +648,8 @@
     document.addEventListener('DOMContentLoaded', () => {
       const deleteModalEl = document.getElementById('deleteModal');
       const deleteModal = new bootstrap.Modal(deleteModalEl);
-      // Initialize Bootstrap modal once
       const submitterModalEl = document.getElementById('submitterInfoModal');
-      const submitterModal = new bootstrap.Modal(submitterModalEl, {
-        backdrop: 'static',  // Optional: prevents closing on outside click
-        keyboard: false      // Optional: prevents closing with ESC
-      });
-
-      // Dark mode toggle for modals (adjust if your dark mode class is on <html> or <body>)
-      const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
-      if (isDark) {
-        deleteModalEl.querySelector('.modal-content').classList.add('modal-dark');
-        submitterModalEl.querySelector('.modal-content').classList.add('modal-dark');
-      }
+      const submitterModal = bootstrap.Modal.getOrCreateInstance(submitterModalEl);
 
       // Fast delete mode flag
       let fastDeleteMode = false;
@@ -1025,7 +691,13 @@
       function animateAndRemoveRow(rowEl) {
         if (!rowEl) return;
         rowEl.classList.add('fade-out');
-        rowEl.addEventListener('transitionend', () => rowEl.remove(), { once: true });
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          rowEl.remove();
+          return;
+        }
+        const removeRow = () => rowEl.remove();
+        rowEl.addEventListener('transitionend', removeRow, { once: true });
+        window.setTimeout(removeRow, 350);
       }
       // Open delete modal or fast-delete immediately if shift pressed
       window.openModal = (event, title, id) => {
@@ -1095,52 +767,66 @@
       });
 
 
-      // Show submitter info modal and fetch data
-      window.showSubmitterInfoModal = async (demoId) => {
-        const content = document.getElementById('submitter-info-content');
-        const noInfoAlert = document.getElementById('noSubmitterInfo');
+      const submitterStates = {
+        loading: document.getElementById('submitterInfoLoading'),
+        result: document.getElementById('submitterInfoResult'),
+        empty: document.getElementById('noSubmitterInfo'),
+        error: document.getElementById('submitterInfoError')
+      };
+      const submitterFields = {
+        name: document.getElementById('submitterName'),
+        email: document.getElementById('submitterEmail'),
+        role: document.getElementById('submitterRole'),
+        acceptedTerms: document.getElementById('submitterAcceptedTerms'),
+        submittedAt: document.getElementById('submitterSubmittedAt')
+      };
+      let submitterRequestNumber = 0;
+      let submitterTrigger = null;
 
-        // Clear previous content
-        content.querySelectorAll("p:not(#noSubmitterInfo)").forEach(p => p.remove());
-        noInfoAlert.classList.add("d-none");
+      function showSubmitterState(activeState) {
+        Object.entries(submitterStates).forEach(([name, element]) => {
+          element.classList.toggle('d-none', name !== activeState);
+        });
+      }
+
+      window.showSubmitterInfoModal = async (demoId, trigger = null) => {
+        const requestNumber = ++submitterRequestNumber;
+        submitterTrigger = trigger?.closest('.dropdown')?.querySelector('.dropdown-toggle')
+          || trigger
+          || (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+        showSubmitterState('loading');
+        submitterModal.show();
 
         try {
           const res = await fetch(`/admin/demo/get_submitter_info/${demoId}`);
           const data = await res.json();
+          if (requestNumber !== submitterRequestNumber) return;
 
-          if (data.status === 'OK' && data.submitter) {
+          if (res.ok && data.status === 'OK' && data.submitter) {
             const s = data.submitter;
-
-            // Dynamically fill the modal
-            const name = s.submitter_name || s.name || '{{ _("Ei saatavilla") }}';
-            const email = s.submitter_email || s.email || '{{ _("Ei saatavilla") }}';
-            const role = s.submitter_role || s.role || '{{ _("Ei saatavilla") }}';
-            const accepted = (s.accept_terms === true || s.accept_terms === 'true') ? '{{ _("Kyllä") }}' : '{{ _("Ei") }}';
-            const submittedAt = s.submitted_at || '{{ _("Ei saatavilla") }}';
-
-            content.innerHTML = `
-                <p><strong>{{ _('Nimi') }}:</strong> ${name}</p>
-                <p><strong>{{ _('Sähköposti') }}:</strong> ${email}</p>
-                <p><strong>{{ _('Rooli') }}:</strong> ${role}</p>
-                <p><strong>{{ _('Hyväksynyt ehdot') }}:</strong> ${accepted}</p>
-                <p><strong>{{ _('Ilmoitettu') }}:</strong> ${submittedAt}</p>
-            `;
+            submitterFields.name.textContent = s.submitter_name || s.name || '{{ _("Ei saatavilla") }}';
+            submitterFields.email.textContent = s.submitter_email || s.email || '{{ _("Ei saatavilla") }}';
+            submitterFields.role.textContent = s.submitter_role || s.role || '{{ _("Ei saatavilla") }}';
+            submitterFields.acceptedTerms.textContent = (s.accept_terms === true || s.accept_terms === 'true')
+              ? '{{ _("Kyllä") }}'
+              : '{{ _("Ei") }}';
+            submitterFields.submittedAt.textContent = s.submitted_at || '{{ _("Ei saatavilla") }}';
+            showSubmitterState('result');
+          } else if (res.status === 404) {
+            showSubmitterState('empty');
           } else {
-            // Show the "no info" alert
-            noInfoAlert.classList.remove("d-none");
+            showSubmitterState('error');
           }
         } catch (err) {
+          if (requestNumber !== submitterRequestNumber) return;
           console.error("Error fetching submitter info:", err);
-          noInfoAlert.textContent = '{{ _("Virhe haettaessa tietoja.") }}';
-          noInfoAlert.classList.remove("d-none");
-        } finally {
-          submitterModal.show();
+          showSubmitterState('error');
         }
       };
 
-      // Close modal buttons
-      document.getElementById('submitterInfoCloseBtn').onclick = () => submitterModal.hide();
-      document.getElementById('closeSubmitterInfo').onclick = () => submitterModal.hide();
+      submitterModalEl.addEventListener('hidden.bs.modal', () => {
+        if (submitterTrigger?.isConnected) submitterTrigger.focus();
+      });
 
       // Initial button text update
       updateDeleteButtonTexts();
@@ -1357,14 +1043,14 @@
   </script>
 
   <!-- Freeze Modal -->
-  <div class="modal fade" id="freezeModal" tabindex="-1" aria-labelledby="freezeModalLabel" aria-hidden="true">
+  <div class="modal fade admin-modal" id="freezeModal" tabindex="-1" aria-labelledby="freezeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg rounded-4">
-        <div class="modal-header bg-primary text-white rounded-top-4">
+      <div class="modal-content">
+        <div class="modal-header">
           <h5 class="modal-title" id="freezeModalLabel">
             <i class="fa-solid fa-snowflake me-2"></i> Jäädytyksen hallinta
           </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Sulje"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sulje"></button>
         </div>
         <div class="modal-body text-center p-4">
           <p id="freezeStatusText" class="mb-4 fs-6 text-muted">Ladataan tila…</p>
@@ -1377,11 +1063,11 @@
   </div>
 
   <!-- Non-Recurring Modal -->
-  <div class="modal fade" id="nonRecurringModal" tabindex="-1" aria-labelledby="nonRecurringModalLabel"
+  <div class="modal fade admin-modal" id="nonRecurringModal" tabindex="-1" aria-labelledby="nonRecurringModalLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg rounded-4">
-        <div class="modal-header bg-warning text-dark rounded-top-4">
+      <div class="modal-content">
+        <div class="modal-header">
           <h5 class="modal-title" id="nonRecurringModalLabel">
             <i class="fa-solid fa-circle-exclamation me-2"></i> Ei toistuva mielenosoitus
           </h5>

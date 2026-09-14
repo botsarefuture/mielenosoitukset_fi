@@ -214,7 +214,7 @@ This project is licensed under the Apache License, Version 2.0. See the [LICENSE
 If you have any questions, suggestions, or feedback, feel free to reach out to us:
 
 - Email: tuki@mielenosoitukset.fi
-- Email: emilia@mielenosoitukset.fi (for contributor enquiries)
+- Email: olivia@mielenosoitukset.fi (for contributor enquiries)
 
 - GitHub Issues: [https://github.com/botsarefuture/mielenosoitukset_fi/issues](https://github.com/botsarefuture/mielenosoitukset_fi/issues)
 

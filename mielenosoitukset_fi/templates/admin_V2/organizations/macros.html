@@ -1,10 +1,10 @@
 {% macro invite_modal(organization) %}
 <!-- Invite Users Modal -->
 <div class="modal fade admin-modal admin-workflow-modal" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content shadow rounded-4 border-0">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
 
-      <form class="admin-workspace-form" method="POST" action="{{ url_for('admin_org.invite', org_id=organization._id if organization else None) }}">
+      <form class="admin-form admin-workspace-form" method="POST" action="{{ url_for('admin_org.invite') }}">
         <!-- Modal Header -->
         <div class="modal-header">
           <div>
@@ -16,9 +16,10 @@
 
         <!-- Modal Body -->
         <div class="modal-body">
-          <div class="mb-3">
-            <label for="invitee_email" class="form-label">{{ _('Kutsuttavan sähköpostiosoite') }} <span class="text-danger" aria-hidden="true">*</span></label>
-            <input type="email" class="form-control" id="invitee_email" name="invitee_email" placeholder="{{ _('Sähköposti') }}" required aria-required="true" autocomplete="email">
+          <div class="admin-field mb-3">
+            <p id="inviteHelp" class="admin-field__help">{{ _('Lähetämme käyttäjälle sähköpostitse linkin, jolla hän voi liittyä organisaatioon.') }}</p>
+            <label for="invitee_email" class="form-label">{{ _('Kutsuttavan sähköpostiosoite') }} <span class="admin-required" aria-hidden="true">*</span></label>
+            <input type="email" class="form-control" id="invitee_email" name="invitee_email" placeholder="nimi@example.fi" required aria-required="true" aria-describedby="inviteHelp" autocomplete="email">
           </div>
           <input type="hidden" name="organization_id" value="{{ organization._id }}">
         </div>

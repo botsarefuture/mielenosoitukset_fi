@@ -1,0 +1,300 @@
+.admin-dashboard-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-dashboard-shell .dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(20rem, 1.25fr);
+  gap: 1rem;
+  min-width: 0;
+}
+
+.admin-dashboard-shell .live-header,
+.admin-dashboard-shell .side-header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.admin-dashboard-shell .side-header {
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.admin-dashboard-shell .eyebrow {
+  margin-bottom: .35rem;
+  color: var(--admin-workspace-muted);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.admin-dashboard-shell .live-indicator {
+  display: inline-flex;
+  gap: .5rem;
+  align-items: center;
+  padding: .6rem .8rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 999px;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+  font-weight: 700;
+}
+
+.admin-dashboard-shell .pulse {
+  width: .7rem;
+  height: .7rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--admin-workspace-danger);
+  animation: admin-dashboard-pulse 2s infinite;
+}
+
+.admin-dashboard-shell .clock-chip .pulse {
+  background: var(--admin-workspace-success);
+}
+
+@keyframes admin-dashboard-pulse {
+  0% { box-shadow: 0 0 0 0 var(--admin-workspace-danger-soft); }
+  70%, 100% { box-shadow: 0 0 0 .5rem transparent; }
+}
+
+.admin-dashboard-shell .stat-grid,
+.admin-dashboard-shell .system-rows,
+.admin-dashboard-shell .quick-actions {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-dashboard-shell .stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  margin-top: 1.25rem;
+}
+
+.admin-dashboard-shell .stat-card,
+.admin-dashboard-shell .panic-card,
+.admin-dashboard-shell .health-card,
+.admin-dashboard-shell .quick-card,
+.admin-dashboard-shell .login-entry {
+  min-width: 0;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 1rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+}
+
+.admin-dashboard-shell .stat-card {
+  padding: 1rem;
+  transition: border-color .18s ease, transform .18s ease;
+}
+
+.admin-dashboard-shell .stat-card:hover {
+  border-color: var(--admin-workspace-blue);
+  transform: translateY(-.15rem);
+}
+
+.admin-dashboard-shell .stat-label {
+  margin-bottom: .35rem;
+  color: var(--admin-workspace-muted);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.admin-dashboard-shell .stat-value {
+  color: var(--admin-workspace-text);
+  font-size: clamp(1.55rem, 3vw, 2rem);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.admin-dashboard-shell .stat-sub {
+  display: flex;
+  gap: .5rem .75rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-top: .45rem;
+  color: var(--admin-workspace-muted);
+  font-size: .8rem;
+}
+
+.admin-dashboard-shell .system-rows {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  margin-top: 1rem;
+}
+
+.admin-dashboard-shell .panic-card {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  padding: 1rem;
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-dashboard-shell .panic-grid {
+  display: grid;
+  grid-template: repeat(2, 3.75rem) / repeat(2, 3.75rem);
+  gap: .5rem;
+  flex: 0 0 auto;
+}
+
+.admin-dashboard-shell .panic-grid span {
+  border-radius: .75rem;
+  background: var(--admin-workspace-surface);
+  transition: background .2s ease, transform .2s ease;
+}
+
+.admin-dashboard-shell .panic-grid.active span {
+  background: var(--admin-workspace-danger);
+  animation: admin-dashboard-alert 1.5s infinite;
+}
+
+.admin-dashboard-shell .panic-grid.safe span {
+  background: var(--admin-workspace-success);
+}
+
+@keyframes admin-dashboard-alert {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(.95); opacity: .75; }
+}
+
+.admin-dashboard-shell .panic-state {
+  color: var(--admin-workspace-text);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.admin-dashboard-shell .panic-state.active { color: var(--admin-workspace-danger); }
+.admin-dashboard-shell .panic-state.safe { color: var(--admin-workspace-success); }
+
+.admin-dashboard-shell .panic-actions {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-top: .75rem;
+}
+
+.admin-dashboard-shell .panic-actions form { margin: 0; }
+
+.admin-dashboard-shell .health-card {
+  padding: 1rem;
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-dashboard-shell .health-metric + .health-metric { margin-top: 1rem; }
+
+.admin-dashboard-shell .health-label {
+  display: flex;
+  gap: .75rem;
+  justify-content: space-between;
+  margin-bottom: .35rem;
+  color: var(--admin-workspace-muted);
+  font-size: .8rem;
+}
+
+.admin-dashboard-progress {
+  height: .625rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--admin-workspace-surface);
+}
+
+.admin-dashboard-progress > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--admin-workspace-primary-bg);
+  transition: width .2s ease;
+}
+
+.admin-dashboard-shell .quick-actions {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  margin-top: 1rem;
+}
+
+.admin-dashboard-shell .quick-card {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  text-decoration: none;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.admin-dashboard-shell .quick-card:hover {
+  border-color: var(--admin-workspace-blue);
+  color: var(--admin-workspace-blue-dark);
+  background: var(--admin-workspace-blue-soft);
+  transform: translateY(-.15rem);
+}
+
+.admin-dashboard-shell .quick-card:focus-visible {
+  outline: 3px solid var(--admin-workspace-blue-soft);
+  outline-offset: 2px;
+}
+
+.admin-dashboard-shell .side-panel {
+  min-height: 100%;
+}
+
+.admin-dashboard-shell .login-feed {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.admin-dashboard-shell .login-entry {
+  position: relative;
+  margin-bottom: .75rem;
+  padding: .85rem 1rem;
+}
+
+.admin-dashboard-shell .login-entry::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: .25rem;
+  border-radius: 1rem 0 0 1rem;
+  background: var(--admin-workspace-danger);
+}
+
+.admin-dashboard-shell .login-entry.success::before {
+  background: var(--admin-workspace-success);
+}
+
+.admin-dashboard-shell .entry-heading {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-dashboard-shell .entry-meta {
+  display: grid;
+  gap: .25rem;
+  margin-top: .55rem;
+  color: var(--admin-workspace-muted);
+  font-size: .78rem;
+}
+
+@media (max-width: 1200px) {
+  .admin-dashboard-shell .dashboard-grid { grid-template-columns: 1fr; }
+  .admin-dashboard-shell .login-feed { max-height: none; }
+}
+
+@media (max-width: 640px) {
+  .admin-dashboard-shell .panic-card { align-items: flex-start; flex-direction: column; }
+  .admin-dashboard-shell .panic-grid { grid-template: repeat(2, 2.75rem) / repeat(2, 2.75rem); }
+  .admin-dashboard-shell .quick-card { align-items: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-dashboard-shell :is(.pulse, .panic-grid.active span) { animation: none; }
+  .admin-dashboard-shell :is(.stat-card, .quick-card, .panic-grid span, .admin-dashboard-progress > span) { transition: none; }
+}

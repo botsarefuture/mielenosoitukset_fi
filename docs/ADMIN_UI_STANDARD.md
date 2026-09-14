@@ -52,10 +52,14 @@ Use these shared classes:
 
 New and migrated full pages render their introduction with the
 `admin_page_hero` macro from `admin_V2/macros.html`. Breadcrumbs live above the
-kicker inside the content column. When a parent view exists, pass it as
-`back_url`; the macro always renders that back action first in the shared action
-column. Additional actions belong in the macro caller block. Do not hand-build a
-different back-button position inside page content.
+kicker inside the content column. Every full page except the admin root includes
+a breadcrumb trail from its root context to the current page. Workflow, detail,
+editor, confirmation, and nested tool pages pass their parent as `back_url`; the
+macro always renders that back action first in the shared action column.
+Top-level collections and workspaces intentionally omit the back action because
+the persistent admin navigation and root breadcrumb already provide their parent
+navigation. Additional actions belong in the macro caller block. Do not
+hand-build a different back-button position inside page content.
 
 Use a compact heading instead of a hero only for detail editors and short
 workflows. The first screenful must still have one clear title, a short purpose

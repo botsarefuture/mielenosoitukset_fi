@@ -1,0 +1,261 @@
+.translation-editor {
+  display: grid;
+  gap: 1rem;
+}
+
+.translation-editor .translation-eyebrow,
+.translation-editor .translation-column-language {
+  color: var(--admin-workspace-blue-dark);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.translation-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: .75rem;
+}
+
+.translation-status-card {
+  display: grid;
+  gap: .55rem;
+  align-content: start;
+}
+
+.translation-status-card .admin-status-badge {
+  width: fit-content;
+}
+
+.translation-language-tabs {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.translation-language-tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.65rem;
+  padding: .55rem .85rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 999px;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+  font-size: .82rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.translation-language-tab:hover,
+.translation-language-tab:focus-visible,
+.translation-language-tab.is-active {
+  border-color: var(--admin-workspace-primary-bg);
+  color: var(--admin-workspace-on-primary);
+  background: var(--admin-workspace-primary-bg);
+}
+
+.translation-language-tab:focus-visible {
+  outline: 3px solid var(--admin-workspace-blue-soft);
+  outline-offset: 2px;
+}
+
+.translation-direction {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  border-color: var(--admin-workspace-blue);
+  background: var(--admin-workspace-blue-soft);
+}
+
+.translation-direction-language {
+  min-width: 0;
+  padding: .8rem 1rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .75rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+  text-align: center;
+}
+
+.translation-direction-arrow {
+  color: var(--admin-workspace-blue-dark);
+  font-size: 1.35rem;
+}
+
+.translation-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.translation-pair + .translation-pair {
+  margin-top: 1rem;
+}
+
+.translation-pair-column {
+  min-width: 0;
+}
+
+.translation-pair-source {
+  background: var(--admin-workspace-surface-muted);
+}
+
+.translation-pair-target {
+  border-color: var(--admin-workspace-blue);
+}
+
+.translation-column-language {
+  display: block;
+  margin-bottom: .65rem;
+}
+
+.translation-source-field,
+.translation-preview {
+  min-height: 2.7rem;
+  padding: .7rem .8rem;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .7rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+  white-space: pre-wrap;
+}
+
+.translation-source-field--description,
+.translation-preview {
+  min-height: 15rem;
+}
+
+.translation-step {
+  border-left: .3rem solid var(--admin-workspace-blue);
+}
+
+.translation-step-heading {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+}
+
+.translation-step-number {
+  display: inline-grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 2.5rem;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--admin-workspace-on-primary);
+  background: var(--admin-workspace-primary-bg);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.markdown-guide {
+  border-color: var(--admin-workspace-blue);
+  background: var(--admin-workspace-blue-soft);
+}
+
+.markdown-guide-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: .75rem;
+}
+
+.markdown-guide-step {
+  padding: 1rem;
+  border: 2px solid transparent;
+  border-radius: .85rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+  opacity: .55;
+  transform: translateY(.25rem);
+  transition: opacity .2s ease, transform .2s ease, border-color .2s ease;
+}
+
+.markdown-guide-step.is-active,
+.markdown-guide-step.is-complete {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.markdown-guide-step.is-active {
+  border-color: var(--admin-workspace-blue);
+}
+
+.markdown-example {
+  display: block;
+  margin-top: .65rem;
+  padding: .65rem;
+  border-radius: .5rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+  font-size: .9rem;
+}
+
+.markdown-toolbar {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: .75rem;
+}
+
+.translation-preview {
+  margin-top: .35rem;
+}
+
+.translation-accessibility-control {
+  display: flex;
+  gap: .8rem;
+  align-items: center;
+  min-height: 3.5rem;
+  padding: .8rem 1rem;
+  border-color: var(--admin-workspace-blue);
+}
+
+.translation-editor:not(.accessibility-mode) .translation-step {
+  border-left-width: .2rem;
+}
+
+.translation-editor:not(.accessibility-mode) .translation-step-number {
+  width: 1.8rem;
+  height: 1.8rem;
+  flex-basis: 1.8rem;
+  font-size: .85rem;
+}
+
+.translation-editor:not(.accessibility-mode) :is(.translation-step-heading p, .translation-editor-summary, .markdown-guide-steps) {
+  display: none;
+}
+
+.translation-editor:not(.accessibility-mode) .markdown-guide.is-replaying .markdown-guide-steps {
+  display: grid;
+}
+
+@media (max-width: 900px) {
+  .translation-pair,
+  .translation-direction {
+    grid-template-columns: 1fr;
+  }
+
+  .translation-direction-arrow {
+    transform: rotate(90deg);
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .markdown-toolbar .btn,
+  .translation-editor .admin-sticky-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-guide-step {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

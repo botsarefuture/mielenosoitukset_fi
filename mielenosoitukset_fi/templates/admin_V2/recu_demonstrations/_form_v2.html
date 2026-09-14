@@ -131,9 +131,9 @@
         title,
         _('Muokkaa sarjan perustietoja, toistuvuutta ja tulevia lapsimielenosoituksia samasta näkymästä.'),
         _('Toistuvat mielenosoitukset'),
-        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Toistuvat mielenosoitukset'), url_for('admin_recu_demo.recu_demo_control')), (title, none)] if current_user.is_authenticated else [(title, none)],
-        back_url=url_for('admin_recu_demo.recu_demo_control') if current_user.is_authenticated else none,
-        back_label=_('Toistuvat mielenosoitukset'),
+        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Toistuvat mielenosoitukset'), url_for('admin_recu_demo.recu_demo_control')), (title, none)] if current_user.is_authenticated else [(_('Etusivu'), url_for('index')), (title, none)],
+        back_url=url_for('admin_recu_demo.recu_demo_control') if current_user.is_authenticated else url_for('index'),
+        back_label=_('Toistuvat mielenosoitukset') if current_user.is_authenticated else _('Etusivu'),
         sections=[('basic-info', _('Perustiedot')), ('recurrence-settings', _('Toistuvuus')), ('location-info', _('Sijainti')), ('organizer-info', _('Järjestäjät'))] + ([('child-demos', _('Lapsimielenosoitukset'))] if demo and demo._id else []),
         title_id='tabletitle',
     ) }}
@@ -240,7 +240,7 @@
 
             <div class="form-group">
                 <label for="description">{{ _('Kuvaus') }}</label>
-                <div class="main-container" style="margin-bottom: 1.5rem;">
+                <div class="main-container admin-editor-richtext">
                     <div id="editor-container"
                         class="editor-container editor-container_classic-editor editor-container_include-block-toolbar">
                         <div class="editor-container__editor">
@@ -251,7 +251,7 @@
                 <input type="hidden" id="description" name="description" value="{{ demo.description|default('', true) if demo else '' }}">
             </div>
 
-            <div style="height: 2rem;"></div>
+            <div class="admin-editor-spacer" aria-hidden="true"></div>
 
             <script type="importmap">
             {
@@ -311,7 +311,7 @@
             </div>
 
             <!-- Weekly options -->
-            <div id="weekly-options" class="form-group mt-4" style="display: none">
+            <div id="weekly-options" class="form-group mt-4" hidden>
                 <label class="block font-medium mb-1">Valitse viikonpäivä</label>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {% set selected_weekday = demo.repeat_schedule.weekday if demo and demo.repeat_schedule else none %}
@@ -322,7 +322,7 @@
             </div>
 
             <!-- Monthly options -->
-            <div id="monthly-options" class="form-group mt-4" style="display: none">
+            <div id="monthly-options" class="form-group mt-4" hidden>
                 <label class="block font-medium mb-1">Kuukauden vaihtoehto</label>
                 <select id="monthly_option" name="monthly_option" class="form-control w-full">
                     {% set monthly_option = demo.repeat_schedule.monthly_option if demo and demo.repeat_schedule else 'day_of_month' %}
@@ -380,8 +380,8 @@
                 const monthlyOptions = document.getElementById('monthly-options');
 
                 const updateRecurrenceOptions = () => {
-                    weeklyOptions.style.display = freqSelect.value === 'weekly' ? 'block' : 'none';
-                    monthlyOptions.style.display = freqSelect.value === 'monthly' ? 'block' : 'none';
+                    weeklyOptions.hidden = freqSelect.value !== 'weekly';
+                    monthlyOptions.hidden = freqSelect.value !== 'monthly';
                 };
                 freqSelect.addEventListener('change', updateRecurrenceOptions);
                 updateRecurrenceOptions();
@@ -414,8 +414,7 @@
             <h2>{{ _('SEO / tagit') }}</h2>
             <div class="form-group">
                 <label for="tag-input">{{ _('Tägit') }}</label>
-                <div id="tags-wrapper" class="tags-wrapper"
-                    style="display:flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem; min-height: 3rem; cursor: text;">
+                <div id="tags-wrapper" class="tags-wrapper admin-token-input">
                     <!-- Existing tags rendered here as pills -->
                     {% if demo and demo.tags %}
                     {% for tag in demo.tags %}
@@ -427,8 +426,8 @@
                     {% endfor %}
                     {% endif %}
                     <!-- Input for new tags -->
-                    <input type="text" id="tag-input" placeholder="{{ _('Kirjoita ja paina enter lisätäksesi tagin') }}"
-                        style="border:none; outline:none; flex-grow:1; min-width:150px;" />
+                    <input type="text" id="tag-input" class="admin-token-input__field"
+                        placeholder="{{ _('Kirjoita ja paina enter lisätäksesi tagin') }}" />
                 </div>
             </div>
         </section>
@@ -565,7 +564,7 @@
                 {% if demo and demo.cover_picture %}
                 <div class="mt-2">
                     <img src="{{ demo.cover_picture }}" alt="{{ _('Kansikuvan esikatselu') }}"
-                        style="max-width: 300px; max-height: 200px; object-fit: contain; border-radius: 0.25rem;">
+                        class="admin-form-image-preview">
                 </div>
                 {% endif %}
             </div>
@@ -665,11 +664,9 @@
                 })();
             </script>
 
-            <div id="march-route-container" class="form-group"
-                style="{% if not demo or demo.event_type != 'MARCH' %}display:none;{% endif %}">
+            <div id="march-route-container" class="form-group"{% if not demo or demo.event_type != 'MARCH' %} hidden{% endif %}>
                 <label>{{ _('Reitti (marssin)') }}</label>
-                <div id="route-tags-wrapper" class="tags-wrapper"
-                    style="display:flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem; min-height: 3rem; cursor: text;">
+                <div id="route-tags-wrapper" class="tags-wrapper admin-token-input">
 
                     <!-- Existing route points rendered as pills -->
                     {% if demo and demo.route %}
@@ -686,9 +683,8 @@
                     {% endif %}
 
                     <!-- Input for new route points -->
-                    <input type="text" id="route-input"
-                        placeholder="{{ _('Kirjoita reittipiste ja paina enter lisätäksesi') }}"
-                        style="border:none; outline:none; flex-grow:1; min-width:150px;" />
+                    <input type="text" id="route-input" class="admin-token-input__field"
+                        placeholder="{{ _('Kirjoita reittipiste ja paina enter lisätäksesi') }}" />
                 </div>
             </div>
 
@@ -744,11 +740,7 @@
 
                     // Show/hide route container based on type selection
                     function updateRouteVisibility() {
-                        if (typeSelect.value === 'MARCH') {
-                            marchRouteContainer.style.display = 'block';
-                        } else {
-                            marchRouteContainer.style.display = 'none';
-                        }
+                        marchRouteContainer.hidden = typeSelect.value !== 'MARCH';
                     }
 
                     typeSelect.addEventListener('change', updateRouteVisibility);

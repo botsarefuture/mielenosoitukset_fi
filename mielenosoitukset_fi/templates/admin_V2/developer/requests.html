@@ -7,7 +7,9 @@
     _('Kehittäjähallinta'),
     _('Hallinnoi kehittäjäoikeuksia ja sovellusten scope-pyyntöjä.'),
     _('Käyttäjät ja hallinto'),
-    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Kehittäjähallinta'), none)]
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttäjät'), url_for('admin_user.user_control')), (_('Kehittäjähallinta'), none)],
+    back_url=url_for('admin_user.user_control'),
+    back_label=_('Käyttäjät')
   ) }}
 
   <h4 class="mt-4 mb-3">Kehittäjäpaneelin avauspyynnöt</h4>

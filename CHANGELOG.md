@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Small orange user-status and admin-role badges now use a contrast-safe semantic foreground in both themes instead of bright orange text on the soft orange surface.
 * Case summary cards and detail section headings now use the shared component wrappers, restoring the common label sizing, overflow behavior, and compact heading geometry.
 * Disabled demonstration hero actions now retain the canonical hero control geometry and expose their unavailable state to assistive technology after legacy hero classes are removed.
 * Campaign volunteer controls now initialize their shared Bootstrap modal after the bundle has loaded, so filtering, pagination, exports, editing, confirmation, and deletion remain operational on first page load.

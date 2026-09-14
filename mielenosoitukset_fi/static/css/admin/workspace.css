@@ -16,6 +16,7 @@ body {
   --admin-workspace-primary-hover: light-dark(#00267a, #416fbd);
   --admin-workspace-on-primary: #ffffff;
   --admin-workspace-orange: #ff6600;
+  --admin-workspace-orange-strong: light-dark(#963b00, #ffb37a);
   --admin-workspace-orange-soft: light-dark(#fff2e8, #3a2418);
   --admin-workspace-surface: light-dark(#ffffff, #20252d);
   --admin-workspace-surface-muted: light-dark(#f6f8fb, #292f39);

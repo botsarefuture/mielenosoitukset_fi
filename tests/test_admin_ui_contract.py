@@ -264,6 +264,7 @@ def test_user_role_forms_use_shared_admin_contract():
     assert "admin-data-view" in user_list
     assert "--users-" not in users_css
     assert "--admin-workspace-primary-bg" in users_css
+    assert "--admin-workspace-orange-strong" in users_css
     assert ".dark .admin-modal .btn-close" in Path(
         "mielenosoitukset_fi/static/css/admin/workspace.css"
     ).read_text(encoding="utf-8")

@@ -4,7 +4,7 @@
   height: 1.45rem;
   place-items: center;
   border-radius: 999px;
-  color: var(--admin-workspace-orange);
+  color: var(--admin-workspace-orange-strong);
   background: var(--admin-workspace-orange-soft);
   font-size: .72rem;
 }
@@ -85,7 +85,7 @@
   line-height: 1.55;
 }
 
-.create-user-note i { margin-top: .15rem; color: var(--admin-workspace-orange); }
+.create-user-note i { margin-top: .15rem; color: var(--admin-workspace-orange-strong); }
 .create-user-note a { color: var(--admin-workspace-blue-dark); font-weight: 800; }
 
 .create-user-grid {
@@ -195,7 +195,7 @@
 }
 
 .workflow-heading-icon.warning {
-  color: var(--admin-workspace-orange);
+  color: var(--admin-workspace-orange-strong);
   background: var(--admin-workspace-orange-soft);
 }
 
@@ -251,7 +251,7 @@
   font-size: .78rem;
 }
 
-.workflow-status.warning { color: var(--admin-workspace-orange); }
+.workflow-status.warning { color: var(--admin-workspace-orange-strong); }
 .workflow-status.danger { color: var(--admin-workspace-danger); }
 
 .workflow-button {
@@ -415,7 +415,7 @@
 }
 
 .users-table .user-role.admin {
-  color: var(--admin-workspace-orange);
+  color: var(--admin-workspace-orange-strong);
   background: var(--admin-workspace-orange-soft);
 }
 

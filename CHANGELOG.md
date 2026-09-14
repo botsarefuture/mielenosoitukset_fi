@@ -37,7 +37,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
-* The admin inline-style debt ratchet now fingerprints the allowlisted style contents, so declarations and attribute values cannot expand unnoticed while the remaining exceptions are migrated.
+* The admin inline-style debt guard now fingerprints every remaining style block and attribute value, so declarations cannot grow inside an allowlisted element without an explicit reviewed baseline update.
 * The demonstration collection now uses the shared data-view, grouped-row, status-icon, empty-state, pagination, and modal contracts plus the reusable demonstrations stylesheet instead of its 343-line template-local light/dark palette; delete animation also respects reduced-motion preferences.
 * The demonstration command center now uses the shared admin page, hero, status, section-card, button, and semantic theme contracts backed by the reusable demonstrations CSS module instead of a 325-line inline palette; external tools use isolated-tab links and a stray post-template CSS fragment has been removed.
 * User listing, identity rows, role badges, account workflows, and creation/login-history modals now combine the shared admin summary, section, data-view, field, button, modal, status, and semantic color contracts with a reusable users CSS module instead of 570 lines of template-local styling and legacy `--users-*` theme aliases.

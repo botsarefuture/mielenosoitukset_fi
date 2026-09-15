@@ -21,6 +21,7 @@ from mielenosoitukset_fi.scripts.process_ui_translation_sync import (
 )
 from mielenosoitukset_fi.utils.analytics import prep
 from mielenosoitukset_fi.scripts.auto_close_cases import main as auto_close_cases
+from mielenosoitukset_fi.scripts.process_support_tickets import main as process_support_tickets
 
 
 @dataclass(frozen=True)
@@ -123,6 +124,14 @@ JOB_DEFINITIONS: List[JobDefinition] = [
         description="Closes cases whose linked demos were accepted/rejected/cancelled or org edits are applied.",
         func=auto_close_cases,
         default_trigger=_interval(hours=1),
+        allow_interval_override=True,
+    ),
+    JobDefinition(
+        key="process_support_tickets",
+        name="Support ticket ingress (tuki@ mailbox)",
+        description="Polls the tuki@ IMAP mailbox, creates support_ticket cases, sends auto-replies and relays URGENT follow-ups.",
+        func=process_support_tickets,
+        default_trigger=_interval(minutes=5),
         allow_interval_override=True,
     ),
 ]

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiitos yhteydenotostasi</title>
+    <style>
+        body {
+            background: #f4f4f4;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            background: #ffffff;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            padding: 15px 10px;
+            background: #0033A0;
+            color: #ffffff;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            margin: 20px;
+        }
+        .ticket-box {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #eef2fb;
+            border: 1px dashed #0033A0;
+            border-radius: 6px;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #0033A0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #0033A0;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .btn:hover {
+            background: #002a6d;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #888888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Kiitos yhteydenotostasi</h1>
+        </div>
+        <div class="content">
+            <p>Hei!</p>
+            <p>Olemme vastaanottaneet yhteydenottosi ja se on nyt käsittelyssä. Viestisi on tallennettu tukipyyntönä, jonka tunnus on:</p>
+            <div class="ticket-box">{{ ticket_id }}</div>
+            <p>Vastaamme yhteydenottoon yleensä <strong>alle {{ sla_hours }} tunnin</strong> kuluessa.</p>
+            <p>Kun vastaat tähän viestiin, vastauksesi liitetään automaattisesti samaan tukipyyntöön ({{ ticket_id }}).</p>
+            <p>Jos asiasi on <strong>kiireellinen</strong>, kirjoita vastauksesi alkuun sana <strong>{{ urgent_keyword }}</strong> — se ohjataan välittömästi kiireellisenä eteenpäin.</p>
+            <p>Kiitos kärsivällisyydestäsi!</p>
+        </div>
+        <div class="footer">
+            <p>Tämä on automaattinen vastaus. Voit vastata tähän viestiin — vastauksesi liitetään tukipyyntöösi {{ ticket_id }}.</p>
+        </div>
+    </div>
+</body>
+</html>

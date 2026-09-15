@@ -16,6 +16,7 @@
     <span class="admin-status-badge admin-status-badge--warning"><i class="fas fa-layer-group" aria-hidden="true"></i>{{ _('Avoimet') }}: {{ open_count }}</span>
     <span class="admin-status-badge admin-status-badge--success"><i class="fas fa-check" aria-hidden="true"></i>{{ _('Suljetut') }}: {{ closed_count }}</span>
     <span class="admin-status-badge"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>{{ _('Eskaloinnit') }}: {{ escalated_count }}</span>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_case.blocklist') }}"><i class="fas fa-ban me-1" aria-hidden="true"></i>{{ _('Tukilippujen estolista') }}</a>
   </div>
   <div class="admin-active-filters admin-case-filters" aria-label="{{ _('Suodata tapauksia') }}">
     <button type="button" class="admin-filter-chip active" data-filter="all" aria-pressed="true">{{ _('Kaikki') }}</button>

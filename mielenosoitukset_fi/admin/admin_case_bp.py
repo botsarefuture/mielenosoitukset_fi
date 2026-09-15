@@ -1,3 +1,4 @@
+import re
 import sys
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
@@ -72,6 +73,7 @@ def _case_type_label(case_type):
         "organization_edit_suggestion": _("Organisaation muutospyyntö"),
         "demo_cancellation_request": _("Peruutuspyyntö"),
         "demo_cancelled": _("Peruttu mielenosoitus"),
+        "support_ticket": _("Tukipyyntö"),
     }
     return labels.get(case_type, str(case_type).replace("_", " ").capitalize())
 
@@ -153,6 +155,11 @@ def _build_case_row(case_obj, demo_doc=None, org_doc=None):
     closed = bool((case_obj.meta or {}).get("closed"))
     escalated = bool((case_obj.meta or {}).get("superior_needed"))
 
+    # Support tickets: map the URGENT keyword flag to the high-urgency badge
+    # so the "Kriittiset" filter catches them, not just the escalation chip.
+    if case_obj.case_type == "support_ticket" and (case_obj.meta or {}).get("urgent"):
+        urgency = urgency or "high"
+
     if case_obj.case_type == "new_demo":
         title = (demo_doc or {}).get("title") or _("Uusi mielenosoitus")
         description = (demo_doc or {}).get("address") or _("Ei lisatietoja")
@@ -177,6 +184,11 @@ def _build_case_row(case_obj, demo_doc=None, org_doc=None):
         title = (org_doc or {}).get("name") or _("Organisaation muutospyynto")
         description = _("Organisaation tiedoista ehdotetaan muutoksia.")
         meta_line = (submitter.get("submitter_name") or submitter.get("email") or _("Ei ilmoittajaa"))
+    elif case_obj.case_type == "support_ticket":
+        ticket_subject = (case_obj.suggestion or {}).get("subject") or (case_obj.meta or {}).get("ticket", {}).get("subject") or _("Tukipyyntö")
+        description = (case_obj.suggestion or {}).get("message") or _("Ei viestiä")
+        meta_line = submitter.get("submitter_email") or submitter.get("email") or _("Ei ilmoittajaa")
+        title = _("Tukipyyntö: {subject}").format(subject=ticket_subject[:100]) if ticket_subject else _("Tukipyyntö")
     else:
         title = _case_type_label(case_obj.case_type)
         description = _("Ei lisatietoja")
@@ -248,6 +260,110 @@ def cases():
         auto_closed=auto_closed,
     )
 
+@admin_case_bp.route("/demo_search/", methods=["GET"])
+@login_required
+@admin_required
+def demo_search():
+    """Simple AJAX lookup for linking a support ticket to an existing demo."""
+    q = (request.args.get("q", "") or "").strip()
+    if not q:
+        return jsonify([])
+    demos = list(
+        mongo.demonstrations.find(
+            {"title": {"$regex": re.escape(q), "$options": "i"}},
+            {"title": 1, "city": 1, "cancelled": 1},
+        ).sort("title", 1).limit(10)
+    )
+    return jsonify([
+        {
+            "id": str(d.get("_id")),
+            "title": d.get("title", ""),
+            "city": d.get("city", ""),
+            "cancelled": bool(d.get("cancelled")),
+        }
+        for d in demos
+    ])
+
+
+@admin_case_bp.route("/org_search/", methods=["GET"])
+@login_required
+@admin_required
+def org_search():
+    """Simple AJAX lookup for linking a support ticket to an organization."""
+    q = (request.args.get("q", "") or "").strip()
+    if not q:
+        return jsonify([])
+    orgs = list(
+        mongo.organizations.find(
+            {"name": {"$regex": re.escape(q), "$options": "i"}},
+            {"name": 1},
+        ).sort("name", 1).limit(10)
+    )
+    return jsonify([
+        {"id": str(o.get("_id")), "name": o.get("name", "")}
+        for o in orgs
+    ])
+
+
+@admin_case_bp.route("/blocklist/", methods=["GET", "POST"])
+@login_required
+@admin_required
+def blocklist():
+    """Manage the support-ticket sender blocklist.
+
+    Supports exact addresses (``user@example.com``) and whole domains with
+    their subdomains (``example.com`` or ``*@example.com``).
+    """
+    if request.method == "POST":
+        pattern = (request.form.get("pattern", "") or "").strip().lower()
+        if pattern:
+            existing = mongo.support_ticket_blocklist.find_one({"pattern": pattern})
+            if not existing:
+                mongo.support_ticket_blocklist.insert_one(
+                    {
+                        "pattern": pattern,
+                        "added_by": current_user.username,
+                        "added_at": utcnow(),
+                    }
+                )
+                log_admin_action_V2(
+                    f"{current_user.username} lisäsi tukilippujen estolistalle: {pattern}",
+                    None,
+                )
+                flash_message(_("Esto lisätty: %(pattern)s") % {"pattern": pattern}, "success")
+            else:
+                flash_message(_("Esto on jo listalla."), "warning")
+        else:
+            flash_message(_("Anna sähköpostiosoite tai verkkotunnus."), "warning")
+        return redirect(url_for("admin_case.blocklist"))
+
+    blocked = list(
+        mongo.support_ticket_blocklist.find({}).sort("added_at", -1)
+    )
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}cases/blocklist.html",
+        blocked=blocked,
+        case_type_label=_("Tukilippujen estolista"),
+    )
+
+
+@admin_case_bp.route("/blocklist/<block_id>/remove", methods=["POST"])
+@login_required
+@admin_required
+def blocklist_remove(block_id):
+    if not ObjectId.is_valid(block_id):
+        abort(404)
+    doc = mongo.support_ticket_blocklist.find_one({"_id": ObjectId(block_id)})
+    if doc:
+        mongo.support_ticket_blocklist.delete_one({"_id": ObjectId(block_id)})
+        log_admin_action_V2(
+            f"{current_user.username} poisti tukilippujen estolistalta: {doc.get('pattern')}",
+            None,
+        )
+        flash_message(_("Esto poistettu: %(pattern)s") % {"pattern": doc.get("pattern")}, "success")
+    return redirect(url_for("admin_case.blocklist"))
+
+
 @admin_case_bp.route("/<case_id>/")
 @login_required
 def single_case(case_id):
@@ -309,6 +425,29 @@ def single_case(case_id):
             "cancelled_at": (demo or {}).get("cancelled_at"),
         }
 
+    elif case.case_type == "support_ticket":
+        suggestion = case.suggestion or {}
+        ticket_meta = (case.meta or {}).get("ticket", {})
+        case_data["support_ticket"] = {
+            "subject": ticket_meta.get("subject") or suggestion.get("subject") or _("(ei aihetta)"),
+            "message": suggestion.get("message") or _("(ei viestiä)"),
+            "html_message": suggestion.get("html_message") or "",
+            "received_at": case.created_at,
+            "source": ticket_meta.get("source", "email"),
+            "message_id": ticket_meta.get("message_id"),
+            "from_wrapper": ticket_meta.get("from_wrapper", False),
+            "followups": suggestion.get("messages", []),
+        }
+        case_data["urgent"] = bool((case.meta or {}).get("urgent"))
+        # Linked objects: when an admin acts on the request (e.g. creates a
+        # demo), the created entity is linked back to the ticket.
+        if case.demo_id:
+            demo = mongo.demonstrations.find_one({"_id": _safe_objectid(case.demo_id)})
+            case_data["demo"] = _stringify_demo(demo)
+        if case.organization_id:
+            org = mongo.organizations.find_one({"_id": _safe_objectid(case.organization_id)})
+            case_data["organization"] = stringify_object_ids(org) if org else {}
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}cases/case.html",
         case=case,
@@ -347,6 +486,127 @@ def add_action(case_id):
 
     log_admin_action_V2(f"{current_user.username} lisäsi toimenpiteen: {action_type} ({reason})", case_id)
     flash_message(_("Merkintä lisätty!"), "success")
+    return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+
+# --- Link ticket to action (demo / organization) ---
+@admin_case_bp.route("/<case_id>/link_demo/", methods=["POST"])
+@login_required
+@admin_required
+def link_demo(case_id):
+    case = Case.get(case_id)
+    if not case:
+        abort(404)
+
+    demo_id = request.form.get("demo_id", "").strip()
+    if not demo_id or not ObjectId.is_valid(demo_id):
+        flash_message(_("Valitse tai kirjoita kelvollinen mielenosoituksen tunniste."), "warning")
+        return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)}, {"title": 1})
+    if not demo:
+        flash_message(_("Mielenosoitusta ei löytynyt annetulla tunnisteella."), "error")
+        return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+    case.demo_id = ObjectId(demo_id)
+    case._touch()
+    case._add_history_entry({
+        "timestamp": utcnow(),
+        "action": "Linked to demo",
+        "user": current_user.username,
+        "mech_action": "link_demo",
+        "metadata": {"demo_id": demo_id, "demo_title": demo.get("title")},
+    })
+    case.add_action("link_demo", current_user.username,
+                    note=_("Liitetty mielenosoitukseen: %(title)s") % {"title": demo.get("title")})
+
+    log_admin_action_V2(f"{current_user.username} liitti tapauksen {case.running_num} mielenosoitukseen: {demo.get('title')} ({demo_id})", case_id)
+    flash_message(_("Mielenosoitus liitetty tukipyyntöön."), "success")
+    return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+
+@admin_case_bp.route("/<case_id>/unlink_demo/", methods=["POST"])
+@login_required
+@admin_required
+def unlink_demo(case_id):
+    case = Case.get(case_id)
+    if not case:
+        abort(404)
+
+    removed_id = case.demo_id
+    case.demo_id = None
+    case._touch()
+    case._add_history_entry({
+        "timestamp": utcnow(),
+        "action": "Unlinked demo",
+        "user": current_user.username,
+        "mech_action": "unlink_demo",
+        "metadata": {"demo_id": str(removed_id) if removed_id else None},
+    })
+    case.add_action("unlink_demo", current_user.username, note=_("Poistettu mielenosoituslinkki."))
+
+    log_admin_action_V2(f"{current_user.username} poisti mielenosoituslinkin tapauksesta {case.running_num}", case_id)
+    flash_message(_("Mielenosoituslinkki poistettu."), "success")
+    return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+
+@admin_case_bp.route("/<case_id>/link_org/", methods=["POST"])
+@login_required
+@admin_required
+def link_org(case_id):
+    case = Case.get(case_id)
+    if not case:
+        abort(404)
+
+    org_id = request.form.get("organization_id", "").strip()
+    if not org_id or not ObjectId.is_valid(org_id):
+        flash_message(_("Valitse tai kirjoita kelvollinen organisaation tunniste."), "warning")
+        return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+    org = mongo.organizations.find_one({"_id": ObjectId(org_id)}, {"name": 1})
+    if not org:
+        flash_message(_("Organisaatiota ei löytynyt annetulla tunnisteella."), "error")
+        return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+    case.organization_id = ObjectId(org_id)
+    case._touch()
+    case._add_history_entry({
+        "timestamp": utcnow(),
+        "action": "Linked to organization",
+        "user": current_user.username,
+        "mech_action": "link_org",
+        "metadata": {"organization_id": org_id, "organization_name": org.get("name")},
+    })
+    case.add_action("link_org", current_user.username,
+                    note=_("Liitetty organisaatioon: %(name)s") % {"name": org.get("name")})
+
+    log_admin_action_V2(f"{current_user.username} liitti tapauksen {case.running_num} organisaatioon: {org.get('name')} ({org_id})", case_id)
+    flash_message(_("Organisaatio liitetty tukipyyntöön."), "success")
+    return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+
+@admin_case_bp.route("/<case_id>/unlink_org/", methods=["POST"])
+@login_required
+@admin_required
+def unlink_org(case_id):
+    case = Case.get(case_id)
+    if not case:
+        abort(404)
+
+    removed_id = case.organization_id
+    case.organization_id = None
+    case._touch()
+    case._add_history_entry({
+        "timestamp": utcnow(),
+        "action": "Unlinked organization",
+        "user": current_user.username,
+        "mech_action": "unlink_org",
+        "metadata": {"organization_id": str(removed_id) if removed_id else None},
+    })
+    case.add_action("unlink_org", current_user.username, note=_("Poistettu organisaatiolinkki."))
+
+    log_admin_action_V2(f"{current_user.username} poisti organisaatiolinkin tapauksesta {case.running_num}", case_id)
+    flash_message(_("Organisaatiolinkki poistettu."), "success")
     return redirect(url_for("admin_case.single_case", case_id=case_id))
 
 

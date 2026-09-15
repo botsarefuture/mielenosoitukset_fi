@@ -24,6 +24,7 @@ TICKET_SLA_HOURS: 48
 TICKET_SENDER: "no-reply@mielenosoitukset.fi"  # Outgoing auto-reply From
 TICKET_URGENT_KEYWORD: "URGENT"
 TICKET_POLL_SECONDS: 120
+TICKET_IGNORED_SENDERS: []  # Optional static fallback blocklist (admin UI manages the live list): e.g. "tiktok.com", "*@instagram.com", "user@example.org"
 
 # Optional configurations
 # SERVER_NAME: "www.example.com"  # Server name for the application

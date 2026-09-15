@@ -305,6 +305,65 @@ def org_search():
     ])
 
 
+@admin_case_bp.route("/blocklist/", methods=["GET", "POST"])
+@login_required
+@admin_required
+def blocklist():
+    """Manage the support-ticket sender blocklist.
+
+    Supports exact addresses (``user@example.com``) and whole domains with
+    their subdomains (``example.com`` or ``*@example.com``).
+    """
+    if request.method == "POST":
+        pattern = (request.form.get("pattern", "") or "").strip().lower()
+        if pattern:
+            existing = mongo.support_ticket_blocklist.find_one({"pattern": pattern})
+            if not existing:
+                mongo.support_ticket_blocklist.insert_one(
+                    {
+                        "pattern": pattern,
+                        "added_by": current_user.username,
+                        "added_at": utcnow(),
+                    }
+                )
+                log_admin_action_V2(
+                    f"{current_user.username} lisäsi tukilippujen estolistalle: {pattern}",
+                    None,
+                )
+                flash_message(_("Esto lisätty: %(pattern)s") % {"pattern": pattern}, "success")
+            else:
+                flash_message(_("Esto on jo listalla."), "warning")
+        else:
+            flash_message(_("Anna sähköpostiosoite tai verkkotunnus."), "warning")
+        return redirect(url_for("admin_case.blocklist"))
+
+    blocked = list(
+        mongo.support_ticket_blocklist.find({}).sort("added_at", -1)
+    )
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}cases/blocklist.html",
+        blocked=blocked,
+        case_type_label=_("Tukilippujen estolista"),
+    )
+
+
+@admin_case_bp.route("/blocklist/<block_id>/remove", methods=["POST"])
+@login_required
+@admin_required
+def blocklist_remove(block_id):
+    if not ObjectId.is_valid(block_id):
+        abort(404)
+    doc = mongo.support_ticket_blocklist.find_one({"_id": ObjectId(block_id)})
+    if doc:
+        mongo.support_ticket_blocklist.delete_one({"_id": ObjectId(block_id)})
+        log_admin_action_V2(
+            f"{current_user.username} poisti tukilippujen estolistalta: {doc.get('pattern')}",
+            None,
+        )
+        flash_message(_("Esto poistettu: %(pattern)s") % {"pattern": doc.get("pattern")}, "success")
+    return redirect(url_for("admin_case.blocklist"))
+
+
 @admin_case_bp.route("/<case_id>/")
 @login_required
 def single_case(case_id):

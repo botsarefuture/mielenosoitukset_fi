@@ -9,6 +9,7 @@
 * Support tickets arriving through the site contact form now identify the actual sender from the form wrapper (previously the `From:` header pointed at `no-reply@mielenosoitukset.fi`), so follow-up replies reach the right person.
 * Admin case detail now renders support tickets with sender, subject, message, follow-up thread, and an urgent badge, and list cards show urgent tickets under the critical filter.
 * Admins can link a support ticket to an existing demonstration or organization (search-as-you-type) and unlink it again; the link is recorded in the case history and appears in the ticket detail with a shortcut to the demonstration control panel.
+* Admins can maintain a support-ticket sender blocklist (exact addresses or whole domains including subdomains, e.g. `tiktok.com` also blocks `m.tiktok.com`) managed from the admin case pages; emails from blocked senders are ignored by the ticket ingress and never create tickets or trigger auto-replies.
 
 ### Fixed
 * Preview environments are now resource-bounded and deploy in a serialized way: each preview MongoDB container is limited to 512 MB RAM / 0.5 CPU and the fake SMTP container to 128 MB / 0.1 CPU (overridable via `PREVIEW_MONGO_*` / `PREVIEW_MAIL_*` env vars), and preview deploys take a global `flock` while starting and seeding MongoDB. This prevents stack-wide pushes (e.g. 16 PRs at once) from spawning many unconstrained mongod processes and pegging all CPUs on the preview host, which previously exhausted swap and caused multi-hour 100% CPU load.

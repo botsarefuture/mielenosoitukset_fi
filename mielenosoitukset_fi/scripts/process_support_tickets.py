@@ -56,6 +56,47 @@ _PLAIN_SENDER_LABEL_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Static fallback list blended with the admin-managed Mongo blocklist.
+def _load_blocklist(mongo) -> List[str]:
+    """Return all blocked sender patterns (config static list + Mongo list).
+
+    Patterns are stored lowercased. Supported forms:
+    - ``user@example.com``  → block that exact address
+    - ``*@example.com``     → block example.com and every subdomain
+    - ``example.com``       → same as ``*@example.com``
+    """
+    entries = list(getattr(Config, "TICKET_IGNORED_SENDERS", []) or [])
+    for doc in mongo.support_ticket_blocklist.find({}, {"pattern": 1}):
+        entries.append(doc.get("pattern", ""))
+    return [e.strip().lower() for e in entries if e and e.strip()]
+
+
+def _sender_matches_pattern(sender_email: str, pattern: str) -> bool:
+    """Match a lowercased sender address against one blocklist pattern."""
+    if "@" not in sender_email:
+        return False
+    # ``user@example.com`` → block that exact address.
+    if "@" in pattern and not pattern.startswith("*@"):
+        return sender_email == pattern
+    # ``*@example.com`` and bare ``example.com`` → block example.com and
+    # every subdomain (e.g. m.example.com, deep.sub.example.com).
+    if pattern.startswith("*@"):
+        domain = pattern[2:]
+    else:
+        domain = pattern
+    if not domain:
+        return False
+    domain_part = sender_email.split("@", 1)[1]
+    return domain_part == domain or domain_part.endswith("." + domain)
+
+
+def _sender_is_blocked(sender_email: str, blocklist: List[str]) -> bool:
+    """Check a sender against the blocklist (exact, ``*@domain``, or bare domain)."""
+    if not sender_email:
+        return False
+    lower = sender_email.strip().lower()
+    return any(_sender_matches_pattern(lower, p) for p in blocklist)
+
 
 def _decode_header_value(value: Optional[str]) -> str:
     """Decode RFC 2047 encoded header values (e.g. '=?utf-8?Q?...?=')."""
@@ -206,7 +247,7 @@ def _find_existing_by_reply(parsed: Dict[str, Any], mongo):
     return None
 
 
-def _process_email(raw: bytes, mongo, email_sender, config) -> Optional[int]:
+def _process_email(raw: bytes, mongo, email_sender, config, blocklist: Optional[List[str]] = None) -> Optional[int]:
     """Process one raw email into a support ticket. Returns running_num or None."""
     keyword = getattr(config, "TICKET_URGENT_KEYWORD", "URGENT")
     parsed = _parse_message(raw, keyword)
@@ -237,6 +278,15 @@ def _process_email(raw: bytes, mongo, email_sender, config) -> Optional[int]:
             "Skipping email without extractable sender (subject=%r)",
             parsed["subject"][:80],
         )
+        return None
+
+    # Admin-maintained blocklist: skip senders added by admins (exact address
+    # or whole domain incl. subdomains). The email is still flagged \\Seen by
+    # the caller so it is not reprocessed.
+    if blocklist is None:
+        blocklist = _load_blocklist(mongo)
+    if _sender_is_blocked(sender_email, blocklist):
+        logger.info("Skipping blocked support-ticket sender %s", sender_email)
         return None
 
     internal_senders = {
@@ -404,6 +454,9 @@ def poll_once(config=Config, db=None, email_sender=None) -> Dict[str, Any]:
     db = db or DatabaseManager().get_instance().get_db()
     email_sender = email_sender or EmailSender(config)
 
+    # Load the admin blocklist once per pass to keep processing consistent.
+    blocklist = _load_blocklist(db)
+
     created = 0
     urgent = 0
     failed = 0
@@ -423,7 +476,7 @@ def poll_once(config=Config, db=None, email_sender=None) -> Dict[str, Any]:
                 try:
                     _, msg_data = client.fetch(num, "(RFC822)")
                     raw = msg_data[0][1]
-                    running_num = _process_email(raw, db, email_sender, config)
+                    running_num = _process_email(raw, db, email_sender, config, blocklist=blocklist)
                     if running_num:
                         created += 1
                         # Re-read the case to know if it was urgent

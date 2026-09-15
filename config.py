@@ -206,6 +206,7 @@ class Config:
         )
         cls.TICKET_URGENT_KEYWORD = config.get("TICKET_URGENT_KEYWORD", "URGENT")
         cls.TICKET_POLL_SECONDS = config.get("TICKET_POLL_SECONDS", 120)
+        cls.TICKET_IGNORED_SENDERS = config.get("TICKET_IGNORED_SENDERS", []) or []
         cls.ENABLE_PANIC_THREAD = config.get("ENABLE_PANIC_THREAD", True)
         cls.ENABLE_BACKGROUND_JOBS = config.get("ENABLE_BACKGROUND_JOBS", True)
         cls.DISABLE_BACKGROUND_JOBS = config.get(

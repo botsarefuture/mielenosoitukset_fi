@@ -436,6 +436,7 @@ def single_case(case_id):
             "source": ticket_meta.get("source", "email"),
             "message_id": ticket_meta.get("message_id"),
             "from_wrapper": ticket_meta.get("from_wrapper", False),
+            "submitter_email": (case.submitter or {}).get("submitter_email"),
             "followups": suggestion.get("messages", []),
         }
         case_data["urgent"] = bool((case.meta or {}).get("urgent"))
@@ -614,6 +615,59 @@ from flask import jsonify, request, abort
 from flask_login import login_required, current_user
 from bson import ObjectId
 from datetime import datetime
+
+@admin_case_bp.route("/<case_id>/reply/", methods=["POST"])
+@login_required
+@admin_required
+def reply_to_ticket(case_id):
+    """Send an admin reply to a support ticket's submitter via email."""
+    case = Case.get(case_id)
+    if not case or case.case_type != "support_ticket":
+        abort(404)
+
+    from mielenosoitukset_fi.scripts.process_support_tickets import queue_admin_reply
+
+    message = (request.form.get("reply_message") or "").strip()
+    if not message:
+        flash_message(_("Kirjoita vastaus ennen lähettämistä."), "warning")
+        return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+    submitter = (case.submitter or {}).get("submitter_email") or ""
+    if not submitter:
+        flash_message(_("Tukipyynnöllä ei ole lähettäjän sähköpostiosoitetta."), "error")
+        return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+    case_doc = mongo.cases.find_one({"_id": ObjectId(case_id)})
+    if not case_doc:
+        abort(404)
+
+    admin_label = getattr(current_user, "username", None) or str(current_user)
+    try:
+        queue_admin_reply(
+            email_sender,
+            current_app.config,
+            case_doc,
+            reply_to=submitter,
+            message=message,
+            admin_label=admin_label,
+        )
+    except Exception as exc:
+        logger.exception("Failed to queue support ticket reply for case %s", case_id)
+        flash_message(_("Vastauksen lähetys epäonnistui: %(error)s") % {"error": str(exc)}, "error")
+        return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+    case._add_history_entry({
+        "timestamp": utcnow(),
+        "action": "Support ticket reply sent",
+        "user": current_user.username,
+        "mech_action": "reply_to_ticket",
+        "metadata": {"to": submitter},
+    })
+    case.add_action("reply_to_ticket", current_user.username, note=_("Lähetetty vastaus tukipyyntöön."))
+    log_admin_action_V2(f"{current_user.username} lähetti vastauksen tukipyyntöön {case.running_num} ({submitter})", case_id)
+    flash_message(_("Vastaus lähetetty sähköpostitse."), "success")
+    return redirect(url_for("admin_case.single_case", case_id=case_id))
+
 
 @admin_case_bp.route("/<case_id>/close/", methods=["POST"])
 @login_required

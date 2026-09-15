@@ -135,8 +135,8 @@
       ]
     },
     "mielenosoitukset_fi/admin/admin_case_bp.py": {
-      "count": 20,
-      "sha256": "28d8492fecd335619cb39d13040049b61dd59add3586bf4c2e50a53a7440bfd6",
+      "count": 21,
+      "sha256": "63dcb694303ad1eccab5a0378f231f3222ff1d591de1fcfba4f74d59261af526",
       "coverage": [
         "integration",
         "e2e-admin"

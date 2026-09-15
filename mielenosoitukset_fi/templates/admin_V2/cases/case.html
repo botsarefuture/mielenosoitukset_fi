@@ -77,12 +77,24 @@
             <div class="info-list">
               {% for followup in support_ticket.followups %}
               <div class="note-box">
-                <div><strong>{{ followup.from_name or followup.from_email }}</strong> <span class="muted">{{ followup.timestamp|datetimeformat("%d.%m.%Y %H:%M") if followup.timestamp else '' }}</span></div>
+                <div><strong>
+                  {%- if followup.direction == 'out' %}<span class="admin-status-badge admin-status-badge--info">→ {{ _('Lähtevä') }}</span>{% else %}<span class="admin-status-badge admin-status-badge--secondary">← {{ _('Saapuva') }}</span>{% endif %}
+                  {{ followup.from_name or followup.from_email }}</strong> <span class="muted">{{ followup.timestamp|datetimeformat("%d.%m.%Y %H:%M") if followup.timestamp else '' }}</span></div>
                 {% if followup.subject %}<div class="muted">{{ followup.subject }}</div>{% endif %}
                 <div>{{ followup.message }}</div>
               </div>
               {% endfor %}
             </div>
+          </div>
+          {% endif %}
+          {% if support_ticket.submitter_email %}
+          <div class="detail-item">
+            <strong>{{ _('Vastaa lähettäjälle') }}</strong>
+            <form method="POST" action="{{ url_for('admin_case.reply_to_ticket', case_id=case._id) }}" class="admin-reply-form">
+              <div class="muted mb-1">{{ support_ticket.submitter_email }}</div>
+              <textarea name="reply_message" class="form-control" rows="4" required placeholder="{{ _('Kirjoita vastaus...') }}"></textarea>
+              <button type="submit" class="btn btn-sm btn-primary mt-1">{{ _('Lähetä vastaus sähköpostitse') }}</button>
+            </form>
           </div>
           {% endif %}
           <div class="detail-item">

@@ -131,7 +131,7 @@ JOB_DEFINITIONS: List[JobDefinition] = [
         name="Support ticket ingress (tuki@ mailbox)",
         description="Polls the tuki@ IMAP mailbox, creates support_ticket cases, sends auto-replies and relays URGENT follow-ups.",
         func=process_support_tickets,
-        default_trigger=_interval(minutes=5),
+        default_trigger=_interval(minutes=1),
         allow_interval_override=True,
     ),
 ]

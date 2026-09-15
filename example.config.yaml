@@ -21,7 +21,12 @@ TICKET_IMAP_PASSWORD: "example_password"  # IMAP password for the tuki mailbox
 TICKET_IMAP_MAILBOX: "INBOX"
 TICKET_ESCALATION_EMAIL: "olivia@mielenosoitukset.fi"  # URGENT alerts go here
 TICKET_SLA_HOURS: 48
-TICKET_SENDER: "no-reply@mielenosoitukset.fi"  # Outgoing auto-reply From
+TICKET_SENDER: "tuki@mielenosoitukset.fi"  # The In-Reply-To sender shown to submitters (also used to ignore outbound mail in ingress)
+# SMTP for outgoing ticket emails (defaults: server=TICKET_IMAP_SERVER, port=587, use TLS=true).
+# Credentials are reused from TICKET_IMAP_USERNAME / TICKET_IMAP_PASSWORD.
+TICKET_SMTP_SERVER: "mail.luova.club"
+TICKET_SMTP_PORT: 587
+TICKET_SMTP_USE_TLS: true
 TICKET_URGENT_KEYWORD: "URGENT"
 TICKET_POLL_SECONDS: 120
 TICKET_IGNORED_SENDERS: []  # Optional static fallback blocklist (admin UI manages the live list): e.g. "tiktok.com", "*@instagram.com", "user@example.org"

@@ -24,6 +24,7 @@ from __future__ import annotations
 import email
 import imaplib
 import re
+import uuid
 from email.header import decode_header, make_header
 from email.message import Message
 from email.utils import parsedate_to_datetime
@@ -232,6 +233,7 @@ def _parse_message(raw: bytes, keyword: str) -> Dict[str, Any]:
     return {
         "message_id": (msg.get("Message-ID") or "").strip() or None,
         "in_reply_to": (msg.get("In-Reply-To") or "").strip() or None,
+        "references": (msg.get("References") or "").strip() or None,
         "received_at": parsedate_to_datetime(msg.get("Date")) if msg.get("Date") else None,
         "subject": subject,
         "from_header": from_value or "",
@@ -247,17 +249,29 @@ def _parse_message(raw: bytes, keyword: str) -> Dict[str, Any]:
 def _find_existing_by_reply(parsed: Dict[str, Any], mongo):
     """Find an existing support ticket that this email replies to.
 
-    Matches on In-Reply-To / References against stored ticket message_ids.
+    Matches on In-Reply-To / References against:
+    - the original ticket's stored message_id (meta.ticket.message_id)
+    - the ticket's outbound replies (meta.ticket.reply_message_ids)
+    - follow-up messages already appended to the case (suggestion.messages)
     """
-    candidates = [parsed.get("in_reply_to"), parsed.get("message_id")]
+    candidates = [parsed.get("in_reply_to"), parsed.get("references"), parsed.get("message_id")]
     for value in candidates:
         if not value:
             continue
-        existing = mongo.cases.find_one(
-            {"type": "support_ticket", "meta.ticket.message_id": value}
-        )
-        if existing:
-            return existing
+        # mail clients can send multiple, space-separated IDs
+        for ref in re.findall(r"<[^>]+>", value):
+            existing = mongo.cases.find_one(
+                {
+                    "type": "support_ticket",
+                    "$or": [
+                        {"meta.ticket.message_id": ref},
+                        {"meta.ticket.reply_message_ids": ref},
+                        {"suggestion.messages.message_id": ref},
+                    ],
+                }
+            )
+            if existing:
+                return existing
     return None
 
 
@@ -351,18 +365,29 @@ def _process_email(raw: bytes, mongo, email_sender, config, blocklist: Optional[
     )
 
     # Auto-reply with the ticket id + SLA note. The reply goes to the real
-    # human sender only.
+    # human sender only. Its Message-ID is kept so the user's reply can be
+    # threaded back onto this ticket.
     ticket_label = f"#{case.running_num}"
-    _queue_auto_reply(email_sender, config, sender_email, ticket_label, parsed["subject"])
+    auto_reply_msg_id = _queue_auto_reply(
+        email_sender, config, sender_email, ticket_label, parsed["subject"], in_reply_to=message_id
+    )
 
+    urgent_msg_id = None
     if urgent:
-        _queue_urgent_alert(
+        urgent_msg_id = _queue_urgent_alert(
             email_sender,
             config,
             sender_email,
             ticket_label,
             parsed["subject"],
             parsed["body"],
+        )
+
+    outbound_ids = [mid for mid in (auto_reply_msg_id, urgent_msg_id) if mid]
+    if outbound_ids:
+        mongo.cases.update_one(
+            {"_id": case._id},
+            {"$addToSet": {"meta.ticket.reply_message_ids": {"$each": outbound_ids}}},
         )
 
     logger.info(
@@ -415,32 +440,46 @@ def _append_followup(parent, parsed: Dict[str, Any], mongo, email_sender, config
     )
 
 
-def _queue_auto_reply(email_sender, config, reply_to: str, ticket_label: str, original_subject: str) -> None:
+def _new_outbound_message_id() -> str:
+    """Generate a Message-ID for an outbound ticket email (threading anchor)."""
+    return f"<{uuid.uuid4()}@mielenosoitukset.fi>"
+
+
+def _queue_auto_reply(email_sender, config, reply_to: str, ticket_label: str, original_subject: str, in_reply_to: Optional[str] = None) -> str:
     sla_hours = getattr(config, "TICKET_SLA_HOURS", 48)
     keyword = getattr(config, "TICKET_URGENT_KEYWORD", "URGENT")
+    message_id = _new_outbound_message_id()
+    extra_headers = {"Message-ID": message_id}
+    if in_reply_to:
+        extra_headers["In-Reply-To"] = in_reply_to
+        extra_headers["References"] = in_reply_to
     email_sender.queue_email(
         template_name="customer_support/ticket_auto_reply.html",
         subject=f"Vahvistus tukipyynnöstä {ticket_label}",
         recipients=[reply_to],
         sender=_ticket_sender(config),
+        extra_headers=extra_headers,
         context={
             "ticket_id": ticket_label,
             "sla_hours": sla_hours,
             "urgent_keyword": keyword,
         },
     )
+    return message_id
 
 
-def _queue_urgent_alert(email_sender, config, sender_email: str, ticket_label: str, subject: str, body: str) -> None:
+def _queue_urgent_alert(email_sender, config, sender_email: str, ticket_label: str, subject: str, body: str) -> Optional[str]:
     escalation_email = getattr(config, "TICKET_ESCALATION_EMAIL", "")
     if not escalation_email:
         logger.warning("No TICKET_ESCALATION_EMAIL configured; cannot relay URGENT.")
-        return
+        return None
+    message_id = _new_outbound_message_id()
     email_sender.queue_email(
         template_name="customer_support/ticket_urgent_alert.html",
         subject=f"URGENT tukipyyntö {ticket_label}: {subject[:80]}",
         recipients=[escalation_email],
         sender=_ticket_sender(config),
+        extra_headers={"Message-ID": message_id},
         context={
             "ticket_id": ticket_label,
             "from_email": sender_email,
@@ -448,6 +487,65 @@ def _queue_urgent_alert(email_sender, config, sender_email: str, ticket_label: s
             "message": body,
         },
     )
+    logger.info("Queued URGENT alert for %s to %s", ticket_label, escalation_email)
+    return message_id
+
+
+def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, admin_label: str = "") -> None:
+    """Queue an admin reply to a support ticket and record it in the case.
+
+    The outbound Message-ID is stored on the ticket so the user's next reply
+    threads back onto the same case. The reply itself is appended to
+    ``suggestion.messages`` (direction ``out``) so it shows in the admin UI.
+
+    ``case`` is the support-ticket document (dict) from MongoDB.
+    """
+    mongo = DatabaseManager().get_instance().get_db()
+    ticket_meta = (case.get("meta") or {}).get("ticket", {})
+    ticket_label = f"#{case.get('running_num')}"
+    original_subject = ticket_meta.get("subject") or (case.get("suggestion") or {}).get("subject") or "tukipyyntö"
+    subject = f"Re: {original_subject}"
+    message_id = _new_outbound_message_id()
+    in_reply_to = ticket_meta.get("message_id")
+
+    extra_headers = {"Message-ID": message_id}
+    if in_reply_to:
+        extra_headers["In-Reply-To"] = in_reply_to
+        extra_headers["References"] = in_reply_to
+
+    email_sender.queue_email(
+        template_name="customer_support/ticket_admin_reply.html",
+        subject=subject,
+        recipients=[reply_to],
+        sender=_ticket_sender(config),
+        extra_headers=extra_headers,
+        context={
+            "ticket_id": ticket_label,
+            "message": message,
+            "admin_name": admin_label,
+        },
+    )
+
+    now = utcnow()
+    mongo.cases.update_one(
+        {"_id": case["_id"]},
+        {
+            "$push": {
+                "suggestion.messages": {
+                    "timestamp": now,
+                    "message_id": message_id,
+                    "from_email": getattr(config, "TICKET_IMAP_USERNAME", ""),
+                    "from_name": admin_label,
+                    "direction": "out",
+                    "subject": subject,
+                    "message": message,
+                }
+            },
+            "$addToSet": {"meta.ticket.reply_message_ids": message_id},
+            "$set": {"updated_at": now},
+        },
+    )
+    logger.info("Queued admin reply to %s (%s)", reply_to, ticket_label)
 
 
 def poll_once(config=Config, db=None, email_sender=None) -> Dict[str, Any]:

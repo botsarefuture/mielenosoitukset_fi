@@ -504,7 +504,12 @@ def poll_once(config=Config, db=None, email_sender=None) -> Dict[str, Any]:
 
 def main():
     result = poll_once()
-    logger.info("Support ticket ingress finished", extra=result)
+    logger.info(
+        "Support ticket ingress finished: %s created, %s urgent, %s failed",
+        result.get("created", 0),
+        result.get("urgent", 0),
+        result.get("failed", 0),
+    )
 
 
 if __name__ == "__main__":

@@ -8,7 +8,8 @@
     _('Tukilippujen estolista'),
     _('Näistä lähettäjistä (sähköposti tai koko verkkotunnus aliverkkotunnuksineen) ei luoda tukilippua.'),
     _('Käyttäjät ja hallinto'),
-    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Tapaukset'), url_for('admin_case.cases')), (_('Estolista'), none)]
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Tapaukset'), url_for('admin_case.cases')), (_('Estolista'), none)],
+    back_url=url_for('admin_case.cases'),
   ) }}
 
   <div class="admin-section-card">

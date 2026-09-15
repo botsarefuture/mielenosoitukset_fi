@@ -212,7 +212,7 @@ class BackgroundJobManager:
                     "last_run_triggered_by": doc.get("last_run_triggered_by"),
                     "last_duration_seconds": doc.get("last_duration_seconds"),
                     "last_message": doc.get("last_message"),
-                    "next_run_at": (scheduler_job.next_run_time if scheduler_job else doc.get("next_run_at")),
+                    "next_run_at": self._get_next_run_time(scheduler_job) if scheduler_job else doc.get("next_run_at"),
                 }
             )
         return items

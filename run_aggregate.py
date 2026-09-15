@@ -7,7 +7,10 @@ from typing import List, Optional
 from mielenosoitukset_fi.app import create_app
 from mielenosoitukset_fi.utils.aggregate_analytics import rollup_events
 
-app = create_app()
+# The analytics rollup service must not compete for the background-job
+# scheduler leadership that the web app owns (same leader key in Mongo).
+# It only rolls up analytics; the scheduler stays with the main app.
+app = create_app(config_overrides={"ENABLE_BACKGROUND_JOBS": False})
 
 
 def _run_once() -> None:

@@ -8,7 +8,7 @@ time (datetime) | iso string, read (bool)
 
 {% macro notif_badge(count) %}
 {% if count %}
-<span class="badge bg-danger position-absolute top-0 start-100 translate-middle p-1 rounded-circle"></span>
+<span class="notif-badge position-absolute top-0 start-100 translate-middle">{{ [count, 99]|min }}{% if count > 99 %}+{% endif %}</span>
 {% endif %}
 {% endmacro %}
 
@@ -26,7 +26,7 @@ time (datetime) | iso string, read (bool)
   </button>
 
   <div id="notif-panel" class="notif-panel card shadow border-0" role="menu" aria-labelledby="notif-btn">
-    <div class="card-header d-flex justify-content-between align-items-center py-2 px-3 bg-white border-0">
+    <div class="card-header d-flex justify-content-between align-items-center py-2 px-3 border-0">
       <span class="fw-semibold">{{ _('Ilmoitukset') }}</span>
       <button id="mark-read-btn"
               class="btn btn-link btn-sm text-decoration-none d-none">{{ _('Merkitse luetuiksi') }}</button>
@@ -41,7 +41,7 @@ time (datetime) | iso string, read (bool)
       </div>
     </div>
 
-    <div class="card-footer text-center bg-white py-2">
+    <div class="card-footer text-center py-2">
       <a href="{{ url_for('notifications.list_all_page') }}"
          class="small {% if request.endpoint == 'notifications.list_all_page' %}d-none{% endif %}">
         {{ _('Näytä kaikki') }}
@@ -115,6 +115,8 @@ time (datetime) | iso string, read (bool)
   }
 
   .top-header .container {
+    box-sizing: border-box;
+    width: 100%;
     max-width: 1400px;
     margin: 0 auto;
     padding: 0 2rem;
@@ -122,6 +124,17 @@ time (datetime) | iso string, read (bool)
     justify-content: space-between;
     align-items: center;
     background: none;
+  }
+
+  .branding {
+    min-width: 0;
+  }
+
+  .branding .logo {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .branding .logo {
@@ -143,36 +156,45 @@ time (datetime) | iso string, read (bool)
     border-radius: 4px;
   }
 
-  /* Language Buttons */
+  /* Language Switcher */
   .language-buttons {
     display: flex;
-    gap: 0.5rem;
     align-items: center;
+    gap: 0.25rem;
+    padding: 0.3rem;
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.18);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
   }
 
-  .language-buttons::before {
-    content: '🌐';
-    font-size: 1.25rem;
-    margin-right: 0.5rem;
+  .language-buttons .fa-globe {
+    margin: 0 0.4rem 0 0.55rem;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.9rem;
   }
 
   .language-button {
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.8rem;
+    background: transparent;
+    border: 1px solid transparent;
     color: white;
-    padding: 0.5rem 1rem;
+    padding: 0.42rem 0.7rem;
     border-radius: 50px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-decoration: none;
     transition: var(--transition);
-    font-family: inherit;
   }
 
   .language-button:hover {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.14);
+    color: white;
   }
 
   .language-button:focus {
@@ -183,12 +205,13 @@ time (datetime) | iso string, read (bool)
   .language-button.active {
     background: white;
     color: var(--color-primary);
-    border-color: white;
+    border-color: rgba(255, 255, 255, 0.9);
     font-weight: 700;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.18);
   }
 
   .language-button.active:hover {
-    transform: translateY(-2px);
+    color: var(--color-primary);
   }
 
   /* Main Navigation */
@@ -202,6 +225,8 @@ time (datetime) | iso string, read (bool)
   }
 
   .nav-container {
+    box-sizing: border-box;
+    width: 100%;
     max-width: 1400px;
     margin: 0 auto;
     padding: 0 2rem;
@@ -479,6 +504,17 @@ time (datetime) | iso string, read (bool)
 
     .language-buttons {
       justify-content: center;
+      width: fit-content;
+    }
+
+    .branding .logo {
+      font-size: 1.35rem;
+    }
+
+    @media (max-width: 420px) {
+      .branding .logo {
+        font-size: 1.15rem;
+      }
     }
 
     .mobile-menu-toggle {
@@ -603,13 +639,18 @@ time (datetime) | iso string, read (bool)
   }
 
   #notif-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
-    border-radius: 999px;
-    padding: 0.45rem 0.6rem;
+    border-radius: 50%;
     color: var(--color-text);
     transition: var(--transition);
-    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
   }
 
   #notif-btn:focus-visible {
@@ -618,13 +659,36 @@ time (datetime) | iso string, read (bool)
   }
 
   #notif-btn .fa-bell {
-    color: light-dark(var(--color-primary), #facc15);
-    transition: color .18s ease;
+    color: var(--color-text);
+    transition: color .18s ease, transform .18s ease;
+  }
+
+  #notif-btn:hover,
+  #notif-wrap[aria-expanded="true"] #notif-btn {
+    background: light-dark(rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.22));
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
   }
 
   #notif-btn:hover .fa-bell,
   #notif-wrap[aria-expanded="true"] #notif-btn .fa-bell {
-    color: light-dark(var(--color-primary-hover), #fde047);
+    color: var(--color-primary);
+  }
+
+  #notif-btn:hover .fa-bell {
+    animation: notif-bell-ring 0.5s ease;
+  }
+
+  #notif-btn:active {
+    transform: scale(0.96);
+  }
+
+  @keyframes notif-bell-ring {
+    0%, 100% { transform: rotate(0); }
+    20%      { transform: rotate(14deg); }
+    40%      { transform: rotate(-14deg); }
+    60%      { transform: rotate(9deg); }
+    80%      { transform: rotate(-9deg); }
   }
 
   .notif-panel {
@@ -711,12 +775,38 @@ time (datetime) | iso string, read (bool)
     color: var(--color-primary);
   }
 
-  /* simple blue dot for unread */
+  /* Notification count badge */
+  .notif-badge {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    min-width: 1.2em;
+    padding: 0.2em 0.4em;
+    border-radius: 50px;
+    text-align: center;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.45);
+    animation: notif-badge-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark .notif-badge {
+    background: linear-gradient(135deg, #f87171, #ef4444);
+    box-shadow: 0 2px 10px rgba(248, 113, 113, 0.5);
+  }
+
+  @keyframes notif-badge-in {
+    from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  }
+
+  /* Unread dot indicator */
   .list-group-item.bg-light::before {
     content: "";
     width: 8px;
     height: 8px;
-    background: #0d6efd;
+    background: var(--color-primary);
     border-radius: 50%;
     display: inline-block;
     margin-right: .5rem;
@@ -736,16 +826,21 @@ time (datetime) | iso string, read (bool)
       </a>
     </div>
 
+    {% set public_locales = get_supported_locales() %}
+    {% if public_locales|length > 1 %}
     <nav class="language-buttons" aria-label="{{ _('Kielivalinta') }}">
-      {% for lang_code in get_supported_locales() %}
-      <button class="language-button {% if session.get('locale', 'fi') == lang_code %}active{% endif %}"
-              onclick="location.href='{{ url_for('set_language', lang=lang_code) }}'"
-              aria-label="{{ _('Vaihda kieleksi') }} {{ lang_code.upper() }}"
-              {% if session.get('locale', 'fi') == lang_code %}aria-current="true"{% endif %}>
+      <i class="fa-solid fa-globe" aria-hidden="true"></i>
+      {% for lang_code in public_locales %}
+      <a class="language-button {% if session.get('locale', 'fi') == lang_code %}active{% endif %}"
+         href="{{ url_for('set_language', lang=lang_code, next=request.full_path if request.query_string else request.path) }}"
+         title="{{ get_lang_name(lang_code) or lang_code.upper() }}"
+         aria-label="{{ _('Vaihda kieleksi') }} {{ get_lang_name(lang_code) or lang_code.upper() }}"
+         {% if session.get('locale', 'fi') == lang_code %}aria-current="page"{% endif %}>
         {{ lang_code.upper() }}
-      </button>
+      </a>
       {% endfor %}
     </nav>
+    {% endif %}
   </div>
 </header>
 
@@ -781,6 +876,13 @@ time (datetime) | iso string, read (bool)
         <a href="{{ url_for('demonstrations') }}" class="nav-link" aria-label="{{ _('Mielenosoitukset') }}">
           <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
           <span>{{ _('Mielenosoitukset') }}</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="{{ url_for('cities') }}" class="nav-link" aria-label="{{ _('Kaupungit') }}">
+          <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+          <span>{{ _('Kaupungit') }}</span>
         </a>
       </li>
 
@@ -822,6 +924,12 @@ time (datetime) | iso string, read (bool)
               <a href="{{ url_for('users.auth.settings') }}" role="menuitem">
                 <i class="fa-solid fa-cog" aria-hidden="true"></i>
                 <span>{{ _('Asetukset') }}</span>
+              </a>
+            </li>
+            <li role="none">
+              <a href="{{ url_for('admin.admin_dashboard') }}" role="menuitem">
+                <i class="fa-solid fa-gauge" aria-hidden="true"></i>
+                <span>{{ _('Hallintapaneeli') }}</span>
               </a>
             </li>
             <li role="none">
@@ -1216,7 +1324,10 @@ time (datetime) | iso string, read (bool)
     const btn      = document.getElementById('notif-btn');
     const listBox  = document.getElementById('notif-list');
     const markBtn  = document.getElementById('mark-read-btn');
-    const badgeTpl = '<span class="badge bg-danger position-absolute top-0 start-100 translate-middle p-1 rounded-circle"></span>';
+    const badgeTpl = (count) => {
+      const display = count > 99 ? '99+' : count;
+      return `<span class="notif-badge position-absolute top-0 start-100 translate-middle">${display}</span>`;
+    };
     const locale   = document.documentElement.lang || 'fi-FI';
     const fallbackFormatter = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -1237,13 +1348,14 @@ time (datetime) | iso string, read (bool)
 
     const render = (data = []) => {
       // badge
-      btn.querySelector('.badge')?.remove();
-      if (data.some(n => !n.read)) {
-        btn.insertAdjacentHTML('beforeend', badgeTpl);
+      btn.querySelector('.notif-badge')?.remove();
+      const unread = data.filter(n => !n.read);
+      if (unread.length) {
+        btn.insertAdjacentHTML('beforeend', badgeTpl(unread.length));
       }
 
       // mark-all-read button
-      markBtn.classList.toggle('d-none', !data.some(n => !n.read));
+      markBtn.classList.toggle('d-none', !unread.length);
 
       // list
       if (!data.length) {

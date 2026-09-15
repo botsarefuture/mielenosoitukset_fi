@@ -85,7 +85,7 @@ class DatabaseManager:
             )
             self._client.admin.command("ping")  # Verify connection
             self._initialized = True
-            logger.info(f"Connected to MongoDB at {self._mongo_uri}")
+            logger.info("Connected to MongoDB successfully.")
         except errors.ServerSelectionTimeoutError as e:
             logger.error(f"MongoDB connection timeout: {e}")
             raise RuntimeError(f"Failed to connect to MongoDB: {e}")

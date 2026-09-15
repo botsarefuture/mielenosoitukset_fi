@@ -1,90 +1,5 @@
 {% extends 'admin_base.html' %}
-
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
-<style>
-    .container {
-        background-color: var(--container-bg);
-        color: var(--text);
-        border-radius: 16px;
-        padding: 2rem 2.5rem;
-        max-width: 1000px;
-        margin: 2rem auto;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .form-title {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--primary);
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        margin-bottom: 1.5rem;
-    }
-
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .form-group label {
-        font-weight: 600;
-        color: var(--text);
-    }
-
-    .form-control {
-        background-color: var(--input-bg);
-        color: var(--input-text);
-        border: 1px solid var(--input-border);
-        border-radius: 8px;
-        padding: 0.6rem 1rem;
-        width: 100%;
-        font-size: 0.95rem;
-    }
-
-    .btn-primary {
-        background-color: var(--primary);
-        color: white;
-        padding: 0.5rem 1.25rem;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        font-weight: 500;
-    }
-
-    .btn-primary:hover {
-        background-color: var(--primary-hover);
-    }
-
-    .approval-box {
-        background-color: var(--red);
-        color: var(--white);
-        padding: 1rem;
-        border-radius: 0.5rem;
-    }
-
-    .permissions-panel {
-        margin-top: 2rem;
-    }
-
-    .permission-category {
-        margin-bottom: 1rem;
-    }
-
-    .permission-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 0.5rem;
-    }
-
-    .permission-item label {
-        margin-left: 0.5rem;
-    }
-</style>
-{% endblock %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block scripts %}
 <script>
@@ -114,16 +29,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <strong>{{ _('Hallituksen hyväksyntä myönnetty') }}:</strong> ${grantedBy} <br>
                     <strong>{{ _('Päivämäärä') }}:</strong> ${timestamp}
                 `;
-                clearanceInfoEl.style.display = "block";
+                clearanceInfoEl.hidden = false;
             } else {
                 globalAdminOption.disabled = true;
-                clearanceInfoEl.style.display = "none";
+                clearanceInfoEl.hidden = true;
             }
         })
         .catch(err => {
             console.error('Error checking board clearance:', err);
             globalAdminOption.disabled = true;
-            clearanceInfoEl.style.display = "none";
+            clearanceInfoEl.hidden = true;
         });
 });
 </script>
@@ -132,38 +47,61 @@ document.addEventListener('DOMContentLoaded', () => {
 {% endblock %}
 
 {% block main_content %}
-<section class="container">
-    <h2 class="form-title">{{ _('Muokkaa käyttäjää') }}</h2>
-    <p class="muted">{{ _('Täällä voit muokata käyttäjän perustietoja ja hallita hänen oikeuksiaan.') }}</p>
-    <div class="muted"
-        style="font-size:0.95rem; background:var(--muted-bg, #f8f9fa); padding:0.75rem; border-radius:8px;">
-        {{ _('Vinkki: Muutokset tallennetaan painamalla "Tallenna muutokset". Käyttäjien oikeudet vaikuttavat heidän näkyviinsä toimintoihin.') }}
-    </div>
+<div class="admin-user-page admin-page">
+    {{ admin_page_hero(
+        _('Muokkaa käyttäjää'),
+        _('Päivitä käyttäjän perustiedot, rooli ja sallitut käyttöoikeudet samasta näkymästä.'),
+        _('Käyttäjähallinta'),
+        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttäjät'), url_for('admin_user.user_control')), (_('Muokkaa käyttäjää'), none)],
+        back_url=url_for('admin_user.user_control'),
+        back_label=_('Käyttäjät')
+    ) }}
 
-    <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user.id) }}">
-        <div class="form-group">
-            <label for="username">{{ _('Käyttäjänimi') }}</label>
-            <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}" required>
+    <form class="admin-form admin-user-form" method="POST" action="{{ url_for('admin_user.save_user', user_id=user.id) }}">
+      <section class="admin-form-section">
+        <div class="admin-form-section__header"><h2>{{ _('Perustiedot') }}</h2><p>{{ _('Tunnistetiedot ja tilin kirjautumiseen vaikuttavat asetukset.') }}</p></div>
+        <div class="admin-form-grid">
+        <div class="form-group admin-field">
+            <label for="username">{{ _('Käyttäjänimi') }} <span class="admin-required" aria-hidden="true">*</span></label>
+            <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}" required aria-required="true" autocomplete="username">
         </div>
 
-        <div class="form-group">
-            <label for="email">{{ _('Sähköpostiosoite') }}</label>
-            <input class="form-control" type="email" id="email" name="email" value="{{ user.email }}" required>
+        <div class="form-group admin-field">
+            <label for="displayname">{{ _('Näyttönimi') }} <span class="admin-required" aria-hidden="true">*</span></label>
+            <input class="form-control" type="text" id="displayname" name="displayname" value="{{ user.displayname or '' }}" maxlength="80" required aria-required="true">
         </div>
 
-        <div class="form-group approval-box">
-            <label for="approved">{{ _('Onko sähköpostiosoite vahvistettu') }}</label>
-            <div style="display:flex; align-items:center; gap:1rem;">
+        <div class="form-group admin-field admin-field--wide">
+            <label for="email">{{ _('Sähköpostiosoite') }} <span class="admin-required" aria-hidden="true">*</span></label>
+            <input class="form-control" type="email" id="email" name="email" value="{{ user.email }}" required aria-required="true" autocomplete="email">
+        </div>
+
+        <div class="form-group admin-field">
+            <div class="admin-check-row">
                 <input type="checkbox" id="approved" name="confirmed" {% if user.confirmed %}checked{% endif %}>
-                <span class="status-text">{% if user.confirmed %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}</span>
-                <small class="muted">{{ _('Merkitse valituksi jos käyttäjän sähköposti on vahvistettu.') }}</small>
+                <label for="approved">{{ _('Sähköpostiosoite on vahvistettu') }}</label>
+                <small>{{ _('Vaikuttaa siihen, pidetäänkö tiliä käyttövalmiina.') }}</small>
             </div>
         </div>
 
-        <div class="form-group">
-            <label for="role">{{ _('Rooli') }}</label>
-            <select id="role" name="role" class="form-control" required>
+        <div class="form-group admin-field">
+            <div class="admin-check-row">
+                <input type="checkbox" id="forced_identity_change" name="forced_identity_change" {% if user.forced_identity_change %}checked{% endif %}>
+                <label for="forced_identity_change">{{ _('Pakota käyttäjänimen ja näyttönimen vaihto') }}</label>
+                <small>{{ _('Käyttäjä ohjataan vaihtamaan molemmat nimet seuraavalla kirjautumiskerralla ja hänelle lähetetään ilmoitus.') }}</small>
+            </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="admin-form-section">
+        <div class="admin-form-section__header"><h2>{{ _('Rooli') }}</h2><p>{{ _('Rooli antaa oletusoikeudet. Erilliset oikeudet määritellään alempana.') }}</p></div>
+        <div class="form-group admin-field">
+            <label for="role">{{ _('Rooli') }} <span class="admin-required" aria-hidden="true">*</span></label>
+            <select id="role" name="role" class="form-control" required aria-required="true" aria-describedby="roleHelp globalAdminNotice clearanceInfo">
                 <option value="user" {% if user.role=='user' %}selected{% endif %}>{{ _('Käyttäjä') }}</option>
+                <option value="translator" {% if user.role=='translator' %}selected{% endif %}>{{ _('Kääntäjä') }}</option>
+                <option value="city_admin" {% if user.role=='city_admin' %}selected{% endif %}>{{ _('Kaupunkiadmin') }}</option>
                 <option value="admin" {% if user.role=='admin' %}selected{% endif %}>{{ _('Järjestelmänvalvoja') }}
                 </option>
                 <option value="global_admin" id="role_global_admin" {% if user.role=='global_admin' %}selected{% endif
@@ -171,19 +109,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     {{ _('Superkäyttäjä (vain hallituksen hyväksynnän jälkeen)') }}
                 </option>
             </select>
+            <small class="muted" id="roleHelp">{{ _('Kääntäjä voi tehdä käännösehdotuksia. Kaupunkiadminin alueet ja oikeudet valitaan omassa osiossaan.') }}</small>
+            <small class="muted">{{ _('Organisaatioiden jäsen- ja ylläpitäjäroolit hallitaan kyseisen organisaation yhteenvetosivulla.') }}</small>
             <small class="muted" id="globalAdminNotice">
                 {{ _('Superkäyttäjärooli voidaan valita vain, jos hallitus on antanut hyväksynnän.') }}
             </small>
-<div id="clearanceInfo" style="margin-top:0.5rem; display:none; padding:0.5rem; background-color:var(--input-bg); border-radius:8px;">
+<div id="clearanceInfo" class="admin-form-note" hidden>
     <!-- Filled dynamically by JS -->
 </div>
         </div>
+      </section>
 
 
 
-        <div class="permissions-panel">
-            <h3>{{ _('Globaalit oikeudet') }}</h3>
-            <p class="muted">{{ _('Globaalit oikeudet ovat vain superkäyttäjille.') }}</p>
+        <section class="permissions-panel admin-form-section">
+            <div class="admin-form-section__header"><h2>{{ _('Globaalit oikeudet') }}</h2><p>{{ _('Näitä oikeuksia käytetään koko palvelussa. Rooli voi lisätä pakollisia oletusoikeuksia automaattisesti.') }}</p></div>
             <div class="permissions-group">
                 <div class="select-all">
                     <input type="checkbox"
@@ -208,23 +148,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 {% endfor %}
             </div>
-        </div>
+        </section>
 
         {% if can_manage_scope_grants %}
-        <div class="permissions-panel">
-            <h3>{{ _('Paikkakuntakohtainen ylläpito') }}</h3>
-            <p class="muted">{{ _('Valitse paikkakunnat ja oikeudet, joilla käyttäjä voi käsitellä niiden mielenosoituksia.') }}</p>
+        <section class="permissions-panel admin-form-section">
+            <div class="admin-form-section__header"><h2>{{ _('Paikkakuntakohtainen ylläpito') }}</h2><p>{{ _('Valitse paikkakunnat ja oikeudet, joilla käyttäjä voi käsitellä niiden mielenosoituksia.') }}</p></div>
 
-            <div class="form-group">
+            <div class="form-group admin-field">
                 <label for="admin_scope_cities">{{ _('Paikkakunnat') }}</label>
-                <select id="admin_scope_cities" name="admin_scope_cities[]" class="form-control" multiple size="10">
-                    {% for city in city_list %}
+                <select id="admin_scope_cities" name="admin_scope_cities[]" class="form-control" multiple size="10" aria-describedby="admin-scope-cities-help">
+                    {% for city in enabled_city_list %}
                     {% set city_key = city_name_to_key[city] %}
                     <option value="{{ city_key }}" {% if city_key in city_scope_grant.scope_keys %}selected{% endif %}>
                         {{ city }}
                     </option>
                     {% endfor %}
+                    {% for city in city_list %}
+                    {% if city not in enabled_city_list %}
+                    {% set city_key = city_name_to_key[city] %}
+                    <option value="{{ city_key }}" {% if city_key in city_scope_grant.scope_keys %}selected{% endif %}>
+                        {{ city }}{% if city_key not in city_scope_grant.scope_keys %} {{ _('(ei käytössä)') }}{% endif %}
+                    </option>
+                    {% endif %}
+                    {% endfor %}
                 </select>
+                <small class="muted" id="admin-scope-cities-help">{{ _('Useita paikkakuntia voi valita näppäimistöllä pitämällä Ctrl- tai Command-näppäintä painettuna. Oikeudet koskevat vain valittujen paikkakuntien mielenosoituksia.') }}</small>
             </div>
 
             <div class="permissions-group">
@@ -244,14 +192,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
         {% endif %}
 
-        <div class="form-group" style="text-align:center;">
-            <button type="submit" class="btn-primary">{{ _('Tallenna muutokset') }}</button>
-            <a href="{{ url_for('admin_user.user_control') }}" class="btn" style="margin-left:0.75rem;">{{ _('Peruuta')
+        <div class="admin-sticky-actions">
+            <a href="{{ url_for('admin_user.user_control') }}" class="btn btn-outline-secondary">{{ _('Peruuta')
                 }}</a>
+            <button type="submit" class="btn btn-primary">{{ _('Tallenna muutokset') }}</button>
         </div>
     </form>
-</section>
+</div>
 {% endblock %}

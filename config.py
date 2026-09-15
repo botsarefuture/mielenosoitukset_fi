@@ -104,12 +104,54 @@ class Config:
         )
 
         cls.BABEL_CONFIG = config.get("BABEL", {})
-        cls.BABEL_DEFAULT_LOCALE = cls.BABEL_CONFIG.get("DEFAULT_LOCALE", "en")
+        cls.BABEL_DEFAULT_LOCALE = cls.BABEL_CONFIG.get("DEFAULT_LOCALE", "fi")
         cls.BABEL_SUPPORTED_LOCALES = cls.BABEL_CONFIG.get(
             "SUPPORTED_LOCALES",
-            ["en"],
+            ["fi", "en"],
         )
-        cls.BABEL_LANGUAGES = cls.BABEL_CONFIG.get("LANGUAGES", {"en": "English"})
+        cls.BABEL_PUBLIC_LOCALES = cls.BABEL_CONFIG.get(
+            "PUBLIC_LOCALES",
+            [cls.BABEL_DEFAULT_LOCALE],
+        )
+        cls.BABEL_LANGUAGES = cls.BABEL_CONFIG.get(
+            "LANGUAGES",
+            {"fi": "Suomi", "en": "English"},
+        )
+        cls.DEEPL_API_KEY = config.get("DEEPL_API_KEY", "")
+        cls.DEEPL_API_URL = config.get(
+            "DEEPL_API_URL",
+            "https://api-free.deepl.com/v2/translate",
+        )
+        cls.UI_TRANSLATION_SYNC_ENABLED = config.get("UI_TRANSLATION_SYNC_ENABLED", False)
+        cls.UI_TRANSLATION_SYNC_REPO_PATH = config.get("UI_TRANSLATION_SYNC_REPO_PATH", "")
+        cls.UI_TRANSLATION_SYNC_BASE_BRANCH = config.get("UI_TRANSLATION_SYNC_BASE_BRANCH", "main")
+        cls.UI_TRANSLATION_SYNC_BRANCH_PREFIX = config.get(
+            "UI_TRANSLATION_SYNC_BRANCH_PREFIX",
+            "ui-translation",
+        )
+        cls.UI_TRANSLATION_SYNC_REMOTE = config.get("UI_TRANSLATION_SYNC_REMOTE", "origin")
+        cls.UI_TRANSLATION_SYNC_GIT_AUTHOR_NAME = config.get(
+            "UI_TRANSLATION_SYNC_GIT_AUTHOR_NAME",
+            "Mielenosoitukset UI Translation Bot",
+        )
+        cls.UI_TRANSLATION_SYNC_GIT_AUTHOR_EMAIL = config.get(
+            "UI_TRANSLATION_SYNC_GIT_AUTHOR_EMAIL",
+            "translations@mielenosoitukset.fi",
+        )
+        cls.UI_TRANSLATION_GITHUB_REPO = config.get("UI_TRANSLATION_GITHUB_REPO", "")
+        cls.UI_TRANSLATION_GITHUB_TOKEN = config.get("UI_TRANSLATION_GITHUB_TOKEN", "")
+        cls.UI_TRANSLATION_GITHUB_API_URL = config.get(
+            "UI_TRANSLATION_GITHUB_API_URL",
+            "https://api.github.com",
+        )
+        cls.UI_TRANSLATION_GITHUB_AUTO_MERGE = config.get(
+            "UI_TRANSLATION_GITHUB_AUTO_MERGE",
+            False,
+        )
+        cls.UI_TRANSLATION_GITHUB_MERGE_METHOD = config.get(
+            "UI_TRANSLATION_GITHUB_MERGE_METHOD",
+            "squash",
+        )
 
         cls.SECRET_KEY = config.get("SECRET_KEY", "secret_key")
         cls.PORT = config.get("PORT", 8000)
@@ -144,6 +186,27 @@ class Config:
         cls.DEFAULT_TIMEZONE = config.get("DEFAULT_TIMEZONE", "Europe/Helsinki")
         cls.TESTING = config.get("TESTING", False)
         cls.ENABLE_EMAIL_WORKER = config.get("ENABLE_EMAIL_WORKER", True)
+
+        # Support ticket ingress (IMAP polling of the tuki@ mailbox)
+        cls.TICKET_INGRESS_ENABLED = config.get("TICKET_INGRESS_ENABLED", False)
+        cls.TICKET_IMAP_SERVER = config.get("TICKET_IMAP_SERVER", "mail.luova.club")
+        cls.TICKET_IMAP_PORT = config.get("TICKET_IMAP_PORT", 993)
+        cls.TICKET_IMAP_USE_SSL = config.get("TICKET_IMAP_USE_SSL", True)
+        cls.TICKET_IMAP_USERNAME = config.get("TICKET_IMAP_USERNAME", "")
+        cls.TICKET_IMAP_PASSWORD = config.get("TICKET_IMAP_PASSWORD", "")
+        cls.TICKET_IMAP_MAILBOX = config.get("TICKET_IMAP_MAILBOX", "INBOX")
+        cls.TICKET_ESCALATION_EMAIL = config.get(
+            "TICKET_ESCALATION_EMAIL",
+            "olivia@mielenosoitukset.fi",
+        )
+        cls.TICKET_SLA_HOURS = config.get("TICKET_SLA_HOURS", 48)
+        cls.TICKET_SENDER = config.get(
+            "TICKET_SENDER",
+            cls.MAIL_DEFAULT_SENDER,
+        )
+        cls.TICKET_URGENT_KEYWORD = config.get("TICKET_URGENT_KEYWORD", "URGENT")
+        cls.TICKET_POLL_SECONDS = config.get("TICKET_POLL_SECONDS", 120)
+        cls.TICKET_IGNORED_SENDERS = config.get("TICKET_IGNORED_SENDERS", []) or []
         cls.ENABLE_PANIC_THREAD = config.get("ENABLE_PANIC_THREAD", True)
         cls.ENABLE_BACKGROUND_JOBS = config.get("ENABLE_BACKGROUND_JOBS", True)
         cls.DISABLE_BACKGROUND_JOBS = config.get(

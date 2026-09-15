@@ -1,6 +1,6 @@
 from functools import wraps
 from bson import ObjectId
-from flask import redirect, url_for, abort
+from flask import g, redirect, url_for, abort
 from flask_babel import _
 from flask_login import current_user
 from mielenosoitukset_fi.database_manager import DatabaseManager
@@ -16,6 +16,11 @@ def has_admin_access(user) -> bool:
     if getattr(user, "role", None) in ["global_admin", "admin", "god"]:
         return True
     if getattr(user, "global_admin", False):
+        return True
+    if (
+        hasattr(user, "has_city_admin_scope_grants")
+        and user.has_city_admin_scope_grants()
+    ):
         return True
     if hasattr(user, "has_admin_scope_grants") and user.has_admin_scope_grants():
         return True
@@ -131,6 +136,8 @@ def has_demo_permission(user, _id, permission_name):
     - Grants permission when the user has the required permission in any
       organization that appears in the demonstration's organizers.
 
+    Uses a per-request cache to avoid repeated MongoDB lookups for the same demo.
+
     Parameters
     ----------
     user :
@@ -181,7 +188,22 @@ def has_demo_permission(user, _id, permission_name):
         )
         return False
 
-    demo_doc = mongo.demonstrations.find_one({"_id": demo_id})
+    # Per-request cache for demo documents (avoids N+1 DB lookups)
+    cache_key = f"demo_perm_{demo_id}"
+    demo_doc = None
+    try:
+        demo_doc = getattr(g, "_demo_perm_cache", {}).get(cache_key)
+    except Exception:
+        pass
+    if demo_doc is None:
+        demo_doc = mongo.demonstrations.find_one({"_id": demo_id})
+        if demo_doc is not None:
+            try:
+                if not hasattr(g, "_demo_perm_cache"):
+                    g._demo_perm_cache = {}
+                g._demo_perm_cache[cache_key] = demo_doc
+            except Exception:
+                pass
     if not demo_doc:
         logger.warning(
             "Demo permission denied: demonstration %s not found for '%s'.",
@@ -252,6 +274,62 @@ def has_demo_permission(user, _id, permission_name):
         permission_name,
         demo_id,
     )
+    return False
+
+
+def has_demo_approval_permission(user, demo=None):
+    """Check explicit ACCEPT_DEMO grants without treating edit access as approval."""
+    if user is None or not getattr(user, "is_authenticated", False):
+        return False
+
+    has_full_permissions = getattr(user, "has_full_permissions", None)
+    if getattr(user, "global_admin", False) or (
+        callable(has_full_permissions) and has_full_permissions()
+    ):
+        return True
+
+    permission = "ACCEPT_DEMO"
+    permission_scope_getter = getattr(user, "_perm_in", None)
+    permission_scopes = list(
+        permission_scope_getter(permission)
+        if callable(permission_scope_getter)
+        else []
+    )
+    if permission in getattr(user, "global_permissions", []) or any(
+        str(scope) == "global" for scope in permission_scopes
+    ):
+        return True
+
+    city_scope_getter = getattr(user, "scoped_city_keys_for", None)
+    city_scopes = set(
+        city_scope_getter(permission) if callable(city_scope_getter) else []
+    )
+    organization_scopes = {
+        str(scope) for scope in permission_scopes if str(scope) != "global"
+    }
+    if demo is None:
+        return bool(city_scopes or organization_scopes)
+
+    if isinstance(demo, dict):
+        city = demo.get("city")
+        city_key = demo.get("city_key") or normalize_city_key(city)
+        organizers = demo.get("organizers", [])
+    else:
+        city = getattr(demo, "city", None)
+        city_key = getattr(demo, "city_key", None) or normalize_city_key(city)
+        organizers = getattr(demo, "organizers", []) or []
+
+    if city_key and city_key in city_scopes:
+        return True
+
+    for organizer in organizers:
+        if isinstance(organizer, dict):
+            organization_id = organizer.get("organization_id")
+        else:
+            organization_id = getattr(organizer, "organization_id", None)
+        if organization_id is not None and str(organization_id) in organization_scopes:
+            return True
+
     return False
 
 def permission_required(permission_name: str, _id: str | None = None, _type: str | None = None):
@@ -390,6 +468,19 @@ def permission_required(permission_name: str, _id: str | None = None, _type: str
             ):
                 logger.info(
                     "User %s has scoped city permission '%s'.",
+                    current_user.username,
+                    permission_name,
+                )
+                return f(*args, **kwargs)
+
+            if (
+                hasattr(current_user, "has_city_admin_scope_grants")
+                and current_user.has_city_admin_scope_grants()
+                and hasattr(current_user, "scoped_city_keys_for")
+                and current_user.scoped_city_keys_for(permission_name)
+            ):
+                logger.info(
+                    "User %s has city-scoped permission '%s' (general fallback).",
                     current_user.username,
                     permission_name,
                 )

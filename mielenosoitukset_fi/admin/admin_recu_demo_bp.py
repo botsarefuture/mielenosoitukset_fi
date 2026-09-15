@@ -10,7 +10,11 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.classes import RecurringDemonstration, Organizer, RepeatSchedule
 from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.variables import CITY_LIST
-from mielenosoitukset_fi.utils.wrappers import permission_required, admin_required
+from mielenosoitukset_fi.utils.wrappers import (
+    admin_required,
+    has_demo_approval_permission,
+    permission_required,
+)
 
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
 from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo
@@ -88,10 +92,16 @@ def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None)
         submit_button_text=submit_button_text,
         city_list=CITY_LIST,
         all_organizations=list(mongo.organizations.find()),
+        translation_locales=_supported_demo_translation_locales(),
+        translation_language_names=_translation_language_names(),
+        default_demo_language=(
+            getattr(demo, "default_language", None) or "fi"
+        ),
         child_demos=child_demos,
         child_counts=child_counts,
         frozen_child_ids=frozen_child_ids,
         today=date.today().isoformat(),
+        can_approve_demo=has_demo_approval_permission(current_user, demo),
     )
 
 
@@ -303,12 +313,16 @@ def _collect_organizers(form, existing_organizers=None):
 def recu_demo_control():
     """Render the recurring demonstration control panel with a list of recurring demonstrations."""
     search_query = request.args.get("search", "")
-    approved_status = request.args.get("approved", "false").lower() == "true"
+    approved_status = request.args.get("approved", "all").lower()
+    if approved_status not in {"all", "true", "false"}:
+        approved_status = "all"
     # show_past = request.args.get("show_past", "false").lower() == "true"
     today = date.today()
 
     # Construct query based on approval status
-    query = {"approved": approved_status} if approved_status else {}
+    query = {}
+    if approved_status != "all":
+        query["approved"] = approved_status == "true"
     recurring_demos = []
     for recudemo in list(mongo.recu_demos.find(query)):
         try:
@@ -405,6 +419,10 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     # Basic info
     title = request.form.get("title")
     description = request.form.get("description")
+    default_language = (
+        request.form.get("default_language")
+        or "fi"
+    )
     date = request.form.get("date")
     start_time = request.form.get("start_time")
     end_time = request.form.get("end_time")
@@ -418,6 +436,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     approved = request.form.get("approved") == "on"
 
     tags = collect_tags(request)
+    translations = collect_demo_translations(request, default_language)
     cover_picture = request.form.get("cover_picture")
     gallery_images = parse_gallery_images_field(request.form.get("gallery_images"))
 
@@ -509,6 +528,8 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     demonstration_data = {
         "title": title,
         "description": description,
+        "default_language": default_language,
+        "translations": translations,
         "date": date,
         "start_time": start_time,
         "end_time": end_time,
@@ -529,6 +550,12 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "recurs": freq != "none",
         "organizers": organizers,
     }
+
+    approval_scope_demo = existing_demo if existing_demo else demonstration_data
+    if not has_demo_approval_permission(current_user, approval_scope_demo):
+        demonstration_data["approved"] = bool(
+            existing_demo and existing_demo.get("approved")
+        )
 
     # Ensure organizer IDs are ObjectId if present
     for org in demonstration_data["organizers"]:
@@ -569,6 +596,47 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
                 demo_id=demo_id,
             )
         )
+
+
+def _supported_demo_translation_locales():
+    from flask import current_app
+
+    return list(current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"])
+
+
+def _translation_language_names():
+    from flask import current_app
+
+    return dict(current_app.config.get("BABEL_LANGUAGES") or {})
+
+
+def collect_demo_translations(request, default_language):
+    supported_locales = _supported_demo_translation_locales()
+    normalized_default = (default_language or "fi").strip().lower()
+    translations = {}
+
+    for language in supported_locales:
+        normalized_language = (language or "").strip().lower()
+        if not normalized_language or normalized_language == normalized_default:
+            continue
+
+        title = (request.form.get(f"translation_{normalized_language}_title") or "").strip()
+        description = (request.form.get(f"translation_{normalized_language}_description") or "").strip()
+        raw_tags = (request.form.get(f"translation_{normalized_language}_tags") or "").strip()
+        tags = [tag.strip().lstrip("#") for tag in raw_tags.split(",") if tag.strip()]
+
+        entry = {}
+        if title:
+            entry["title"] = title
+        if description:
+            entry["description"] = description
+        if tags:
+            entry["tags"] = tags
+
+        if entry:
+            translations[normalized_language] = entry
+
+    return translations
 
 
 @admin_recu_demo_bp.route("/<demo_id>/bulk-update-children", methods=["POST"])

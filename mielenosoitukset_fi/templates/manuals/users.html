@@ -1,104 +1,45 @@
 {% extends 'manual_base.html' %}
 
 {% block content %}
-<section class="manual-section">
-  <h2>Käyttäjien hallinta</h2>
-
-  <!-- Under construction warning -->
-  <div class="manual-warning">
-    ⚠️ Tämä sivu on rakenteilla. Sisältöä päivitetään jatkuvasti. Alla oleva sisältö antaa yleiskuvan toiminnallisuuksista.
-  </div>
-
-  <p>Käyttäjien hallintapaneelissa voit hallita kaikkia käyttäjiä, muokata tietoja ja seurata oikeuksia nopeasti ja turvallisesti.</p>
-
-  <!-- Important note card -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h5 class="card-title text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Huomio</h5>
-      <p class="card-text">
-        Ei ole suositeltavaa muokata käyttäjien oikeuksia manuaalisesti. Oikeudet määritellään automaattisesti mm. seuraavasti:
-      </p>
-      <ul class="mb-0">
-        <li><strong>Roolin perusteella</strong></li>
-        <li><strong>Organisaatioihin perustuen</strong></li>
-        <li><strong>Muut automaattiset asetukset</strong></li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- Users actions -->
-  <div class="row g-4">
-
-    <!-- Add User Card -->
-<!-- Add User Card -->
-<div class="col-md-6 col-lg-4">
-  <div class="card shadow-sm h-100">
-    <div class="card-body d-flex flex-column">
-      <h5 class="card-title"><i class="fa-solid fa-user-plus me-2"></i>Lisää uusi käyttäjä</h5>
-      <p class="card-text">
-        Luo uusi käyttäjä helposti syöttämällä tarvittavat tiedot, kuten nimi, rooli ja organisaatio. Järjestelmä luo automaattisesti käyttäjätunnuksen ja salasanan, ja oikeudet määritellään turvallisesti automaattisesti.
-      </p>
-      <a href="{{ url_for('admin.manual_page', page='users/add') }}" class="btn btn-primary mt-auto">
-        <i class="fa-solid fa-arrow-right me-1"></i> Lisätietoja
-      </a>
-    </div>
-  </div>
+<div class="manual-breadcrumb">
+  <i class="fa-solid fa-house me-1"></i> <a href="{{ url_for('admin.manual_page', page='index') }}">Ohje</a> / Käyttäjien hallinta
 </div>
 
-
-
-    <!-- Edit User Card -->
-    <div class="col-md-6 col-lg-4">
-      <div class="card shadow-sm h-100">
-        <div class="card-body">
-          <h5 class="card-title"><i class="fa-solid fa-edit me-2"></i>Muokkaa käyttäjää</h5>
-          <p class="card-text">
-            Päivitä käyttäjän tiedot, kuten sähköposti, näyttönimi ja rooli. Muutokset päivittyvät heti järjestelmään.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Force Password Change Card -->
-    <div class="col-md-6 col-lg-4">
-      <div class="card shadow-sm h-100">
-        <div class="card-body">
-          <h5 class="card-title"><i class="fa-solid fa-key me-2"></i>Pakota salasanan vaihto</h5>
-          <p class="card-text">
-            Pakota käyttäjä vaihtamaan salasanansa seuraavan kirjautumisen yhteydessä turvallisuuden parantamiseksi.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Delete User Card -->
-    <div class="col-md-6 col-lg-4">
-      <div class="card shadow-sm h-100">
-        <div class="card-body">
-          <h5 class="card-title text-danger"><i class="fa-solid fa-trash-alt me-2"></i>Poista käyttäjä</h5>
-          <p class="card-text">
-            Poista käyttäjä kokonaan järjestelmästä. Tämä toimenpide on peruuttamaton, joten käytä varoen.
-          </p>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Extra tips section -->
-  <div class="mt-4">
-    <h3>Vinkkejä tehokkaaseen hallintaan</h3>
-    <ul>
-      <li>Hyödynnä <strong>suodattimia ja hakutoimintoa</strong> löytääksesi käyttäjän nopeasti.</li>
-      <li>Seuraa aktiivisuutta ja viimeisimpiä kirjautumisia tilastoista.</li>
-      <li>Muista, että oikeudet päivittyvät automaattisesti roolien ja organisaatioiden mukaan.</li>
-      <li>Pidä yhteyttä ylläpitoon ongelmatilanteissa.</li>
-    </ul>
-  </div>
-
-  <p class="mt-3">
-    🔗 Katso myös <a href="{{ url_for('admin.manual_page', page='dashboard') }}">Hallintapaneeli</a> ja <a href="{{ url_for('admin.manual_page', page='stats') }}">Tilastot</a> saadaksesi täydellisen kuvan käyttäjien hallinnasta.
+<section class="manual-section">
+  <h2><i class="fa-solid fa-users me-2"></i>Käyttäjien hallinta</h2>
+  <p>
+    Käyttäjien hallintanäkymä löytyy osoitteesta <strong>/admin/user</strong>. Täältä voit luoda käyttäjiä,
+    muokata heidän tietojaan ja roolejaan, hallita kaupunkiadmin-oikeuksia, pakottaa salasanan vaihdon ja
+    poistaa käyttäjiä.
   </p>
 
+  <h3>Keskeiset toiminnot</h3>
+  <ul>
+    <li><strong>Lista:</strong> selaa käyttäjiä, hae ja suodata, katso kaupunkiadmin-myönnöt.</li>
+    <li><a href="{{ url_for('admin.manual_page', page='users/add') }}"><strong>Luo uusi käyttäjä</strong></a> (<code>CREATE_USER</code>).</li>
+    <li><strong>Muokkaa käyttäjää</strong> (<code>EDIT_USER</code>): nimi, sähköposti, rooli, oikeudet ja kaupunkialue.</li>
+    <li><strong>Pakota salasanan vaihto</strong> (<code>FORCE_PASSWORD_CHANGE</code>) seuraavaan kirjautumiseen.</li>
+    <li><strong>Poista käyttäjä</strong> (<code>DELETE_USER</code>).</li>
+  </ul>
+
+  <div class="manual-note">
+    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+    <strong>Huomio:</strong> Oikeuksia ei ole yleensä suositeltavaa muokata manuaalisesti. Ne määräytyvät
+    automaattisesti roolin ja organisaatiojäsenyyksien perusteella. Katso lisää
+    <a href="{{ url_for('admin.manual_page', page='users/about_roles') }}">roolit &amp; oikeudet</a> -sivulta.
+  </div>
+
+  <h3>Vaatimukset ja suojaukset</h3>
+  <ul>
+    <li><strong>Roolihierarkia:</strong> Et voi muokata käyttäjiä, joilla on sama tai korkeampi käyttöoikeustaso kuin sinulla.</li>
+    <li><strong>Turvaluokitus:</strong> <code>global_admin</code>-roolin myöntäminen vaatii hallituksen hyväksynnän (board clearance).</li>
+    <li><strong>Sähköposti-ilmoitukset:</strong> Tallennettaessa muutokset käyttäjälle lähetetään sähköposti.</li>
+  </ul>
+
+  <h3>Lisätietoa</h3>
+  <ul>
+    <li><a href="{{ url_for('admin.manual_page', page='users/add') }}">Lisää uusi käyttäjä</a> – vaiheittainen ohje.</li>
+    <li><a href="{{ url_for('admin.manual_page', page='users/about_roles') }}">Roolit &amp; oikeudet</a> – eri roolien vertailu.</li>
+  </ul>
 </section>
 {% endblock %}

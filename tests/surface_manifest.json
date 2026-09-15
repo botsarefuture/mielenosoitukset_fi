@@ -1,24 +1,157 @@
 {
+  "api_routes": {
+    "count": 14,
+    "entries": [
+      {
+        "function": "list_demonstrations",
+        "methods": [
+          "GET"
+        ],
+        "prefix": "/api/",
+        "route": "/demonstrations"
+      },
+      {
+        "function": "get_demonstration",
+        "methods": [
+          "GET"
+        ],
+        "prefix": "/api/",
+        "route": "/demonstrations/<demo_id>"
+      },
+      {
+        "function": "get_demo_stats",
+        "methods": [
+          "GET"
+        ],
+        "prefix": "/api/",
+        "route": "/demonstrations/<demo_id>/stats"
+      },
+      {
+        "function": "like_demo",
+        "methods": [
+          "POST"
+        ],
+        "prefix": "/api/",
+        "route": "/demonstrations/<demo_id>/like"
+      },
+      {
+        "function": "demo_attending",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "prefix": "/api/",
+        "route": "/demonstrations/<demo_id>/attending"
+      },
+      {
+        "function": "unlike_demo",
+        "methods": [
+          "POST"
+        ],
+        "prefix": "/api/",
+        "route": "/demonstrations/<demo_id>/unlike"
+      },
+      {
+        "function": "get_likes",
+        "methods": [
+          "GET"
+        ],
+        "prefix": "/api/",
+        "route": "/demonstrations/<demo_id>/likes"
+      },
+      {
+        "function": "get_unapproved_demonstrations",
+        "methods": [
+          "GET"
+        ],
+        "prefix": "/api/",
+        "route": "/demonstrations/unapproved"
+      },
+      {
+        "function": "admin_get_demo_info",
+        "methods": [
+          "GET"
+        ],
+        "prefix": "/api/",
+        "route": "/admin/demonstrations/<demo_id>"
+      },
+      {
+        "function": "renew_token",
+        "methods": [
+          "POST"
+        ],
+        "prefix": "/api/",
+        "route": "/token/renew"
+      },
+      {
+        "function": "create_long_lived_token",
+        "methods": [
+          "POST"
+        ],
+        "prefix": "/api/",
+        "route": "/token/long_lived"
+      },
+      {
+        "function": "friends_attending",
+        "methods": [
+          "POST"
+        ],
+        "prefix": "/api/",
+        "route": "/friends-attending"
+      },
+      {
+        "function": "friends",
+        "methods": [
+          "GET"
+        ],
+        "prefix": "/api/",
+        "route": "/user/friends/"
+      },
+      {
+        "function": "invite_friends",
+        "methods": [
+          "POST"
+        ],
+        "prefix": "/api/",
+        "route": "/demonstrations/<demo_id>/invite"
+      }
+    ]
+  },
+  "background_jobs": {
+    "count": 11,
+    "sha256": "c9b1d775d13caf29e1e2d18a6a31d864a66eb9796bbbdf71ee2e5fbc9df0223a",
+    "coverage": [
+      "jobs",
+      "integration"
+    ]
+  },
   "routes": {
     "mielenosoitukset_fi/admin/admin_bp.py": {
-      "count": 25,
-      "sha256": "a1b7f38e96edbb54c9ccebd305fab33d1cd90da15bda1bc803fae4e6e7b0cb62",
+      "count": 34,
+      "sha256": "0dfb8f5d9deaa4a7dd9554635c8c5418e2af122dea7f954faf2a472d29e344bf",
       "coverage": [
         "integration",
         "e2e-admin"
       ]
     },
     "mielenosoitukset_fi/admin/admin_case_bp.py": {
-      "count": 12,
-      "sha256": "5fd1e5409dc19fb03657442c1f1c2967a6be67de5a1fd47c9bc11c46bce93386",
+      "count": 20,
+      "sha256": "28d8492fecd335619cb39d13040049b61dd59add3586bf4c2e50a53a7440bfd6",
       "coverage": [
         "integration",
         "e2e-admin"
       ]
     },
+    "mielenosoitukset_fi/admin/admin_city_bp.py": {
+      "count": 1,
+      "sha256": "651daec4ff338a32e0ee863fb56c268fe26cafac872b016a53066275b7490b46",
+      "coverage": [
+        "integration"
+      ]
+    },
     "mielenosoitukset_fi/admin/admin_demo_bp.py": {
-      "count": 41,
-      "sha256": "d60a35056535d103fa958399c06a6d34b713cb927fdc30838523f143c4808207",
+      "count": 49,
+      "sha256": "148dcce50c0ceb79797f382975667b0c220413b38db73e27fb1ba5e7a887a826",
       "coverage": [
         "integration",
         "e2e-admin"
@@ -27,6 +160,14 @@
     "mielenosoitukset_fi/admin/admin_dev_bp.py": {
       "count": 6,
       "sha256": "719cc75a2c4725c6558926b8767ba0369ae6bd1658d0644309b90378b13a00ba",
+      "coverage": [
+        "integration",
+        "e2e-admin"
+      ]
+    },
+    "mielenosoitukset_fi/admin/admin_governance_bp.py": {
+      "count": 3,
+      "sha256": "94de410e4e8ebb65c21e395cc20c78d24e9ed7456ead73d10e18da4818ed274b",
       "coverage": [
         "integration",
         "e2e-admin"
@@ -112,8 +253,8 @@
       ]
     },
     "mielenosoitukset_fi/basic_routes.py": {
-      "count": 46,
-      "sha256": "39187ea8f2cfb15048ab8e95c4a48ddf7e9ac8c670a867b647684ea7f18a65c7",
+      "count": 52,
+      "sha256": "f1c436c0b04d7aaffc3e7cd8fbcc6589854d38aa6bf18530bd8e5ccd05891dbc",
       "coverage": [
         "integration",
         "e2e-public"
@@ -149,9 +290,16 @@
         "integration"
       ]
     },
+    "mielenosoitukset_fi/translations_join_bp.py": {
+      "count": 1,
+      "sha256": "5d848cdfb95e77ff83cb7831e7b8f7b256e5103ebb0c5f42c82294a660448739",
+      "coverage": [
+        "integration"
+      ]
+    },
     "mielenosoitukset_fi/users/BPs/auth.py": {
-      "count": 29,
-      "sha256": "bd8f1297aa0d8d5129ec0a3bba7249024c63f534c5369c51cad91128a008e2d1",
+      "count": 30,
+      "sha256": "187426130dda0a7d2ca709f927d95d2ad6837e577a83446c34daaf59b4d57923",
       "coverage": [
         "integration",
         "e2e-auth"
@@ -173,132 +321,6 @@
         "e2e-user"
       ]
     }
-  },
-  "api_routes": {
-    "count": 14,
-    "entries": [
-      {
-        "function": "list_demonstrations",
-        "route": "/demonstrations",
-        "methods": [
-          "GET"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "get_demonstration",
-        "route": "/demonstrations/<demo_id>",
-        "methods": [
-          "GET"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "get_demo_stats",
-        "route": "/demonstrations/<demo_id>/stats",
-        "methods": [
-          "GET"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "like_demo",
-        "route": "/demonstrations/<demo_id>/like",
-        "methods": [
-          "POST"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "demo_attending",
-        "route": "/demonstrations/<demo_id>/attending",
-        "methods": [
-          "GET",
-          "POST"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "unlike_demo",
-        "route": "/demonstrations/<demo_id>/unlike",
-        "methods": [
-          "POST"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "get_likes",
-        "route": "/demonstrations/<demo_id>/likes",
-        "methods": [
-          "GET"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "get_unapproved_demonstrations",
-        "route": "/demonstrations/unapproved",
-        "methods": [
-          "GET"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "admin_get_demo_info",
-        "route": "/admin/demonstrations/<demo_id>",
-        "methods": [
-          "GET"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "renew_token",
-        "route": "/token/renew",
-        "methods": [
-          "POST"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "create_long_lived_token",
-        "route": "/token/long_lived",
-        "methods": [
-          "POST"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "friends_attending",
-        "route": "/friends-attending",
-        "methods": [
-          "POST"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "friends",
-        "route": "/user/friends/",
-        "methods": [
-          "GET"
-        ],
-        "prefix": "/api/"
-      },
-      {
-        "function": "invite_friends",
-        "route": "/demonstrations/<demo_id>/invite",
-        "methods": [
-          "POST"
-        ],
-        "prefix": "/api/"
-      }
-    ]
-  },
-  "background_jobs": {
-    "count": 9,
-    "sha256": "99e3be0a0c0d69e5dec9e6b79ca4ee5463a6916a4b655d730748be4224748711",
-    "coverage": [
-      "jobs",
-      "integration"
-    ]
   },
   "socketio": {
     "count": 5,

@@ -1,12 +1,13 @@
 from copy import deepcopy
+from flask import current_app, jsonify, redirect, request, Blueprint, url_for, session
 import re
-from flask import current_app, jsonify, redirect, request, Blueprint, url_for
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, timedelta
 from flask_caching import Cache
 from flask_cors import CORS
 from functools import wraps
+from flask_babel import get_locale
 
 from flask_login import current_user, login_required
 
@@ -16,9 +17,14 @@ from mielenosoitukset_fi.utils.classes import Demonstration
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 from mielenosoitukset_fi.utils.notifications import create_notification    # NEW
 from mielenosoitukset_fi.utils.analytics import get_prepped_data
+from mielenosoitukset_fi.utils.demo_localization import (
+    demo_has_tag,
+    demo_matches_search_query,
+    demo_matches_title_query,
+    get_demo_localized_dict,
+)
 from mielenosoitukset_fi.utils.tokens import (
-    TOKENS_COLLECTION,
-    TOKEN_USAGE_LOGS,
+    token_usage_logs_collection,
     token_expired,
     token_renewal_needed,
     create_token,
@@ -79,7 +85,7 @@ def token_required(required_scopes=None, auto_renew=True):
                     raise ApiException(Message("Insufficient token scope", "token_scope"), 403)
 
             # Log usage
-            TOKEN_USAGE_LOGS.insert_one({
+            token_usage_logs_collection().insert_one({
                 "token_id": token_record["_id"],
                 "timestamp": datetime.now(),
                 "endpoint": request.path,
@@ -154,6 +160,33 @@ def _case_insensitive_exact_pattern(value):
     return re.compile(f"^{re.escape(value)}$", re.IGNORECASE)
 
 
+PUBLIC_DEMONSTRATION_LIST_PROJECTION = {
+    "_id": 1,
+    "title": 1,
+    "description": 1,
+    "default_language": 1,
+    "translations": 1,
+    "date": 1,
+    "formatted_date": 1,
+    "start_time": 1,
+    "end_time": 1,
+    "city": 1,
+    "address": 1,
+    "tags": 1,
+    "cancelled": 1,
+    "cover_picture": 1,
+    "cover_image": 1,
+    "preview_image": 1,
+    "img": 1,
+    "slug": 1,
+    "running_number": 1,
+    "latitude": 1,
+    "longitude": 1,
+    "type": 1,
+    "event_type": 1,
+}
+
+
 @api_bp.route("/demonstrations", methods=["GET"])
 # @token_required(required_scopes=["read"])
 def list_demonstrations():
@@ -219,6 +252,23 @@ def list_demonstrations():
     # --- Extract & normalize query parameters ---
     def get_param(name: str, default: str = ""):
         return request.args.get(name, default).strip().casefold()
+
+    def _requested_language():
+        explicit = (request.args.get("lang") or "").strip().lower()
+        if explicit:
+            return explicit
+        try:
+            locale = str(get_locale() or "").strip().lower()
+            if locale:
+                return locale
+        except Exception:
+            pass
+        return (session.get("locale") or "").strip().lower() or None
+
+    requested_language = _requested_language()
+    include_translations = (
+        request.args.get("include_translations", "").strip().lower() == "true"
+    )
     cache_key = make_cache_key()
     use_cache = bool(cache) and not should_skip_cache(public_only=False)
 
@@ -295,13 +345,18 @@ def list_demonstrations():
 
     extra_filters = []
     if search:
-        extra_filters.append({"title": _case_insensitive_contains(search)})
+        pattern = _case_insensitive_contains(search)
+        extra_filters.append(
+            {"$or": [{"title": pattern}, {"description": pattern}, {"translations.en.title": pattern}, {"translations.en.description": pattern}]}
+        )
     if title:
-        extra_filters.append({"title": _case_insensitive_contains(title)})
+        pattern = _case_insensitive_contains(title)
+        extra_filters.append({"$or": [{"title": pattern}, {"translations.en.title": pattern}]})
     if city_list:
         extra_filters.append({"city": {"$in": [_case_insensitive_exact_pattern(city) for city in city_list]}})
     if tag:
-        extra_filters.append({"tags": _case_insensitive_exact(tag)})
+        pattern = _case_insensitive_exact(tag)
+        extra_filters.append({"$or": [{"tags": pattern}, {"translations.en.tags": pattern}]})
     if extra_filters:
         query["$and"] = query.get("$and", []) + extra_filters
 
@@ -309,9 +364,13 @@ def list_demonstrations():
     total = mongo.demonstrations.count_documents(query)
     total_pages = max((total + per_page - 1) // per_page, 1)
     paginated = [
-        stringify_object_ids(demo)
+        get_demo_localized_dict(
+            stringify_object_ids(demo),
+            language=requested_language,
+            include_translations=include_translations,
+        )
         for demo in (
-            mongo.demonstrations.find(query)
+            mongo.demonstrations.find(query, PUBLIC_DEMONSTRATION_LIST_PROJECTION)
             .sort("date", 1)
             .skip((page - 1) * per_page)
             .limit(per_page)
@@ -361,8 +420,25 @@ def get_demonstration(demo_id):
     if not demo:
         raise ApiException(Message("Demonstration not found", "demo_not_found"), 404)
     
+    requested_language = (request.args.get("lang") or "").strip().lower() or None
+    if not requested_language:
+        try:
+            requested_language = str(get_locale() or "").strip().lower() or None
+        except Exception:
+            requested_language = None
+    if not requested_language:
+        requested_language = (session.get("locale") or "").strip().lower() or None
+    include_translations = (
+        request.args.get("include_translations", "").strip().lower() == "true"
+    )
+
     demo_obj = Demonstration.from_dict(demo)
-    return jsonify(stringify_object_ids(demo_obj.to_dict(json=False))), 200
+    payload = demo_obj.to_localized_dict(
+        language=requested_language,
+        include_translations=include_translations,
+        json=False,
+    )
+    return jsonify(stringify_object_ids(payload)), 200
 
 # -------------------------
 # DEMO STATS

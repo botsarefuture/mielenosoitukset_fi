@@ -19,7 +19,37 @@ def test_edit_demo_shows_edit_only_controls(admin_client, seeded_data):
     assert "Luo muokkauslinkki" in page
     assert "Luo kopio mielenosoituksesta" in page
     assert 'class="editor-save-bar"' in page
-    assert 'class="editor-section-nav"' in page
+    assert 'class="admin-page-hero__nav editor-section-nav"' in page
+
+
+def test_editor_without_accept_permission_cannot_forge_demo_approval(
+    friend_client, db, seeded_data
+):
+    db.users.update_one(
+        {"_id": seeded_data["friend_id"]},
+        {"$set": {"role": "admin", "global_permissions": ["EDIT_DEMO"]}},
+    )
+
+    edit_page = friend_client.get(
+        f"/admin/demo/edit_demo/{seeded_data['pending_demo_id']}"
+    )
+    assert edit_page.status_code == 200
+    assert 'id="approval-container"' not in edit_page.get_data(as_text=True)
+
+    response = friend_client.post(
+        f"/admin/demo/edit_demo/{seeded_data['pending_demo_id']}",
+        data={
+            "title": "Pending Demonstration",
+            "date": "2026-05-01",
+            "city": "Helsinki",
+            "approved": "on",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    updated = db.demonstrations.find_one({"_id": seeded_data["pending_demo_id"]})
+    assert updated["approved"] is False
 
 
 def test_demo_dashboard_filters_year_text_and_missing_tag(admin_client, db, seeded_data):
@@ -119,3 +149,58 @@ def test_demo_dashboard_filters_by_required_tag(admin_client, db, seeded_data):
     page = response.get_data(as_text=True)
     assert "Tagged Pride demo" in page
     assert "Untagged Pride demo" not in page
+
+
+def test_edit_demo_prefills_translation_fields(admin_client, db, seeded_data):
+    db.demonstrations.update_one(
+        {"_id": seeded_data["demo_id"]},
+        {
+            "$set": {
+                "default_language": "fi",
+                "translations": {
+                    "en": {
+                        "title": "English Climate March",
+                        "description": "English description",
+                        "tags": ["peace", "climate"],
+                    }
+                },
+            }
+        },
+    )
+
+    response = admin_client.get(f"/admin/demo/edit_demo/{seeded_data['demo_id']}")
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert 'value="English Climate March"' in page
+    assert "English description" in page
+    assert 'value="peace, climate"' in page
+
+
+def test_create_demo_persists_translation_payload(admin_client, db):
+    response = admin_client.post(
+        "/admin/demo/create_demo",
+        data={
+            "title": "Solidarity Rally",
+            "date": "2026-09-10",
+            "start_time": "18:00",
+            "end_time": "20:00",
+            "city": "Helsinki",
+            "address": "Kansalaistori 1",
+            "type": "STAY_STILL",
+            "description": "Finnish base description",
+            "default_language": "fi",
+            "translation_en_title": "Solidarity Rally in English",
+            "translation_en_description": "English description",
+            "translation_en_tags": "peace, rally",
+            "translation_sv_title": "Solidaritetsmanifestation",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    created = db.demonstrations.find_one({"title": "Solidarity Rally"})
+    assert created["default_language"] == "fi"
+    assert created["translations"]["en"]["title"] == "Solidarity Rally in English"
+    assert created["translations"]["en"]["tags"] == ["peace", "rally"]
+    assert created["translations"]["sv"]["title"] == "Solidaritetsmanifestation"

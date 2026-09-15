@@ -1,234 +1,6 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 {% block title %}{{ _('Tapaus') }} #{{ case.running_num }}{% endblock %}
-
-{% block styles %}
-<style>
-  .case-page {
-    display: grid;
-    gap: 1.5rem;
-  }
-  .case-header {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(37, 99, 235, 0.34));
-    color: #eef4ff;
-    border-radius: 18px;
-    padding: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.2);
-  }
-  .case-header h1 {
-    margin: 0 0 0.4rem;
-    color: #fff;
-    font-size: clamp(1.6rem, 2.8vw, 2.3rem);
-  }
-  .case-header p {
-    margin: 0;
-    max-width: 52rem;
-    color: #d8e4ff;
-  }
-  .chip-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    margin-top: 1rem;
-  }
-  .case-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.4rem 0.75rem;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 0.86rem;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.09);
-    color: #eef4ff;
-  }
-  .case-chip.success { background: rgba(22, 163, 74, 0.18); }
-  .case-chip.warning { background: rgba(217, 119, 6, 0.22); }
-  .case-chip.danger { background: rgba(220, 38, 38, 0.2); }
-  .case-chip.info { background: rgba(37, 99, 235, 0.24); }
-  .case-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.95fr);
-    gap: 1.25rem;
-    align-items: start;
-  }
-  .case-main,
-  .case-sidebar {
-    display: grid;
-    gap: 1rem;
-  }
-  .case-card {
-    background: var(--color-card-bg, #fff);
-    border: 1px solid var(--color-border, #e2e8f0);
-    border-radius: 18px;
-    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
-    overflow: hidden;
-  }
-  .case-card-header {
-    padding: 1rem 1.15rem;
-    border-bottom: 1px solid var(--color-border, #e2e8f0);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.8rem;
-  }
-  .case-card-header h2,
-  .case-card-header h3 {
-    margin: 0;
-    font-size: 1.05rem;
-  }
-  .case-card-body {
-    padding: 1.1rem 1.15rem 1.2rem;
-    display: grid;
-    gap: 1rem;
-  }
-  .detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.9rem 1rem;
-  }
-  .detail-grid.single {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .detail-item {
-    display: grid;
-    gap: 0.25rem;
-  }
-  .detail-item strong {
-    font-size: 0.84rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-text-secondary, #64748b);
-  }
-  .detail-item span,
-  .detail-item div {
-    color: var(--color-text, #0f172a);
-    word-break: break-word;
-  }
-  .muted {
-    color: var(--color-text-secondary, #64748b);
-  }
-  .description-box,
-  .note-box {
-    border: 1px solid var(--color-border, #e2e8f0);
-    border-radius: 14px;
-    padding: 0.95rem 1rem;
-    background: rgba(148, 163, 184, 0.06);
-  }
-  .description-box p:last-child {
-    margin-bottom: 0;
-  }
-  .pill-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .pill-list span {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.35rem 0.7rem;
-    border-radius: 999px;
-    border: 1px solid var(--color-border, #dbe3f0);
-    background: rgba(37, 99, 235, 0.08);
-    color: var(--color-text, #0f172a);
-    font-size: 0.9rem;
-  }
-  .action-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-  .form-stack {
-    display: grid;
-    gap: 0.9rem;
-  }
-  .form-stack label {
-    display: grid;
-    gap: 0.35rem;
-    font-weight: 600;
-  }
-  .form-stack select,
-  .form-stack textarea {
-    width: 100%;
-    border: 1px solid var(--color-border, #cbd5e1);
-    border-radius: 12px;
-    padding: 0.75rem 0.85rem;
-    font: inherit;
-    background: #fff;
-    color: var(--color-text, #0f172a);
-  }
-  .form-stack textarea {
-    min-height: 120px;
-    resize: vertical;
-  }
-  .info-list {
-    display: grid;
-    gap: 0.85rem;
-  }
-  .log-list,
-  .timeline-list {
-    display: grid;
-    gap: 0.8rem;
-  }
-  .log-entry,
-  .timeline-entry {
-    border: 1px solid var(--color-border, #e2e8f0);
-    border-radius: 14px;
-    padding: 0.9rem 1rem;
-    background: rgba(148, 163, 184, 0.05);
-  }
-  .log-entry-header,
-  .timeline-entry-header {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.45rem;
-  }
-  .log-entry-header strong,
-  .timeline-entry-header strong {
-    color: var(--color-text, #0f172a);
-  }
-  .empty-state {
-    padding: 1.25rem;
-    text-align: center;
-    color: var(--color-text-secondary, #64748b);
-    border: 1px dashed var(--color-border, #cbd5e1);
-    border-radius: 14px;
-  }
-  .change-list {
-    display: grid;
-    gap: 0.8rem;
-  }
-  .change-entry {
-    border: 1px solid var(--color-border, #e2e8f0);
-    border-radius: 14px;
-    padding: 0.9rem 1rem;
-    background: rgba(148, 163, 184, 0.05);
-  }
-  .change-entry strong {
-    display: block;
-    margin-bottom: 0.4rem;
-  }
-  .change-entry .before {
-    color: #b91c1c;
-  }
-  .change-entry .after {
-    color: #166534;
-  }
-  @media (max-width: 960px) {
-    .case-layout {
-      grid-template-columns: 1fr;
-    }
-  }
-  @media (max-width: 720px) {
-    .detail-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
-{% endblock %}
 
 {% block main_content %}
 {% set demo = case_data.demo if case_data.demo is defined else {} %}
@@ -240,38 +12,136 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<div class="case-page">
-  <section class="case-header">
-    <h1>{{ _('Tapaus') }} #{{ case.running_num }}</h1>
-    <p>{{ _('Tama nakyma kokoaa tapauksen tilan, siihen liittyvat tiedot ja kasittelytoimet samaan paikkaan.') }}</p>
-    <div class="chip-row">
-      <span class="case-chip"><i class="fa-solid fa-folder"></i>{{ case_data.type_label }}</span>
-      <span class="case-chip {{ 'success' if case.meta.closed else 'info' }}">
-        <i class="fa-solid {{ 'fa-circle-check' if case.meta.closed else 'fa-clock' }}"></i>
-        {{ _('Suljettu') if case.meta.closed else _('Avoin') }}
-      </span>
-      {% if case.meta.superior_needed %}
-      <span class="case-chip danger"><i class="fa-solid fa-arrow-up-right-dots"></i>{{ _('Eskaloitu') }}</span>
-      {% endif %}
-      {% if demo and demo.status %}
-      <span class="case-chip {{ demo.status.tone }}"><i class="fa-solid fa-bullhorn"></i>{{ demo.status.label }}</span>
-      {% endif %}
-    </div>
-  </section>
+<div class="case-page admin-page">
+  {{ admin_page_hero(
+    _('Tapaus') ~ ' #' ~ case.running_num,
+    _('Tämä näkymä kokoaa tapauksen tilan, siihen liittyvät tiedot ja käsittelytoimet samaan paikkaan.'),
+    _('Tapaukset'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Tapaukset'), url_for('admin_case.cases')), (_('Tapaus') ~ ' #' ~ case.running_num, none)],
+    back_url=url_for('admin_case.cases'),
+    back_label=_('Tapaukset')
+  ) }}
+  <div class="admin-row-actions admin-case-statuses" aria-label="{{ _('Tapauksen tila') }}">
+    <span class="admin-status-badge"><i class="fa-solid fa-folder"></i>{{ case_data.type_label }}</span>
+    <span class="admin-status-badge admin-status-badge--{{ 'success' if case.meta.closed else 'info' }}">
+      <i class="fa-solid {{ 'fa-circle-check' if case.meta.closed else 'fa-clock' }}"></i>
+      {{ _('Suljettu') if case.meta.closed else _('Avoin') }}
+    </span>
+    {% if case.meta.superior_needed %}
+    <span class="admin-status-badge admin-status-badge--danger"><i class="fa-solid fa-arrow-up-right-dots"></i>{{ _('Eskaloitu') }}</span>
+    {% endif %}
+    {% if demo and demo.status %}
+    <span class="admin-status-badge admin-status-badge--{{ demo.status.tone }}"><i class="fa-solid fa-bullhorn"></i>{{ demo.status.label }}</span>
+    {% endif %}
+  </div>
 
-  <div class="case-layout">
-    <div class="case-main">
-      <section class="case-card">
-        <div class="case-card-header">
-          <h2>{{ _('Tapauksen tiedot') }}</h2>
+  <div class="admin-detail-layout">
+    <div class="admin-stack">
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2>{{ _('Tapauksen tiedot') }}</h2></div>
           {% if demo and demo._id %}
           <a class="btn btn-outline-primary btn-sm" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}">
             <i class="fa-solid fa-eye me-1"></i>{{ _('Avaa julkinen sivu') }}
           </a>
           {% endif %}
         </div>
-        <div class="case-card-body">
-          {% if case.case_type == "new_demo" %}
+        <div class="admin-section-card__body admin-stack">
+          {% set support_ticket = case_data.support_ticket if case_data.support_ticket is defined else {} %}
+          {% if case.case_type == "support_ticket" %}
+          <div class="detail-grid">
+            <div class="detail-item"><strong>{{ _('Ilmoittaja') }}</strong><span>{{ case_data.submitter_label }}</span></div>
+            <div class="detail-item"><strong>{{ _('Vastaanotettu') }}</strong><span>{% if support_ticket.received_at %}{{ support_ticket.received_at|datetimeformat("%d.%m.%Y %H:%M") }}{% else %}-{% endif %}</span></div>
+            {% if case_data.urgent %}
+            <div class="detail-item"><strong>{{ _('Kiireellisyys') }}</strong><span class="admin-status-badge admin-status-badge--danger">{{ _('URGENT') }}</span></div>
+            {% endif %}
+            {% if support_ticket.from_wrapper %}
+            <div class="detail-item"><strong>{{ _('Alkupera') }}</strong><span>{{ _('Yhteydenottolomake') }}</span></div>
+            {% endif %}
+          </div>
+          <div class="detail-item">
+            <strong>{{ _('Aihe') }}</strong>
+            <div class="note-box">{{ support_ticket.subject or _('(ei aihetta)') }}</div>
+          </div>
+          <div class="detail-item">
+            <strong>{{ _('Viesti') }}</strong>
+            {% if support_ticket.html_message %}
+            <div class="description-box">{{ support_ticket.html_message|safe }}</div>
+            {% else %}
+            <div class="note-box">{{ support_ticket.message or _('(ei viestia)') }}</div>
+            {% endif %}
+          </div>
+          {% if support_ticket.followups %}
+          <div class="detail-item">
+            <strong>{{ _('Jatkoviestit') }}</strong>
+            <div class="info-list">
+              {% for followup in support_ticket.followups %}
+              <div class="note-box">
+                <div><strong>{{ followup.from_name or followup.from_email }}</strong> <span class="muted">{{ followup.timestamp|datetimeformat("%d.%m.%Y %H:%M") if followup.timestamp else '' }}</span></div>
+                {% if followup.subject %}<div class="muted">{{ followup.subject }}</div>{% endif %}
+                <div>{{ followup.message }}</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          <div class="detail-item">
+            <strong>{{ _('Liitetyt toimenpiteet') }}</strong>
+            <div class="admin-linked-actions">
+              {% if case_data.demo %}
+              <div class="note-box">
+                <div>
+                  <span class="admin-status-badge admin-status-badge--info">Demo</span>
+                  {% if case_data.demo.title %}<strong>{{ case_data.demo.title }}</strong>{% endif %}
+                  {% if case_data.demo.city %}<span class="muted">({{ case_data.demo.city }})</span>{% endif %}
+                </div>
+                {% if case_data.demo._id %}
+                <a class="btn btn-sm btn-outline-primary mt-1" href="{{ url_for('admin_demo.demo_command_center', demo_id=case_data.demo._id) }}" target="_blank" rel="noopener noreferrer">{{ _('Avaa hallintapaneelissa') }}</a>
+                {% endif %}
+                <form method="POST" action="{{ url_for('admin_case.unlink_demo', case_id=case._id) }}" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-outline-danger mt-1">{{ _('Poista linkki') }}</button>
+                </form>
+              </div>
+              {% else %}
+              <div class="note-box">
+                <form method="POST" action="{{ url_for('admin_case.link_demo', case_id=case._id) }}" class="admin-link-form" data-link-type="demo">
+                  <label class="muted">{{ _('Liitä olemassa oleva mielenosoitus') }}</label>
+                  <div class="admin-link-search">
+                    <input type="text" name="demo_search" class="form-control" placeholder="{{ _('Hae otsikolla...') }}" autocomplete="off" data-search-type="demo" />
+                    <input type="hidden" name="demo_id" />
+                    <button type="submit" class="btn btn-sm btn-primary" disabled>{{ _('Liitä') }}</button>
+                  </div>
+                  <div class="admin-link-results"></div>
+                </form>
+              </div>
+              {% endif %}
+
+              {% if case_data.organization %}
+              <div class="note-box">
+                <div>
+                  <span class="admin-status-badge admin-status-badge--info">Org</span>
+                  <strong>{{ case_data.organization.name }}</strong>
+                </div>
+                <form method="POST" action="{{ url_for('admin_case.unlink_org', case_id=case._id) }}" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-outline-danger mt-1">{{ _('Poista linkki') }}</button>
+                </form>
+              </div>
+              {% else %}
+              <div class="note-box">
+                <form method="POST" action="{{ url_for('admin_case.link_org', case_id=case._id) }}" class="admin-link-form" data-link-type="org">
+                  <label class="muted">{{ _('Liitä olemassa oleva organisaatio') }}</label>
+                  <div class="admin-link-search">
+                    <input type="text" name="org_search" class="form-control" placeholder="{{ _('Hae nimellä...') }}" autocomplete="off" data-search-type="org" />
+                    <input type="hidden" name="organization_id" />
+                    <button type="submit" class="btn btn-sm btn-primary" disabled>{{ _('Liitä') }}</button>
+                  </div>
+                  <div class="admin-link-results"></div>
+                </form>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% elif case.case_type == "new_demo" %}
           <div class="detail-grid">
             <div class="detail-item"><strong>{{ _('Otsikko') }}</strong><span>{{ demo.title or '-' }}</span></div>
             <div class="detail-item"><strong>{{ _('Paivamaara') }}</strong><span>{{ demo.date or '-' }}</span></div>
@@ -335,7 +205,7 @@
             </div>
           </div>
 
-          <div class="action-row">
+          <div class="admin-row-actions">
             <button class="btn btn-success" type="button" onclick="sendDemoAction('accept')" {% if case.meta.superior_needed and current_user.role != 'global_admin' %}disabled{% endif %}>
               <i class="fa-solid fa-check me-1"></i>{{ _('Hyvaksy mielenosoitus') }}
             </button>
@@ -362,7 +232,7 @@
             <div class="note-box">{{ cancellation.reason or _('Ei syyta annettu') }}</div>
           </div>
           {% if not cancellation.cancelled %}
-          <div class="action-row">
+          <div class="admin-row-actions">
             <button class="btn btn-danger" type="button" onclick="approveCancellation()">
               <i class="fa-solid fa-ban me-1"></i>{{ _('Hyvaksy peruutus') }}
             </button>
@@ -406,12 +276,12 @@
         </div>
       </section>
 
-      <section class="case-card">
-        <div class="case-card-header">
-          <h2>{{ _('Sisaiset muistiinpanot') }}</h2>
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2>{{ _('Sisaiset muistiinpanot') }}</h2></div>
         </div>
-        <div class="case-card-body">
-          <form class="form-stack" method="POST" action="{{ url_for('admin_case.add_action', case_id=case._id) }}">
+        <div class="admin-section-card__body">
+          <form class="form-stack admin-stack" method="POST" action="{{ url_for('admin_case.add_action', case_id=case._id) }}">
             <label>
               {{ _('Merkinnan tyyppi') }}
               <select name="action_type">
@@ -434,12 +304,12 @@
       </section>
     </div>
 
-    <aside class="case-sidebar">
-      <section class="case-card">
-        <div class="case-card-header">
-          <h3>{{ _('Tapausstatus') }}</h3>
+    <aside class="admin-stack">
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2>{{ _('Tapausstatus') }}</h2></div>
         </div>
-        <div class="case-card-body">
+        <div class="admin-section-card__body admin-stack">
           <div class="detail-grid single">
             <div class="detail-item"><strong>{{ _('Tilanne') }}</strong><span>{{ _('Suljettu') if case.meta.closed else _('Avoin') }}</span></div>
             <div class="detail-item"><strong>{{ _('Luotu') }}</strong><span>{{ case.created_at|datetimeformat("%d.%m.%Y %H:%M") }}</span></div>
@@ -449,7 +319,7 @@
             <div class="detail-item"><strong>{{ _('Sulkemisen syy') }}</strong><span>{{ case.meta.closed_reason }}</span></div>
             {% endif %}
           </div>
-          <div class="action-row">
+          <div class="admin-row-actions">
             <button class="btn btn-outline-secondary" type="button" onclick="promptCaseAction('close')" {% if case.meta.closed %}disabled{% endif %}>
               <i class="fa-solid fa-folder-closed me-1"></i>{{ _('Sulje tapaus') }}
             </button>
@@ -465,11 +335,11 @@
         </div>
       </section>
 
-      <section class="case-card">
-        <div class="case-card-header">
-          <h3>{{ _('Toimintaloki') }}</h3>
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2>{{ _('Toimintaloki') }}</h2></div>
         </div>
-        <div class="case-card-body">
+        <div class="admin-section-card__body admin-stack">
           {% if case.action_logs %}
           <div class="log-list">
             {% for log in case.action_logs|reverse %}
@@ -489,11 +359,11 @@
         </div>
       </section>
 
-      <section class="case-card">
-        <div class="case-card-header">
-          <h3>{{ _('Tapahtumahistoria') }}</h3>
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2>{{ _('Tapahtumahistoria') }}</h2></div>
         </div>
-        <div class="case-card-body">
+        <div class="admin-section-card__body admin-stack">
           {% if case.case_history %}
           <div class="timeline-list">
             {% for event in case.case_history|reverse %}
@@ -656,5 +526,58 @@
       })
       .catch(() => Swal.fire("{{ _('Virhe') }}", "{{ _('Tapahtui odottamaton virhe.') }}", "error"));
   }
+
+  // ---- Link support ticket to demo / organization (autocomplete) ----
+  document.querySelectorAll(".admin-link-form").forEach((form) => {
+    const searchInput = form.querySelector("input[data-search-type]");
+    const hiddenInput = form.querySelector("input[type='hidden']");
+    const submitBtn = form.querySelector("button[type='submit']");
+    const resultsBox = form.querySelector(".admin-link-results");
+    let selected = null;
+    let debounceTimer = null;
+
+    function renderResults(items) {
+      resultsBox.innerHTML = "";
+      if (!items.length) {
+        resultsBox.innerHTML = `<div class="muted">{{ _('Ei tuloksia.') }}</div>`;
+        return;
+      }
+      items.forEach((item) => {
+        const el = document.createElement("div");
+        el.className = "admin-link-result";
+        el.tabIndex = 0;
+        const label = item.title || item.name || "";
+        const extra = item.city ? ` <span class="muted">(${item.city})</span>` : (item.cancelled ? ` <span class="muted">(${item.cancelled ? '{{ _('peruttu') }}' : ''})</span>` : "");
+        el.innerHTML = `<strong>${label}</strong>${extra}`;
+        el.addEventListener("click", () => {
+          selected = item;
+          hiddenInput.value = item.id;
+          searchInput.value = label;
+          resultsBox.innerHTML = "";
+          submitBtn.disabled = false;
+        });
+        el.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") { el.click(); e.preventDefault(); }
+        });
+        resultsBox.appendChild(el);
+      });
+    }
+
+    searchInput.addEventListener("input", () => {
+      submitBtn.disabled = true;
+      hiddenInput.value = "";
+      selected = null;
+      const q = searchInput.value.trim();
+      if (q.length < 2) { resultsBox.innerHTML = ""; return; }
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const type = searchInput.dataset.searchType;
+        fetch(`/admin/case/${type === "org" ? "org_search" : "demo_search"}/?q=${encodeURIComponent(q)}`)
+          .then((res) => res.json())
+          .then(renderResults)
+          .catch(() => { resultsBox.innerHTML = `<div class="muted">{{ _('Haku epaonnistui.') }}</div>`; });
+      }, 250);
+    });
+  });
 </script>
 {% endblock %}

@@ -1,360 +1,19 @@
-{% extends 'admin_base.html' %} {% block styles %}
-
-<style>
-  .search-and-filter {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    align-items: flex-start;
-  }
-
-  .search-bar {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 0.75rem;
-    align-items: center;
-    max-width: 460px;
-    width: 100%;
-    flex: 1 1 320px;
-    padding: 0.9rem 1.1rem;
-    border-radius: 16px;
-    background: light-dark(#f8f9fb, #1f232f);
-    border: 1px solid light-dark(#d6dce8, rgba(255,255,255,0.08));
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-  }
-
-  .search-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-    color: light-dark(#4c5d7a, #b1b7c6);
-    background: light-dark(#e9edf6, rgba(255,255,255,0.06));
-    border: 1px solid light-dark(#d4daec, rgba(255,255,255,0.08));
-  }
-
-  .search-input {
-    border: none;
-    background: transparent;
-    font-size: 1rem;
-    color: light-dark(#111827, #f4f6ff);
-    padding: 0;
-  }
-
-  .search-input::placeholder {
-    color: light-dark(#9097a9, #7f879b);
-  }
-
-  .search-input:focus {
-    outline: none;
-  }
-
-  .search-button {
-    border: none;
-    border-radius: 12px;
-    padding: 0.65rem 1.3rem;
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
-    color: #fff;
-    font-weight: 600;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    box-shadow: 0 15px 25px rgba(37, 99, 235, 0.35);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .search-button i {
-    font-size: 0.9rem;
-  }
-
-  .search-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 18px 28px rgba(37, 99, 235, 0.45);
-  }
-
-  .filter-select,
-  .filter-input {
-    border-radius: 12px;
-    border: 1px solid light-dark(#d2d8e5, rgba(255,255,255,0.12));
-    background: light-dark(#ffffff, #1d2533);
-    color: light-dark(#111827, #f3f4ff);
-    padding: 0.55rem 0.9rem;
-    min-width: 110px;
-    transition: border 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-  }
-
-  .filter-select:focus,
-  .filter-input:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 12px 26px rgba(37, 99, 235, 0.18);
-  }
-
-  .filter-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: flex-start;
-    flex: 2 1 420px;
-  }
-
-  .filter-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    min-width: 190px;
-    flex: 1 1 200px;
-  }
-
-  .filter-field label {
-    font-weight: 500;
-    color: light-dark(#1f2937, #e5e7f4);
-  }
-
-  .filter-apply-button {
-    border: none;
-    border-radius: 12px;
-    padding: 0.58rem 1rem;
-    background: light-dark(#111827, #edf2ff);
-    color: light-dark(#ffffff, #111827);
-    font-weight: 600;
-    min-height: 42px;
-    align-self: end;
-  }
-
-  .actions-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .filter-field label {
-    font-weight: 500;
-    color: light-dark(#1f2937, #e5e7f4);
-  }
-
-  .modal-dark {
-    background-color: light-dark(#fff, #1e1e2f);
-    color: light-dark(#000, #eee);
-    border-color: light-dark(#ccc, #444);
-  }
-
-  .modal-dark .modal-header,
-  .modal-dark .modal-footer {
-    background-color: light-dark(#f8f9fa, #2a2a3d);
-    border-color: light-dark(#ccc, #444);
-    color: light-dark(#000, #eee);
-  }
-
-  .modal-dark .btn-close {
-    filter: none;
-    /* reset if needed */
-  }
-
-  .modal-dark .btn-danger {
-    background-color: light-dark(#dc3545, #e03e3e);
-    border-color: light-dark(#b02a37, #b32b2b);
-  }
-
-  .modal-dark .btn-danger:hover {
-    background-color: light-dark(#c82333, #c32b2b);
-    border-color: light-dark(#a71d2a, #912020);
-  }
-
-  .modal-dark .btn-secondary {
-    color: light-dark(#6c757d, #ccc);
-    border-color: light-dark(#6c757d, #666);
-  }
-
-  .modal-dark .btn-secondary:hover {
-    background-color: light-dark(#e2e6ea, #444);
-    color: light-dark(#000, #fff);
-  }
-
-  .submitter-info-body {
-    color: light-dark(#1f2937, #e5e7f4);
-  }
-
-  /* smooth fade/slide when a row is removed */
-  tr.fade‑out {
-    opacity: 0;
-    height: 0;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    transition: opacity 2s ease, height 2s ease, padding 2s ease;
-  }
-
-  /* --------------------------------------------------
-   Section headers that fit the current dashboard style
--------------------------------------------------- */
-
-.section-header td {
-    padding: 0.6rem 1rem;
-    font-weight: 600;
-    font-size: 0.95rem;
-    border-radius: 6px;
-
-    /* Accent strip on left */
-    border-left: 4px solid var(--bs-info);
-
-    /* Light/Dark adaptive background */
-    background-color: light-dark(#f2f4f7, #2a2d33);
-    color: light-dark(#222, #e5e5e5);
-
-    /* Slight top separation */
-    border-top: 1px solid light-dark(#d0d0d0, #3a3a3a);
-    margin-top: 6px;
-}
-
-/* Approved header gets a neutral accent */
-.section-header.approved td {
-    border-left-color: var(--bs-success);
-}
-
-
-/* --------------------------------------------------
-   Needs-attention row (pending approvals)
--------------------------------------------------- */
-
-.needs-attention {
-    background-color: light-dark(
-        rgba(255, 220, 220, 0.45),
-        rgba(120, 50, 50, 0.25)
-    );
-}
-
-.needs-attention:hover {
-    background-color: light-dark(
-        rgba(255, 220, 220, 0.55),
-        rgba(130, 60, 60, 0.32)
-    );
-}
-
-
-/* --------------------------------------------------
-   Table row hover improvements (subtle)
--------------------------------------------------- */
-
-.table-container table tbody tr {
-    transition: background-color 0.18s ease;
-}
-
-.table-container table tbody tr:hover {
-    background-color: light-dark(
-        rgba(0, 0, 0, 0.04),
-        rgba(255, 255, 255, 0.04)
-    );
-}
-
-
-/* --------------------------------------------------
-   Dropdown + buttons (subtle rounding only)
--------------------------------------------------- */
-
-.dropdown-menu {
-    border-radius: 8px;
-}
-
-.dropdown-item {
-    border-radius: 4px;
-}
-
-.dropdown-item:hover {
-    background-color: light-dark(
-        rgba(0, 0, 0, 0.08),
-        rgba(255, 255, 255, 0.08)
-    );
-}
-
-
-/* --------------------------------------------------
-   Status icons (professional but readable)
--------------------------------------------------- */
-
-.fa-check-circle {
-    color: var(--bs-success);
-}
-
-.fa-times-circle {
-    color: var(--bs-danger);
-}
-
-
-/* --------------------------------------------------
-   Dropdown Menu Styling
--------------------------------------------------- */
-
-/* Dropdown container */
-.dropdown-menu {
-    border-radius: 8px;
-    background-color: light-dark(#ffffff, #1f1f28);
-    border: 1px solid light-dark(#dcdcdc, #2c2c36);
-    padding: 0.25rem;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-}
-
-/* Items */
-.dropdown-item {
-    border-radius: 6px;
-    padding: 0.45rem 0.75rem;
-    transition: background-color 0.12s ease, color 0.12s ease, padding-left 0.12s ease;
-    color: light-dark(#333, #ddd);
-}
-
-/* Hover */
-.dropdown-item:hover {
-    background-color: light-dark(
-        rgba(0, 0, 0, 0.06),
-        rgba(255, 255, 255, 0.09)
-    );
-    padding-left: 0.95rem; /* subtle slide effect */
-}
-
-/* Active/pressed */
-.dropdown-item:active {
-    background-color: light-dark(
-        rgba(0, 0, 0, 0.12),
-        rgba(255, 255, 255, 0.16)
-    );
-}
-
-/* Disabled */
-.dropdown-item.disabled,
-.dropdown-item:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Divider consistency */
-.dropdown-divider {
-    border-color: light-dark(#ddd, #333);
-}
-
-/* Text-danger items */
-.dropdown-item.text-danger:hover {
-    background-color: light-dark(
-        rgba(255, 0, 0, 0.12),
-        rgba(255, 60, 60, 0.12)
-    );
-    color: light-dark(#b00020, #ff6b6b);
-}
-
-</style>
-{% endblock %} {% block scripts %}
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demonstrations.css', v='20260914-admin-ui-51') }}">{% endblock %}
+{% block scripts %}
 <!--<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>-->
 <script>
   function acceptSty(demoId) {
-    demo = document.getElementById(`demo-${demoId}`);
+    const demo = document.getElementById(`demo-${demoId}`);
+    const approvalCell = demo?.querySelector('[data-col="approved"]');
+    if (!demo || !approvalCell) return;
 
-    demo.children[4].innerText = "{{ _('Kyllä') }}";
-
-    demo.children[5].children[0].remove();
-
-    demo.classList.remove("needs-attention");
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-check-circle admin-status-icon admin-status-icon--success';
+    icon.setAttribute('aria-hidden', 'true');
+    approvalCell.replaceChildren(icon, document.createTextNode(" {{ _('Kyllä') }}"));
+    demo.classList.remove("admin-data-row--attention");
   }
 
   function acceptDemo(demoId) {
@@ -391,189 +50,128 @@
 
 
 
-<section class="dashboard-container">
-  <!-- Intro card -->
-  <div class="introduction">
-    <h1 id="tabletitle">{{ _('Mielenosoitukset') }}</h1>
-    <p class="muted">
-      {{ _('Täältä voit hallita mielenosoituksia, joihin sinulla on käyttöoikeus.') }}<br>
-      {{ _('Lisätietoja hallinnoimisesta löydät hallinnoijan käsikirjasta, kappaleesta 3.1: Mielenosoitusten
-      hallintapaneeli, etusivu.') }}
-    </p>
-  </div>
-
-  <div class="dashboard-panel">
-
-    <div class="flex justify-center mb-4">
-      {% if current_user.has_permission("CREATE_DEMO") %}
-      <a href="{{ url_for('admin_demo.create_demo') }}" class="btn new-item">
+<section class="dashboard-container admin-workspace demo-management-page">
+  {% call admin_page_hero(
+    _('Mielenosoitukset'),
+    _('Hae, suodata ja hallitse mielenosoituksia, joihin sinulla on käyttöoikeus.'),
+    _('Sisällönhallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), none)],
+    title_id='tabletitle',
+  ) %}
+      {% if can_create_demo %}
+      <a href="{{ url_for('admin_demo.create_demo') }}" class="admin-workspace-hero-action admin-page-hero__action">
         <i class="fas fa-plus"></i>{{ _('Uusi mielenosoitus') }}
       </a>
       {% else %}
-      <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
+      <span class="admin-page-hero__action non-suffperm" aria-disabled="true" data-tooltip="Ei käyttöoikeutta">
         <i class="fas fa-ban"></i>{{ _('Uusi mielenosoitus') }}
-      </a>
+      </span>
       {% endif %}
 
-      {% if current_user.has_permission("CREATE_RECURRING_DEMO") %}
-      <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="btn new-item">
+      {% if can_create_recurring_demo %}
+      <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="admin-workspace-hero-action admin-page-hero__action">
         <i class="fas fa-plus-circle"></i>{{ _('Uusi toistuva mielenosoitus') }}
       </a>
       {% else %}
-      <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
+      <span class="admin-page-hero__action non-suffperm" aria-disabled="true" data-tooltip="Ei käyttöoikeutta">
         <i class="fas fa-ban"></i>{{ _('Uusi toistuva mielenosoitus') }}
+      </span>
+      {% endif %}
+
+      {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission('TRANSLATE_DEMO') or current_user.has_permission('REVIEW_DEMO_TRANSLATIONS') %}
+      <a href="{{ url_for('admin_demo.demo_translation_dashboard') }}" class="admin-workspace-hero-action admin-page-hero__action">
+        <i class="fas fa-language"></i>{{ _('Käännöstyöjono') }}
       </a>
       {% endif %}
-    </div>
+  {% endcall %}
 
+  <section class="admin-workspace-summary" aria-label="{{ _('Näkyvien mielenosoitusten yhteenveto') }}">
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fas fa-bullhorn" aria-hidden="true"></i></span>
+      <div><span>{{ _('Osumia') }}</span><strong>{{ filtered_count }}</strong></div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fas fa-hourglass-half" aria-hidden="true"></i></span>
+      <div><span>{{ _('Odottaa hyväksyntää') }}</span><strong>{{ pending_count }}</strong></div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span>
+      <div><span>{{ _('Hyväksytyt') }}</span><strong>{{ approved_count }}</strong></div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fas fa-rotate" aria-hidden="true"></i></span>
+      <div><span>{{ _('Toistuvat') }}</span><strong>{{ recurring_count }}</strong></div>
+    </article>
+  </section>
 
-    <div class="search-and-filter">
-      <!-- Client-side search bar -->
-      <div class="search-bar">
-        <div class="search-icon">
-          <i class="fa-solid fa-magnifying-glass"></i>
+  <div class="dashboard-panel admin-workspace-toolbar">
+    <form method="GET" action="{{ url_for('admin_demo.demo_control') }}" class="admin-filter-bar" id="dashboard-filter-form">
+      <input type="hidden" name="page" value="1">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="admin-filter-bar__primary">
+        <div class="filter-field admin-field">
+          <label for="search">{{ _('Haku') }}</label>
+          <input type="search" name="search" id="search" class="filter-input" placeholder="{{ _('Nimi, paikka, osoite tai tunniste') }}" value="{{ search_query }}">
         </div>
-        <input type="search" id="search" class="search-input" placeholder="{{ _('Hae mielenosoituksia...') }}"
-          aria-label="{{ _('Hae mielenosoituksia') }}" value="{{ search_query }}">
-        <button type="button" id="search-btn" class="search-button">
-          <i class="fa-solid fa-arrow-right"></i><span>{{ _('Hae') }}</span>
-        </button>
-      </div>
-
-      <!-- Server-side filters -->
-      <form method="GET" action="{{ url_for('admin_demo.demo_control') }}" class="filter-form" id="dashboard-filter-form">
-        <input type="hidden" name="search" id="filter-search-hidden" value="{{ search_query }}">
-        <div class="filter-field">
+        <div class="filter-field admin-field">
+          <label for="city">{{ _('Kaupunki') }}</label>
+          <select name="city" id="city" class="filter-select">
+            <option value="">{{ _('Kaikki kaupungit') }}</option>
+            {% for city in city_options %}<option value="{{ city_name_to_key[city] }}" {% if city_filter == city_name_to_key[city] %}selected{% endif %}>{{ city }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="filter-field admin-field">
           <label for="year">{{ _('Vuosi') }}</label>
           <input type="text" inputmode="numeric" pattern="[0-9]{4}" name="year" id="year" class="filter-input"
             placeholder="2026" value="{{ year_filter }}">
         </div>
-
-        <div class="filter-field">
-          <label for="tag">{{ _('Sisältää tunnisteen') }}</label>
-          <input type="text" name="tag" id="tag" class="filter-input" placeholder="#pride" value="{{ tag_filter }}">
-        </div>
-
-        <div class="filter-field">
-          <label for="missing_tag">{{ _('Puuttuva tunniste') }}</label>
-          <input type="text" name="missing_tag" id="missing_tag" class="filter-input" placeholder="#pride" value="{{ missing_tag_filter }}">
-        </div>
-
-        <div class="filter-field">
-          <label for="approved">{{ _('Näytä vain hyväksytyt mielenosoitukset:') }}</label>
-          <select name="approved" id="approved" class="filter-select" onchange="this.form.submit()">
-            <option value="true" {% if approved_status %}selected{% endif %}>{{ _('Kyllä') }}</option>
-            <option value="false" {% if not approved_status %}selected{% endif %}>{{ _('Ei') }}</option>
+        <div class="filter-field admin-field">
+          <label for="approved">{{ _('Hyväksyntätila') }}</label>
+          <select name="approved" id="approved" class="filter-select">
+            <option value="all" {% if approval_filter == 'all' %}selected{% endif %}>{{ _('Kaikki') }}</option>
+            <option value="pending" {% if approval_filter == 'pending' %}selected{% endif %}>{{ _('Odottaa hyväksyntää') }}</option>
+            <option value="approved" {% if approval_filter == 'approved' %}selected{% endif %}>{{ _('Hyväksytty') }}</option>
           </select>
         </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+      </div>
 
-        <div class="filter-field">
-          <label for="show_past">{{ _('Näytä menneet mielenosoitukset:') }}</label>
-          <select name="show_past" id="show_past" class="filter-select" onchange="this.form.submit()">
+      <details class="admin-advanced-filters" {% if tag_filter or missing_tag_filter or show_hidden or show_cancelled or recurring_filter != 'all' or show_past_filter != 'all' or sort_filter != 'priority' %}open{% endif %}>
+        <summary>{{ _('Lisäsuodattimet') }}</summary>
+        <div class="admin-advanced-filters__grid">
+        <div class="filter-field admin-field">
+          <label for="show_past">{{ _('Menneet mielenosoitukset') }}</label>
+          <select name="show_past" id="show_past" class="filter-select">
             <option value="all" {% if show_past_filter=='all' %}selected{% endif %}>{{ _('Kaikki') }}</option>
-            <option value="false" {% if show_past_filter=='false' %}selected{% endif %}>{{ _('Ei') }}</option>
-            <option value="true" {% if show_past_filter=='true' %}selected{% endif %}>{{ _('Kyllä') }}</option>
+            <option value="false" {% if show_past_filter=='false' %}selected{% endif %}>{{ _('Piilota menneet') }}</option>
+            <option value="true" {% if show_past_filter=='true' %}selected{% endif %}>{{ _('Sisällytä menneet') }}</option>
           </select>
+          <small>{{ _('Rajaa, sisällytetäänkö jo päättyneet tapahtumat tuloksiin.') }}</small>
         </div>
-
-        <div class="filter-field">
-          <label for="show_hidden">{{ _('Näytä piilotetut mielenosoitukset:') }}</label>
-          <select name="show_hidden" id="show_hidden" class="filter-select" onchange="this.form.submit()">
+        <div class="filter-field admin-field"><label for="show_hidden">{{ _('Piilotetut') }}</label>
+          <select name="show_hidden" id="show_hidden" class="filter-select">
             <option value="false" {% if not show_hidden %}selected{% endif %}>{{ _('Ei') }}</option>
             <option value="true" {% if show_hidden %}selected{% endif %}>{{ _('Kyllä') }}</option>
           </select>
         </div>
-
-        <div class="filter-field">
-          <label for="show_cancelled">{{ _('Näytä perutut mielenosoitukset:') }}</label>
-          <select name="show_cancelled" id="show_cancelled" class="filter-select" onchange="this.form.submit()">
+        <div class="filter-field admin-field"><label for="show_cancelled">{{ _('Perutut') }}</label>
+          <select name="show_cancelled" id="show_cancelled" class="filter-select">
             <option value="false" {% if not show_cancelled %}selected{% endif %}>{{ _('Ei') }}</option>
             <option value="true" {% if show_cancelled %}selected{% endif %}>{{ _('Kyllä') }}</option>
           </select>
         </div>
+        <div class="filter-field admin-field"><label for="recurring">{{ _('Toistuvuus') }}</label><select name="recurring" id="recurring" class="filter-select"><option value="all" {% if recurring_filter == 'all' %}selected{% endif %}>{{ _('Kaikki') }}</option><option value="true" {% if recurring_filter == 'true' %}selected{% endif %}>{{ _('Vain toistuvat') }}</option><option value="false" {% if recurring_filter == 'false' %}selected{% endif %}>{{ _('Vain yksittäiset') }}</option></select></div>
+        <div class="filter-field admin-field"><label for="sort">{{ _('Järjestys') }}</label><select name="sort" id="sort" class="filter-select"><option value="priority" {% if sort_filter == 'priority' %}selected{% endif %}>{{ _('Hyväksyntätila ja päivämäärä') }}</option><option value="date_asc" {% if sort_filter == 'date_asc' %}selected{% endif %}>{{ _('Päivämäärä, vanhin ensin') }}</option><option value="date_desc" {% if sort_filter == 'date_desc' %}selected{% endif %}>{{ _('Päivämäärä, uusin ensin') }}</option><option value="title_asc" {% if sort_filter == 'title_asc' %}selected{% endif %}>{{ _('Otsikko A–Ö') }}</option></select></div>
+        <div class="filter-field admin-field"><label for="tag">{{ _('Sisältää tunnisteen') }}</label><input type="text" name="tag" id="tag" class="filter-input" placeholder="#pride" value="{{ tag_filter }}"><small>{{ _('Kaikkien annettujen tunnisteiden tulee löytyä.') }}</small></div>
+        <div class="filter-field admin-field"><label for="missing_tag">{{ _('Puuttuva tunniste') }}</label><input type="text" name="missing_tag" id="missing_tag" class="filter-input" placeholder="#pride" value="{{ missing_tag_filter }}"><small>{{ _('Sulkee pois annetuilla tunnisteilla merkityt rivit.') }}</small></div>
+        </div>
+      </details>
+    </form>
 
-        <button type="submit" class="filter-apply-button">{{ _('Suodata') }}</button>
-      </form>
+    <div class="admin-result-summary" aria-live="polite">
+      {% if active_filters %}<strong>{{ _('%(count)s osumaa', count=filtered_count) }}</strong> · {{ _('yhteensä %(count)s sinulle näkyvää mielenosoitusta', count=total_count) }}{% else %}{{ _('Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta', start=range_start, end=range_end, count=filtered_count) }}{% endif %}
     </div>
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const searchInput = document.getElementById('search');
-        const searchButton = document.getElementById('search-btn');
-        const filterForm = document.getElementById('dashboard-filter-form');
-        const filterSearchHidden = document.getElementById('filter-search-hidden');
-        if (!searchInput || !searchButton) return;
-
-        const dataRows = Array.from(document.querySelectorAll('tr[data-search-row="true"]'));
-        const sectionHeaders = Array.from(document.querySelectorAll('tr.section-header'));
-
-        const updateSectionHeaders = () => {
-          sectionHeaders.forEach(header => {
-            let hasVisible = false;
-            let next = header.nextElementSibling;
-            while (next && !next.classList.contains('section-header')) {
-              if (!next.classList.contains('d-none')) {
-                hasVisible = true;
-                break;
-              }
-              next = next.nextElementSibling;
-            }
-            header.classList.toggle('d-none', !hasVisible);
-          });
-        };
-
-        const syncHiddenSearch = () => {
-          if (filterSearchHidden) {
-            filterSearchHidden.value = searchInput.value || '';
-          }
-        };
-
-        const applyLocalSearch = term => {
-          const normalized = term.trim().toLowerCase();
-          dataRows.forEach(row => {
-            const haystack = row.getAttribute('data-search-text') || row.textContent.toLowerCase();
-            const match = !normalized || haystack.includes(normalized);
-            row.classList.toggle('d-none', !match);
-          });
-          updateSectionHeaders();
-        };
-
-        const commitSearch = () => {
-          const normalized = (searchInput.value || '').trim();
-          const url = new URL(window.location.href);
-          if (normalized) {
-            url.searchParams.set('search', normalized);
-          } else {
-            url.searchParams.delete('search');
-          }
-          url.searchParams.delete('page');
-          window.location.href = url.toString();
-        };
-
-        searchInput.addEventListener('input', () => {
-          applyLocalSearch(searchInput.value || '');
-          syncHiddenSearch();
-        });
-
-        searchInput.addEventListener('keydown', event => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            commitSearch();
-          }
-        });
-
-        searchButton.addEventListener('click', () => {
-          commitSearch();
-        });
-
-        if (filterForm) {
-          filterForm.addEventListener('submit', () => {
-            syncHiddenSearch();
-          });
-        }
-
-        applyLocalSearch(searchInput.value || '');
-      });
-    </script>
+    {% if active_filters %}<div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">{% for filter in active_filters %}<a class="admin-filter-chip" href="{{ filter.remove_url }}"><span>{{ filter.label }}: {{ filter.value }}</span><i class="fas fa-xmark" aria-hidden="true"></i></a>{% endfor %}<a class="admin-clear-filters" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a></div>{% endif %}
     {% if current_user.has_permission("EDIT_DEMO") %}
     <div class="bulk-action-bar mt-3">
       <button type="button" id="bulk-cancel-btn" class="btn btn-danger" disabled>
@@ -582,7 +180,7 @@
       <button type="button" id="merge-demos-btn" class="btn btn-outline-primary ms-2" disabled>
         <i class="fa-solid fa-object-group me-1"></i>{{ _('Yhdistä valitut mielenosoitukset') }}
       </button>
-      <span id="bulk-action-feedback" class="text-muted ms-3 d-none"></span>
+      <span id="bulk-action-feedback" class="admin-selection-status ms-2" aria-live="polite">{{ _('Ei valintoja · valitse mielenosoituksia rivien neliöruuduista') }}</span>
     </div>
     {% endif %}
 
@@ -590,18 +188,16 @@
 
   <!-- Demonstrations table -->
   {% if demonstrations %}
-  {% set column_count = 6
-      + (1 if current_user.has_permission("EDIT_DEMO") else 0)
+  {% set column_count = 7
       + (1 if show_cancelled else 0) %}
-  <div class="table-container" style="background:none;">
-    <table>
+  <div class="admin-data-view admin-data-view--scrollable">
+    <div class="admin-data-view__viewport">
+    <table class="admin-data-view__table">
       <thead>
         <tr>
-          {% if current_user.has_permission("EDIT_DEMO") %}
           <th class="select-col">
-            <input type="checkbox" id="select-all-demos" aria-label="{{ _('Valitse kaikki mielenosoitukset') }}">
+            <input type="checkbox" id="select-all-demos" class="form-check-input admin-selection-checkbox" aria-label="{{ _('Valitse kaikki mielenosoitukset') }}" title="{{ _('Valitse kaikki muokattavissa olevat mielenosoitukset') }}"{{ '' if current_user.has_permission('EDIT_DEMO') else ' disabled' }}>
           </th>
-          {% endif %}
           <th>{{ _('Otsikko') }}</th>
           <th>{{ _('Kaupunki') }}</th>
           <th>{{ _('Päivämäärä') }}</th>
@@ -623,18 +219,16 @@
    PENDING SECTION
    ----------------------------- #}
 {% if pending %}
-<tr class="section-header">
+<tr class="admin-data-group-header">
     <td colspan="{{ column_count }}"><strong>{{ _('Odottaa hyväksyntää') }}</strong></td>
 </tr>
 
 {% for demo in pending %}
-<tr id="demo-{{ demo._id }}" class="needs-attention" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
+<tr id="demo-{{ demo._id }}" class="admin-data-row--attention" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
 
-    {% if current_user.has_permission("EDIT_DEMO") %}
     <td class="select-col">
-        <input type="checkbox" class="demo-select form-check-input" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }}">
+        <input type="checkbox" class="demo-select form-check-input admin-selection-checkbox" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }} {{ demo.title }}"{{ '' if current_user.has_permission('EDIT_DEMO') and 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) else ' disabled' }}>
     </td>
-    {% endif %}
 
     <td>{{ demo.title }}</td>
     <td>{{ demo.city }}</td>
@@ -642,14 +236,14 @@
 
     <td>
         {% if demo.recurs %}
-            <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}
+            <i class="fa-solid fa-check-circle admin-status-icon admin-status-icon--success"></i> {{ _('Kyllä') }}
         {% else %}
-            <i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}
+            <i class="fa-solid fa-times-circle admin-status-icon admin-status-icon--danger"></i> {{ _('Ei') }}
         {% endif %}
     </td>
 
     <td data-col="approved">
-        <i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}
+        <i class="fa-solid fa-times-circle admin-status-icon admin-status-icon--danger"></i> {{ _('Ei') }}
     </td>
 
     {% if show_cancelled %}
@@ -667,7 +261,7 @@
 
     <td class="actions-cell">
         <div class="d-flex align-items-center gap-2">
-            {% if current_user.has_permission("VIEW_DEMO") %}
+            {% if 'VIEW_DEMO' in demo_actions.get(demo._id|string, []) %}
             <a class="btn btn-sm btn-outline-primary command-center-btn"
                href="{{ url_for('admin_demo.demo_command_center', demo_id=demo._id) }}"
                title="{{ _('Hallintanäkymä') }}">
@@ -685,7 +279,7 @@
 
                 {# Accept #}
                 {% if not demo.approved %}
-                  {% if current_user.has_permission("ACCEPT_DEMO") %}
+                  {% if 'ACCEPT_DEMO' in demo_actions.get(demo._id|string, []) %}
                       <li><button class="dropdown-item" type="button"
                                   onclick="acceptDemo('{{ demo._id }}')">
                           <i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}
@@ -713,7 +307,7 @@
                 {% endif %}
 
                 {# Edit #}
-                {% if current_user.has_permission("EDIT_DEMO") %}
+                {% if 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) %}
                     <li><a class="dropdown-item"
                            href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">
                         <i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}
@@ -721,20 +315,20 @@
                 {% endif %}
 
                 {# View #}
-                {% if current_user.has_permission("VIEW_DEMO") %}
+                {% if 'VIEW_DEMO' in demo_actions.get(demo._id|string, []) %}
                     <li><a class="dropdown-item"
                            href="{{ url_for('demonstration_detail', demo_id=demo._id) }}">
                         <i class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}
                     </a></li>
 
                     <li><button class="dropdown-item" type="button"
-                                onclick="showSubmitterInfoModal('{{ demo._id }}')">
+                                onclick="showSubmitterInfoModal('{{ demo._id }}', this)">
                         <i class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}
                     </button></li>
                 {% endif %}
 
                 {# Screenshot + Freeze #}
-                {% if current_user.has_permission("CREATE_DEMO") %}
+                {% if 'CREATE_DEMO' in demo_actions.get(demo._id|string, []) %}
                     <li><button class="dropdown-item" type="button"
                                 onclick="triggerScreenshot('{{ demo._id }}', this)">
                         <i class="fas fa-camera me-2"></i>{{ _('Luo esikatselukuva') }}
@@ -783,18 +377,16 @@
    APPROVED SECTION
    ----------------------------- #}
 {% if approved %}
-<tr class="section-header approved">
+<tr class="admin-data-group-header admin-data-group-header--success">
     <td colspan="{{ column_count }}"><strong>{{ _('Hyväksytyt mielenosoitukset') }}</strong></td>
 </tr>
 
 {% for demo in approved %}
 <tr id="demo-{{ demo._id }}" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
 
-    {% if current_user.has_permission("EDIT_DEMO") %}
     <td class="select-col">
-        <input type="checkbox" class="demo-select form-check-input" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }}">
+        <input type="checkbox" class="demo-select form-check-input admin-selection-checkbox" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }} {{ demo.title }}"{{ '' if current_user.has_permission('EDIT_DEMO') and 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) else ' disabled' }}>
     </td>
-    {% endif %}
 
     <td>{{ demo.title }}</td>
     <td>{{ demo.city }}</td>
@@ -802,14 +394,14 @@
 
     <td>
         {% if demo.recurs %}
-            <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}
+            <i class="fa-solid fa-check-circle admin-status-icon admin-status-icon--success"></i> {{ _('Kyllä') }}
         {% else %}
-            <i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}
+            <i class="fa-solid fa-times-circle admin-status-icon admin-status-icon--danger"></i> {{ _('Ei') }}
         {% endif %}
     </td>
 
     <td data-col="approved">
-        <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}
+        <i class="fa-solid fa-check-circle admin-status-icon admin-status-icon--success"></i> {{ _('Kyllä') }}
     </td>
 
     {% if show_cancelled %}
@@ -826,7 +418,7 @@
     {% endif %}
 
     <td class="actions-cell">
-        {% if current_user.has_permission("VIEW_DEMO") %}
+        {% if 'VIEW_DEMO' in demo_actions.get(demo._id|string, []) %}
         <a class="btn btn-sm btn-outline-primary me-2 command-center-btn"
            href="{{ url_for('admin_demo.demo_command_center', demo_id=demo._id) }}"
            title="{{ _('Hallintanäkymä') }}">
@@ -858,7 +450,7 @@
                 {% endif %}
 
                 {# Edit #}
-                {% if current_user.has_permission("EDIT_DEMO") %}
+                {% if 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) %}
                     <li><a class="dropdown-item"
                            href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">
                         <i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}
@@ -866,20 +458,20 @@
                 {% endif %}
 
                 {# View #}
-                {% if current_user.has_permission("VIEW_DEMO") %}
+                {% if 'VIEW_DEMO' in demo_actions.get(demo._id|string, []) %}
                     <li><a class="dropdown-item"
                            href="{{ url_for('demonstration_detail', demo_id=demo._id) }}">
                         <i class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}
                     </a></li>
 
                     <li><button class="dropdown-item" type="button"
-                                onclick="showSubmitterInfoModal('{{ demo._id }}')">
+                                onclick="showSubmitterInfoModal('{{ demo._id }}', this)">
                         <i class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}
                     </button></li>
                 {% endif %}
 
                 {# Screenshot + Freeze #}
-                {% if current_user.has_permission("CREATE_DEMO") %}
+                {% if 'CREATE_DEMO' in demo_actions.get(demo._id|string, []) %}
                     <li><button class="dropdown-item" type="button"
                                 onclick="triggerScreenshot('{{ demo._id }}', this)">
                         <i class="fas fa-camera me-2"></i>{{ _('Luo esikatselukuva') }}
@@ -927,14 +519,18 @@
 </tbody>
 
     </table>
-    <nav aria-label="Stats pagination">
-      <ul class="pagination justify-content-center">
+    </div>
+    <div class="admin-pagination admin-data-view__footer">
+    <label class="admin-page-size" for="page-size">{{ _('Rivejä sivulla') }}
+      <select id="page-size" aria-label="{{ _('Rivejä sivulla') }}">{% for size in [20, 50, 100] %}<option value="{{ size }}" {% if per_page == size %}selected{% endif %}>{{ size }}</option>{% endfor %}</select>
+    </label>
+    <nav aria-label="{{ _('Mielenosoitusten sivutus') }}">
+      <ul class="pagination">
 
         {# Previous button #}
         {% if prev_page %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ prev_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}&year={{ year_filter|urlencode }}&tag={{ tag_filter|urlencode }}&missing_tag={{ missing_tag_filter|urlencode }}&approved={{ 'true' if approved_status else 'false' }}&show_past={{ show_past_filter }}&show_hidden={{ 'true' if show_hidden else 'false' }}&show_cancelled={{ 'true' if show_cancelled else 'false' }}"
-            aria-label="Previous">
+          <a class="page-link" href="{{ prev_url }}" aria-label="{{ _('Edellinen sivu') }}">
             <i class="fas fa-angle-left"></i> {{ _('Edellinen') }}
           </a>
         </li>
@@ -952,8 +548,7 @@
         {# Next button #}
         {% if next_page %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ next_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}&year={{ year_filter|urlencode }}&tag={{ tag_filter|urlencode }}&missing_tag={{ missing_tag_filter|urlencode }}&approved={{ 'true' if approved_status else 'false' }}&show_past={{ show_past_filter }}&show_hidden={{ 'true' if show_hidden else 'false' }}&show_cancelled={{ 'true' if show_cancelled else 'false' }}"
-            aria-label="Next">
+          <a class="page-link" href="{{ next_url }}" aria-label="{{ _('Seuraava sivu') }}">
             {{ _('Seuraava') }} <i class="fas fa-angle-right"></i>
           </a>
         </li>
@@ -965,16 +560,17 @@
 
       </ul>
     </nav>
+    </div>
 
 
   </div>
   {% else %}
-  <div class="no-results">
+  <div class="no-results admin-empty-state admin-panel">
     <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei mielenosoituksia löytynyt.') }}
   </div>
   {% endif %}
   <!-- Delete Confirmation Modal -->
-  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal fade admin-modal" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content" id="deleteModalContent">
         <div class="modal-header">
@@ -995,25 +591,42 @@
     </div>
   </div>
   <!-- Submitter Info Modal -->
-  <div class="modal fade" id="submitterInfoModal" tabindex="-1" aria-labelledby="submitterInfoLabel" aria-hidden="true">
+  <div class="modal fade admin-modal" id="submitterInfoModal" tabindex="-1" aria-labelledby="submitterInfoLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg rounded-4" id="submitterInfoModalContent">
-        <div class="modal-header bg-info text-white rounded-top-4">
-          <h5 class="modal-title" id="submitterInfoLabel">
-            <i class="fa-solid fa-user me-2"></i> {{ _('Ilmoittajan tiedot') }}
-          </h5>
-          <button type="button" class="btn-close btn-close-white" aria-label="{{ _('Sulje') }}"
+      <div class="modal-content" id="submitterInfoModalContent">
+        <div class="modal-header">
+          <div>
+            <p class="admin-modal-kicker">{{ _('Mielenosoituksen hallinta') }}</p>
+            <h2 class="modal-title" id="submitterInfoLabel">
+              <i class="fa-solid fa-user me-2"></i> {{ _('Ilmoittajan tiedot') }}
+            </h2>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"
             id="submitterInfoCloseBtn"></button>
         </div>
-        <div class="modal-body p-4 text-center submitter-info-body" id="submitter-info-content">
-          <!-- Dynamically filled content -->
-          <div id="noSubmitterInfo" class="alert alert-warning d-none">
+        <div class="modal-body" id="submitter-info-content">
+          <div id="submitterInfoLoading" role="status" aria-live="polite">
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            {{ _('Haetaan ilmoittajan tietoja…') }}
+          </div>
+          <dl id="submitterInfoResult" class="row mb-0 d-none">
+            <dt class="col-sm-5">{{ _('Nimi') }}</dt><dd class="col-sm-7" id="submitterName"></dd>
+            <dt class="col-sm-5">{{ _('Sähköposti') }}</dt><dd class="col-sm-7" id="submitterEmail"></dd>
+            <dt class="col-sm-5">{{ _('Rooli') }}</dt><dd class="col-sm-7" id="submitterRole"></dd>
+            <dt class="col-sm-5">{{ _('Hyväksynyt ehdot') }}</dt><dd class="col-sm-7" id="submitterAcceptedTerms"></dd>
+            <dt class="col-sm-5">{{ _('Ilmoitettu') }}</dt><dd class="col-sm-7" id="submitterSubmittedAt"></dd>
+          </dl>
+          <div id="noSubmitterInfo" class="alert alert-warning d-none" role="status">
             <i class="fa-solid fa-circle-exclamation me-2"></i>
             {{ _('Ilmoittajan tietoja ei löytynyt.') }}
           </div>
+          <div id="submitterInfoError" class="alert alert-danger d-none" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            {{ _('Virhe haettaessa tietoja.') }}
+          </div>
         </div>
-        <div class="modal-footer justify-content-center">
-          <button type="button" class="btn btn-outline-info btn-lg px-4" id="closeSubmitterInfo">
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeSubmitterInfo">
             {{ _('Sulje') }}
           </button>
         </div>
@@ -1023,20 +636,11 @@
 
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const searchInput = document.getElementById('search');
-      const searchBtn = document.getElementById('search-btn');
-      const rows = document.querySelectorAll('.table-container tbody tr');
-
-      const filterRows = () => {
-        const term = searchInput.value.trim().toLowerCase();
-        rows.forEach(row => {
-          row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
-        });
-      };
-
-      searchInput.addEventListener('input', filterRows);
-      searchBtn.addEventListener('click', filterRows);
+    document.getElementById('page-size')?.addEventListener('change', (event) => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('per_page', event.target.value);
+      url.searchParams.set('page', '1');
+      window.location.assign(url.toString());
     });
   </script>
 
@@ -1044,19 +648,8 @@
     document.addEventListener('DOMContentLoaded', () => {
       const deleteModalEl = document.getElementById('deleteModal');
       const deleteModal = new bootstrap.Modal(deleteModalEl);
-      // Initialize Bootstrap modal once
       const submitterModalEl = document.getElementById('submitterInfoModal');
-      const submitterModal = new bootstrap.Modal(submitterModalEl, {
-        backdrop: 'static',  // Optional: prevents closing on outside click
-        keyboard: false      // Optional: prevents closing with ESC
-      });
-
-      // Dark mode toggle for modals (adjust if your dark mode class is on <html> or <body>)
-      const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
-      if (isDark) {
-        deleteModalEl.querySelector('.modal-content').classList.add('modal-dark');
-        submitterModalEl.querySelector('.modal-content').classList.add('modal-dark');
-      }
+      const submitterModal = bootstrap.Modal.getOrCreateInstance(submitterModalEl);
 
       // Fast delete mode flag
       let fastDeleteMode = false;
@@ -1098,7 +691,13 @@
       function animateAndRemoveRow(rowEl) {
         if (!rowEl) return;
         rowEl.classList.add('fade-out');
-        rowEl.addEventListener('transitionend', () => rowEl.remove(), { once: true });
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          rowEl.remove();
+          return;
+        }
+        const removeRow = () => rowEl.remove();
+        rowEl.addEventListener('transitionend', removeRow, { once: true });
+        window.setTimeout(removeRow, 350);
       }
       // Open delete modal or fast-delete immediately if shift pressed
       window.openModal = (event, title, id) => {
@@ -1168,52 +767,66 @@
       });
 
 
-      // Show submitter info modal and fetch data
-      window.showSubmitterInfoModal = async (demoId) => {
-        const content = document.getElementById('submitter-info-content');
-        const noInfoAlert = document.getElementById('noSubmitterInfo');
+      const submitterStates = {
+        loading: document.getElementById('submitterInfoLoading'),
+        result: document.getElementById('submitterInfoResult'),
+        empty: document.getElementById('noSubmitterInfo'),
+        error: document.getElementById('submitterInfoError')
+      };
+      const submitterFields = {
+        name: document.getElementById('submitterName'),
+        email: document.getElementById('submitterEmail'),
+        role: document.getElementById('submitterRole'),
+        acceptedTerms: document.getElementById('submitterAcceptedTerms'),
+        submittedAt: document.getElementById('submitterSubmittedAt')
+      };
+      let submitterRequestNumber = 0;
+      let submitterTrigger = null;
 
-        // Clear previous content
-        content.querySelectorAll("p:not(#noSubmitterInfo)").forEach(p => p.remove());
-        noInfoAlert.classList.add("d-none");
+      function showSubmitterState(activeState) {
+        Object.entries(submitterStates).forEach(([name, element]) => {
+          element.classList.toggle('d-none', name !== activeState);
+        });
+      }
+
+      window.showSubmitterInfoModal = async (demoId, trigger = null) => {
+        const requestNumber = ++submitterRequestNumber;
+        submitterTrigger = trigger?.closest('.dropdown')?.querySelector('.dropdown-toggle')
+          || trigger
+          || (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+        showSubmitterState('loading');
+        submitterModal.show();
 
         try {
           const res = await fetch(`/admin/demo/get_submitter_info/${demoId}`);
           const data = await res.json();
+          if (requestNumber !== submitterRequestNumber) return;
 
-          if (data.status === 'OK' && data.submitter) {
+          if (res.ok && data.status === 'OK' && data.submitter) {
             const s = data.submitter;
-
-            // Dynamically fill the modal
-            const name = s.submitter_name || s.name || '{{ _("Ei saatavilla") }}';
-            const email = s.submitter_email || s.email || '{{ _("Ei saatavilla") }}';
-            const role = s.submitter_role || s.role || '{{ _("Ei saatavilla") }}';
-            const accepted = (s.accept_terms === true || s.accept_terms === 'true') ? '{{ _("Kyllä") }}' : '{{ _("Ei") }}';
-            const submittedAt = s.submitted_at || '{{ _("Ei saatavilla") }}';
-
-            content.innerHTML = `
-                <p><strong>{{ _('Nimi') }}:</strong> ${name}</p>
-                <p><strong>{{ _('Sähköposti') }}:</strong> ${email}</p>
-                <p><strong>{{ _('Rooli') }}:</strong> ${role}</p>
-                <p><strong>{{ _('Hyväksynyt ehdot') }}:</strong> ${accepted}</p>
-                <p><strong>{{ _('Ilmoitettu') }}:</strong> ${submittedAt}</p>
-            `;
+            submitterFields.name.textContent = s.submitter_name || s.name || '{{ _("Ei saatavilla") }}';
+            submitterFields.email.textContent = s.submitter_email || s.email || '{{ _("Ei saatavilla") }}';
+            submitterFields.role.textContent = s.submitter_role || s.role || '{{ _("Ei saatavilla") }}';
+            submitterFields.acceptedTerms.textContent = (s.accept_terms === true || s.accept_terms === 'true')
+              ? '{{ _("Kyllä") }}'
+              : '{{ _("Ei") }}';
+            submitterFields.submittedAt.textContent = s.submitted_at || '{{ _("Ei saatavilla") }}';
+            showSubmitterState('result');
+          } else if (res.status === 404) {
+            showSubmitterState('empty');
           } else {
-            // Show the "no info" alert
-            noInfoAlert.classList.remove("d-none");
+            showSubmitterState('error');
           }
         } catch (err) {
+          if (requestNumber !== submitterRequestNumber) return;
           console.error("Error fetching submitter info:", err);
-          noInfoAlert.textContent = '{{ _("Virhe haettaessa tietoja.") }}';
-          noInfoAlert.classList.remove("d-none");
-        } finally {
-          submitterModal.show();
+          showSubmitterState('error');
         }
       };
 
-      // Close modal buttons
-      document.getElementById('submitterInfoCloseBtn').onclick = () => submitterModal.hide();
-      document.getElementById('closeSubmitterInfo').onclick = () => submitterModal.hide();
+      submitterModalEl.addEventListener('hidden.bs.modal', () => {
+        if (submitterTrigger?.isConnected) submitterTrigger.focus();
+      });
 
       // Initial button text update
       updateDeleteButtonTexts();
@@ -1234,12 +847,14 @@
       const feedbackEl = document.getElementById('bulk-action-feedback');
       const selected = new Set();
       const selectionLabel = {{ _('Valittuja mielenosoituksia')|tojson }};
+      const emptySelectionLabel = {{ _('Ei valintoja · valitse mielenosoituksia rivien neliöruuduista')|tojson }};
       const defaultBulkContent = bulkBtn ? bulkBtn.innerHTML : '';
       const mergeUrlBase = {{ url_for('admin_demo.merge_demos')|tojson }};
       const maxMergeCount = 4;
       const mergeLimitMessage = {{ _('Voit yhdistää kerrallaan enintään %(count)s mielenosoitusta.', count=4)|tojson }};
 
-      const getCheckboxes = () => Array.from(document.querySelectorAll('.demo-select'));
+      const getCheckboxes = () => Array.from(document.querySelectorAll('.demo-select:not(:disabled)'))
+        .filter(cb => cb.closest('tr')?.style.display !== 'none');
 
       function updateState() {
         const total = getCheckboxes().length;
@@ -1251,11 +866,9 @@
         }
         if (feedbackEl) {
           if (selected.size === 0) {
-            feedbackEl.textContent = '';
-            feedbackEl.classList.add('d-none');
+            feedbackEl.textContent = emptySelectionLabel;
           } else {
             feedbackEl.textContent = selectionLabel + ': ' + selected.size;
-            feedbackEl.classList.remove('d-none');
           }
         }
         if (masterCheckbox) {
@@ -1274,6 +887,11 @@
 
       function handleSelection(cb) {
         if (!cb) return;
+        const row = cb.closest('tr');
+        if (row) {
+          row.classList.toggle('selected', cb.checked);
+          row.setAttribute('aria-selected', cb.checked ? 'true' : 'false');
+        }
         if (cb.checked) {
           selected.add(cb.value);
         } else {
@@ -1425,14 +1043,14 @@
   </script>
 
   <!-- Freeze Modal -->
-  <div class="modal fade" id="freezeModal" tabindex="-1" aria-labelledby="freezeModalLabel" aria-hidden="true">
+  <div class="modal fade admin-modal" id="freezeModal" tabindex="-1" aria-labelledby="freezeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg rounded-4">
-        <div class="modal-header bg-primary text-white rounded-top-4">
+      <div class="modal-content">
+        <div class="modal-header">
           <h5 class="modal-title" id="freezeModalLabel">
             <i class="fa-solid fa-snowflake me-2"></i> Jäädytyksen hallinta
           </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Sulje"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sulje"></button>
         </div>
         <div class="modal-body text-center p-4">
           <p id="freezeStatusText" class="mb-4 fs-6 text-muted">Ladataan tila…</p>
@@ -1445,11 +1063,11 @@
   </div>
 
   <!-- Non-Recurring Modal -->
-  <div class="modal fade" id="nonRecurringModal" tabindex="-1" aria-labelledby="nonRecurringModalLabel"
+  <div class="modal fade admin-modal" id="nonRecurringModal" tabindex="-1" aria-labelledby="nonRecurringModalLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg rounded-4">
-        <div class="modal-header bg-warning text-dark rounded-top-4">
+      <div class="modal-content">
+        <div class="modal-header">
           <h5 class="modal-title" id="nonRecurringModalLabel">
             <i class="fa-solid fa-circle-exclamation me-2"></i> Ei toistuva mielenosoitus
           </h5>

@@ -1,42 +1,18 @@
 {% extends "admin_base.html" %}
-
-{% block styles %}
-<style>
-  .timeline-card {
-    border-left: 4px solid var(--bs-primary);
-  }
-  .timeline-item {
-    border-left: 3px solid rgba(0,0,0,0.05);
-    padding-left: 1.5rem;
-    position: relative;
-  }
-  .timeline-item::before {
-    content: '';
-    position: absolute;
-    left: -10px;
-    top: 1.1rem;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--bs-primary);
-    box-shadow: 0 0 0 4px rgba(13,110,253,0.15);
-  }
-</style>
-{% endblock %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
 <div class="admin-page">
-  <div class="admin-header d-flex flex-column flex-md-row justify-content-between gap-3 align-items-start align-items-md-center mb-4">
-    <div>
-      <h1 class="admin-section-title mb-1">{{ _('Audit-loki – aikajana') }}</h1>
-      <p class="text-muted mb-0">{{ _('Viimeisimmät merkinnät kaikista mielenosoituksista') }}</p>
-    </div>
-    <a href="{{ url_for('admin_demo.demo_control') }}" class="btn btn-outline-secondary">
-      <i class="fa-solid fa-arrow-left me-2"></i>{{ _('Takaisin hallintapaneeliin') }}
-    </a>
-  </div>
+  {{ admin_page_hero(
+    _('Audit-loki – aikajana'),
+    _('Viimeisimmät merkinnät kaikista mielenosoituksista'),
+    _('Mielenosoitukset'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (_('Audit-loki'), none)],
+    back_url=url_for('admin_demo.demo_control'),
+    back_label=_('Mielenosoitukset')
+  ) }}
 
-  <form method="get" class="row g-3 mb-4">
+  <form method="get" class="row g-3 admin-panel">
     <div class="col-md-5">
       <label for="demo_id" class="form-label">{{ _('Suodata mielenosoituksen ID:llä') }}</label>
       <div class="input-group">
@@ -62,7 +38,7 @@
   </form>
 
   {% if entries %}
-  <div class="card shadow-sm timeline-card">
+  <div class="card admin-data-view timeline-card">
     <div class="card-body">
       <div class="list-group list-group-flush">
         {% for entry in entries %}

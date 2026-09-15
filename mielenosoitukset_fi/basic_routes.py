@@ -8,10 +8,13 @@ import uuid
 import hashlib
 import requests
 from mielenosoitukset_fi.utils.time_utils import utcnow
-from datetime import datetime, date, timedelta
-from flask_babel import _, format_date
+from datetime import datetime, date, timedelta, timezone
+from urllib.parse import urlsplit
+from flask_babel import _, refresh, format_date, get_locale
 from flask import (
+    Response,
     redirect,
+    render_template,
     send_file,
     send_from_directory,
     url_for,
@@ -19,6 +22,7 @@ from flask import (
     abort,
     jsonify,
     session,
+    current_app,
 )
 from flask_login import current_user, login_required
 from bson.objectid import ObjectId
@@ -29,11 +33,14 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.scripts.send_demo_reminders import generate_ical_event
 from mielenosoitukset_fi.utils.variables import CITY_LIST
+from mielenosoitukset_fi.utils.cities import CITY_KEY_TO_NAME, normalize_city_key
+from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.wrappers import permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
+from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.utils.request_ip import get_client_ip
 from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
@@ -44,7 +51,15 @@ from mielenosoitukset_fi.utils.cache import (
     should_skip_cache,
     skip_cache_public_only,
 )
+from mielenosoitukset_fi.utils import VERSION
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.demo_localization import (
+    demo_has_tag,
+    demo_matches_conflict_candidate,
+    demo_matches_search_query,
+    get_demo_localized_dict,
+    get_demo_localized_fields,
+)
 from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
 from mielenosoitukset_fi.utils.classes import Case
 from mielenosoitukset_fi.utils.demo_cancellation import (
@@ -89,6 +104,25 @@ submission_errors_collection = mongo["demo_submission_errors"]
 submission_errors_collection.create_index("created_at", background=True)
 submission_errors_collection.create_index("error_code", background=True)
 
+# --- Performance indexes (added for admin & audit query speed) ---
+mongo["demo_audit_logs"].create_index([("demo_id", ASCENDING), ("timestamp", DESCENDING)], background=True)
+mongo["demo_edit_history"].create_index([("demo_id", ASCENDING), ("edited_at", DESCENDING)], background=True)
+mongo["demo_suggestions"].create_index([("demo_id", ASCENDING), ("created_at", DESCENDING)], background=True)
+mongo["admin_logs"].create_index("timestamp", background=True)
+mongo["super_audit_logs"].create_index("timestamp", background=True)
+mongo["magic_links"].create_index("token_hash", unique=True, background=True)
+mongo["magic_links"].create_index("demo_id", background=True)
+mongo["cases"].create_index([("demo_id", ASCENDING), ("created_at", DESCENDING)], background=True)
+mongo["demo_attending"].create_index("demo_id", background=True)
+mongo["demo_invites"].create_index("demo_id", background=True)
+mongo["demo_reminders"].create_index("demonstration_id", background=True)
+mongo["recommended_demos"].create_index("demo_id", unique=True, background=True)
+mongo["posted_events"].create_index([("demo_id", ASCENDING), ("created_at", DESCENDING)], background=True)
+mongo["demonstrations"].create_index("slug", background=True)
+mongo["demonstrations"].create_index("parent", background=True)
+mongo["city_settings"].create_index("city_key", background=True)
+# --- End performance indexes ---
+
 SUBMISSION_DUPLICATE_WINDOW = timedelta(hours=12)
 SUBMIT_ERROR_CODES = {
     "missing_required": "SUBMIT_MISSING_FIELDS",
@@ -99,6 +133,33 @@ SUBMIT_ERROR_CODES = {
 }
 
 PANIC_MODE = False  # Forced maintenance mode for security remediation
+
+CITY_INESSIVE_OVERRIDES = {
+    "helsinki": "Helsingissä",
+    "tampere": "Tampereella",
+    "turku": "Turussa",
+    "kokkola": "Kokkolassa",
+    "porvoo": "Porvoossa",
+    "kuopio": "Kuopiossa",
+    "pieksamaki": "Pieksämäellä",
+    "jyvaskyla": "Jyväskylässä",
+    "pietarsaari": "Pietarsaaressa",
+    "vaasa": "Vaasassa",
+    "seinajoki": "Seinäjoella",
+    "lappeenranta": "Lappeenrannassa",
+    "sastamala": "Sastamalassa",
+    "savonlinna": "Savonlinnassa",
+    "oulu": "Oulussa",
+    "rovaniemi": "Rovaniemellä",
+    "joensuu": "Joensuussa",
+    "varkaus": "Varkaudessa",
+    "kotka": "Kotkassa",
+    "pori": "Porissa",
+    "kemi": "Kemissä",
+    "hamina": "Haminassa",
+    "kajaani": "Kajaanissa",
+    "raasepori": "Raaseporissa",
+}
 
 
 def _normalize_tag_value(tag):
@@ -114,6 +175,32 @@ def _normalize_tag_list(raw_tags):
         if cleaned:
             normalized.append(cleaned)
     return normalized
+
+
+def _city_display_name(raw_city):
+    city_key = normalize_city_key(raw_city)
+    return CITY_KEY_TO_NAME.get(city_key) or str(raw_city or "").strip()
+
+
+def _city_inessive_phrase(city_name):
+    city_key = normalize_city_key(city_name)
+    return CITY_INESSIVE_OVERRIDES.get(city_key) or f"kaupungissa {city_name}"
+
+
+def _demo_detail_identifier(demo):
+    return demo.get("slug") or demo.get("running_number") or str(demo.get("_id"))
+
+
+def _today_demo_query(city_name=None):
+    query = {**DEMO_FILTER, "date": date.today().isoformat()}
+    if city_name:
+        city_display = _city_display_name(city_name)
+        city_key = normalize_city_key(city_display)
+        query["$or"] = [
+            {"city_key": city_key},
+            {"city": {"$regex": f"^{re.escape(city_display)}$", "$options": "i"}},
+        ]
+    return query
 
 
 def _normalize_route_points(raw_route):
@@ -295,15 +382,40 @@ def _submit_error(message, code, status=400, extra=None):
 
 def generate_alternate_urls(app, endpoint, **values):
     """
-    Generate alternate URLs for supported languages.
+    Generate alternate URLs only for languages published to visitors.
     """
     alternate_urls = {}
-    for lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
+    for lang_code in app.config["BABEL_PUBLIC_LOCALES"]:
         with app.test_request_context():
             alternate_urls[lang_code] = url_for(endpoint, lang_code=lang_code, **values)
     return alternate_urls
 
-def format_demo_for_api(demo):
+def _current_demo_language():
+    try:
+        locale = str(get_locale() or "").strip().lower()
+        if locale:
+            return locale
+    except Exception:
+        pass
+    return (session.get("locale") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
+
+
+def _localized_demo_copy(demo, language=None):
+    if not isinstance(demo, dict):
+        return demo
+    return get_demo_localized_dict(
+        demo,
+        language=language or _current_demo_language(),
+        include_translations=True,
+    )
+
+
+def _localized_demo_list(demos, language=None):
+    target_language = language or _current_demo_language()
+    return [_localized_demo_copy(demo, target_language) for demo in demos]
+
+
+def format_demo_for_api(demo, language=None):
     """
     Format a demonstration document for API output.
 
@@ -340,24 +452,29 @@ def format_demo_for_api(demo):
             logger.exception(f"Error formatting time: {t}")
             return t
         
+    localized_demo = _localized_demo_copy(demo, language)
+
     try:
-        date_obj = datetime.strptime(demo.get("date", ""), "%Y-%m-%d")
+        date_obj = datetime.strptime(localized_demo.get("date", ""), "%Y-%m-%d")
         date_display = date_obj.strftime("%d.%m.%Y")
     except Exception:
-        date_display = demo.get("date", "")
+        date_display = localized_demo.get("date", "")
 
     return {
-        "_id": str(demo.get("_id")),
-        "title": demo.get("title", ""),
+        "_id": str(localized_demo.get("_id")),
+        "title": localized_demo.get("title", ""),
+        "default_language": localized_demo.get("default_language", "fi"),
+        "resolved_language": localized_demo.get("resolved_language"),
+        "available_languages": localized_demo.get("available_languages", []),
         "date_display": date_display,
-        "start_time_display": fmt_time(demo.get("start_time")),
-        "end_time_display": fmt_time(demo.get("end_time")),
-        "city": demo.get("city", ""),
-        "address": demo.get("address", ""),
-        "tags": demo.get("tags", []),
-        "description": demo.get("description", ""),
-        "cover_image": get_demo_cover_image(demo),
-        "cancelled": bool(demo.get("cancelled")),
+        "start_time_display": fmt_time(localized_demo.get("start_time")),
+        "end_time_display": fmt_time(localized_demo.get("end_time")),
+        "city": localized_demo.get("city", ""),
+        "address": localized_demo.get("address", ""),
+        "tags": localized_demo.get("tags", []),
+        "description": localized_demo.get("description", ""),
+        "cover_image": get_demo_cover_image(localized_demo),
+        "cancelled": bool(localized_demo.get("cancelled")),
     }
 
 def filter_demonstrations_api(
@@ -405,10 +522,8 @@ def filter_demonstrations_api(
         if demo_date < today:
             continue
         # Search
-        if search_query:
-            if search_query not in demo.get("title", "").lower() and \
-               search_query not in demo.get("address", "").lower():
-                continue
+        if search_query and not demo_matches_search_query(demo, search_query):
+            continue
         # City
         if city_query:
             if isinstance(city_query, list):
@@ -431,10 +546,8 @@ def filter_demonstrations_api(
             except Exception:
                 pass
         # Tag filter
-        if tag_query:
-            tags = [t.lower() for t in demo.get("tags", [])]
-            if tag_query.lower() not in tags:
-                continue
+        if tag_query and not demo_has_tag(demo, tag_query):
+            continue
         if demo["_id"] not in added_demo_ids:
             filtered.append(demo)
             added_demo_ids.add(demo["_id"])
@@ -474,10 +587,21 @@ def _build_public_demo_query(
     query["date"] = date_query
 
     if search_query:
-        query["$or"] = [
+        search_conditions = [
             {"title": _case_insensitive_contains(search_query)},
+            {"description": _case_insensitive_contains(search_query)},
+            {"tags": _case_insensitive_contains(search_query)},
             {"address": _case_insensitive_contains(search_query)},
         ]
+        for locale in current_app.config.get("BABEL_SUPPORTED_LOCALES", []):
+            search_conditions.extend(
+                [
+                    {f"translations.{locale}.title": _case_insensitive_contains(search_query)},
+                    {f"translations.{locale}.description": _case_insensitive_contains(search_query)},
+                    {f"translations.{locale}.tags": _case_insensitive_contains(search_query)},
+                ]
+            )
+        query.setdefault("$and", []).append({"$or": search_conditions})
 
     if city_query:
         if isinstance(city_query, list):
@@ -491,7 +615,12 @@ def _build_public_demo_query(
         query["address"] = _case_insensitive_contains(location_query)
 
     if tag_query:
-        query["tags"] = _case_insensitive_exact(tag_query)
+        tag_conditions = [{"tags": _case_insensitive_exact(tag_query)}]
+        for locale in current_app.config.get("BABEL_SUPPORTED_LOCALES", []):
+            tag_conditions.append(
+                {f"translations.{locale}.tags": _case_insensitive_exact(tag_query)}
+            )
+        query.setdefault("$and", []).append({"$or": tag_conditions})
 
     return query
 
@@ -600,6 +729,7 @@ def add_api_routes(app):
             JSON with keys: demonstrations, total_pages
         """
         args = get_api_pagination_args()
+        requested_language = (request.args.get("lang") or "").strip().lower() or None
         today = date.today()
         query = _build_public_demo_query(
             today,
@@ -620,7 +750,7 @@ def add_api_routes(app):
             .skip((page - 1) * per_page)
             .limit(per_page)
         )
-        result = [format_demo_for_api(demo) for demo in demos_cursor]
+        result = [format_demo_for_api(demo, requested_language) for demo in demos_cursor]
         return jsonify(demonstrations=result, total_pages=total_pages)
 
     @app.route("/api/v1/check_demo_conflict", methods=["GET"])
@@ -648,23 +778,10 @@ def add_api_routes(app):
                 "approved": True,
             })
             matches = []
-            title_words = set([w for w in re.findall(r"\w+", title.lower()) if len(w) > 3])
             for d in potential:
                 if len(matches) >= 5:
                     break
-                existing_title = (d.get('title') or '').lower()
-                existing_addr = (d.get('address') or '').lower()
-                matched = False
-                if title.lower() in existing_title or existing_title in title.lower():
-                    matched = True
-                else:
-                    existing_words = set([w for w in re.findall(r"\w+", existing_title) if len(w) > 3])
-                    if title_words and len(title_words & existing_words) >= 2:
-                        matched = True
-                if not matched and address_q:
-                    if address_q.lower() in existing_addr or existing_addr in address_q.lower():
-                        matched = True
-                if matched:
+                if demo_matches_conflict_candidate(d, title, address_q):
                     matches.append({
                         "_id": str(d.get('_id')),
                         "title": d.get('title'),
@@ -688,6 +805,73 @@ def init_routes(app):
         return dict(generate_demo_sentence=generate_demo_sentence)
 
     from flask import Response
+
+    @app.route("/health")
+    def health_check():
+        return jsonify(status="ok"), 200
+
+    _status_cache = {"data": None, "ts": 0}
+    _STATUS_TTL = 60  # seconds
+
+    def _run_health_checks():
+        services = []
+        all_ok = True
+
+        # --- MongoDB ---
+        try:
+            from mielenosoitukset_fi.database_manager import DatabaseManager
+            _db = DatabaseManager().get_instance().get_db()
+            _db.command("ping")
+            services.append({"name": "Tietokanta", "status": "ok", "message": "Yhteys kunnossa"})
+        except Exception:
+            all_ok = False
+            services.append({"name": "Tietokanta", "status": "err", "message": "Ei vastaa"})
+
+        # --- Redis / Cache ---
+        try:
+            from mielenosoitukset_fi.utils.cache import cache
+            cache.set("_status_ping", True, timeout=5)
+            services.append({"name": "Välimuisti", "status": "ok", "message": "Yhteys kunnossa"})
+        except Exception:
+            all_ok = False
+            services.append({"name": "Välimuisti", "status": "err", "message": "Ei vastaa"})
+
+        # --- S3 ---
+        try:
+            from mielenosoitukset_fi.utils.s3 import _s3_client
+            if _s3_client is None:
+                raise RuntimeError("S3 client not initialised")
+            _s3_client.list_buckets()
+            services.append({"name": "Tiedostovarasto", "status": "ok", "message": "Saavutettavissa"})
+        except Exception:
+            all_ok = False
+            services.append({"name": "Tiedostovarasto", "status": "err", "message": "Ei vastaa"})
+
+        return services, all_ok
+
+    @app.route("/status")
+    def status_page():
+        from mielenosoitukset_fi.utils.time_utils import utcnow as _utcnow
+        import time as _time
+
+        now_mono = _time.monotonic()
+        if _status_cache["data"] is None or (now_mono - _status_cache["ts"]) > _STATUS_TTL:
+            services, all_ok = _run_health_checks()
+            _status_cache["data"] = (services, all_ok)
+            _status_cache["ts"] = now_mono
+        else:
+            services, all_ok = _status_cache["data"]
+
+        latency_ms = round((_time.monotonic() - now_mono) * 1000)
+        now = _utcnow().replace(tzinfo=timezone.utc).strftime("%d.%m.%Y %H:%M:%S UTC")
+
+        return render_template(
+            "status.html",
+            overall_ok=all_ok,
+            services=services,
+            updated_at=now,
+            latency_ms=latency_ms,
+        )
 
     @app.route("/robots.txt")
     def robots_txt():
@@ -754,9 +938,6 @@ def init_routes(app):
         return send_from_directory(api_dir, "api.yaml", mimetype="application/yaml")
 
         
-    from flask import Response, url_for
-    import xml.etree.ElementTree as ET
-    from flask import Flask, Response, url_for
     import xml.etree.ElementTree as ET
 
     @app.route("/sitemap.xml", methods=["GET"])
@@ -767,7 +948,7 @@ def init_routes(app):
         Notes
         -----
         Default language is Finnish. If only Finnish is enabled in
-        BABEL_SUPPORTED_LOCALES, no alternate hreflang links are emitted.
+        BABEL_PUBLIC_LOCALES, no alternate hreflang links are emitted.
 
         Returns
         -------
@@ -776,7 +957,7 @@ def init_routes(app):
         """
         try:
             # Supported locales (fallback to Finnish)
-            locales = app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"]
+            locales = app.config.get("BABEL_PUBLIC_LOCALES") or ["fi"]
             locales = [l for l in locales if l]  # normalize
 
             # If only Finnish is available, do not include alternate links
@@ -796,17 +977,27 @@ def init_routes(app):
                 {"loc": "index"},
                 {"loc": "submit"},
                 {"loc": "demonstrations"},
+                {"loc": "today_demos"},
+                {"loc": "cities"},
+                {"loc": "calendar_month_view"},
+                {"loc": "calendar_year_view", "values": {"year": date.today().year}},
+                {"loc": "public_guides"},
                 {"loc": "info"},
+                {"loc": "terms"},
                 {"loc": "privacy"},
                 {"loc": "contact"},
+                {"loc": "api_docs"},
+                {"loc": "pride_nakyvaksi"},
                 {"loc": "campaign.index"},
             ]
 
             # Helper to add url + optional alternate links
-            def _add_url_with_alternates(parent, endpoint, **values):
+            def _add_url_with_alternates(parent, endpoint, lastmod=None, **values):
                 url_el = ET.SubElement(parent, "url")
                 loc_el = ET.SubElement(url_el, "loc")
                 loc_el.text = url_for(endpoint, _external=True, **values)
+                if lastmod:
+                    ET.SubElement(url_el, "lastmod").text = lastmod
                 if include_alternates:
                     for lang in locales:
                         ET.SubElement(
@@ -823,7 +1014,7 @@ def init_routes(app):
 
             # Add static routes
             for r in static_routes:
-                _add_url_with_alternates(urlset, r["loc"])
+                _add_url_with_alternates(urlset, r["loc"], **r.get("values", {}))
 
             # Demonstration URLs: limit to demos in reasonable date window
             query_filter = DEMO_FILTER.copy()
@@ -831,20 +1022,20 @@ def init_routes(app):
             end_date = (date.today() + timedelta(days=365 * 2)).strftime("%Y-%m-%d")
             query_filter["date"] = {"$gte": start_date, "$lte": end_date}
 
-            def _format_lastmod_for_demo(demo):
+            def _format_lastmod_for_doc(doc):
                 """
-                Determine a suitable lastmod value for a demo.
+                Determine a suitable lastmod value for a Mongo-style document.
 
                 The function prefers explicit timestamp fields (updated_at, modified_at, ...)
-                and falls back to the demo.date field. When an explicit timestamp is found
+                and falls back to the document date field. When an explicit timestamp is found
                 it is normalized to a date string in "YYYY-MM-DD" form. If only a date
                 string is available, it is returned as-is. Returns None if no sensible
                 value is found.
 
                 Parameters
                 ----------
-                demo : dict
-                    Demonstration document.
+                doc : dict
+                    Mongo-style document.
 
                 Returns
                 -------
@@ -907,15 +1098,15 @@ def init_routes(app):
 
                 # Prefer explicit timestamp-like fields and always normalize to YYYY-MM-DD when possible
                 for key in candidates:
-                    v = demo.get(key)
+                    v = doc.get(key)
                     if not v:
                         continue
                     date_str = _to_date_str(v)
                     if date_str:
                         return date_str
 
-                # Fallback to demo['date']
-                v = demo.get("date")
+                # Fallback to doc['date']
+                v = doc.get("date")
                 if v:
                     date_str = _to_date_str(v)
                     if date_str:
@@ -924,6 +1115,58 @@ def init_routes(app):
                     if isinstance(v, str) and v.strip():
                         return v
                 return None
+
+            demo_city_keys = set()
+            for row in demonstrations_collection.aggregate(
+                [
+                    {"$match": {**DEMO_FILTER, "city": {"$exists": True, "$ne": ""}}},
+                    {"$group": {"_id": {"city_key": "$city_key", "city": "$city"}}},
+                ]
+            ):
+                raw = row.get("_id") or {}
+                city_key = raw.get("city_key") or normalize_city_key(raw.get("city"))
+                if city_key in CITY_KEY_TO_NAME:
+                    demo_city_keys.add(city_key)
+
+            enabled_city_keys_for_sitemap = {
+                normalize_city_key(city)
+                for city in enabled_city_names(mongo)
+                if normalize_city_key(city) in CITY_KEY_TO_NAME
+            }
+            for city_key in sorted(
+                enabled_city_keys_for_sitemap | demo_city_keys,
+                key=lambda key: CITY_KEY_TO_NAME[key],
+            ):
+                _add_url_with_alternates(
+                    urlset,
+                    "city_demos",
+                    city=CITY_KEY_TO_NAME[city_key].lower(),
+                )
+                _add_url_with_alternates(
+                    urlset,
+                    "today_city_demos",
+                    city=CITY_KEY_TO_NAME[city_key].lower(),
+                )
+
+            for org_doc in mongo.organizations.find({}).sort("name", 1):
+                _add_url_with_alternates(
+                    urlset,
+                    "org",
+                    lastmod=_format_lastmod_for_doc(org_doc),
+                    org_id=str(org_doc["_id"]),
+                )
+
+            tag_pipeline = [
+                {"$match": DEMO_FILTER},
+                {"$unwind": "$tags"},
+                {"$match": {"tags": {"$type": "string", "$ne": ""}}},
+                {"$group": {"_id": "$tags"}},
+                {"$sort": {"_id": 1}},
+            ]
+            for row in demonstrations_collection.aggregate(tag_pipeline):
+                tag_name = str(row.get("_id") or "").strip().lstrip("#")
+                if tag_name:
+                    _add_url_with_alternates(urlset, "tag_detail", tag_name=tag_name)
 
             for demo in demonstrations_collection.find(query_filter):
                 demo_identifier = (
@@ -938,7 +1181,7 @@ def init_routes(app):
                 )
 
                 # lastmod for the demonstration if available
-                lastmod_val = _format_lastmod_for_demo(demo)
+                lastmod_val = _format_lastmod_for_doc(demo)
                 if lastmod_val:
                     ET.SubElement(url_el, "lastmod").text = lastmod_val
 
@@ -984,13 +1227,30 @@ def init_routes(app):
         else:
             return dict(alternate_urls={})
         
-    # inject city list to the template context
+    # inject city list to the template context (cached to avoid per-request DB hits)
+    _city_names_cache = {"names": None, "timestamp": 0}
+    _CITY_NAMES_CACHE_TTL = 60  # seconds
+
     @app.context_processor
     def inject_city_list():
         """
         Inject the city list into the template context.
         """
-        return dict(city_list=CITY_LIST)
+        import time as _time
+        now = _time.monotonic()
+        cached_names = _city_names_cache["names"]
+        if cached_names is None or (now - _city_names_cache["timestamp"]) >= _CITY_NAMES_CACHE_TTL:
+            cached_names = enabled_city_names(mongo)
+            _city_names_cache["names"] = cached_names
+            _city_names_cache["timestamp"] = now
+        return dict(city_list=CITY_LIST, enabled_city_list=cached_names)
+
+    @app.context_processor
+    def inject_app_version():
+        """
+        Inject the running app version into templates.
+        """
+        return dict(app_version=VERSION)
 
     
     @app.route("/")
@@ -1050,12 +1310,24 @@ def init_routes(app):
             .limit(6)
         )
 
+        locale = _current_demo_language()
+        localized_filtered_demonstrations = _localized_demo_list(
+            filtered_demonstrations, locale
+        )
+        localized_recommended_demos = _localized_demo_list(recommended_demos or [], locale)
+
         return render_template(
             "index.html",
-            demonstrations=filtered_demonstrations,
-            recommended_demos=recommended_demos,
-            featured_demos_json=[format_demo_for_api(demo) for demo in filtered_demonstrations[:6]],
-            recommended_demos_json=[format_demo_for_api(demo) for demo in (recommended_demos or [])],
+            demonstrations=localized_filtered_demonstrations,
+            recommended_demos=localized_recommended_demos,
+            featured_demos_json=[
+                format_demo_for_api(demo, locale)
+                for demo in filtered_demonstrations[:6]
+            ],
+            recommended_demos_json=[
+                format_demo_for_api(demo, locale)
+                for demo in (recommended_demos or [])
+            ],
         )
 
 
@@ -1113,6 +1385,59 @@ def init_routes(app):
         
         return jsonify(results)
 
+    @app.route("/api/v1/organizations", methods=["GET"])
+    def api_v1_organizations():
+        """
+        Public, paginated list of organizations (verified and unverified).
+
+        Query params: page, per_page, search (name/email), lang
+        Returns JSON: { organizations: [ { id, name, email, website,
+        description, verified, logo } ... ], total_pages }
+        """
+        try:
+            page = max(int(request.args.get("page", 1)), 1)
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            per_page = max(int(request.args.get("per_page", 20) or 20), 1)
+        except (TypeError, ValueError):
+            per_page = 20
+        search = (request.args.get("search") or "").strip()
+
+        query = {}
+        if search:
+            query = {
+                "$or": [
+                    {"name": {"$regex": search, "$options": "i"}},
+                    {"email": {"$regex": search, "$options": "i"}},
+                ]
+            }
+
+        total = mongo.organizations.count_documents(query)
+        total_pages = max((total + per_page - 1) // per_page, 1)
+        orgs_cursor = (
+            mongo.organizations.find(
+                query,
+                {"_id": 1, "name": 1, "email": 1, "website": 1, "description": 1, "verified": 1, "logo": 1},
+            )
+            .sort("name", 1)
+            .skip((page - 1) * per_page)
+            .limit(per_page)
+        )
+        organizations = [
+            {
+                "id": str(org["_id"]),
+                "name": org.get("name", ""),
+                "email": org.get("email", ""),
+                "website": org.get("website", ""),
+                "description": org.get("description", ""),
+                "verified": bool(org.get("verified", False)),
+                "logo": org.get("logo"),
+            }
+            for org in orgs_cursor
+        ]
+        return jsonify(organizations=organizations, total_pages=total_pages)
+
     @app.route("/submit", methods=["GET", "POST"])
     def submit():
         """
@@ -1134,6 +1459,10 @@ def init_routes(app):
             address = (request.form.get("address") or "").strip()
             event_type = (request.form.get("type") or "").strip()
             route = request.form.get("route") if event_type == "marssi" else None
+            default_language = (
+                request.form.get("default_language")
+                or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi")
+            ).strip().lower()
 
             # --- Tags (comma separated) ---
             tags_field = request.form.get("tags", "")
@@ -1341,25 +1670,9 @@ def init_routes(app):
                         "cancelled": {"$ne": True},
                     })
                     matches = []
-                    title_words = set([w for w in re.findall(r"\w+", title.lower()) if len(w) > 3])
                     for d in potential:
-                        existing_title = (d.get('title') or '').lower()
-                        existing_addr = (d.get('address') or '').lower()
-                        # direct substring check
-                        if title.lower() in existing_title or existing_title in title.lower():
+                        if demo_matches_conflict_candidate(d, title, address):
                             matches.append(d)
-                            continue
-                        # word intersection heuristic
-                        existing_words = set([w for w in re.findall(r"\w+", existing_title) if len(w) > 3])
-                        # Keep the warning threshold fairly high so we do not
-                        # block real users too aggressively on merely similar titles.
-                        if title_words and len(title_words & existing_words) >= 3:
-                            matches.append(d)
-                            continue
-                        # address similarity
-                        if address and (address.lower() in existing_addr or existing_addr in address.lower()):
-                            matches.append(d)
-                            continue
                     if matches:
                         conflict_summary = [
                             {
@@ -1378,17 +1691,7 @@ def init_routes(app):
                         )
                         # if AJAX, return structured JSON so frontend can prompt user
                         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                            return (
-                                jsonify(
-                                    success=False,
-                                    conflict=True,
-                                    requires_confirmation=True,
-                                    message="Löytyi samankaltaisia ilmoituksia tälle päivälle.",
-                                    error_code=SUBMIT_ERROR_CODES["duplicate_conflict"],
-                                    demos=conflict_summary,
-                                ),
-                                409,
-                            )
+                            return jsonify(success=False, conflict=True, message="Löytyi samankaltaisia ilmoituksia tälle päivälle.", demos=conflict_summary), 409
                         # otherwise, flash and redirect back to form
                         flash_message("Löytyi samankaltaisia ilmoituksia tälle päivälle. Ole hyvä ja tarkista ennen julkaisua.", "warning")
                         return redirect(url_for("submit"))
@@ -1416,6 +1719,7 @@ def init_routes(app):
                     gallery_images=[photo_url] if photo_url else None, #FIXME: we should support multiple images in the form and handle them properly, but for now just put the single uploaded image into gallery_images to at least have it show up in the demo detail page
                     description=description,
                     tags=tags,
+                    default_language=default_language,
                 )
                 demo_dict = demonstration.to_dict()
                 demonstration.save()
@@ -1588,6 +1892,9 @@ def init_routes(app):
             test_mode_allowed=test_mode_allowed,
             can_edit_demo=can_edit_demo,
             submission_token=_new_submission_token(),
+            translation_locales=app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"],
+            translation_language_names=app.config.get("BABEL_LANGUAGES") or {},
+            default_demo_language=app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
         )
 
     def upload_image_to_s3(img):
@@ -1705,8 +2012,8 @@ def init_routes(app):
         """
         Render the demonstrations listing page.
 
-        This route serves the main demonstrations listing interface, which loads 
-        the `list copy.html` template. The page itself handles all search, filter, 
+        This route serves the main demonstrations listing interface, which loads
+        the `list.html` template. The page itself handles all search, filter,
         and pagination logic on the client side via JavaScript — fetching data 
         dynamically from the API and rendering demonstration cards.
 
@@ -1716,10 +2023,119 @@ def init_routes(app):
         Returns
         -------
         flask.Response
-            Rendered HTML page (`list copy.html`), which serves as the frontend 
+            Rendered HTML page (`list copy.html`), which serves as the frontend
             container for dynamic demonstration listings.
         """
-        return render_template("list copy.html")
+        current_locale = (
+            (session.get("locale") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
+        )
+        return render_template("list copy.html", current_locale=current_locale)
+
+    @app.route("/cities")
+    def cities():
+        """
+        Render a public city index from enabled cities and cities with demonstrations.
+        """
+        today_iso = date.today().isoformat()
+        demo_counts: dict[str, int] = {}
+        today_counts: dict[str, int] = {}
+        for group in demonstrations_collection.aggregate(
+            [
+                {
+                    "$match": {
+                        **DEMO_FILTER,
+                        "city": {"$exists": True, "$ne": ""},
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": {"city_key": "$city_key", "city": "$city"},
+                        "count": {"$sum": 1},
+                        "today_count": {
+                            "$sum": {"$cond": [{"$eq": ["$date", today_iso]}, 1, 0]}
+                        },
+                    }
+                },
+            ]
+        ):
+            identity = group.get("_id") or {}
+            city_key = normalize_city_key(
+                identity.get("city_key") or identity.get("city")
+            )
+            if city_key in CITY_KEY_TO_NAME:
+                demo_counts[city_key] = (
+                    demo_counts.get(city_key, 0) + group["count"]
+                )
+                today_counts[city_key] = (
+                    today_counts.get(city_key, 0) + group["today_count"]
+                )
+
+        enabled_keys = {
+            normalize_city_key(name)
+            for name in enabled_city_names(mongo)
+            if normalize_city_key(name) in CITY_KEY_TO_NAME
+        }
+        all_keys = sorted(
+            enabled_keys | set(demo_counts),
+            key=lambda k: CITY_KEY_TO_NAME[k],
+        )
+        city_rows = []
+        for city_key in all_keys:
+            city_name = CITY_KEY_TO_NAME[city_key]
+            city_rows.append(
+                {
+                    "key": city_key,
+                    "name": city_name,
+                    "phrase": _city_inessive_phrase(city_name),
+                    "demo_count": demo_counts.get(city_key, 0),
+                    "today_count": today_counts.get(city_key, 0),
+                }
+            )
+
+        return render_template("cities.html", cities=city_rows)
+
+    def _render_today_demonstrations(city=None):
+        city_name = _city_display_name(city) if city else None
+        if city is not None and not city_name:
+            abort(404)
+
+        query = _today_demo_query(city_name)
+        demos = list(demonstrations_collection.find(query).sort("start_time", ASCENDING))
+        for demo in demos:
+            demo["detail_identifier"] = _demo_detail_identifier(demo)
+
+        today_value = date.today()
+        if city_name:
+            title = f"Mielenosoitukset {_city_inessive_phrase(city_name)} tänään"
+            description = (
+                f"Tänään järjestettävät mielenosoitukset {_city_inessive_phrase(city_name)}. "
+                "Katso ajat, paikat ja aiheet yhdestä näkymästä."
+            )
+        else:
+            title = "Mielenosoitukset Suomessa tänään"
+            description = (
+                "Tänään järjestettävät mielenosoitukset Suomessa. "
+                "Katso päivän tapahtumat, kaupungit, ajat ja aiheet yhdestä näkymästä."
+            )
+
+        return render_template(
+            "today_demos.html",
+            city_name=city_name,
+            city_phrase=_city_inessive_phrase(city_name) if city_name else None,
+            date_value=today_value,
+            date_label=format_date(today_value, format="long"),
+            demonstrations=demos,
+            page_title=title,
+            page_description=description,
+        )
+
+    @app.route("/mielenosoitukset-tanaan")
+    def today_demos():
+        return _render_today_demonstrations()
+
+    @app.route("/city/<city>/tanaan")
+    def today_city_demos(city):
+        return _render_today_demonstrations(city=city)
 
 
     @app.route("/city/<city>") # TODO: lets make this use the api too
@@ -1808,8 +2224,7 @@ def init_routes(app):
             True if demo matches all filters, False otherwise
         """
         matches_search = (
-            search_query in demo["title"].lower()
-            or search_query in demo["address"].lower()
+            demo_matches_search_query(demo, search_query)
         )
         
         matches_city = (
@@ -1877,8 +2292,10 @@ def init_routes(app):
         # Determine whether to bypass cache
         bypass_cache = bool(request.query_string) or should_skip_cache(public_only=False)
 
+        # Resolve locale once and reuse the exact same value for rendering and caching.
+        locale = _current_demo_language()
+
         # Build a cache key that is stable for public users; include locale so localized pages differ
-        locale = session.get("locale", "")
         viewer_segment = "anon"
         if current_user.is_authenticated:
             try:
@@ -1908,11 +2325,10 @@ def init_routes(app):
                 logger.exception("Error fetching geocode for demo %s", demo_id)
 
         # Prepare response
-        _demo = copy.copy(demo_obj)
-        demo = Demonstration.to_dict(demo_obj, True)
+        demo = demo_obj.to_localized_dict(language=locale, json=True)
 
         toistuvuus = ""
-        if _demo.recurs:
+        if demo_obj.recurs:
             toistuvuus = generate_demo_sentence(demo)
 
         def _format_suggestion_date(raw_value):
@@ -1944,6 +2360,23 @@ def init_routes(app):
                 organizer_follow_map[org_id_str] = org_id_str in user_follow_orgs
                 org["organization_id_str"] = org_id_str
 
+        followable_org_ids = set()
+        org_oids = [
+            _safe_objectid(org.get("organization_id_str") or org.get("organization_id") or org.get("_id"))
+            for org in demo.get("organizers") or []
+        ]
+        org_oids = [oid for oid in org_oids if oid]
+        if org_oids:
+            for doc in mongo.organizations.find({"_id": {"$in": org_oids}}, {"verified": 1}):
+                doc_id = _stringify_id(doc.get("_id"))
+                if doc_id and doc.get("verified"):
+                    followable_org_ids.add(doc_id)
+
+        for org in demo.get("organizers") or []:
+            org_identifier = org.get("organization_id") or org.get("_id")
+            org_id_str = _stringify_id(org_identifier)
+            org["followable"] = bool(org_id_str and org_id_str in followable_org_ids)
+
         recurring_target_id = None
         #if demo.get("recurs"):
         #    recurring_target_id = _stringify_id(demo_obj._id)
@@ -1970,7 +2403,7 @@ def init_routes(app):
             similar_demos.append(
                 {
                     "id": sid,
-                    "title": doc.get("title"),
+                    "title": get_demo_localized_fields(doc, locale).get("title"),
                     "city": doc.get("city"),
                     "date": doc.get("date"),
                     "formatted_date": formatted_date,
@@ -2003,6 +2436,8 @@ def init_routes(app):
                     {
                         "_id": 1,
                         "title": 1,
+                        "default_language": 1,
+                        "translations": 1,
                         "city": 1,
                         "date": 1,
                         "start_time": 1,
@@ -2036,7 +2471,17 @@ def init_routes(app):
                 org_cursor = (
                     mongo.demonstrations.find(
                         org_query,
-                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1},
+                        {
+                            "_id": 1,
+                            "title": 1,
+                            "default_language": 1,
+                            "translations": 1,
+                            "city": 1,
+                            "date": 1,
+                            "start_time": 1,
+                            "address": 1,
+                            "slug": 1,
+                        },
                     )
                     .sort("date", ASCENDING)
                     .limit(6)
@@ -2067,7 +2512,17 @@ def init_routes(app):
                 rec_cursor = (
                     mongo.demonstrations.find(
                         rec_query,
-                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1},
+                        {
+                            "_id": 1,
+                            "title": 1,
+                            "default_language": 1,
+                            "translations": 1,
+                            "city": 1,
+                            "date": 1,
+                            "start_time": 1,
+                            "address": 1,
+                            "slug": 1,
+                        },
                     )
                     .sort("date", ASCENDING)
                     .limit(6)
@@ -2085,6 +2540,16 @@ def init_routes(app):
             "recurring_following": recurring_following,
         }
 
+        available_demo_languages = []
+        default_demo_language = (demo.get("default_language") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
+        if default_demo_language:
+            available_demo_languages.append(default_demo_language)
+        for language_code, translation in (demo.get("translations") or {}).items():
+            if translation and any(translation.get(field) not in (None, "", []) for field in ("title", "description", "tags")):
+                normalized = str(language_code).strip().lower()
+                if normalized and normalized not in available_demo_languages:
+                    available_demo_languages.append(normalized)
+
         response = make_response(
             render_template(
                 "detail.html",
@@ -2092,6 +2557,9 @@ def init_routes(app):
                 toistuvuus=toistuvuus,
                 similar_demos=similar_demos,
                 follow_meta=follow_meta,
+                current_demo_language=locale,
+                default_demo_language=default_demo_language,
+                available_demo_languages=available_demo_languages,
             )
         )
         response.headers["X-Cache"] = "MISS"
@@ -2422,7 +2890,9 @@ def init_routes(app):
             except (requests.exceptions.RequestException, IndexError):
                 ...
                 
-        demo = Demonstration.to_dict(demo, True)
+        demo = _localized_demo_copy(
+            Demonstration.to_dict(demo, True), _current_demo_language()
+        )
         log_demo_view(
             demo_id, current_user._id if current_user.is_authenticated else None
         )
@@ -2677,15 +3147,28 @@ def init_routes(app):
     
     @app.route("/set_language/<lang>")
     def set_language(lang):
-        supported_languages = app.config["BABEL_SUPPORTED_LOCALES"]
+        supported_languages = app.config["BABEL_PUBLIC_LOCALES"]
         if lang not in supported_languages:
-            flash_message("Unsupported language selected.", "error")
-            return redirect(request.referrer)
+            flash_message(_("Valittu kieli ei ole vielä käytettävissä."), "error")
+            return redirect(request.referrer or url_for("index"))
         session["locale"] = lang
         session.modified = True
-        referrer = request.referrer
-        if referrer and referrer.startswith(request.host_url):
-            return redirect(referrer)
+
+        next_target = (request.args.get("next") or "").strip()
+        if next_target:
+            parsed = urlsplit(next_target)
+            if not parsed.scheme and not parsed.netloc and next_target.startswith("/"):
+                return redirect(next_target)
+
+        referrer = request.referrer or ""
+        if referrer:
+            parsed_referrer = urlsplit(referrer)
+            current_host = urlsplit(request.host_url).netloc
+            if parsed_referrer.netloc == current_host:
+                safe_path = parsed_referrer.path or "/"
+                if parsed_referrer.query:
+                    safe_path = f"{safe_path}?{parsed_referrer.query}"
+                return redirect(safe_path)
         return redirect(url_for("index"))
     
     @app.route("/download_material/<demo_id>", methods=["GET"])
@@ -2720,7 +3203,7 @@ def init_routes(app):
 
     @app.before_request
     def preprocess_url():  
-        supported_languages = app.config["BABEL_SUPPORTED_LOCALES"]
+        supported_languages = app.config["BABEL_PUBLIC_LOCALES"]
         path = request.path.strip("/").split("/")
         if path and path[0] in supported_languages:
             lang = path[0]
@@ -3028,7 +3511,9 @@ def init_routes(app):
             if demo_date:
                 dd = datetime.strptime(demo_date, "%Y-%m-%d").date()
                 if dd.year == year and dd.month == month:
-                    month_demos[dd.day].append(demo)
+                    month_demos[dd.day].append(
+                        _localized_demo_copy(demo, _current_demo_language())
+                    )
 
         # Kalenteri kuukaudelle
         cal = calendar.Calendar(firstweekday=0)  # 0 = Monday
@@ -3094,7 +3579,9 @@ def init_routes(app):
             if demo_date_str:
                 dd = datetime.strptime(demo_date_str, "%Y-%m-%d").date()
                 if dd.year == year:
-                    year_demos[dd.month]["days"][dd.day].append(demo)
+                    year_demos[dd.month]["days"][dd.day].append(
+                        _localized_demo_copy(demo, _current_demo_language())
+                    )
 
         # Kuukausien nimet
         month_names = {

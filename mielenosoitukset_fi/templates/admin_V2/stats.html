@@ -1,43 +1,22 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/stats.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/activities.css') }}">
-
-<style>
-  th.sortable {
-    cursor: pointer;
-    position: relative;
-  }
-  th.sortable::after {
-    content: "\f0dc";
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    font-size: 0.7em;
-    color: var(--stats-muted);
-    position: absolute;
-    right: 0.75rem;
-  }
-  th.sortable.asc::after { content: "\f0de"; }
-  th.sortable.desc::after { content: "\f0dd"; }
-</style>
 {% endblock %}
 
 {% block main_content %}
 <div class="stats-shell">
-  <section class="stats-hero">
-    <div class="stats-hero-copy">
-      <p class="stats-kicker">{{ _('Tilastot') }}</p>
-      <h1>{{ _('Miten palvelulla menee?') }}</h1>
-      <p class="stats-lede">
-        {{ _('Täältä näet palvelun tärkeimmät luvut ja mielenosoitusten katselukerrat yhdessä paikassa.') }}
-      </p>
-    </div>
-    <div class="stats-hero-note">
-      <span>{{ _('Viimeisin päivitys') }}</span>
-      <strong id="last-updated">{{ _('Päivitetään...') }}</strong>
-    </div>
-  </section>
+  {{ admin_page_hero(
+    _('Miten palvelulla menee?'),
+    _('Täältä näet palvelun tärkeimmät luvut ja mielenosoitusten katselukerrat yhdessä paikassa.'),
+    _('Tilastot'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Tilastot'), none)],
+    metric_value=_('Päivitetään...'),
+    metric_label=_('Viimeisin päivitys'),
+    metric_id='last-updated'
+  ) }}
 
   <section class="stat-grid">
     <div class="stat-card">

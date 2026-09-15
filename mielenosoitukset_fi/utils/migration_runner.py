@@ -2,7 +2,11 @@ from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 
 from mielenosoitukset_fi.utils.logger import logger
-from mielenosoitukset_fi.utils.migrations import migration_003_city_keys
+from mielenosoitukset_fi.utils.migrations import (
+    migration_003_city_keys,
+    migration_004_admin_governance,
+    migration_005_user_identity_uniqueness,
+)
 
 
 MIGRATIONS = [
@@ -10,6 +14,16 @@ MIGRATIONS = [
         "id": "003_city_keys",
         "description": "Backfill normalized city keys for city-scoped admin grants.",
         "run": migration_003_city_keys.migrate_city_keys,
+    },
+    {
+        "id": "004_admin_governance",
+        "description": "Persist board clearances and add explicit city-management access.",
+        "run": migration_004_admin_governance.migrate_admin_governance,
+    },
+    {
+        "id": "005_user_identity_uniqueness",
+        "description": "Enforce case-insensitive username and email uniqueness.",
+        "run": migration_005_user_identity_uniqueness.migrate_user_identity_uniqueness,
     },
 ]
 

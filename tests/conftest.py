@@ -74,6 +74,7 @@ _CONFIG_PATH.write_text(
             "BABEL": {
                 "DEFAULT_LOCALE": "fi",
                 "SUPPORTED_LOCALES": ["fi", "en", "sv"],
+                "PUBLIC_LOCALES": ["fi"],
                 "LANGUAGES": {
                     "fi": "Suomi",
                     "en": "English",
@@ -127,6 +128,11 @@ ALL_PERMISSIONS = sorted(
         "LIST_USERS",
         "MANAGE_BACKGROUND_JOBS",
         "MANAGE_CLEARANCE",
+        "MANAGE_CITIES",
+        "REVIEW_DEMO_TRANSLATIONS",
+        "REVIEW_UI_TRANSLATIONS",
+        "TRANSLATE_DEMO",
+        "TRANSLATE_UI",
         "VIEW_ANALYTICS",
         "VIEW_BACKGROUND_JOBS",
         "VIEW_CLEARANCE_AUDIT",
@@ -236,11 +242,25 @@ def _user_doc(username, email, password, **updates):
 def _seed_database(app, db):
     from mielenosoitukset_fi.admin.admin_demo_bp import _hash_token as hash_magic_token
     from mielenosoitukset_fi.admin.admin_demo_bp import _registry_upsert_initial, serializer
-    import mielenosoitukset_fi.admin.admin_demo_bp as admin_demo_bp
     from mielenosoitukset_fi.utils.auth import generate_confirmation_token, generate_reset_token
     from mielenosoitukset_fi.utils.demo_cancellation import _hash_token as hash_cancel_token
 
-    admin_demo_bp.mongo = db
+    # Some project modules (e.g. ``admin.admin_demo_bp``) get imported twice in a
+    # single process: once as ``mielenosoitukset_fi.admin.admin_demo_bp`` and once
+    # as a top-level ``admin.admin_demo_bp`` (``app.py`` imports the top-level
+    # name when the project root is on ``sys.path``). Rebinding ``mongo`` only on
+    # one of the copies leaves the other pointing at a stale/foreign database,
+    # which makes token-based admin flows flaky in a full test run. Rebinding the
+    # handle on every project module keeps seeding and routes on one database.
+    for _mod in list(sys.modules.values()):
+        _mod_file = getattr(_mod, "__file__", None)
+        if not _mod_file or not str(_mod_file).startswith(str(ROOT)):
+            continue
+        if getattr(_mod, "mongo", None) is not None:
+            try:
+                _mod.mongo = db
+            except Exception:
+                pass
 
     for collection_name in db.list_collection_names():
         if collection_name.startswith("system."):
@@ -252,6 +272,7 @@ def _seed_database(app, db):
     user_id = ObjectId()
     friend_id = ObjectId()
     developer_id = ObjectId()
+    translator_id = ObjectId()
     org_id = ObjectId()
     second_org_id = ObjectId()
     demo_id = ObjectId()
@@ -306,13 +327,22 @@ def _seed_database(app, db):
         displayname="Developer User",
         api_tokens_enabled=True,
     )
+    translator_doc = _user_doc(
+        "translator",
+        "translator@example.test",
+        "TranslatorPass1!",
+        _id=translator_id,
+        displayname="Translator User",
+        role="translator",
+        global_permissions=["TRANSLATE_DEMO"],
+    )
 
     friendship = {"user_id": friend_id, "last_updated": now}
     reverse_friendship = {"user_id": user_id, "last_updated": now}
     user_doc["friends"] = [friendship]
     friend_doc["friends"] = [reverse_friendship]
 
-    db.users.insert_many([admin_doc, user_doc, friend_doc, developer_doc])
+    db.users.insert_many([admin_doc, user_doc, friend_doc, developer_doc, translator_doc])
 
     db.memberships.insert_many(
         [
@@ -362,6 +392,9 @@ def _seed_database(app, db):
         ]
     )
 
+    upcoming_demo_date = utcnow().date() + timedelta(days=30)
+    recurring_demo_date = upcoming_demo_date + timedelta(days=7)
+
     organizer = {
         "name": "Test Organization",
         "email": "bob@example.test",
@@ -369,7 +402,7 @@ def _seed_database(app, db):
     }
     base_demo = {
         "title": "Climate March Helsinki",
-        "date": "2026-05-01",
+        "date": upcoming_demo_date.isoformat(),
         "start_time": "12:00",
         "end_time": "14:00",
         "city": "Helsinki",
@@ -390,7 +423,7 @@ def _seed_database(app, db):
         "last_modified": now,
         "running_number": 1001,
         "slug": "climate-march-helsinki",
-        "formatted_date": "01.05.2026",
+        "formatted_date": upcoming_demo_date.strftime("%d.%m.%Y"),
         "latitude": "60.1699",
         "longitude": "24.9384",
         "type": "other",
@@ -424,7 +457,7 @@ def _seed_database(app, db):
             "_id": recu_demo_id,
             "title": "Recurring Test Series",
             "description": "Series used in smoke tests.",
-            "date": "2026-05-08",
+            "date": recurring_demo_date.isoformat(),
             "start_time": "18:00",
             "end_time": "20:00",
             "city": "Helsinki",
@@ -668,6 +701,7 @@ def _seed_database(app, db):
         "user_id": user_id,
         "friend_id": friend_id,
         "developer_id": developer_id,
+        "translator_id": translator_id,
         "org_id": org_id,
         "demo_id": demo_id,
         "pending_demo_id": pending_demo_id,
@@ -749,6 +783,17 @@ def cleanup_test_resources():
     if instance is not None:
         try:
             instance.get_db().client.drop_database(TEST_DB_NAME)
+        except Exception:
+            pass
+        try:
+            # Drop any test databases left behind by earlier crashed sessions so
+            # MongoDB does not accumulate hundreds of disposable databases.
+            for _db_name in instance.get_db().client.list_database_names():
+                if _db_name.startswith("mielenosoitukset_test_"):
+                    try:
+                        instance.get_db().client.drop_database(_db_name)
+                    except Exception:
+                        pass
         except Exception:
             pass
         try:
@@ -892,6 +937,11 @@ def admin_client(app, seeded_data):
 @pytest.fixture
 def developer_client(app, seeded_data):
     return _client_for_user(app, seeded_data["developer_id"])
+
+
+@pytest.fixture
+def translator_client(app, seeded_data):
+    return _client_for_user(app, seeded_data["translator_id"])
 
 
 @pytest.fixture

@@ -1,12 +1,19 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
-<div class="container-fluid">
-  <h2 class="mb-4">Kehittäjähallinta</h2>
-  <p class="text-muted">Hallinnoi kehittäjäoikeuksia ja sovellusten scope-pyyntöjä.</p>
+<div class="admin-page">
+  {{ admin_page_hero(
+    _('Kehittäjähallinta'),
+    _('Hallinnoi kehittäjäoikeuksia ja sovellusten scope-pyyntöjä.'),
+    _('Käyttäjät ja hallinto'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttäjät'), url_for('admin_user.user_control')), (_('Kehittäjähallinta'), none)],
+    back_url=url_for('admin_user.user_control'),
+    back_label=_('Käyttäjät')
+  ) }}
 
   <h4 class="mt-4 mb-3">Kehittäjäpaneelin avauspyynnöt</h4>
-  <div class="table-responsive mb-4">
+  <div class="table-responsive admin-data-view admin-workspace-table mb-4">
     <table class="table table-striped align-middle">
       <thead>
         <tr>
@@ -41,14 +48,14 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="6" class="text-center text-muted">Ei pyyntöjä.</td></tr>
+        <tr><td colspan="6" class="admin-empty-state">Ei pyyntöjä.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 
-  <div class="table-responsive">
-    <h4 class="mb-3">Scope-pyynnöt (sovellukset)</h4>
+  <div class="table-responsive admin-data-view admin-workspace-table">
+    <div class="admin-data-view__header"><h2>Scope-pyynnöt (sovellukset)</h2></div>
     <table class="table table-striped align-middle">
       <thead>
         <tr>
@@ -80,7 +87,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" class="text-center text-muted">Ei pyyntöjä.</td></tr>
+        <tr><td colspan="7" class="admin-empty-state">Ei pyyntöjä.</td></tr>
         {% endfor %}
       </tbody>
     </table>

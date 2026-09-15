@@ -1,449 +1,61 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
-{% block styles %}
-<style>
-  .demo-command-center {
-    padding: 1rem;
-  }
-
-  .hero-card {
-    background: light-dark(#ffffff, #101626);
-    border-radius: 20px;
-    padding: 2rem;
-    box-shadow: 0 15px 40px rgba(15, 23, 42, 0.12);
-    color: light-dark(#0f172a, #f5f7ff);
-    border: 1px solid light-dark(#dfe3ec, rgba(255,255,255,0.08));
-    margin-bottom: 2rem;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .hero-card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.25), transparent 55%);
-    pointer-events: none;
-  }
-
-  .hero-header {
-    position: relative;
-    z-index: 1;
-  }
-
-  .status-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .status-badge {
-    padding: 0.35rem 0.85rem;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
-  .status-badge.success { background: rgba(34,197,94,0.18); color: #15803d; }
-  .status-badge.warning { background: rgba(251,191,36,0.2); color: #b45309; }
-  .status-badge.danger  { background: rgba(239,68,68,0.2); color: #b91c1c; }
-  .status-badge.neutral { background: rgba(148,163,184,0.25); color: #1f2937; }
-
-  .hero-title {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.35rem;
-    color: light-dark(#0f172a, #f8fafc);
-  }
-
-  .hero-subtitle {
-    color: light-dark(#334155, #cddbff);
-    font-size: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .hero-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1rem;
-  }
-
-  .hero-link {
-    padding: 0.45rem 0.9rem;
-    border-radius: 999px;
-    background: light-dark(#eef2ff, rgba(255,255,255,0.12));
-    color: light-dark(#19154b, #e0e7ff);
-    font-size: 0.9rem;
-    text-decoration: none;
-    border: 1px solid light-dark(#c7d2fe, rgba(255,255,255,0.3));
-  }
-
-  .hero-metadata {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-
-  .meta-item {
-    background: light-dark(rgba(99,102,241,0.08), rgba(99,102,241,0.25));
-    border-radius: 16px;
-    padding: 1rem;
-    font-size: 0.9rem;
-    color: light-dark(#111c33, #e2e8f0);
-    border: 1px solid light-dark(#c7d2fe, rgba(255,255,255,0.12));
-  }
-
-  .meta-item span {
-    display: block;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: light-dark(#64748b, #a5b4fc);
-    margin-bottom: 0.35rem;
-  }
-
-  .command-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
-    gap: 1.75rem;
-  }
-
-  .primary-column {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-
-  .info-card {
-    background: light-dark(#ffffff, #0e1526);
-    border-radius: 18px;
-    padding: 1.5rem;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-    border: 1px solid light-dark(#e2e8f0, rgba(255,255,255,0.1));
-    color: light-dark(#0f172a, #f8f9ff);
-  }
-
-  .info-card h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: light-dark(#0f172a, #f8fafc);
-  }
-
-  .info-card h5 {
-    color: light-dark(#0f172a, #f8f9ff);
-  }
-
-  .stat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-  }
-
-  .stat-pill {
-    border-radius: 16px;
-    padding: 1rem;
-    background: light-dark(#f8fafc, #1c2236);
-    border: 1px solid light-dark(#d7dce8, rgba(255,255,255,0.15));
-    color: light-dark(#0f172a, #f2f5ff);
-  }
-
-  .stat-pill span {
-    display: block;
-    font-size: 0.8rem;
-    color: light-dark(#475569, #cbd5f5);
-    margin-bottom: 0.35rem;
-  }
-
-  .stat-pill strong {
-    font-size: 1.5rem;
-    font-weight: 700;
-  }
-
-  .definition-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-  }
-
-  .definition-list dt {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: light-dark(#64748b, #c7d2fe);
-  }
-
-  .definition-list dd {
-    margin: 0.35rem 0 0;
-    font-weight: 600;
-    color: light-dark(#111827, #f8fafc);
-  }
-
-  .tag-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .tag-chip {
-    background: light-dark(#e0e7ff, rgba(129,140,248,0.25));
-    color: light-dark(#312e81, #e0e7ff);
-    padding: 0.3rem 0.8rem;
-    border-radius: 999px;
-    font-size: 0.85rem;
-  }
-
-  .list-with-icons {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .list-with-icons li {
-    display: flex;
-    gap: 0.75rem;
-    align-items: flex-start;
-  }
-
-  .list-with-icons span.icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    background: light-dark(#eef2ff, rgba(255,255,255,0.08));
-    display: grid;
-    place-items: center;
-    color: #6366f1;
-  }
-
-  .timeline {
-    border-left: 2px solid light-dark(#cbd5f5, rgba(255,255,255,0.25));
-    padding-left: 1.25rem;
-    margin-left: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .timeline-entry {
-    position: relative;
-  }
-
-  .timeline-entry::before {
-    content: "";
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #6366f1;
-    left: -1.48rem;
-    top: 0.35rem;
-  }
-
-  .timeline-entry h5 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-  }
-
-  .timeline-entry small,
-  .timeline-entry .small,
-  .timeline-entry .text-muted {
-    color: light-dark(#475569, #b7c4f0) !important;
-  }
-
-  .timeline-entry a {
-    color: light-dark(#1d4ed8, #7eb4ff);
-  }
-
-  .action-sidebar {
-    position: sticky;
-    top: 5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-
-  .action-card {
-    background: light-dark(#f8fafc, #050914);
-    color: light-dark(#0f172a, #f8fafc);
-    border-radius: 18px;
-    padding: 1.25rem;
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.3);
-    border: 1px solid light-dark(rgba(15,23,42,0.08), rgba(255,255,255,0.1));
-  }
-
-  .action-card h3 {
-    margin-bottom: 1rem;
-    font-size: 1.05rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  .action-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-
-  .action-btn {
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 12px;
-    padding: 0.75rem 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(255,255,255,0.08);
-    color: inherit;
-  }
-
-  .action-btn.primary { background: linear-gradient(135deg, #34d399, #10b981); color: #053b2c; }
-  .action-btn.secondary { background: rgba(255,255,255,0.1); }
-  .action-btn.danger { background: linear-gradient(135deg, #f87171, #ef4444); color: #fff; }
-
-  .resources-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-
-  .resources-list a {
-    color: light-dark(#0f172a, #f8fafc);
-    text-decoration: underline;
-    font-size: 0.9rem;
-  }
-
-  .grid-two {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 1rem;
-  }
-
-  .case-card {
-    border-radius: 16px;
-    padding: 1rem;
-    border: 1px solid light-dark(#e2e8f0, rgba(255,255,255,0.12));
-    background: light-dark(#f8fafc, #1b2133);
-    color: light-dark(#0f172a, #f2f5ff);
-  }
-
-  .case-card h5 {
-    margin: 0 0 0.35rem;
-  }
-
-  .linked-item {
-    padding: 0.65rem 0;
-    border-bottom: 1px solid light-dark(#e2e8f0, rgba(255,255,255,0.12));
-    color: light-dark(#0f172a, #f8fafc);
-  }
-
-  .linked-item a {
-    color: light-dark(#1d4ed8, #7da9ff);
-  }
-
-  .linked-item a:hover {
-    color: light-dark(#1e40af, #a0c4ff);
-  }
-
-  .linked-item:last-child { border-bottom: none; }
-
-  .media-links a {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-right: 0.5rem;
-    margin-bottom: 0.5rem;
-    padding: 0.35rem 0.75rem;
-    border-radius: 10px;
-    border: 1px solid light-dark(#e2e8f0, rgba(255,255,255,0.15));
-  }
-
-  @media (max-width: 1100px) {
-    .command-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .action-sidebar {
-      position: static;
-    }
-  }
-</style>
-{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demonstrations.css', v='20260914-admin-ui-51') }}">{% endblock %}
 
 {% block main_content %}
-<div class="demo-command-center">
-  <div class="hero-card">
-    <div class="hero-header">
-      <div class="status-badges">
-        {% if status_flags.approved %}
-        <span class="status-badge success"><i class="fa-solid fa-check"></i> {{ _('Hyväksytty') }}</span>
-        {% elif status_flags.needs_review %}
-        <span class="status-badge warning"><i class="fa-solid fa-hourglass-half"></i> {{ _('Odottaa käsittelyä') }}</span>
-        {% endif %}
-        {% if status_flags.rejected %}
-        <span class="status-badge danger"><i class="fa-solid fa-xmark"></i> {{ _('Hylätty') }}</span>
-        {% endif %}
-        {% if status_flags.hidden %}
-        <span class="status-badge neutral"><i class="fa-solid fa-eye-slash"></i> {{ _('Piilotettu') }}</span>
-        {% endif %}
-        {% if status_flags.recurring %}
-        <span class="status-badge neutral"><i class="fa-solid fa-rotate"></i> {{ _('Toistuva') }}</span>
-        {% endif %}
-        {% if status_flags.recommended %}
-        <span class="status-badge success"><i class="fa-solid fa-star"></i> {{ _('Suositeltu') }}</span>
-        {% endif %}
-        {% if status_flags.cancelled %}
-        <span class="status-badge danger"><i class="fa-solid fa-ban"></i> {{ _('Peruttu') }}</span>
-        {% elif status_flags.cancellation_requested %}
-        <span class="status-badge warning"><i class="fa-solid fa-triangle-exclamation"></i> {{ _('Peruutuspyyntö') }}</span>
-        {% endif %}
-      </div>
-      <h1 class="hero-title">{{ demo.title }}</h1>
-      <p class="hero-subtitle">
-        <i class="fa-solid fa-calendar-day me-2"></i>{{ demo.date }}
-        {% if demo.start_time %} · {{ demo.start_time }}{% if demo.end_time %} – {{ demo.end_time }}{% endif %}{% endif %}
-        {% if demo.city %} · {{ demo.city }}{% endif %}
-        {% if demo.address %} · {{ demo.address }}{% endif %}
-      </p>
-      <div class="hero-links">
-        <a href="{{ public_url }}" class="hero-link" target="_blank" rel="noopener">
+<div class="demo-command-center admin-page admin-workspace">
+  {% call admin_page_hero(
+    demo.title,
+    demo.date ~ ((' · ' ~ demo.start_time ~ ((' – ' ~ demo.end_time) if demo.end_time else '')) if demo.start_time else '') ~ ((' · ' ~ demo.city) if demo.city else '') ~ ((' · ' ~ demo.address) if demo.address else ''),
+    _('Mielenosoitukset'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (demo.title, none)],
+    back_url=url_for('admin_demo.demo_control'),
+    back_label=_('Mielenosoitukset'),
+    variant='admin-page-hero--stacked'
+  ) %}
+        <a href="{{ public_url }}" class="admin-page-hero__action" target="_blank" rel="noopener noreferrer">
           <i class="fa-solid fa-arrow-up-right-from-square me-2"></i>{{ _('Avaa julkinen sivu') }}
         </a>
         {% if map_url %}
-        <a href="{{ map_url }}" class="hero-link" target="_blank" rel="noopener">
+        <a href="{{ map_url }}" class="admin-page-hero__action" target="_blank" rel="noopener noreferrer">
           <i class="fa-solid fa-map-location-dot me-2"></i>{{ _('Näytä kartalla') }}
         </a>
         {% endif %}
-        <a href="{{ resource_links.edit }}" class="hero-link">
+        <a href="{{ resource_links.edit }}" class="admin-page-hero__action">
           <i class="fa-solid fa-pen-to-square me-2"></i>{{ _('Muokkaa lomakkeella') }}
         </a>
-        <a href="{{ resource_links.history }}" class="hero-link">
+        <a href="{{ resource_links.history }}" class="admin-page-hero__action">
           <i class="fa-solid fa-clock-rotate-left me-2"></i>{{ _('Muokkaushistoria') }}
         </a>
-        <a href="{{ resource_links.audit }}" class="hero-link">
+        <a href="{{ resource_links.audit }}" class="admin-page-hero__action">
           <i class="fa-solid fa-clipboard-list me-2"></i>{{ _('Audit-loki') }}
         </a>
         {% if permissions.can_view_analytics %}
-        <a href="{{ resource_links.analytics }}" class="hero-link">
+        <a href="{{ resource_links.analytics }}" class="admin-page-hero__action">
           <i class="fa-solid fa-chart-line me-2"></i>{{ _('Analytiikka') }}
         </a>
         {% endif %}
-      </div>
-    </div>
-    <div class="hero-metadata">
+  {% endcall %}
+
+  <div class="status-badges admin-row-actions" aria-label="{{ _('Mielenosoituksen tila') }}">
+    {% if status_flags.approved %}
+    <span class="status-badge admin-status-badge admin-status-badge--success"><i class="fa-solid fa-check"></i> {{ _('Hyväksytty') }}</span>
+    {% elif status_flags.needs_review %}
+    <span class="status-badge admin-status-badge admin-status-badge--warning"><i class="fa-solid fa-hourglass-half"></i> {{ _('Odottaa käsittelyä') }}</span>
+    {% endif %}
+    {% if status_flags.rejected %}<span class="status-badge admin-status-badge admin-status-badge--danger"><i class="fa-solid fa-xmark"></i> {{ _('Hylätty') }}</span>{% endif %}
+    {% if status_flags.hidden %}<span class="status-badge admin-status-badge"><i class="fa-solid fa-eye-slash"></i> {{ _('Piilotettu') }}</span>{% endif %}
+    {% if status_flags.recurring %}<span class="status-badge admin-status-badge"><i class="fa-solid fa-rotate"></i> {{ _('Toistuva') }}</span>{% endif %}
+    {% if status_flags.recommended %}<span class="status-badge admin-status-badge admin-status-badge--success"><i class="fa-solid fa-star"></i> {{ _('Suositeltu') }}</span>{% endif %}
+    {% if status_flags.cancelled %}
+    <span class="status-badge admin-status-badge admin-status-badge--danger"><i class="fa-solid fa-ban"></i> {{ _('Peruttu') }}</span>
+    {% elif status_flags.cancellation_requested %}
+    <span class="status-badge admin-status-badge admin-status-badge--warning"><i class="fa-solid fa-triangle-exclamation"></i> {{ _('Peruutuspyyntö') }}</span>
+    {% endif %}
+  </div>
+
+  <div class="hero-metadata" aria-label="{{ _('Tekniset tiedot') }}">
       <div class="meta-item">
         <span>{{ _('Mongo ID') }}</span>
         {{ demo_id }}
@@ -464,12 +76,11 @@
         <span>{{ _('Muokattu viimeksi') }}</span>
         {{ demo_raw.get('last_modified')|datetimeformat("%d.%m.%Y %H:%M") if demo_raw.get('last_modified') else '-' }}
       </div>
-    </div>
   </div>
 
   <div class="command-grid">
     <div class="primary-column">
-      <section class="info-card">
+      <section class="info-card admin-section-card">
         <h3>{{ _('Kokonaiskuva') }}</h3>
         <div class="stat-grid">
           <div class="stat-pill">
@@ -514,7 +125,7 @@
         </div>
       </section>
 
-      <section class="info-card">
+      <section class="info-card admin-section-card">
         <h3>{{ _('Aikataulu ja sijainti') }}</h3>
         <dl class="definition-list">
           <div>
@@ -618,7 +229,7 @@
         {% endif %}
       </section>
 
-      <section class="info-card">
+      <section class="info-card admin-section-card">
         <h3>{{ _('Sisältö ja tagit') }}</h3>
         {% if demo.description %}
         <div class="mb-3">{{ demo.description|safe }}</div>
@@ -634,7 +245,7 @@
         {% endif %}
       </section>
 
-      <section class="info-card">
+      <section class="info-card admin-section-card">
         <h3>{{ _('Yhteystiedot ja järjestäjät') }}</h3>
         <div class="grid-two">
           <div>
@@ -671,7 +282,7 @@
                   <div class="text-muted small">{{ organizer.email }}</div>
                   {% endif %}
                   {% if organizer.website %}
-                  <div><a href="{{ organizer.website }}" target="_blank" rel="noopener">{{ organizer.website }}</a></div>
+                  <div><a href="{{ organizer.website }}" target="_blank" rel="noopener noreferrer">{{ organizer.website }}</a></div>
                   {% endif %}
                 </div>
               </li>
@@ -732,7 +343,7 @@
         {% endif %}
       </section>
 
-      <section class="info-card">
+      <section class="info-card admin-section-card">
         <h3>{{ _('Tapaukset ja pyynnöt') }}</h3>
         <div class="grid-two">
           <div>
@@ -800,7 +411,7 @@
         </div>
       </section>
 
-      <section class="info-card">
+      <section class="info-card admin-section-card">
         <h3>{{ _('Lokit ja historia') }}</h3>
         <div class="grid-two">
           <div>
@@ -855,7 +466,7 @@
         </div>
       </section>
 
-      <section class="info-card">
+      <section class="info-card admin-section-card">
         <h3>{{ _('Julkaisut ja näkyvyys') }}</h3>
         {% if posted_events %}
         <ul class="list-unstyled mb-0">
@@ -867,11 +478,11 @@
               {% if event.status_id %}· ID {{ event.status_id }}{% endif %}
             </div>
             {% if event.link %}
-            <a href="{{ event.link }}" target="_blank" rel="noopener">{{ event.link }}</a>
+            <a href="{{ event.link }}" target="_blank" rel="noopener noreferrer">{{ event.link }}</a>
             {% endif %}
             {% if event.status_url %}
             <div>
-              <a href="{{ event.status_url }}" target="_blank" rel="noopener">{{ _('Avaa Mastodonissa') }}</a>
+              <a href="{{ event.status_url }}" target="_blank" rel="noopener noreferrer">{{ _('Avaa Mastodonissa') }}</a>
             </div>
             {% endif %}
           </li>
@@ -882,26 +493,26 @@
         {% endif %}
       </section>
 
-      <section class="info-card">
+      <section class="info-card admin-section-card">
         <h3>{{ _('Linkit ja media') }}</h3>
         <div class="media-links">
           {% if demo.facebook %}
-          <a href="{{ demo.facebook }}" target="_blank" rel="noopener"><i class="fa-brands fa-facebook"></i> Facebook</a>
+          <a href="{{ demo.facebook }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook"></i> Facebook</a>
           {% endif %}
           {% if demo.cover_picture %}
-          <a href="{{ demo.cover_picture }}" target="_blank" rel="noopener"><i class="fa-solid fa-image"></i> {{ _('Kansikuva') }}</a>
+          <a href="{{ demo.cover_picture }}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-image"></i> {{ _('Kansikuva') }}</a>
           {% endif %}
           {% if demo.preview_image %}
-          <a href="{{ demo.preview_image }}" target="_blank" rel="noopener"><i class="fa-solid fa-clone"></i> {{ _('Esikatselu') }}</a>
+          <a href="{{ demo.preview_image }}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-clone"></i> {{ _('Esikatselu') }}</a>
           {% endif %}
           {% if demo.img %}
-          <a href="{{ demo.img }}" target="_blank" rel="noopener"><i class="fa-solid fa-photo-film"></i> {{ _('Kuva') }}</a>
+          <a href="{{ demo.img }}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-photo-film"></i> {{ _('Kuva') }}</a>
           {% endif %}
         </div>
         {% if demo_raw.get('external_links') %}
         <div class="mt-2">
           {% for link in demo_raw.get('external_links') %}
-          <a href="{{ link }}" target="_blank" rel="noopener">{{ link }}</a>
+          <a href="{{ link }}" target="_blank" rel="noopener noreferrer">{{ link }}</a>
           {% endfor %}
         </div>
         {% endif %}
@@ -909,35 +520,35 @@
     </div>
 
     <aside class="action-sidebar">
-      <div class="action-card">
+      <div class="action-card admin-section-card">
         <h3>{{ _('Pikatoiminnot') }}</h3>
         <div class="action-grid">
           {% if permissions.can_accept and not status_flags.approved %}
-          <button class="action-btn primary js-command" data-command="approve">
+          <button type="button" class="action-btn btn btn-success js-command" data-command="approve">
             {{ _('Hyväksy mielenosoitus') }}
             <i class="fa-solid fa-check"></i>
           </button>
-          <button class="action-btn secondary js-command" data-command="reject">
+          <button type="button" class="action-btn btn btn-outline-secondary js-command" data-command="reject">
             {{ _('Hylkää mielenosoitus') }}
             <i class="fa-solid fa-xmark"></i>
           </button>
           {% endif %}
           {% if permissions.can_edit %}
-          <button class="action-btn danger js-command" data-command="cancel" data-requires-reason="true">
+          <button type="button" class="action-btn btn btn-danger js-command" data-command="cancel" data-requires-reason="true">
             {{ _('Merkitse perutuksi') }}
             <i class="fa-solid fa-ban"></i>
           </button>
-          <button class="action-btn secondary js-command" data-command="duplicate">
+          <button type="button" class="action-btn btn btn-outline-secondary js-command" data-command="duplicate">
             {{ _('Kopioi pohjaksi') }}
             <i class="fa-solid fa-copy"></i>
           </button>
           {% endif %}
-          <button class="action-btn secondary js-command" data-command="screenshot">
+          <button type="button" class="action-btn btn btn-outline-secondary js-command" data-command="screenshot">
             {{ _('Luo esikatselukuva') }}
             <i class="fa-solid fa-camera"></i>
           </button>
           {% if permissions.can_recommend %}
-          <button class="action-btn secondary js-command" data-command="toggle-recommend" data-active="{{ 'true' if status_flags.recommended else 'false' }}">
+          <button type="button" class="action-btn btn btn-outline-secondary js-command" data-command="toggle-recommend" data-active="{{ 'true' if status_flags.recommended else 'false' }}">
             {% if status_flags.recommended %}
               {{ _('Poista suositus') }}
             {% else %}
@@ -949,7 +560,7 @@
         </div>
       </div>
 
-      <div class="action-card">
+      <div class="action-card admin-section-card">
         <h3>{{ _('Työkalut') }}</h3>
         <ul class="resources-list">
           <li><a href="{{ resource_links.edit }}"><i class="fa-solid fa-pen me-2"></i>{{ _('Avaa muokkauslomake') }}</a></li>
@@ -958,7 +569,7 @@
           {% if permissions.can_view_analytics %}
           <li><a href="{{ resource_links.analytics }}"><i class="fa-solid fa-chart-line me-2"></i>{{ _('Analytiikka') }}</a></li>
           {% endif %}
-          <li><a href="{{ public_url }}" target="_blank"><i class="fa-solid fa-external-link me-2"></i>{{ _('Näytä julkinen sivu') }}</a></li>
+          <li><a href="{{ public_url }}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-external-link me-2"></i>{{ _('Näytä julkinen sivu') }}</a></li>
         </ul>
       </div>
     </aside>
@@ -1067,8 +678,3 @@
   });
 </script>
 {% endblock %}
-
-  .info-card .text-muted,
-  .demo-command-center .text-muted {
-    color: light-dark(#6b7280, #aeb8d8) !important;
-  }

@@ -1,0 +1,570 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Kaupungit') }} - Mielenosoitukset.fi{% endblock %}
+
+{% block meta %}
+<meta name="description" content="{{ _('Selaa mielenosoituksia kaupungeittain ja katso missä järjestetään mielenosoituksia tänään.') }}" />
+<meta name="robots" content="index, follow" />
+{% endblock %}
+
+{% block styles %}
+<style>
+  .cities-page {
+    color: var(--color-text);
+  }
+
+  .cities-hero {
+    background: linear-gradient(135deg, #f7fbff 0%, #ffffff 48%, #eef7f1 100%);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .dark .cities-hero {
+    background: linear-gradient(135deg, #10161d 0%, #1a1d23 48%, #101813 100%);
+  }
+
+  .cities-shell {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 3rem 1rem;
+  }
+
+  .cities-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--color-primary);
+    font-weight: 750;
+    margin-bottom: 1rem;
+  }
+
+  .cities-hero h1 {
+    max-width: 780px;
+    font-size: clamp(2rem, 4.8vw, 4.25rem);
+    line-height: 1.02;
+    margin: 0 0 1rem;
+  }
+
+  .cities-hero p {
+    max-width: 720px;
+    color: var(--color-text-secondary);
+    font-size: 1.08rem;
+    line-height: 1.7;
+  }
+
+  .cities-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .cities-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-card-bg);
+    color: var(--color-text);
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .cities-button.primary {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+  }
+
+  .cities-button:hover,
+  .cities-button:focus {
+    transform: translateY(-1px);
+    color: var(--color-primary);
+  }
+
+  .cities-button.primary:hover,
+  .cities-button.primary:focus {
+    color: #fff;
+    filter: brightness(0.96);
+  }
+
+  .cities-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin-top: -1.5rem;
+  }
+
+  .cities-stat {
+    border: 1px solid var(--color-border);
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius, 16px);
+    padding: 1rem 1.2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .cities-stat .stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+  }
+
+  .cities-stat:nth-child(1) .stat-icon { background: light-dark(#eef4ff, #1a2540); color: var(--color-primary); }
+  .cities-stat:nth-child(2) .stat-icon { background: light-dark(#f3eeff, #241a40); color: #7c3aed; }
+  .cities-stat:nth-child(3) .stat-icon { background: light-dark(#eaf6ef, #153a24); color: #16a34a; }
+
+  .cities-stat .stat-text strong {
+    display: block;
+    font-size: 1.7rem;
+    line-height: 1;
+    margin-bottom: 0.15rem;
+  }
+
+  .cities-stat .stat-text span {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+  }
+
+  /* Search */
+  .cities-search-wrap {
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .cities-search {
+    position: relative;
+    max-width: 420px;
+  }
+
+  .cities-search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-secondary);
+    pointer-events: none;
+    font-size: 0.95rem;
+  }
+
+  .cities-search input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.6rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-card-bg);
+    color: var(--color-text);
+    font-size: 1rem;
+    outline: none;
+    transition: var(--transition, all 0.3s cubic-bezier(0.4,0,0.2,1));
+  }
+
+  .cities-search input::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+  }
+
+  .cities-search input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+
+  .cities-search-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--color-text-secondary);
+  }
+
+  .cities-empty {
+    display: none;
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--color-text-secondary);
+  }
+
+  .cities-empty .empty-icon {
+    font-size: 2.4rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+  }
+
+  /* Grid */
+  .city-grid-section {
+    padding-top: 2rem;
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-heading h2 {
+    margin: 0;
+    font-size: clamp(1.45rem, 3vw, 2.1rem);
+  }
+
+  .section-heading p {
+    max-width: 520px;
+    margin: 0;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+
+  .city-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+    gap: 1rem;
+  }
+
+  /* Cards */
+  .city-card {
+    display: grid;
+    gap: 0.8rem;
+    min-width: 0;
+    min-height: 190px;
+    padding: 1.15rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius, 16px);
+    background: var(--color-card-bg);
+    color: var(--color-text);
+    text-decoration: none;
+    transition: var(--transition, all 0.3s cubic-bezier(0.4,0,0.2,1));
+    animation: city-card-in 0.4s ease both;
+    animation-delay: calc(var(--i, 0) * 25ms);
+  }
+
+  @keyframes city-card-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .city-card { animation: none; }
+  }
+
+  .city-card:hover,
+  .city-card:focus-within {
+    transform: translateY(-3px);
+    border-color: var(--color-primary);
+    box-shadow: 0 8px 28px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  }
+
+  .city-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .city-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    background: light-dark(#eef4ff, #1a2540);
+    color: var(--color-primary);
+  }
+
+  .city-card-head-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .city-card h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Today badge */
+  .city-today-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 26px;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 750;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .city-today-badge.has-today {
+    background: light-dark(#dcfce7, #14532d);
+    color: light-dark(#16a34a, #4ade80);
+  }
+
+  .city-today-badge.no-today {
+    background: light-dark(#f3f4f6, #262830);
+    color: var(--color-text-secondary);
+  }
+
+  .city-card p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+  }
+
+  .city-card > * {
+    min-width: 0;
+  }
+
+  .city-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-self: end;
+  }
+
+  .city-card-actions a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 38px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.88rem;
+    transition: var(--transition, all 0.3s cubic-bezier(0.4,0,0.2,1));
+  }
+
+  .city-card-actions a:hover,
+  .city-card-actions a:focus {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  /* How-to */
+  .city-system {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .city-system h2 {
+    margin-top: 0;
+  }
+
+  .city-system ol {
+    display: grid;
+    gap: 0.75rem;
+    padding-left: 1.25rem;
+    line-height: 1.7;
+  }
+
+  .city-system p {
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 720px) {
+    .cities-shell {
+      padding: 2rem 1rem;
+    }
+
+    .section-heading {
+      display: block;
+    }
+
+    .section-heading p {
+      margin-top: 0.5rem;
+    }
+
+    .cities-search {
+      max-width: 100%;
+    }
+
+    .city-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="cities-page">
+  <section class="cities-hero site-hero site-hero--wide">
+    <div class="cities-shell">
+      <div class="cities-kicker">
+        <i class="fa-solid fa-location-dot"></i>
+        {{ _('Paikalliset mielenosoitukset') }}
+      </div>
+      <h1>{{ _('Mielenosoitukset kaupungeittain') }}</h1>
+      <p>
+        {{ _('Löydä nopeasti missä kaupungeissa on mielenosoituksia, katso päivän tapahtumat ja avaa kaupunkikohtainen näkymä tuleville mielenosoituksille.') }}
+      </p>
+      <div class="cities-actions">
+        <a class="cities-button primary" href="{{ url_for('today_demos') }}">
+          <i class="fa-solid fa-calendar-day"></i>
+          {{ _('Mielenosoitukset Suomessa tänään') }}
+        </a>
+        <a class="cities-button" href="{{ url_for('demonstrations') }}">
+          <i class="fa-solid fa-list"></i>
+          {{ _('Kaikki tulevat mielenosoitukset') }}
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="cities-shell">
+    <section class="cities-summary" aria-label="{{ _('Yhteenveto') }}">
+      <div class="cities-stat">
+        <div class="stat-icon"><i class="fa-solid fa-city"></i></div>
+        <div class="stat-text">
+          <strong>{{ cities|length }}</strong>
+          <span>{{ _('kaupunkia listalla') }}</span>
+        </div>
+      </div>
+      <div class="cities-stat">
+        <div class="stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
+        <div class="stat-text">
+          <strong>{{ cities|sum(attribute='demo_count') }}</strong>
+          <span>{{ _('tulevaa mielenosoitusta kaupunkisivuilla') }}</span>
+        </div>
+      </div>
+      <div class="cities-stat">
+        <div class="stat-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div class="stat-text">
+          <strong>{{ cities|sum(attribute='today_count') }}</strong>
+          <span>{{ _('mielenosoitusta tänään') }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="city-grid-section">
+      <div class="section-heading">
+        <h2>{{ _('Kaupunkisivut') }}</h2>
+        <p>{{ _('Jokaisesta kaupungista löytyy oma päivänäkymä sekä laajempi lista tulevista mielenosoituksista.') }}</p>
+      </div>
+
+      <div class="cities-search-wrap">
+        <div class="cities-search">
+          <i class="fa-solid fa-magnifying-glass cities-search-icon" aria-hidden="true"></i>
+          <input
+            type="search"
+            id="city-search-input"
+            placeholder="{{ _('Etsi kaupunki\u2026') }}"
+            aria-label="{{ _('Etsi kaupunkia') }}"
+            autocomplete="off"
+          />
+        </div>
+        <div class="cities-search-meta">
+          <span id="city-search-count"></span>
+        </div>
+      </div>
+
+      <div class="city-grid" id="city-grid" aria-label="{{ _('Kaupunkilista') }}">
+        {% for city in cities %}
+        <article class="city-card" data-city-key="{{ city.key }}" style="--i: {{ loop.index0 }}">
+          <div class="city-card-head">
+            <div class="city-avatar" aria-hidden="true">{{ city.name[:2] }}</div>
+            <div class="city-card-head-text">
+              <h3 data-searchable>{{ city.name }}</h3>
+            </div>
+            <span class="city-today-badge {{ 'has-today' if city.today_count > 0 else 'no-today' }}">
+              <i class="fa-solid fa-calendar-day"></i>
+              {% if city.today_count > 0 %}
+                {{ city.today_count }} {{ _('tänään') }}
+              {% else %}
+                {{ _('Ei tänään') }}
+              {% endif %}
+            </span>
+          </div>
+          <p>
+            {{ _('Mielenosoitukset') }} {{ city.phrase }}:
+            {{ city.demo_count }} {{ _('tulevaa tapahtumaa') }}.
+          </p>
+          <div class="city-card-actions">
+            <a href="{{ url_for('today_city_demos', city=city.name|lower) }}">
+              <i class="fa-solid fa-calendar-day"></i>
+              {{ _('Tänään') }}
+            </a>
+            <a href="{{ url_for('city_demos', city=city.name|lower) }}">
+              <i class="fa-solid fa-arrow-right"></i>
+              {{ _('Kaikki') }}
+            </a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+
+      <div class="cities-empty" id="city-empty">
+        <div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <p>{{ _('Ei hakutuloksia') }}</p>
+      </div>
+    </section>
+
+    <section class="city-system">
+      <h2>{{ _('Miten kaupunki lisätään?') }}</h2>
+      <ol>
+        <li>{{ _('Etsitään kaupungista yhteyshenkilö tai paikallinen tiimi.') }}</li>
+        <li>{{ _('Kaupunki otetaan käyttöön ylläpidon kaupunkihallinnassa.') }}</li>
+        <li>{{ _('Yhteyshenkilöille annetaan kaupungin mielenosoitusten käsittelyyn tarvittavat oikeudet.') }}</li>
+      </ol>
+      <p>
+        {{ _('Jos haluat auttaa kaupungissa, jota ei vielä näy listalla, ota yhteyttä ylläpitoon ja kerro paikkakunta sekä miten haluaisit osallistua.') }}
+      </p>
+    </section>
+  </div>
+</main>
+
+<script>
+(function () {
+  var input = document.getElementById('city-search-input');
+  var grid  = document.getElementById('city-grid');
+  var count = document.getElementById('city-search-count');
+  var empty = document.getElementById('city-empty');
+  var cards = Array.prototype.slice.call(grid.querySelectorAll('.city-card'));
+  var total = cards.length;
+
+  function update() {
+    var q = input.value.toLowerCase().trim();
+    var shown = 0;
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var name = (card.querySelector('[data-searchable]') || {}).textContent || '';
+      var match = !q || name.toLowerCase().indexOf(q) !== -1;
+      card.style.display = match ? '' : 'none';
+      if (match) shown++;
+    }
+    count.textContent = shown + ' {{ _('kaupunkia')|replace("'", "\\'") }}';
+    empty.style.display = shown === 0 ? '' : 'none';
+    grid.style.display = shown === 0 ? 'none' : '';
+  }
+
+  input.addEventListener('input', update);
+  update();
+})();
+</script>
+{% endblock %}

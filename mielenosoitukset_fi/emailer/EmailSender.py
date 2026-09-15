@@ -173,7 +173,7 @@ class EmailSender:
 
     def send_now(
         self, template_name, subject, recipients, context,
-        sender=None, attachments=None, extra_headers=None
+        sender=None, attachments=None, extra_headers=None, raise_on_error=False
     ):
         """Send email immediately without queueing"""
         template = self._env.get_template(template_name)
@@ -188,6 +188,10 @@ class EmailSender:
             extra_headers=extra_headers,
             instance_id=self._instance_id,
         )
+
+        if raise_on_error:
+            return self.send_email(email_job, raise_on_error=True)
+
         retry_attempts = 3
 
         def attempt_send(attempt):

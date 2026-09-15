@@ -1,95 +1,102 @@
-<!DOCTYPE html>
-<html lang="fi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hallintapaneelin käyttöohje</title>
+{% extends 'manual_base.html' %}
 
-  <!-- Bootstrap 5 & FontAwesome -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+{% block content %}
+<div class="manual-breadcrumb">
+  <i class="fa-solid fa-house me-1"></i> Ohje / Etusivu
+</div>
 
-  <style>
-    body { background-color: #f8f9fa; color: #212529; }
-    .manual-header { 
-      background-color: #0d6efd; color: #fff; padding: 2rem 1rem; border-radius: 0 0 12px 12px; text-align: center; 
-    }
-    .manual-header h1 { margin: 0; font-weight: 700; }
-    .manual-warning { margin: 1rem 0; padding: 1rem; border-radius: 8px; background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
-    .manual-nav { margin: 2rem 0; }
-    .manual-nav .list-group-item { border: none; border-radius: 8px; margin-bottom: 0.5rem; transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
-    .manual-nav .list-group-item:hover { transform: translateX(5px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); background-color: #e9ecef; }
-    .manual-section { margin-bottom: 3rem; }
-    .manual-section h2 { font-size: 1.8rem; margin-bottom: 1rem; border-bottom: 2px solid #0d6efd; padding-bottom: 0.3rem; }
-    .manual-footer { text-align: center; padding: 2rem 1rem; color: #6c757d; border-top: 1px solid #dee2e6; }
-    .page-link { cursor: pointer; }
-  </style>
-</head>
-<body>
+<section class="manual-section">
+  <h2>Tervetuloa ohjeeseen</h2>
+  <p>
+    Tämä käyttöohje auttaa sinua käyttämään hallintapaneelia: mielenosoitusten, käyttäjien,
+    organisaatioiden, tilastojen, tietoturvan ja ylläpidon keskeisiin toimintoihin.
+  </p>
+</section>
 
-  <!-- Header -->
-  <header class="manual-header">
-    <h1>Hallintapaneelin käyttöohje</h1>
-    <p>Tämä opas on tarkoitettu hallintapaneelin käyttäjille.</p>
-    <div class="manual-warning">
-      ⚠️ Huomio: Käyttöohje on tällä hetkellä rakenteilla. Sisältöä päivitetään jatkuvasti.
-    </div>
-  </header>
-
-  <div class="container mt-4">
-
-    <!-- Navigation -->
-    <div class="manual-nav">
-      <div class="list-group">
-        <a href="{{ url_for('admin.manual_page', page='dashboard') }}" class="list-group-item list-group-item-action">
-          <i class="fa-solid fa-tachometer-alt me-2"></i> Hallintapaneeli (Dashboard)
-        </a>
-        <a href="{{ url_for('admin.manual_page', page='users') }}" class="list-group-item list-group-item-action">
-          <i class="fa-solid fa-users me-2"></i> Käyttäjien hallinta
-        </a>
-        <a href="{{ url_for('admin.manual_page', page='stats') }}" class="list-group-item list-group-item-action">
-          <i class="fa-solid fa-chart-line me-2"></i> Tilastot & raportit
-        </a>
-        <a href="{{ url_for('admin.manual_page', page='security') }}" class="list-group-item list-group-item-action">
-          <i class="fa-solid fa-lock me-2"></i> Tietoturva & oikeudet
-        </a>
-        <a href="{{ url_for('admin.manual_page', page='support') }}" class="list-group-item list-group-item-action">
-          <i class="fa-solid fa-tools me-2"></i> Ylläpito & tuki
-        </a>
-        <a href="{{ url_for('admin.manual_page', page='faq') }}" class="list-group-item list-group-item-action">
-          <i class="fa-solid fa-question-circle me-2"></i> FAQ / Usein kysytyt kysymykset
-        </a>
+<section class="manual-section">
+  <h2>Sisältö</h2>
+  <div class="row g-3">
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fa-solid fa-tachometer-alt me-2"></i>Hallintapaneeli</h5>
+          <p class="card-text">Yleiskatsaus dashboardista ja sen toiminnoista.</p>
+          <a href="{{ url_for('admin.manual_page', page='dashboard') }}" class="btn btn-outline-primary">Lue <i class="fa-solid fa-arrow-right ms-1"></i></a>
+        </div>
       </div>
     </div>
-
-    <!-- Intro Section -->
-    <section class="manual-section">
-      <h2>Tervetuloa</h2>
-      <p>Tämä hallintapaneelin käyttöohje on suunniteltu auttamaan käyttäjiä navigoimaan järjestelmässä, hallitsemaan käyttäjiä, tarkastelemaan tilastoja ja ylläpitämään tietoturvaa. Käyttöohje sisältää useita sivuja ja osioita, jotka kattavat kaikki tärkeät hallintapaneelin toiminnot.</p>
-      <p>Jokainen osio sisältää kuvauksia, esimerkkejä ja vinkkejä tehokkaaseen käyttöön.</p>
-    </section>
-
-    <!-- Pagination / Pages Overview -->
-    <section class="manual-section">
-      <h2>Käyttöohjeen sivut</h2>
-      <p>Alla on linkit eri käyttöohjeen sivuille:</p>
-      <ul>
-        <li><a href="{{ url_for('admin.manual_page', page='dashboard') }}"><i class="fa-solid fa-tachometer-alt me-1"></i> Hallintapaneeli (Dashboard)</a></li>
-        <li><a href="{{ url_for('admin.manual_page', page='users') }}"><i class="fa-solid fa-users me-1"></i> Käyttäjien hallinta</a></li>
-        <li><a href="{{ url_for('admin.manual_page', page='stats') }}"><i class="fa-solid fa-chart-line me-1"></i> Tilastot & raportit</a></li>
-        <li><a href="{{ url_for('admin.manual_page', page='security') }}"><i class="fa-solid fa-lock me-1"></i> Tietoturva & oikeudet</a></li>
-        <li><a href="{{ url_for('admin.manual_page', page='support') }}"><i class="fa-solid fa-tools me-1"></i> Ylläpito & tuki</a></li>
-        <li><a href="{{ url_for('admin.manual_page', page='faq') }}"><i class="fa-solid fa-question-circle me-1"></i> FAQ / Usein kysytyt kysymykset</a></li>
-      </ul>
-      <p>Kaikki sivut ovat tällä hetkellä rakenteilla, mutta perusnavigointi on jo käytettävissä.</p>
-    </section>
-
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fa-solid fa-flag me-2"></i>Mielenosoitukset</h5>
+          <p class="card-text">Listaus, hyväksyminen, muokkaus ja taikamerkkilinkit.</p>
+          <a href="{{ url_for('admin.manual_page', page='demos') }}" class="btn btn-outline-primary">Lue <i class="fa-solid fa-arrow-right ms-1"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fa-solid fa-repeat me-2"></i>Toistuvat mielenosoitukset</h5>
+          <p class="card-text">Toistuvien mielenosoitusten ja massatoimintojen hallinta.</p>
+          <a href="{{ url_for('admin.manual_page', page='recurring') }}" class="btn btn-outline-primary">Lue <i class="fa-solid fa-arrow-right ms-1"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fa-solid fa-building me-2"></i>Organisaatiot</h5>
+          <p class="card-text">Organisaatioiden, jäsenten ja kutsujen hallinta.</p>
+          <a href="{{ url_for('admin.manual_page', page='organizations') }}" class="btn btn-outline-primary">Lue <i class="fa-solid fa-arrow-right ms-1"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fa-solid fa-users me-2"></i>Käyttäjät</h5>
+          <p class="card-text">Käyttäjien lisääminen, muokkaus, roolit ja oikeudet.</p>
+          <a href="{{ url_for('admin.manual_page', page='users') }}" class="btn btn-outline-primary">Lue <i class="fa-solid fa-arrow-right ms-1"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fa-solid fa-chart-line me-2"></i>Tilastot &amp; analytiikka</h5>
+          <p class="card-text">Tilastot, analytiikka ja reaaliaikainen seuranta.</p>
+          <a href="{{ url_for('admin.manual_page', page='stats') }}" class="btn btn-outline-primary">Lue <i class="fa-solid fa-arrow-right ms-1"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fa-solid fa-lock me-2"></i>Tietoturva &amp; oikeudet</h5>
+          <p class="card-text">Roolimalli, turvaluokitus, magic linkit ja lokit.</p>
+          <a href="{{ url_for('admin.manual_page', page='security') }}" class="btn btn-outline-primary">Lue <i class="fa-solid fa-arrow-right ms-1"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fa-solid fa-tools me-2"></i>Ylläpito &amp; tuki</h5>
+          <p class="card-text">Lokit, taustatehtävät, järjestelmän tila ja kehittäjät.</p>
+          <a href="{{ url_for('admin.manual_page', page='support') }}" class="btn btn-outline-primary">Lue <i class="fa-solid fa-arrow-right ms-1"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fa-solid fa-question-circle me-2"></i>FAQ</h5>
+          <p class="card-text">Vastauksia yleisimpiin kysymyksiin.</p>
+          <a href="{{ url_for('admin.manual_page', page='faq') }}" class="btn btn-outline-primary">Lue <i class="fa-solid fa-arrow-right ms-1"></i></a>
+        </div>
+      </div>
+    </div>
   </div>
-
-  <footer class="manual-footer">
-    &copy; 2026 Hallintapaneeli. Kaikki oikeudet pidätetään.
-  </footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</section>
+{% endblock %}

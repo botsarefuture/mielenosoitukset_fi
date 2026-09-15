@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}Palvelun tila — Mielenosoitukset.fi{% endblock %}
+{% block og_title %}Palvelun tila — Mielenosoitukset.fi{% endblock %}
+{% block og_description %}Mielenosoitukset.fi-palvelun tila ja saatavuus.{% endblock %}
+
+{% block styles %}
+<style>
+:root {
+  --color-bg: light-dark(#f8fafc, #0f1419);
+  --color-card-bg: light-dark(#ffffff, #1a1d23);
+  --color-text: light-dark(#1e293b, #e2e8f0);
+  --color-text-secondary: light-dark(#64748b, #94a3b8);
+  --color-border: light-dark(#e2e8f0, #374151);
+  --color-success: light-dark(#10b981, #059669);
+  --color-success-bg: light-dark(#ecfdf5, #052e16);
+  --color-danger: light-dark(#ef4444, #dc2626);
+  --color-danger-bg: light-dark(#fef2f2, #450a0a);
+  --color-warning: light-dark(#f59e0b, #d97706);
+  --color-warning-bg: light-dark(#fffbeb, #451a03);
+  --border-radius: 16px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.status-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 20px 80px;
+}
+
+.status-hero {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.status-hero h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 8px;
+}
+
+.status-hero .subtitle {
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+.status-overall {
+  border-radius: var(--border-radius);
+  padding: 24px 28px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: var(--transition);
+}
+.status-overall.ok  { background: var(--color-success-bg); color: var(--color-success); }
+.status-overall.warn { background: var(--color-warning-bg); color: var(--color-warning); }
+.status-overall.err  { background: var(--color-danger-bg); color: var(--color-danger); }
+.status-overall .icon { font-size: 1.5rem; }
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 560px) {
+  .status-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.status-card {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: var(--transition);
+}
+.status-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-dot.ok    { background: var(--color-success); box-shadow: 0 0 6px var(--color-success); }
+.status-dot.warn  { background: var(--color-warning); box-shadow: 0 0 6px var(--color-warning); }
+.status-dot.err   { background: var(--color-danger);  box-shadow: 0 0 6px var(--color-danger); }
+
+.status-card-body {
+  flex: 1;
+  min-width: 0;
+}
+.status-card-body .label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+.status-card-body .meta {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.status-footer {
+  text-align: center;
+  margin-top: 40px;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="status-page">
+  <div class="status-hero">
+    <h1>Palvelun tila</h1>
+    <p class="subtitle">Mielenosoitukset.fi — reaaliaikainen tila</p>
+  </div>
+
+  <div class="status-overall {{ 'ok' if overall_ok else 'err' }}">
+    <span class="icon">{{ '✓' if overall_ok else '✗' }}</span>
+    <span>{{ 'Kaikki palvelut toimivat' if overall_ok else 'Jokin palvelu ei vastaa' }}</span>
+  </div>
+
+  <div class="status-grid">
+    {% for svc in services %}
+    <div class="status-card">
+      <div class="status-dot {{ svc.status }}"></div>
+      <div class="status-card-body">
+        <div class="label">{{ svc.name }}</div>
+        <div class="meta">{{ svc.message }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="status-footer">
+    Päivitetty: {{ updated_at }} &middot; Viive {{ latency_ms }} ms
+  </div>
+</div>
+{% endblock %}

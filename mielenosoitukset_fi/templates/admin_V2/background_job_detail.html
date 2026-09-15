@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% macro interval_text(job) -%}
   {%- set args = job.trigger_args or {} -%}
@@ -9,32 +10,16 @@
   {{ parts|join(' ') if parts else _('Ei asetettu') }}
 {%- endmacro %}
 
-{% block styles %}
-<style>
-  .log-row details summary {
-    cursor: pointer;
-  }
-  .metadata-block {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 0.75rem;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-size: 0.85rem;
-  }
-</style>
-{% endblock %}
-
 {% block main_content %}
-<div class="container-fluid py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <a href="{{ url_for('admin.background_jobs') }}" class="text-decoration-none">
-        <i class="fa-solid fa-arrow-left-long me-2"></i>{{ _('Takaisin listaukseen') }}
-      </a>
-      <h2 class="mt-2 mb-0">{{ job.name }}</h2>
-      <p class="text-muted mb-0">{{ job.description }}</p>
-    </div>
-    <div class="text-end">
+<div class="admin-page">
+  {% call admin_page_hero(
+    job.name,
+    job.description,
+    _('Taustatyöt'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Taustatyöt'), url_for('admin.background_jobs')), (job.name, none)],
+    back_url=url_for('admin.background_jobs'),
+    back_label=_('Taustatyöt')
+  ) %}
       <span class="badge {{ 'bg-success' if job.enabled else 'bg-secondary' }}">
         {{ _('Käynnissä') if job.enabled else _('Pois käytöstä') }}
       </span>
@@ -43,8 +28,7 @@
       {% else %}
         <span class="badge bg-outline-secondary ms-1">{{ _('Manuaaliajo estetty') }}</span>
       {% endif %}
-    </div>
-  </div>
+  {% endcall %}
 
   <div class="row g-3 mb-4">
     <div class="col-lg-4">
@@ -129,15 +113,15 @@
                     <strong>{{ _('Viesti') }}:</strong> {{ run.message or _('Ei viestiä') }}
                   </div>
                   {% if run.metadata %}
-                    <details class="mt-2">
+                    <details class="admin-disclosure mt-2">
                       <summary class="small text-primary">{{ _('Näytä metadata') }}</summary>
-                      <pre class="metadata-block mt-2">{{ run.metadata | tojson(indent=2) }}</pre>
+                      <pre class="admin-code-block mt-2">{{ run.metadata | tojson(indent=2) }}</pre>
                     </details>
                   {% endif %}
                   {% if run.trace %}
-                    <details class="mt-2">
+                    <details class="admin-disclosure mt-2">
                       <summary class="small text-danger">{{ _('Näytä virheen stack trace') }}</summary>
-                      <pre class="metadata-block mt-2">{{ run.trace }}</pre>
+                      <pre class="admin-code-block mt-2">{{ run.trace }}</pre>
                     </details>
                   {% endif %}
                 </div>
@@ -224,9 +208,9 @@
                   </a>
                 </div>
               {% endif %}
-              <details class="mt-2">
+              <details class="admin-disclosure mt-2">
                 <summary class="small text-secondary">{{ _('Näytä lisätiedot') }}</summary>
-                <div class="metadata-block mt-2">{{ (change.details or {}) | tojson(indent=2) }}</div>
+                <pre class="admin-code-block mt-2">{{ (change.details or {}) | tojson(indent=2) }}</pre>
               </details>
             </div>
           {% endfor %}

@@ -1,18 +1,65 @@
 {% extends 'manual_base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-  <section class="manual-section">
-    <h2>Ylläpito & tuki</h2>
-    <div class="manual-warning">
-      ⚠️ Tämä sivu on rakenteilla. Sisältöä päivitetään pian.
-    </div>
-    <p>Täältä löydät yhteystiedot ja ohjeet järjestelmän tukipalveluihin.</p>
-    <ul>
-      <li>Helpdesk-yhteystiedot</li>
-      <li>Ongelmanratkaisuvinkkejä</li>
-      <li>Ylläpitotoimet</li>
-    </ul>
-  </section>
+<div class="manual-breadcrumb">
+  <i class="fa-solid fa-house me-1"></i> <a href="{{ url_for('admin.manual_page', page='index') }}">Ohje</a> / Ylläpito &amp; tuki
 </div>
+
+<section class="manual-section">
+  <h2><i class="fa-solid fa-tools me-2"></i>Ylläpito &amp; tuki</h2>
+  <p>
+    Ylläpito-osioon kuuluvat lokit, taustatehtävät, järjestelmän tila ja kehittäjähallinta, joita
+    tarvitaan ongelmien jäljittämiseen ja järjestelmän seurantaan.
+  </p>
+
+  <h3>Lokit ja tapahtumat</h3>
+  <p>
+    <strong>/admin/logs</strong> (<code>VIEW_LOGS</code>) näyttää admin-toiminnan lokin. Voit:
+  </p>
+  <ul>
+    <li>Selata tapahtumia useista lähteistä välilehdillä.</li>
+    <li>Suodattaa ja hakea tapahtumia.</li>
+    <li>Viedä lokit JSON-muodossa jatkokäsittelyä varten.</li>
+  </ul>
+
+  <h3>Taustatehtävät</h3>
+  <p>
+    <strong>/admin/background-jobs</strong> (<code>VIEW_BACKGROUND_JOBS</code>) näyttää käynnissä olevat
+    ja ajastetut taustatehtävät. <code>MANAGE_BACKGROUND_JOBS</code>-oikeudella voit:
+  </p>
+  <ul>
+    <li>Käynnistää tehtävän manuaalisesti.</li>
+    <li>Ottaa tehtävän käyttöön tai pois käytöstä.</li>
+    <li>Muuttaa tehtävän ajastusta ja tarkastella suoritushistoriaa.</li>
+  </ul>
+
+  <h3>Järjestelmän tila</h3>
+  <p>
+    <strong>/admin/status</strong> näyttää infrastruktuurin kunnon (MongoDB, Redis, S3), palvelimen
+    tilastot, kokoelmat ja virheet. Hyödyllinen ongelmatilanteiden selvittämiseen.
+  </p>
+
+  <h3>Kehittäjähallinta</h3>
+  <p>
+    <strong>/admin/developer</strong> (<code>EDIT_USER</code>) käsittelee:
+  </p>
+  <ul>
+    <li>Hakemukset API-avaimille ja laajennetuille oikeuksille (scope).</li>
+    <li>Käyttäjien kehittäjäsovellusten tarkastelun ja API-pääsyn hyväksymisen/hylkäämisen.</li>
+  </ul>
+
+  <h3>Muut hallintaosiot</h3>
+  <ul>
+    <li><strong>Kaupungit</strong> (<code>MANAGE_CITIES</code>, /admin/cities): ota kaupunkeja käyttöön/pois ja katso demo- ja käyttöoikeusmäärät.</li>
+    <li><strong>Hallinto/governance</strong>: turvaluokitukset, audit-loki ja kaupunkien yleiskatsaus.</li>
+    <li><strong>Tapaukset</strong> (<code>LIST_CASES</code>, /admin/case): käsittelyjonot uusille mielenosoituksille, virheilmoituksille, organisaation muutospyynnöille ja peruutuspyynnöille, mukaan lukien eskalointi ylemmälle tasolle.</li>
+    <li><strong>Media</strong>: kuvien lataus S3-tallennustilaan.</li>
+  </ul>
+
+  <h3>Kampanjat</h3>
+  <p>
+    <strong>/admin/kampanja</strong> (<code>KAMPANJA</code>) hallinnoi vapaaehtoisia: listaus, päivitys,
+    vahvistus ja CSV- vienti.
+  </p>
+</section>
 {% endblock %}

@@ -49,6 +49,7 @@ RESERVED_USERNAMES: Final = frozenset(
         "www",
     }
 )
+RESERVED_IDENTITY_NAMES: Final = frozenset({"admin", "administrator"})
 
 
 def normalize_username(username: object) -> str:
@@ -56,6 +57,23 @@ def normalize_username(username: object) -> str:
     if not isinstance(username, str):
         return ""
     return username.strip().casefold()
+
+
+def normalize_email(email: object) -> str:
+    """Return the canonical lowercase form used to store and compare emails."""
+    if not isinstance(email, str):
+        return ""
+    return email.strip().casefold()
+
+
+def is_reserved_identity_name(value: object) -> bool:
+    """Return whether a user-facing identity impersonates an admin account."""
+    if not isinstance(value, str):
+        return False
+    normalized = value.strip().casefold()
+    if normalized.startswith("@"):
+        normalized = normalized[1:].strip()
+    return normalized in RESERVED_IDENTITY_NAMES
 
 
 def validate_username(username: object) -> tuple[bool, str]:

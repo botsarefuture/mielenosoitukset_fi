@@ -1,0 +1,250 @@
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/translations.css', v='20260914-admin-ui-52') }}">{% endblock %}
+
+{% block main_content %}
+
+
+<section class="admin-page admin-workspace translation-editor accessibility-mode" id="translation-editor">
+  {% call admin_page_hero(
+    _('Käännökset') ~ ': ' ~ (demo.title or _('Nimetön mielenosoitus')),
+    _('Tee käännösehdotus valitulle kielelle. Ehdotus ei julkaise sisältöä suoraan, vaan jää tarkistettavaksi.'),
+    _('Käännöstyötila'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Demojen käännökset'), url_for('admin_demo.demo_translation_dashboard')), (demo.title or _('Nimetön mielenosoitus'), none)],
+    back_url=url_for('admin_demo.demo_translation_dashboard'),
+    back_label=_('Demojen käännökset'),
+  ) %}
+      {% if is_recurring_source and (current_user.role in ['admin', 'global_admin'] or current_user.has_permission('EDIT_RECURRING_DEMO')) %}
+      <a class="admin-page-hero__action" href="{{ url_for('admin_recu_demo.edit_recu_demo', demo_id=demo._id) }}">{{ _('Avaa toistuvan demon editori') }}</a>
+      {% elif current_user.role in ['admin', 'global_admin'] or current_user.has_permission('EDIT_DEMO') %}
+      <a class="admin-page-hero__action" href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">{{ _('Avaa demo-editori') }}</a>
+      {% endif %}
+  {% endcall %}
+
+  <label class="admin-panel-inset admin-check-row translation-accessibility-control" for="translation-accessibility-mode">
+    <input class="form-check-input" id="translation-accessibility-mode" type="checkbox" role="switch"
+           data-enabled-message="{{ _('Helppokäyttötila käytössä.') }}"
+           data-disabled-message="{{ _('Tiivis näkymä käytössä.') }}" checked>
+    <span>
+      <strong class="d-block">{{ _('Helppokäyttötila') }}</strong>
+      <span class="text-muted">{{ _('Suuremmat painikkeet, väljempi näkymä ja automaattinen opastus. Valinta muistetaan tällä laitteella.') }}</span>
+    </span>
+  </label>
+  <p class="visually-hidden" id="accessibility-mode-status" aria-live="polite"></p>
+
+  <section class="admin-section-card">
+    <header class="admin-section-card__header">
+      <div class="admin-section-card__title"><h2>{{ _('Käännöstilanne') }}</h2></div>
+    </header>
+    <div class="admin-section-card__body">
+    <div class="translation-status-grid">
+      {% for row in translation_rows %}
+      <article class="admin-panel-inset translation-status-card">
+        <div class="fw-bold mb-2">{{ row.label }}</div>
+        {% if row.proposal_status == 'pending' %}
+        <span class="admin-status-badge admin-status-badge--warning">{{ _('Odottaa tarkistusta') }}</span>
+        {% elif row.approved %}
+        <span class="admin-status-badge admin-status-badge--success">{{ _('Julkaistu') }}</span>
+        {% elif row.proposal_status == 'rejected' %}
+        <span class="admin-status-badge admin-status-badge--danger">{{ _('Hylätty') }}</span>
+        {% else %}
+        <span class="admin-status-badge">{{ _('Ei käännöstä') }}</span>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    </div>
+  </section>
+
+  <section class="admin-section-card">
+    <header class="admin-section-card__header">
+      <div class="admin-section-card__title">
+        <i class="fas fa-language" aria-hidden="true"></i>
+        <div>
+          <p class="translation-eyebrow mb-1">{{ _('Käännösehdotus') }}</p>
+          <h2>{{ _('Tee käännös kolmessa helpossa vaiheessa') }}</h2>
+        </div>
+      </div>
+    </header>
+    <div class="admin-section-card__body">
+    <p class="text-muted mb-4 translation-editor-summary">{{ _('Valitse kieli, kirjoita käännös ja lähetä se tarkistettavaksi.') }}</p>
+    {% if translation_locales %}
+    <div class="translation-step-heading mb-3">
+      <span class="translation-step-number" aria-hidden="true">1</span>
+      <div>
+        <h3 class="h4 mb-1">{{ _('Valitse käännöksen kieli') }}</h3>
+        <p class="text-muted mb-0">{{ _('Valittu kieli näkyy korostettuna.') }}</p>
+      </div>
+    </div>
+    <nav class="translation-language-tabs mb-4" aria-label="{{ _('Kohdekieli') }}">
+      {% for locale in translation_locales %}
+      <a class="translation-language-tab{% if locale == selected_language %} is-active{% endif %}"
+         href="{{ url_for('admin_demo.edit_demo_translations', demo_id=demo._id, language=locale) }}"
+         {% if locale == selected_language %}aria-current="page"{% endif %}>
+        {{ translation_language_names.get(locale, locale) }}
+      </a>
+      {% endfor %}
+    </nav>
+
+    {% if can_translate_demos and selected_language %}
+    <div class="admin-panel-inset translation-direction mb-4" aria-label="{{ _('Käännössuunta') }}">
+      <div class="translation-direction-language">
+        <span class="text-muted d-block">{{ _('Mistä kielestä') }}</span>
+        <strong class="h4 mb-0">{{ translation_language_names.get(source_language, source_language) }}</strong>
+      </div>
+      <span class="translation-direction-arrow" aria-hidden="true"><i class="fas fa-arrow-right"></i></span>
+      <div class="translation-direction-language">
+        <span class="text-muted d-block">{{ _('Mille kielelle') }}</span>
+        <strong class="h4 mb-0">{{ translation_language_names.get(selected_language, selected_language) }}</strong>
+      </div>
+    </div>
+
+    <aside class="admin-panel-inset markdown-guide mb-4" id="markdown-guide" aria-labelledby="markdown-guide-title">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <div>
+          <h3 class="h4 mb-1" id="markdown-guide-title">{{ _('Näin muotoilet tekstiä') }}</h3>
+          <p class="text-muted mb-0">{{ _('Markdown on helppo tapa tehdä tekstistä selkeää. Katso kolme esimerkkiä.') }}</p>
+        </div>
+        <button class="btn btn-outline-primary btn-lg" id="replay-markdown-guide" type="button">
+          <i class="fas fa-rotate-right me-1" aria-hidden="true"></i>{{ _('Näytä opastus uudelleen') }}
+        </button>
+      </div>
+      <div class="markdown-guide-steps" id="markdown-guide-steps">
+        <div class="markdown-guide-step" data-guide-step>
+          <strong>{{ _('Lihavoi tärkeä asia') }}</strong>
+          <code class="markdown-example">**{{ _('tärkeä teksti') }}**</code>
+        </div>
+        <div class="markdown-guide-step" data-guide-step>
+          <strong>{{ _('Tee selkeä lista') }}</strong>
+          <code class="markdown-example">- {{ _('ensimmäinen asia') }}<br>- {{ _('toinen asia') }}</code>
+        </div>
+        <div class="markdown-guide-step" data-guide-step>
+          <strong>{{ _('Lisää väliotsikko') }}</strong>
+          <code class="markdown-example">## {{ _('Ohjelma') }}</code>
+        </div>
+      </div>
+      <p class="visually-hidden" id="markdown-guide-status" aria-live="polite"></p>
+    </aside>
+
+    <form method="POST" class="admin-form admin-section-card translation-step mb-4">
+      <input type="hidden" name="language" value="{{ selected_language }}">
+      {% if deepl_prefill_active and deepl_suggestion %}
+      <input type="hidden" name="suggestion_provider" value="{{ (deepl_suggestion._meta or {}).get('provider', 'deepl') }}">
+      <input type="hidden" name="suggestion_source_hash" value="{{ deepl_suggestion_payload.get('source_hash', '') }}">
+      <input type="hidden" name="suggestion_auto_generated" value="true">
+      {% endif %}
+      <div class="admin-section-card__header translation-step-heading">
+        <span class="translation-step-number" aria-hidden="true">2</span>
+        <div>
+          <h3 class="h4 mb-1">{{ _('Kirjoita käännös') }}</h3>
+          <p class="text-muted mb-0">{{ _('Esikatselu näyttää heti, miltä kuvaus näyttää valmiina.') }}</p>
+        </div>
+      </div>
+      <div class="admin-section-card__body">
+      <div class="translation-pair">
+        <div class="admin-panel-inset translation-pair-column translation-pair-source">
+          <span class="translation-column-language">{{ translation_language_names.get(source_language, source_language) }} · {{ _('Lähde') }}</span>
+          <label class="form-label">{{ _('Otsikko') }}</label>
+          <div class="translation-source-field">{{ demo.title or '' }}</div>
+        </div>
+        <div class="admin-panel-inset admin-field translation-pair-column translation-pair-target">
+          <span class="translation-column-language">{{ translation_language_names.get(selected_language, selected_language) }} · {{ _('Käännös') }}</span>
+          <label for="translated_title" class="form-label">{{ _('Otsikko') }}</label>
+          <input id="translated_title" name="translated_title" class="form-control form-control-lg" value="{{ form_seed_translation.title or '' }}">
+        </div>
+      </div>
+
+      <div class="translation-pair">
+        <div class="admin-panel-inset translation-pair-column translation-pair-source">
+          <span class="translation-column-language">{{ translation_language_names.get(source_language, source_language) }} · {{ _('Lähde') }}</span>
+          <label class="form-label">{{ _('Kuvaus') }}</label>
+          <div class="translation-source-field translation-source-field--description">{{ source_description_markdown }}</div>
+        </div>
+        <div class="admin-panel-inset admin-field translation-pair-column translation-pair-target">
+          <span class="translation-column-language">{{ translation_language_names.get(selected_language, selected_language) }} · {{ _('Käännös') }}</span>
+          <label for="translated_description" class="form-label">{{ _('Kuvaus') }}</label>
+          <div class="markdown-toolbar" aria-label="{{ _('Tekstin muotoilupainikkeet') }}">
+            <button class="btn btn-outline-secondary" type="button" data-markdown-before="**" data-markdown-after="**" data-markdown-placeholder="{{ _('teksti') }}">{{ _('Lihavoi') }}</button>
+            <button class="btn btn-outline-secondary" type="button" data-markdown-line="## " data-markdown-placeholder="{{ _('teksti') }}">{{ _('Väliotsikko') }}</button>
+            <button class="btn btn-outline-secondary" type="button" data-markdown-line="- " data-markdown-placeholder="{{ _('teksti') }}">{{ _('Lista') }}</button>
+            <button class="btn btn-outline-secondary" type="button" data-markdown-before="[" data-markdown-after="](https://)" data-markdown-placeholder="{{ _('teksti') }}">{{ _('Linkki') }}</button>
+          </div>
+          <textarea id="translated_description" name="translated_description" class="form-control" rows="12" aria-describedby="translated-description-help">{{ form_seed_description_markdown }}</textarea>
+          <p class="text-muted mt-2" id="translated-description-help">{{ _('Voit kirjoittaa tavallista tekstiä tai käyttää yllä olevia muotoilupainikkeita.') }}</p>
+          <div class="form-label" id="translation-preview-label">{{ _('Valmiin kuvauksen esikatselu') }}</div>
+          <div class="translation-preview" id="translation-description-preview" data-empty-message="{{ _('Esikatselu ilmestyy tähän kirjoittaessasi.') }}" aria-labelledby="translation-preview-label" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="translation-pair">
+        <div class="admin-panel-inset translation-pair-column translation-pair-source">
+          <span class="translation-column-language">{{ translation_language_names.get(source_language, source_language) }} · {{ _('Lähde') }}</span>
+          <label class="form-label">{{ _('Tunnisteet') }}</label>
+          <div class="translation-source-field">{{ (demo.tags or [])|join(', ') }}</div>
+        </div>
+        <div class="admin-panel-inset admin-field translation-pair-column translation-pair-target">
+          <span class="translation-column-language">{{ translation_language_names.get(selected_language, selected_language) }} · {{ _('Käännös') }}</span>
+          <label for="translated_tags" class="form-label">{{ _('Tunnisteet') }}</label>
+          <input id="translated_tags" name="translated_tags" class="form-control form-control-lg" value="{{ (form_seed_translation.tags or [])|join(', ') }}">
+          <small class="text-muted">{{ _('Erottele tunnisteet pilkulla.') }}</small>
+        </div>
+      </div>
+      <div class="translation-step-heading mt-4 mb-3">
+        <span class="translation-step-number" aria-hidden="true">3</span>
+        <div>
+          <h3 class="h4 mb-1">{{ _('Lähetä käännös tarkistettavaksi') }}</h3>
+          <p class="text-muted mb-0">{{ _('Käännös ei julkaistu heti. Tarkistaja hyväksyy sen ensin.') }}</p>
+        </div>
+      </div>
+      </div>
+      <div class="admin-sticky-actions">
+        <button class="btn btn-primary" type="submit">{{ _('Lähetä tarkistettavaksi') }}</button>
+      </div>
+    </form>
+    {% endif %}
+
+    {% if translation_proposal %}
+    <section class="admin-section-card">
+      <header class="admin-section-card__header"><div class="admin-section-card__title"><h2>{{ _('Nykyinen ehdotus') }}</h2></div></header>
+      <div class="admin-section-card__body">
+      <p class="mb-2"><strong>{{ _('Tila') }}:</strong> {{ translation_proposal.status or _('luonnos') }}</p>
+      {% if translation_proposal.submitted_by_name %}
+      <p class="mb-2"><strong>{{ _('Lähettäjä') }}:</strong> {{ translation_proposal.submitted_by_name }}</p>
+      {% endif %}
+      {% if translation_proposal.review_notes %}
+      <p class="mb-2"><strong>{{ _('Tarkistusmuistiinpanot') }}:</strong> {{ translation_proposal.review_notes }}</p>
+      {% endif %}
+      {% if translation_proposal._meta %}
+      <p class="mb-2"><strong>{{ _('Ehdotuksen alkuperä') }}:</strong> {{ translation_proposal._meta.provider or _('manuaalinen') }}</p>
+      {% endif %}
+
+      {% if can_review_demo_translations and translation_proposal.status == 'pending' %}
+      <form method="POST" action="{{ url_for('admin_demo.approve_demo_translation', demo_id=demo._id, language=selected_language) }}" class="admin-form mb-3">
+        <div class="admin-field">
+        <label for="approve_notes" class="form-label">{{ _('Muistiinpanot hyväksynnälle') }}</label>
+        <textarea id="approve_notes" name="review_notes" class="form-control mb-2" rows="3"></textarea>
+        </div>
+        <button class="btn btn-success" type="submit">{{ _('Hyväksy käännös') }}</button>
+      </form>
+
+      <form method="POST" action="{{ url_for('admin_demo.reject_demo_translation', demo_id=demo._id, language=selected_language) }}" class="admin-form">
+        <div class="admin-field">
+        <label for="reject_notes" class="form-label">{{ _('Muistiinpanot hylkäykselle') }} <span class="admin-required" aria-hidden="true">*</span></label>
+        <textarea id="reject_notes" name="review_notes" class="form-control mb-2" rows="3" required></textarea>
+        </div>
+        <button class="btn btn-danger" type="submit">{{ _('Hylkää ehdotus') }}</button>
+      </form>
+      {% endif %}
+      </div>
+    </section>
+    {% endif %}
+    {% else %}
+    <div class="alert alert-info mb-0">{{ _('Tälle mielenosoitukselle ei ole konfiguroitu erillisiä kohdekieliä.') }}</div>
+    {% endif %}
+    </div>
+  </section>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{{ url_for('static', filename='js/translation-editor.js') }}"></script>{% endblock %}

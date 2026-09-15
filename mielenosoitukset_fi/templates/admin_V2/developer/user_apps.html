@@ -1,10 +1,17 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
-<div class="container-fluid">
-  <h2 class="mb-4">Käyttäjän sovellukset</h2>
-  <p class="text-muted">Käyttäjä: {{ user.username or 'Tuntematon' }} ({{ user.email or '' }})</p>
-  <div class="table-responsive">
+<div class="admin-page">
+  {{ admin_page_hero(
+    _('Käyttäjän sovellukset'),
+    _('Käyttäjä: %(username)s (%(email)s)', username=(user.username or _('Tuntematon')), email=(user.email or '–')),
+    _('Kehittäjähallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Kehittäjähallinta'), url_for('admin_dev.list_requests')), (_('Käyttäjän sovellukset'), none)],
+    back_url=url_for('admin_dev.list_requests'),
+    back_label=_('Kehittäjähallinta')
+  ) }}
+  <div class="table-responsive admin-data-view admin-workspace-table">
     <table class="table table-striped align-middle">
       <thead>
         <tr>
@@ -25,7 +32,7 @@
           <td>{{ app.created_at or '' }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="text-center text-muted">Ei sovelluksia.</td></tr>
+        <tr><td colspan="5" class="admin-empty-state">Ei sovelluksia.</td></tr>
         {% endfor %}
       </tbody>
     </table>

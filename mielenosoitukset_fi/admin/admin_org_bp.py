@@ -115,6 +115,79 @@ from mielenosoitukset_fi.utils.logger import logger
 email_sender = EmailSender()
 
 
+def _has_explicit_organization_permission(user, permission: str, org_id=None) -> bool:
+    """Check organization permission without city-admin implied grants."""
+    if user.has_full_permissions():
+        return True
+    if permission in getattr(user, "global_permissions", []):
+        return True
+    if org_id is None:
+        return any(permission in membership.permissions for membership in user.memberships)
+    membership = user.membership_for(org_id)
+    return bool(membership and permission in membership.permissions)
+
+
+def _is_limited_city_admin(user) -> bool:
+    if user.has_full_permissions() or getattr(user, "role", None) == "admin":
+        return False
+    return user.has_city_admin_scope_grants()
+
+
+def _can_verify_organization(user, org_id) -> bool:
+    if _is_limited_city_admin(user):
+        return False
+    return _has_explicit_organization_permission(user, "EDIT_ORGANIZATION", org_id)
+
+
+def _can_edit_organization(user, organization) -> bool:
+    """City-admins may not edit verified organizations on implied grants.
+
+    Global admins and org members/owners with explicit EDIT_ORGANIZATION
+    permissions (via membership or global_permissions) can still edit
+    verified organizations.
+    """
+    if not _is_limited_city_admin(user):
+        return True
+    verified = (
+        organization.get("verified", False)
+        if isinstance(organization, dict)
+        else getattr(organization, "verified", False)
+    )
+    if not verified:
+        return True
+    org_id = (
+        organization.get("_id")
+        if isinstance(organization, dict)
+        else getattr(organization, "_id", None)
+    )
+    return _has_explicit_organization_permission(user, "EDIT_ORGANIZATION", org_id)
+
+
+def _can_invite_to_organization(user, organization) -> bool:
+    """Disallow city-admin-derived invitations to verified organizations."""
+    verified = (
+        organization.get("verified", False)
+        if isinstance(organization, dict)
+        else getattr(organization, "verified", False)
+    )
+    org_id = (
+        organization.get("_id")
+        if isinstance(organization, dict)
+        else getattr(organization, "_id", None)
+    )
+    if not user.has_permission("INVITE_TO_ORGANIZATION", org_id):
+        return False
+    if not verified:
+        return True
+    if _is_limited_city_admin(user):
+        return False
+    return _has_explicit_organization_permission(
+        user,
+        "INVITE_TO_ORGANIZATION",
+        org_id,
+    )
+
+
 
 
 # Organization control panel
@@ -124,11 +197,9 @@ email_sender = EmailSender()
 @permission_required("LIST_ORGANIZATIONS")
 def organization_control():
     """Render the organization control panel with a list of organizations."""
-    org_limiter = (
-        [ObjectId(org) for org in current_user.org_ids()]
-        if not current_user.global_admin
-        else None
-    )
+    org_limiter = None
+    if not current_user.has_full_permissions() and not current_user.has_city_admin_scope_grants():
+        org_limiter = [ObjectId(org) for org in current_user.org_ids()]
 
     search_query = request.args.get("search", "")
     page = _parse_positive_int_arg("page", 1)
@@ -196,9 +267,16 @@ def organization_control():
         per_page=per_page,
         total=total_count,
     )
+    editable_org_ids = {
+        str(org["_id"])
+        for org in organizations
+        if current_user.has_permission("EDIT_ORGANIZATION", org["_id"])
+        and _can_edit_organization(current_user, org)
+    }
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}organizations/dashboard.html",
         organizations=organizations,
+        editable_org_ids=editable_org_ids,
         search_query=search_query,
         per_page=per_page,
         current_page=page,
@@ -279,10 +357,21 @@ def edit_organization(org_id):
     if not current_user.has_permission("EDIT_ORGANIZATION", org_id):
         _log_org_event("organization_edit_forbidden", org_id=org_id)
         abort(403)
-        
-    _log_org_event("organization_edit", org_id=org_id, method=request.method)
 
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    if not organization:
+        _log_org_event("organization_edit_missing", org_id=org_id)
+        abort(404)
+
+    if not _can_edit_organization(current_user, organization):
+        _log_org_event(
+            "organization_edit_forbidden",
+            org_id=org_id,
+            reason="city_admin_verified_org",
+        )
+        abort(403)
+
+    _log_org_event("organization_edit", org_id=org_id, method=request.method)
 
     if request.method == "POST":
         if update_organization(org_id):
@@ -290,7 +379,12 @@ def edit_organization(org_id):
             flash_message(_("Organisaatio päivitetty onnistuneesti."))
             return redirect(request.referrer)
 
-    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}organizations/form.html", organization=organization)
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}organizations/form.html",
+        organization=organization,
+        can_verify_organization=_can_verify_organization(current_user, org_id),
+        can_invite_members=_can_invite_to_organization(current_user, organization),
+    )
 
 
 def invite_to_organization(invitee_email, organization_id):
@@ -391,8 +485,9 @@ def update_organization(org_id):
         "email": email,
         "website": website,
         "social_media_links": social_media_links,
-        "verified": request.form.get("verified") == "on",
     }
+    if _can_verify_organization(current_user, org_id):
+        update_payload["verified"] = request.form.get("verified") == "on"
     if logo_changed:
         update_payload["logo"] = logo_value
 
@@ -691,6 +786,12 @@ def invite():
     """ """
     invitee_email = request.form.get("invitee_email")
     organization_id = request.form.get("organization_id")
+    organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
+    if not organization:
+        abort(404)
+    if not _can_invite_to_organization(current_user, organization):
+        _log_org_event("organization_invite_forbidden", organization_id=organization_id)
+        abort(403)
     logger.debug(f"Inviting {invitee_email} to organization {organization_id}")
     invite_to_organization(invitee_email, ObjectId(organization_id))
     return redirect(request.referrer or url_for("admin_org.organization_control"))
@@ -744,7 +845,9 @@ def view_organization(org_id):
         f"{_ADMIN_TEMPLATE_FOLDER}organizations/view.html",
         organization=organization,
         memberships=members,
-        invited_users=invited_users
+        invited_users=invited_users,
+        can_invite_members=_can_invite_to_organization(current_user, organization_doc),
+        can_edit_organization=_can_edit_organization(current_user, organization_doc),
     )
 
 
@@ -794,6 +897,18 @@ def delete_membership() -> Tuple[Response, int]:
         _log_org_event("membership_delete_error", reason="missing_membership_id")
         return jsonify({"error": "Membership ID puuttuu"}), 400
 
+    # --- Verify org edit rights for city admins ---
+    membership_doc = mongo.memberships.find_one({"_id": ObjectId(membership_id)})
+    if membership_doc and membership_doc.get("organization_id"):
+        org_doc = mongo.organizations.find_one({"_id": membership_doc["organization_id"]})
+        if not _can_edit_organization(current_user, org_doc or {}):
+            _log_org_event(
+                "membership_delete_error",
+                membership_id=membership_id,
+                reason="city_admin_verified_org",
+            )
+            return jsonify({"error": "Sinulla ei ole oikeutta muokata varmennettua organisaatiota."}), 403
+
     # --- Delete membership ---
     result = mongo.memberships.delete_one({"_id": ObjectId(membership_id)})
 
@@ -824,6 +939,15 @@ def review_suggestion(org_id, suggestion_id):
     if not org or not suggestion:
         flash_message("Ehdotusta tai organisaatiota ei löytynyt.", "error")
         return redirect(url_for("index"))
+
+    if not _can_edit_organization(current_user, org):
+        _log_org_event(
+            "organization_suggestion_view_error",
+            org_id=org_id,
+            suggestion_id=suggestion_id,
+            reason="city_admin_verified_org",
+        )
+        abort(403)
 
     org = Organization.from_dict(org)
 
@@ -885,6 +1009,16 @@ def apply_suggestion(org_id, suggestion_id):
         )
         flash_message("Ehdotusta ei löytynyt.", "error")
         return redirect(url_for("admin_org.review_suggestion", org_id=org_id, suggestion_id=suggestion_id))
+
+    org_doc = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    if not _can_edit_organization(current_user, org_doc or {}):
+        _log_org_event(
+            "organization_suggestion_apply_error",
+            org_id=org_id,
+            suggestion_id=suggestion_id,
+            reason="city_admin_verified_org",
+        )
+        abort(403)
 
     selected_fields = request.form.getlist("apply_fields")
     if not selected_fields:
@@ -1250,6 +1384,14 @@ def cancel_invite() -> Tuple[Response, int]:
     if not org:
         _log_org_event("organization_invite_cancel_error", reason="organization_not_found", organization_id=org_id, email=email)
         return jsonify({"status": "error", "error": "Organization not found."}), 404
+    if not _can_invite_to_organization(current_user, org) or not _can_edit_organization(current_user, org):
+        _log_org_event(
+            "organization_invite_cancel_error",
+            reason="forbidden",
+            organization_id=org_id,
+            email=email,
+        )
+        return jsonify({"status": "error", "error": "Forbidden."}), 403
 
     # --- Process invitations ---
     invitations = org.get("invitations", [])
@@ -1341,6 +1483,9 @@ def set_invite_role() -> Tuple[Response, int]:
     if not org:
         _log_org_event("organization_invite_role_error", reason="organization_not_found", organization_id=org_id, email=email)
         return jsonify({"status": "error", "error": "Organization not found."}), 404
+    if not _can_invite_to_organization(current_user, org):
+        _log_org_event("organization_invite_role_error", reason="forbidden", organization_id=org_id, email=email)
+        return jsonify({"status": "error", "error": "Forbidden."}), 403
 
     # --- Process invitations ---
     invitations = org.get("invitations", [])
@@ -1452,6 +1597,15 @@ def change_access_level() -> Tuple[Response, int]:
         )
         flash_message("Organisaatiota ei löydy.", "error")
         return jsonify({"status": "error"}), 404
+    if not _can_edit_organization(current_user, org_doc):
+        _log_org_event(
+            "organization_access_change_error",
+            reason="city_admin_verified_org",
+            organization_id=organization_id,
+            user_id=user_id,
+            role=role,
+        )
+        return jsonify({"status": "error", "error": "Forbidden."}), 403
 
     organization = Organization.from_dict(org_doc)
 

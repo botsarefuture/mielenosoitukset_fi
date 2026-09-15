@@ -29,7 +29,7 @@ jqueryScript.onload = function () {
         });
 
         overlay.on('click', function () {
-            const modals = $('.modal.active');
+            const modals = $('.legacy-admin-modal.active');
             modals.each(function () {
                 closeModal($(this));
             });
@@ -38,7 +38,7 @@ jqueryScript.onload = function () {
         closeModalButtons.each(function () {
             $(this).on('click', function () {
                 console.log('close button clicked');
-                const modal = $(this).closest('.modal');
+                const modal = $(this).closest('.legacy-admin-modal');
                 console.log(modal);
                 closeModal(modal);
             });
@@ -77,7 +77,7 @@ async function closeModal(modal) {
     }
     console.log(modal);
     modal.removeClass('active');
-    const activeModals = $('.modal.active');
+    const activeModals = $('.legacy-admin-modal.active');
     if (activeModals.length === 0) {
         $('#overlay').removeClass('active');
     }
@@ -101,7 +101,7 @@ let interval = setInterval(() => {
             });
 
             overlay.on('click', function () {
-                const modals = $('.modal.active');
+                const modals = $('.legacy-admin-modal.active');
                 modals.each(function () {
                     closeModal($(this));
                 });
@@ -119,7 +119,7 @@ let interval = setInterval(() => {
                     return;
                 }
                 modal.removeClass('active');
-                const activeModals = $('.modal.active');
+                const activeModals = $('.legacy-admin-modal.active');
                 if (activeModals.length === 0) {
                     $('#overlay').removeClass('active');
                 }
@@ -127,7 +127,7 @@ let interval = setInterval(() => {
 
             closeModalButtons.each(function () {
                 $(this).on('click', async function () {
-                    const modal = $(this).closest('.modal');
+                    const modal = $(this).closest('.legacy-admin-modal');
                     await closeModal(modal);
                 });
             });
@@ -149,7 +149,7 @@ let interval = setInterval(() => {
  */
 document.addEventListener("DOMContentLoaded", () => {
   const overlay = document.getElementById("overlay");
-  const modals = document.querySelectorAll(".modal");
+  const modals = document.querySelectorAll(".legacy-admin-modal");
   const closeButtons = document.querySelectorAll("[data-close-modal]");
 
   // Close modal function

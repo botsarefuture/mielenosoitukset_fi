@@ -1,154 +1,111 @@
 {% extends 'admin_base.html' %}
-
-{% block styles %}
-<style>
-  .analytics-container {
-    max-width: 900px;
-    margin: 2rem auto;
-    padding: 1.5rem;
-    background: var(--container_background);
-    border: 1px solid var(--border_color);
-    border-radius: 8px;
-  }
-
-  h2 {
-    margin-bottom: 1rem;
-    color: var(--primary_color);
-  }
-
-  .summary {
-    display: flex;
-    gap: 2rem;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-  }
-
-  .summary-item {
-    flex: 1 1 150px;
-    background: var(--bg_secondary);
-    padding: 1rem;
-    border-radius: 6px;
-    text-align: center;
-  }
-
-  .summary-item h3 {
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-  }
-
-  .summary-item p {
-    font-size: 1.2rem;
-    color: var(--text_muted);
-  }
-
-  .chart-container {
-    background: var(--bg_secondary);
-    padding: 1rem;
-    border-radius: 6px;
-    margin-bottom: 2rem;
-  }
-
-  /* Download buttons */
-  .dashboard-actions {
-    margin: 1rem 0 2rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-
-  .dashboard-actions button {
-    background-color: var(--primary_color);
-    color: #fff;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background-color 0.2s;
-  }
-
-  .dashboard-actions button:hover {
-    background-color: #ff6699; /* a cute hover pink */
-  }
-
-  /* Responsive */
-  @media (max-width: 600px) {
-    .summary {
-      flex-direction: column;
-    }
-    .dashboard-actions {
-      flex-direction: column;
-    }
-  }
-</style>
-{% endblock %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
-<div class="dashboard-container">
-  <h2>{{ demo.title }} — {{ _('Analytiikka') }}</h2>
+<div class="admin-page admin-analytics" id="analyticsDashboard">
+  {{ admin_page_hero(
+    demo.title ~ ' — ' ~ _('Analytiikka'),
+    _('Tarkastele mielenosoituksen katselukertoja minuutti-, päivä- ja viikkotasolla.'),
+    _('Analytiikka'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (demo.title, none)],
+    back_url=url_for('admin_demo.demo_control'),
+    back_label=_('Mielenosoitukset')
+  ) }}
 
-  <div class="summary">
-    <div class="summary-item">
-      <h3>{{ total_views }}</h3>
-      <p>{{ _('Näytöt yhteensä') }}</p>
+  <div class="admin-workspace-summary admin-analytics__summary" aria-label="{{ _('Analytiikan yhteenveto') }}">
+    <div class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-eye" aria-hidden="true"></i></span>
+      <div>
+        <strong>{{ total_views }}</strong>
+        <span>{{ _('Näytöt yhteensä') }}</span>
+      </div>
     </div>
-    <div class="summary-item">
-      <h3>{{ views_today }}</h3>
-      <p>{{ _('Näytöt tänään') }}</p>
+    <div class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i></span>
+      <div>
+        <strong>{{ views_today }}</strong>
+        <span>{{ _('Näytöt tänään') }}</span>
+      </div>
     </div>
-    <div class="summary-item">
-      <h3>{{ avg_views_per_minute }}</h3>
-      <p>{{ _('Keskimäärin näytöksiä/minuutti') }}</p>
+    <div class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i></span>
+      <div>
+        <strong>{{ avg_views_per_minute }}</strong>
+        <span>{{ _('Keskimäärin näytöksiä/minuutti') }}</span>
+      </div>
     </div>
   </div>
 
-  <div class="dashboard-actions">
-    <button onclick="downloadChart('viewsPerMinuteChart', 'views_per_minute.png')">
+  <div class="admin-row-actions admin-analytics__actions" data-export-actions>
+    <button type="button" class="btn btn-outline-primary" onclick="downloadChart('viewsPerMinuteChart', 'views_per_minute.png')">
+      <i class="fa-solid fa-download" aria-hidden="true"></i>
       {{ _('Lataa per minuutti PNG') }}
     </button>
-    <button onclick="downloadChart('viewsPerDayChart', 'views_per_day.png')">
+    <button type="button" class="btn btn-outline-primary" onclick="downloadChart('viewsPerDayChart', 'views_per_day.png')">
+      <i class="fa-solid fa-download" aria-hidden="true"></i>
       {{ _('Lataa per päivä PNG') }}
     </button>
-    <button onclick="downloadChart('viewsPerWeekChart', 'views_per_week.png')">
+    <button type="button" class="btn btn-outline-primary" onclick="downloadChart('viewsPerWeekChart', 'views_per_week.png')">
+      <i class="fa-solid fa-download" aria-hidden="true"></i>
       {{ _('Lataa per viikko PNG') }}
     </button>
-    <button onclick="downloadAllCharts()">
+    <button type="button" class="btn btn-outline-primary" onclick="downloadAllCharts()">
+      <i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i>
       {{ _('Lataa kaikki PNG') }}
     </button>
-    <button onclick="downloadDashboard()">
-    {{ _('Lataa koko dashboard PNG') }}
-</button>
-
+    <button type="button" class="btn btn-primary" onclick="downloadDashboard()">
+      <i class="fa-solid fa-camera" aria-hidden="true"></i>
+      {{ _('Lataa koko dashboard PNG') }}
+    </button>
   </div>
 
-  <!-- Per minute today -->
-  <div class="dashboard-panel chart-container">
-    <h3>{{ _('Näytöt per minuutti tänään') }}</h3>
-    <canvas id="viewsPerMinuteChart" width="800" height="300"></canvas>
-  </div>
-
-  <!-- Per day last 30 days -->
-  <div class="dashboard-panel chart-container">
-    <h3>{{ _('Näytöt päivittäin (viimeiset 30 päivää)') }}</h3>
-    <canvas id="viewsPerDayChart" width="800" height="300"></canvas>
-  </div>
-
-  <!-- Per week last 52 weeks -->
-  <div class="dashboard-panel chart-container">
-    <h3>{{ _('Näytöt viikoittain (viimeiset 52 viikkoa)') }}</h3>
-    <canvas id="viewsPerWeekChart" width="800" height="300"></canvas>
-  </div>
+  {% set chart_sections = [
+    ('viewsPerMinuteChart', _('Näytöt per minuutti tänään'), chart_labels, chart_data),
+    ('viewsPerDayChart', _('Näytöt päivittäin (viimeiset 30 päivää)'), daily_labels, daily_data),
+    ('viewsPerWeekChart', _('Näytöt viikoittain (viimeiset 52 viikkoa)'), weekly_labels, weekly_data)
+  ] %}
+  {% for chart_id, chart_title, labels, values in chart_sections %}
+  <section class="admin-section-card" aria-labelledby="{{ chart_id }}Title">
+    <header class="admin-section-card__header">
+      <div class="admin-section-card__title">
+        <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+        <h2 id="{{ chart_id }}Title">{{ chart_title }}</h2>
+      </div>
+    </header>
+    <div class="admin-section-card__body admin-analytics__chart-body">
+      <div class="admin-analytics__chart-frame admin-analytics__chart-frame--compact">
+        <canvas id="{{ chart_id }}" role="img" aria-label="{{ chart_title }}"></canvas>
+      </div>
+      <details class="admin-disclosure admin-analytics__data-disclosure">
+        <summary>{{ _('Näytä arvot taulukkona') }}</summary>
+        <div class="admin-data-view__viewport admin-analytics__data-scroll">
+          <table class="admin-data-view__table">
+            <thead>
+              <tr>
+                <th scope="col">{{ _('Ajankohta') }}</th>
+                <th scope="col">{{ _('Näytöt') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for label in labels %}
+              <tr>
+                <td>{{ label }}</td>
+                <td>{{ values[loop.index0] }}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
+  {% endfor %}
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-function isDarkMode() {
-  return document.documentElement.classList.contains('dark');
-}
-
-textColor = isDarkMode() ? "#fff" : "#666";
-
-// --- Data ---
 const perMinuteLabels = {{ chart_labels|tojson }};
 const perMinuteData = {{ chart_data|tojson }};
 const perDayLabels = {{ daily_labels|tojson }};
@@ -156,108 +113,169 @@ const perDayData = {{ daily_data|tojson }};
 const perWeekLabels = {{ weekly_labels|tojson }};
 const perWeekData = {{ weekly_data|tojson }};
 
-// --- Chart default options ---
-const commonOptions = {
-  responsive: true,
-  backgroundColor: '#fff', // ensures background when exporting
-  scales: {
-    y: { beginAtZero: true, title: { display: true, text: '{{ _("Näytöt") }}' }, ticks: { color: textColor } },
-    x: { ticks: { color: textColor } }
-  },
-  plugins: { legend: { labels: { color: textColor } }, tooltip: { mode: 'index', intersect: false } },
-  interaction: { mode: 'nearest', axis: 'x', intersect: false }
-};
-
-// Helper to add background to chart for PNG export
-function setChartBackground(chart, color = '#fff') {
-    chart.options.plugins.background = {
-        beforeDraw: (chart) => {
-            const ctx = chart.ctx;
-            ctx.save();
-            ctx.globalCompositeOperation = 'destination-over';
-            ctx.fillStyle = color;
-            ctx.fillRect(0, 0, chart.width, chart.height);
-            ctx.restore();
-        }
-    };
-    chart.update();
+function getAdminChartColors() {
+  const styles = getComputedStyle(document.documentElement);
+  return {
+    text: styles.getPropertyValue('--admin-chart-text').trim(),
+    grid: styles.getPropertyValue('--admin-chart-grid').trim(),
+    surface: styles.getPropertyValue('--admin-chart-surface').trim(),
+    primary: styles.getPropertyValue('--admin-chart-primary').trim(),
+    primarySoft: styles.getPropertyValue('--admin-chart-primary-soft').trim(),
+    secondary: styles.getPropertyValue('--admin-chart-secondary').trim(),
+    secondarySoft: styles.getPropertyValue('--admin-chart-secondary-soft').trim()
+  };
 }
 
-// --- Charts ---
-const ctxMinute = document.getElementById('viewsPerMinuteChart').getContext('2d');
-const perMinuteChart = new Chart(ctxMinute, {
+function chartOptions(colors) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: '{{ _("Näytöt") }}', color: colors.text },
+        ticks: { color: colors.text },
+        grid: { color: colors.grid }
+      },
+      x: {
+        ticks: { color: colors.text },
+        grid: { display: false }
+      }
+    },
+    plugins: {
+      legend: { labels: { color: colors.text } },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+        backgroundColor: colors.surface,
+        titleColor: colors.text,
+        bodyColor: colors.text,
+        borderColor: colors.grid,
+        borderWidth: 1
+      }
+    },
+    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+  };
+}
+
+const initialChartColors = getAdminChartColors();
+const perMinuteChart = new Chart(document.getElementById('viewsPerMinuteChart'), {
   type: 'line',
-  data: { labels: perMinuteLabels, datasets: [{ label: '{{ _("Näytöt per minuutti") }}', data: perMinuteData, borderColor: 'rgba(255, 99, 132, 0.8)', backgroundColor: 'rgba(255, 99, 132, 0.2)', fill: true, tension: 0.3, pointRadius: 0 }] },
-  options: commonOptions
+  data: {
+    labels: perMinuteLabels,
+    datasets: [{
+      label: '{{ _("Näytöt per minuutti") }}',
+      data: perMinuteData,
+      borderColor: initialChartColors.primary,
+      backgroundColor: initialChartColors.primarySoft,
+      fill: true,
+      tension: 0.3,
+      pointRadius: 0
+    }]
+  },
+  options: chartOptions(initialChartColors)
 });
-setChartBackground(perMinuteChart);
 
-const ctxDay = document.getElementById('viewsPerDayChart').getContext('2d');
-const perDayChart = new Chart(ctxDay, {
+const perDayChart = new Chart(document.getElementById('viewsPerDayChart'), {
   type: 'bar',
-  data: { labels: perDayLabels, datasets: [{ label: '{{ _("Näytöt per päivä") }}', data: perDayData, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1, borderRadius: 3 }] },
-  options: commonOptions
+  data: {
+    labels: perDayLabels,
+    datasets: [{
+      label: '{{ _("Näytöt per päivä") }}',
+      data: perDayData,
+      backgroundColor: initialChartColors.primarySoft,
+      borderColor: initialChartColors.primary,
+      borderWidth: 1,
+      borderRadius: 3
+    }]
+  },
+  options: chartOptions(initialChartColors)
 });
-setChartBackground(perDayChart);
 
-const ctxWeek = document.getElementById('viewsPerWeekChart').getContext('2d');
-const perWeekChart = new Chart(ctxWeek, {
+const perWeekChart = new Chart(document.getElementById('viewsPerWeekChart'), {
   type: 'bar',
-  data: { labels: perWeekLabels, datasets: [{ label: '{{ _("Näytöt per viikko") }}', data: perWeekData, backgroundColor: 'rgba(255, 206, 86, 0.6)', borderColor: 'rgba(255, 206, 86, 1)', borderWidth: 1, borderRadius: 3 }] },
-  options: commonOptions
+  data: {
+    labels: perWeekLabels,
+    datasets: [{
+      label: '{{ _("Näytöt per viikko") }}',
+      data: perWeekData,
+      backgroundColor: initialChartColors.secondarySoft,
+      borderColor: initialChartColors.secondary,
+      borderWidth: 1,
+      borderRadius: 3
+    }]
+  },
+  options: chartOptions(initialChartColors)
 });
-setChartBackground(perWeekChart);
-function downloadChart(chartId, filename, bgColor = '#121212') { // dark bg
-    const chartCanvas = document.getElementById(chartId);
-    const ctx = chartCanvas.getContext('2d');
 
-    // Save current canvas
-    const backup = ctx.getImageData(0, 0, chartCanvas.width, chartCanvas.height);
+const adminCharts = [perMinuteChart, perDayChart, perWeekChart];
 
-    // Draw dark background
-    ctx.globalCompositeOperation = 'destination-over';
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, chartCanvas.width, chartCanvas.height);
+function applyAdminChartTheme() {
+  const colors = getAdminChartColors();
+  adminCharts.forEach((chart) => {
+    chart.options.scales.x.ticks.color = colors.text;
+    chart.options.scales.y.ticks.color = colors.text;
+    chart.options.scales.y.title.color = colors.text;
+    chart.options.scales.y.grid.color = colors.grid;
+    chart.options.plugins.legend.labels.color = colors.text;
+    chart.options.plugins.tooltip.backgroundColor = colors.surface;
+    chart.options.plugins.tooltip.titleColor = colors.text;
+    chart.options.plugins.tooltip.bodyColor = colors.text;
+    chart.options.plugins.tooltip.borderColor = colors.grid;
+  });
 
-    // Export PNG
-    const link = document.createElement('a');
-    link.href = chartCanvas.toDataURL('image/png');
-    link.download = filename;
-    link.click();
-
-    // Restore original canvas
-    ctx.putImageData(backup, 0, 0);
+  perMinuteChart.data.datasets[0].borderColor = colors.primary;
+  perMinuteChart.data.datasets[0].backgroundColor = colors.primarySoft;
+  perDayChart.data.datasets[0].borderColor = colors.primary;
+  perDayChart.data.datasets[0].backgroundColor = colors.primarySoft;
+  perWeekChart.data.datasets[0].borderColor = colors.secondary;
+  perWeekChart.data.datasets[0].backgroundColor = colors.secondarySoft;
+  adminCharts.forEach((chart) => chart.update('none'));
 }
 
-// Download all charts with dark background
+document.addEventListener('admin:themechange', applyAdminChartTheme);
+
+function downloadChart(chartId, filename) {
+  const chartCanvas = document.getElementById(chartId);
+  const ctx = chartCanvas.getContext('2d');
+  const backup = ctx.getImageData(0, 0, chartCanvas.width, chartCanvas.height);
+
+  ctx.globalCompositeOperation = 'destination-over';
+  ctx.fillStyle = getAdminChartColors().surface;
+  ctx.fillRect(0, 0, chartCanvas.width, chartCanvas.height);
+
+  const link = document.createElement('a');
+  link.href = chartCanvas.toDataURL('image/png');
+  link.download = filename;
+  link.click();
+
+  ctx.putImageData(backup, 0, 0);
+}
+
 function downloadAllCharts() {
-    downloadChart('viewsPerMinuteChart', 'views_per_minute.png', '#121212');
-    downloadChart('viewsPerDayChart', 'views_per_day.png', '#121212');
-    downloadChart('viewsPerWeekChart', 'views_per_week.png', '#121212');
+  downloadChart('viewsPerMinuteChart', 'views_per_minute.png');
+  downloadChart('viewsPerDayChart', 'views_per_day.png');
+  downloadChart('viewsPerWeekChart', 'views_per_week.png');
 }
-
 </script>
-<!-- html2canvas library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
 <script>
 function downloadDashboard() {
-    const container = document.querySelector('.dashboard-container');
-    // Temporarily hide the action buttons
-    const buttons = container.querySelector('.dashboard-actions');
-    buttons.style.display = 'none';
+  const container = document.getElementById('analyticsDashboard');
+  const actions = container.querySelector('[data-export-actions]');
+  actions.hidden = true;
 
-    // Export
-    html2canvas(container, { backgroundColor: '#121212' }).then(canvas => {
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/png');
-        link.download = 'dashboard.png';
-        link.click();
-
-        // Restore buttons
-        buttons.style.display = '';
+  html2canvas(container, { backgroundColor: getAdminChartColors().surface })
+    .then((canvas) => {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'dashboard.png';
+      link.click();
+    })
+    .finally(() => {
+      actions.hidden = false;
     });
 }
 </script>
-
 {% endblock %}

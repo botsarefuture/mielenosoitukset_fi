@@ -1,0 +1,20 @@
+<nav class="governance-tabs" aria-label="{{ _('Hallinnon osiot') }}">
+  <a href="{{ url_for('admin_governance.dashboard') }}" {% if governance_tab == 'overview' %}aria-current="page"{% endif %}>
+    <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>{{ _('Yleiskuva') }}
+  </a>
+  {% if current_user.global_admin or current_user.has_permission('MANAGE_CLEARANCE') %}
+  <a href="{{ url_for('admin_governance.clearances') }}" {% if governance_tab == 'clearances' %}aria-current="page"{% endif %}>
+    <i class="fa-solid fa-user-shield" aria-hidden="true"></i>{{ _('Superkäyttäjähyväksynnät') }}
+  </a>
+  {% endif %}
+  {% if current_user.global_admin or current_user.has_permission('VIEW_CLEARANCE_AUDIT') %}
+  <a href="{{ url_for('admin_governance.audit_log') }}" {% if governance_tab == 'audit' %}aria-current="page"{% endif %}>
+    <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>{{ _('Tapahtumaloki') }}
+  </a>
+  {% endif %}
+  {% if current_user.global_admin or current_user.has_permission('MANAGE_CITIES') %}
+  <a href="{{ url_for('admin_city.city_control') }}" {% if governance_tab == 'cities' %}aria-current="page"{% endif %}>
+    <i class="fa-solid fa-location-dot" aria-hidden="true"></i>{{ _('Kaupungit') }}
+  </a>
+  {% endif %}
+</nav>

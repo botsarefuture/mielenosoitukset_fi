@@ -187,8 +187,11 @@ def log_super_audit(
             doc["tags"] = tags
     if has_request_context():
         try:
+            request_path = request.path
+            if request.endpoint and request.endpoint.endswith("_with_token"):
+                request_path = request.url_rule.rule if request.url_rule else "<token-route>"
             doc["request"] = {
-                "path": request.path,
+                "path": request_path,
                 "method": request.method,
                 "args": request.args.to_dict(flat=False),
                 "form_keys": list(request.form.keys()),

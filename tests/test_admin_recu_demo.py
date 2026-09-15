@@ -91,6 +91,42 @@ def test_admin_can_create_recurring_demo_with_sparse_organizer_indexes(admin_cli
     assert created["organizers"][0]["organization_id"] == kept_org_id
 
 
+def test_editor_without_accept_permission_cannot_change_recurring_approval(
+    friend_client, db, seeded_data
+):
+    db.users.update_one(
+        {"_id": seeded_data["friend_id"]},
+        {
+            "$set": {
+                "role": "admin",
+                "global_permissions": ["EDIT_RECURRING_DEMO"],
+            }
+        },
+    )
+
+    edit_page = friend_client.get(
+        f"/admin/recu_demo/edit_recu_demo/{seeded_data['recu_demo_id']}"
+    )
+    assert edit_page.status_code == 200
+    assert 'id="approval-container"' not in edit_page.get_data(as_text=True)
+
+    response = friend_client.post(
+        f"/admin/recu_demo/edit_recu_demo/{seeded_data['recu_demo_id']}",
+        data={
+            "title": "Recurring Test Series",
+            "date": "2026-05-08",
+            "city": "Helsinki",
+            "recurrence_type": "weekly",
+            "recurrence_interval": "1",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    updated = db.recu_demos.find_one({"_id": seeded_data["recu_demo_id"]})
+    assert updated["approved"] is True
+
+
 def test_admin_can_bulk_update_selected_recurring_children(admin_client, db, seeded_data):
     parent_id = seeded_data["recu_demo_id"]
     db.recu_demos.update_one(
@@ -282,7 +318,7 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
         "_id": parent_id,
         "title": "Runner break series",
         "description": "Created by recurring runner test.",
-        "date": "2026-06-24",
+        "date": "2099-06-24",
         "start_time": "12:00",
         "end_time": "13:00",
         "city": "Helsinki",
@@ -296,11 +332,11 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
             "frequency": "weekly",
             "interval": 1,
             "weekday": "wednesday",
-            "end_date": "2026-07-15",
+            "end_date": "2099-07-15",
         },
-        "created_until": "2026-06-30T00:00:00",
+        "created_until": "2099-06-30T00:00:00",
         "freezed_children": [],
-        "break_dates": ["2026-07-01"],
+        "break_dates": ["2099-07-01"],
         "organizers": [],
     }
     db.recu_demos.insert_one(parent)
@@ -309,7 +345,7 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
             "_id": break_child_id,
             "parent": parent_id,
             "title": "Existing break child",
-            "date": "2026-07-01",
+            "date": "2099-07-01",
             "start_time": "12:00",
             "end_time": "13:00",
             "city": "Helsinki",
@@ -334,10 +370,10 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
     }
     saved_parent = db.recu_demos.find_one({"_id": parent_id})
     assert break_child["cancelled"] is True
-    assert "2026-07-01" in created_dates
-    assert "2026-07-08" in created_dates
-    assert "2026-07-15" in created_dates
-    assert saved_parent["created_until"].startswith("2026-07-15")
+    assert "2099-07-01" in created_dates
+    assert "2099-07-08" in created_dates
+    assert "2099-07-15" in created_dates
+    assert saved_parent["created_until"].startswith("2099-07-15")
 
 
 def test_recurring_demo_no_change_save_preserves_schedule_and_nullable_values(
@@ -430,3 +466,35 @@ def test_recurring_demo_no_change_save_preserves_schedule_and_nullable_values(
     assert saved["organizers"][0]["url"] == "/stored-organizer"
     assert saved["organizers"][0]["is_private"] is True
     assert saved["organizers"][0]["show_email_public"] is False
+
+
+def test_admin_can_create_recurring_demo_with_translations(admin_client, db):
+    response = admin_client.post(
+        "/admin/recu_demo/create_recu_demo",
+        data={
+            "title": "Weekly recurring demo translated",
+            "description": "Finnish base description.",
+            "default_language": "fi",
+            "translation_en_title": "Weekly recurring demo in English",
+            "translation_en_description": "English recurring description.",
+            "translation_en_tags": "peace, weekly",
+            "date": "2026-09-03",
+            "start_time": "12:00",
+            "end_time": "13:00",
+            "city": "Helsinki",
+            "address": "Testikatu 3",
+            "type": "MARCH",
+            "approved": "on",
+            "organizer_name_1": "Test Org",
+            "organizer_id_1": str(ObjectId()),
+            "frequency_type": "none",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    created = db.recu_demos.find_one({"title": "Weekly recurring demo translated"})
+    assert created["default_language"] == "fi"
+    assert created["translations"]["en"]["title"] == "Weekly recurring demo in English"
+    assert created["translations"]["en"]["description"] == "English recurring description."
+    assert created["translations"]["en"]["tags"] == ["peace", "weekly"]

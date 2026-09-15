@@ -72,6 +72,13 @@
     margin-bottom: 2rem;
   }
 
+  /* Keep the viewport-wide hero centered inside this page's narrower form container. */
+  .hero-section.site-hero.site-hero {
+    left: 50%;
+    margin-inline: 0;
+    translate: -50% 0;
+  }
+
   .hero-section::before {
     content: '';
     position: absolute;
@@ -1590,8 +1597,9 @@
 <div class="container-main-content">
 
   <!-- Hero Section -->
-  <section class="hero-section">
+  <section class="hero-section site-hero">
     <div class="hero-content">
+      <p class="site-hero__eyebrow"><i class="fa-solid fa-plus" aria-hidden="true"></i>{{ _('Ilmoita tapahtuma') }}</p>
       <h1>{{ _('Ilmoita mielenosoituksesta') }}</h1>
       <p class="lead">
         {{ _('Ilmoittamalla mielenosoituksesta autat muita löytämään tietoa mielenosoituksista. Mitä useampia ja
@@ -1663,6 +1671,10 @@
         <p>{{ _('Jos järjestelmä ilmoittaa samankaltaisesta tapahtumasta tai lähetys ei mene heti läpi, lue toimintaohjeet tästä:') }}
           <a href="{{ url_for('public_guides') }}#submit-help">{{ _('ohjeet ilmoituksen lähettämiseen') }}</a>.
         </p>
+        <p>
+          {{ _('Jos tarvitset käännösapua, ota yhteyttä meihin:') }}
+          <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>.
+        </p>
       </div>
 
       <!-- Page 1: Basic Information -->
@@ -1696,6 +1708,23 @@
           <div class="helper-text">
             <i class="fa-solid fa-tags"></i>
             {{ _('Tagit auttavat ihmisiä löytämään tapahtumasi. Lisää ne ilman #-merkkiä.') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="default_language">
+            {{ _('Sisällön kieli') }}<span class="required-asterisk">*</span>
+          </label>
+          <select id="default_language" name="default_language" required>
+            {% for locale in translation_locales %}
+            <option value="{{ locale }}" {% if default_demo_language == locale %}selected{% endif %}>
+              {{ translation_language_names.get(locale, locale|upper) }}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="helper-text">
+            <i class="fa-solid fa-language"></i>
+            {{ _('Valitse millä kielellä kirjoitat otsikon, tagit ja kuvauksen. Varsinaiset käännökset voi lisätä myöhemmin.') }}
           </div>
         </div>
 

@@ -21,8 +21,23 @@ def _get_mongo():
 
 VALID_WINDOW = 5          # TODO → move to config
 DEFAULT_ROLE = "user"
+CITY_ADMIN_ORGANIZATION_PERMISSIONS = {
+    "LIST_ORGANIZATIONS",
+    "VIEW_ORGANIZATION",
+    "CREATE_ORGANIZATION",
+    "EDIT_ORGANIZATION",
+    "INVITE_TO_ORGANIZATION",
+}
 
 class User(UserMixin):
+    def has_full_permissions(self) -> bool:
+        """Return whether this account bypasses individual permission grants."""
+        return bool(self.global_admin) or self.role in {
+            "global_admin",
+            "god",
+            "superuser",
+        }
+
     def _perm_in(self, permission: str) -> List[Union[str, ObjectId]]:
         """
         Return a list of scopes (organization IDs or the literal string "global")
@@ -39,6 +54,9 @@ class User(UserMixin):
             List of organization IDs or "global" where the user has the permission.
         """
         
+        if self.has_full_permissions():
+            return ["global"]
+
         scopes = []
         if permission in self.global_permissions:
             scopes.append("global")
@@ -70,11 +88,15 @@ class User(UserMixin):
         dict
             The user document ready for insertion into the database.
         """
+        username = username.strip().casefold()
+        email = email.strip().casefold() if isinstance(email, str) else email
         password_hash = generate_password_hash(password)
         user_doc = {
             "username": username,
+            "username_canonical": username,
             "password_hash": password_hash,
             "email": email,
+            "email_canonical": email,
             "displayname": displayname,
             "global_admin": False,
             "confirmed": False,
@@ -136,6 +158,8 @@ class User(UserMixin):
         password_hash: str,
         *,
         email: Optional[str] = None,
+        username_canonical: Optional[str] = None,
+        email_canonical: Optional[str] = None,
         displayname: Optional[str] = None,
         profile_picture: Optional[str] = None,
         bio: Optional[str] = None,
@@ -152,13 +176,16 @@ class User(UserMixin):
         friends: list = [],
         friend_requests: list = [],
         forced_pwd_reset: bool = False,
+        forced_identity_change: bool = False,
         active: bool = True,
         last_login: datetime.datetime = None
     ):
         self.id                = str(user_id)  # flask‑login expects .id str
         self._id               = ObjectId(user_id)
         self.username          = username
+        self.username_canonical = username_canonical or username.strip().casefold()
         self.email             = email
+        self.email_canonical   = email_canonical or (email.strip().casefold() if email else None)
         self.password_hash     = password_hash
         self.displayname       = displayname
         self.profile_picture   = profile_picture
@@ -177,6 +204,7 @@ class User(UserMixin):
         self.friends           = friends
         self.friend_requests    = friend_requests
         self.forced_pwd_reset    = forced_pwd_reset
+        self.forced_identity_change = forced_identity_change
         self.active             = active
         self.last_login         = last_login
 
@@ -193,6 +221,8 @@ class User(UserMixin):
             username        = doc["username"],
             password_hash   = doc["password_hash"],
             email           = doc.get("email"),
+            username_canonical = doc.get("username_canonical"),
+            email_canonical = doc.get("email_canonical"),
             displayname     = doc.get("displayname"),
             profile_picture = doc.get("profile_picture"),
             bio             = doc.get("bio"),
@@ -200,7 +230,8 @@ class User(UserMixin):
             following       = doc.get("following", []),
             followed_organizations = doc.get("followed_organizations", []),
             followed_recurring_demos = doc.get("followed_recurring_demos", []),
-            global_admin    = doc.get("global_admin", False) or doc.get("role")=="global_admin",
+            global_admin    = doc.get("global_admin", False)
+                              or doc.get("role") in {"global_admin", "god", "superuser"},
             confirmed       = doc.get("confirmed", False),
             global_permissions = doc.get("global_permissions", []),
             role            = doc.get("role", DEFAULT_ROLE),
@@ -209,6 +240,7 @@ class User(UserMixin):
             friends         = doc.get("friends", []),
             friend_requests = doc.get("friend_requests", []),
             forced_pwd_reset = doc.get("forced_pwd_reset", False),
+            forced_identity_change = doc.get("forced_identity_change", False),
             active          = doc.get("active", False),
             last_login      = doc.get("last_login", None)
         )
@@ -254,6 +286,15 @@ class User(UserMixin):
     def has_admin_scope_grants(self) -> bool:
         return bool(self.admin_scope_grants)
 
+    def has_city_admin_scope_grants(self) -> bool:
+        """Return whether the user has an active, usable city-admin grant."""
+        return any(
+            grant.get("scope_type") == "city"
+            and bool(grant.get("scope_keys") or grant.get("scope_key"))
+            and bool(grant.get("permissions"))
+            for grant in self.admin_scope_grants
+        )
+
     def scoped_city_keys_for(self, permission: str) -> List[str]:
         """Return normalized city keys where this user has a scoped permission."""
         keys: list[str] = []
@@ -283,6 +324,8 @@ class User(UserMixin):
         scope_type: str,
         scope_key: str,
     ) -> bool:
+        if self.has_full_permissions():
+            return True
         if permission in self.global_permissions:
             return True
         if scope_type != "city":
@@ -329,6 +372,9 @@ class User(UserMixin):
           the organization_id of that membership is included.
         The list is deduplicated and keeps a predictable order.
         """
+        if self.has_full_permissions():
+            return ["global"]
+
         scopes: List[Union[str, ObjectId]] = []
 
         # 1️⃣ global scope
@@ -420,6 +466,8 @@ class User(UserMixin):
         return list(perms)
 
     def has_permission(self, perm: str, organization_id: Optional[Union[str, ObjectId]]=None, strict=False) -> bool:
+        if self.has_full_permissions():
+            return True
         if perm in self.global_permissions:
             return True
         
@@ -429,9 +477,19 @@ class User(UserMixin):
                 print(ms.permissions)
                 print(ms.organization_id)
             
-            return bool(ms and perm in ms.permissions)
+            if ms and perm in ms.permissions:
+                return True
+            return (
+                perm in CITY_ADMIN_ORGANIZATION_PERMISSIONS
+                and self.has_city_admin_scope_grants()
+            )
         # if org not specified, check all org memberships
-        return any(perm in m.permissions for m in self.memberships)
+        if any(perm in m.permissions for m in self.memberships):
+            return True
+        return (
+            perm in CITY_ADMIN_ORGANIZATION_PERMISSIONS
+            and self.has_city_admin_scope_grants()
+        )
 
     # ---------- FOLLOW / BAN / MFA ----------------------------------------------
 
@@ -498,8 +556,10 @@ class User(UserMixin):
         d = {
             "_id": str(self._id) if json else self._id,
             "username": self.username,
+            "username_canonical": self.username_canonical,
             "password_hash": self.password_hash,
             "email": self.email,
+            "email_canonical": self.email_canonical,
             "displayname": self.displayname,
             "profile_picture": self.profile_picture,
             "bio": self.bio,
@@ -516,6 +576,7 @@ class User(UserMixin):
             "friends": self.friends,
             "friend_requests": self.friend_requests,
             "forced_pwd_reset": self.forced_pwd_reset,
+            "forced_identity_change": self.forced_identity_change,
             "active": self.active,
             "last_login": self.last_login
         }
@@ -717,6 +778,10 @@ class AnonymousUser(AnonymousUserMixin):
 
 
         """
+        return False
+
+    def has_city_admin_scope_grants(self) -> bool:
+        """Anonymous visitors never have city-scoped administration grants."""
         return False
 
     def is_following(self, user_id):

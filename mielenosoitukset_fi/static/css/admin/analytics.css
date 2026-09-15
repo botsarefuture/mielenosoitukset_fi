@@ -1,0 +1,145 @@
+/* Shared presentation for admin analytics pages. Data and chart behavior stay
+   in their templates; layout, theme and interaction states live here. */
+html.light {
+  --admin-chart-text: #647083;
+  --admin-chart-grid: rgba(28, 48, 82, .1);
+  --admin-chart-surface: #ffffff;
+  --admin-chart-primary: #0033a0;
+  --admin-chart-primary-soft: rgba(0, 51, 160, .18);
+  --admin-chart-secondary: #b54708;
+  --admin-chart-secondary-soft: rgba(181, 71, 8, .18);
+}
+
+html.dark {
+  --admin-chart-text: #d9e0ea;
+  --admin-chart-grid: rgba(255, 255, 255, .1);
+  --admin-chart-surface: #20252d;
+  --admin-chart-primary: #8bb1ff;
+  --admin-chart-primary-soft: rgba(139, 177, 255, .22);
+  --admin-chart-secondary: #ffad73;
+  --admin-chart-secondary-soft: rgba(255, 173, 115, .22);
+}
+
+.admin-analytics {
+  gap: 1rem;
+}
+
+.admin-analytics__split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(18rem, .55fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.admin-analytics__summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-analytics__actions {
+  padding: 1rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 1rem;
+  background: var(--admin-workspace-surface);
+  box-shadow: var(--admin-workspace-shadow);
+}
+
+.admin-analytics__chart-body {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-analytics__description {
+  margin: .25rem 0 0;
+  color: var(--admin-workspace-muted);
+  font-size: .8rem;
+  line-height: 1.5;
+}
+
+.admin-analytics__chart-frame {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: 26rem;
+}
+
+.admin-analytics__chart-frame--compact {
+  height: 18rem;
+}
+
+.admin-analytics__chart-frame canvas {
+  max-width: 100%;
+}
+
+.admin-analytics__data-disclosure {
+  padding-top: .85rem;
+  border-top: 1px solid var(--admin-workspace-border);
+}
+
+.admin-analytics__data-disclosure > summary {
+  color: var(--admin-workspace-blue-dark);
+  font-size: .82rem;
+  font-weight: 750;
+}
+
+.admin-analytics__data-disclosure[open] > summary {
+  margin-bottom: .75rem;
+}
+
+.admin-analytics__data-scroll {
+  max-height: 20rem;
+  overflow: auto;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .75rem;
+}
+
+.admin-analytics .admin-data-view__table {
+  min-width: 25rem;
+}
+
+.admin-analytics .admin-data-view__table th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+}
+
+.admin-analytics .admin-data-view__table td:last-child {
+  color: var(--admin-workspace-blue-dark);
+  font-weight: 800;
+}
+
+@media (max-width: 1000px) {
+  .admin-analytics__split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-analytics__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-analytics__actions .btn {
+    flex: 1 1 14rem;
+  }
+
+  .admin-analytics__chart-frame {
+    height: 20rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-analytics__actions .btn {
+    width: 100%;
+  }
+
+  .admin-analytics__chart-frame,
+  .admin-analytics__chart-frame--compact {
+    height: 17rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-analytics canvas {
+    scroll-behavior: auto;
+  }
+}

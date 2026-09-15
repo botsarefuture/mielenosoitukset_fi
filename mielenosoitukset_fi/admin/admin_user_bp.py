@@ -1,4 +1,5 @@
 from bson.objectid import ObjectId
+from pymongo.errors import DuplicateKeyError
 from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify
 from flask_login import current_user, login_required
 import math
@@ -9,11 +10,19 @@ from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from mielenosoitukset_fi.utils.variables import CITY_LIST, PERMISSIONS_GROUPS
 from mielenosoitukset_fi.utils.cities import CITY_KEY_TO_NAME, CITY_NAME_TO_KEY, normalize_city_key
-from mielenosoitukset_fi.utils.validators import valid_email
+from mielenosoitukset_fi.utils.city_settings import enabled_city_names
+from mielenosoitukset_fi.utils.validators import (
+    is_reserved_identity_name,
+    normalize_email,
+    normalize_username,
+    valid_email,
+    validate_username,
+)
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 from mielenosoitukset_fi.utils.flashing import flash_message
 
 from .utils import get_org_name, mongo, _ADMIN_TEMPLATE_FOLDER
+from .board_compliance import has_board_clearance
 from flask_babel import _
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
@@ -50,7 +59,7 @@ def user_control():
         "all": mongo.users.count_documents({}),
         "confirmed": mongo.users.count_documents({"confirmed": True}),
         "admins": mongo.users.count_documents(
-            {"role": {"$in": ["admin", "global_admin", "god"]}}
+            {"role": {"$in": ["city_admin", "admin", "global_admin", "god"]}}
         ),
         "never_logged_in": mongo.users.count_documents(
             {"$or": [{"last_login": {"$exists": False}}, {"last_login": None}]}
@@ -81,9 +90,26 @@ def user_control():
         .skip((page - 1) * per_page)
         .limit(per_page)
     )
+    users = list(users_cursor)
+    page_user_ids = [user["_id"] for user in users]
+    scoped_user_ids = {
+        str(grant["user_id"])
+        for grant in mongo.admin_scope_grants.find(
+            {
+                "user_id": {"$in": page_user_ids + [str(user_id) for user_id in page_user_ids]},
+                "scope_type": "city",
+                "$or": [{"revoked_at": {"$exists": False}}, {"revoked_at": None}],
+            },
+            {"user_id": 1},
+        )
+    }
+    for user in users:
+        if user.get("role") in {None, "user"} and str(user["_id"]) in scoped_user_ids:
+            user["role"] = "city_admin"
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}user/list.html",
-        users=list(users_cursor),
+        users=users,
         search_query=search_query,
         current_page=page,
         per_page=per_page,
@@ -94,10 +120,30 @@ def user_control():
         total_users=total_users,
         user_summary=user_summary,
         visible_pages=visible_pages,
+        can_manage_scope_grants=_can_manage_scope_grants(current_user),
+        city_list=CITY_LIST,
+        enabled_city_list=enabled_city_names(mongo),
+        city_name_to_key=CITY_NAME_TO_KEY,
     )
 
 
-USER_ACCESS_LEVELS = {"god": 4, "global_admin": 3, "admin": 2, "user": 1}
+USER_ACCESS_LEVELS = {
+    "god": 5,
+    "global_admin": 4,
+    "admin": 3,
+    "city_admin": 2,
+    "translator": 1,
+    "user": 1,
+}
+ROLE_IMPLIED_GLOBAL_PERMISSIONS = {
+    "translator": {"TRANSLATE_DEMO", "TRANSLATE_UI"},
+}
+
+
+def _normalize_role_permissions(role, selected_permissions):
+    permissions = set(selected_permissions or [])
+    permissions.update(ROLE_IMPLIED_GLOBAL_PERMISSIONS.get(role, set()))
+    return sorted(permissions)
 
 CITY_ADMIN_PERMISSIONS = [
     "LIST_DEMOS",
@@ -140,6 +186,8 @@ def _city_scope_grant_for_user(user_id: ObjectId) -> dict:
 def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions: list[str]) -> None:
     city_keys = sorted({normalize_city_key(key) for key in city_keys if normalize_city_key(key) in CITY_KEY_TO_NAME})
     permissions = sorted({permission for permission in permissions if permission in CITY_ADMIN_PERMISSIONS})
+    if city_keys and permissions:
+        permissions = sorted(set(permissions) | {"LIST_DEMOS", "VIEW_DEMO"})
 
     query = {
         "user_id": {"$in": [user_id, str(user_id)]},
@@ -151,6 +199,10 @@ def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions:
         mongo.admin_scope_grants.update_many(
             query,
             {"$set": {"revoked_at": utcnow(), "revoked_by": str(current_user._id)}},
+        )
+        mongo.users.update_one(
+            {"_id": user_id, "role": "city_admin"},
+            {"$set": {"role": "user"}},
         )
         return
 
@@ -171,6 +223,10 @@ def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions:
         payload["created_at"] = utcnow()
         payload["granted_by"] = str(current_user._id)
         mongo.admin_scope_grants.insert_one(payload)
+    mongo.users.update_one(
+        {"_id": user_id, "role": {"$nin": ["admin", "global_admin", "god"]}},
+        {"$set": {"role": "city_admin"}},
+    )
 
 
 def compare_user_levels(user1, user2):  # Check if the user1 is higher than user2
@@ -236,20 +292,26 @@ def edit_user(user_id):
         # 1️⃣ Nykytila
         current = {
             "username":           user.username,
+            "displayname":        user.displayname or "",
             "email":              user.email,
             "role":               user.role,
             "confirmed":          bool(user.confirmed),
             "global_permissions": list(user.global_permissions or []),
+            "forced_identity_change": bool(user.forced_identity_change),
         }
 
         # 2️⃣ Lomakkeelta saapuvat arvot
         incoming = {
-            "username":  request.form.get("username", "").strip(),
-            "email":     request.form.get("email", "").strip(),
+            "username":  normalize_username(request.form.get("username")),
+            "displayname": request.form.get("displayname", user.displayname or "").strip(),
+            "email":     normalize_email(request.form.get("email")),
             "role":      request.form.get("role") or user.role,
             "confirmed": request.form.get("confirmed") == "on",
-            "global_permissions": request.form.getlist("permissions[global][]")
-                                   or current["global_permissions"],
+            "global_permissions": _normalize_role_permissions(
+                request.form.get("role") or user.role,
+                request.form.getlist("permissions[global][]") or current["global_permissions"],
+            ),
+            "forced_identity_change": request.form.get("forced_identity_change") == "on",
         }
 
         # ─── validoinnit ────────────────────────────────────────────────────────
@@ -257,8 +319,45 @@ def edit_user(user_id):
             flash_message("Käyttäjänimi ja sähköposti ovat pakollisia.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
+        username_valid, username_error = validate_username(incoming["username"])
+        if not username_valid:
+            flash_message(username_error, "error")
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
+        if is_reserved_identity_name(incoming["displayname"]):
+            flash_message("Admin-nimitys on varattu palvelun sisäiseen käyttöön.", "error")
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
+        if mongo.users.find_one({
+            "_id": {"$ne": user._id},
+            "$or": [
+                {"username_canonical": incoming["username"]},
+                {"username": {"$regex": f"^{re.escape(incoming['username'])}$", "$options": "i"}},
+            ],
+        }):
+            flash_message("Käyttäjänimi on jo käytössä.", "error")
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
+
         if not valid_email(incoming["email"]):
             flash_message("Virheellinen sähköpostimuoto.", "error")
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
+        if mongo.users.find_one({
+            "_id": {"$ne": user._id},
+            "$or": [
+                {"email_canonical": incoming["email"]},
+                {"email": {"$regex": f"^{re.escape(incoming['email'])}$", "$options": "i"}},
+            ],
+        }):
+            flash_message("Sähköpostiosoite on jo käytössä.", "error")
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
+
+        if (
+            incoming["role"] == "global_admin"
+            and user.role != "global_admin"
+            and not has_board_clearance(user._id)
+        ):
+            flash_message(
+                "Superkäyttäjäroolia ei voi myöntää ilman hallituksen hyväksyntää.",
+                "error",
+            )
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # estä oman roolin muutos
@@ -279,10 +378,18 @@ def edit_user(user_id):
 
         # 3️⃣ Muutosdiff
         changes = {k: v for k, v in incoming.items() if v != current[k]}
+        if "username" in changes:
+            changes["username_canonical"] = incoming["username"]
+        if "email" in changes:
+            changes["email_canonical"] = incoming["email"]
 
         # 4️⃣ Päivitä vain jos on muutoksia
         if changes:
-            mongo.users.update_one({"_id": ObjectId(user_id)}, {"$set": changes})
+            try:
+                mongo.users.update_one({"_id": ObjectId(user_id)}, {"$set": changes})
+            except DuplicateKeyError:
+                flash_message("Käyttäjänimi tai sähköpostiosoite on jo käytössä.", "error")
+                return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
             flash_message("Käyttäjä päivitetty onnistuneesti.", "approved")
         else:
             flash_message("Mitään ei muutettu.", "info")
@@ -296,6 +403,8 @@ def edit_user(user_id):
 
     # ─── GET → lomake ──────────────────────────────────────────────────────────
     city_scope_grant = _city_scope_grant_for_user(user._id)
+    if city_scope_grant.get("scope_keys") and user.role in {None, "user"}:
+        user.role = "city_admin"
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}user/edit.html",
         user=user,
@@ -303,6 +412,7 @@ def edit_user(user_id):
         global_permissions=user.global_permissions,
         can_manage_scope_grants=_can_manage_scope_grants(current_user),
         city_list=CITY_LIST,
+        enabled_city_list=enabled_city_names(mongo),
         city_name_to_key=CITY_NAME_TO_KEY,
         city_scope_grant=city_scope_grant,
         city_admin_permissions=CITY_ADMIN_PERMISSIONS,
@@ -328,7 +438,9 @@ class UserOrg:
         return {
             "org_id": ObjectId(self.org_id),
             "role": (
-                self.role if self.role in ["global_admin", "admin", "user"] else "user"
+                self.role
+                if self.role in ["global_admin", "admin", "city_admin", "user"]
+                else "user"
             ),
             "permissions": self.permissions,
         }
@@ -370,11 +482,13 @@ def save_user(user_id):
     user = User.from_db(user)
 
     # Get form data
-    username = request.form.get("username")
-    email = request.form.get("email")
+    username = normalize_username(request.form.get("username"))
+    displayname = (request.form.get("displayname", user.displayname or "") or "").strip()
+    email = normalize_email(request.form.get("email"))
     role = request.form.get("role")
     confirmed = request.form.get("confirmed") == "on"
-    global_permissions = request.form.getlist("permissions[global][]")  # ← 🔥 this line
+    global_permissions = _normalize_role_permissions(role, request.form.getlist("permissions[global][]"))
+    forced_identity_change = request.form.get("forced_identity_change") == "on"
 
     # Prevent role escalation
     if current_user._id == user_id and role != current_user.role:
@@ -399,16 +513,76 @@ def save_user(user_id):
         flash_message("Virheellinen sähköpostimuoto.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
+    if mongo.users.find_one({
+        "_id": {"$ne": user._id},
+        "$or": [
+            {"email_canonical": email},
+            {"email": {"$regex": f"^{re.escape(email)}$", "$options": "i"}},
+        ],
+    }):
+        flash_message("Sähköpostiosoite on jo käytössä.", "error")
+        return redirect(url_for("admin_user.edit_user", user_id=user_id))
+
+    username_valid, username_error = validate_username(username)
+    if not username_valid:
+        flash_message(username_error, "error")
+        return redirect(url_for("admin_user.edit_user", user_id=user_id))
+    if is_reserved_identity_name(displayname):
+        flash_message("Admin-nimitys on varattu palvelun sisäiseen käyttöön.", "error")
+        return redirect(url_for("admin_user.edit_user", user_id=user_id))
+    if mongo.users.find_one({
+        "_id": {"$ne": user._id},
+        "$or": [
+            {"username_canonical": username},
+            {"username": {"$regex": f"^{re.escape(username)}$", "$options": "i"}},
+        ],
+    }):
+        flash_message("Käyttäjänimi on jo käytössä.", "error")
+        return redirect(url_for("admin_user.edit_user", user_id=user_id))
+
+    if (
+        role == "global_admin"
+        and user.role != "global_admin"
+        and not has_board_clearance(user._id)
+    ):
+        flash_message(
+            "Superkäyttäjäroolia ei voi myöntää ilman hallituksen hyväksyntää.",
+            "error",
+        )
+        return redirect(url_for("admin_user.edit_user", user_id=user_id))
+
     
     # Assign values
     user.username = username
+    user.username_canonical = username
+    user.displayname = displayname
     user.email = email
+    user.email_canonical = email
     user.role = role
     user.confirmed = confirmed
-    user.global_permissions = global_permissions  # ← 🔥 this line
+    user.global_permissions = global_permissions
+    identity_change_was_forced = bool(user.forced_identity_change)
+    user.forced_identity_change = forced_identity_change
 
 
-    user.save()
+    try:
+        user.save()
+    except DuplicateKeyError:
+        flash_message("Käyttäjänimi tai sähköpostiosoite on jo käytössä.", "error")
+        return redirect(url_for("admin_user.edit_user", user_id=user_id))
+
+    if forced_identity_change and not identity_change_was_forced:
+        email_sender.queue_email(
+            template_name="auth/identity_change_required.html",
+            subject="Käyttäjänimi ja näyttönimi on vaihdettava",
+            recipients=[email],
+            context={
+                "user_name": displayname or username,
+                "login_link": url_for("users.auth.login", _external=True),
+                "support_contact": "tuki@mielenosoitukset.fi",
+            },
+            extra_headers={"reply-to": "tuki@mielenosoitukset.fi"},
+        )
 
     if _can_manage_scope_grants(current_user):
         city_scope_keys = request.form.getlist("admin_scope_cities[]")
@@ -453,14 +627,12 @@ import warnings
 
 
 @admin_user_bp.route("/api/check_clearance/<user_id>")
+@login_required
+@admin_required
+@permission_required("MANAGE_CLEARANCE")
 def check_clearance(user_id):
-    """
-    Temporary endpoint to check if the board has approved the user for global_admin role.
-    Currently always returns False.
-    """
-    return jsonify({
-        "has_clearance": False
-    })
+    """Compatibility endpoint for checking global-admin board approval."""
+    return jsonify({"has_clearance": has_board_clearance(user_id)})
 
 
 def is_valid_email(email):
@@ -575,7 +747,7 @@ def create_user():
     """
     data = request.get_json() if request.is_json else request.form
 
-    email = (data.get("email") or "").strip()
+    email = normalize_email(data.get("email"))
     if not email:
         flash_message("Sähköposti on pakollinen.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
@@ -587,14 +759,53 @@ def create_user():
     displayname = (data.get("displayname") or username).strip()
     role = data.get("role") or "user"
 
+    username = normalize_username(username)
+    username_valid, username_error = validate_username(username)
+    if not username_valid:
+        flash_message(username_error, "error")
+        return redirect(request.referrer or url_for("admin_user.user_control"))
+    if is_reserved_identity_name(displayname):
+        flash_message("Admin-nimitys on varattu palvelun sisäiseen käyttöön.", "error")
+        return redirect(request.referrer or url_for("admin_user.user_control"))
+
     # Basic validation
-    if role not in ["user", "admin", "global_admin"]:
+    if role not in ["user", "translator", "city_admin", "admin", "global_admin"]:
         flash_message("Rooli ei ole kelvollinen.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
 
+    if request.is_json:
+        city_scope_keys = data.get("admin_scope_cities", []) or []
+        if isinstance(city_scope_keys, str):
+            city_scope_keys = [city_scope_keys]
+    else:
+        city_scope_keys = request.form.getlist("admin_scope_cities[]")
+
+    city_scope_keys = sorted(
+        {
+            normalize_city_key(key)
+            for key in city_scope_keys
+            if normalize_city_key(key) in CITY_KEY_TO_NAME
+        }
+    )
+    if role == "city_admin":
+        if not _can_manage_scope_grants(current_user):
+            flash_message("Sinulla ei ole oikeutta myöntää kaupunkiadminin roolia.", "error")
+            return redirect(request.referrer or url_for("admin_user.user_control"))
+        if not city_scope_keys:
+            flash_message("Valitse kaupunkiadminille vähintään yksi paikkakunta.", "error")
+            return redirect(request.referrer or url_for("admin_user.user_control"))
+
     # Check if email already exists
-    if mongo.users.find_one({"email": email}):
+    if mongo.users.find_one({"email": {"$regex": f"^{re.escape(email)}$", "$options": "i"}}):
         flash_message("Käyttäjä tällä sähköpostilla on jo olemassa.", "error")
+        return redirect(request.referrer or url_for("admin_user.user_control"))
+    if mongo.users.find_one({
+        "$or": [
+            {"username_canonical": username},
+            {"username": {"$regex": f"^{re.escape(username)}$", "$options": "i"}},
+        ]
+    }):
+        flash_message("Käyttäjänimi on jo käytössä.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
 
     # Generate a random password
@@ -604,15 +815,21 @@ def create_user():
     # Create user document
     user_doc = {
         "email": email,
+        "email_canonical": email,
         "username": username,
+        "username_canonical": username,
         "displayname": displayname,
         "role": role,
         "confirmed": True,
         "password_hash": password_hash,
-        "global_permissions": [],
+        "global_permissions": _normalize_role_permissions(role, []),
     }
     
-    result = mongo.users.insert_one(user_doc)
+    try:
+        result = mongo.users.insert_one(user_doc)
+    except DuplicateKeyError:
+        flash_message("Käyttäjänimi tai sähköpostiosoite on jo käytössä.", "error")
+        return redirect(request.referrer or url_for("admin_user.user_control"))
     if not result.inserted_id:
         flash_message("Käyttäjän luominen epäonnistui.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
@@ -622,6 +839,9 @@ def create_user():
 
     user.forced_pwd_reset = True # We want to force password reset on first login
     user.save()
+
+    if role == "city_admin":
+        _sync_city_scope_grant(user._id, city_scope_keys, CITY_ADMIN_PERMISSIONS)
 
     # Send credentials via email
     email_sender.queue_email(

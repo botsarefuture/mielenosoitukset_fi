@@ -1,11 +1,13 @@
 import os
 import json
+import re
 import pytz
 from collections import defaultdict
 from typing import Any, Dict
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, timedelta, timezone, date
 import requests
+from flask_babel import _
 
 from bson.objectid import ObjectId
 from flask import (
@@ -33,10 +35,25 @@ from flask_login import (
 from mielenosoitukset_fi.users.models import User  # Import User model
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.logger import logger
-from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
+from mielenosoitukset_fi.utils.wrappers import (
+    admin_required,
+    has_admin_access,
+    permission_required,
+)
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.analytics import get_demo_views
 from mielenosoitukset_fi.utils.cache import cache
+from mielenosoitukset_fi.utils.ui_translation_catalog import (
+    entry_state,
+    get_catalog_entry,
+    iter_catalog_entries,
+    proposal_key,
+    supported_ui_translation_locales,
+    update_catalog_entry,
+)
+from mielenosoitukset_fi.utils.ui_translation_git_sync import (
+    build_ui_translation_sync_branch_name,
+)
 
 from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
 
@@ -54,6 +71,7 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 # Initialize MongoDB and Flask-Login
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
+ui_translation_proposals = mongo["ui_translation_proposals"]
 
 login_manager = LoginManager()
 login_manager.login_view = "users.auth.login"
@@ -66,6 +84,21 @@ def _get_job_manager_or_abort():
     if not job_manager:
         abort(503, "Background jobs are not available in this deployment.")
     return job_manager
+
+
+def _is_limited_city_admin(user) -> bool:
+    """Return whether the actor must stay in city-scoped admin surfaces."""
+    if getattr(user, "role", None) in {"admin", "global_admin", "god"}:
+        return False
+    return bool(
+        hasattr(user, "has_city_admin_scope_grants")
+        and user.has_city_admin_scope_grants()
+    )
+
+
+def _require_global_admin_surface() -> None:
+    if _is_limited_city_admin(current_user):
+        abort(403)
 
 
 def _json_safe(value):
@@ -124,6 +157,155 @@ def _log_admin_event(event: str, **details):
         logger.exception("Failed to log admin event: %s", event)
 
 
+def _can_translate_ui(user) -> bool:
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    if getattr(user, "role", None) in {"admin", "translator"}:
+        return True
+    return user.has_permission("TRANSLATE_UI")
+
+
+def _can_review_ui_translations(user) -> bool:
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    if getattr(user, "role", None) in {"admin", "global_admin"}:
+        return True
+    return user.has_permission("REVIEW_UI_TRANSLATIONS")
+
+
+def _ui_translation_language_names():
+    return current_app.config.get("BABEL_LANGUAGES", {})
+
+
+def _ui_translation_sync_enabled() -> bool:
+    return bool(current_app.config.get("UI_TRANSLATION_SYNC_ENABLED", False))
+
+
+def _redirect_ui_translation_action_target(locale: str, msgid: str = ""):
+    if msgid:
+        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+    return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+
+def _normalize_ui_translation_rows(locale: str, search_query: str = "", state_filter: str = "pending"):
+    normalized_search = (search_query or "").strip().casefold()
+    proposals = {
+        proposal["msgid"]: proposal
+        for proposal in ui_translation_proposals.find({"locale": locale})
+    }
+
+    rows = []
+    untranslated = 0
+    fuzzy = 0
+    translated = 0
+    pending = 0
+    for entry in iter_catalog_entries(locale):
+        catalog_state = entry_state(entry)
+        if catalog_state == "untranslated":
+            untranslated += 1
+        elif catalog_state == "fuzzy":
+            fuzzy += 1
+        else:
+            translated += 1
+
+        proposal = proposals.get(entry.msgid)
+        effective_state = "pending" if proposal and proposal.get("status") == "pending" else catalog_state
+        if effective_state == "pending":
+            pending += 1
+
+        if normalized_search and normalized_search not in entry.msgid.casefold() and normalized_search not in entry.msgstr.casefold():
+            continue
+        if state_filter not in {"all", "", None} and effective_state != state_filter:
+            continue
+
+        rows.append(
+            {
+                "msgid": entry.msgid,
+                "msgstr": entry.msgstr,
+                "flags": entry.flags,
+                "locations": entry.locations,
+                "catalog_state": catalog_state,
+                "effective_state": effective_state,
+                "proposal": proposal,
+                "github_sync": (proposal or {}).get("github_sync") or {},
+            }
+        )
+
+    return {
+        "rows": rows,
+        "counts": {
+            "total": untranslated + fuzzy + translated,
+            "untranslated": untranslated,
+            "fuzzy": fuzzy,
+            "translated": translated,
+            "pending": pending,
+        },
+    }
+
+
+def _normalize_ui_translation_sync_rows(
+    locale_filter: str = "",
+    sync_status_filter: str = "all",
+    merge_status_filter: str = "all",
+    search_query: str = "",
+):
+    normalized_search = (search_query or "").strip().casefold()
+    query: Dict[str, Any] = {"github_sync": {"$exists": True, "$ne": {}}}
+    if locale_filter:
+        query["locale"] = locale_filter
+    if sync_status_filter not in {"", "all", None}:
+        query["github_sync.status"] = sync_status_filter
+    if merge_status_filter not in {"", "all", None}:
+        query["github_sync.merge_status"] = merge_status_filter
+    if normalized_search:
+        query["$or"] = [
+            {"msgid": {"$regex": search_query, "$options": "i"}},
+            {"proposed_text": {"$regex": search_query, "$options": "i"}},
+            {"github_sync.branch_name": {"$regex": search_query, "$options": "i"}},
+        ]
+
+    rows = list(
+        ui_translation_proposals.find(query).sort(
+            [
+                ("github_sync.queued_at", -1),
+                ("reviewed_at", -1),
+                ("submitted_at", -1),
+                ("msgid", 1),
+            ]
+        ).limit(300)
+    )
+
+    status_counts = {
+        "queued": 0,
+        "running": 0,
+        "retry": 0,
+        "branch_pushed": 0,
+        "pr_opened": 0,
+        "committed_local_branch": 0,
+        "noop": 0,
+    }
+    retryable_count = 0
+    for row in rows:
+        sync_status = ((row.get("github_sync") or {}).get("status") or "").strip()
+        if sync_status in status_counts:
+            status_counts[sync_status] += 1
+        if sync_status in {"retry", "committed_local_branch"}:
+            retryable_count += 1
+
+    return {
+        "rows": rows,
+        "counts": {
+            "total": len(rows),
+            "retryable": retryable_count,
+            **status_counts,
+        },
+    }
+
+
 @admin_bp.before_request
 def log_request_info():
     try:
@@ -137,6 +319,421 @@ def log_request_info():
     except Exception as e:
         logger.error(e)
         pass
+
+
+@admin_bp.route("/ui-translations")
+@login_required
+def ui_translation_dashboard():
+    if not (_can_translate_ui(current_user) or _can_review_ui_translations(current_user)):
+        abort(403)
+
+    locales = supported_ui_translation_locales()
+    selected_locale = (request.args.get("locale") or "").strip().lower()
+    if selected_locale not in locales and locales:
+        selected_locale = locales[0]
+
+    search_query = (request.args.get("search") or "").strip()
+    default_state = "untranslated"
+    state_filter = (request.args.get("state") or default_state).strip().lower()
+    if state_filter not in {"pending", "untranslated", "fuzzy", "translated", "all"}:
+        state_filter = "pending"
+
+    locale_summaries = []
+    selected_rows = []
+    selected_counts = {"total": 0, "untranslated": 0, "fuzzy": 0, "translated": 0, "pending": 0}
+    for locale in locales:
+        normalized = _normalize_ui_translation_rows(
+            locale,
+            search_query=search_query if locale == selected_locale else "",
+            state_filter=state_filter if locale == selected_locale else "all",
+        )
+        locale_summaries.append(
+            {
+                "locale": locale,
+                "label": _ui_translation_language_names().get(locale, locale),
+                **normalized["counts"],
+            }
+        )
+        if locale == selected_locale:
+            selected_rows = normalized["rows"][:200]
+            selected_counts = normalized["counts"]
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/dashboard.html",
+        locales=locale_summaries,
+        selected_locale=selected_locale,
+        selected_rows=selected_rows,
+        selected_counts=selected_counts,
+        language_names=_ui_translation_language_names(),
+        search_query=search_query,
+        state_filter=state_filter,
+        can_translate_ui=_can_translate_ui(current_user),
+        can_review_ui_translations=_can_review_ui_translations(current_user),
+        ui_translation_sync_enabled=_ui_translation_sync_enabled(),
+    )
+
+
+@admin_bp.route("/ui-translations/sync")
+@login_required
+def ui_translation_sync_dashboard():
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+    if not _ui_translation_sync_enabled():
+        abort(404)
+
+    locales = supported_ui_translation_locales()
+    selected_locale = (request.args.get("locale") or "").strip().lower()
+    if selected_locale not in locales:
+        selected_locale = ""
+
+    sync_status = (request.args.get("sync_status") or "all").strip().lower()
+    if sync_status not in {"all", "queued", "running", "retry", "branch_pushed", "pr_opened", "committed_local_branch", "noop"}:
+        sync_status = "all"
+
+    merge_status = (request.args.get("merge_status") or "all").strip().lower()
+    if merge_status not in {"all", "merged", "merge_blocked", "not_configured", "merge_unknown"}:
+        merge_status = "all"
+
+    search_query = (request.args.get("search") or "").strip()
+    normalized = _normalize_ui_translation_sync_rows(
+        locale_filter=selected_locale,
+        sync_status_filter=sync_status,
+        merge_status_filter=merge_status,
+        search_query=search_query,
+    )
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/sync_dashboard.html",
+        locales=locales,
+        language_names=_ui_translation_language_names(),
+        selected_locale=selected_locale,
+        sync_status=sync_status,
+        merge_status=merge_status,
+        search_query=search_query,
+        sync_rows=normalized["rows"],
+        sync_counts=normalized["counts"],
+    )
+
+
+@admin_bp.route("/ui-translations/<locale>/edit")
+@login_required
+def ui_translation_editor(locale):
+    if not (_can_translate_ui(current_user) or _can_review_ui_translations(current_user)):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if locale not in supported_ui_translation_locales():
+        abort(404)
+
+    msgid = (request.args.get("msgid") or "").strip()
+    if not msgid:
+        flash_message(_("Valitse käyttöliittymätekstirivi listasta avataksesi editorin."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+    try:
+        entry = get_catalog_entry(locale, msgid)
+    except FileNotFoundError:
+        logger.exception("Missing UI translation catalog for locale %s.", locale)
+        flash_message(_("Tämän kielen käyttöliittymäkatalogia ei löytynyt."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+    except Exception:
+        logger.exception("Failed to load UI translation catalog entry for locale=%s msgid=%s", locale, msgid)
+        flash_message(_("Käyttöliittymäkäännösriviä ei voitu avata juuri nyt."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+    if entry is None:
+        flash_message(_("Pyydettyä käyttöliittymäkäännösriviä ei löytynyt tästä kielikatalogista."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+    proposal = ui_translation_proposals.find_one(
+        {"_id": proposal_key(locale, msgid)}
+    )
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/editor.html",
+        locale=locale,
+        locale_label=_ui_translation_language_names().get(locale, locale),
+        entry=entry,
+        proposal=proposal,
+        can_translate_ui=_can_translate_ui(current_user),
+        can_review_ui_translations=_can_review_ui_translations(current_user),
+        ui_translation_sync_enabled=_ui_translation_sync_enabled(),
+    )
+
+
+@admin_bp.route("/ui-translations/<locale>/propose", methods=["POST"])
+@login_required
+def submit_ui_translation_proposal(locale):
+    if not _can_translate_ui(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if locale not in supported_ui_translation_locales():
+        abort(404)
+
+    msgid = request.form.get("msgid") or ""
+    proposed_text = (request.form.get("proposed_text") or "").strip()
+    notes = (request.form.get("notes") or "").strip()
+
+    try:
+        entry = get_catalog_entry(locale, msgid)
+    except FileNotFoundError:
+        abort(404)
+    if entry is None:
+        abort(404)
+    if not proposed_text:
+        flash_message(_("Syötä käännösehdotus ennen lähettämistä."), "error")
+        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+
+    now = datetime.utcnow()
+    ui_translation_proposals.update_one(
+        {"_id": proposal_key(locale, msgid)},
+        {
+            "$set": {
+                "locale": locale,
+                "msgid": msgid,
+                "current_msgstr": entry.msgstr,
+                "proposed_text": proposed_text,
+                "notes": notes,
+                "status": "pending",
+                "submitted_at": now,
+                "submitted_by": str(getattr(current_user, "_id", "")),
+                "submitted_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                "reviewed_at": None,
+                "reviewed_by": None,
+                "reviewed_by_name": None,
+                "review_notes": "",
+                "locations": list(entry.locations),
+            }
+        },
+        upsert=True,
+    )
+    flash_message(_("Käyttöliittymäkäännösehdotus tallennettiin tarkistettavaksi."), "success")
+    return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+
+
+@admin_bp.route("/ui-translations/<locale>/approve", methods=["GET", "POST"])
+@login_required
+def approve_ui_translation_proposal(locale):
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if request.method == "GET":
+        flash_message(
+            _("Käyttöliittymäkäännöksen hyväksyntä tehdään lomakkeen kautta, ei suoralla linkillä."),
+            "error",
+        )
+        return _redirect_ui_translation_action_target(locale, request.args.get("msgid") or "")
+    msgid = request.form.get("msgid") or ""
+    review_notes = (request.form.get("review_notes") or "").strip()
+    proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
+    if not proposal or proposal.get("status") != "pending":
+        flash_message(_("Tälle käyttöliittymätekstille ei ole odottavaa käännösehdotusta."), "error")
+        return _redirect_ui_translation_action_target(locale, msgid)
+
+    sync_enabled = _ui_translation_sync_enabled()
+    if not sync_enabled:
+        update_catalog_entry(locale, msgid, proposal.get("proposed_text", ""))
+    sync_metadata = {
+        "status": "queued",
+        "queued_at": datetime.utcnow(),
+        "branch_name": build_ui_translation_sync_branch_name(locale, msgid),
+        "pr_url": None,
+        "pr_number": None,
+        "commit_sha": None,
+        "last_error": "",
+        "message": "",
+        "attempts": 0,
+    }
+    ui_translation_proposals.update_one(
+        {"_id": proposal["_id"]},
+        {
+            "$set": {
+                "status": "approved",
+                "reviewed_at": datetime.utcnow(),
+                "reviewed_by": str(getattr(current_user, "_id", "")),
+                "reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                "review_notes": review_notes,
+                "github_sync": sync_metadata if sync_enabled else {},
+            }
+        },
+    )
+    if sync_enabled:
+        flash_message(
+            _("Käyttöliittymäkäännös hyväksyttiin ja jonotettiin GitHub-synkkiä varten."),
+            "success",
+        )
+    else:
+        flash_message(
+            _("Käyttöliittymäkäännös hyväksyttiin ja kirjoitettiin kielikatalogiin."),
+            "success",
+        )
+    if sync_enabled:
+        job_manager = current_app.extensions.get("job_manager")
+        if job_manager is not None:
+            job_manager.run_job_now(
+                "process_ui_translation_sync",
+                triggered_by=f"admin:{current_user.get_id()}",
+                metadata={
+                    "proposal_id": str(proposal["_id"]),
+                    "locale": locale,
+                    "msgid": msgid,
+                },
+            )
+            flash_message(
+                _("Hyväksytty käännös jonotettiin GitHub-synkkiä varten."),
+                "info",
+            )
+    return _redirect_ui_translation_action_target(locale, msgid)
+
+
+@admin_bp.route("/ui-translations/<locale>/reject", methods=["GET", "POST"])
+@login_required
+def reject_ui_translation_proposal(locale):
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if request.method == "GET":
+        flash_message(
+            _("Käyttöliittymäkäännöksen hylkäys tehdään lomakkeen kautta, ei suoralla linkillä."),
+            "error",
+        )
+        return _redirect_ui_translation_action_target(locale, request.args.get("msgid") or "")
+    msgid = request.form.get("msgid") or ""
+    review_notes = (request.form.get("review_notes") or "").strip()
+    proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
+    if not proposal or proposal.get("status") != "pending":
+        flash_message(_("Tälle käyttöliittymätekstille ei ole odottavaa käännösehdotusta."), "error")
+        return _redirect_ui_translation_action_target(locale, msgid)
+
+    ui_translation_proposals.update_one(
+        {"_id": proposal["_id"]},
+        {
+            "$set": {
+                "status": "rejected",
+                "reviewed_at": datetime.utcnow(),
+                "reviewed_by": str(getattr(current_user, "_id", "")),
+                "reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                "review_notes": review_notes,
+            }
+        },
+    )
+    flash_message(_("Käyttöliittymäkäännösehdotus hylättiin."), "success")
+    return _redirect_ui_translation_action_target(locale, msgid)
+
+
+@admin_bp.route("/ui-translations/<locale>/requeue-sync", methods=["GET", "POST"])
+@login_required
+def requeue_ui_translation_sync(locale):
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if request.method == "GET":
+        flash_message(
+            _("GitHub-synkin uudelleenjonotus tehdään lomakkeen kautta, ei suoralla linkillä."),
+            "error",
+        )
+        return _redirect_ui_translation_action_target(locale, request.args.get("msgid") or "")
+    msgid = request.form.get("msgid") or ""
+    proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
+    if not proposal or proposal.get("status") != "approved":
+        flash_message(_("Tälle käyttöliittymätekstille ei ole hyväksyttyä käännöstä synkattavaksi."), "error")
+        return _redirect_ui_translation_action_target(locale, msgid)
+
+    ui_translation_proposals.update_one(
+        {"_id": proposal["_id"]},
+        {
+            "$set": {
+                "github_sync.status": "queued",
+                "github_sync.queued_at": datetime.utcnow(),
+                "github_sync.branch_name": build_ui_translation_sync_branch_name(locale, msgid),
+                "github_sync.last_error": "",
+                "github_sync.message": "",
+            }
+        },
+    )
+
+    job_manager = current_app.extensions.get("job_manager")
+    if job_manager is not None:
+        job_manager.run_job_now(
+            "process_ui_translation_sync",
+            triggered_by=f"admin:{current_user.get_id()}",
+            metadata={
+                "proposal_id": str(proposal["_id"]),
+                "locale": locale,
+                "msgid": msgid,
+                "requeued": True,
+            },
+        )
+
+    flash_message(_("GitHub-synkki jonotettiin uudelleen hyväksytylle käyttöliittymäkäännökselle."), "success")
+    return _redirect_ui_translation_action_target(locale, msgid)
+
+
+@admin_bp.route("/ui-translations/sync/requeue", methods=["POST"])
+@login_required
+def bulk_requeue_ui_translation_sync():
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+    if not _ui_translation_sync_enabled():
+        abort(404)
+
+    selected_ids = [value for value in request.form.getlist("proposal_ids") if value]
+    if not selected_ids:
+        flash_message(_("Valitse vähintään yksi käyttöliittymäkäännössynkki uudelleenjonotettavaksi."), "error")
+        return redirect(url_for("admin.ui_translation_sync_dashboard"))
+
+    updated = 0
+    requeued_ids = []
+    for proposal in ui_translation_proposals.find({"_id": {"$in": selected_ids}}):
+        github_sync = proposal.get("github_sync") or {}
+        sync_status = (github_sync.get("status") or "").strip()
+        merge_status = (github_sync.get("merge_status") or "").strip()
+        requeueable = sync_status in {"retry", "committed_local_branch"} or merge_status in {
+            "merge_blocked",
+            "merge_unknown",
+        }
+        if proposal.get("status") != "approved" or not requeueable:
+            continue
+        ui_translation_proposals.update_one(
+            {"_id": proposal["_id"]},
+            {
+                "$set": {
+                    "github_sync.status": "queued",
+                    "github_sync.queued_at": datetime.utcnow(),
+                    "github_sync.last_error": "",
+                    "github_sync.message": "",
+                }
+            },
+        )
+        updated += 1
+        requeued_ids.append(str(proposal["_id"]))
+
+    if updated:
+        job_manager = current_app.extensions.get("job_manager")
+        if job_manager is not None:
+            job_manager.run_job_now(
+                "process_ui_translation_sync",
+                triggered_by=f"admin:{current_user.get_id()}",
+                metadata={
+                    "proposal_ids": requeued_ids,
+                    "bulk_requeue": True,
+                },
+            )
+        flash_message(
+            _("Valitut käyttöliittymäkäännössynkit jonotettiin uudelleen GitHub-synkkiä varten."),
+            "success",
+        )
+    else:
+        flash_message(
+            _("Valituista riveistä yksikään ei ollut uudelleenjonotettavassa GitHub-synkin tilassa."),
+            "error",
+        )
+
+    return redirect(url_for("admin.ui_translation_sync_dashboard"))
 
 
 class DemoViewCount:
@@ -246,16 +843,25 @@ def load_user(user_id):
 # Admin dashboard
 
 # Route to view dashboard
+# Any authenticated user may open the dashboard; the template only renders
+# admin-only widgets for users with admin access (role-filtered view).
 @admin_bp.route("/dashboard")
 @login_required
-@admin_required
 def admin_dashboard():
-    """Render the admin dashboard."""
+    """Render the admin dashboard (role-filtered for all authenticated users)."""
+    if _is_limited_city_admin(current_user):
+        return redirect(url_for("admin_demo.demo_control"))
     # Load current panic mode
     panic = mongo.panic.find_one({"name": "global"})
     panic_mode = panic.get("panic", False) if panic else False
-    _log_admin_event("dashboard_view", panic_mode=panic_mode)
-    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}dashboard.html", panic_mode=panic_mode)
+    is_admin_user = has_admin_access(current_user)
+    if is_admin_user:
+        _log_admin_event("dashboard_view", panic_mode=panic_mode)
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}dashboard.html",
+        panic_mode=panic_mode,
+        is_admin_user=is_admin_user,
+    )
 
 
 # Route to activate panic mode
@@ -264,6 +870,7 @@ def admin_dashboard():
 @admin_required
 def activate_panic():
     """Activate global panic mode."""
+    _require_global_admin_surface()
     mongo.panic.update_one(
         {"name": "global"},
         {"$set": {"panic": True}},
@@ -280,6 +887,7 @@ def activate_panic():
 @admin_required
 def deactivate_panic():
     """Deactivate global panic mode."""
+    _require_global_admin_surface()
     mongo.panic.update_one(
         {"name": "global"},
         {"$set": {"panic": False}},
@@ -296,6 +904,7 @@ def deactivate_panic():
 @admin_required
 def panic_status():
     """Return current panic mode status as JSON."""
+    _require_global_admin_surface()
     panic = mongo.panic.find_one({"name": "global"})
     panic_mode = panic.get("panic", False) if panic else False
     _log_admin_event("panic_status_requested", panic_mode=panic_mode)
@@ -307,6 +916,7 @@ def panic_status():
 @admin_required
 def clear_cache():
     """Allow admins to purge the application cache from the dashboard."""
+    _require_global_admin_surface()
     try:
         cache.clear()
         _log_admin_event("cache_cleared", status="success")
@@ -399,6 +1009,7 @@ def _calculate_dashboard_snapshot() -> dict:
 @admin_required
 def dashboard_data():
     """Return aggregated dashboard metrics for polling."""
+    _require_global_admin_surface()
     snapshot = _calculate_dashboard_snapshot()
     _log_admin_event("dashboard_snapshot_requested")
     return jsonify(snapshot)
@@ -409,6 +1020,7 @@ def dashboard_data():
 @admin_required
 def dashboard_login_feed():
     """Return the most recent login attempts for the realtime feed."""
+    _require_global_admin_surface()
     try:
         limit = int(request.args.get("limit", 20))
     except ValueError:
@@ -436,16 +1048,28 @@ def background_jobs():
         selected_job = None
 
     try:
-        limit = min(int(request.args.get("limit", 50)), 200)
+        limit = min(max(int(request.args.get("limit", 50)), 10), 200)
     except (TypeError, ValueError):
         limit = 50
 
-    runs = job_manager.get_recent_runs(selected_job, limit=limit)
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
+
+    total_runs = job_manager.count_runs(selected_job)
+    total_pages = max(1, (total_runs + limit - 1) // limit)
+    page = min(page, total_pages)
+    skip = (page - 1) * limit
+    runs = job_manager.get_recent_runs(selected_job, limit=limit, skip=skip)
+    result_start = skip + 1 if total_runs else 0
+    result_end = skip + len(runs)
 
     _log_admin_event(
         "background_jobs_view",
         selected_job=selected_job,
         limit=limit,
+        page=page,
         total_jobs=len(jobs),
     )
     return render_template(
@@ -454,6 +1078,11 @@ def background_jobs():
         runs=runs,
         selected_job=selected_job,
         limit=limit,
+        page=page,
+        total_pages=total_pages,
+        total_runs=total_runs,
+        result_start=result_start,
+        result_end=result_end,
         scheduler_disabled=current_app.config.get("DISABLE_BACKGROUND_JOBS", False),
         can_manage=current_user.has_permission("MANAGE_BACKGROUND_JOBS"),
     )
@@ -606,7 +1235,13 @@ def _build_logs_query(filters: Dict[str, Any]) -> Dict[str, Any]:
     user_filter = filters.get("user")
     if user_filter:
         try:
-            clauses.append({"user._id": ObjectId(user_filter)})
+            clauses.append({
+                "$or": [
+                    {"user._id": ObjectId(user_filter)},
+                    {"actor.id": user_filter},
+                    {"actor._id": user_filter},
+                ]
+            })
         except Exception:
             pass
 
@@ -632,6 +1267,47 @@ def _build_logs_query(filters: Dict[str, Any]) -> Dict[str, Any]:
             "$or": [
                 {"request.method": action_type},
                 {"action.method": action_type},
+            ]
+        })
+
+    category = filters.get("category")
+    if category == "read":
+        clauses.append({
+            "$or": [
+                {"request.method": "GET"},
+                {"action.method": "GET"},
+            ]
+        })
+    elif category == "change":
+        clauses.append({
+            "$or": [
+                {"request.method": {"$in": ["POST", "PUT", "PATCH", "DELETE"]}},
+                {"action.method": {"$in": ["POST", "PUT", "PATCH", "DELETE"]}},
+            ]
+        })
+    elif category == "security":
+        clauses.append({
+            "$or": [
+                {"event": {"$regex": "login|auth|permission|token|clearance|mfa|security", "$options": "i"}},
+                {"message": {"$regex": "login|auth|permission|token|clearance|mfa|security", "$options": "i"}},
+            ]
+        })
+
+    search = (filters.get("q") or "").strip()
+    if search:
+        pattern = re.escape(search)
+        clauses.append({
+            "$or": [
+                {"event": {"$regex": pattern, "$options": "i"}},
+                {"message": {"$regex": pattern, "$options": "i"}},
+                {"details": {"$regex": pattern, "$options": "i"}},
+                {"request.path": {"$regex": pattern, "$options": "i"}},
+                {"action.path": {"$regex": pattern, "$options": "i"}},
+                {"user.username": {"$regex": pattern, "$options": "i"}},
+                {"user.displayname": {"$regex": pattern, "$options": "i"}},
+                {"actor.username": {"$regex": pattern, "$options": "i"}},
+                {"entity_id": {"$regex": pattern, "$options": "i"}},
+                {"related_id": {"$regex": pattern, "$options": "i"}},
             ]
         })
 
@@ -689,9 +1365,11 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
         timestamp_iso = timestamp_display
         rel_minutes = None
 
-    user_doc = doc.get("user") or {}
+    user_doc = doc.get("user") or doc.get("actor") or {}
+    if not isinstance(user_doc, dict):
+        user_doc = {"username": str(user_doc), "displayname": str(user_doc)}
     by = {
-        "id": str(user_doc.get("_id")) if user_doc.get("_id") else None,
+        "id": str(user_doc.get("_id") or user_doc.get("id")) if (user_doc.get("_id") or user_doc.get("id")) else None,
         "username": user_doc.get("username") or "Unknown",
         "displayname": user_doc.get("displayname") or user_doc.get("username") or "Unknown",
         "profile_picture": user_doc.get("profile_picture"),
@@ -706,9 +1384,22 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
         or "—"
     )
 
+    sensitive_keys = ("password", "passwd", "token", "secret", "authorization", "cookie", "csrf")
+
+    def _redact_payload(value):
+        if isinstance(value, dict):
+            return {
+                key: "[REDACTED]" if any(part in str(key).lower() for part in sensitive_keys) else _redact_payload(item)
+                for key, item in value.items()
+            }
+        if isinstance(value, list):
+            return [_redact_payload(item) for item in value]
+        return value
+
     def _stringify_payload(value):
         if value in (None, "", {}, []):
             return ""
+        value = _redact_payload(value)
         if isinstance(value, (dict, list)):
             try:
                 return json.dumps(value, ensure_ascii=False, default=str)
@@ -728,7 +1419,7 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
         "json": _stringify_payload(request_data.get("json")),
     }
 
-    details_text = doc.get("details")
+    details_text = _redact_payload(doc.get("details"))
     if isinstance(details_text, (dict, list)):
         try:
             details_text = json.dumps(details_text, ensure_ascii=False, default=str)
@@ -737,11 +1428,26 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
     elif details_text is not None:
         details_text = str(details_text)
 
+    event = doc.get("event") or doc.get("message") or legacy_action or ""
+    event_lc = str(event).lower()
+    if any(term in event_lc for term in ("login", "auth", "permission", "token", "clearance", "mfa", "security")):
+        category = "security"
+    elif method in ("POST", "PUT", "PATCH", "DELETE"):
+        category = "change"
+    elif method == "GET":
+        category = "read"
+    else:
+        category = "system"
+
+    entity_doc = doc.get("entity") if isinstance(doc.get("entity"), dict) else {}
+
     return {
         "id": str(doc.get("_id")),
         "timestamp": timestamp_display,
         "timestamp_iso": timestamp_iso,
         "relative_minutes": rel_minutes,
+        "event": str(event),
+        "category": category,
         "action": {
             "method": method,
             "path": path,
@@ -752,6 +1458,10 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
         "session_id": session_id,
         "details": details_text,
         "request_meta": request_meta,
+        "entity": {
+            "type": doc.get("entity_type") or entity_doc.get("type"),
+            "id": doc.get("entity_id") or doc.get("demo_id") or doc.get("related_id") or entity_doc.get("id"),
+        },
     }
 
 def get_admin_activity(page=1, per_page=20, query=None):
@@ -961,15 +1671,187 @@ def stats_matomo_live():
         logger.exception("Matomo live fetch failed")
         return jsonify({"enabled": False, "reason": str(exc)})
 
+
+# ── Admin status dashboard ────────────────────────────────────────────────────
+
+def _collect_infra_health() -> dict:
+    """Collect infrastructure health checks."""
+    services = []
+
+    # MongoDB
+    try:
+        _t0 = __import__("time").monotonic()
+        mongo.command("ping")
+        ms = round((__import__("time").monotonic() - _t0) * 1000)
+        db_stats = mongo.command("dbStats")
+        services.append({
+            "name": "MongoDB",
+            "status": "ok",
+            "message": f"Ping {ms} ms · {db_stats.get('collections', '?')} kokoelmat · {round(db_stats.get('dataSize', 0) / 1048576, 1)} MB",
+        })
+    except Exception as exc:
+        services.append({"name": "MongoDB", "status": "err", "message": str(exc)})
+
+    # Redis / cache
+    try:
+        _t0 = __import__("time").monotonic()
+        cache.set("_admin_status_ping", True, timeout=5)
+        ms = round((__import__("time").monotonic() - _t0) * 1000)
+        services.append({"name": "Redis", "status": "ok", "message": f"Ping {ms} ms"})
+    except Exception as exc:
+        services.append({"name": "Redis", "status": "err", "message": str(exc)})
+
+    # S3
+    try:
+        from mielenosoitukset_fi.utils.s3 import _s3_client
+        if _s3_client is None:
+            raise RuntimeError("S3 client not initialised")
+        _s3_client.list_buckets()
+        services.append({"name": "S3 / Tiedostovarasto", "status": "ok", "message": "Saavutettavissa"})
+    except Exception as exc:
+        services.append({"name": "S3 / Tiedostovarasto", "status": "err", "message": str(exc)})
+
+    return {"services": services, "all_ok": all(s["status"] == "ok" for s in services)}
+
+
+def _collect_server_stats() -> dict:
+    """Collect OS-level and process stats."""
+    import os, time as _time
+
+    # Uptime
+    try:
+        uptime_s = _time.monotonic()
+        days = int(uptime_s // 86400)
+        hours = int((uptime_s % 86400) // 3600)
+        mins = int((uptime_s % 3600) // 60)
+        uptime_str = f"{days}d {hours}h {mins}m" if days else f"{hours}h {mins}m"
+    except Exception:
+        uptime_str = "—"
+
+    # Memory (from /proc if available)
+    mem = {"used_mb": 0, "total_mb": 0, "pct": 0}
+    try:
+        with open("/proc/self/status") as f:
+            for line in f:
+                if line.startswith("VmRSS:"):
+                    mem["used_mb"] = round(int(line.split()[1]) / 1024)
+    except Exception:
+        pass
+
+    # Disk
+    try:
+        st = os.statvfs("/var/www/mielenosoitukset_fi")
+        total_gb = round((st.f_blocks * st.f_frsize) / (1024 ** 3), 1)
+        free_gb  = round((st.f_bavail * st.f_frsize) / (1024 ** 3), 1)
+        used_pct = round(((st.f_blocks - st.f_bavail) / st.f_blocks) * 100)
+    except Exception:
+        total_gb, free_gb, used_pct = 0, 0, 0
+
+    # Gunicorn workers (count from filesystem)
+    workers = 0
+    try:
+        import glob as _glob
+        workers = len(_glob.glob("/tmp/gunicorn_*.pid"))
+    except Exception:
+        pass
+
+    return {
+        "uptime": uptime_str,
+        "memory": mem,
+        "disk": {"total_gb": total_gb, "free_gb": free_gb, "used_pct": used_pct},
+        "workers": workers,
+        "python": __import__("sys").version.split()[0],
+    }
+
+
+def _collect_collection_counts() -> dict:
+    """Get document counts for key collections."""
+    collections = {
+        "users": "users",
+        "organizations": "organizations",
+        "demonstrations": "demonstrations",
+        "cases": "cases",
+        "admin_logs": "admin_logs",
+        "login_logs": "login_logs",
+        "demo_suggestions": "demo_suggestions",
+    }
+    counts = {}
+    for label, coll_name in collections.items():
+        try:
+            counts[label] = mongo[coll_name].count_documents({})
+        except Exception:
+            counts[label] = "—"
+    return counts
+
+
+def _collect_recent_errors() -> list:
+    """Fetch recent error-level log entries."""
+    try:
+        cursor = (
+            mongo.admin_logs
+            .find({"level": "error"})
+            .sort("_id", -1)
+            .limit(10)
+        )
+        errors = []
+        for doc in cursor:
+            ts = doc.get("timestamp")
+            if hasattr(ts, "strftime"):
+                ts = ts.strftime("%d.%m %H:%M")
+            errors.append({
+                "timestamp": str(ts) if ts else "—",
+                "event": doc.get("event", "—"),
+                "message": (doc.get("details") or {}).get("error", "")[:120],
+            })
+        return errors
+    except Exception:
+        return []
+
+
+@admin_bp.route("/status")
+@login_required
+@admin_required
+def admin_status():
+    """Admin system status dashboard."""
+    from mielenosoitukset_fi.utils.time_utils import utcnow as _utcnow
+    import time as _time
+
+    start = _time.monotonic()
+
+    infra = _collect_infra_health()
+    server = _collect_server_stats()
+    counts = _collect_collection_counts()
+    recent_errors = _collect_recent_errors()
+    dashboard = _calculate_dashboard_snapshot()
+
+    latency_ms = round((_time.monotonic() - start) * 1000)
+    now = _utcnow().replace(tzinfo=timezone.utc).strftime("%d.%m.%Y %H:%M:%S UTC")
+
+    _log_admin_event("admin_status_view")
+
+    return render_template(
+        "admin_V2/status.html",
+        infra=infra,
+        server=server,
+        counts=counts,
+        recent_errors=recent_errors,
+        dashboard=dashboard,
+        updated_at=now,
+        latency_ms=latency_ms,
+    )
+
+
 @admin_bp.route("/manual/")
+@login_required
 def manual():
     _log_admin_event("manual_index_view")
-    return render_template("manuals/index.html")
+    return render_template("manuals/index.html", current_page="index")
 
 @admin_bp.route("/manual/<path:page>")
+@login_required
 def manual_page(page):
     _log_admin_event("manual_page_view", page=page)
-    return render_template(f"manuals/{page}.html")
+    return render_template(f"manuals/{page}.html", current_page=page)
 
 @admin_bp.route("/logs")
 @login_required
@@ -1021,13 +1903,15 @@ def api_logs():
         A dictionary containing the logs and pagination info
     """
     try:
-        page = int(request.args.get("page", 1))
-        per_page = int(request.args.get("per_page", 20))
+        page = max(int(request.args.get("page", 1)), 1)
+        per_page = min(max(int(request.args.get("per_page", 20)), 1), 100)
         filters = {
             "user": request.args.get("user"),
             "start_date": request.args.get("start_date"),
             "end_date": request.args.get("end_date"),
             "action_type": request.args.get("action_type"),
+            "category": request.args.get("category"),
+            "q": request.args.get("q"),
         }
         query = _build_logs_query(filters)
         logs = get_admin_activity(page, per_page, query)

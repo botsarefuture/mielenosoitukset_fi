@@ -1,0 +1,117 @@
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+
+
+{% block main_content %}
+<div class="admin-page">
+  {% call admin_page_hero(
+    _('Järjestelmän tila'),
+    _('Tarkista infrastruktuurin, palvelimen ja taustapalveluiden ajantasainen toimintatila.'),
+    _('Järjestelmä'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Järjestelmän tila'), none)]
+  ) %}
+    <a href="{{ url_for('admin.admin_status') }}" class="admin-page-hero__action">
+      <i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ _('Päivitä') }}
+    </a>
+  {% endcall %}
+
+<div class="admin-health-grid">
+
+  <!-- Overall banner -->
+  <div class="admin-health-banner {{ 'is-ok' if infra.all_ok else 'is-error' }}">
+    <span class="admin-health-banner__icon">{{ '✓' if infra.all_ok else '✗' }}</span>
+    <span>{{ 'Kaikki järjestelmät toimivat' if infra.all_ok else 'Jokin järjestelmä ei vastaa' }}</span>
+  </div>
+
+  <!-- Infrastructure health -->
+  <section class="admin-health-panel">
+    <h2 class="admin-health-panel__title"><i class="fa-solid fa-server"></i> Infrastruktuuri</h2>
+    {% for svc in infra.services %}
+    <div class="admin-health-service">
+      <span class="admin-health-service__dot {{ 'is-ok' if svc.status == 'ok' else 'is-error' }}" aria-hidden="true"></span>
+      <span class="admin-health-service__name">{{ svc.name }}</span>
+      <span class="admin-health-service__message">{{ svc.message }}</span>
+    </div>
+    {% endfor %}
+  </section>
+
+  <!-- Server details -->
+  <section class="admin-health-panel">
+    <h2 class="admin-health-panel__title"><i class="fa-solid fa-microchip"></i> Palvelin</h2>
+    <div class="admin-health-detail"><span>Käyttöaika</span><strong>{{ server.uptime }}</strong></div>
+    <div class="admin-health-detail"><span>Python</span><strong>{{ server.python }}</strong></div>
+    <div class="admin-health-detail"><span>Muisti (RSS)</span><strong>{{ server.memory.used_mb }} MB</strong></div>
+    <div class="admin-health-detail"><span>Gunicorn työntekijät</span><strong>{{ server.workers or '—' }}</strong></div>
+    <div class="admin-health-disk">
+      <div class="admin-health-detail"><span>Levytila</span><strong>{{ server.disk.free_gb }} GB / {{ server.disk.total_gb }} GB vapaa</strong></div>
+      <div class="admin-health-progress" role="progressbar" aria-label="Levytilan käyttö" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ server.disk.used_pct }}">
+        <div class="admin-health-progress__fill {{ 'is-ok' if server.disk.used_pct < 70 else ('is-warning' if server.disk.used_pct < 90 else 'is-error') }}"
+             style="width:{{ server.disk.used_pct }}%"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Collection counts -->
+  <section class="admin-health-panel">
+    <h2 class="admin-health-panel__title"><i class="fa-solid fa-database"></i> Tietokannan kokoelmat</h2>
+    <div class="admin-health-metrics">
+      {% for label, count in counts.items() %}
+      <div class="admin-health-metric">
+        <strong>{{ count }}</strong>
+        <span>{{ label }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Dashboard quick stats -->
+  <section class="admin-health-panel">
+    <h2 class="admin-health-panel__title"><i class="fa-solid fa-chart-line"></i> Yleiskatsaus</h2>
+    <div class="admin-health-metrics">
+      <div class="admin-health-metric">
+        <strong>{{ dashboard.users.total }}</strong>
+        <span>Käyttäjää</span>
+      </div>
+      <div class="admin-health-metric">
+        <strong>{{ dashboard.organizations.active }}</strong>
+        <span>Organisaatiota</span>
+      </div>
+      <div class="admin-health-metric">
+        <strong>{{ dashboard.demos.live }}</strong>
+        <span>Mielenosoitusta</span>
+      </div>
+      <div class="admin-health-metric">
+        <strong>{{ dashboard.cases.open }}</strong>
+        <span>Avointa asiaa</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent errors -->
+  <section class="admin-health-panel admin-health-grid__full">
+    <h2 class="admin-health-panel__title"><i class="fa-solid fa-triangle-exclamation"></i> Viimeisimmät virheet</h2>
+    {% if recent_errors %}
+    <div class="admin-data-view__viewport"><table class="admin-health-errors">
+      <thead><tr><th>Aika</th><th>Tapahtuma</th><th>Virheilmoitus</th></tr></thead>
+      <tbody>
+        {% for err in recent_errors %}
+        <tr>
+          <td>{{ err.timestamp }}</td>
+          <td>{{ err.event }}</td>
+          <td>{{ err.message }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}
+    <div class="admin-empty-state">Ei virheitä viime aikana</div>
+    {% endif %}
+  </section>
+
+  <footer class="admin-health-footer">
+    Päivitetty: {{ updated_at }} &middot; Haku {{ latency_ms }} ms
+  </footer>
+
+</div>
+</div>
+{% endblock %}

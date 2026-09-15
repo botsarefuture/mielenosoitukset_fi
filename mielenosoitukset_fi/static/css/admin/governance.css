@@ -1,0 +1,106 @@
+.governance-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.governance-hero,
+.governance-card {
+  border: 1px solid var(--bs-border-color);
+  background: var(--bs-body-bg);
+  border-radius: 1rem;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+}
+
+.governance-hero {
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.governance-eyebrow {
+  color: var(--bs-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.governance-tabs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.governance-tabs a {
+  align-items: center;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 999px;
+  color: var(--bs-body-color);
+  display: inline-flex;
+  font-weight: 700;
+  gap: 0.45rem;
+  padding: 0.55rem 0.9rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.governance-tabs a:hover,
+.governance-tabs a[aria-current="page"] {
+  background: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: #fff;
+}
+
+.governance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+}
+
+.governance-card {
+  padding: 1.25rem;
+}
+
+.governance-card-icon {
+  align-items: center;
+  background: color-mix(in srgb, var(--bs-primary) 14%, transparent);
+  border-radius: 0.8rem;
+  color: var(--bs-primary);
+  display: inline-flex;
+  height: 2.6rem;
+  justify-content: center;
+  margin-bottom: 0.8rem;
+  width: 2.6rem;
+}
+
+.governance-metric {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+  margin: 0.5rem 0;
+}
+
+.governance-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.governance-toolbar .form-control {
+  max-width: 390px;
+}
+
+.governance-status {
+  min-height: 1.5rem;
+}
+
+@media (max-width: 700px) {
+  .governance-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

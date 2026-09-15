@@ -31,6 +31,7 @@ from html import unescape
 from typing import Any, Dict, List, Optional, Tuple
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.emailer.EmailJob import Sender
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.classes import Case
 from mielenosoitukset_fi.utils.logger import logger
@@ -96,6 +97,19 @@ def _sender_is_blocked(sender_email: str, blocklist: List[str]) -> bool:
         return False
     lower = sender_email.strip().lower()
     return any(_sender_matches_pattern(lower, p) for p in blocklist)
+
+
+def _ticket_sender(config):
+    """Build a Sender that sends from the tuki@ ticket mailbox via SMTP."""
+    username = getattr(config, "TICKET_IMAP_USERNAME", "")
+    return Sender(
+        email_address=username,
+        email_server=getattr(config, "TICKET_SMTP_SERVER", getattr(config, "TICKET_IMAP_SERVER", "")),
+        email_port=int(getattr(config, "TICKET_SMTP_PORT", 587)),
+        username=username,
+        password=getattr(config, "TICKET_IMAP_PASSWORD", ""),
+        use_tls=bool(getattr(config, "TICKET_SMTP_USE_TLS", True)),
+    )
 
 
 def _decode_header_value(value: Optional[str]) -> str:
@@ -408,6 +422,7 @@ def _queue_auto_reply(email_sender, config, reply_to: str, ticket_label: str, or
         template_name="customer_support/ticket_auto_reply.html",
         subject=f"Vahvistus tukipyynnöstä {ticket_label}",
         recipients=[reply_to],
+        sender=_ticket_sender(config),
         context={
             "ticket_id": ticket_label,
             "sla_hours": sla_hours,
@@ -425,6 +440,7 @@ def _queue_urgent_alert(email_sender, config, sender_email: str, ticket_label: s
         template_name="customer_support/ticket_urgent_alert.html",
         subject=f"URGENT tukipyyntö {ticket_label}: {subject[:80]}",
         recipients=[escalation_email],
+        sender=_ticket_sender(config),
         context={
             "ticket_id": ticket_label,
             "from_email": sender_email,

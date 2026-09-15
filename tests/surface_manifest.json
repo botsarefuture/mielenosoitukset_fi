@@ -118,216 +118,216 @@
     ]
   },
   "background_jobs": {
-    "count": 10,
+    "count": 11,
+    "sha256": "c9b1d775d13caf29e1e2d18a6a31d864a66eb9796bbbdf71ee2e5fbc9df0223a",
     "coverage": [
       "jobs",
       "integration"
-    ],
-    "sha256": "9682ed3d9025ddd0db93fe3c6ccf815faba39ade36d30bf77d305f819111ba93"
+    ]
   },
   "routes": {
     "mielenosoitukset_fi/admin/admin_bp.py": {
       "count": 34,
+      "sha256": "0dfb8f5d9deaa4a7dd9554635c8c5418e2af122dea7f954faf2a472d29e344bf",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "0dfb8f5d9deaa4a7dd9554635c8c5418e2af122dea7f954faf2a472d29e344bf"
+      ]
     },
     "mielenosoitukset_fi/admin/admin_case_bp.py": {
-      "count": 12,
+      "count": 20,
+      "sha256": "28d8492fecd335619cb39d13040049b61dd59add3586bf4c2e50a53a7440bfd6",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "5fd1e5409dc19fb03657442c1f1c2967a6be67de5a1fd47c9bc11c46bce93386"
+      ]
     },
     "mielenosoitukset_fi/admin/admin_city_bp.py": {
       "count": 1,
+      "sha256": "651daec4ff338a32e0ee863fb56c268fe26cafac872b016a53066275b7490b46",
       "coverage": [
         "integration"
-      ],
-      "sha256": "651daec4ff338a32e0ee863fb56c268fe26cafac872b016a53066275b7490b46"
+      ]
     },
     "mielenosoitukset_fi/admin/admin_demo_bp.py": {
       "count": 49,
+      "sha256": "148dcce50c0ceb79797f382975667b0c220413b38db73e27fb1ba5e7a887a826",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "148dcce50c0ceb79797f382975667b0c220413b38db73e27fb1ba5e7a887a826"
+      ]
     },
     "mielenosoitukset_fi/admin/admin_dev_bp.py": {
       "count": 6,
+      "sha256": "719cc75a2c4725c6558926b8767ba0369ae6bd1658d0644309b90378b13a00ba",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "719cc75a2c4725c6558926b8767ba0369ae6bd1658d0644309b90378b13a00ba"
+      ]
     },
     "mielenosoitukset_fi/admin/admin_governance_bp.py": {
       "count": 3,
+      "sha256": "94de410e4e8ebb65c21e395cc20c78d24e9ed7456ead73d10e18da4818ed274b",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "94de410e4e8ebb65c21e395cc20c78d24e9ed7456ead73d10e18da4818ed274b"
+      ]
     },
     "mielenosoitukset_fi/admin/admin_kampanja_bp.py": {
       "count": 6,
+      "sha256": "b2bdad47b8e41a1a36cc7036746f91ce513fbc433610e2f61daf36bef3d752ed",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "b2bdad47b8e41a1a36cc7036746f91ce513fbc433610e2f61daf36bef3d752ed"
+      ]
     },
     "mielenosoitukset_fi/admin/admin_media_bp.py": {
       "count": 4,
+      "sha256": "037d7caeb08527ad9fd25897e5a970fd6f1403d0919c246519307a8fd635b306",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "037d7caeb08527ad9fd25897e5a970fd6f1403d0919c246519307a8fd635b306"
+      ]
     },
     "mielenosoitukset_fi/admin/admin_org_bp.py": {
       "count": 15,
+      "sha256": "19d8fb701e0b1374257cc98c696e089b2b39d30ebe9bce789692e51de406c0ad",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "19d8fb701e0b1374257cc98c696e089b2b39d30ebe9bce789692e51de406c0ad"
+      ]
     },
     "mielenosoitukset_fi/admin/admin_recu_demo_bp.py": {
       "count": 7,
+      "sha256": "a47968928482fa0a5677d53a4cf8be7b76b82cdcebff43528d69dc1cf628f5bc",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "a47968928482fa0a5677d53a4cf8be7b76b82cdcebff43528d69dc1cf628f5bc"
+      ]
     },
     "mielenosoitukset_fi/admin/admin_user_bp.py": {
       "count": 8,
+      "sha256": "df393544e63f55eebd24b19860edc017182a07831612299decd842d54b59954e",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "df393544e63f55eebd24b19860edc017182a07831612299decd842d54b59954e"
+      ]
     },
     "mielenosoitukset_fi/admin/board_audit.py": {
       "count": 2,
+      "sha256": "99243822ac20e1096df9ad9d090cd0c922ec675622b4c9d93f4147290504f94c",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "99243822ac20e1096df9ad9d090cd0c922ec675622b4c9d93f4147290504f94c"
+      ]
     },
     "mielenosoitukset_fi/admin/board_compliance.py": {
       "count": 4,
+      "sha256": "2442609deed0137824e173a59d3cb35100596ddd2cd284f1001ed20a6acc4798",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "2442609deed0137824e173a59d3cb35100596ddd2cd284f1001ed20a6acc4798"
+      ]
     },
     "mielenosoitukset_fi/admin/v2.py": {
       "count": 1,
+      "sha256": "49ac73bd1fa6d3e2f086f256cfd4d7f440a6798348484643c2b1263af855237d",
       "coverage": [
         "integration",
         "e2e-admin"
-      ],
-      "sha256": "49ac73bd1fa6d3e2f086f256cfd4d7f440a6798348484643c2b1263af855237d"
+      ]
     },
     "mielenosoitukset_fi/api/routes.py": {
       "count": 14,
+      "sha256": "b93d2542cdbcd44b679285d9e70d7818a0e24333531c5fd87ca14826bb4c135a",
       "coverage": [
         "integration",
         "contract"
-      ],
-      "sha256": "b93d2542cdbcd44b679285d9e70d7818a0e24333531c5fd87ca14826bb4c135a"
+      ]
     },
     "mielenosoitukset_fi/app.py": {
       "count": 2,
+      "sha256": "cd9c57924f5816feb8357cbf18c57d329adfbc411002a38a2ca96cdbcbc525b0",
       "coverage": [
         "integration"
-      ],
-      "sha256": "cd9c57924f5816feb8357cbf18c57d329adfbc411002a38a2ca96cdbcbc525b0"
+      ]
     },
     "mielenosoitukset_fi/basic_routes.py": {
       "count": 52,
+      "sha256": "f1c436c0b04d7aaffc3e7cd8fbcc6589854d38aa6bf18530bd8e5ccd05891dbc",
       "coverage": [
         "integration",
         "e2e-public"
-      ],
-      "sha256": "f1c436c0b04d7aaffc3e7cd8fbcc6589854d38aa6bf18530bd8e5ccd05891dbc"
+      ]
     },
     "mielenosoitukset_fi/developer_bp.py": {
       "count": 9,
+      "sha256": "b1fafb2b6411ae8b377701f6a7883c5d8be10bc8b51d261ef3e4df2a2558e92b",
       "coverage": [
         "integration",
         "e2e-developer"
-      ],
-      "sha256": "b1fafb2b6411ae8b377701f6a7883c5d8be10bc8b51d261ef3e4df2a2558e92b"
+      ]
     },
     "mielenosoitukset_fi/kampanja/routes.py": {
       "count": 3,
+      "sha256": "038c304f6afcdc2e4e070810496a27b70f03f9465ba65d480046ef38c05afa1f",
       "coverage": [
         "integration",
         "e2e-public"
-      ],
-      "sha256": "038c304f6afcdc2e4e070810496a27b70f03f9465ba65d480046ef38c05afa1f"
+      ]
     },
     "mielenosoitukset_fi/mcp_admin_bp.py": {
       "count": 10,
+      "sha256": "8f213902698ea302ccab346abe22fd0c49668d2baf571559a467d00a0c4af90a",
       "coverage": [
         "integration"
-      ],
-      "sha256": "8f213902698ea302ccab346abe22fd0c49668d2baf571559a467d00a0c4af90a"
+      ]
     },
     "mielenosoitukset_fi/notifications_bp.py": {
       "count": 3,
+      "sha256": "1b4b57b231a01be68a23f14adb6f01592d0bd8ad21982ee29f506299107feca7",
       "coverage": [
         "integration"
-      ],
-      "sha256": "1b4b57b231a01be68a23f14adb6f01592d0bd8ad21982ee29f506299107feca7"
+      ]
     },
     "mielenosoitukset_fi/translations_join_bp.py": {
       "count": 1,
+      "sha256": "5d848cdfb95e77ff83cb7831e7b8f7b256e5103ebb0c5f42c82294a660448739",
       "coverage": [
         "integration"
-      ],
-      "sha256": "5d848cdfb95e77ff83cb7831e7b8f7b256e5103ebb0c5f42c82294a660448739"
+      ]
     },
     "mielenosoitukset_fi/users/BPs/auth.py": {
       "count": 30,
+      "sha256": "187426130dda0a7d2ca709f927d95d2ad6837e577a83446c34daaf59b4d57923",
       "coverage": [
         "integration",
         "e2e-auth"
-      ],
-      "sha256": "187426130dda0a7d2ca709f927d95d2ad6837e577a83446c34daaf59b4d57923"
+      ]
     },
     "mielenosoitukset_fi/users/BPs/orgs.py": {
       "count": 3,
+      "sha256": "dcdc8ff71d1edc45a3bbeef08de9d79d991dcfdd624df91e3b72becc4ce940fe",
       "coverage": [
         "integration",
         "e2e-user"
-      ],
-      "sha256": "dcdc8ff71d1edc45a3bbeef08de9d79d991dcfdd624df91e3b72becc4ce940fe"
+      ]
     },
     "mielenosoitukset_fi/users/BPs/profile.py": {
       "count": 20,
+      "sha256": "b37c2cb18bafe4543983980a245b92d19c33181847f234469a10e63f4013d874",
       "coverage": [
         "integration",
         "e2e-user"
-      ],
-      "sha256": "b37c2cb18bafe4543983980a245b92d19c33181847f234469a10e63f4013d874"
+      ]
     }
   },
   "socketio": {
     "count": 5,
+    "sha256": "1cd63bfefd1947e6fbd8d974b64af5b17f863d9d6ba0ca24342ae1b7b8f8b6ac",
     "coverage": [
       "ws",
       "integration"
-    ],
-    "sha256": "1cd63bfefd1947e6fbd8d974b64af5b17f863d9d6ba0ca24342ae1b7b8f8b6ac"
+    ]
   }
 }

@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Preview environments are now resource-bounded and deploy in a serialized way: each preview MongoDB container is limited to 512 MB RAM / 0.5 CPU and the fake SMTP container to 128 MB / 0.1 CPU (overridable via `PREVIEW_MONGO_*` / `PREVIEW_MAIL_*` env vars), and preview deploys take a global `flock` while starting and seeding MongoDB. This prevents stack-wide pushes (e.g. 16 PRs at once) from spawning many unconstrained mongod processes and pegging all CPUs on the preview host, which previously exhausted swap and caused multi-hour 100% CPU load.
 * Every full admin subpage now has a canonical breadcrumb trail, nested workflows use the hero's first shared back action, and a static contract documents the intentional top-level pages that rely on persistent navigation instead.
 * Admin demonstration, recurring-demonstration, tag, and shared table templates now express conditional visibility and form geometry through semantic markup and shared workspace components; the only remaining admin inline style is the server-driven disk-usage width.
 * The live admin dashboard now renders login-feed API values with DOM text nodes instead of HTML interpolation and exposes live health bars as accessible progress indicators.

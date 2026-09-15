@@ -47,7 +47,101 @@
           {% endif %}
         </div>
         <div class="admin-section-card__body admin-stack">
-          {% if case.case_type == "new_demo" %}
+          {% set support_ticket = case_data.support_ticket if case_data.support_ticket is defined else {} %}
+          {% if case.case_type == "support_ticket" %}
+          <div class="detail-grid">
+            <div class="detail-item"><strong>{{ _('Ilmoittaja') }}</strong><span>{{ case_data.submitter_label }}</span></div>
+            <div class="detail-item"><strong>{{ _('Vastaanotettu') }}</strong><span>{% if support_ticket.received_at %}{{ support_ticket.received_at|datetimeformat("%d.%m.%Y %H:%M") }}{% else %}-{% endif %}</span></div>
+            {% if case_data.urgent %}
+            <div class="detail-item"><strong>{{ _('Kiireellisyys') }}</strong><span class="admin-status-badge admin-status-badge--danger">{{ _('URGENT') }}</span></div>
+            {% endif %}
+            {% if support_ticket.from_wrapper %}
+            <div class="detail-item"><strong>{{ _('Alkupera') }}</strong><span>{{ _('Yhteydenottolomake') }}</span></div>
+            {% endif %}
+          </div>
+          <div class="detail-item">
+            <strong>{{ _('Aihe') }}</strong>
+            <div class="note-box">{{ support_ticket.subject or _('(ei aihetta)') }}</div>
+          </div>
+          <div class="detail-item">
+            <strong>{{ _('Viesti') }}</strong>
+            {% if support_ticket.html_message %}
+            <div class="description-box">{{ support_ticket.html_message|safe }}</div>
+            {% else %}
+            <div class="note-box">{{ support_ticket.message or _('(ei viestia)') }}</div>
+            {% endif %}
+          </div>
+          {% if support_ticket.followups %}
+          <div class="detail-item">
+            <strong>{{ _('Jatkoviestit') }}</strong>
+            <div class="info-list">
+              {% for followup in support_ticket.followups %}
+              <div class="note-box">
+                <div><strong>{{ followup.from_name or followup.from_email }}</strong> <span class="muted">{{ followup.timestamp|datetimeformat("%d.%m.%Y %H:%M") if followup.timestamp else '' }}</span></div>
+                {% if followup.subject %}<div class="muted">{{ followup.subject }}</div>{% endif %}
+                <div>{{ followup.message }}</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          <div class="detail-item">
+            <strong>{{ _('Liitetyt toimenpiteet') }}</strong>
+            <div class="admin-linked-actions">
+              {% if case_data.demo %}
+              <div class="note-box">
+                <div>
+                  <span class="admin-status-badge admin-status-badge--info">Demo</span>
+                  {% if case_data.demo.title %}<strong>{{ case_data.demo.title }}</strong>{% endif %}
+                  {% if case_data.demo.city %}<span class="muted">({{ case_data.demo.city }})</span>{% endif %}
+                </div>
+                {% if case_data.demo._id %}
+                <a class="btn btn-sm btn-outline-primary mt-1" href="{{ url_for('admin_demo.demo_command_center', demo_id=case_data.demo._id) }}" target="_blank" rel="noopener noreferrer">{{ _('Avaa hallintapaneelissa') }}</a>
+                {% endif %}
+                <form method="POST" action="{{ url_for('admin_case.unlink_demo', case_id=case._id) }}" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-outline-danger mt-1">{{ _('Poista linkki') }}</button>
+                </form>
+              </div>
+              {% else %}
+              <div class="note-box">
+                <form method="POST" action="{{ url_for('admin_case.link_demo', case_id=case._id) }}" class="admin-link-form" data-link-type="demo">
+                  <label class="muted">{{ _('Liitä olemassa oleva mielenosoitus') }}</label>
+                  <div class="admin-link-search">
+                    <input type="text" name="demo_search" class="form-control" placeholder="{{ _('Hae otsikolla...') }}" autocomplete="off" data-search-type="demo" />
+                    <input type="hidden" name="demo_id" />
+                    <button type="submit" class="btn btn-sm btn-primary" disabled>{{ _('Liitä') }}</button>
+                  </div>
+                  <div class="admin-link-results"></div>
+                </form>
+              </div>
+              {% endif %}
+
+              {% if case_data.organization %}
+              <div class="note-box">
+                <div>
+                  <span class="admin-status-badge admin-status-badge--info">Org</span>
+                  <strong>{{ case_data.organization.name }}</strong>
+                </div>
+                <form method="POST" action="{{ url_for('admin_case.unlink_org', case_id=case._id) }}" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-outline-danger mt-1">{{ _('Poista linkki') }}</button>
+                </form>
+              </div>
+              {% else %}
+              <div class="note-box">
+                <form method="POST" action="{{ url_for('admin_case.link_org', case_id=case._id) }}" class="admin-link-form" data-link-type="org">
+                  <label class="muted">{{ _('Liitä olemassa oleva organisaatio') }}</label>
+                  <div class="admin-link-search">
+                    <input type="text" name="org_search" class="form-control" placeholder="{{ _('Hae nimellä...') }}" autocomplete="off" data-search-type="org" />
+                    <input type="hidden" name="organization_id" />
+                    <button type="submit" class="btn btn-sm btn-primary" disabled>{{ _('Liitä') }}</button>
+                  </div>
+                  <div class="admin-link-results"></div>
+                </form>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% elif case.case_type == "new_demo" %}
           <div class="detail-grid">
             <div class="detail-item"><strong>{{ _('Otsikko') }}</strong><span>{{ demo.title or '-' }}</span></div>
             <div class="detail-item"><strong>{{ _('Paivamaara') }}</strong><span>{{ demo.date or '-' }}</span></div>
@@ -432,5 +526,58 @@
       })
       .catch(() => Swal.fire("{{ _('Virhe') }}", "{{ _('Tapahtui odottamaton virhe.') }}", "error"));
   }
+
+  // ---- Link support ticket to demo / organization (autocomplete) ----
+  document.querySelectorAll(".admin-link-form").forEach((form) => {
+    const searchInput = form.querySelector("input[data-search-type]");
+    const hiddenInput = form.querySelector("input[type='hidden']");
+    const submitBtn = form.querySelector("button[type='submit']");
+    const resultsBox = form.querySelector(".admin-link-results");
+    let selected = null;
+    let debounceTimer = null;
+
+    function renderResults(items) {
+      resultsBox.innerHTML = "";
+      if (!items.length) {
+        resultsBox.innerHTML = `<div class="muted">{{ _('Ei tuloksia.') }}</div>`;
+        return;
+      }
+      items.forEach((item) => {
+        const el = document.createElement("div");
+        el.className = "admin-link-result";
+        el.tabIndex = 0;
+        const label = item.title || item.name || "";
+        const extra = item.city ? ` <span class="muted">(${item.city})</span>` : (item.cancelled ? ` <span class="muted">(${item.cancelled ? '{{ _('peruttu') }}' : ''})</span>` : "");
+        el.innerHTML = `<strong>${label}</strong>${extra}`;
+        el.addEventListener("click", () => {
+          selected = item;
+          hiddenInput.value = item.id;
+          searchInput.value = label;
+          resultsBox.innerHTML = "";
+          submitBtn.disabled = false;
+        });
+        el.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") { el.click(); e.preventDefault(); }
+        });
+        resultsBox.appendChild(el);
+      });
+    }
+
+    searchInput.addEventListener("input", () => {
+      submitBtn.disabled = true;
+      hiddenInput.value = "";
+      selected = null;
+      const q = searchInput.value.trim();
+      if (q.length < 2) { resultsBox.innerHTML = ""; return; }
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const type = searchInput.dataset.searchType;
+        fetch(`/admin/case/${type === "org" ? "org_search" : "demo_search"}/?q=${encodeURIComponent(q)}`)
+          .then((res) => res.json())
+          .then(renderResults)
+          .catch(() => { resultsBox.innerHTML = `<div class="muted">{{ _('Haku epaonnistui.') }}</div>`; });
+      }, 250);
+    });
+  });
 </script>
 {% endblock %}

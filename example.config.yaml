@@ -10,6 +10,21 @@ MAIL:
   PASSWORD: "example_password"  # SMTP password
   DEFAULT_SENDER: "example@example.com"  # Default sender email address
 
+# Support ticket system (IMAP ingress)
+# Polls the tuki@ mailbox and creates support_ticket cases with auto-reply.
+TICKET_INGRESS_ENABLED: true
+TICKET_IMAP_SERVER: "mail.luova.club"
+TICKET_IMAP_PORT: 993
+TICKET_IMAP_USE_SSL: true
+TICKET_IMAP_USERNAME: "tuki@mielenosoitukset.fi"  # IMAP login (mailbox owner)
+TICKET_IMAP_PASSWORD: "example_password"  # IMAP password for the tuki mailbox
+TICKET_IMAP_MAILBOX: "INBOX"
+TICKET_ESCALATION_EMAIL: "olivia@mielenosoitukset.fi"  # URGENT alerts go here
+TICKET_SLA_HOURS: 48
+TICKET_SENDER: "no-reply@mielenosoitukset.fi"  # Outgoing auto-reply From
+TICKET_URGENT_KEYWORD: "URGENT"
+TICKET_POLL_SECONDS: 120
+
 # Optional configurations
 # SERVER_NAME: "www.example.com"  # Server name for the application
 # PREFERRED_URL_SCHEME: "https"  # URL scheme (e.g., https)

@@ -186,6 +186,26 @@ class Config:
         cls.DEFAULT_TIMEZONE = config.get("DEFAULT_TIMEZONE", "Europe/Helsinki")
         cls.TESTING = config.get("TESTING", False)
         cls.ENABLE_EMAIL_WORKER = config.get("ENABLE_EMAIL_WORKER", True)
+
+        # Support ticket ingress (IMAP polling of the tuki@ mailbox)
+        cls.TICKET_INGRESS_ENABLED = config.get("TICKET_INGRESS_ENABLED", False)
+        cls.TICKET_IMAP_SERVER = config.get("TICKET_IMAP_SERVER", "mail.luova.club")
+        cls.TICKET_IMAP_PORT = config.get("TICKET_IMAP_PORT", 993)
+        cls.TICKET_IMAP_USE_SSL = config.get("TICKET_IMAP_USE_SSL", True)
+        cls.TICKET_IMAP_USERNAME = config.get("TICKET_IMAP_USERNAME", "")
+        cls.TICKET_IMAP_PASSWORD = config.get("TICKET_IMAP_PASSWORD", "")
+        cls.TICKET_IMAP_MAILBOX = config.get("TICKET_IMAP_MAILBOX", "INBOX")
+        cls.TICKET_ESCALATION_EMAIL = config.get(
+            "TICKET_ESCALATION_EMAIL",
+            "olivia@mielenosoitukset.fi",
+        )
+        cls.TICKET_SLA_HOURS = config.get("TICKET_SLA_HOURS", 48)
+        cls.TICKET_SENDER = config.get(
+            "TICKET_SENDER",
+            cls.MAIL_DEFAULT_SENDER,
+        )
+        cls.TICKET_URGENT_KEYWORD = config.get("TICKET_URGENT_KEYWORD", "URGENT")
+        cls.TICKET_POLL_SECONDS = config.get("TICKET_POLL_SECONDS", 120)
         cls.ENABLE_PANIC_THREAD = config.get("ENABLE_PANIC_THREAD", True)
         cls.ENABLE_BACKGROUND_JOBS = config.get("ENABLE_BACKGROUND_JOBS", True)
         cls.DISABLE_BACKGROUND_JOBS = config.get(

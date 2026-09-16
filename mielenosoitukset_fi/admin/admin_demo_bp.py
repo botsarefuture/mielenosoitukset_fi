@@ -44,6 +44,7 @@ from mielenosoitukset_fi.utils.demo_translation_cache import (
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.cities import CITY_NAME_TO_KEY, normalize_city_key
+from mielenosoitukset_fi.utils.city_assignment import touch_city_assignment
 from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
 from mielenosoitukset_fi.utils.wrappers import (
@@ -3221,6 +3222,7 @@ def send_edit_link(demo_id):
             recipients=[email],
             raise_on_error=True,
         )
+        touch_city_assignment(mongo, demo_id)
         logging.info("Sending edit link to email: %s", email)
 
         return jsonify(
@@ -3584,6 +3586,7 @@ def handle_demo_form(
                 merged_data = _deep_merge(prev_demo, demonstration_data)
                 demo = Demonstration.from_dict(merged_data)
                 demo.save()
+                touch_city_assignment(mongo, demo_id)
                 hist_id = record_demo_change(
                     demo_id,
                     prev_demo,

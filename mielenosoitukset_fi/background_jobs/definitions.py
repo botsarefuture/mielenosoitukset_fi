@@ -22,6 +22,7 @@ from mielenosoitukset_fi.scripts.process_ui_translation_sync import (
 from mielenosoitukset_fi.utils.analytics import prep
 from mielenosoitukset_fi.scripts.auto_close_cases import main as auto_close_cases
 from mielenosoitukset_fi.scripts.process_support_tickets import main as process_support_tickets
+from mielenosoitukset_fi.scripts.escalate_city_assignments import main as escalate_city_assignments
 
 
 @dataclass(frozen=True)
@@ -132,6 +133,14 @@ JOB_DEFINITIONS: List[JobDefinition] = [
         description="Polls the tuki@ IMAP mailbox, creates support_ticket cases, sends auto-replies and relays URGENT follow-ups.",
         func=process_support_tickets,
         default_trigger=_interval(minutes=1),
+        allow_interval_override=True,
+    ),
+    JobDefinition(
+        key="escalate_city_assignments",
+        name="City assignment escalation (24h)",
+        description="Escalates city-admin assigned demonstrations with no decision within 24 h to the national team.",
+        func=escalate_city_assignments,
+        default_trigger=_interval(minutes=30),
         allow_interval_override=True,
     ),
 ]

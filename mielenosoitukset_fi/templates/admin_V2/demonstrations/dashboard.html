@@ -245,7 +245,15 @@
     </td>
 
     <td data-col="approved">
+        {% if demo.city_assignment %}
+            {% if demo.city_assignment.escalated %}
+                <span class="badge bg-warning text-dark">{{ _('Eskaloitu') }}</span>
+            {% else %}
+                <span class="badge bg-info text-dark">{{ _('Kaupungin vastuulla') }}</span>
+            {% endif %}
+        {% else %}
         <i class="fa-solid fa-times-circle admin-status-icon admin-status-icon--danger"></i> {{ _('Ei') }}
+        {% endif %}
     </td>
 
     {% if show_cancelled %}

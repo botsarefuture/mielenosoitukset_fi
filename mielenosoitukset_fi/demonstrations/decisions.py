@@ -11,6 +11,8 @@ from mielenosoitukset_fi.demonstrations.audit import (
     log_demo_audit_entry,
     record_demo_change,
 )
+from mielenosoitukset_fi.utils.city_assignment import clear_city_assignment
+from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.time_utils import utcnow
 
 
@@ -285,6 +287,13 @@ def apply_demo_decision(
             raise LookupError("Demonstration not found")
 
     decision_id = decision_meta["id"]
+
+    # A resolved demo no longer belongs to the city admins' queue.
+    try:
+        clear_city_assignment(db, demo_oid)
+    except Exception:
+        logger.exception("Failed to clear city assignment for demo %s", demo_oid)
+
     cases_updated = _close_related_cases(
         db, demo_oid, current, decision, decision_meta
     )

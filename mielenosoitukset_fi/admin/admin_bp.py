@@ -41,6 +41,7 @@ from mielenosoitukset_fi.utils.wrappers import (
     permission_required,
 )
 from mielenosoitukset_fi.utils.flashing import flash_message
+from mielenosoitukset_fi.utils.city_assignment import NOT_ESCALATED_ASSIGNMENT_CLAUSE, CITY_ASSIGNMENT_FIELD
 from mielenosoitukset_fi.utils.analytics import get_demo_views
 from mielenosoitukset_fi.utils.cache import cache
 from mielenosoitukset_fi.utils.ui_translation_catalog import (
@@ -971,7 +972,25 @@ def _calculate_dashboard_snapshot() -> dict:
     cases_open = mongo.cases.count_documents({"$or": [{"meta.closed": {"$ne": True}}, {"meta": {"$exists": False}}]})
 
     upcoming_demos = demos_coll.count_documents({"cancelled": {"$ne": True}, "hide": {"$ne": True}})
-    pending_demos = demos_coll.count_documents({"approved": {"$ne": True}, "hide": {"$ne": True}})
+    pending_demos = demos_coll.count_documents(
+        {"approved": {"$ne": True}, "hide": {"$ne": True}, **NOT_ESCALATED_ASSIGNMENT_CLAUSE}
+    )
+    city_pending = demos_coll.count_documents(
+        {
+            "approved": {"$ne": True},
+            "hide": {"$ne": True},
+            CITY_ASSIGNMENT_FIELD: {"$exists": True},
+            "city_assignment.escalated": {"$ne": True},
+        }
+    )
+    escalated_pending = demos_coll.count_documents(
+        {
+            "approved": {"$ne": True},
+            "hide": {"$ne": True},
+            CITY_ASSIGNMENT_FIELD: {"$exists": True},
+            "city_assignment.escalated": True,
+        }
+    )
 
     logins_last_hour = login_coll.count_documents({"timestamp": {"$gte": last_hour}})
     failed_logins_last_hour = login_coll.count_documents({"timestamp": {"$gte": last_hour}, "success": False})
@@ -991,7 +1010,7 @@ def _calculate_dashboard_snapshot() -> dict:
             "admins": admin_users,
         },
         "organizations": {"active": active_orgs},
-        "demos": {"live": upcoming_demos, "pending": pending_demos},
+        "demos": {"live": upcoming_demos, "pending": pending_demos, "city_pending": city_pending, "escalated_pending": escalated_pending},
         "cases": {"open": cases_open},
         "logins": {
             "last_hour": logins_last_hour,

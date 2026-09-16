@@ -254,6 +254,9 @@ def test_user_role_forms_use_shared_admin_contract():
     assert "<style" not in user_list
     assert "<style" not in user_table
     assert "css/admin/users.css" in user_list
+    assert "{{ user.profile_picture }}" in user_table
+    assert "class=\"user-avatar\"" in user_table
+    assert "object-fit: cover;" in users_css
     assert "admin-workspace-summary" in user_list
     assert "admin-section-card" in user_list
     assert "admin-data-view" in user_list
@@ -290,6 +293,7 @@ def test_demo_collection_uses_server_side_filter_and_pagination_contract():
     ):
         assert contract in template
     assert "css/admin/demonstrations.css" in template
+    assert "admin-data-view__header admin-result-summary" in template
     assert "<style" not in template
     assert "modal-dark" not in template
     assert "filterRows" not in template
@@ -565,6 +569,10 @@ def test_audit_and_developer_pages_use_canonical_hero_navigation():
     assert "detail.style.maxHeight" not in logs
     assert "--admin-workspace-primary-bg" in audit_css
     assert "prefers-reduced-motion: reduce" in audit_css
+    submission_errors = Path(pages[4]).read_text(encoding="utf-8")
+    assert 'class="admin-data-view admin-workspace h-100"' in submission_errors
+    assert 'class="admin-data-view__header"' in submission_errors
+    assert submission_errors.count("card shadow-sm") == 2
 
 
 def test_analytics_pages_use_shared_hero_metric_slot():
@@ -1020,6 +1028,7 @@ def test_recurring_collection_uses_shared_filter_data_and_modal_contracts():
     assert "style=" not in template
     assert 'class="admin-filter-bar"' in template
     assert 'class="admin-data-view admin-data-view--scrollable"' in template
+    assert "admin-data-view__header admin-result-summary" in template
     assert 'class="admin-data-view__table"' in template
     assert "admin-status-badge--success" in template
     assert 'class="admin-empty-state"' in template

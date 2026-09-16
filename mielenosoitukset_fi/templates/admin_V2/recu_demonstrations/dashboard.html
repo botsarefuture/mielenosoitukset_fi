@@ -45,6 +45,11 @@
 
   {% if recurring_demos %}
   <div class="admin-data-view admin-data-view--scrollable">
+    <div class="admin-data-view__header admin-result-summary">
+      <span><strong>{{ recurring_demos|length }}</strong> {{ _('toistuvaa mielenosoitusta') }}</span>
+      {% set approved_count = recurring_demos|selectattr('approved', 'equalto', true)|list|length %}
+      {% if approved_count %}<span><strong>{{ approved_count }}</strong> {{ _('hyväksyttyä') }}</span>{% endif %}
+    </div>
     <div class="admin-data-view__viewport">
     <table class="admin-data-view__table">
       <thead>

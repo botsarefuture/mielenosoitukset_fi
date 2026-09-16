@@ -352,12 +352,13 @@
   min-width: 13rem;
 }
 
-.users-table .user-avatar {
-  display: grid;
+.users-table .user-identity .user-avatar {
+  display: flex;
   flex: 0 0 auto;
   width: 2.45rem;
   height: 2.45rem;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   border-radius: .75rem;
   color: var(--admin-workspace-blue-dark);
@@ -365,6 +366,12 @@
   font-weight: 900;
   line-height: 1;
   text-transform: uppercase;
+}
+
+.users-table .user-identity img.user-avatar {
+  color: transparent;
+  object-fit: cover;
+  object-position: center;
 }
 
 .users-table .user-identity :is(strong, span) {

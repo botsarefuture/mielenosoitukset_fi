@@ -20,7 +20,11 @@
       <tr id="user-{{ user._id }}">
         <td>
           <div class="user-identity">
-            <span class="user-avatar">{{ (user.displayname or user.username or '?')[:1] }}</span>
+            {% if user.profile_picture %}
+          <img class="user-avatar" src="{{ user.profile_picture }}" alt="" loading="lazy">
+          {% else %}
+          <span class="user-avatar">{{ (user.displayname or user.username or '?')[:1] }}</span>
+          {% endif %}
             <div>
               <strong>{{ user.displayname or user.username }}</strong>
               <span>@{{ user.username }}</span>

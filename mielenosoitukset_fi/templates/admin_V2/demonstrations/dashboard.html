@@ -168,9 +168,6 @@
       </details>
     </form>
 
-    <div class="admin-result-summary" aria-live="polite">
-      {% if active_filters %}<strong>{{ _('%(count)s osumaa', count=filtered_count) }}</strong> · {{ _('yhteensä %(count)s sinulle näkyvää mielenosoitusta', count=total_count) }}{% else %}{{ _('Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta', start=range_start, end=range_end, count=filtered_count) }}{% endif %}
-    </div>
     {% if active_filters %}<div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">{% for filter in active_filters %}<a class="admin-filter-chip" href="{{ filter.remove_url }}"><span>{{ filter.label }}: {{ filter.value }}</span><i class="fas fa-xmark" aria-hidden="true"></i></a>{% endfor %}<a class="admin-clear-filters" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a></div>{% endif %}
     {% if current_user.has_permission("EDIT_DEMO") %}
     <div class="bulk-action-bar mt-3">
@@ -180,7 +177,6 @@
       <button type="button" id="merge-demos-btn" class="btn btn-outline-primary ms-2" disabled>
         <i class="fa-solid fa-object-group me-1"></i>{{ _('Yhdistä valitut mielenosoitukset') }}
       </button>
-      <span id="bulk-action-feedback" class="admin-selection-status ms-2" aria-live="polite">{{ _('Ei valintoja · valitse mielenosoituksia rivien neliöruuduista') }}</span>
     </div>
     {% endif %}
 
@@ -191,6 +187,12 @@
   {% set column_count = 7
       + (1 if show_cancelled else 0) %}
   <div class="admin-data-view admin-data-view--scrollable">
+    <div class="admin-data-view__header admin-result-summary" aria-live="polite">
+      <span>{% if active_filters %}<strong>{{ _('%(count)s osumaa', count=filtered_count) }}</strong> · {{ _('yhteensä %(count)s sinulle näkyvää mielenosoitusta', count=total_count) }}{% else %}{{ _('Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta', start=range_start, end=range_end, count=filtered_count) }}{% endif %}</span>
+      {% if current_user.has_permission("EDIT_DEMO") %}
+      <span id="bulk-action-feedback" class="admin-selection-status" aria-live="polite">{{ _('Ei valintoja · valitse mielenosoituksia rivien neliöruuduista') }}</span>
+      {% endif %}
+    </div>
     <div class="admin-data-view__viewport">
     <table class="admin-data-view__table">
       <thead>

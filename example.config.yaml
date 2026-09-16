@@ -31,6 +31,13 @@ TICKET_URGENT_KEYWORD: "URGENT"
 TICKET_POLL_SECONDS: 120
 TICKET_IGNORED_SENDERS: []  # Optional static fallback blocklist (admin UI manages the live list): e.g. "tiktok.com", "*@instagram.com", "user@example.org"
 
+# City-admin demo assignment
+# When a demo is submitted in a city with active city admins, it is assigned to
+# them (they get approve/reject links and the national team is not notified).
+# If no action is taken within this many hours, the demo is escalated to the
+# national team. Cities without city admins fall back to the national queue.
+CITY_ASSIGNMENT_ESCALATION_HOURS: 24
+
 # Optional configurations
 # SERVER_NAME: "www.example.com"  # Server name for the application
 # PREFERRED_URL_SCHEME: "https"  # URL scheme (e.g., https)

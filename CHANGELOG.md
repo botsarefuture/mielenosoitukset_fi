@@ -5,6 +5,9 @@
 ## UNRELEASED
 
 ### Added
+* When a demonstration is submitted for a city that has active city admins, it is now assigned to those admins: they receive the moderation email (approve/preview/reject links) on submission and the national team is not notified while the city owns the demo. Cities without city admins keep the existing national queue unchanged.
+* Assigned demonstrations left without a decision for 24 h (configurable via `CITY_ASSIGNMENT_ESCALATION_HOURS`) are escalated to the national team by a background job (every 30 min), which receives the moderation email so the demo re-enters the national pending queue and reminder loop.
+* The national admin dashboard now breaks pending demonstrations into three counts — national pending, city-pending (owned by a city with a live 24 h window), and escalated — and the demo dashboard marks rows as "Kaupungin vastuulla" or "Eskaloitu" while approved/rejected status is shown for everything else.
 * Support ticket system: emails to `tuki@mielenosoitukset.fi` are polled by a background job and turned into admin support-ticket cases with an automatic reply that includes the ticket ID and a 48 h response target; replies from the sender are appended to the same ticket instead of creating duplicates, and messages flagged URGENT (subject or body) are escalated to `olivia@mielenosoitukset.fi`.
 * Admins can reply to a support ticket's submitter directly from the case detail page; the reply is sent from `tuki@mielenosoitukset.fi` with proper `In-Reply-To` threading headers, recorded in the case history, and shown in the follow-up thread as an outgoing message.
 * Support ticket email threading now uses real `Message-ID` / `In-Reply-To` / `References` headers: outbound auto-replies, urgent alerts, and admin replies are recorded on the ticket, so a user replying from any mail client is threaded back onto the same case even after several exchanges.

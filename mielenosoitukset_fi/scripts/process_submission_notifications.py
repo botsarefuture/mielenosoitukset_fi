@@ -11,6 +11,7 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailJob import EmailJob
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.city_assignment import NOT_ESCALATED_ASSIGNMENT_CLAUSE
 from mielenosoitukset_fi.admin.admin_demo_bp import (
     generate_demo_approve_link,
     generate_demo_preview_link,
@@ -84,6 +85,7 @@ def _enqueue_admin_reminders(db, max_to_enqueue: int = 50):
             {"in_past": {"$ne": True}},
             {"cancelled": {"$ne": True}},
             {"$or": [{"rejected": {"$exists": False}}, {"rejected": False}]},
+            NOT_ESCALATED_ASSIGNMENT_CLAUSE,
             {
                 "$or": [
                     {"admin_notification_last_sent_at": {"$exists": False}},

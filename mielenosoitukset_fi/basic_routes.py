@@ -34,6 +34,10 @@ from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.scripts.send_demo_reminders import generate_ical_event
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.cities import CITY_KEY_TO_NAME, normalize_city_key
+from mielenosoitukset_fi.utils.city_assignment import (
+    active_city_admins_for_city,
+    assign_demo_to_city,
+)
 from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
@@ -121,6 +125,10 @@ mongo["posted_events"].create_index([("demo_id", ASCENDING), ("created_at", DESC
 mongo["demonstrations"].create_index("slug", background=True)
 mongo["demonstrations"].create_index("parent", background=True)
 mongo["city_settings"].create_index("city_key", background=True)
+mongo["demonstrations"].create_index(
+    [("city_assignment.escalated", 1), ("city_assignment.assigned_at", 1)],
+    background=True,
+)
 # --- End performance indexes ---
 
 SUBMISSION_DUPLICATE_WINDOW = timedelta(hours=12)
@@ -1820,26 +1828,70 @@ def init_routes(app):
             
             # --- Queue notification job for background processing ---
             notification_messages = []
-            
-            notification_messages.append(
-                {
-                    "template_name": "admin_demo_approve_notification.html",
-                    "subject": "Uusi mielenosoitus odottaa hyväksyntää",
-                    "recipients": ["tuki@mielenosoitukset.fi"],
-                    "context": {
-                        "title": title,
-                        "date": date,
-                        "city": city,
-                        "address": address,
-                        "submitter_name": submitter_name,
-                        "submitter_email": submitter_email,
-                        "submitter_role": submitter_role,
-                        "approve_link": approve_link,
-                        "preview_link": preview_link,
-                        "reject_link": reject_link,
-                    },
-                }
-            )
+
+            # If the demo's city has active city admins, assign the demo to them
+            # and skip the national admin queue. Otherwise the demo falls back to
+            # the national team exactly as before.
+            city_key = normalize_city_key(city or "")
+            city_admins = active_city_admins_for_city(mongo, city_key) if city_key else []
+            assignment_email = None
+            if city_admins:
+                try:
+                    assignment_email = assign_demo_to_city(
+                        mongo,
+                        demo_id,
+                        city_key,
+                        city_admins,
+                        template_name="admin_demo_city_assignment.html",
+                        subject=f"Uusi mielenosoitus odottaa hyväksyntää: {city}",
+                        context={
+                            "title": title,
+                            "date": date,
+                            "city": city,
+                            "address": address,
+                            "submitter_name": submitter_name,
+                            "submitter_email": submitter_email,
+                            "submitter_role": submitter_role,
+                            "approve_link": approve_link,
+                            "preview_link": preview_link,
+                            "reject_link": reject_link,
+                            "escalate_after_hours": current_app.config.get(
+                                "CITY_ASSIGNMENT_ESCALATION_HOURS", 24
+                            ),
+                        },
+                    )
+                except Exception as e:
+                    logger.exception(
+                        "Failed to assign demo %s to city admins: %s", demo_id, e
+                    )
+                    assignment_email = None
+
+            if assignment_email:
+                notification_messages.append(assignment_email)
+                notification_type = "city_assignment"
+                marks_admin_contact = False
+            else:
+                notification_messages.append(
+                    {
+                        "template_name": "admin_demo_approve_notification.html",
+                        "subject": "Uusi mielenosoitus odottaa hyväksyntää",
+                        "recipients": ["tuki@mielenosoitukset.fi"],
+                        "context": {
+                            "title": title,
+                            "date": date,
+                            "city": city,
+                            "address": address,
+                            "submitter_name": submitter_name,
+                            "submitter_email": submitter_email,
+                            "submitter_role": submitter_role,
+                            "approve_link": approve_link,
+                            "preview_link": preview_link,
+                            "reject_link": reject_link,
+                        },
+                    }
+                )
+                notification_type = "initial_submission"
+                marks_admin_contact = True
 
             if notification_messages:
                 try:
@@ -1848,8 +1900,8 @@ def init_routes(app):
                             "demo_id": demo_id,
                             "status": "pending",
                             "created_at": utcnow(),
-                            "notification_type": "initial_submission",
-                            "marks_admin_contact": True,
+                            "notification_type": notification_type,
+                            "marks_admin_contact": marks_admin_contact,
                             "messages": notification_messages,
                         }
                     )

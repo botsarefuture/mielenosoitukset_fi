@@ -6,6 +6,8 @@
 
 ### Added
 * Support ticket system: emails to `tuki@mielenosoitukset.fi` are polled by a background job and turned into admin support-ticket cases with an automatic reply that includes the ticket ID and a 48 h response target; replies from the sender are appended to the same ticket instead of creating duplicates, and messages flagged URGENT (subject or body) are escalated to `olivia@mielenosoitukset.fi`.
+* Admins can reply to a support ticket's submitter directly from the case detail page; the reply is sent from `tuki@mielenosoitukset.fi` with proper `In-Reply-To` threading headers, recorded in the case history, and shown in the follow-up thread as an outgoing message.
+* Support ticket email threading now uses real `Message-ID` / `In-Reply-To` / `References` headers: outbound auto-replies, urgent alerts, and admin replies are recorded on the ticket, so a user replying from any mail client is threaded back onto the same case even after several exchanges.
 * Support tickets arriving through the site contact form now identify the actual sender from the form wrapper (previously the `From:` header pointed at `no-reply@mielenosoitukset.fi`), so follow-up replies reach the right person.
 * Admin case detail now renders support tickets with sender, subject, message, follow-up thread, and an urgent badge, and list cards show urgent tickets under the critical filter.
 * Admins can link a support ticket to an existing demonstration or organization (search-as-you-type) and unlink it again; the link is recorded in the case history and appears in the ticket detail with a shortcut to the demonstration control panel.

@@ -195,6 +195,9 @@ class Config:
         cls.TICKET_IMAP_USERNAME = config.get("TICKET_IMAP_USERNAME", "")
         cls.TICKET_IMAP_PASSWORD = config.get("TICKET_IMAP_PASSWORD", "")
         cls.TICKET_IMAP_MAILBOX = config.get("TICKET_IMAP_MAILBOX", "INBOX")
+        cls.TICKET_SMTP_SERVER = config.get("TICKET_SMTP_SERVER", cls.TICKET_IMAP_SERVER)
+        cls.TICKET_SMTP_PORT = config.get("TICKET_SMTP_PORT", 587)
+        cls.TICKET_SMTP_USE_TLS = config.get("TICKET_SMTP_USE_TLS", True)
         cls.TICKET_ESCALATION_EMAIL = config.get(
             "TICKET_ESCALATION_EMAIL",
             "olivia@mielenosoitukset.fi",

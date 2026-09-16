@@ -177,6 +177,37 @@ def test_edit_demo_prefills_translation_fields(admin_client, db, seeded_data):
     assert 'value="peace, climate"' in page
 
 
+def test_demo_dashboard_renders_numbered_pagination(admin_client, db, seeded_data):
+    db.demonstrations.insert_many(
+        [
+            {
+                "_id": ObjectId(),
+                "title": f"Pagination batch demo {index}",
+                "description": "Pagination fixture.",
+                "date": "2026-08-01",
+                "city": "Helsinki",
+                "address": "Kansalaistori 1",
+                "approved": True,
+                "hide": False,
+                "rejected": False,
+                "cancelled": False,
+                "in_past": False,
+                "editors": [seeded_data["user_id"]],
+            }
+            for index in range(22)
+        ]
+    )
+
+    response = admin_client.get("/admin/demo/?search=Pagination%20batch&per_page=20")
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "Sivu 1 / 2" in page
+    assert "page=2" in page
+    assert 'class="page-item active"' in page
+    assert "per_page=20" in page
+
+
 def test_create_demo_persists_translation_payload(admin_client, db):
     response = admin_client.post(
         "/admin/demo/create_demo",

@@ -1868,6 +1868,13 @@ def demo_control():
     range_start = (page - 1) * per_page + 1 if filtered_count else 0
     range_end = min(page * per_page, filtered_count)
 
+    page_window_start = max(1, page - 2)
+    page_window_end = min(total_pages, page + 2)
+    visible_pages = [
+        {"number": page_number, "url": page_url(page_number)}
+        for page_number in range(page_window_start, page_window_end + 1)
+    ]
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/dashboard.html",
         demonstrations=demos,
@@ -1903,6 +1910,9 @@ def demo_control():
         next_page=next_page,
         prev_url=page_url(prev_page) if prev_page else None,
         next_url=page_url(next_page) if next_page else None,
+        visible_pages=visible_pages,
+        first_page_url=page_url(1),
+        last_page_url=page_url(total_pages),
     )
 
 

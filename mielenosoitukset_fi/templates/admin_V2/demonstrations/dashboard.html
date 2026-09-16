@@ -1,5 +1,5 @@
 {% extends 'admin_base.html' %}
-{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demonstrations.css', v='20260914-admin-ui-51') }}">{% endblock %}
 {% block scripts %}
 <!--<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>-->
@@ -530,48 +530,19 @@
 
     </table>
     </div>
-    <div class="admin-pagination admin-data-view__footer">
-    <label class="admin-page-size" for="page-size">{{ _('Rivejä sivulla') }}
-      <select id="page-size" aria-label="{{ _('Rivejä sivulla') }}">{% for size in [20, 50, 100] %}<option value="{{ size }}" {% if per_page == size %}selected{% endif %}>{{ size }}</option>{% endfor %}</select>
-    </label>
-    <nav aria-label="{{ _('Mielenosoitusten sivutus') }}">
-      <ul class="pagination">
-
-        {# Previous button #}
-        {% if prev_page %}
-        <li class="page-item">
-          <a class="page-link" href="{{ prev_url }}" aria-label="{{ _('Edellinen sivu') }}">
-            <i class="fas fa-angle-left"></i> {{ _('Edellinen') }}
-          </a>
-        </li>
-        {% else %}
-        <li class="page-item disabled">
-          <span class="page-link"><i class="fas fa-angle-left"></i> {{ _('Edellinen') }}</span>
-        </li>
-        {% endif %}
-
-        {# Current page / total pages #}
-        <li class="page-item disabled">
-          <span class="page-link">{{ _('Sivu') }} {{ current_page }} / {{ total_pages }}</span>
-        </li>
-
-        {# Next button #}
-        {% if next_page %}
-        <li class="page-item">
-          <a class="page-link" href="{{ next_url }}" aria-label="{{ _('Seuraava sivu') }}">
-            {{ _('Seuraava') }} <i class="fas fa-angle-right"></i>
-          </a>
-        </li>
-        {% else %}
-        <li class="page-item disabled">
-          <span class="page-link">{{ _('Seuraava') }} <i class="fas fa-angle-right"></i></span>
-        </li>
-        {% endif %}
-
-      </ul>
-    </nav>
-    </div>
-
+    {{ admin_pagination(
+      current_page,
+      total_pages,
+      per_page=per_page,
+      prev_page=prev_page,
+      next_page=next_page,
+      prev_page_url=prev_url,
+      next_page_url=next_url,
+      visible_pages=visible_pages,
+      first_page_url=first_page_url,
+      last_page_url=last_page_url,
+      aria_label=_('Mielenosoitusten sivutus'),
+    ) }}
 
   </div>
   {% else %}

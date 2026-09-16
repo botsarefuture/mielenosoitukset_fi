@@ -39,6 +39,27 @@
     {% endif %}
 {% endmacro %}
 
+{% macro admin_pagination(current_page, total_pages, per_page=none, prev_page=none, next_page=none, prev_page_url=none, next_page_url=none, visible_pages=none, first_page_url=none, last_page_url=none, aria_label=none, client_side=false) %}
+<nav class="admin-data-view__footer admin-pagination"{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if client_side %} data-admin-pagination{% endif %}>
+  {% if per_page %}<label class="admin-page-size" for="page-size">{{ _('Rivejä sivulla') }}
+    <select id="page-size" aria-label="{{ _('Rivejä sivulla') }}">{% for size in [20, 50, 100] %}<option value="{{ size }}" {% if per_page == size %}selected{% endif %}>{{ size }}</option>{% endfor %}</select>
+  </label>
+  {% endif %}
+  <div class="admin-pagination__info">{% if client_side %}{{ _('Sivu') }} <span data-admin-pagination-current>1</span> / <span data-admin-pagination-total>{{ total_pages }}</span>{% else %}{{ _('Sivu') }} {{ current_page }} / {{ total_pages }}{% endif %}</div>
+  <ul class="pagination">
+    <li class="page-item {% if not prev_page %}disabled{% endif %}" data-direction="prev"><a class="page-link" href="{{ prev_page_url or '#' }}"><i class="fas fa-angle-left" aria-hidden="true"></i><span class="admin-pagination__label">{{ _('Edellinen') }}</span></a></li>
+    {% if client_side %}
+    {# page-number links are built by the client-side pagination script #}
+    {% else %}
+    {% if visible_pages and visible_pages[0].number > 1 %}<li class="page-item"><a class="page-link" href="{{ first_page_url }}">1</a></li>{% if visible_pages[0].number > 2 %}<li class="page-item disabled"><span class="admin-pagination__ellipsis">…</span></li>{% endif %}{% endif %}
+    {% for pagination_page in visible_pages %}<li class="page-item {% if pagination_page.number == current_page %}active{% endif %}"><a class="page-link" href="{{ pagination_page.url }}" {% if pagination_page.number == current_page %}aria-current="page"{% endif %}>{{ pagination_page.number }}</a></li>{% endfor %}
+    {% if visible_pages and visible_pages[-1].number < total_pages %}{% if visible_pages[-1].number < total_pages - 1 %}<li class="page-item disabled"><span class="admin-pagination__ellipsis">…</span></li>{% endif %}<li class="page-item"><a class="page-link" href="{{ last_page_url }}">{{ total_pages }}</a></li>{% endif %}
+    {% endif %}
+    <li class="page-item {% if not next_page %}disabled{% endif %}" data-direction="next"><a class="page-link" href="{{ next_page_url or '#' }}"><span class="admin-pagination__label">{{ _('Seuraava') }}</span><i class="fas fa-angle-right" aria-hidden="true"></i></a></li>
+  </ul>
+</nav>
+{% endmacro %}
+
 {% macro admin_page_hero(title, description, kicker, breadcrumbs=(), back_url=none, back_label=none, actions_visible=true, sections=(), title_id=none, variant='', metric_value=none, metric_label=none, metric_id=none) %}
 {% set allowed_variants = ('admin-page-hero--stacked',) %}
 {% set resolved_variant = variant if variant in allowed_variants else '' %}

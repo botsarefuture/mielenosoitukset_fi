@@ -281,17 +281,25 @@ def test_demo_collection_uses_server_side_filter_and_pagination_contract():
         "admin-advanced-filters",
         "admin-active-filters",
         "admin-result-summary",
-        "admin-pagination",
-        "admin-page-size",
         "admin-data-view",
         "admin-data-view__viewport",
         "admin-data-view__table",
-        "admin-data-view__footer",
         "admin-data-group-header",
         "admin-data-row--attention",
         "admin-modal",
     ):
         assert contract in template
+    assert "admin_pagination(" in template
+    common_macro = Path(
+        "mielenosoitukset_fi/templates/admin_V2/macros.html"
+    ).read_text(encoding="utf-8")
+    for class_name in (
+        "admin-pagination",
+        "admin-page-size",
+        "admin-data-view__footer admin-pagination",
+        "admin-pagination__info",
+    ):
+        assert class_name in common_macro
     assert "css/admin/demonstrations.css" in template
     assert "admin-data-view__header admin-result-summary" in template
     assert "<style" not in template
@@ -379,8 +387,12 @@ def test_organization_collection_uses_shared_data_view_contract():
     assert "admin-workspace-summary-card" in dashboard
     assert "admin-filter-bar__primary--search" in dashboard
     assert "admin-data-view__viewport" in dashboard
-    assert "admin-data-view__footer admin-pagination" in dashboard
-    assert "admin-pagination__info" in dashboard
+    assert "admin_pagination(" in dashboard
+    common_macro = Path(
+        "mielenosoitukset_fi/templates/admin_V2/macros.html"
+    ).read_text(encoding="utf-8")
+    assert "admin-data-view__footer admin-pagination" in common_macro
+    assert "admin-pagination__info" in common_macro
     assert "admin-entity-identity" in dashboard
     assert "aria-selected" in dashboard
 
@@ -1038,6 +1050,22 @@ def test_recurring_collection_uses_shared_filter_data_and_modal_contracts():
     assert ".admin-data-view--scrollable .admin-data-view__viewport" in Path(
         "mielenosoitukset_fi/static/css/admin/workspace.css"
     ).read_text(encoding="utf-8")
+
+
+def test_recurring_collection_uses_shared_pagination_component():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html"
+    ).read_text(encoding="utf-8")
+    macro = Path(
+        "mielenosoitukset_fi/templates/admin_V2/macros.html"
+    ).read_text(encoding="utf-8")
+
+    assert "import admin_page_hero, admin_pagination" in template
+    assert "admin_pagination(" in template
+    assert "client_side=true" in template
+    assert "data-admin-pagination" in macro
+    assert "admin-data-view__footer admin-pagination" in macro
+    assert "admin-page-size" in macro
 
 
 def test_background_job_detail_uses_shared_code_and_disclosure_components():

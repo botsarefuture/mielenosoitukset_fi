@@ -17,6 +17,7 @@
 * Admins can maintain a support-ticket sender blocklist (exact addresses or whole domains including subdomains, e.g. `tiktok.com` also blocks `m.tiktok.com`) managed from the admin case pages; emails from blocked senders are ignored by the ticket ingress and never create tickets or trigger auto-replies.
 
 ### Changed
+* Demonstration, recurring-demonstration, and organization dashboards now share a single pagination component with an identical "Sivu X / Y" label: numbered page links with first/last and ellipsis, previous/next controls, and a "Rivejä sivulla" per-page selector (20/50/100). The recurring-demo dashboard previously had no pagination at all and now paginates its server-rendered rows client-side with a live search filter.
 * User avatars now display the user's profile picture when set, falling back to a centered initial letter inside the letter-colored square.
 * Demo and recurring-dash result summaries are now rendered inside the table panel header bar (matching the organization dashboard), so the rounded panel corners are no longer obscured by the thead.
 * The submission-errors "Suodattimet" filter card now uses the shared `admin-data-view` shell for consistent theming.

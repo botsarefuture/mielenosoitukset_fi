@@ -396,3 +396,80 @@ def test_admin_summary_cards_keep_icons_labels_and_values_separate(
 
         widths = [item["card"]["width"] for item in geometry]
         assert max(widths) - min(widths) <= 2, path
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_report_error_modal_buttons_are_not_overridden_by_page_button_styles(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    """The page-level .btn styles (shimmer ::before, border:none) must not leak
+    into the report-error modal buttons, which rely on Bootstrap outline buttons."""
+    _install_bootstrap_modal_test_double(browser_page)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    seeded_data = _seed_database(app, db)
+    demo_id = seeded_data["demo_id"]
+
+    browser_page.goto(f"{live_server}/demonstration/{demo_id}", wait_until="domcontentloaded")
+    browser_page.wait_for_selector(".report-flow-trigger", state="visible")
+
+    browser_page.evaluate(
+        """() => {
+            const modal = document.getElementById('report-choice-modal');
+            bootstrap.Modal.getOrCreateInstance(modal).show();
+        }"""
+    )
+    choice_modal = browser_page.locator("#report-choice-modal")
+    choice_modal.wait_for(state="visible")
+
+    outline_button = choice_modal.locator("#choose-report-error")
+    shimmer = outline_button.evaluate(
+        """() => {
+            const before = getComputedStyle(document.querySelector('#choose-report-error'), '::before');
+            const border = getComputedStyle(document.querySelector('#choose-report-error'));
+            return {
+                content: before.content,
+                display: before.display,
+                borderWidth: parseFloat(border.borderWidth),
+                borderStyle: border.borderStyle,
+            };
+        }"""
+    )
+    assert shimmer["content"] == "none", "page .btn::before shimmer must not leak into modal"
+    assert shimmer["display"] == "none", "page .btn::before shimmer must not leak into modal"
+    assert shimmer["borderWidth"] == 1 and shimmer["borderStyle"] == "solid", (
+        "outline button border must be visible inside the modal"
+    )
+
+    browser_page.evaluate(
+        """() => {
+            const reportBtn = document.getElementById('choose-report-error');
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('report-choice-modal')).hide();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('report-modal')).show();
+        }"""
+    )
+    browser_page.wait_for_selector("#report-modal.show", state="attached", timeout=10000)
+    report_modal = browser_page.locator("#report-modal")
+    report_modal.wait_for(state="visible")
+
+    for selector in (".btn-secondary", ".btn-danger"):
+        button_styles = report_modal.locator(selector).evaluate(
+            """(element) => {
+                const before = getComputedStyle(element, '::before');
+                return {
+                    content: before.content,
+                    display: before.display,
+                };
+            }"""
+        )
+        assert button_styles["content"] == "none", (
+            f"page .btn::before shimmer must not leak into modal {selector}"
+        )
+        assert button_styles["display"] == "none", (
+            f"page .btn::before shimmer must not leak into modal {selector}"
+        )

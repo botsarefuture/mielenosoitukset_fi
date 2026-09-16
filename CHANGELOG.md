@@ -13,6 +13,11 @@
 * Admins can link a support ticket to an existing demonstration or organization (search-as-you-type) and unlink it again; the link is recorded in the case history and appears in the ticket detail with a shortcut to the demonstration control panel.
 * Admins can maintain a support-ticket sender blocklist (exact addresses or whole domains including subdomains, e.g. `tiktok.com` also blocks `m.tiktok.com`) managed from the admin case pages; emails from blocked senders are ignored by the ticket ingress and never create tickets or trigger auto-replies.
 
+### Changed
+* User avatars now display the user's profile picture when set, falling back to a centered initial letter inside the letter-colored square.
+* Demo and recurring-dash result summaries are now rendered inside the table panel header bar (matching the organization dashboard), so the rounded panel corners are no longer obscured by the thead.
+* The submission-errors "Suodattimet" filter card now uses the shared `admin-data-view` shell for consistent theming.
+
 ### Fixed
 * Preview environments are now resource-bounded and deploy in a serialized way: each preview MongoDB container is limited to 512 MB RAM / 0.5 CPU and the fake SMTP container to 128 MB / 0.1 CPU (overridable via `PREVIEW_MONGO_*` / `PREVIEW_MAIL_*` env vars), and preview deploys take a global `flock` while starting and seeding MongoDB. This prevents stack-wide pushes (e.g. 16 PRs at once) from spawning many unconstrained mongod processes and pegging all CPUs on the preview host, which previously exhausted swap and caused multi-hour 100% CPU load.
 * Every full admin subpage now has a canonical breadcrumb trail, nested workflows use the hero's first shared back action, and a static contract documents the intentional top-level pages that rely on persistent navigation instead.

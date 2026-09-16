@@ -423,7 +423,7 @@ def _append_followup(parent, parsed: Dict[str, Any], mongo, email_sender, config
                 "meta.escalation_emailed_to": getattr(config, "TICKET_ESCALATION_EMAIL", ""),
             }
         )
-        _queue_urgent_alert(
+        urgent_msg_id = _queue_urgent_alert(
             email_sender,
             config,
             parsed["sender_email"],
@@ -431,6 +431,8 @@ def _append_followup(parent, parsed: Dict[str, Any], mongo, email_sender, config
             parsed["subject"],
             parsed["body"],
         )
+        if urgent_msg_id:
+            update["$addToSet"] = {"meta.ticket.reply_message_ids": urgent_msg_id}
     mongo.cases.update_one({"_id": parent["_id"]}, update)
     logger.info(
         "Appended follow-up to ticket %s from %s (urgent=%s)",

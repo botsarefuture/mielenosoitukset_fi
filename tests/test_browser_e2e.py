@@ -396,3 +396,184 @@ def test_admin_summary_cards_keep_icons_labels_and_values_separate(
 
         widths = [item["card"]["width"] for item in geometry]
         assert max(widths) - min(widths) <= 2, path
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+@pytest.mark.parametrize("viewport_height", [640, 844])
+def test_report_error_modal_vertical_fit_and_scroll_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+    viewport_height,
+):
+    """The report modals must never clip above/below the mobile viewport: the dialog
+    is height-capped, the dialog is scrollable, the header/footer stay fixed, and the
+    body scrolls internally without horizontal overflow."""
+    _install_bootstrap_modal_test_double(browser_page)
+    is_mobile = viewport_width < 1000
+    browser_page.set_viewport_size({"width": viewport_width, "height": viewport_height})
+    seeded_data = _seed_database(app, db)
+    demo_id = seeded_data["demo_id"]
+
+    browser_page.goto(f"{live_server}/demonstration/{demo_id}", wait_until="domcontentloaded")
+    browser_page.wait_for_selector(".report-flow-trigger", state="visible")
+
+    for modal_id, next_action in (
+        ("#report-choice-modal", True),
+        ("#report-modal", False),
+    ):
+        browser_page.evaluate(
+            """() => {
+                const m = bootstrap.Modal.getOrCreateInstance(
+                    document.getElementById('report-choice-modal')
+                );
+                m.show();
+            }"""
+        )
+        browser_page.locator("#report-choice-modal").wait_for(state="visible")
+
+        if not next_action:
+            browser_page.evaluate(
+                """() => {
+                    bootstrap.Modal.getOrCreateInstance(document.querySelector('#report-choice-modal')).hide();
+                    bootstrap.Modal.getOrCreateInstance(document.querySelector('#report-modal')).show();
+                }"""
+            )
+            browser_page.locator("#report-modal").wait_for(state="visible")
+
+        contract = browser_page.locator(modal_id).evaluate(
+            """(modal) => {
+                const dialog = modal.querySelector('.modal-dialog');
+                const content = modal.querySelector('.modal-content');
+                const body = modal.querySelector('.modal-body');
+                const header = modal.querySelector('.modal-header');
+                const footer = modal.querySelector('.modal-footer');
+                const dialogStyle = getComputedStyle(dialog);
+                const contentStyle = getComputedStyle(content);
+                const bodyStyle = getComputedStyle(body);
+                return {
+                    isScrollableDialog: dialog.classList.contains('modal-dialog-scrollable'),
+                    dialogHeight: dialogStyle.height,
+                    contentMaxHeight: contentStyle.maxHeight,
+                    contentOverflowX: contentStyle.overflowX,
+                    contentOverflowY: contentStyle.overflowY,
+                    bodyOverflowY: bodyStyle.overflowY,
+                    headerFlexShrink: header ? getComputedStyle(header).flexShrink : null,
+                    footerFlexShrink: footer ? getComputedStyle(footer).flexShrink : null,
+                    contentOverflowXpx: content.scrollWidth - content.clientWidth,
+                    bodyOverflowXpx: body.scrollWidth - body.clientWidth,
+                    docScrollWidth: document.documentElement.scrollWidth,
+                    viewportW: document.documentElement.clientWidth,
+                    viewportH: window.innerHeight,
+                };
+            }"""
+        )
+        assert contract["isScrollableDialog"], (
+            f"{modal_id} dialog must use the Bootstrap scrollable dialog layout"
+        )
+        # Header/footer must stay pinned; only the body scrolls.
+        assert contract["headerFlexShrink"] == "0", f"{modal_id} header must stay pinned"
+        assert contract["footerFlexShrink"] == "0", f"{modal_id} footer must stay pinned"
+        assert contract["bodyOverflowY"] in ("auto", "visible"), (
+            f"{modal_id} body must be the internally scrolling region"
+        )
+        # The dialog is capped to the viewport height on mobile, so content can
+        # never reach beyond the screen (no top/bottom clipping).
+        if is_mobile:
+            assert contract["dialogHeight"] not in ("auto",), (
+                f"{modal_id} dialog height must be viewport-capped on mobile, "
+                f"got {contract['dialogHeight']}"
+            )
+        # Never overflow horizontally, inside the modal or the document.
+        assert contract["contentOverflowXpx"] == 0, (
+            f"{modal_id} content overflows horizontally"
+        )
+        assert contract["bodyOverflowXpx"] == 0, f"{modal_id} body overflows horizontally"
+        assert contract["docScrollWidth"] == contract["viewportW"], (
+            f"{modal_id} pushes the document wider than the viewport"
+        )
+
+        if next_action:
+            browser_page.locator("#choose-report-error").click()
+            browser_page.locator("#report-modal").wait_for(state="visible")
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_report_error_modal_buttons_are_not_overridden_by_page_button_styles(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    """The page-level .btn styles (shimmer ::before, border:none) must not leak
+    into the report-error modal buttons, which rely on Bootstrap outline buttons."""
+    _install_bootstrap_modal_test_double(browser_page)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    seeded_data = _seed_database(app, db)
+    demo_id = seeded_data["demo_id"]
+
+    browser_page.goto(f"{live_server}/demonstration/{demo_id}", wait_until="domcontentloaded")
+    browser_page.wait_for_selector(".report-flow-trigger", state="visible")
+
+    browser_page.evaluate(
+        """() => {
+            const modal = document.getElementById('report-choice-modal');
+            bootstrap.Modal.getOrCreateInstance(modal).show();
+        }"""
+    )
+    choice_modal = browser_page.locator("#report-choice-modal")
+    choice_modal.wait_for(state="visible")
+
+    outline_button = choice_modal.locator("#choose-report-error")
+    shimmer = outline_button.evaluate(
+        """() => {
+            const before = getComputedStyle(document.querySelector('#choose-report-error'), '::before');
+            const border = getComputedStyle(document.querySelector('#choose-report-error'));
+            return {
+                content: before.content,
+                display: before.display,
+                borderWidth: parseFloat(border.borderWidth),
+                borderStyle: border.borderStyle,
+            };
+        }"""
+    )
+    assert shimmer["content"] == "none", "page .btn::before shimmer must not leak into modal"
+    assert shimmer["display"] == "none", "page .btn::before shimmer must not leak into modal"
+    assert shimmer["borderWidth"] == 1 and shimmer["borderStyle"] == "solid", (
+        "outline button border must be visible inside the modal"
+    )
+
+    browser_page.evaluate(
+        """() => {
+            const reportBtn = document.getElementById('choose-report-error');
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('report-choice-modal')).hide();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('report-modal')).show();
+        }"""
+    )
+    browser_page.wait_for_selector("#report-modal.show", state="attached", timeout=10000)
+    report_modal = browser_page.locator("#report-modal")
+    report_modal.wait_for(state="visible")
+
+    for selector in (".btn-secondary", ".btn-danger"):
+        button_styles = report_modal.locator(selector).evaluate(
+            """(element) => {
+                const before = getComputedStyle(element, '::before');
+                return {
+                    content: before.content,
+                    display: before.display,
+                };
+            }"""
+        )
+        assert button_styles["content"] == "none", (
+            f"page .btn::before shimmer must not leak into modal {selector}"
+        )
+        assert button_styles["display"] == "none", (
+            f"page .btn::before shimmer must not leak into modal {selector}"
+        )

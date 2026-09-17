@@ -101,6 +101,12 @@
     transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
   }
 
+  #report-choice-modal .btn::before,
+  #report-modal .btn::before {
+    display: none !important;
+    content: none !important;
+  }
+
   #report-choice-modal .btn:hover,
   #report-choice-modal .btn:focus,
   #report-modal .btn:hover,
@@ -112,14 +118,14 @@
   #report-choice-modal .btn-primary,
   #report-modal .btn-primary {
     background: linear-gradient(135deg, var(--report-primary), #2563eb);
-    border-color: transparent;
+    border: none;
   }
 
   #report-choice-modal .btn-outline-secondary,
   #report-modal .btn-outline-secondary,
   #report-modal .btn-secondary {
     background: transparent;
-    border-color: var(--modal-border);
+    border: 1px solid var(--modal-border);
     color: var(--modal-text);
   }
 
@@ -421,16 +427,48 @@
     border: 1px solid rgba(220, 53, 69, 0.18);
   }
 
+  #report-choice-modal .modal-content,
+  #report-modal .modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: 90dvh;
+  }
+
+  #report-choice-modal .modal-header,
+  #report-modal .modal-header,
+  #report-choice-modal .modal-footer,
+  #report-modal .modal-footer {
+    flex-shrink: 0;
+  }
+
+  #report-choice-modal .modal-body,
+  #report-modal .modal-body {
+    overflow-y: auto;
+    overflow-wrap: break-word;
+  }
+
+  #report-choice-modal .report-option-head > *,
+  #report-modal .report-option-head > *,
+  #report-choice-modal .report-option-card > *,
+  #report-modal .report-option-card > * {
+    min-width: 0;
+  }
+
   @media (max-width: 576px) {
     #report-choice-modal .modal-dialog,
     #report-modal .modal-dialog {
-      margin: 0.65rem;
+      margin: 0.65rem auto;
       max-width: calc(100vw - 1.3rem);
+      height: calc(100dvh - 1.3rem);
+      --bs-modal-margin: 0.65rem;
     }
 
     #report-choice-modal .modal-content,
     #report-modal .modal-content {
       border-radius: 1.05rem;
+      max-height: 100%;
+      overflow-x: hidden;
+      overflow-y: hidden;
     }
 
     #report-choice-modal .modal-body,
@@ -454,7 +492,18 @@
     }
 
     .report-option-card {
-      padding: 1rem;
+      padding: 0.9rem 1rem;
+    }
+
+    .report-option-icon {
+      width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 0.85rem;
+      font-size: 0.95rem;
+    }
+
+    .report-option-card + .report-option-card {
+      margin-top: 0.75rem;
     }
 
     .report-flow-kicker {
@@ -469,8 +518,17 @@
       font-size: 0.94rem;
     }
 
+    .report-flow-lead {
+      margin-bottom: 1rem;
+    }
+
+    .report-form-intro {
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
     #report-modal textarea.form-control {
-      min-height: 8rem;
+      min-height: 7rem;
     }
 
     #report-choice-modal .btn,
@@ -481,7 +539,9 @@
 
     #report-modal .modal-footer {
       display: grid;
-      gap: 0.75rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+      padding: 0.75rem 1rem;
     }
 
     #report-modal .btn-secondary,
@@ -498,7 +558,7 @@
 
 <!-- Report Flow Choice Modal -->
 <div class="modal fade" id="report-choice-modal" tabindex="-1" aria-labelledby="reportChoiceModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <div>
@@ -583,7 +643,7 @@
 
 <!-- Report Error Modal -->
 <div class="modal fade" id="report-modal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <div>

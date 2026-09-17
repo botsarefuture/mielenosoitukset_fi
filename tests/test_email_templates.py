@@ -72,9 +72,9 @@ def test_city_assignment_email_template_renders():
 
     rendered = template.render(_city_assignment_context())
 
-    assert "Uusi mielenosoitus odottaa hyväksyntää" in rendered
+    assert "Uusi mielenosoitus odottaa käsittelyä" in rendered
     assert "Climate March" in rendered
-    assert "on nyt vastuullasi" in rendered
+    assert "Mielenosoitusta ei käsitellä kansallisessa tiimissä automaattisesti" in rendered
     assert "Hyväksy mielenosoitus" in rendered
     assert "https://example.test/approve" in rendered
     assert "24 tunnin kuluessa" in rendered

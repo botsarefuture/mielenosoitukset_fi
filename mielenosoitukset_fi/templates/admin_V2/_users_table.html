@@ -1,6 +1,9 @@
+{% set city_qs = '&city=' ~ (city_filter.key|urlencode) if city_filter else '' %}
+
 <div class="admin-data-view__header admin-result-summary">
   <span><strong>{{ total_users }}</strong> {{ _('käyttäjää löytyi') }}</span>
-  {% if search_query %}<span>{{ _('Haku') }}: “{{ search_query }}”</span>{% endif %}
+  {% if city_filter %}<span>{{ _('Kaupunki') }}: {{ city_filter.name }}</span>{% endif %}
+  {% if search_query %}<span>{{ _('Haku') }}: "{{ search_query }}"</span>{% endif %}
 </div>
 
 {% if users %}
@@ -94,17 +97,17 @@
   <div class="users-pagination-info">{{ _('Sivu') }} {{ current_page }} / {{ total_pages }}</div>
   <ul class="pagination">
     <li class="page-item {% if not prev_page %}disabled{% endif %}">
-      <a class="page-link" href="?page={{ prev_page or 1 }}&per_page={{ per_page }}&search={{ search_query|urlencode }}">
+      <a class="page-link" href="?page={{ prev_page or 1 }}&per_page={{ per_page }}&search={{ search_query|urlencode }}{{ city_qs }}">
         <i class="fas fa-angle-left" aria-hidden="true"></i><span class="users-pagination-label">{{ _('Edellinen') }}</span>
       </a>
     </li>
     {% for page_number in visible_pages %}
       <li class="page-item {% if page_number == current_page %}active{% endif %}">
-        <a class="page-link" href="?page={{ page_number }}&per_page={{ per_page }}&search={{ search_query|urlencode }}" {% if page_number == current_page %}aria-current="page"{% endif %}>{{ page_number }}</a>
+        <a class="page-link" href="?page={{ page_number }}&per_page={{ per_page }}&search={{ search_query|urlencode }}{{ city_qs }}" {% if page_number == current_page %}aria-current="page"{% endif %}>{{ page_number }}</a>
       </li>
     {% endfor %}
     <li class="page-item {% if not next_page %}disabled{% endif %}">
-      <a class="page-link" href="?page={{ next_page or total_pages }}&per_page={{ per_page }}&search={{ search_query|urlencode }}">
+      <a class="page-link" href="?page={{ next_page or total_pages }}&per_page={{ per_page }}&search={{ search_query|urlencode }}{{ city_qs }}">
         <span class="users-pagination-label">{{ _('Seuraava') }}</span><i class="fas fa-angle-right" aria-hidden="true"></i>
       </a>
     </li>

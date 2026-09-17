@@ -56,6 +56,28 @@ def test_admin_city_control_aggregates_counts_and_offers_bulk_tools(app, db, see
     assert "Näytetään" in page
 
 
+def test_admin_city_control_grant_count_links_to_filtered_user_list(app, db, seeded_data):
+    admin_id = seeded_data["admin_id"]
+    user_id = seeded_data["user_id"]
+    db.admin_scope_grants.insert_one(
+        {
+            "user_id": user_id,
+            "scope_type": "city",
+            "scope_keys": ["varkaus"],
+            "permissions": ["LIST_DEMOS"],
+        }
+    )
+    client = _client_for_user(app, admin_id)
+
+    response = client.get("/admin/cities/")
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert f'href="/admin/user/?city=varkaus"' in page
+    # The grant count for Varkaus is rendered as a link because it is > 0.
+    assert 'data-city-name="varkaus"' in page
+
+
 def test_user_city_scope_picker_prioritizes_enabled_cities(app, db, seeded_data):
     client = _client_for_user(app, seeded_data["admin_id"])
     response = client.get(f"/admin/user/edit_user/{seeded_data['user_id']}")

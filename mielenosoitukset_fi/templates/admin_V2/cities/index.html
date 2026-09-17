@@ -106,7 +106,13 @@
               </div>
             </td>
             <td class="city-admin-metric-column"><a class="city-admin-metric" href="{{ url_for('city_demos', city=row.name) }}" target="_blank" rel="noopener noreferrer">{{ row.demo_count }} <span class="visually-hidden">{{ _('Avaa julkinen kaupunkisivu') }}</span></a></td>
-            <td class="city-admin-metric-column"><span class="city-admin-metric">{{ row.grant_count }}</span></td>
+            <td class="city-admin-metric-column">
+              {% if row.grant_count and (current_user.global_admin or current_user.has_permission('LIST_USERS')) %}
+                <a class="city-admin-metric" href="{{ url_for('admin_user.user_control', city=row.key) }}" title="{{ row.grant_count }} {{ _('kaupunkioikeutta') }} — {{ _('Näytä käyttäjät') }}">{{ row.grant_count }}</a>
+              {% else %}
+                <span class="city-admin-metric">{{ row.grant_count }}</span>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>

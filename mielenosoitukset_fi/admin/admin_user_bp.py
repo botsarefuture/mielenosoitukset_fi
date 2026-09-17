@@ -1,4 +1,4 @@
-from bson.objectid import ObjectId
+from bson.objectid import ObjectId, InvalidId
 from pymongo.errors import DuplicateKeyError
 from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify
 from flask_login import current_user, login_required
@@ -51,6 +51,11 @@ def log_request_info():
 def user_control():
     """Render the user control panel with a list of users."""
     search_query = (request.args.get("search", "") or "").strip()
+    city_key = request.args.get("city", "") or ""
+    city_filter_key = normalize_city_key(city_key) if city_key else ""
+    city_filter = None
+    if city_filter_key in CITY_KEY_TO_NAME:
+        city_filter = {"key": city_filter_key, "name": CITY_KEY_TO_NAME[city_filter_key]}
     page = max(request.args.get("page", default=1, type=int) or 1, 1)
     per_page = request.args.get("per_page", default=20, type=int) or 20
     per_page = min(max(per_page, 1), 100)
@@ -75,6 +80,26 @@ def user_control():
                 {"displayname": {"$regex": escaped_query, "$options": "i"}},
             ]
         }
+    if city_filter:
+        city_grant_user_ids = []
+        for grant in mongo.admin_scope_grants.find(
+            {
+                "scope_type": "city",
+                "scope_keys": city_filter_key,
+                "$or": [{"revoked_at": {"$exists": False}}, {"revoked_at": None}],
+            },
+            {"user_id": 1},
+        ):
+            raw_user_id = grant.get("user_id")
+            try:
+                city_grant_user_ids.append(ObjectId(raw_user_id))
+            except (TypeError, ValueError, InvalidId):
+                if raw_user_id:
+                    city_grant_user_ids.append(raw_user_id)
+        if city_grant_user_ids:
+            search_filter["_id"] = {"$in": city_grant_user_ids}
+        else:
+            search_filter["_id"] = {"$in": []}
 
     total_users = mongo.users.count_documents(search_filter)
     total_pages = max(math.ceil(total_users / per_page), 1)
@@ -124,6 +149,7 @@ def user_control():
         city_list=CITY_LIST,
         enabled_city_list=enabled_city_names(mongo),
         city_name_to_key=CITY_NAME_TO_KEY,
+        city_filter=city_filter,
     )
 
 

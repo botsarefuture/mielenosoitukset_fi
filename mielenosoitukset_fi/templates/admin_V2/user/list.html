@@ -44,6 +44,16 @@
       <i class="fas fa-search users-search-icon" aria-hidden="true"></i>
       <input class="form-control" type="search" id="userSearch" placeholder="{{ _('Hae nimellä, käyttäjänimellä tai sähköpostilla...') }}" value="{{ search_query }}">
     </label>
+    <label class="users-search users-city-filter" for="userCityFilter">
+      <i class="fas fa-city users-search-icon" aria-hidden="true"></i>
+      <select class="form-select form-select-sm" id="userCityFilter">
+        <option value="">{{ _('Kaikki kaupungit') }}</option>
+        {% for city in city_list|sort %}
+          {% set ckey = city_name_to_key[city] %}
+          <option value="{{ ckey }}" {% if city_filter and city_filter.key == ckey %}selected{% endif %}>{{ city }}</option>
+        {% endfor %}
+      </select>
+    </label>
     {% if current_user.has_permission("CREATE_USER") %}
       <button type="button" class="users-create btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
         <i class="fas fa-user-plus" aria-hidden="true"></i>{{ _('Luo uusi käyttäjä') }}
@@ -80,13 +90,31 @@
     });
   }
 
+  function buildUserListUrl(extras) {
+    const base = {{ url_for('admin_user.user_control')|tojson }};
+    const params = new URLSearchParams();
+    params.set('page', '1');
+    params.set('per_page', {{ per_page|tojson }});
+    const search = $('#userSearch').val() || '';
+    if (search) params.set('search', search);
+    const city = $('#userCityFilter').val() || '';
+    if (city) params.set('city', city);
+    for (const [k, v] of Object.entries(extras || {})) {
+      if (v !== null && v !== undefined && v !== '') params.set(k, v);
+    }
+    return `${base}?${params.toString()}`;
+  }
+
   let searchTimeout;
   $('#userSearch').on('input', function () {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-      const query = encodeURIComponent($(this).val());
-      loadUserTable(`{{ url_for('admin_user.user_control') }}?search=${query}&page=1&per_page={{ per_page }}`);
+      loadUserTable(buildUserListUrl());
     }, 300);
+  });
+
+  $('#userCityFilter').on('change', function () {
+    loadUserTable(buildUserListUrl());
   });
 
   $(document).on('click', '#usersTableContainer .pagination a.page-link', function (event) {

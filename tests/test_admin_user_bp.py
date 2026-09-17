@@ -81,6 +81,69 @@ def test_user_control_searches_display_names(admin_client, db, seeded_data):
     assert "displayname-search-user" in body
 
 
+def test_user_control_filters_by_city_admin_scope(admin_client, db, seeded_data):
+    """The user list can filter users by the city they hold an active admin grant for."""
+    # Two users with tampere grant, one with oulu grant only.
+    tampere_users = [ObjectId(), ObjectId()]
+    oulu_user = ObjectId()
+    db.users.insert_many(
+        [
+            {
+                "_id": oid,
+                "username": f"tampere-admin-{idx:02d}",
+                "role": "city_admin",
+                "email": f"tampere-admin-{idx:02d}@example.test",
+                "confirmed": True,
+            }
+            for idx, oid in enumerate(tampere_users)
+        ]
+    )
+    db.users.insert_one(
+        {
+            "_id": oulu_user,
+            "username": "oulu-admin-01",
+            "role": "city_admin",
+            "email": "oulu-admin-01@example.test",
+            "confirmed": True,
+        }
+    )
+    for oid in tampere_users:
+        db.admin_scope_grants.insert_one(
+            {
+                "user_id": oid,
+                "scope_type": "city",
+                "scope_keys": ["tampere"],
+                "permissions": ["LIST_DEMOS"],
+            }
+        )
+    db.admin_scope_grants.insert_one(
+        {
+            "user_id": oulu_user,
+            "scope_type": "city",
+            "scope_keys": ["oulu"],
+            "permissions": ["LIST_DEMOS"],
+        }
+    )
+
+    response = admin_client.get("/admin/user/?city=tampere")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "tampere-admin-00" in body
+    assert "tampere-admin-01" in body
+    assert "oulu-admin-01" not in body
+    assert "Kaupunki" in body
+
+    # Normalized key form also works.
+    response2 = admin_client.get("/admin/user/?city=Tampere")
+    assert response2.status_code == 200
+    assert "tampere-admin-00" in response2.get_data(as_text=True)
+
+    # Unknown city falls back to full list.
+    response3 = admin_client.get("/admin/user/?city=nowhereville")
+    assert response3.status_code == 200
+    assert "tampere-admin-00" in response3.get_data(as_text=True)
+
+
 def test_edit_user_exposes_translator_role_and_auto_assigns_permission(admin_client, db, seeded_data):
     translator_id = seeded_data["translator_id"]
 

@@ -44,6 +44,33 @@
   }
 
 
+  function rejectDemo(demoId) {
+    if (!confirm("{{ _('Haluatko varmasti hylätä tämän mielenosoituksen?') }}")) return;
+
+    fetch(`/api/admin/demo/${demoId}/deny`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+      redirect: "manual",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          showToast("{{ _('Mielenosoitus hylätty.') }}", 'success');
+          const row = document.getElementById(`demo-${demoId}`);
+          if (row) row.remove();
+        } else {
+          showToast(data.message || data.error || "{{ _('Virhe hylkäämisessä.') }}", 'danger');
+        }
+      })
+      .catch(() => {
+        showToast("{{ _('Yhteysvirhe, yritä uudelleen.') }}", 'danger');
+      });
+  }
+
+
 </script>
 
 {% endblock %} {% block main_content %}
@@ -297,6 +324,17 @@
                   {% else %}
                       <li><span class="dropdown-item disabled">
                           <i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}
+                      </span></li>
+                  {% endif %}
+
+                  {% if 'ACCEPT_DEMO' in demo_actions.get(demo._id|string, []) %}
+                      <li><button class="dropdown-item text-danger" type="button"
+                                  onclick="rejectDemo('{{ demo._id }}')">
+                          <i class="fa-solid fa-xmark me-2"></i>{{ _('Hylkää') }}
+                      </button></li>
+                  {% else %}
+                      <li><span class="dropdown-item disabled">
+                          <i class="fa-solid fa-xmark me-2"></i>{{ _('Hylkää') }}
                       </span></li>
                   {% endif %}
                 {% endif %}

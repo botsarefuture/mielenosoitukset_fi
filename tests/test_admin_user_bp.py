@@ -2,6 +2,8 @@ from datetime import datetime, timezone
 
 from bson import ObjectId
 
+from mielenosoitukset_fi.users.models import User
+
 
 def _insert_admin_user_list_entries(db):
     entries = [
@@ -254,3 +256,40 @@ def test_create_user_rejects_reserved_admin_identity(admin_client, db, seeded_da
 
     assert response.status_code == 302
     assert db.users.find_one({"email": "reserved-admin@example.test"}) is None
+
+
+def test_create_user_persists_active_true(admin_client, db, seeded_data):
+    response = admin_client.post(
+        "/admin/user/create_user",
+        data={
+            "email": "active-test@example.test",
+            "username": "active-test-user",
+            "displayname": "Active Test",
+            "role": "user",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    user_doc = db.users.find_one({"email": "active-test@example.test"})
+    assert user_doc is not None
+    assert user_doc["active"] is True
+    assert user_doc["banned"] is False
+
+
+def test_user_from_db_defaults_active_true(db, seeded_data):
+    oid = ObjectId()
+    db.users.insert_one(
+        {
+            "_id": oid,
+            "username": "legacy-no-active",
+            "email": "legacy-no-active@example.test",
+            "password_hash": "fake",
+            "role": "user",
+            "confirmed": True,
+        }
+    )
+
+    doc = db.users.find_one({"_id": oid})
+    user = User.from_db(doc)
+    assert user.active is True

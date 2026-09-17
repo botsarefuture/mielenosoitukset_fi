@@ -465,10 +465,25 @@
 
     #report-choice-modal .modal-content,
     #report-modal .modal-content {
+      display: block;
       border-radius: 1.05rem;
       max-height: 100%;
       overflow-x: hidden;
-      overflow-y: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #report-choice-modal .modal-header,
+    #report-modal .modal-header,
+    #report-choice-modal .modal-footer,
+    #report-modal .modal-footer {
+      flex-shrink: initial;
+    }
+
+    #report-choice-modal .modal-body,
+    #report-modal .modal-body {
+      overflow: visible;
     }
 
     #report-choice-modal .modal-body,

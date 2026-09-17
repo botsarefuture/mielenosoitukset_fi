@@ -410,9 +410,10 @@ def test_report_error_modal_vertical_fit_and_scroll_contract(
     viewport_width,
     viewport_height,
 ):
-    """The report modals must never clip above/below the mobile viewport: the dialog
-    is height-capped, the dialog is scrollable, the header/footer stay fixed, and the
-    body scrolls internally without horizontal overflow."""
+    """The report modals must never clip above/below the viewport: the dialog is
+    height-capped. On mobile the whole content scrolls as one swipeable region
+    (no nested body scroller); on desktop the header/footer stay pinned. Never
+    overflow horizontally."""
     _install_bootstrap_modal_test_double(browser_page)
     is_mobile = viewport_width < 1000
     browser_page.set_viewport_size({"width": viewport_width, "height": viewport_height})
@@ -475,12 +476,26 @@ def test_report_error_modal_vertical_fit_and_scroll_contract(
         assert contract["isScrollableDialog"], (
             f"{modal_id} dialog must use the Bootstrap scrollable dialog layout"
         )
-        # Header/footer must stay pinned; only the body scrolls.
-        assert contract["headerFlexShrink"] == "0", f"{modal_id} header must stay pinned"
-        assert contract["footerFlexShrink"] == "0", f"{modal_id} footer must stay pinned"
-        assert contract["bodyOverflowY"] in ("auto", "visible"), (
-            f"{modal_id} body must be the internally scrolling region"
-        )
+        if is_mobile:
+            # On mobile the whole modal content scrolls as a single region, so a
+            # swipe anywhere (header, hint, cards, footer) scrolls the dialog.
+            assert contract["contentOverflowY"] == "auto", (
+                f"{modal_id} content must be the mobile scroll region"
+            )
+            assert contract["bodyOverflowY"] == "visible", (
+                f"{modal_id} body must not nest a separate scroll region on mobile"
+            )
+        else:
+            # On desktop the header/footer stay pinned and only the body scrolls.
+            assert contract["headerFlexShrink"] == "0", (
+                f"{modal_id} header must stay pinned"
+            )
+            assert contract["footerFlexShrink"] == "0", (
+                f"{modal_id} footer must stay pinned"
+            )
+            assert contract["bodyOverflowY"] == "auto", (
+                f"{modal_id} body must be the desktop scroll region"
+            )
         # The dialog is capped to the viewport height on mobile, so content can
         # never reach beyond the screen (no top/bottom clipping).
         if is_mobile:

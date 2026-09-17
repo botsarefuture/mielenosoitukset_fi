@@ -376,6 +376,7 @@
 * Admin dashboard routes now emit structured audit logs (matching the new `admin_demo_bp` style) so every panic toggle, cache purge, job action, and analytics query is captured consistently.
 * Organization admin routes now emit structured audit logs for every invite, edit, deletion, suggestion review, and membership change, aligning them with the new admin logging standard.
 * Login now uses a resend-verification popup so users can request a fresh email without leaving the sign-in page.
+* Admin-created users were silently stored as inactive: `create_user` wrote no `active` field and `User.from_db` defaulted a missing `active` to `False`, so the forced-password-reset save persisted `active: false` forever. City-admin accounts created this way were therefore never picked up by the city assignment feature — no assignment email was sent and demos silently fell back to the national team. New users are now created `active: true`/`banned: false` and a missing `active` field is treated as active, consistent with the model default.
 
 ## v4.0.0-beta.3 – *Cache & Follow Polish* ✨
 

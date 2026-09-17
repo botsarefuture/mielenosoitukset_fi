@@ -847,6 +847,8 @@ def create_user():
         "displayname": displayname,
         "role": role,
         "confirmed": True,
+        "active": True,
+        "banned": False,
         "password_hash": password_hash,
         "global_permissions": _normalize_role_permissions(role, []),
     }

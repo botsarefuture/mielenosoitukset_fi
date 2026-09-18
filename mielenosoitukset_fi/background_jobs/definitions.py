@@ -22,6 +22,7 @@ from mielenosoitukset_fi.scripts.process_ui_translation_sync import (
 from mielenosoitukset_fi.utils.analytics import prep
 from mielenosoitukset_fi.scripts.auto_close_cases import main as auto_close_cases
 from mielenosoitukset_fi.scripts.process_support_tickets import main as process_support_tickets
+from mielenosoitukset_fi.scripts.process_email_queue import run as process_email_queue
 from mielenosoitukset_fi.scripts.escalate_city_assignments import main as escalate_city_assignments
 
 
@@ -134,6 +135,13 @@ JOB_DEFINITIONS: List[JobDefinition] = [
         func=process_support_tickets,
         default_trigger=_interval(minutes=1),
         allow_interval_override=True,
+    ),
+    JobDefinition(
+        key="process_email_queue",
+        name="Email queue drain",
+        description="Drains orphaned queued emails, ensuring delivery even when originating processes terminate.",
+        func=process_email_queue,
+        default_trigger=_interval(minutes=2),
     ),
     JobDefinition(
         key="escalate_city_assignments",

@@ -17,7 +17,7 @@ class Sender:
             "email_server": self.email_server,
             "email_port": self.email_port,
             "username": self.username,
-            "password": self.password,  # ⚠️ Be careful storing raw passwords!
+            "password": self.password,
             "use_tls": self.use_tls,
             "email_address": self.email_address,
         }
@@ -75,7 +75,7 @@ class EmailJob:
         self.sender = sender
         self.attachments = attachments or []
         self.extra_headers = extra_headers or {}
-        self.instance_id = instance_id or str(uuid.uuid4())  # default to a unique ID
+        self.instance_id = instance_id or str(uuid.uuid4())
 
     def to_dict(self):
         """Convert the job into a serializable dict for MongoDB storage."""
@@ -88,6 +88,8 @@ class EmailJob:
             "attachments": self.attachments,
             "extra_headers": self.extra_headers,
             "instance_id": self.instance_id,
+            "status": "pending",
+            "attempts": 0,
         }
 
     @classmethod

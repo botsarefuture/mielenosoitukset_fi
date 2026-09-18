@@ -79,7 +79,14 @@
               <div class="note-box">
                 <div><strong>
                   {%- if followup.direction == 'out' %}<span class="admin-status-badge admin-status-badge--info">→ {{ _('Lähtevä') }}</span>{% else %}<span class="admin-status-badge admin-status-badge--secondary">← {{ _('Saapuva') }}</span>{% endif %}
-                  {{ followup.from_name or followup.from_email }}</strong> <span class="muted">{{ followup.timestamp|datetimeformat("%d.%m.%Y %H:%M") if followup.timestamp else '' }}</span></div>
+                  {{ followup.from_name or followup.from_email }}</strong> <span class="muted">{{ followup.timestamp|datetimeformat("%d.%m.%Y %H:%M") if followup.timestamp else '' }}</span>
+                  {%- if followup.direction == 'out' and followup.status %}
+                    {%- if followup.status == 'sent' %}<span class="admin-status-badge admin-status-badge--success" title="{{ _('Sähköposti on toimitettu vastaanottajalle') }}">✓ {{ _('Toimitettu') }}</span>
+                    {%- elif followup.status == 'failed' %}<span class="admin-status-badge admin-status-badge--danger" title="{{ _('Sähköpostin toimitus epäonnistui') }}{% if followup.error %}: {{ followup.error }}{% endif %}">✗ {{ _('Epäonnistui') }}</span>
+                    {%- else %}<span class="admin-status-badge admin-status-badge--warning">{{ _('Jonossa') }}</span>
+                    {%- endif %}
+                  {%- endif %}
+                </div>
                 {% if followup.subject %}<div class="muted">{{ followup.subject }}</div>{% endif %}
                 <div>{{ followup.message }}</div>
               </div>

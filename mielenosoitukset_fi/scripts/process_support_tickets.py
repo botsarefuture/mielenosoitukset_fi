@@ -493,7 +493,7 @@ def _queue_urgent_alert(email_sender, config, sender_email: str, ticket_label: s
     return message_id
 
 
-def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, admin_label: str = "") -> None:
+def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, admin_label: str = "") -> str:
     """Queue an admin reply to a support ticket and record it in the case.
 
     The outbound Message-ID is stored on the ticket so the user's next reply
@@ -501,6 +501,8 @@ def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, a
     ``suggestion.messages`` (direction ``out``) so it shows in the admin UI.
 
     ``case`` is the support-ticket document (dict) from MongoDB.
+
+    Returns the generated Message-ID.
     """
     mongo = DatabaseManager().get_instance().get_db()
     ticket_meta = (case.get("meta") or {}).get("ticket", {})
@@ -541,6 +543,7 @@ def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, a
                     "direction": "out",
                     "subject": subject,
                     "message": message,
+                    "status": "queued",
                 }
             },
             "$addToSet": {"meta.ticket.reply_message_ids": message_id},
@@ -548,6 +551,7 @@ def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, a
         },
     )
     logger.info("Queued admin reply to %s (%s)", reply_to, ticket_label)
+    return message_id
 
 
 def poll_once(config=Config, db=None, email_sender=None) -> Dict[str, Any]:

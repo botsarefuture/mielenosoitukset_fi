@@ -642,6 +642,43 @@ def reply_to_ticket(case_id):
         abort(404)
 
     admin_label = getattr(current_user, "username", None) or str(current_user)
+
+    # Record the audit trail and action log *before* queueing the reply, and
+    # use targeted $-updates rather than Case._touch() (which rewrites the
+    # whole document from stale in-memory state). This ordering + targeted
+    # writes guarantee queue_admin_reply's $push to suggestion.messages and
+    # $addToSet to meta.ticket.reply_message_ids can't be wiped afterwards.
+    now = utcnow()
+    mongo.cases.update_one(
+        {"_id": case._id},
+        {
+            "$set": {"updated_at": now},
+            "$push": {
+                "case_history": {
+                    "timestamp": now,
+                    "action": "Support ticket reply sent",
+                    "user": current_user.username,
+                    "mech_action": "reply_to_ticket",
+                    "metadata": {"to": submitter},
+                }
+            },
+        },
+    )
+    mongo.cases.update_one(
+        {"_id": case._id},
+        {
+            "$set": {"updated_at": now},
+            "$push": {
+                "action_logs": {
+                    "timestamp": now,
+                    "admin": current_user.username,
+                    "action_type": "reply_to_ticket",
+                    "note": _("Lähetetty vastaus tukipyyntöön."),
+                }
+            },
+        },
+    )
+
     try:
         queue_admin_reply(
             email_sender,
@@ -656,16 +693,8 @@ def reply_to_ticket(case_id):
         flash_message(_("Vastauksen lähetys epäonnistui: %(error)s") % {"error": str(exc)}, "error")
         return redirect(url_for("admin_case.single_case", case_id=case_id))
 
-    case._add_history_entry({
-        "timestamp": utcnow(),
-        "action": "Support ticket reply sent",
-        "user": current_user.username,
-        "mech_action": "reply_to_ticket",
-        "metadata": {"to": submitter},
-    })
-    case.add_action("reply_to_ticket", current_user.username, note=_("Lähetetty vastaus tukipyyntöön."))
     log_admin_action_V2(f"{current_user.username} lähetti vastauksen tukipyyntöön {case.running_num} ({submitter})", case_id)
-    flash_message(_("Vastaus lähetetty sähköpostitse."), "success")
+    flash_message(_("Vastaus lisätty lähetysjonoon; se toimitetaan hetken kuluttua."), "success")
     return redirect(url_for("admin_case.single_case", case_id=case_id))
 
 

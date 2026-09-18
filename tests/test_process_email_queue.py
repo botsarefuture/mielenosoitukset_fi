@@ -65,15 +65,14 @@ def test_process_email_queue_drains_orphaned_jobs_regardless_of_instance(db, mon
 
 @pytest.mark.integration
 @pytest.mark.jobs
-def test_process_email_queue_continues_after_send_failure(db, monkeypatch):
+def test_process_email_queue_keeps_failed_job_for_retry(db, monkeypatch):
     from mielenosoitukset_fi.scripts.process_email_queue import run
 
     db.email_queue.delete_many({})
+    broken_id = ObjectId("5c0000000000000000000001")
     db.email_queue.insert_many(
         [
-            _queued_email(
-                "Broken first", ["broken@example.test"], _id=ObjectId("5c0000000000000000000001")
-            ),
+            _queued_email("Broken first", ["broken@example.test"], _id=broken_id),
             _queued_email(
                 "Healthy second", ["ok@example.test"], _id=ObjectId("5c0000000000000000000002")
             ),
@@ -84,8 +83,50 @@ def test_process_email_queue_continues_after_send_failure(db, monkeypatch):
 
     processed = run(max_jobs=10)
 
+    # The healthy job is sent and deleted; the broken one must be kept for
+    # a later retry (no delete-before-send data loss).
     assert processed == 1
     assert [job["subject"] for job in sent] == ["Healthy second"]
+    remaining = list(db.email_queue.find({}))
+    assert len(remaining) == 1
+    assert remaining[0]["_id"] == broken_id
+    assert remaining[0]["status"] == "failed"
+    assert remaining[0]["attempts"] == 1
+    assert remaining[0]["last_error"]
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_process_email_queue_retries_failed_job_on_later_run(db, monkeypatch):
+    from datetime import datetime, timezone, timedelta
+
+    from mielenosoitukset_fi.scripts.process_email_queue import run
+
+    db.email_queue.delete_many({})
+    db.email_queue.insert_one(
+        _queued_email("Flaky reply", ["flaky@example.test"], _id=ObjectId("5c0000000000000000000001"))
+    )
+
+    sent = _patch_sender(monkeypatch, fail_first=1)
+
+    # First run: SMTP down, job marked failed and kept.
+    processed = run(max_jobs=10)
+    assert processed == 0
+    assert sent == []
+    remaining = db.email_queue.find_one({})
+    assert remaining["status"] == "failed"
+    assert remaining["attempts"] == 1
+
+    # Simulate the retry cooldown elapsing.
+    db.email_queue.update_one(
+        {},
+        {"$set": {"last_attempt_at": datetime.now(timezone.utc) - timedelta(hours=1)}},
+    )
+
+    # Second run: SMTP is back. The failed job must be picked up and delivered.
+    processed = run(max_jobs=10)
+    assert processed == 1
+    assert [job["subject"] for job in sent] == ["Flaky reply"]
     assert db.email_queue.count_documents({}) == 0
 
 
@@ -100,3 +141,72 @@ def test_process_email_queue_is_idempotent_on_empty_queue(db, monkeypatch):
 
     assert run(max_jobs=10) == 0
     assert sent == []
+
+
+def _case_with_outbound(mid):
+    return {
+        "_id": ObjectId("5c000000000000000000000a"),
+        "type": "support_ticket",
+        "running_num": 1,
+        "submitter": {"submitter_email": "x@example.test"},
+        "suggestion": {
+            "messages": [
+                {"message_id": mid, "direction": "out", "message": "Hi", "status": "queued"}
+            ]
+        },
+        "meta": {"ticket": {"reply_message_ids": [mid]}},
+    }
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_process_email_queue_records_delivery_status_on_case(db, monkeypatch):
+    from mielenosoitukset_fi.scripts.process_email_queue import run
+
+    db.email_queue.delete_many({})
+    db.cases.delete_many({})
+
+    mid = "<abc123@mielenosoitukset.fi>"
+    db.cases.insert_one(_case_with_outbound(mid))
+
+    job = _queued_email("Admin reply", ["x@example.test"])
+    job["extra_headers"] = {"Message-ID": mid}
+    db.email_queue.insert_one(job)
+
+    _patch_sender(monkeypatch)
+    processed = run(max_jobs=10)
+
+    assert processed == 1
+    reopened = db.cases.find_one({"_id": ObjectId("5c000000000000000000000a")})
+    message = reopened["suggestion"]["messages"][0]
+    assert message["status"] == "sent"
+    assert "sent_at" in message
+    # The queued job itself is deleted only after successful delivery.
+    assert db.email_queue.count_documents({}) == 0
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_process_email_queue_records_failure_status_on_case(db, monkeypatch):
+    from mielenosoitukset_fi.scripts.process_email_queue import run
+
+    db.email_queue.delete_many({})
+    db.cases.delete_many({})
+
+    mid = "<abc123@mielenosoitukset.fi>"
+    db.cases.insert_one(_case_with_outbound(mid))
+
+    job = _queued_email("Admin reply", ["x@example.test"])
+    job["extra_headers"] = {"Message-ID": mid}
+    db.email_queue.insert_one(job)
+
+    _patch_sender(monkeypatch, fail_first=99)
+    processed = run(max_jobs=10)
+
+    assert processed == 0
+    reopened = db.cases.find_one({"_id": ObjectId("5c000000000000000000000a")})
+    message = reopened["suggestion"]["messages"][0]
+    assert message["status"] == "failed"
+    assert message["error"]
+    # The job is retained (not deleted) so it can be retried later.
+    assert db.email_queue.count_documents({}) == 1

@@ -1,5 +1,6 @@
 import threading
 import smtplib
+from datetime import datetime, timezone, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from jinja2 import Environment, FileSystemLoader
@@ -7,8 +8,19 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from .EmailJob import EmailJob
 import time
 import uuid
+import pymongo
 from config import Config
 from mielenosoitukset_fi.utils.logger import logger
+
+EMAIL_MAX_ATTEMPTS = 30
+EMAIL_RETRY_COOLDOWN_SECONDS = 60
+EMAIL_STALE_IN_FLIGHT_SECONDS = 600
+EMAIL_SMTP_TIMEOUT_SECONDS = 30
+
+# Only one in-process queue worker per Python process. Several modules create
+# module-level EmailSender singletons; spawning a polling thread for each
+# would produce many threads all claiming the same queue.
+_WORKER_STARTED = False
 
 
 class EmailSender:
@@ -21,6 +33,7 @@ class EmailSender:
         self._db_manager = DatabaseManager().get_instance()
         self._db = self._db_manager.get_db()
         self._queue_collection = self._db["email_queue"]
+        self._cases_collection = self._db["cases"]
         self._env = Environment(
             loader=FileSystemLoader("mielenosoitukset_fi/templates/emails")
         )
@@ -35,6 +48,10 @@ class EmailSender:
             self.start_worker()
 
     def start_worker(self):
+        global _WORKER_STARTED
+        if _WORKER_STARTED:
+            return
+        _WORKER_STARTED = True
         worker_thread = threading.Thread(
             target=self.process_queue,
             name=f"email-worker-{self._instance_id[:8]}",
@@ -49,15 +66,124 @@ class EmailSender:
         timer.start()
 
     def process_queue(self):
-        """Only pull jobs that belong to this instance"""
+        """Claim and send jobs globally (not instance-scoped).
+
+        Uses atomic ``find_one_and_update`` to claim one pending or failed
+        job at a time.  On success the document is deleted; on failure it is
+        marked ``status="failed"`` so the periodic ``process_email_queue``
+        background job can retry it later.
+        """
         while True:
-            email_job_data = self._queue_collection.find_one_and_delete(
-                {"instance_id": self._instance_id}
-            )
-            if email_job_data:
-                email_job = EmailJob.from_dict(email_job_data)
-                self.send_email(email_job)
+            job_doc = self._claim_next_job()
+            if job_doc:
+                self._process_claimed_job(job_doc)
             time.sleep(5)
+
+    def _claim_next_job(self):
+        """Atomically claim the next eligible job (pending or retryable).
+
+        Returns the claimed document dict or ``None``.
+        """
+        cooldown_cutoff = datetime.now(timezone.utc) - timedelta(seconds=EMAIL_RETRY_COOLDOWN_SECONDS)
+
+        return self._queue_collection.find_one_and_update(
+            {
+                "$and": [
+                    {"status": {"$in": [None, "pending", "failed"]}},
+                    {
+                        "$or": [
+                            {"attempts": {"$exists": False}},
+                            {"attempts": {"$lt": EMAIL_MAX_ATTEMPTS}},
+                        ]
+                    },
+                    {
+                        "$or": [
+                            {"status": {"$ne": "failed"}},
+                            {"last_attempt_at": {"$lte": cooldown_cutoff}},
+                        ]
+                    },
+                ]
+            },
+            {
+                "$set": {
+                    "status": "in_flight",
+                    "claimed_at": datetime.now(timezone.utc),
+                    "claimed_by": self._instance_id[:8],
+                },
+                "$inc": {"attempts": 1},
+            },
+            sort=[("_id", 1)],
+            return_document=pymongo.ReturnDocument.AFTER,
+        )
+
+    def _process_claimed_job(self, job_doc):
+        """Send a claimed job, updating status on success/failure."""
+        email_job = EmailJob.from_dict(job_doc)
+        try:
+            self.send_email(email_job, raise_on_error=True)
+            self._queue_collection.delete_one({"_id": job_doc["_id"]})
+            self._record_cases_delivery(job_doc, delivered=True)
+        except Exception as exc:
+            error_str = str(exc)[:500]
+            self._queue_collection.update_one(
+                {"_id": job_doc["_id"]},
+                {
+                    "$set": {
+                        "status": "failed",
+                        "last_error": error_str,
+                        "last_attempt_at": datetime.now(timezone.utc),
+                    },
+                },
+            )
+            self._record_cases_delivery(job_doc, delivered=False, error=error_str)
+
+    def _requeue_stale_in_flight(self):
+        """Mark jobs stuck ``in_flight`` (e.g. worker crashed) as ``failed``."""
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=EMAIL_STALE_IN_FLIGHT_SECONDS)
+        self._queue_collection.update_many(
+            {"status": "in_flight", "claimed_at": {"$lte": cutoff}},
+            {
+                "$set": {
+                    "status": "failed",
+                    "last_error": "stale claim (worker crashed/restarted)",
+                    "last_attempt_at": datetime.now(timezone.utc),
+                },
+            },
+        )
+
+    def _record_cases_delivery(self, job_doc, delivered, error=None):
+        """Update the delivery status on matching support-ticket case messages.
+
+        Looks up the ``Message-ID`` header from the queued email and, if it
+        matches a support ticket's ``meta.ticket.reply_message_ids``, updates
+        the corresponding ``suggestion.messages`` entry with the delivery
+        status so the admin UI can show it.
+        """
+        message_id = (job_doc.get("extra_headers") or {}).get("Message-ID")
+        if not message_id:
+            return
+        status = "sent" if delivered else "failed"
+        set_fields = {"suggestion.messages.$[m].status": status}
+        if delivered:
+            set_fields["suggestion.messages.$[m].sent_at"] = datetime.now(timezone.utc)
+        else:
+            set_fields["suggestion.messages.$[m].error"] = (error or "unknown")[:500]
+
+        try:
+            self._cases_collection.update_many(
+                {
+                    "meta.ticket.reply_message_ids": message_id,
+                    "suggestion.messages": {"$exists": True, "$ne": None},
+                },
+                {"$set": set_fields},
+                array_filters=[{"m.message_id": message_id}],
+            )
+        except Exception:
+            self._logger.debug(
+                "Could not update case delivery status for Message-ID %s",
+                message_id,
+                exc_info=True,
+            )
 
     def send_email(self, email_job, raise_on_error=False):
         try:
@@ -126,7 +252,7 @@ class EmailSender:
                     msg.attach(part)
 
             # Send
-            with smtplib.SMTP(smtp_server, smtp_port) as server:
+            with smtplib.SMTP(smtp_server, smtp_port, timeout=EMAIL_SMTP_TIMEOUT_SECONDS) as server:
                 if use_tls:
                     server.starttls()
                 server.login(smtp_username, smtp_password)
@@ -208,7 +334,7 @@ class EmailSender:
         attempt_send(0)
 
     def _die_when_no_jobs(self):
-        """Wait until this instance’s queue is empty"""
+        """Wait until this instance's queue is empty"""
         while self._queue_collection.count_documents({"instance_id": self._instance_id}) > 0:
             time.sleep(1)
         self._logger.info("No email jobs in the queue. Stopping EmailSender.")

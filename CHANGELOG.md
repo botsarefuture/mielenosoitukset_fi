@@ -6,6 +6,7 @@
 
 ### Added
 * The admin user list can now be filtered by the city a user has an active city-admin right for: a new city dropdown (`?city=<key>`) filters users server-side and stays active through search and pagination. On the Kaupunkihallinta page, a city's "Kaupunkioikeuksia" count is now a link that opens the user list pre-filtered to the admins of that city.
+* Granting city-admin rights for an inactive city (via user create/edit) now auto-activates that city's `city_settings` entry, so the city becomes visible on the site and eligible for demo assignment; revoking the grant leaves the city's activation state untouched.
 * When a demonstration is submitted for a city that has active city admins, it is now assigned to those admins: they receive the moderation email (approve/preview/reject links) on submission and the national team is not notified while the city owns the demo. Cities without city admins keep the existing national queue unchanged.
 * Assigned demonstrations left without a decision for 24 h (configurable via `CITY_ASSIGNMENT_ESCALATION_HOURS`) are escalated to the national team by a background job (every 30 min), which receives the moderation email so the demo re-enters the national pending queue and reminder loop.
 * The national admin dashboard now breaks pending demonstrations into three counts — national pending, city-pending (owned by a city with a live 24 h window), and escalated — and the demo dashboard marks rows as "Kaupungin vastuulla" or "Eskaloitu" while approved/rejected status is shown for everything else.

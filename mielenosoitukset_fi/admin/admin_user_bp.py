@@ -10,7 +10,11 @@ from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from mielenosoitukset_fi.utils.variables import CITY_LIST, PERMISSIONS_GROUPS
 from mielenosoitukset_fi.utils.cities import CITY_KEY_TO_NAME, CITY_NAME_TO_KEY, normalize_city_key
-from mielenosoitukset_fi.utils.city_settings import enabled_city_names
+from mielenosoitukset_fi.utils.city_settings import (
+    enabled_city_keys,
+    enabled_city_names,
+    upsert_city_setting,
+)
 from mielenosoitukset_fi.utils.validators import (
     is_reserved_identity_name,
     normalize_email,
@@ -209,11 +213,30 @@ def _city_scope_grant_for_user(user_id: ObjectId) -> dict:
     return grant
 
 
+def _auto_activate_granted_cities(city_keys: list[str]) -> None:
+    """Activate city_settings for granted cities that are currently inactive.
+
+    Granting a city admin for an inactive city would otherwise hand over
+    moderation of a city that is invisible on the site, so the city is
+    enabled automatically.
+    """
+    active_keys = enabled_city_keys(mongo)
+    for city_key in city_keys:
+        if city_key not in active_keys:
+            upsert_city_setting(
+                mongo,
+                city_key,
+                True,
+                actor_id=str(current_user._id),
+            )
+
+
 def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions: list[str]) -> None:
     city_keys = sorted({normalize_city_key(key) for key in city_keys if normalize_city_key(key) in CITY_KEY_TO_NAME})
     permissions = sorted({permission for permission in permissions if permission in CITY_ADMIN_PERMISSIONS})
     if city_keys and permissions:
         permissions = sorted(set(permissions) | {"LIST_DEMOS", "VIEW_DEMO"})
+        _auto_activate_granted_cities(city_keys)
 
     query = {
         "user_id": {"$in": [user_id, str(user_id)]},

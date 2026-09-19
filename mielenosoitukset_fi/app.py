@@ -22,6 +22,7 @@ from zoneinfo import ZoneInfo
 
 
 from mielenosoitukset_fi.utils import VERSION
+from mielenosoitukset_fi.utils.build_info import resolve_build_sha
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -67,6 +68,7 @@ def create_app(config_overrides=None) -> Flask:
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
     if config_overrides:
         app.config.update(config_overrides)
+    app.config.setdefault("BUILD_SHA", resolve_build_sha())
 
     # Keep translation catalogs separate from languages that are ready to be
     # published. This lets translators work on English and Swedish without

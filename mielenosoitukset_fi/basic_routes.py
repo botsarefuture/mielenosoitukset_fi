@@ -816,7 +816,11 @@ def init_routes(app):
 
     @app.route("/health")
     def health_check():
-        return jsonify(status="ok"), 200
+        build_sha = app.config.get("BUILD_SHA", "unknown")
+        response = jsonify(status="ok", build_sha=build_sha)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Build-SHA"] = build_sha
+        return response, 200
 
     _status_cache = {"data": None, "ts": 0}
     _STATUS_TTL = 60  # seconds

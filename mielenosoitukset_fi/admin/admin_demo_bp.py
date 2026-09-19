@@ -3653,7 +3653,7 @@ def handle_demo_form(
         return redirect(url_for("admin_demo.demo_control"))
 
     except ValueError as e:
-        flash_message(f"Virhe: {str(e)}", "error")
+        flash_message("Virhe: %(error)s", "error", error=str(e))
 
         # Redirect to the edit or create form based on operation type
     return redirect(

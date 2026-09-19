@@ -32,6 +32,19 @@ class FlashMessageTests(unittest.TestCase):
                 [("default", "Heads up")],
             )
 
+    def test_named_values_are_interpolated_after_translation(self):
+        with self.app.test_request_context("/"):
+            flash_message(
+                "Toiminto epäonnistui: %(error)s",
+                "error",
+                error="testivirhe",
+            )
+
+            self.assertEqual(
+                get_flashed_messages(with_categories=True),
+                [("error", "Toiminto epäonnistui: testivirhe")],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

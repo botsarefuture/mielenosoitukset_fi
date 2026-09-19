@@ -697,10 +697,13 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
             _, cancelled_count = _cancel_children_for_break_dates(
                 ObjectId(demo_id), break_dates
             )
-            message = "Toistuva mielenosoitus päivitetty onnistuneesti."
             if cancelled_count:
-                message += f" Peruttiin {cancelled_count} taukopäivälle osuvaa lapsimielenosoitusta."
-            flash_message(message)
+                flash_message(
+                    "Toistuva mielenosoitus päivitettiin. Peruttiin %(count)s taukopäivälle osuvaa lapsimielenosoitusta.",
+                    count=cancelled_count,
+                )
+            else:
+                flash_message("Toistuva mielenosoitus päivitettiin onnistuneesti.")
         else:
             mongo.recu_demos.insert_one(demonstration_data)
             flash_message("Toistuva mielenosoitus luotu onnistuneesti.")
@@ -709,7 +712,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         import logging
 
         logging.error(f"An error occurred: {str(e)}")
-        flash_message(f"Virhe: {str(e)}")
+        flash_message("Virhe: %(error)s", error=str(e))
         return redirect(
             url_for(
                 (
@@ -844,8 +847,9 @@ def bulk_update_children(demo_id):
         )
 
     flash_message(
-        f"Päivitettiin {updated_count} lapsimielenosoitusta.",
+        "Päivitettiin %(count)s lapsimielenosoitusta.",
         "success",
+        count=updated_count,
     )
     return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
 
@@ -902,7 +906,11 @@ def bulk_cancel_children(demo_id):
     elif cancelled_count == 0:
         flash_message("Valitut lapsimielenosoitukset olivat jo peruttuja.", "info")
     else:
-        flash_message(f"Peruttiin {cancelled_count} lapsimielenosoitusta.", "success")
+        flash_message(
+            "Peruttiin %(count)s lapsimielenosoitusta.",
+            "success",
+            count=cancelled_count,
+        )
     return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
 
 

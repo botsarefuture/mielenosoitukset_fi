@@ -141,8 +141,8 @@
 }
     </style>
     {% block styles %}{% endblock %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/workspace.css', v='20260914-admin-ui-52') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/analytics.css', v='20260914-admin-ui-52') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/workspace.css', v='20260919-admin-ui-53') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/analytics.css', v='20260919-admin-ui-53') }}">
 </head>
 
 <body class="min-vh-100 d-flex flex-column bg-body-tertiary">
@@ -449,10 +449,25 @@ function confirmAction(action, taskId) {
     </button>
   </div>
 
-  <!-- Super admin info -->
-  <div class="alert alert-warning text-center mt-3 mb-0 py-1 small">
-    <i class="fas fa-exclamation-triangle me-1"></i>{{ _('Olet superkäyttäjätilassa.') }}
+  {% if admin_actor_context %}
+  <div class="admin-scope-context admin-scope-context--{{ admin_actor_context.kind }}" aria-label="{{ _('Aktiivinen ylläpitorooli') }}">
+    <i class="fas {{ 'fa-shield-halved' if admin_actor_context.kind == 'global' else ('fa-city' if admin_actor_context.kind == 'city' else ('fa-building' if admin_actor_context.kind == 'organization' else ('fa-language' if admin_actor_context.kind == 'translator' else 'fa-user-lock'))) }}" aria-hidden="true"></i>
+    <div>
+      <strong>
+        {% if admin_actor_context.kind == 'global' %}{{ _('Globaali ylläpito') }}
+        {% elif admin_actor_context.kind == 'city' %}{{ _('Kaupunkiadmin') }}
+        {% elif admin_actor_context.kind == 'organization' %}{{ _('Organisaatioylläpitäjä') }}
+        {% elif admin_actor_context.kind == 'translator' %}{{ _('Kääntäjä') }}
+        {% else %}{{ _('Rajattu ylläpito') }}{% endif %}
+      </strong>
+      {% if admin_actor_context.kind == 'city' %}<span>{{ admin_actor_context.city_names|join(', ') }}</span>
+      {% elif admin_actor_context.kind == 'organization' %}<span>{{ _('%(count)s organisaatiota', count=admin_actor_context.organization_count) }}</span>
+      {% elif admin_actor_context.kind == 'translator' %}<span>{{ _('Käännöstyökalut') }}</span>
+      {% elif admin_actor_context.kind == 'global' %}<span>{{ _('Kaikki ylläpito-oikeudet') }}</span>
+      {% else %}<span>{{ _('Vain myönnetyt toiminnot') }}</span>{% endif %}
+    </div>
   </div>
+  {% endif %}
 </aside>
 
         {# ---------- Main content area ---------- #}

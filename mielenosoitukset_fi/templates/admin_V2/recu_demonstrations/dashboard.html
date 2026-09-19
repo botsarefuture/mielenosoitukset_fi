@@ -21,6 +21,7 @@
   <div class="dashboard-panel">
     <form method="GET" action="{{ url_for('admin_recu_demo.recu_demo_control') }}" class="admin-filter-bar">
       <div class="admin-filter-bar__primary admin-filter-bar__primary--search">
+        <input type="hidden" name="per_page" value="{{ per_page }}">
         <div class="admin-field">
           <label for="search">{{ _('Hae toistuvia mielenosoituksia') }}</label>
           <input type="search" id="search" name="search" class="form-control" placeholder="{{ _('Hae otsikolla tai kaupungilla...') }}"
@@ -39,16 +40,28 @@
         <button type="submit" class="btn btn-primary">
           <i class="fas fa-search"></i> {{ _('Hae') }}
         </button>
+        {% if has_active_filters %}
+        <a href="{{ clear_filters_url }}" class="btn btn-outline-secondary">{{ _('Tyhjennä suodattimet') }}</a>
+        {% endif %}
       </div>
     </form>
+    {% if has_active_filters %}
+    <div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">
+      {% if search_query %}<span class="admin-filter-chip">{{ _('Haku') }}: {{ search_query }}</span>{% endif %}
+      {% if approved_status != 'all' %}<span class="admin-filter-chip">{{ _('Hyväksyntä') }}: {{ _('Hyväksytty') if approved_status == 'true' else _('Hyväksymätön') }}</span>{% endif %}
+    </div>
+    {% endif %}
   </div>
 
   {% if recurring_demos %}
   <div class="admin-data-view admin-data-view--scrollable">
-    <div class="admin-data-view__header admin-result-summary">
-      <span><strong>{{ recurring_demos|length }}</strong> {{ _('toistuvaa mielenosoitusta') }}</span>
-      {% set approved_count = recurring_demos|selectattr('approved', 'equalto', true)|list|length %}
-      {% if approved_count %}<span><strong>{{ approved_count }}</strong> {{ _('hyväksyttyä') }}</span>{% endif %}
+    <div class="admin-data-view__header admin-result-summary" aria-live="polite">
+      {% if has_active_filters %}
+      <strong>{{ _('%(count)s osumaa', count=filtered_count) }}</strong>
+      <span>{{ _('yhteensä %(count)s sinulle näkyvää toistuvaa mielenosoitusta', count=total_count) }}</span>
+      {% else %}
+      <span>{{ _('Näytetään %(start)s–%(end)s / %(count)s toistuvasta mielenosoituksesta', start=range_start, end=range_end, count=filtered_count) }}</span>
+      {% endif %}
     </div>
     <div class="admin-data-view__viewport">
     <table class="admin-data-view__table">
@@ -77,7 +90,7 @@
             {% endif %}
           </td>
           <td class="actions-cell">
-            {% if current_user.has_permission("EDIT_DEMO") %}
+            {% if current_user.has_permission("EDIT_RECURRING_DEMO") %}
             <a href="{{ url_for('admin_recu_demo.edit_recu_demo', demo_id=demo._id) }}" class="btn btn-sm btn-outline-primary">
               <i class="fas fa-edit"></i> {{ _('Muokkaa') }}
             </a>
@@ -87,7 +100,7 @@
             </span>
             {% endif %}
 
-            {% if current_user.has_permission("DELETE_DEMO") %}
+            {% if current_user.has_permission("DELETE_RECURRING_DEMO") %}
             <button type="button" class="btn btn-sm btn-outline-danger"
               onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}', 'recu')">
               <i class="fas fa-trash-alt"></i> {{ _('Poista') }}
@@ -103,13 +116,17 @@
       </tbody>
     </table>
     </div>
-    {% set recu_per_page = 20 %}
-    {% set recu_total_pages = [1, ((recurring_demos|length + recu_per_page - 1) // recu_per_page)]|max %}
     {{ admin_pagination(
-      1,
-      recu_total_pages,
-      per_page=recu_per_page,
-      client_side=true,
+      current_page,
+      total_pages,
+      per_page=per_page,
+      prev_page=prev_page,
+      next_page=next_page,
+      prev_page_url=prev_page_url,
+      next_page_url=next_page_url,
+      visible_pages=visible_pages,
+      first_page_url=first_page_url,
+      last_page_url=last_page_url,
       aria_label=_('Toistuvien mielenosoitusten sivutus'),
     ) }}
   </div>
@@ -181,8 +198,10 @@
     const id = confirmDeleteBtn.dataset.id;
     const type = confirmDeleteBtn.dataset.type;
     let url = '';
+    const payload = {};
     if (type === 'recu') {
       url = `/admin/recu_demo/delete_recu_demo/${id}`;
+      payload.confirm_delete = true;
     } else {
       url = `/admin/demo/delete_demo/${id}`;
     }
@@ -193,7 +212,7 @@
     fetch(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({})
+      body: JSON.stringify(payload)
     })
     .then(res => res.json())
     .then(data => {
@@ -209,118 +228,11 @@
 });
 
 
-  // Client-side search filter + pagination over the server-rendered rows.
-  document.addEventListener('DOMContentLoaded', () => {
-    const nav = document.querySelector('[data-admin-pagination]');
-    const table = document.querySelector('.admin-data-view__table');
-    const searchInput = document.getElementById('search');
-    if (!nav || !table) return;
-
-    const rows = [...table.querySelectorAll('tbody tr')];
-    const list = nav.querySelector('.pagination');
-    const prevLi = list?.querySelector('[data-direction="prev"]');
-    const nextLi = list?.querySelector('[data-direction="next"]');
-    const infoCurrent = nav.querySelector('[data-admin-pagination-current]');
-    const infoTotal = nav.querySelector('[data-admin-pagination-total]');
-    const pageSizeSelect = nav.querySelector('#page-size');
-
-    let searchTerm = (searchInput?.value || '').toLowerCase().trim();
-    let currentPage = 1;
-    let perPage = parseInt(pageSizeSelect?.value || '20', 10);
-
-    function buildPageLink(page, active, text) {
-      const li = document.createElement('li');
-      li.className = 'page-item' + (active ? ' active' : '');
-      const a = document.createElement('a');
-      a.className = 'page-link';
-      a.href = '#';
-      a.textContent = text != null ? text : page;
-      if (active) a.setAttribute('aria-current', 'page');
-      a.addEventListener('click', (event) => {
-        event.preventDefault();
-        currentPage = page;
-        render();
-      });
-      li.appendChild(a);
-      return li;
-    }
-
-    function buildEllipsis() {
-      const li = document.createElement('li');
-      li.className = 'page-item disabled';
-      const span = document.createElement('span');
-      span.className = 'admin-pagination__ellipsis';
-      span.textContent = '…';
-      li.appendChild(span);
-      return li;
-    }
-
-    function setPages(totalPages, page) {
-      list.querySelectorAll('.page-item').forEach((li) => {
-        if (!li.hasAttribute('data-direction')) li.remove();
-      });
-      if (totalPages <= 1) return;
-      const first = 1;
-      const last = totalPages;
-      const start = Math.max(first, page - 2);
-      const end = Math.min(last, page + 2);
-      const fragment = document.createDocumentFragment();
-      if (start > first) {
-        fragment.appendChild(buildPageLink(first, page === first));
-        if (start > first + 1) fragment.appendChild(buildEllipsis());
-      }
-      for (let n = start; n <= end; n++) {
-        fragment.appendChild(buildPageLink(n, n === page));
-      }
-      if (end < last) {
-        if (end < last - 1) fragment.appendChild(buildEllipsis());
-        fragment.appendChild(buildPageLink(last, page === last));
-      }
-      list.insertBefore(fragment, nextLi);
-    }
-
-    function totalPagesFor(matches) {
-      return Math.max(1, Math.ceil(matches.length / perPage));
-    }
-
-    function render() {
-      const matches = rows.filter((row) => !searchTerm || row.innerText.toLowerCase().includes(searchTerm));
-      const totalPages = totalPagesFor(matches);
-      currentPage = Math.min(currentPage, totalPages);
-      rows.forEach((row) => {
-        const index = matches.indexOf(row);
-        row.style.display = (index >= 0 && index >= (currentPage - 1) * perPage && index < currentPage * perPage) ? '' : 'none';
-      });
-      infoCurrent.textContent = String(currentPage);
-      infoTotal.textContent = String(totalPages);
-      prevLi?.classList.toggle('disabled', currentPage <= 1);
-      nextLi?.classList.toggle('disabled', currentPage >= totalPages);
-      setPages(totalPages, currentPage);
-    }
-
-    list?.querySelector('[data-direction="prev"] a')?.addEventListener('click', (event) => {
-      event.preventDefault();
-      if (currentPage > 1) currentPage -= 1;
-      render();
-    });
-    list?.querySelector('[data-direction="next"] a')?.addEventListener('click', (event) => {
-      event.preventDefault();
-      const matches = rows.filter((row) => !searchTerm || row.innerText.toLowerCase().includes(searchTerm));
-      if (currentPage < totalPagesFor(matches)) currentPage += 1;
-      render();
-    });
-    pageSizeSelect?.addEventListener('change', (event) => {
-      perPage = parseInt(event.target.value, 10);
-      currentPage = 1;
-      render();
-    });
-    searchInput?.addEventListener('input', (event) => {
-      searchTerm = event.target.value.toLowerCase().trim();
-      currentPage = 1;
-      render();
-    });
-
-    render();
+  document.getElementById('page-size')?.addEventListener('change', (event) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('per_page', event.target.value);
+    url.searchParams.set('page', '1');
+    window.location.assign(url.toString());
   });
 
 </script>

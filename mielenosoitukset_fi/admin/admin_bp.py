@@ -42,6 +42,8 @@ from mielenosoitukset_fi.utils.wrappers import (
 )
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.city_assignment import NOT_ESCALATED_ASSIGNMENT_CLAUSE, CITY_ASSIGNMENT_FIELD
+from mielenosoitukset_fi.utils.cities import normalize_city_key
+from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.analytics import get_demo_views
 from mielenosoitukset_fi.utils.cache import cache
 from mielenosoitukset_fi.utils.ui_translation_catalog import (
@@ -95,6 +97,92 @@ def _is_limited_city_admin(user) -> bool:
         hasattr(user, "has_city_admin_scope_grants")
         and user.has_city_admin_scope_grants()
     )
+
+
+def _admin_actor_context(user) -> dict | None:
+    """Describe the authenticated actor's real administrative scope."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return None
+
+    role = getattr(user, "role", None)
+    full_permission_check = getattr(user, "has_full_permissions", None)
+    has_full_permissions = (
+        full_permission_check()
+        if callable(full_permission_check)
+        else bool(full_permission_check)
+    )
+    if has_full_permissions:
+        return {"kind": "global"}
+
+    city_keys = []
+    for grant in getattr(user, "admin_scope_grants", []) or []:
+        if grant.get("scope_type") != "city" or not grant.get("permissions"):
+            continue
+        raw_keys = grant.get("scope_keys") or [grant.get("scope_key")]
+        if isinstance(raw_keys, str):
+            raw_keys = [raw_keys]
+        city_keys.extend(
+            key for key in (normalize_city_key(value) for value in raw_keys) if key
+        )
+    city_keys = list(dict.fromkeys(city_keys))
+    if city_keys:
+        city_names_by_key = {normalize_city_key(city): city for city in CITY_LIST}
+        return {
+            "kind": "city",
+            "city_names": [
+                city_names_by_key.get(key, key.replace("-", " ").title())
+                for key in city_keys
+            ],
+        }
+
+    translation_permissions = {
+        "TRANSLATE_DEMO",
+        "REVIEW_DEMO_TRANSLATIONS",
+        "TRANSLATE_UI",
+        "REVIEW_UI_TRANSLATIONS",
+    }
+    global_permissions = set(getattr(user, "global_permissions", []) or [])
+    if role == "translator" or global_permissions.intersection(
+        translation_permissions
+    ):
+        return {"kind": "translator"}
+
+    organization_admin_memberships = [
+        membership
+        for membership in (getattr(user, "memberships", []) or [])
+        if getattr(membership, "role", None) in {"admin", "owner"}
+    ]
+    if organization_admin_memberships:
+        return {
+            "kind": "organization",
+            "organization_count": len(organization_admin_memberships),
+        }
+
+    return {"kind": "restricted"}
+
+
+def _is_admin_shell_request() -> bool:
+    """Return whether the current request serves the shared admin shell.
+
+    The ``admin_actor_context`` value is only consumed by templates that extend
+    the admin shell, and every admin shell route lives under the ``/admin`` URL
+    prefix. Guarding here keeps public-page renders free of the lazy
+    ``admin_scope_grants`` / ``memberships`` database lookups.
+    """
+    path = request.path
+    return path == "/admin" or path.startswith("/admin/")
+
+
+@admin_bp.app_context_processor
+def inject_admin_actor_context():
+    """Expose truthful role/scope context to the shared admin shell."""
+    if (
+        not has_request_context()
+        or not getattr(current_user, "is_authenticated", False)
+        or not _is_admin_shell_request()
+    ):
+        return {}
+    return {"admin_actor_context": _admin_actor_context(current_user)}
 
 
 def _require_global_admin_surface() -> None:

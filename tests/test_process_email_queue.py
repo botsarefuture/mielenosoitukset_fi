@@ -93,6 +93,17 @@ def test_process_email_queue_keeps_failed_job_for_retry(db, monkeypatch):
     assert remaining[0]["status"] == "failed"
     assert remaining[0]["attempts"] == 1
     assert remaining[0]["last_error"]
+    error_log = db.admin_logs.find_one(
+        {
+            "event": "email_delivery_failed",
+            "details.job_id": str(broken_id),
+        }
+    )
+    assert error_log["level"] == "error"
+    assert error_log["details"]["error"] == "smtp down"
+    assert error_log["details"]["recipient_count"] == 1
+    assert "broken@example.test" not in str(error_log)
+    assert "Broken" not in str(error_log)
 
 
 @pytest.mark.integration

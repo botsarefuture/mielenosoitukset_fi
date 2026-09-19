@@ -4,6 +4,9 @@
 
 ## UNRELEASED
 
+### Fixed
+* Support-case replies now resolve the ticket mailbox SMTP profile correctly from both Flask and background-job contexts, recover already queued legacy replies with empty connection fields, avoid storing ticket SMTP passwords in new queue entries, and surface sanitized delivery failures in Admin → System status → Recent errors.
+
 ### Added
 * The admin user list can now be filtered by the city a user has an active city-admin right for: a new city dropdown (`?city=<key>`) filters users server-side and stays active through search and pagination. On the Kaupunkihallinta page, a city's "Kaupunkioikeuksia" count is now a link that opens the user list pre-filtered to the admins of that city.
 * Granting city-admin rights for an inactive city (via user create/edit) now auto-activates that city's `city_settings` entry, so the city becomes visible on the site and eligible for demo assignment; revoking the grant leaves the city's activation state untouched.

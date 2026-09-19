@@ -1,8 +1,12 @@
 from types import SimpleNamespace
 from pathlib import Path
+from unittest.mock import patch
 from bson import ObjectId
 
-from mielenosoitukset_fi.admin.admin_bp import _admin_actor_context
+from mielenosoitukset_fi.admin.admin_bp import (
+    _admin_actor_context,
+    inject_admin_actor_context,
+)
 from mielenosoitukset_fi.users.models import User
 from tests.conftest import _client_for_user
 
@@ -17,6 +21,13 @@ def _user(**overrides):
         "memberships": [],
     }
     values.update(overrides)
+    values[
+        "has_full_permissions"
+    ] = bool(values["global_admin"]) or values["role"] in {
+        "global_admin",
+        "god",
+        "superuser",
+    }
     return SimpleNamespace(**values)
 
 
@@ -37,6 +48,15 @@ def test_admin_actor_context_distinguishes_global_city_and_translator_roles():
     assert _admin_actor_context(_user(role="translator")) == {
         "kind": "translator"
     }
+
+
+def test_admin_role_with_limited_permissions_is_not_classified_as_global():
+    limited_admin = _user(
+        role="admin",
+        global_admin=False,
+        global_permissions=["API_READ"],
+    )
+    assert _admin_actor_context(limited_admin) == {"kind": "restricted"}
 
 
 def test_admin_actor_context_distinguishes_organization_and_restricted_roles():
@@ -72,6 +92,24 @@ def test_admin_shell_does_not_claim_every_actor_is_a_superuser():
         "Rajattu ylläpito",
     ):
         assert kind in source
+
+
+def test_public_pages_do_not_evaluate_admin_scope_context(app, db, seeded_data):
+    client = _client_for_user(app, seeded_data["user_id"])
+    with patch(
+        "mielenosoitukset_fi.admin.admin_bp._admin_actor_context"
+    ) as spy:
+        response = client.get("/")
+
+    assert response.status_code == 200
+    spy.assert_not_called()
+
+
+def test_public_context_processor_returns_no_admin_scope_context(app):
+    with app.test_request_context("/"):
+        context = inject_admin_actor_context()
+
+    assert context == {}
 
 
 def test_admin_shell_renders_the_authenticated_scope(app, admin_client, db, seeded_data):

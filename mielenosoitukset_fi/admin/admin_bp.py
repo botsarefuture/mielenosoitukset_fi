@@ -105,12 +105,13 @@ def _admin_actor_context(user) -> dict | None:
         return None
 
     role = getattr(user, "role", None)
-    if getattr(user, "global_admin", False) or role in {
-        "admin",
-        "global_admin",
-        "god",
-        "superuser",
-    }:
+    full_permission_check = getattr(user, "has_full_permissions", None)
+    has_full_permissions = (
+        full_permission_check()
+        if callable(full_permission_check)
+        else bool(full_permission_check)
+    )
+    if has_full_permissions:
         return {"kind": "global"}
 
     city_keys = []
@@ -160,9 +161,27 @@ def _admin_actor_context(user) -> dict | None:
     return {"kind": "restricted"}
 
 
+def _is_admin_shell_request() -> bool:
+    """Return whether the current request serves the shared admin shell.
+
+    The ``admin_actor_context`` value is only consumed by templates that extend
+    the admin shell, and every admin shell route lives under the ``/admin`` URL
+    prefix. Guarding here keeps public-page renders free of the lazy
+    ``admin_scope_grants`` / ``memberships`` database lookups.
+    """
+    path = request.path
+    return path == "/admin" or path.startswith("/admin/")
+
+
 @admin_bp.app_context_processor
 def inject_admin_actor_context():
     """Expose truthful role/scope context to the shared admin shell."""
+    if (
+        not has_request_context()
+        or not getattr(current_user, "is_authenticated", False)
+        or not _is_admin_shell_request()
+    ):
+        return {}
     return {"admin_actor_context": _admin_actor_context(current_user)}
 
 

@@ -4,15 +4,32 @@ import uuid
 class Sender:
     """Encapsulates SMTP server details and credentials for an email sender."""
 
-    def __init__(self, email_server, email_port, username, password, use_tls, email_address):
+    def __init__(
+        self,
+        email_server=None,
+        email_port=None,
+        username=None,
+        password=None,
+        use_tls=None,
+        email_address=None,
+        profile=None,
+    ):
         self.email_server = email_server
         self.email_port = email_port
         self.username = username
         self.password = password
         self.use_tls = use_tls
         self.email_address = email_address
+        self.profile = profile
 
     def to_dict(self):
+        if self.profile:
+            # Named profiles are resolved from server configuration at delivery
+            # time. Never persist their SMTP password in the queue.
+            return {
+                "profile": self.profile,
+                "email_address": self.email_address,
+            }
         return {
             "email_server": self.email_server,
             "email_port": self.email_port,
@@ -20,6 +37,7 @@ class Sender:
             "password": self.password,
             "use_tls": self.use_tls,
             "email_address": self.email_address,
+            "profile": None,
         }
 
     @classmethod
@@ -31,6 +49,7 @@ class Sender:
             password=data.get("password"),
             use_tls=data.get("use_tls"),
             email_address=data.get("email_address"),
+            profile=data.get("profile"),
         )
 
 

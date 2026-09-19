@@ -123,6 +123,27 @@ def test_admin_status_shows_recent_errors(app, seeded_data, admin_client):
     assert "Viimeisimmät virheet" in html
 
 
+def test_admin_status_shows_email_delivery_errors(
+    app, db, seeded_data, admin_client
+):
+    from datetime import datetime, timezone
+
+    db.admin_logs.insert_one(
+        {
+            "event": "email_delivery_failed",
+            "module": "emailer",
+            "level": "error",
+            "timestamp": datetime.now(timezone.utc),
+            "details": {"error": "SMTP test failure"},
+        }
+    )
+
+    html = admin_client.get("/admin/status").get_data(as_text=True)
+
+    assert "email_delivery_failed" in html
+    assert "SMTP test failure" in html
+
+
 def test_admin_status_requires_auth(app, seeded_data):
     resp = app.test_client().get("/admin/status")
     assert resp.status_code in (302, 401, 403)

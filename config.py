@@ -195,9 +195,17 @@ class Config:
         cls.TICKET_IMAP_USERNAME = config.get("TICKET_IMAP_USERNAME", "")
         cls.TICKET_IMAP_PASSWORD = config.get("TICKET_IMAP_PASSWORD", "")
         cls.TICKET_IMAP_MAILBOX = config.get("TICKET_IMAP_MAILBOX", "INBOX")
-        cls.TICKET_SMTP_SERVER = config.get("TICKET_SMTP_SERVER", cls.TICKET_IMAP_SERVER)
-        cls.TICKET_SMTP_PORT = config.get("TICKET_SMTP_PORT", 587)
-        cls.TICKET_SMTP_USE_TLS = config.get("TICKET_SMTP_USE_TLS", True)
+        # YAML often represents intentionally omitted optional values as null.
+        # Treat null/empty SMTP overrides as absent instead of replacing the
+        # working IMAP-host defaults with unusable connection settings.
+        cls.TICKET_SMTP_SERVER = (
+            config.get("TICKET_SMTP_SERVER") or cls.TICKET_IMAP_SERVER
+        )
+        cls.TICKET_SMTP_PORT = config.get("TICKET_SMTP_PORT") or 587
+        ticket_smtp_tls = config.get("TICKET_SMTP_USE_TLS")
+        cls.TICKET_SMTP_USE_TLS = (
+            True if ticket_smtp_tls is None else bool(ticket_smtp_tls)
+        )
         cls.TICKET_ESCALATION_EMAIL = config.get(
             "TICKET_ESCALATION_EMAIL",
             "olivia@mielenosoitukset.fi",

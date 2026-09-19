@@ -7,8 +7,6 @@ destroyed (e.g., during process restarts or script exits).
 
 Run periodically via the scheduler to guarantee queued emails are sent.
 """
-from datetime import datetime, timezone
-
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailJob import EmailJob
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
@@ -32,15 +30,20 @@ def run(max_jobs: int = 50):
 
     Jobs are claimed atomically (status ``in_flight``) so concurrent
     drainers never double-send. Failed sends are marked ``failed`` and are
-    retried on later runs until ``EMAIL_MAX_ATTEMPTS`` is reached; jobs are
-    only deleted from the queue after a successful send.
+    retried on later runs until ``EMAIL_MAX_ATTEMPTS`` is reached; legacy
+    empty-sender ticket jobs that exhausted that budget are reopened each
+    run so the config-based recovery can deliver them. Jobs are only deleted
+    from the queue after a successful send.
     """
     db = DatabaseManager().get_instance().get_db()
     queue = db["email_queue"]
     processed = 0
 
-    # 1. Requeue jobs stuck in-flight (e.g. a worker crashed mid-send).
+    # 1. Requeue jobs stuck in-flight (e.g. a worker crashed mid-send) and
+    #    reopen exhausted legacy empty-sender ticket jobs so the config-based
+    #    delivery recovery can finally deliver them.
     _sender._requeue_stale_in_flight()
+    _sender._reopen_exhausted_legacy_ticket_jobs()
 
     # 2. Claim and send pending/retryable jobs.
     while processed < max_jobs:
@@ -55,19 +58,8 @@ def run(max_jobs: int = 50):
             _sender._record_cases_delivery(job_doc, delivered=True)
             processed += 1
         except Exception as exc:
-            error_str = str(exc)[:500]
             logger.exception("Failed to process email job %s", job_doc.get("_id"))
-            queue.update_one(
-                {"_id": job_doc["_id"]},
-                {
-                    "$set": {
-                        "status": "failed",
-                        "last_error": error_str,
-                        "last_attempt_at": datetime.now(timezone.utc),
-                    },
-                },
-            )
-            _sender._record_cases_delivery(job_doc, delivered=False, error=error_str)
+            _sender._record_delivery_failure(job_doc, exc)
 
     if processed:
         logger.info("Processed %d queued email jobs.", processed)

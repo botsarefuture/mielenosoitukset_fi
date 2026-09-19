@@ -1,3 +1,4 @@
+import re
 import threading
 import smtplib
 from datetime import datetime, timezone, timedelta
@@ -16,6 +17,16 @@ EMAIL_MAX_ATTEMPTS = 30
 EMAIL_RETRY_COOLDOWN_SECONDS = 60
 EMAIL_STALE_IN_FLIGHT_SECONDS = 600
 EMAIL_SMTP_TIMEOUT_SECONDS = 30
+
+# Redact email addresses from errors persisted for admins: SMTP exception
+# strings (e.g. ``SMTPRecipientsRefused``) echo the rejected recipient
+# addresses, which must not end up in Admin → System status.
+_EMAIL_ADDRESS_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
+
+
+def _sanitize_delivery_error(error):
+    """Return a short, recipient-safe summary of a delivery failure."""
+    return _EMAIL_ADDRESS_RE.sub("[redacted]", str(error))[:500]
 
 # Only one in-process queue worker per Python process. Several modules create
 # module-level EmailSender singletons; spawning a polling thread for each
@@ -124,18 +135,7 @@ class EmailSender:
             self._queue_collection.delete_one({"_id": job_doc["_id"]})
             self._record_cases_delivery(job_doc, delivered=True)
         except Exception as exc:
-            error_str = str(exc)[:500]
-            self._queue_collection.update_one(
-                {"_id": job_doc["_id"]},
-                {
-                    "$set": {
-                        "status": "failed",
-                        "last_error": error_str,
-                        "last_attempt_at": datetime.now(timezone.utc),
-                    },
-                },
-            )
-            self._record_cases_delivery(job_doc, delivered=False, error=error_str)
+            self._record_delivery_failure(job_doc, exc)
 
     def _requeue_stale_in_flight(self):
         """Mark jobs stuck ``in_flight`` (e.g. worker crashed) as ``failed``."""
@@ -149,6 +149,27 @@ class EmailSender:
                     "last_attempt_at": datetime.now(timezone.utc),
                 },
             },
+        )
+
+    def _reopen_exhausted_legacy_ticket_jobs(self):
+        """Reset exhausted legacy empty-sender ticket jobs so they retry.
+
+        Pre-fix support replies were queued with empty SMTP fields, so their
+        sender has nothing to resolve. If the broken configuration lasted
+        longer than the retry budget those jobs reached ``EMAIL_MAX_ATTEMPTS``
+        and ``_claim_next_job`` now skips them forever. Reset the attempt
+        counter so the config-based recovery in ``_delivery_settings`` gets a
+        chance to deliver them.
+        """
+        self._queue_collection.update_many(
+            {
+                "status": "failed",
+                "attempts": {"$gte": EMAIL_MAX_ATTEMPTS},
+                "sender": {"$type": "object"},
+                "sender.email_server": {"$in": [None, ""]},
+                "sender.profile": {"$ne": "ticket"},
+            },
+            {"$set": {"attempts": 0}},
         )
 
     def _record_cases_delivery(self, job_doc, delivered, error=None):
@@ -185,23 +206,126 @@ class EmailSender:
                 exc_info=True,
             )
 
+    def _record_delivery_failure(self, job_doc, error):
+        """Persist retry state, case status, and a sanitized admin error."""
+        error_str = _sanitize_delivery_error(error)
+        now = datetime.now(timezone.utc)
+        self._queue_collection.update_one(
+            {"_id": job_doc["_id"]},
+            {
+                "$set": {
+                    "status": "failed",
+                    "last_error": error_str,
+                    "last_attempt_at": now,
+                }
+            },
+        )
+        self._record_cases_delivery(job_doc, delivered=False, error=error_str)
+        try:
+            sender = job_doc.get("sender") or {}
+            self._db["admin_logs"].update_one(
+                {
+                    "event": "email_delivery_failed",
+                    "details.job_id": str(job_doc.get("_id")),
+                },
+                {
+                    "$set": {
+                        "event": "email_delivery_failed",
+                        "module": "emailer",
+                        "level": "error",
+                        "timestamp": now,
+                        "details": {
+                            "job_id": str(job_doc.get("_id")),
+                            "error": error_str,
+                            "attempts": job_doc.get("attempts", 0),
+                            "recipient_count": len(job_doc.get("recipients") or []),
+                            "sender_profile": sender.get("profile") or "legacy",
+                        },
+                    }
+                },
+                upsert=True,
+            )
+        except Exception:
+            self._logger.debug(
+                "Could not record email delivery failure in admin status",
+                exc_info=True,
+            )
+
+    def _config_value(self, key, default=None):
+        """Read config from either an object or mapping, then canonical Config."""
+        if hasattr(self._config, "get"):
+            value = self._config.get(key)
+        else:
+            value = getattr(self._config, key, None)
+        if value is None or value == "":
+            value = getattr(Config, key, default)
+        return default if value is None or value == "" else value
+
+    def _delivery_settings(self, sender):
+        """Resolve SMTP settings, including legacy empty ticket senders."""
+        is_ticket = bool(
+            sender
+            and (
+                getattr(sender, "profile", None) == "ticket"
+                or not getattr(sender, "email_server", None)
+            )
+        )
+        if is_ticket:
+            smtp_server = self._config_value(
+                "TICKET_SMTP_SERVER",
+                self._config_value(
+                    "TICKET_IMAP_SERVER", self._config_value("MAIL_SERVER")
+                ),
+            )
+            smtp_port = int(self._config_value("TICKET_SMTP_PORT", 587))
+            smtp_username = self._config_value(
+                "TICKET_IMAP_USERNAME", self._config_value("MAIL_USERNAME", "")
+            )
+            smtp_password = self._config_value(
+                "TICKET_IMAP_PASSWORD", self._config_value("MAIL_PASSWORD", "")
+            )
+            sender_address = (
+                getattr(sender, "email_address", None)
+                or self._config_value("TICKET_SENDER", smtp_username)
+            )
+            use_tls = bool(self._config_value("TICKET_SMTP_USE_TLS", True))
+        elif sender:
+            sender_address = sender.email_address
+            smtp_server = sender.email_server
+            smtp_port = int(sender.email_port)
+            smtp_username = sender.username
+            smtp_password = sender.password
+            use_tls = bool(sender.use_tls)
+        else:
+            sender_address = self._config_value("MAIL_DEFAULT_SENDER")
+            smtp_server = self._config_value("MAIL_SERVER")
+            smtp_port = int(self._config_value("MAIL_PORT", 587))
+            smtp_username = self._config_value("MAIL_USERNAME", "")
+            smtp_password = self._config_value("MAIL_PASSWORD", "")
+            use_tls = bool(self._config_value("MAIL_USE_TLS", True))
+
+        if not smtp_server:
+            raise ValueError("SMTP server is not configured")
+        if not sender_address:
+            raise ValueError("Email sender address is not configured")
+        return {
+            "sender_address": sender_address,
+            "smtp_server": smtp_server,
+            "smtp_port": smtp_port,
+            "smtp_username": smtp_username,
+            "smtp_password": smtp_password,
+            "use_tls": use_tls,
+        }
+
     def send_email(self, email_job, raise_on_error=False):
         try:
-            # Determine SMTP settings
-            if email_job.sender:
-                sender_address = email_job.sender.email_address
-                smtp_server = email_job.sender.email_server
-                smtp_port = email_job.sender.email_port
-                smtp_username = email_job.sender.username
-                smtp_password = email_job.sender.password
-                use_tls = email_job.sender.use_tls
-            else:
-                sender_address = self._config.MAIL_DEFAULT_SENDER
-                smtp_server = self._config.MAIL_SERVER
-                smtp_port = self._config.MAIL_PORT
-                smtp_username = self._config.MAIL_USERNAME
-                smtp_password = self._config.MAIL_PASSWORD
-                use_tls = self._config.MAIL_USE_TLS or True
+            settings = self._delivery_settings(email_job.sender)
+            sender_address = settings["sender_address"]
+            smtp_server = settings["smtp_server"]
+            smtp_port = settings["smtp_port"]
+            smtp_username = settings["smtp_username"]
+            smtp_password = settings["smtp_password"]
+            use_tls = settings["use_tls"]
 
             has_attachments = bool(getattr(email_job, "attachments", []))
             if has_attachments:

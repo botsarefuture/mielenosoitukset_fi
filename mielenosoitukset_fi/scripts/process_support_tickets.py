@@ -100,16 +100,33 @@ def _sender_is_blocked(sender_email: str, blocklist: List[str]) -> bool:
     return any(_sender_matches_pattern(lower, p) for p in blocklist)
 
 
+def _config_value(config, key, default=None):
+    """Read one setting from Flask's mapping or an attribute-based config."""
+    if hasattr(config, "get"):
+        value = config.get(key)
+    else:
+        value = getattr(config, key, None)
+    if value is None or value == "":
+        value = getattr(Config, key, default)
+    return default if value is None or value == "" else value
+
+
 def _ticket_sender(config):
-    """Build a Sender that sends from the tuki@ ticket mailbox via SMTP."""
-    username = getattr(config, "TICKET_IMAP_USERNAME", "")
+    """Build a credential-free reference to the configured ticket mailbox.
+
+    Flask's ``current_app.config`` is a mapping while the background poller
+    passes the attribute-based ``Config`` object. The old implementation only
+    supported the latter and queued empty SMTP credentials for admin replies.
+    Delivery now resolves the named profile from the canonical server config.
+    """
+    sender_address = _config_value(
+        config,
+        "TICKET_SENDER",
+        _config_value(config, "TICKET_IMAP_USERNAME", ""),
+    )
     return Sender(
-        email_address=username,
-        email_server=getattr(config, "TICKET_SMTP_SERVER", getattr(config, "TICKET_IMAP_SERVER", "")),
-        email_port=int(getattr(config, "TICKET_SMTP_PORT", 587)),
-        username=username,
-        password=getattr(config, "TICKET_IMAP_PASSWORD", ""),
-        use_tls=bool(getattr(config, "TICKET_SMTP_USE_TLS", True)),
+        profile="ticket",
+        email_address=sender_address,
     )
 
 
@@ -538,7 +555,11 @@ def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, a
                 "suggestion.messages": {
                     "timestamp": now,
                     "message_id": message_id,
-                    "from_email": getattr(config, "TICKET_IMAP_USERNAME", ""),
+                    "from_email": _config_value(
+                        config,
+                        "TICKET_SENDER",
+                        _config_value(config, "TICKET_IMAP_USERNAME", ""),
+                    ),
                     "from_name": admin_label,
                     "direction": "out",
                     "subject": subject,

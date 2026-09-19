@@ -1042,6 +1042,16 @@ def test_recurring_collection_uses_shared_filter_data_and_modal_contracts():
     assert 'class="admin-data-view admin-data-view--scrollable"' in template
     assert "admin-data-view__header admin-result-summary" in template
     assert 'class="admin-data-view__table"' in template
+    assert 'class="admin-data-view__header admin-result-summary"' in template
+    assert "filtered_count = mongo.recu_demos.count_documents(filter_query)" in Path(
+        "mielenosoitukset_fi/admin/admin_recu_demo_bp.py"
+    ).read_text(encoding="utf-8")
+    assert '.sort([("date", 1), ("_id", 1)])' in Path(
+        "mielenosoitukset_fi/admin/admin_recu_demo_bp.py"
+    ).read_text(encoding="utf-8")
+    assert "rows.forEach" not in template
+    assert 'has_permission("EDIT_RECURRING_DEMO")' in template
+    assert 'has_permission("DELETE_RECURRING_DEMO")' in template
     assert "admin-status-badge--success" in template
     assert 'class="admin-empty-state"' in template
     assert 'class="modal fade admin-modal"' in template
@@ -1062,7 +1072,10 @@ def test_recurring_collection_uses_shared_pagination_component():
 
     assert "import admin_page_hero, admin_pagination" in template
     assert "admin_pagination(" in template
-    assert "client_side=true" in template
+    assert "client_side=true" not in template
+    assert "current_page," in template
+    assert "prev_page_url=prev_page_url" in template
+    assert "visible_pages=visible_pages" in template
     assert "data-admin-pagination" in macro
     assert "admin-data-view__footer admin-pagination" in macro
     assert "admin-page-size" in macro

@@ -73,15 +73,15 @@ def test_recu_demo_dashboard_lists_demos_with_migrated_city_key(
     assert "Recurring Test Series" in response.get_data(as_text=True)
 
 
-def test_recu_demo_dashboard_renders_client_side_pagination(admin_client, db, seeded_data):
+def test_recu_demo_dashboard_renders_server_side_pagination(admin_client, db, seeded_data):
     response = admin_client.get("/admin/recu_demo/")
 
     assert response.status_code == 200
     page = response.get_data(as_text=True)
-    assert 'data-admin-pagination' in page
+    assert 'data-admin-pagination' not in page
     assert 'id="page-size"' in page
-    assert 'data-admin-pagination-current' in page
-    assert 'data-admin-pagination-total' in page
+    assert "Rivejä sivulla" in page
+    assert "Sivu 1 / 1" in page
 
 
 def test_recu_demo_dashboard_filters_approval_state(admin_client, db, seeded_data):

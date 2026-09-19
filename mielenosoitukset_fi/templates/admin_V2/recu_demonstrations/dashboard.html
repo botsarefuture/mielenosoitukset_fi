@@ -198,8 +198,10 @@
     const id = confirmDeleteBtn.dataset.id;
     const type = confirmDeleteBtn.dataset.type;
     let url = '';
+    const payload = {};
     if (type === 'recu') {
       url = `/admin/recu_demo/delete_recu_demo/${id}`;
+      payload.confirm_delete = true;
     } else {
       url = `/admin/demo/delete_demo/${id}`;
     }
@@ -210,7 +212,7 @@
     fetch(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({})
+      body: JSON.stringify(payload)
     })
     .then(res => res.json())
     .then(data => {

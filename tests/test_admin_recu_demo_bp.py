@@ -123,3 +123,58 @@ def test_recurring_control_counts_and_lists_only_city_scoped_rows(
     assert "Recurring Test Series" in body
     assert "Recurring Outside City Scope" not in body
     assert "1 toistuvasta mielenosoituksesta" in body
+
+
+def test_recu_demo_delete_accepts_json_confirmation_contract(admin_client, db, seeded_data):
+    demo_id = seeded_data["recu_demo_id"]
+
+    response = admin_client.post(
+        f"/admin/recu_demo/delete_recu_demo/{demo_id}",
+        json={"confirm_delete": True},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["status"] == "OK"
+    assert db.recu_demos.count_documents({"_id": demo_id}) == 0
+
+
+def test_recu_demo_delete_rejects_unconfirmed_json(admin_client, db, seeded_data):
+    demo_id = seeded_data["recu_demo_id"]
+
+    response = admin_client.post(
+        f"/admin/recu_demo/delete_recu_demo/{demo_id}",
+        json={},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["status"] == "ERROR"
+    assert db.recu_demos.count_documents({"_id": demo_id}) == 1
+
+
+def test_recurring_control_excludes_unrenderable_records_from_counts(
+    admin_client, db, seeded_data
+):
+    seed = db.recu_demos.find_one({"_id": seeded_data["recu_demo_id"]})
+    malformed = {
+        **seed,
+        "_id": ObjectId(),
+        "title": "Broken recurring series",
+        "repeat_schedule": "weekly",
+    }
+    db.recu_demos.insert_one(malformed)
+    malformed_created_until = {
+        **seed,
+        "_id": ObjectId(),
+        "title": "Broken created_until series",
+        "created_until": "not-a-date",
+    }
+    db.recu_demos.insert_one(malformed_created_until)
+
+    response = admin_client.get("/admin/recu_demo/")
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Recurring Test Series" in body
+    assert "Broken recurring series" not in body
+    assert "Broken created_until series" not in body
+    assert "Näytetään 1–1 / 1" in body

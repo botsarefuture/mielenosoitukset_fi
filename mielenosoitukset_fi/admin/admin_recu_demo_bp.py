@@ -3,7 +3,7 @@ from copy import deepcopy
 from datetime import datetime, date
 
 from bson.objectid import ObjectId
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, jsonify, render_template, request, redirect, url_for
 from flask_login import login_required
 from mielenosoitukset_fi.utils.flashing import flash_message
 
@@ -293,6 +293,40 @@ def _collect_organizers(form, existing_organizers=None):
     return organizers
 
 
+def _renderable_recu_demo_guard():
+    """Return a Mongo filter that skips records the dashboard cannot render.
+
+    `RecurringDemonstration.from_dict` raises on malformed ``repeat_schedule``
+    or ``created_until`` values, so the control panel silently omits those rows.
+    This guard keeps the scoped counts and the paginated cursor consistent with
+    the rows that are actually rendered.
+    """
+    return {
+        "$and": [
+            {
+                "$or": [
+                    {"created_until": {"$exists": False}},
+                    {"created_until": None},
+                    {"created_until": {"$regex": r"^\d{4}-\d{2}-\d{2}"}},
+                ]
+            },
+            {
+                "$or": [
+                    {"repeat_schedule": {"$exists": False}},
+                    {"repeat_schedule": None},
+                    {
+                        "$and": [
+                            {"repeat_schedule": {"$type": "object"}},
+                            {"repeat_schedule.frequency": {"$exists": True}},
+                            {"repeat_schedule.interval": {"$exists": True}},
+                        ]
+                    },
+                ]
+            },
+        ]
+    }
+
+
 @admin_recu_demo_bp.route("/")
 @login_required
 @admin_required
@@ -345,6 +379,8 @@ def recu_demo_control():
             )
         if "global" not in permission_scope:
             scope_clauses.append({"$or": permission_filters})
+
+    scope_clauses.append(_renderable_recu_demo_guard())
 
     def query_from(clauses):
         if not clauses:
@@ -889,6 +925,10 @@ def parse_gallery_images_field(raw_value):
 def delete_recu_demo(demo_id):
     """Delete a recurring demonstration from the database.
 
+    Accepts both the classic confirmation form (``confirm_delete`` field) and
+    the JSON contract the dashboard delete modal uses so users granted only
+    ``DELETE_RECURRING_DEMO`` can actually complete the delete.
+
     Parameters
     ----------
     demo_id :
@@ -897,20 +937,33 @@ def delete_recu_demo(demo_id):
     Returns
     -------
 
-
     """
-    demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
+    json_mode = request.headers.get("Content-Type") == "application/json"
 
+    demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
     if not demo_data:
-        flash_message("Toistuvaa mielenosoitusta ei löytynyt.")
+        error_message = "Toistuvaa mielenosoitusta ei löytynyt."
+        if json_mode:
+            return jsonify({"status": "ERROR", "message": error_message})
+        flash_message(error_message)
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
-    if "confirm_delete" in request.form:
-        mongo.recu_demos.delete_one({"_id": ObjectId(demo_id)})
-        flash_message("Toistuva mielenosoitus poistettu onnistuneesti.")
-    else:
-        flash_message("Et vahvistanut toistuvan mielenosoituksen poistoa.")
+    confirmed = "confirm_delete" in request.form
+    if json_mode:
+        confirmed = bool(request.json and request.json.get("confirm_delete"))
 
+    if not confirmed:
+        error_message = "Et vahvistanut toistuvan mielenosoituksen poistoa."
+        if json_mode:
+            return jsonify({"status": "ERROR", "message": error_message})
+        flash_message(error_message)
+        return redirect(url_for("admin_recu_demo.recu_demo_control"))
+
+    mongo.recu_demos.delete_one({"_id": ObjectId(demo_id)})
+    success_message = "Toistuva mielenosoitus poistettu onnistuneesti."
+    if json_mode:
+        return jsonify({"status": "OK", "message": success_message})
+    flash_message(success_message)
     return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
 

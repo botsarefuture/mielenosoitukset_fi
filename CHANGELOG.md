@@ -5,7 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
-* Support-case replies now resolve the ticket mailbox SMTP profile correctly from both Flask and background-job contexts, recover already queued legacy replies with empty connection fields, avoid storing ticket SMTP passwords in new queue entries, and surface sanitized delivery failures in Admin → System status → Recent errors.
+* Support-case replies now resolve the ticket mailbox SMTP profile correctly from both Flask and background-job contexts, recover already queued legacy replies with empty connection fields (including legacy jobs that had exhausted the retry budget, which are reopened by the queue drainer), avoid storing ticket SMTP passwords in new queue entries, and surface delivery failures in Admin → System status → Recent errors with recipient addresses redacted.
 
 ### Added
 * The admin user list can now be filtered by the city a user has an active city-admin right for: a new city dropdown (`?city=<key>`) filters users server-side and stays active through search and pagination. On the Kaupunkihallinta page, a city's "Kaupunkioikeuksia" count is now a link that opens the user list pre-filtered to the admins of that city.

@@ -1,3 +1,4 @@
+import re
 import threading
 import smtplib
 from datetime import datetime, timezone, timedelta
@@ -16,6 +17,16 @@ EMAIL_MAX_ATTEMPTS = 30
 EMAIL_RETRY_COOLDOWN_SECONDS = 60
 EMAIL_STALE_IN_FLIGHT_SECONDS = 600
 EMAIL_SMTP_TIMEOUT_SECONDS = 30
+
+# Redact email addresses from errors persisted for admins: SMTP exception
+# strings (e.g. ``SMTPRecipientsRefused``) echo the rejected recipient
+# addresses, which must not end up in Admin → System status.
+_EMAIL_ADDRESS_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
+
+
+def _sanitize_delivery_error(error):
+    """Return a short, recipient-safe summary of a delivery failure."""
+    return _EMAIL_ADDRESS_RE.sub("[redacted]", str(error))[:500]
 
 # Only one in-process queue worker per Python process. Several modules create
 # module-level EmailSender singletons; spawning a polling thread for each
@@ -140,6 +151,27 @@ class EmailSender:
             },
         )
 
+    def _reopen_exhausted_legacy_ticket_jobs(self):
+        """Reset exhausted legacy empty-sender ticket jobs so they retry.
+
+        Pre-fix support replies were queued with empty SMTP fields, so their
+        sender has nothing to resolve. If the broken configuration lasted
+        longer than the retry budget those jobs reached ``EMAIL_MAX_ATTEMPTS``
+        and ``_claim_next_job`` now skips them forever. Reset the attempt
+        counter so the config-based recovery in ``_delivery_settings`` gets a
+        chance to deliver them.
+        """
+        self._queue_collection.update_many(
+            {
+                "status": "failed",
+                "attempts": {"$gte": EMAIL_MAX_ATTEMPTS},
+                "sender": {"$type": "object"},
+                "sender.email_server": {"$in": [None, ""]},
+                "sender.profile": {"$ne": "ticket"},
+            },
+            {"$set": {"attempts": 0}},
+        )
+
     def _record_cases_delivery(self, job_doc, delivered, error=None):
         """Update the delivery status on matching support-ticket case messages.
 
@@ -176,7 +208,7 @@ class EmailSender:
 
     def _record_delivery_failure(self, job_doc, error):
         """Persist retry state, case status, and a sanitized admin error."""
-        error_str = str(error)[:500]
+        error_str = _sanitize_delivery_error(error)
         now = datetime.now(timezone.utc)
         self._queue_collection.update_one(
             {"_id": job_doc["_id"]},

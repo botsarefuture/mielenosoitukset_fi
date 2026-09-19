@@ -221,3 +221,127 @@ def test_process_email_queue_records_failure_status_on_case(db, monkeypatch):
     assert message["error"]
     # The job is retained (not deleted) so it can be retried later.
     assert db.email_queue.count_documents({}) == 1
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_process_email_queue_reopens_exhausted_legacy_ticket_job(db, monkeypatch):
+    from datetime import datetime, timezone, timedelta
+
+    from mielenosoitukset_fi.scripts.process_email_queue import run
+
+    db.email_queue.delete_many({})
+    db.email_queue.insert_one(
+        {
+            "_id": ObjectId("5c0000000000000000000001"),
+            "subject": "Legacy ticket reply",
+            "recipients": ["ticket@example.test"],
+            "body": "Body for legacy ticket reply",
+            "html": "<p>Body for legacy ticket reply</p>",
+            "sender": {
+                "email_server": "",
+                "email_port": 587,
+                "username": "",
+                "password": "",
+                "use_tls": True,
+                "email_address": "",
+            },
+            "attachments": [],
+            "extra_headers": {},
+            "instance_id": "00000000-0000-0000-0000-000000000000",
+            "status": "failed",
+            "attempts": 30,
+            "last_attempt_at": datetime.now(timezone.utc) - timedelta(hours=1),
+        }
+    )
+
+    sent = _patch_sender(monkeypatch)
+
+    processed = run(max_jobs=10)
+
+    assert processed == 1
+    assert [job["subject"] for job in sent] == ["Legacy ticket reply"]
+    assert db.email_queue.count_documents({}) == 0
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_process_email_queue_does_not_reopen_real_sender_exhausted_jobs(db, monkeypatch):
+    from datetime import datetime, timezone, timedelta
+
+    from mielenosoitukset_fi.scripts.process_email_queue import run
+
+    db.email_queue.delete_many({})
+    db.email_queue.insert_one(
+        {
+            "_id": ObjectId("5c0000000000000000000001"),
+            "subject": "Real sender job",
+            "recipients": ["user@example.test"],
+            "body": "Body for real sender job",
+            "html": "<p>Body for real sender job</p>",
+            "sender": {
+                "email_server": "smtp.example.test",
+                "email_port": 587,
+                "username": "user",
+                "password": "secret",
+                "use_tls": True,
+                "email_address": "no-reply@example.test",
+            },
+            "attachments": [],
+            "extra_headers": {},
+            "instance_id": "00000000-0000-0000-0000-000000000000",
+            "status": "failed",
+            "attempts": 30,
+            "last_attempt_at": datetime.now(timezone.utc) - timedelta(hours=1),
+        }
+    )
+
+    sent = _patch_sender(monkeypatch)
+
+    processed = run(max_jobs=10)
+
+    assert processed == 0
+    assert sent == []
+    remaining = db.email_queue.find_one({})
+    assert remaining["attempts"] == 30
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_process_email_queue_redacts_recipients_in_delivery_errors(db, monkeypatch):
+    import smtplib
+
+    from mielenosoitukset_fi.scripts import process_email_queue as script
+    from mielenosoitukset_fi.scripts.process_email_queue import run
+
+    db.email_queue.delete_many({})
+    broken_id = ObjectId("5c0000000000000000000001")
+    db.email_queue.insert_one(
+        _queued_email("Admin reply", ["refused@example.test"], _id=broken_id)
+    )
+
+    def refused_send(email_job, raise_on_error=False):
+        if not raise_on_error:
+            raise AssertionError(
+                "Drainer must send with raise_on_error=True to surface delivery errors"
+            )
+        raise smtplib.SMTPRecipientsRefused(
+            {"refused@example.test": (550, b"No such user here")}
+        )
+
+    monkeypatch.setattr(script._sender, "send_email", refused_send)
+
+    processed = run(max_jobs=10)
+
+    assert processed == 0
+    job = db.email_queue.find_one({"_id": broken_id})
+    assert "refused@example.test" not in job["last_error"]
+    assert "[redacted]" in job["last_error"]
+    error_log = db.admin_logs.find_one(
+        {
+            "event": "email_delivery_failed",
+            "details.job_id": str(broken_id),
+        }
+    )
+    assert error_log["details"]["error"] == job["last_error"]
+    assert "refused@example.test" not in str(error_log)

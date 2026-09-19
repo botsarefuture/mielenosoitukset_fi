@@ -30,15 +30,20 @@ def run(max_jobs: int = 50):
 
     Jobs are claimed atomically (status ``in_flight``) so concurrent
     drainers never double-send. Failed sends are marked ``failed`` and are
-    retried on later runs until ``EMAIL_MAX_ATTEMPTS`` is reached; jobs are
-    only deleted from the queue after a successful send.
+    retried on later runs until ``EMAIL_MAX_ATTEMPTS`` is reached; legacy
+    empty-sender ticket jobs that exhausted that budget are reopened each
+    run so the config-based recovery can deliver them. Jobs are only deleted
+    from the queue after a successful send.
     """
     db = DatabaseManager().get_instance().get_db()
     queue = db["email_queue"]
     processed = 0
 
-    # 1. Requeue jobs stuck in-flight (e.g. a worker crashed mid-send).
+    # 1. Requeue jobs stuck in-flight (e.g. a worker crashed mid-send) and
+    #    reopen exhausted legacy empty-sender ticket jobs so the config-based
+    #    delivery recovery can finally deliver them.
     _sender._requeue_stale_in_flight()
+    _sender._reopen_exhausted_legacy_ticket_jobs()
 
     # 2. Claim and send pending/retryable jobs.
     while processed < max_jobs:

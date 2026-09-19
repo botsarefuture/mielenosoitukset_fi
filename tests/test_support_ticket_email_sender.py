@@ -1,8 +1,10 @@
 from types import SimpleNamespace
 
+import smtplib
+
 from config import Config
 from mielenosoitukset_fi.emailer.EmailJob import Sender
-from mielenosoitukset_fi.emailer.EmailSender import EmailSender
+from mielenosoitukset_fi.emailer.EmailSender import EmailSender, _sanitize_delivery_error
 from mielenosoitukset_fi.scripts.process_support_tickets import _ticket_sender
 
 
@@ -93,3 +95,15 @@ def test_null_ticket_smtp_overrides_use_safe_defaults():
     assert TicketConfig.TICKET_SMTP_SERVER == "mail.example.test"
     assert TicketConfig.TICKET_SMTP_PORT == 587
     assert TicketConfig.TICKET_SMTP_USE_TLS is True
+
+
+def test_delivery_error_sanitizer_redacts_recipient_addresses():
+    error = smtplib.SMTPRecipientsRefused(
+        {"victim@example.test": (550, b"No such user here")}
+    )
+
+    sanitized = _sanitize_delivery_error(error)
+
+    assert "victim@example.test" not in sanitized
+    assert "[redacted]" in sanitized
+    assert "No such user here" in sanitized

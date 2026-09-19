@@ -1,7 +1,7 @@
 from flask import flash, g, has_request_context
 from flask_babel import _
 
-def flash_message(message, category="message"):
+def flash_message(message, category="message", **variables):
     """
     Flash a message with a specific category, compatible with the new flash styles.
 
@@ -11,6 +11,10 @@ def flash_message(message, category="message"):
         The message to be flashed.
     category : str, optional
         The category of the message. Defaults to "message".
+    **variables
+        Named interpolation values for ``%(name)s`` placeholders. Keeping the
+        untranslated message as the first literal argument lets Babel extract
+        it from ``flash_message(...)`` calls.
 
     Notes
     -----
@@ -41,5 +45,9 @@ def flash_message(message, category="message"):
     if has_request_context():
         g._has_flash_messages = True
 
-    # Flash the translated message
-    flash(_(message), mapped_category)
+    # Translate the literal message id first, then interpolate user/runtime
+    # values. This preserves extraction and lets translations reorder values.
+    translated_message = _(message)
+    if variables:
+        translated_message %= variables
+    flash(translated_message, mapped_category)

@@ -444,7 +444,11 @@ def invite_to_organization(invitee_email, organization_id):
         )
     except Exception as e:
         logger.error(f"Kutsun lähettäminen epäonnistui: {e}")
-        flash_message(f"Kutsun lähettäminen epäonnistui: {e}", "error")
+        flash_message(
+            "Kutsun lähettäminen epäonnistui: %(error)s",
+            "error",
+            error=str(e),
+        )
         _log_org_event(
             "organization_invite_error",
             organization_id=str(organization_id),

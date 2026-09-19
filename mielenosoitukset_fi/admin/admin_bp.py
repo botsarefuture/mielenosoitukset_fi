@@ -966,7 +966,7 @@ def activate_panic():
         upsert=True
     )
     _log_admin_event("panic_mode_update", panic_mode=True)
-    flash_message("Panic mode activated!", "success")
+    flash_message("Hätätila otettiin käyttöön.", "success")
     return redirect(url_for("admin.admin_dashboard"))
 
 
@@ -983,7 +983,7 @@ def deactivate_panic():
         upsert=True
     )
     _log_admin_event("panic_mode_update", panic_mode=False)
-    flash_message("Panic mode deactivated!", "success")
+    flash_message("Hätätila poistettiin käytöstä.", "success")
     return redirect(url_for("admin.admin_dashboard"))
 
 
@@ -1263,7 +1263,7 @@ def run_background_job(job_key):
     job = job_manager.get_job(job_key)
 
     if not job.get("allow_manual_trigger", True):
-        flash_message("This job cannot be run manually.", "danger")
+        flash_message("Tätä taustatyötä ei voi suorittaa manuaalisesti.", "danger")
         _log_admin_event("background_job_run_now", job_key=job_key, status="forbidden")
         return redirect(url_for("admin.background_jobs", job=job_key))
 
@@ -1280,7 +1280,7 @@ def run_background_job(job_key):
         triggered_by=triggered_by,
         status="queued",
     )
-    flash_message("Job queued to run now.", "success")
+    flash_message("Taustatyö lisättiin suoritettavaksi jonoon.", "success")
     return redirect(url_for("admin.background_jobs", job=job_key))
 
 
@@ -1294,10 +1294,10 @@ def toggle_background_job(job_key):
     enabled = request.form.get("enabled") == "1"
     job_manager.set_job_enabled(job_key, enabled)
     _log_admin_event("background_job_toggle", job_key=job_key, enabled=enabled)
-    flash_message(
-        f"Job {'enabled' if enabled else 'disabled'} successfully.",
-        "success",
-    )
+    if enabled:
+        flash_message("Taustatyö otettiin käyttöön.", "success")
+    else:
+        flash_message("Taustatyö poistettiin käytöstä.", "success")
     return redirect(url_for("admin.background_jobs", job=job_key))
 
 
@@ -1320,7 +1320,7 @@ def update_background_job_schedule(job_key):
             interval_unit=interval_unit,
             status="success",
         )
-        flash_message("Schedule updated.", "success")
+        flash_message("Taustatyön ajastus päivitettiin.", "success")
     except Exception as exc:  # pragma: no cover - defensive
         _log_admin_event(
             "background_job_schedule_update",
@@ -1330,7 +1330,11 @@ def update_background_job_schedule(job_key):
             status="error",
             reason=str(exc),
         )
-        flash_message(f"Failed to update schedule: {exc}", "danger")
+        flash_message(
+            "Taustatyön ajastuksen päivitys epäonnistui: %(error)s",
+            "danger",
+            error=str(exc),
+        )
 
     return redirect(url_for("admin.background_jobs", job=job_key))
 
@@ -1606,7 +1610,7 @@ def stats():
     except Exception as e:
         logger.error(f"Error rendering stats page: {e}")
         _log_admin_event("stats_view_error", reason=str(e))
-        flash_message("An error occurred while loading statistics.", "danger")
+        flash_message("Tilastojen lataaminen epäonnistui.", "danger")
         return redirect(url_for("admin.admin_dashboard"))
 
 

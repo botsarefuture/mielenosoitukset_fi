@@ -911,7 +911,11 @@ def create_user():
         extra_headers={"reply-to": "tuki@mielenosoitukset.fi"}
     )
 
-    flash_message(f"Käyttäjä {displayname} luotu ja tunnukset lähetetty sähköpostiin.", "approved")
+    flash_message(
+        "Käyttäjä %(displayname)s luotiin ja tunnukset lähetettiin sähköpostiin.",
+        "approved",
+        displayname=displayname,
+    )
     return redirect(request.referrer or url_for("admin_user.user_control"))
 
 @admin_user_bp.route("/api/force_password_change/", methods=["POST"])

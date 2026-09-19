@@ -44,6 +44,18 @@ def markdown_to_html(value):
     return sanitizer.html()
 
 
+def markdown_to_plain_text(value):
+    """Convert Markdown into readable plain text through the safe HTML form."""
+    rendered = markdown_to_html(value)
+    if not rendered:
+        return ""
+
+    parser = _HTMLToPlainTextParser()
+    parser.feed(rendered)
+    parser.close()
+    return parser.text()
+
+
 def _safe_link_target(value):
     target = (value or "").strip()
     parsed = urlparse(target)
@@ -80,6 +92,89 @@ class _SafeMarkdownHTMLParser(HTMLParser):
 
     def html(self):
         return "".join(self.parts)
+
+
+class _HTMLToPlainTextParser(HTMLParser):
+    """Render the allowlisted Markdown HTML as a useful email text part."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts = []
+        self.list_stack = []
+        self.link_stack = []
+
+    def _append(self, value):
+        self.parts.append(value)
+
+    def _ensure_newline(self, count=1):
+        current = "".join(self.parts)
+        missing = count - len(current) + len(current.rstrip("\n"))
+        if missing > 0:
+            self._append("\n" * missing)
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag in {
+            "p",
+            "blockquote",
+            "pre",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+        }:
+            self._ensure_newline(2)
+        elif tag == "br":
+            self._ensure_newline()
+        elif tag in {"ul", "ol"}:
+            self._ensure_newline()
+            self.list_stack.append({"tag": tag, "index": 0})
+        elif tag == "li":
+            self._ensure_newline()
+            indent = "  " * max(len(self.list_stack) - 1, 0)
+            if self.list_stack and self.list_stack[-1]["tag"] == "ol":
+                self.list_stack[-1]["index"] += 1
+                marker = f"{self.list_stack[-1]['index']}. "
+            else:
+                marker = "- "
+            self._append(f"{indent}{marker}")
+        elif tag == "a":
+            self.link_stack.append(_safe_link_target(attrs.get("href")))
+
+    def handle_endtag(self, tag):
+        if tag in {
+            "p",
+            "blockquote",
+            "pre",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+        }:
+            self._ensure_newline(2)
+        elif tag == "li":
+            self._ensure_newline()
+        elif tag in {"ul", "ol"}:
+            if self.list_stack:
+                self.list_stack.pop()
+            self._ensure_newline(2)
+        elif tag == "a":
+            target = self.link_stack.pop() if self.link_stack else ""
+            if target:
+                self._append(f" ({target})")
+
+    def handle_data(self, data):
+        self._append(data)
+
+    def text(self):
+        value = "".join(self.parts)
+        value = re.sub(r"[ \t]+\n", "\n", value)
+        value = re.sub(r"\n{3,}", "\n\n", value)
+        return value.strip()
 
 
 class _HTMLToMarkdownParser(HTMLParser):

@@ -391,16 +391,16 @@ class EmailSender:
 
     def queue_email(
         self, template_name, subject, recipients, context,
-        sender=None, attachments=None, extra_headers=None
+        sender=None, attachments=None, extra_headers=None, plain_body=None
     ):
         """Queue an email for this instance"""
         template = self._env.get_template(template_name)
-        body = template.render(context)
+        html_body = template.render(context)
         email_job = EmailJob(
             subject=subject,
             recipients=recipients,
-            body=body,
-            html=body,
+            body=plain_body if plain_body is not None else html_body,
+            html=html_body,
             sender=sender,
             attachments=attachments,
             extra_headers=extra_headers,

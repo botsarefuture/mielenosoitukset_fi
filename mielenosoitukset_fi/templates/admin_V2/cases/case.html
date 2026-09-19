@@ -99,7 +99,8 @@
             <strong>{{ _('Vastaa lähettäjälle') }}</strong>
             <form method="POST" action="{{ url_for('admin_case.reply_to_ticket', case_id=case._id) }}" class="admin-reply-form">
               <div class="muted mb-1">{{ support_ticket.submitter_email }}</div>
-              <textarea name="reply_message" class="form-control" rows="4" required placeholder="{{ _('Kirjoita vastaus...') }}"></textarea>
+              <textarea id="reply_message" name="reply_message" class="form-control" rows="4" required aria-describedby="reply_message_help" placeholder="{{ _('Kirjoita vastaus...') }}"></textarea>
+              <p id="reply_message_help" class="admin-field__help">{{ _('Voit käyttää Markdown-muotoiluja, kuten lihavointia, otsikoita, listoja ja linkkejä.') }}</p>
               <button type="submit" class="btn btn-sm btn-primary mt-1">{{ _('Lähetä vastaus sähköpostitse') }}</button>
             </form>
           </div>

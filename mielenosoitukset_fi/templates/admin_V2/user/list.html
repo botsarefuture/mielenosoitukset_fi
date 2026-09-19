@@ -11,10 +11,10 @@
     _('Käyttäjähallinta'),
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttäjät'), none)],
   ) %}
-      <a href="{{ url_for('admin.manual_page', page='users') }}" target="_blank" rel="noopener noreferrer" class="users-hero-action admin-page-hero__action">
+      <a href="{{ url_for('admin.manual_page', page='users') }}" target="_blank" rel="noopener noreferrer" class="admin-page-hero__action">
         <i class="fa-solid fa-book-open" aria-hidden="true"></i>{{ _('Käyttöohje') }}
       </a>
-      <a href="{{ url_for('admin_dev.list_requests') }}" class="users-hero-action admin-page-hero__action">
+      <a href="{{ url_for('admin_dev.list_requests') }}" class="admin-page-hero__action">
         <i class="fa-solid fa-key" aria-hidden="true"></i>{{ _('API-avainpyynnöt') }}
         {% if pending_token_requests %}<span class="users-request-count">{{ pending_token_requests }}</span>{% endif %}
       </a>

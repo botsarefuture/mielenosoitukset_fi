@@ -212,6 +212,36 @@ def test_admin_hero_variants_are_limited_to_the_shared_stacked_contract():
     assert "variant='admin-page-hero--stacked'" in source
 
 
+def test_legacy_admin_hero_selectors_and_action_aliases_are_absent():
+    css_sources = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in Path("mielenosoitukset_fi/static/css/admin").glob("*.css")
+    )
+    template_sources = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in Path("mielenosoitukset_fi/templates/admin_V2").rglob("*.html")
+    )
+    legacy_selectors = (
+        ".admin-page-header",
+        ".admin-workspace-hero",
+        ".governance-hero",
+        ".governance-eyebrow",
+        ".logs-header",
+        ".case-hero",
+        ".editor-hero",
+        ".introduction",
+    )
+    legacy_action_classes = (
+        "admin-workspace-hero-action",
+        "users-hero-action",
+    )
+
+    for selector in legacy_selectors:
+        assert selector not in css_sources
+    for class_name in legacy_action_classes:
+        assert class_name not in template_sources
+
+
 def test_admin_hero_foreground_and_data_view_surfaces_are_shared():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

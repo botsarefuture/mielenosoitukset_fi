@@ -25,6 +25,9 @@ jobs:
       SSH_OPTIONS: -o BatchMode=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=5
 
     steps:
+      - name: Check out deployment verifier
+        uses: actions/checkout@v4
+
       - name: Validate deployment configuration
         run: |
           set -euo pipefail
@@ -54,5 +57,6 @@ jobs:
       - name: Verify public health endpoint
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --retry 5 --retry-all-errors \
-            --max-time 10 "https://mielenosoitukset.fi/health?deploy=$GITHUB_SHA"
+          python3 deploy/verify_health_sha.py \
+            "$GITHUB_SHA" "https://mielenosoitukset.fi/health" \
+            --attempts 15 --delay 2 --timeout 10

@@ -5,6 +5,7 @@ set -euo pipefail
 repo_dir="${PRODUCTION_REPO_DIR:-/var/www/mielenosoitukset_fi}"
 service_name="${PRODUCTION_SERVICE_NAME:-mielenosoitukset_fi}"
 health_url="${PRODUCTION_HEALTH_URL:-https://mielenosoitukset.fi/health}"
+build_sha_file="${PRODUCTION_BUILD_SHA_FILE:-${repo_dir}/.deploy-build-sha}"
 expected_sha="${1:-}"
 
 if [[ ! "$expected_sha" =~ ^[0-9a-f]{40}$ ]]; then
@@ -61,20 +62,24 @@ trap - EXIT
 
 chown -R www-data:www-data "$repo_dir"
 
+# New workers capture this value while creating their Flask application. Write
+# it atomically so an existing worker can never observe a partial SHA. Existing
+# workers retain the value they captured at their own startup.
+build_sha_tmp="${build_sha_file}.tmp.$$"
+printf '%s\n' "$expected_sha" >"$build_sha_tmp"
+chmod 0644 "$build_sha_tmp"
+mv -f "$build_sha_tmp" "$build_sha_file"
+
 # Gunicorn's HUP reload starts replacement workers before retiring the old
 # workers, avoiding the hard outage caused by systemctl restart.
 systemctl reload "$service_name"
 
-for attempt in $(seq 1 30); do
-  if systemctl is-active --quiet "$service_name" && \
-     curl --fail --silent --show-error --max-time 5 \
-       --header 'Cache-Control: no-cache' \
-       "${health_url}?deploy=${expected_sha}" >/dev/null; then
-    echo "Deployed ${expected_sha} with a graceful worker reload."
-    exit 0
-  fi
-  sleep 2
-done
+if systemctl is-active --quiet "$service_name" && \
+   python3 "$repo_dir/deploy/verify_health_sha.py" \
+     "$expected_sha" "$health_url" --attempts 30 --delay 2 --timeout 5; then
+  echo "Deployed ${expected_sha} with a verified graceful worker reload."
+  exit 0
+fi
 
-echo "production_deploy.sh: health check did not recover after deploying ${expected_sha}" >&2
+echo "production_deploy.sh: no replacement worker served ${expected_sha}" >&2
 exit 1

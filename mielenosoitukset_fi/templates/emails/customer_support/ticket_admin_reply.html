@@ -48,7 +48,32 @@
             background: #f8f8f8;
             border-left: 4px solid #0033A0;
             border-radius: 4px;
-            white-space: pre-wrap;
+        }
+        .message > :first-child {
+            margin-top: 0;
+        }
+        .message > :last-child {
+            margin-bottom: 0;
+        }
+        .message h1,
+        .message h2,
+        .message h3,
+        .message h4,
+        .message h5,
+        .message h6 {
+            color: #222222;
+            line-height: 1.3;
+            margin: 18px 0 8px;
+        }
+        .message p,
+        .message ul,
+        .message ol {
+            line-height: 1.6;
+            margin: 0 0 12px;
+        }
+        .message a {
+            color: #0033A0;
+            text-decoration: underline;
         }
         .footer {
             margin-top: 20px;
@@ -66,7 +91,7 @@
         <div class="content">
             <p>Hei!</p>
             <p>Vastaamme tukipyyntöösi {{ ticket_id }}:</p>
-            <div class="message">{{ message }}</div>
+            <div class="message">{{ message_html }}</div>
             <p>Vastaa tähän viestiin, jos tarvitset lisäapua. Vastauksesi liitetään automaattisesti samaan tukipyyntöön ({{ ticket_id }}).</p>
             <p>Jos asiasi on <strong>kiireellinen</strong>, kirjoita vastauksesi alkuun sana <strong>URGENT</strong> — se ohjataan välittömästi kiireellisenä eteenpäin.</p>
         </div>

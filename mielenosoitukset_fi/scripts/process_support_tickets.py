@@ -31,11 +31,17 @@ from email.utils import parsedate_to_datetime
 from html import unescape
 from typing import Any, Dict, List, Optional, Tuple
 
+from markupsafe import Markup
+
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailJob import Sender
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.classes import Case
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.content_formatting import (
+    markdown_to_html,
+    markdown_to_plain_text,
+)
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from config import Config
 
@@ -534,15 +540,29 @@ def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, a
         extra_headers["In-Reply-To"] = in_reply_to
         extra_headers["References"] = in_reply_to
 
+    message_html = Markup(markdown_to_html(message))
+    message_plain = markdown_to_plain_text(message)
+    plain_body = (
+        f"Hei!\n\n"
+        f"Vastaamme tukipyyntöösi {ticket_label}:\n\n"
+        f"{message_plain}\n\n"
+        "Vastaa tähän viestiin, jos tarvitset lisäapua. Vastauksesi "
+        f"liitetään automaattisesti samaan tukipyyntöön ({ticket_label}).\n\n"
+        "Jos asiasi on kiireellinen, kirjoita vastauksesi alkuun sana "
+        "URGENT — se ohjataan välittömästi kiireellisenä eteenpäin.\n\n"
+        "Mielenosoitukset.fi"
+    )
+
     email_sender.queue_email(
         template_name="customer_support/ticket_admin_reply.html",
         subject=subject,
         recipients=[reply_to],
         sender=_ticket_sender(config),
         extra_headers=extra_headers,
+        plain_body=plain_body,
         context={
             "ticket_id": ticket_label,
-            "message": message,
+            "message_html": message_html,
             "admin_name": admin_label,
         },
     )

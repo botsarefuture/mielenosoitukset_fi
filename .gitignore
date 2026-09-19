@@ -20,6 +20,7 @@ config.compose.dev.yaml
 .codex
 **/.DS_Store
 .backup_pre_perf
+.deploy-build-sha
 **mailpit**
 data/mailpit.db
 data/mailpit.db-shm

@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Production deploy verification now waits for a replacement worker that reports the exact requested commit SHA; `/health` publishes immutable per-worker build metadata, stale workers cannot falsely complete a graceful reload, and the documented deployment key is restricted from shells, PTYs, agent/X11 forwarding, and port forwarding.
 * Admin page heroes now resolve exclusively from the canonical shared hero contract: the remaining city, demonstration, user, governance, editor, log, case, introduction, and legacy page-header selector aliases have been removed, preventing old palettes or geometry from diverging across pages and themes.
 * Support-case replies now resolve the ticket mailbox SMTP profile correctly from both Flask and background-job contexts, recover already queued legacy replies with empty connection fields (including legacy jobs that had exhausted the retry budget, which are reopened by the queue drainer), avoid storing ticket SMTP passwords in new queue entries, and surface delivery failures in Admin → System status → Recent errors with recipient addresses redacted.
 

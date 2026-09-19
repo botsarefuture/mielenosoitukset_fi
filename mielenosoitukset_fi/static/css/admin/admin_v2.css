@@ -282,49 +282,6 @@ table input[type="checkbox"] {
     color: var(--text-muted)
 }
 
-.introduction {
-    background-color: var(--container-bg);
-    border-left: 6px solid var(--primary);
-    padding: 1.5rem 2rem;
-    border-radius: 16px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
-    margin-bottom: 2rem;
-    color: var(--text);
-    animation: fadeInUp 0.5s ease-in-out;
-    max-width: 1000px;
-}
-
-.introduction h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    color: var(--primary);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.introduction p {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: var(--text-muted) !important;
-    margin-top: 0.25rem;
-}
-
-.introduction p.muted {
-    font-style: italic;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 .actions-cell,
 .actions-cell-header {
     width: min-content;
@@ -381,4 +338,3 @@ table input[type="checkbox"] {
     font-size: 0.75em;
     font-weight: bold;
   }
-  

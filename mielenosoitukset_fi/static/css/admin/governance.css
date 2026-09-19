@@ -3,25 +3,11 @@
   margin: 0 auto;
 }
 
-.governance-hero,
 .governance-card {
   border: 1px solid var(--bs-border-color);
   background: var(--bs-body-bg);
   border-radius: 1rem;
   box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
-}
-
-.governance-hero {
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.governance-eyebrow {
-  color: var(--bs-primary);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .governance-tabs {

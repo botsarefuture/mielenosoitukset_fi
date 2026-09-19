@@ -79,57 +79,6 @@ body {
   box-sizing: border-box;
 }
 
-.admin-page-header {
-  display: flex;
-  gap: 1.25rem;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  width: 100%;
-  margin: 0;
-  padding: 1.25rem 1.4rem;
-  border: 1px solid var(--admin-workspace-border);
-  border-radius: 1rem;
-  color: var(--admin-workspace-text);
-  background: var(--admin-workspace-surface);
-  box-shadow: var(--admin-workspace-shadow);
-}
-
-.admin-page-header > div:first-child {
-  min-width: min(100%, 18rem);
-  flex: 1 1 30rem;
-}
-
-.admin-page-header h1,
-.admin-page-header h2 {
-  margin: 0;
-  font-size: clamp(1.45rem, 3vw, 2rem);
-  letter-spacing: -.025em;
-}
-
-.admin-page-header p {
-  max-width: 52rem;
-  margin: .35rem 0 0;
-  color: var(--admin-workspace-muted);
-  line-height: 1.55;
-}
-
-.admin-page-header__kicker {
-  margin: 0 0 .25rem !important;
-  color: var(--admin-workspace-blue-dark) !important;
-  font-size: .72rem;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.admin-page-header__actions {
-  display: flex;
-  gap: .6rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
 .admin-filter-bar {
   display: grid;
   gap: 1rem;
@@ -2050,12 +1999,7 @@ main.flex-grow-1 {
   box-sizing: border-box;
 }
 
-.admin-page-hero,
-.admin-workspace-hero,
-.dashboard-container > .introduction,
-.governance-hero,
-.logs-header,
-.case-hero {
+.admin-page-hero {
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
@@ -2162,10 +2106,7 @@ main.flex-grow-1 {
   grid-column: 1 / -1;
 }
 
-.admin-page-hero__kicker,
-.admin-workspace-kicker,
-.governance-eyebrow,
-.admin-workspace-hero .eyebrow {
+.admin-page-hero__kicker {
   margin: 0;
   color: var(--admin-hero-kicker-foreground);
   font-size: .76rem;
@@ -2175,13 +2116,7 @@ main.flex-grow-1 {
 }
 
 .admin-page-hero h1,
-.admin-page-hero h2,
-.admin-workspace-hero h1,
-.dashboard-container > .introduction h1,
-.governance-hero h1,
-.logs-header h1,
-.logs-header h2,
-.case-hero h1 {
+.admin-page-hero h2 {
   margin: .25rem 0 .5rem;
   color: var(--admin-hero-foreground);
   font-size: clamp(2rem, 4vw, 3.2rem);
@@ -2190,12 +2125,7 @@ main.flex-grow-1 {
   text-shadow: none;
 }
 
-.admin-page-hero p:not(.admin-page-hero__kicker),
-.admin-workspace-hero p:not(.admin-workspace-kicker),
-.dashboard-container > .introduction p,
-.governance-hero p:not(.governance-eyebrow),
-.logs-header p,
-.case-hero p {
+.admin-page-hero p:not(.admin-page-hero__kicker) {
   max-width: 720px;
   margin: 0;
   color: var(--admin-hero-muted-foreground);
@@ -2203,8 +2133,7 @@ main.flex-grow-1 {
   line-height: 1.65;
 }
 
-.admin-page-hero__actions,
-.admin-workspace-hero-actions {
+.admin-page-hero__actions {
   position: relative;
   z-index: 1;
   display: flex;
@@ -2216,8 +2145,6 @@ main.flex-grow-1 {
 }
 
 .admin-page-hero__action,
-.admin-workspace-hero-action,
-.admin-workspace-hero .new-item,
 .admin-page-hero .non-suffperm {
   display: inline-flex;
   gap: .45rem;
@@ -2236,9 +2163,7 @@ main.flex-grow-1 {
 }
 
 .admin-page-hero__action:hover,
-.admin-page-hero__action:focus-visible,
-.admin-workspace-hero-action:hover,
-.admin-workspace-hero .new-item:hover {
+.admin-page-hero__action:focus-visible {
   color: var(--admin-hero-foreground);
   background: var(--admin-hero-control-background-hover);
 }
@@ -4058,18 +3983,12 @@ th.sortable.desc::after {
     margin: 0 !important;
   }
 
-  .admin-page-hero,
-  .admin-workspace-hero,
-  .dashboard-container > .introduction,
-  .governance-hero,
-  .logs-header,
-  .case-hero {
+  .admin-page-hero {
     grid-template-columns: 1fr;
     min-height: 0;
   }
 
-  .admin-page-hero__actions,
-  .admin-workspace-hero-actions { justify-content: flex-start; }
+  .admin-page-hero__actions { justify-content: flex-start; }
   .admin-data-view__footer {
     align-items: stretch;
     flex-direction: column;
@@ -4138,8 +4057,6 @@ th.sortable.desc::after {
   ) > div > span {
     min-height: 0;
   }
-  .admin-page-hero__action,
-  .admin-workspace-hero-action,
-  .admin-workspace-hero .new-item { width: 100%; }
+  .admin-page-hero__action { width: 100%; }
   .admin-data-view__footer .users-pagination-label { display: none; }
 }

@@ -19,7 +19,7 @@
     back_label=_('Hallinto'),
     actions_visible=current_user.global_admin or current_user.has_permission('LIST_USERS'),
   ) %}
-      <a class="admin-workspace-hero-action admin-page-hero__action" href="{{ url_for('admin_user.user_control') }}">
+      <a class="admin-page-hero__action" href="{{ url_for('admin_user.user_control') }}">
         <i class="fa-solid fa-user-gear me-1" aria-hidden="true"></i>{{ _('Hallinnoi kaupunkioikeuksia') }}
       </a>
   {% endcall %}

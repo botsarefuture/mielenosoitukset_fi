@@ -86,7 +86,7 @@
     title_id='tabletitle',
   ) %}
       {% if can_create_demo %}
-      <a href="{{ url_for('admin_demo.create_demo') }}" class="admin-workspace-hero-action admin-page-hero__action">
+      <a href="{{ url_for('admin_demo.create_demo') }}" class="admin-page-hero__action">
         <i class="fas fa-plus"></i>{{ _('Uusi mielenosoitus') }}
       </a>
       {% else %}
@@ -96,7 +96,7 @@
       {% endif %}
 
       {% if can_create_recurring_demo %}
-      <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="admin-workspace-hero-action admin-page-hero__action">
+      <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="admin-page-hero__action">
         <i class="fas fa-plus-circle"></i>{{ _('Uusi toistuva mielenosoitus') }}
       </a>
       {% else %}
@@ -106,7 +106,7 @@
       {% endif %}
 
       {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission('TRANSLATE_DEMO') or current_user.has_permission('REVIEW_DEMO_TRANSLATIONS') %}
-      <a href="{{ url_for('admin_demo.demo_translation_dashboard') }}" class="admin-workspace-hero-action admin-page-hero__action">
+      <a href="{{ url_for('admin_demo.demo_translation_dashboard') }}" class="admin-page-hero__action">
         <i class="fas fa-language"></i>{{ _('Käännöstyöjono') }}
       </a>
       {% endif %}

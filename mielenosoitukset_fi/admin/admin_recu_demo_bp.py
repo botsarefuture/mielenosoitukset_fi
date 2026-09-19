@@ -105,19 +105,6 @@ def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None)
     )
 
 
-def _safe_text(value):
-    """Return a lower-cased string for filtering, tolerating missing fields."""
-    return (value or "").lower()
-
-
-def _safe_demo_date(value):
-    """Return a sortable date, falling back for malformed legacy records."""
-    try:
-        return datetime.strptime(value, "%Y-%m-%d").date()
-    except (TypeError, ValueError):
-        return date.max
-
-
 def _get_repeat_frequency(form):
     """Support both legacy and current recurrence field names."""
     raw_frequency = form.get("frequency_type") or form.get("recurrence_type") or "none"
@@ -312,43 +299,144 @@ def _collect_organizers(form, existing_organizers=None):
 @permission_required("LIST_RECURRING_DEMOS")
 def recu_demo_control():
     """Render the recurring demonstration control panel with a list of recurring demonstrations."""
-    search_query = request.args.get("search", "")
+    search_query = (request.args.get("search") or "").strip()
     approved_status = request.args.get("approved", "all").lower()
     if approved_status not in {"all", "true", "false"}:
         approved_status = "all"
-    # show_past = request.args.get("show_past", "false").lower() == "true"
-    today = date.today()
+    try:
+        requested_per_page = int(request.args.get("per_page", 20))
+    except (TypeError, ValueError):
+        requested_per_page = 20
+    per_page = requested_per_page if requested_per_page in {20, 50, 100} else 20
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
 
-    # Construct query based on approval status
-    query = {}
+    scope_clauses = []
+    if not current_user.global_admin:
+        permission_scope = current_user._perm_in("LIST_RECURRING_DEMOS")
+        organization_ids = [
+            ObjectId(scope)
+            for scope in permission_scope
+            if str(scope) != "global" and ObjectId.is_valid(str(scope))
+        ]
+        city_keys = current_user.scoped_city_keys_for("LIST_RECURRING_DEMOS")
+        city_names = [
+            city for city in CITY_LIST if normalize_city_key(city) in city_keys
+        ]
+        permission_filters = [{"editors": current_user.id}]
+        if organization_ids:
+            permission_filters.append(
+                {
+                    "organizers": {
+                        "$elemMatch": {"organization_id": {"$in": organization_ids}}
+                    }
+                }
+            )
+        if city_keys:
+            permission_filters.append(
+                {
+                    "$or": [
+                        {"city_key": {"$in": city_keys}},
+                        {"city": {"$in": city_names}},
+                    ]
+                }
+            )
+        if "global" not in permission_scope:
+            scope_clauses.append({"$or": permission_filters})
+
+    def query_from(clauses):
+        if not clauses:
+            return {}
+        if len(clauses) == 1:
+            return clauses[0]
+        return {"$and": clauses}
+
+    scope_query = query_from(scope_clauses)
+    filter_clauses = list(scope_clauses)
     if approved_status != "all":
-        query["approved"] = approved_status == "true"
+        filter_clauses.append({"approved": approved_status == "true"})
+    if search_query:
+        search_pattern = re.escape(search_query)
+        filter_clauses.append(
+            {
+                "$or": [
+                    {"title": {"$regex": search_pattern, "$options": "i"}},
+                    {"city": {"$regex": search_pattern, "$options": "i"}},
+                    {"address": {"$regex": search_pattern, "$options": "i"}},
+                ]
+            }
+        )
+
+    filter_query = query_from(filter_clauses)
+    total_count = mongo.recu_demos.count_documents(scope_query)
+    filtered_count = mongo.recu_demos.count_documents(filter_query)
+    total_pages = max(1, (filtered_count + per_page - 1) // per_page)
+    page = min(page, total_pages)
+
     recurring_demos = []
-    for recudemo in list(mongo.recu_demos.find(query)):
+    cursor = (
+        mongo.recu_demos.find(filter_query)
+        .sort([("date", 1), ("_id", 1)])
+        .skip((page - 1) * per_page)
+        .limit(per_page)
+    )
+    for recudemo in cursor:
         try:
             recurring_demos.append(RecurringDemonstration.from_dict(recudemo))
         except Exception:
             continue
 
-    # Filter based on search query and date
-    filtered_recurring_demos = [
-        demo
-        for demo in recurring_demos
-        if (
-            _safe_text(search_query) in _safe_text(demo.title)
-            or _safe_text(search_query) in _safe_text(demo.city)
-            or _safe_text(search_query) in _safe_text(demo.address)
-        )
-    ]
+    preserved_args = {
+        key: value
+        for key, value in request.args.items()
+        if key != "page" and value not in {None, ""}
+    }
+    preserved_args["per_page"] = str(per_page)
 
-    # Sort the filtered recurring demonstrations by date
-    filtered_recurring_demos.sort(key=lambda x: _safe_demo_date(x.date))
+    def page_url(target_page):
+        return url_for(
+            "admin_recu_demo.recu_demo_control",
+            **preserved_args,
+            page=target_page,
+        )
+
+    visible_start = max(1, page - 2)
+    visible_end = min(total_pages, page + 2)
+    visible_pages = [
+        {"number": number, "url": page_url(number)}
+        for number in range(visible_start, visible_end + 1)
+    ]
+    prev_page = page - 1 if page > 1 else None
+    next_page = page + 1 if page < total_pages else None
+    range_start = (page - 1) * per_page + 1 if filtered_count else 0
+    range_end = min(page * per_page, filtered_count)
+    has_active_filters = bool(search_query or approved_status != "all")
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/dashboard.html",
-        recurring_demos=filtered_recurring_demos,
+        recurring_demos=recurring_demos,
         search_query=search_query,
         approved_status=approved_status,
+        per_page=per_page,
+        current_page=page,
+        total_pages=total_pages,
+        total_count=total_count,
+        filtered_count=filtered_count,
+        range_start=range_start,
+        range_end=range_end,
+        has_active_filters=has_active_filters,
+        clear_filters_url=url_for(
+            "admin_recu_demo.recu_demo_control", per_page=per_page
+        ),
+        visible_pages=visible_pages,
+        first_page_url=page_url(1),
+        last_page_url=page_url(total_pages),
+        prev_page=prev_page,
+        next_page=next_page,
+        prev_page_url=page_url(prev_page) if prev_page else None,
+        next_page_url=page_url(next_page) if next_page else None,
     )
 
 

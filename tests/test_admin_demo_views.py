@@ -7,6 +7,10 @@ def test_create_demo_hides_edit_only_controls(admin_client):
     assert response.status_code == 200
     page = response.get_data(as_text=True)
     assert 'name="cover_picture"' in page
+    assert 'name="slug"' in page
+    assert 'name="img"' in page
+    assert 'name="preview_image"' in page
+    assert "Linkit ja kuvat" in page
     assert "Luo muokkauslinkki" not in page
     assert "Luo kopio mielenosoituksesta" not in page
 
@@ -235,3 +239,54 @@ def test_create_demo_persists_translation_payload(admin_client, db):
     assert created["translations"]["en"]["title"] == "Solidarity Rally in English"
     assert created["translations"]["en"]["tags"] == ["peace", "rally"]
     assert created["translations"]["sv"]["title"] == "Solidaritetsmanifestation"
+
+
+def test_create_demo_persists_normalized_slug_and_all_image_assets(admin_client, db):
+    response = admin_client.post(
+        "/admin/demo/create_demo",
+        data={
+            "title": "Ääni rauhalle",
+            "date": "2026-10-10",
+            "start_time": "12:00",
+            "end_time": "14:00",
+            "city": "Helsinki",
+            "address": "Kansalaistori 1",
+            "type": "STAY_STILL",
+            "slug": "  Ääni & Rauha!  ",
+            "cover_picture": "https://cdn.example.test/cover.jpg",
+            "img": "/static/uploads/original.jpg",
+            "preview_image": "https://cdn.example.test/preview.jpg",
+            "gallery_images": "https://cdn.example.test/one.jpg\nhttps://cdn.example.test/two.jpg",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    created = db.demonstrations.find_one({"title": "Ääni rauhalle"})
+    assert created["slug"] == "aani-rauha"
+    assert created["cover_picture"] == "https://cdn.example.test/cover.jpg"
+    assert created["img"] == "/static/uploads/original.jpg"
+    assert created["preview_image"] == "https://cdn.example.test/preview.jpg"
+    assert created["gallery_images"] == [
+        "https://cdn.example.test/one.jpg",
+        "https://cdn.example.test/two.jpg",
+    ]
+
+
+def test_create_demo_rejects_a_duplicate_normalized_slug(admin_client, db, seeded_data):
+    response = admin_client.post(
+        "/admin/demo/create_demo",
+        data={
+            "title": "Duplicate slug demo",
+            "date": "2026-10-11",
+            "city": "Helsinki",
+            "address": "Kansalaistori 1",
+            "type": "STAY_STILL",
+            "slug": "Climate March Helsinki",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/admin/demo/create_demo")
+    assert db.demonstrations.find_one({"title": "Duplicate slug demo"}) is None

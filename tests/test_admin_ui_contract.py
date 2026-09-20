@@ -1033,7 +1033,8 @@ def test_demo_editor_static_geometry_uses_shared_form_components():
     assert "event_type != 'MARCH'" in template and " hidden" in template
     assert "marchRouteContainer.hidden = typeSelect.value !== 'MARCH'" in template
     assert template.count('class="tags-wrapper admin-token-input"') == 2
-    assert 'class="admin-form-image-preview"' in template
+    assert "import demo_media_fields" in template
+    assert "{{ demo_media_fields(demo) }}" in template
     assert 'class="row g-3 admin-coordinate-fields"' in template
     assert 'class="admin-form-section__header"' in template
     assert 'data-bs-target="#editLinkModal"' in template
@@ -1053,12 +1054,36 @@ def test_recurring_editor_static_geometry_uses_shared_form_components():
     assert "style=" not in template
     assert template.count('class="tags-wrapper admin-token-input"') == 2
     assert template.count('class="admin-token-input__field"') == 2
-    assert 'class="admin-form-image-preview"' in template
+    assert "import demo_media_fields" in template
+    assert "{{ demo_media_fields(demo, recurring=true) }}" in template
     assert 'class="main-container admin-editor-richtext"' in template
     assert 'class="admin-editor-spacer" aria-hidden="true"' in template
     assert "weeklyOptions.hidden = freqSelect.value !== 'weekly'" in template
     assert "monthlyOptions.hidden = freqSelect.value !== 'monthly'" in template
     assert "marchRouteContainer.hidden = typeSelect.value !== 'MARCH'" in template
+
+
+def test_demo_editors_share_the_canonical_media_field_contract():
+    partial = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/_media_fields.html"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in partial
+    assert "style=" not in partial
+    assert 'class="admin-form-section"' in partial
+    assert 'class="admin-form-section__header"' in partial
+    assert 'class="admin-form-section__body admin-form-grid"' in partial
+    assert 'class="admin-form-image-preview"' in partial
+    for field_name in (
+        "facebook",
+        "slug",
+        "cover_picture",
+        "cover_picture_file",
+        "img",
+        "preview_image",
+        "gallery_images",
+    ):
+        assert f'name="{field_name}"' in partial
 
 
 def test_recurring_collection_uses_shared_filter_data_and_modal_contracts():

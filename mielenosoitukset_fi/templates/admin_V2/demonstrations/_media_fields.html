@@ -1,0 +1,92 @@
+{% macro demo_media_fields(demo=none, recurring=false) %}
+<section id="misc-info" class="admin-form-section">
+    <header class="admin-form-section__header">
+        <span class="admin-form-section__icon" aria-hidden="true"><i class="fas fa-images"></i></span>
+        <div>
+            <h2>{{ _('Linkit ja kuvat') }}</h2>
+            <p>{{ _('Hallitse julkista lyhytlinkkiä ja eri käyttötarkoituksiin tallennettuja kuvaresursseja.') }}</p>
+        </div>
+    </header>
+    <div class="admin-form-section__body admin-form-grid">
+        <div class="admin-field">
+            <label for="facebook">{{ _('Facebook-linkki') }}</label>
+            <input type="url" id="facebook" name="facebook" class="form-control"
+                value="{{ demo.facebook|default('', true) if demo else '' }}">
+        </div>
+
+        <div class="admin-field">
+            <label for="slug">{{ _('Julkinen lyhytlinkki') }}</label>
+            <input type="text" id="slug" name="slug" class="form-control" maxlength="160"
+                inputmode="url" autocomplete="off" spellcheck="false"
+                aria-describedby="slug-help"
+                placeholder="{{ _('esimerkiksi ilmastomarssi-helsinki') }}"
+                value="{{ demo.slug|default('', true) if demo else '' }}">
+            <p class="admin-field__help" id="slug-help">
+                {% if recurring %}
+                {{ _('Kirjoita sarjan linkkipohja. Uusille lapsimielenosoituksille lisätään automaattisesti tapahtumapäivä. Välilyönnit ja erikoismerkit muutetaan URL-muotoon.') }}
+                {% else %}
+                {{ _('Kirjoita vain linkin loppuosa. Välilyönnit ja erikoismerkit muutetaan tallennettaessa URL-muotoon. Jätä tyhjäksi, jos lyhytlinkkiä ei käytetä.') }}
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="admin-field admin-field--full">
+            <label for="cover_picture">{{ _('Kansikuva') }}</label>
+            <input type="text" inputmode="url" id="cover_picture" name="cover_picture" class="form-control"
+                aria-describedby="cover-picture-help"
+                placeholder="{{ _('Syötä kuvan URL tai lataa tiedosto alla') }}"
+                value="{{ demo.cover_picture|default('', true) if demo else '' }}">
+            <p class="admin-field__help" id="cover-picture-help">
+                {{ _('Ensisijainen kuva julkisissa listoissa ja mielenosoituksen sivulla.') }}
+            </p>
+            <label for="cover_picture_file">{{ _('Tai lataa uusi kansikuva') }}</label>
+            <input type="file" id="cover_picture_file" name="cover_picture_file" class="form-control"
+                accept="image/*">
+            {% if demo and demo.cover_picture %}
+            <img src="{{ demo.cover_picture }}" class="admin-form-image-preview"
+                alt="{{ _('Nykyisen kansikuvan esikatselu') }}">
+            {% endif %}
+        </div>
+
+        <div class="admin-field">
+            <label for="img">{{ _('Alkuperäinen kuva') }}</label>
+            <input type="text" inputmode="url" id="img" name="img" class="form-control"
+                aria-describedby="img-help"
+                placeholder="https://…"
+                value="{{ demo.img|default('', true) if demo else '' }}">
+            <p class="admin-field__help" id="img-help">
+                {{ _('Lähdekuva tai vanhemmista tietueista säilytettävä kuva. Sitä käytetään kansikuvan varavaihtoehtona.') }}
+            </p>
+            {% if demo and demo.img %}
+            <img src="{{ demo.img }}" class="admin-form-image-preview"
+                alt="{{ _('Alkuperäisen kuvan esikatselu') }}">
+            {% endif %}
+        </div>
+
+        <div class="admin-field">
+            <label for="preview_image">{{ _('Esikatselukuva') }}</label>
+            <input type="text" inputmode="url" id="preview_image" name="preview_image" class="form-control"
+                aria-describedby="preview-image-help"
+                placeholder="https://…"
+                value="{{ demo.preview_image|default('', true) if demo else '' }}">
+            <p class="admin-field__help" id="preview-image-help">
+                {{ _('Jakamisessa ja esikatseluissa käytettävä generoitu tai käsin asetettu kuva.') }}
+            </p>
+            {% if demo and demo.preview_image %}
+            <img src="{{ demo.preview_image }}" class="admin-form-image-preview"
+                alt="{{ _('Esikatselukuvan esikatselu') }}">
+            {% endif %}
+        </div>
+
+        <div class="admin-field admin-field--full">
+            <label for="gallery_images">{{ _('Lisäkuvat (yksi URL per rivi)') }}</label>
+            <textarea id="gallery_images" name="gallery_images" class="form-control" rows="4"
+                aria-describedby="gallery-images-help"
+                placeholder="{{ _('Yksi kuvan URL jokaiselle riville') }}">{{ (demo.gallery_images | join('\n')) if demo and demo.gallery_images else '' }}</textarea>
+            <p class="admin-field__help" id="gallery-images-help">
+                {{ _('Kuvat näytetään annetussa järjestyksessä mielenosoituksen kuvakarusellissa.') }}
+            </p>
+        </div>
+    </div>
+</section>
+{% endmacro %}

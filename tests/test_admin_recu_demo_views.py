@@ -7,6 +7,10 @@ def test_create_recu_demo_uses_shared_admin_form(admin_client):
     assert response.status_code == 200
     page = response.get_data(as_text=True)
     assert 'name="cover_picture"' in page
+    assert 'name="slug"' in page
+    assert 'name="img"' in page
+    assert 'name="preview_image"' in page
+    assert "Uusille lapsimielenosoituksille lisätään automaattisesti tapahtumapäivä" in page
     assert 'name="default_language"' in page
     assert 'name="translation_en_title"' in page
     assert 'id="organization"' in page

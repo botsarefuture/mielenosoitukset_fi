@@ -50,6 +50,7 @@ from mielenosoitukset_fi.utils.classes import Demonstration, RecurringDemonstrat
 from traceback import format_exc
 from mielenosoitukset_fi.utils import VERSION
 from mielenosoitukset_fi.utils.classes.RepeatSchedule import RepeatSchedule
+from mielenosoitukset_fi.utils.demo_slugs import recurring_child_slug
 from mielenosoitukset_fi.utils.time_utils import utcnow
 
 # Dry-run flag (can be overridden from CLI)
@@ -138,6 +139,27 @@ def _break_date_strings(parent_demo: dict) -> set[str]:
             except Exception:
                 logger.warning("Skipping invalid recurring break date %r", raw_date)
     return dates
+
+
+def _recurring_occurrence_slug(parent_demo: dict, occurrence_date: str):
+    """Return a stable slug that cannot collide with another series."""
+    base_slug = recurring_child_slug(parent_demo.get("slug"), occurrence_date)
+    if not base_slug:
+        return None
+
+    parent_id = parent_demo["_id"]
+    candidate = base_slug
+    suffix = str(parent_id)[-6:]
+    sequence = 1
+    while demonstrations_collection.find_one(
+        {"slug": candidate, "parent": {"$ne": parent_id}},
+        {"_id": 1},
+    ):
+        sequence += 1
+        candidate = f"{base_slug}-{suffix}"
+        if sequence > 2:
+            candidate = f"{candidate}-{sequence}"
+    return candidate
 
 
 def mark_break_children_cancelled(parent_demo: dict) -> int:
@@ -521,6 +543,11 @@ def process_demo(demo: dict, only_calculate: bool = False):
                 new_demo_data = demo.copy()
                 new_demo_data.update({"date": next_date_str,"parent":demo["_id"],"recurring":True})
                 new_demo_data.pop("_id", None)
+                child_slug = _recurring_occurrence_slug(demo, next_date_str)
+                if child_slug:
+                    new_demo_data["slug"] = child_slug
+                else:
+                    new_demo_data.pop("slug", None)
                 new_demo = Demonstration.from_dict(new_demo_data)
                 bulk_ops.append(UpdateOne({"date": next_date_str,"parent":demo["_id"]},{"$setOnInsert": new_demo.to_dict()}, upsert=True))
                 runtime_actions.append({"action":"create","document":new_demo.to_dict(),"reason":"create new","timestamp":datetime.now(),"executed_by":"system"})

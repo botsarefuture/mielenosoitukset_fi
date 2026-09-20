@@ -1,3 +1,5 @@
+import io
+
 from bson import ObjectId
 from mielenosoitukset_fi.utils.classes import RecurringDemonstration
 
@@ -10,6 +12,27 @@ def test_recurring_runner_normalizes_frozen_child_ids():
     assert _frozen_child_ids({"freezed_children": [object_id, str(object_id)]}) == {
         str(object_id)
     }
+
+
+def test_recurring_child_slug_gets_stable_series_suffix_on_collision(
+    monkeypatch, db
+):
+    from mielenosoitukset_fi.scripts import repeat_v2
+
+    parent_id = ObjectId()
+    db.demonstrations.insert_one(
+        {
+            "_id": ObjectId(),
+            "parent": ObjectId(),
+            "slug": "weekly-march-2026-12-01",
+        }
+    )
+    monkeypatch.setattr(repeat_v2, "demonstrations_collection", db.demonstrations)
+
+    assert repeat_v2._recurring_occurrence_slug(
+        {"_id": parent_id, "slug": "weekly-march"},
+        "2026-12-01",
+    ) == f"weekly-march-2026-12-01-{str(parent_id)[-6:]}"
 
 
 def test_recurring_demo_from_dict_accepts_city_key(seeded_data, db):
@@ -328,6 +351,9 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
         "event_type": "STAY_STILL",
         "tags": [],
         "route": [],
+        "slug": "runner-break-series",
+        "img": "/static/uploads/runner-source.jpg",
+        "preview_image": "https://cdn.example.test/runner-preview.jpg",
         "repeat_schedule": {
             "frequency": "weekly",
             "interval": 1,
@@ -369,10 +395,16 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
         for doc in db.demonstrations.find({"parent": parent_id}, {"date": 1})
     }
     saved_parent = db.recu_demos.find_one({"_id": parent_id})
+    generated_child = db.demonstrations.find_one(
+        {"parent": parent_id, "date": "2099-07-08"}
+    )
     assert break_child["cancelled"] is True
     assert "2099-07-01" in created_dates
     assert "2099-07-08" in created_dates
     assert "2099-07-15" in created_dates
+    assert generated_child["slug"] == "runner-break-series-2099-07-08"
+    assert generated_child["img"] == "/static/uploads/runner-source.jpg"
+    assert generated_child["preview_image"] == "https://cdn.example.test/runner-preview.jpg"
     assert saved_parent["created_until"].startswith("2099-07-15")
 
 
@@ -498,3 +530,66 @@ def test_admin_can_create_recurring_demo_with_translations(admin_client, db):
     assert created["translations"]["en"]["title"] == "Weekly recurring demo in English"
     assert created["translations"]["en"]["description"] == "English recurring description."
     assert created["translations"]["en"]["tags"] == ["peace", "weekly"]
+
+
+def test_admin_can_create_recurring_demo_with_slug_and_all_image_assets(
+    admin_client, db
+):
+    response = admin_client.post(
+        "/admin/recu_demo/create_recu_demo",
+        data={
+            "title": "Weekly image series",
+            "description": "Recurring media fixture.",
+            "date": "2026-11-05",
+            "start_time": "12:00",
+            "end_time": "13:00",
+            "city": "Helsinki",
+            "address": "Testikatu 4",
+            "type": "MARCH",
+            "slug": "Viikoittainen kuvamarssi",
+            "cover_picture": "https://cdn.example.test/series-cover.jpg",
+            "img": "/static/uploads/series-original.jpg",
+            "preview_image": "https://cdn.example.test/series-preview.jpg",
+            "gallery_images": "https://cdn.example.test/series-gallery.jpg",
+            "frequency_type": "weekly",
+            "frequency_interval": "1",
+            "weekday": "thursday",
+            "end_date": "2026-12-31",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    created = db.recu_demos.find_one({"title": "Weekly image series"})
+    assert created["slug"] == "viikoittainen-kuvamarssi"
+    assert created["cover_picture"] == "https://cdn.example.test/series-cover.jpg"
+    assert created["img"] == "/static/uploads/series-original.jpg"
+    assert created["preview_image"] == "https://cdn.example.test/series-preview.jpg"
+    assert created["gallery_images"] == [
+        "https://cdn.example.test/series-gallery.jpg"
+    ]
+
+
+def test_recurring_demo_cover_upload_overrides_the_url(admin_client, db):
+    response = admin_client.post(
+        "/admin/recu_demo/create_recu_demo",
+        data={
+            "title": "Uploaded recurring cover",
+            "date": "2026-11-12",
+            "start_time": "12:00",
+            "end_time": "13:00",
+            "city": "Helsinki",
+            "address": "Testikatu 5",
+            "type": "STAY_STILL",
+            "cover_picture": "https://cdn.example.test/old-cover.jpg",
+            "cover_picture_file": (io.BytesIO(b"test image"), "uusi kansi.jpg"),
+            "frequency_type": "none",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    created = db.recu_demos.find_one({"title": "Uploaded recurring cover"})
+    assert created["cover_picture"] == (
+        "https://cdn.example.test/uploads/demo_preview/uusi_kansi.jpg"
+    )

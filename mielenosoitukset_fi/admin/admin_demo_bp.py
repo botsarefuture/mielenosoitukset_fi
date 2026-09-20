@@ -33,6 +33,10 @@ from urllib.parse import quote_plus
 
 from mielenosoitukset_fi.utils.classes import Demonstration, Organizer, MemberShip, Case
 from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo, queue_cancellation_links_for_demo
+from mielenosoitukset_fi.utils.demo_slugs import (
+    demo_slug_is_available,
+    normalize_demo_slug,
+)
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
@@ -3553,6 +3557,26 @@ def handle_demo_form(
     # Collect demonstration data from the form
     demonstration_data = collect_demo_data(request)
     case_id = request.args.get("case_id") or None
+
+    # Older integrations may not submit the newly exposed editor fields. In
+    # that case an edit must preserve the stored values rather than clear them.
+    for optional_field in ("slug", "img", "preview_image"):
+        if optional_field not in request.form:
+            demonstration_data.pop(optional_field, None)
+
+    slug = demonstration_data.get("slug")
+    excluded_demo_id = ObjectId(demo_id) if is_edit and demo_id else None
+    if slug and not demo_slug_is_available(
+        mongo.demonstrations,
+        slug,
+        exclude_id=excluded_demo_id,
+    ):
+        flash_message(
+            "Lyhytlinkki '%(slug)s' on jo käytössä. Valitse toinen lyhytlinkki.",
+            "error",
+            slug=slug,
+        )
+        return redirect(request.url)
   
 
     from mielenosoitukset_fi.utils.admin.demonstration import fix_organizers
@@ -3968,6 +3992,7 @@ def collect_demo_data(request):
     start_time = request.form.get("start_time")
     end_time = request.form.get("end_time")
     facebook = request.form.get("facebook")
+    slug = normalize_demo_slug(request.form.get("slug"))
     city = request.form.get("city")
     city_key = normalize_city_key(city)
     address = request.form.get("address")
@@ -4023,6 +4048,8 @@ def collect_demo_data(request):
 
     gallery_images_field = request.form.get("gallery_images")
     gallery_images = parse_gallery_images_field(gallery_images_field)
+    img = (request.form.get("img") or "").strip() or None
+    preview_image = (request.form.get("preview_image") or "").strip() or None
 
     return {
         "title": title,
@@ -4030,6 +4057,7 @@ def collect_demo_data(request):
         "start_time": start_time,
         "end_time": end_time,
         "facebook": facebook,
+        "slug": slug,
         "city": city,
         "city_key": city_key,
         "address": address,
@@ -4044,6 +4072,8 @@ def collect_demo_data(request):
         "latitude": latitude,
         "longitude": longitude,
         "cover_picture": cover_picture,  # Add cover_picture to output
+        "img": img,
+        "preview_image": preview_image,
         "gallery_images": gallery_images,
     }
 

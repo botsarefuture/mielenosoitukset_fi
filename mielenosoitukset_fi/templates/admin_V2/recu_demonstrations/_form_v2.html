@@ -1,5 +1,6 @@
 {% extends 'admin_base.html' %}
 {% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/demonstrations/_media_fields.html' import demo_media_fields %}
 
 {% block styles %}
 <!-- Core CSS -->
@@ -545,36 +546,7 @@
         </section>
 
 
-        <!-- Social & Cover Picture -->
-        <section id="misc-info" class="form-section dashboard-panel mb-8">
-            <h2>Sekalaiset</h2>
-            <div class="form-group">
-                <label for="facebook">{{ _('Facebook linkki') }}</label>
-                <input type="url" id="facebook" name="facebook" class="form-control"
-                    value="{{ demo.facebook|default('', true) if demo else '' }}">
-            </div>
-
-            <div class="form-group">
-                <label for="cover_picture">{{ _('Kansikuva') }}</label>
-                <input type="text" id="cover_picture" name="cover_picture" class="form-control"
-                    placeholder="{{ _('Syötä kuvan URL tai lataa alla') }}"
-                    value="{{ demo.cover_picture|default('', true) if demo else '' }}">
-                <input type="file" id="cover_picture_file" name="cover_picture_file" class="form-control mt-2"
-                    accept="image/*">
-                {% if demo and demo.cover_picture %}
-                <div class="mt-2">
-                    <img src="{{ demo.cover_picture }}" alt="{{ _('Kansikuvan esikatselu') }}"
-                        class="admin-form-image-preview">
-                </div>
-                {% endif %}
-            </div>
-            <div class="form-group">
-                <label for="gallery_images">{{ _('Lisäkuvat (yksi URL per rivi)') }}</label>
-                <textarea id="gallery_images" name="gallery_images" class="form-control" rows="4"
-                    placeholder="{{ _('Ensimmäinen rivi näkyy korttien kuvana, loput muodostavat karusellin.') }}">{{ (demo.gallery_images | join('\n')) if demo and demo.gallery_images else '' }}</textarea>
-                <small class="text-muted">{{ _('Voit liittää useita kuvia; järjestys määrää karusellin järjestyksen.') }}</small>
-            </div>
-        </section>
+        {{ demo_media_fields(demo, recurring=true) }}
 
         <!-- Location Section -->
         <section id="location-info" class="form-section dashboard-panel mb-8">

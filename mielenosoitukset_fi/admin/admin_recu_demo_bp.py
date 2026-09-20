@@ -3,8 +3,9 @@ from copy import deepcopy
 from datetime import datetime, date
 
 from bson.objectid import ObjectId
-from flask import Blueprint, jsonify, render_template, request, redirect, url_for
+from flask import Blueprint, current_app, jsonify, render_template, request, redirect, url_for
 from flask_login import login_required
+from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.utils.flashing import flash_message
 
 from mielenosoitukset_fi.utils.classes import RecurringDemonstration, Organizer, RepeatSchedule
@@ -18,6 +19,11 @@ from mielenosoitukset_fi.utils.wrappers import (
 
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
 from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo
+from mielenosoitukset_fi.utils.demo_slugs import (
+    demo_slug_is_available,
+    normalize_demo_slug,
+)
+from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.demonstrations.audit import record_demo_change
 from .utils import mongo, _ADMIN_TEMPLATE_FOLDER
 
@@ -34,7 +40,13 @@ CHILD_BULK_FIELD_MAP = {
     "route": ("route",),
     "organizers": ("organizers",),
     "tags": ("tags",),
-    "links_and_images": ("facebook", "cover_picture", "gallery_images"),
+    "links_and_images": (
+        "facebook",
+        "cover_picture",
+        "img",
+        "preview_image",
+        "gallery_images",
+    ),
     "approved": ("approved",),
 }
 
@@ -551,6 +563,11 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     start_time = request.form.get("start_time")
     end_time = request.form.get("end_time")
     facebook = request.form.get("facebook")
+    slug = (
+        normalize_demo_slug(request.form.get("slug"))
+        if "slug" in request.form
+        else (existing_demo or {}).get("slug")
+    )
     city = request.form.get("city") or ""
     address = request.form.get("address")
     latitude = request.form.get("latitude")
@@ -562,7 +579,41 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     tags = collect_tags(request)
     translations = collect_demo_translations(request, default_language)
     cover_picture = request.form.get("cover_picture")
+    cover_picture_file = request.files.get("cover_picture_file")
+    if cover_picture_file and cover_picture_file.filename:
+        filename = secure_filename(cover_picture_file.filename)
+        uploaded_url = upload_image_fileobj(
+            current_app.config.get("S3_BUCKET"),
+            cover_picture_file.stream,
+            filename,
+            "demo_preview",
+        )
+        if uploaded_url:
+            cover_picture = uploaded_url
+    img = (
+        (request.form.get("img") or "").strip() or None
+        if "img" in request.form
+        else (existing_demo or {}).get("img")
+    )
+    preview_image = (
+        (request.form.get("preview_image") or "").strip() or None
+        if "preview_image" in request.form
+        else (existing_demo or {}).get("preview_image")
+    )
     gallery_images = parse_gallery_images_field(request.form.get("gallery_images"))
+
+    excluded_demo_id = ObjectId(demo_id) if is_edit and demo_id else None
+    if slug and not demo_slug_is_available(
+        mongo.recu_demos,
+        slug,
+        exclude_id=excluded_demo_id,
+    ):
+        flash_message(
+            "Lyhytlinkki '%(slug)s' on jo käytössä. Valitse toinen lyhytlinkki.",
+            "error",
+            slug=slug,
+        )
+        return redirect(request.url)
 
     organizers = _collect_organizers(
         request.form,
@@ -632,14 +683,20 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
             ("description", description),
             ("facebook", facebook),
             ("cover_picture", cover_picture),
+            ("img", img),
+            ("preview_image", preview_image),
         ):
             if value == "" and existing_demo.get(field_name) is None:
                 if field_name == "description":
                     description = None
                 elif field_name == "facebook":
                     facebook = None
-                else:
+                elif field_name == "cover_picture":
                     cover_picture = None
+                elif field_name == "img":
+                    img = None
+                else:
+                    preview_image = None
 
     if latitude and not _is_valid_latitude(latitude):
         latitude = None
@@ -659,6 +716,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "end_time": end_time,
         "tags": tags,
         "facebook": facebook,
+        "slug": slug,
         "city": city,
         "city_key": normalize_city_key(city),
         "address": address,
@@ -668,6 +726,8 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "route": route,
         "approved": approved,
         "cover_picture": cover_picture,
+        "img": img,
+        "preview_image": preview_image,
         "gallery_images": gallery_images,
         "repeat_schedule": repeat_schedule,
         "break_dates": break_dates,

@@ -24,6 +24,7 @@ from mielenosoitukset_fi.utils.demo_slugs import (
     normalize_demo_slug,
 )
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
+from mielenosoitukset_fi.utils.recurrence import calculate_recurrence_dates
 from mielenosoitukset_fi.demonstrations.audit import record_demo_change
 from .utils import mongo, _ADMIN_TEMPLATE_FOLDER
 
@@ -169,6 +170,79 @@ def _collect_break_dates(form):
             dates.append(normalized)
             seen.add(normalized)
     return sorted(dates)
+
+
+def _parse_recurrence_preview_date(value):
+    """Accept the ISO and Finnish date formats supported by the form."""
+    for date_format in ("%Y-%m-%d", "%d.%m.%Y"):
+        try:
+            return datetime.strptime((value or "").strip(), date_format).date()
+        except ValueError:
+            continue
+    return None
+
+
+@admin_recu_demo_bp.route("/preview-dates")
+@login_required
+@admin_required
+def preview_recurrence_dates():
+    """Preview upcoming dates without persisting or generating child demos."""
+    if not (
+        current_user.has_permission("CREATE_RECURRING_DEMO")
+        or current_user.has_permission("EDIT_RECURRING_DEMO")
+    ):
+        return jsonify({"message": "Käyttöoikeutesi eivät riitä esikatseluun."}), 403
+
+    start_date = _parse_recurrence_preview_date(request.args.get("date"))
+    if not start_date:
+        return jsonify({"message": "Täytä ensin kelvollinen alkupäivä."}), 400
+
+    frequency = _get_repeat_frequency(request.args)
+    interval = _get_repeat_interval(request.args, frequency)
+    monthly_option = request.args.get("monthly_option") if frequency == "monthly" else None
+    day_of_month = None
+    if monthly_option == "day_of_month":
+        try:
+            day_of_month = int(request.args.get("day_of_month") or start_date.day)
+        except (TypeError, ValueError):
+            day_of_month = None
+
+    try:
+        schedule = RepeatSchedule(
+            frequency=frequency,
+            interval=interval,
+            weekday=request.args.get("weekday") if frequency == "weekly" else None,
+            monthly_option=monthly_option,
+            day_of_month=day_of_month,
+            nth_weekday=request.args.get("nth_weekday")
+            if monthly_option == "nth_weekday"
+            else None,
+            weekday_of_month=request.args.get("weekday_of_month")
+            if monthly_option == "nth_weekday"
+            else None,
+            end_date=(request.args.get("end_date") or "").strip() or None,
+        )
+    except (TypeError, ValueError):
+        return jsonify(
+            {"message": "Tarkista, että kaikki toistuvuusasetukset ovat kelvollisia."}
+        ), 400
+
+    break_dates = set(_collect_break_dates(request.args))
+    candidate_dates = calculate_recurrence_dates(
+        start_date,
+        schedule,
+        max_occurrences=100,
+    )
+    dates = [value.isoformat() for value in candidate_dates if value.isoformat() not in break_dates]
+    return jsonify(
+        {
+            "dates": dates[:12],
+            "has_more": len(dates) > 12,
+            "excluded_break_dates": sum(
+                1 for value in candidate_dates if value.isoformat() in break_dates
+            ),
+        }
+    )
 
 
 def _is_valid_latitude(value):

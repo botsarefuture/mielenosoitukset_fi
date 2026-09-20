@@ -15,6 +15,7 @@
 <script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/admin_recurrence_preview.js', v='20260920-admin-ui-1') }}"></script>
 
 <script>
 
@@ -374,6 +375,31 @@
                 </div>
                 <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-break-date">{{ _('Lisää taukopäivä') }}</button>
             </div>
+
+            <section
+                class="admin-panel-inset admin-recurrence-preview"
+                aria-labelledby="recurrence-preview-heading"
+                data-recurrence-preview
+                data-preview-endpoint="{{ url_for('admin_recu_demo.preview_recurrence_dates') }}"
+                data-loading-label="{{ _('Lasketaan tulevia päivämääriä…') }}"
+                data-start-label="{{ _('Täytä alkupäivä nähdäksesi tulevat päivämäärät.') }}"
+                data-empty-label="{{ _('Nykyisillä asetuksilla ei synny tulevia päivämääriä.') }}"
+                data-error-label="{{ _('Päivämäärien esikatselua ei voitu laskea.') }}"
+                data-count-label="{{ _('Seuraavat %(count)s päivämäärää', count='__COUNT__') }}"
+                data-more-label="{{ _('Lisää päivämääriä syntyy tämän esikatselun jälkeen.') }}"
+                data-break-label="{{ _('%(count)s taukopäivää on jätetty pois.', count='__COUNT__') }}"
+            >
+                <header class="admin-recurrence-preview__header">
+                    <div>
+                        <h3 id="recurrence-preview-heading">{{ _('Tulevien päivämäärien esikatselu') }}</h3>
+                        <p>{{ _('Esikatselu päivittyy toistuvuusasetusten mukaan eikä vielä luo lapsimielenosoituksia.') }}</p>
+                    </div>
+                    <span class="admin-status-badge admin-status-badge--info">{{ _('Enintään 12 päivää') }}</span>
+                </header>
+                <p class="admin-recurrence-preview__status" data-preview-status aria-live="polite">{{ _('Täytä alkupäivä nähdäksesi tulevat päivämäärät.') }}</p>
+                <ol class="admin-recurrence-preview__dates" data-preview-dates></ol>
+                <p class="admin-field__help" data-preview-note hidden></p>
+            </section>
 
             <script>
                 const freqSelect = document.getElementById('frequency_type');

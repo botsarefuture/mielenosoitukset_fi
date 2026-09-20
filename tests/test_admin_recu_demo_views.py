@@ -1,3 +1,5 @@
+from datetime import date
+
 from bson import ObjectId
 
 
@@ -33,6 +35,52 @@ def test_edit_recu_demo_renders_shared_admin_form_with_org_selector(admin_client
     assert "Päivitä lapsimielenosoituksia" in page
     assert 'class="editor-save-bar"' in page
     assert '<option value="weekly" selected>' in page
+
+
+def test_recurring_form_exposes_live_date_preview(admin_client):
+    response = admin_client.get("/admin/recu_demo/create_recu_demo")
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "Tulevien päivämäärien esikatselu" in page
+    assert "data-recurrence-preview" in page
+    assert "/admin/recu_demo/preview-dates" in page
+    assert "js/admin_recurrence_preview.js" in page
+
+
+def test_recurring_date_preview_uses_schedule_and_excludes_breaks(admin_client):
+    response = admin_client.get(
+        "/admin/recu_demo/preview-dates",
+        query_string=[
+            ("date", "2099-01-01"),
+            ("frequency_type", "weekly"),
+            ("frequency_interval", "1"),
+            ("weekday", "friday"),
+            ("end_date", "2099-02-01"),
+            ("break_dates", "2099-01-01"),
+        ],
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert "2099-01-01" not in payload["dates"]
+    assert payload["excluded_break_dates"] == 1
+    assert payload["dates"]
+    assert all(date.fromisoformat(value).weekday() == 4 for value in payload["dates"])
+
+
+def test_recurring_date_preview_rejects_incomplete_monthly_schedule(admin_client):
+    response = admin_client.get(
+        "/admin/recu_demo/preview-dates",
+        query_string={
+            "date": "2099-01-01",
+            "frequency_type": "monthly",
+            "monthly_option": "nth_weekday",
+        },
+    )
+
+    assert response.status_code == 400
+    assert "toistuvuusasetukset" in response.get_json()["message"]
 
 
 def test_edit_recu_demo_prefills_translation_fields(admin_client, db, seeded_data):

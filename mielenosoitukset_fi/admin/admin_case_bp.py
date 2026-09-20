@@ -25,7 +25,6 @@ from mielenosoitukset_fi.utils.logger import logger
 
 # --- init ---
 SECRET_KEY = "your_secret_key"
-GEOCODE_API_KEY = "66df12ce96495339674278ivnc82595"
 serializer = URLSafeTimedSerializer(SECRET_KEY)
 email_sender = EmailSender()
 

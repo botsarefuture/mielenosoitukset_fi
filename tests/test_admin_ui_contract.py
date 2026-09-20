@@ -956,7 +956,9 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
         assert "import admin_page_hero" in source, str(template)
         assert "admin_page_hero(" in source, str(template)
 
-    assert len(pages) == 52
+    # Exact inventory ratchet: the unreachable legacy recurring form was removed,
+    # leaving 51 routed full-page admin templates.
+    assert len(pages) == 51
     for locale in ("en", "fi", "sv"):
         catalog = Path(
             f"mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.po"
@@ -1356,3 +1358,31 @@ def test_demo_edit_links_use_the_shared_secure_lifecycle_contract():
     assert "edit_link: editLink" not in edit_link_script
     assert "generate-edit-link-btn" not in recurring_form
     assert "send_edit_link_email" not in recurring_form
+
+
+def test_retired_admin_styles_and_templates_do_not_return():
+    admin_css = Path("mielenosoitukset_fi/static/css/admin")
+    retired_styles = {
+        "activities.css",
+        "case.css",
+        "dash.css",
+        "demo_checkbox.css",
+        "demo_form.css",
+        "recu_dash.css",
+        "sidebar_v2.css",
+    }
+
+    assert not retired_styles.intersection(path.name for path in admin_css.glob("*.css"))
+    assert not Path(
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form.html"
+    ).exists()
+
+    admin_base = Path("mielenosoitukset_fi/templates/admin_base.html").read_text(
+        encoding="utf-8"
+    )
+    macros = Path("mielenosoitukset_fi/templates/admin_V2/macros.html").read_text(
+        encoding="utf-8"
+    )
+    for stylesheet in retired_styles:
+        assert stylesheet not in admin_base
+    assert "macro render_table" not in macros

@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* The `repeat_main` background job ("Recurring demonstrations refresher") now actually runs and creates child demonstrations. Its entrypoint previously read from stdin (`input()` with a "want to continue? (y/n)" prompt), which raised `EOFError` inside the scheduler and aborted every run before any demo children were created. The interactive prompt and `sys.argv` handling moved to a dedicated CLI entry used only when the script runs standalone, so triggering the job from the admin background-jobs page now works headlessly.
 * Production deploy verification now waits for a replacement worker that reports the exact requested commit SHA; `/health` publishes immutable per-worker build metadata, stale workers cannot falsely complete a graceful reload, and the documented deployment key is restricted from shells, PTYs, agent/X11 forwarding, and port forwarding.
 * Admin page heroes now resolve exclusively from the canonical shared hero contract: the remaining city, demonstration, user, governance, editor, log, case, introduction, and legacy page-header selector aliases have been removed, preventing old palettes or geometry from diverging across pages and themes.
 * Admin flash notifications now use Finnish consistently for the default locale instead of mixing English into panic-mode, background-job, and statistics workflows. The canonical Babel extraction command now includes `flash_message()` literals, and named runtime values are interpolated only after translation.

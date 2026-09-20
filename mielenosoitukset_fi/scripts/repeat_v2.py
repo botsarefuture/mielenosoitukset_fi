@@ -637,31 +637,28 @@ def process_runtime_actions():
 
 
 
-def main():
+def main(dry_run: bool = False, only_calculate: bool = False) -> None:
     """
     Entry point for processing recurring demonstrations.
+
+    Unlike the CLI entry point, this function never prompts for input or
+    reads ``sys.argv``, so it is safe to invoke from the background job
+    manager (which has no interactive stdin).
+
+    Parameters
+    ----------
+    dry_run : bool, optional
+        When True, do not write any changes to the database; only simulate.
+    only_calculate : bool, optional
+        When True, only calculate next occurrences without creating or
+        deleting demos.
 
     Returns
     -------
     None
     """
     global DRY_RUN
-    parser = argparse.ArgumentParser(description="Process recurring demonstrations")
-    parser.add_argument("--dry-run", action="store_true", help="Do not write changes to the database; only simulate")
-    parser.add_argument("--only-calculate", action="store_true", help="Only calculate next occurrences without creating or deleting demos")
-    # Ignore the first two arguments passed to the process (drop argv[0] and argv[1])
-    import sys
-    args_to_parse = sys.argv[3:]
-    args = parser.parse_args(args_to_parse)
-    
-    print(f"DRY RUN: {args.dry_run}, want to continue? (y/n)")
-    answer = input().strip().lower()
-    if answer != 'y':
-        logger.info("Aborting demonstration processing.")
-        return
-    
-    DRY_RUN = bool(args.dry_run)
-    only_calculate = bool(args.only_calculate)
+    DRY_RUN = bool(dry_run)
 
     logger.info(f"Starting demonstration processing. DRY_RUN={DRY_RUN}, ONLY_CALCULATE={only_calculate}")
     handle_repeating_demonstrations(only_calculate=only_calculate)
@@ -674,5 +671,27 @@ def main():
         logger.info("ONLY_CALCULATE flag set: skipped creation, deletion, and merge.")
 
 
+def _cli_main() -> None:
+    """
+    Command-line entry point with an interactive dry-run confirmation prompt.
+
+    This is only used when the script is executed directly
+    (``python repeat_v2.py``), never from the background job manager.
+    """
+    parser = argparse.ArgumentParser(description="Process recurring demonstrations")
+    parser.add_argument("--dry-run", action="store_true", help="Do not write changes to the database; only simulate")
+    parser.add_argument("--only-calculate", action="store_true", help="Only calculate next occurrences without creating or deleting demos")
+    args = parser.parse_args()
+
+    if args.dry_run:
+        print(f"DRY RUN: {args.dry_run}, want to continue? (y/n)")
+        answer = input().strip().lower()
+        if answer != 'y':
+            logger.info("Aborting demonstration processing.")
+            return
+
+    main(dry_run=args.dry_run, only_calculate=args.only_calculate)
+
+
 if __name__ == "__main__":
-    main()
+    _cli_main()

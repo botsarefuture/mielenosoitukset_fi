@@ -1,10 +1,10 @@
 {% extends "admin_base.html" %}
-{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
 
 {% block title %}{{ _('Käyttöliittymäkäännösten GitHub-synkit') }}{% endblock %}
 
 {% block main_content %}
-<div class="admin-page">
+<section class="admin-page">
   {{ admin_page_hero(
     _('Käyttöliittymäkäännösten GitHub-synkit'),
     _('Seuraa hyväksyttyjen UI-käännösten branch-, PR- ja merge-tilaa sekä jonota epäonnistuneet synkit uudelleen.'),
@@ -14,137 +14,117 @@
     back_label=_('Käyttöliittymäkäännökset')
   ) }}
 
-  <form method="GET" class="row g-3 align-items-end admin-panel">
-    <div class="col-md-3">
-      <label class="form-label" for="locale">{{ _('Kieli') }}</label>
-      <select class="form-select" id="locale" name="locale">
-        <option value="">{{ _('Kaikki kielet') }}</option>
-        {% for locale in locales %}
-        <option value="{{ locale }}" {% if selected_locale == locale %}selected{% endif %}>{{ language_names.get(locale, locale) }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label" for="sync_status">{{ _('Sync-tila') }}</label>
-      <select class="form-select" id="sync_status" name="sync_status">
-        {% for value, label in [('all', _('Kaikki')), ('queued', _('Jonossa')), ('running', _('Käynnissä')), ('retry', _('Epäonnistui')), ('branch_pushed', _('Branch pushattu')), ('pr_opened', _('PR avattu')), ('committed_local_branch', _('Commit tehty, push puuttuu')), ('noop', _('Ei muutosta'))] %}
-        <option value="{{ value }}" {% if sync_status == value %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label" for="merge_status">{{ _('Merge-tila') }}</label>
-      <select class="form-select" id="merge_status" name="merge_status">
-        {% for value, label in [('all', _('Kaikki')), ('merged', _('Mergetty')), ('merge_blocked', _('Merge blokattu')), ('not_configured', _('Automerge ei käytössä')), ('merge_unknown', _('Tuntematon'))] %}
-        <option value="{{ value }}" {% if merge_status == value %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label" for="search">{{ _('Haku') }}</label>
-      <input class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="{{ _('Hae msgid:llä, branchilla tai tekstillä') }}">
-    </div>
-    <div class="col-12 d-flex gap-2">
-      <button class="btn btn-primary" type="submit">{{ _('Suodata') }}</button>
-      <a class="btn btn-outline-secondary" href="{{ url_for('admin.ui_translation_sync_dashboard') }}">{{ _('Tyhjennä') }}</a>
-    </div>
-  </form>
+  <section class="admin-workspace-summary" aria-label="{{ _('GitHub-synkkien yhteenveto') }}">
+    <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-code-branch" aria-hidden="true"></i></span><div><span>{{ _('Yhteensä') }}</span><strong>{{ sync_counts.total }}</strong></div></article>
+    <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-rotate" aria-hidden="true"></i></span><div><span>{{ _('Uudelleen jonotettavat') }}</span><strong>{{ sync_counts.retryable }}</strong></div></article>
+    <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-clock" aria-hidden="true"></i></span><div><span>{{ _('Jonossa / käynnissä') }}</span><strong>{{ sync_counts.queued + sync_counts.running }}</strong></div></article>
+    <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-code-pull-request" aria-hidden="true"></i></span><div><span>{{ _('PR avattu') }}</span><strong>{{ sync_counts.pr_opened }}</strong></div></article>
+  </section>
 
-  <div class="card mb-4">
-    <div class="card-body">
-      <div class="d-flex flex-wrap gap-3 small text-muted">
-        <span>{{ _('Yhteensä') }}: {{ sync_counts.total }}</span>
-        <span>{{ _('Retryttävät') }}: {{ sync_counts.retryable }}</span>
-        <span>{{ _('Jonossa') }}: {{ sync_counts.queued }}</span>
-        <span>{{ _('Käynnissä') }}: {{ sync_counts.running }}</span>
-        <span>{{ _('Epäonnistui') }}: {{ sync_counts.retry }}</span>
-        <span>{{ _('PR avattu') }}: {{ sync_counts.pr_opened }}</span>
-      </div>
-    </div>
-  </div>
-
-  <form method="POST" action="{{ url_for('admin.bulk_requeue_ui_translation_sync') }}">
-    <div class="card">
-      <div class="card-body">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-          <h2 class="h5 mb-0">{{ _('GitHub-synkit') }}</h2>
-          <div class="admin-row-actions">
-            <span id="sync-selection-status" class="admin-selection-status" aria-live="polite">{{ _('Ei valintoja · valitse synkkejä rivien neliöruuduista') }}</span>
-            <button id="bulk-requeue-button" class="btn btn-outline-primary btn-sm" type="submit" disabled>{{ _('Jonota valitut uudelleen') }}</button>
-          </div>
+  <section class="dashboard-panel admin-workspace-toolbar" aria-label="{{ _('GitHub-synkkien suodattimet') }}">
+    <form method="GET" action="{{ url_for('admin.ui_translation_sync_dashboard') }}" class="admin-filter-bar" id="ui-sync-filter-form">
+      <input type="hidden" name="page" value="1">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="admin-filter-bar__primary">
+        <div class="admin-field">
+          <label for="locale">{{ _('Kieli') }}</label>
+          <select id="locale" name="locale">
+            <option value="">{{ _('Kaikki kielet') }}</option>
+            {% for locale in locales %}<option value="{{ locale }}" {% if selected_locale == locale %}selected{% endif %}>{{ language_names.get(locale, locale) }}</option>{% endfor %}
+          </select>
         </div>
+        <div class="admin-field">
+          <label for="sync_status">{{ _('Synkronoinnin tila') }}</label>
+          <select id="sync_status" name="sync_status">
+            {% for value, label in [('all', _('Kaikki')), ('queued', _('Jonossa')), ('running', _('Käynnissä')), ('retry', _('Epäonnistui')), ('branch_pushed', _('Branch lähetetty')), ('pr_opened', _('PR avattu')), ('committed_local_branch', _('Commit tehty, lähetys puuttuu')), ('noop', _('Ei muutosta'))] %}
+            <option value="{{ value }}" {% if sync_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="admin-field">
+          <label for="merge_status">{{ _('Merge-tila') }}</label>
+          <select id="merge_status" name="merge_status">
+            {% for value, label in [('all', _('Kaikki')), ('merged', _('Mergetty')), ('merge_blocked', _('Merge estynyt')), ('not_configured', _('Automaattinen merge ei ole käytössä')), ('merge_unknown', _('Tuntematon'))] %}
+            <option value="{{ value }}" {% if merge_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="admin-field">
+          <label for="search">{{ _('Haku') }}</label>
+          <input type="search" id="search" name="search" value="{{ search_query }}" placeholder="{{ _('Hae avaintekstillä, branchilla tai tekstillä') }}">
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="fas fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+      </div>
+    </form>
+    {% if selected_locale or sync_status != 'all' or merge_status != 'all' or search_query %}
+    <div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">
+      {% if selected_locale %}<span class="admin-filter-chip">{{ _('Kieli') }}: {{ language_names.get(selected_locale, selected_locale) }}</span>{% endif %}
+      {% if sync_status != 'all' %}<span class="admin-filter-chip">{{ _('Synkronointi') }}: {{ sync_status }}</span>{% endif %}
+      {% if merge_status != 'all' %}<span class="admin-filter-chip">{{ _('Merge') }}: {{ merge_status }}</span>{% endif %}
+      {% if search_query %}<span class="admin-filter-chip">{{ _('Haku') }}: {{ search_query }}</span>{% endif %}
+      <a class="admin-clear-filters" href="{{ url_for('admin.ui_translation_sync_dashboard') }}">{{ _('Tyhjennä suodattimet') }}</a>
+    </div>
+    {% endif %}
+  </section>
 
-        <div class="table-responsive admin-workspace-table">
-          <table class="table align-middle">
-            <thead>
-              <tr>
-                <th class="select-col"><input class="form-check-input admin-selection-checkbox" type="checkbox" id="select-all-sync-rows" aria-label="{{ _('Valitse kaikki uudelleen jonotettavat synkit') }}"></th>
-                <th>{{ _('Kieli / avainteksti') }}</th>
-                <th>{{ _('Sync') }}</th>
-                <th>{{ _('Merge') }}</th>
-                <th>{{ _('PR / branch') }}</th>
-                <th>{{ _('Toiminnot') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in sync_rows %}
-              {% set sync = row.github_sync or {} %}
-              {% set retryable = row.status == 'approved' and sync.status in ['retry', 'committed_local_branch'] %}
-              <tr>
-                <td>
-                  {% if retryable %}
-                  <input class="form-check-input admin-selection-checkbox" type="checkbox" name="proposal_ids" value="{{ row._id }}" aria-label="{{ _('Valitse synkki') }} {{ row.msgid }}">
-                  {% endif %}
-                </td>
-                <td>
-                  <div class="fw-semibold">{{ language_names.get(row.locale, row.locale) }}</div>
-                  <div>{{ row.msgid }}</div>
-                  {% if row.proposed_text %}
-                  <div class="small text-muted">{{ row.proposed_text }}</div>
-                  {% endif %}
-                </td>
-                <td>
-                  <span class="badge bg-secondary">{{ sync.status or '—' }}</span>
-                  {% if sync.last_error %}
-                  <div class="small text-danger mt-2">{{ sync.last_error }}</div>
-                  {% elif sync.message %}
-                  <div class="small text-muted mt-2">{{ sync.message }}</div>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if sync.merge_status %}
-                  <span class="badge bg-light text-dark border">{{ sync.merge_status }}</span>
-                  {% else %}
-                  —
-                  {% endif %}
-                  {% if sync.merge_message %}
-                  <div class="small text-muted mt-2">{{ sync.merge_message }}</div>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if sync.pr_url %}
-                  <div><a href="{{ sync.pr_url }}" target="_blank" rel="noopener">{{ _('Avaa PR') }}</a></div>
-                  {% endif %}
-                  {% if sync.branch_name %}
-                  <div class="small text-muted"><code>{{ sync.branch_name }}</code></div>
-                  {% endif %}
-                </td>
-                <td>
-                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.ui_translation_editor', locale=row.locale, msgid=row.msgid) }}">{{ _('Avaa') }}</a>
-                </td>
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="6" class="admin-empty-state">{{ _('Ei synkkejä valituilla suodattimilla.') }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+  <form method="POST" action="{{ url_for('admin.bulk_requeue_ui_translation_sync') }}" class="admin-form">
+    <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="ui-sync-heading">
+      <div class="admin-data-view__header admin-result-summary" aria-live="polite">
+        <div><strong id="ui-sync-heading">{{ _('GitHub-synkit') }}</strong><span>{{ _('Näytetään %(start)s–%(end)s / %(count)s synkistä', start=range_start, end=range_end, count=filtered_count) }}</span></div>
+        <div class="admin-row-actions">
+          <span id="sync-selection-status" class="admin-selection-status" aria-live="polite">{{ _('Ei valintoja · valitse synkkejä rivien neliöruuduista') }}</span>
+          <button id="bulk-requeue-button" class="btn btn-outline-primary btn-sm" type="submit" disabled>{{ _('Jonota valitut uudelleen') }}</button>
         </div>
       </div>
-    </div>
+      <div class="admin-data-view__viewport">
+        <table class="admin-data-view__table">
+          <thead>
+            <tr>
+              <th class="select-col"><input class="form-check-input admin-selection-checkbox" type="checkbox" id="select-all-sync-rows" aria-label="{{ _('Valitse kaikki tällä sivulla uudelleen jonotettavat synkit') }}"></th>
+              <th>{{ _('Kieli / avainteksti') }}</th>
+              <th>{{ _('Synkronointi') }}</th>
+              <th>{{ _('Merge') }}</th>
+              <th>{{ _('PR / branch') }}</th>
+              <th class="actions-cell-header">{{ _('Toiminnot') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in sync_rows %}
+            {% set sync = row.github_sync or {} %}
+            {% set retryable = row.status == 'approved' and sync.status in ['retry', 'committed_local_branch'] %}
+            <tr>
+              <td class="select-col">{% if retryable %}<input class="form-check-input admin-selection-checkbox" type="checkbox" name="proposal_ids" value="{{ row._id }}" aria-label="{{ _('Valitse synkki') }} {{ row.msgid }}">{% endif %}</td>
+              <td><strong>{{ language_names.get(row.locale, row.locale) }}</strong><div>{{ row.msgid }}</div>{% if row.proposed_text %}<div class="admin-field__help">{{ row.proposed_text }}</div>{% endif %}</td>
+              <td>
+                <span class="admin-status-badge{% if sync.status == 'retry' %} admin-status-badge--danger{% elif sync.status == 'running' %} admin-status-badge--info{% elif sync.status in ['pr_opened', 'branch_pushed'] %} admin-status-badge--success{% elif sync.status == 'committed_local_branch' %} admin-status-badge--warning{% endif %}">{{ sync.status or '—' }}</span>
+                {% if sync.last_error %}<div class="field-error">{{ sync.last_error }}</div>{% elif sync.message %}<div class="admin-field__help">{{ sync.message }}</div>{% endif %}
+              </td>
+              <td>{% if sync.merge_status %}<span class="admin-status-badge{% if sync.merge_status == 'merged' %} admin-status-badge--success{% elif sync.merge_status == 'merge_blocked' %} admin-status-badge--warning{% endif %}">{{ sync.merge_status }}</span>{% else %}—{% endif %}{% if sync.merge_message %}<div class="admin-field__help">{{ sync.merge_message }}</div>{% endif %}</td>
+              <td>{% if sync.pr_url %}<div><a href="{{ sync.pr_url }}" target="_blank" rel="noopener noreferrer">{{ _('Avaa PR') }}</a></div>{% endif %}{% if sync.branch_name %}<div class="admin-field__help"><code>{{ sync.branch_name }}</code></div>{% endif %}</td>
+              <td class="actions-cell"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.ui_translation_editor', locale=row.locale, msgid=row.msgid) }}">{{ _('Avaa') }}</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6"><div class="admin-empty-state"><i class="admin-empty-state__icon fas fa-code-branch" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Synkkejä ei löytynyt') }}</strong><span>{{ _('Kokeile muuttaa suodattimia tai tyhjennä ne.') }}</span></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {{ admin_pagination(
+        current_page,
+        total_pages,
+        per_page=per_page,
+        prev_page=prev_page,
+        next_page=next_page,
+        prev_page_url=prev_page_url,
+        next_page_url=next_page_url,
+        visible_pages=visible_pages,
+        first_page_url=first_page_url,
+        last_page_url=last_page_url,
+        aria_label=_('GitHub-synkkien sivutus')
+      ) }}
+    </section>
   </form>
-</div>
+</section>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -172,14 +152,10 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   toggle.addEventListener('change', function () {
-    checkboxes.forEach(function (checkbox) {
-      checkbox.checked = toggle.checked;
-    });
+    checkboxes.forEach(function (checkbox) { checkbox.checked = toggle.checked; });
     updateSelection();
   });
-  checkboxes.forEach(function (checkbox) {
-    checkbox.addEventListener('change', updateSelection);
-  });
+  checkboxes.forEach(function (checkbox) { checkbox.addEventListener('change', updateSelection); });
   updateSelection();
 });
 </script>

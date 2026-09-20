@@ -18,4 +18,11 @@ document.addEventListener("change", (event) => {
   if (event.target.matches("[data-admin-boolean]")) {
     updateAdminBooleanStatus(event.target);
   }
+
+  if (event.target.matches(".admin-page-size select")) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("per_page", event.target.value);
+    url.searchParams.set("page", "1");
+    window.location.assign(url.toString());
+  }
 });

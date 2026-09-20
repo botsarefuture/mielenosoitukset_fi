@@ -693,16 +693,6 @@
     </div>
   </div>
 
-
-  <script>
-    document.getElementById('page-size')?.addEventListener('change', (event) => {
-      const url = new URL(window.location.href);
-      url.searchParams.set('per_page', event.target.value);
-      url.searchParams.set('page', '1');
-      window.location.assign(url.toString());
-    });
-  </script>
-
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const deleteModalEl = document.getElementById('deleteModal');

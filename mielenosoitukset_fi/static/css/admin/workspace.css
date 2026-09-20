@@ -2217,6 +2217,29 @@ main.flex-grow-1 {
   box-shadow: var(--admin-workspace-shadow);
 }
 
+a.admin-workspace-summary-card {
+  color: inherit;
+  text-decoration: none;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+a.admin-workspace-summary-card:hover {
+  border-color: var(--admin-workspace-blue);
+  color: inherit;
+  transform: translateY(-1px);
+}
+
+a.admin-workspace-summary-card:focus-visible {
+  border-color: var(--admin-workspace-blue);
+  outline: none;
+  box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .12));
+}
+
+a.admin-workspace-summary-card[aria-current="page"] {
+  border-color: var(--admin-workspace-blue);
+  background: var(--admin-workspace-blue-soft);
+}
+
 .admin-workspace-summary-card div {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -2251,6 +2274,14 @@ main.flex-grow-1 {
   color: var(--admin-workspace-muted);
   font-size: .72rem;
   font-weight: 800;
+}
+
+.admin-workspace-summary-card small {
+  display: block;
+  margin-top: .25rem;
+  color: var(--admin-workspace-muted);
+  font-size: .72rem;
+  line-height: 1.35;
 }
 
 .admin-workspace-summary-card strong {
@@ -3313,8 +3344,14 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .admin-status-badge--running {
+  .admin-status-badge--running,
+  a.admin-workspace-summary-card {
     animation: none;
+    transition: none;
+  }
+
+  a.admin-workspace-summary-card:hover {
+    transform: none;
   }
 }
 

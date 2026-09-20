@@ -56,6 +56,31 @@ def test_admin_dashboard_shows_untranslated_rows_by_default(admin_client, app, t
     assert "Submit demonstration" in body
 
 
+def test_ui_translation_dashboard_paginates_and_preserves_filters(
+    admin_client, app, tmp_path
+):
+    root = _seed_translation_catalogs(app, tmp_path)
+    catalog = root / "en" / "LC_MESSAGES" / "messages.po"
+    with catalog.open("a", encoding="utf-8") as handle:
+        for index in range(45):
+            handle.write(f'\nmsgid "Bulk key {index:02d}"\nmsgstr ""\n')
+
+    response = admin_client.get(
+        "/admin/ui-translations?locale=en&search=Bulk+key&state=all&page=2&per_page=20"
+    )
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Bulk key 19" not in body
+    assert "Bulk key 20" in body
+    assert "Bulk key 39" in body
+    assert "Bulk key 40" not in body
+    assert "Näytetään 21–40 / 45 rivistä" in body
+    assert "search=Bulk+key" in body
+    assert "state=all" in body
+    assert "per_page=20" in body
+
+
 def test_admin_can_access_ui_translation_sync_dashboard(admin_client, app, db):
     app.config["UI_TRANSLATION_SYNC_ENABLED"] = True
     db.ui_translation_proposals.insert_one(
@@ -79,6 +104,38 @@ def test_admin_can_access_ui_translation_sync_dashboard(admin_client, app, db):
     body = response.get_data(as_text=True)
     assert "Käyttöliittymäkäännösten GitHub-synkit" in body
     assert "Submit demonstration" in body
+
+
+def test_ui_translation_sync_dashboard_paginates_stably(admin_client, app, db):
+    app.config["UI_TRANSLATION_SYNC_ENABLED"] = True
+    db.ui_translation_proposals.insert_many(
+        [
+            {
+                "_id": proposal_key("en", f"Sync row {index:02d}"),
+                "locale": "en",
+                "msgid": f"Sync row {index:02d}",
+                "proposed_text": f"Translated row {index:02d}",
+                "status": "approved",
+                "github_sync": {"status": "retry", "branch_name": f"sync-{index:02d}"},
+            }
+            for index in range(45)
+        ]
+    )
+
+    response = admin_client.get(
+        "/admin/ui-translations/sync?locale=en&sync_status=retry&page=2&per_page=20"
+    )
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Sync row 19" not in body
+    assert "Sync row 20" in body
+    assert "Sync row 39" in body
+    assert "Sync row 40" not in body
+    assert "Näytetään 21–40 / 45 synkistä" in body
+    assert "locale=en" in body
+    assert "sync_status=retry" in body
+    assert "per_page=20" in body
 
 
 def test_admin_get_to_approve_route_redirects_instead_of_error(admin_client, app, db):

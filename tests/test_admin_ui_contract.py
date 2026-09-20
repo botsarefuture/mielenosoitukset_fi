@@ -558,6 +558,52 @@ def test_translation_workspaces_use_canonical_hero_navigation():
     assert "--bs-" not in translation_css
 
 
+def test_translation_collections_use_shared_filter_data_and_pagination_contracts():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/ui_translations/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero, admin_pagination" in source
+        assert "admin-filter-bar" in source
+        assert "admin-data-view__header admin-result-summary" in source
+        assert "admin-data-view__viewport" in source
+        assert "admin-data-view__table" in source
+        assert "admin-empty-state" in source
+        assert "admin_pagination(" in source
+        assert "class=\"card" not in source
+        assert "table-responsive admin-workspace-table" not in source
+        assert "<style" not in source
+        assert "style=" not in source
+
+    ui_dashboard = Path(pages[1]).read_text(encoding="utf-8")
+    sync_dashboard = Path(pages[2]).read_text(encoding="utf-8")
+    assert "admin-workspace-summary" in ui_dashboard
+    assert "admin-workspace-summary" in sync_dashboard
+    assert "admin-selection-checkbox" in sync_dashboard
+    assert "aria-selected" in sync_dashboard
+
+    shared_script = Path(
+        "mielenosoitukset_fi/static/js/admin_workspace.js"
+    ).read_text(encoding="utf-8")
+    assert '.matches(".admin-page-size select")' in shared_script
+    assert 'url.searchParams.set("per_page", event.target.value)' in shared_script
+    assert 'url.searchParams.set("page", "1")' in shared_script
+
+    pagination_pages = pages + (
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/organizations/dashboard.html",
+    )
+    for name in pagination_pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "page-size')?.addEventListener" not in source
+        assert "pageSize?.addEventListener" not in source
+
+
 def test_system_workspaces_use_canonical_hero_navigation():
     pages = (
         "mielenosoitukset_fi/templates/admin_V2/dashboard.html",

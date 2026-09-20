@@ -78,6 +78,7 @@ from mielenosoitukset_fi.demonstrations.audit import (
     log_super_audit,
 )
 from mielenosoitukset_fi.demonstrations.decisions import apply_demo_decision
+from .pagination import build_admin_pagination, parse_admin_pagination
 
 
 # Secret key for generating tokens
@@ -1935,12 +1936,11 @@ def demo_translation_dashboard():
         abort(403)
 
     search_query = (request.args.get("search") or "").strip()
+    page, per_page = parse_admin_pagination(request.args)
     query = {
         "$or": [{"rejected": {"$exists": False}}, {"rejected": False}],
         "date": {"$gte": date.today().strftime("%Y-%m-%d")},
     }
-    if search_query:
-        query["title"] = {"$regex": re.escape(search_query), "$options": "i"}
 
     demo_docs = list(
         mongo.demonstrations.find(
@@ -1982,13 +1982,29 @@ def demo_translation_dashboard():
         parent["is_recurring_translation_source"] = True
         parent["date"] = first_child_dates.get(parent["_id"], "")
 
-    demos = recurring_parents + _filter_redundant_recurring_children(demo_docs)
-    demos.sort(key=lambda demo: (demo.get("date") or "", str(demo.get("_id"))))
-    demos = demos[:100]
+    all_demos = recurring_parents + _filter_redundant_recurring_children(demo_docs)
+    all_demos.sort(key=lambda demo: (demo.get("date") or "", str(demo.get("_id"))))
+    total_count = len(all_demos)
+    if search_query:
+        normalized_search = search_query.casefold()
+        all_demos = [
+            demo
+            for demo in all_demos
+            if normalized_search in (demo.get("title") or "").casefold()
+        ]
+    filtered_count = len(all_demos)
+    pagination = build_admin_pagination(
+        "admin_demo.demo_translation_dashboard",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args={"search": search_query},
+    )
+    demos = all_demos[pagination["slice_start"] : pagination["slice_end"]]
 
     pending_items = []
     if _can_review_demo_translations(current_user):
-        for demo in demos:
+        for demo in all_demos:
             for locale, proposal in (demo.get("translation_proposals") or {}).items():
                 if proposal.get("status") != "pending":
                     continue
@@ -2003,6 +2019,16 @@ def demo_translation_dashboard():
                         "proposal": proposal,
                     }
                 )
+        pending_items.sort(
+            key=lambda item: (
+                str(item.get("submitted_at") or ""),
+                item.get("demo_title") or "",
+                item.get("language") or "",
+            ),
+            reverse=True,
+        )
+    pending_total = len(pending_items)
+    pending_items = pending_items[:10]
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/translations_dashboard.html",
@@ -2012,6 +2038,10 @@ def demo_translation_dashboard():
         can_review_demo_translations=_can_review_demo_translations(current_user),
         can_translate_demos=_can_translate_demos(current_user),
         translation_language_names=_translation_language_names(),
+        total_count=total_count,
+        filtered_count=filtered_count,
+        pending_total=pending_total,
+        **pagination,
     )
 
 

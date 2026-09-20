@@ -78,6 +78,17 @@
       </button>
     </form>
 
+    <div class="auth-divider">
+      <span>{{ _('tai') }}</span>
+    </div>
+
+    <div class="mt-2">
+      <button type="button" class="btn btn-secondary btn-lg w-100" id="passkey-login-btn">
+        <i class="fa-solid fa-fingerprint"></i>
+        {{ _('Kirjaudu passkeyllä') }}
+      </button>
+    </div>
+
     <div class="verification-help">
       <button type="button" class="btn btn-secondary btn-small" id="open-verification-modal">
         <i class="fa-solid fa-envelope-open-text"></i>
@@ -187,6 +198,7 @@
   </div>
 </div>
 
+<script src="{{ url_for('static', filename='js/webauthn.js') }}"></script>
 <script>
 // Toggle password visibility
 function togglePassword(fieldId) {
@@ -383,6 +395,30 @@ verificationModal.addEventListener('click', function(event) {
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape' && !verificationModal.classList.contains('hidden')) {
     hideVerificationModal();
+  }
+});
+
+// Passkey (WebAuthn) sign-in
+document.getElementById('passkey-login-btn').addEventListener('click', async function() {
+  const btn = this;
+  const username = document.getElementById('username').value.trim();
+  if (!window.PublicKeyCredential) {
+    showError('error-message', '{{ _("Selaimesi ei tue passkey-kirjautumista.") }}');
+    return;
+  }
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+  hideMessage('error-message');
+
+  try {
+    const redirect = await signInWithPasskey(username);
+    showSuccess('error-message', '{{ _("Kirjautuminen onnistui! Ohjataan...") }}');
+    setTimeout(() => { window.location.href = redirect; }, 800);
+  } catch (err) {
+    showError('error-message', err.message);
+    btn.classList.remove('loading');
+    btn.disabled = false;
   }
 });
 

@@ -84,6 +84,50 @@ body {
   gap: 1rem;
 }
 
+.admin-section-tabs {
+  display: flex;
+  gap: .5rem;
+  max-width: 100%;
+  margin: 0;
+  padding: .15rem 0 .25rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.admin-section-tabs a {
+  display: inline-flex;
+  gap: .45rem;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 2.55rem;
+  padding: .55rem .85rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 999px;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+  font-size: .8rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.admin-section-tabs a:hover {
+  border-color: var(--admin-workspace-blue);
+  color: var(--admin-workspace-blue-dark);
+  background: var(--admin-workspace-blue-soft);
+}
+
+.admin-section-tabs a[aria-current="page"] {
+  border-color: var(--admin-workspace-primary-bg);
+  color: var(--admin-workspace-on-primary);
+  background: var(--admin-workspace-primary-bg);
+}
+
+.admin-section-tabs a:focus-visible {
+  border-color: var(--admin-workspace-blue);
+  outline: 3px solid var(--admin-workspace-blue-soft);
+  outline-offset: 2px;
+}
+
 .admin-filter-bar__primary,
 .admin-advanced-filters__grid {
   display: grid;
@@ -157,6 +201,17 @@ body {
 }
 
 .admin-result-summary strong { color: var(--admin-workspace-text); }
+
+.admin-live-status {
+  min-height: 1.25rem;
+  color: var(--admin-workspace-muted);
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.admin-live-status--error {
+  color: var(--admin-workspace-danger);
+}
 
 .admin-active-filters {
   display: flex;
@@ -1974,7 +2029,6 @@ main.flex-grow-1 {
 
 .admin-workspace,
 .dashboard-container,
-.governance-shell,
 .admin-dashboard-shell {
   display: grid;
   gap: 1rem;
@@ -1992,9 +2046,7 @@ main.flex-grow-1 {
 .admin-workspace,
 .admin-workspace > *,
 .dashboard-container,
-.dashboard-container > *,
-.governance-shell,
-.governance-shell > * {
+.dashboard-container > * {
   min-width: 0;
   box-sizing: border-box;
 }
@@ -2643,7 +2695,6 @@ a.admin-workspace-summary-card[aria-current="page"] {
 
 .admin-workspace-toolbar,
 .dashboard-panel,
-.governance-card,
 .filter-card {
   padding: 1rem;
   border: 1px solid var(--admin-workspace-border);
@@ -2707,8 +2758,7 @@ a.admin-workspace-summary-card[aria-current="page"] {
 }
 
 .admin-workspace :is(.form-control, .form-select),
-.dashboard-container :is(.form-control, .form-select, .filter-input, .filter-select, .search-input),
-.governance-shell :is(.form-control, .form-select) {
+.dashboard-container :is(.form-control, .form-select, .filter-input, .filter-select, .search-input) {
   min-height: 2.65rem;
   border: 1px solid var(--admin-workspace-border);
   border-radius: .7rem;
@@ -2718,8 +2768,7 @@ a.admin-workspace-summary-card[aria-current="page"] {
 }
 
 .admin-workspace :is(.form-control, .form-select):focus,
-.dashboard-container :is(.form-control, .form-select, .filter-input, .filter-select, .search-input):focus,
-.governance-shell :is(.form-control, .form-select):focus {
+.dashboard-container :is(.form-control, .form-select, .filter-input, .filter-select, .search-input):focus {
   border-color: var(--admin-workspace-blue);
   box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .12));
 }
@@ -2727,8 +2776,7 @@ a.admin-workspace-summary-card[aria-current="page"] {
 main.flex-grow-1 .btn-primary,
 .modal .btn-primary,
 .dashboard-container .search-button,
-.dashboard-container .filter-apply-button,
-.governance-shell .btn-primary {
+.dashboard-container .filter-apply-button {
   --bs-btn-color: var(--admin-workspace-on-primary);
   --bs-btn-bg: var(--admin-workspace-primary-bg);
   --bs-btn-border-color: var(--admin-workspace-primary-bg);
@@ -2751,8 +2799,7 @@ main.flex-grow-1 .btn-primary,
 
 main.flex-grow-1 .btn-primary:is(:hover, :active, .active, [aria-pressed="true"]),
 .modal .btn-primary:is(:hover, :active, .active, [aria-pressed="true"]),
-.dashboard-container :is(.search-button, .filter-apply-button):hover,
-.governance-shell .btn-primary:is(:hover, :active, .active, [aria-pressed="true"]) {
+.dashboard-container :is(.search-button, .filter-apply-button):hover {
   border-color: var(--admin-workspace-primary-hover);
   color: var(--admin-workspace-on-primary);
   background: var(--admin-workspace-primary-hover);
@@ -2760,8 +2807,7 @@ main.flex-grow-1 .btn-primary:is(:hover, :active, .active, [aria-pressed="true"]
 
 main.flex-grow-1 .btn-primary:is(:disabled, .disabled, [aria-disabled="true"]),
 .modal .btn-primary:is(:disabled, .disabled, [aria-disabled="true"]),
-.dashboard-container :is(.search-button, .filter-apply-button):disabled,
-.governance-shell .btn-primary:is(:disabled, .disabled, [aria-disabled="true"]) {
+.dashboard-container :is(.search-button, .filter-apply-button):disabled {
   border-color: var(--admin-workspace-primary-bg);
   color: var(--admin-workspace-on-primary);
   background: var(--admin-workspace-primary-bg);
@@ -2771,8 +2817,7 @@ main.flex-grow-1 .btn-primary:is(:disabled, .disabled, [aria-disabled="true"]),
 
 main.flex-grow-1 .btn-primary:focus-visible,
 .modal .btn-primary:focus-visible,
-.dashboard-container :is(.search-button, .filter-apply-button):focus-visible,
-.governance-shell .btn-primary:focus-visible {
+.dashboard-container :is(.search-button, .filter-apply-button):focus-visible {
   border-color: var(--admin-workspace-primary-hover);
   color: var(--admin-workspace-on-primary);
   background: var(--admin-workspace-primary-hover);
@@ -4060,7 +4105,6 @@ th.sortable.desc::after {
 
   .admin-workspace :is(.form-control, .form-select),
   .dashboard-container :is(.form-control, .form-select, .filter-input, .filter-select, .search-input),
-  .governance-shell :is(.form-control, .form-select),
   .city-admin-search {
     width: 100% !important;
     min-width: 0;

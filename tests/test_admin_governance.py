@@ -1,5 +1,7 @@
 import re
 
+from mielenosoitukset_fi.utils.time_utils import utcnow
+
 from tests.conftest import _client_for_user
 
 
@@ -82,7 +84,7 @@ def test_admin_management_views_share_workspace_design(app, seeded_data):
     city_page = client.get("/admin/cities/").get_data(as_text=True)
 
     assert "css/admin/workspace.css" in demonstration_page
-    assert "20260920-admin-ui-54" in demonstration_page
+    assert "20260920-admin-ui-56" in demonstration_page
     assert 'class="admin-page-hero"' in demonstration_page
     assert demonstration_page.count("admin-workspace-summary-card") >= 4
     assert 'class="admin-page-hero"' in city_page
@@ -94,6 +96,87 @@ def test_admin_management_views_share_workspace_design(app, seeded_data):
     assert "city-admin-city-identity" in city_page
     assert "admin-data-view admin-data-view--scrollable" in city_page
     assert "admin-data-view__table" in city_page
+
+
+def test_clearance_collection_paginates_filtered_users(app, db, seeded_data):
+    client = _client_for_user(app, seeded_data["admin_id"])
+    inserted_ids = db.users.insert_many(
+        [
+            {
+                "username": f"governance-user-{index:02d}",
+                "email": f"governance-{index:02d}@example.test",
+                "role": "user",
+            }
+            for index in range(45)
+        ]
+    ).inserted_ids
+    db.board_clearances.insert_many(
+        [
+            {
+                "user_id": str(user_id),
+                "approved": True,
+                "granted_by": "admin",
+                "timestamp": utcnow(),
+            }
+            for index, user_id in enumerate(inserted_ids)
+            if index % 2 == 0
+        ]
+    )
+
+    response = client.get(
+        "/admin/governance/clearances?search=governance-user&approval=all&page=2&per_page=20"
+    )
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "governance-user-19" not in page
+    assert "governance-user-20" in page
+    assert "governance-user-39" in page
+    assert "governance-user-40" not in page
+    assert "Näytetään 21–40 / 45 käyttäjästä" in page
+    assert "search=governance-user" in page
+    assert "approval=all" in page
+    assert "per_page=20" in page
+
+
+def test_governance_audit_collection_paginates_with_stable_tie_breaker(
+    app, db, seeded_data
+):
+    client = _client_for_user(app, seeded_data["admin_id"])
+    timestamp = utcnow()
+    db.board_audit_logs.insert_many(
+        [
+            {
+                "user_id": "not-an-object-id",
+                "action": "myönnetty",
+                "granted_by": f"Audit actor {index:02d}",
+                "timestamp": timestamp,
+            }
+            for index in range(45)
+        ]
+    )
+
+    first = client.get(
+        "/admin/governance/audit?search=Audit+actor&action=my%C3%B6nnetty&page=1&per_page=20"
+    )
+    second = client.get(
+        "/admin/governance/audit?search=Audit+actor&action=my%C3%B6nnetty&page=2&per_page=20"
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    first_page = first.get_data(as_text=True)
+    second_page = second.get_data(as_text=True)
+    assert "Audit actor 44" in first_page
+    assert "Audit actor 25" in first_page
+    assert "Audit actor 24" not in first_page
+    assert "Audit actor 25" not in second_page
+    assert "Audit actor 24" in second_page
+    assert "Audit actor 05" in second_page
+    assert "Näytetään 21–40 / 45 tapahtumasta" not in second_page
+    assert "45 osumaa" in second_page
+    assert "search=Audit+actor" in second_page
+    assert "action=my%C3%B6nnetty" in second_page
 
 
 def test_governance_migration_preserves_existing_city_managers(db):

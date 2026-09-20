@@ -408,6 +408,62 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
     assert saved_parent["created_until"].startswith("2099-07-15")
 
 
+def test_background_job_repeat_main_creates_child_demos_without_stdin(
+    monkeypatch, db
+):
+    from mielenosoitukset_fi.scripts import repeat_v2
+
+    db.recu_demos.delete_many({})
+    db.demonstrations.delete_many({})
+
+    parent_id = ObjectId()
+    parent = {
+        "_id": parent_id,
+        "title": "Runner main series",
+        "description": "Created by background job repeat_main test.",
+        "date": "2099-06-24",
+        "start_time": "12:00",
+        "end_time": "13:00",
+        "city": "Helsinki",
+        "address": "Testikatu 1",
+        "approved": True,
+        "hide": False,
+        "event_type": "STAY_STILL",
+        "tags": [],
+        "route": [],
+        "slug": "runner-main-series",
+        "img": "/static/uploads/runner-main-source.jpg",
+        "preview_image": "https://cdn.example.test/runner-main-preview.jpg",
+        "repeat_schedule": {
+            "frequency": "weekly",
+            "interval": 1,
+            "weekday": "wednesday",
+            "end_date": "2099-07-15",
+        },
+        "created_until": "2099-06-30T00:00:00",
+        "freezed_children": [],
+        "break_dates": [],
+        "organizers": [],
+    }
+    db.recu_demos.insert_one(parent)
+    monkeypatch.setattr(repeat_v2, "demonstrations_collection", db.demonstrations)
+    monkeypatch.setattr(repeat_v2, "recu_demos_collection", db.recu_demos)
+    monkeypatch.setattr(repeat_v2, "stats_collection", db.recu_stats)
+    monkeypatch.setattr(repeat_v2, "DRY_RUN", False)
+    repeat_v2.runtime_actions.clear()
+
+    repeat_v2.main()
+
+    created_dates = {
+        doc["date"]
+        for doc in db.demonstrations.find({"parent": parent_id}, {"date": 1})
+    }
+    assert "2099-07-08" in created_dates
+    assert "2099-07-15" in created_dates
+    saved_parent = db.recu_demos.find_one({"_id": parent_id})
+    assert saved_parent["created_until"].startswith("2099-07-15")
+
+
 def test_recurring_demo_no_change_save_preserves_schedule_and_nullable_values(
     admin_client, db, seeded_data
 ):

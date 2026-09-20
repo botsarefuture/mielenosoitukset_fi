@@ -54,6 +54,7 @@ from mielenosoitukset_fi.utils.tokens import (
     token_usage_logs_collection,
     tokens_collection,
 )
+from mielenosoitukset_fi.utils.step_up import clear_elevation, is_elevated, sudo_required
 
 
 def generate_qr(url: str) -> str:
@@ -386,6 +387,14 @@ def generate_api_token():
         return jsonify({
             "status": "error",
             "error": "Privileged token scopes require a global administrator.",
+        }), 403
+
+    # Privileged scopes are destructive — require a recent step-up.
+    if requested_privileged_scopes and not is_elevated():
+        return jsonify({
+            "status": "error",
+            "error": "step_up_required",
+            "message": "Vahvista henkilöllisyytesi uudelleen ennen etuoikeutettujen avainten luontia.",
         }), 403
 
     try:
@@ -738,6 +747,8 @@ def login():
 
         # Everything good, log the user in
         login_user(user)
+        session.permanent = True  # ~12h authenticated session (PERMANENT_SESSION_LIFETIME)
+        session.modified = True
         log_login_attempt(username, success=True, ip=user_ip, user_agent=user_agent, user_id=user._id)
 
         if user.forced_pwd_reset:
@@ -948,7 +959,8 @@ def verify_mfa():
         if UserMFA(user._id).verify_token(token):
             
             login_user(user)
-            
+            session.permanent = True  # ~12h authenticated session
+            session.modified = True
             
             session["mfa_required"] = False
             session["modified"] = True
@@ -1277,6 +1289,7 @@ def mfa_status():
 # --- MFA Device Revoke Endpoint ---
 @auth_bp.route("/api/v2/mfa_device_revoke", methods=["POST"])
 @login_required
+@sudo_required()
 def mfa_device_revoke():
     """
     Removes a specific MFA device/secret for the user.
@@ -1311,6 +1324,7 @@ def mfa_device_revoke():
 def logout():
     """ """
     logout_user()
+    clear_elevation()  # step-up state never outlives the session
     flash_message("Kirjauduit onnistuneesti ulos", "success")
     return redirect(url_for("users.auth.login"))
 
@@ -1595,6 +1609,7 @@ def api_login_logs():
 # ── 1B.  Change-password endpoint for Settings page ──────────────────────────
 @auth_bp.route("/api/v2/change_password", methods=["POST"])
 @login_required
+@sudo_required()
 def api_change_password():
     """
     JSON-only password change:

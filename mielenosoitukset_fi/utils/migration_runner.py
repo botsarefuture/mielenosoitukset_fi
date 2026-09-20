@@ -6,6 +6,7 @@ from mielenosoitukset_fi.utils.migrations import (
     migration_003_city_keys,
     migration_004_admin_governance,
     migration_005_user_identity_uniqueness,
+    migration_006_passkeys,
 )
 
 
@@ -24,6 +25,11 @@ MIGRATIONS = [
         "id": "005_user_identity_uniqueness",
         "description": "Enforce case-insensitive username and email uniqueness.",
         "run": migration_005_user_identity_uniqueness.migrate_user_identity_uniqueness,
+    },
+    {
+        "id": "006_passkey_storage",
+        "description": "Add storage and indexes for WebAuthn passkeys and challenges.",
+        "run": migration_006_passkeys.migrate_passkey_storage,
     },
 ]
 

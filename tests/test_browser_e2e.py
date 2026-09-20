@@ -341,7 +341,7 @@ def test_admin_pages_share_responsive_theme_aware_heroes(
 @pytest.mark.e2e
 @pytest.mark.integration
 @pytest.mark.parametrize("viewport_width", [390, 1440])
-def test_admin_summary_cards_keep_icons_labels_and_values_separate(
+def test_admin_summary_cards_center_icons_and_keep_copy_separate(
     app,
     db,
     live_server,
@@ -360,7 +360,7 @@ def test_admin_summary_cards_keep_icons_labels_and_values_separate(
         ("/admin/user/", ".users-summary-card", ".users-summary-icon", "div > span", "div > strong"),
         ("/admin/organization/", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
         (f"/admin/organization/view/{seeded_data['org_id']}", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
-        ("/admin/stats", ".admin-workspace-summary .admin-workspace-summary-card", ".admin-workspace-summary-icon", "span", "strong"),
+        ("/admin/stats", ".admin-workspace-summary .admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
     )
 
     for path, card_selector, icon_selector, label_selector, value_selector in pages:
@@ -370,6 +370,7 @@ def test_admin_summary_cards_keep_icons_labels_and_values_separate(
         geometry = cards.evaluate_all(
             """(elements, selectors) => elements.map(element => {
                 const icon = element.querySelector(selectors.icon);
+                const iconGlyph = icon ? icon.querySelector('i') : null;
                 const label = element.querySelector(selectors.label);
                 const value = element.querySelector(selectors.value);
                 const content = label ? label.parentElement : null;
@@ -378,6 +379,7 @@ def test_admin_summary_cards_keep_icons_labels_and_values_separate(
                     card: cardRect.toJSON(),
                     content: content ? content.getBoundingClientRect().toJSON() : null,
                     icon: icon ? icon.getBoundingClientRect().toJSON() : null,
+                    iconGlyph: iconGlyph ? iconGlyph.getBoundingClientRect().toJSON() : null,
                     label: label ? label.getBoundingClientRect().toJSON() : null,
                     value: value ? value.getBoundingClientRect().toJSON() : null,
                     viewport: document.documentElement.clientWidth,
@@ -387,9 +389,15 @@ def test_admin_summary_cards_keep_icons_labels_and_values_separate(
         )
 
         for item in geometry:
-            assert item["icon"] and item["content"] and item["label"] and item["value"], path
+            assert item["icon"] and item["iconGlyph"] and item["content"] and item["label"] and item["value"], path
             assert item["card"]["height"] >= 90, path
             assert item["icon"]["right"] < item["content"]["left"], path
+            icon_center_x = item["icon"]["left"] + item["icon"]["width"] / 2
+            glyph_center_x = item["iconGlyph"]["left"] + item["iconGlyph"]["width"] / 2
+            icon_center_y = item["icon"]["top"] + item["icon"]["height"] / 2
+            glyph_center_y = item["iconGlyph"]["top"] + item["iconGlyph"]["height"] / 2
+            assert abs(icon_center_x - glyph_center_x) <= 1, path
+            assert abs(icon_center_y - glyph_center_y) <= 1, path
             assert item["label"]["bottom"] <= item["value"]["top"] + 1, path
             assert item["card"]["left"] >= 0, path
             assert item["card"]["right"] <= item["viewport"] + 1, path

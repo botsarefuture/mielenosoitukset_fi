@@ -32,6 +32,44 @@ def test_translation_dashboard_never_includes_past_demos(translator_client, db, 
     assert "Näytä myös menneet mielenosoitukset" not in body
 
 
+def test_translation_dashboard_paginates_filtered_results_deterministically(
+    translator_client, db
+):
+    db.demonstrations.insert_many(
+        [
+            {
+                "title": f"Paged translation demo {index:02d}",
+                "date": "2099-06-01",
+                "approved": True,
+                "rejected": False,
+                "default_language": "fi",
+            }
+            for index in range(45)
+        ]
+    )
+
+    first = translator_client.get(
+        "/admin/demo/translations?search=Paged+translation&page=1&per_page=20"
+    )
+    second = translator_client.get(
+        "/admin/demo/translations?search=Paged+translation&page=2&per_page=20"
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    first_body = first.get_data(as_text=True)
+    second_body = second.get_data(as_text=True)
+    assert "Paged translation demo 00" in first_body
+    assert "Paged translation demo 19" in first_body
+    assert "Paged translation demo 20" not in first_body
+    assert "Paged translation demo 19" not in second_body
+    assert "Paged translation demo 20" in second_body
+    assert "Paged translation demo 39" in second_body
+    assert "45 osumaa" in second_body
+    assert "search=Paged+translation" in second_body
+    assert "per_page=20" in second_body
+
+
 def test_translation_dashboard_hides_unchanged_recurring_children(
     translator_client, db, seeded_data
 ):

@@ -1,10 +1,10 @@
 {% extends "admin_base.html" %}
-{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
 
 {% block title %}{{ _('Käyttöliittymäkäännökset') }}{% endblock %}
 
 {% block main_content %}
-<div class="admin-page">
+<section class="admin-page">
   {% call admin_page_hero(
     _('Käyttöliittymäkäännökset'),
     _('Hallitse sivuston ydinkomponenttien gettext-käännöksiä ja tarkista ehdotukset ennen hyväksyntää.'),
@@ -12,131 +12,127 @@
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttöliittymäkäännökset'), none)],
     actions_visible=ui_translation_sync_enabled and can_review_ui_translations
   ) %}
-      <a class="btn btn-outline-primary admin-page-hero__action" href="{{ url_for('admin.ui_translation_sync_dashboard') }}">{{ _('Avaa GitHub-synkit') }}</a>
+    <a class="admin-page-hero__action" href="{{ url_for('admin.ui_translation_sync_dashboard') }}"><i class="fas fa-code-branch" aria-hidden="true"></i>{{ _('Avaa GitHub-synkit') }}</a>
   {% endcall %}
 
-  <div class="row g-3 mb-4">
+  <section class="admin-workspace-summary" aria-label="{{ _('Kielten käännöstilanne') }}">
     {% for locale in locales %}
-    <div class="col-md-4">
-      <a class="card h-100 text-decoration-none {% if locale.locale == selected_locale %}border-primary{% endif %}" href="{{ url_for('admin.ui_translation_dashboard', locale=locale.locale, search=search_query, state=state_filter) }}">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start mb-2">
-            <h2 class="h5 mb-0">{{ locale.label }}</h2>
-            {% if locale.pending %}
-            <span class="badge bg-warning text-dark">{{ locale.pending }} {{ _('odottaa') }}</span>
-            {% endif %}
-          </div>
-          <div class="small text-muted">
-            <div>{{ _('Kääntämättä') }}: {{ locale.untranslated }}</div>
-            <div>{{ _('Fuzzy') }}: {{ locale.fuzzy }}</div>
-            <div>{{ _('Valmiina') }}: {{ locale.translated }}</div>
-          </div>
-        </div>
-      </a>
-    </div>
+    <a class="admin-workspace-summary-card" href="{{ url_for('admin.ui_translation_dashboard', locale=locale.locale, search=search_query, state=state_filter) }}"{% if locale.locale == selected_locale %} aria-current="page"{% endif %}>
+      <span class="admin-workspace-summary-icon"><i class="fas fa-language" aria-hidden="true"></i></span>
+      <div>
+        <span>{{ locale.label }}</span>
+        <strong>{{ locale.translated }} / {{ locale.total }}</strong>
+        <small>{{ locale.untranslated }} {{ _('kääntämättä') }}{% if locale.pending %} · {{ locale.pending }} {{ _('odottaa') }}{% endif %}</small>
+      </div>
+    </a>
     {% endfor %}
-  </div>
+  </section>
 
   {% if selected_locale %}
-  <form method="GET" class="row g-3 align-items-end admin-panel">
-    <input type="hidden" name="locale" value="{{ selected_locale }}">
-    <div class="col-md-5">
-      <label class="form-label" for="search">{{ _('Haku') }}</label>
-      <input class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="{{ _('Hae msgid:llä tai nykyisellä käännöksellä') }}">
-    </div>
-    <div class="col-md-4">
-      <label class="form-label" for="state">{{ _('Tila') }}</label>
-      <select class="form-select" id="state" name="state">
-        {% for value, label in [('pending', _('Odottaa tarkistusta')), ('untranslated', _('Kääntämättä')), ('fuzzy', _('Fuzzy')), ('translated', _('Valmiit')), ('all', _('Kaikki'))] %}
-        <option value="{{ value }}" {% if state_filter == value %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-3 d-flex gap-2">
-      <button class="btn btn-primary" type="submit">{{ _('Suodata') }}</button>
-      <a class="btn btn-outline-secondary" href="{{ url_for('admin.ui_translation_dashboard', locale=selected_locale) }}">{{ _('Tyhjennä') }}</a>
-    </div>
-  </form>
-
-  <div class="card">
-    <div class="card-body">
-      <div class="d-flex flex-wrap gap-3 mb-3 small text-muted">
-        <span>{{ _('Yhteensä') }}: {{ selected_counts.total }}</span>
-        <span>{{ _('Kääntämättä') }}: {{ selected_counts.untranslated }}</span>
-        <span>{{ _('Fuzzy') }}: {{ selected_counts.fuzzy }}</span>
-        <span>{{ _('Valmiina') }}: {{ selected_counts.translated }}</span>
-        <span>{{ _('Odottaa tarkistusta') }}: {{ selected_counts.pending }}</span>
-      </div>
-
-      <div class="table-responsive admin-workspace-table">
-        <table class="table align-middle">
-          <thead>
-            <tr>
-              <th>{{ _('Avainteksti') }}</th>
-              <th>{{ _('Nykyinen käännös') }}</th>
-              <th>{{ _('Tila') }}</th>
-              <th>{{ _('Toiminnot') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in selected_rows %}
-            <tr>
-              <td>
-                <div class="fw-semibold">{{ row.msgid }}</div>
-                {% if row.locations %}
-                <div class="small text-muted">{{ row.locations|join(', ') }}</div>
-                {% endif %}
-              </td>
-              <td>{{ row.proposal.proposed_text if row.proposal and row.proposal.status == 'pending' else (row.msgstr or '—') }}</td>
-              <td>
-                {% if row.effective_state == 'pending' %}
-                <span class="badge bg-warning text-dark">{{ _('Odottaa') }}</span>
-                {% elif row.effective_state == 'untranslated' %}
-                <span class="badge bg-secondary">{{ _('Kääntämättä') }}</span>
-                {% elif row.effective_state == 'fuzzy' %}
-                <span class="badge bg-info text-dark">Fuzzy</span>
-                {% else %}
-                <span class="badge bg-success">{{ _('Valmis') }}</span>
-                {% endif %}
-                {% if ui_translation_sync_enabled and row.proposal and row.proposal.status == 'approved' and row.github_sync %}
-                <div class="small mt-2">
-                  {% if row.github_sync.status == 'queued' %}
-                  <span class="badge bg-secondary">{{ _('Git-sync jonossa') }}</span>
-                  {% elif row.github_sync.status == 'running' %}
-                  <span class="badge bg-info text-dark">{{ _('Git-sync käynnissä') }}</span>
-                  {% elif row.github_sync.status == 'pr_opened' %}
-                  <span class="badge bg-primary">{{ _('PR avattu') }}</span>
-                  {% elif row.github_sync.status == 'branch_pushed' %}
-                  <span class="badge bg-primary">{{ _('Branch pushattu') }}</span>
-                  {% elif row.github_sync.status == 'committed_local_branch' %}
-                  <span class="badge bg-warning text-dark">{{ _('Commit tehty, push puuttuu') }}</span>
-                  {% elif row.github_sync.status == 'retry' %}
-                  <span class="badge bg-danger">{{ _('Git-sync epäonnistui') }}</span>
-                  {% endif %}
-                  {% if row.github_sync.merge_status == 'merged' %}
-                  <span class="badge bg-success">{{ _('Mergetty') }}</span>
-                  {% elif row.github_sync.merge_status == 'merge_blocked' %}
-                  <span class="badge bg-warning text-dark">{{ _('Merge blokattu') }}</span>
-                  {% elif row.github_sync.merge_status == 'not_configured' %}
-                  <span class="badge bg-secondary">{{ _('Automerge ei käytössä') }}</span>
-                  {% endif %}
-                </div>
-                {% endif %}
-              </td>
-              <td>
-                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.ui_translation_editor', locale=selected_locale, msgid=row.msgid) }}">{{ _('Avaa') }}</a>
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="4" class="admin-empty-state">{{ _('Ei rivejä valituilla suodattimilla.') }}</td>
-            </tr>
+  <section class="dashboard-panel admin-workspace-toolbar" aria-label="{{ _('Käännösrivin suodattimet') }}">
+    <form method="GET" action="{{ url_for('admin.ui_translation_dashboard') }}" class="admin-filter-bar" id="ui-translation-filter-form">
+      <input type="hidden" name="locale" value="{{ selected_locale }}">
+      <input type="hidden" name="page" value="1">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="admin-filter-bar__primary admin-filter-bar__primary--search">
+        <div class="admin-field">
+          <label for="search">{{ _('Haku') }}</label>
+          <input type="search" id="search" name="search" value="{{ search_query }}" placeholder="{{ _('Hae avaintekstillä tai nykyisellä käännöksellä') }}">
+        </div>
+        <div class="admin-field">
+          <label for="state">{{ _('Tila') }}</label>
+          <select id="state" name="state">
+            {% for value, label in [('pending', _('Odottaa tarkistusta')), ('untranslated', _('Kääntämättä')), ('fuzzy', _('Fuzzy')), ('translated', _('Valmiit')), ('all', _('Kaikki'))] %}
+            <option value="{{ value }}" {% if state_filter == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
-          </tbody>
-        </table>
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="fas fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('admin.ui_translation_dashboard', locale=selected_locale) }}">{{ _('Tyhjennä') }}</a>
       </div>
+    </form>
+    {% if search_query or state_filter != 'untranslated' %}
+    <div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">
+      {% if search_query %}<span class="admin-filter-chip">{{ _('Haku') }}: {{ search_query }}</span>{% endif %}
+      {% if state_filter != 'untranslated' %}<span class="admin-filter-chip">{{ _('Tila') }}: {{ state_filter }}</span>{% endif %}
+      <a class="admin-clear-filters" href="{{ url_for('admin.ui_translation_dashboard', locale=selected_locale) }}">{{ _('Tyhjennä suodattimet') }}</a>
     </div>
-  </div>
+    {% endif %}
+  </section>
+
+  <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="ui-translations-heading">
+    <div class="admin-data-view__header admin-result-summary" aria-live="polite">
+      <div>
+        <strong id="ui-translations-heading">{{ language_names.get(selected_locale, selected_locale) }}</strong>
+        <span>{{ _('Näytetään %(start)s–%(end)s / %(count)s rivistä', start=range_start, end=range_end, count=filtered_count) }}</span>
+      </div>
+      <span>{{ _('Yhteensä') }} {{ selected_counts.total }} · {{ _('Kääntämättä') }} {{ selected_counts.untranslated }} · {{ _('Fuzzy') }} {{ selected_counts.fuzzy }} · {{ _('Valmiina') }} {{ selected_counts.translated }} · {{ _('Odottaa') }} {{ selected_counts.pending }}</span>
+    </div>
+    <div class="admin-data-view__viewport">
+      <table class="admin-data-view__table">
+        <thead>
+          <tr>
+            <th>{{ _('Avainteksti') }}</th>
+            <th>{{ _('Nykyinen käännös') }}</th>
+            <th>{{ _('Tila') }}</th>
+            <th class="actions-cell-header">{{ _('Toiminnot') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in selected_rows %}
+          <tr>
+            <td>
+              <strong>{{ row.msgid }}</strong>
+              {% if row.locations %}<div class="admin-field__help">{{ row.locations|join(', ') }}</div>{% endif %}
+            </td>
+            <td>{{ row.proposal.proposed_text if row.proposal and row.proposal.status == 'pending' else (row.msgstr or '—') }}</td>
+            <td>
+              {% if row.effective_state == 'pending' %}
+              <span class="admin-status-badge admin-status-badge--warning">{{ _('Odottaa') }}</span>
+              {% elif row.effective_state == 'untranslated' %}
+              <span class="admin-status-badge">{{ _('Kääntämättä') }}</span>
+              {% elif row.effective_state == 'fuzzy' %}
+              <span class="admin-status-badge admin-status-badge--info">Fuzzy</span>
+              {% else %}
+              <span class="admin-status-badge admin-status-badge--success">{{ _('Valmis') }}</span>
+              {% endif %}
+              {% if ui_translation_sync_enabled and row.proposal and row.proposal.status == 'approved' and row.github_sync %}
+              <div class="admin-field__help">
+                {% if row.github_sync.status == 'queued' %}<span class="admin-status-badge">{{ _('Git-sync jonossa') }}</span>
+                {% elif row.github_sync.status == 'running' %}<span class="admin-status-badge admin-status-badge--info">{{ _('Git-sync käynnissä') }}</span>
+                {% elif row.github_sync.status == 'pr_opened' %}<span class="admin-status-badge admin-status-badge--info">{{ _('PR avattu') }}</span>
+                {% elif row.github_sync.status == 'branch_pushed' %}<span class="admin-status-badge admin-status-badge--info">{{ _('Branch pushattu') }}</span>
+                {% elif row.github_sync.status == 'committed_local_branch' %}<span class="admin-status-badge admin-status-badge--warning">{{ _('Commit tehty, push puuttuu') }}</span>
+                {% elif row.github_sync.status == 'retry' %}<span class="admin-status-badge admin-status-badge--danger">{{ _('Git-sync epäonnistui') }}</span>{% endif %}
+                {% if row.github_sync.merge_status == 'merged' %}<span class="admin-status-badge admin-status-badge--success">{{ _('Mergetty') }}</span>
+                {% elif row.github_sync.merge_status == 'merge_blocked' %}<span class="admin-status-badge admin-status-badge--warning">{{ _('Merge estynyt') }}</span>
+                {% elif row.github_sync.merge_status == 'not_configured' %}<span class="admin-status-badge">{{ _('Automaattinen merge ei ole käytössä') }}</span>{% endif %}
+              </div>
+              {% endif %}
+            </td>
+            <td class="actions-cell"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.ui_translation_editor', locale=selected_locale, msgid=row.msgid) }}">{{ _('Avaa') }}</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4"><div class="admin-empty-state"><i class="admin-empty-state__icon fas fa-language" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Käännösrivejä ei löytynyt') }}</strong><span>{{ _('Kokeile muuttaa suodattimia tai tyhjennä ne.') }}</span></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {{ admin_pagination(
+      current_page,
+      total_pages,
+      per_page=per_page,
+      prev_page=prev_page,
+      next_page=next_page,
+      prev_page_url=prev_page_url,
+      next_page_url=next_page_url,
+      visible_pages=visible_pages,
+      first_page_url=first_page_url,
+      last_page_url=last_page_url,
+      aria_label=_('Käyttöliittymäkäännösten sivutus')
+    ) }}
+  </section>
   {% endif %}
-</div>
+</section>
+
 {% endblock %}

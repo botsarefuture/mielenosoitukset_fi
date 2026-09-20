@@ -58,6 +58,7 @@ from mielenosoitukset_fi.utils.ui_translation_git_sync import (
     build_ui_translation_sync_branch_name,
 )
 
+from .pagination import build_admin_pagination, parse_admin_pagination
 from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
 
 # Timezone for rolling analytics into Helsinki-local buckets
@@ -363,9 +364,11 @@ def _normalize_ui_translation_sync_rows(
                 ("github_sync.queued_at", -1),
                 ("reviewed_at", -1),
                 ("submitted_at", -1),
+                ("locale", 1),
                 ("msgid", 1),
+                ("_id", 1),
             ]
-        ).limit(300)
+        )
     )
 
     status_counts = {
@@ -422,13 +425,15 @@ def ui_translation_dashboard():
         selected_locale = locales[0]
 
     search_query = (request.args.get("search") or "").strip()
+    page, per_page = parse_admin_pagination(request.args)
     default_state = "untranslated"
     state_filter = (request.args.get("state") or default_state).strip().lower()
     if state_filter not in {"pending", "untranslated", "fuzzy", "translated", "all"}:
-        state_filter = "pending"
+        state_filter = default_state
 
     locale_summaries = []
     selected_rows = []
+    selected_filtered_count = 0
     selected_counts = {"total": 0, "untranslated": 0, "fuzzy": 0, "translated": 0, "pending": 0}
     for locale in locales:
         normalized = _normalize_ui_translation_rows(
@@ -444,8 +449,25 @@ def ui_translation_dashboard():
             }
         )
         if locale == selected_locale:
-            selected_rows = normalized["rows"][:200]
+            selected_rows = normalized["rows"]
+            selected_rows.sort(key=lambda row: row.get("msgid") or "")
+            selected_filtered_count = len(selected_rows)
             selected_counts = normalized["counts"]
+
+    pagination = build_admin_pagination(
+        "admin.ui_translation_dashboard",
+        total_count=selected_filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args={
+            "locale": selected_locale,
+            "search": search_query,
+            "state": state_filter,
+        },
+    )
+    selected_rows = selected_rows[
+        pagination["slice_start"] : pagination["slice_end"]
+    ]
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/dashboard.html",
@@ -459,6 +481,8 @@ def ui_translation_dashboard():
         can_translate_ui=_can_translate_ui(current_user),
         can_review_ui_translations=_can_review_ui_translations(current_user),
         ui_translation_sync_enabled=_ui_translation_sync_enabled(),
+        filtered_count=selected_filtered_count,
+        **pagination,
     )
 
 
@@ -484,12 +508,29 @@ def ui_translation_sync_dashboard():
         merge_status = "all"
 
     search_query = (request.args.get("search") or "").strip()
+    page, per_page = parse_admin_pagination(request.args)
     normalized = _normalize_ui_translation_sync_rows(
         locale_filter=selected_locale,
         sync_status_filter=sync_status,
         merge_status_filter=merge_status,
         search_query=search_query,
     )
+    filtered_count = len(normalized["rows"])
+    pagination = build_admin_pagination(
+        "admin.ui_translation_sync_dashboard",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args={
+            "locale": selected_locale,
+            "sync_status": sync_status,
+            "merge_status": merge_status,
+            "search": search_query,
+        },
+    )
+    sync_rows = normalized["rows"][
+        pagination["slice_start"] : pagination["slice_end"]
+    ]
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/sync_dashboard.html",
@@ -499,8 +540,10 @@ def ui_translation_sync_dashboard():
         sync_status=sync_status,
         merge_status=merge_status,
         search_query=search_query,
-        sync_rows=normalized["rows"],
+        sync_rows=sync_rows,
         sync_counts=normalized["counts"],
+        filtered_count=filtered_count,
+        **pagination,
     )
 
 

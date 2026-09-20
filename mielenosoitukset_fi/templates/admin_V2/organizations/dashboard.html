@@ -107,14 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   checkboxes.forEach((checkbox) => checkbox.addEventListener('change', () => { updateRow(checkbox); updateSelectAll(); }));
   updateSelectAll();
-
-  const pageSize = document.getElementById('page-size');
-  pageSize?.addEventListener('change', (event) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('per_page', event.target.value);
-    url.searchParams.set('page', '1');
-    window.location.assign(url.toString());
-  });
 });
 </script>
 {% endblock %}

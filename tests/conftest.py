@@ -820,6 +820,9 @@ def external_side_effects(monkeypatch):
     from mielenosoitukset_fi.utils import s3 as s3_module
     basic_routes = importlib.import_module("mielenosoitukset_fi.basic_routes")
     admin_demo_bp = importlib.import_module("mielenosoitukset_fi.admin.admin_demo_bp")
+    admin_recu_demo_bp = importlib.import_module(
+        "mielenosoitukset_fi.admin.admin_recu_demo_bp"
+    )
     admin_media_bp = importlib.import_module("mielenosoitukset_fi.admin.admin_media_bp")
     admin_org_bp = importlib.import_module("mielenosoitukset_fi.admin.admin_org_bp")
     auth_bp = importlib.import_module("mielenosoitukset_fi.users.BPs.auth")
@@ -839,6 +842,9 @@ def external_side_effects(monkeypatch):
     monkeypatch.setattr(s3_module, "upload_image_fileobj", upload_stub, raising=True)
     monkeypatch.setattr(basic_routes, "upload_image_fileobj", upload_stub, raising=True)
     monkeypatch.setattr(admin_demo_bp, "upload_image_fileobj", upload_stub, raising=True)
+    monkeypatch.setattr(
+        admin_recu_demo_bp, "upload_image_fileobj", upload_stub, raising=True
+    )
     monkeypatch.setattr(admin_media_bp, "upload_image_fileobj", upload_stub, raising=True)
     monkeypatch.setattr(admin_org_bp, "upload_image_fileobj", upload_stub, raising=True)
     monkeypatch.setattr(auth_bp, "upload_image_fileobj", upload_stub, raising=True)

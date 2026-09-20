@@ -4,7 +4,6 @@ import bson
 import hmac
 import secrets
 from flask import abort, current_app
-import requests
 from copy import deepcopy
 
 from mielenosoitukset_fi.utils.time_utils import utcnow
@@ -51,6 +50,7 @@ from mielenosoitukset_fi.utils.cities import CITY_NAME_TO_KEY, normalize_city_ke
 from mielenosoitukset_fi.utils.city_assignment import touch_city_assignment
 from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
+from mielenosoitukset_fi.utils.geocode import geocode_address as geocode_address_lookup
 from mielenosoitukset_fi.utils.wrappers import (
     admin_required,
     has_demo_approval_permission,
@@ -83,8 +83,6 @@ from .pagination import build_admin_pagination, parse_admin_pagination
 
 # Secret key for generating tokens
 SECRET_KEY = "your_secret_key"
-
-GEOCODE_API_KEY = "66df12ce96495339674278ivnc82595"  # your API key
 
 serializer = URLSafeTimedSerializer(SECRET_KEY)
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
@@ -4869,6 +4867,7 @@ def _require_valid_objectid(id_str):
 
 
 @admin_demo_api_bp.route("/geocode", methods=["POST"])
+@login_required
 def geocode_address():
     """
     Accepts JSON: { "address": "...", "city": "..." }
@@ -4884,30 +4883,12 @@ def geocode_address():
     if not address or not city:
         return jsonify({"error": "Missing 'address' or 'city'"}), 400
 
-    full_query = f"{address}, {city}, Finland"
-    api_url = f"https://geocode.maps.co/search?q={full_query}&api_key={GEOCODE_API_KEY}"
+    coordinates = geocode_address_lookup(address, city)
+    if not coordinates:
+        return jsonify({"error": "No coordinates found"}), 404
 
-    try:
-        response = requests.get(api_url)
-        response.raise_for_status()
-        geocode_data = response.json()
-
-        if not geocode_data:
-            return jsonify({"error": "No coordinates found"}), 404
-
-        latitude = geocode_data[0].get("lat")
-        longitude = geocode_data[0].get("lon")
-
-        if not latitude or not longitude:
-            return jsonify({"error": "Coordinates missing in API response"}), 500
-
-        return jsonify({
-            "latitude": latitude,
-            "longitude": longitude
-        })
-
-    except requests.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+    latitude, longitude = coordinates
+    return jsonify({"latitude": latitude, "longitude": longitude})
 
 @admin_demo_api_bp.route("/<demo_id>/approve", methods=["POST"])
 @login_required

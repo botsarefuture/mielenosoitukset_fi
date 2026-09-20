@@ -6,7 +6,6 @@ import threading
 import time
 import uuid
 import hashlib
-import requests
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, date, timedelta, timezone
 from urllib.parse import urlsplit
@@ -65,6 +64,7 @@ from mielenosoitukset_fi.utils.demo_localization import (
     get_demo_localized_fields,
 )
 from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
+from mielenosoitukset_fi.utils.geocode import geocode_address as geocode_address_lookup
 from mielenosoitukset_fi.utils.classes import Case
 from mielenosoitukset_fi.utils.demo_cancellation import (
     cancel_demo,
@@ -2895,21 +2895,10 @@ def init_routes(app):
         )
 
     def fetch_geocode_data(demo):
-        address_query = f"{demo.address}, {demo.city}"
-        api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"
-        try:
-            response = requests.get(api_url)
-            response.raise_for_status()
-            geocode_data = response.json()
-            if geocode_data:
-                latitude = geocode_data[0].get("lat", "None")
-                longitude = geocode_data[0].get("lon", "None")
-                if latitude and longitude:
-                    demo.latitude = latitude
-                    demo.longitude = longitude
-                    demo.save()
-        except (requests.exceptions.RequestException, IndexError):
-            ...
+        coordinates = geocode_address_lookup(demo.address, demo.city)
+        if coordinates:
+            demo.latitude, demo.longitude = coordinates
+            demo.save()
 
     @app.route("/demonstration/<demo_id>/some", methods=["GET"])
     @permission_required("VIEW_DEMO")
@@ -2943,21 +2932,7 @@ def init_routes(app):
             abort(401)
             
         if not demo.longitude:
-            address_query = f"{demo.address}, {demo.city}"
-            api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"
-            try:
-                response = requests.get(api_url)
-                response.raise_for_status()
-                geocode_data = response.json()
-                if geocode_data:
-                    latitude = geocode_data[0].get("lat", "None")
-                    longitude = geocode_data[0].get("lon", "None")
-                    if latitude and longitude:
-                        demo.latitude = latitude
-                        demo.longitude = longitude
-                        demo.save()
-            except (requests.exceptions.RequestException, IndexError):
-                ...
+            fetch_geocode_data(demo)
                 
         demo = _localized_demo_copy(
             Demonstration.to_dict(demo, True), _current_demo_language()

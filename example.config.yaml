@@ -42,6 +42,11 @@ CITY_ASSIGNMENT_ESCALATION_HOURS: 24
 # SERVER_NAME: "www.example.com"  # Server name for the application
 # PREFERRED_URL_SCHEME: "https"  # URL scheme (e.g., https)
 
+# Geocoding API key (geocode.maps.co). Used to resolve demonstration address
+# coordinates for the "Laske koordinaatit" button. If omitted, the app falls
+# back to the legacy built-in key.
+# GEOCODE_API_KEY: "your_geocode_maps_co_key"
+
 PORT: 5002  # Application port
 DEBUG: true  # Enable debugging mode for development
 # SOS! Disable debug mode in production! 

@@ -122,6 +122,13 @@ class Config:
             "DEEPL_API_URL",
             "https://api-free.deepl.com/v2/translate",
         )
+        # Free geocoding API used to resolve demonstration address coordinates.
+        # Keep the legacy key as the default so existing deployments keep
+        # working until they add their own GEOCODE_API_KEY to config.
+        cls.GEOCODE_API_KEY = config.get(
+            "GEOCODE_API_KEY",
+            "66df12ce96495339674278ivnc82595",
+        )
         cls.UI_TRANSLATION_SYNC_ENABLED = config.get("UI_TRANSLATION_SYNC_ENABLED", False)
         cls.UI_TRANSLATION_SYNC_REPO_PATH = config.get("UI_TRANSLATION_SYNC_REPO_PATH", "")
         cls.UI_TRANSLATION_SYNC_BASE_BRANCH = config.get("UI_TRANSLATION_SYNC_BASE_BRANCH", "main")

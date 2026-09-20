@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* The passkey step-up dialog on the settings page no longer fails silently: it is now initialised after the document is ready (bootstrap is loaded lazily, not at parse time), so "Lisää passkey" and other elevation-protected controls open and work again.
 * Admin summary-card icons now stay centered inside their colored icon tiles on every user, organization, demonstration, city, governance, case, translation, and statistics view instead of being pulled to the tile's left edge by a broad text-span rule.
 * UI-translation sync now reports the existing remote branch commit when an identical translation is already current, instead of exposing the SHA of a discarded temporary commit.
 * The "Laske koordinaatit" / "Laske koordinaatit uudelleen" buttons in the demonstration and recurring-demonstration editors now resolve address coordinates reliably. All geocoding now goes through a single shared helper (`mielenosoitukset_fi/utils/geocode.py`) that sends the address via correctly URL-encoded query parameters (Finnish addresses with umlauts, commas, and ampersands no longer trip up the lookup), guards against responses that lack usable lat/lon (previously a missing key saved the truthy placeholder string `"None"` as coordinates), times out instead of hanging request handling, and uses the configured `GEOCODE_API_KEY` (falling back to the legacy key) instead of a duplicate hardcoded key in four files.

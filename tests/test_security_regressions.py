@@ -73,6 +73,13 @@ def test_api_token_rejects_malformed_scope_payload(user_client, db, seeded_data)
 
 
 def test_global_admin_can_issue_mcp_admin_token(admin_client, db, seeded_data):
+    # Privileged scopes require a recent step-up first (see step-up auth).
+    step_up = admin_client.post(
+        "/users/auth/api/v2/step-up/password",
+        json={"password": "AdminPass1!"},
+    )
+    assert step_up.status_code == 200, step_up.get_data(as_text=True)
+
     response = admin_client.post(
         "/users/auth/api_token",
         json={"type": "short", "scopes": ["read", "mcp.admin"]},
@@ -87,6 +94,19 @@ def test_global_admin_can_issue_mcp_admin_token(admin_client, db, seeded_data):
         }
     )
     assert token is not None
+
+
+def test_privileged_token_without_step_up_is_rejected(admin_client, db, seeded_data):
+    tokens_before = db.api_tokens.count_documents({"user_id": seeded_data["admin_id"]})
+
+    response = admin_client.post(
+        "/users/auth/api_token",
+        json={"type": "short", "scopes": ["read", "mcp.admin"]},
+    )
+
+    assert response.status_code == 403
+    assert response.get_json()["error"] == "step_up_required"
+    assert db.api_tokens.count_documents({"user_id": seeded_data["admin_id"]}) == tokens_before
 
 
 def test_auth_security_routes_ignore_stale_module_database_handle(

@@ -68,6 +68,13 @@ def test_mfa_enable_flow_end_to_end(app, db):
 
     device_id = data["devices"][0]["id"]
 
+    # Removing an MFA device is sensitive → step up first (password + TOTP).
+    r = client.post(
+        "/users/auth/api/v2/step-up/password",
+        json={"password": TEST_PASSWORD, "totp_code": _totp_code(secret)},
+    )
+    assert r.status_code == 200, r.get_data(as_text=True)
+
     r = client.post("/users/auth/api/v2/mfa_device_revoke", json={"device_id": device_id})
     assert r.status_code == 200, r.get_data(as_text=True)
 

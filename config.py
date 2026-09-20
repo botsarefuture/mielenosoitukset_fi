@@ -175,6 +175,33 @@ class Config:
         )
 
         cls.ENABLE_CHAT = config.get("ENABLE_CHAT", True)
+
+        # ---- WebAuthn / passkeys --------------------------------------------
+        # The relying-party identity must match how browsers see the origin.
+        # In development `localhost` is a valid secure context; production and
+        # staging deployments must configure the real RP ID and origin(s).
+        cls.WEBAUTHN_RP_ID = config.get("WEBAUTHN_RP_ID", "localhost")
+        cls.WEBAUTHN_RP_NAME = config.get("WEBAUTHN_RP_NAME", "Mielenosoitukset.fi")
+        cls.WEBAUTHN_ORIGIN = config.get("WEBAUTHN_ORIGIN", "http://localhost:8000")
+        allowed_origins = config.get("WEBAUTHN_ALLOWED_ORIGINS")
+        cls.WEBAUTHN_ALLOWED_ORIGINS = (
+            allowed_origins if isinstance(allowed_origins, list) and allowed_origins
+            else [cls.WEBAUTHN_ORIGIN]
+        )
+        # How long a step-up ("sudo") elevation stays valid before the user
+        # must authenticate again for a sensitive operation.
+        cls.SUDO_DEFAULT_TIMEOUT = int(config.get("SUDO_DEFAULT_TIMEOUT", 900))
+
+        # ---- Session ----------------------------------------------------------
+        # Target normal authenticated session lifetime (~12 hours). Sessions are
+        # marked permanent on login so this value is actually applied.
+        cls.PERMANENT_SESSION_LIFETIME = config.get(
+            "PERMANENT_SESSION_LIFETIME", 12 * 60 * 60
+        )
+        cls.SESSION_COOKIE_HTTPONLY = config.get("SESSION_COOKIE_HTTPONLY", True)
+        cls.SESSION_COOKIE_SAMESITE = config.get("SESSION_COOKIE_SAMESITE", "Lax")
+        cls.SESSION_COOKIE_SECURE = config.get("SESSION_COOKIE_SECURE", False)
+
         cls.ALLOWED_EXTENSIONS = cls.S3_CONFIG.get(
             "ALLOWED_EXTENSIONS",
             {"png", "jpg", "jpeg", "gif"},

@@ -583,6 +583,18 @@
         </form>
       </div>
 
+      <!-- 🔑 Passkeys -->
+      <div class="settings-section">
+        <h5><i class="fas fa-fingerprint"></i> {{ _('Passkeyt') }}</h5>
+        <p class="text-muted">
+          {{ _('Kirjaudu ilman salasanaa puhelimen, tietokoneen tai turva-avaimen tunnistuksella.') }}
+        </p>
+        <button class="btn btn-primary mb-2" id="add-passkey-btn" type="button">
+          <i class="fa-solid fa-fingerprint me-1"></i> {{ _('Lisää passkey') }}
+        </button>
+        <ul class="list-group mt-2" id="passkeys-list"></ul>
+      </div>
+
       <!-- 📜 Login history -->
       <div class="settings-section">
         <h5><i class="fas fa-history"></i> {{ _('Kirjautumishistoria') }}</h5>
@@ -846,6 +858,56 @@
     </div>
   </div>
 </div>
+
+<!-- Step-up (re-authentication) Modal -->
+<div class="modal fade" id="stepUpModal" aria-hidden="true" aria-labelledby="stepUpModalLabel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="stepUpModalLabel">
+          <i class="fa-solid fa-shield-halved me-1"></i>
+          {{ _('Vahvista henkilöllisyytesi') }}
+        </h5>
+        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">
+          {{ _('Tämä toiminto vaatii tuoreen tunnistautumisen. Vahvista alla.') }}
+        </p>
+        <div id="step-up-error" class="alert alert-danger d-none"></div>
+
+        <button class="btn btn-primary w-100 mb-3 d-none" id="step-up-webauthn-btn" type="button">
+          <i class="fa-solid fa-fingerprint me-1"></i>
+          {{ _('Vahvista passkeyllä') }}
+        </button>
+
+        <div id="step-up-password-form">
+          <label class="form-label" for="step-up-password-input">
+            {{ _('Salasana') }}
+          </label>
+          <input class="form-control mb-3" id="step-up-password-input" type="password"
+                 autocomplete="current-password" placeholder="{{ _('Kirjoita salasana') }}">
+          <div id="step-up-totp-group" class="mb-3 d-none">
+            <label class="form-label" for="step-up-totp-input">
+              {{ _('MFA-koodi') }}
+            </label>
+            <input class="form-control" id="step-up-totp-input" type="text" inputmode="numeric"
+                   maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code"
+                   placeholder="{{ _('6-numeroinen koodi') }}">
+          </div>
+          <button class="btn btn-secondary w-100" id="step-up-password-btn" type="button">
+            {{ _('Vahvista salasanalla') }}
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal" id="step-up-cancel-btn" type="button">
+          {{ _('Peruuta') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -951,7 +1013,7 @@
             revokeBtn.textContent = "Poista";
             revokeBtn.onclick = async () => {
               if (confirm("Haluatko poistaa tämän laitteen?")) {
-                await fetch("/users/auth/api/v2/mfa_device_revoke", {
+                await fetchWithStepUp("/users/auth/api/v2/mfa_device_revoke", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ device_id: d.id })
@@ -1117,7 +1179,7 @@
         const payload = Object.fromEntries(fd.entries());
 
         try {
-          const res = await fetch("/users/auth/api/v2/change_password", {
+          const res = await fetchWithStepUp("/users/auth/api/v2/change_password", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
@@ -1298,7 +1360,7 @@
         if (btn) btn.disabled = true;
 
         try {
-          const res = await fetch("/users/auth/api_token", {
+          const res = await fetchWithStepUp("/users/auth/api_token", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ type, scopes })
@@ -1342,4 +1404,254 @@
   });
 </script>
 
+<script src="{{ url_for('static', filename='js/webauthn.js') }}"></script>
+<script>
+  /* ------------------------------------------------------------------ *
+   * Step-up ("sudo") helper: retry a fetch after re-authenticating.    *
+   * ------------------------------------------------------------------ */
+  const stepUpModal = new bootstrap.Modal(document.getElementById("stepUpModal"));
+  const stepUpError = document.getElementById("step-up-error");
+  const stepUpWebAuthnBtn = document.getElementById("step-up-webauthn-btn");
+  const stepUpPwBtn = document.getElementById("step-up-password-btn");
+  const stepUpPwInput = document.getElementById("step-up-password-input");
+  const stepUpTotpGroup = document.getElementById("step-up-totp-group");
+  const stepUpTotpInput = document.getElementById("step-up-totp-input");
+
+  let stepUpResolve = null;
+
+  function stepUpErrorMsg(msg) {
+    stepUpError.textContent = msg;
+    stepUpError.classList.remove("d-none");
+  }
+
+  async function stepUpViaWebAuthn() {
+    try {
+      const optionsRes = await fetch("/users/auth/api/v2/step-up/webauthn/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const optionsData = await optionsRes.json();
+      if (optionsData.status !== "success") {
+        stepUpErrorMsg(optionsData.message || "Passkey-tunnistautuminen epäonnistui");
+        return;
+      }
+      const assertion = await navigator.credentials.get({
+        publicKey: decodePublicKeyOptions(optionsData.options)
+      });
+      const res = await fetch("/users/auth/api/v2/step-up/webauthn/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: formatAssertionCredential(assertion) })
+      });
+      const data = await res.json();
+      if (data.status !== "success") {
+        stepUpErrorMsg(data.message || "Passkey-tunnistautuminen epäonnistui");
+        return;
+      }
+      stepUpModal.hide();
+      stepUpResolve && stepUpResolve(true);
+    } catch (err) {
+      console.error(err);
+      stepUpErrorMsg("Passkey-tunnistautuminen epäonnistui. Yritä salasanalla.");
+    }
+  }
+
+  async function stepUpViaPassword() {
+    const password = stepUpPwInput.value;
+    const totp_code = stepUpTotpInput.value.trim();
+    const payload = { password };
+    if (totp_code) payload.totp_code = totp_code;
+    try {
+      const res = await fetch("/users/auth/api/v2/step-up/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        stepUpModal.hide();
+        stepUpResolve && stepUpResolve(true);
+      } else {
+        stepUpErrorMsg(data.message || "Virheellinen salasana");
+      }
+    } catch (err) {
+      console.error(err);
+      stepUpErrorMsg("Tunnistautuminen epäonnistui");
+    }
+  }
+
+  async function requestStepUp() {
+    return new Promise((resolve) => {
+      stepUpResolve = resolve;
+      stepUpError.classList.add("d-none");
+      stepUpPwInput.value = "";
+      stepUpTotpInput.value = "";
+      stepUpTotpGroup.classList.add("d-none");
+      stepUpWebAuthnBtn.classList.add("d-none");
+
+      // reveal the methods the user can step up with
+      fetch("/users/auth/api/v2/step-up/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          const methods = data.methods || [];
+          const webauthn = methods.some((m) => m.type === "webauthn");
+          const requiresTotp = methods.some(
+            (m) => m.type === "password_totp" && m.requires_totp
+          );
+          if (webauthn && window.PublicKeyCredential) {
+            stepUpWebAuthnBtn.classList.remove("d-none");
+            if (methods[0] && methods[0].type === "webauthn") {
+              stepUpPwFormHint();
+            }
+          }
+          if (requiresTotp) stepUpTotpGroup.classList.remove("d-none");
+        });
+
+      stepUpModal.show();
+    });
+  }
+
+  function stepUpPwFormHint() {
+    // prefer the passkey button: place it above the password form (already so).
+  }
+
+  /**
+   * fetch() wrapper that transparently runs the step-up flow when a request is
+   * rejected with {"error":"step_up_required"} and then retries the request.
+   */
+  async function fetchWithStepUp(url, options) {
+    const res = await fetch(url, options || {});
+    if (res.status !== 403) return res;
+    let body = null;
+    try {
+      body = await res.clone().json();
+    } catch (e) {
+      /* non-JSON 403 */
+    }
+    if (!body || body.error !== "step_up_required") return res;
+
+    const ok = await requestStepUp();
+    if (!ok) return res;
+    return fetch(url, options || {});
+  }
+
+  stepUpWebAuthnBtn.addEventListener("click", stepUpViaWebAuthn);
+  stepUpPwBtn.addEventListener("click", stepUpViaPassword);
+  stepUpPwInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") stepUpViaPassword();
+  });
+  document.getElementById("step-up-cancel-btn").addEventListener("click", () => {
+    stepUpResolve && stepUpResolve(false);
+    stepUpResolve = null;
+  });
+  document.getElementById("stepUpModal").addEventListener("hidden.bs.modal", () => {
+    stepUpResolve && stepUpResolve(false);
+    stepUpResolve = null;
+  });
+
+  /* ------------------------------------------------------------------ *
+   * Passkey management                                                  *
+   * ------------------------------------------------------------------ */
+  const passkeysList = document.getElementById("passkeys-list");
+
+  async function loadPasskeys() {
+    try {
+      const res = await fetch("/users/auth/api/v2/passkeys");
+      const data = await res.json();
+      if (data.status !== "success") return;
+      passkeysList.innerHTML = "";
+      if (!data.passkeys.length) {
+        passkeysList.innerHTML = '<li class="list-group-item text-muted">' +
+          "{{ _('Ei passkeyjä vielä.') }}" + "</li>";
+        return;
+      }
+      data.passkeys.forEach((pk) => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between align-items-center";
+        li.dataset.passkeyId = pk.id;
+
+        const meta = document.createElement("div");
+        const name = document.createElement("span");
+        name.className = "fw-semibold me-2";
+        name.textContent = pk.name || "Authenticator";
+        const created = document.createElement("small");
+        created.className = "text-muted";
+        created.textContent = new Date(pk.created_at).toLocaleDateString("fi-FI");
+        meta.appendChild(name);
+        meta.appendChild(created);
+
+        const actions = document.createElement("div");
+        const renameBtn = document.createElement("button");
+        renameBtn.className = "btn btn-sm btn-outline-secondary me-1";
+        renameBtn.textContent = "{{ _('Nimeä') }}";
+        renameBtn.onclick = async () => {
+          const newName = prompt("{{ _('Uusi nimi passkeylle') }}", pk.name);
+          if (!newName) return;
+          const r = await fetchWithStepUp("/users/auth/api/v2/passkeys/rename", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: pk.id, name: newName })
+          });
+          const j = await r.json();
+          showSettingsMessage(j.message, j.status === "success" ? "success" : "error");
+          loadPasskeys();
+        };
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "btn btn-sm btn-danger";
+        deleteBtn.textContent = "{{ _('Poista') }}";
+        deleteBtn.onclick = async () => {
+          if (!confirm("{{ _('Haluatko poistaa tämän passkeyn?') }}")) return;
+          const r = await fetchWithStepUp("/users/auth/api/v2/passkeys/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: pk.id })
+          });
+          const j = await r.json();
+          showSettingsMessage(j.message, j.status === "success" ? "success" : "error");
+          loadPasskeys();
+        };
+        actions.appendChild(renameBtn);
+        actions.appendChild(deleteBtn);
+
+        li.appendChild(meta);
+        li.appendChild(actions);
+        passkeysList.appendChild(li);
+      });
+    } catch (e) {
+      console.error("Failed to load passkeys", e);
+    }
+  }
+
+  document.getElementById("add-passkey-btn").addEventListener("click", async () => {
+    hideSettingsMessage();
+    if (!window.PublicKeyCredential) {
+      showSettingsMessage("{{ _('Selaimesi ei tue passkeyjä.') }}", "error");
+      return;
+    }
+    try {
+      const statusRes = await fetch("/users/auth/api/v2/step-up/status");
+      const status = await statusRes.json();
+      if (status.elevated !== true) {
+        const ok = await requestStepUp();
+        if (!ok) return;
+      }
+      const passkeys = await registerPasskey();
+      showSettingsMessage("{{ _('Passkey lisätty onnistuneesti.') }}", "success");
+      loadPasskeys();
+    } catch (err) {
+      showSettingsMessage(err.message, "error");
+    }
+  });
+
+  $(function () {
+    $("#settings-tabs").on("tabsactivate", function (event, ui) {
+      if (ui.newTab.find("a").attr("href") === "#tab-security") {
+        loadPasskeys();
+      }
+    });
+  });
+</script>
 {% endblock %}

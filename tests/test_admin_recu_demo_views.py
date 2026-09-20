@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from bson import ObjectId
 
@@ -67,6 +67,34 @@ def test_recurring_date_preview_uses_schedule_and_excludes_breaks(admin_client):
     assert payload["excluded_break_dates"] == 1
     assert payload["dates"]
     assert all(date.fromisoformat(value).weekday() == 4 for value in payload["dates"])
+
+
+def test_recurring_date_preview_scans_past_long_consecutive_break(admin_client):
+    start_date = date(2099, 1, 1)
+    break_dates = [
+        (start_date + timedelta(days=offset)).isoformat() for offset in range(120)
+    ]
+    query = [
+        ("date", start_date.isoformat()),
+        ("frequency_type", "daily"),
+        ("frequency_interval", "1"),
+        ("end_date", "2099-12-31"),
+    ]
+    query.extend(("break_dates", value) for value in break_dates)
+
+    response = admin_client.get(
+        "/admin/recu_demo/preview-dates",
+        query_string=query,
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["dates"] == [
+        (start_date + timedelta(days=offset)).isoformat()
+        for offset in range(120, 132)
+    ]
+    assert payload["excluded_break_dates"] == 120
+    assert payload["has_more"] is True
 
 
 def test_recurring_date_preview_rejects_incomplete_monthly_schedule(admin_client):

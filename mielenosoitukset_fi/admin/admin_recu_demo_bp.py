@@ -24,7 +24,7 @@ from mielenosoitukset_fi.utils.demo_slugs import (
     normalize_demo_slug,
 )
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
-from mielenosoitukset_fi.utils.recurrence import calculate_recurrence_dates
+from mielenosoitukset_fi.utils.recurrence import collect_recurrence_preview_dates
 from mielenosoitukset_fi.demonstrations.audit import record_demo_change
 from .utils import mongo, _ADMIN_TEMPLATE_FOLDER
 
@@ -228,19 +228,17 @@ def preview_recurrence_dates():
         ), 400
 
     break_dates = set(_collect_break_dates(request.args))
-    candidate_dates = calculate_recurrence_dates(
+    dates, has_more, excluded_count = collect_recurrence_preview_dates(
         start_date,
         schedule,
-        max_occurrences=100,
+        break_dates,
+        limit=12,
     )
-    dates = [value.isoformat() for value in candidate_dates if value.isoformat() not in break_dates]
     return jsonify(
         {
-            "dates": dates[:12],
-            "has_more": len(dates) > 12,
-            "excluded_break_dates": sum(
-                1 for value in candidate_dates if value.isoformat() in break_dates
-            ),
+            "dates": [value.isoformat() for value in dates],
+            "has_more": has_more,
+            "excluded_break_dates": excluded_count,
         }
     )
 

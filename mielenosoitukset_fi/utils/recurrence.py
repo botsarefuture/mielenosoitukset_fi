@@ -1,7 +1,7 @@
 """Pure recurring-date calculation shared by workers and admin previews."""
 
 from datetime import date, datetime, timedelta
-from typing import Optional, Union
+from typing import Collection, Optional, Union
 
 from dateutil.relativedelta import relativedelta, weekday
 
@@ -122,3 +122,52 @@ def calculate_recurrence_dates(
         iterations += 1
 
     return occurrences
+
+
+def collect_recurrence_preview_dates(
+    start_date: Union[datetime, date],
+    schedule: RepeatSchedule,
+    excluded_dates: Collection[str] = (),
+    *,
+    limit: int = 12,
+    scan_limit: int = 10000,
+    today: Optional[date] = None,
+) -> tuple[list[date], bool, int]:
+    """Collect usable preview dates while skipping configured break dates.
+
+    The candidate budget accounts for every distinct excluded date, so a long
+    consecutive break does not consume the visible preview. ``scan_limit`` is
+    a separate defensive cap for malformed or unexpectedly large requests.
+    """
+    if limit < 1 or scan_limit < 1:
+        return [], False, 0
+
+    excluded = set(excluded_dates)
+    candidate_limit = min(scan_limit, len(excluded) + limit + 1)
+    candidate_dates = calculate_recurrence_dates(
+        start_date,
+        schedule,
+        max_occurrences=candidate_limit,
+        today=today,
+    )
+
+    usable_dates = []
+    excluded_count = 0
+    for candidate in candidate_dates:
+        if candidate.isoformat() in excluded:
+            excluded_count += 1
+            continue
+        usable_dates.append(candidate)
+        if len(usable_dates) > limit:
+            break
+
+    reached_safety_cap = (
+        candidate_limit == scan_limit
+        and len(candidate_dates) == scan_limit
+        and len(usable_dates) <= limit
+    )
+    return (
+        usable_dates[:limit],
+        len(usable_dates) > limit or reached_safety_cap,
+        excluded_count,
+    )

@@ -264,7 +264,13 @@ def sync_ui_translation_to_git(locale: str, msgid: str, translated_text: str) ->
                 branch_is_current = False
 
         pushed = False
-        if not branch_is_current:
+        if branch_is_current:
+            # The temporary commit has the same tree as the remote branch but
+            # may have a different SHA because its commit timestamp changed.
+            # Report the canonical remote commit that callers can actually
+            # fetch instead of the throwaway worktree commit.
+            commit_sha = existing_branch_sha
+        else:
             try:
                 _run_git(worktree_root, "push", "--force-with-lease", remote_name, f"HEAD:{branch_name}")
                 pushed = True

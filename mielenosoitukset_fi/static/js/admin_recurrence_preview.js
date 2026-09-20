@@ -82,6 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function refreshPreview() {
+    requestController?.abort();
+    requestController = null;
     const query = buildQuery();
     if (!query.get("date")) {
       clearPreview();
@@ -89,21 +91,25 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    requestController?.abort();
-    requestController = new AbortController();
+    const controller = new AbortController();
+    requestController = controller;
     status.textContent = label("loadingLabel", "Lasketaan tulevia päivämääriä…");
     try {
       const response = await fetch(`${preview.dataset.previewEndpoint}?${query}`, {
         headers: { Accept: "application/json" },
-        signal: requestController.signal,
+        signal: controller.signal,
       });
       const payload = await response.json();
+      if (requestController !== controller) return;
       if (!response.ok) throw new Error(payload.message || "Preview failed");
       renderDates(payload);
     } catch (error) {
       if (error.name === "AbortError") return;
+      if (requestController !== controller) return;
       clearPreview();
       status.textContent = error.message || label("errorLabel", "Päivämäärien esikatselua ei voitu laskea.");
+    } finally {
+      if (requestController === controller) requestController = null;
     }
   }
 

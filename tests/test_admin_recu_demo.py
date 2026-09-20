@@ -385,6 +385,7 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
     monkeypatch.setattr(repeat_v2, "recu_demos_collection", db.recu_demos)
     monkeypatch.setattr(repeat_v2, "stats_collection", db.recu_stats)
     monkeypatch.setattr(repeat_v2, "DRY_RUN", False)
+    monkeypatch.setattr(repeat_v2, "FORCE_RECHECK", True)
     repeat_v2.runtime_actions.clear()
 
     repeat_v2.process_demo(parent)

@@ -55,3 +55,16 @@ def test_recurrence_preview_script_uses_safe_dom_rendering():
     assert "replaceChildren" in script
     assert "MutationObserver" in script
     assert "innerHTML" not in script
+
+
+def test_recurrence_preview_aborts_stale_request_before_empty_date_return():
+    script = Path(
+        "mielenosoitukset_fi/static/js/admin_recurrence_preview.js"
+    ).read_text(encoding="utf-8")
+
+    refresh_start = script.index("async function refreshPreview()")
+    abort_position = script.index("requestController?.abort()", refresh_start)
+    empty_date_position = script.index('if (!query.get("date"))', refresh_start)
+
+    assert abort_position < empty_date_position
+    assert "if (requestController !== controller) return;" in script

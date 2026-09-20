@@ -51,7 +51,11 @@ from mielenosoitukset_fi.utils import VERSION
 from mielenosoitukset_fi.utils.classes.RepeatSchedule import RepeatSchedule
 from mielenosoitukset_fi.utils.demo_slugs import recurring_child_slug
 from mielenosoitukset_fi.utils.time_utils import utcnow
-from mielenosoitukset_fi.utils.recurrence import calculate_recurrence_dates, next_weekday
+from mielenosoitukset_fi.utils.recurrence import (
+    WEEKDAY_MAP,
+    calculate_recurrence_dates,
+    next_weekday,
+)
 
 # Dry-run flag (can be overridden from CLI)
 DRY_RUN = False

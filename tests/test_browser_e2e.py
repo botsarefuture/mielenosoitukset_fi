@@ -360,7 +360,7 @@ def test_admin_summary_cards_keep_icons_labels_and_values_separate(
         ("/admin/user/", ".users-summary-card", ".users-summary-icon", "div > span", "div > strong"),
         ("/admin/organization/", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
         (f"/admin/organization/view/{seeded_data['org_id']}", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
-        ("/admin/stats", ".stats-shell > .stat-grid .stat-card", ".stat-icon", ".stat-label", ".stat-value"),
+        ("/admin/stats", ".admin-workspace-summary .admin-workspace-summary-card", ".admin-workspace-summary-icon", "span", "strong"),
     )
 
     for path, card_selector, icon_selector, label_selector, value_selector in pages:

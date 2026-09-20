@@ -1637,18 +1637,61 @@ from flask import request, render_template
 @admin_bp.route("/stats")
 @login_required
 @admin_required
+@permission_required("VIEW_ANALYTICS")
 def stats():
     """Render statistics page with user, organization, and demo analytics."""
     try:
+        page, per_page = parse_admin_pagination(request.args)
+        include_past = (request.args.get("include_past") or "0").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        scope_query, has_global_scope = _analytics_demo_scope(current_user)
+        (
+            rows,
+            analytics_count,
+            total_views,
+            visible_demo_count,
+            future_demo_count,
+            page,
+        ) = _build_analytics_summary(
+            include_past,
+            page,
+            per_page,
+            scope_query=scope_query,
+        )
+        pagination = build_admin_pagination(
+            "admin.stats",
+            total_count=analytics_count,
+            page=page,
+            per_page=per_page,
+            query_args={"include_past": "1" if include_past else ""},
+        )
         _log_admin_event(
             "stats_view",
-            page=int(request.args.get("page", 1)),
-            per_page=int(request.args.get("per_page", 20)),
+            page=page,
+            per_page=per_page,
+            include_past=include_past,
         )
         return render_template(
             f"{_ADMIN_TEMPLATE_FOLDER}stats.html",
-            page=int(request.args.get("page", 1)),
-            per_page=int(request.args.get("per_page", 20)),
+            rows=rows,
+            analytics_count=analytics_count,
+            total_views=total_views,
+            avg_views=round(total_views / analytics_count, 2)
+            if analytics_count
+            else 0,
+            visible_demo_count=visible_demo_count,
+            future_demo_count=future_demo_count,
+            include_past=include_past,
+            show_global_counts=has_global_scope,
+            total_users=mongo.users.count_documents({}) if has_global_scope else None,
+            total_organizations=mongo.organizations.count_documents({})
+            if has_global_scope
+            else None,
+            last_updated=utcnow().strftime("%d.%m.%Y %H:%M"),
+            **pagination,
         )
     except Exception as e:
         logger.error(f"Error rendering stats page: {e}")
@@ -1671,11 +1714,64 @@ def _parse_demo_date(value):
     return None
 
 
-def _future_demo_ids() -> set[ObjectId]:
+def _analytics_demo_scope(user) -> tuple[dict, bool]:
+    """Return the demonstrations visible to the current analytics viewer."""
+    has_full_permissions = getattr(user, "has_full_permissions", None)
+    if getattr(user, "global_admin", False) or (
+        callable(has_full_permissions) and has_full_permissions()
+    ):
+        return {}, True
+
+    permission_scopes = list(user._perm_in("VIEW_ANALYTICS"))
+    if "global" in {str(scope) for scope in permission_scopes}:
+        return {}, True
+
+    organization_ids = [
+        ObjectId(scope)
+        for scope in permission_scopes
+        if ObjectId.is_valid(str(scope))
+    ]
+    city_keys = (
+        user.scoped_city_keys_for("VIEW_ANALYTICS")
+        if hasattr(user, "scoped_city_keys_for")
+        else []
+    )
+    city_names = [
+        city for city in CITY_LIST if normalize_city_key(city) in city_keys
+    ]
+    editor_ids = [user.id]
+    if getattr(user, "_id", None) is not None:
+        editor_ids.append(user._id)
+    permission_filters = [{"editors": {"$in": editor_ids}}]
+    if organization_ids:
+        permission_filters.append(
+            {
+                "organizers": {
+                    "$elemMatch": {"organization_id": {"$in": organization_ids}}
+                }
+            }
+        )
+    if city_keys:
+        permission_filters.append(
+            {
+                "$or": [
+                    {"city_key": {"$in": city_keys}},
+                    {"city": {"$in": city_names}},
+                ]
+            }
+        )
+    return {"$or": permission_filters}, False
+
+
+def _future_demo_ids(scope_query=None) -> set[ObjectId]:
     today = utcnow().date()
     ids: set[ObjectId] = set()
     cursor = mongo.demonstrations.find(
-        {"date": {"$exists": True}},
+        {
+            "$and": [scope_query or {}, {"date": {"$exists": True}}],
+        }
+        if scope_query
+        else {"date": {"$exists": True}},
         {"_id": 1, "date": 1},
     )
     for doc in cursor:
@@ -1685,12 +1781,20 @@ def _future_demo_ids() -> set[ObjectId]:
     return ids
 
 
-def _build_analytics_summary(include_past: bool, page: int, per_page: int):
-    match_stage = {}
-    future_ids = set()
-    if not include_past:
-        future_ids = _future_demo_ids()
-        match_stage["demo_id"] = {"$in": list(future_ids)} if future_ids else {"$in": []}
+def _build_analytics_summary(
+    include_past: bool,
+    page: int,
+    per_page: int,
+    *,
+    scope_query=None,
+):
+    visible_ids = {
+        doc["_id"]
+        for doc in mongo.demonstrations.find(scope_query or {}, {"_id": 1})
+    }
+    future_ids = _future_demo_ids(scope_query)
+    selected_ids = visible_ids if include_past else future_ids
+    match_stage = {"demo_id": {"$in": list(selected_ids)}}
 
     base_pipeline = [{"$match": match_stage}] if match_stage else []
     count_pipeline = base_pipeline + [
@@ -1703,10 +1807,12 @@ def _build_analytics_summary(include_past: bool, page: int, per_page: int):
     total_views_doc = list(mongo.analytics.aggregate(total_views_pipeline))
     total_views = total_views_doc[0]["total_views"] if total_views_doc else 0
 
-    skip = max((page - 1) * per_page, 0)
+    total_pages = max(1, (total_count + per_page - 1) // per_page)
+    page = min(max(page, 1), total_pages)
+    skip = (page - 1) * per_page
     data_pipeline = base_pipeline + [
         {"$group": {"_id": "$demo_id", "views": {"$sum": 1}}},
-        {"$sort": {"views": -1}},
+        {"$sort": {"views": -1, "_id": 1}},
         {"$skip": skip},
         {"$limit": per_page},
     ]
@@ -1732,36 +1838,55 @@ def _build_analytics_summary(include_past: bool, page: int, per_page: int):
                 "date": info.get("date"),
             }
         )
-    total_pages = (total_count + per_page - 1) // per_page if per_page else 1
-    return rows, total_count, total_pages, total_views, len(future_ids)
+    return (
+        rows,
+        total_count,
+        total_views,
+        len(visible_ids),
+        len(future_ids),
+        page,
+    )
 
 
 @admin_bp.route("/api/stats/summary")
 @login_required
 @admin_required
+@permission_required("VIEW_ANALYTICS")
 def stats_summary_api():
     """Return stats payload for the admin dashboard."""
-    per_page = max(min(int(request.args.get("per_page", 20)), 100), 1)
-    page = max(int(request.args.get("page", 1)), 1)
+    page, per_page = parse_admin_pagination(request.args)
     include_past = (request.args.get("include_past") or "0").lower() in {"1", "true", "yes"}
+    scope_query, has_global_scope = _analytics_demo_scope(current_user)
 
-    total_users = mongo.users.count_documents({})
-    active_users = mongo.users.count_documents({"confirmed": True})
-    total_organizations = mongo.organizations.count_documents({})
-    total_demos = mongo.demonstrations.count_documents({})
-
-    rows, total_count, total_pages, total_views, future_demo_count = _build_analytics_summary(
-        include_past, page, per_page
+    (
+        rows,
+        total_count,
+        total_views,
+        visible_demo_count,
+        future_demo_count,
+        page,
+    ) = _build_analytics_summary(
+        include_past,
+        page,
+        per_page,
+        scope_query=scope_query,
     )
+    total_pages = max(1, (total_count + per_page - 1) // per_page)
     avg_views = round(total_views / total_count, 2) if total_count else 0
 
     return jsonify(
         {
             "summary": {
-                "total_users": total_users,
-                "active_users": active_users,
-                "total_organizations": total_organizations,
-                "total_demos": total_demos,
+                "total_users": mongo.users.count_documents({})
+                if has_global_scope
+                else None,
+                "active_users": mongo.users.count_documents({"confirmed": True})
+                if has_global_scope
+                else None,
+                "total_organizations": mongo.organizations.count_documents({})
+                if has_global_scope
+                else None,
+                "total_demos": visible_demo_count,
                 "total_demos_future": future_demo_count,
                 "total_views": total_views,
                 "avg_views": avg_views,
@@ -1791,7 +1916,11 @@ def _matomo_config():
 @admin_bp.route("/api/stats/matomo-live")
 @login_required
 @admin_required
+@permission_required("VIEW_ANALYTICS")
 def stats_matomo_live():
+    _, has_global_scope = _analytics_demo_scope(current_user)
+    if not has_global_scope:
+        abort(403)
     cfg = _matomo_config()
     if not cfg:
         return jsonify({"enabled": False, "reason": "missing_config"})
@@ -2150,6 +2279,9 @@ def render_analytics_overview():
 
 from datetime import timedelta
 @admin_bp.route("/per_demo_analytics/<demo_id>")
+@login_required
+@admin_required
+@permission_required("VIEW_ANALYTICS", _type="DEMONSTRATION")
 def demo_analytics(demo_id):
     from mielenosoitukset_fi.utils.classes import Demonstration
     try:
@@ -2407,7 +2539,13 @@ def api_demos_nousussa():
 
 
 @admin_bp.route("/analytics/overall_24h")
+@login_required
+@admin_required
+@permission_required("VIEW_ANALYTICS")
 def analytics_overall_24h():
+    _, has_global_scope = _analytics_demo_scope(current_user)
+    if not has_global_scope:
+        abort(403)
     now        = datetime.now(timezone.utc).replace(second=0, microsecond=0)
     yesterday  = now - timedelta(days=1)
 
@@ -2486,7 +2624,13 @@ def analytics_overall_24h():
 
 
 @admin_bp.route("/api/analytics/overall_24h")
+@login_required
+@admin_required
+@permission_required("VIEW_ANALYTICS")
 def analytics_overall_24h_api():
+    _, has_global_scope = _analytics_demo_scope(current_user)
+    if not has_global_scope:
+        abort(403)
     now_hel = datetime.now(HELSINKI_TZ).replace(second=0, microsecond=0)
     yesterday_hel = now_hel - timedelta(days=1)
 

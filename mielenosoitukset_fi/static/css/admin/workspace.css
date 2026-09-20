@@ -2007,7 +2007,6 @@ main.flex-grow-1 {
 .users-page,
 .orgs-page,
 .analytics-page,
-.stats-shell,
 .org-detail,
 .suggestion-review {
   width: 100%;
@@ -2020,7 +2019,6 @@ main.flex-grow-1 {
 .users-page > *,
 .orgs-page > *,
 .analytics-page > *,
-.stats-shell > *,
 .org-detail > *,
 .suggestion-review > * {
   min-width: 0;
@@ -2348,8 +2346,7 @@ a.admin-workspace-summary-card[aria-current="page"] {
   .admin-workspace-summary-card,
   .users-summary-card,
   .orgs-summary-card,
-  .org-detail-summary-card,
-  .stats-shell .stat-card
+  .org-detail-summary-card
 ) {
   box-sizing: border-box;
   display: grid;
@@ -2370,8 +2367,7 @@ a.admin-workspace-summary-card[aria-current="page"] {
   .admin-workspace-summary-icon,
   .users-summary-icon,
   .orgs-summary-icon,
-  .org-detail-summary-icon,
-  .stats-shell .stat-icon
+  .org-detail-summary-icon
 ) {
   box-sizing: border-box;
   display: inline-grid;
@@ -2387,8 +2383,7 @@ a.admin-workspace-summary-card[aria-current="page"] {
   .admin-workspace-summary-card,
   .users-summary-card,
   .orgs-summary-card,
-  .org-detail-summary-card,
-  .stats-shell .stat-card
+  .org-detail-summary-card
 ) > div {
   display: flex;
   flex-direction: column;
@@ -2423,23 +2418,6 @@ a.admin-workspace-summary-card[aria-current="page"] {
   font-size: 1.7rem;
   font-weight: 800;
   line-height: 1;
-}
-
-.stats-shell .stat-card > div > .stat-label {
-  min-height: 1.2em;
-  margin: 0 0 .25rem;
-  line-height: 1.2;
-}
-
-.stats-shell .stat-card > div > .stat-value {
-  margin: 0;
-  font-size: 1.7rem;
-  line-height: 1;
-}
-
-.stats-shell .stat-card > div > .stat-sub {
-  margin-top: .35rem;
-  line-height: 1.3;
 }
 
 .campaign-admin-page {
@@ -3997,7 +3975,7 @@ th.sortable.desc::after {
     transform: none !important;
     margin-top: .4rem !important;
   }
-  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid) {
+  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .city-admin-shell .city-admin-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -4127,7 +4105,7 @@ th.sortable.desc::after {
     text-align: left;
   }
 
-  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid) {
+  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary) {
     grid-template-columns: 1fr;
   }
   :is(

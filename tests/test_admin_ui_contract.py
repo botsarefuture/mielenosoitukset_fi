@@ -684,14 +684,18 @@ def test_audit_and_developer_pages_use_canonical_hero_navigation():
     assert "<style" not in logs
     assert "css/admin/audit.css" in logs
     assert "admin-filter-bar" in logs
-    assert "admin-section-card" in logs
-    assert "admin-result-summary" in logs
-    assert "admin-pagination" in logs
-    assert 'aria-expanded="false"' in logs
-    assert "detail.hidden = !isOpen" in logs
-    assert "detail.style.maxHeight" not in logs
-    assert "--admin-workspace-primary-bg" in audit_css
-    assert "prefers-reduced-motion: reduce" in audit_css
+    assert "admin-section-tabs" in logs
+    assert "admin-data-view__header admin-result-summary" in logs
+    assert "admin-data-view__viewport" in logs
+    assert "admin_pagination(" in logs
+    assert "admin-disclosure" in logs
+    assert "fetchLogs" not in logs
+    assert "innerHTML" not in logs
+    assert "<script" not in logs
+    assert "--surface" not in audit_css
+    assert "--border-color" not in audit_css
+    assert "var(--admin-workspace-surface)" in audit_css
+    assert "var(--admin-workspace-border)" in audit_css
     submission_errors = Path(pages[4]).read_text(encoding="utf-8")
     assert 'class="admin-data-view admin-workspace h-100"' in submission_errors
     assert 'class="admin-data-view__header"' in submission_errors
@@ -877,6 +881,37 @@ def test_specialist_admin_pages_use_canonical_hero_navigation():
     campaign = Path(pages[0]).read_text(encoding="utf-8")
     assert 'class="header' not in campaign
     assert ".header" not in campaign
+
+
+def test_super_audit_uses_shared_collection_contract():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/super_audit/logs.html"
+    ).read_text(encoding="utf-8")
+    route = Path(
+        "mielenosoitukset_fi/admin/admin_demo_bp.py"
+    ).read_text(encoding="utf-8")
+
+    for contract in (
+        "admin-page admin-workspace",
+        "admin-filter-bar",
+        "admin-active-filters",
+        "admin-data-view__header admin-result-summary",
+        "admin-data-view__viewport",
+        "admin-data-view__table",
+        "admin-code-block",
+        "admin-empty-state",
+        "admin_pagination(",
+    ):
+        assert contract in template
+
+    assert "class=\"card" not in template
+    assert "table-responsive" not in template
+    assert 'name="limit"' not in template
+    assert "<style" not in template
+    assert "style=" not in template
+    assert '.sort([("timestamp", -1), ("_id", -1)])' in route
+    assert '.skip(pagination["slice_start"])' in route
+    assert ".limit(per_page)" in route
 
 
 def test_campaign_collection_uses_shared_admin_components():

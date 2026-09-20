@@ -4601,7 +4601,7 @@ def view_super_audit_logs():
         abort(403)
 
     args = request.args
-    limit = min(max(int(args.get("limit", 200)), 10), 1000)
+    page, per_page = parse_admin_pagination(args)
     query = {}
     event = (args.get("event") or "").strip()
     if event:
@@ -4616,8 +4616,24 @@ def view_super_audit_logs():
     if search_text:
         query["payload"] = {"$regex": re.escape(search_text), "$options": "i"}
 
+    total_count = mongo.super_audit_logs.count_documents(query)
+    pagination = build_admin_pagination(
+        "admin_demo.view_super_audit_logs",
+        total_count=total_count,
+        page=page,
+        per_page=per_page,
+        query_args={
+            "event": event,
+            "path": path,
+            "method": method,
+            "q": search_text,
+        },
+    )
     entries = list(
-        mongo.super_audit_logs.find(query).sort("timestamp", -1).limit(limit)
+        mongo.super_audit_logs.find(query)
+        .sort([("timestamp", -1), ("_id", -1)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
     )
     for entry in entries:
         entry["_id"] = str(entry.get("_id"))
@@ -4635,7 +4651,9 @@ def view_super_audit_logs():
         f"{_ADMIN_TEMPLATE_FOLDER}super_audit/logs.html",
         entries=entries,
         events=distinct_events,
-        filters={"event": event, "path": path, "method": method, "q": search_text, "limit": limit},
+        filters={"event": event, "path": path, "method": method, "q": search_text},
+        total_count=total_count,
+        **pagination,
     )
 
 

@@ -1524,8 +1524,8 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
         user_doc = {"username": str(user_doc), "displayname": str(user_doc)}
     by = {
         "id": str(user_doc.get("_id") or user_doc.get("id")) if (user_doc.get("_id") or user_doc.get("id")) else None,
-        "username": user_doc.get("username") or "Unknown",
-        "displayname": user_doc.get("displayname") or user_doc.get("username") or "Unknown",
+        "username": user_doc.get("username") or _("Tuntematon"),
+        "displayname": user_doc.get("displayname") or user_doc.get("username") or _("Tuntematon"),
         "profile_picture": user_doc.get("profile_picture"),
         "email": user_doc.get("email"),
     }
@@ -1623,7 +1623,7 @@ def get_admin_activity(page=1, per_page=20, query=None):
     skip = (page - 1) * per_page
     cursor = (
         mongo.admin_logs.find(query or {})
-        .sort("_id", -1)
+        .sort([("timestamp", -1), ("_id", -1)])
         .skip(skip)
         .limit(per_page)
     )
@@ -2014,13 +2014,12 @@ def manual_page(page):
 def logs():
     user_cursor = (
         mongo.users.find({}, {"displayname": 1, "username": 1})
-        .sort("username", 1)
-        .limit(500)
+        .sort([("username", 1), ("_id", 1)])
     )
     users = [
         {
             "id": str(doc["_id"]),
-            "name": doc.get("displayname") or doc.get("username") or "Unknown",
+            "name": doc.get("displayname") or doc.get("username") or _("Tuntematon"),
         }
         for doc in user_cursor
     ]
@@ -2029,11 +2028,42 @@ def logs():
     method_set.update(filter(None, mongo.admin_logs.distinct("action.method")))
     action_types = sorted(method_set)
 
+    filters = {
+        "user": (request.args.get("user") or "").strip(),
+        "start_date": (request.args.get("start_date") or "").strip(),
+        "end_date": (request.args.get("end_date") or "").strip(),
+        "action_type": (request.args.get("action_type") or "").strip(),
+        "category": (request.args.get("category") or "").strip(),
+        "q": (request.args.get("q") or "").strip(),
+    }
+    query = _build_logs_query(filters)
+    total_count = mongo.admin_logs.count_documents({})
+    filtered_count = mongo.admin_logs.count_documents(query)
+    page, per_page = parse_admin_pagination(request.args)
+    pagination = build_admin_pagination(
+        "admin.logs",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args=filters,
+    )
+    entries = get_admin_activity(
+        pagination["current_page"],
+        per_page,
+        query,
+    )
+
     _log_admin_event("admin_logs_view")
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}logs.html",
         users=users,
         action_types=action_types,
+        entries=entries,
+        filters=filters,
+        total_count=total_count,
+        filtered_count=filtered_count,
+        clear_filters_url=url_for("admin.logs"),
+        **pagination,
     )
 
 

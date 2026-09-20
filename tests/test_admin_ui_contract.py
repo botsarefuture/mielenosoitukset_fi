@@ -1214,14 +1214,25 @@ def test_demo_edit_links_use_the_shared_secure_lifecycle_contract():
     recurring_form = Path(
         "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html"
     ).read_text(encoding="utf-8")
+    edit_link_modal = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/_edit_link_modal.html"
+    ).read_text(encoding="utf-8")
+    edit_link_script = Path(
+        "mielenosoitukset_fi/static/js/admin_demo_edit_links.js"
+    ).read_text(encoding="utf-8")
 
-    assert "modal fade admin-modal" in demo_form
+    assert "import demo_edit_link_modal" in demo_form
+    assert "demo_edit_link_modal('editLinkModal'" in demo_form
+    assert "modal fade admin-modal" in edit_link_modal
     assert "admin-data-view" in demo_form
-    assert 'value="1h"' in demo_form
-    assert 'value="24h"' in demo_form
-    assert 'value="7d"' in demo_form
-    assert "'X-CSRF-Token': editLinkCsrf" in demo_form
-    assert "JSON.stringify({email, duration: duration.value})" in demo_form
-    assert "JSON.stringify({ email, edit_link: editLink })" not in demo_form
+    assert 'value="1h"' in edit_link_modal
+    assert 'value="24h"' in edit_link_modal
+    assert 'value="7d"' in edit_link_modal
+    assert 'data-demo-edit-link-generate' in edit_link_modal
+    assert 'data-demo-edit-link-copy' in edit_link_modal
+    assert 'data-demo-edit-link-send' in edit_link_modal
+    assert '"X-CSRF-Token": modalElement.dataset.csrfToken' in edit_link_script
+    assert "JSON.stringify({ email: email.value, duration: duration.value })" in edit_link_script
+    assert "edit_link: editLink" not in edit_link_script
     assert "generate-edit-link-btn" not in recurring_form
     assert "send_edit_link_email" not in recurring_form

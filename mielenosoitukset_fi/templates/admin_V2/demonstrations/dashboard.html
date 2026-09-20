@@ -1,7 +1,9 @@
 {% extends 'admin_base.html' %}
 {% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
+{% from 'admin_V2/demonstrations/_edit_link_modal.html' import demo_edit_link_modal %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demonstrations.css', v='20260914-admin-ui-51') }}">{% endblock %}
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/admin_demo_edit_links.js') }}"></script>
 <!--<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>-->
 <script>
   function acceptSty(demoId) {
@@ -299,12 +301,28 @@
     <td class="actions-cell">
         <div class="d-flex align-items-center gap-2">
             {% if 'VIEW_DEMO' in demo_actions.get(demo._id|string, []) %}
+            <a class="btn btn-sm btn-outline-primary"
+               href="{{ url_for('demonstration_detail', demo_id=(demo.slug or demo._id)) }}"
+               target="_blank" rel="noopener"
+               title="{{ _('Avaa julkinen esikatselu') }}"
+               aria-label="{{ _('Avaa julkinen esikatselu') }}: {{ demo.title }}">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i>
+            </a>
             <a class="btn btn-sm btn-outline-primary command-center-btn"
                href="{{ url_for('admin_demo.demo_command_center', demo_id=demo._id) }}"
                title="{{ _('Hallintanäkymä') }}">
                 <i class="fa-solid fa-table-columns"></i>
                 <span class="visually-hidden">{{ _('Hallintanäkymä') }}</span>
             </a>
+            {% endif %}
+            {% if 'GENERATE_EDIT_LINK' in demo_actions.get(demo._id|string, []) %}
+            <button class="btn btn-sm btn-outline-secondary" type="button"
+                    data-bs-toggle="modal" data-bs-target="#dashboardEditLinkModal"
+                    data-demo-edit-link-trigger data-demo-id="{{ demo._id }}" data-demo-title="{{ demo.title }}"
+                    title="{{ _('Luo ja kopioi muokkauslinkki') }}"
+                    aria-label="{{ _('Luo ja kopioi muokkauslinkki') }}: {{ demo.title }}">
+                <i class="fa-solid fa-link" aria-hidden="true"></i>
+            </button>
             {% endif %}
             <div class="dropdown">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
@@ -415,6 +433,7 @@
 
             </ul>
         </div>
+        </div>
     </td>
 
 </tr>
@@ -466,13 +485,30 @@
     {% endif %}
 
     <td class="actions-cell">
+        <div class="d-flex align-items-center gap-2">
         {% if 'VIEW_DEMO' in demo_actions.get(demo._id|string, []) %}
-        <a class="btn btn-sm btn-outline-primary me-2 command-center-btn"
+        <a class="btn btn-sm btn-outline-primary"
+           href="{{ url_for('demonstration_detail', demo_id=(demo.slug or demo._id)) }}"
+           target="_blank" rel="noopener"
+           title="{{ _('Avaa julkinen esikatselu') }}"
+           aria-label="{{ _('Avaa julkinen esikatselu') }}: {{ demo.title }}">
+            <i class="fa-solid fa-eye" aria-hidden="true"></i>
+        </a>
+        <a class="btn btn-sm btn-outline-primary command-center-btn"
            href="{{ url_for('admin_demo.demo_command_center', demo_id=demo._id) }}"
            title="{{ _('Hallintanäkymä') }}">
             <i class="fa-solid fa-table-columns"></i>
             <span class="visually-hidden">{{ _('Hallintanäkymä') }}</span>
         </a>
+        {% endif %}
+        {% if 'GENERATE_EDIT_LINK' in demo_actions.get(demo._id|string, []) %}
+        <button class="btn btn-sm btn-outline-secondary" type="button"
+                data-bs-toggle="modal" data-bs-target="#dashboardEditLinkModal"
+                data-demo-edit-link-trigger data-demo-id="{{ demo._id }}" data-demo-title="{{ demo.title }}"
+                title="{{ _('Luo ja kopioi muokkauslinkki') }}"
+                aria-label="{{ _('Luo ja kopioi muokkauslinkki') }}: {{ demo.title }}">
+            <i class="fa-solid fa-link" aria-hidden="true"></i>
+        </button>
         {% endif %}
         <div class="dropdown">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
@@ -558,6 +594,7 @@
 
             </ul>
         </div>
+        </div>
     </td>
 
 </tr>
@@ -587,6 +624,9 @@
   <div class="no-results admin-empty-state admin-panel">
     <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei mielenosoituksia löytynyt.') }}
   </div>
+  {% endif %}
+  {% if can_generate_edit_link %}
+  {{ demo_edit_link_modal('dashboardEditLinkModal', edit_link_csrf_token) }}
   {% endif %}
   <!-- Delete Confirmation Modal -->
   <div class="modal fade admin-modal" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">

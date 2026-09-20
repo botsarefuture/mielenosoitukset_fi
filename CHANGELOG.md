@@ -12,6 +12,7 @@
 
 ### Added
 * Administrator replies to support-ticket cases now support safe Markdown formatting inside the existing branded email template, with a sanitized HTML part and a readable plain-text alternative.
+* Demonstration dashboard rows now provide permission-scoped quick actions for opening the public preview and creating a time-limited edit link. The edit-link flow reuses the editor's warning, duration selector, CSRF protection, one-time raw-link display, and accessible copy fallback instead of silently minting a bearer link.
 * Demonstration and recurring-demonstration editors now share one accessible link-and-image section for managing the public slug, cover image, original image, generated preview image, and gallery. Slugs are normalized and checked for duplicates, while newly generated recurring occurrences receive stable date-specific slugs instead of copying one ambiguous identifier to every child.
 * The admin user list can now be filtered by the city a user has an active city-admin right for: a new city dropdown (`?city=<key>`) filters users server-side and stays active through search and pagination. On the Kaupunkihallinta page, a city's "Kaupunkioikeuksia" count is now a link that opens the user list pre-filtered to the admins of that city.
 * Granting city-admin rights for an inactive city (via user create/edit) now auto-activates that city's `city_settings` entry, so the city becomes visible on the site and eligible for demo assignment; revoking the grant leaves the city's activation state untouched.

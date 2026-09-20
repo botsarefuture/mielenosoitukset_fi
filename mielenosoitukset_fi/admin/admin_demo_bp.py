@@ -1821,6 +1821,10 @@ def demo_control():
             for permission in ("VIEW_DEMO", "EDIT_DEMO", "ACCEPT_DEMO", "GENERATE_EDIT_LINK", "CREATE_DEMO")
             if _user_can_access_demo(demo_id, permission)
         }
+    can_generate_edit_link = any(
+        "GENERATE_EDIT_LINK" in permissions
+        for permissions in demo_actions.values()
+    )
 
     # --- Determine next/previous pages ---
     prev_page = page - 1 if page > 1 else None
@@ -1883,6 +1887,10 @@ def demo_control():
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/dashboard.html",
         demonstrations=demos,
         demo_actions=demo_actions,
+        can_generate_edit_link=can_generate_edit_link,
+        edit_link_csrf_token=(
+            _edit_link_csrf_token() if can_generate_edit_link else None
+        ),
         can_create_demo=_user_can_create_demo_in_city(None),
         can_create_recurring_demo=_user_can_create_recurring_demo(),
         search_query=search_query,

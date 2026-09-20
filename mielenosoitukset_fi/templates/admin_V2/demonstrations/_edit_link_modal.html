@@ -1,0 +1,68 @@
+{% macro demo_edit_link_modal(modal_id, csrf_token, demo_id=none, allow_email=false) %}
+<div class="modal fade admin-modal" id="{{ modal_id }}" tabindex="-1"
+    aria-labelledby="{{ modal_id }}Label" aria-hidden="true"
+    data-demo-edit-link-modal
+    {% if demo_id %}data-demo-id="{{ demo_id }}"{% endif %}
+    data-csrf-token="{{ csrf_token }}"
+    data-generate-url-template="{{ url_for('admin_demo.generate_edit_link', demo_id='__DEMO_ID__') }}"
+    {% if allow_email %}data-email-url-template="{{ url_for('admin_demo.send_edit_link', demo_id='__DEMO_ID__') }}"{% endif %}
+    data-copy-success="{{ _('Muokkauslinkki kopioitiin leikepöydälle.') }}"
+    data-copy-fallback="{{ _('Automaattinen kopiointi ei onnistunut. Linkki on valittu, joten voit kopioida sen näppäimistöllä.') }}"
+    data-generate-error="{{ _('Linkin luominen epäonnistui.') }}"
+    data-email-error="{{ _('Sähköpostin lähettäminen epäonnistui.') }}"
+    data-connection-error="{{ _('Yhteysvirhe, yritä uudelleen.') }}"
+    data-expires-label="{{ _('Vanhenee täsmälleen') }}">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <p class="admin-modal-kicker">{{ _('Mielenosoituksen hallinta') }}</p>
+                    <h2 class="modal-title" id="{{ modal_id }}Label">{{ _('Luo muokkauslinkki') }}</h2>
+                    <p class="mb-0 text-muted" data-demo-edit-link-title></p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+            </div>
+            <div class="modal-body admin-form">
+                <div class="alert alert-warning" role="alert">
+                    {{ _('Linkin saanut henkilö voi muokata tätä mielenosoitusta ilman kirjautumista koko valitun voimassaoloajan. Jaa linkki vain luotetulle vastaanottajalle.') }}
+                </div>
+                <div class="admin-field">
+                    <label for="{{ modal_id }}-duration">{{ _('Voimassaoloaika') }}</label>
+                    <select id="{{ modal_id }}-duration" class="form-select" data-demo-edit-link-duration>
+                        <option value="1h">{{ _('1 tunti') }}</option>
+                        <option value="24h" selected>{{ _('24 tuntia') }}</option>
+                        <option value="7d">{{ _('7 vuorokautta') }}</option>
+                    </select>
+                    <small>{{ _('Voimassaoloaikaa ei voi pidentää linkin luonnin jälkeen.') }}</small>
+                </div>
+                <button type="button" class="btn btn-primary" data-demo-edit-link-generate>
+                    <i class="fas fa-link me-1" aria-hidden="true"></i>{{ _('Luo ja kopioi linkki') }}
+                </button>
+                <div class="admin-panel-inset mt-3 d-none" data-demo-edit-link-result aria-live="polite">
+                    <label for="{{ modal_id }}-raw-link">{{ _('Kopioi linkki nyt') }}</label>
+                    <div class="input-group">
+                        <input type="text" id="{{ modal_id }}-raw-link" class="form-control" readonly data-demo-edit-link-value>
+                        <button type="button" class="btn btn-outline-secondary" data-demo-edit-link-copy>{{ _('Kopioi') }}</button>
+                    </div>
+                    <small data-demo-edit-link-expiry></small>
+                    <p class="mb-0 mt-2">{{ _('Turvallisuussyistä raakaa linkkiä ei voi näyttää uudelleen tämän ikkunan sulkemisen jälkeen.') }}</p>
+                </div>
+                {% if allow_email %}
+                <hr>
+                <div class="admin-field">
+                    <label for="{{ modal_id }}-email">{{ _('Lähetä uusi muokkauslinkki sähköpostilla') }}</label>
+                    <input type="email" id="{{ modal_id }}-email" class="form-control"
+                        placeholder="{{ _('Syötä sähköpostiosoite') }}" data-demo-edit-link-email>
+                    <small>{{ _('Palvelin luo vastaanottajalle uuden linkin samalla voimassaoloajalla.') }}</small>
+                </div>
+                <button type="button" class="btn btn-secondary" data-demo-edit-link-send>{{ _('Luo ja lähetä') }}</button>
+                {% endif %}
+                <p class="mt-2 mb-0" aria-live="polite" data-demo-edit-link-feedback></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

@@ -320,6 +320,13 @@
         "integration",
         "e2e-user"
       ]
+    },
+    "mielenosoitukset_fi/users/BPs/passkeys.py": {
+      "count": 12,
+      "sha256": "4bcb9dbd230fe29c0c3e42bb08d65ae9bc72d9dd0d5a9cfac8854fdd72813664",
+      "coverage": [
+        "integration"
+      ]
     }
   },
   "socketio": {

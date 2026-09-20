@@ -1319,6 +1319,37 @@ def mfa_device_revoke():
         return jsonify({"status": "error", "message": "Device not found"}), 404
 
 
+# --- MFA Device Rename Endpoint ---
+@auth_bp.route("/api/v2/mfa_device_rename", methods=["POST"])
+@login_required
+@sudo_required()
+def mfa_device_rename():
+    """
+    Renames a specific MFA device/secret for the user.
+    """
+    user = current_user
+    data = request.get_json(force=True)
+    device_id = data.get("device_id")
+    name = data.get("name")
+
+    if not device_id or not name:
+        return jsonify({"status": "error", "message": "device_id and name are required"}), 400
+
+    try:
+        device_oid = ObjectId(str(device_id))
+    except Exception:
+        return jsonify({"status": "error", "message": "Invalid device id"}), 400
+
+    result = mongo.mfas.update_one(
+        {"_id": device_oid, "user_id": user._id},
+        {"$set": {"device_name": (name or "New device")[:60]}},
+    )
+
+    if result.matched_count == 1:
+        return jsonify({"status": "success", "message": "Laite uudelleennimetty"})
+    return jsonify({"status": "error", "message": "Device not found"}), 404
+
+
 @auth_bp.route("/logout")
 @login_required
 def logout():

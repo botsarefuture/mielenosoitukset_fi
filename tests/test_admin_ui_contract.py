@@ -721,10 +721,14 @@ def test_analytics_pages_use_shared_hero_metric_slot():
         assert "metric_value=" in source
         assert "admin.admin_dashboard" in source
     assert "analytics-hero" not in Path(pages[0]).read_text(encoding="utf-8")
-    stats_css = Path(
-        "mielenosoitukset_fi/static/css/admin/stats.css"
-    ).read_text(encoding="utf-8")
-    assert ".stats-hero" not in stats_css
+    stats = Path(pages[1]).read_text(encoding="utf-8")
+    assert "stats.css" not in stats
+    assert "stats-shell" not in stats
+    assert 'class="admin-page admin-workspace"' in stats
+    assert 'class="admin-workspace-summary"' in stats
+    assert 'class="admin-data-view admin-data-view--scrollable"' in stats
+    assert "admin_pagination(" in stats
+    assert "innerHTML" not in stats
 
 
 def test_analytics_pages_use_shared_theme_aware_components():

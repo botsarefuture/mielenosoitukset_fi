@@ -520,6 +520,41 @@ def test_access_management_pages_use_canonical_hero_navigation():
         assert "back_url=" in Path(name).read_text(encoding="utf-8")
 
 
+def test_governance_workspaces_use_shared_collection_components():
+    dashboard = Path(
+        "mielenosoitukset_fi/templates/admin_V2/governance/dashboard.html"
+    ).read_text(encoding="utf-8")
+    clearances = Path(
+        "mielenosoitukset_fi/templates/admin_V2/governance/clearances.html"
+    ).read_text(encoding="utf-8")
+    audit = Path(
+        "mielenosoitukset_fi/templates/admin_V2/governance/audit.html"
+    ).read_text(encoding="utf-8")
+    tabs = Path(
+        "mielenosoitukset_fi/templates/admin_V2/governance/_tabs.html"
+    ).read_text(encoding="utf-8")
+
+    for source in (dashboard, clearances, audit):
+        assert "admin-page admin-workspace" in source
+        assert "admin-page-hero" not in source or "admin_page_hero(" in source
+        assert "admin-data-view__header admin-result-summary" in source
+        assert "admin-data-view__viewport" in source
+        assert "admin-data-view__table" in source
+        assert "admin-empty-state" in source
+        assert "governance-card" not in source
+        assert "table-responsive" not in source
+        assert "<style" not in source
+        assert "style=" not in source
+
+    for source in (clearances, audit):
+        assert "admin-filter-bar" in source
+        assert "admin_pagination(" in source
+
+    assert "admin-workspace-summary" in dashboard
+    assert "admin-section-tabs" in tabs
+    assert not Path("mielenosoitukset_fi/static/css/admin/governance.css").exists()
+
+
 def test_translation_workspaces_use_canonical_hero_navigation():
     pages = (
         "mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_dashboard.html",

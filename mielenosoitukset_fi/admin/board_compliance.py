@@ -51,7 +51,7 @@ def clearance_rows():
         if doc.get("user_id")
     }
     rows = []
-    for user_doc in mongo.users.find().sort("username", 1):
+    for user_doc in mongo.users.find().sort([("username", 1), ("_id", 1)]):
         user_id = str(user_doc["_id"])
         clearance = _serialize_clearance(
             clearances.get(user_id),

@@ -1,12 +1,11 @@
 {% extends 'admin_base.html' %}
 {% set governance_tab = 'audit' %}
-{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
 
 {% block title %}{{ _('Hallinnon tapahtumaloki') }} – Mielenosoitukset.fi{% endblock %}
-{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/governance.css') }}">{% endblock %}
 
 {% block main_content %}
-<section class="governance-shell">
+<section class="admin-page admin-workspace">
   {{ admin_page_hero(
     _('Hyväksyntöjen tapahtumaloki'),
     _('Tarkastele kuka myönsi tai perui hallinnollisen hyväksynnän ja milloin muutos tehtiin.'),
@@ -15,21 +14,73 @@
     back_url=url_for('admin_governance.dashboard'),
     back_label=_('Hallinto ja käyttöoikeudet'),
   ) }}
+
   {% include 'admin_V2/governance/_tabs.html' %}
-  <section class="governance-card">
-    <div class="governance-toolbar"><label class="visually-hidden" for="audit-search">{{ _('Hae käyttäjää, toimintoa tai tekijää') }}</label><input class="form-control" id="audit-search" type="search" placeholder="{{ _('Hae käyttäjää, toimintoa tai tekijää') }}"><span class="text-body-secondary">{{ audit_events|length }} {{ _('tapahtumaa') }}</span></div>
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0"><caption class="visually-hidden">{{ _('Superkäyttäjähyväksyntöjen tapahtumaloki') }}</caption><thead><tr><th>{{ _('Käyttäjä') }}</th><th>{{ _('Toiminto') }}</th><th>{{ _('Tekijä') }}</th><th>{{ _('Aika') }}</th></tr></thead>
-        <tbody>{% for event in audit_events %}<tr data-audit-row data-search="{{ (event.username ~ ' ' ~ event.action ~ ' ' ~ event.granted_by)|lower }}"><td class="fw-semibold">{{ event.username }}</td><td>{{ event.action }}</td><td>{{ event.granted_by }}</td><td>{{ event.timestamp|datetimeformat('%d.%m.%Y %H:%M') }}</td></tr>{% else %}<tr><td colspan="4" class="text-center text-body-secondary py-4">{{ _('Tapahtumia ei ole vielä kirjattu.') }}</td></tr>{% endfor %}</tbody>
+
+  <section class="dashboard-panel admin-workspace-toolbar" aria-label="{{ _('Tapahtumalokin suodattimet') }}">
+    <form method="GET" action="{{ url_for('admin_governance.audit_log') }}" class="admin-filter-bar">
+      <input type="hidden" name="page" value="1">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="admin-filter-bar__primary admin-filter-bar__primary--search">
+        <div class="admin-field">
+          <label for="audit-search">{{ _('Haku') }}</label>
+          <input id="audit-search" name="search" type="search" value="{{ search_query }}" placeholder="{{ _('Hae käyttäjää, toimintoa tai tekijää') }}">
+        </div>
+        <div class="admin-field">
+          <label for="action">{{ _('Toiminto') }}</label>
+          <select id="action" name="action">
+            <option value="all" {% if action_filter == 'all' %}selected{% endif %}>{{ _('Kaikki toiminnot') }}</option>
+            {% for action in action_options %}<option value="{{ action }}" {% if action_filter == action %}selected{% endif %}>{{ action }}</option>{% endfor %}
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+        <a class="btn btn-outline-secondary" href="{{ clear_filters_url }}">{{ _('Tyhjennä') }}</a>
+      </div>
+    </form>
+    {% if search_query or action_filter != 'all' %}
+    <div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">
+      {% if search_query %}<span class="admin-filter-chip">{{ _('Haku') }}: {{ search_query }}</span>{% endif %}
+      {% if action_filter != 'all' %}<span class="admin-filter-chip">{{ _('Toiminto') }}: {{ action_filter }}</span>{% endif %}
+      <a class="admin-clear-filters" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="governance-audit-heading">
+    <div class="admin-data-view__header admin-result-summary" aria-live="polite">
+      <strong id="governance-audit-heading">{{ _('Hyväksyntöjen tapahtumat') }}</strong>
+      {% if search_query or action_filter != 'all' %}
+      <span>{{ _('%(count)s osumaa', count=filtered_count) }} · {{ _('yhteensä %(count)s tapahtumaa', count=total_count) }}</span>
+      {% else %}
+      <span>{{ _('Näytetään %(start)s–%(end)s / %(count)s tapahtumasta', start=range_start, end=range_end, count=filtered_count) }}</span>
+      {% endif %}
+    </div>
+    <div class="admin-data-view__viewport">
+      <table class="admin-data-view__table">
+        <caption class="visually-hidden">{{ _('Superkäyttäjähyväksyntöjen tapahtumaloki') }}</caption>
+        <thead><tr><th>{{ _('Käyttäjä') }}</th><th>{{ _('Toiminto') }}</th><th>{{ _('Tekijä') }}</th><th>{{ _('Aika') }}</th></tr></thead>
+        <tbody>
+          {% for event in audit_events %}
+          <tr><td><strong>{{ event.username }}</strong></td><td><span class="admin-status-badge{% if event.action == 'myönnetty' %} admin-status-badge--success{% elif event.action == 'peruttu' %} admin-status-badge--warning{% endif %}">{{ event.action }}</span></td><td>{{ event.granted_by }}</td><td>{{ event.timestamp|datetimeformat('%d.%m.%Y %H:%M') }}</td></tr>
+          {% else %}
+          <tr><td colspan="4"><div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-clock-rotate-left" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Tapahtumia ei löytynyt') }}</strong><span>{{ _('Kokeile muuttaa suodattimia tai tyhjennä ne.') }}</span></div></td></tr>
+          {% endfor %}
+        </tbody>
       </table>
     </div>
+    {{ admin_pagination(
+      current_page,
+      total_pages,
+      per_page=per_page,
+      prev_page=prev_page,
+      next_page=next_page,
+      prev_page_url=prev_page_url,
+      next_page_url=next_page_url,
+      visible_pages=visible_pages,
+      first_page_url=first_page_url,
+      last_page_url=last_page_url,
+      aria_label=_('Hyväksyntöjen tapahtumalokin sivutus')
+    ) }}
   </section>
 </section>
-<script>
-const auditSearch = document.getElementById('audit-search');
-auditSearch.addEventListener('input', () => {
-  const query = auditSearch.value.trim().toLowerCase();
-  document.querySelectorAll('[data-audit-row]').forEach((row) => { row.hidden = !row.dataset.search.includes(query); });
-});
-</script>
 {% endblock %}

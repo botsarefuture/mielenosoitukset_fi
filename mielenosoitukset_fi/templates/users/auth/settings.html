@@ -1409,7 +1409,8 @@
   /* ------------------------------------------------------------------ *
    * Step-up ("sudo") helper: retry a fetch after re-authenticating.    *
    * ------------------------------------------------------------------ */
-  const stepUpModal = new bootstrap.Modal(document.getElementById("stepUpModal"));
+  document.addEventListener("DOMContentLoaded", () => {
+  const stepUpEl = document.getElementById("stepUpModal");
   const stepUpError = document.getElementById("step-up-error");
   const stepUpWebAuthnBtn = document.getElementById("step-up-webauthn-btn");
   const stepUpPwBtn = document.getElementById("step-up-password-btn");
@@ -1418,6 +1419,17 @@
   const stepUpTotpInput = document.getElementById("step-up-totp-input");
 
   let stepUpResolve = null;
+  let stepUpModal = null;
+
+  // bootstrap.bundle.js is loaded with defer, so it is not available while
+  // this inline script parses. Build the Modal lazily on first use (which is
+  // always after the document is ready) to avoid a ReferenceError.
+  function getStepUpModal() {
+    if (!stepUpModal && window.bootstrap && stepUpEl) {
+      stepUpModal = new bootstrap.Modal(stepUpEl);
+    }
+    return stepUpModal;
+  }
 
   function stepUpErrorMsg(msg) {
     stepUpError.textContent = msg;
@@ -1448,7 +1460,7 @@
         stepUpErrorMsg(data.message || "Passkey-tunnistautuminen epäonnistui");
         return;
       }
-      stepUpModal.hide();
+      getStepUpModal() && getStepUpModal().hide();
       stepUpResolve && stepUpResolve(true);
     } catch (err) {
       console.error(err);
@@ -1469,7 +1481,7 @@
       });
       const data = await res.json();
       if (data.status === "success") {
-        stepUpModal.hide();
+        getStepUpModal() && getStepUpModal().hide();
         stepUpResolve && stepUpResolve(true);
       } else {
         stepUpErrorMsg(data.message || "Virheellinen salasana");
@@ -1510,7 +1522,7 @@
           if (requiresTotp) stepUpTotpGroup.classList.remove("d-none");
         });
 
-      stepUpModal.show();
+      getStepUpModal() && getStepUpModal().show();
     });
   }
 
@@ -1652,6 +1664,11 @@
         loadPasskeys();
       }
     });
+  });
+
+  // Expose the step-up retry wrapper to the earlier-registered password
+  // change, MFA revoke, and API-token handlers.
+  window.fetchWithStepUp = fetchWithStepUp;
   });
 </script>
 {% endblock %}

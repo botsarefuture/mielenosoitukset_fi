@@ -26,6 +26,21 @@ def test_edit_demo_shows_edit_only_controls(admin_client, seeded_data):
     assert 'class="admin-page-hero__nav editor-section-nav"' in page
 
 
+def test_demo_dashboard_has_scoped_preview_and_edit_link_quick_actions(
+    admin_client, seeded_data
+):
+    response = admin_client.get("/admin/demo/")
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert 'target="_blank" rel="noopener"' in page
+    assert "Avaa julkinen esikatselu" in page
+    assert 'data-bs-target="#dashboardEditLinkModal"' in page
+    assert 'data-demo-edit-link-trigger' in page
+    assert page.count('id="dashboardEditLinkModal"') == 1
+    assert "Luo ja kopioi linkki" in page
+
+
 def test_editor_without_accept_permission_cannot_forge_demo_approval(
     friend_client, db, seeded_data
 ):

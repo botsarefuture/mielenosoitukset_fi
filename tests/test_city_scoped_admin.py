@@ -142,6 +142,25 @@ def test_city_scoped_admin_dashboard_shows_accept_action_for_scoped_demo(
     assert "onclick=\"acceptDemo(" in page
 
 
+def test_dashboard_hides_edit_link_quick_action_without_scoped_permission(
+    app, db, seeded_data
+):
+    scoped_user_id = _create_scoped_admin(
+        db,
+        ["helsinki"],
+        ["LIST_DEMOS", "VIEW_DEMO"],
+    )
+    client = _client_for_user(app, scoped_user_id)
+
+    response = client.get("/admin/demo/")
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "Avaa julkinen esikatselu" in page
+    assert 'data-demo-edit-link-trigger' not in page
+    assert 'id="dashboardEditLinkModal"' not in page
+
+
 def test_city_scoped_admin_dashboard_shows_create_demo_action(app, db, seeded_data):
     scoped_user_id = _create_scoped_admin(
         db,

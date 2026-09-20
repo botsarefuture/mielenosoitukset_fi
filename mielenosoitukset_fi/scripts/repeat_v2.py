@@ -44,7 +44,6 @@ from pymongo import MongoClient, UpdateOne
 from datetime import datetime, date, timedelta
 import argparse
 from typing import Union, Optional
-from dateutil.relativedelta import relativedelta, weekday
 from config import Config
 from mielenosoitukset_fi.utils.classes import Demonstration, RecurringDemonstration
 from traceback import format_exc
@@ -52,6 +51,11 @@ from mielenosoitukset_fi.utils import VERSION
 from mielenosoitukset_fi.utils.classes.RepeatSchedule import RepeatSchedule
 from mielenosoitukset_fi.utils.demo_slugs import recurring_child_slug
 from mielenosoitukset_fi.utils.time_utils import utcnow
+from mielenosoitukset_fi.utils.recurrence import (
+    WEEKDAY_MAP,
+    calculate_recurrence_dates,
+    next_weekday,
+)
 
 # Dry-run flag (can be overridden from CLI)
 DRY_RUN = False
@@ -61,45 +65,6 @@ FORCE_RECHECK = False
 RECHECK_FIX = False
 
 # Helper: map weekday names to index and a weekly alignment helper
-WEEKDAY_MAP = {
-    "monday": 0,
-    "tuesday": 1,
-    "wednesday": 2,
-    "thursday": 3,
-    "friday": 4,
-    "saturday": 5,
-    "sunday": 6,
-}
-
-def next_weekday(dt: date, target_weekday: str, interval: int = 1) -> date:
-    """
-    Advance `dt` to the next `target_weekday`, respecting weekly `interval`.
-
-    Parameters
-    ----------
-    dt : date
-        Starting date
-    target_weekday : str
-        Weekday name (e.g., 'friday')
-    interval : int
-        Number of weeks between repeats (1 means every week)
-
-    Returns
-    -------
-    date
-        Next date that falls on the target weekday according to interval
-    """
-    target_wd = WEEKDAY_MAP[target_weekday.lower()]
-    current_wd = dt.weekday()
-
-    days_until = (target_wd - current_wd) % 7
-    if days_until == 0:
-        days_until = 7 * interval
-    else:
-        days_until += 7 * (interval - 1)
-
-    return dt + timedelta(days=days_until)
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -228,94 +193,14 @@ RUNTIME_ID = _get_runtime_id()
 
 
 def calculate_next_dates(start_date: Union[datetime, date], schedule: RepeatSchedule, _created_until: Optional[Union[datetime, date]] = None):
-    """
-    Generate next dates, respecting created_until and limiting to MAX_NEW_DEMOS_PER_RUN.
-
-    Notes
-    -----
-    This function operates on date-only values (datetime.date) to avoid
-    time-of-day and timezone related off-by-one issues where a date at
-    midnight could be considered "previous day" depending on server time.
-    """
-    frequency = schedule.frequency
-    interval = schedule.interval or 1
-    # Use date-only comparisons to avoid time-of-day issues
-    current_date = datetime.now().date()
-    next_dates = []
-
-    # Normalize end_date
-    end_date = schedule.end_date
-    if not end_date or end_date == "":
-        end_date = (datetime.now() + relativedelta(years=1)).date()
-    elif isinstance(end_date, str):
-        try:
-            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-        except Exception:
-            end_date = (datetime.now() + relativedelta(years=1)).date()
-
-    # Convert start_date and created_until to date objects if needed
-    if isinstance(start_date, datetime):
-        start_date = start_date.date()
-    if isinstance(_created_until, datetime):
-        _created_until = _created_until.date()
-
-    # Adjust start_date if before created_until
-    if _created_until and _created_until > start_date:
-        start_date = _created_until
-
-    date = start_date
-    new_demos_count = 0
-    max_iterations = 10000  # hard safety cap
-    iterations = 0
-
-    while date <= end_date and new_demos_count < MAX_NEW_DEMOS_PER_RUN and iterations < max_iterations:
-        if date >= current_date and (not _created_until or date > _created_until):
-            next_dates.append(date)
-            new_demos_count += 1
-
-        # Advance
-        try:
-            if frequency == "daily":
-                date = date + timedelta(days=interval)
-            elif frequency == "weekly":
-                # If a weekday is specified in the schedule, align using next_weekday
-                if getattr(schedule, "weekday", None):
-                    try:
-                        date = next_weekday(date, str(schedule.weekday), interval=schedule.interval or 1)
-                    except Exception:
-                        # Fallback to simple week increment
-                        date = date + timedelta(weeks=interval)
-                else:
-                    date = date + timedelta(weeks=interval)
-            elif frequency == "monthly":
-                if schedule.monthly_option == "day_of_month":
-                    date = date + relativedelta(months=interval)
-                elif schedule.monthly_option == "nth_weekday":
-                    nth = schedule.nth_weekday
-                    weekday_of_month = schedule.weekday_of_month
-                    if nth and weekday_of_month:
-                        # move to first day of the target month
-                        date = (date + relativedelta(months=interval)).replace(day=1)
-                        w_map = {"monday":0,"tuesday":1,"wednesday":2,"thursday":3,"friday":4,"saturday":5,"sunday":6}
-                        n_map = {"first":1,"second":2,"third":3,"fourth":4,"last":-1}
-                        wday = w_map[weekday_of_month]
-                        n = n_map[nth]
-                        if n == -1:
-                            date = date + relativedelta(day=31, weekday=weekday(wday, -1))
-                        else:
-                            date = date + relativedelta(weekday=weekday(wday, n))
-            elif frequency == "yearly":
-                date = date + relativedelta(years=interval)
-            else:
-                logger.warning(f"Unknown frequency '{frequency}'")
-                break
-        except OverflowError:
-            logger.warning(f"Date overflow reached: {date}")
-            break
-
-        iterations += 1
-
-    logger.debug(f"Next dates: {[d.strftime('%Y-%m-%d') for d in next_dates]}")
+    """Generate worker dates through the shared recurrence calculator."""
+    next_dates = calculate_recurrence_dates(
+        start_date,
+        schedule,
+        _created_until,
+        max_occurrences=MAX_NEW_DEMOS_PER_RUN,
+    )
+    logger.debug("Next dates: %s", [value.isoformat() for value in next_dates])
     return next_dates
 
 def update_parent_stats(parent_id):

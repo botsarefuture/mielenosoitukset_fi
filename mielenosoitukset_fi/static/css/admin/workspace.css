@@ -360,6 +360,60 @@ body {
   background: var(--admin-workspace-surface-muted);
 }
 
+.admin-recurrence-preview {
+  display: grid;
+  gap: .85rem;
+  margin-top: 1rem;
+}
+
+.admin-recurrence-preview__header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.admin-recurrence-preview__header h3,
+.admin-recurrence-preview__header p,
+.admin-recurrence-preview__status,
+.admin-recurrence-preview__dates {
+  margin: 0;
+}
+
+.admin-recurrence-preview__header p,
+.admin-recurrence-preview__status {
+  color: var(--admin-workspace-muted);
+}
+
+.admin-recurrence-preview__dates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: .55rem;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-recurrence-preview__dates li {
+  display: flex;
+  gap: .6rem;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: .55rem .7rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .65rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+  font-weight: 750;
+}
+
+.admin-recurrence-preview__dates li::before {
+  color: var(--admin-workspace-blue-dark);
+  content: "\f073";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+}
+
 .admin-code-block {
   margin: 0;
   overflow: auto;

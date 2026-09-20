@@ -2310,7 +2310,6 @@ a.admin-workspace-summary-card[aria-current="page"] {
   background: var(--admin-workspace-orange-soft);
 }
 
-.admin-workspace-summary-card span,
 .admin-workspace-summary-card strong {
   display: block;
 }

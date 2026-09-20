@@ -114,6 +114,19 @@ mongo["demo_edit_history"].create_index([("demo_id", ASCENDING), ("edited_at", D
 mongo["demo_suggestions"].create_index([("demo_id", ASCENDING), ("created_at", DESCENDING)], background=True)
 mongo["admin_logs"].create_index("timestamp", background=True)
 mongo["super_audit_logs"].create_index("timestamp", background=True)
+
+
+def ensure_audit_pagination_indexes(database):
+    """Create the indexes used by deterministic audit-log pagination."""
+    for collection_name in ("admin_logs", "super_audit_logs"):
+        database[collection_name].create_index(
+            [("timestamp", DESCENDING), ("_id", DESCENDING)],
+            name="timestamp_desc_id_desc",
+            background=True,
+        )
+
+
+ensure_audit_pagination_indexes(mongo)
 mongo["magic_links"].create_index("token_hash", unique=True, background=True)
 mongo["magic_links"].create_index("demo_id", background=True)
 mongo["cases"].create_index([("demo_id", ASCENDING), ("created_at", DESCENDING)], background=True)

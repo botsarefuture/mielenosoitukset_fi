@@ -6,6 +6,7 @@
 
 ### Added
 * The public demonstration submission form now offers "Hae tiedot Facebookista": pasting a link to a public Facebook event and clicking the button prefills the form (title, description, date, times, city, address, organizer) via a server-side Apify-based importer. Imported data is sanitized with the site's existing HTML allowlist, the city is only filled when it matches a known Finnish municipality, and nothing is auto-submitted — the submitter always reviews the prefilled fields before sending. A source stamp (`facebook_import`) is recorded on the demo for admins, shown in the command center ("Tuotu Facebookista"). The importer is configurable via `APIFY_API_TOKEN`, `APIFY_FACEBOOK_ACTOR_ID`, `APIFY_SYNC_TIMEOUT_SECONDS` and `APIFY_API_BASE_URL`, and is disabled automatically when no token is configured.
+* The submission wizard now opens on a "Miten lisäät tapahtuman tiedot?" page where the submitter picks either "Tuo tiedot Facebookista" (goes straight to the prefilled import section at the top of Perustiedot) or "Lisää tiedot itse". The Facebook import row moved from the bottom to the top of Perustiedot.
 
 ### Fixed
 * The passkey step-up dialog on the settings page no longer fails silently: it is now initialised after the document is ready (bootstrap is loaded lazily, not at parse time), so "Lisää passkey" and other elevation-protected controls open and work again.

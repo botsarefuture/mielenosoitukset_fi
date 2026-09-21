@@ -3966,3 +3966,32 @@ msgstr ""
 msgid "Täyttää lomakkeen otsikko-, kuvaus-, aika-, paikka- ja järjestäjätiedot julkisesta Facebook-tapahtumasta, kun olet lisännyt linkin yläpuolella."
 msgstr ""
 
+
+
+#: submit.html:1710
+msgid "Miten lisäät tapahtuman tiedot?"
+msgstr ""
+
+#: submit.html:1712
+msgid "Tuotko tiedot julkisesta Facebook-tapahtumasta vai lisäätkö ne itse lomakkeelle?"
+msgstr ""
+
+#: submit.html:1761
+msgid "Tuo tiedot Facebookista"
+msgstr ""
+
+#: submit.html:1762
+msgid "Liitä linkki julkiseen Facebook-tapahtumaan, niin täytämme lomakkeen puolestasi."
+msgstr ""
+
+#: submit.html:1766
+msgid "Lisää tiedot itse"
+msgstr ""
+
+#: submit.html:1767
+msgid "Täytä lomake käsin alusta loppuun."
+msgstr ""
+
+#: submit.html:1650
+msgid "Aloitus"
+msgstr ""

@@ -3976,3 +3976,32 @@ msgstr "Failed to fetch the details. Please try again or fill in the form manual
 msgid "Täyttää lomakkeen otsikko-, kuvaus-, aika-, paikka- ja järjestäjätiedot julkisesta Facebook-tapahtumasta, kun olet lisännyt linkin yläpuolella."
 msgstr "Fills in the form's title, description, time, place and organizer details from a public Facebook event after you have added the link above."
 
+
+
+#: submit.html:1710
+msgid "Miten lisäät tapahtuman tiedot?"
+msgstr "How do you want to add the event details?"
+
+#: submit.html:1712
+msgid "Tuotko tiedot julkisesta Facebook-tapahtumasta vai lisäätkö ne itse lomakkeelle?"
+msgstr "Do you want to import the details from a public Facebook event or enter them yourself?"
+
+#: submit.html:1761
+msgid "Tuo tiedot Facebookista"
+msgstr "Import from Facebook"
+
+#: submit.html:1762
+msgid "Liitä linkki julkiseen Facebook-tapahtumaan, niin täytämme lomakkeen puolestasi."
+msgstr "Paste a link to a public Facebook event and we will fill in the form for you."
+
+#: submit.html:1766
+msgid "Lisää tiedot itse"
+msgstr "Enter details manually"
+
+#: submit.html:1767
+msgid "Täytä lomake käsin alusta loppuun."
+msgstr "Fill in the form yourself from start to finish."
+
+#: submit.html:1650
+msgid "Aloitus"
+msgstr "Start"

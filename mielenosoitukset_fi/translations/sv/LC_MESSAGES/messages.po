@@ -3966,3 +3966,32 @@ msgstr "Hämtningen av uppgifterna misslyckades. Försök igen eller fyll i form
 msgid "Täyttää lomakkeen otsikko-, kuvaus-, aika-, paikka- ja järjestäjätiedot julkisesta Facebook-tapahtumasta, kun olet lisännyt linkin yläpuolella."
 msgstr "Fyller i formulärets rubrik, beskrivning, tid, plats och arrangörsuppgifter från ett offentligt Facebook-evenemang när du har lagt till länken ovan."
 
+
+
+#: submit.html:1710
+msgid "Miten lisäät tapahtuman tiedot?"
+msgstr "Hur vill du lägga till evenemangets uppgifter?"
+
+#: submit.html:1712
+msgid "Tuotko tiedot julkisesta Facebook-tapahtumasta vai lisäätkö ne itse lomakkeelle?"
+msgstr "Vill du hämta uppgifterna från ett offentligt Facebook-evenemang eller fylla i dem själv?"
+
+#: submit.html:1761
+msgid "Tuo tiedot Facebookista"
+msgstr "Importera från Facebook"
+
+#: submit.html:1762
+msgid "Liitä linkki julkiseen Facebook-tapahtumaan, niin täytämme lomakkeen puolestasi."
+msgstr "Klistra in en länk till ett offentligt Facebook-evenemang så fyller vi i formuläret åt dig."
+
+#: submit.html:1766
+msgid "Lisää tiedot itse"
+msgstr "Fyll i uppgifterna själv"
+
+#: submit.html:1767
+msgid "Täytä lomake käsin alusta loppuun."
+msgstr "Fyll i formuläret manuellt från början till slut."
+
+#: submit.html:1650
+msgid "Aloitus"
+msgstr "Start"

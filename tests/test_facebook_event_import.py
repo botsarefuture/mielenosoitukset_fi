@@ -450,3 +450,36 @@ class TestSubmitStampsFacebookProvenance:
         demo = db.demonstrations.find_one({"title": "Plain Demo"})
         assert demo is not None
         assert "facebook_import" not in demo or demo["facebook_import"] is None
+
+
+class TestSubmitWizardChooser:
+    """The submit wizard starts with an import/manual chooser page and the
+    Facebook import section sits at the top of the 'Perustiedot' step."""
+
+    def test_chooser_page_renders_first(self, client):
+        resp = client.get("/submit")
+        assert resp.status_code == 200
+        page = resp.get_data(as_text=True)
+        assert 'id="page-1"' in page
+        assert 'id="page-2"' in page
+        assert 'id="page-6"' in page
+        assert "Miten lisäät tapahtuman tiedot?" in page
+        assert "Tuo tiedot Facebookista" in page
+        assert 'onclick="chooseImport()"' in page
+        assert 'onclick="chooseManual()"' in page
+
+    def test_import_section_is_before_title_field(self, client):
+        resp = client.get("/submit")
+        assert resp.status_code == 200
+        page = resp.get_data(as_text=True)
+        assert page.index('id="facebook"') < page.index('id="name"')
+        assert page.index('id="facebook-import-btn"') < page.index('id="name"')
+        assert page.index('id="facebook"') > page.index('id="page-1"')
+        assert page.index('id="facebook"') < page.index('id="page-3"')
+
+    def test_progress_steps_count_six(self, client):
+        resp = client.get("/submit")
+        assert resp.status_code == 200
+        page = resp.get_data(as_text=True)
+        assert page.count('class="progress-step"') == 6
+        assert "Aloitus" in page

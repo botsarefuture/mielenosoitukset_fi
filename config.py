@@ -266,6 +266,23 @@ class Config:
             "redis://localhost:6379/mosoitukset_fi",
         )
 
+        # ---- Facebook event import (Apify) -------------------------------------
+        # Used by the submission form's "fetch event details from Facebook"
+        # helper. The token is read from the YAML config (or environment, see
+        # the example configs) and must not be hardcoded in the repository.
+        cls.APIFY_API_BASE_URL = config.get(
+            "APIFY_API_BASE_URL",
+            "https://api.apify.com/v2",
+        )
+        cls.APIFY_API_TOKEN = config.get("APIFY_API_TOKEN", "")
+        cls.APIFY_FACEBOOK_ACTOR_ID = config.get(
+            "APIFY_FACEBOOK_ACTOR_ID",
+            "apify/facebook-events-scraper",
+        )
+        cls.APIFY_SYNC_TIMEOUT_SECONDS = int(
+            config.get("APIFY_SYNC_TIMEOUT_SECONDS", 120)
+        )
+
     @classmethod
     def reload(cls) -> None:
         """Reload configuration from the active config file."""

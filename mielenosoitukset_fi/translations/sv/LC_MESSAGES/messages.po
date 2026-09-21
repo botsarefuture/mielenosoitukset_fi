@@ -3829,3 +3829,169 @@ msgstr "Kontrollera organisationen som ska tas bort innan den oåterkalleliga å
 msgid "Tarkista käyttäjätili ja sen rooli ennen peruuttamatonta toimintoa."
 msgstr "Kontrollera användarkontot och dess roll innan den oåterkalleliga åtgärden."
 
+
+
+#: mielenosoitukset_fi/basic_routes.py:2001
+msgid "Anna Facebook-tapahtuman linkki."
+msgstr "Ange en Facebook-evenemangslänk."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2003
+msgid "Linkki ei ole kelvollinen Facebook-tapahtuman linkki. Varmista, että linkki on muotoa https://www.facebook.com/events/123456789"
+msgstr "Länken är inte en giltig Facebook-evenemangslänk. Se till att länken är i formen https://www.facebook.com/events/123456789"
+
+
+#: mielenosoitukset_fi/basic_routes.py:2007
+msgid "Facebook-tuonti ei ole käytössä tällä hetkellä. Täytä lomake käsin."
+msgstr "Facebook-importen är inte tillgänglig just nu. Fyll i formuläret manuellt."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2010
+msgid "Facebook-tuonnin asetukset eivät ole kunnossa. Yritä myöhemmin uudelleen."
+msgstr "Inställningarna för Facebook-importen fungerar inte. Försök igen senare."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2013
+msgid "Facebook-tuonnin kustannusraja on ylittynyt. Yritä myöhemmin uudelleen."
+msgstr "Kostnadsgränsen för Facebook-importen har nåtts. Försök igen senare."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2016
+msgid "Liian monta Facebook-tuontipyyntöä. Odota hetki ja yritä uudelleen."
+msgstr "För många Facebook-importförfrågningar. Vänta en stund och försök igen."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2019
+msgid "Facebook-tuontipalvelu ei ole käytettävissä. Yritä myöhemmin uudelleen."
+msgstr "Facebook-importtjänsten är inte tillgänglig. Försök igen senare."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2022
+msgid "Facebook-tapahtuman tietojen hakeminen kesti liian kauan. Yritä myöhemmin uudelleen."
+msgstr "Hämtningen av Facebook-evenemanget tog för lång tid. Försök igen senare."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2025
+msgid "Facebook-tuonti epäonnistui. Yritä myöhemmin uudelleen tai täytä lomake käsin."
+msgstr "Facebook-importen misslyckades. Försök igen senare eller fyll i formuläret manuellt."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2028
+msgid "Facebook-tuonnissa tapahtui verkkovirhe. Yritä myöhemmin uudelleen."
+msgstr "Ett nätverksfel inträffade under Facebook-importen. Försök igen senare."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2031
+msgid "Tapahtumaa ei löytynyt tai se ei ole julkinen. Tarkista linkki tai täytä lomake käsin."
+msgstr "Evenemanget hittades inte eller är inte offentligt. Kontrollera länken eller fyll i formuläret manuellt."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2034
+msgid "Facebook-tuonti palautti odottamattoman vastauksen. Täytä lomake käsin."
+msgstr "Facebook-importen returnerade ett oväntat svar. Fyll i formuläret manuellt."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2038
+msgid "Tietojen hakeminen Facebook-tapahtumasta epäonnistui. Täytä lomake käsin."
+msgstr "Hämtningen av Facebook-evenemanget misslyckades. Fyll i formuläret manuellt."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2053
+msgid "Facebook-tapahtuma on merkitty peruutetuksi."
+msgstr "Facebook-evenemanget är markerat som inställt."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2054
+msgid "Facebook-tapahtuma on jo menneisyydessä."
+msgstr "Facebook-evenemanget ligger redan i det förflutna."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2056
+msgid "Tapahtuman näkyvyys ei ole julkinen Facebookissa eikä tietoja välttämättä saada haettua."
+msgstr "Evenemangets synlighet är inte offentlig på Facebook och uppgifterna kan därför inte hämtas."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2060
+msgid "Tapahtuma on Facebookissa merkitty etätapahtumaksi (online)."
+msgstr "Evenemanget är markerat som online-evenemang på Facebook."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2063
+msgid "Tarkka alkamisaika ei ollut saatavilla; kenttä täytettiin parhaan tarjolla olleen ajan mukaan."
+msgstr "En exakt starttid fanns inte tillgänglig; fältet fylldes med den bästa tillgängliga tiden."
+
+
+#: mielenosoitukset_fi/basic_routes.py:2103
+msgid "Tiedot haettiin Facebook-tapahtumasta. Tarkista tiedot ja täydennä puuttuvat tiedot ennen lähettämistä."
+msgstr "Uppgifterna hämtades från Facebook-evenemanget. Kontrollera uppgifterna och komplettera eventuella saknade uppgifter innan du skickar."
+
+
+#: mielenosoitukset_fi/templates/submit.html:2065
+msgid "Hae tiedot Facebookista"
+msgstr "Hämta uppgifter från Facebook"
+
+
+#: mielenosoitukset_fi/templates/submit.html:2168
+msgid "Tuotu:"
+msgstr "Importerat:"
+
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:505
+msgid "Tuotu Facebookista"
+msgstr "Importerat från Facebook"
+
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:507
+msgid "Ilmoittaja täytti lomakkeen Facebook-tuonnilla"
+msgstr "Inlämnaren fyllde i formuläret med Facebook-import"
+
+
+#: mielenosoitukset_fi/templates/submit.html:2238
+msgid "Lisää Facebook-tapahtuman linkki ensin yllä olevaan kenttään."
+msgstr "Lägg först till Facebook-evenemangslänken i fältet ovan."
+
+
+#: mielenosoitukset_fi/templates/submit.html:2243
+msgid "Haetaan tapahtuman tietoja..."
+msgstr "Hämtar evenemangsuppgifter..."
+
+
+#: mielenosoitukset_fi/templates/submit.html:2259
+#: mielenosoitukset_fi/templates/submit.html:2268
+msgid "Tietojen hakeminen epäonnistui. Yritä uudelleen tai täytä lomake käsin."
+msgstr "Hämtningen av uppgifterna misslyckades. Försök igen eller fyll i formuläret manuellt."
+
+
+#: mielenosoitukset_fi/templates/submit.html:2069
+msgid "Täyttää lomakkeen otsikko-, kuvaus-, aika-, paikka- ja järjestäjätiedot julkisesta Facebook-tapahtumasta, kun olet lisännyt linkin yläpuolella."
+msgstr "Fyller i formulärets rubrik, beskrivning, tid, plats och arrangörsuppgifter från ett offentligt Facebook-evenemang när du har lagt till länken ovan."
+
+
+
+#: submit.html:1710
+msgid "Miten lisäät tapahtuman tiedot?"
+msgstr "Hur vill du lägga till evenemangets uppgifter?"
+
+#: submit.html:1712
+msgid "Tuotko tiedot julkisesta Facebook-tapahtumasta vai lisäätkö ne itse lomakkeelle?"
+msgstr "Vill du hämta uppgifterna från ett offentligt Facebook-evenemang eller fylla i dem själv?"
+
+#: submit.html:1761
+msgid "Tuo tiedot Facebookista"
+msgstr "Importera från Facebook"
+
+#: submit.html:1762
+msgid "Liitä linkki julkiseen Facebook-tapahtumaan, niin täytämme lomakkeen puolestasi."
+msgstr "Klistra in en länk till ett offentligt Facebook-evenemang så fyller vi i formuläret åt dig."
+
+#: submit.html:1766
+msgid "Lisää tiedot itse"
+msgstr "Fyll i uppgifterna själv"
+
+#: submit.html:1767
+msgid "Täytä lomake käsin alusta loppuun."
+msgstr "Fyll i formuläret manuellt från början till slut."
+
+#: submit.html:1650
+msgid "Aloitus"
+msgstr "Start"

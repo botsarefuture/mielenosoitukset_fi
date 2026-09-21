@@ -182,6 +182,10 @@ class Demonstration(BaseModel):
         cancelled: bool = False,
         cancelled_at=None,
         cancelled_by: dict = None,
+        # Provenance metadata for demos prefilled through the Facebook event
+        # importer: {"url": ..., "event_id": ..., "imported_at": ..., "imported_fields": [...]}.
+        # Present only when the submitter actually used the importer.
+        facebook_import: dict = None,
     ):
         """
         Initialize a new demonstration event.
@@ -329,6 +333,9 @@ class Demonstration(BaseModel):
 
         # EXTERNAL LINKS
         self.facebook = facebook
+
+        # Provenance for demos prefilled from a Facebook event (see __init__).
+        self.facebook_import = facebook_import
 
         self.approved = approved
         

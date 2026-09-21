@@ -25,6 +25,10 @@ CDN_BASE_URL: "https://cdn.miekkari.localhost"
 CACHE_TYPE: "SimpleCache"
 ENABLE_CHAT: false
 
+# Facebook event import (Apify). Leave empty to disable the feature.
+# APIFY_API_TOKEN: "your_apify_api_token"
+# APIFY_FACEBOOK_ACTOR_ID: "apify/facebook-events-scraper"
+
 # S3 Configuration
 S3:
   ACCESS_KEY: "example_access_key"  # Access key for S3

@@ -47,6 +47,16 @@ CITY_ASSIGNMENT_ESCALATION_HOURS: 24
 # back to the legacy built-in key.
 # GEOCODE_API_KEY: "your_geocode_maps_co_key"
 
+# Facebook event import (Apify). Used by the submission form's
+# "Hae tiedot Facebookista" helper to fetch details for a public Facebook
+# event and prefill the form. Leave APIFY_API_TOKEN empty to disable the feature.
+# The token should be set from the environment in production:
+#   export APIFY_API_TOKEN="...your Apify API token..."
+APIFY_API_TOKEN: ""  # Apify API token (apify.com -> Settings -> Integrations)
+# APIFY_FACEBOOK_ACTOR_ID: "apify/facebook-events-scraper"
+# APIFY_API_BASE_URL: "https://api.apify.com/v2"
+# APIFY_SYNC_TIMEOUT_SECONDS: 120
+
 PORT: 5002  # Application port
 DEBUG: true  # Enable debugging mode for development
 # SOS! Disable debug mode in production! 

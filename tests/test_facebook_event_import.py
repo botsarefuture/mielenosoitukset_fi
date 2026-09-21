@@ -293,7 +293,8 @@ class TestNormalizeEvent:
         )
         event = importer._normalize_event(item, VALID)
         assert len(event.title) == MAX_TITLE_LENGTH
-        assert len(event.description_html) == MAX_DESCRIPTION_LENGTH
+        # Description is no longer truncated; it should preserve the full content
+        assert len(event.description_html) >= 60_000
         assert len(event.address) <= MAX_ADDRESS_LENGTH
         assert len(event.organizer) == MAX_ORGANIZER_LENGTH
 
@@ -351,7 +352,7 @@ class TestSubmitFacebookImportRoute:
         assert payload["event"]["title"] == "Mars"
         assert payload["event"]["facebook_url"] == VALID
         assert payload["message"]
-        assert len(payload["fields_summary"]) == 10
+        assert len(payload["fields_summary"]) == 11
         assert payload["fields_summary"][0]["key"] == "title"
         assert payload["warnings"]
         assert payload["warnings"][0]

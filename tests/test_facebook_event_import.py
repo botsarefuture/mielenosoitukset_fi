@@ -121,6 +121,32 @@ class TestFetchEvent:
         assert captured["payload"]["startUrls"] == [VALID]
         assert captured["headers"]["Authorization"] == "Bearer test-token"
 
+    def test_actor_id_slash_normalized_to_tilde(self, monkeypatch):
+        monkeypatch.setattr(Config, "APIFY_API_TOKEN", "test-token", raising=False)
+        monkeypatch.setattr(Config, "APIFY_FACEBOOK_ACTOR_ID", "apify/facebook-events-scraper", raising=False)
+        captured = {}
+
+        def fake_post(url, **kwargs):
+            captured["url"] = url
+            return _FakeApifyResponse(payload=[{"name": "Mars"}])
+
+        monkeypatch.setattr(requests, "post", fake_post)
+        FacebookEventImporter()._fetch_event(VALID)
+        assert "/acts/apify~facebook-events-scraper/run-sync-get-dataset-items" in captured["url"]
+
+    def test_default_actor_id_uses_tilde(self, monkeypatch):
+        monkeypatch.setattr(Config, "APIFY_API_TOKEN", "test-token", raising=False)
+        monkeypatch.delattr(Config, "APIFY_FACEBOOK_ACTOR_ID", raising=False)
+        captured = {}
+
+        def fake_post(url, **kwargs):
+            captured["url"] = url
+            return _FakeApifyResponse(payload=[{"name": "Mars"}])
+
+        monkeypatch.setattr(requests, "post", fake_post)
+        FacebookEventImporter()._fetch_event(VALID)
+        assert "/acts/apify~facebook-events-scraper/run-sync-get-dataset-items" in captured["url"]
+
     def test_network_error_maps_to_apify_network(self, monkeypatch):
         monkeypatch.setattr(Config, "APIFY_API_TOKEN", "test-token", raising=False)
 

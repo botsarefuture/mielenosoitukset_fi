@@ -46,10 +46,11 @@ MAX_TITLE_LENGTH = 200
 MAX_DESCRIPTION_LENGTH = 50_000
 MAX_ADDRESS_LENGTH = 300
 MAX_ORGANIZER_LENGTH = 200
+MAX_IMAGE_BYTES = 15_000_000
 
 # Keys shown in the field summary. End date/time is optional in the form, so
 # it is reported as "imported" when present but never as "missing".
-_NOTE_FIELDS = ("end_date", "end_time")
+_NOTE_FIELDS = ("end_date", "end_time", "image_url")
 _FIELD_KEYS = (
     "title",
     "description_html",
@@ -61,6 +62,7 @@ _FIELD_KEYS = (
     "address",
     "organizer",
     "facebook_url",
+    "image_url",
 )
 
 
@@ -91,7 +93,9 @@ class ImportedFacebookEvent:
     city: str = ""
     address: str = ""
     organizer: str = ""
+    organizers: List[str] = field(default_factory=list)
     facebook_url: str = ""
+    image_url: str = ""
 
     # Field keys that were filled (machine keys, order preserved).
     imported: List[str] = field(default_factory=list)
@@ -112,6 +116,7 @@ class ImportedFacebookEvent:
             "address": self.address,
             "organizer": self.organizer,
             "facebook_url": self.facebook_url,
+            "image_url": self.image_url,
             "imported": self.imported,
             "missing": self.missing,
             "warnings": self.warnings,
@@ -237,11 +242,14 @@ class FacebookEventImporter:
             title = str(title)
         fields = {
             "title": title.strip()[:MAX_TITLE_LENGTH],
-            "organizer": _first_organizer(item),
             "address": _location_address(item),
             "start_date": None,
             "start_time": None,
         }
+
+        # Determine organizer(s) from the item.
+        event.organizers = _organizer_names(item)
+        event.organizer = event.organizers[0] if event.organizers else _first_organizer(item)
 
         # Date/time come from the ISO start stamp in UTC.
         start = _to_local_datetime(item.get("utcStartDate"))
@@ -257,7 +265,7 @@ class FacebookEventImporter:
         description = _sanitize_description(item.get("description"))
         city = _find_matching_city(_location_city(item))
 
-        for key in ("title", "description_html", "city", "address", "organizer"):
+        for key in ("title", "description_html", "city", "address"):
             setattr(event, key, fields.get(key) or "")
 
         description_html = ""
@@ -289,6 +297,9 @@ class FacebookEventImporter:
             event.warnings.append("not_public")
         if item.get("isOnline"):
             event.warnings.append("online")
+
+        # Best‑effort: download and upload the event's cover photo to S3.
+        _attach_cover_image(item, event)
 
         event.imported, event.missing = _field_summary(event)
         return event
@@ -420,7 +431,6 @@ def _sanitize_description(value: Any) -> str:
     text = (value or "").strip()
     if not text:
         return ""
-    text = text[:MAX_DESCRIPTION_LENGTH * 2]
     # Script/style blocks and inline event handlers are not content; drop them
     # before the markdown round-trip so nothing like "<script>..." survives.
     text = re.sub(r"(?is)<(script|style)\b[^>]*>.*?</\1\s*>", " ", text)
@@ -429,7 +439,7 @@ def _sanitize_description(value: Any) -> str:
     )
     # Pass through the same pipeline used for user-submitted Markdown so only
     # allowlisted HTML ever reaches the Quill editor.
-    return markdown_to_html(html_to_markdown(text))[:MAX_DESCRIPTION_LENGTH]
+    return markdown_to_html(html_to_markdown(text))
 
 
 def _field_summary(event: ImportedFacebookEvent):
@@ -440,3 +450,74 @@ def _field_summary(event: ImportedFacebookEvent):
         if key not in _NOTE_FIELDS and not getattr(event, key)
     ]
     return imported, missing
+
+
+def _cover_image_url(item: Dict[str, Any]) -> str:
+    """Extract the cover photo URL from a Facebook event Apify item."""
+    # Primary: actor's imageUrl field
+    for key in ("imageUrl", "image_url", "cover"):
+        v = item.get(key)
+        if isinstance(v, str) and v.strip().startswith("https://"):
+            return v.strip()
+    # Fallback: coverPhoto array
+    cover_photo = item.get("coverPhoto")
+    if isinstance(cover_photo, list) and cover_photo:
+        first = cover_photo[0]
+        if isinstance(first, dict):
+            u = first.get("sourceUrl") or first.get("url")
+            if isinstance(u, str) and u.strip().startswith("https://"):
+                return u.strip()
+    # Fallback: picture object
+    picture = item.get("picture")
+    if isinstance(picture, dict):
+        u = picture.get("sourceUrl") or picture.get("url")
+        if isinstance(u, str) and u.strip().startswith("https://"):
+            return u.strip()
+    return ""
+
+
+def _organizer_names(item: Dict[str, Any]) -> List[str]:
+    """Extract all organizer names from a Facebook event Apify item."""
+    names: List[str] = []
+    organizators = item.get("organizators")
+    if isinstance(organizators, list):
+        for org in organizators:
+            if isinstance(org, dict):
+                n = org.get("name")
+                if n and str(n).strip():
+                    names.append(str(n).strip()[:MAX_ORGANIZER_LENGTH])
+    # Fallback to organizerCompany if no organizators
+    if not names:
+        company = item.get("organizerCompany")
+        if company and str(company).strip():
+            names.append(str(company).strip()[:MAX_ORGANIZER_LENGTH])
+    return names
+
+
+def _attach_cover_image(
+    item: Dict[str, Any], event: ImportedFacebookEvent
+) -> None:
+    """Best‑effort download and upload the event's cover photo to S3."""
+    url = _cover_image_url(item)
+    if not url:
+        return
+    try:
+        import io as _io
+        import requests as _requests
+
+        resp = _requests.get(url, timeout=25)
+        if resp.status_code != 200:
+            return
+        if len(resp.content) > MAX_IMAGE_BYTES:
+            logger.warning("Cover image too large (%s bytes), skipping upload", len(resp.content))
+            return
+        bucket = getattr(Config, "S3_BUCKET", "mielenosoitukset.fi")
+        from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
+
+        s3_url = upload_image_fileobj(
+            bucket, _io.BytesIO(resp.content), f"{item.get('id') or 'event'}.jpg", "demo_pics"
+        )
+        if s3_url:
+            event.image_url = s3_url
+    except Exception as exc:
+        logger.warning("Failed to download/upload cover image: %s", exc)

@@ -1516,9 +1516,12 @@ def init_routes(app):
 
             # --- File upload (S3) ---
             img = request.files.get("image")
-            photo_url = ""
-            
             photo_url = upload_image_to_s3(img)
+            if not photo_url and request.form.get("facebook_imported") == "1":
+                _fb_image = (request.form.get("facebook_image_url") or "").strip()
+                _cdn = (current_app.config.get("CDN_BASE_URL") or "").strip().rstrip("/")
+                if _fb_image and _fb_image.startswith(_cdn + "/"):
+                    photo_url = _fb_image
 
             # --- Submitter info fields ---
             submitter_role = (request.form.get("submitter_role") or "").strip()
@@ -2048,6 +2051,7 @@ def init_routes(app):
             "address": _("Osoite"),
             "organizer": _("Järjestäjä"),
             "facebook_url": _("Facebook-linkki"),
+            "image_url": _("Kuva"),
         }
         _IMPORT_WARNING_MESSAGES = {
             "canceled": _("Facebook-tapahtuma on merkitty peruutetuksi."),
@@ -2090,7 +2094,7 @@ def init_routes(app):
             }
             for key in ("title", "description_html", "start_date", "start_time",
                         "end_date", "end_time", "city", "address", "organizer",
-                        "facebook_url")
+                        "facebook_url", "image_url")
         ]
         warnings = [
             _IMPORT_WARNING_MESSAGES.get(code, code) for code in event.warnings

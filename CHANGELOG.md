@@ -9,6 +9,7 @@
 * The submission wizard now opens on a "Miten lisäät tapahtuman tiedot?" page where the submitter picks either "Tuo tiedot Facebookista" (goes straight to the prefilled import section at the top of Perustiedot) or "Lisää tiedot itse". The Facebook import row moved from the bottom to the top of Perustiedot.
 
 ### Fixed
+* The Facebook event import no longer fails with a "502 Bad gateway" page: the Apify actor id was configured as `apify/facebook-events-scraper`, which Apify rejects (404) because actor ids use the `owner~name` form (`apify~facebook-events-scraper`). The default and the example configs now use the correct id, and the importer normalizes any `owner/name` spelling automatically.
 * The passkey step-up dialog on the settings page no longer fails silently: it is now initialised after the document is ready (bootstrap is loaded lazily, not at parse time), so "Lisää passkey" and other elevation-protected controls open and work again.
 * Admin summary-card icons now stay centered inside their colored icon tiles on every user, organization, demonstration, city, governance, case, translation, and statistics view instead of being pulled to the tile's left edge by a broad text-span rule.
 * UI-translation sync now reports the existing remote branch commit when an identical translation is already current, instead of exposing the SHA of a discarded temporary commit.

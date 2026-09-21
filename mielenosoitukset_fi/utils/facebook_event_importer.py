@@ -1,4 +1,4 @@
-"""Facebook event import via the Apify ``apify/facebook-events-scraper`` actor.
+"""Facebook event import via the Apify ``apify~facebook-events-scraper`` actor.
 
 The public submission form lets users paste a link to a public Facebook event
 and prefills the demonstration form from the scraped event data. All Apify
@@ -155,9 +155,16 @@ class FacebookEventImporter:
             raise FacebookImportError("not_configured", status_code=503)
 
         base_url = getattr(Config, "APIFY_API_BASE_URL", "https://api.apify.com/v2")
-        actor_id = getattr(
-            Config, "APIFY_FACEBOOK_ACTOR_ID", "apify/facebook-events-scraper"
-        )
+        actor_id = str(
+            getattr(
+                Config, "APIFY_FACEBOOK_ACTOR_ID", "apify~facebook-events-scraper"
+            )
+            or "apify~facebook-events-scraper"
+        ).strip()
+        # Apify actor ids use the "owner~name" form; tolerate the historical
+        # "owner/name" spelling so existing configs keep working.
+        if "/" in actor_id:
+            actor_id = actor_id.replace("/", "~")
         sync_timeout = int(
             getattr(Config, "APIFY_SYNC_TIMEOUT_SECONDS", 120) or 120
         )

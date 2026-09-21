@@ -124,7 +124,9 @@ def test_admin_theme_is_applied_before_styles_and_controls_color_scheme():
         encoding="utf-8"
     )
 
-    assert base.index("localStorage.getItem('theme')") < base.index("variables.css")
+    assert base.index("localStorage.getItem('theme')") < base.index("workspace.css")
+    assert "css/admin/variables.css" not in base
+    assert "css/admin/admin_v2.css" not in base
     assert "html.light" in workspace and "color-scheme: light" in workspace
     assert "html.dark" in workspace and "color-scheme: dark" in workspace
     assert "modal-content, .modal-header, .modal-body, .modal-footer" not in base
@@ -1164,8 +1166,8 @@ def test_demo_editor_static_geometry_uses_shared_form_components():
     assert 'data-bs-target="#editLinkModal"' in template
     assert 'id="duplicate-demo-btn"' in template
     assert ".admin-token-input:focus-within" in workspace
-    assert ':not(.admin-token-input__field), select, textarea)' in workspace
-    assert 'input:not(.admin-token-input__field), select, textarea):focus' in workspace
+    assert '.admin-editor-form :where(input:not([type="checkbox"])' in workspace
+    assert ':not([type="hidden"]):not(.admin-token-input__field), select, textarea):focus' in workspace
     assert ".access-panel-card .list-group-item" in workspace
     assert "var(--admin-workspace-surface-muted)" in workspace
 
@@ -1366,12 +1368,14 @@ def test_retired_admin_styles_and_templates_do_not_return():
     admin_css = Path("mielenosoitukset_fi/static/css/admin")
     retired_styles = {
         "activities.css",
+        "admin_v2.css",
         "case.css",
         "dash.css",
         "demo_checkbox.css",
         "demo_form.css",
         "recu_dash.css",
         "sidebar_v2.css",
+        "variables.css",
     }
 
     assert not retired_styles.intersection(path.name for path in admin_css.glob("*.css"))
@@ -1388,3 +1392,30 @@ def test_retired_admin_styles_and_templates_do_not_return():
     for stylesheet in retired_styles:
         assert stylesheet not in admin_base
     assert "macro render_table" not in macros
+
+    for form_path in (
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html",
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html",
+    ):
+        assert "admin_demo_checkbox.js" not in Path(form_path).read_text(
+            encoding="utf-8"
+        )
+
+
+def test_shipping_admin_styles_use_only_semantic_or_bootstrap_tokens():
+    admin_css = Path("mielenosoitukset_fi/static/css/admin")
+    token_pattern = re.compile(r"var\((--[A-Za-z0-9_-]+)|^\s*(--[A-Za-z0-9_-]+)\s*:", re.M)
+
+    for stylesheet in admin_css.glob("*.css"):
+        # This file belongs to the public toolbar, not the admin shell. Its
+        # legacy palette is documented until that public modal is migrated.
+        if stylesheet.name == "modal.css":
+            continue
+        source = stylesheet.read_text(encoding="utf-8")
+        tokens = {first or second for first, second in token_pattern.findall(source)}
+        unsupported = {
+            token
+            for token in tokens
+            if not token.startswith(("--admin-", "--bs-"))
+        }
+        assert not unsupported, f"{stylesheet}: {sorted(unsupported)}"

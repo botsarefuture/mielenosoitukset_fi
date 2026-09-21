@@ -28,24 +28,6 @@ body {
   --admin-workspace-danger: light-dark(#b42318, #ff9b91);
   --admin-workspace-danger-soft: light-dark(#fff0ee, #3b2021);
   --admin-workspace-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .08), rgba(0, 0, 0, .18));
-  /* Compatibility aliases for older admin screens. New code should use the
-     admin-workspace tokens directly. */
-  --bg: var(--admin-workspace-surface);
-  --container-bg: var(--admin-workspace-surface);
-  --background: var(--admin-workspace-surface);
-  --background_light: var(--admin-workspace-surface-muted);
-  --container_background: var(--admin-workspace-surface);
-  --input-bg: var(--admin-workspace-surface-muted);
-  --input_background: var(--admin-workspace-surface-muted);
-  --input-text: var(--admin-workspace-text);
-  --text: var(--admin-workspace-text);
-  --primary_text_color: var(--admin-workspace-text);
-  --text-muted: var(--admin-workspace-muted);
-  --secondary_text_color: var(--admin-workspace-muted);
-  --border-color: var(--admin-workspace-border);
-  --border_color: var(--admin-workspace-border);
-  --primary: var(--admin-workspace-blue);
-  --primary-hover: var(--admin-workspace-blue-dark);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--admin-workspace-text);
   background: light-dark(#f6f8fb, #171b22);
@@ -1687,7 +1669,7 @@ main.flex-grow-1 :is(.alert, .badge) {
   font-weight: 750;
 }
 
-.admin-editor-form :is(input:not([type="checkbox"]):not([type="radio"]):not(.admin-token-input__field), select, textarea) {
+.admin-editor-form :where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.admin-token-input__field), select, textarea) {
   width: 100%;
   min-height: 2.7rem;
   border: 1px solid var(--admin-workspace-border);
@@ -1697,7 +1679,7 @@ main.flex-grow-1 :is(.alert, .badge) {
   box-shadow: none;
 }
 
-.admin-editor-form :is(input:not(.admin-token-input__field), select, textarea):focus {
+.admin-editor-form :where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.admin-token-input__field), select, textarea):focus {
   border-color: var(--admin-workspace-blue);
   outline: none;
   box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .12));
@@ -2248,8 +2230,7 @@ main.flex-grow-1 {
   color: var(--admin-hero-foreground);
 }
 
-.admin-page-hero__action,
-.admin-page-hero .non-suffperm {
+.admin-page-hero__action {
   display: inline-flex;
   gap: .45rem;
   align-items: center;
@@ -2264,6 +2245,12 @@ main.flex-grow-1 {
   font-weight: 800;
   text-decoration: none;
   box-shadow: none;
+}
+
+.admin-page-hero__action--disabled,
+.admin-page-hero__action[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: .68;
 }
 
 .admin-page-hero__action:hover,
@@ -2788,6 +2775,12 @@ a.admin-workspace-summary-card[aria-current="page"] {
   border-bottom: 1px solid var(--admin-workspace-border);
 }
 
+.actions-cell,
+.actions-cell-header {
+  width: 1%;
+  white-space: nowrap;
+}
+
 .admin-workspace :is(.form-control, .form-select),
 .dashboard-container :is(.form-control, .form-select, .filter-input, .filter-select, .search-input) {
   min-height: 2.65rem;
@@ -3071,10 +3064,9 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
   background: var(--admin-workspace-blue-soft);
 }
 
-/* Legacy pages with their own visual vocabulary inherit the same workspace
-   surfaces without changing their domain-specific layout. */
+/* Operational workspaces retain domain-specific layouts while sharing the
+   canonical workspace surfaces. */
 .jobs-container,
-.logs-shell,
 .case-shell,
 .status-grid {
   width: 100%;
@@ -3088,7 +3080,6 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
 
 .jobs-container :is(.job-card, .history-panel),
 .jobs-container :is(.filter-form, .history-item),
-.logs-shell :is(.log-card, .meta-item, .log-details),
 .case-shell .case-card,
 .status-grid :is(.panel, .stat-mini) {
   border: 1px solid var(--admin-workspace-border);
@@ -3105,21 +3096,18 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
 
 .jobs-container :is(.job-title, .info-label, .history-title),
 .status-grid :is(.panel-title, .svc-name, .stat-mini .num),
-.case-shell .case-title,
-.logs-shell :is(.path-block .path, .timestamp) {
+.case-shell .case-title {
   color: var(--admin-workspace-text);
 }
 
 .jobs-container :is(.job-description, .info-value, .history-empty),
 .status-grid :is(.svc-msg, .stat-mini .lbl, .dl),
-.case-shell :is(.case-desc, .case-footer),
-.logs-shell :is(.path-block .endpoint, .timestamp small) {
+.case-shell :is(.case-desc, .case-footer) {
   color: var(--admin-workspace-muted);
 }
 
 .jobs-container :is(.job-info, .history-filters, .job-key-badge),
 .jobs-container .filter-form,
-.logs-shell :is(.meta-item, .log-details),
 .status-grid .stat-mini {
   border-color: var(--admin-workspace-border);
   background: var(--admin-workspace-surface-muted);
@@ -3534,13 +3522,6 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
   }
 }
 
-.logs-shell {
-  --surface: var(--admin-workspace-surface);
-  --surface-muted: var(--admin-workspace-surface-muted);
-  --border-color: var(--admin-workspace-border);
-  --text-soft: var(--admin-workspace-muted);
-}
-
 /* System health uses the same theme-aware surfaces and data-view geometry as
    the rest of the workspace. The only template-local style left is the
    dynamic disk-usage width supplied by the server. */
@@ -3548,6 +3529,17 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+}
+
+.admin-footer__version {
+  width: fit-content;
+  margin: .5rem auto 0;
+  padding: .25rem .55rem;
+  border-radius: 999px;
+  color: var(--admin-workspace-muted);
+  background: var(--admin-workspace-surface-muted);
+  font-size: .75rem;
+  font-weight: 750;
 }
 
 .admin-health-grid__full,

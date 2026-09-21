@@ -409,6 +409,76 @@ def test_admin_summary_cards_center_icons_and_keep_copy_separate(
 @pytest.mark.e2e
 @pytest.mark.integration
 @pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_admin_demo_forms_use_shared_theme_and_control_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+
+    theme_surfaces = {}
+    for theme in ("light", "dark"):
+        theme_surfaces[theme] = []
+        for path in ("/admin/demo/create_demo", "/admin/recu_demo/create_recu_demo"):
+            browser_page.goto(f"{live_server}{path}", wait_until="domcontentloaded")
+            browser_page.evaluate(
+                """theme => {
+                    document.documentElement.classList.toggle('dark', theme === 'dark');
+                    document.documentElement.classList.toggle('light', theme === 'light');
+                    document.documentElement.setAttribute('data-bs-theme', theme);
+                }""",
+                theme,
+            )
+            control = browser_page.locator(".admin-editor-form .form-control").first
+            control.focus()
+            # Bootstrap transitions form focus styles; sample the settled state.
+            browser_page.wait_for_timeout(200)
+            styles = browser_page.locator(".admin-editor-form").evaluate(
+                """form => {
+                    const section = form.querySelector('.form-section');
+                    const control = form.querySelector('.form-control');
+                    const required = form.querySelector('.admin-required');
+                    const save = form.querySelector('.editor-save-bar .btn-primary');
+                    const sectionStyle = getComputedStyle(section);
+                    const controlStyle = getComputedStyle(control);
+                    const requiredStyle = getComputedStyle(required);
+                    const saveStyle = getComputedStyle(save);
+                    return {
+                        sectionBackground: sectionStyle.backgroundColor,
+                        sectionBorder: sectionStyle.borderColor,
+                        controlBackground: controlStyle.backgroundColor,
+                        controlColor: controlStyle.color,
+                        controlFocus: controlStyle.boxShadow,
+                        requiredColor: requiredStyle.color,
+                        saveBackground: saveStyle.backgroundColor,
+                        saveColor: saveStyle.color,
+                        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+                    };
+                }"""
+            )
+            assert styles["sectionBackground"] != "rgba(0, 0, 0, 0)", path
+            assert styles["sectionBorder"] != "rgba(0, 0, 0, 0)", path
+            assert styles["controlBackground"] != "rgba(0, 0, 0, 0)", path
+            assert styles["controlColor"] != styles["controlBackground"], path
+            assert styles["controlFocus"] != "none", path
+            assert styles["requiredColor"] != styles["controlColor"], path
+            assert styles["saveBackground"] != "rgba(0, 0, 0, 0)", path
+            assert styles["saveColor"] == "rgb(255, 255, 255)", path
+            assert styles["overflow"] <= 1, path
+            theme_surfaces[theme].append(styles["sectionBackground"])
+
+    assert theme_surfaces["light"] != theme_surfaces["dark"]
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
 @pytest.mark.parametrize("viewport_height", [640, 844])
 def test_report_error_modal_vertical_fit_and_scroll_contract(
     app,

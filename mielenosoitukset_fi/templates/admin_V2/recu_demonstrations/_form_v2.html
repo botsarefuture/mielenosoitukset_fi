@@ -12,7 +12,6 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
-<script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/admin_recurrence_preview.js', v='20260920-admin-ui-1') }}"></script>
@@ -29,7 +28,7 @@
         organizerDiv.classList.add('dashboard-panel', 'form-group', 'organizer-item');
 
         organizerDiv.innerHTML = `
-            <label for="organizer_name_${organizerCount}">{{ _('Järjestäjätahon nimi') }} <span class="required">*</span></label>
+            <label for="organizer_name_${organizerCount}">{{ _('Järjestäjätahon nimi') }} <span class="admin-required" aria-hidden="true">*</span></label>
             <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" class="form-control" required>
             <label for="organizer_website_${organizerCount}">{{ _('Nettisivu') }}</label>
             <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" class="form-control">
@@ -59,7 +58,7 @@
         organizerDiv.classList.add('dashboard-panel', 'form-group', 'organizer-item');
 
         organizerDiv.innerHTML = `
-            <label for="organizer_name_${organizerCount}">{{ _('Järjestäjätahon nimi') }} <span class="required">*</span></label>
+            <label for="organizer_name_${organizerCount}">{{ _('Järjestäjätahon nimi') }} <span class="admin-required" aria-hidden="true">*</span></label>
             <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" class="form-control disabled" disabled value="{{ _('Täytetään automaattisesti') }}">
             <label for="organizer_website_${organizerCount}">{{ _('Nettisivu') }}</label>
             <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" class="form-control disabled" disabled value="{{ _('Täytetään automaattisesti') }}">
@@ -149,7 +148,7 @@
             <p>{{ _('Muokkauslinkillä myöskin he joilla ei ole käyttäjätiliä sivustolle, voivat muokata
                 mielenosoituksia. Muokkauslinkillä muokkaus on rajoitettua.') }}</p>
         </details>
-        <button id="ok" class="button" onclick="document.getElementById('alert1').remove()">{{ _('OK') }}</button>
+        <button id="ok" class="btn btn-primary" onclick="document.getElementById('alert1').remove()">{{ _('OK') }}</button>
     </section>
     {% endif %}
 
@@ -160,13 +159,13 @@
             <h2 class="text-xl font-semibold mb-4">{{ _('Perustiedot') }}</h2>
 
             <div class="form-group">
-                <label for="title">{{ _('Otsikko') }} <span class="required">*</span></label>
+                <label for="title">{{ _('Otsikko') }} <span class="admin-required" aria-hidden="true">*</span></label>
                 <input type="text" id="title" name="title" class="form-control" value="{{ demo.title if demo else '' }}"
                     required>
             </div>
 
             <div class="form-group">
-                <label for="type">{{ _('Tyyppi') }} <span class="required">*</span></label>
+                <label for="type">{{ _('Tyyppi') }} <span class="admin-required" aria-hidden="true">*</span></label>
                 <select id="type" name="type" class="form-control" required>
                     <option value="MARCH" {% if demo and demo.event_type=='MARCH' %}selected{% endif %}>{{ _('Marssi')
                         }}</option>
@@ -180,13 +179,13 @@
             </div>
 
             <div class="form-group">
-                <label for="date">{{ _('Päivämäärä (pp.kk.vvvv)') }} <span class="required">*</span></label>
+                <label for="date">{{ _('Päivämäärä (pp.kk.vvvv)') }} <span class="admin-required" aria-hidden="true">*</span></label>
                 <input type="text" id="date" name="date" class="form-control" value="{{ demo.date if demo else '' }}"
                     required>
             </div>
 
             <div class="form-group">
-                <label for="start_time">{{ _('Alkamisaika') }} <span class="required">*</span></label>
+                <label for="start_time">{{ _('Alkamisaika') }} <span class="admin-required" aria-hidden="true">*</span></label>
                 <input type="text" id="start_time" name="start_time" class="form-control"
                     value="{{ demo.start_time if demo else '' }}" required>
             </div>
@@ -758,7 +757,7 @@
 
         <!-- Organizers Section -->
         <section id="organizer-info" class="form-section dashboard-panel mb-8">
-            <h2 class="text-xl font-semibold mb-4">{{ _('Järjestäjätahojen tiedot') }} <span class="required">*</span>
+            <h2 class="text-xl font-semibold mb-4">{{ _('Järjestäjätahojen tiedot') }} <span class="admin-required" aria-hidden="true">*</span>
             </h2>
 
             <div id="organizers-container">
@@ -766,7 +765,7 @@
                 {% for organizer in demo.organizers %}
                 <div class="dashboard-panel form-group organizer-item">
                     <label for="organizer_name_{{ loop.index }}">{{ _('Järjestäjätahon nimi') }} <span
-                            class="required">*</span></label>
+                            class="admin-required" aria-hidden="true">*</span></label>
                     <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}"
                         class="form-control" value="{{ organizer.name }}" required>
                     <input type="hidden" name="organizer_record_id_{{ loop.index }}" value="{{ organizer._id }}">
@@ -810,7 +809,7 @@
 
             <div class="form-group mt-4">
                 <label for="organization">{{ _('Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen') }} <span
-                        class="required">*</span></label>
+                        class="admin-required" aria-hidden="true">*</span></label>
                 <select id="organization" name="organization" class="form-control">
                     <option value="">{{ _('Valitse järjestö') }}</option>
                     {% if current_user.global_admin %}
@@ -899,7 +898,7 @@
         <!-- Submit Section -->
         <section class="editor-save-bar">
             <span>{{ _('Tallenna sarjan tiedot ennen kuin kopioit niitä lapsimielenosoituksiin.') }}</span>
-            <button type="submit" class="btn btn-submit">{{ submit_button_text }}</button>
+            <button type="submit" class="btn btn-primary">{{ submit_button_text }}</button>
         </section>
     </form>
 

@@ -324,6 +324,7 @@ body {
 
 .admin-panel,
 .admin-data-view {
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
   border: 1px solid var(--admin-workspace-border);
@@ -1349,7 +1350,7 @@ main.flex-grow-1 :is(.table, table) thead {
   background: var(--admin-workspace-surface-muted);
 }
 
-main.flex-grow-1 :is(.table-responsive, .table-container) {
+main.flex-grow-1 .table-responsive {
   border-radius: 1rem;
 }
 
@@ -1524,7 +1525,7 @@ main.flex-grow-1 :is(.alert, .badge) {
 }
 
 .admin-form-section,
-.admin-editor-form :is(.form-section, .dashboard-panel) {
+.admin-editor-form .form-section {
   border: 1px solid var(--admin-workspace-border);
   border-radius: 1rem;
   color: var(--admin-workspace-text);
@@ -2040,10 +2041,6 @@ main.flex-grow-1 {
   min-width: 0;
 }
 
-.users-page,
-.orgs-page,
-.analytics-page,
-.org-detail,
 .suggestion-review {
   width: 100%;
   max-width: 1450px;
@@ -2052,17 +2049,12 @@ main.flex-grow-1 {
   box-sizing: border-box;
 }
 
-.users-page > *,
-.orgs-page > *,
-.analytics-page > *,
-.org-detail > *,
 .suggestion-review > * {
   min-width: 0;
   box-sizing: border-box;
 }
 
 .admin-workspace,
-.dashboard-container,
 .admin-dashboard-shell {
   display: grid;
   gap: 1rem;
@@ -2078,9 +2070,7 @@ main.flex-grow-1 {
 }
 
 .admin-workspace,
-.admin-workspace > *,
-.dashboard-container,
-.dashboard-container > * {
+.admin-workspace > * {
   min-width: 0;
   box-sizing: border-box;
 }
@@ -2711,9 +2701,7 @@ a.admin-workspace-summary-card[aria-current="page"] {
   outline-offset: 1px;
 }
 
-.admin-workspace-toolbar,
-.dashboard-panel,
-.filter-card {
+.admin-workspace-toolbar {
   padding: 1rem;
   border: 1px solid var(--admin-workspace-border);
   border-radius: 1rem;
@@ -2723,7 +2711,6 @@ a.admin-workspace-summary-card[aria-current="page"] {
 }
 
 .admin-workspace-table,
-.table-container,
 .table-responsive.admin-workspace-table {
   overflow-x: auto;
   margin: 0;
@@ -2733,8 +2720,7 @@ a.admin-workspace-summary-card[aria-current="page"] {
   box-shadow: var(--admin-workspace-shadow);
 }
 
-.admin-workspace-table table,
-.table-container table {
+.admin-workspace-table table {
   margin: 0;
   border-collapse: collapse;
   border-spacing: 0;
@@ -2742,14 +2728,12 @@ a.admin-workspace-summary-card[aria-current="page"] {
   background: transparent;
 }
 
-.admin-workspace-table thead,
-.table-container thead {
+.admin-workspace-table thead {
   color: var(--admin-workspace-muted);
   background: var(--admin-workspace-surface-muted);
 }
 
-.admin-workspace-table thead th,
-.table-container thead th {
+.admin-workspace-table thead th {
   padding: .8rem 1rem;
   border-bottom: 1px solid var(--admin-workspace-border);
   font-size: .72rem;
@@ -2758,19 +2742,16 @@ a.admin-workspace-summary-card[aria-current="page"] {
   text-transform: uppercase;
 }
 
-.admin-workspace-table tbody tr,
-.table-container tbody tr {
+.admin-workspace-table tbody tr {
   color: var(--admin-workspace-text);
   background: transparent;
 }
 
-.admin-workspace-table tbody tr:hover,
-.table-container tbody tr:hover {
+.admin-workspace-table tbody tr:hover {
   background: var(--admin-workspace-blue-soft);
 }
 
-.admin-workspace-table tbody td,
-.table-container tbody td {
+.admin-workspace-table tbody td {
   padding: .8rem 1rem;
   border-bottom: 1px solid var(--admin-workspace-border);
 }
@@ -2781,8 +2762,7 @@ a.admin-workspace-summary-card[aria-current="page"] {
   white-space: nowrap;
 }
 
-.admin-workspace :is(.form-control, .form-select),
-.dashboard-container :is(.form-control, .form-select, .filter-input, .filter-select, .search-input) {
+.admin-workspace :is(.form-control, .form-select) {
   min-height: 2.65rem;
   border: 1px solid var(--admin-workspace-border);
   border-radius: .7rem;
@@ -2791,16 +2771,13 @@ a.admin-workspace-summary-card[aria-current="page"] {
   box-shadow: none;
 }
 
-.admin-workspace :is(.form-control, .form-select):focus,
-.dashboard-container :is(.form-control, .form-select, .filter-input, .filter-select, .search-input):focus {
+.admin-workspace :is(.form-control, .form-select):focus {
   border-color: var(--admin-workspace-blue);
   box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .12));
 }
 
 main.flex-grow-1 .btn-primary,
-.modal .btn-primary,
-.dashboard-container .search-button,
-.dashboard-container .filter-apply-button {
+.modal .btn-primary {
   --bs-btn-color: var(--admin-workspace-on-primary);
   --bs-btn-bg: var(--admin-workspace-primary-bg);
   --bs-btn-border-color: var(--admin-workspace-primary-bg);
@@ -2822,16 +2799,14 @@ main.flex-grow-1 .btn-primary,
 }
 
 main.flex-grow-1 .btn-primary:is(:hover, :active, .active, [aria-pressed="true"]),
-.modal .btn-primary:is(:hover, :active, .active, [aria-pressed="true"]),
-.dashboard-container :is(.search-button, .filter-apply-button):hover {
+.modal .btn-primary:is(:hover, :active, .active, [aria-pressed="true"]) {
   border-color: var(--admin-workspace-primary-hover);
   color: var(--admin-workspace-on-primary);
   background: var(--admin-workspace-primary-hover);
 }
 
 main.flex-grow-1 .btn-primary:is(:disabled, .disabled, [aria-disabled="true"]),
-.modal .btn-primary:is(:disabled, .disabled, [aria-disabled="true"]),
-.dashboard-container :is(.search-button, .filter-apply-button):disabled {
+.modal .btn-primary:is(:disabled, .disabled, [aria-disabled="true"]) {
   border-color: var(--admin-workspace-primary-bg);
   color: var(--admin-workspace-on-primary);
   background: var(--admin-workspace-primary-bg);
@@ -2840,8 +2815,7 @@ main.flex-grow-1 .btn-primary:is(:disabled, .disabled, [aria-disabled="true"]),
 }
 
 main.flex-grow-1 .btn-primary:focus-visible,
-.modal .btn-primary:focus-visible,
-.dashboard-container :is(.search-button, .filter-apply-button):focus-visible {
+.modal .btn-primary:focus-visible {
   border-color: var(--admin-workspace-primary-hover);
   color: var(--admin-workspace-on-primary);
   background: var(--admin-workspace-primary-hover);
@@ -4099,8 +4073,6 @@ th.sortable.desc::after {
     flex-direction: column;
   }
   .admin-data-view__footer .pagination { justify-content: center; }
-  .dashboard-container { margin: 0; padding: 0; }
-
   .city-admin-shell .city-admin-overview { grid-template-columns: 1fr; }
   .city-admin-shell .city-admin-overview .admin-workspace-summary-card {
     min-height: 6.25rem;
@@ -4127,7 +4099,6 @@ th.sortable.desc::after {
   }
 
   .admin-workspace :is(.form-control, .form-select),
-  .dashboard-container :is(.form-control, .form-select, .filter-input, .filter-select, .search-input),
   .city-admin-search {
     width: 100% !important;
     min-width: 0;

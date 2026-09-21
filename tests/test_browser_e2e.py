@@ -409,6 +409,71 @@ def test_admin_summary_cards_center_icons_and_keep_copy_separate(
 @pytest.mark.e2e
 @pytest.mark.integration
 @pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_admin_filter_toolbars_use_shared_theme_and_fit_viewport(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+
+    paths = (
+        "/admin/demo/",
+        "/admin/recu_demo/",
+        "/admin/stats",
+        "/admin/logs",
+        "/admin/demo/translations",
+        "/admin/ui-translations",
+    )
+    theme_backgrounds = {}
+    for theme in ("light", "dark"):
+        theme_backgrounds[theme] = []
+        for path in paths:
+            browser_page.goto(f"{live_server}{path}", wait_until="domcontentloaded")
+            browser_page.evaluate(
+                """theme => {
+                    document.documentElement.classList.toggle('dark', theme === 'dark');
+                    document.documentElement.classList.toggle('light', theme === 'light');
+                    document.documentElement.setAttribute('data-bs-theme', theme);
+                }""",
+                theme,
+            )
+            toolbar = browser_page.locator(".admin-workspace-toolbar").first
+            toolbar.wait_for(state="visible")
+            styles = toolbar.evaluate(
+                """element => {
+                    const computed = getComputedStyle(element);
+                    const rect = element.getBoundingClientRect();
+                    return {
+                        background: computed.backgroundColor,
+                        border: computed.borderColor,
+                        radius: parseFloat(computed.borderRadius),
+                        left: rect.left,
+                        right: rect.right,
+                        viewport: document.documentElement.clientWidth,
+                        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+                    };
+                }"""
+            )
+            assert styles["background"] != "rgba(0, 0, 0, 0)", path
+            assert styles["border"] != "rgba(0, 0, 0, 0)", path
+            assert styles["radius"] >= 12, path
+            assert styles["left"] >= 0, path
+            assert styles["right"] <= styles["viewport"] + 1, path
+            assert styles["overflow"] <= 1, path
+            theme_backgrounds[theme].append(styles["background"])
+
+    assert theme_backgrounds["light"] != theme_backgrounds["dark"]
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
 def test_admin_demo_forms_use_shared_theme_and_control_contract(
     app,
     db,

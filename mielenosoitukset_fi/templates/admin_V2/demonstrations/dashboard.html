@@ -79,7 +79,7 @@
 
 
 
-<section class="dashboard-container admin-workspace demo-management-page">
+<section class="admin-workspace demo-management-page">
   {% call admin_page_hero(
     _('Mielenosoitukset'),
     _('Hae, suodata ja hallitse mielenosoituksia, joihin sinulla on käyttöoikeus.'),
@@ -133,7 +133,7 @@
     </article>
   </section>
 
-  <div class="dashboard-panel admin-workspace-toolbar">
+  <div class="admin-workspace-toolbar">
     <form method="GET" action="{{ url_for('admin_demo.demo_control') }}" class="admin-filter-bar" id="dashboard-filter-form">
       <input type="hidden" name="page" value="1">
       <input type="hidden" name="per_page" value="{{ per_page }}">

@@ -113,6 +113,20 @@ Bootstrap owns `.modal`. Never define layout or visibility on the global
 `.legacy-admin-modal` until it can be converted to Bootstrap. Modal content
 inherits the active admin theme.
 
+## Domain scope hooks
+
+Shared layout and components always use the canonical `admin-*` classes above.
+The remaining domain roots are deliberate CSS-module boundaries rather than
+visual aliases: `.admin-dashboard-shell` scopes the live operations dashboard,
+`.jobs-container` scopes background-job details, `.case-shell` scopes case
+cards, and `.status-grid` scopes system-health metrics. They may not redefine
+the workspace palette, hero, controls, buttons, or data-view contract.
+
+The retired `.dashboard-container`, `.dashboard-panel`, `.filter-card`,
+`.table-container`, and page-name layout aliases must not return. Use
+`.admin-page`, `.admin-workspace`, `.admin-panel`, `.admin-workspace-toolbar`,
+and `.admin-data-view` directly.
+
 ## Review checklist
 
 - Uses `admin_base.html` and `main_content`.

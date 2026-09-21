@@ -4,7 +4,7 @@
 {% block title %}{{ _('Yhteensä katselukerrat viimeisen 24 tunnin aikana') }}{% endblock %}
 
 {% block main_content %}
-<section class="dashboard-container">
+<section class="admin-page">
   {{ admin_page_hero(
     _('Yhteensä katselukerrat viimeisen 24 tunnin aikana'),
     _('Tarkastele kaikkien mielenosoitusten katselukertoja valitulla aikavälijaolla.'),
@@ -27,7 +27,7 @@
   </div>
 </form>
 
-  <div class="dashboard-panel">
+  <div class="admin-panel">
     <canvas id="totalViewsChart"></canvas>
   </div>
 </section>

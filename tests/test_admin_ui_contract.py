@@ -1419,3 +1419,26 @@ def test_shipping_admin_styles_use_only_semantic_or_bootstrap_tokens():
             if not token.startswith(("--admin-", "--bs-"))
         }
         assert not unsupported, f"{stylesheet}: {sorted(unsupported)}"
+
+
+def test_admin_v2_does_not_restore_retired_layout_aliases():
+    templates = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in Path("mielenosoitukset_fi/templates/admin_V2").rglob("*.html")
+    )
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+    retired_classes = (
+        "dashboard-container",
+        "dashboard-panel",
+        "filter-card",
+        "table-container",
+        "users-page",
+        "orgs-page",
+        "analytics-page",
+    )
+
+    for class_name in retired_classes:
+        assert class_name not in templates
+        assert f".{class_name}" not in workspace

@@ -25,7 +25,7 @@
         organizerCount++;
         const container = document.getElementById('organizers-container');
         const organizerDiv = document.createElement('div');
-        organizerDiv.classList.add('dashboard-panel', 'form-group', 'organizer-item');
+        organizerDiv.classList.add('admin-panel', 'form-group', 'organizer-item');
 
         organizerDiv.innerHTML = `
             <label for="organizer_name_${organizerCount}">{{ _('Järjestäjätahon nimi') }} <span class="admin-required" aria-hidden="true">*</span></label>
@@ -55,7 +55,7 @@
         organizerCount++;
         const container = document.getElementById('organizers-container');
         const organizerDiv = document.createElement('div');
-        organizerDiv.classList.add('dashboard-panel', 'form-group', 'organizer-item');
+        organizerDiv.classList.add('admin-panel', 'form-group', 'organizer-item');
 
         organizerDiv.innerHTML = `
             <label for="organizer_name_${organizerCount}">{{ _('Järjestäjätahon nimi') }} <span class="admin-required" aria-hidden="true">*</span></label>
@@ -125,7 +125,7 @@
 {% endblock %}
 
 {% block main_content %}
-<div class="dashboard-container">
+<div class="admin-page">
 
     <!-- Page intro -->
     {{ admin_page_hero(
@@ -155,7 +155,7 @@
     <form id="recu-demo-form" class="admin-editor-form" method="POST" action="{{ form_action }}" novalidate enctype="multipart/form-data">
 
         <!-- Basic Info Section -->
-        <section id="basic-info" class="form-section dashboard-panel mb-8">
+        <section id="basic-info" class="form-section mb-8">
             <h2 class="text-xl font-semibold mb-4">{{ _('Perustiedot') }}</h2>
 
             <div class="form-group">
@@ -282,7 +282,7 @@
                 </small>
             </div>
         </section>
-        <section id="recurrence-settings" class="form-section dashboard-panel mb-8">
+        <section id="recurrence-settings" class="form-section mb-8">
             <h2 class="text-xl font-semibold mb-4">Toistuvuusasetukset</h2>
             {% if demo and demo.repeat_schedule %}
             <p class="current-schedule-summary">
@@ -436,7 +436,7 @@
 
 
 
-        <section id="seo-info" class="form-section dashboard-panel">
+        <section id="seo-info" class="form-section">
             <h2>{{ _('SEO / tagit') }}</h2>
             <div class="form-group">
                 <label for="tag-input">{{ _('Tägit') }}</label>
@@ -534,7 +534,7 @@
 
         </script>
 
-        <section class="form-section dashboard-panel mb-8">
+        <section class="form-section mb-8">
             <h2 class="text-xl font-semibold mb-4">{{ _('Käännökset') }}</h2>
             <p class="text-muted mb-4">
                 {{ _('Voit täydentää toistuvalle mielenosoitukselle käännökset eri kielillä. Tyhjät kentät fallbackaavat oletuskielen sisältöön.') }}
@@ -543,7 +543,7 @@
             {% for locale in translation_locales %}
             {% if locale != default_demo_language %}
             {% set translated = demo.translations.get(locale, {}) if demo and demo.translations else {} %}
-            <div class="dashboard-panel mb-4" data-translation-locale="{{ locale }}">
+            <div class="admin-panel mb-4" data-translation-locale="{{ locale }}">
                 <h3 class="h5 mb-3">{{ translation_language_names.get(locale, locale|upper) }}</h3>
 
                 <div class="form-group">
@@ -574,7 +574,7 @@
         {{ demo_media_fields(demo, recurring=true) }}
 
         <!-- Location Section -->
-        <section id="location-info" class="form-section dashboard-panel mb-8">
+        <section id="location-info" class="form-section mb-8">
             <h2 class="text-xl font-semibold mb-4">{{ _('Sijaintiedot') }}</h2>
 
             {% include "paikkakunta-dropdown.html" %}
@@ -756,14 +756,14 @@
         </section>
 
         <!-- Organizers Section -->
-        <section id="organizer-info" class="form-section dashboard-panel mb-8">
+        <section id="organizer-info" class="form-section mb-8">
             <h2 class="text-xl font-semibold mb-4">{{ _('Järjestäjätahojen tiedot') }} <span class="admin-required" aria-hidden="true">*</span>
             </h2>
 
             <div id="organizers-container">
                 {% if demo and demo.organizers %}
                 {% for organizer in demo.organizers %}
-                <div class="dashboard-panel form-group organizer-item">
+                <div class="admin-panel form-group organizer-item">
                     <label for="organizer_name_{{ loop.index }}">{{ _('Järjestäjätahon nimi') }} <span
                             class="admin-required" aria-hidden="true">*</span></label>
                     <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}"
@@ -875,7 +875,7 @@
 
         <!-- Approval Section -->
         {% if can_approve_demo|default(false) %}
-        <section id="approval-info" class="form-section dashboard-panel mb-8">
+        <section id="approval-info" class="form-section mb-8">
             <div class="form-group admin-boolean-field" id="approval-container">
                 <label class="admin-check-row" for="approved">
                     <input type="checkbox" id="approved" name="approved" class="form-check-input"
@@ -903,7 +903,7 @@
     </form>
 
     {% if demo and demo._id %}
-    <section id="child-demos" class="form-section dashboard-panel child-bulk-panel">
+    <section id="child-demos" class="form-section child-bulk-panel">
         <div class="section-heading-row">
             <div>
                 <p class="section-kicker">{{ _('Sarjan hallinta') }}</p>

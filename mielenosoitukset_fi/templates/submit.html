@@ -1813,6 +1813,7 @@
           </div>
           <div id="facebook-import-status" class="facebook-import-status" role="status" aria-live="polite" style="display: none;"></div>
           <input type="hidden" id="facebook_imported" name="facebook_imported" value="" />
+          <input type="hidden" id="facebook_image_url" name="facebook_image_url" value="" />
         </div>
 
         <style>
@@ -1902,7 +1903,7 @@
 
             const imported = (data.fields_summary || []).filter(function (f) { return f.imported; });
             const missing = (data.fields_summary || []).filter(function (f) {
-              return !f.imported && f.key !== 'end_date' && f.key !== 'end_time';
+              return !f.imported && f.key !== 'end_date' && f.key !== 'end_time' && f.key !== 'image_url';
             });
 
             lines.push('<div class="fb-import-fields">');
@@ -1958,7 +1959,31 @@
 
             set('address', e.address);
 
-            if (e.organizer) {
+            // Fill all organizers from the imported event
+            if (e.organizers && e.organizers.length > 0) {
+              // Fill first organizer
+              let orgInput = document.querySelector('[name^="organizer_name_"]');
+              if (!orgInput && typeof addOrganizer === 'function') {
+                addOrganizer();
+                orgInput = document.querySelector('[name^="organizer_name_"]');
+              }
+              if (orgInput) {
+                orgInput.value = e.organizers[0];
+                localStorage.setItem('form_' + orgInput.name, e.organizers[0]);
+              }
+              // Fill additional organizers
+              for (let i = 1; i < e.organizers.length; i++) {
+                if (typeof addOrganizer === 'function') {
+                  addOrganizer();
+                  const newInput = document.querySelector('[name^="organizer_name_"]');
+                  if (newInput) {
+                    newInput.value = e.organizers[i];
+                    localStorage.setItem('form_' + newInput.name, e.organizers[i]);
+                  }
+                }
+              }
+            } else if (e.organizer) {
+              // Fallback: single organizer
               let orgInput = document.querySelector('[name^="organizer_name_"]');
               if (!orgInput && typeof addOrganizer === 'function') {
                 addOrganizer();
@@ -1967,6 +1992,21 @@
               if (orgInput) {
                 orgInput.value = e.organizer;
                 localStorage.setItem('form_' + orgInput.name, e.organizer);
+              }
+            }
+
+            // Handle imported cover image
+            if (e.image_url) {
+              const fbImageInput = document.getElementById('facebook_image_url');
+              if (fbImageInput) {
+                fbImageInput.value = e.image_url;
+              }
+              const preview = document.getElementById('image-preview');
+              if (preview) {
+                preview.src = e.image_url;
+                preview.style.display = 'block';
+                // Also cache in localStorage for visual persistence
+                localStorage.setItem('form_image_preview', e.image_url);
               }
             }
 

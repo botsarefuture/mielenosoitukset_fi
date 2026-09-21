@@ -41,6 +41,44 @@ def test_demo_dashboard_has_scoped_preview_and_edit_link_quick_actions(
     assert "Luo ja kopioi linkki" in page
 
 
+def test_demo_suggestions_use_shared_collection_and_review_contract(
+    admin_client, db, seeded_data
+):
+    seeded_suggestion = db.demo_suggestions.find_one(
+        {"_id": seeded_data["suggestion_id"]}
+    )
+    for index in range(25):
+        db.demo_suggestions.insert_one(
+            {
+                "_id": ObjectId(),
+                "demo_id": str(seeded_data["demo_id"]),
+                "status": "pending",
+                "created_at": seeded_suggestion["created_at"],
+                "suggested_fields": {"title": f"Suggestion {index:02d}"},
+                "original_values": {"title": f"Demo {index:02d}"},
+            }
+        )
+
+    response = admin_client.get("/admin/demo/suggestions?per_page=20&page=2")
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert 'class="admin-page admin-workspace"' in page
+    assert 'class="admin-data-view admin-data-view--scrollable"' in page
+    assert 'class="admin-data-view__footer admin-pagination"' in page
+    assert "Sivu 2 / 2" in page
+    assert "21–26 / 26" in page
+
+    detail = admin_client.get(
+        f"/admin/demo/suggestions/{seeded_data['suggestion_id']}"
+    )
+    assert detail.status_code == 200
+    detail_page = detail.get_data(as_text=True)
+    assert 'class="admin-form-page admin-page"' in detail_page
+    assert 'class="admin-data-view admin-data-view--scrollable"' in detail_page
+    assert 'class="form-check-input admin-selection-checkbox field-checkbox"' in detail_page
+    assert 'id="rejectSuggestionModal"' in detail_page
+
+
 def test_editor_without_accept_permission_cannot_forge_demo_approval(
     friend_client, db, seeded_data
 ):

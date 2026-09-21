@@ -1442,3 +1442,22 @@ def test_admin_v2_does_not_restore_retired_layout_aliases():
     for class_name in retired_classes:
         assert class_name not in templates
         assert f".{class_name}" not in workspace
+
+
+def test_demo_suggestion_workflow_uses_shared_admin_components():
+    list_template = Path(
+        "mielenosoitukset_fi/templates/admin/suggestions_list.html"
+    ).read_text(encoding="utf-8")
+    review_template = Path(
+        "mielenosoitukset_fi/templates/admin/suggestion_view.html"
+    ).read_text(encoding="utf-8")
+
+    for template in (list_template, review_template):
+        assert "<style" not in template
+        assert "style=" not in template
+        assert "admin_page_hero" in template
+    assert "admin-data-view admin-data-view--scrollable" in list_template
+    assert "admin_pagination(" in list_template
+    assert "admin-selection-checkbox field-checkbox" in review_template
+    assert "admin-sticky-actions" in review_template
+    assert 'id="rejectSuggestionModal"' in review_template

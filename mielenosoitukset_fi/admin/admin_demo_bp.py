@@ -731,8 +731,59 @@ def suggestions_list():
     """
     List incoming demo suggestions for admin review.
     """
-    suggestions = list(mongo.demo_suggestions.find({}).sort('created_at', -1).limit(200))
-    return render_template('admin/suggestions_list.html', suggestions=suggestions)
+    status_filter = (request.args.get("status") or "all").strip().lower()
+    if status_filter not in {"all", "new", "pending", "applied", "rejected"}:
+        status_filter = "all"
+    page, per_page = parse_admin_pagination(request.args)
+
+    # Suggestions inherit the demonstration's EDIT_DEMO scope. Filter the
+    # complete, deterministic result set before calculating totals or slicing
+    # so city/organization administrators never see global rows or counts.
+    visible_suggestions = []
+    permission_cache = {}
+    for suggestion in mongo.demo_suggestions.find({}).sort(
+        [("created_at", -1), ("_id", -1)]
+    ):
+        demo_id = str(suggestion.get("demo_id") or "")
+        if demo_id not in permission_cache:
+            permission_cache[demo_id] = bool(
+                demo_id and _user_can_access_demo(demo_id, "EDIT_DEMO")
+            )
+        if permission_cache[demo_id]:
+            visible_suggestions.append(suggestion)
+    total_count = len(visible_suggestions)
+    if status_filter != "all":
+        accepted_statuses = (
+            {"new", "pending"}
+            if status_filter in {"new", "pending"}
+            else {status_filter}
+        )
+        visible_suggestions = [
+            suggestion
+            for suggestion in visible_suggestions
+            if (suggestion.get("status") or "pending").lower() in accepted_statuses
+        ]
+    filtered_count = len(visible_suggestions)
+    pagination = build_admin_pagination(
+        "admin_demo.suggestions_list",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args={"status": status_filter if status_filter != "all" else ""},
+    )
+    suggestions = visible_suggestions[
+        pagination["slice_start"] : pagination["slice_end"]
+    ]
+    return render_template(
+        "admin/suggestions_list.html",
+        suggestions=suggestions,
+        status_filter=status_filter,
+        total_count=total_count,
+        filtered_count=filtered_count,
+        has_active_filters=status_filter != "all",
+        clear_filters_url=url_for("admin_demo.suggestions_list"),
+        **pagination,
+    )
 
 
 @admin_demo_bp.route('/suggestions/<suggestion_id>')

@@ -172,7 +172,7 @@ def test_user_login_and_notifications_flow_in_real_browser(
     live_server,
     browser_page,
 ):
-    _seed_database(app, db)
+    seeded_data = _seed_database(app, db)
 
     browser_page.goto(
         f"{live_server}/users/auth/login?next=/users/profile/",
@@ -269,7 +269,7 @@ def test_admin_pages_share_responsive_theme_aware_heroes(
     browser_page,
     viewport_width,
 ):
-    _seed_database(app, db)
+    seeded_data = _seed_database(app, db)
     browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
     browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
     _submit_login_form(browser_page, "admin", "AdminPass1!")
@@ -289,6 +289,7 @@ def test_admin_pages_share_responsive_theme_aware_heroes(
         "/admin/case/",
         "/admin/demo/translations",
         "/admin/demo/suggestions",
+        f"/admin/demo/suggestions/{seeded_data['suggestion_id']}",
         "/admin/recu_demo/",
         "/admin/ui-translations",
     )
@@ -361,6 +362,7 @@ def test_admin_summary_cards_center_icons_and_keep_copy_separate(
         ("/admin/organization/", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
         (f"/admin/organization/view/{seeded_data['org_id']}", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
         ("/admin/stats", ".admin-workspace-summary .admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
+        (f"/admin/demo/suggestions/{seeded_data['suggestion_id']}", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
     )
 
     for path, card_selector, icon_selector, label_selector, value_selector in pages:
@@ -408,6 +410,45 @@ def test_admin_summary_cards_center_icons_and_keep_copy_separate(
 
 @pytest.mark.e2e
 @pytest.mark.integration
+def test_admin_demo_suggestion_selection_and_reject_modal_are_accessible(
+    app,
+    db,
+    live_server,
+    browser_page,
+):
+    seeded_data = _seed_database(app, db)
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+    browser_page.goto(
+        f"{live_server}/admin/demo/suggestions/{seeded_data['suggestion_id']}",
+        wait_until="domcontentloaded",
+    )
+
+    checkbox = browser_page.locator(".field-checkbox").first
+    row = checkbox.locator("xpath=ancestor::tr")
+    assert checkbox.is_checked()
+    assert row.get_attribute("aria-selected") == "true"
+    checkbox.uncheck()
+    assert row.get_attribute("aria-selected") == "false"
+    assert browser_page.locator("#apply-btn").is_disabled()
+
+    trigger = browser_page.locator('[data-bs-target="#rejectSuggestionModal"]')
+    trigger.focus()
+    trigger.click()
+    modal = browser_page.locator("#rejectSuggestionModal")
+    modal.wait_for(state="visible")
+    modal.locator(".btn-close").click()
+    browser_page.wait_for_function(
+        "document.querySelector('#rejectSuggestionModal')?.getAttribute('aria-hidden') === 'true'"
+    )
+    browser_page.wait_for_function(
+        "document.querySelector('[data-bs-target=\"#rejectSuggestionModal\"]') === document.activeElement"
+    )
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
 @pytest.mark.parametrize("viewport_width", [390, 1440])
 def test_admin_filter_toolbars_use_shared_theme_and_fit_viewport(
     app,
@@ -429,6 +470,7 @@ def test_admin_filter_toolbars_use_shared_theme_and_fit_viewport(
         "/admin/logs",
         "/admin/demo/translations",
         "/admin/ui-translations",
+        "/admin/demo/suggestions",
     )
     theme_backgrounds = {}
     for theme in ("light", "dark"):

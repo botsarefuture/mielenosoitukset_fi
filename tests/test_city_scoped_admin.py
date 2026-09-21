@@ -125,6 +125,48 @@ def test_city_scoped_admin_dashboard_only_lists_assigned_cities(app, db, seeded_
     assert "Turku Outside Scope" not in page
 
 
+def test_city_scoped_admin_suggestions_hide_other_city_rows_and_counts(
+    app, db, seeded_data
+):
+    scoped_user_id = _create_scoped_admin(
+        db,
+        ["helsinki"],
+        ["EDIT_DEMO"],
+    )
+    helsinki_demo = db.demonstrations.find_one({"_id": seeded_data["demo_id"]})
+    turku_demo = deepcopy(helsinki_demo)
+    turku_demo["_id"] = ObjectId()
+    turku_demo["title"] = "Turku Suggestion Target"
+    turku_demo["city"] = "Turku"
+    turku_demo["city_key"] = normalize_city_key("Turku")
+    turku_demo["slug"] = "turku-suggestion-target"
+    turku_demo["editors"] = []
+    db.demonstrations.insert_one(turku_demo)
+    turku_suggestion_id = ObjectId()
+    db.demo_suggestions.insert_one(
+        {
+            "_id": turku_suggestion_id,
+            "demo_id": str(turku_demo["_id"]),
+            "status": "pending",
+            "created_at": db.demo_suggestions.find_one(
+                {"_id": seeded_data["suggestion_id"]}
+            )["created_at"],
+            "suggested_fields": {"title": "Turku Secret Suggestion"},
+            "original_values": {"title": "Turku Suggestion Target"},
+        }
+    )
+
+    client = _client_for_user(app, scoped_user_id)
+    response = client.get("/admin/demo/suggestions")
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "Climate March Helsinki" in page
+    assert "Turku Suggestion Target" not in page
+    assert "<strong>1</strong>" in page
+    assert "sinulle näkyvää ehdotusta" in page
+    assert client.get(f"/admin/demo/suggestions/{turku_suggestion_id}").status_code == 403
+
+
 def test_city_scoped_admin_dashboard_shows_accept_action_for_scoped_demo(
     app, db, seeded_data
 ):

@@ -50,6 +50,17 @@ def _normalize_organizers(value: Any) -> list[Any]:
     return []
 
 
+def _normalize_gallery_images(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [v.strip() for v in value.splitlines() if v.strip()]
+    if isinstance(value, (list, tuple, set)):
+        return [str(v).strip() for v in value if str(v).strip()]
+    v = str(value).strip()
+    return [v] if v else []
+
+
 def _jsonrpc_response(result: Any, request_id: Any, http_status: int = 200):
     return (
         jsonify({"jsonrpc": "2.0", "id": request_id, "result": result}),
@@ -613,6 +624,10 @@ def _update_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
         "hide",
         "cancelled",
         "event_type",
+        "cover_picture",
+        "img",
+        "gallery_images",
+        "preview_image",
     }
     applied: dict[str, Any] = {}
     for key, value in patch.items():
@@ -622,6 +637,8 @@ def _update_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
             value = _normalize_tags(value)
         elif key == "organizers":
             value = _normalize_organizers(value)
+        elif key == "gallery_images":
+            value = _normalize_gallery_images(value)
         setattr(demo, key, value)
         applied[key] = value
 
@@ -949,7 +966,30 @@ TOOLS: dict[str, dict[str, Any]] = {
             "required": ["demo_id", "patch"],
             "properties": {
                 "demo_id": {"type": "string"},
-                "patch": {"type": "object"},
+                "patch": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "date": {"type": "string"},
+                        "start_time": {"type": "string"},
+                        "end_time": {"type": "string"},
+                        "city": {"type": "string"},
+                        "address": {"type": "string"},
+                        "description": {"type": "string"},
+                        "facebook": {"type": "string"},
+                        "route": {"type": "array"},
+                        "tags": {"type": "array"},
+                        "organizers": {"type": "array"},
+                        "approved": {"type": "boolean"},
+                        "hide": {"type": "boolean"},
+                        "cancelled": {"type": "boolean"},
+                        "event_type": {"type": "string"},
+                        "cover_picture": {"type": "string"},
+                        "img": {"type": "string"},
+                        "gallery_images": {"type": "array"},
+                        "preview_image": {"type": "string"},
+                    },
+                },
             },
         },
         "handler": _update_demo,

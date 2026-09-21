@@ -2058,6 +2058,221 @@ function inSelection(selection, maxSelection) {
           </div>
         </div>
 
+        <div class="form-group facebook-import-group">
+          <div class="facebook-import-row">
+            <button type="button" class="btn btn-secondary" id="facebook-import-btn">
+              <i class="fa-brands fa-facebook"></i>
+              {{ _('Hae tiedot Facebookista') }}
+            </button>
+            <div class="helper-text" style="margin: 0; flex: 1;">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              {{ _('Täyttää lomakkeen otsikko-, kuvaus-, aika-, paikka- ja järjestäjätiedot julkisesta Facebook-tapahtumasta, kun olet lisännyt linkin yläpuolella.') }}
+            </div>
+          </div>
+          <div id="facebook-import-status" class="facebook-import-status" role="status" aria-live="polite" style="display: none;"></div>
+          <input type="hidden" id="facebook_imported" name="facebook_imported" value="" />
+        </div>
+
+        <style>
+          .facebook-import-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+          }
+          .facebook-import-status {
+            margin-top: 0.75rem;
+            padding: 0.85rem 1rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: var(--color-card-bg, rgba(128, 128, 128, 0.08));
+            border-left: 4px solid var(--color-secondary, #6d28d9);
+          }
+          .facebook-import-status.success {
+            background: #e8f7ee;
+            border-left-color: #1e7e34;
+            color: #0f4d22;
+          }
+          .facebook-import-status.error {
+            background: #fdecec;
+            border-left-color: #c0392b;
+            color: #7b241c;
+          }
+          .facebook-import-status .fb-import-message {
+            margin-bottom: 0.35rem;
+          }
+          .facebook-import-status .fb-import-warnings {
+            background: #fdf6e3;
+            border-left: 3px solid #f1c40f;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+            color: #7a5c00;
+          }
+          .facebook-import-status .fb-import-fields {
+            margin-top: 0.4rem;
+          }
+          .facebook-import-status .fb-field-label {
+            background: rgba(0, 0, 0, 0.06);
+            border-radius: 4px;
+            padding: 1px 6px;
+            margin: 0 2px;
+            white-space: nowrap;
+          }
+        </style>
+
+        <script>
+        (function () {
+          const btn = document.getElementById('facebook-import-btn');
+          const statusEl = document.getElementById('facebook-import-status');
+          const facebookInput = document.getElementById('facebook');
+          const importedFlag = document.getElementById('facebook_imported');
+
+          function esc(str) {
+            return String(str == null ? '' : str)
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;');
+          }
+
+          function setImportStatus(html, kind) {
+            statusEl.className = 'facebook-import-status ' + (kind || '');
+            statusEl.innerHTML = html;
+            statusEl.style.display = 'block';
+          }
+
+          // Manual edits to the link invalidate the "imported" provenance flag.
+          facebookInput.addEventListener('input', function () {
+            importedFlag.value = '';
+          });
+
+          function buildSummaryHtml(data) {
+            const lines = [];
+            lines.push('<div class="fb-import-message"><i class="fa-solid fa-circle-check"></i> ' + esc(data.message) + '</div>');
+
+            if (data.warnings && data.warnings.length) {
+              lines.push('<div class="fb-import-warnings">');
+              data.warnings.forEach(function (w) { lines.push('<div>' + esc(w) + '</div>'); });
+              lines.push('</div>');
+            }
+
+            const imported = (data.fields_summary || []).filter(function (f) { return f.imported; });
+            const missing = (data.fields_summary || []).filter(function (f) {
+              return !f.imported && f.key !== 'end_date' && f.key !== 'end_time';
+            });
+
+            lines.push('<div class="fb-import-fields">');
+            if (imported.length) {
+              lines.push('{{ _('Tuotu:') }} '
+                + imported.map(function (f) { return '<span class="fb-field-label">' + esc(f.label) + '</span>'; }).join(' '));
+            }
+            if (missing.length) {
+              lines.push('<div style="margin-top:0.3rem;">{{ _('Täydennettävä:') }} '
+                + missing.map(function (f) { return '<span class="fb-field-label">' + esc(f.label) + '</span>'; }).join(' ')
+                + '</div>');
+            }
+            lines.push('</div>');
+            return lines.join('');
+          }
+
+          function applyImportedEvent(data) {
+            const e = data.event || {};
+            const set = function (id, val) {
+              const el = document.getElementById(id);
+              if (!el) return;
+              el.value = (val === undefined || val === null) ? '' : String(val);
+              if (el.name) localStorage.setItem('form_' + el.name, el.value);
+            };
+
+            set('name', e.title);
+
+            if (typeof quill !== 'undefined' && quill && quill.root) {
+              if (e.description_html) {
+                quill.root.innerHTML = e.description_html;
+                // keep the hidden sync field and localStorage draft in sync
+                const descEl = document.getElementById('description');
+                if (descEl) {
+                  descEl.value = e.description_html;
+                  localStorage.setItem('form_description', e.description_html);
+                }
+              }
+            } else {
+              set('description', e.description_html);
+            }
+
+            set('date', e.start_date);
+            set('start_time', e.start_time);
+            set('end_time', e.end_time);
+
+            if (e.city) {
+              if (typeof selectCity === 'function') {
+                selectCity(e.city);
+              } else {
+                set('selected-city', e.city);
+              }
+            }
+
+            set('address', e.address);
+
+            if (e.organizer) {
+              let orgInput = document.querySelector('[name^="organizer_name_"]');
+              if (!orgInput && typeof addOrganizer === 'function') {
+                addOrganizer();
+                orgInput = document.querySelector('[name^="organizer_name_"]');
+              }
+              if (orgInput) {
+                orgInput.value = e.organizer;
+                localStorage.setItem('form_' + orgInput.name, e.organizer);
+              }
+            }
+
+            set('facebook', e.facebook_url);
+            importedFlag.value = '1';
+          }
+
+          btn.addEventListener('click', async function () {
+            const url = (facebookInput.value || '').trim();
+            if (!url) {
+              setImportStatus('{{ _('Lisää Facebook-tapahtuman linkki ensin yllä olevaan kenttään.') }}', 'error');
+              return;
+            }
+
+            btn.disabled = true;
+            setImportStatus('{{ _('Haetaan tapahtuman tietoja...') }}', 'loading');
+
+            try {
+              const response = await fetch('{{ url_for('submit_facebook_import') }}', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                  'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: 'url=' + encodeURIComponent(url)
+              });
+
+              let data = null;
+              try { data = await response.json(); } catch (err) { /* non-JSON */ }
+
+              if (!response.ok || !data || !data.success) {
+                const message = (data && data.error) || '{{ _('Tietojen hakeminen epäonnistui. Yritä uudelleen tai täytä lomake käsin.') }}';
+                setImportStatus(esc(message), 'error');
+                return;
+              }
+
+              applyImportedEvent(data);
+              setImportStatus(buildSummaryHtml(data), 'success');
+            } catch (err) {
+              console.error('Facebook import failed:', err);
+              setImportStatus('{{ _('Tietojen hakeminen epäonnistui. Yritä uudelleen tai täytä lomake käsin.') }}', 'error');
+            } finally {
+              btn.disabled = false;
+            }
+          });
+        })();
+        </script>
+
         <div class="form-navigation">
           <button type="button" class="btn btn-secondary" disabled>
             <i class="fa-solid fa-arrow-left"></i>

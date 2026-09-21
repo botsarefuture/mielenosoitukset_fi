@@ -499,6 +499,21 @@
           {% if demo.facebook %}
           <a href="{{ demo.facebook }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook"></i> Facebook</a>
           {% endif %}
+          {% if demo.facebook_import %}
+          <div class="mt-2 fb-import-provenance">
+            <i class="fa-solid fa-circle-check"></i>
+            <strong>{{ _('Tuotu Facebookista') }}</strong>
+            <p class="mb-0 text-muted">
+              {{ _('Ilmoittaja täytti lomakkeen Facebook-tuonnilla') }}
+              {% if demo.facebook_import.get('url') %}
+              — <a href="{{ demo.facebook_import.get('url') }}" target="_blank" rel="noopener noreferrer">{{ demo.facebook_import.get('url') }}</a>
+              {% endif %}
+              {% if demo.facebook_import.get('imported_at') %}
+              <small>({{ demo.facebook_import.get('imported_at') }})</small>
+              {% endif %}
+            </p>
+          </div>
+          {% endif %}
           {% if demo.cover_picture %}
           <a href="{{ demo.cover_picture }}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-image"></i> {{ _('Kansikuva') }}</a>
           {% endif %}

@@ -73,6 +73,11 @@ from mielenosoitukset_fi.utils.demo_cancellation import (
     queue_cancellation_links_for_demo,
     request_cancellation_case,
 )
+from mielenosoitukset_fi.utils.facebook_event_importer import (
+    FacebookEventImporter,
+    FacebookImportError,
+    parse_event_url,
+)
 
 email_sender = EmailSender()
 
@@ -1482,6 +1487,22 @@ def init_routes(app):
             facebook = (request.form.get("facebook") or "").strip()
             city = (request.form.get("city") or "").strip()
             address = (request.form.get("address") or "").strip()
+
+            # --- Facebook import provenance (informational only) ---
+            # Stamped only when the importer was actually used and the pasted
+            # link is a real Facebook event URL. Never affects moderation.
+            facebook_import_meta = None
+            if request.form.get("facebook_imported") == "1" and facebook:
+                try:
+                    canonical_fb = parse_event_url(facebook)
+                except FacebookImportError:
+                    canonical_fb = None
+                if canonical_fb:
+                    facebook_import_meta = {
+                        "url": canonical_fb,
+                        "imported_at": utcnow(),
+                        "importer": "apify-facebook-events-scraper",
+                    }
             event_type = (request.form.get("type") or "").strip()
             route = request.form.get("route") if event_type == "marssi" else None
             default_language = (
@@ -1745,6 +1766,7 @@ def init_routes(app):
                     description=description,
                     tags=tags,
                     default_language=default_language,
+                    facebook_import=facebook_import_meta,
                 )
                 demo_dict = demonstration.to_dict()
                 demonstration.save()
@@ -1964,6 +1986,125 @@ def init_routes(app):
             translation_locales=app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"],
             translation_language_names=app.config.get("BABEL_LANGUAGES") or {},
             default_demo_language=app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
+        )
+
+    @app.route("/submit/facebook_import", methods=["POST"])
+    def submit_facebook_import():
+        """AJAX helper behind the "Hae tiedot Facebookista" button.
+
+        Fetches a public Facebook event via Apify and returns normalized,
+        sanitized data the frontend uses to prefill the submission form.
+        This is a convenience layer only: nothing is auto-submitted and the
+        user always reviews the imported fields before sending the form.
+        """
+        _FACEBOOK_IMPORT_ERRORS = {
+            "missing_url": _("Anna Facebook-tapahtuman linkki."),
+            "invalid_url": _(
+                "Linkki ei ole kelvollinen Facebook-tapahtuman linkki. Varmista, "
+                "että linkki on muotoa https://www.facebook.com/events/123456789"
+            ),
+            "not_configured": _(
+                "Facebook-tuonti ei ole käytössä tällä hetkellä. Täytä lomake käsin."
+            ),
+            "apify_auth": _(
+                "Facebook-tuonnin asetukset eivät ole kunnossa. Yritä myöhemmin uudelleen."
+            ),
+            "apify_payment": _(
+                "Facebook-tuonnin kustannusraja on ylittynyt. Yritä myöhemmin uudelleen."
+            ),
+            "apify_rate_limit": _(
+                "Liian monta Facebook-tuontipyyntöä. Odota hetki ja yritä uudelleen."
+            ),
+            "apify_unavailable": _(
+                "Facebook-tuontipalvelu ei ole käytettävissä. Yritä myöhemmin uudelleen."
+            ),
+            "apify_timeout": _(
+                "Facebook-tapahtuman tietojen hakeminen kesti liian kauan. Yritä myöhemmin uudelleen."
+            ),
+            "apify_failed": _(
+                "Facebook-tuonti epäonnistui. Yritä myöhemmin uudelleen tai täytä lomake käsin."
+            ),
+            "apify_network": _(
+                "Facebook-tuonnissa tapahtui verkkovirhe. Yritä myöhemmin uudelleen."
+            ),
+            "empty_result": _(
+                "Tapahtumaa ei löytynyt tai se ei ole julkinen. Tarkista linkki tai täytä lomake käsin."
+            ),
+            "unexpected_response": _(
+                "Facebook-tuonti palautti odottamattoman vastauksen. Täytä lomake käsin."
+            ),
+        }
+        _GENERIC_IMPORT_ERROR = _(
+            "Tietojen hakeminen Facebook-tapahtumasta epäonnistui. Täytä lomake käsin."
+        )
+        _IMPORT_FIELD_LABELS = {
+            "title": _("Otsikko"),
+            "description_html": _("Kuvaus"),
+            "start_date": _("Päivämäärä"),
+            "start_time": _("Alkamisaika"),
+            "end_date": _("Päättymispäivä"),
+            "end_time": _("Päättymisaika"),
+            "city": _("Paikkakunta"),
+            "address": _("Osoite"),
+            "organizer": _("Järjestäjä"),
+            "facebook_url": _("Facebook-linkki"),
+        }
+        _IMPORT_WARNING_MESSAGES = {
+            "canceled": _("Facebook-tapahtuma on merkitty peruutetuksi."),
+            "past": _("Facebook-tapahtuma on jo menneisyydessä."),
+            "not_public": _(
+                "Tapahtuman näkyvyys ei ole julkinen Facebookissa eikä tietoja "
+                "välttämättä saada haettua."
+            ),
+            "online": _(
+                "Tapahtuma on Facebookissa merkitty etätapahtumaksi (online)."
+            ),
+            "approximate_time": _(
+                "Tarkka alkamisaika ei ollut saatavilla; kenttä täytettiin "
+                "parhaan tarjolla olleen ajan mukaan."
+            ),
+        }
+
+        url = (request.form.get("url") or request.args.get("url") or "").strip()
+        importer = FacebookEventImporter()
+        try:
+            event = importer.import_event(url)
+        except FacebookImportError as exc:
+            logger.warning(
+                "Facebook import failed (code=%s) for url=%r", exc.code, url
+            )
+            message = _FACEBOOK_IMPORT_ERRORS.get(exc.code, _GENERIC_IMPORT_ERROR)
+            return jsonify(success=False, error=message, code=exc.code), exc.status_code
+        except Exception:
+            logger.exception("Unexpected error during Facebook event import")
+            return (
+                jsonify(success=False, error=_GENERIC_IMPORT_ERROR, code="internal"),
+                500,
+            )
+
+        fields_summary = [
+            {
+                "key": key,
+                "label": _IMPORT_FIELD_LABELS.get(key, key),
+                "imported": key in event.imported,
+            }
+            for key in ("title", "description_html", "start_date", "start_time",
+                        "end_date", "end_time", "city", "address", "organizer",
+                        "facebook_url")
+        ]
+        warnings = [
+            _IMPORT_WARNING_MESSAGES.get(code, code) for code in event.warnings
+        ]
+
+        return jsonify(
+            success=True,
+            event=event.to_dict(),
+            message=_(
+                "Tiedot haettiin Facebook-tapahtumasta. Tarkista tiedot ja täydennä "
+                "puuttuvat tiedot ennen lähettämistä."
+            ),
+            fields_summary=fields_summary,
+            warnings=warnings,
         )
 
     def upload_image_to_s3(img):

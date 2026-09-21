@@ -1717,41 +1717,53 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1rem;
-            margin-top: 1.25rem;
+            margin-top: 1.5rem;
           }
           .import-choice-card {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 0.5rem;
-            padding: 1.25rem;
-            border: 2px solid var(--border-color, #ddd);
-            border-radius: 12px;
-            background: #fff;
+            gap: 0.6rem;
+            padding: 1.5rem;
+            background: var(--color-card-bg);
+            color: var(--color-text);
+            border: 2px solid var(--color-border);
+            border-radius: var(--border-radius);
+            box-shadow: var(--color-shadow);
             text-align: left;
             cursor: pointer;
-            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            font-family: inherit;
+            transition: var(--transition);
           }
-          .import-choice-card:hover {
-            border-color: var(--accent-color, #c0392b);
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+          .import-choice-card:hover,
+          .import-choice-card:focus-visible {
+            border-color: var(--color-primary);
+            transform: translateY(-2px);
+            box-shadow: var(--color-shadow-lg);
           }
           .import-choice-card:focus-visible {
-            outline: 2px solid var(--accent-color, #c0392b);
+            outline: 2px solid var(--color-primary);
             outline-offset: 2px;
           }
+          .import-choice-card:hover .import-choice-icon,
+          .import-choice-card:focus-visible .import-choice-icon {
+            transform: scale(1.1);
+          }
           .import-choice-icon {
-            font-size: 1.75rem;
-            color: var(--accent-color, #c0392b);
+            font-size: 2rem;
+            line-height: 1;
+            color: var(--color-primary);
+            transition: var(--transition);
           }
           .import-choice-title {
-            font-weight: 600;
-            font-size: 1.05rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--color-text);
           }
           .import-choice-desc {
-            color: #555;
+            color: var(--color-text-secondary);
             font-size: 0.9rem;
-            line-height: 1.4;
+            line-height: 1.45;
           }
         </style>
 

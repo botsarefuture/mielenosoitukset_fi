@@ -277,7 +277,7 @@ class Config:
         cls.APIFY_API_TOKEN = config.get("APIFY_API_TOKEN", "")
         cls.APIFY_FACEBOOK_ACTOR_ID = config.get(
             "APIFY_FACEBOOK_ACTOR_ID",
-            "apify/facebook-events-scraper",
+            "apify~facebook-events-scraper",
         )
         cls.APIFY_SYNC_TIMEOUT_SECONDS = int(
             config.get("APIFY_SYNC_TIMEOUT_SECONDS", 120)

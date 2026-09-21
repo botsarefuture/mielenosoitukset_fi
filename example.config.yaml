@@ -53,7 +53,7 @@ CITY_ASSIGNMENT_ESCALATION_HOURS: 24
 # The token should be set from the environment in production:
 #   export APIFY_API_TOKEN="...your Apify API token..."
 APIFY_API_TOKEN: ""  # Apify API token (apify.com -> Settings -> Integrations)
-# APIFY_FACEBOOK_ACTOR_ID: "apify/facebook-events-scraper"
+# APIFY_FACEBOOK_ACTOR_ID: "apify~facebook-events-scraper"
 # APIFY_API_BASE_URL: "https://api.apify.com/v2"
 # APIFY_SYNC_TIMEOUT_SECONDS: 120
 

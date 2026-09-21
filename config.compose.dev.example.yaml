@@ -27,7 +27,7 @@ ENABLE_CHAT: false
 
 # Facebook event import (Apify). Leave empty to disable the feature.
 # APIFY_API_TOKEN: "your_apify_api_token"
-# APIFY_FACEBOOK_ACTOR_ID: "apify/facebook-events-scraper"
+# APIFY_FACEBOOK_ACTOR_ID: "apify~facebook-events-scraper"
 
 # S3 Configuration
 S3:

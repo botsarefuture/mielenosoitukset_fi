@@ -16,6 +16,7 @@
 * Support-case replies now resolve the ticket mailbox SMTP profile correctly from both Flask and background-job contexts, recover already queued legacy replies with empty connection fields (including legacy jobs that had exhausted the retry budget, which are reopened by the queue drainer), avoid storing ticket SMTP passwords in new queue entries, and surface delivery failures in Admin → System status → Recent errors with recipient addresses redacted.
 
 ### Added
+* MFA device keys can now be renamed from account settings (e.g. "YubiKey 5C" instead of "New device"); renaming is a sudo-protected action and follows the existing passkey rename flow.
 * Passkeys (WebAuthn): browsers and devices can now be used as password-less, phishing-resistant sign-in credentials. Users register passkeys from account settings and sign in with them from the login page; challenges are stored server-side, bound to the browser session, single-use, and expire after 5 minutes.
 * Multi-method step-up ("sudo") authentication: sensitive actions — changing the password, removing/adding MFA devices, managing passkeys, and issuing privileged API tokens — now require a fresh identity confirmation (passkey, or password plus TOTP when MFA is enabled). Elevation lasts 15 minutes per session and is cleared on logout.
 * Authenticated sessions are now long-lived (~12h) instead of expiring when the browser closes, controlled by `PERMANENT_SESSION_LIFETIME`.

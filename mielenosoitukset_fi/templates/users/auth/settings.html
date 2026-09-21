@@ -1008,6 +1008,21 @@
             const li = document.createElement("li");
             li.className = "list-group-item d-flex justify-content-between align-items-center";
             li.textContent = `${d.name} (${d.created_at})`;
+            const renameBtn = document.createElement("button");
+            renameBtn.className = "btn btn-sm btn-outline-secondary me-1";
+            renameBtn.textContent = "{{ _('Nimeä') }}";
+            renameBtn.onclick = async () => {
+              const newName = prompt("{{ _('Uusi nimi laitteelle') }}", d.name);
+              if (!newName) return;
+              const r = await fetchWithStepUp("/users/auth/api/v2/mfa_device_rename", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ device_id: d.id, name: newName })
+              });
+              const j = await r.json();
+              showSettingsMessage(j.message, j.status === "success" ? "success" : "error");
+              loadMFAStatus();
+            };
             const revokeBtn = document.createElement("button");
             revokeBtn.className = "btn btn-sm btn-danger";
             revokeBtn.textContent = "Poista";
@@ -1021,6 +1036,7 @@
                 loadMFAStatus();
               }
             };
+            li.appendChild(renameBtn);
             li.appendChild(revokeBtn);
             devicesList.appendChild(li);
           });

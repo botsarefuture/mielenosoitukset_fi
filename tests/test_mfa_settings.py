@@ -82,6 +82,51 @@ def test_mfa_enable_flow_end_to_end(app, db):
     assert r.get_json()["status"] == "disabled"
 
 
+def test_mfa_device_rename_requires_step_up_and_updates_name(app, db):
+    user_id = _create_mfa_user(db)
+    secret = UserMFA(user_id).add_device()
+    db.users.update_one({"_id": user_id}, {"$set": {"mfa_enabled": True}})
+    client = _client_for_user(app, user_id)
+
+    r = client.get("/users/auth/api/v2/mfa_status")
+    device_id = r.get_json()["devices"][0]["id"]
+
+    # Sensitive action → refused without elevation.
+    r = client.post(
+        "/users/auth/api/v2/mfa_device_rename",
+        json={"device_id": device_id, "name": "YubiKey 5C"},
+    )
+    assert r.status_code == 403, r.get_data(as_text=True)
+
+    r = client.post(
+        "/users/auth/api/v2/step-up/password",
+        json={"password": TEST_PASSWORD, "totp_code": _totp_code(secret)},
+    )
+    assert r.status_code == 200, r.get_data(as_text=True)
+
+    r = client.post(
+        "/users/auth/api/v2/mfa_device_rename",
+        json={"device_id": device_id, "name": "YubiKey 5C"},
+    )
+    assert r.status_code == 200, r.get_data(as_text=True)
+    assert r.get_json()["status"] == "success"
+
+    r = client.get("/users/auth/api/v2/mfa_status")
+    devices = r.get_json()["devices"]
+    assert devices[0]["name"] == "YubiKey 5C"
+    assert len(devices) == 1
+
+    # Missing fields / unknown device are rejected cleanly.
+    r = client.post("/users/auth/api/v2/mfa_device_rename", json={"device_id": device_id})
+    assert r.status_code == 400
+
+    r = client.post(
+        "/users/auth/api/v2/mfa_device_rename",
+        json={"device_id": str(ObjectId()), "name": "Ghost"},
+    )
+    assert r.status_code == 404
+
+
 def test_mfa_blocks_login_without_code_and_allows_with_code(app, db):
     user_id = _create_mfa_user(db)
     secret = UserMFA(user_id).add_device()

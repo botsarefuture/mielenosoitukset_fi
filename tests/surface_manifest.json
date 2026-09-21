@@ -298,8 +298,8 @@
       ]
     },
     "mielenosoitukset_fi/users/BPs/auth.py": {
-      "count": 30,
-      "sha256": "187426130dda0a7d2ca709f927d95d2ad6837e577a83446c34daaf59b4d57923",
+      "count": 31,
+      "sha256": "104c950e858681c6b65018adfddb121b3ffa53fdef3a173d8a2c64e9bb6f5ee3",
       "coverage": [
         "integration",
         "e2e-auth"
@@ -313,19 +313,19 @@
         "e2e-user"
       ]
     },
+    "mielenosoitukset_fi/users/BPs/passkeys.py": {
+      "count": 12,
+      "sha256": "4bcb9dbd230fe29c0c3e42bb08d65ae9bc72d9dd0d5a9cfac8854fdd72813664",
+      "coverage": [
+        "integration"
+      ]
+    },
     "mielenosoitukset_fi/users/BPs/profile.py": {
       "count": 20,
       "sha256": "b37c2cb18bafe4543983980a245b92d19c33181847f234469a10e63f4013d874",
       "coverage": [
         "integration",
         "e2e-user"
-      ]
-    },
-    "mielenosoitukset_fi/users/BPs/passkeys.py": {
-      "count": 12,
-      "sha256": "4bcb9dbd230fe29c0c3e42bb08d65ae9bc72d9dd0d5a9cfac8854fdd72813664",
-      "coverage": [
-        "integration"
       ]
     }
   },

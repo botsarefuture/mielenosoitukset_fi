@@ -151,6 +151,27 @@ html.dark {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 1rem;
+  /* Long labels/terms inside the mini tables must never widen the tracks. */
+  min-width: 0;
+}
+
+.admin-site-analytics__grid .admin-section-card {
+  min-width: 0;
+}
+
+/* Every card body on the analytics page scrolls internally rather than
+   stretching the page — including the full-width top-pages tables. */
+.admin-site-analytics .admin-section-card__body {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.admin-site-analytics .admin-data-view__table {
+  width: 100%;
+}
+
+.admin-site-analytics td {
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 900px) {
@@ -177,6 +198,6 @@ html.dark {
 }
 
 .admin-site-analytics__term {
-  max-width: 22rem;
+  max-width: 14rem;
   overflow-wrap: anywhere;
 }

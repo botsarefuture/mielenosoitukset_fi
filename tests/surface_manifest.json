@@ -327,6 +327,16 @@
         "integration",
         "e2e-user"
       ]
+    },
+    "mielenosoitukset_fi/admin/admin_site_analytics_bp.py": {
+      "count": 2,
+      "sha256": "98f83d6f8ddfe59bd710561e2c75ddf9cbf514b366de27e5304de00ceb0d9330",
+      "coverage": [
+        "tests/test_site_analytics.py::test_admin_overview_returns_200_and_numbers",
+        "tests/test_site_analytics.py::test_admin_demo_analytics_page",
+        "tests/test_site_analytics.py::test_analytics_requires_login",
+        "tests/test_site_analytics.py::test_analytics_requires_permission"
+      ]
     }
   },
   "socketio": {

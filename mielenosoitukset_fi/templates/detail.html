@@ -1891,7 +1891,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
           {% if org.organization_id and org.organization_id != "None" and not org.is_private %}
           <div class="contact-item">
             <i class="fa-solid fa-id-badge"></i>
-            <a href="{{ org.url if org.url else '/organization/' ~ org._id }}" target="_blank">
+            <a href="{{ org.url if org.url else '/organization/' ~ org.organization_id }}" target="_blank">
               {{ _('Organisaation profiili') }}
             </a>
           </div>

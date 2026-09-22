@@ -451,6 +451,160 @@ def test_top_pages_ranks_demos_and_titles(admin_client, db):
 
 
 # ---------------------------------------------------------------------------
+# Events (searches, language changes, beacon interactions)
+# ---------------------------------------------------------------------------
+
+
+def test_demo_search_event_recorded_once_per_search(app, db):
+    _clear(db)
+    client = app.test_client()
+
+    assert client.get("/api/v1/demonstrations?search=climate&page=1").status_code == 200
+    assert client.get("/api/v1/demonstrations?search=climate&page=1").status_code == 200
+
+    docs = [doc for doc in _counts(db) if doc.get("event") == "demo_search"]
+    assert len(docs) == 1
+    assert docs[0]["count"] == 2
+    assert "climate" in docs[0]["resource_id"]
+
+
+def test_demo_search_pagination_does_not_record(app, db):
+    _clear(db)
+    client = app.test_client()
+
+    client.get("/api/v1/demonstrations?search=climate&page=1")
+    client.get("/api/v1/demonstrations?search=climate&page=2")
+
+    docs = [doc for doc in _counts(db) if doc.get("event") == "demo_search"]
+    assert len(docs) == 1
+    assert docs[0]["count"] == 1
+
+
+def test_plain_list_loads_do_not_record_search(app, db):
+    _clear(db)
+    client = app.test_client()
+
+    client.get("/api/v1/demonstrations?page=1")
+    client.get("/api/v1/demonstrations?city=Helsinki&page=1")
+
+    assert [doc for doc in _counts(db) if doc.get("event")] == []
+
+
+def test_language_change_event(app_factory, db):
+    from tests.conftest import _cleanup_app_resources
+
+    _clear(db)
+    app = app_factory(
+        BABEL_SUPPORTED_LOCALES=["fi", "en"],
+        BABEL_PUBLIC_LOCALES=["fi", "en"],
+    )
+    try:
+        client = app.test_client()
+        response = client.get("/set_language/en")
+        assert response.status_code in {301, 302}
+        events = [doc for doc in _counts(db) if doc.get("event") == "language_change"]
+        assert len(events) == 1
+        assert events[0]["resource_id"] == "en"
+    finally:
+        _cleanup_app_resources(app)
+
+
+def test_beacon_records_allowlisted_events(app, db):
+    _clear(db)
+    client = app.test_client()
+
+    response = client.post(
+        "/api/analytics/event",
+        json={"event": "map_interaction", "resource_id": "/demonstration/abc"},
+    )
+    assert response.status_code == 200
+
+    docs = [doc for doc in _counts(db) if doc.get("event") == "map_interaction"]
+    assert len(docs) == 1
+    assert docs[0]["resource_id"] == "/demonstration/abc"
+
+
+def test_beacon_rejects_unknown_events(app, db):
+    _clear(db)
+    client = app.test_client()
+
+    client.post("/api/analytics/event", json={"event": "keystroke", "resource_id": "a"})
+    client.post("/api/analytics/event", json={})
+    client.post("/api/analytics/event", data="not json", content_type="text/plain")
+
+    assert [doc for doc in _counts(db) if doc.get("event")] == []
+
+
+def test_beacon_rejects_cross_origin_referrer(app, db):
+    _clear(db)
+    client = app.test_client()
+
+    client.post(
+        "/api/analytics/event",
+        json={"event": "map_interaction"},
+        headers={"Referer": "https://evil.example/spam"},
+    )
+
+    assert _counts(db) == []
+
+
+def test_beacon_external_link_uses_hostname_only(app, db):
+    _clear(db)
+    client = app.test_client()
+
+    client.post(
+        "/api/analytics/event",
+        json={"event": "external_link", "resource_id": "facebook.com"},
+    )
+
+    docs = [doc for doc in _counts(db) if doc.get("event") == "external_link"]
+    assert len(docs) == 1
+    assert docs[0]["resource_id"] == "facebook.com"
+
+
+def test_event_totals_and_top_search_terms(db):
+    _clear(db)
+
+    increment_counter(event="demo_search", resource_id="climate")
+    increment_counter(event="demo_search", resource_id="climate")
+    increment_counter(event="demo_search", resource_id="helsinki")
+    increment_counter(event="language_change", resource_id="en")
+    increment_counter(page_type="index")
+
+    from mielenosoitukset_fi.utils import site_analytics as sa
+
+    totals = {row["event"]: row["count"] for row in sa.get_event_totals(days=30)}
+    assert totals == {"demo_search": 3, "language_change": 1}
+
+    top_terms = sa.get_top_event_resources("demo_search", days=30)
+    assert top_terms[0]["resource_id"] == "climate"
+    assert top_terms[0]["count"] == 2
+
+
+def test_resource_id_is_length_capped(db):
+    _clear(db)
+    long_value = "x" * 500
+
+    increment_counter(event="demo_search", resource_id=long_value)
+
+    docs = _counts(db)
+    assert len(docs) == 1
+    assert len(docs[0]["resource_id"]) == 200
+
+
+def test_dashboard_shows_events(admin_client, db):
+    _clear(db)
+    increment_counter(event="demo_submitted", resource_id=str(ObjectId()))
+    increment_counter(event="demo_search", resource_id="ilmastomarssi")
+
+    response = admin_client.get("/admin/analytics/")
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "Ilmoitetut mielenosoitukset" in page
+    assert "ilmastomarssi" in page
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 

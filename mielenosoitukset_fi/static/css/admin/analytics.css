@@ -175,3 +175,8 @@ html.dark {
 .admin-site-analytics__delta--down {
   color: var(--admin-status-danger, #dc3545);
 }
+
+.admin-site-analytics__term {
+  max-width: 22rem;
+  overflow-wrap: anywhere;
+}

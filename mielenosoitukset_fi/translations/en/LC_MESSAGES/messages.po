@@ -6110,7 +6110,7 @@ msgstr ""
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:40
 #: mielenosoitukset_fi/templates/list.html:34
 msgid "Tapahtumat"
-msgstr ""
+msgstr "Events"
 
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:72
 #: mielenosoitukset_fi/templates/organizations/details.html:1394
@@ -12717,3 +12717,15 @@ msgstr ""
 #: mielenosoitukset_fi/utils/wrappers.py:550
 msgid "This endpoint is deprecated and no longer available."
 msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:179
+msgid "Käyttäjien toimet: haut, ilmoitukset, seurannat ja kartan käyttö."
+msgstr "User actions: searches, submissions, follows, and map usage."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:204
+msgid "Yleisimmät haut"
+msgstr "Top searches"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:205
+msgid "Mielenosoituslistalla käytetyt hakusanat."
+msgstr "Search terms used on the demonstration list."

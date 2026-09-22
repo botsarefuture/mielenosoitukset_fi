@@ -12707,3 +12707,15 @@ msgstr ""
 #: mielenosoitukset_fi/utils/wrappers.py:550
 msgid "This endpoint is deprecated and no longer available."
 msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:179
+msgid "Käyttäjien toimet: haut, ilmoitukset, seurannat ja kartan käyttö."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:204
+msgid "Yleisimmät haut"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:205
+msgid "Mielenosoituslistalla käytetyt hakusanat."
+msgstr ""

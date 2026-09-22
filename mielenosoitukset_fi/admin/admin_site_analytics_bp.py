@@ -16,12 +16,15 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.site_analytics import (
     DEVICE_LABELS,
+    EVENT_LABELS,
     LANGUAGE_LABELS,
     REFERRER_LABELS,
     get_breakdown,
     get_demonstration_analytics,
     get_demonstration_identifiers,
+    get_event_totals,
     get_overview,
+    get_top_event_resources,
     get_top_pages,
     get_traffic_series,
 )
@@ -128,6 +131,8 @@ def site_overview():
         languages = get_breakdown("language", days=days)
         devices = get_breakdown("device", days=days)
         referrers = get_breakdown("referrer", days=days)
+        events = get_event_totals(days=days)
+        search_terms = get_top_event_resources("demo_search", days=days, limit=8)
     except Exception:
         logger.exception("Failed to build site analytics overview")
         abort(503)
@@ -156,9 +161,12 @@ def site_overview():
         languages=languages,
         devices=devices,
         referrers=referrers,
+        events=events,
+        search_terms=search_terms,
         language_labels=LANGUAGE_LABELS,
         device_labels=DEVICE_LABELS,
         referrer_labels=REFERRER_LABELS,
+        event_labels=EVENT_LABELS,
     )
 
 

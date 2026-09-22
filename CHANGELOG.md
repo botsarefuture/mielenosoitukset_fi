@@ -12,6 +12,7 @@
 * **Facebook event descriptions are no longer truncated** — the 50k character safety cap has been removed; full descriptions are preserved (with only script/style sanitization).
 
 ### Fixed
+* "Organisaation profiili" links on demonstration detail pages that lack a stored per-organizer URL now point to the linked organization (`/organization/<organization_id>`) instead of the organizer's own id, which returned a "not found" page.
 * The Facebook event import no longer fails with a "502 Bad gateway" page: the Apify actor id was configured as `apify/facebook-events-scraper`, which Apify rejects (404) because actor ids use the `owner~name` form (`apify~facebook-events-scraper`). The default and the example configs now use the correct id, and the importer normalizes any `owner/name` spelling automatically.
 * The passkey step-up dialog on the settings page no longer fails silently: it is now initialised after the document is ready (bootstrap is loaded lazily, not at parse time), so "Lisää passkey" and other elevation-protected controls open and work again.
 * Admin summary-card icons now stay centered inside their colored icon tiles on every user, organization, demonstration, city, governance, case, translation, and statistics view instead of being pulled to the tile's left edge by a broad text-span rule.

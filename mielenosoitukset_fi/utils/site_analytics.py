@@ -156,6 +156,23 @@ _DESKTOP_PATTERN = re.compile(
 # Page type for generic public HTML pages (info pages, guides, forms...).
 PAGE_TYPE_GENERIC = "page"
 
+# Finnish display labels for page types shown in the admin dashboards.
+PAGE_TYPE_LABELS = {
+    "index": "Etusivu",
+    "demonstration": "Mielenosoitus",
+    "demonstrations": "Mielenosoituslista",
+    "organization": "Järjestö",
+    "city": "Kaupunkisivu",
+    "cities": "Kaupunkilista",
+    "tag": "Tunniste",
+    "calendar": "Kalenteri",
+    "today": "Mielenosoitukset tänään",
+    "submit": "Ilmoita mielenosoitus",
+    "search": "Haku",
+    "campaign": "Kampanja",
+    PAGE_TYPE_GENERIC: "Muu sivu",
+}
+
 
 def _mongo():
     """Database handle resolved lazily so tests can rebind modules cleanly."""

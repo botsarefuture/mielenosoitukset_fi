@@ -201,3 +201,59 @@ html.dark {
   max-width: 14rem;
   overflow-wrap: anywhere;
 }
+
+/* Compact label+value rows for breakdown cards: label left, count right,
+   always on one visible line — no horizontal scrolling inside the card. */
+.admin-site-analytics__stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-site-analytics__stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--admin-chart-surface, rgba(0, 0, 0, 0.03));
+}
+
+.admin-site-analytics__stat-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-site-analytics__stat-value {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.admin-site-analytics__limits {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px dashed var(--admin-chart-grid, rgba(0, 0, 0, 0.15));
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.admin-site-analytics__limits i {
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 900px) {
+  .admin-site-analytics__limits {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

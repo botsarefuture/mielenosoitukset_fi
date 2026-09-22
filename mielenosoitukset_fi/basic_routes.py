@@ -41,6 +41,10 @@ from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.analytics import log_demo_view
+from mielenosoitukset_fi.utils.site_analytics import (
+    record_beacon_event,
+    record_event_for_request,
+)
 from mielenosoitukset_fi.utils.wrappers import permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
 from werkzeug.utils import secure_filename
@@ -981,6 +985,20 @@ def add_api_routes(app):
         )
         page = max(args["page"], 1)
         per_page = max(args["per_page"], 1)
+
+        # Record deliberate demo-list searches once per search (the first
+        # page only — pagination requests of the same query are not new
+        # searches). City/tag filtering is intentionally not recorded here:
+        # city pages load the API with city params on every view, so those
+        # are already covered by the pageview counters.
+        if page == 1:
+            search_term = str(args.get("search_query") or "").strip()
+            if len(search_term) >= 2:
+                record_event_for_request(
+                    "demo_search",
+                    resource_id=search_term[:120],
+                )
+
         total = demonstrations_collection.count_documents(query)
         total_pages = max((total + per_page - 1) // per_page, 1)
         demos_cursor = (
@@ -1143,6 +1161,20 @@ def init_routes(app):
             log_demo_view(demo_oid, user_id, session_id=_resolve_session_id())
         except Exception:
             logger.exception("Failed to log demo view via beacon", extra={"demo_id": demo_id})
+        return jsonify({"ok": True})
+
+    @app.route("/api/analytics/event", methods=["POST"])
+    def track_analytics_event():
+        """Record an allowlisted browser event (map use, external link click).
+
+        The payload is validated against a strict allowlist in the analytics
+        module; invalid or cross-origin submissions are silently dropped and
+        the endpoint always answers 200 so beacon failures are invisible.
+        """
+        payload = request.get_json(silent=True)
+        if payload is None:
+            payload = request.form.to_dict()
+        record_beacon_event(payload)
         return jsonify({"ok": True})
 
     @app.route("/api-docs/")
@@ -2175,6 +2207,7 @@ def init_routes(app):
                 "Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.",
                 "success",
             )
+            record_event_for_request("demo_submitted", resource_id=str(demo_id))
             # If AJAX, return JSON success so frontend can show the success page without following redirects
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return jsonify(success=True, message="Mielenosoitus ilmoitettu onnistuneesti!"), 200
@@ -3383,6 +3416,7 @@ def init_routes(app):
             )
             
             flash_message("Yhteydenottopyyntö välitetty onnistuneesti!", "success")
+            record_event_for_request("contact_message")
             return redirect(url_for("contact"))
         return render_template("contact.html")
 
@@ -3571,6 +3605,7 @@ def init_routes(app):
             return redirect(request.referrer or url_for("index"))
         session["locale"] = lang
         session.modified = True
+        record_event_for_request("language_change", resource_id=lang)
 
         next_target = (request.args.get("next") or "").strip()
         if next_target:
@@ -3703,6 +3738,7 @@ def init_routes(app):
             "user_agent": user_agent,
             "created_at": utcnow(),
         })
+        record_event_for_request("reminder_subscribe", resource_id=str(demo_id))
 
         return jsonify({"status": "OK", "message": "Muistutus tilattu onnistuneesti!"})
 
@@ -3741,6 +3777,7 @@ def init_routes(app):
             {"_id": current_user._id},
             {"$addToSet": {"followed_organizations": str_id}},
         )
+        record_event_for_request("follow_organization", resource_id=str_id)
         return jsonify({"status": "OK", "following": True})
 
     @app.route("/api/unfollow/organization/<org_id>", methods=["POST"])
@@ -3758,6 +3795,7 @@ def init_routes(app):
             {"_id": current_user._id},
             {"$pull": {"followed_organizations": str_id}},
         )
+        record_event_for_request("unfollow_organization", resource_id=str_id)
         return jsonify({"status": "OK", "following": False})
 
     @app.route("/api/follow/recurring/<demo_id>", methods=["POST"])
@@ -3772,6 +3810,7 @@ def init_routes(app):
             {"_id": current_user._id},
             {"$addToSet": {"followed_recurring_demos": target_str}},
         )
+        record_event_for_request("follow_recurring", resource_id=target_str)
         return jsonify({"status": "OK", "following": True, "target_id": target_str})
 
     @app.route("/api/unfollow/recurring/<demo_id>", methods=["POST"])
@@ -3788,6 +3827,7 @@ def init_routes(app):
             {"_id": current_user._id},
             {"$pull": {"followed_recurring_demos": target_str}},
         )
+        record_event_for_request("unfollow_recurring", resource_id=target_str)
         return jsonify({"status": "OK", "following": False, "target_id": target_str})
 
     @app.route("/manifest.json")

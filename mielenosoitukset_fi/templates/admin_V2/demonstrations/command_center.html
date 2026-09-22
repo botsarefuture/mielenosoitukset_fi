@@ -123,6 +123,11 @@
             <strong>{{ stats.children }}</strong>
           </div>
         </div>
+        {% if permissions.can_view_analytics %}
+        <a class="btn btn-secondary btn-sm mt-2" href="{{ url_for('admin_site_analytics.site_demo_analytics', demo_id=demo_id) }}">
+          <i class="fa-solid fa-chart-simple me-1" aria-hidden="true"></i>{{ _('Sivunäyttöanalytiikka') }}
+        </a>
+        {% endif %}
       </section>
 
       <section class="info-card admin-section-card">

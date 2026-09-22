@@ -184,6 +184,7 @@ def create_app(config_overrides=None) -> Flask:
         admin_dev_bp,
         admin_city_bp,
         admin_governance_bp,
+        admin_site_analytics_bp,
     )
     from users import _BLUEPRINT_ as user_bp
     from api import api_bp
@@ -203,6 +204,7 @@ def create_app(config_overrides=None) -> Flask:
     app.register_blueprint(admin_dev_bp)
     app.register_blueprint(admin_city_bp)
     app.register_blueprint(admin_governance_bp)
+    app.register_blueprint(admin_site_analytics_bp)
     #app.register_blueprint(admin_case_bp)
     
     app.register_blueprint(user_bp, url_prefix="/users/")
@@ -240,6 +242,21 @@ def create_app(config_overrides=None) -> Flask:
     import basic_routes
 
     basic_routes.init_routes(app)
+
+    # ---- Built-in first-party analytics (server-side pageviews) ----------
+    # Records a pageview for public HTML responses in after_request, so it
+    # also counts cached pages and never delays rendering: the write is a
+    # single atomic MongoDB $inc and any failure is silently ignored.
+    from mielenosoitukset_fi.utils import site_analytics
+
+    @app.after_request
+    def _record_site_analytics(response):
+        try:
+            if app.config.get("SITE_ANALYTICS_ENABLED", True):
+                site_analytics.record_pageview_from_request(request, response)
+        except Exception:
+            logger.exception("Site analytics recording failed")
+        return response
 
     logger.info("Flask application created successfully.")
 

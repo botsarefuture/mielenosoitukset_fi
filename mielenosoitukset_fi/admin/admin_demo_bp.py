@@ -736,34 +736,84 @@ def suggestions_list():
         status_filter = "all"
     page, per_page = parse_admin_pagination(request.args)
 
-    # Suggestions inherit the demonstration's EDIT_DEMO scope. Filter the
-    # complete, deterministic result set before calculating totals or slicing
-    # so city/organization administrators never see global rows or counts.
-    visible_suggestions = []
-    permission_cache = {}
-    for suggestion in mongo.demo_suggestions.find({}).sort(
-        [("created_at", -1), ("_id", -1)]
-    ):
-        demo_id = str(suggestion.get("demo_id") or "")
-        if demo_id not in permission_cache:
-            permission_cache[demo_id] = bool(
-                demo_id and _user_can_access_demo(demo_id, "EDIT_DEMO")
-            )
-        if permission_cache[demo_id]:
-            visible_suggestions.append(suggestion)
-    total_count = len(visible_suggestions)
-    if status_filter != "all":
-        accepted_statuses = (
-            {"new", "pending"}
-            if status_filter in {"new", "pending"}
-            else {status_filter}
-        )
-        visible_suggestions = [
-            suggestion
-            for suggestion in visible_suggestions
-            if (suggestion.get("status") or "pending").lower() in accepted_statuses
+    # Suggestions inherit the demonstration's EDIT_DEMO scope. Resolve that
+    # scope at the query level (mirroring demo_control's permission filters) so
+    # city/organization administrators never receive global rows or counts.
+    # Global admins and holders of a global EDIT_DEMO grant skip the restriction
+    # exactly like the per-suggestion access check they replace.
+    demo_id_filter = None
+    if not _user_has_global_demo_permission("EDIT_DEMO"):
+        permission_scope = current_user._perm_in("EDIT_DEMO")
+        organization_ids = [
+            ObjectId(scope)
+            for scope in permission_scope
+            if str(scope) != "global" and ObjectId.is_valid(str(scope))
         ]
-    filtered_count = len(visible_suggestions)
+        city_keys = (
+            current_user.scoped_city_keys_for("EDIT_DEMO")
+            if hasattr(current_user, "scoped_city_keys_for")
+            else []
+        )
+        city_names = [
+            city for city in CITY_LIST if normalize_city_key(city) in city_keys
+        ]
+        permission_filters = [{"editors": current_user.id}]
+        if organization_ids:
+            permission_filters.append(
+                {
+                    "organizers": {
+                        "$elemMatch": {"organization_id": {"$in": organization_ids}}
+                    }
+                }
+            )
+        if city_keys:
+            permission_filters.append(
+                {
+                    "$or": [
+                        {"city_key": {"$in": city_keys}},
+                        {"city": {"$in": city_names}},
+                    ]
+                }
+            )
+        if "global" not in permission_scope:
+            accessible_demo_ids = [
+                str(demo["_id"])
+                for demo in mongo.demonstrations.find(
+                    {"$or": permission_filters}, {"_id": 1}
+                )
+            ]
+            demo_id_filter = {"demo_id": {"$in": accessible_demo_ids}}
+
+    if status_filter != "all":
+        # Mirror the Python-side fallback (missing/empty status counts as
+        # "pending") so the database filter matches the previous behaviour.
+        status_clause = (
+            {
+                "$or": [
+                    {"status": {"$in": ["new", "pending", ""]}},
+                    {"status": None},
+                    {"status": {"$exists": False}},
+                ]
+            }
+            if status_filter in {"new", "pending"}
+            else {"status": status_filter}
+        )
+    else:
+        status_clause = None
+
+    def query_from(clauses):
+        clauses = [clause for clause in clauses if clause]
+        if not clauses:
+            return {}
+        if len(clauses) == 1:
+            return clauses[0]
+        return {"$and": clauses}
+
+    base_query = query_from([demo_id_filter, status_clause])
+    total_count = mongo.demo_suggestions.count_documents(
+        query_from([demo_id_filter])
+    )
+    filtered_count = mongo.demo_suggestions.count_documents(base_query)
     pagination = build_admin_pagination(
         "admin_demo.suggestions_list",
         total_count=filtered_count,
@@ -771,9 +821,12 @@ def suggestions_list():
         per_page=per_page,
         query_args={"status": status_filter if status_filter != "all" else ""},
     )
-    suggestions = visible_suggestions[
-        pagination["slice_start"] : pagination["slice_end"]
-    ]
+    suggestions = list(
+        mongo.demo_suggestions.find(base_query)
+        .sort([("created_at", -1), ("_id", -1)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
+    )
     return render_template(
         "admin/suggestions_list.html",
         suggestions=suggestions,
@@ -781,7 +834,7 @@ def suggestions_list():
         total_count=total_count,
         filtered_count=filtered_count,
         has_active_filters=status_filter != "all",
-        clear_filters_url=url_for("admin_demo.suggestions_list"),
+        clear_filters_url=url_for("admin_demo.suggestions_list", per_page=per_page),
         **pagination,
     )
 

@@ -167,6 +167,22 @@ def test_city_scoped_admin_suggestions_hide_other_city_rows_and_counts(
     assert client.get(f"/admin/demo/suggestions/{turku_suggestion_id}").status_code == 403
 
 
+def test_city_scoped_admin_suggestions_show_empty_state_outside_scope(app, db, seeded_data):
+    scoped_user_id = _create_scoped_admin(
+        db,
+        ["tampere"],
+        ["EDIT_DEMO"],
+    )
+
+    client = _client_for_user(app, scoped_user_id)
+    response = client.get("/admin/demo/suggestions")
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "Climate March Helsinki" not in page
+    assert "<strong>0</strong>" in page
+    assert "Ei ehdotuksia" in page
+
+
 def test_city_scoped_admin_dashboard_shows_accept_action_for_scoped_demo(
     app, db, seeded_data
 ):

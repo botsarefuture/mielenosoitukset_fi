@@ -79,6 +79,53 @@ def test_demo_suggestions_use_shared_collection_and_review_contract(
     assert 'id="rejectSuggestionModal"' in detail_page
 
 
+def test_demo_suggestions_status_filter_counts_and_page_size_are_preserved(
+    admin_client, db, seeded_data
+):
+    seeded_suggestion = db.demo_suggestions.find_one(
+        {"_id": seeded_data["suggestion_id"]}
+    )
+    for status in ("new", "applied", "rejected", "pending"):
+        db.demo_suggestions.insert_one(
+            {
+                "_id": ObjectId(),
+                "demo_id": str(seeded_data["demo_id"]),
+                "status": status,
+                "created_at": seeded_suggestion["created_at"],
+                "suggested_fields": {"title": f"Suggestion {status}"},
+                "original_values": {"title": f"Demo {status}"},
+            }
+        )
+
+    # The status filter (with the missing/empty status == "pending" fallback)
+    # runs server-side; the reported counts stay within the accessible set.
+    pending = admin_client.get("/admin/demo/suggestions?status=pending").get_data(
+        as_text=True
+    )
+    assert "3 osumaa" in pending
+    assert "yhteensä 5 sinulle näkyvää ehdotusta" in pending
+    applied = admin_client.get("/admin/demo/suggestions?status=applied").get_data(
+        as_text=True
+    )
+    assert "yhteensä 5 sinulle näkyvää ehdotusta" in applied
+    assert "Demo applied" in applied
+    assert "Demo new" not in applied
+
+    # Clearing the filter keeps the selected page size.
+    clear = admin_client.get("/admin/demo/suggestions?status=pending&per_page=50")
+    assert clear.status_code == 200
+    clear_page = clear.get_data(as_text=True)
+    assert "Tyhjennä suodattimet" in clear_page
+    assert "/admin/demo/suggestions?per_page=50" in clear_page
+
+    # Out-of-range pages clamp to the last page instead of erroring.
+    overflow = admin_client.get("/admin/demo/suggestions?per_page=20&page=99")
+    assert overflow.status_code == 200
+    overflow_page = overflow.get_data(as_text=True)
+    assert "Sivu 1 / 1" in overflow_page
+    assert "Näytetään 1–5 / 5 ehdotuksesta" in overflow_page
+
+
 def test_editor_without_accept_permission_cannot_forge_demo_approval(
     friend_client, db, seeded_data
 ):

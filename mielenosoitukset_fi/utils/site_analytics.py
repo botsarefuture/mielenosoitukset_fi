@@ -48,6 +48,33 @@ HELSINKI_TZ = pytz.timezone("Europe/Helsinki")
 # MongoDB collection used for all aggregate counters.
 SITE_ANALYTICS_COLLECTION = "site_analytics"
 
+# Maximum stored length for resource identifiers (demo ids, search terms,
+# external hostnames). Anything longer is truncated — analytics counters do
+# not need (and should not keep) long free-form values.
+MAX_RESOURCE_LENGTH = 200
+
+# Events accepted from the browser beacon. Deliberately tiny: these are the
+# only browser-side signals with a real dashboard use case. Everything else
+# is recorded server-side from actual application actions.
+BEACON_EVENT_ALLOWLIST = {"map_interaction", "external_link"}
+
+# Friendly labels for the dashboard events table. Unknown events are shown
+# as their raw names.
+EVENT_LABELS = {
+    "language_change": "Kielenvaihdot",
+    "demo_submitted": "Ilmoitetut mielenosoitukset",
+    "reminder_subscribe": "Muistutusilmoitukset",
+    "follow_organization": "Organisaation seurannat",
+    "unfollow_organization": "Seurannan lopetukset (organisaatio)",
+    "follow_recurring": "Toistuvien seurannat",
+    "unfollow_recurring": "Seurannan lopetukset (toistuva)",
+    "contact_message": "Yhteydenotot",
+    "volunteer_signup": "Vapaaehtoisilmoitukset",
+    "demo_search": "Mielenosoitushaut",
+    "map_interaction": "Kartan käytöt",
+    "external_link": "Ulkolinkkien klikkaukset",
+}
+
 # Coarse device buckets.
 DESKTOP = "desktop"
 MOBILE = "mobile"
@@ -386,7 +413,7 @@ def increment_counter(page_type=None, event=None, resource_id=None, language=Non
         return False
 
     if resource_id:
-        doc_key["resource_id"] = str(resource_id)
+        doc_key["resource_id"] = str(resource_id)[:MAX_RESOURCE_LENGTH]
     if language:
         doc_key["language"] = str(language)
     if device:
@@ -412,6 +439,70 @@ def record_event(event, resource_id=None, language=None, device=None, referrer=N
             device=device,
             referrer=referrer,
         )
+    except Exception:
+        return False
+
+
+def record_event_for_request(event, resource_id=None, request=None):
+    """Record an application action as an event, using the current request
+    for its language/device/referrer dimensions.
+
+    Only meaningful, deliberate actions should be recorded through this
+    helper (submissions, follows, searches...). Bots are skipped and any
+    failure is swallowed — analytics must never break an application flow.
+    """
+    try:
+        if request is None:
+            from flask import request as _request
+
+            request = _request
+        device = classify_device(request.headers.get("User-Agent") or "")
+        if device == BOT:
+            return False
+        return record_event(
+            event=event,
+            resource_id=resource_id,
+            language=_current_language(),
+            device=device,
+            referrer=classify_referrer(
+                request.headers.get("Referer") or "", request.host or ""
+            ),
+        )
+    except Exception:
+        return False
+
+
+def record_beacon_event(payload, request=None):
+    """Record an event submitted by the tiny in-page beacon script.
+
+    Guards against junk data:
+    * only allowlisted event names are accepted,
+    * resource identifiers are trimmed and length-capped,
+    * requests with a *cross-origin* referrer are dropped (an in-page beacon
+      always shares the site origin, so this removes drive-by spam).
+    """
+    try:
+        if not isinstance(payload, dict):
+            return False
+        event = str(payload.get("event") or "").strip()
+        if event not in BEACON_EVENT_ALLOWLIST:
+            return False
+
+        if request is None:
+            from flask import request as _request
+
+            request = _request
+        referrer_host = ""
+        try:
+            referrer_host = (urlsplit(request.headers.get("Referer") or "").hostname or "").lower()
+        except ValueError:
+            return False
+        current_host = (request.host or "").split(":")[0].lower()
+        if referrer_host and referrer_host != current_host:
+            return False
+
+        resource_id = str(payload.get("resource_id") or "").strip()[:MAX_RESOURCE_LENGTH]
+        return record_event_for_request(event, resource_id or None, request=request)
     except Exception:
         return False
 
@@ -552,6 +643,41 @@ def get_breakdown(field, days=30, start=None, end=None, limit=12):
     ]
     return [
         {"value": row["_id"] or "other", "count": row["count"]}
+        for row in _collection().aggregate(pipeline)
+    ]
+
+
+def get_event_totals(days=30, start=None, end=None, limit=12):
+    """Totals per recorded event name in the window, largest first."""
+    match, _, _ = _match_window(days=days, start=start, end=end)
+    query = dict(match)
+    query["event"] = {"$exists": True, "$ne": None}
+    pipeline = [
+        {"$match": query},
+        {"$group": {"_id": "$event", "count": {"$sum": "$count"}}},
+        {"$sort": {"count": -1}},
+        {"$limit": limit},
+    ]
+    return [
+        {"event": row["_id"], "count": row["count"]}
+        for row in _collection().aggregate(pipeline)
+    ]
+
+
+def get_top_event_resources(event, days=30, start=None, end=None, limit=8):
+    """Top resource identifiers for one event (e.g. top search terms)."""
+    match, _, _ = _match_window(days=days, start=start, end=end)
+    query = dict(match)
+    query["event"] = event
+    query["resource_id"] = {"$exists": True, "$nin": [None, ""]}
+    pipeline = [
+        {"$match": query},
+        {"$group": {"_id": "$resource_id", "count": {"$sum": "$count"}}},
+        {"$sort": {"count": -1}},
+        {"$limit": limit},
+    ]
+    return [
+        {"resource_id": row["_id"], "count": row["count"]}
         for row in _collection().aggregate(pipeline)
     ]
 

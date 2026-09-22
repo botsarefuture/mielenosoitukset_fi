@@ -99,18 +99,16 @@
         </div>
       </header>
       <div class="admin-section-card__body">
-        <table class="admin-data-view__table">
-          <tbody>
-            {% for row in data.languages %}
-            <tr>
-              <td>{{ language_labels.get(row.value, row.value | capitalize) }}</td>
-              <td class="text-end"><span class="admin-status-badge admin-status-badge--info">{{ row.count }}</span></td>
-            </tr>
-            {% else %}
-            <tr><td>{{ _('Ei vielä tietoja.') }}</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <ul class="admin-site-analytics__stats">
+          {% for row in data.languages %}
+          <li class="admin-site-analytics__stat">
+            <span class="admin-site-analytics__stat-label">{{ language_labels.get(row.value, row.value | capitalize) }}</span>
+            <span class="admin-site-analytics__stat-value">{{ row.count }}</span>
+          </li>
+          {% else %}
+          <li class="admin-site-analytics__stat">{{ _('Ei vielä tietoja.') }}</li>
+          {% endfor %}
+        </ul>
       </div>
     </section>
 
@@ -122,18 +120,16 @@
         </div>
       </header>
       <div class="admin-section-card__body">
-        <table class="admin-data-view__table">
-          <tbody>
-            {% for row in data.devices %}
-            <tr>
-              <td>{{ device_labels.get(row.value, row.value | capitalize) }}</td>
-              <td class="text-end"><span class="admin-status-badge admin-status-badge--info">{{ row.count }}</span></td>
-            </tr>
-            {% else %}
-            <tr><td>{{ _('Ei vielä tietoja.') }}</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <ul class="admin-site-analytics__stats">
+          {% for row in data.devices %}
+          <li class="admin-site-analytics__stat">
+            <span class="admin-site-analytics__stat-label">{{ device_labels.get(row.value, row.value | capitalize) }}</span>
+            <span class="admin-site-analytics__stat-value">{{ row.count }}</span>
+          </li>
+          {% else %}
+          <li class="admin-site-analytics__stat">{{ _('Ei vielä tietoja.') }}</li>
+          {% endfor %}
+        </ul>
       </div>
     </section>
 
@@ -145,18 +141,16 @@
         </div>
       </header>
       <div class="admin-section-card__body">
-        <table class="admin-data-view__table">
-          <tbody>
-            {% for row in data.referrers %}
-            <tr>
-              <td>{{ referrer_labels.get(row.value, row.value | capitalize) }}</td>
-              <td class="text-end"><span class="admin-status-badge admin-status-badge--info">{{ row.count }}</span></td>
-            </tr>
-            {% else %}
-            <tr><td>{{ _('Ei vielä tietoja.') }}</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <ul class="admin-site-analytics__stats">
+          {% for row in data.referrers %}
+          <li class="admin-site-analytics__stat">
+            <span class="admin-site-analytics__stat-label">{{ referrer_labels.get(row.value, row.value | capitalize) }}</span>
+            <span class="admin-site-analytics__stat-value">{{ row.count }}</span>
+          </li>
+          {% else %}
+          <li class="admin-site-analytics__stat">{{ _('Ei vielä tietoja.') }}</li>
+          {% endfor %}
+        </ul>
       </div>
     </section>
   </div>

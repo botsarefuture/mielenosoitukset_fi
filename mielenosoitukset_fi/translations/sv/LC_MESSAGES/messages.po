@@ -5438,6 +5438,9 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/site_demo_analytics.html:18
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:69
 #: mielenosoitukset_fi/templates/admin_base.html:409
+msgid "Laskuriin kirjataan vain julkiset sivunäytöt: hallintapaneelin, käyttäjien oma alue, rajapinnat, staattiset tiedostot ja botit on jätetty tarkoituksella pois. Indeksointibottien käynnit eivät näy luvuissa, eikä yksittäisiä vierailijoita tunnisteta tai tallenneta mitenkään."
+msgstr "Endast offentliga sidvisningar räknas: adminpanelen, användarkontoområdet, API:er, statiska filer och botar är medvetet undantagna. Sökmotorbotternas besök syns inte i siffrorna, och enskilda besökare identifieras eller lagras aldrig."
+
 msgid "Palvelun analytiikka"
 msgstr "Tjänstens analys"
 

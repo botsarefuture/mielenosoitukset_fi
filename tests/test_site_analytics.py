@@ -340,6 +340,36 @@ def test_admin_overview_returns_200_and_numbers(admin_client, db):
     assert "Palvelun analytiikka" in page or "analytiikka" in page.lower()
 
 
+def test_admin_overview_labels_resourceless_page_types(admin_client, db):
+    """Submit/calendar/index views show Finnish labels, not raw type keys."""
+    from datetime import timezone as _tz
+
+    from mielenosoitukset_fi.utils.site_analytics import HELSINKI_TZ
+
+    _clear(db)
+    base = utcnow().replace(tzinfo=_tz.utc).astimezone(HELSINKI_TZ)
+    for page_type in ("submit", "calendar", "index"):
+        increment_counter(page_type=page_type, when=base.replace(tzinfo=_tz.utc))
+
+    response = admin_client.get("/admin/analytics/")
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "Ilmoita mielenosoitus" in page
+    assert "Kalenteri" in page
+    assert "Etusivu" in page
+
+
+def test_admin_overview_documents_limits(admin_client, db):
+    """The dashboard states what is excluded and that no one is identified."""
+    _clear(db)
+    _seed_counters(db, str(ObjectId()))
+
+    response = admin_client.get("/admin/analytics/")
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "Laskuriin kirjataan vain julkiset" in page
+
+
 def test_overview_period_math(admin_client, db, app):
     _clear(db)
     demo_id = str(ObjectId())

@@ -18,6 +18,7 @@ from mielenosoitukset_fi.utils.site_analytics import (
     DEVICE_LABELS,
     EVENT_LABELS,
     LANGUAGE_LABELS,
+    PAGE_TYPE_LABELS,
     REFERRER_LABELS,
     get_breakdown,
     get_demonstration_analytics,
@@ -167,6 +168,7 @@ def site_overview():
         device_labels=DEVICE_LABELS,
         referrer_labels=REFERRER_LABELS,
         event_labels=EVENT_LABELS,
+        page_type_labels=PAGE_TYPE_LABELS,
     )
 
 

@@ -7,6 +7,7 @@ from mielenosoitukset_fi.utils.migrations import (
     migration_004_admin_governance,
     migration_005_user_identity_uniqueness,
     migration_006_passkeys,
+    migration_007_site_analytics,
 )
 
 
@@ -30,6 +31,11 @@ MIGRATIONS = [
         "id": "006_passkey_storage",
         "description": "Add storage and indexes for WebAuthn passkeys and challenges.",
         "run": migration_006_passkeys.migrate_passkey_storage,
+    },
+    {
+        "id": "007_site_analytics",
+        "description": "Add indexes for built-in first-party site analytics counters.",
+        "run": migration_007_site_analytics.migrate_site_analytics,
     },
 ]
 

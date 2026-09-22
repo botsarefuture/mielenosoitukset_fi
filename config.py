@@ -266,6 +266,17 @@ class Config:
             "redis://localhost:6379/mosoitukset_fi",
         )
 
+        # ---- Built-in first-party analytics ---------------------------------
+        # Server-side pageview counting without cookies or JavaScript. Set to
+        # false to stop recording (dashboards keep working on existing data).
+        cls.SITE_ANALYTICS_ENABLED = bool(config.get("SITE_ANALYTICS_ENABLED", True))
+
+        # ---- Matomo (optional, client-side) ----------------------------------
+        # The legacy client-side Matomo tracker in base.html can be turned off
+        # now that built-in analytics cover basic pageviews. It is enabled by
+        # default so current deployments keep reporting until it is switched.
+        cls.MATOMO_ENABLED = bool(config.get("MATOMO_ENABLED", True))
+
         # ---- Facebook event import (Apify) -------------------------------------
         # Used by the submission form's "fetch event details from Facebook"
         # helper. The token is read from the YAML config (or environment, see

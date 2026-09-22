@@ -1,0 +1,229 @@
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+
+{% block title %}{{ _('Mielenosoituksen analytiikka') }} — {{ demo.title or demo_id }}{% endblock %}
+
+{% block main_content %}
+<section class="admin-page admin-site-analytics">
+  {{ admin_page_hero(
+    _('Mielenosoituksen analytiikka'),
+    _('Sivunäytöt kerätään palvelimella ilman evästeitä — luvut kertovat mielenosoituksen julkisen sivun katselut.'),
+    _('Analytiikka'),
+    [
+      (_('Hallintapaneeli'), url_for('admin.admin_dashboard')),
+      (_('Palvelun analytiikka'), url_for('admin_site_analytics.site_overview')),
+      (demo.title or demo_id, none),
+    ],
+    back_url=url_for('admin_site_analytics.site_overview'),
+    back_label=_('Palvelun analytiikka'),
+    metric_value=data.total,
+    metric_label=_('sivunäyttöä yhteensä')
+  ) }}
+
+  <form method="get" class="admin-filter-bar" aria-label="{{ _('Aikavälin valinta') }}">
+    <div class="admin-field">
+      <label for="site-demo-range">{{ _('Aikaväli') }}</label>
+      <select class="form-select" id="site-demo-range" name="range" onchange="this.form.submit()">
+        <option value="7" {% if range_days == 7 %}selected{% endif %}>{{ _('Viimeiset 7 päivää') }}</option>
+        <option value="14" {% if range_days == 14 %}selected{% endif %}>{{ _('Viimeiset 14 päivää') }}</option>
+        <option value="30" {% if range_days == 30 %}selected{% endif %}>{{ _('Viimeiset 30 päivää') }}</option>
+        <option value="90" {% if range_days == 90 %}selected{% endif %}>{{ _('Viimeiset 90 päivää') }}</option>
+        <option value="365" {% if range_days == 365 %}selected{% endif %}>{{ _('Viimeiset 365 päivää') }}</option>
+      </select>
+    </div>
+    <div class="admin-form-actions">
+      <a class="btn btn-secondary" href="{{ url_for('admin.demo_analytics', demo_id=demo_id) }}">
+        <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>{{ _('Perinteinen katseluanalytiikka') }}
+      </a>
+    </div>
+  </form>
+
+  <section class="admin-workspace-summary" aria-label="{{ _('Mielenosoituksen näyttöjen yhteenveto') }}">
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-eye" aria-hidden="true"></i></span>
+      <div>
+        <span>{{ _('Näyttöä yhteensä') }}</span>
+        <strong>{{ data.total }}</strong>
+        <small>{{ _('kaikki kerätyt ajankohdat') }}</small>
+      </div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i></span>
+      <div>
+        <span>{{ _('Tänään') }}</span>
+        <strong>{{ data.today }}</strong>
+        <small>{{ _('palvelimen päivämäärän mukaan') }}</small>
+      </div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i></span>
+      <div>
+        <span>{{ _('Viimeiset 7 päivää') }}</span>
+        <strong>{{ data.last_7d }}</strong>
+        <small>{{ _('päivittäin keskimäärin %(count)s', count=(data.last_7d / 7) | round(1)) }}</small>
+      </div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></span>
+      <div>
+        <span>{{ _('Valittu aikaväli') }}</span>
+        <strong>{{ data.last_28d }}</strong>
+        <small>{{ _('%(days)d päivää', days=range_days) }}</small>
+      </div>
+    </article>
+  </section>
+
+  <section class="admin-section-card" aria-labelledby="site-demo-traffic-title">
+    <header class="admin-section-card__header">
+      <div class="admin-section-card__title">
+        <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+        <div>
+          <h2 id="site-demo-traffic-title">{{ _('Näytöt aikaulottuvuudessa') }}</h2>
+          <p>{{ _('Päivittäiset sivunäytöt valitulla aikavälillä.') }}</p>
+        </div>
+      </div>
+    </header>
+    <div class="admin-section-card__body">
+      <div class="admin-analytics__chart-frame">
+        <canvas id="siteDemoTrafficChart" role="img" aria-label="{{ _('Mielenosoituksen päivittäiset sivunäytöt viivakaaviona') }}"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <div class="admin-site-analytics__grid">
+    <section class="admin-section-card" aria-labelledby="site-demo-languages-title">
+      <header class="admin-section-card__header">
+        <div class="admin-section-card__title">
+          <i class="fa-solid fa-language" aria-hidden="true"></i>
+          <div><h2 id="site-demo-languages-title">{{ _('Kielet') }}</h2></div>
+        </div>
+      </header>
+      <div class="admin-section-card__body">
+        <table class="admin-data-view__table">
+          <tbody>
+            {% for row in data.languages %}
+            <tr>
+              <td>{{ language_labels.get(row.value, row.value | capitalize) }}</td>
+              <td class="text-end"><span class="admin-status-badge admin-status-badge--info">{{ row.count }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td>{{ _('Ei vielä tietoja.') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-section-card" aria-labelledby="site-demo-devices-title">
+      <header class="admin-section-card__header">
+        <div class="admin-section-card__title">
+          <i class="fa-solid fa-mobile-screen" aria-hidden="true"></i>
+          <div><h2 id="site-demo-devices-title">{{ _('Laitteet') }}</h2></div>
+        </div>
+      </header>
+      <div class="admin-section-card__body">
+        <table class="admin-data-view__table">
+          <tbody>
+            {% for row in data.devices %}
+            <tr>
+              <td>{{ device_labels.get(row.value, row.value | capitalize) }}</td>
+              <td class="text-end"><span class="admin-status-badge admin-status-badge--info">{{ row.count }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td>{{ _('Ei vielä tietoja.') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-section-card" aria-labelledby="site-demo-referrers-title">
+      <header class="admin-section-card__header">
+        <div class="admin-section-card__title">
+          <i class="fa-solid fa-link" aria-hidden="true"></i>
+          <div><h2 id="site-demo-referrers-title">{{ _('Viittaajat') }}</h2></div>
+        </div>
+      </header>
+      <div class="admin-section-card__body">
+        <table class="admin-data-view__table">
+          <tbody>
+            {% for row in data.referrers %}
+            <tr>
+              <td>{{ referrer_labels.get(row.value, row.value | capitalize) }}</td>
+              <td class="text-end"><span class="admin-status-badge admin-status-badge--info">{{ row.count }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td>{{ _('Ei vielä tietoja.') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  (function () {
+    const canvas = document.getElementById('siteDemoTrafficChart');
+    if (!canvas) return;
+
+    const labels = {{ data['daily_labels'] | tojson }};
+    const values = {{ data['daily_values'] | tojson }};
+
+    function getAdminChartColors() {
+      const styles = getComputedStyle(document.documentElement);
+      return {
+        text: styles.getPropertyValue('--admin-chart-text').trim(),
+        grid: styles.getPropertyValue('--admin-chart-grid').trim(),
+        background: styles.getPropertyValue('--admin-chart-surface').trim(),
+        primary: styles.getPropertyValue('--admin-chart-primary').trim()
+      };
+    }
+
+    const chartColors = getAdminChartColors();
+    const trafficChart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: '{{ _("Sivunäytöt") }}',
+          data: values,
+          backgroundColor: chartColors.primary,
+          borderRadius: 6,
+          barPercentage: 0.7
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: chartColors.text, maxTicksLimit: 12 }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { color: chartColors.text, precision: 0 }, grid: { color: chartColors.grid } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: chartColors.background,
+            titleColor: chartColors.text,
+            bodyColor: chartColors.text,
+            borderColor: chartColors.grid,
+            borderWidth: 1
+          }
+        }
+      }
+    });
+
+    document.addEventListener('admin:themechange', () => {
+      const colors = getAdminChartColors();
+      trafficChart.data.datasets[0].backgroundColor = colors.primary;
+      trafficChart.options.scales.x.ticks.color = colors.text;
+      trafficChart.options.scales.y.ticks.color = colors.text;
+      trafficChart.options.scales.y.grid.color = colors.grid;
+      trafficChart.update('none');
+    });
+  })();
+</script>
+{% endblock %}

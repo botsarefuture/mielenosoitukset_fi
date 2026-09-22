@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ilmoittautuminen vahvistettu – Mielenosoitukset.fi</title>
-    <script src="{{ url_for('static', filename='js/matomo.js') }}"></script>
+    {% if config.get('MATOMO_ENABLED', true) %}<script src="{{ url_for('static', filename='js/matomo.js') }}"></script>{% endif %}
 
   <link rel="stylesheet" href="/static/kampanja/styles.css" />
   <style>

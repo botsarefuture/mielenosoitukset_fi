@@ -254,6 +254,219 @@ def _normalize_route_points(raw_route):
     return [point.strip() for point in re.split(r"[\n,]+", text) if point.strip()]
 
 
+def _coerce_organizer_dict(raw):
+    """Coerce a single raw organizer entry into a plain display dict.
+
+    Accepts mappings (as stored on the demonstration document), Organizer-like
+    objects, and plain strings. Returns a dict with the user-editable display
+    fields (name, email, website) plus any other public metadata preserved as-is.
+    """
+    if raw is None:
+        return None
+
+    if isinstance(raw, str):
+        text = raw.strip()
+        return {"name": text} if text else None
+
+    if isinstance(raw, dict):
+        entry = dict(raw)
+    else:
+        getter = getattr(raw, "get", None)
+        if callable(getter):
+            entry = dict(getter())
+        else:
+            entry = {
+                key: getattr(raw, key)
+                for key in ("name", "email", "website", "logo", "url", "organization_id", "_id")
+                if getattr(raw, key, None) is not None
+            }
+
+    entry.pop("is_private", None)
+    entry.pop("show_name_public", None)
+    entry.pop("show_email_public", None)
+
+    if entry.get("organization_id") is not None:
+        entry["organization_id"] = str(entry["organization_id"])
+    else:
+        entry.pop("organization_id", None)
+
+    if entry.get("_id") is not None:
+        entry["_id"] = str(entry["_id"])
+    else:
+        entry.pop("_id", None)
+
+    for key in ("name", "email", "website"):
+        if key in entry:
+            entry[key] = str(entry.get(key) or "").strip()
+
+    if not any(str(entry.get(key) or "").strip() for key in ("name", "email", "website")):
+        return None
+
+    return entry
+
+
+def _organizer_display_name(entry):
+    """Human-readable single-line representation used for pill inputs."""
+    if isinstance(entry, str):
+        return entry.strip()
+
+    name = str(entry.get("name") or "").strip()
+    email = str(entry.get("email") or "").strip()
+    website = str(entry.get("website") or "").strip()
+    details = ", ".join(part for part in (email, website) if part)
+    if name and details:
+        return f"{name} ({details})"
+    return name or details
+
+
+def _split_organizer_entries(raw):
+    """Split raw organizer text into per-organizer chunks.
+
+    A top-level comma is treated as a separator only when it is not inside
+    parentheses, so 'Name (a@x.fi, https://x.fi)' stays one entry.
+    """
+    text = str(raw or "").strip()
+    if not text:
+        return []
+
+    if "\n" in text:
+        return [chunk.strip() for chunk in text.split("\n") if chunk.strip()]
+
+    chunks = []
+    depth = 0
+    current = []
+    for char in text:
+        if char == "(":
+            depth += 1
+        elif char == ")" and depth > 0:
+            depth -= 1
+        if char == "," and depth == 0:
+            chunks.append("".join(current))
+            current = []
+        else:
+            current.append(char)
+    chunks.append("".join(current))
+    return [chunk.strip() for chunk in chunks if chunk.strip()]
+
+
+def _parse_organizer_text(chunk):
+    """Parse one organizer chunk like 'Name (email, website)' into a dict."""
+    chunk = str(chunk or "").strip()
+    if not chunk:
+        return None
+
+    name = chunk
+    details = ""
+    if chunk.endswith(")"):
+        open_index = chunk.rfind("(")
+        if open_index != -1:
+            candidate_name = chunk[:open_index].strip()
+            if candidate_name:
+                name = candidate_name
+                details = chunk[open_index + 1 : -1].strip()
+
+    if not details:
+        match = re.match(r"^(.*?)\s*<([^<>]+)>$", name)
+        if match and match.group(1).strip():
+            name = match.group(1).strip()
+            details = match.group(2).strip()
+
+    email = ""
+    website = ""
+    for part in re.split(r"[,;]+", details) if details else []:
+        part = part.strip()
+        if not part:
+            continue
+        if not website and (part.lower().startswith(("http://", "https://", "www.")) or "/" in part):
+            website = part
+        elif "@" in part and not email:
+            email = part
+        elif not website:
+            website = part
+
+    if not email:
+        for token in re.split(r"\s+", name):
+            if "@" in token and "/" not in token:
+                email = token.strip()
+                name = (name.replace(token, "")).strip()
+                break
+
+    if not website:
+        for token in re.split(r"\s+", name):
+            if token.lower().startswith(("http://", "https://", "www.")):
+                website = token.strip()
+                name = (name.replace(token, "")).strip()
+                break
+
+    name = re.sub(r"\s+", " ", name).strip()
+
+    if not (name or email or website):
+        return None
+
+    return {
+        "name": name,
+        "email": email,
+        "website": website,
+    }
+
+
+def _normalize_organizers(raw_organizers):
+    """Normalize organizers input into a list of plain display dicts.
+
+    Accepts a list of dicts/Organizer-like objects/strings or raw text where
+    entries are separated by newlines or top-level commas. Each entry may be
+    'Name', 'Name (email, website)', or 'Name <email>'. Also accepts
+    comma-separated plain names when no parentheses are involved.
+    """
+    entries = []
+
+    if raw_organizers is None:
+        pass
+    elif isinstance(raw_organizers, str):
+        for chunk in _split_organizer_entries(raw_organizers):
+            parsed = _parse_organizer_text(chunk)
+            if parsed:
+                entries.append(parsed)
+    elif isinstance(raw_organizers, dict):
+        coerced = _coerce_organizer_dict(raw_organizers)
+        if coerced:
+            entries.append(coerced)
+    elif isinstance(raw_organizers, (list, tuple)):
+        for item in raw_organizers:
+            if isinstance(item, str):
+                for chunk in _split_organizer_entries(item):
+                    parsed = _parse_organizer_text(chunk)
+                    if parsed:
+                        entries.append(parsed)
+            else:
+                coerced = _coerce_organizer_dict(item)
+                if coerced:
+                    entries.append(coerced)
+    else:
+        coerced = _coerce_organizer_dict(raw_organizers)
+        if coerced:
+            entries.append(coerced)
+
+    return [entry for entry in entries if entry.get("name") or entry.get("email") or entry.get("website")]
+
+
+def _organizer_identity_keys(entries):
+    """Comparison keys (name, email, website) used to detect organizer changes.
+
+    Metadata such as _id or organization_id is deliberately excluded so an
+    untouched organizer list does not register as a suggested change.
+    """
+    return [
+        (
+            str(entry.get("name") or ""),
+            str(entry.get("email") or ""),
+            str(entry.get("website") or ""),
+        )
+        for entry in (entries or [])
+        if isinstance(entry, dict)
+    ]
+
+
 def _load_panic():
     a = mongo.panic.find_one({"name": "global"})
     return a.get("panic", False) if a else False
@@ -2897,6 +3110,7 @@ def init_routes(app):
                 'facebook',
                 'tags',
                 'route',
+                'organizers',
             ]
 
             suggested_fields = {}
@@ -2908,6 +3122,8 @@ def init_routes(app):
                     val = _normalize_tag_list(val.split(','))
                 elif f == 'route' and val:
                     val = _normalize_route_points(val)
+                elif f == 'organizers' and val:
+                    val = _normalize_organizers(val)
 
                 # compare to the stored demo_doc values and only store differences
                 orig = demo_doc.get(f)
@@ -2916,13 +3132,20 @@ def init_routes(app):
                     orig_comp = _normalize_tag_list(orig)
                 elif f == 'route':
                     orig_comp = _normalize_route_points(orig)
+                elif f == 'organizers':
+                    orig_comp = _normalize_organizers(orig)
                 else:
                     orig_comp = (orig or '').strip() if orig is not None else ''
 
-                # For comparison, when tags / route -> convert to normalized lists
+                # For comparison, when tags / route / organizers -> convert to normalized lists
                 changed = False
-                if f in {'tags', 'route'}:
-                    if val and isinstance(val, list) and val != orig_comp:
+                if f in {'tags', 'route', 'organizers'}:
+                    if f == 'organizers':
+                        # Compare only the user-editable fields so preserved
+                        # organizer metadata does not register as a change.
+                        if val and _organizer_identity_keys(val) != _organizer_identity_keys(orig_comp):
+                            changed = True
+                    elif val and isinstance(val, list) and val != orig_comp:
                         changed = True
                 else:
                     if val and str(val) != str(orig_comp):
@@ -2987,6 +3210,12 @@ def init_routes(app):
             description_markdown=html_to_markdown(demo_doc.get('description')),
             route_input_value=", ".join(_normalize_route_points(demo_doc.get('route'))),
             tag_input_value=", ".join(_normalize_tag_list(demo_doc.get('tags') or [])),
+            # newline-joined: organizer display names may contain commas inside
+            # parentheses, so commas must not act as entry separators here.
+            organizer_input_value="\n".join(
+                _organizer_display_name(entry)
+                for entry in _normalize_organizers(demo_doc.get('organizers'))
+            ),
         )
 
     @app.route("/cancel_demonstration/<token>", methods=["GET", "POST"])

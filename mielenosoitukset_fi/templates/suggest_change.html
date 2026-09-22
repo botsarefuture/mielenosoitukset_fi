@@ -547,7 +547,7 @@
             <span class="summary-pill">⏰ {{ demo.start_time }}{% if demo.end_time %}–{{ demo.end_time }}{% endif %}</span>
             <span class="summary-pill">📍 {{ demo.city }}</span>
           </div>
-          <p class="summary-note">{{ _('Jos esimerkiksi paikka, aika, kuvaus tai marssin reitti on väärin tai puutteellinen, voit korjata sen tässä.') }}</p>
+          <p class="summary-note">{{ _('Jos esimerkiksi paikka, aika, kuvaus, marssin reitti tai järjestäjätiedot on väärin tai puutteellisia, voit korjata ne tässä.') }}</p>
         </section>
 
         <aside class="guidance-card">
@@ -555,6 +555,7 @@
           <ul class="guidance-list">
             <li>{{ _('Kuvauskenttä näyttää esikatselun, joten sinun ei tarvitse arvioida lopputulosta koodin perusteella.') }}</li>
             <li>{{ _('Reittipisteet ja aihetunnisteet lisätään yksi kerrallaan, jotta listasta tulee siisti.') }}</li>
+            <li>{{ _('Järjestäjät voi lisätä yksi kerrallaan: nimi riittää, yhteystiedot ovat valinnaisia.') }}</li>
             <li>{{ _('Jos et ole varma jostain tiedosta, voit selittää asian “Viesti ylläpidolle” -kentässä.') }}</li>
           </ul>
         </aside>
@@ -653,6 +654,26 @@
 
         <section class="form-section">
           <div class="section-heading">
+            <h3>🧑‍🤝‍🧑 {{ _('Järjestäjät') }}</h3>
+            <p>{{ _('Kerro kuka tai ketkä mielenosoituksen järjestävät.') }}</p>
+          </div>
+          <div class="form-grid">
+            <div class="field-group">
+              <label for="organizer-input">{{ _('Järjestäjät') }}</label>
+              <div class="input-with-action">
+                <input type="text" id="organizer-input" placeholder="{{ _('Kirjoita järjestäjä ja paina Enter') }}" aria-describedby="organizer-help-text" />
+                <button type="button" class="inline-add-btn" id="organizer-add-btn">{{ _('Lisää') }}</button>
+              </div>
+              <div class="pill-list" id="organizer-pill-list" aria-live="polite"></div>
+              <input type="hidden" id="organizers" name="organizers" value="{{ organizer_input_value }}" />
+              <span class="field-help" id="organizer-help-text">{{ _('Kirjoita järjestäjän nimi. Halutessasi lisää sähköposti tai kotisivu sulkuihin: Yhdistys (yhdistys@example.fi, https://yhdistys.fi).') }}</span>
+              <span class="field-help">{{ _('Voit myös kaksoisnapsauttaa järjestäjää muokataksesi sitä.') }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-heading">
             <h3>📄 {{ _('Kuvaus') }}</h3>
             <p>{{ _('Kirjoita tavallisena tekstinä. HTML-koodia ei tarvitse eikä pidä käyttää.') }}</p>
           </div>
@@ -731,6 +752,11 @@
 
     const splitPoints = (value) => (value || '')
       .split(/[,\n]+/)
+      .map((point) => point.trim())
+      .filter(Boolean);
+
+    const splitOrganizers = (value) => (value || '')
+      .split(/\r?\n+/)
       .map((point) => point.trim())
       .filter(Boolean);
 
@@ -906,6 +932,18 @@
       removeAriaLabel: "{{ _('Poista reittipiste') }}",
       splitValue: splitPoints,
       syncValue: (items) => items.join(', '),
+      allowDuplicates: true,
+    });
+
+    initializePillEditor({
+      hiddenInputId: 'organizers',
+      textInputId: 'organizer-input',
+      addButtonId: 'organizer-add-btn',
+      listId: 'organizer-pill-list',
+      emptyText: "{{ _('Ei järjestäjiä vielä lisätty.') }}",
+      removeAriaLabel: "{{ _('Poista järjestäjä') }}",
+      splitValue: splitOrganizers,
+      syncValue: (items) => items.join('\n'),
       allowDuplicates: true,
     });
 

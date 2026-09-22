@@ -370,6 +370,12 @@
 {% endblock %}
 
 {% block main_content %}
+{% macro render_organizers(entries) -%}
+{%- if not entries -%}—
+{%- else -%}
+{%- for org in entries %}{% if org is mapping %}{{ org.get('name') or '' }}{% set org_bits = [] %}{% if org.get('email') %}{% set _ = org_bits.append(org.get('email')) %}{% endif %}{% if org.get('website') %}{% set _ = org_bits.append(org.get('website')) %}{% endif %}{% if org_bits %} ({{ org_bits | join(', ') }}){% endif %}{% else %}{{ org }}{% endif %}{{ '; ' if not loop.last }}{% endfor %}
+{%- endif -%}
+{%- endmacro %}
 <div class="admin-page suggestion-review">
   {% if suggestion %}
     <a href="{{ url_for('admin_demo.suggestions_list') }}" class="review-back">
@@ -442,11 +448,11 @@
                 <div class="change-comparison">
                   <div class="change-value">
                     <span class="change-value-label">{{ _('Nykyinen arvo') }}</span>
-                    <div class="change-value-content">{% if k == 'tags' and suggestion.original_values.get(k) is iterable and suggestion.original_values.get(k) is not string %}{{ suggestion.original_values.get(k, '') | join(', ') }}{% else %}{{ suggestion.original_values.get(k, '') }}{% endif %}</div>
+                    <div class="change-value-content">{% if k == 'tags' and suggestion.original_values.get(k) is iterable and suggestion.original_values.get(k) is not string %}{{ suggestion.original_values.get(k, '') | join(', ') }}{% elif k == 'organizers' and suggestion.original_values.get(k) is iterable and suggestion.original_values.get(k) is not string %}{{ render_organizers(suggestion.original_values.get(k)) }}{% else %}{{ suggestion.original_values.get(k, '') }}{% endif %}</div>
                   </div>
                   <div class="change-value change-value-proposed">
                     <span class="change-value-label">{{ _('Ehdotettu arvo') }}</span>
-                    <div class="change-value-content">{% if k == 'tags' and v is iterable and v is not string %}{{ v | join(', ') }}{% else %}{{ v }}{% endif %}</div>
+                    <div class="change-value-content">{% if k == 'tags' and v is iterable and v is not string %}{{ v | join(', ') }}{% elif k == 'organizers' and v is iterable and v is not string %}{{ render_organizers(v) }}{% else %}{{ v }}{% endif %}</div>
                   </div>
                 </div>
               </article>

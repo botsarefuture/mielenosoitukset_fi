@@ -1,0 +1,367 @@
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+
+{% block title %}{{ _('Palvelun analytiikka') }}{% endblock %}
+
+{% set range_options = [(7, _('Viimeiset 7 päivää')), (14, _('Viimeiset 14 päivää')), (30, _('Viimeiset 30 päivää')), (90, _('Viimeiset 90 päivää'))] %}
+
+{% macro period_badge(card) %}
+  {% set current = card.current %}
+  {% set previous = card.previous %}
+  {% if previous and current is not none %}
+    {% set diff = ((current - previous) / previous * 100) | round | int %}
+    {% if diff > 0 %}
+      <small class="admin-site-analytics__delta admin-site-analytics__delta--up"><i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i>+{{ diff }}&nbsp;%</small>
+    {% elif diff < 0 %}
+      <small class="admin-site-analytics__delta admin-site-analytics__delta--down"><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i>{{ diff }}&nbsp;%</small>
+    {% else %}
+      <small class="admin-site-analytics__delta"><i class="fa-solid fa-equals" aria-hidden="true"></i>±0&nbsp;%</small>
+    {% endif %}
+  {% endif %}
+{% endmacro %}
+
+{% block main_content %}
+<section class="admin-page admin-site-analytics">
+  {{ admin_page_hero(
+    _('Palvelun analytiikka'),
+    _('Sivunäyttömäärät kerätään palvelimella ilman evästeitä tai kolmannen osapuolen palveluita.'),
+    _('Analytiikka'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Palvelun analytiikka'), none)],
+    metric_value=overview.today.current,
+    metric_label=_('sivunäyttöä tänään')
+  ) }}
+
+  <form method="get" class="admin-filter-bar" aria-label="{{ _('Aikavälin valinta') }}">
+    <div class="admin-field">
+      <label for="site-analytics-range">{{ _('Aikaväli') }}</label>
+      <select class="form-select" id="site-analytics-range" name="range" onchange="this.form.submit()">
+        {% for value, label in range_options %}
+        <option value="{{ value }}" {% if range_days == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+
+  <section class="admin-workspace-summary" aria-label="{{ _('Sivunäyttöjen yhteenveto') }}">
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i></span>
+      <div>
+        <span>{{ _('Tänään') }}</span>
+        <strong>{{ overview.today.current }}</strong>
+        {{ period_badge(overview.today) }}
+        <small>{{ _('eilen %(count)s', count=overview.yesterday) }}</small>
+      </div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i></span>
+      <div>
+        <span>{{ _('Tämä viikko') }}</span>
+        <strong>{{ overview.week.current }}</strong>
+        {{ period_badge(overview.week) }}
+        <small>{{ _('edellinen viikko %(count)s', count=overview.week.previous) }}</small>
+      </div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-calendar" aria-hidden="true"></i></span>
+      <div>
+        <span>{{ _('Tämä kuukausi') }}</span>
+        <strong>{{ overview.month.current }}</strong>
+        {{ period_badge(overview.month) }}
+        <small>{{ _('edellinen kuukausi vastaavana aikana %(count)s', count=overview.month.previous) }}</small>
+      </div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></span>
+      <div>
+        <span>{{ _('Valittu aikaväli') }}</span>
+        <strong>{{ overview.window.current }}</strong>
+        {{ period_badge(overview.window) }}
+        <small>{{ _('edellinen vastaava jakso %(count)s', count=overview.window.previous) }}</small>
+      </div>
+    </article>
+  </section>
+
+  <section class="admin-section-card" aria-labelledby="site-traffic-title">
+    <header class="admin-section-card__header">
+      <div class="admin-section-card__title">
+        <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+        <div>
+          <h2 id="site-traffic-title">{{ _('Liike selvityksellä aikaulottuvuudessa') }}</h2>
+          <p>{{ _('Päivittäiset sivunäytöt valitulla aikavälillä.') }}</p>
+        </div>
+      </div>
+    </header>
+    <div class="admin-section-card__body">
+      <div class="admin-analytics__chart-frame">
+        <canvas id="siteTrafficChart" role="img" aria-label="{{ _('Päivittäiset sivunäytöt viivakaaviona') }}"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <div class="admin-site-analytics__grid">
+    <section class="admin-section-card" aria-labelledby="site-languages-title">
+      <header class="admin-section-card__header">
+        <div class="admin-section-card__title">
+          <i class="fa-solid fa-language" aria-hidden="true"></i>
+          <div><h2 id="site-languages-title">{{ _('Kielet') }}</h2></div>
+        </div>
+      </header>
+      <div class="admin-section-card__body">
+        <table class="admin-data-view__table">
+          <tbody>
+            {% for row in languages %}
+            <tr>
+              <td>{{ language_labels.get(row.value, row.value | capitalize) }}</td>
+              <td class="text-end"><span class="admin-status-badge admin-status-badge--info">{{ row.count }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td>{{ _('Ei vielä tietoja.') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-section-card" aria-labelledby="site-devices-title">
+      <header class="admin-section-card__header">
+        <div class="admin-section-card__title">
+          <i class="fa-solid fa-mobile-screen" aria-hidden="true"></i>
+          <div><h2 id="site-devices-title">{{ _('Laitteet') }}</h2></div>
+        </div>
+      </header>
+      <div class="admin-section-card__body">
+        <table class="admin-data-view__table">
+          <tbody>
+            {% for row in devices %}
+            <tr>
+              <td>{{ device_labels.get(row.value, row.value | capitalize) }}</td>
+              <td class="text-end"><span class="admin-status-badge admin-status-badge--info">{{ row.count }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td>{{ _('Ei vielä tietoja.') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-section-card" aria-labelledby="site-referrers-title">
+      <header class="admin-section-card__header">
+        <div class="admin-section-card__title">
+          <i class="fa-solid fa-link" aria-hidden="true"></i>
+          <div><h2 id="site-referrers-title">{{ _('Viittaajat') }}</h2></div>
+        </div>
+      </header>
+      <div class="admin-section-card__body">
+        <table class="admin-data-view__table">
+          <tbody>
+            {% for row in referrers %}
+            <tr>
+              <td>{{ referrer_labels.get(row.value, row.value | capitalize) }}</td>
+              <td class="text-end"><span class="admin-status-badge admin-status-badge--info">{{ row.count }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td>{{ _('Ei vielä tietoja.') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="admin-site-analytics__grid">
+    <section class="admin-section-card" aria-labelledby="site-events-title">
+      <header class="admin-section-card__header">
+        <div class="admin-section-card__title">
+          <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+          <div>
+            <h2 id="site-events-title">{{ _('Tapahtumat') }}</h2>
+            <p>{{ _('Käyttäjien toimet: haut, ilmoitukset, seurannat ja kartan käyttö.') }}</p>
+          </div>
+        </div>
+      </header>
+      <div class="admin-section-card__body">
+        <table class="admin-data-view__table">
+          <tbody>
+            {% for row in events %}
+            <tr>
+              <td>{{ event_labels.get(row.event, row.event) }}</td>
+              <td class="text-end"><span class="admin-status-badge admin-status-badge--info">{{ row.count }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td>{{ _('Ei vielä tietoja.') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-section-card" aria-labelledby="site-searches-title">
+      <header class="admin-section-card__header">
+        <div class="admin-section-card__title">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <div>
+            <h2 id="site-searches-title">{{ _('Yleisimmät haut') }}</h2>
+            <p>{{ _('Mielenosoituslistalla käytetyt hakusanat.') }}</p>
+          </div>
+        </div>
+      </header>
+      <div class="admin-section-card__body">
+        <table class="admin-data-view__table">
+          <tbody>
+            {% for row in search_terms %}
+            <tr>
+              <td class="admin-site-analytics__term">{{ row.resource_id }}</td>
+              <td class="text-end"><span class="admin-status-badge admin-status-badge--info">{{ row.count }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td>{{ _('Ei vielä tietoja.') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <section class="admin-section-card" aria-labelledby="site-top-pages-title">
+    <header class="admin-section-card__header">
+      <div class="admin-section-card__title">
+        <i class="fa-solid fa-ranking-star" aria-hidden="true"></i>
+        <div>
+          <h2 id="site-top-pages-title">{{ _('Katsotuimmat sivut') }}</h2>
+          <p>{{ _('Sivunäytöt sivutyypeittäin koko palvelussa.') }}</p>
+        </div>
+      </div>
+    </header>
+    <div class="admin-section-card__body">
+      <table class="admin-data-view__table">
+        <thead>
+          <tr>
+            <th scope="col">{{ _('Sivu') }}</th>
+            <th scope="col">{{ _('Tyyppi') }}</th>
+            <th scope="col">{{ _('Sivunäyttöä') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in top_pages %}
+          <tr>
+            <td>
+              {% if row.url %}<a href="{{ row.url }}">{{ row.title or row.resource_id }}</a>
+              {% else %}{{ row.title or row.resource_id or _('Etusivu') }}{% endif %}
+            </td>
+            <td>{{ row.page_type }}</td>
+            <td><span class="admin-status-badge admin-status-badge--info"><i class="fa-solid fa-eye" aria-hidden="true"></i>{{ row.count }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3">{{ _('Ei vielä tietoja.') }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="admin-section-card" aria-labelledby="site-top-demos-title">
+    <header class="admin-section-card__header">
+      <div class="admin-section-card__title">
+        <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
+        <div>
+          <h2 id="site-top-demos-title">{{ _('Katsotuimmat mielenosoitukset') }}</h2>
+          <p>{{ _('Mielenosoitussivujen näytöt valitulla aikavälillä.') }}</p>
+        </div>
+      </div>
+    </header>
+    <div class="admin-section-card__body">
+      <table class="admin-data-view__table">
+        <thead>
+          <tr>
+            <th scope="col">{{ _('Mielenosoitus') }}</th>
+            <th scope="col">{{ _('Sivunäyttöä') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in top_demos %}
+          <tr>
+            <td>
+              {% if row.url %}<a href="{{ row.url }}">{{ row.title or row.resource_id }}</a>
+              {% else %}{{ row.title or row.resource_id }}{% endif %}
+            </td>
+            <td><span class="admin-status-badge admin-status-badge--info"><i class="fa-solid fa-eye" aria-hidden="true"></i>{{ row.count }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="2">{{ _('Ei vielä tietoja.') }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  (function () {
+    const canvas = document.getElementById('siteTrafficChart');
+    if (!canvas) return;
+
+    const labels = {{ series['labels'] | tojson }};
+    const values = {{ series['values'] | tojson }};
+
+    function getAdminChartColors() {
+      const styles = getComputedStyle(document.documentElement);
+      return {
+        text: styles.getPropertyValue('--admin-chart-text').trim(),
+        grid: styles.getPropertyValue('--admin-chart-grid').trim(),
+        background: styles.getPropertyValue('--admin-chart-surface').trim(),
+        primary: styles.getPropertyValue('--admin-chart-primary').trim()
+      };
+    }
+
+    const chartColors = getAdminChartColors();
+    const trafficChart = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: '{{ _("Sivunäytöt") }}',
+          data: values,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2,
+          borderColor: chartColors.primary,
+          backgroundColor: chartColors.primary + '33'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+          x: { ticks: { color: chartColors.text, maxTicksLimit: 12 }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { color: chartColors.text, precision: 0 }, grid: { color: chartColors.grid } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: chartColors.background,
+            titleColor: chartColors.text,
+            bodyColor: chartColors.text,
+            borderColor: chartColors.grid,
+            borderWidth: 1
+          }
+        }
+      }
+    });
+
+    document.addEventListener('admin:themechange', () => {
+      const colors = getAdminChartColors();
+      trafficChart.data.datasets[0].borderColor = colors.primary;
+      trafficChart.data.datasets[0].backgroundColor = colors.primary + '33';
+      trafficChart.options.scales.x.ticks.color = colors.text;
+      trafficChart.options.scales.y.ticks.color = colors.text;
+      trafficChart.options.scales.y.grid.color = colors.grid;
+      trafficChart.update('none');
+    });
+  })();
+</script>
+{% endblock %}

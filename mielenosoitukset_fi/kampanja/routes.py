@@ -46,6 +46,10 @@ def add_volunteer():
 
     mongo.volunteers.insert_one(volunteer)
 
+    from mielenosoitukset_fi.utils.site_analytics import record_event_for_request
+
+    record_event_for_request("volunteer_signup", resource_id=volunteer["city"] or None)
+
     confirm_link = f"https://mielenosoitukset.fi/kampanja/confirm/{token}"
 
     email_sender.queue_email(

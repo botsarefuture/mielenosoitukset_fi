@@ -11,3 +11,4 @@ from .admin_case_bp import admin_case_bp
 from .admin_dev_bp import admin_dev_bp
 from .admin_city_bp import admin_city_bp
 from .admin_governance_bp import admin_governance_bp
+from .admin_site_analytics_bp import admin_site_analytics_bp

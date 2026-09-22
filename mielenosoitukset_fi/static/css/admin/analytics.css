@@ -143,3 +143,40 @@ html.dark {
     scroll-behavior: auto;
   }
 }
+
+/* ---- Built-in site analytics (server-side pageviews) ------------------- */
+
+.admin-site-analytics__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 900px) {
+  .admin-site-analytics__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-site-analytics__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 600;
+  color: inherit;
+  opacity: 0.85;
+}
+
+.admin-site-analytics__delta--up {
+  color: var(--admin-status-success, #198754);
+}
+
+.admin-site-analytics__delta--down {
+  color: var(--admin-status-danger, #dc3545);
+}
+
+.admin-site-analytics__term {
+  max-width: 22rem;
+  overflow-wrap: anywhere;
+}

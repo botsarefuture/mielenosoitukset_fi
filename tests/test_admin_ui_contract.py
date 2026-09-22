@@ -957,8 +957,9 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
         assert "admin_page_hero(" in source, str(template)
 
     # Exact inventory ratchet: the unreachable legacy recurring form was removed,
-    # leaving 51 routed full-page admin templates.
-    assert len(pages) == 51
+    # leaving 51 routed full-page admin templates; the built-in site analytics
+    # feature adds its overview and per-demonstration dashboards (53).
+    assert len(pages) == 53
     for locale in ("en", "fi", "sv"):
         catalog = Path(
             f"mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.po"
@@ -986,6 +987,7 @@ def test_full_admin_pages_use_breadcrumbs_and_standard_back_actions():
         "kampanja/list.html",
         "organizations/dashboard.html",
         "s3/dashboard.html",
+        "site_analytics.html",
         "stats.html",
         "status.html",
         "ui_translations/dashboard.html",

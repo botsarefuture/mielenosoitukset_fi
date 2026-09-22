@@ -66,6 +66,7 @@
       <span class="admin-result-summary">{{ _('Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta', start=range_start, end=range_end, count=analytics_count) }}</span>
       {% if show_global_counts %}
       <div class="admin-form-actions">
+        <a href="{{ url_for('admin_site_analytics.site_overview') }}" class="btn btn-primary"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>{{ _('Palvelun analytiikka') }}</a>
         <a href="{{ url_for('admin.analytics_overall_24h') }}" class="btn btn-primary"><i class="fa-solid fa-clock" aria-hidden="true"></i>{{ _('Viimeiset 24 h') }}</a>
         <a href="{{ url_for('admin.analytics_overall_24h') }}" class="btn btn-secondary" id="matomo-link" data-live-url="{{ url_for('admin.stats_matomo_live') }}" data-unavailable-label="{{ _('Matomo ei saatavilla') }}" data-visitor-label="{{ _('kävijää') }}"><i class="fa-solid fa-chart-line" aria-hidden="true"></i><span data-matomo-label>{{ _('Matomo') }}</span></a>
       </div>
@@ -106,5 +107,5 @@
 
 {% block scripts %}
 {% if show_global_counts %}<script defer src="{{ url_for('static', filename='js/admin_stats.js', v='20260920-admin-ui-1') }}"></script>{% endif %}
-<script defer src="{{ url_for('static', filename='js/matomo.js') }}"></script>
+{% if config.get('MATOMO_ENABLED', true) %}<script defer src="{{ url_for('static', filename='js/matomo.js') }}"></script>{% endif %}
 {% endblock %}

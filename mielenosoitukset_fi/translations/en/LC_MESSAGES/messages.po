@@ -274,7 +274,7 @@ msgstr "Date (pp.kk.vvvv)"
 #: mielenosoitukset_fi/templates/list.html:509 mielenosoitukset_fi/templates/tag_list.html:491
 #: mielenosoitukset_fi/templates/tag_list.html:544
 msgid "Aika"
-msgstr ""
+msgstr "Time"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:195
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:118 mielenosoitukset_fi/templates/city.html:40
@@ -504,7 +504,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:637
 msgid "Lisätiedot"
-msgstr "Additional informatio"
+msgstr "Details"
 
 #: mielenosoitukset_fi/templates/detail.html:644
 #, fuzzy
@@ -1322,7 +1322,7 @@ msgstr "Edit"
 
 #: mielenosoitukset_fi/templates/admin/demonstrations/edit_history.html:24
 msgid "Tuntematon"
-msgstr ""
+msgstr "Unknown"
 
 #: mielenosoitukset_fi/templates/admin/demonstrations/edit_history.html:29
 msgid "Näytä muutokset tästä versiosta"
@@ -1404,7 +1404,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:164
 #, fuzzy
 msgid "Rooli"
-msgstr "Profile"
+msgstr "Role"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:197
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:25 mielenosoitukset_fi/templates/admin_V2/user/edit.html:166
@@ -2192,7 +2192,7 @@ msgstr "Organizers name"
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:615
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:153
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:532
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:620
@@ -5401,7 +5401,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:10
 #: mielenosoitukset_fi/templates/admin_base.html:364
 msgid "Ilmoitusvirheet"
-msgstr ""
+msgstr "Submission errors"
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/all.html:10
 #: mielenosoitukset_fi/templates/admin_V2/cases/blocklist.html:10
@@ -5438,7 +5438,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/status.html:10
 #: mielenosoitukset_fi/templates/admin_base.html:398
 msgid "Järjestelmä"
-msgstr ""
+msgstr "System"
 
 #: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:4
 #: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:26
@@ -6317,7 +6317,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:109
 #: mielenosoitukset_fi/templates/submit.html:1058
 msgid "Virhekoodi"
-msgstr ""
+msgstr "Error code"
 
 #: mielenosoitukset_fi/templates/submit.html:1059
 msgid "Löytyi mahdollinen päällekkäinen ilmoitus"
@@ -6878,7 +6878,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:114
 #: mielenosoitukset_fi/templates/users/auth/settings.html:606
 msgid "IP-osoite"
-msgstr ""
+msgstr "IP address"
 
 #: mielenosoitukset_fi/templates/admin/suggestion_view.html:426
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:278
@@ -7838,13 +7838,13 @@ msgstr "Period"
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:51
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:63
 msgid "Alkaen"
-msgstr ""
+msgstr "From"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:48
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:52
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:64
 msgid "Päättyen"
-msgstr ""
+msgstr "Until"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:200
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_dashboard.html:75
@@ -7856,7 +7856,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/dashboard.html:55
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:60
 msgid "Aktiiviset suodattimet"
-msgstr ""
+msgstr "Active filters"
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:60
 msgid "Tekijä rajattu"
@@ -7878,7 +7878,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/dashboard.html:58
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:65
 msgid "Tyhjennä suodattimet"
-msgstr ""
+msgstr "Clear filters"
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:72
 msgid "Hallintatapahtumat"
@@ -7890,7 +7890,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:74
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:60
 msgid "%(count)s osumaa"
-msgstr ""
+msgstr "%(count)s matches"
 
 #: mielenosoitukset_fi/templates/admin_V2/governance/audit.html:53
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:74
@@ -7988,7 +7988,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/dashboard.html:116
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:107
 msgid "Kokeile muuttaa suodattimia tai tyhjennä ne."
-msgstr ""
+msgstr "Try changing or clearing the filters."
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:147
 msgid "Hallintalokin sivutus"
@@ -8586,7 +8586,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:265
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/magic_tokens.html:75
 msgid "IP"
-msgstr ""
+msgstr "IP"
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:266
 msgid "Aikaleima"
@@ -9190,7 +9190,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:58
 msgid "Tekniset tiedot"
-msgstr ""
+msgstr "Technical details"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:60
 msgid "Mongo ID"
@@ -9528,7 +9528,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:169
 msgid "Lisäsuodattimet"
-msgstr ""
+msgstr "Advanced filters"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:172
 msgid "Menneet mielenosoitukset"
@@ -9955,7 +9955,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:24
 msgid "Kaikki koodit"
-msgstr ""
+msgstr "All codes"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:31
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:111
@@ -9968,17 +9968,17 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:41
 msgid "Esim. sähköposti"
-msgstr ""
+msgstr "For example, email"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:56
 msgid "Käyttäjän ID"
-msgstr ""
+msgstr "User ID"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:60
 #: mielenosoitukset_fi/templates/admin_V2/super_audit/logs.html:30
 #: mielenosoitukset_fi/templates/admin_V2/super_audit/logs.html:47
 msgid "Polku"
-msgstr ""
+msgstr "Path"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:80
 msgid "Tulokset"
@@ -12731,3 +12731,71 @@ msgstr "Top searches"
 #: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:205
 msgid "Mielenosoituslistalla käytetyt hakusanat."
 msgstr "Search terms used on the demonstration list."
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "HTTP-status"
+msgstr "HTTP status"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Tutki mielenosoitusten ilmoittamisessa tapahtuneita virheitä ja rajaa tekniset tiedot tukiselvitystä varten."
+msgstr "Investigate demonstration submission errors and filter technical details for support diagnostics."
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Ilmoitusvirheiden suodattimet"
+msgstr "Submission error filters"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Kaikki statukset"
+msgstr "All statuses"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Haku viestistä"
+msgstr "Search messages"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Pyynnön polku"
+msgstr "Request path"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Poista suodatin"
+msgstr "Remove filter"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Yleisimmät virhekoodit nykyisessä haussa"
+msgstr "Most common error codes in the current search"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "%(count)s tapahtumaa"
+msgstr "%(count)s events"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "yhteensä %(count)s kirjattua virhettä"
+msgstr "%(count)s recorded errors in total"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Näytetään %(start)s–%(end)s / %(count)s virheestä"
+msgstr "Showing %(start)s–%(end)s / %(count)s errors"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "IP / käyttäjä"
+msgstr "IP / user"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Näytä tiedot"
+msgstr "Show details"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Lomakkeen tilannekuva"
+msgstr "Form snapshot"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "HTTP-pyyntö"
+msgstr "HTTP request"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Ilmoitusvirheitä ei löytynyt"
+msgstr "No submission errors found"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Ilmoitusvirheiden sivutus"
+msgstr "Submission error pagination"

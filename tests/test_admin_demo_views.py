@@ -247,6 +247,17 @@ def test_submission_errors_require_view_logs_permission(friend_client, db, seede
     assert "Ilmoitusvirheet" not in dashboard.get_data(as_text=True)
 
 
+def test_view_logs_permission_is_assignable():
+    from mielenosoitukset_fi.utils.variables import PERMISSIONS_GROUPS
+
+    permission_names = {
+        permission["name"]
+        for permissions in PERMISSIONS_GROUPS.values()
+        for permission in permissions
+    }
+    assert "VIEW_LOGS" in permission_names
+
+
 def test_submission_errors_use_stable_server_pagination_and_preserve_filters(
     admin_client, db
 ):

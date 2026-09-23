@@ -783,9 +783,27 @@ def test_audit_and_developer_pages_use_canonical_hero_navigation():
     assert "var(--admin-workspace-surface)" in audit_css
     assert "var(--admin-workspace-border)" in audit_css
     submission_errors = Path(pages[4]).read_text(encoding="utf-8")
-    assert 'class="admin-data-view admin-workspace h-100"' in submission_errors
-    assert 'class="admin-data-view__header"' in submission_errors
-    assert submission_errors.count("card shadow-sm") == 2
+    assert 'class="admin-filter-bar"' in submission_errors
+    assert 'class="admin-advanced-filters"' in submission_errors
+    assert 'class="admin-active-filters"' in submission_errors
+    assert 'class="admin-data-view admin-data-view--scrollable"' in submission_errors
+    assert "admin_pagination(" in submission_errors
+    assert 'class="admin-code-block"' in submission_errors
+    assert "card shadow-sm" not in submission_errors
+    assert "list-group" not in submission_errors
+    assert "bg-warning" not in submission_errors
+    assert "bg-light" not in submission_errors
+
+    route = Path(
+        "mielenosoitukset_fi/admin/admin_demo_bp.py"
+    ).read_text(encoding="utf-8")
+    route_start = route.index('def submission_errors_dashboard():')
+    route_end = route.index('admin_demo_api_bp = Blueprint', route_start)
+    route_block = route[route_start - 160:route_end]
+    assert '@permission_required("VIEW_LOGS")' in route_block
+    assert 'parse_admin_pagination(args)' in route_block
+    assert '("_id", DESCENDING)' in route_block
+    assert '.skip(pagination["slice_start"])' in route_block
 
 
 def test_analytics_pages_use_shared_hero_metric_slot():

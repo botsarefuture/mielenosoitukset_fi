@@ -1,166 +1,140 @@
 {% extends 'admin_base.html' %}
-{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
+
+{% block title %}{{ _('Ilmoitusvirheet') }}{% endblock %}
 
 {% block main_content %}
-<div class="admin-page">
+<section class="admin-page admin-workspace">
   {{ admin_page_hero(
     _('Ilmoitusvirheet'),
-    _('Viimeisimmät 200 virhettä mielenosoituksen ilmoittamisesta. Käytä virhekoodeja tukitiimin selvityksissä.'),
+    _('Tutki mielenosoitusten ilmoittamisessa tapahtuneita virheitä ja rajaa tekniset tiedot tukiselvitystä varten.'),
     _('Järjestelmä'),
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (_('Ilmoitusvirheet'), none)],
     back_url=url_for('admin_demo.demo_control'),
     back_label=_('Mielenosoitukset')
   ) }}
 
-  <div class="row g-3 mb-4">
-    <div class="col-12 col-xl-8">
-      <div class="admin-data-view admin-workspace h-100">
-        <div class="admin-data-view__header"><strong>{{ _('Suodattimet') }}</strong></div>
-        <div class="p-3">
-          <form method="get" class="row g-3 align-items-end">
-            <div class="col-12 col-md-4">
-              <label for="error_code" class="form-label text-muted small mb-1">{{ _('Virhekoodi') }}</label>
-              <select class="form-select" id="error_code" name="error_code">
-                <option value="">{{ _('Kaikki koodit') }}</option>
-                {% for code in error_codes %}
-                <option value="{{ code }}" {% if filters.error_code == code %}selected{% endif %}>{{ code }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-6 col-md-2">
-              <label for="status" class="form-label text-muted small mb-1">{{ _('Status') }}</label>
-              <select class="form-select" id="status" name="status">
-                <option value="">{{ _('Kaikki') }}</option>
-                {% for status in status_options %}
-                <option value="{{ status }}" {% if filters.status == status|string %}selected{% endif %}>{{ status }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-12 col-md-6 col-xl-6">
-              <label for="q" class="form-label text-muted small mb-1">{{ _('Hakusana (viesti)') }}</label>
-              <input type="text" class="form-control" id="q" name="q" value="{{ filters.q or '' }}" placeholder="{{ _('Esim. sähköposti') }}">
-            </div>
-            <div class="col-6 col-md-3">
-              <label for="start_date" class="form-label text-muted small mb-1">{{ _('Alkaen') }}</label>
-              <input type="date" class="form-control" id="start_date" name="start_date" value="{{ filters.start_date or '' }}">
-            </div>
-            <div class="col-6 col-md-3">
-              <label for="end_date" class="form-label text-muted small mb-1">{{ _('Päättyen') }}</label>
-              <input type="date" class="form-control" id="end_date" name="end_date" value="{{ filters.end_date or '' }}">
-            </div>
-            <div class="col-12 col-md-3">
-              <label for="ip" class="form-label text-muted small mb-1">{{ _('IP-osoite') }}</label>
-              <input type="text" class="form-control" id="ip" name="ip" value="{{ filters.ip or '' }}">
-            </div>
-            <div class="col-12 col-md-3">
-              <label for="user_id" class="form-label text-muted small mb-1">{{ _('Käyttäjän ID') }}</label>
-              <input type="text" class="form-control" id="user_id" name="user_id" value="{{ filters.user_id or '' }}">
-            </div>
-            <div class="col-12 col-md-6">
-              <label for="path" class="form-label text-muted small mb-1">{{ _('Polku') }}</label>
-              <input type="text" class="form-control" id="path" name="path" value="{{ filters.path or '' }}" placeholder="/submit">
-            </div>
-            <div class="col-12 d-flex gap-2">
-              <button type="submit" class="btn btn-primary">
-                <i class="fa-solid fa-filter me-2"></i>{{ _('Suodata') }}
-              </button>
-              {% if filters_active %}
-              <a href="{{ url_for('admin_demo.submission_errors_dashboard') }}" class="btn btn-outline-secondary">
-                {{ _('Tyhjennä') }}
-              </a>
-              {% endif %}
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-    <div class="col-12 col-xl-4">
-      <div class="card shadow-sm mb-3">
-        <div class="card-body">
-          <div class="text-muted small text-uppercase">{{ _('Tulokset') }}</div>
-          <div class="h3 mb-1">{{ total_count }}</div>
-          <div class="text-muted">{{ _('Näytetään %(shown)s / %(total)s viimeisimmästä osumasta', shown=logs|length, total=total_count) }}</div>
-          {% if filters_active %}
-          <span class="badge bg-warning text-dark mt-2">{{ _('Suodattimet käytössä') }}</span>
-          {% endif %}
-        </div>
-      </div>
-      {% if error_stats %}
-      <div class="card shadow-sm">
-        <div class="card-header fw-semibold">{{ _('Yleisimmät virhekoodit (hakuun rajattuna)') }}</div>
-        <ul class="list-group list-group-flush">
-          {% for stat in error_stats %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <span>{{ stat.code }}</span>
-            <span class="badge bg-secondary">{{ stat.count }}</span>
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
-      {% endif %}
-    </div>
-  </div>
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Ilmoitusvirheiden suodattimet') }}">
+    <form method="get" action="{{ url_for('admin_demo.submission_errors_dashboard') }}" class="admin-filter-bar">
+      <input type="hidden" name="page" value="1">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
 
-  <div class="table-responsive admin-data-view admin-workspace-table">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>{{ _('Aika') }}</th>
-          <th>{{ _('Virhekoodi') }}</th>
-          <th>{{ _('Viesti') }}</th>
-          <th>{{ _('Status') }}</th>
-          <th>{{ _('IP / Käyttäjä') }}</th>
-          <th>{{ _('Lisätiedot') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for log in logs %}
-        <tr>
-          <td>{{ log.created_at_str or '-' }}</td>
-          <td><span class="badge bg-warning text-dark">{{ log.error_code }}</span></td>
-          <td>{{ log.message }}</td>
-          <td>{{ log.status or '-' }}</td>
-          <td>
-            <div><strong>IP:</strong> {{ log.ip or '-' }}</div>
-            {% if log.user %}
-            <div><strong>ID:</strong> {{ log.user.id or '-' }}</div>
-            <div><strong>Nimi:</strong> {{ log.user.username or '-' }}</div>
-            <div><strong>Rooli:</strong> {{ log.user.role or '-' }}</div>
-            {% endif %}
-          </td>
-          <td>
-            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#error-details-{{ log._id }}" aria-expanded="false">
-              {{ _('Näytä') }}
-            </button>
-            <div class="collapse mt-2" id="error-details-{{ log._id }}">
-              <div class="small text-muted">
-                <strong>{{ _('Lisätiedot') }}:</strong>
-                <pre class="bg-light p-2 rounded">{{ log.extra | tojson(indent=2) }}</pre>
-              </div>
-              <div class="small text-muted">
-                <strong>{{ _('Lomake') }}:</strong>
-                <pre class="bg-light p-2 rounded">{{ log.form_snapshot | tojson(indent=2) }}</pre>
-              </div>
-              <div class="small text-muted">
-                <strong>{{ _('HTTP') }}:</strong>
-                <pre class="bg-light p-2 rounded">{{ {
-                  "path": log.request_path,
-                  "method": log.request_method,
-                  "query": log.query_args,
-                  "referer": log.referer,
-                  "user_agent": log.user_agent
-                } | tojson(indent=2) }}</pre>
-              </div>
-            </div>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="6" class="admin-empty-state">{{ _('Ei kirjattuja virheitä.') }}</td>
-        </tr>
+      <div class="admin-filter-bar__primary">
+        <div class="admin-field">
+          <label for="error_code">{{ _('Virhekoodi') }}</label>
+          <select id="error_code" name="error_code">
+            <option value="">{{ _('Kaikki koodit') }}</option>
+            {% for code in error_codes %}<option value="{{ code }}" {% if filters.error_code == code %}selected{% endif %}>{{ code }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="admin-field">
+          <label for="status">{{ _('HTTP-status') }}</label>
+          <select id="status" name="status">
+            <option value="">{{ _('Kaikki statukset') }}</option>
+            {% for status in status_options %}<option value="{{ status }}" {% if filters.status == status|string %}selected{% endif %}>{{ status }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="admin-field">
+          <label for="q">{{ _('Haku viestistä') }}</label>
+          <input type="search" id="q" name="q" value="{{ filters.q or '' }}" placeholder="{{ _('Esim. sähköposti') }}">
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+      </div>
+
+      <details class="admin-advanced-filters" {% if filters.start_date or filters.end_date or filters.ip or filters.user_id or filters.path %}open{% endif %}>
+        <summary>{{ _('Lisäsuodattimet') }}</summary>
+        <div class="admin-advanced-filters__grid">
+          <div class="admin-field"><label for="start_date">{{ _('Alkaen') }}</label><input type="date" id="start_date" name="start_date" value="{{ filters.start_date or '' }}"></div>
+          <div class="admin-field"><label for="end_date">{{ _('Päättyen') }}</label><input type="date" id="end_date" name="end_date" value="{{ filters.end_date or '' }}"></div>
+          <div class="admin-field"><label for="ip">{{ _('IP-osoite') }}</label><input type="text" id="ip" name="ip" value="{{ filters.ip or '' }}" autocomplete="off"></div>
+          <div class="admin-field"><label for="user_id">{{ _('Käyttäjän ID') }}</label><input type="text" id="user_id" name="user_id" value="{{ filters.user_id or '' }}" autocomplete="off"></div>
+          <div class="admin-field"><label for="path">{{ _('Pyynnön polku') }}</label><input type="text" id="path" name="path" value="{{ filters.path or '' }}" placeholder="/submit"></div>
+        </div>
+      </details>
+    </form>
+
+    {% if active_filters %}
+    <div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">
+      {% for filter in active_filters %}<a class="admin-filter-chip" href="{{ filter.remove_url }}"><span>{{ filter.label }}: {{ filter.value }}</span><i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="visually-hidden">{{ _('Poista suodatin') }}</span></a>{% endfor %}
+      <a class="admin-clear-filters" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a>
+    </div>
+    {% endif %}
+  </section>
+
+  {% if error_stats %}
+  <section class="admin-section-card" aria-labelledby="submission-error-stats-heading">
+    <header class="admin-section-card__header">
+      <div class="admin-section-card__title"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i><h2 id="submission-error-stats-heading">{{ _('Yleisimmät virhekoodit nykyisessä haussa') }}</h2></div>
+    </header>
+    <div class="admin-section-card__body">
+      <div class="admin-fact-list">
+        {% for stat in error_stats %}
+        <div class="admin-fact">
+          <span class="admin-fact__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+          <div class="admin-fact__content"><span>{{ stat.code }}</span><strong>{{ _('%(count)s tapahtumaa', count=stat.count) }}</strong></div>
+        </div>
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="submission-errors-heading">
+    <header class="admin-data-view__header admin-result-summary" aria-live="polite">
+      <strong id="submission-errors-heading">{{ _('Ilmoitusvirheet') }}</strong>
+      <span>
+        {% if filters_active %}<strong>{{ _('%(count)s osumaa', count=filtered_count) }}</strong> · {{ _('yhteensä %(count)s kirjattua virhettä', count=total_count) }}
+        {% else %}{{ _('Näytetään %(start)s–%(end)s / %(count)s virheestä', start=range_start, end=range_end, count=filtered_count) }}{% endif %}
+      </span>
+    </header>
+
+    {% if logs %}
+    <div class="admin-data-view__viewport">
+      <table class="admin-data-view__table">
+        <thead><tr><th scope="col">{{ _('Aika') }}</th><th scope="col">{{ _('Virhekoodi') }}</th><th scope="col">{{ _('Viesti') }}</th><th scope="col">{{ _('HTTP-status') }}</th><th scope="col">{{ _('IP / käyttäjä') }}</th><th scope="col">{{ _('Tekniset tiedot') }}</th></tr></thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td><time>{{ log.created_at_str or '—' }}</time></td>
+            <td><span class="admin-status-badge admin-status-badge--warning">{{ log.error_code or _('Tuntematon') }}</span></td>
+            <td>{{ log.message or '—' }}</td>
+            <td>{% if log.status %}<span class="admin-status-badge">{{ log.status }}</span>{% else %}—{% endif %}</td>
+            <td>
+              <div><strong>{{ _('IP') }}:</strong> <code>{{ log.ip or '—' }}</code></div>
+              {% if log.user %}<div><strong>{{ _('ID') }}:</strong> <code>{{ log.user.id or '—' }}</code></div><div><strong>{{ _('Nimi') }}:</strong> {{ log.user.username or '—' }}</div><div><strong>{{ _('Rooli') }}:</strong> {{ log.user.role or '—' }}</div>{% endif %}
+            </td>
+            <td>
+              <details class="admin-disclosure">
+                <summary>{{ _('Näytä tiedot') }}</summary>
+                <div class="admin-stack">
+                  <div><strong>{{ _('Lisätiedot') }}</strong><pre class="admin-code-block">{{ log.extra | tojson(indent=2) }}</pre></div>
+                  <div><strong>{{ _('Lomakkeen tilannekuva') }}</strong><pre class="admin-code-block">{{ log.form_snapshot | tojson(indent=2) }}</pre></div>
+                  <div><strong>{{ _('HTTP-pyyntö') }}</strong><pre class="admin-code-block">{{ {"path": log.request_path, "method": log.request_method, "query": log.query_args, "referer": log.referer, "user_agent": log.user_agent} | tojson(indent=2) }}</pre></div>
+                </div>
+              </details>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-magnifying-glass" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Ilmoitusvirheitä ei löytynyt') }}</strong><span>{{ _('Kokeile muuttaa suodattimia tai tyhjennä ne.') }}</span></div>
+    {% endif %}
+
+    {{ admin_pagination(
+      current_page,
+      total_pages,
+      per_page=per_page,
+      prev_page=prev_page,
+      next_page=next_page,
+      prev_page_url=prev_page_url,
+      next_page_url=next_page_url,
+      visible_pages=visible_pages,
+      first_page_url=first_page_url,
+      last_page_url=last_page_url,
+      aria_label=_('Ilmoitusvirheiden sivutus')
+    ) }}
+  </section>
+</section>
 {% endblock %}

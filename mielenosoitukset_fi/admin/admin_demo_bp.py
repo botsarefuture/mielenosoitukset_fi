@@ -4893,7 +4893,9 @@ def get_submitter_info(demo_id):
 
 
 @admin_demo_bp.route("/submission_errors", methods=["GET"])
+@login_required
 @admin_required
+@permission_required("VIEW_LOGS")
 def submission_errors_dashboard():
     args = request.args
     filters = []
@@ -4955,23 +4957,43 @@ def submission_errors_dashboard():
 
     query = {"$and": filters} if filters else {}
 
+    page, per_page = parse_admin_pagination(args)
+    filtered_count = mongo.demo_submission_errors.count_documents(query)
+    total_count = mongo.demo_submission_errors.count_documents({})
+    pagination = build_admin_pagination(
+        "admin_demo.submission_errors_dashboard",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args=selected,
+    )
+
     logs_cursor = (
         mongo.demo_submission_errors.find(query)
-        .sort("created_at", DESCENDING)
-        .limit(200)
+        .sort([("created_at", DESCENDING), ("_id", DESCENDING)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
     )
 
     logs = []
     for log in logs_cursor:
         log["_id"] = str(log.get("_id"))
+        log["extra"] = log.get("extra") or {}
+        log["form_snapshot"] = log.get("form_snapshot") or {}
+        for request_field in (
+            "request_path",
+            "request_method",
+            "query_args",
+            "referer",
+            "user_agent",
+        ):
+            log[request_field] = log.get(request_field)
         created = log.get("created_at")
         if isinstance(created, datetime):
             log["created_at_str"] = created.strftime("%d.%m.%Y %H:%M:%S")
         else:
             log["created_at_str"] = "-"
         logs.append(log)
-
-    total_count = mongo.demo_submission_errors.count_documents(query)
 
     pipeline = []
     if query:
@@ -4996,15 +5018,46 @@ def submission_errors_dashboard():
         [status for status in mongo.demo_submission_errors.distinct("status") if status is not None]
     )
 
+    filter_labels = {
+        "error_code": _("Virhekoodi"),
+        "status": _("HTTP-status"),
+        "q": _("Viesti"),
+        "start_date": _("Alkaen"),
+        "end_date": _("Päättyen"),
+        "ip": _("IP-osoite"),
+        "user_id": _("Käyttäjän ID"),
+        "path": _("Polku"),
+    }
+    active_filters = []
+    for key, value in selected.items():
+        remaining = dict(selected)
+        remaining.pop(key, None)
+        remaining["per_page"] = per_page
+        active_filters.append(
+            {
+                "label": filter_labels[key],
+                "value": value,
+                "remove_url": url_for(
+                    "admin_demo.submission_errors_dashboard", **remaining
+                ),
+            }
+        )
+
     return render_template(
         "admin_V2/demonstrations/submission_errors.html",
         logs=logs,
         filters=selected,
-        filters_active=bool(selected),
+        filters_active=bool(active_filters),
+        active_filters=active_filters,
+        clear_filters_url=url_for(
+            "admin_demo.submission_errors_dashboard", per_page=per_page
+        ),
         error_codes=error_codes,
         status_options=status_options,
         total_count=total_count,
+        filtered_count=filtered_count,
         error_stats=error_stats,
+        **pagination,
     )
 
 from flask import Blueprint, request, jsonify

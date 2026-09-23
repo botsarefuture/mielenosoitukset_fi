@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from bson import ObjectId
 
 
@@ -229,6 +231,69 @@ def test_editor_without_accept_permission_cannot_forge_demo_approval(
     assert response.status_code == 302
     updated = db.demonstrations.find_one({"_id": seeded_data["pending_demo_id"]})
     assert updated["approved"] is False
+
+
+def test_submission_errors_require_view_logs_permission(friend_client, db, seeded_data):
+    db.users.update_one(
+        {"_id": seeded_data["friend_id"]},
+        {"$set": {"role": "admin", "global_permissions": ["EDIT_DEMO"]}},
+    )
+
+    denied = friend_client.get("/admin/demo/submission_errors")
+    assert denied.status_code == 403
+
+    dashboard = friend_client.get("/admin/dashboard")
+    assert dashboard.status_code == 200
+    assert "Ilmoitusvirheet" not in dashboard.get_data(as_text=True)
+
+
+def test_submission_errors_use_stable_server_pagination_and_preserve_filters(
+    admin_client, db
+):
+    db.demo_submission_errors.delete_many({})
+    created_at = datetime(2026, 9, 23, 12, 0, 0)
+    documents = []
+    for index in range(45):
+        documents.append(
+            {
+                "_id": ObjectId(f"{index + 1:024x}"),
+                "created_at": created_at,
+                "error_code": "validation_failed",
+                "message": f"Paginated submission error {index:02d}",
+                "status": 400,
+                "ip": "127.0.0.1",
+                "request_path": "/submit",
+            }
+        )
+    db.demo_submission_errors.insert_many(documents)
+
+    response = admin_client.get(
+        "/admin/demo/submission_errors?q=Paginated&per_page=20&page=2"
+    )
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert 'class="admin-page admin-workspace"' in page
+    assert 'class="admin-filter-bar"' in page
+    assert 'class="admin-data-view admin-data-view--scrollable"' in page
+    assert 'class="admin-data-view__footer admin-pagination"' in page
+    assert "45 osumaa" in page
+    assert "yhteensä 45 kirjattua virhettä" in page
+    assert "Sivu 2 / 3" in page
+    assert "Paginated submission error 24" in page
+    assert "Paginated submission error 25" not in page
+    assert "Paginated submission error 04" not in page
+    assert "q=Paginated" in page
+    assert "per_page=20" in page
+
+    overflow = admin_client.get(
+        "/admin/demo/submission_errors?q=Paginated&per_page=20&page=99"
+    )
+    assert overflow.status_code == 200
+    overflow_page = overflow.get_data(as_text=True)
+    assert "Sivu 3 / 3" in overflow_page
+    assert "Paginated submission error 04" in overflow_page
+    assert "Paginated submission error 05" not in overflow_page
 
 
 def test_demo_dashboard_filters_year_text_and_missing_tag(admin_client, db, seeded_data):

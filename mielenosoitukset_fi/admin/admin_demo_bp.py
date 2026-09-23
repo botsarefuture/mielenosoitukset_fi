@@ -4841,6 +4841,7 @@ def manage_magic_tokens():
         "demo_id": (request.args.get("demo_id") or "").strip(),
         "status": (request.args.get("status") or "").strip(),
     }
+    page, per_page = parse_admin_pagination(request.args)
 
     query = {}
     if filters["action"]:
@@ -4854,13 +4855,23 @@ def manage_magic_tokens():
     elif filters["status"] == "revoked":
         query["revoked"] = True
     elif filters["status"] == "used":
-        query["used_at"] = {"$exists": True}
+        query["used_at"] = {"$ne": None}
 
+    total_count = mongo[MAGIC_COLLECTION].count_documents({})
+    filtered_count = mongo[MAGIC_COLLECTION].count_documents(query)
+    pagination = build_admin_pagination(
+        "admin_demo.manage_magic_tokens",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args=filters,
+    )
     tokens = list(
         mongo[MAGIC_COLLECTION]
         .find(query)
-        .sort("created_at", -1)
-        .limit(300)
+        .sort([("created_at", DESCENDING), ("_id", DESCENDING)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
     )
 
     summary_pipeline = []
@@ -4902,12 +4913,43 @@ def manage_magic_tokens():
 
     distinct_actions = sorted(mongo[MAGIC_COLLECTION].distinct("action"))
 
+    active_filters = []
+    filter_labels = {
+        "action": _("Toiminto"),
+        "demo_id": _("Mielenosoituksen ID"),
+        "status": _("Tila"),
+    }
+    status_labels = {
+        "active": _("Aktiivinen"),
+        "revoked": _("Mitätöity"),
+        "used": _("Käytetty"),
+    }
+    for key, value in filters.items():
+        if not value:
+            continue
+        remaining = {**filters, key: "", "per_page": per_page, "page": 1}
+        active_filters.append(
+            {
+                "label": filter_labels[key],
+                "value": status_labels.get(value, value),
+                "remove_url": url_for("admin_demo.manage_magic_tokens", **remaining),
+            }
+        )
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/magic_tokens.html",
         tokens=tokens,
         filters=filters,
         actions=distinct_actions,
         action_counts=action_counts,
+        active_filters=active_filters,
+        clear_filters_url=url_for(
+            "admin_demo.manage_magic_tokens", per_page=per_page
+        ),
+        total_count=total_count,
+        filtered_count=filtered_count,
+        filters_active=bool(active_filters),
+        **pagination,
     )
 
 

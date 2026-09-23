@@ -3597,6 +3597,12 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
   a.admin-workspace-summary-card:hover {
     transform: none;
   }
+
+  :is(.admin-sidebar, .admin-page-hero__action, .admin-section-tabs a, .admin-data-view__table tr, .admin-sticky-actions, .editor-save-bar) {
+    animation: none;
+    scroll-behavior: auto;
+    transition: none;
+  }
 }
 
 .admin-case-summary__filter {

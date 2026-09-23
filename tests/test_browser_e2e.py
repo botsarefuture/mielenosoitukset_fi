@@ -640,6 +640,119 @@ def test_admin_demo_forms_use_shared_theme_and_control_contract(
 
 @pytest.mark.e2e
 @pytest.mark.integration
+def test_admin_workspace_accessibility_matrix(
+    app,
+    db,
+    live_server,
+    browser_page,
+):
+    """Exercise zoom, keyboard, motion, long-copy and overflow contracts."""
+    _seed_database(app, db)
+    # A 1440px desktop exposes 720 CSS pixels at 200% browser zoom.
+    browser_page.set_viewport_size({"width": 720, "height": 900})
+    browser_page.emulate_media(reduced_motion="reduce")
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+
+    reduced_motion = browser_page.locator(".admin-dashboard-shell").evaluate(
+        """shell => {
+            const pulse = shell.querySelector('.pulse');
+            const quickCard = shell.querySelector('.quick-card');
+            return {
+                pulseAnimation: pulse ? getComputedStyle(pulse).animationName : 'none',
+                quickTransition: quickCard ? getComputedStyle(quickCard).transitionDuration : '0s',
+            };
+        }"""
+    )
+    assert reduced_motion["pulseAnimation"] == "none"
+    assert reduced_motion["quickTransition"] == "0s"
+
+    paths = (
+        "/admin/demo/",
+        "/admin/user/",
+        "/admin/organization/",
+        "/admin/demo/create_demo",
+        "/admin/analytics/overall_24h",
+    )
+    long_title = (
+        "Poikkeuksellisen pitkä ylläpitonäkymän otsikko, joka kertoo selkeästi "
+        "mielenosoitusten käyttöoikeuksien ja saavutettavuuden kokonaisuudesta"
+    )
+
+    for path in paths:
+        browser_page.goto(f"{live_server}{path}", wait_until="domcontentloaded")
+        hero = browser_page.locator(".admin-page-hero").first
+        hero.wait_for(state="visible")
+        hero.locator("h1, h2").first.evaluate(
+            "(heading, title) => { heading.textContent = title; }", long_title
+        )
+
+        contract = browser_page.evaluate(
+            """() => {
+                const hero = document.querySelector('.admin-page-hero');
+                const heading = hero.querySelector('h1, h2');
+                const sticky = document.querySelector('.admin-sticky-actions, .editor-save-bar');
+                const dataView = document.querySelector('.admin-data-view__viewport');
+                const viewport = document.documentElement.clientWidth;
+                const heroRect = hero.getBoundingClientRect();
+                const headingRect = heading.getBoundingClientRect();
+                const stickyRect = sticky?.getBoundingClientRect();
+                return {
+                    documentOverflow: document.documentElement.scrollWidth - viewport,
+                    heroLeft: heroRect.left,
+                    heroRight: heroRect.right,
+                    headingLeft: headingRect.left,
+                    headingRight: headingRect.right,
+                    stickyLeft: stickyRect?.left ?? null,
+                    stickyRight: stickyRect?.right ?? null,
+                    dataOverflow: dataView ? getComputedStyle(dataView).overflowX : null,
+                    viewport,
+                };
+            }"""
+        )
+        assert contract["documentOverflow"] <= 1, path
+        assert contract["heroLeft"] >= 0, path
+        assert contract["heroRight"] <= contract["viewport"] + 1, path
+        assert contract["headingLeft"] >= contract["heroLeft"] - 1, path
+        assert contract["headingRight"] <= contract["heroRight"] + 1, path
+        if contract["stickyLeft"] is not None:
+            assert contract["stickyLeft"] >= 0, path
+            assert contract["stickyRight"] <= contract["viewport"] + 1, path
+        if contract["dataOverflow"] is not None:
+            assert contract["dataOverflow"] in ("auto", "scroll"), path
+
+    browser_page.goto(f"{live_server}/admin/demo/create_demo", wait_until="domcontentloaded")
+    browser_page.locator("body").click(position={"x": 700, "y": 880})
+    focus_is_visible = False
+    for _ in range(30):
+        browser_page.keyboard.press("Tab")
+        focus_contract = browser_page.evaluate(
+            """() => {
+                const active = document.activeElement;
+                const style = active ? getComputedStyle(active) : null;
+                return {
+                    insideMain: Boolean(active?.closest('main')),
+                    outlineStyle: style?.outlineStyle ?? 'none',
+                    outlineWidth: parseFloat(style?.outlineWidth ?? '0'),
+                    boxShadow: style?.boxShadow ?? 'none',
+                };
+            }"""
+        )
+        if focus_contract["insideMain"] and (
+            (
+                focus_contract["outlineStyle"] != "none"
+                and focus_contract["outlineWidth"] >= 2
+            )
+            or focus_contract["boxShadow"] != "none"
+        ):
+            focus_is_visible = True
+            break
+    assert focus_is_visible, "keyboard focus must be visibly indicated inside admin main"
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
 @pytest.mark.parametrize("viewport_width", [390, 1440])
 @pytest.mark.parametrize("viewport_height", [640, 844])
 def test_report_error_modal_vertical_fit_and_scroll_contract(

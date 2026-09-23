@@ -3669,6 +3669,53 @@ def _user_has_global_demo_permission(permission_name: str) -> bool:
     return permission_name in getattr(current_user, "global_permissions", [])
 
 
+def _demo_scope_query_for_permission(permission_name: str) -> dict:
+    """Return the demonstration query visible to the current permission scope."""
+    has_full_permissions = getattr(current_user, "has_full_permissions", None)
+    if _user_has_global_demo_permission(permission_name) or (
+        callable(has_full_permissions) and has_full_permissions()
+    ):
+        return {}
+
+    permission_scopes = list(
+        getattr(current_user, "_perm_in", lambda _permission: [])(permission_name)
+    )
+    if "global" in permission_scopes:
+        return {}
+
+    organization_ids = [
+        ObjectId(scope)
+        for scope in permission_scopes
+        if str(scope) != "global" and ObjectId.is_valid(str(scope))
+    ]
+    city_keys = (
+        current_user.scoped_city_keys_for(permission_name)
+        if hasattr(current_user, "scoped_city_keys_for")
+        else []
+    )
+    city_names = [city for city in CITY_LIST if normalize_city_key(city) in city_keys]
+
+    permission_filters = [{"editors": current_user.id}]
+    if organization_ids:
+        permission_filters.append(
+            {
+                "organizers": {
+                    "$elemMatch": {"organization_id": {"$in": organization_ids}}
+                }
+            }
+        )
+    if city_keys:
+        permission_filters.append(
+            {
+                "$or": [
+                    {"city_key": {"$in": city_keys}},
+                    {"city": {"$in": city_names}},
+                ]
+            }
+        )
+    return {"$or": permission_filters}
+
+
 def _user_can_access_demo(demo_id, permission_name: str) -> bool:
     if _user_has_global_demo_permission(permission_name):
         return True
@@ -4537,13 +4584,28 @@ def view_demo_audit_log(demo_id):
         return redirect(url_for("admin_demo.demo_control"))
     _abort_if_demo_forbidden(demo["_id"], "VIEW_DEMO")
 
+    audit_query = {"demo_id": str(demo["_id"])}
+    page, per_page = parse_admin_pagination(request.args)
+    total_count = mongo.demo_audit_logs.count_documents(audit_query)
+    pagination = build_admin_pagination(
+        "admin_demo.view_demo_audit_log",
+        total_count=total_count,
+        page=page,
+        per_page=per_page,
+        query_args={"demo_id": str(demo["_id"])},
+    )
     entries = list(
-        mongo.demo_audit_logs.find({"demo_id": str(demo["_id"])}).sort("timestamp", -1)
+        mongo.demo_audit_logs.find(audit_query)
+        .sort([("timestamp", DESCENDING), ("_id", DESCENDING)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
     )
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/audit_log.html",
         demo=demo,
         entries=entries,
+        total_count=total_count,
+        **pagination,
     )
 
 
@@ -4553,20 +4615,79 @@ def view_demo_audit_log(demo_id):
 @permission_required("VIEW_DEMO")
 def audit_timeline():
     """Central timeline view for latest demo audit log entries."""
-    limit = min(max(int(request.args.get("limit", 200)), 1), 500)
+    default_per_page = 20
+    if not request.args.get("per_page"):
+        try:
+            legacy_limit = int(request.args.get("limit", default_per_page))
+        except (TypeError, ValueError):
+            legacy_limit = default_per_page
+        default_per_page = (
+            20 if legacy_limit <= 20 else 50 if legacy_limit <= 50 else 100
+        )
+    page, per_page = parse_admin_pagination(
+        request.args, default_per_page=default_per_page
+    )
     demo_filter = (request.args.get("demo_id") or "").strip()
     automatic = (request.args.get("automatic") or "all").lower()
+    if automatic not in {"all", "manual", "auto"}:
+        automatic = "all"
 
-    query = {}
-    obj_id = None
+    demo_scope_query = _demo_scope_query_for_permission("VIEW_DEMO")
+    scope_clauses = []
+    if demo_scope_query:
+        accessible_demo_ids = [
+            str(doc["_id"])
+            for doc in mongo.demonstrations.find(demo_scope_query, {"_id": 1})
+        ]
+        scope_clauses.append({"demo_id": {"$in": accessible_demo_ids}})
+
+    filter_clauses = list(scope_clauses)
     if demo_filter:
-        if ObjectId.is_valid(demo_filter):
-            obj_id = ObjectId(demo_filter)
-            query["demo_id"] = str(obj_id)
-        else:
-            query["demo_id"] = demo_filter
+        filter_clauses.append(
+            {"demo_id": str(ObjectId(demo_filter))}
+            if ObjectId.is_valid(demo_filter)
+            else {"demo_id": demo_filter}
+        )
 
-    entries = list(mongo.demo_audit_logs.find(query).sort("timestamp", -1).limit(limit))
+    automatic_clauses = [
+        {"automatic": True},
+        {"details.automatic": True},
+        {"username": {"$regex": r"^\[JOB\]"}},
+        {"actor.username": {"$regex": r"^\[JOB\]"}},
+    ]
+    if automatic == "auto":
+        filter_clauses.append({"$or": automatic_clauses})
+    elif automatic == "manual":
+        filter_clauses.append({"$nor": automatic_clauses})
+
+    def _combine(clauses):
+        if not clauses:
+            return {}
+        if len(clauses) == 1:
+            return clauses[0]
+        return {"$and": clauses}
+
+    scope_query = _combine(scope_clauses)
+    query = _combine(filter_clauses)
+    total_count = mongo.demo_audit_logs.count_documents(scope_query)
+    filtered_count = mongo.demo_audit_logs.count_documents(query)
+    selected = {
+        "demo_id": demo_filter,
+        "automatic": automatic if automatic != "all" else "",
+    }
+    pagination = build_admin_pagination(
+        "admin_demo.audit_timeline",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args=selected,
+    )
+    entries = list(
+        mongo.demo_audit_logs.find(query)
+        .sort([("timestamp", DESCENDING), ("_id", DESCENDING)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
+    )
 
     def _is_automatic(entry):
         if entry.get("automatic"):
@@ -4580,11 +4701,6 @@ def audit_timeline():
         actor = entry.get("actor") or {}
         actor_name = (actor.get("username") or "").strip()
         return actor_name.startswith("[JOB]")
-
-    if automatic == "manual":
-        entries = [e for e in entries if not _is_automatic(e)]
-    elif automatic == "auto":
-        entries = [e for e in entries if _is_automatic(e)]
 
     # Attach demo details for quick reference
     demo_map = {}
@@ -4605,12 +4721,42 @@ def audit_timeline():
             entry["demo_date"] = info.get("date")
         entry["is_automatic"] = _is_automatic(entry)
 
+    active_filters = []
+    filter_labels = {
+        "demo_id": _("Mielenosoituksen ID"),
+        "automatic": _("Toimintotyyppi"),
+    }
+    filter_values = {
+        "demo_id": demo_filter,
+        "automatic": {
+            "manual": _("Vain manuaaliset"),
+            "auto": _("Vain automaattiset"),
+        }.get(automatic, ""),
+    }
+    for key, value in filter_values.items():
+        if not value:
+            continue
+        remaining = dict(selected)
+        remaining.pop(key, None)
+        remaining["per_page"] = per_page
+        active_filters.append(
+            {
+                "label": filter_labels[key],
+                "value": value,
+                "remove_url": url_for("admin_demo.audit_timeline", **remaining),
+            }
+        )
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/audit_timeline.html",
         entries=entries,
-        limit=limit,
         filter_demo_id=demo_filter,
         automatic_filter=automatic,
+        active_filters=active_filters,
+        clear_filters_url=url_for("admin_demo.audit_timeline", per_page=per_page),
+        total_count=total_count,
+        filtered_count=filtered_count,
+        **pagination,
     )
 
 

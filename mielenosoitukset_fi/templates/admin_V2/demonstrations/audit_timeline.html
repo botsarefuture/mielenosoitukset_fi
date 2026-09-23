@@ -1,102 +1,96 @@
 {% extends "admin_base.html" %}
-{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
+
+{% block title %}{{ _('Audit-loki – aikajana') }}{% endblock %}
 
 {% block main_content %}
-<div class="admin-page">
+<section class="admin-page admin-workspace">
   {{ admin_page_hero(
     _('Audit-loki – aikajana'),
-    _('Viimeisimmät merkinnät kaikista mielenosoituksista'),
+    _('Tarkastele kaikkien sinulle näkyvien mielenosoitusten manuaalisia ja automaattisia tapahtumia.'),
     _('Mielenosoitukset'),
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (_('Audit-loki'), none)],
     back_url=url_for('admin_demo.demo_control'),
-    back_label=_('Mielenosoitukset')
+    back_label=_('Mielenosoitukset'),
+    metric_value=total_count,
+    metric_label=_('sinulle näkyvää merkintää')
   ) }}
 
-  <form method="get" class="row g-3 admin-panel">
-    <div class="col-md-5">
-      <label for="demo_id" class="form-label">{{ _('Suodata mielenosoituksen ID:llä') }}</label>
-      <div class="input-group">
-        <input type="text" id="demo_id" name="demo_id" class="form-control" placeholder="6651c..." value="{{ filter_demo_id or '' }}">
-        {% if filter_demo_id %}
-        <a href="{{ url_for('admin_demo.audit_timeline') }}" class="btn btn-outline-secondary">{{ _('Tyhjennä') }}</a>
-        {% endif %}
-        <button class="btn btn-primary" type="submit">{{ _('Suodata') }}</button>
-      </div>
-    </div>
-    <div class="col-md-2">
-      <label for="limit" class="form-label">{{ _('Näytä merkintöjä') }}</label>
-      <input type="number" min="10" max="500" class="form-control" id="limit" name="limit" value="{{ limit }}">
-    </div>
-    <div class="col-md-3">
-      <label for="automatic" class="form-label">{{ _('Toiminnot') }}</label>
-      <select id="automatic" name="automatic" class="form-select">
-        <option value="all" {% if automatic_filter == "all" %}selected{% endif %}>{{ _('Näytä kaikki') }}</option>
-        <option value="manual" {% if automatic_filter == "manual" %}selected{% endif %}>{{ _('Vain manuaaliset') }}</option>
-        <option value="auto" {% if automatic_filter == "auto" %}selected{% endif %}>{{ _('Vain automaattiset') }}</option>
-      </select>
-    </div>
-  </form>
-
-  {% if entries %}
-  <div class="card admin-data-view timeline-card">
-    <div class="card-body">
-      <div class="list-group list-group-flush">
-        {% for entry in entries %}
-        <div class="list-group-item timeline-item">
-          <div class="d-flex justify-content-between flex-wrap gap-2">
-            <div>
-              <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-light text-dark text-uppercase">{{ entry.action }}</span>
-                {% if entry.demo_title %}
-                <strong>{{ entry.demo_title }}</strong>
-                {% else %}
-                <code>{{ entry.demo_id }}</code>
-                {% endif %}
-              </div>
-              <div class="text-muted small mt-1">
-                {{ entry.timestamp.strftime('%d.%m.%Y %H:%M:%S') if entry.timestamp else '' }}
-                · {{ entry.username or '–' }} · {{ entry.ip_address or entry.details.ip or '–' }}
-                {% if entry.is_automatic %} · <span class="badge bg-secondary">{{ _('Automaattinen') }}</span>{% endif %}
-              </div>
-              {% if entry.demo_city or entry.demo_date %}
-              <div class="text-muted small">
-                {{ entry.demo_city or '' }} {{ entry.demo_date or '' }}
-              </div>
-              {% endif %}
-            </div>
-            <div class="d-flex flex-wrap gap-2">
-              {% if entry.demo_id %}
-              <a href="{{ url_for('admin_demo.view_demo_audit_log', demo_id=entry.demo_id) }}" class="btn btn-outline-secondary btn-sm">
-                <i class="fa-solid fa-list me-1"></i>{{ _('Demo-loki') }}
-              </a>
-              {% endif %}
-              {% if entry.details and entry.details.history_id %}
-              <a href="{{ url_for('admin_demo.view_demo_diff', history_id=entry.details.history_id) }}" class="btn btn-outline-primary btn-sm">
-                <i class="fa-solid fa-code-compare me-1"></i>{{ _('Dif') }}
-              </a>
-              {% endif %}
-            </div>
-          </div>
-          <p class="mb-2 mt-3">{{ entry.message or entry.action }}</p>
-          {% if entry.details and entry.details.changed_fields %}
-          <div class="small text-muted mb-1">
-            {{ _('Muokatut kentät:') }} {{ entry.details.changed_fields|join(', ') }}
-          </div>
-          {% endif %}
-          {% if entry.details and entry.details.reason %}
-          <div class="alert alert-warning py-2 mb-0">
-            <strong>{{ _('Syy:') }}</strong> {{ entry.details.reason }}
-          </div>
-          {% endif %}
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Audit-lokin suodattimet') }}">
+    <form method="get" action="{{ url_for('admin_demo.audit_timeline') }}" class="admin-filter-bar">
+      <input type="hidden" name="page" value="1">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="admin-filter-bar__primary admin-filter-bar__primary--search">
+        <div class="admin-field">
+          <label for="demo_id">{{ _('Mielenosoituksen ID') }}</label>
+          <input type="search" id="demo_id" name="demo_id" placeholder="6651c…" value="{{ filter_demo_id or '' }}">
         </div>
+        <div class="admin-field">
+          <label for="automatic">{{ _('Toimintotyyppi') }}</label>
+          <select id="automatic" name="automatic">
+            <option value="all" {% if automatic_filter == 'all' %}selected{% endif %}>{{ _('Kaikki toiminnot') }}</option>
+            <option value="manual" {% if automatic_filter == 'manual' %}selected{% endif %}>{{ _('Vain manuaaliset') }}</option>
+            <option value="auto" {% if automatic_filter == 'auto' %}selected{% endif %}>{{ _('Vain automaattiset') }}</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+      </div>
+    </form>
+
+    {% if active_filters %}
+    <div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">
+      {% for filter in active_filters %}<a class="admin-filter-chip" href="{{ filter.remove_url }}"><span>{{ filter.label }}: {{ filter.value }}</span><i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="visually-hidden">{{ _('Poista suodatin') }}</span></a>{% endfor %}
+      <a class="admin-clear-filters" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="admin-data-view" aria-labelledby="audit-timeline-heading">
+    <header class="admin-data-view__header admin-result-summary" aria-live="polite">
+      <strong id="audit-timeline-heading">{{ _('Audit-aikajana') }}</strong>
+      <span>{% if active_filters %}<strong>{{ _('%(count)s osumaa', count=filtered_count) }}</strong> · {{ _('yhteensä %(count)s sinulle näkyvää merkintää', count=total_count) }}{% else %}{{ _('Näytetään %(start)s–%(end)s / %(count)s merkinnästä', start=range_start, end=range_end, count=filtered_count) }}{% endif %}</span>
+    </header>
+
+    {% if entries %}
+    <div class="admin-data-view__viewport">
+      <div class="admin-audit-stream admin-audit-stream--timeline">
+        {% for entry in entries %}
+        <article class="admin-audit-entry admin-audit-entry--timeline" data-action="{{ entry.action }}">
+          <header class="admin-audit-entry__header">
+            <div>
+              <div class="admin-audit-entry__heading"><span class="admin-status-badge admin-status-badge--info">{{ entry.action }}</span>{% if entry.demo_title %}<h2 class="admin-audit-entry__title">{{ entry.demo_title }}</h2>{% else %}<code>{{ entry.demo_id }}</code>{% endif %}{% if entry.is_automatic %}<span class="admin-status-badge">{{ _('Automaattinen') }}</span>{% endif %}</div>
+              <div class="admin-audit-entry__meta"><time>{{ entry.timestamp.strftime('%d.%m.%Y %H:%M:%S') if entry.timestamp else '—' }}</time><span>{{ entry.username or _('Tuntematon käyttäjä') }}</span><code>{{ entry.ip_address or (entry.details or {}).get('ip') or '—' }}</code>{% if entry.demo_city or entry.demo_date %}<span>{{ entry.demo_city or '' }} {{ entry.demo_date or '' }}</span>{% endif %}</div>
+            </div>
+            <div class="admin-row-actions">
+              {% if entry.demo_id %}<a href="{{ url_for('admin_demo.view_demo_audit_log', demo_id=entry.demo_id) }}" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-list" aria-hidden="true"></i>{{ _('Demo-loki') }}</a>{% endif %}
+              {% if entry.details and entry.details.history_id %}<a href="{{ url_for('admin_demo.view_demo_diff', history_id=entry.details.history_id) }}" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-code-compare" aria-hidden="true"></i>{{ _('Muutosvertailu') }}</a>{% endif %}
+            </div>
+          </header>
+
+          <p class="admin-audit-entry__message">{{ entry.message or entry.action }}</p>
+          {% if entry.details and entry.details.changed_fields %}<div class="admin-field__help">{{ _('Muokatut kentät:') }} {{ entry.details.changed_fields|join(', ') }}</div>{% endif %}
+          {% if entry.details and entry.details.reason %}<div class="admin-audit-note admin-audit-note--warning"><strong>{{ _('Syy:') }}</strong> {{ entry.details.reason }}</div>{% endif %}
+        </article>
         {% endfor %}
       </div>
     </div>
-  </div>
-  {% else %}
-  <div class="alert alert-info">
-    <i class="fa-solid fa-circle-info me-2"></i>{{ _('Audit-merkintöjä ei löytynyt.') }}
-  </div>
-  {% endif %}
-</div>
+    {% else %}
+    <div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-magnifying-glass" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Audit-merkintöjä ei löytynyt') }}</strong><span>{{ _('Kokeile muuttaa suodattimia tai tyhjennä ne.') }}</span></div>
+    {% endif %}
+
+    {{ admin_pagination(
+      current_page,
+      total_pages,
+      per_page=per_page,
+      prev_page=prev_page,
+      next_page=next_page,
+      prev_page_url=prev_page_url,
+      next_page_url=next_page_url,
+      visible_pages=visible_pages,
+      first_page_url=first_page_url,
+      last_page_url=last_page_url,
+      aria_label=_('Audit-aikajanan sivutus')
+    ) }}
+  </section>
+</section>
 {% endblock %}

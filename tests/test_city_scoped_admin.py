@@ -187,6 +187,53 @@ def test_city_scoped_admin_suggestions_hide_other_city_rows_and_counts(
     assert client.get(f"/admin/demo/suggestions/{turku_suggestion_id}").status_code == 403
 
 
+def test_city_scoped_admin_audit_timeline_hides_other_city_rows_and_counts(
+    app, db, seeded_data
+):
+    scoped_user_id = _create_scoped_admin(db, ["helsinki"], ["VIEW_DEMO"])
+    helsinki_demo = db.demonstrations.find_one({"_id": seeded_data["demo_id"]})
+    turku_demo = deepcopy(helsinki_demo)
+    turku_demo["_id"] = ObjectId()
+    turku_demo["title"] = "Turku Audit Secret"
+    turku_demo["city"] = "Turku"
+    turku_demo["city_key"] = normalize_city_key("Turku")
+    turku_demo["slug"] = "turku-audit-secret"
+    turku_demo["editors"] = []
+    db.demonstrations.insert_one(turku_demo)
+
+    db.demo_audit_logs.delete_many({})
+    db.demo_audit_logs.insert_many(
+        [
+            {
+                "demo_id": str(helsinki_demo["_id"]),
+                "timestamp": helsinki_demo.get("updated_at"),
+                "action": "edit_demo",
+                "message": "Helsinki visible audit event",
+                "username": "admin",
+            },
+            {
+                "demo_id": str(turku_demo["_id"]),
+                "timestamp": turku_demo.get("updated_at"),
+                "action": "edit_demo",
+                "message": "Turku hidden audit event",
+                "username": "admin",
+            },
+        ]
+    )
+
+    client = _client_for_user(app, scoped_user_id)
+    response = client.get("/admin/demo/audit/logs")
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "Helsinki visible audit event" in page
+    assert "Turku hidden audit event" not in page
+    assert "1 merkinnästä" in page
+    assert (
+        client.get(f"/admin/demo/{turku_demo['_id']}/audit_log").status_code
+        == 403
+    )
+
+
 def test_city_scoped_admin_suggestions_show_empty_state_outside_scope(app, db, seeded_data):
     scoped_user_id = _create_scoped_admin(
         db,

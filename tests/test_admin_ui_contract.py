@@ -1239,10 +1239,19 @@ def test_stats_and_demo_audits_use_shared_data_cues():
     ).read_text(encoding="utf-8")
 
     for name in pages:
-        assert "<style" not in Path(name).read_text(encoding="utf-8")
+        source = Path(name).read_text(encoding="utf-8")
+        assert "<style" not in source
+        if "audit_" in name:
+            assert "admin-audit-stream" in source
+            assert "admin-audit-entry" in source
+            assert "admin-data-view__header admin-result-summary" in source
+            assert "admin_pagination(" in source
+            assert "list-group" not in source
+            assert 'class="card' not in source
+            assert "bg-light" not in source
     assert "th.sortable::after" in workspace
-    assert '.audit-list .list-group-item[data-action="approve_demo"]' in workspace
-    assert ".timeline-item::before" in workspace
+    assert '.admin-audit-entry[data-action="approve_demo"]' in workspace
+    assert ".admin-audit-entry--timeline::before" in workspace
     assert "var(--admin-workspace-muted)" in workspace
     assert "var(--admin-workspace-border)" in workspace
 

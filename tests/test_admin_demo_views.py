@@ -307,6 +307,51 @@ def test_submission_errors_use_stable_server_pagination_and_preserve_filters(
     assert "Paginated submission error 05" not in overflow_page
 
 
+def test_demo_audit_views_use_stable_server_pagination(admin_client, db, seeded_data):
+    db.demo_audit_logs.delete_many({})
+    timestamp = datetime(2026, 9, 23, 13, 0, 0)
+    demo_id = str(seeded_data["demo_id"])
+    db.demo_audit_logs.insert_many(
+        [
+            {
+                "_id": ObjectId(f"{index + 101:024x}"),
+                "demo_id": demo_id,
+                "timestamp": timestamp,
+                "action": "edit_demo",
+                "message": f"Audit event {index:02d}",
+                "username": "admin",
+            }
+            for index in range(45)
+        ]
+    )
+
+    detail = admin_client.get(
+        f"/admin/demo/{demo_id}/audit_log?per_page=20&page=2"
+    )
+    assert detail.status_code == 200
+    detail_page = detail.get_data(as_text=True)
+    assert 'class="admin-audit-stream"' in detail_page
+    assert 'class="admin-data-view__footer admin-pagination"' in detail_page
+    assert "Sivu 2 / 3" in detail_page
+    assert "Audit event 24" in detail_page
+    assert "Audit event 25" not in detail_page
+    assert "Audit event 04" not in detail_page
+
+    timeline = admin_client.get(
+        "/admin/demo/audit/logs?automatic=manual&per_page=20&page=2"
+    )
+    assert timeline.status_code == 200
+    timeline_page = timeline.get_data(as_text=True)
+    assert 'class="admin-audit-stream admin-audit-stream--timeline"' in timeline_page
+    assert "45 osumaa" in timeline_page
+    assert "yhteensä 45 sinulle näkyvää merkintää" in timeline_page
+    assert "Sivu 2 / 3" in timeline_page
+    assert "Audit event 24" in timeline_page
+    assert "Audit event 25" not in timeline_page
+    assert "automatic=manual" in timeline_page
+    assert "per_page=20" in timeline_page
+
+
 def test_demo_dashboard_filters_year_text_and_missing_tag(admin_client, db, seeded_data):
     db.demonstrations.insert_many(
         [

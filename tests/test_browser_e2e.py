@@ -290,6 +290,8 @@ def test_admin_pages_share_responsive_theme_aware_heroes(
         "/admin/demo/translations",
         "/admin/demo/suggestions",
         f"/admin/demo/suggestions/{seeded_data['suggestion_id']}",
+        f"/admin/demo/edit_history/{seeded_data['demo_id']}",
+        f"/admin/demo/view_demo_diff/{seeded_data['history_id']}",
         "/admin/recu_demo/",
         "/admin/ui-translations",
     )
@@ -444,6 +446,59 @@ def test_admin_demo_suggestion_selection_and_reject_modal_are_accessible(
     )
     browser_page.wait_for_function(
         "document.querySelector('[data-bs-target=\"#rejectSuggestionModal\"]') === document.activeElement"
+    )
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_admin_demo_diff_toggle_and_rollback_modal_are_accessible(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    seeded_data = _seed_database(app, db)
+    db.demo_edit_history.update_one(
+        {"_id": seeded_data["history_id"]},
+        {
+            "$set": {
+                "old_demo": {"title": "Old title", "city": "Helsinki"},
+                "new_demo": {"title": "New title", "city": "Helsinki"},
+            }
+        },
+    )
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+    browser_page.goto(
+        f"{live_server}/admin/demo/view_demo_diff/{seeded_data['history_id']}",
+        wait_until="domcontentloaded",
+    )
+
+    unchanged_row = browser_page.locator(".admin-diff-row--unchanged")
+    toggle = browser_page.locator("#toggleUnchanged")
+    assert unchanged_row.is_hidden()
+    toggle.click()
+    assert toggle.get_attribute("aria-expanded") == "true"
+    assert unchanged_row.is_visible()
+    assert browser_page.evaluate(
+        "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+    )
+
+    trigger = browser_page.locator('[data-bs-target="#rollbackModal"]')
+    trigger.focus()
+    trigger.click()
+    modal = browser_page.locator("#rollbackModal")
+    modal.wait_for(state="visible")
+    modal.locator(".btn-close").click()
+    browser_page.wait_for_function(
+        "document.querySelector('#rollbackModal')?.getAttribute('aria-hidden') === 'true'"
+    )
+    browser_page.wait_for_function(
+        "document.querySelector('[data-bs-target=\"#rollbackModal\"]') === document.activeElement"
     )
 
 

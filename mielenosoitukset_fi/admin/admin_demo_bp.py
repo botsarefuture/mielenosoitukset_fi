@@ -709,8 +709,21 @@ def demo_edit_history(demo_id):
         return redirect(url_for("admin_demo.demo_control"))
     _abort_if_demo_forbidden(demo_data["_id"], "EDIT_DEMO")
 
+    history_query = {"demo_id": str(demo_data["_id"])}
+    page, per_page = parse_admin_pagination(request.args)
+    total_count = mongo.demo_edit_history.count_documents(history_query)
+    pagination = build_admin_pagination(
+        "admin_demo.demo_edit_history",
+        total_count=total_count,
+        page=page,
+        per_page=per_page,
+        query_args={"demo_id": str(demo_data["_id"])},
+    )
     history = list(
-        mongo.demo_edit_history.find({"demo_id": str(demo_data["_id"])}).sort("edited_at", -1)
+        mongo.demo_edit_history.find(history_query)
+        .sort([("edited_at", -1), ("_id", -1)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
     )
     demo = Demonstration.from_dict(demo_data)
     demo_name = demo.title
@@ -719,7 +732,9 @@ def demo_edit_history(demo_id):
         history=history,
         demo_id=str(demo_data["_id"]),
         demo_name=demo_name,
-        current_demo_data=demo_data
+        current_demo_data=demo_data,
+        total_count=total_count,
+        **pagination,
     )
 
 
@@ -996,6 +1011,8 @@ def view_demo_diff(history_id):
     from markupsafe import Markup
 
     # Fetch the history entry
+    if not BsonObjectId.is_valid(history_id):
+        abort(404)
     hist = mongo.demo_edit_history.find_one({"_id": BsonObjectId(history_id)})
     if not hist:
         abort(404)
@@ -1032,7 +1049,9 @@ def view_demo_diff(history_id):
         for tag, i1, i2, j1, j2 in sm.get_opcodes():
             if tag == "equal":
                 for line in a_lines[i1:i2]:
-                    html.append(f'<span class="diff-unchanged">{line}</span>')
+                    html.append(
+                        f'<span class="diff-unchanged">{Markup.escape(line)}</span>'
+                    )
             elif tag == "replace":
                 if (i2 - i1) == (j2 - j1):
                     for idx in range(i2 - i1):
@@ -1041,37 +1060,66 @@ def view_demo_diff(history_id):
                         html.append('</span>')
                 else:
                     for line in a_lines[i1:i2]:
-                        html.append(f'<span class="diff-remove">{line}</span>')
+                        html.append(
+                            f'<span class="diff-remove">{Markup.escape(line)}</span>'
+                        )
                     for line in b_lines[j1:j2]:
-                        html.append(f'<span class="diff-add">{line}</span>')
+                        html.append(
+                            f'<span class="diff-add">{Markup.escape(line)}</span>'
+                        )
             elif tag == "delete":
                 for line in a_lines[i1:i2]:
-                    html.append(f'<span class="diff-remove">{line}</span>')
+                    html.append(
+                        f'<span class="diff-remove">{Markup.escape(line)}</span>'
+                    )
             elif tag == "insert":
                 for line in b_lines[j1:j2]:
-                    html.append(f'<span class="diff-add">{line}</span>')
+                    html.append(
+                        f'<span class="diff-add">{Markup.escape(line)}</span>'
+                    )
         return Markup("".join(html))
 
     # Compute diffs for each field
     diffs = {}
     all_fields = set(old.keys()) | set(new.keys())
-    for field in all_fields:
+    for field in sorted(all_fields):
         old_val = old.get(field, "")
         new_val = new.get(field, "")
-        if old_val != new_val:
-            diffs[field] = {
-                "old": old_val,
-                "new": new_val,
-                "diff_html": html_diff(old_val, new_val)
-            }
+        changed = old_val != new_val
+        diffs[field] = {
+            "old": old_val,
+            "new": new_val,
+            "changed": changed,
+            "diff_html": (
+                html_diff(old_val, new_val)
+                if changed
+                else Markup(
+                    f'<span class="diff-unchanged">'
+                    f'{Markup.escape(str(new_val))}</span>'
+                )
+            ),
+        }
+
+    demo_data = _find_demo_with_alias_support(hist.get("demo_id")) or {}
+    demo_name = (
+        demo_data.get("title")
+        or new.get("title")
+        or old.get("title")
+        or _("Mielenosoitus")
+    )
+    changed_count = sum(1 for diff in diffs.values() if diff["changed"])
 
     return render_template(
         "admin/demonstrations/demo_diff.html",
         diffs=diffs,
+        changed_count=changed_count,
+        unchanged_count=len(diffs) - changed_count,
         edited_by=hist.get("edited_by"),
         edited_at=hist.get("edited_at"),
         demo_id=hist.get("demo_id"),
-        history_id=history_id
+        demo_name=demo_name,
+        history_id=history_id,
+        rollbacked=bool(hist.get("rollbacked_from")),
     )
 @admin_demo_bp.route("/rollback_demo/<history_id>", methods=["POST"])
 @login_required

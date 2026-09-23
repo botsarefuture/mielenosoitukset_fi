@@ -116,6 +116,31 @@ def test_admin_inline_style_debt_cannot_grow_without_review():
     assert actual_attributes == style_attribute_allowlist
 
 
+def test_active_legacy_demo_workflows_use_shared_admin_contracts():
+    root = Path("mielenosoitukset_fi/templates/admin")
+    contracts = {
+        "suggestions_list.html": ("admin_page_hero", "admin-data-view"),
+        "suggestion_view.html": ("admin_page_hero", "admin-data-view", "admin-modal"),
+        "demonstrations/edit_history.html": (
+            "admin_page_hero",
+            "admin-data-view",
+            "admin_pagination",
+        ),
+        "demonstrations/demo_diff.html": (
+            "admin_page_hero",
+            "admin-data-view",
+            "admin-modal",
+        ),
+    }
+
+    for relative, required_markers in contracts.items():
+        source = (root / relative).read_text(encoding="utf-8")
+        assert "<style" not in source, relative
+        assert "style=" not in source, relative
+        for marker in required_markers:
+            assert marker in source, f"{relative}: missing {marker}"
+
+
 def test_admin_theme_is_applied_before_styles_and_controls_color_scheme():
     base = Path("mielenosoitukset_fi/templates/admin_base.html").read_text(
         encoding="utf-8"

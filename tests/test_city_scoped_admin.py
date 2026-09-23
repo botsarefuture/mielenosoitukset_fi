@@ -69,6 +69,26 @@ def test_city_admin_can_open_command_center_and_edit_only_for_assigned_city(
     assert client.get(f"/admin/demo/edit_history/{helsinki_demo_id}").status_code == 200
     assert client.get(f"/admin/demo/edit_history/{turku_demo_id}").status_code == 403
 
+    assert (
+        client.get(
+            f"/admin/demo/view_demo_diff/{seeded_data['history_id']}"
+        ).status_code
+        == 200
+    )
+    turku_history_id = db.demo_edit_history.insert_one(
+        {
+            "demo_id": str(turku_demo_id),
+            "edited_by": str(scoped_user_id),
+            "edited_at": turku_demo.get("updated_at"),
+            "old_demo": {"title": "Turku before"},
+            "new_demo": {"title": "Turku after"},
+        }
+    ).inserted_id
+    assert (
+        client.get(f"/admin/demo/view_demo_diff/{turku_history_id}").status_code
+        == 403
+    )
+
 
 def test_city_admin_can_open_create_demo_form(app, db, seeded_data):
     scoped_user_id = _create_scoped_admin(

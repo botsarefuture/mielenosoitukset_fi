@@ -126,6 +126,81 @@ def test_demo_suggestions_status_filter_counts_and_page_size_are_preserved(
     assert "Näytetään 1–5 / 5 ehdotuksesta" in overflow_page
 
 
+def test_demo_edit_history_uses_stable_server_pagination(
+    admin_client, db, seeded_data
+):
+    seeded_history = db.demo_edit_history.find_one(
+        {"_id": seeded_data["history_id"]}
+    )
+    inserted_ids = []
+    for index in range(25):
+        inserted_ids.append(
+            db.demo_edit_history.insert_one(
+                {
+                    "_id": ObjectId(),
+                    "demo_id": str(seeded_data["demo_id"]),
+                    "edited_by": str(seeded_data["admin_id"]),
+                    "edited_at": seeded_history["edited_at"],
+                    "old_demo": {"title": f"Version {index:02d}"},
+                    "new_demo": {"title": f"Version {index + 1:02d}"},
+                }
+            ).inserted_id
+        )
+
+    first = admin_client.get(
+        f"/admin/demo/edit_history/{seeded_data['demo_id']}?per_page=20&page=1"
+    )
+    second = admin_client.get(
+        f"/admin/demo/edit_history/{seeded_data['demo_id']}?per_page=20&page=2"
+    )
+
+    assert first.status_code == second.status_code == 200
+    first_page = first.get_data(as_text=True)
+    second_page = second.get_data(as_text=True)
+    assert 'class="admin-page admin-workspace"' in first_page
+    assert 'class="admin-data-view admin-data-view--scrollable"' in first_page
+    assert 'class="admin-data-view__footer admin-pagination"' in first_page
+    assert "Näytetään 1–20 / 26 versiosta" in first_page
+    assert "Sivu 2 / 2" in second_page
+    assert "Näytetään 21–26 / 26 versiosta" in second_page
+    assert str(inserted_ids[-1]) in first_page
+    assert str(inserted_ids[-1]) not in second_page
+    assert str(inserted_ids[0]) in second_page
+
+
+def test_demo_diff_escapes_stored_content_and_uses_shared_workflow(
+    admin_client, db, seeded_data
+):
+    payload = '<img src=x onerror=alert(1)>'
+    db.demo_edit_history.update_one(
+        {"_id": seeded_data["history_id"]},
+        {
+            "$set": {
+                "old_demo": {"title": "Stable title", "description": "Safe line"},
+                "new_demo": {
+                    "title": "Stable title",
+                    "description": f"Safe line\n{payload}",
+                },
+            }
+        },
+    )
+
+    response = admin_client.get(
+        f"/admin/demo/view_demo_diff/{seeded_data['history_id']}"
+    )
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert 'class="admin-page admin-workspace"' in page
+    assert 'class="admin-data-view admin-data-view--scrollable"' in page
+    assert 'id="previewModal"' in page
+    assert 'id="rollbackModal"' in page
+    assert 'class="admin-diff-row--unchanged" hidden' in page
+    assert payload not in page
+    assert "&lt;img src=x onerror=alert(1)&gt;" in page
+    assert admin_client.get("/admin/demo/view_demo_diff/not-an-id").status_code == 404
+
+
 def test_editor_without_accept_permission_cannot_forge_demo_approval(
     friend_client, db, seeded_data
 ):

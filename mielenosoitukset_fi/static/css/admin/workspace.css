@@ -599,6 +599,81 @@ body {
   color: var(--admin-workspace-blue-dark);
 }
 
+/* Version-history diffs use the same data-view surface in every theme. */
+.admin-diff-table {
+  min-width: 46rem;
+}
+
+.admin-diff-field {
+  width: 15rem;
+}
+
+.admin-diff-field > * {
+  display: block;
+}
+
+.admin-diff-field .admin-status-badge {
+  width: max-content;
+  margin-top: .45rem;
+}
+
+.admin-diff-block {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: .8rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.admin-diff-block > :is(.diff-line, .diff-add, .diff-remove, .diff-unchanged) {
+  display: block;
+  padding: .3rem .45rem;
+  border-radius: .45rem;
+}
+
+.admin-diff-block .diff-add {
+  color: var(--admin-workspace-success);
+  background: var(--admin-workspace-success-soft);
+}
+
+.admin-diff-block .diff-remove {
+  color: var(--admin-workspace-danger);
+  background: var(--admin-workspace-danger-soft);
+  text-decoration: line-through;
+}
+
+.admin-diff-block .diff-unchanged {
+  color: var(--admin-workspace-muted);
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-diff-block .diff-line :is(.diff-add, .diff-remove, .diff-unchanged) {
+  display: inline;
+  padding: .1rem .16rem;
+  border-radius: .25rem;
+}
+
+.admin-diff-preview {
+  display: grid;
+  gap: .75rem;
+}
+
+.admin-diff-preview h3 {
+  margin: 0 0 .45rem;
+  font-size: .85rem;
+}
+
+.admin-diff-preview pre {
+  margin: 0;
+  color: var(--admin-workspace-text);
+  font: inherit;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .admin-status-badge {
   display: inline-flex;
   gap: .35rem;

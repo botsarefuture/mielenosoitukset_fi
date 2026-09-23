@@ -76,7 +76,7 @@ def test_demo_suggestions_use_shared_collection_and_review_contract(
     assert 'class="admin-form-page admin-page"' in detail_page
     assert 'class="admin-data-view admin-data-view--scrollable"' in detail_page
     assert 'class="form-check-input admin-selection-checkbox field-checkbox"' in detail_page
-    assert 'id="rejectSuggestionModal"' in detail_page
+    assert 'class="modal fade admin-modal" id="rejectSuggestionModal"' in detail_page
 
 
 def test_demo_suggestions_status_filter_counts_and_page_size_are_preserved(

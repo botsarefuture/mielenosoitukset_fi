@@ -70,7 +70,7 @@
       <div class="admin-form-section__body"><button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectSuggestionModal"><i class="fas fa-ban" aria-hidden="true"></i>{{ _('Hylkää ehdotus') }}</button></div>
     </section>
 
-    <div class="modal fade" id="rejectSuggestionModal" tabindex="-1" aria-labelledby="rejectSuggestionTitle" aria-describedby="rejectSuggestionDescription" aria-hidden="true">
+    <div class="modal fade admin-modal" id="rejectSuggestionModal" tabindex="-1" aria-labelledby="rejectSuggestionTitle" aria-describedby="rejectSuggestionDescription" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title" id="rejectSuggestionTitle">{{ _('Hylkää ehdotus') }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div><div class="modal-body"><p id="rejectSuggestionDescription">{{ _('Haluatko varmasti hylätä ehdotuksen? Ehdotettuja muutoksia ei julkaista.') }}</p></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button><form method="post" action="{{ url_for('admin_demo.suggestion_status_update', suggestion_id=suggestion._id) }}"><input type="hidden" name="status" value="rejected"><button type="submit" class="btn btn-danger"><i class="fas fa-ban" aria-hidden="true"></i>{{ _('Hylkää ehdotus') }}</button></form></div></div></div>
     </div>
   {% else %}

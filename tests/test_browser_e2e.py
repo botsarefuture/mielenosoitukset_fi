@@ -659,14 +659,17 @@ def test_admin_workspace_accessibility_matrix(
         """shell => {
             const pulse = shell.querySelector('.pulse');
             const quickCard = shell.querySelector('.quick-card');
+            const sidebar = document.querySelector('.admin-layout > .admin-sidebar');
             return {
                 pulseAnimation: pulse ? getComputedStyle(pulse).animationName : 'none',
                 quickTransition: quickCard ? getComputedStyle(quickCard).transitionDuration : '0s',
+                sidebarTransition: sidebar ? getComputedStyle(sidebar).transitionDuration : '0s',
             };
         }"""
     )
     assert reduced_motion["pulseAnimation"] == "none"
     assert reduced_motion["quickTransition"] == "0s"
+    assert reduced_motion["sidebarTransition"] == "0s"
 
     paths = (
         "/admin/demo/",

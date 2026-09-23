@@ -3598,7 +3598,7 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
     transform: none;
   }
 
-  :is(.admin-sidebar, .admin-page-hero__action, .admin-section-tabs a, .admin-data-view__table tr, .admin-sticky-actions, .editor-save-bar) {
+  :is(.admin-page-hero__action, .admin-section-tabs a, .admin-data-view__table tr, .admin-sticky-actions, .editor-save-bar) {
     animation: none;
     scroll-behavior: auto;
     transition: none;
@@ -4346,4 +4346,14 @@ th.sortable.desc::after {
   }
   .admin-page-hero__action { width: 100%; }
   .admin-data-view__footer .users-pagination-label { display: none; }
+}
+
+/* This must follow the mobile offcanvas rule above so its transition cannot
+   win the cascade when reduced motion is requested. */
+@media (prefers-reduced-motion: reduce) {
+  .admin-layout > .admin-sidebar {
+    animation: none;
+    scroll-behavior: auto;
+    transition: none;
+  }
 }

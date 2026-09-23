@@ -134,6 +134,8 @@ def test_admin_shell_uses_shared_css_without_inline_style_debt():
         ".admin-footer",
     ):
         assert marker in workspace
+    assert "@media (max-width: 767.98px)" in workspace
+    assert "width: min(88vw, 320px)" in workspace
 
 
 def test_active_legacy_demo_workflows_use_shared_admin_contracts():

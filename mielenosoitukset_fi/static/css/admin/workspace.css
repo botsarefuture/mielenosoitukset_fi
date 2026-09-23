@@ -146,6 +146,12 @@ body {
   background: var(--admin-workspace-surface-muted);
 }
 
+@media (max-width: 767.98px) {
+  .admin-sidebar {
+    width: min(88vw, 320px);
+  }
+}
+
 @media (min-width: 768px) {
   .admin-sidebar {
     position: sticky;

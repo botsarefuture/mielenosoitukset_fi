@@ -3,12 +3,24 @@ from copy import deepcopy
 from datetime import datetime, date
 
 from bson.objectid import ObjectId
-from flask import Blueprint, current_app, jsonify, render_template, request, redirect, url_for
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.utils.flashing import flash_message
 
-from mielenosoitukset_fi.utils.classes import RecurringDemonstration, Organizer, RepeatSchedule
+from mielenosoitukset_fi.utils.classes import (
+    RecurringDemonstration,
+    RepeatSchedule,
+)
 from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import (
@@ -18,6 +30,10 @@ from mielenosoitukset_fi.utils.wrappers import (
 )
 
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
+from mielenosoitukset_fi.utils.admin.organizers import (
+    collect_admin_organizers,
+    linkable_admin_organization_ids,
+)
 from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo
 from mielenosoitukset_fi.utils.demo_slugs import (
     demo_slug_is_available,
@@ -63,7 +79,53 @@ def log_request_info():
     )
 
 
-def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None):
+def _linkable_organization_ids(permission_name, *, existing_demo=None):
+    """Return recurring-editor organization ids allowed for the current user."""
+    return linkable_admin_organization_ids(
+        current_user,
+        permission_name,
+        existing_demo=existing_demo,
+    )
+
+
+def _available_organizer_organizations(permission_name, *, existing_demo=None):
+    allowed_ids = _linkable_organization_ids(
+        permission_name, existing_demo=existing_demo
+    )
+    query = {} if allowed_ids is None else {"_id": {"$in": list(allowed_ids)}}
+    return list(
+        mongo.organizations.find(
+            query, {"name": 1, "email": 1, "website": 1}
+        ).sort("name", 1)
+    )
+
+
+def _validate_organizer_organization_scope(
+    organizers, permission_name, *, existing_demo=None
+):
+    allowed_ids = _linkable_organization_ids(
+        permission_name, existing_demo=existing_demo
+    )
+    if allowed_ids is None:
+        return
+    submitted_ids = {
+        organizer.get("organization_id")
+        for organizer in organizers
+        if organizer.get("organization_id")
+    }
+    if not submitted_ids.issubset(allowed_ids):
+        abort(403)
+
+
+def _render_recu_demo_form(
+    *,
+    form_action,
+    title,
+    submit_button_text,
+    organizer_permission,
+    demo=None,
+    organizer_existing_demo=None,
+):
     """Render the shared recurring-demonstration form."""
     child_demos = []
     child_counts = {"total": 0, "future": 0, "shown": 0}
@@ -104,7 +166,10 @@ def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None)
         title=title,
         submit_button_text=submit_button_text,
         city_list=CITY_LIST,
-        all_organizations=list(mongo.organizations.find()),
+        all_organizations=_available_organizer_organizations(
+            organizer_permission,
+            existing_demo=organizer_existing_demo,
+        ),
         translation_locales=_supported_demo_translation_locales(),
         translation_language_names=_translation_language_names(),
         default_demo_language=(
@@ -310,71 +375,10 @@ def _cancel_children_for_break_dates(parent_id, break_dates):
 
 
 def _collect_organizers(form, existing_organizers=None):
-    """Collect organizer cards even if client-side indexes become sparse."""
-    organizers = []
-    existing_by_organization_id = {
-        str(organizer.get("organization_id")): organizer
-        for organizer in (existing_organizers or [])
-        if organizer.get("organization_id")
-    }
-    existing_by_record_id = {
-        str(organizer.get("_id")): organizer
-        for organizer in (existing_organizers or [])
-        if organizer.get("_id")
-    }
-    organizer_indexes = sorted(
-        {
-            int(match.group(1))
-            for key in form.keys()
-            if (match := re.match(r"organizer_name_(\d+)$", key))
-        }
-        | {
-            int(match.group(1))
-            for key in form.keys()
-            if (match := re.match(r"organizer_id_(\d+)$", key))
-        }
+    """Collect organizer cards through the shared admin form contract."""
+    return collect_admin_organizers(
+        form, existing_organizers=existing_organizers
     )
-
-    for index in organizer_indexes:
-        name = form.get(f"organizer_name_{index}")
-        organization_id = form.get(f"organizer_id_{index}")
-        organizer_record_id = form.get(f"organizer_record_id_{index}")
-        if not name and not organization_id:
-            continue
-
-        existing = deepcopy(
-            existing_by_organization_id.get(str(organization_id))
-            or existing_by_record_id.get(str(organizer_record_id))
-            or {}
-        )
-        organizer = Organizer(
-            name=name,
-            email=form.get(f"organizer_email_{index}"),
-            website=form.get(f"organizer_website_{index}"),
-            organization_id=organization_id,
-            is_private=form.get(f"organizer_is_private_{index}") == "on",
-            show_name_public=form.get(f"organizer_show_name_{index}") == "on",
-            show_email_public=form.get(f"organizer_show_email_{index}") == "on",
-        )
-        organizer_data = organizer.to_dict()
-        if existing:
-            for field_name, default_value in (
-                ("is_private", False),
-                ("show_name_public", True),
-                ("show_email_public", True),
-            ):
-                if field_name not in existing and organizer_data.get(field_name) == default_value:
-                    organizer_data.pop(field_name, None)
-            for field_name in ("logo", "url"):
-                if field_name not in existing and organizer_data.get(field_name) is None:
-                    organizer_data.pop(field_name, None)
-        for metadata_field in ("_id", "url", "logo"):
-            if metadata_field in existing:
-                organizer_data[metadata_field] = existing[metadata_field]
-        existing.update(organizer_data)
-        organizers.append(existing)
-
-    return organizers
 
 
 def _renderable_recu_demo_guard():
@@ -573,6 +577,7 @@ def create_recu_demo():
         form_action=url_for("admin_recu_demo.create_recu_demo"),
         title="Luo toistuva mielenosoitus",
         submit_button_text="Luo",
+        organizer_permission="CREATE_RECURRING_DEMO",
     )
 
 
@@ -613,6 +618,8 @@ def edit_recu_demo(demo_id):
         form_action=url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id),
         title="Muokkaa toistuvaa mielenosoitusta",
         submit_button_text="Vahvista muokkaus",
+        organizer_permission="EDIT_RECURRING_DEMO",
+        organizer_existing_demo=demo_data,
     )
 
 
@@ -687,9 +694,19 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         )
         return redirect(request.url)
 
-    organizers = _collect_organizers(
-        request.form,
-        existing_organizers=(existing_demo or {}).get("organizers", []),
+    try:
+        organizers = _collect_organizers(
+            request.form,
+            existing_organizers=(existing_demo or {}).get("organizers", []),
+        )
+    except ValueError as error:
+        flash_message("Virhe: %(error)s", "error", error=str(error))
+        return redirect(request.url)
+
+    _validate_organizer_organization_scope(
+        organizers,
+        "EDIT_RECURRING_DEMO" if is_edit else "CREATE_RECURRING_DEMO",
+        existing_demo=existing_demo,
     )
 
     # Recurrence / repeat schedule
@@ -812,14 +829,6 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         demonstration_data["approved"] = bool(
             existing_demo and existing_demo.get("approved")
         )
-
-    # Ensure organizer IDs are ObjectId if present
-    for org in demonstration_data["organizers"]:
-        if org.get("organization_id"):
-            try:
-                org["organization_id"] = ObjectId(org["organization_id"])
-            except Exception:
-                org["organization_id"] = None
 
     try:
         if is_edit:

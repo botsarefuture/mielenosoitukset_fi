@@ -139,9 +139,13 @@ def test_admin_shell_uses_shared_css_without_inline_style_debt():
 
 
 def test_demo_organizer_editor_uses_shared_accessible_contract():
-    form = Path(
-        "mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html"
-    ).read_text(encoding="utf-8")
+    forms = [
+        Path(path).read_text(encoding="utf-8")
+        for path in (
+            "mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html",
+            "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html",
+        )
+    ]
     editor = Path(
         "mielenosoitukset_fi/templates/admin_V2/demonstrations/_organizer_editor.html"
     ).read_text(encoding="utf-8")
@@ -152,11 +156,12 @@ def test_demo_organizer_editor_uses_shared_accessible_contract():
         "mielenosoitukset_fi/static/css/admin/workspace.css"
     ).read_text(encoding="utf-8")
 
-    assert "import organizer_editor" in form
-    assert "organizer_editor(demo, all_organizations)" in form
-    assert "admin_organizer_editor.js" in form
-    assert "createNewOrganizer" not in form
-    assert "current_user.organizations" not in form
+    for form in forms:
+        assert "import organizer_editor" in form
+        assert "organizer_editor(demo, all_organizations)" in form
+        assert "admin_organizer_editor.js" in form
+        assert "createNewOrganizer" not in form
+        assert "current_user.organizations" not in form
     assert "onclick=" not in editor
     assert "admin-organizer-editor" in editor
     assert "data-add-linked-organizer" in editor

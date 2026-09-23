@@ -757,19 +757,24 @@ def test_admin_workspace_accessibility_matrix(
 @pytest.mark.e2e
 @pytest.mark.integration
 @pytest.mark.parametrize("viewport_width", [390, 1440])
+@pytest.mark.parametrize(
+    "editor_path",
+    ["/admin/demo/create_demo", "/admin/recu_demo/create_recu_demo"],
+)
 def test_admin_organizer_editor_supports_mixed_accessible_rows(
     app,
     db,
     live_server,
     browser_page,
     viewport_width,
+    editor_path,
 ):
     _seed_database(app, db)
     browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
     browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
     _submit_login_form(browser_page, "admin", "AdminPass1!")
     _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
-    browser_page.goto(f"{live_server}/admin/demo/create_demo", wait_until="domcontentloaded")
+    browser_page.goto(f"{live_server}{editor_path}", wait_until="domcontentloaded")
     browser_page.wait_for_load_state("networkidle")
 
     editor = browser_page.locator("[data-organizer-editor]")

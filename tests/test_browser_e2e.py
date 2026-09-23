@@ -813,6 +813,45 @@ def test_admin_organizer_editor_supports_mixed_accessible_rows(
 @pytest.mark.e2e
 @pytest.mark.integration
 @pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_background_job_detail_uses_shared_responsive_theme_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    _seed_database(app, db)
+    jobs = app.extensions["job_manager"].list_jobs()
+    assert jobs
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+
+    for theme in ("light", "dark"):
+        browser_page.goto(
+            f"{live_server}/admin/background-jobs/{jobs[0]['key']}",
+            wait_until="domcontentloaded",
+        )
+        browser_page.evaluate(
+            """theme => {
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+                document.documentElement.classList.toggle('light', theme === 'light');
+                document.documentElement.setAttribute('data-bs-theme', theme);
+            }""",
+            theme,
+        )
+        browser_page.locator(".admin-job-detail__layout").wait_for(state="visible")
+        assert browser_page.locator(".admin-page-hero").is_visible()
+        assert browser_page.locator(".admin-data-view").count() == 2
+        assert browser_page.evaluate(
+            "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+        )
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
 @pytest.mark.parametrize("viewport_height", [640, 844])
 def test_report_error_modal_vertical_fit_and_scroll_contract(
     app,

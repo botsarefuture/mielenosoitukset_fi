@@ -1371,9 +1371,31 @@ def test_background_job_detail_uses_shared_code_and_disclosure_components():
     ).read_text(encoding="utf-8")
 
     assert "<style" not in template
+    assert "style=" not in template
     assert template.count('class="admin-disclosure') == 3
     assert template.count('class="admin-code-block') == 3
     assert "metadata-block" not in template
+    assert "admin_page_hero, admin_pagination" in template
+    assert 'class="jobs-container admin-page"' in template
+    assert "admin-section-card" in template
+    assert template.count("admin-data-view") >= 2
+    assert "admin-result-summary" in template
+    assert "admin-empty-state" in template
+    assert "admin-status-badge" in template
+    assert "admin_pagination(" in template
+    for legacy_class in (
+        "card shadow-sm",
+        "list-group",
+        "bg-success",
+        "text-muted",
+        "row g-",
+        "col-lg-",
+    ):
+        assert legacy_class not in template
+    assert "build_admin_pagination(" in Path(
+        "mielenosoitukset_fi/admin/admin_bp.py"
+    ).read_text(encoding="utf-8")
+    assert ".admin-job-detail__layout" in workspace
     assert ".admin-disclosure > summary:focus-visible" in workspace
 
 
@@ -1390,6 +1412,9 @@ def test_background_job_collection_uses_shared_workspace_components():
     job_manager = Path(
         "mielenosoitukset_fi/background_jobs/manager.py"
     ).read_text(encoding="utf-8")
+    job_macros = Path(
+        "mielenosoitukset_fi/templates/admin_V2/_background_job_macros.html"
+    ).read_text(encoding="utf-8")
 
     assert "<style" not in template
     assert "style=" not in template
@@ -1399,7 +1424,8 @@ def test_background_job_collection_uses_shared_workspace_components():
     assert "admin-filter-bar" in template
     assert "admin-data-view__footer admin-pagination" in template
     assert "admin-empty-state" in template
-    assert "admin-status-badge" in template
+    assert "import interval_text, job_status_badge" in template
+    assert "admin-status-badge" in job_macros
     assert "admin-code-block" in template
     assert "btn-modern" not in template
     assert ".admin-jobs__layout" in workspace

@@ -159,6 +159,11 @@
           <label for="jobRunFilter">{{ _('Rajaa ajokerralla') }}</label>
           <select id="jobRunFilter" name="run_id" class="form-select">
             <option value="">{{ _('Kaikki ajokerrat') }}</option>
+            {% if selected_run %}
+              <option value="{{ selected_run.id }}" selected>
+                {{ selected_run.started_at|datetimeformat('%d.%m.%Y %H:%M:%S') }} · {{ selected_run.status|default(_('tuntematon')) }}
+              </option>
+            {% endif %}
             {% for run in runs %}
               <option value="{{ run.id }}" {% if selected_run_id == run.id %}selected{% endif %}>
                 {{ run.started_at|datetimeformat('%d.%m.%Y %H:%M:%S') if run.started_at else run.id }}

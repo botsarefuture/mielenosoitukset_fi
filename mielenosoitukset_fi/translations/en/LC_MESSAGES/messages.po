@@ -5,7 +5,6 @@
 #
 # Translators:
 # Verso, 2024
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
@@ -4328,7 +4327,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:61
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:113
 msgid "Ei viestiä"
-msgstr ""
+msgstr "No message"
 
 #: mielenosoitukset_fi/admin/admin_case_bp.py:190
 msgid "Tukipyyntö: {subject}"
@@ -4577,7 +4576,7 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:417
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:55
 msgid "tuntematon"
-msgstr ""
+msgstr "unknown"
 
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:452
 msgid "Seuraavat tapaukset suljettiin ja linkitettiin tähän: %(cases)s."
@@ -5364,7 +5363,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_base.html:300
 #: mielenosoitukset_fi/templates/header.html:932
 msgid "Hallintapaneeli"
-msgstr ""
+msgstr "Admin panel"
 
 #: mielenosoitukset_fi/templates/admin_base.html:307
 msgid "Kaupunkiadminin näkymä"
@@ -5462,7 +5461,7 @@ msgstr "Site analytics"
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:52
 #: mielenosoitukset_fi/templates/admin_base.html:417
 msgid "Taustatyöt"
-msgstr ""
+msgstr "Background jobs"
 
 #: mielenosoitukset_fi/templates/admin_V2/developer/requests.html:7
 #: mielenosoitukset_fi/templates/admin_V2/developer/requests.html:10
@@ -7231,135 +7230,135 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:16
 #: mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html:38
 msgid "Ei asetettu"
-msgstr ""
+msgstr "Not set"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:24
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:73
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:39
 msgid "Käynnissä"
-msgstr ""
+msgstr "Running"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:24
 msgid "Pois käytöstä"
-msgstr ""
+msgstr "Disabled"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:27
 msgid "Manuaaliajo sallittu"
-msgstr ""
+msgstr "Manual run allowed"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:29
 msgid "Manuaaliajo estetty"
-msgstr ""
+msgstr "Manual run disabled"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:37
 msgid "Ajoituksen tiedot"
-msgstr ""
+msgstr "Schedule details"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:39
 msgid "Tunniste"
-msgstr ""
+msgstr "Identifier"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:41
 msgid "Ajoitus"
-msgstr ""
+msgstr "Schedule"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:43
 msgid "Seuraava ajo"
-msgstr ""
+msgstr "Next run"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:48
 msgid "Ei ajastusta"
-msgstr ""
+msgstr "Not scheduled"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:51
 msgid "Viimeisin ajo"
-msgstr ""
+msgstr "Latest run"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:55
 msgid "tila"
-msgstr ""
+msgstr "status"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:57
 msgid "Ei ajettu vielä"
-msgstr ""
+msgstr "Not run yet"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:60
 msgid "Viimeisin viesti"
-msgstr ""
+msgstr "Latest message"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:68
 msgid "Nopeat toiminnot"
-msgstr ""
+msgstr "Quick actions"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:71
 msgid "Aja työ nyt"
-msgstr ""
+msgstr "Run job now"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:83
 msgid "Lokitapahtumat"
-msgstr ""
+msgstr "Log entries"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:84
 msgid "kirjausta"
-msgstr ""
+msgstr "entries"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:88
 msgid "Rivejä / sivu"
-msgstr ""
+msgstr "Rows per page"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:92
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:37
 #: mielenosoitukset_fi/templates/admin_V2/status.html:14
 msgid "Päivitä"
-msgstr ""
+msgstr "Update"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:105
 msgid "Kesto"
-msgstr ""
+msgstr "Duration"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:105
 msgid "Laukaisi"
-msgstr ""
+msgstr "Triggered by"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:113
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:67
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:110
 msgid "Viesti"
-msgstr ""
+msgstr "Message"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:117
 msgid "Näytä metadata"
-msgstr ""
+msgstr "Show metadata"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:123
 msgid "Näytä virheen stack trace"
-msgstr ""
+msgstr "Show error stack trace"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:131
 msgid "Ei kirjauksia valitulla suodatuksella."
-msgstr ""
+msgstr "No entries match the selected filters."
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:136
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:213
 #: mielenosoitukset_fi/templates/admin_V2/cities/index.html:145
 msgid "Näytetään"
-msgstr ""
+msgstr "Showing"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:158
 msgid "Demomuutokset tämän työn toimesta"
-msgstr ""
+msgstr "Demonstration changes made by this job"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:159
 msgid "viimeisintä merkintää"
-msgstr ""
+msgstr "latest entries"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:165
 msgid "Rajaa ajokerralla"
-msgstr ""
+msgstr "Filter by run"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:167
 msgid "Kaikki ajokerrat"
-msgstr ""
+msgstr "All runs"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:176
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/audit_timeline.html:23
@@ -7374,32 +7373,32 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/dashboard.html:50
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:56
 msgid "Suodata"
-msgstr ""
+msgstr "Filter"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:189
 msgid "Demo"
-msgstr ""
+msgstr "Demonstration"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:196
 msgid "Muuttuneet kentät"
-msgstr ""
+msgstr "Changed fields"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:201
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:104
 msgid "Ei tietoa"
-msgstr ""
+msgstr "No information"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:207
 msgid "Avaa muokkaushistoria"
-msgstr ""
+msgstr "Open edit history"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:212
 msgid "Näytä lisätiedot"
-msgstr ""
+msgstr "Show details"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:219
 msgid "Ei demomuutoksia valitulla hakuehdolla."
-msgstr ""
+msgstr "No demonstration changes match the selected filter."
 
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:32
 msgid "Seuraa ajoja, päivitä aikatauluja ja käynnistä tehtäviä käsin."

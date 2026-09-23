@@ -33,6 +33,10 @@ class _JobManagerStub:
         self.calls.append({"limit": limit, "skip": skip})
         return self.runs[skip : skip + limit]
 
+    def get_run(self, job_key, run_id):
+        assert job_key == "example_job"
+        return next((run for run in self.runs if run["id"] == run_id), None)
+
 
 def test_background_job_detail_uses_shared_server_pagination(
     app, admin_client
@@ -84,3 +88,26 @@ def test_background_job_detail_normalizes_legacy_page_size(app, admin_client):
     assert "Ei lokitapahtumia" in html
     assert "Sivu 1 / 1" in html
 
+
+def test_background_job_detail_keeps_selected_run_visible_off_page(
+    app, admin_client
+):
+    now = utcnow()
+    runs = [
+        {
+            "id": f"run-{index}",
+            "started_at": now - timedelta(minutes=index),
+            "status": "success",
+        }
+        for index in range(25)
+    ]
+    manager = _JobManagerStub(runs)
+    app.extensions["job_manager"] = manager
+
+    response = admin_client.get(
+        "/admin/background-jobs/example_job?page=2&per_page=20&run_id=run-1"
+    )
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '<option value="run-1" selected>' in html

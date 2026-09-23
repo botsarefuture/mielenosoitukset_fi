@@ -1273,6 +1273,11 @@ def background_job_detail(job_key):
         limit=per_page,
         skip=pagination["slice_start"],
     )
+    selected_run = None
+    if selected_run_id and not any(
+        run.get("id") == selected_run_id for run in runs
+    ):
+        selected_run = job_manager.get_run(job_key, selected_run_id)
 
     changes_query: Dict[str, Any] = {"details.job_key": job_key}
     if selected_run_id:
@@ -1301,6 +1306,7 @@ def background_job_detail(job_key):
         can_manage=current_user.has_permission("MANAGE_BACKGROUND_JOBS"),
         change_logs=change_logs,
         selected_run_id=selected_run_id,
+        selected_run=selected_run,
         **pagination,
     )
 

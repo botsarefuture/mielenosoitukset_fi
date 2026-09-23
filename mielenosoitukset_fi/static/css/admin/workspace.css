@@ -2423,13 +2423,28 @@ a.admin-workspace-summary-card[aria-current="page"] {
   .org-detail-summary-icon
 ) {
   box-sizing: border-box;
-  display: inline-grid;
+  display: inline-flex;
   width: 2.75rem;
   height: 2.75rem;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
   align-self: center;
   border-radius: .8rem;
   font-size: 1rem;
+  text-align: center;
+}
+
+:is(
+  .admin-workspace-summary-icon,
+  .users-summary-icon,
+  .orgs-summary-icon,
+  .org-detail-summary-icon
+) > i {
+  display: inline-block;
+  flex: 0 0 1.25em;
+  width: 1.25em;
+  line-height: 1;
+  text-align: center;
 }
 
 :is(
@@ -2911,12 +2926,10 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
 }
 
 .city-admin-shell .city-admin-overview .admin-workspace-summary-icon {
-  display: grid;
   flex: 0 0 auto;
   width: 2.75rem;
   height: 2.75rem;
   margin: 0;
-  place-items: center;
   border-radius: .8rem;
   font-size: 1rem;
 }

@@ -4,7 +4,7 @@
 {% block title %}{{ _('Yhteensä katselukerrat viimeisen 24 tunnin aikana') }}{% endblock %}
 
 {% block main_content %}
-<section class="admin-page">
+<section class="admin-page admin-analytics">
   {{ admin_page_hero(
     _('Yhteensä katselukerrat viimeisen 24 tunnin aikana'),
     _('Tarkastele kaikkien mielenosoitusten katselukertoja valitulla aikavälijaolla.'),
@@ -13,109 +13,242 @@
     back_url=url_for('admin.stats'),
     back_label=_('Tilastot')
   ) }}
-  <form method="get" class="admin-filter-bar">
-  <div class="admin-field">
-  <label for="interval">{{ _('Jaa aikavälit:') }}</label>
-  <select class="form-select" id="interval" name="interval" onchange="this.form.submit()">
-    <option value="1" {% if interval == 1 %}selected{% endif %}>1 min</option>
-    <option value="5" {% if interval == 5 %}selected{% endif %}>5 min</option>
-    <option value="15" {% if interval == 15 %}selected{% endif %}>15 min</option>
-    <option value="30" {% if interval == 30 %}selected{% endif %}>30 min</option>
-    <option value="60" {% if interval == 60 %}selected{% endif %}>1 tunti</option>
-    <option value="120" {% if interval == 120 %}selected{% endif %}>2 tuntia</option>
-  </select>
-  </div>
-</form>
 
-  <div class="admin-panel">
-    <canvas id="totalViewsChart"></canvas>
-  </div>
+  <section class="admin-section-card" aria-labelledby="overall-chart-title">
+    <header class="admin-section-card__header">
+      <div class="admin-section-card__title">
+        <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+        <div>
+          <h2 id="overall-chart-title">{{ _('Katselukerrat aikajanalla') }}</h2>
+          <p class="admin-analytics__description">{{ _('Kaavio päivittyy automaattisesti minuutin välein. Tarkat arvot ovat saatavilla myös taulukkona.') }}</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="admin-section-card__body admin-analytics__chart-body">
+      <form method="get" action="{{ url_for('admin.analytics_overall_24h') }}" class="admin-filter-bar">
+        <div class="admin-filter-bar__primary admin-filter-bar__primary--search">
+          <div class="admin-field">
+            <label for="interval">{{ _('Aikavälijako') }}</label>
+            <select class="form-select" id="interval" name="interval" aria-describedby="interval-help">
+              <option value="1" {% if interval == 1 %}selected{% endif %}>{{ _('1 minuutti') }}</option>
+              <option value="5" {% if interval == 5 %}selected{% endif %}>{{ _('5 minuuttia') }}</option>
+              <option value="15" {% if interval == 15 %}selected{% endif %}>{{ _('15 minuuttia') }}</option>
+              <option value="30" {% if interval == 30 %}selected{% endif %}>{{ _('30 minuuttia') }}</option>
+              <option value="60" {% if interval == 60 %}selected{% endif %}>{{ _('1 tunti') }}</option>
+              <option value="120" {% if interval == 120 %}selected{% endif %}>{{ _('2 tuntia') }}</option>
+            </select>
+            <p class="admin-field__help" id="interval-help">{{ _('Valitse, kuinka tarkkoihin jaksoihin viimeiset 24 tuntia ryhmitellään.') }}</p>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-filter" aria-hidden="true"></i>
+            {{ _('Päivitä jako') }}
+          </button>
+        </div>
+      </form>
+
+      <p class="admin-analytics__status admin-field__help" role="status" aria-live="polite" data-chart-status></p>
+      <p class="field-error" role="alert" data-chart-error hidden>{{ _('Analytiikan päivitys epäonnistui. Näytetään viimeksi ladatut tiedot.') }}</p>
+
+      <div class="admin-analytics__chart-frame" data-chart-frame{% if not chart_labels %} hidden{% endif %}>
+        <canvas id="totalViewsChart" role="img" aria-labelledby="overall-chart-title" aria-describedby="overall-chart-description"></canvas>
+      </div>
+      <p id="overall-chart-description" class="visually-hidden">{{ _('Viivakaavio kaikkien mielenosoitusten katselukerroista viimeisen 24 tunnin aikana.') }}</p>
+
+      <div class="admin-empty-state" data-chart-empty{% if chart_labels %} hidden{% endif %}>
+        <i class="admin-empty-state__icon fa-solid fa-chart-line" aria-hidden="true"></i>
+        <strong class="admin-empty-state__title">{{ _('Ei katselutietoja') }}</strong>
+        <p>{{ _('Katselukerrat ilmestyvät tähän, kun mielenosoituksia on tarkasteltu.') }}</p>
+      </div>
+
+      <details class="admin-disclosure admin-analytics__data-disclosure">
+        <summary>{{ _('Näytä arvot taulukkona') }}</summary>
+        <div class="admin-data-view__viewport admin-analytics__data-scroll">
+          <table class="admin-data-view__table">
+            <thead>
+              <tr>
+                <th scope="col">{{ _('Ajankohta') }}</th>
+                <th scope="col">{{ _('Katselukerrat') }}</th>
+              </tr>
+            </thead>
+            <tbody data-chart-table-body>
+            {% for label in chart_labels %}
+              <tr><td>{{ label }}</td><td>{{ chart_data[loop.index0] }}</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
 </section>
 {% endblock %}
+
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const ctx = document.getElementById('totalViewsChart').getContext('2d');
+(() => {
+  const chartElement = document.getElementById('totalViewsChart');
+  if (!chartElement || typeof Chart === 'undefined') return;
+
   const interval = {{ interval | int }};
-  const isDark = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+  const apiUrl = {{ url_for('admin.analytics_overall_24h_api') | tojson }};
+  const statusElement = document.querySelector('[data-chart-status]');
+  const errorElement = document.querySelector('[data-chart-error]');
+  const emptyElement = document.querySelector('[data-chart-empty]');
+  const chartFrame = document.querySelector('[data-chart-frame]');
+  const tableBody = document.querySelector('[data-chart-table-body]');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let labels = {{ chart_labels | tojson }};
+  let values = {{ chart_data | tojson }};
+  let chartInstance = null;
+  let activeRequest = null;
 
-  const chartColors = {
-    text: isDark ? '#eee' : '#222',
-    grid: isDark ? '#444' : '#ccc',
-    background: isDark ? '#1e1e2f' : '#fff',
-    line: isDark ? '#ff79c6' : '#d6336c',
-  };
+  function getAdminChartColors() {
+    const styles = getComputedStyle(document.documentElement);
+    return {
+      text: styles.getPropertyValue('--admin-chart-text').trim(),
+      grid: styles.getPropertyValue('--admin-chart-grid').trim(),
+      surface: styles.getPropertyValue('--admin-chart-surface').trim(),
+      primary: styles.getPropertyValue('--admin-chart-primary').trim(),
+      primarySoft: styles.getPropertyValue('--admin-chart-primary-soft').trim()
+    };
+  }
 
-  let chartInstance;
+  function chartOptions(colors) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: !reducedMotion.matches,
+      scales: {
+        x: {
+          title: { display: true, text: {{ _('Aika (tunnit:minuutit)') | tojson }}, color: colors.text },
+          ticks: { color: colors.text, maxTicksLimit: 12 },
+          grid: { color: colors.grid }
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: {{ _('Katselukerrat') | tojson }}, color: colors.text },
+          ticks: { color: colors.text },
+          grid: { color: colors.grid }
+        }
+      },
+      plugins: {
+        legend: { labels: { color: colors.text } },
+        tooltip: {
+          backgroundColor: colors.surface,
+          titleColor: colors.text,
+          bodyColor: colors.text,
+          borderColor: colors.grid,
+          borderWidth: 1,
+          mode: 'index',
+          intersect: false
+        }
+      },
+      interaction: { mode: 'nearest', axis: 'x', intersect: false }
+    };
+  }
 
-  function renderChart(labels, data) {
+  function renderChart() {
+    const colors = getAdminChartColors();
+    const hasData = labels.length > 0;
+    chartFrame.hidden = !hasData;
+    emptyElement.hidden = hasData;
+    if (!hasData) {
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = null;
+      return;
+    }
     if (chartInstance) chartInstance.destroy();
-    chartInstance = new Chart(ctx, {
+    chartInstance = new Chart(chartElement.getContext('2d'), {
       type: 'line',
       data: {
-        labels: labels,
+        labels,
         datasets: [{
-          label: '{{ _("Katselukerrat yhteensä") }}',
-          data: data,
+          label: {{ _('Katselukerrat yhteensä') | tojson }},
+          data: values,
           fill: true,
-          borderColor: chartColors.line,
-          backgroundColor: chartColors.line + '66',
+          borderColor: colors.primary,
+          backgroundColor: colors.primarySoft,
           tension: 0.3,
-          pointRadius: 0,
+          pointRadius: 0
         }]
       },
-      options: {
-        responsive: true,
-        scales: {
-          x: {
-            title: { display: true, text: '{{ _("Aika (tunnit:minuutit)") }}' },
-            ticks: { color: chartColors.text },
-            grid: { color: chartColors.grid },
-            maxTicksLimit: 12,
-          },
-          y: {
-            beginAtZero: true,
-            title: { display: true, text: '{{ _("Näyttökerrat") }}' },
-            ticks: { color: chartColors.text },
-            grid: { color: chartColors.grid },
-          }
-        },
-        plugins: {
-          legend: {
-            labels: { color: chartColors.text }
-          },
-          tooltip: {
-            backgroundColor: chartColors.background,
-            titleColor: chartColors.text,
-            bodyColor: chartColors.text,
-            mode: 'index',
-            intersect: false,
-          }
-        },
-        interaction: {
-          mode: 'nearest',
-          axis: 'x',
-          intersect: false,
-        }
-      }
+      options: chartOptions(colors)
     });
   }
 
-  function fetchAnalytics() {
-    fetch(`/admin/api/analytics/overall_24h?interval=${interval}`)
-      .then(res => res.json())
-      .then(({ labels, data }) => {
-        renderChart(labels, data);
-      })
-      .catch(err => {
-        console.error("❌ Failed to fetch analytics:", err);
-      });
+  function renderTable() {
+    const fragment = document.createDocumentFragment();
+    labels.forEach((label, index) => {
+      const row = document.createElement('tr');
+      const labelCell = document.createElement('td');
+      const valueCell = document.createElement('td');
+      labelCell.textContent = label;
+      valueCell.textContent = String(values[index] ?? 0);
+      row.append(labelCell, valueCell);
+      fragment.append(row);
+    });
+    tableBody.replaceChildren(fragment);
   }
 
-  // Initial chart
-  fetchAnalytics();
+  function applyAdminChartTheme() {
+    if (!chartInstance) return;
+    const colors = getAdminChartColors();
+    const dataset = chartInstance.data.datasets[0];
+    dataset.borderColor = colors.primary;
+    dataset.backgroundColor = colors.primarySoft;
+    chartInstance.options.scales.x.title.color = colors.text;
+    chartInstance.options.scales.x.ticks.color = colors.text;
+    chartInstance.options.scales.x.grid.color = colors.grid;
+    chartInstance.options.scales.y.title.color = colors.text;
+    chartInstance.options.scales.y.ticks.color = colors.text;
+    chartInstance.options.scales.y.grid.color = colors.grid;
+    chartInstance.options.plugins.legend.labels.color = colors.text;
+    chartInstance.options.plugins.tooltip.backgroundColor = colors.surface;
+    chartInstance.options.plugins.tooltip.titleColor = colors.text;
+    chartInstance.options.plugins.tooltip.bodyColor = colors.text;
+    chartInstance.options.plugins.tooltip.borderColor = colors.grid;
+    chartInstance.update('none');
+  }
 
-  // Auto-refresh every 1 minute (60,000 ms)
-  setInterval(fetchAnalytics, 60000);
+  async function fetchAnalytics() {
+    if (activeRequest) activeRequest.abort();
+    const request = new AbortController();
+    activeRequest = request;
+    errorElement.hidden = true;
+    try {
+      const url = new URL(apiUrl, window.location.origin);
+      url.searchParams.set('interval', String(interval));
+      const response = await fetch(url, { headers: { Accept: 'application/json' }, signal: request.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const payload = await response.json();
+      if (!Array.isArray(payload.labels) || !Array.isArray(payload.data) || payload.labels.length !== payload.data.length) {
+        throw new Error('Invalid analytics response');
+      }
+      labels = payload.labels;
+      values = payload.data;
+      renderChart();
+      renderTable();
+      statusElement.textContent = {{ _('Analytiikka päivitetty.') | tojson }};
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+      errorElement.hidden = false;
+      statusElement.textContent = '';
+    } finally {
+      if (activeRequest === request) activeRequest = null;
+    }
+  }
+
+  renderChart();
+  document.addEventListener('admin:themechange', applyAdminChartTheme);
+  const refreshTimer = window.setInterval(() => {
+    if (!document.hidden) fetchAnalytics();
+  }, 60000);
+  window.addEventListener('pagehide', () => {
+    window.clearInterval(refreshTimer);
+    if (activeRequest) activeRequest.abort();
+  }, { once: true });
+})();
 </script>
 {% endblock %}

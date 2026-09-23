@@ -768,6 +768,7 @@ def test_analytics_pages_use_shared_theme_aware_components():
     pages = (
         Path("mielenosoitukset_fi/templates/admin_V2/analytics.html"),
         Path("mielenosoitukset_fi/templates/admin_V2/per_demo_analytics.html"),
+        Path("mielenosoitukset_fi/templates/admin_V2/overall_24h_analytics.html"),
     )
 
     assert "css/admin/analytics.css" in base
@@ -792,6 +793,21 @@ def test_analytics_pages_use_shared_theme_aware_components():
     assert "admin-analytics__data-disclosure" in per_demo
     assert "admin-data-view__table" in per_demo
     assert "prefers-reduced-motion: reduce" in per_demo
+
+    overall = pages[2].read_text(encoding="utf-8")
+    assert 'class="admin-page admin-analytics"' in overall
+    assert "admin-filter-bar__primary" in overall
+    assert "admin-analytics__data-disclosure" in overall
+    assert "admin-data-view__table" in overall
+    assert "data-chart-empty" in overall
+    assert "response.ok" in overall
+    assert "AbortController" in overall
+    assert "textContent" in overall
+    assert "replaceChildren" in overall
+    assert "onchange=" not in overall
+    assert "isDark" not in overall
+    for hardcoded_color in ("#eee", "#222", "#444", "#ccc", "#1e1e2f", "#ff79c6", "#d6336c"):
+        assert hardcoded_color not in overall
 
 
 def test_case_and_merge_pages_use_canonical_hero_navigation():

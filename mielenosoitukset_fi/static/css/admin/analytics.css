@@ -55,6 +55,10 @@ html.dark {
   line-height: 1.5;
 }
 
+.admin-analytics__status {
+  min-height: 1.15rem;
+}
+
 .admin-analytics__chart-frame {
   position: relative;
   width: 100%;

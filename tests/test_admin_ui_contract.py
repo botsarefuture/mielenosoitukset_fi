@@ -138,6 +138,38 @@ def test_admin_shell_uses_shared_css_without_inline_style_debt():
     assert "width: min(88vw, 320px)" in workspace
 
 
+def test_demo_organizer_editor_uses_shared_accessible_contract():
+    form = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html"
+    ).read_text(encoding="utf-8")
+    editor = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/_organizer_editor.html"
+    ).read_text(encoding="utf-8")
+    script = Path(
+        "mielenosoitukset_fi/static/js/admin_organizer_editor.js"
+    ).read_text(encoding="utf-8")
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+    assert "import organizer_editor" in form
+    assert "organizer_editor(demo, all_organizations)" in form
+    assert "admin_organizer_editor.js" in form
+    assert "createNewOrganizer" not in form
+    assert "current_user.organizations" not in form
+    assert "onclick=" not in editor
+    assert "admin-organizer-editor" in editor
+    assert "data-add-linked-organizer" in editor
+    assert "data-add-freeform-organizer" in editor
+    assert "data-remove-organizer" in editor
+    assert "admin-check-row" in editor
+    assert "innerHTML" not in script
+    assert "textContent" in script
+    assert "CSS.escape" in script
+    assert ".admin-organizer-editor" in workspace
+    assert ".admin-organizer-row" in workspace
+
+
 def test_active_legacy_demo_workflows_use_shared_admin_contracts():
     root = Path("mielenosoitukset_fi/templates/admin")
     contracts = {

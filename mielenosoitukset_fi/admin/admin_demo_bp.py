@@ -1,6 +1,5 @@
 import sys
 import re
-import bson
 import hmac
 import secrets
 from flask import abort, current_app
@@ -3032,13 +3031,11 @@ def create_demo():
         # Handle form submission for creating a new demonstration
         return handle_demo_form(request, is_edit=False)
 
-    # Fetch available organizations for the form
-    organizations = mongo.organizations.find()
+    organizations = _available_organizer_organizations("CREATE_DEMO")
 
     # Render the demonstration creation form
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/form.html",
-        organizations=organizations,
         all_organizations=organizations,
         form_action=url_for("admin_demo.create_demo"),
         title="Luo mielenosoitus",
@@ -3103,7 +3100,9 @@ def edit_demo(demo_id):
         title=_("Muokkaa mielenosoitusta"),
         submit_button_text=_("Tallenna muutokset"),
         city_list=CITY_LIST,
-        all_organizations=mongo.organizations.find(),
+        all_organizations=_available_organizer_organizations(
+            "EDIT_DEMO", existing_demo=demo_data
+        ),
         case_id=case_id,
         demo_edit_access=demo_edit_access,
         show_demo_access_panel=show_demo_access_panel,
@@ -3625,7 +3624,9 @@ def edit_demo_with_token(token):
         title=_("Muokkaa mielenosoitusta"),
         submit_button_text=_("Tallenna muutokset"),
         city_list=CITY_LIST,
-        all_organizations=mongo.organizations.find(),
+        all_organizations=_available_organizer_organizations(
+            "EDIT_DEMO", existing_demo=demo_data, token_edit=True
+        ),
         edit_demo_with_token=True,
         demo_edit_access=demo_edit_access,
         show_demo_access_panel=False,
@@ -3719,6 +3720,73 @@ def _user_can_create_recurring_demo() -> bool:
     )
 
 
+def _linkable_organization_ids(permission_name, *, existing_demo=None, token_edit=False):
+    """Return allowed organization ids, or ``None`` for unrestricted access.
+
+    Organization-scoped administrators may only add profiles in which they hold
+    the relevant demonstration permission. City-scoped and token editors may
+    preserve an existing linked organizer but cannot forge a new organization
+    relationship. Global administrators retain the existing unrestricted view.
+    """
+    existing_ids = {
+        ObjectId(str(organizer.get("organization_id")))
+        for organizer in (existing_demo or {}).get("organizers", [])
+        if isinstance(organizer, dict)
+        and organizer.get("organization_id")
+        and ObjectId.is_valid(str(organizer.get("organization_id")))
+    }
+    if token_edit:
+        return existing_ids
+
+    has_full_permissions = getattr(current_user, "has_full_permissions", None)
+    if _user_has_global_demo_permission(permission_name) or (
+        callable(has_full_permissions) and has_full_permissions()
+    ):
+        return None
+
+    membership_ids = {
+        membership.organization_id
+        for membership in getattr(current_user, "memberships", [])
+        if permission_name in membership.permissions
+    }
+    return existing_ids | membership_ids
+
+
+def _available_organizer_organizations(
+    permission_name, *, existing_demo=None, token_edit=False
+):
+    allowed_ids = _linkable_organization_ids(
+        permission_name,
+        existing_demo=existing_demo,
+        token_edit=token_edit,
+    )
+    query = {} if allowed_ids is None else {"_id": {"$in": list(allowed_ids)}}
+    return list(
+        mongo.organizations.find(
+            query, {"name": 1, "email": 1, "website": 1}
+        ).sort("name", 1)
+    )
+
+
+def _validate_organizer_organization_scope(
+    organizers, permission_name, *, existing_demo=None, token_edit=False
+):
+    allowed_ids = _linkable_organization_ids(
+        permission_name,
+        existing_demo=existing_demo,
+        token_edit=token_edit,
+    )
+    if allowed_ids is None:
+        return
+    submitted_ids = {
+        organizer.get("organization_id")
+        for organizer in organizers
+        if organizer.get("organization_id")
+    }
+    if not submitted_ids.issubset(allowed_ids):
+        abort(403)
+
+
 def handle_demo_form(
     request,
     is_edit=False,
@@ -3742,8 +3810,26 @@ def handle_demo_form(
 
 
     """
-    # Collect demonstration data from the form
-    demonstration_data = collect_demo_data(request)
+    existing_demo = (
+        mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+        if is_edit and demo_id
+        else None
+    )
+    try:
+        demonstration_data = collect_demo_data(
+            request,
+            existing_organizers=(existing_demo or {}).get("organizers", []),
+        )
+    except ValueError as error:
+        flash_message("Virhe: %(error)s", "error", error=str(error))
+        return redirect(request.url)
+
+    _validate_organizer_organization_scope(
+        demonstration_data["organizers"],
+        "EDIT_DEMO" if is_edit else "CREATE_DEMO",
+        existing_demo=existing_demo,
+        token_edit=token_edit,
+    )
     case_id = request.args.get("case_id") or None
 
     # Older integrations may not submit the newly exposed editor fields. In
@@ -3773,7 +3859,7 @@ def handle_demo_form(
 
     approval_scope_demo = demonstration_data
     if is_edit and demo_id:
-        approval_scope_demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+        approval_scope_demo = existing_demo
     can_change_approval = has_demo_approval_permission(
         current_user, approval_scope_demo
     )
@@ -3788,7 +3874,7 @@ def handle_demo_form(
         
     try:
         if is_edit and demo_id:
-            prev_demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+            prev_demo = existing_demo
             if prev_demo:
                 # The token route has already validated the signed bearer token,
                 # registry record, expiry and revocation state. Normal admin
@@ -4157,7 +4243,7 @@ def unfreeze_demo(demo_id):
 
 
 
-def collect_demo_data(request):
+def collect_demo_data(request, existing_organizers=None):
     """
     Collect demonstration data from the request form, including cover picture support.
 
@@ -4198,7 +4284,9 @@ def collect_demo_data(request):
         raise ValueError(_("Otsikko, päivämäärä ja kaupunki ovat pakollisia kenttiä."))
 
     # Process organizers and tags
-    organizers = collect_organizers(request)
+    organizers = collect_organizers(
+        request, existing_organizers=existing_organizers
+    )
     tags = collect_tags(request)
 
     description = request.form.get("description")
@@ -4251,7 +4339,7 @@ def collect_demo_data(request):
         "address": address,
         "type": event_type,
         "route": route,
-        "organizers": [org.to_dict() for org in organizers],
+        "organizers": organizers,
         "approved": approved,
         "tags": tags,
         "description": description,
@@ -4356,7 +4444,7 @@ def is_valid_longitude(lon):
         return False
 
 
-def collect_organizers(request):
+def collect_organizers(request, existing_organizers=None):
     """Collect organizer data from the request form.
 
     This function extracts multiple organizers' information from the form and returns a list
@@ -4372,68 +4460,86 @@ def collect_organizers(request):
 
 
     """
+    existing_by_organization_id = {
+        str(organizer.get("organization_id")): organizer
+        for organizer in (existing_organizers or [])
+        if isinstance(organizer, dict) and organizer.get("organization_id")
+    }
+    existing_by_record_id = {
+        str(organizer.get("_id")): organizer
+        for organizer in (existing_organizers or [])
+        if isinstance(organizer, dict) and organizer.get("_id")
+    }
+    indexes = sorted(
+        {
+            int(match.group(1))
+            for key in request.form.keys()
+            if (match := re.match(r"organizer_(?:name|id)_(\d+)$", key))
+        }
+    )
+    linked_ids = set()
+    freeform_keys = set()
     organizers = []
-    i = 1
 
-    while True:
-        # Extract data for each organizer using a dynamic field naming pattern
-        name = request.form.get(f"organizer_name_{i}")
-        website = request.form.get(f"organizer_website_{i}")
-        email = request.form.get(f"organizer_email_{i}")
-        organizer_id = request.form.get(f"organizer_id_{i}")
-        is_private = request.form.get(f"organizer_is_private_{i}") == "on"
-        show_name_public = request.form.get(f"organizer_show_name_{i}") == "on"
-        show_email_public = request.form.get(f"organizer_show_email_{i}") == "on"
+    for index in indexes:
+        name = (request.form.get(f"organizer_name_{index}") or "").strip()
+        email = (request.form.get(f"organizer_email_{index}") or "").strip()
+        website = (request.form.get(f"organizer_website_{index}") or "").strip()
+        raw_organization_id = (
+            request.form.get(f"organizer_id_{index}") or ""
+        ).strip()
+        record_id = request.form.get(f"organizer_record_id_{index}")
+        if not name and not raw_organization_id:
+            continue
 
-        # Ensure non-private organizers keep their details visible unless explicitly hidden
-        if not is_private and request.form.get(f"organizer_show_name_{i}") is None:
-            show_name_public = True
-        if not is_private and request.form.get(f"organizer_show_email_{i}") is None:
-            show_email_public = True
-
-        # Stop when no name and no organization ID is provided (end of organizers)
-        if not name and not organizer_id:
-            break
-
-        # Create an Organizer object and append to the list
-        if organizer_id:
-            try:
-                organizers.append(
-                    Organizer(
-                        name=name.strip() if name else "",
-                        email=email.strip() if email else "",
-                        website=website.strip() if website else "",
-                        organization_id=ObjectId(organizer_id),
-                        is_private=False,
-                        show_name_public=show_name_public,
-                        show_email_public=show_email_public,
-                    )
-                )
-            except bson.errors.InvalidId as e:
-                organizers.append(
-                    Organizer(
-                        name=name.strip() if name else "",
-                        email=email.strip() if email else "",
-                        website=website.strip() if website else "",
-                        is_private=is_private,
-                        show_name_public=show_name_public,
-                        show_email_public=show_email_public,
-                    )
-                )
-                
+        organization_id = None
+        if raw_organization_id:
+            if not ObjectId.is_valid(raw_organization_id):
+                raise ValueError(_("Järjestäjän organisaatiotunniste ei ole kelvollinen."))
+            organization_id = ObjectId(raw_organization_id)
+            if organization_id in linked_ids:
+                raise ValueError(_("Sama organisaatio on lisätty järjestäjäksi useammin kuin kerran."))
+            linked_ids.add(organization_id)
         else:
-            organizers.append(
-                Organizer(
-                    name=name.strip() if name else "",
-                    email=email.strip() if email else "",
-                    website=website.strip() if website else "",
-                    is_private=is_private,
-                    show_name_public=show_name_public,
-                    show_email_public=show_email_public,
-                )
-            )
+            if not name:
+                raise ValueError(_("Vapaamuotoisen järjestäjän nimi on pakollinen."))
+            identity = (name.casefold(), email.casefold(), website.casefold())
+            if identity in freeform_keys:
+                raise ValueError(_("Sama vapaamuotoinen järjestäjä on lisätty useammin kuin kerran."))
+            freeform_keys.add(identity)
 
-        i += 1  # Move to the next organizer field
+        existing = dict(
+            existing_by_organization_id.get(str(organization_id))
+            or existing_by_record_id.get(str(record_id))
+            or {}
+        )
+        is_private = request.form.get(f"organizer_is_private_{index}") == "on"
+        show_name_public = request.form.get(f"organizer_show_name_{index}") == "on"
+        show_email_public = request.form.get(f"organizer_show_email_{index}") == "on"
+        if organization_id:
+            is_private = False
+            show_name_public = True
+            show_email_public = True
+        elif not is_private:
+            if request.form.get(f"organizer_show_name_{index}") is None:
+                show_name_public = True
+            if request.form.get(f"organizer_show_email_{index}") is None:
+                show_email_public = True
+
+        organizer_data = Organizer(
+            name=name,
+            email=email,
+            website=website,
+            organization_id=organization_id,
+            is_private=is_private,
+            show_name_public=show_name_public,
+            show_email_public=show_email_public,
+        ).to_dict()
+        for metadata_field in ("_id", "url", "logo"):
+            if metadata_field in existing:
+                organizer_data[metadata_field] = existing[metadata_field]
+        existing.update(organizer_data)
+        organizers.append(existing)
 
     return organizers
 

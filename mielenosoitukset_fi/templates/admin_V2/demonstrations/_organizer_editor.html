@@ -1,0 +1,105 @@
+{% macro organizer_row(organizer, index) -%}
+{% set linked = organizer.organization_id|default(none, true) %}
+<article class="admin-organizer-row" data-organizer-row data-organizer-kind="{{ 'organization' if linked else 'freeform' }}"{% if linked %} data-organization-id="{{ linked }}"{% endif %}>
+  <header class="admin-organizer-row__header">
+    <div>
+      <span class="admin-status-badge admin-status-badge--info">
+        {{ _('Palvelussa oleva organisaatio') if linked else _('Muu järjestäjä') }}
+      </span>
+      {% if linked %}<strong data-organizer-linked-name>{{ organizer.name }}</strong>{% endif %}
+    </div>
+    <button type="button" class="btn btn-outline-danger btn-sm" data-remove-organizer aria-label="{{ _('Poista järjestäjä') }}">
+      <i class="fa-solid fa-trash" aria-hidden="true"></i>
+      {{ _('Poista') }}
+    </button>
+  </header>
+
+  <input type="hidden" name="organizer_record_id_{{ index }}" value="{{ organizer._id|default('', true) }}">
+  <input type="hidden" name="organizer_id_{{ index }}" value="{{ linked or '' }}">
+  {% if linked %}
+    <input type="hidden" name="organizer_name_{{ index }}" value="{{ organizer.name|default('', true) }}">
+    <input type="hidden" name="organizer_email_{{ index }}" value="{{ organizer.email|default('', true) }}">
+    <input type="hidden" name="organizer_website_{{ index }}" value="{{ organizer.website|default('', true) }}">
+    <input type="hidden" name="organizer_show_name_{{ index }}" value="on">
+    <input type="hidden" name="organizer_show_email_{{ index }}" value="on">
+    <dl class="admin-organizer-row__details">
+      {% if organizer.email %}<div><dt>{{ _('Sähköposti') }}</dt><dd data-organizer-linked-email>{{ organizer.email }}</dd></div>{% endif %}
+      {% if organizer.website %}<div><dt>{{ _('Verkkosivu') }}</dt><dd data-organizer-linked-website>{{ organizer.website }}</dd></div>{% endif %}
+    </dl>
+    <p class="admin-field__help">{{ _('Tiedot päivittyvät organisaation profiilista tallennettaessa.') }}</p>
+  {% else %}
+    <div class="admin-form-grid">
+      <div class="admin-field admin-field--full">
+        <label for="organizer_name_{{ index }}">{{ _('Järjestäjän nimi') }} <span class="admin-required" aria-hidden="true">*</span></label>
+        <input type="text" id="organizer_name_{{ index }}" name="organizer_name_{{ index }}" class="form-control" value="{{ organizer.name|default('', true) }}" required>
+      </div>
+      <div class="admin-field">
+        <label for="organizer_email_{{ index }}">{{ _('Sähköposti') }}</label>
+        <input type="email" id="organizer_email_{{ index }}" name="organizer_email_{{ index }}" class="form-control" value="{{ organizer.email|default('', true) }}">
+      </div>
+      <div class="admin-field">
+        <label for="organizer_website_{{ index }}">{{ _('Verkkosivu') }}</label>
+        <input type="url" id="organizer_website_{{ index }}" name="organizer_website_{{ index }}" class="form-control" value="{{ organizer.website|default('', true) }}">
+      </div>
+    </div>
+    <div class="admin-organizer-row__privacy">
+      <label class="admin-check-row" for="organizer_is_private_{{ index }}">
+        <input type="checkbox" id="organizer_is_private_{{ index }}" name="organizer_is_private_{{ index }}" class="form-check-input"{% if organizer.is_private %} checked{% endif %}>
+        <span class="admin-check-row__content"><strong class="admin-check-row__label">{{ _('Yksityishenkilö') }}</strong></span>
+      </label>
+      <label class="admin-check-row" for="organizer_show_name_{{ index }}">
+        <input type="checkbox" id="organizer_show_name_{{ index }}" name="organizer_show_name_{{ index }}" class="form-check-input"{% if organizer.show_name_public is not defined or organizer.show_name_public %} checked{% endif %}>
+        <span class="admin-check-row__content"><strong class="admin-check-row__label">{{ _('Näytä nimi julkisesti') }}</strong></span>
+      </label>
+      <label class="admin-check-row" for="organizer_show_email_{{ index }}">
+        <input type="checkbox" id="organizer_show_email_{{ index }}" name="organizer_show_email_{{ index }}" class="form-check-input"{% if (organizer.show_email_public is defined and organizer.show_email_public) or (organizer.show_email_public is not defined and (organizer.is_private is not defined or not organizer.is_private)) %} checked{% endif %}>
+        <span class="admin-check-row__content"><strong class="admin-check-row__label">{{ _('Näytä sähköposti julkisesti') }}</strong></span>
+      </label>
+    </div>
+  {% endif %}
+</article>
+{%- endmacro %}
+
+{% macro organizer_editor(demo, organizations) -%}
+<div class="admin-organizer-editor" data-organizer-editor data-next-index="{{ (demo.organizers|length + 1) if demo and demo.organizers else 1 }}" data-duplicate-organization="{{ _('Sama organisaatio on jo lisätty järjestäjäksi.') }}" data-select-organization="{{ _('Valitse ensin organisaatio.') }}">
+  <div class="admin-organizer-editor__add admin-inset">
+    <div class="admin-field">
+      <label for="organizer-organization">{{ _('Palvelussa oleva organisaatio') }}</label>
+      <select id="organizer-organization" class="form-select" data-organization-select aria-describedby="organizer-organization-help organizer-error">
+        <option value="">{{ _('Valitse organisaatio') }}</option>
+        {% for organization in organizations %}
+          <option value="{{ organization._id }}" data-name="{{ organization.name }}" data-email="{{ organization.email|default('', true) }}" data-website="{{ organization.website|default('', true) }}">{{ organization.name }}</option>
+        {% endfor %}
+      </select>
+      <p class="admin-field__help" id="organizer-organization-help">{{ _('Voit linkittää vain organisaatioita, joihin käyttöoikeutesi riittävät. Linkitetyn organisaation tiedot tulevat sen profiilista.') }}</p>
+    </div>
+    <div class="admin-organizer-editor__add-actions">
+      <button type="button" class="btn btn-primary" data-add-linked-organizer>
+        <i class="fa-solid fa-building-circle-plus" aria-hidden="true"></i>{{ _('Lisää organisaatio') }}
+      </button>
+      <button type="button" class="btn btn-outline-primary" data-add-freeform-organizer>
+        <i class="fa-solid fa-user-plus" aria-hidden="true"></i>{{ _('Lisää muu järjestäjä') }}
+      </button>
+    </div>
+  </div>
+
+  <p class="field-error" id="organizer-error" role="alert" data-organizer-error hidden></p>
+  <div class="admin-empty-state" data-organizer-empty{% if demo and demo.organizers %} hidden{% endif %}>
+    <i class="admin-empty-state__icon fa-solid fa-people-group" aria-hidden="true"></i>
+    <strong class="admin-empty-state__title">{{ _('Ei järjestäjiä') }}</strong>
+    <p>{{ _('Lisää palvelussa oleva organisaatio tai muu järjestäjä.') }}</p>
+  </div>
+  <div class="admin-organizer-editor__list" data-organizer-list aria-live="polite">
+    {% if demo and demo.organizers %}
+      {% for organizer in demo.organizers %}{{ organizer_row(organizer, loop.index) }}{% endfor %}
+    {% endif %}
+  </div>
+
+  <template data-organizer-template="linked">
+    {{ organizer_row({'organization_id': '__ORGANIZATION_ID__', 'name': '__ORGANIZATION_NAME__', 'email': '__ORGANIZATION_EMAIL__', 'website': '__ORGANIZATION_WEBSITE__'}, '__INDEX__') }}
+  </template>
+  <template data-organizer-template="freeform">
+    {{ organizer_row({'name': '', 'email': '', 'website': '', 'is_private': false, 'show_name_public': true, 'show_email_public': true}, '__INDEX__') }}
+  </template>
+</div>
+{%- endmacro %}

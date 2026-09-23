@@ -757,6 +757,57 @@ def test_admin_workspace_accessibility_matrix(
 @pytest.mark.e2e
 @pytest.mark.integration
 @pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_admin_organizer_editor_supports_mixed_accessible_rows(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+    browser_page.goto(f"{live_server}/admin/demo/create_demo", wait_until="domcontentloaded")
+    browser_page.wait_for_load_state("networkidle")
+
+    editor = browser_page.locator("[data-organizer-editor]")
+    assert editor.locator("[data-organizer-empty]").is_visible()
+    editor.locator("[data-add-freeform-organizer]").click()
+    freeform = editor.locator('[data-organizer-kind="freeform"]')
+    assert freeform.count() == 1
+    freeform_name = freeform.locator('input[name^="organizer_name_"]')
+    browser_page.wait_for_function(
+        "name => document.activeElement?.name === name",
+        arg=freeform_name.get_attribute("name"),
+    )
+    freeform_name.fill("Vapaa testijärjestäjä")
+
+    organization_select = editor.locator("[data-organization-select]")
+    organization_select.select_option(index=1)
+    selected_id = organization_select.input_value()
+    editor.locator("[data-add-linked-organizer]").click()
+    linked = editor.locator('[data-organizer-kind="organization"]')
+    assert linked.count() == 1
+    assert linked.get_attribute("data-organization-id") == selected_id
+    assert editor.locator("[data-organizer-empty]").is_hidden()
+
+    organization_select.select_option(selected_id)
+    editor.locator("[data-add-linked-organizer]").click()
+    assert editor.locator("[data-organizer-error]").is_visible()
+    assert linked.count() == 1
+
+    freeform.locator("[data-remove-organizer]").click()
+    assert editor.locator('[data-organizer-kind="freeform"]').count() == 0
+    assert browser_page.evaluate(
+        "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+    )
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
 @pytest.mark.parametrize("viewport_height", [640, 844])
 def test_report_error_modal_vertical_fit_and_scroll_contract(
     app,

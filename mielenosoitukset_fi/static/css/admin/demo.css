@@ -80,22 +80,6 @@ input[readonly] {
 
 
 
-.admin-panel.form-group.organizer-item {
-    width: 400px;
-    align-items: stretch;
-    flex-grow: 1;
-    flex-shrink: 1;
-}
-
-
-#organizers-container {
-    display: flex;
-    align-content: start;
-    align-items: stretch;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
 .tag-pill .remove-route-btn {
     background: transparent;
     border: none;

@@ -212,3 +212,40 @@ def test_duplicate_organizers_are_rejected_server_side(app, db):
 
         with pytest.raises(ValueError, match="Sama organisaatio"):
             collect_organizers(request)
+
+
+@pytest.mark.parametrize(
+    "row",
+    (
+        {"organizer_email_3": "missing-name@example.test"},
+        {"organizer_website_3": "https://missing-name.example.test"},
+        {"organizer_record_id_3": str(ObjectId())},
+    ),
+)
+def test_incomplete_freeform_organizer_rows_are_rejected(app, row):
+    with app.test_request_context(
+        "/admin/demo/create_demo",
+        method="POST",
+        data={"organizer_name_3": "", **row},
+    ):
+        from flask import request
+
+        with pytest.raises(ValueError, match="nimi on pakollinen"):
+            collect_organizers(request)
+
+
+def test_completely_unused_organizer_row_is_ignored(app):
+    with app.test_request_context(
+        "/admin/demo/create_demo",
+        method="POST",
+        data={
+            "organizer_name_3": "",
+            "organizer_email_3": "",
+            "organizer_website_3": "",
+            "organizer_id_3": "",
+            "organizer_record_id_3": "",
+        },
+    ):
+        from flask import request
+
+        assert collect_organizers(request) == []

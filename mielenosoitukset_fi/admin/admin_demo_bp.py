@@ -4489,7 +4489,7 @@ def collect_organizers(request, existing_organizers=None):
             request.form.get(f"organizer_id_{index}") or ""
         ).strip()
         record_id = request.form.get(f"organizer_record_id_{index}")
-        if not name and not raw_organization_id:
+        if not any((name, email, website, raw_organization_id, record_id)):
             continue
 
         organization_id = None

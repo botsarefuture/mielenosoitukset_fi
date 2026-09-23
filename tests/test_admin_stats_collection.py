@@ -1,9 +1,36 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from bson import ObjectId
 
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from tests.conftest import _client_for_user
+
+
+def test_overall_24h_initial_render_matches_helsinki_api(admin_client, db):
+    from mielenosoitukset_fi.admin.admin_bp import HELSINKI_TZ
+
+    now = datetime.now(HELSINKI_TZ).replace(second=0, microsecond=0)
+    label = now.strftime("%H:%M")
+    db.d_analytics.delete_many({})
+    db.d_analytics.insert_one(
+        {
+            "_id": ObjectId(),
+            "analytics": {
+                now.strftime("%Y-%m-%d"): {
+                    str(now.hour): {str(now.minute): 7}
+                }
+            },
+        }
+    )
+
+    page = admin_client.get("/admin/analytics/overall_24h?interval=1")
+    payload = admin_client.get(
+        "/admin/api/analytics/overall_24h?interval=1"
+    ).get_json()
+
+    assert page.status_code == 200
+    assert f"<td>{label}</td><td>7</td>" in page.get_data(as_text=True)
+    assert payload["data"][payload["labels"].index(label)] == 7
 
 
 def _analytics_demo(index, *, editor_id=None):

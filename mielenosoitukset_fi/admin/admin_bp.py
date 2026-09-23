@@ -2546,8 +2546,8 @@ def analytics_overall_24h():
     _, has_global_scope = _analytics_demo_scope(current_user)
     if not has_global_scope:
         abort(403)
-    now        = datetime.now(timezone.utc).replace(second=0, microsecond=0)
-    yesterday  = now - timedelta(days=1)
+    now = datetime.now(HELSINKI_TZ).replace(second=0, microsecond=0)
+    yesterday = now - timedelta(days=1)
 
     # ── 1️⃣  Interval from query string ──────────────────────────
     try:
@@ -2582,7 +2582,8 @@ def analytics_overall_24h():
                     try:
                         ts = datetime.strptime(
                             f"{day_str} {hour_str}:{minute}", "%Y-%m-%d %H:%M"
-                        ).replace(tzinfo=timezone.utc)
+                        )
+                        ts = HELSINKI_TZ.localize(ts)
                     except ValueError:
                         continue
 

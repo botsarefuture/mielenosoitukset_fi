@@ -33,6 +33,131 @@ body {
   background: light-dark(#f6f8fb, #171b22);
 }
 
+/* Shared admin shell. Keep navigation, transient feedback and footer surfaces
+   on the same semantic palette as every page in the workspace. */
+.admin-toast-layer {
+  z-index: 1100;
+}
+
+.admin-sidebar {
+  border-right: 1px solid var(--admin-workspace-border);
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-sidebar-link {
+  color: var(--admin-workspace-text) !important;
+}
+
+.admin-sidebar-link:hover,
+.admin-sidebar-link:focus,
+.admin-sidebar-link.active {
+  border-radius: .375rem;
+  color: var(--admin-workspace-blue-dark) !important;
+  background: var(--admin-workspace-blue-soft);
+}
+
+.admin-sidebar-link:focus-visible,
+.admin-theme-toggle:focus-visible {
+  outline: 3px solid var(--admin-workspace-blue-soft);
+  outline-offset: 2px;
+}
+
+.admin-sidebar-heading {
+  margin: 1rem 0 .3rem;
+  padding: 0 .75rem;
+  color: var(--admin-workspace-muted);
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.admin-sidebar-card {
+  border: 1px solid var(--admin-workspace-border);
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+}
+
+.admin-sidebar-card :is(.card-header, .list-group-item, .card-body) {
+  border-color: var(--admin-workspace-border);
+  color: inherit;
+  background: transparent;
+}
+
+.admin-sidebar-card .list-group-item:hover {
+  cursor: pointer;
+  background: var(--admin-workspace-blue-soft);
+}
+
+.admin-sidebar-card a {
+  color: var(--admin-workspace-text);
+}
+
+.admin-sidebar-card a:hover {
+  color: var(--admin-workspace-blue-dark);
+}
+
+.admin-sidebar-task-link {
+  max-width: 75%;
+}
+
+.admin-theme-control {
+  margin-bottom: 1rem;
+}
+
+.admin-theme-toggle {
+  border-color: var(--admin-workspace-border);
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+}
+
+.admin-theme-toggle:hover,
+.admin-theme-toggle:focus {
+  border-color: var(--admin-workspace-blue);
+  color: var(--admin-workspace-blue-dark);
+  background: var(--admin-workspace-blue-soft);
+}
+
+#sidebar .btn:hover {
+  opacity: .9;
+}
+
+#sidebar .card-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+#sidebar .card-body::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: var(--admin-workspace-muted);
+}
+
+.modal-backdrop {
+  z-index: 1000001 !important;
+}
+
+.modal {
+  z-index: 1000002 !important;
+}
+
+.admin-footer {
+  border-top: 1px solid var(--admin-workspace-border);
+  color: var(--admin-workspace-muted);
+  background: var(--admin-workspace-surface-muted);
+}
+
+@media (min-width: 768px) {
+  .admin-sidebar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    width: 280px;
+    height: 100vh;
+    overflow-y: auto;
+  }
+}
+
 .admin-content {
   width: 100%;
   max-width: 1450px;

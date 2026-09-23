@@ -116,6 +116,26 @@ def test_admin_inline_style_debt_cannot_grow_without_review():
     assert actual_attributes == style_attribute_allowlist
 
 
+def test_admin_shell_uses_shared_css_without_inline_style_debt():
+    base = Path("mielenosoitukset_fi/templates/admin_base.html").read_text(
+        encoding="utf-8"
+    )
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in base
+    assert "style=" not in base
+    for marker in (
+        ".admin-sidebar",
+        ".admin-sidebar-card",
+        ".admin-theme-toggle",
+        ".admin-toast-layer",
+        ".admin-footer",
+    ):
+        assert marker in workspace
+
+
 def test_active_legacy_demo_workflows_use_shared_admin_contracts():
     root = Path("mielenosoitukset_fi/templates/admin")
     contracts = {

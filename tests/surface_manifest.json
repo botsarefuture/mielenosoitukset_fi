@@ -181,14 +181,6 @@
         "e2e-admin"
       ]
     },
-    "mielenosoitukset_fi/admin/admin_media_bp.py": {
-      "count": 4,
-      "sha256": "037d7caeb08527ad9fd25897e5a970fd6f1403d0919c246519307a8fd635b306",
-      "coverage": [
-        "integration",
-        "e2e-admin"
-      ]
-    },
     "mielenosoitukset_fi/admin/admin_org_bp.py": {
       "count": 15,
       "sha256": "19d8fb701e0b1374257cc98c696e089b2b39d30ebe9bce789692e51de406c0ad",

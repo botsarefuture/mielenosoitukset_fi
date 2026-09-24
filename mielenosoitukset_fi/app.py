@@ -177,7 +177,6 @@ def create_app(config_overrides=None) -> Flask:
         admin_demo_api_bp,
         admin_org_bp,
         admin_recu_demo_bp,
-        admin_media_bp,
         board_bp,
         audit_bp,
         admin_kampanja_bp,
@@ -198,7 +197,6 @@ def create_app(config_overrides=None) -> Flask:
     app.register_blueprint(admin_recu_demo_bp)
     app.register_blueprint(admin_user_bp)
     app.register_blueprint(admin_org_bp)
-    app.register_blueprint(admin_media_bp)
     app.register_blueprint(admin_kampanja_bp)
     app.register_blueprint(admin_case_bp)
     app.register_blueprint(admin_dev_bp)

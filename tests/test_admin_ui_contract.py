@@ -993,8 +993,6 @@ def test_specialist_admin_pages_use_canonical_hero_navigation():
     pages = (
         "mielenosoitukset_fi/templates/admin_V2/kampanja/list.html",
         "mielenosoitukset_fi/templates/admin_V2/overall_24h_analytics.html",
-        "mielenosoitukset_fi/templates/admin_V2/s3/dashboard.html",
-        "mielenosoitukset_fi/templates/admin_V2/s3/view_media.html",
         "mielenosoitukset_fi/templates/admin_V2/super_audit/logs.html",
     )
 
@@ -1003,7 +1001,7 @@ def test_specialist_admin_pages_use_canonical_hero_navigation():
         assert "import admin_page_hero" in source
         assert "admin_page_hero(" in source
         assert "admin.admin_dashboard" in source
-    for name in (pages[1], pages[3], pages[4]):
+    for name in pages[1:]:
         assert "back_url=" in Path(name).read_text(encoding="utf-8")
     campaign = Path(pages[0]).read_text(encoding="utf-8")
     assert 'class="header' not in campaign
@@ -1079,10 +1077,9 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
         assert "import admin_page_hero" in source, str(template)
         assert "admin_page_hero(" in source, str(template)
 
-    # Exact inventory ratchet: the unreachable legacy recurring form was removed,
-    # leaving 51 routed full-page admin templates; the built-in site analytics
-    # feature adds its overview and per-demonstration dashboards (53).
-    assert len(pages) == 53
+    # Exact inventory ratchet: after the retired two-page media workspace was
+    # removed, 51 routed full-page admin templates remain.
+    assert len(pages) == 51
     for locale in ("en", "fi", "sv"):
         catalog = Path(
             f"mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.po"
@@ -1109,7 +1106,6 @@ def test_full_admin_pages_use_breadcrumbs_and_standard_back_actions():
         "governance/dashboard.html",
         "kampanja/list.html",
         "organizations/dashboard.html",
-        "s3/dashboard.html",
         "site_analytics.html",
         "stats.html",
         "status.html",
@@ -1178,33 +1174,24 @@ def test_dead_admin_template_copies_and_legacy_sync_actions_are_absent():
     assert "admin-row-actions" in sync_dashboard
 
 
-def test_media_admin_uses_shared_theme_aware_components():
-    upload = Path(
-        "mielenosoitukset_fi/templates/admin_V2/s3/dashboard.html"
-    ).read_text(encoding="utf-8")
-    library = Path(
-        "mielenosoitukset_fi/templates/admin_V2/s3/view_media.html"
-    ).read_text(encoding="utf-8")
+def test_retired_media_workspace_is_absent():
     workspace = Path(
         "mielenosoitukset_fi/static/css/admin/workspace.css"
     ).read_text(encoding="utf-8")
+    app_source = Path("mielenosoitukset_fi/app.py").read_text(encoding="utf-8")
+    admin_init = Path("mielenosoitukset_fi/admin/__init__.py").read_text(encoding="utf-8")
 
-    for template in (upload, library):
-        assert "<style" not in template
-        assert "style=" not in template
-        assert "admin_org_control.css" not in template
-        assert "form.css" not in template
-        assert "table.css" not in template
-    assert "admin-form-section" in upload
-    assert 'class="admin-form-section__body"' in upload
-    assert 'class="admin-form-section__body admin-media-upload"' in library
-    assert "admin-media-grid" in library
-    assert "admin-media-card__preview" in library
-    assert "onclick=" not in library
-    assert ".admin-media-card" in workspace
-    assert "repeat(auto-fill, minmax(min(100%, 16rem), 1fr))" in workspace
-    assert "var(--admin-workspace-surface)" in workspace
-    assert "var(--admin-workspace-border)" in workspace
+    assert not Path("mielenosoitukset_fi/admin/admin_media_bp.py").exists()
+    assert not any(Path("mielenosoitukset_fi/templates/admin_V2/s3").glob("*.html"))
+    assert "admin_media_bp" not in app_source
+    assert "admin_media_bp" not in admin_init
+    for selector in (
+        ".admin-media-upload",
+        ".admin-media-grid",
+        ".admin-media-card",
+        ".admin-media-meta",
+    ):
+        assert selector not in workspace
 
 
 def test_system_status_uses_shared_theme_aware_health_components():

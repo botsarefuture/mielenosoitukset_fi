@@ -1249,29 +1249,43 @@ def background_job_detail(job_key):
     except KeyError:
         abort(404)
 
-    try:
-        page = max(1, int(request.args.get("page", 1)))
-    except (TypeError, ValueError):
-        page = 1
-
-    try:
-        limit = min(200, max(10, int(request.args.get("limit", 25))))
-    except (TypeError, ValueError):
-        limit = 25
-
-    skip = (page - 1) * limit
-    runs = job_manager.get_recent_runs(job_key, limit=limit, skip=skip)
     total_runs = job_manager.count_runs(job_key)
-    has_next = skip + limit < total_runs
-
     selected_run_id = request.args.get("run_id")
+    pagination_args = request.args.copy()
+    if "per_page" not in pagination_args and pagination_args.get("limit"):
+        pagination_args["per_page"] = pagination_args["limit"]
+    page, per_page = parse_admin_pagination(
+        pagination_args, default_per_page=20
+    )
+    pagination = build_admin_pagination(
+        "admin.background_job_detail",
+        total_count=total_runs,
+        page=page,
+        per_page=per_page,
+        query_args={
+            "job_key": job_key,
+            "run_id": selected_run_id,
+        },
+    )
+    page = pagination["current_page"]
+    runs = job_manager.get_recent_runs(
+        job_key,
+        limit=per_page,
+        skip=pagination["slice_start"],
+    )
+    selected_run = None
+    if selected_run_id and not any(
+        run.get("id") == selected_run_id for run in runs
+    ):
+        selected_run = job_manager.get_run(job_key, selected_run_id)
+
     changes_query: Dict[str, Any] = {"details.job_key": job_key}
     if selected_run_id:
         changes_query["details.job_run_id"] = selected_run_id
 
     change_logs = list(
         mongo.demo_audit_logs.find(changes_query)
-        .sort("timestamp", -1)
+        .sort([("timestamp", -1), ("_id", -1)])
         .limit(100)
     )
 
@@ -1279,7 +1293,7 @@ def background_job_detail(job_key):
         "background_job_detail_view",
         job_key=job_key,
         page=page,
-        limit=limit,
+        limit=per_page,
         selected_run_id=selected_run_id,
     )
     return render_template(
@@ -1287,12 +1301,13 @@ def background_job_detail(job_key):
         job=job,
         runs=runs,
         page=page,
-        limit=limit,
+        limit=per_page,
         total_runs=total_runs,
-        has_next=has_next,
         can_manage=current_user.has_permission("MANAGE_BACKGROUND_JOBS"),
         change_logs=change_logs,
         selected_run_id=selected_run_id,
+        selected_run=selected_run,
+        **pagination,
     )
 
 
@@ -2546,8 +2561,8 @@ def analytics_overall_24h():
     _, has_global_scope = _analytics_demo_scope(current_user)
     if not has_global_scope:
         abort(403)
-    now        = datetime.now(timezone.utc).replace(second=0, microsecond=0)
-    yesterday  = now - timedelta(days=1)
+    now = datetime.now(HELSINKI_TZ).replace(second=0, microsecond=0)
+    yesterday = now - timedelta(days=1)
 
     # ── 1️⃣  Interval from query string ──────────────────────────
     try:
@@ -2582,7 +2597,8 @@ def analytics_overall_24h():
                     try:
                         ts = datetime.strptime(
                             f"{day_str} {hour_str}:{minute}", "%Y-%m-%d %H:%M"
-                        ).replace(tzinfo=timezone.utc)
+                        )
+                        ts = HELSINKI_TZ.localize(ts)
                     except ValueError:
                         continue
 

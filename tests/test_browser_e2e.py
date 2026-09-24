@@ -1,6 +1,8 @@
+from datetime import datetime
 import re
 
 import pytest
+from bson import ObjectId
 
 from tests.conftest import _seed_database
 
@@ -172,7 +174,7 @@ def test_user_login_and_notifications_flow_in_real_browser(
     live_server,
     browser_page,
 ):
-    _seed_database(app, db)
+    seeded_data = _seed_database(app, db)
 
     browser_page.goto(
         f"{live_server}/users/auth/login?next=/users/profile/",
@@ -269,7 +271,7 @@ def test_admin_pages_share_responsive_theme_aware_heroes(
     browser_page,
     viewport_width,
 ):
-    _seed_database(app, db)
+    seeded_data = _seed_database(app, db)
     browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
     browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
     _submit_login_form(browser_page, "admin", "AdminPass1!")
@@ -289,6 +291,9 @@ def test_admin_pages_share_responsive_theme_aware_heroes(
         "/admin/case/",
         "/admin/demo/translations",
         "/admin/demo/suggestions",
+        f"/admin/demo/suggestions/{seeded_data['suggestion_id']}",
+        f"/admin/demo/edit_history/{seeded_data['demo_id']}",
+        f"/admin/demo/view_demo_diff/{seeded_data['history_id']}",
         "/admin/recu_demo/",
         "/admin/ui-translations",
     )
@@ -361,6 +366,7 @@ def test_admin_summary_cards_center_icons_and_keep_copy_separate(
         ("/admin/organization/", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
         (f"/admin/organization/view/{seeded_data['org_id']}", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
         ("/admin/stats", ".admin-workspace-summary .admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
+        (f"/admin/demo/suggestions/{seeded_data['suggestion_id']}", ".admin-workspace-summary-card", ".admin-workspace-summary-icon", "div > span", "div > strong"),
     )
 
     for path, card_selector, icon_selector, label_selector, value_selector in pages:
@@ -426,6 +432,506 @@ def test_admin_summary_cards_center_icons_and_keep_copy_separate(
 
         widths = [item["card"]["width"] for item in geometry]
         assert max(widths) - min(widths) <= 2, path
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_admin_demo_suggestion_selection_and_reject_modal_are_accessible(
+    app,
+    db,
+    live_server,
+    browser_page,
+):
+    seeded_data = _seed_database(app, db)
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+    browser_page.goto(
+        f"{live_server}/admin/demo/suggestions/{seeded_data['suggestion_id']}",
+        wait_until="domcontentloaded",
+    )
+
+    checkbox = browser_page.locator(".field-checkbox").first
+    row = checkbox.locator("xpath=ancestor::tr")
+    assert checkbox.is_checked()
+    assert row.get_attribute("aria-selected") == "true"
+    checkbox.uncheck()
+    assert row.get_attribute("aria-selected") == "false"
+    assert browser_page.locator("#apply-btn").is_disabled()
+
+    trigger = browser_page.locator('[data-bs-target="#rejectSuggestionModal"]')
+    trigger.focus()
+    trigger.click()
+    modal = browser_page.locator("#rejectSuggestionModal")
+    modal.wait_for(state="visible")
+    modal.locator(".btn-close").click()
+    browser_page.wait_for_function(
+        "document.querySelector('#rejectSuggestionModal')?.getAttribute('aria-hidden') === 'true'"
+    )
+    browser_page.wait_for_function(
+        "document.querySelector('[data-bs-target=\"#rejectSuggestionModal\"]') === document.activeElement"
+    )
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_admin_demo_diff_toggle_and_rollback_modal_are_accessible(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    seeded_data = _seed_database(app, db)
+    db.demo_edit_history.update_one(
+        {"_id": seeded_data["history_id"]},
+        {
+            "$set": {
+                "old_demo": {"title": "Old title", "city": "Helsinki"},
+                "new_demo": {"title": "New title", "city": "Helsinki"},
+            }
+        },
+    )
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+    browser_page.goto(
+        f"{live_server}/admin/demo/view_demo_diff/{seeded_data['history_id']}",
+        wait_until="domcontentloaded",
+    )
+
+    unchanged_row = browser_page.locator(".admin-diff-row--unchanged")
+    toggle = browser_page.locator("#toggleUnchanged")
+    assert unchanged_row.is_hidden()
+    toggle.click()
+    assert toggle.get_attribute("aria-expanded") == "true"
+    assert unchanged_row.is_visible()
+    assert browser_page.evaluate(
+        "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+    )
+
+    trigger = browser_page.locator('[data-bs-target="#rollbackModal"]')
+    trigger.focus()
+    trigger.click()
+    modal = browser_page.locator("#rollbackModal")
+    modal.wait_for(state="visible")
+    modal.locator(".btn-close").click()
+    browser_page.wait_for_function(
+        "document.querySelector('#rollbackModal')?.getAttribute('aria-hidden') === 'true'"
+    )
+    browser_page.wait_for_function(
+        "document.querySelector('[data-bs-target=\"#rollbackModal\"]') === document.activeElement"
+    )
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_admin_filter_toolbars_use_shared_theme_and_fit_viewport(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+
+    paths = (
+        "/admin/demo/",
+        "/admin/recu_demo/",
+        "/admin/stats",
+        "/admin/logs",
+        "/admin/demo/translations",
+        "/admin/ui-translations",
+        "/admin/demo/suggestions",
+    )
+    theme_backgrounds = {}
+    for theme in ("light", "dark"):
+        theme_backgrounds[theme] = []
+        for path in paths:
+            browser_page.goto(f"{live_server}{path}", wait_until="domcontentloaded")
+            browser_page.evaluate(
+                """theme => {
+                    document.documentElement.classList.toggle('dark', theme === 'dark');
+                    document.documentElement.classList.toggle('light', theme === 'light');
+                    document.documentElement.setAttribute('data-bs-theme', theme);
+                }""",
+                theme,
+            )
+            toolbar = browser_page.locator(".admin-workspace-toolbar").first
+            toolbar.wait_for(state="visible")
+            styles = toolbar.evaluate(
+                """element => {
+                    const computed = getComputedStyle(element);
+                    const rect = element.getBoundingClientRect();
+                    return {
+                        background: computed.backgroundColor,
+                        border: computed.borderColor,
+                        radius: parseFloat(computed.borderRadius),
+                        left: rect.left,
+                        right: rect.right,
+                        viewport: document.documentElement.clientWidth,
+                        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+                    };
+                }"""
+            )
+            assert styles["background"] != "rgba(0, 0, 0, 0)", path
+            assert styles["border"] != "rgba(0, 0, 0, 0)", path
+            assert styles["radius"] >= 12, path
+            assert styles["left"] >= 0, path
+            assert styles["right"] <= styles["viewport"] + 1, path
+            assert styles["overflow"] <= 1, path
+            theme_backgrounds[theme].append(styles["background"])
+
+    assert theme_backgrounds["light"] != theme_backgrounds["dark"]
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_admin_demo_forms_use_shared_theme_and_control_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+
+    theme_surfaces = {}
+    for theme in ("light", "dark"):
+        theme_surfaces[theme] = []
+        for path in ("/admin/demo/create_demo", "/admin/recu_demo/create_recu_demo"):
+            browser_page.goto(f"{live_server}{path}", wait_until="domcontentloaded")
+            browser_page.evaluate(
+                """theme => {
+                    document.documentElement.classList.toggle('dark', theme === 'dark');
+                    document.documentElement.classList.toggle('light', theme === 'light');
+                    document.documentElement.setAttribute('data-bs-theme', theme);
+                }""",
+                theme,
+            )
+            control = browser_page.locator(".admin-editor-form .form-control").first
+            control.focus()
+            # Bootstrap transitions form focus styles; sample the settled state.
+            browser_page.wait_for_timeout(200)
+            styles = browser_page.locator(".admin-editor-form").evaluate(
+                """form => {
+                    const section = form.querySelector('.form-section');
+                    const control = form.querySelector('.form-control');
+                    const required = form.querySelector('.admin-required');
+                    const save = form.querySelector('.editor-save-bar .btn-primary');
+                    const sectionStyle = getComputedStyle(section);
+                    const controlStyle = getComputedStyle(control);
+                    const requiredStyle = getComputedStyle(required);
+                    const saveStyle = getComputedStyle(save);
+                    return {
+                        sectionBackground: sectionStyle.backgroundColor,
+                        sectionBorder: sectionStyle.borderColor,
+                        controlBackground: controlStyle.backgroundColor,
+                        controlColor: controlStyle.color,
+                        controlFocus: controlStyle.boxShadow,
+                        requiredColor: requiredStyle.color,
+                        saveBackground: saveStyle.backgroundColor,
+                        saveColor: saveStyle.color,
+                        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+                    };
+                }"""
+            )
+            assert styles["sectionBackground"] != "rgba(0, 0, 0, 0)", path
+            assert styles["sectionBorder"] != "rgba(0, 0, 0, 0)", path
+            assert styles["controlBackground"] != "rgba(0, 0, 0, 0)", path
+            assert styles["controlColor"] != styles["controlBackground"], path
+            assert styles["controlFocus"] != "none", path
+            assert styles["requiredColor"] != styles["controlColor"], path
+            assert styles["saveBackground"] != "rgba(0, 0, 0, 0)", path
+            assert styles["saveColor"] == "rgb(255, 255, 255)", path
+            assert styles["overflow"] <= 1, path
+            theme_surfaces[theme].append(styles["sectionBackground"])
+
+    assert theme_surfaces["light"] != theme_surfaces["dark"]
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_admin_workspace_accessibility_matrix(
+    app,
+    db,
+    live_server,
+    browser_page,
+):
+    """Exercise zoom, keyboard, motion, long-copy and overflow contracts."""
+    _seed_database(app, db)
+    # A 1440px desktop exposes 720 CSS pixels at 200% browser zoom.
+    browser_page.set_viewport_size({"width": 720, "height": 900})
+    browser_page.emulate_media(reduced_motion="reduce")
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+
+    reduced_motion = browser_page.locator(".admin-dashboard-shell").evaluate(
+        """shell => {
+            const pulse = shell.querySelector('.pulse');
+            const quickCard = shell.querySelector('.quick-card');
+            const sidebar = document.querySelector('.admin-layout > .admin-sidebar');
+            return {
+                pulseAnimation: pulse ? getComputedStyle(pulse).animationName : 'none',
+                quickTransition: quickCard ? getComputedStyle(quickCard).transitionDuration : '0s',
+                sidebarTransition: sidebar ? getComputedStyle(sidebar).transitionDuration : '0s',
+            };
+        }"""
+    )
+    assert reduced_motion["pulseAnimation"] == "none"
+    assert reduced_motion["quickTransition"] == "0s"
+    assert reduced_motion["sidebarTransition"] == "0s"
+
+    paths = (
+        "/admin/demo/",
+        "/admin/user/",
+        "/admin/organization/",
+        "/admin/demo/create_demo",
+        "/admin/analytics/overall_24h",
+    )
+    long_title = (
+        "Poikkeuksellisen pitkä ylläpitonäkymän otsikko, joka kertoo selkeästi "
+        "mielenosoitusten käyttöoikeuksien ja saavutettavuuden kokonaisuudesta"
+    )
+
+    for path in paths:
+        browser_page.goto(f"{live_server}{path}", wait_until="domcontentloaded")
+        hero = browser_page.locator(".admin-page-hero").first
+        hero.wait_for(state="visible")
+        hero.locator("h1, h2").first.evaluate(
+            "(heading, title) => { heading.textContent = title; }", long_title
+        )
+
+        contract = browser_page.evaluate(
+            """() => {
+                const hero = document.querySelector('.admin-page-hero');
+                const heading = hero.querySelector('h1, h2');
+                const sticky = document.querySelector('.admin-sticky-actions, .editor-save-bar');
+                const dataView = document.querySelector('.admin-data-view__viewport');
+                const viewport = document.documentElement.clientWidth;
+                const heroRect = hero.getBoundingClientRect();
+                const headingRect = heading.getBoundingClientRect();
+                const stickyRect = sticky?.getBoundingClientRect();
+                return {
+                    documentOverflow: document.documentElement.scrollWidth - viewport,
+                    heroLeft: heroRect.left,
+                    heroRight: heroRect.right,
+                    headingLeft: headingRect.left,
+                    headingRight: headingRect.right,
+                    stickyLeft: stickyRect?.left ?? null,
+                    stickyRight: stickyRect?.right ?? null,
+                    dataOverflow: dataView ? getComputedStyle(dataView).overflowX : null,
+                    viewport,
+                };
+            }"""
+        )
+        assert contract["documentOverflow"] <= 1, path
+        assert contract["heroLeft"] >= 0, path
+        assert contract["heroRight"] <= contract["viewport"] + 1, path
+        assert contract["headingLeft"] >= contract["heroLeft"] - 1, path
+        assert contract["headingRight"] <= contract["heroRight"] + 1, path
+        if contract["stickyLeft"] is not None:
+            assert contract["stickyLeft"] >= 0, path
+            assert contract["stickyRight"] <= contract["viewport"] + 1, path
+        if contract["dataOverflow"] is not None:
+            assert contract["dataOverflow"] in ("auto", "scroll"), path
+
+    browser_page.goto(f"{live_server}/admin/demo/create_demo", wait_until="domcontentloaded")
+    browser_page.locator("body").click(position={"x": 700, "y": 880})
+    focus_is_visible = False
+    for _ in range(30):
+        browser_page.keyboard.press("Tab")
+        focus_contract = browser_page.evaluate(
+            """() => {
+                const active = document.activeElement;
+                const style = active ? getComputedStyle(active) : null;
+                return {
+                    insideMain: Boolean(active?.closest('main')),
+                    outlineStyle: style?.outlineStyle ?? 'none',
+                    outlineWidth: parseFloat(style?.outlineWidth ?? '0'),
+                    boxShadow: style?.boxShadow ?? 'none',
+                };
+            }"""
+        )
+        if focus_contract["insideMain"] and (
+            (
+                focus_contract["outlineStyle"] != "none"
+                and focus_contract["outlineWidth"] >= 2
+            )
+            or focus_contract["boxShadow"] != "none"
+        ):
+            focus_is_visible = True
+            break
+    assert focus_is_visible, "keyboard focus must be visibly indicated inside admin main"
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+@pytest.mark.parametrize(
+    "editor_path",
+    ["/admin/demo/create_demo", "/admin/recu_demo/create_recu_demo"],
+)
+def test_admin_organizer_editor_supports_mixed_accessible_rows(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+    editor_path,
+):
+    _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+    browser_page.goto(f"{live_server}{editor_path}", wait_until="domcontentloaded")
+    browser_page.wait_for_load_state("networkidle")
+
+    editor = browser_page.locator("[data-organizer-editor]")
+    assert editor.locator("[data-organizer-empty]").is_visible()
+    editor.locator("[data-add-freeform-organizer]").click()
+    freeform = editor.locator('[data-organizer-kind="freeform"]')
+    assert freeform.count() == 1
+    freeform_name = freeform.locator('input[name^="organizer_name_"]')
+    browser_page.wait_for_function(
+        "name => document.activeElement?.name === name",
+        arg=freeform_name.get_attribute("name"),
+    )
+    freeform_name.fill("Vapaa testijärjestäjä")
+
+    organization_select = editor.locator("[data-organization-select]")
+    organization_select.select_option(index=1)
+    selected_id = organization_select.input_value()
+    editor.locator("[data-add-linked-organizer]").click()
+    linked = editor.locator('[data-organizer-kind="organization"]')
+    assert linked.count() == 1
+    assert linked.get_attribute("data-organization-id") == selected_id
+    assert editor.locator("[data-organizer-empty]").is_hidden()
+
+    organization_select.select_option(selected_id)
+    editor.locator("[data-add-linked-organizer]").click()
+    assert editor.locator("[data-organizer-error]").is_visible()
+    assert linked.count() == 1
+
+    freeform.locator("[data-remove-organizer]").click()
+    assert editor.locator('[data-organizer-kind="freeform"]').count() == 0
+    assert browser_page.evaluate(
+        "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+    )
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_background_job_detail_uses_shared_responsive_theme_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    _seed_database(app, db)
+    jobs = app.extensions["job_manager"].list_jobs()
+    assert jobs
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+
+    for theme in ("light", "dark"):
+        browser_page.goto(
+            f"{live_server}/admin/background-jobs/{jobs[0]['key']}",
+            wait_until="domcontentloaded",
+        )
+        browser_page.evaluate(
+            """theme => {
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+                document.documentElement.classList.toggle('light', theme === 'light');
+                document.documentElement.setAttribute('data-bs-theme', theme);
+            }""",
+            theme,
+        )
+        browser_page.locator(".admin-job-detail__layout").wait_for(state="visible")
+        assert browser_page.locator(".admin-page-hero").is_visible()
+        assert browser_page.locator(".admin-data-view").count() == 2
+        assert browser_page.evaluate(
+            "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+        )
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_submission_errors_use_shared_responsive_theme_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    _seed_database(app, db)
+    db.demo_submission_errors.insert_one(
+        {
+            "_id": ObjectId(),
+            "created_at": datetime(2026, 9, 23, 12, 0, 0),
+            "error_code": "validation_failed",
+            "message": "Selainpistokokeen ilmoitusvirhe",
+            "status": 400,
+            "ip": "127.0.0.1",
+            "request_path": "/submit",
+            "request_method": "POST",
+            "extra": {"field": "email"},
+            "form_snapshot": {"title": "Testi"},
+        }
+    )
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+
+    theme_surfaces = {}
+    for theme in ("light", "dark"):
+        browser_page.goto(
+            f"{live_server}/admin/demo/submission_errors",
+            wait_until="domcontentloaded",
+        )
+        browser_page.evaluate(
+            """theme => {
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+                document.documentElement.classList.toggle('light', theme === 'light');
+                document.documentElement.setAttribute('data-bs-theme', theme);
+            }""",
+            theme,
+        )
+        browser_page.locator(".admin-page-hero").wait_for(state="visible")
+        assert browser_page.locator(".admin-filter-bar").is_visible()
+        assert browser_page.locator(".admin-data-view").is_visible()
+        assert browser_page.locator(".admin-pagination").is_visible()
+        details = browser_page.locator(".admin-disclosure").first
+        details.evaluate("element => { element.open = true; }")
+        assert details.locator(".admin-code-block").first.is_visible()
+        assert browser_page.evaluate(
+            "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+        )
+        theme_surfaces[theme] = browser_page.locator(".admin-data-view").evaluate(
+            "element => getComputedStyle(element).backgroundColor"
+        )
+
+    assert theme_surfaces["light"] != theme_surfaces["dark"]
 
 
 @pytest.mark.e2e

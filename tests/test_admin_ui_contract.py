@@ -116,6 +116,90 @@ def test_admin_inline_style_debt_cannot_grow_without_review():
     assert actual_attributes == style_attribute_allowlist
 
 
+def test_admin_shell_uses_shared_css_without_inline_style_debt():
+    base = Path("mielenosoitukset_fi/templates/admin_base.html").read_text(
+        encoding="utf-8"
+    )
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in base
+    assert "style=" not in base
+    for marker in (
+        ".admin-sidebar",
+        ".admin-sidebar-card",
+        ".admin-theme-toggle",
+        ".admin-toast-layer",
+        ".admin-footer",
+    ):
+        assert marker in workspace
+    assert "@media (max-width: 767.98px)" in workspace
+    assert "width: min(88vw, 320px)" in workspace
+
+
+def test_demo_organizer_editor_uses_shared_accessible_contract():
+    forms = [
+        Path(path).read_text(encoding="utf-8")
+        for path in (
+            "mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html",
+            "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html",
+        )
+    ]
+    editor = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/_organizer_editor.html"
+    ).read_text(encoding="utf-8")
+    script = Path(
+        "mielenosoitukset_fi/static/js/admin_organizer_editor.js"
+    ).read_text(encoding="utf-8")
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+    for form in forms:
+        assert "import organizer_editor" in form
+        assert "organizer_editor(demo, all_organizations)" in form
+        assert "admin_organizer_editor.js" in form
+        assert "createNewOrganizer" not in form
+        assert "current_user.organizations" not in form
+    assert "onclick=" not in editor
+    assert "admin-organizer-editor" in editor
+    assert "data-add-linked-organizer" in editor
+    assert "data-add-freeform-organizer" in editor
+    assert "data-remove-organizer" in editor
+    assert "admin-check-row" in editor
+    assert "innerHTML" not in script
+    assert "textContent" in script
+    assert "CSS.escape" in script
+    assert ".admin-organizer-editor" in workspace
+    assert ".admin-organizer-row" in workspace
+
+
+def test_active_legacy_demo_workflows_use_shared_admin_contracts():
+    root = Path("mielenosoitukset_fi/templates/admin")
+    contracts = {
+        "suggestions_list.html": ("admin_page_hero", "admin-data-view"),
+        "suggestion_view.html": ("admin_page_hero", "admin-data-view", "admin-modal"),
+        "demonstrations/edit_history.html": (
+            "admin_page_hero",
+            "admin-data-view",
+            "admin_pagination",
+        ),
+        "demonstrations/demo_diff.html": (
+            "admin_page_hero",
+            "admin-data-view",
+            "admin-modal",
+        ),
+    }
+
+    for relative, required_markers in contracts.items():
+        source = (root / relative).read_text(encoding="utf-8")
+        assert "<style" not in source, relative
+        assert "style=" not in source, relative
+        for marker in required_markers:
+            assert marker in source, f"{relative}: missing {marker}"
+
+
 def test_admin_theme_is_applied_before_styles_and_controls_color_scheme():
     base = Path("mielenosoitukset_fi/templates/admin_base.html").read_text(
         encoding="utf-8"
@@ -124,7 +208,9 @@ def test_admin_theme_is_applied_before_styles_and_controls_color_scheme():
         encoding="utf-8"
     )
 
-    assert base.index("localStorage.getItem('theme')") < base.index("variables.css")
+    assert base.index("localStorage.getItem('theme')") < base.index("workspace.css")
+    assert "css/admin/variables.css" not in base
+    assert "css/admin/admin_v2.css" not in base
     assert "html.light" in workspace and "color-scheme: light" in workspace
     assert "html.dark" in workspace and "color-scheme: dark" in workspace
     assert "modal-content, .modal-header, .modal-body, .modal-footer" not in base
@@ -697,9 +783,27 @@ def test_audit_and_developer_pages_use_canonical_hero_navigation():
     assert "var(--admin-workspace-surface)" in audit_css
     assert "var(--admin-workspace-border)" in audit_css
     submission_errors = Path(pages[4]).read_text(encoding="utf-8")
-    assert 'class="admin-data-view admin-workspace h-100"' in submission_errors
-    assert 'class="admin-data-view__header"' in submission_errors
-    assert submission_errors.count("card shadow-sm") == 2
+    assert 'class="admin-filter-bar"' in submission_errors
+    assert 'class="admin-advanced-filters"' in submission_errors
+    assert 'class="admin-active-filters"' in submission_errors
+    assert 'class="admin-data-view admin-data-view--scrollable"' in submission_errors
+    assert "admin_pagination(" in submission_errors
+    assert 'class="admin-code-block"' in submission_errors
+    assert "card shadow-sm" not in submission_errors
+    assert "list-group" not in submission_errors
+    assert "bg-warning" not in submission_errors
+    assert "bg-light" not in submission_errors
+
+    route = Path(
+        "mielenosoitukset_fi/admin/admin_demo_bp.py"
+    ).read_text(encoding="utf-8")
+    route_start = route.index('def submission_errors_dashboard():')
+    route_end = route.index('admin_demo_api_bp = Blueprint', route_start)
+    route_block = route[route_start - 160:route_end]
+    assert '@permission_required("VIEW_LOGS")' in route_block
+    assert 'parse_admin_pagination(args)' in route_block
+    assert '("_id", DESCENDING)' in route_block
+    assert '.skip(pagination["slice_start"])' in route_block
 
 
 def test_analytics_pages_use_shared_hero_metric_slot():
@@ -741,6 +845,7 @@ def test_analytics_pages_use_shared_theme_aware_components():
     pages = (
         Path("mielenosoitukset_fi/templates/admin_V2/analytics.html"),
         Path("mielenosoitukset_fi/templates/admin_V2/per_demo_analytics.html"),
+        Path("mielenosoitukset_fi/templates/admin_V2/overall_24h_analytics.html"),
     )
 
     assert "css/admin/analytics.css" in base
@@ -765,6 +870,21 @@ def test_analytics_pages_use_shared_theme_aware_components():
     assert "admin-analytics__data-disclosure" in per_demo
     assert "admin-data-view__table" in per_demo
     assert "prefers-reduced-motion: reduce" in per_demo
+
+    overall = pages[2].read_text(encoding="utf-8")
+    assert 'class="admin-page admin-analytics"' in overall
+    assert "admin-filter-bar__primary" in overall
+    assert "admin-analytics__data-disclosure" in overall
+    assert "admin-data-view__table" in overall
+    assert "data-chart-empty" in overall
+    assert "response.ok" in overall
+    assert "AbortController" in overall
+    assert "textContent" in overall
+    assert "replaceChildren" in overall
+    assert "onchange=" not in overall
+    assert "isDark" not in overall
+    for hardcoded_color in ("#eee", "#222", "#444", "#ccc", "#1e1e2f", "#ff79c6", "#d6336c"):
+        assert hardcoded_color not in overall
 
 
 def test_case_and_merge_pages_use_canonical_hero_navigation():
@@ -1164,8 +1284,8 @@ def test_demo_editor_static_geometry_uses_shared_form_components():
     assert 'data-bs-target="#editLinkModal"' in template
     assert 'id="duplicate-demo-btn"' in template
     assert ".admin-token-input:focus-within" in workspace
-    assert ':not(.admin-token-input__field), select, textarea)' in workspace
-    assert 'input:not(.admin-token-input__field), select, textarea):focus' in workspace
+    assert '.admin-editor-form :where(input:not([type="checkbox"])' in workspace
+    assert ':not([type="hidden"]):not(.admin-token-input__field), select, textarea):focus' in workspace
     assert ".access-panel-card .list-group-item" in workspace
     assert "var(--admin-workspace-surface-muted)" in workspace
 
@@ -1269,9 +1389,31 @@ def test_background_job_detail_uses_shared_code_and_disclosure_components():
     ).read_text(encoding="utf-8")
 
     assert "<style" not in template
+    assert "style=" not in template
     assert template.count('class="admin-disclosure') == 3
     assert template.count('class="admin-code-block') == 3
     assert "metadata-block" not in template
+    assert "admin_page_hero, admin_pagination" in template
+    assert 'class="jobs-container admin-page"' in template
+    assert "admin-section-card" in template
+    assert template.count("admin-data-view") >= 2
+    assert "admin-result-summary" in template
+    assert "admin-empty-state" in template
+    assert "admin-status-badge" in template
+    assert "admin_pagination(" in template
+    for legacy_class in (
+        "card shadow-sm",
+        "list-group",
+        "bg-success",
+        "text-muted",
+        "row g-",
+        "col-lg-",
+    ):
+        assert legacy_class not in template
+    assert "build_admin_pagination(" in Path(
+        "mielenosoitukset_fi/admin/admin_bp.py"
+    ).read_text(encoding="utf-8")
+    assert ".admin-job-detail__layout" in workspace
     assert ".admin-disclosure > summary:focus-visible" in workspace
 
 
@@ -1288,6 +1430,9 @@ def test_background_job_collection_uses_shared_workspace_components():
     job_manager = Path(
         "mielenosoitukset_fi/background_jobs/manager.py"
     ).read_text(encoding="utf-8")
+    job_macros = Path(
+        "mielenosoitukset_fi/templates/admin_V2/_background_job_macros.html"
+    ).read_text(encoding="utf-8")
 
     assert "<style" not in template
     assert "style=" not in template
@@ -1297,7 +1442,8 @@ def test_background_job_collection_uses_shared_workspace_components():
     assert "admin-filter-bar" in template
     assert "admin-data-view__footer admin-pagination" in template
     assert "admin-empty-state" in template
-    assert "admin-status-badge" in template
+    assert "import interval_text, job_status_badge" in template
+    assert "admin-status-badge" in job_macros
     assert "admin-code-block" in template
     assert "btn-modern" not in template
     assert ".admin-jobs__layout" in workspace
@@ -1366,12 +1512,14 @@ def test_retired_admin_styles_and_templates_do_not_return():
     admin_css = Path("mielenosoitukset_fi/static/css/admin")
     retired_styles = {
         "activities.css",
+        "admin_v2.css",
         "case.css",
         "dash.css",
         "demo_checkbox.css",
         "demo_form.css",
         "recu_dash.css",
         "sidebar_v2.css",
+        "variables.css",
     }
 
     assert not retired_styles.intersection(path.name for path in admin_css.glob("*.css"))
@@ -1388,3 +1536,72 @@ def test_retired_admin_styles_and_templates_do_not_return():
     for stylesheet in retired_styles:
         assert stylesheet not in admin_base
     assert "macro render_table" not in macros
+
+    for form_path in (
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html",
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html",
+    ):
+        assert "admin_demo_checkbox.js" not in Path(form_path).read_text(
+            encoding="utf-8"
+        )
+
+
+def test_shipping_admin_styles_use_only_semantic_or_bootstrap_tokens():
+    admin_css = Path("mielenosoitukset_fi/static/css/admin")
+    token_pattern = re.compile(r"var\((--[A-Za-z0-9_-]+)|^\s*(--[A-Za-z0-9_-]+)\s*:", re.M)
+
+    for stylesheet in admin_css.glob("*.css"):
+        # This file belongs to the public toolbar, not the admin shell. Its
+        # legacy palette is documented until that public modal is migrated.
+        if stylesheet.name == "modal.css":
+            continue
+        source = stylesheet.read_text(encoding="utf-8")
+        tokens = {first or second for first, second in token_pattern.findall(source)}
+        unsupported = {
+            token
+            for token in tokens
+            if not token.startswith(("--admin-", "--bs-"))
+        }
+        assert not unsupported, f"{stylesheet}: {sorted(unsupported)}"
+
+
+def test_admin_v2_does_not_restore_retired_layout_aliases():
+    templates = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in Path("mielenosoitukset_fi/templates/admin_V2").rglob("*.html")
+    )
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+    retired_classes = (
+        "dashboard-container",
+        "dashboard-panel",
+        "filter-card",
+        "table-container",
+        "users-page",
+        "orgs-page",
+        "analytics-page",
+    )
+
+    for class_name in retired_classes:
+        assert class_name not in templates
+        assert f".{class_name}" not in workspace
+
+
+def test_demo_suggestion_workflow_uses_shared_admin_components():
+    list_template = Path(
+        "mielenosoitukset_fi/templates/admin/suggestions_list.html"
+    ).read_text(encoding="utf-8")
+    review_template = Path(
+        "mielenosoitukset_fi/templates/admin/suggestion_view.html"
+    ).read_text(encoding="utf-8")
+
+    for template in (list_template, review_template):
+        assert "<style" not in template
+        assert "style=" not in template
+        assert "admin_page_hero" in template
+    assert "admin-data-view admin-data-view--scrollable" in list_template
+    assert "admin_pagination(" in list_template
+    assert "admin-selection-checkbox field-checkbox" in review_template
+    assert "admin-sticky-actions" in review_template
+    assert 'id="rejectSuggestionModal"' in review_template

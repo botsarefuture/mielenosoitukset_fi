@@ -1,29 +1,6 @@
 {% extends 'admin_base.html' %}
 {% from 'admin_V2/macros.html' import admin_page_hero %}
-
-{% macro interval_text(job) -%}
-  {%- set args = job.trigger_args or {} -%}
-  {%- set parts = [] -%}
-  {%- if args.get('days') -%}
-    {%- set _ = parts.append(args.get('days')|int ~ 'd') -%}
-  {%- endif -%}
-  {%- if args.get('hours') -%}
-    {%- set _ = parts.append(args.get('hours')|int ~ 'h') -%}
-  {%- endif -%}
-  {%- if args.get('minutes') -%}
-    {%- set _ = parts.append(args.get('minutes')|int ~ 'min') -%}
-  {%- endif -%}
-  {{ parts|join(' ') if parts else _('Ei asetettu') }}
-{%- endmacro %}
-
-{% macro job_status_badge(status, label=none) -%}
-  {%- set normalized = status or 'unknown' -%}
-  {%- set modifier = 'success' if normalized in ('enabled', 'success') else ('danger' if normalized == 'error' else ('warning' if normalized == 'running' else 'info')) -%}
-  <span class="admin-status-badge admin-status-badge--{{ modifier }}{% if normalized == 'running' %} admin-status-badge--running{% endif %}">
-    <i class="fa-solid {{ 'fa-circle-check' if normalized in ('enabled', 'success') else ('fa-circle-xmark' if normalized in ('disabled', 'error') else ('fa-spinner fa-spin' if normalized == 'running' else 'fa-circle-question')) }}" aria-hidden="true"></i>
-    {{ label if label is not none else normalized|capitalize }}
-  </span>
-{%- endmacro %}
+{% from 'admin_V2/_background_job_macros.html' import interval_text, job_status_badge %}
 
 {% block main_content %}
 <div class="jobs-container admin-page">

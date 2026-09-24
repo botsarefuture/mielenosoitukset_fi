@@ -22,7 +22,7 @@
     {% if current_user.global_admin %}<a href="{{ url_for('admin_demo.view_super_audit_logs') }}"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>{{ _('Tekninen audit-loki') }}</a>{% endif %}
   </nav>
 
-  <section class="dashboard-panel admin-workspace-toolbar" aria-label="{{ _('Hallintalokin suodattimet') }}">
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Hallintalokin suodattimet') }}">
     <form method="GET" action="{{ url_for('admin.logs') }}" class="admin-filter-bar">
       <input type="hidden" name="page" value="1">
       <input type="hidden" name="per_page" value="{{ per_page }}">

@@ -15,7 +15,9 @@ def test_create_recu_demo_uses_shared_admin_form(admin_client):
     assert "Uusille lapsimielenosoituksille lisätään automaattisesti tapahtumapäivä" in page
     assert 'name="default_language"' in page
     assert 'name="translation_en_title"' in page
-    assert 'id="organization"' in page
+    assert "data-organizer-editor" in page
+    assert "data-organization-select" in page
+    assert "data-add-freeform-organizer" in page
     assert "Lisäkuvat" in page
     assert "Luo muokkauslinkki" not in page
     assert "js/ckeditor-init.js" in page
@@ -28,7 +30,8 @@ def test_edit_recu_demo_renders_shared_admin_form_with_org_selector(admin_client
 
     assert response.status_code == 200
     page = response.get_data(as_text=True)
-    assert 'id="organization"' in page
+    assert "data-organizer-editor" in page
+    assert "data-organization-select" in page
     assert "Luo muokkauslinkki" not in page
     assert 'id="duplicate-demo-btn"' in page
     assert 'id="child-demos"' in page

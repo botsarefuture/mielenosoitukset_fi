@@ -29,7 +29,7 @@
   </section>
 
   {% if selected_locale %}
-  <section class="dashboard-panel admin-workspace-toolbar" aria-label="{{ _('Käännösrivin suodattimet') }}">
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Käännösrivin suodattimet') }}">
     <form method="GET" action="{{ url_for('admin.ui_translation_dashboard') }}" class="admin-filter-bar" id="ui-translation-filter-form">
       <input type="hidden" name="locale" value="{{ selected_locale }}">
       <input type="hidden" name="page" value="1">

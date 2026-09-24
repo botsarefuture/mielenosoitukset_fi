@@ -21,7 +21,7 @@
     <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-code-pull-request" aria-hidden="true"></i></span><div><span>{{ _('PR avattu') }}</span><strong>{{ sync_counts.pr_opened }}</strong></div></article>
   </section>
 
-  <section class="dashboard-panel admin-workspace-toolbar" aria-label="{{ _('GitHub-synkkien suodattimet') }}">
+  <section class="admin-workspace-toolbar" aria-label="{{ _('GitHub-synkkien suodattimet') }}">
     <form method="GET" action="{{ url_for('admin.ui_translation_sync_dashboard') }}" class="admin-filter-bar" id="ui-sync-filter-form">
       <input type="hidden" name="page" value="1">
       <input type="hidden" name="per_page" value="{{ per_page }}">

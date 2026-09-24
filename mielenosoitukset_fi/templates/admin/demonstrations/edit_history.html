@@ -1,175 +1,112 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
+
+{% block title %}{{ _('Muokkaushistoria') }} – {{ demo_name }}{% endblock %}
 
 {% block main_content %}
-<div class="container py-3">
-  <h2 class="mb-4">
-    {{ _('Muokkaushistoria mielenosoitukselle') }} <b>{{ demo_name }}</b>
-  </h2>
+<div class="admin-page admin-workspace">
+  {{ admin_page_hero(
+    demo_name,
+    _('Tarkastele mielenosoituksen tallennettuja versioita ja avaa yksittäisen muutoksen vertailu.'),
+    _('Muokkaushistoria'),
+    [
+      (_('Hallintapaneeli'), url_for('admin.admin_dashboard')),
+      (_('Mielenosoitukset'), url_for('admin_demo.demo_control')),
+      (demo_name, url_for('admin_demo.edit_demo', demo_id=demo_id)),
+      (_('Muokkaushistoria'), none),
+    ],
+    back_url=url_for('admin_demo.edit_demo', demo_id=demo_id),
+    back_label=_('Takaisin mielenosoitukseen'),
+    metric_value=total_count,
+    metric_label=_('tallennettua versiota'),
+  ) }}
 
-  {% if history %}
-  <div class="card shadow-sm">
-    <ul class="list-group list-group-flush">
-      {% for entry in history %}
-<li class="list-group-item d-flex justify-content-between align-items-center">
-  <div>
-    <div class="fw-bold">
-  {{ entry.edited_at.strftime('%d.%m.%Y %H:%M:%S') }}
-  <small class="text-muted ms-2" data-timestamp="{{ entry.edited_at.isoformat() }}"></small>
-</div>
-<small class="text-muted d-flex align-items-center gap-2">
-  {{ _('muokannut') }}
-
-  {% set user = _get_user_by_id(entry.edited_by) %}
-  {% if user %}
-    <div class="user-info-wrapper">
-      <img src="{{ user.profile_picture or url_for('static', filename='default-avatar.png') }}"
-           alt="{{ user.username }}"
-           class="rounded-circle user-avatar"
-           data-bs-toggle="popover"
-           data-bs-html="true"
-           data-bs-content="
-            <div class='popover-user-card'>
-            <div class='d-flex align-items-center gap-2 mb-1'>
-              <img src='{{ user.profile_picture or url_for('static', filename='default-avatar.png') }}' 
-                  class='rounded-circle' style='width:40px;height:40px;object-fit:cover;'>
-              <div>
-                <b>{{ user.display_name or user.username }}</b><br>
-                <small class='text-muted'>@{{ user.username }}</small><br>
-                <small class='text-muted'>ID: {{ entry.edited_by }}</small>
-              </div>
-            </div>
-            <div>
-              <small>{{ _('Viimeisin kirjautuminen:') }} {{ user.last_login or _('Tuntematon') }}</small>
-            </div>
-          </div>">
-      <span>{{ user.username }}{% if user.display_name %} ({{ user.display_name }}){% endif %}</span>
+  <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="history-heading">
+    <div class="admin-data-view__header admin-result-summary">
+      <div>
+        <strong id="history-heading">{{ _('Tallennetut versiot') }}</strong>
+        <span class="d-block text-muted">
+          {% if total_count %}
+            {{ _('Näytetään %(start)s–%(end)s / %(total)s versiosta', start=range_start, end=range_end, total=total_count) }}
+          {% else %}
+            {{ _('Muokkaushistoriaa ei ole vielä tallennettu.') }}
+          {% endif %}
+        </span>
+      </div>
     </div>
-  {% else %}
-    <span class="badge bg-secondary">{{ entry.edited_by or _('Tuntematon') }}</span>
-  {% endif %}
 
-  {% if entry.new_demo == current_demo_data %}
-    <span class="badge bg-success ms-2">{{ _('Nykyinen versio') }}</span>
-  {% endif %}
-</small>
-
-<style>
-.user-info-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.user-avatar {
-    width: 32px;
-    height: 32px;
-    object-fit: cover;
-    cursor: pointer;
-    border: 2px solid #1a7f37;
-    transition: transform 0.2s;
-}
-.user-avatar:hover {
-    transform: scale(1.2);
-}
-
-.popover-user-card {
-    min-width: 200px;
-}
-
-.popover-header {
-    font-weight: bold;
-}
-
-.popover-user-card .rounded-circle {
-  max-width: 70px;
-}
-</style>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Initialize Bootstrap popovers
-    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-    popoverTriggerList.map(function(el) {
-        return new bootstrap.Popover(el, {
-            trigger: 'hover',
-            placement: 'top',
-            html: true,
-            boundary: 'window'
-        })
-    });
-
-    // Relative timestamp
-    dayjs.extend(dayjs_plugin_relativeTime);
-    dayjs.locale("fi");
-    document.querySelectorAll("[data-timestamp]").forEach(el => {
-      const ts = el.getAttribute("data-timestamp");
-      if (ts) el.textContent = "(" + dayjs(ts).fromNow() + ")";
-    });
-});
-</script>
-
-  </div>
-  <a href="{{ url_for('admin_demo.view_demo_diff', demo_id=demo_id, history_id=entry._id) }}"
-     class="btn btn-sm btn-outline-primary">
-    {{ _('Näytä muutokset') }}
-  </a>
-</li>
-{% endfor %}
-
-    </ul>
-  </div>
-  {% else %}
-  <div class="alert alert-info" role="alert">
-    {{ _('Muokkaushistoriaa ei löytynyt tälle mielenosoitukselle.') }}
-  </div>
-  {% endif %}
-
-  <div class="mt-3">
-    <a id="backBtn" href="{{ request.referrer or url_for('admin_demo.edit_demo', demo_id=demo_id) }}"
-      class="btn btn-secondary">
-      {{ _('Takaisin') }}
-    </a>
-  </div>
+    {% if history %}
+    <div class="admin-data-view__viewport">
+      <table class="admin-data-view__table">
+        <thead>
+          <tr>
+            <th scope="col">{{ _('Tallennettu') }}</th>
+            <th scope="col">{{ _('Muokkaaja') }}</th>
+            <th scope="col">{{ _('Tila') }}</th>
+            <th scope="col">{{ _('Toiminnot') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in history %}
+          {% set user = _get_user_by_id(entry.edited_by) %}
+          <tr>
+            <td>
+              <time datetime="{{ entry.edited_at.isoformat() if entry.edited_at else '' }}">
+                {{ entry.edited_at.strftime('%d.%m.%Y %H:%M:%S') if entry.edited_at else '—' }}
+              </time>
+            </td>
+            <td>
+              {% if user %}
+              <div class="admin-entity-identity">
+                <span class="admin-entity-avatar" aria-hidden="true">{{ ((user.display_name or user.username or '?')[:1])|upper }}</span>
+                <span class="admin-entity-identity__copy">
+                  <strong>{{ user.display_name or user.username }}</strong>
+                  <span>@{{ user.username }}</span>
+                </span>
+              </div>
+              {% else %}
+              <span class="admin-status-badge"><i class="fas fa-user-slash" aria-hidden="true"></i>{{ entry.edited_by or _('Tuntematon') }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if entry.new_demo == current_demo_data %}
+              <span class="admin-status-badge admin-status-badge--success"><i class="fas fa-circle-check" aria-hidden="true"></i>{{ _('Nykyinen versio') }}</span>
+              {% elif entry.rollbacked_from %}
+              <span class="admin-status-badge admin-status-badge--warning"><i class="fas fa-rotate-left" aria-hidden="true"></i>{{ _('Palautuksesta tallennettu') }}</span>
+              {% else %}
+              <span class="admin-status-badge"><i class="fas fa-clock-rotate-left" aria-hidden="true"></i>{{ _('Aiempi versio') }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <a class="btn btn-outline-primary btn-sm" href="{{ url_for('admin_demo.view_demo_diff', demo_id=demo_id, history_id=entry._id) }}">
+                <i class="fas fa-code-compare" aria-hidden="true"></i>{{ _('Vertaa muutoksia') }}
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {{ admin_pagination(
+      current_page,
+      total_pages,
+      per_page=per_page,
+      prev_page=prev_page,
+      next_page=next_page,
+      prev_page_url=prev_page_url,
+      next_page_url=next_page_url,
+      visible_pages=visible_pages,
+      first_page_url=first_page_url,
+      last_page_url=last_page_url,
+      aria_label=_('Muokkaushistorian sivutus'),
+    ) }}
+    {% else %}
+    <div class="admin-empty-state">
+      <span class="admin-empty-state__icon"><i class="fas fa-clock-rotate-left" aria-hidden="true"></i></span>
+      <h2 class="admin-empty-state__title">{{ _('Ei muokkaushistoriaa') }}</h2>
+      <p>{{ _('Muokkaushistoriaa ei löytynyt tälle mielenosoitukselle.') }}</p>
+    </div>
+    {% endif %}
+  </section>
 </div>
-
-<!-- Relative timestamp with Day.js -->
-<script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/relativeTime.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dayjs/locale/fi.js"></script>
-<script>
-  dayjs.extend(dayjs_plugin_relativeTime);
-  dayjs.locale("fi");
-
-  document.querySelectorAll("[data-timestamp]").forEach(el => {
-    const ts = el.getAttribute("data-timestamp");
-    if (ts) {
-      el.textContent = "(" + dayjs(ts).fromNow() + ")";
-    }
-  });
-</script>
-
-
-
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const backBtn = document.getElementById("backBtn");
-    if (!backBtn) return;
-
-    // If we have a stored original referrer, use it
-    const stored = sessionStorage.getItem("originalReferrer");
-    if (stored) {
-      backBtn.setAttribute("href", stored);
-    } else {
-      // Otherwise, save the current href as the original one
-      sessionStorage.setItem("originalReferrer", backBtn.getAttribute("href"));
-    }
-
-    // When clicked, clear the stored referrer so it won't get stuck
-    backBtn.addEventListener("click", () => {
-      sessionStorage.removeItem("originalReferrer");
-    });
-  });
-</script>
-
-
 {% endblock %}

@@ -4,7 +4,7 @@
 {% block title %}{{ _('Toistuvat mielenosoitukset') }}{% endblock %}
 
 {% block main_content %}
-<section class="dashboard-container">
+<section class="admin-page">
   {% call admin_page_hero(
     _('Toistuvat mielenosoitukset'),
     _('Täältä voit hallita toistuvia mielenosoituksia, joihin sinulla on käyttöoikeus.'),
@@ -18,7 +18,7 @@
     <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="admin-page-hero__action"><i class="fas fa-plus-circle" aria-hidden="true"></i>{{ _('Luo uusi toistuva mielenosoitus') }}</a>
   {% endcall %}
 
-  <div class="dashboard-panel">
+  <div class="admin-workspace-toolbar">
     <form method="GET" action="{{ url_for('admin_recu_demo.recu_demo_control') }}" class="admin-filter-bar">
       <div class="admin-filter-bar__primary admin-filter-bar__primary--search">
         <input type="hidden" name="per_page" value="{{ per_page }}">

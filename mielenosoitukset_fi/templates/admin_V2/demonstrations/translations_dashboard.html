@@ -56,7 +56,7 @@
   </section>
   {% endif %}
 
-  <section class="dashboard-panel admin-workspace-toolbar" aria-label="{{ _('Käännöstyöjonon suodattimet') }}">
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Käännöstyöjonon suodattimet') }}">
     <form method="GET" action="{{ url_for('admin_demo.demo_translation_dashboard') }}" class="admin-filter-bar" id="demo-translation-filter-form">
       <input type="hidden" name="page" value="1">
       <input type="hidden" name="per_page" value="{{ per_page }}">

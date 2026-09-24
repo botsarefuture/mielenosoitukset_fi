@@ -21,130 +21,14 @@
     <!-- Bootstrap & icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/variables.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_v2.css')}}">
-    <!-- Page-specific styles -->
-    <style>
-      @media screen and (max-width: 768px) {
-        main {
-          margin-left: 0 !important; /*reset the margin set in the sidebar_V2.css*/
-        }
-
-        .admin-sidebar {
-          width: min(88vw, 320px) !important;
-        }
-      }
-
-  @media screen and (min-width: 768px) {
-    .admin-sidebar {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow-y: auto;
-      position: sticky;
-      top: 0;
-      width: 280px;
-    }
-  }
-
-  .admin-sidebar {
-    background: light-dark(#eef2f7, #111827);
-    color: light-dark(#0f172a, #f8fafc);
-    border-right: 1px solid light-dark(#d8e0ea, rgba(255,255,255,0.08));
-  }
-
-  .admin-sidebar-link {
-    color: light-dark(#1f2937, #e5e7eb) !important;
-  }
-
-  .admin-sidebar-link:hover,
-  .admin-sidebar-link:focus,
-  .admin-sidebar-link.active {
-    background-color: light-dark(rgba(37, 99, 235, 0.08), rgba(255, 255, 255, 0.08));
-    border-radius: 0.375rem;
-    color: light-dark(#0f172a, #ffffff) !important;
-  }
-
-  .admin-sidebar-heading {
-    color: light-dark(#64748b, #94a3b8);
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    margin: 1rem 0 0.3rem;
-    padding: 0 0.75rem;
-    text-transform: uppercase;
-  }
-
-  .admin-sidebar-card {
-    background: light-dark(#ffffff, #1f2937);
-    color: light-dark(#111827, #f3f4f6);
-    border: 1px solid light-dark(#d7dee9, rgba(255,255,255,0.08));
-  }
-
-  .admin-sidebar-card .card-header,
-  .admin-sidebar-card .list-group-item,
-  .admin-sidebar-card .card-body {
-    background: transparent;
-    color: inherit;
-    border-color: light-dark(#d7dee9, rgba(255,255,255,0.08));
-  }
-
-  .admin-sidebar-card .list-group-item:hover {
-    background-color: light-dark(rgba(37, 99, 235, 0.08), rgba(59, 130, 246, 0.18));
-    cursor: pointer;
-  }
-
-  .admin-sidebar-card a {
-    color: light-dark(#0f172a, #f8fafc);
-  }
-
-  .admin-sidebar-card a:hover {
-    color: light-dark(#1d4ed8, #93c5fd);
-  }
-
-  .admin-theme-toggle {
-    border-color: light-dark(#c7d2e2, rgba(255,255,255,0.18));
-    color: light-dark(#1f2937, #e5e7eb);
-    background: light-dark(#ffffff, rgba(255,255,255,0.04));
-  }
-
-  .admin-theme-toggle:hover,
-  .admin-theme-toggle:focus {
-    background: light-dark(#f8fbff, rgba(255,255,255,0.1));
-    color: light-dark(#0f172a, #ffffff);
-    border-color: light-dark(#93c5fd, rgba(147,197,253,0.35));
-  }
-
-  /* Buttons hover (logout etc.) */
-  #sidebar .btn:hover {
-    opacity: 0.9;
-  }
-
-  #sidebar .card-body::-webkit-scrollbar {
-  width: 6px;
-}
-#sidebar .card-body::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.3);
-  border-radius: 3px;
-}
-
-.modal-backdrop { z-index: 1000001 !important; }
-.modal { z-index: 1000002 !important; }
-/*.modal * { z-index: 1000002 !important; }*/
-.admin-footer {
-  background: light-dark(#e9eef5, #0b1220);
-  color: light-dark(#334155, #cbd5e1);
-  border-top: 1px solid light-dark(#d7dee9, rgba(255,255,255,0.08));
-}
-    </style>
     {% block styles %}{% endblock %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/workspace.css', v='20260923-admin-ui-62') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/analytics.css', v='20260922-analytics-56') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/workspace.css', v='20260923-admin-ui-73') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/analytics.css', v='20260923-analytics-57') }}">
 </head>
 
 <body class="min-vh-100 d-flex flex-column bg-body-tertiary">
 <!-- Toast container -->
-<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+<div class="admin-toast-layer position-fixed top-0 end-0 p-3">
   <div id="toast-container"></div>
 </div>
 <script>
@@ -225,7 +109,7 @@
       <ul class="list-group list-group-flush small">
         {% for task in tasks %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
-          <a href="{{ task.link }}" class="text-decoration-none text-truncate" style="max-width: 75%;">
+          <a href="{{ task.link }}" class="admin-sidebar-task-link text-decoration-none text-truncate">
             {% if task.type == 'demo' %}
               <i class="fas fa-bullhorn text-primary me-1"></i>
             {% elif task.type == 'org_suggestion' %}
@@ -359,6 +243,9 @@ function confirmAction(action, taskId) {
             <i class="fas fa-comment-dots me-2"></i>{{ _('Ehdotukset') }}
           </a>
         </li>
+      {% endif %}
+
+      {% if current_user.has_permission("VIEW_LOGS") %}
         <li class="nav-item">
           <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin_demo.submission_errors_dashboard' %}active{% endif %}" href="{{ url_for('admin_demo.submission_errors_dashboard') }}">
             <i class="fas fa-triangle-exclamation me-2"></i>{{ _('Ilmoitusvirheet') }}
@@ -438,7 +325,7 @@ function confirmAction(action, taskId) {
   </nav>
 
   <!-- Theme toggle -->
-  <div style="margin-bottom: 1rem;">
+  <div class="admin-theme-control">
     <button id="theme-toggle" class="btn admin-theme-toggle w-100" title="{{ _('Vaihtele teema') }}">
       <i class="fas fa-moon me-2"></i><span id="theme-label">{{ _('Tumma tila') }}</span>
     </button>
@@ -496,7 +383,7 @@ function confirmAction(action, taskId) {
     {# ==== FOOTER ==== #}
     <footer class="admin-footer text-center py-3 small mt-auto">
         &copy; 2026 Mielenosoitukset.fi — {{ _('Kaikki oikeudet pidätetään.') }}
-        <p class="version">{{ app_version }}</p>
+        <p class="admin-footer__version">{{ app_version }}</p>
     </footer>
 
     <!-- Bootstrap bundle (+Popper) -->
@@ -613,7 +500,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
     </script>
-    <script src="{{ url_for('static', filename='js/admin_workspace.js', v='20260920-admin-ui-2') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/admin_workspace.js', v='20260921-admin-ui-3') }}" defer></script>
     {% block scripts %}{% endblock %}
     <!-- Logout confirmation modal -->
 <div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmLabel" aria-hidden="true">

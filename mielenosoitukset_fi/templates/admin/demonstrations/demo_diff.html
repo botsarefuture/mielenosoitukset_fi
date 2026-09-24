@@ -1,108 +1,119 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+
+{% block title %}{{ _('Muutosvertailu') }} – {{ demo_name }}{% endblock %}
+
 {% block main_content %}
-<div class="container py-3">
-    <h2 class="mb-4">{{ _('Muutosvertailu mielenosoitukselle') }}: <b>{{ demo_name }}</b></h2>
+<div class="admin-page admin-workspace">
+  {% call admin_page_hero(
+    demo_name,
+    _('Vertaa tallennetun version kenttiä ja varmista palautettava sisältö ennen palautusta.'),
+    _('Muutosvertailu'),
+    [
+      (_('Hallintapaneeli'), url_for('admin.admin_dashboard')),
+      (_('Mielenosoitukset'), url_for('admin_demo.demo_control')),
+      (demo_name, url_for('admin_demo.edit_demo', demo_id=demo_id)),
+      (_('Muokkaushistoria'), url_for('admin_demo.demo_edit_history', demo_id=demo_id)),
+      (_('Muutosvertailu'), none),
+    ],
+    back_url=url_for('admin_demo.demo_edit_history', demo_id=demo_id),
+    back_label=_('Takaisin muokkaushistoriaan'),
+    metric_value=changed_count,
+    metric_label=_('muuttunutta kenttää'),
+  ) %}
+    <button type="button" class="admin-page-hero__action" data-bs-toggle="modal" data-bs-target="#previewModal">
+      <i class="fas fa-eye" aria-hidden="true"></i>{{ _('Esikatsele versio') }}
+    </button>
+    <button type="button" class="admin-page-hero__action" data-bs-toggle="modal" data-bs-target="#rollbackModal">
+      <i class="fas fa-rotate-left" aria-hidden="true"></i>{{ _('Palauta tähän versioon') }}
+    </button>
+  {% endcall %}
 
-    <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
-        <!-- Toggle unchanged fields -->
-        <button class="btn btn-sm btn-outline-secondary" id="toggleUnchanged"
-            data-show-text="{{ _('Näytä piilotetut muuttumattomat kentät') }}"
-            data-hide-text="{{ _('Piilota muuttumattomat kentät') }}">
-            {{ _('Näytä piilotetut muuttumattomat kentät') }}
-        </button>
+  {% if rollbacked %}
+  <div class="admin-inset" role="status">
+    <span class="admin-status-badge admin-status-badge--warning"><i class="fas fa-rotate-left" aria-hidden="true"></i>{{ _('Tämä historiaversio syntyi aiemmasta palautuksesta.') }}</span>
+  </div>
+  {% endif %}
 
-        <!-- Back button -->
-        <a href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo_id) }}" class="btn btn-secondary">
-            {{ _('Takaisin muokkaushistoriaan') }}
-        </a>
-
-        <!-- Rollback button -->
-        <form method="POST" action="{{ url_for('admin_demo.rollback_demo', history_id=history_id) }}" style="display:inline;">
-            <button type="submit" class="btn btn-danger">
-                {{ _('Palauta tähän versioon') }}
-            </button>
-        </form>
-
-        {% if rollbacked %}
-        <span class="badge bg-warning text-dark">
-            {{ _('Tämä versio on palautettu nykyiseksi!') }}
+  <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="diff-heading">
+    <div class="admin-data-view__header admin-result-summary">
+      <div>
+        <strong id="diff-heading">{{ _('Kenttäkohtaiset muutokset') }}</strong>
+        <span class="d-block text-muted">
+          {% if edited_at %}{{ edited_at.strftime('%d.%m.%Y %H:%M:%S') }} · {% endif %}
+          {{ _('%(changed)s muuttunutta, %(unchanged)s muuttumatonta kenttää', changed=changed_count, unchanged=unchanged_count) }}
         </span>
-        {% endif %}
+      </div>
+      {% if unchanged_count %}
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="toggleUnchanged" aria-expanded="false" aria-controls="diff-table-body" data-show-text="{{ _('Näytä muuttumattomat kentät') }}" data-hide-text="{{ _('Piilota muuttumattomat kentät') }}">
+        <i class="fas fa-eye" aria-hidden="true"></i><span>{{ _('Näytä muuttumattomat kentät') }}</span>
+      </button>
+      {% endif %}
     </div>
+    <div class="admin-data-view__viewport">
+      <table class="admin-data-view__table admin-diff-table">
+        <thead>
+          <tr><th scope="col">{{ _('Kenttä') }}</th><th scope="col">{{ _('Muutos') }}</th></tr>
+        </thead>
+        <tbody id="diff-table-body">
+          {% for field, diff in diffs.items() %}
+          <tr class="{% if not diff.changed %}admin-diff-row--unchanged{% endif %}"{% if not diff.changed %} hidden{% endif %}>
+            <td class="admin-diff-field">
+              <strong>{{ field }}</strong>
+              {% if diff.changed %}<span class="admin-status-badge admin-status-badge--info">{{ _('Muuttunut') }}</span>
+              {% else %}<span class="admin-status-badge">{{ _('Ei muutoksia') }}</span>{% endif %}
+            </td>
+            <td><div class="admin-diff-block">{{ diff.diff_html }}</div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 
-    <div class="card shadow-sm mt-3">
-        <div class="table-responsive">
-            <table class="table table-bordered align-middle diff-table">
-                <thead class="table-dark">
-                    <tr>
-                        <th style="width: 20%;">{{ _('Kenttä') }}</th>
-                        <th>{{ _('Muutokset') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for field, diff in diffs.items() %}
-                    <tr class="{% if not diff.diff_html %}unchanged-row d-none{% endif %}">
-                        <td class="fw-bold text-bg-secondary text-white">{{ field }}</td>
-                        <td>
-                            {% if diff.diff_html %}
-                            <div class="diff-block">{{ diff.diff_html | safe }}</div>
-                            {% else %}
-                            <span class="badge bg-info">{{ _('Ei muutoksia') }}</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+  <div class="modal fade admin-modal" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-describedby="previewModalDescription" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header"><div><h2 class="modal-title" id="previewModalLabel">{{ _('Esikatsele palautettavaa versiota') }}</h2><p id="previewModalDescription">{{ _('Näet tässä kaikki version tallennetut kentät ennen palautuspäätöstä.') }}</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div>
+        <div class="modal-body admin-diff-preview">
+          {% for field, diff in diffs.items() %}
+          <section class="admin-inset"><h3>{{ field }}</h3><pre>{{ diff.old }}</pre></section>
+          {% endfor %}
         </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button></div>
+      </div>
     </div>
+  </div>
 
-    <!-- Preview modal -->
-    <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="previewModalLabel">{{ _('Esikatsele palautettavaa versiota') }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            {% for field, diff in diffs.items() %}
-              <p><strong>{{ field }}:</strong></p>
-              <div class="diff-block">{{ diff.diff_html | safe }}</div>
-              <hr>
-            {% endfor %}
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
-          </div>
+  <div class="modal fade admin-modal" id="rollbackModal" tabindex="-1" aria-labelledby="rollbackModalLabel" aria-describedby="rollbackModalDescription" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header"><h2 class="modal-title" id="rollbackModalLabel">{{ _('Palauta tallennettu versio') }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div>
+        <div class="modal-body"><p id="rollbackModalDescription">{{ _('Nykyinen mielenosoitus korvataan tämän historiaversion tiedoilla. Nykytila tallennetaan historiaan, joten palautuksen voi tarvittaessa perua myöhemmin.') }}</p></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+          <form method="POST" action="{{ url_for('admin_demo.rollback_demo', history_id=history_id) }}"><button type="submit" class="btn btn-danger"><i class="fas fa-rotate-left" aria-hidden="true"></i>{{ _('Palauta tähän versioon') }}</button></form>
         </div>
       </div>
     </div>
-
-    <button class="btn btn-outline-info mt-3" data-bs-toggle="modal" data-bs-target="#previewModal">
-        {{ _('Esikatsele tämä versio') }}
-    </button>
-
+  </div>
 </div>
+{% endblock %}
 
-<style>
-.diff-block { font-family: monospace; white-space: pre-wrap; }
-.diff-add { background-color: #1a7f37; color: #fff; padding:2px 4px; border-radius:3px; }
-.diff-remove { background-color: #b22222; color: #fff; padding:2px 4px; border-radius:3px; text-decoration:line-through; }
-.diff-unchanged { background-color: #e6f0fa; color:#222; padding:2px 4px; border-radius:3px; }
-</style>
-
+{% block scripts %}
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Toggle unchanged rows
-    const toggleBtn = document.getElementById("toggleUnchanged");
-    const rows = document.querySelectorAll(".unchanged-row");
-    if (!rows.length) toggleBtn.style.display = "none";
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.getElementById('toggleUnchanged');
+  if (!toggle) return;
+  const rows = [...document.querySelectorAll('.admin-diff-row--unchanged')];
+  const label = toggle.querySelector('span');
 
-    toggleBtn.addEventListener("click", function() {
-        rows.forEach(r => r.classList.toggle("d-none"));
-        this.textContent = rows[0].classList.contains("d-none") ? this.dataset.showText : this.dataset.hideText;
-    });
+  toggle.addEventListener('click', () => {
+    const show = toggle.getAttribute('aria-expanded') !== 'true';
+    rows.forEach((row) => { row.hidden = !show; });
+    toggle.setAttribute('aria-expanded', show ? 'true' : 'false');
+    label.textContent = show ? toggle.dataset.hideText : toggle.dataset.showText;
+  });
 });
 </script>
 {% endblock %}

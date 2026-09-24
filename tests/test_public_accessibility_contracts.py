@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 
 def test_public_shell_has_language_and_semantic_footer_lists(client):
@@ -22,6 +23,21 @@ def test_city_today_page_has_a_document_language(client):
     assert response.status_code == 200
     page = response.get_data(as_text=True)
     assert '<html lang="fi"' in page
+
+
+def test_public_chat_feedback_uses_safe_shared_toast():
+    messages = Path("mielenosoitukset_fi/templates/users/profile/messages.html").read_text(
+        encoding="utf-8"
+    )
+    toaster = Path("mielenosoitukset_fi/static/js/toaster.js").read_text(encoding="utf-8")
+
+    assert "js/toaster.js" in messages
+    assert "showToast(" in messages
+    assert "alert(" not in messages
+    assert "text.textContent = String(message" in toaster
+    assert "innerHTML" not in toaster
+    assert "role', 'status'" in toaster
+    assert "aria-live', 'polite'" in toaster
 
 
 def test_api_documentation_code_blocks_are_focusable_and_links_are_distinct(client):

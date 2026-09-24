@@ -31,7 +31,8 @@
   </div>
 </div>
 
-<!-- Socket.IO client -->
+<!-- Shared public feedback/toast helper and Socket.IO client -->
+<script src="{{ url_for('static', filename='js/toaster.js') }}"></script>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <!-- Chat widget JS improvements -->
 <script>
@@ -233,9 +234,15 @@ function handleMessageRead(msg_id){
 
 // --- SEND MESSAGE ---
 chatSend.onclick = () => {
-    if(!currentFriend) return alert("Valitse ystävä ensin.");
+    if(!currentFriend) {
+        showToast("{{ _('Valitse ensin ystävä.') }}", "info");
+        return;
+    }
     const content = chatInput.value.trim();
-    if(!content) return;
+    if(!content) {
+        showToast("{{ _('Kirjoita viesti ennen lähettämistä.') }}", "info");
+        return;
+    }
     socket.emit("send_message", {recipient: currentFriend, content});
     chatInput.value = "";
 };

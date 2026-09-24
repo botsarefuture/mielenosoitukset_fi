@@ -27,14 +27,37 @@ function showToast(message, category = 'info') {
 
   const toast = document.createElement('div');
   toast.className = `flash-message flash-${category}`;
-  toast.innerHTML = `
-    <div class="flash-icon"><i class="fa-solid ${icons[category] || icons.default}"></i></div>
-    <div class="flash-content"><div class="flash-text">${message}</div></div>
-    <button class="flash-close" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
-    <div class="flash-progress"></div>
-  `;
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
 
-  const progress = toast.querySelector('.flash-progress');
+  const icon = document.createElement('div');
+  icon.className = 'flash-icon';
+  const iconEl = document.createElement('i');
+  iconEl.className = `fa-solid ${icons[category] || icons.default}`;
+  iconEl.setAttribute('aria-hidden', 'true');
+  icon.appendChild(iconEl);
+
+  const content = document.createElement('div');
+  content.className = 'flash-content';
+  const text = document.createElement('div');
+  text.className = 'flash-text';
+  // Messages can contain user-controlled data, so never interpret them as HTML.
+  text.textContent = String(message ?? '');
+  content.appendChild(text);
+
+  const close = document.createElement('button');
+  close.className = 'flash-close';
+  close.type = 'button';
+  close.setAttribute('aria-label', 'Close');
+  const closeIcon = document.createElement('i');
+  closeIcon.className = 'fa-solid fa-xmark';
+  closeIcon.setAttribute('aria-hidden', 'true');
+  close.appendChild(closeIcon);
+
+  const progress = document.createElement('div');
+  progress.className = 'flash-progress';
+  toast.append(icon, content, close, progress);
+
   const remove = () => {
     if (toast.classList.contains('removing')) return;
     toast.classList.add('removing');

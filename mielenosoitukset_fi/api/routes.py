@@ -33,6 +33,7 @@ from mielenosoitukset_fi.utils.tokens import (
 from mielenosoitukset_fi.api.exceptions import ApiException, Message
 from mielenosoitukset_fi.utils.cache import cache, should_skip_cache
 from mielenosoitukset_fi.utils.request_ip import get_client_ip
+from mielenosoitukset_fi.utils.site_analytics import record_event_for_request
 
 mongo = DatabaseManager().get_instance().get_db()
 api_bp = Blueprint("api", __name__)
@@ -160,6 +161,13 @@ def _case_insensitive_exact_pattern(value):
     return re.compile(f"^{re.escape(value)}$", re.IGNORECASE)
 
 
+def _parse_iso_date_arg(value):
+    raw = str(value or "").strip()
+    if raw and re.match(r"^\d{4}-\d{2}-\d{2}$", raw):
+        return raw
+    return None
+
+
 PUBLIC_DEMONSTRATION_LIST_PROJECTION = {
     "_id": 1,
     "title": 1,
@@ -275,12 +283,21 @@ def list_demonstrations():
     cached_response = cache.get(cache_key) if use_cache else None
 
     if cached_response:
+        # Preserve analytics even when serving from cache: record first-page
+        # search terms the same way /api/v1/demonstrations does.
+        try:
+            cached_page = max(int(request.args.get("page", 1)), 1)
+        except ValueError:
+            cached_page = 1
+        if cached_page == 1:
+            _search_term = (request.args.get("search") or "").strip()
+            if len(_search_term) >= 2:
+                try:
+                    record_event_for_request("demo_search", resource_id=_search_term[:120])
+                except Exception:
+                    pass
         response_to_return = deepcopy(cached_response)
         return jsonify(response_to_return), 200
-
-        
-    
-    
 
     search = get_param("search")
     raw_city = request.args.get("city", "").strip()
@@ -292,6 +309,9 @@ def list_demonstrations():
     parent_id = request.args.get("parent_id", "").strip()
     organization_id = request.args.get("organization_id", "").strip()
     max_days_till = request.args.get("max_days_till", "").strip()
+    location_query = request.args.get("location", "").strip().casefold()
+    date_start = _parse_iso_date_arg(request.args.get("date_start", ""))
+    date_end = _parse_iso_date_arg(request.args.get("date_end", ""))
 
     # --- Parse IDs safely ---
     def safe_objectid(value: str):
@@ -346,17 +366,49 @@ def list_demonstrations():
     extra_filters = []
     if search:
         pattern = _case_insensitive_contains(search)
-        extra_filters.append(
-            {"$or": [{"title": pattern}, {"description": pattern}, {"translations.en.title": pattern}, {"translations.en.description": pattern}]}
-        )
+        search_or = [
+            {"title": pattern},
+            {"description": pattern},
+            {"tags": pattern},
+            {"address": pattern},
+        ]
+        for locale in (current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"]):
+            search_or.extend([
+                {f"translations.{locale}.title": pattern},
+                {f"translations.{locale}.description": pattern},
+                {f"translations.{locale}.tags": pattern},
+            ])
+        extra_filters.append({"$or": search_or})
     if title:
         pattern = _case_insensitive_contains(title)
-        extra_filters.append({"$or": [{"title": pattern}, {"translations.en.title": pattern}]})
+        title_or = [{"title": pattern}]
+        for locale in (current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"]):
+            title_or.append({f"translations.{locale}.title": pattern})
+        extra_filters.append({"$or": title_or})
     if city_list:
         extra_filters.append({"city": {"$in": [_case_insensitive_exact_pattern(city) for city in city_list]}})
     if tag:
         pattern = _case_insensitive_exact(tag)
-        extra_filters.append({"$or": [{"tags": pattern}, {"translations.en.tags": pattern}]})
+        tag_or = [{"tags": pattern}]
+        for locale in (current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"]):
+            tag_or.append({f"translations.{locale}.tags": pattern})
+        extra_filters.append({"$or": tag_or})
+    if location_query:
+        extra_filters.append({"address": _case_insensitive_contains(location_query)})
+    # Mirror /api/v1 semantics: date_start/date_end override the default
+    # today/max_date bounds (but still respect in_past=max preservation for
+    # partial ranges). When both are present we want a single tight `date`
+    # clause, not two competing ones in query["date"] and $and.
+    if date_start and date_end:
+        query["date"] = {"$gte": date_start, "$lte": date_end}
+    elif date_start and not date_end:
+        date_filter["$gte"] = max(date_filter.get("$gte", ""), date_start)
+        if date_filter:
+            query["date"] = date_filter
+    elif date_end and not date_start:
+        date_filter["$lte"] = date_end
+        if date_filter:
+            query["date"] = date_filter
     if extra_filters:
         query["$and"] = query.get("$and", []) + extra_filters
 
@@ -387,6 +439,18 @@ def list_demonstrations():
 
     next_url = build_url(page + 1) if page < total_pages else None
     prev_url = build_url(page - 1) if page > 1 else None
+
+    # Record deliberate demo-list searches once per search (first page only —
+    # pagination requests of the same query are not new searches). Mirrors
+    # the /api/v1/demonstrations handler so city-page searches re-enter the
+    # built-in demo_search totals and top-search dashboard.
+    if page == 1:
+        search_term = (request.args.get("search") or "").strip()
+        if len(search_term) >= 2:
+            try:
+                record_event_for_request("demo_search", resource_id=search_term[:120])
+            except Exception:
+                pass
 
     # --- Response object to cache ---
     response_data = {

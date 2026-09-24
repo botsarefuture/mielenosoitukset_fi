@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="{{ session.get('locale') or 'fi' }}" class="dark">
+{% set current_locale = session.get('locale') %}
+<html lang="{{ current_locale if current_locale in get_supported_locales() else 'fi' }}" class="dark">
 
 <head>
   <meta charset="UTF-8" />

@@ -19,6 +19,8 @@
 
 ### Fixed
 * Background-job detail filters now keep an off-page selected run visible while paginating, and the redesigned view's English and Swedish interface copy is included in the compiled translation catalogs.
+* Reaching the end of the paginated demonstration lists no longer throws a JavaScript error: the end-of-content message on the main list and city pages was set via an undefined `_()` helper (or a hard-coded English string), so it either crashed the pagination callback or ignored the active language. The message is now rendered from the session locale.
+* The grid/list view toggles on the demonstration list, city, and tag pages now ship translated aria-labels instead of the English "Grid view"/"List view", and the tag cover photo alt text is translated, so screen-reader output follows the UI language.
 * Public pages no longer flash the wrong color scheme on load: the theme is applied before first paint from the saved preference (falling back to system preference), instead of every page hard-coding dark mode until JavaScript switched it. This also fixes the separate duplicate dark/light toggle code paths, which could disagree about the active theme.
 * The public footer now emits valid HTML: the login/register/logout links are proper list items inside a `<ul>` instead of being wrapped in a `<div>`, keeping the existing blue auth-box styling while fixing the invalid markup.
 * The public header no longer downloads a duplicate Font Awesome stylesheet from a third-party CDN — the site already preloads its own local copy — removing an extra blocking request on every page.

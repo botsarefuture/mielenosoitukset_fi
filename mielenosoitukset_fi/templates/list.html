@@ -38,10 +38,10 @@
 </section>
 <section class="main-content">
   <div class="view-toggle-group" id="view-toggle-group">
-    <button class="view-toggle-btn active" id="grid-view-btn" type="button" aria-label="Grid view">
+    <button class="view-toggle-btn active" id="grid-view-btn" type="button" aria-label="{{ _('Ruudukkonäkymä') }}">
       <i class="fa-solid fa-table-cells-large"></i>
     </button>
-    <button class="view-toggle-btn" id="list-view-btn" type="button" aria-label="List view">
+    <button class="view-toggle-btn" id="list-view-btn" type="button" aria-label="{{ _('Listanäkymä') }}">
       <i class="fa-solid fa-list"></i>
     </button>
   </div>
@@ -185,7 +185,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function showEndMessage() {
     spinner.style.display = "none";
     endMsg.style.display = "";
-    endMsg.textContent = _("Olet saavuttanut lopun");
+    endMsg.textContent = "{{ _('Olet saavuttanut lopun') }}";
   }
 
   function renderDemos(demos, append = false) {

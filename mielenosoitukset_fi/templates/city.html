@@ -1,239 +1,16 @@
 {% extends 'base.html' %}
 {% from '_macros/_hero.html' import hero_section %}
-{% from '_macros/_pagination.html' import listing_end_message %}
+{% from '_macros/_pagination.html' import load_more_button %}
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/user-pagination.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="{{ url_for('static', filename='js/date.js') }}"></script>
-<script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
-<script>
-const cityList = [{{ city_name|tojson }}]; // Only the locked city
-</script>
-<script>
-/**
- * Numpydoc:
- * Fetches demonstration data from the API and renders cards or table rows.
- * Handles infinite scroll, search, and view toggling.
- * City is locked to the current city.
- */
-document.addEventListener("DOMContentLoaded", function() {
-  function renderDemoTableRow(demo) {
-    return `
-      <tr onclick="window.location='/demonstration/${demo._id}'" style="cursor:pointer;">
-        <td><i class="fa-regular fa-calendar"></i> ${demo.date_display}</td>
-        <td><i class="fa-regular fa-clock"></i> ${demo.start_time_display} - ${demo.end_time_display}</td>
-        <td class="demo-table-title"><span class="demo-table-link">${demo.title}</span></td>
-        <td><i class="fa-solid fa-city"></i> ${demo.city}</td>
-        <td><i class="fa-solid fa-location-dot"></i> ${demo.address}</td>
-        <td>
-          <span class="demo-table-tags">
-            ${(demo.tags && demo.tags.length > 0)
-              ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag">#${tag}</a>`).join(' ')
-              : `<span class="demo-table-tag">#${demo.topic || ''}</span>`}
-          </span>
-        </td>
-      </tr>
-    `;
-  }
+{% block title %} {{ city_name }} {{ _('Mielenosoitukset') }} {% endblock %}
 
-  let page = 1;
-  let per_page = 20;
-  let total_pages = 1;
-  let is_loading = false;
-  let last_query = {};
-  let view = localStorage.getItem("demoView") || "grid";
-  const gridContainer = document.getElementById("demo-container-grid");
-  const tableContainer = document.getElementById("demo-table-container");
-  const tableBody = document.getElementById("demo-table-body");
-  const spinner = document.getElementById("loading-spinner");
-  const endMsg = document.getElementById("end-of-content-message");
-  const scrollSentinel = document.getElementById("scroll_sentinel");
-
-  function getQuery() {
-    const form = document.getElementById("search-form");
-    const data = new FormData(form);
-    let query = {};
-    for (const [k, v] of data.entries()) {
-      if (v) query[k] = v;
-    }
-    // Lock city to current city
-    query.city = "{{ city_name }}";
-    if (query.display_date_start) {
-      const parts = query.display_date_start.split(".");
-      if (parts.length === 3) query.date_start = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
-    }
-    if (query.display_date_end) {
-      const parts = query.display_date_end.split(".");
-      if (parts.length === 3) query.date_end = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
-    }
-    return query;
-  }
-
-  function buildApiUrl(query, page) {
-    const params = new URLSearchParams(query);
-    params.set("page", page);
-    params.set("per_page", per_page);
-    return `/api/v1/demonstrations?${params.toString()}`;
-  }
-
-  function clearContent() {
-    gridContainer.innerHTML = "";
-    tableBody.innerHTML = "";
-    endMsg.hidden = true;
-    spinner.style.display = "block";
-  }
-
-  function showEndMessage() {
-    spinner.style.display = "none";
-    endMsg.hidden = false;
-    endMsg.textContent = "{{ _('Olet saavuttanut lopun') }}";
-  }
-
-  function renderDemos(demos, append = false) {
-    if (view === "grid") {
-      const cards = renderDemoCards(demos, {
-        containerId: "demo-container-grid",
-        clear: !append,
-      });
-      setup_grid_navigation(cards);
-      getFriendsAttending(cards);
-    } else {
-      if (!append) tableBody.innerHTML = "";
-      tableBody.innerHTML += demos.map(renderDemoTableRow).join("");
-    }
-  }
-
-  function fetchAndRenderDemos(opts = {reset: false, append: false}) {
-    if (is_loading) return;
-    is_loading = true;
-    spinner.style.display = "block";
-    let query = getQuery();
-    if (opts.reset) {
-      page = 1;
-      last_query = query;
-      clearContent();
-    } else {
-      query = last_query;
-    }
-    return fetch(buildApiUrl(query, page))
-      .then(r => r.json())
-      .then(data => {
-        total_pages = data.total_pages;
-        if (!total_pages) {
-          total_pages = 1;
-        };
-        if (view === "grid" && data.demonstrations.length === 0 && page === 1) {
-          gridContainer.innerHTML = `<div class="grid-item no-results">{{ _('Ei löytynyt mielenosoituksia.') }}</div>`;
-        } else if (view === "list" && data.demonstrations.length === 0 && page === 1) {
-          tableBody.innerHTML = `<tr><td colspan="6">{{ _('Ei löytynyt mielenosoituksia.') }}</td></tr>`;
-        } else {
-          renderDemos(data.demonstrations, opts.append);
-        }
-        if (page >= total_pages) {
-          showEndMessage();
-        } else {
-          endMsg.hidden = true;
-          spinner.style.display = "block";
-        }
-        is_loading = false;
-        return { page, total_pages };
-      })
-      .catch(() => {
-        spinner.style.display = "none";
-        is_loading = false;
-        throw new Error("Failed to load demonstrations");
-      });
-  }
-
-  const paginationController = UserPagination.createLoadMoreController({
-    sentinel: scrollSentinel,
-    loadPage: (nextPage, options = {}) => {
-      page = nextPage;
-      return fetchAndRenderDemos({
-        reset: options.reset ?? false,
-        append: options.append ?? true,
-      });
-    },
-  });
-
-  function setView(newView) {
-    view = newView;
-    localStorage.setItem("demoView", view);
-    if (view === "list") {
-      document.querySelector(".container-main-content").classList.add("list-view");
-      document.getElementById("list-view-btn").classList.add("active");
-      document.getElementById("grid-view-btn").classList.remove("active");
-      gridContainer.classList.add("hide-cards");
-      tableContainer.style.display = "";
-    } else {
-      document.querySelector(".container-main-content").classList.remove("list-view");
-      document.getElementById("grid-view-btn").classList.add("active");
-      document.getElementById("list-view-btn").classList.remove("active");
-      gridContainer.classList.remove("hide-cards");
-      tableContainer.style.display = "none";
-    }
-    paginationController.reload({ reset: true, append: false });
-  }
-  document.getElementById("grid-view-btn").addEventListener("click", () => setView("grid"));
-  document.getElementById("list-view-btn").addEventListener("click", () => setView("list"));
-
-  document.getElementById("search-form").addEventListener("submit", function(e) {
-    e.preventDefault();
-    setView(view);
-  });
-
-  // Date picker
-  const dateConfig = {
-    dateFormat: "d.m.Y",
-    minDate: "today",
-    allowInput: true,
-    locale: {
-      firstDayOfWeek: 1,
-      weekdays: {
-        shorthand: ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
-        longhand: [
-          "Sunnuntai",
-          "Maanantai",
-          "Tiistai",
-          "Keskiviikko",
-          "Torstai",
-          "Perjantai",
-          "Lauantai"
-        ]
-      },
-      months: {
-        shorthand: [
-          "Tam", "Hel", "Mar", "Huht", "Tou", "Kes", "Hele", "Elok", "Syys", "Lok", "Marr", "Jou"
-        ],
-        longhand: [
-          "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu",
-          "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu"
-        ]
-      }
-    }
-  };
-  const startPicker = flatpickr("#date_start", {
-    ...dateConfig,
-    onChange: function (selectedDates) {
-      if (selectedDates[0]) {
-        endPicker.set("minDate", selectedDates[0]);
-      }
-    }
-  });
-  const endPicker = flatpickr("#date_end", {
-    ...dateConfig,
-    onChange: function (selectedDates) {
-      if (selectedDates[0]) {
-        startPicker.set("maxDate", selectedDates[0]);
-      }
-    }
-  });
-
-  setView(view);
-});
-</script>
+{% block meta %}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="{{ _('Lista tulevista mielenosoituksista') }}" />
+<meta name="keywords" content="mielenosoitus, tapahtuma, Helsinki" />
+<meta name="author" content="Mielenosoitukset.fi" />
+<meta name="robots" content="index, follow" />
 {% endblock %}
 
 {% block styles %}
@@ -242,8 +19,15 @@ document.addEventListener("DOMContentLoaded", function() {
 {% endblock %}
 
 {% block content %}
+
+<script>
+  window.CITY_FILTER = {{ city_name|tojson }};
+</script>
+
 {% include "_modals/_demo-card-template.html" %}
-<div class="container-main-content">
+
+<section class="main-content">
+
   {{ hero_section(
     kind='page',
     eyebrow=_('Kaupunki'),
@@ -251,66 +35,176 @@ document.addEventListener("DOMContentLoaded", function() {
     text=_('Näet tässä vain mielenosoitukset, jotka järjestetään kaupungissa') ~ ' ' ~ city_name ~ '. ' ~ _('Voit hakea, suodattaa ja selata vain tämän kaupungin tapahtumia. Jos haluat nähdä kaikki mielenosoitukset, palaa yleisnäkymään.'),
     icon='fa-solid fa-city'
   ) }}
-  <h1>
-    {{ _('Tulevat mielenosoitukset kaupungissa: ') }} {{ city_name }}
-  </h1>
-  <div class="view-toggle-group" id="view-toggle-group">
-    <button class="view-toggle-btn active" id="grid-view-btn" type="button" aria-label="{{ _('Ruudukkonäkymä') }}">
-      <i class="fa-solid fa-table-cells-large"></i>
-    </button>
-    <button class="view-toggle-btn" id="list-view-btn" type="button" aria-label="{{ _('Listanäkymä') }}">
-      <i class="fa-solid fa-list"></i>
-    </button>
-  </div>
+
   <form method="GET" action="#" class="search-form" id="search-form">
-      <input
-          type="text"
-          name="search"
-          placeholder="{{ _('Hae mielenosoituksia...') }}"
-          aria-label="{{ _('Hae mielenosoituksia') }}"
-          value="{{ request.args.get('search', '') }}"
-      />
-      <input type="hidden" name="city" value="{{ city_name }}" />
-      <input
-          type="text"
-          name="location"
-          placeholder="{{ _('Sijainti') }}"
-          aria-label="{{ _('Sijainti') }}"
-          value="{{ request.args.get('location', '') }}"
-      />
-      <div class="date-range">
-        <input type="text" name="display_date_start" id="date_start" placeholder="{{ _('Alkupäivä (pp.mm.vvvv)') }}"
-          aria-label="{{ _('Alkupäivä (pp.mm.vvvv)') }}" />
-        <span>-</span>
-        <input type="text" name="display_date_end" id="date_end" placeholder="{{ _('Loppupäivä (pp.mm.vvvv)') }}"
-          aria-label="{{ _('Loppupäivä (pp.mm.vvvv)') }}" />
-      </div>
-      <div class="date-error" id="date-error">{{ _('Valitse kelvollinen päivämääräväli tulevaisuudesta') }}</div>
-      <input type="hidden" name="date_start" id="iso_date_start">
-      <input type="hidden" name="date_end" id="iso_date_end">
-      <div class="filters" id="filters"></div>
-      <button type="submit" class="button">{{ _('Hae') }}</button>
+    <input
+      type="text"
+      name="search"
+      placeholder="{{ _('Hae mielenosoituksia...') }}"
+      aria-label="{{ _('Hae mielenosoituksia') }}"
+      value="{{ request.args.get('search', '') }}"
+    />
+    <input type="hidden" name="city" value="{{ city_name }}" />
+    <input
+      type="text"
+      name="location"
+      placeholder="{{ _('Sijainti') }}"
+      aria-label="{{ _('Sijainti') }}"
+      value="{{ request.args.get('location', '') }}"
+    />
+    <div class="date-range">
+      <input type="text" name="display_date_start" id="date_start" placeholder="{{ _('Alkupäivä (pp.mm.vvvv)') }}" aria-label="{{ _('Alkupäivä (pp.mm.vvvv)') }}" />
+      <span>-</span>
+      <input type="text" name="display_date_end" id="date_end" placeholder="{{ _('Loppupäivä (pp.mm.vvvv)') }}" aria-label="{{ _('Loppupäivä (pp.mm.vvvv)') }}" />
+    </div>
+    <div class="date-error" id="date-error">{{ _('Valitse kelvollinen päivämääräväli tulevaisuudesta') }}</div>
+    <input type="hidden" name="date_start" id="iso_date_start">
+    <input type="hidden" name="date_end" id="iso_date_end">
+    <div class="filters" id="filters"></div>
+    <button type="submit" class="button">{{ _('Hae') }}</button>
   </form>
-  <div class="container-grid" id="demo-container-grid"></div>
-  <div class="demo-table-container" id="demo-table-container" style="display: none;">
-    <table class="demo-table">
-      <thead>
-        <tr>
-          <th>{{ _('Päivä') }}</th>
-          <th>{{ _('Aika') }}</th>
-          <th>{{ _('Otsikko') }}</th>
-          <th>{{ _('Kaupunki') }}</th>
-          <th>{{ _('Sijainti') }}</th>
-          <th>{{ _('Aiheet / tagit') }}</th>
-        </tr>
-      </thead>
-      <tbody id="demo-table-body"></tbody>
-    </table>
-  </div>
-  <div id="scroll_sentinel"></div>
-  <div id="loading-spinner" style="display: block; text-align: center; padding: 20px;">
-    <i class="fas fa-spinner fa-spin fa-2x"></i>
-  </div>
-  {{ listing_end_message() }}
-</div>
+
+  <section class="section-card">
+    <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>{{ _('Tulevat mielenosoitukset kaupungissa: ') }}{{ city_name }}</h2>
+
+    <div id="demos-grid" class="demos-grid"></div>
+    {{ load_more_button() }}
+
+    <div id="no-results" class="no-results-card" style="display:none;">
+      <div class="no-results-icon">
+        <i class="fa-regular fa-calendar-xmark"></i>
+      </div>
+      <h3 class="no-results-title">{{ _('Ei löytynyt mielenosoituksia') }}</h3>
+      <p class="no-results-text">{{ _('Tällä hetkellä ei ole mielenosoituksia. Tarkista myöhemmin.') }}</p>
+      <div class="no-results-action">
+        <a href="{{ url_for('submit') }}" class="button button-primary">
+          <i class="fa-solid fa-plus"></i>{{ _('Ilmoita uusi mielenosoitus') }}
+        </a>
+      </div>
+    </div>
+
+  </section>
+
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/user-pagination.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
+<script>
+const cityList = {{ city_list | tojson }};
+window.currentLocale = {{ (current_locale if current_locale is defined else session.get('locale') or 'fi') | tojson }};
+window.demoCardI18n = {
+  loading: {{ _('Ladataan mielenosoituksia...') | tojson }},
+  loadMore: {{ _('Lataa lisää') | tojson }},
+  cancelled: {{ _('Peruttu') | tojson }},
+  today: {{ _('Tänään') | tojson }},
+  startingFrom: {{ _('alkaen') | tojson }},
+  loginPrompt: {{ _('Kirjaudu sisään käyttääksesi sosiaalisia toimintoja') | tojson }},
+  attendingSuffix: {{ _('osallistuu') | tojson }},
+};
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const grid = document.getElementById("demos-grid");
+  const loadMoreBtn = document.getElementById("load-more-btn");
+  const searchForm = document.getElementById("search-form");
+  const noResults = document.getElementById("no-results");
+
+  let extraParams = {};
+  if (window.CITY_FILTER) extraParams.city = window.CITY_FILTER;
+
+  async function loadDemosWrapper(page = 1, append = false) {
+    if (!append) {
+      noResults.style.display = "none";
+      grid.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>${window.demoCardI18n.loading}</p></div>`;
+    }
+
+    const result = await loadDemos(page, append, extraParams);
+    if (result) {
+      window.userPaginationController?.setState(result.page, result.total_pages);
+    }
+    return result;
+  }
+
+  window.userPaginationController = UserPagination.createLoadMoreController({
+    button: loadMoreBtn,
+    loadPage: (page, options = {}) => loadDemosWrapper(page, options.append ?? true),
+    initialLabel: '{{ _('Näytä lisää') }}',
+    loadingLabel: '{{ _('Ladataan...') }}',
+  });
+
+  loadDemosWrapper();
+
+  searchForm.addEventListener("submit", e => {
+    e.preventDefault();
+
+    const searchValue = searchForm.querySelector('input[name="search"]').value.trim();
+    const locationValue = searchForm.querySelector('input[name="location"]').value.trim();
+    const displayStart = searchForm.querySelector('input[name="display_date_start"]').value.trim();
+    const displayEnd = searchForm.querySelector('input[name="display_date_end"]').value.trim();
+
+    let dateStart = "";
+    let dateEnd = "";
+    if (displayStart) {
+      const parts = displayStart.split(".");
+      if (parts.length === 3) dateStart = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+    }
+    if (displayEnd) {
+      const parts = displayEnd.split(".");
+      if (parts.length === 3) dateEnd = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+    }
+
+    extraParams = {};
+    if (window.CITY_FILTER) extraParams.city = window.CITY_FILTER;
+    if (searchValue) extraParams.search = searchValue;
+    if (locationValue) extraParams.location = locationValue;
+    if (dateStart) extraParams.date_start = dateStart;
+    if (dateEnd) extraParams.date_end = dateEnd;
+
+    window.userPaginationController?.reload({ append: false });
+    if (!window.userPaginationController) loadDemosWrapper(1, false);
+  });
+
+  const dateConfig = {
+    dateFormat: "d.m.Y",
+    minDate: "today",
+    allowInput: true,
+    locale: {
+      firstDayOfWeek: 1,
+      weekdays: {
+        shorthand: ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
+        longhand: ["Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai"]
+      },
+      months: {
+        shorthand: ["Tam", "Hel", "Maa", "Huh", "Tou", "Kes", "Hei", "Elo", "Syy", "Lok", "Mar", "Jou"],
+        longhand: ["Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu", "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu"]
+      }
+    }
+  };
+
+  const startPicker = flatpickr("#date_start", {
+    ...dateConfig,
+    onChange: (selectedDates) => {
+      if (selectedDates[0]) {
+        endPicker.set("minDate", selectedDates[0]);
+      }
+    }
+  });
+
+  const endPicker = flatpickr("#date_end", {
+    ...dateConfig,
+    onChange: (selectedDates) => {
+      if (selectedDates[0]) {
+        startPicker.set("maxDate", selectedDates[0]);
+      }
+    }
+  });
+});
+</script>
 {% endblock %}

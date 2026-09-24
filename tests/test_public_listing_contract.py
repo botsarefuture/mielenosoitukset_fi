@@ -15,8 +15,9 @@ def test_public_listing_family_uses_shared_hero_and_pagination_markup():
     assert "from '_macros/_hero.html' import hero_section" in city_template
     assert "from '_macros/_hero.html' import hero_section" in tag_template
     assert "load_more_button()" in list_template
+    assert "load_more_button()" in city_template
     assert "load_more_button()" in tag_template
-    assert "listing_end_message()" in city_template
+    assert "listing_end_message()" not in city_template
 
 
 def test_public_listing_pagination_controller_supports_buttons_and_sentinels():

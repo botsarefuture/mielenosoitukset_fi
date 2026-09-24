@@ -2605,36 +2605,27 @@ def init_routes(app):
         return _render_today_demonstrations(city=city)
 
 
-    @app.route("/city/<city>") # TODO: lets make this use the api too
+    @app.route("/city/<city>")
     def city_demos(city):
         """
-        List all upcoming approved demonstrations, optionally filtered by search query.
+        Render the city-scoped demonstration listing shell.
+
+        Parity with the main listing (`demonstrations`) and tag view: the
+        page itself is a static shell; search, filtering and pagination are
+        handled client-side via the shared `loadDemos` + `UserPagination`
+        button controller. The city filter is locked to this city and sent as
+        `extraParams.city` (preserving `display_date_start` → `date_start`
+        ISO handling in-page), so `/api/demonstrations` is the single data
+        source.
         """
-        page = int(request.args.get("page", 1))
-        per_page = int(request.args.get("per_page", 10) or 10)
-        search_query = request.args.get("search", "").lower()
-        city_query = city
-        location_query = request.args.get("location", "").lower()
-        date_query = request.args.get("date", "")
-        today = date.today()
-        demonstrations = demonstrations_collection.find(DEMO_FILTER)
-        filtered_demonstrations = filter_demonstrations(
-            demonstrations, today, search_query, city_query, location_query, date_query
+        city_name = _city_display_name(city) or city.capitalize()
+        current_locale = (
+            (session.get("locale") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
         )
-        filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
-        )
-        total_demos = len(filtered_demonstrations)
-        total_pages = (total_demos + per_page - 1) // per_page
-        start = (page - 1) * per_page
-        end = start + per_page
-        paginated_demonstrations = filtered_demonstrations[start:end]
         return render_template(
             "city.html",
-            demonstrations=paginated_demonstrations,
-            page=page,
-            total_pages=total_pages,
-            city_name=city.capitalize(),
+            city_name=city_name,
+            current_locale=current_locale,
         )
         
         

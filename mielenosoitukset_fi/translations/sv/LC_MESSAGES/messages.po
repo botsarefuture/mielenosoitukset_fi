@@ -2841,7 +2841,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/register.html:58
 #: mielenosoitukset_fi/templates/users/auth/register.html:133
 msgid "Salasanat eivät täsmää"
-msgstr ""
+msgstr "Lösenorden stämmer inte överens"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:69
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:115
@@ -2870,7 +2870,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:76
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:129
 msgid "Luo vahva salasana"
-msgstr ""
+msgstr "Skapa ett starkt lösenord"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:77
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:130
@@ -2880,29 +2880,29 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:116
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:167
 msgid "Vähintään yksi pieni kirjain"
-msgstr ""
+msgstr "Minst en liten bokstav"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:117
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:168
 msgid "Vähintään yksi iso kirjain"
-msgstr ""
+msgstr "Minst en stor bokstav"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:118
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:169
 msgid "Vähintään yksi erikoismerkki"
-msgstr ""
+msgstr "Minst ett specialtecken"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:121
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:172
 #: mielenosoitukset_fi/templates/users/auth/register.html:164
 msgid "Kaikki vaatimukset täytetty!"
-msgstr ""
+msgstr "Alla krav är uppfyllda!"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:133
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:184
 #: mielenosoitukset_fi/templates/users/auth/register.html:130
 msgid "Salasanat täsmäävät"
-msgstr ""
+msgstr "Lösenorden stämmer överens"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:159
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:210
@@ -2981,7 +2981,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/register.html:69
 #: mielenosoitukset_fi/templates/users/auth/register.html:159
 msgid "Ei saa sisältää käyttäjätunnusta tai sähköpostia"
-msgstr ""
+msgstr "Får inte innehålla användarnamnet eller e-postadressen"
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:73
 msgid "Luo salasana"
@@ -3006,7 +3006,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:196
 msgid "Käyttäjätunnus on vapaa"
-msgstr ""
+msgstr "Användarnamnet är tillgängligt"
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:197
 msgid "Käyttäjätunnus on jo varattu"
@@ -3014,7 +3014,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:198
 msgid "Tarkistuksessa tapahtui virhe"
-msgstr ""
+msgstr "Ett fel uppstod vid kontrollen"
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:210
 msgid "Käyttäjätunnus on jo varattu!"
@@ -12077,7 +12077,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:375
 msgid "Salasana luotu!"
-msgstr ""
+msgstr "Lösenord skapat!"
 
 #: mielenosoitukset_fi/templates/users/auth/password_reset_request.html:36
 #: mielenosoitukset_fi/templates/users/auth/register.html:49
@@ -12142,7 +12142,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:387
 msgid "Käyttäjätunnus on varattu"
-msgstr ""
+msgstr "Användarnamnet är upptaget"
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:388
 msgid "Käyttäjätunnuksen tarkistuksessa tapahtui virhe, yritä uudelleen"
@@ -12150,7 +12150,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:391
 msgid "Korjaa virheet ennen kuin jatkat"
-msgstr ""
+msgstr "Rätta felen innan du fortsätter"
 
 #: mielenosoitukset_fi/templates/users/auth/register_next_steps.html:69
 msgid "Kiitos rekisteröitymisestäsi!"
@@ -12595,12 +12595,12 @@ msgstr ""
 
 #: mielenosoitukset_fi/users/BPs/auth.py:812
 msgid "Salasanat eivät täsmää."
-msgstr ""
+msgstr "Lösenorden stämmer inte överens."
 
 #: mielenosoitukset_fi/users/BPs/auth.py:818
 #: mielenosoitukset_fi/users/BPs/auth.py:1525
 msgid "Salasana ei täytä vaatimuksia."
-msgstr ""
+msgstr "Lösenordet uppfyller inte kraven."
 
 #: mielenosoitukset_fi/users/BPs/auth.py:827
 msgid "Salasana on vaihdettu onnistuneesti."
@@ -12890,3 +12890,31 @@ msgstr "Om kontot finns och e-postadressen inte har bekräftats skickade vi en n
 #: mielenosoitukset_fi/templates/users/auth/register_next_steps.html
 msgid "Verkkovirhe, yritä uudelleen"
 msgstr "Nätverksfel, försök igen"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Vähintään 12 merkkiä"
+msgstr "Minst 12 tecken"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Käyttäjätunnus liian lyhyt"
+msgstr "Användarnamnet är för kort"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Tarkistetaan saatavuutta…"
+msgstr "Kontrollerar tillgänglighet…"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Käyttäjätunnus ei kelpaa"
+msgstr "Användarnamnet är ogiltigt"
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Kaikki kentät ovat pakollisia."
+msgstr "Alla fält är obligatoriska."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Nykyinen salasana on väärä."
+msgstr "Det nuvarande lösenordet är felaktigt."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Salasana vaihdettu."
+msgstr "Lösenordet har ändrats."

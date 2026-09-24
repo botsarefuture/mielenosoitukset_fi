@@ -3,10 +3,6 @@
 {% block title %}{{ _('Rekisteröidy') }}{% endblock %}
 
 {% block styles %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css') }}">
 {% endblock %}
 
@@ -19,7 +15,7 @@
             <p class="auth-subtitle">{{ _('Rekisteröidy aloittaaksesi') }}</p>
         </div>
 
-        <div id="error-message" class="hidden"></div>
+        <div id="error-message" class="hidden" role="alert"></div>
 
         <form id="register-form" action="{{ url_for('users.auth.register') }}" method="POST">
 
@@ -34,8 +30,8 @@
                            pattern="[A-Za-z0-9](?:[A-Za-z0-9_-]*[A-Za-z0-9])?" class="form-input"
                            placeholder="{{ _('Valitse käyttäjätunnus') }}" autocomplete="username">
                 </div>
-                <div id="username-status" class="password-match"></div>
-                <p class="form-hint" id="sillyhint"><i class="fa-solid fa-circle-info"></i>{{ _('3–30 merkkiä; kirjaimia, numeroita, alaviivoja ja yhdysmerkkejä') }}</p>
+                <div id="username-status" class="password-match user-inline-status" aria-live="polite"></div>
+                <p class="form-hint user-field-hint--collapsible" id="sillyhint"><i class="fa-solid fa-circle-info"></i>{{ _('3–30 merkkiä; kirjaimia, numeroita, alaviivoja ja yhdysmerkkejä') }}</p>
             </div>
 
             <!-- Email -->
@@ -65,7 +61,7 @@
                     </button>
                 </div>
                 <div class="strength-meter"><div id="strength-fill" class="strength-meter-fill"></div></div>
-                <div id="pwd-now-missing"></div>
+                <div id="pwd-now-missing" class="user-inline-status" aria-live="polite"></div>
             </div>
 
             <!-- Confirm Password -->
@@ -81,7 +77,7 @@
                         <i class="fa-solid fa-eye" id="password_confirm-toggle-icon"></i>
                     </button>
                 </div>
-                <div id="password-match-message" class="password-match">
+                <div id="password-match-message" class="password-match user-inline-status" aria-live="polite">
                     <i class="fa-solid fa-xmark"></i>
                     <span>{{ _('Salasanat eivät täsmää') }}</span>
                 </div>
@@ -98,7 +94,7 @@
                 </ul>
             </div>
 
-            <button type="button" id="generate-password" class="btn btn-secondary" style="width:100%; margin-bottom:1rem;">
+            <button type="button" id="generate-password" class="btn btn-secondary user-action--full">
                 <i class="fa-solid fa-wand-magic-sparkles"></i>{{ _('Luo vahva salasana') }}
             </button>
 
@@ -121,18 +117,6 @@
     </div>
 </div>
 
-<style>
-    #sillyhint {
-        transition: opacity 0.3s ease;
-        opacity: 1;
-    }
-    #sillyhint.hidden {
-        opacity: 0;
-        pointer-events: none;
-    }
-</style>
-
-
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const usernameInput = document.getElementById("username");
@@ -154,12 +138,52 @@ document.addEventListener("DOMContentLoaded", () => {
     const reqNoUsername = document.getElementById("req-no-username");
     const specialRegex = /[!@#$%^&*()\-\_=+\[\]{};:,.<>?]/;
 
-    function showError(message) {
+    const registerMessages = {
+        minLength: {{ _('Vähintään 12 merkkiä')|tojson }},
+        lowercase: {{ _('Vähintään yksi pieni kirjain')|tojson }},
+        uppercase: {{ _('Vähintään yksi iso kirjain')|tojson }},
+        special: {{ _('Vähintään yksi erikoismerkki')|tojson }},
+        noIdentity: {{ _('Ei saa sisältää käyttäjätunnusta tai sähköpostia')|tojson }},
+        requirementsComplete: {{ _('Kaikki vaatimukset täytetty!')|tojson }},
+        passwordsMismatch: {{ _('Salasanat eivät täsmää')|tojson }},
+        passwordsMatch: {{ _('Salasanat täsmäävät')|tojson }},
+        passwordGenerated: {{ _('Salasana luotu!')|tojson }},
+        generatePassword: {{ _('Luo vahva salasana')|tojson }},
+        usernameTooShort: {{ _('Käyttäjätunnus liian lyhyt')|tojson }},
+        checkingUsername: {{ _('Tarkistetaan saatavuutta…')|tojson }},
+        invalidUsername: {{ _('Käyttäjätunnus ei kelpaa')|tojson }},
+        usernameAvailable: {{ _('Käyttäjätunnus on vapaa')|tojson }},
+        usernameTaken: {{ _('Käyttäjätunnus on varattu')|tojson }},
+        usernameCheckFailed: {{ _('Tarkistuksessa tapahtui virhe')|tojson }},
+        correctErrors: {{ _('Korjaa virheet ennen kuin jatkat')|tojson }}
+    };
+
+    function statusContent(iconClass, message, { spin = false } = {}) {
+        const icon = document.createElement("i");
+        icon.classList.add("fa-solid", iconClass);
+        if (spin) icon.classList.add("fa-spin");
+        icon.setAttribute("aria-hidden", "true");
+        const text = document.createElement("span");
+        text.textContent = message;
+        return [icon, text];
+    }
+
+    function showError(issues) {
         errorDiv.className = "alert alert-error";
-        errorDiv.innerHTML = `
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            <span>${message}</span>
-        `;
+        const icon = document.createElement("i");
+        icon.className = "fa-solid fa-triangle-exclamation";
+        icon.setAttribute("aria-hidden", "true");
+        const content = document.createElement("div");
+        const heading = document.createElement("strong");
+        heading.textContent = `${registerMessages.correctErrors}:`;
+        const list = document.createElement("ul");
+        issues.forEach((issue) => {
+            const item = document.createElement("li");
+            item.textContent = issue;
+            list.appendChild(item);
+        });
+        content.append(heading, list);
+        errorDiv.replaceChildren(icon, content);
         errorDiv.classList.remove("hidden");
         errorDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
@@ -193,13 +217,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (score <= 2) {
             strengthFill.className = "strength-meter-fill strength-weak";
-            strengthFill.style.width = "33%";
         } else if (score === 3) {
             strengthFill.className = "strength-meter-fill strength-medium";
-            strengthFill.style.width = "66%";
         } else {
             strengthFill.className = "strength-meter-fill strength-strong";
-            strengthFill.style.width = "100%";
         }
     }
 
@@ -220,22 +241,30 @@ document.addEventListener("DOMContentLoaded", () => {
         if (specialRegex.test(pwd)) reqSpecial.className = "valid"; else { reqSpecial.className = "invalid"; allValid=false; }
         // No username/email
         const lowerPwd = pwd.toLowerCase();
-        if (uname && (lowerPwd.includes(uname) || lowerPwd.includes(email))) { reqNoUsername.className="invalid"; allValid=false; } 
+        const emailIdentity = email.includes("@") ? email.split("@", 1)[0] : email;
+        const includesIdentity =
+            (Boolean(uname) && lowerPwd.includes(uname)) ||
+            (Boolean(emailIdentity) && lowerPwd.includes(emailIdentity));
+        if (includesIdentity) { reqNoUsername.className="invalid"; allValid=false; }
         else reqNoUsername.className="valid";
 
         // Show missing
         const missing = [];
-        if (reqLength.className==="invalid") missing.push("Vähintään 12 merkkiä");
-        if (reqLower.className==="invalid") missing.push("Vähintään yksi pieni kirjain");
-        if (reqUpper.className==="invalid") missing.push("Vähintään yksi iso kirjain");
-        if (reqSpecial.className==="invalid") missing.push("Vähintään yksi erikoismerkki");
-        if (reqNoUsername.className==="invalid") missing.push("Ei saa sisältää käyttäjätunnusta tai sähköpostia");
+        if (reqLength.className==="invalid") missing.push(registerMessages.minLength);
+        if (reqLower.className==="invalid") missing.push(registerMessages.lowercase);
+        if (reqUpper.className==="invalid") missing.push(registerMessages.uppercase);
+        if (reqSpecial.className==="invalid") missing.push(registerMessages.special);
+        if (reqNoUsername.className==="invalid") missing.push(registerMessages.noIdentity);
 
         if(missing.length===0){
-            pwdNowMissing.innerHTML='<i class="fa-solid fa-circle-check"></i> Kaikki vaatimukset täytetty!';
+            pwdNowMissing.replaceChildren(
+                ...statusContent("fa-circle-check", registerMessages.requirementsComplete)
+            );
             pwdNowMissing.classList.add("valid"); pwdNowMissing.classList.remove("invalid");
         } else {
-            pwdNowMissing.innerHTML='<i class="fa-solid fa-circle-info"></i> '+missing.join(", ");
+            pwdNowMissing.replaceChildren(
+                ...statusContent("fa-circle-info", missing.join(", "))
+            );
             pwdNowMissing.classList.add("invalid"); pwdNowMissing.classList.remove("valid");
         }
         return allValid;
@@ -248,12 +277,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if(!confirmInput.value || passwordInput.value!==confirmInput.value){
             matchIcon.className="fa-solid fa-xmark";
-            matchText.textContent="Salasanat eivät täsmää";
+            matchText.textContent=registerMessages.passwordsMismatch;
             matchMessage.classList.remove("valid");
             return false;
         } else {
             matchIcon.className="fa-solid fa-check";
-            matchText.textContent="Salasanat täsmäävät";
+            matchText.textContent=registerMessages.passwordsMatch;
             matchMessage.classList.add("valid");
             return true;
         }
@@ -271,10 +300,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const pwd = generatePassword();
         passwordInput.value = confirmInput.value = pwd;
         updateStrength(); updateRequirements(); checkMatch();
-        const orig=generateBtn.innerHTML;
-        generateBtn.innerHTML='<i class="fa-solid fa-check"></i> Salasana luotu!';
+        generateBtn.replaceChildren(
+            ...statusContent("fa-check", registerMessages.passwordGenerated)
+        );
         generateBtn.classList.add("loading");
-        setTimeout(()=>{ generateBtn.innerHTML=orig; generateBtn.classList.remove("loading"); },2000);
+        setTimeout(()=>{
+            generateBtn.replaceChildren(
+                ...statusContent("fa-wand-magic-sparkles", registerMessages.generatePassword)
+            );
+            generateBtn.classList.remove("loading");
+        },2000);
     });// --- Username availability (debounced) ---
 let unameTimeout;
 const sillyhint = document.getElementById("sillyhint");
@@ -290,11 +325,12 @@ const USERNAME_STATE = {
 let usernameState = USERNAME_STATE.INVALID;
 let lastCheckValue = "";
 
-function setUsernameStatus(state, message, { color = "#333", italic = false } = {}) {
+function setUsernameStatus(state, message, iconClass, { spin = false } = {}) {
     usernameState = state;
-    usernameStatus.innerHTML = message;
-    usernameStatus.style.color = color;
-    usernameStatus.style.fontStyle = italic ? "italic" : "normal";
+    usernameStatus.className = `password-match user-inline-status user-inline-status--${state}`;
+    usernameStatus.replaceChildren(
+        ...statusContent(iconClass, message, { spin })
+    );
 }
 
 usernameInput.addEventListener("input", () => {
@@ -307,16 +343,17 @@ usernameInput.addEventListener("input", () => {
         sillyhint.classList.remove("hidden"); // show hint
         setUsernameStatus(
             USERNAME_STATE.INVALID,
-            '<i class="fa-solid fa-xmark-circle"></i> Käyttäjätunnus liian lyhyt',
-            { color: "#e74c3c" }
+            registerMessages.usernameTooShort,
+            "fa-circle-xmark"
         );
         return; // don’t check availability yet
     } else {
         sillyhint.classList.add("hidden"); // fade out hint
         setUsernameStatus(
             USERNAME_STATE.CHECKING,
-            '<i class="fa-solid fa-spinner fa-spin"></i> Tarkistetaan saatavuutta…',
-            { italic: true }
+            registerMessages.checkingUsername,
+            "fa-spinner",
+            { spin: true }
         );
     }
 
@@ -332,27 +369,27 @@ usernameInput.addEventListener("input", () => {
             if (!resp.ok || data.error) {
                 setUsernameStatus(
                     USERNAME_STATE.INVALID,
-                    `<i class="fa-solid fa-xmark-circle"></i> ${data.error || "Käyttäjätunnus ei kelpaa"}`,
-                    { color: "#a12a2a" }
+                    data.error || registerMessages.invalidUsername,
+                    "fa-circle-xmark"
                 );
             } else if (data.available) {
                 setUsernameStatus(
                     USERNAME_STATE.AVAILABLE,
-                    '<i class="fa-solid fa-check-circle"></i> Käyttäjätunnus on vapaa',
-                    { color: "#2c7a2c" }
+                    registerMessages.usernameAvailable,
+                    "fa-circle-check"
                 );
             } else {
                 setUsernameStatus(
                     USERNAME_STATE.TAKEN,
-                    '<i class="fa-solid fa-xmark-circle"></i> Käyttäjätunnus on varattu',
-                    { color: "#a12a2a" }
+                    registerMessages.usernameTaken,
+                    "fa-circle-xmark"
                 );
             }
         } catch {
             setUsernameStatus(
                 USERNAME_STATE.ERROR,
-                '<i class="fa-solid fa-triangle-exclamation"></i> Tarkistuksessa tapahtui virhe',
-                { color: "#666", italic: true }
+                registerMessages.usernameCheckFailed,
+                "fa-triangle-exclamation"
             );
         }
     }, 500);
@@ -387,8 +424,7 @@ usernameInput.addEventListener("input", () => {
             if(unameTaken) issues.push("{{ _('Käyttäjätunnus on varattu') }}");
             if(unameError) issues.push("{{ _('Käyttäjätunnuksen tarkistuksessa tapahtui virhe, yritä uudelleen') }}");
 
-            const list = issues.map(item => `<li>${item}</li>`).join("");
-            showError(`<strong>{{ _('Korjaa virheet ennen kuin jatkat') }}:</strong><ul>${list}</ul>`);
+            showError(issues);
             return false;
         }
 
@@ -397,13 +433,5 @@ usernameInput.addEventListener("input", () => {
 
     usernameInput.focus();
 });
-
-// --- Shake animation ---
-const style = document.createElement("style");
-style.textContent=`
-    .shake { animation: shake 0.3s; }
-    @keyframes shake { 0%{ transform:translateX(0) } 25%{ transform:translateX(-5px) } 50%{ transform:translateX(5px) } 75%{ transform:translateX(-5px) } 100%{ transform:translateX(0) } }
-`;
-document.head.appendChild(style);
 </script>
 {% endblock %}

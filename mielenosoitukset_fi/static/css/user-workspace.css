@@ -1426,6 +1426,55 @@ textarea.user-field__control {
   cursor: wait;
 }
 
+.user-action--full {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.user-field-hint--collapsible {
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.user-field-hint--collapsible.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.user-inline-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  color: var(--product-text-muted);
+}
+
+.user-inline-status--invalid,
+.user-inline-status--taken {
+  color: var(--product-danger);
+}
+
+.user-inline-status--available,
+.user-inline-status.valid {
+  color: var(--product-success);
+}
+
+.user-inline-status--checking,
+.user-inline-status--error {
+  color: var(--product-text-muted);
+}
+
+.strength-meter-fill.strength-weak {
+  width: 33%;
+}
+
+.strength-meter-fill.strength-medium {
+  width: 66%;
+}
+
+.strength-meter-fill.strength-strong {
+  width: 100%;
+}
+
 /* ==========================
    SHARED PUBLIC STEPS
 ========================== */

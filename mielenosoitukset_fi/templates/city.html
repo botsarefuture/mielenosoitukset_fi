@@ -116,7 +116,32 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchForm = document.getElementById("search-form");
   const noResults = document.getElementById("no-results");
 
-  let extraParams = {};
+  function _collectInitialParams() {
+    const p = {};
+    const q = new URLSearchParams(window.location.search);
+    const search = (q.get('search') || searchForm.querySelector('input[name="search"]')?.value || '').trim();
+    const location = (q.get('location') || searchForm.querySelector('input[name="location"]')?.value || '').trim();
+    const qDateStart = q.get('date_start') || '';
+    const qDateEnd = q.get('date_end') || '';
+    if (search) p.search = search;
+    if (location) p.location = location;
+    if (qDateStart) p.date_start = qDateStart;
+    if (qDateEnd) p.date_end = qDateEnd;
+    // Also hydrate from display_date_* if a direct date was passed differently
+    const ds = searchForm.querySelector('input[name="display_date_start"]')?.value.trim() || '';
+    const de = searchForm.querySelector('input[name="display_date_end"]')?.value.trim() || '';
+    if (ds && !p.date_start) {
+      const parts = ds.split('.');
+      if (parts.length === 3) p.date_start = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+    if (de && !p.date_end) {
+      const parts = de.split('.');
+      if (parts.length === 3) p.date_end = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+    return p;
+  }
+
+  let extraParams = _collectInitialParams();
   if (window.CITY_FILTER) extraParams.city = window.CITY_FILTER;
 
   async function loadDemosWrapper(page = 1, append = false) {

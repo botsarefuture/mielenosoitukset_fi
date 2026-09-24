@@ -155,6 +155,32 @@ def test_translator_can_open_ui_translation_editor(translator_client, app, tmp_p
     )
 
     assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert 'class="admin-detail-layout"' in body
+    assert 'class="admin-section-card"' in body
+    assert 'class="admin-sticky-actions"' in body
+    assert "Kirjoita valmis käännös" in body
+    assert "Tarkista ehdotus" not in body
+
+
+def test_ui_translation_editor_uses_shared_form_contract():
+    source = Path(
+        "mielenosoitukset_fi/templates/admin_V2/ui_translations/editor.html"
+    ).read_text(encoding="utf-8")
+
+    assert 'class="admin-page admin-workspace"' in source
+    assert 'class="admin-detail-layout"' in source
+    assert 'class="admin-section-card"' in source
+    assert 'class="admin-field"' in source
+    assert 'class="admin-sticky-actions"' in source
+    assert "admin-status-badge--" in source
+    assert 'class="row ' not in source
+    assert 'class="col-' not in source
+    assert "card admin-panel" not in source
+    assert "form-control" not in source
+    assert "form-label" not in source
+    assert "badge bg-" not in source
+    assert "text-muted" not in source
 
 
 def test_admin_can_open_real_catalog_ui_translation_editor(admin_client):

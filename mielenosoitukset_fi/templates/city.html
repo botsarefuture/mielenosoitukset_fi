@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 {% from '_macros/_hero.html' import hero_section %}
+{% from '_macros/_pagination.html' import listing_end_message %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/user-pagination.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
@@ -79,13 +81,13 @@ document.addEventListener("DOMContentLoaded", function() {
   function clearContent() {
     gridContainer.innerHTML = "";
     tableBody.innerHTML = "";
-    endMsg.style.display = "none";
+    endMsg.hidden = true;
     spinner.style.display = "block";
   }
 
   function showEndMessage() {
     spinner.style.display = "none";
-    endMsg.style.display = "";
+    endMsg.hidden = false;
     endMsg.textContent = "{{ _('Olet saavuttanut lopun') }}";
   }
 
@@ -115,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function() {
     } else {
       query = last_query;
     }
-    fetch(buildApiUrl(query, page))
+    return fetch(buildApiUrl(query, page))
       .then(r => r.json())
       .then(data => {
         total_pages = data.total_pages;
@@ -129,25 +131,32 @@ document.addEventListener("DOMContentLoaded", function() {
         } else {
           renderDemos(data.demonstrations, opts.append);
         }
-        if (page >= total_pages) showEndMessage();
-        else spinner.style.display = "block";
+        if (page >= total_pages) {
+          showEndMessage();
+        } else {
+          endMsg.hidden = true;
+          spinner.style.display = "block";
+        }
         is_loading = false;
+        return { page, total_pages };
       })
       .catch(() => {
         spinner.style.display = "none";
         is_loading = false;
+        throw new Error("Failed to load demonstrations");
       });
   }
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting && !is_loading && page < total_pages) {
-        page++;
-        fetchAndRenderDemos({append: true});
-      }
-    });
-  }, { rootMargin: '1000px' });
-  observer.observe(scrollSentinel);
+  const paginationController = UserPagination.createLoadMoreController({
+    sentinel: scrollSentinel,
+    loadPage: (nextPage, options = {}) => {
+      page = nextPage;
+      return fetchAndRenderDemos({
+        reset: options.reset ?? false,
+        append: options.append ?? true,
+      });
+    },
+  });
 
   function setView(newView) {
     view = newView;
@@ -165,7 +174,7 @@ document.addEventListener("DOMContentLoaded", function() {
       gridContainer.classList.remove("hide-cards");
       tableContainer.style.display = "none";
     }
-    fetchAndRenderDemos({reset: true});
+    paginationController.reload({ reset: true, append: false });
   }
   document.getElementById("grid-view-btn").addEventListener("click", () => setView("grid"));
   document.getElementById("list-view-btn").addEventListener("click", () => setView("list"));
@@ -302,6 +311,6 @@ document.addEventListener("DOMContentLoaded", function() {
   <div id="loading-spinner" style="display: block; text-align: center; padding: 20px;">
     <i class="fas fa-spinner fa-spin fa-2x"></i>
   </div>
-  <div id="end-of-content-message" style="display:none;text-align:center;padding:1em;"></div>
+  {{ listing_end_message() }}
 </div>
 {% endblock %}

@@ -523,6 +523,17 @@ h1 {
   opacity: 0.7;
 }
 
+.end-of-content-message {
+  display: block;
+  text-align: center;
+  padding: 1em;
+  color: var(--admin-workspace-muted);
+}
+
+.end-of-content-message[hidden] {
+  display: none;
+}
+
 /* ==========================
    EMPTY STATE
 ========================== */

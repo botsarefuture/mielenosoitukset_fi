@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% from '_macros/_hero.html' import hero_section %}
+{% from '_macros/_pagination.html' import load_more_button %}
 
 {% block title %} #{{ tag_name }} {{ _('Mielenosoitukset') }} {% endblock %}
 
@@ -73,9 +74,7 @@
 
     <div id="demos-grid" class="demos-grid"></div>
 
-    <button id="load-more-btn" class="button button-secondary load-more" hidden>
-      {{ _('Näytä lisää') }}
-    </button>
+    {{ load_more_button() }}
 
     <!-- Empty State -->
     <div id="no-results" class="no-results-card" style="display:none;">
@@ -178,7 +177,11 @@
         if (window.TAG_FILTER) extraParams.tag = window.TAG_FILTER;
 
         // 🔹 Reload demos
-        loadDemosWrapper(1, false);
+        if (window.userPaginationController) {
+          window.userPaginationController.reload({ append: false });
+        } else {
+          loadDemosWrapper(1, false);
+        }
       });
 
     }
@@ -200,6 +203,7 @@
       if (result) {
         window.userPaginationController?.setState(result.page, result.total_pages);
       }
+      return result;
     }
 
     /* -------------------------------------------------------------
@@ -207,7 +211,7 @@
      * -----------------------------------------------------------*/
     window.userPaginationController = UserPagination.createLoadMoreController({
       button: loadMoreBtn,
-      loadPage: page => loadDemosWrapper(page, true),
+      loadPage: (page, options = {}) => loadDemosWrapper(page, options.append ?? true),
       initialLabel: '{{ _('Näytä lisää') }}',
       loadingLabel: '{{ _('Ladataan...') }}',
     });
@@ -235,7 +239,11 @@
       if (dateStart) extraParams.date_start = dateStart;
       if (dateEnd) extraParams.date_end = dateEnd;
 
-      loadDemosWrapper(1, false);
+      if (window.userPaginationController) {
+        window.userPaginationController.reload({ append: false });
+      } else {
+        loadDemosWrapper(1, false);
+      }
     });
 
     /* ==================================================================
@@ -276,7 +284,11 @@
         pill.remove();
 
         extraParams.city = updated.join(",");
-        loadDemosWrapper(1, false);
+        if (window.userPaginationController) {
+          window.userPaginationController.reload({ append: false });
+        } else {
+          loadDemosWrapper(1, false);
+        }
       });
     }
 
@@ -329,7 +341,11 @@
             citySuggestions.empty().removeClass("show");
             cityInput.val("");
 
-            loadDemosWrapper(1, false);
+            if (window.userPaginationController) {
+          window.userPaginationController.reload({ append: false });
+        } else {
+          loadDemosWrapper(1, false);
+        }
           });
 
           citySuggestions.append(markup);

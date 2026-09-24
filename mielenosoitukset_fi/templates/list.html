@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% from '_macros/_hero.html' import hero_section %}
+{% from '_macros/_pagination.html' import load_more_button %}
 
 {% block title %} {{ _('Tulevat mielenosoitukset') }} {% endblock %}
 
@@ -57,9 +58,7 @@
   <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>{{ _('Kaikki mielenosoitukset') }}</h2>
 
   <div id="demos-grid" class="demos-grid"></div>
-  <button id="load-more-btn" class="button button-secondary load-more" hidden>
-    {{ _('Näytä lisää') }}
-  </button>
+  {{ load_more_button() }}
 
  <!-- Empty State -->
 <div id="no-results" class="no-results-card" style="display:none;">
@@ -94,11 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (result) {
       window.userPaginationController?.setState(result.page, result.total_pages);
     }
+    return result;
   }
 
   window.userPaginationController = UserPagination.createLoadMoreController({
     button: loadMoreBtn,
-    loadPage: page => loadDemosWrapper(page, true),
+    loadPage: (page, options = {}) => loadDemosWrapper(page, options.append ?? true),
     initialLabel: '{{ _('Näytä lisää') }}',
     loadingLabel: '{{ _('Ladataan...') }}',
   });
@@ -126,7 +126,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dateEnd) extraParams.date_end = dateEnd;
 
     // Reset to first page
-    loadDemosWrapper(1, false);
+    window.userPaginationController?.reload({ append: false });
+    if (!window.userPaginationController) loadDemosWrapper(1, false);
   });
 
 

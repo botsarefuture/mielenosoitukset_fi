@@ -12592,12 +12592,12 @@ msgstr ""
 
 #: mielenosoitukset_fi/users/BPs/auth.py:812
 msgid "Salasanat eivät täsmää."
-msgstr ""
+msgstr "Salasanat eivät täsmää."
 
 #: mielenosoitukset_fi/users/BPs/auth.py:818
 #: mielenosoitukset_fi/users/BPs/auth.py:1525
 msgid "Salasana ei täytä vaatimuksia."
-msgstr ""
+msgstr "Salasana ei täytä vaatimuksia."
 
 #: mielenosoitukset_fi/users/BPs/auth.py:827
 msgid "Salasana on vaihdettu onnistuneesti."
@@ -12819,3 +12819,31 @@ msgstr "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden 
 #: mielenosoitukset_fi/templates/users/auth/register_next_steps.html
 msgid "Verkkovirhe, yritä uudelleen"
 msgstr "Verkkovirhe, yritä uudelleen"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Vähintään 12 merkkiä"
+msgstr "Vähintään 12 merkkiä"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Käyttäjätunnus liian lyhyt"
+msgstr "Käyttäjätunnus liian lyhyt"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Tarkistetaan saatavuutta…"
+msgstr "Tarkistetaan saatavuutta…"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Käyttäjätunnus ei kelpaa"
+msgstr "Käyttäjätunnus ei kelpaa"
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Kaikki kentät ovat pakollisia."
+msgstr "Kaikki kentät ovat pakollisia."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Nykyinen salasana on väärä."
+msgstr "Nykyinen salasana on väärä."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Salasana vaihdettu."
+msgstr "Salasana vaihdettu."

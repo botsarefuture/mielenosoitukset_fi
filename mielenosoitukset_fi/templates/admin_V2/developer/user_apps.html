@@ -1,8 +1,10 @@
 {% extends 'admin_base.html' %}
-{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
+
+{% block title %}{{ _('Käyttäjän sovellukset') }}{% endblock %}
 
 {% block main_content %}
-<div class="admin-page">
+<section class="admin-page admin-workspace">
   {{ admin_page_hero(
     _('Käyttäjän sovellukset'),
     _('Käyttäjä: %(username)s (%(email)s)', username=(user.username or _('Tuntematon')), email=(user.email or '–')),
@@ -11,31 +13,14 @@
     back_url=url_for('admin_dev.list_requests'),
     back_label=_('Kehittäjähallinta')
   ) }}
-  <div class="table-responsive admin-data-view admin-workspace-table">
-    <table class="table table-striped align-middle">
-      <thead>
-        <tr>
-          <th>Nimi</th>
-          <th>Kuvaus</th>
-          <th>Client ID</th>
-          <th>Sallitut scopet</th>
-          <th>Luotu</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for app in apps %}
-        <tr>
-          <td>{{ app.name }}</td>
-          <td>{{ app.description }}</td>
-          <td><code>{{ app.client_id }}</code></td>
-          <td>{{ ', '.join(app.allowed_scopes or []) }}</td>
-          <td>{{ app.created_at or '' }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="5" class="admin-empty-state">Ei sovelluksia.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+
+  <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="developer-apps-heading">
+    <header class="admin-data-view__header admin-result-summary" aria-live="polite"><strong id="developer-apps-heading">{{ _('Rekisteröidyt sovellukset') }}</strong><span>{{ _('Näytetään %(start)s–%(end)s / %(count)s sovelluksesta', start=range_start, end=range_end, count=total_count) }}</span></header>
+    <div class="admin-data-view__viewport"><table class="admin-data-view__table">
+      <thead><tr><th scope="col">{{ _('Nimi') }}</th><th scope="col">{{ _('Kuvaus') }}</th><th scope="col">{{ _('Client ID') }}</th><th scope="col">{{ _('Sallitut scopet') }}</th><th scope="col">{{ _('Luotu') }}</th></tr></thead>
+      <tbody>{% for app in apps %}<tr><td><strong>{{ app.name }}</strong></td><td>{{ app.description or '—' }}</td><td><code>{{ app.client_id }}</code></td><td><div class="admin-row-actions">{% for scope in app.allowed_scopes or [] %}<span class="admin-status-badge admin-status-badge--info">{{ scope }}</span>{% else %}—{% endfor %}</div></td><td><time>{{ app.created_at or '—' }}</time></td></tr>{% else %}<tr><td colspan="5"><div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-cubes" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Sovelluksia ei löytynyt') }}</strong><span>{{ _('Käyttäjä ei ole vielä rekisteröinyt kehittäjäsovelluksia.') }}</span></div></td></tr>{% endfor %}</tbody>
+    </table></div>
+    {{ admin_pagination(current_page, total_pages, per_page=per_page, prev_page=prev_page, next_page=next_page, prev_page_url=prev_page_url, next_page_url=next_page_url, visible_pages=visible_pages, first_page_url=first_page_url, last_page_url=last_page_url, aria_label=_('Käyttäjän sovellusten sivutus')) }}
+  </section>
+</section>
 {% endblock %}

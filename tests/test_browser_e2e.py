@@ -937,6 +937,256 @@ def test_submission_errors_use_shared_responsive_theme_contract(
 @pytest.mark.e2e
 @pytest.mark.integration
 @pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_magic_tokens_use_shared_responsive_theme_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+
+    theme_surfaces = {}
+    for theme in ("light", "dark"):
+        browser_page.goto(
+            f"{live_server}/admin/demo/tokens",
+            wait_until="domcontentloaded",
+        )
+        browser_page.evaluate(
+            """theme => {
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+                document.documentElement.classList.toggle('light', theme === 'light');
+                document.documentElement.setAttribute('data-bs-theme', theme);
+            }""",
+            theme,
+        )
+        browser_page.locator(".admin-page-hero").wait_for(state="visible")
+        assert browser_page.locator(".admin-filter-bar").is_visible()
+        assert browser_page.locator(".admin-data-view").is_visible()
+        assert browser_page.locator(".admin-pagination").is_visible()
+        assert browser_page.locator(".admin-modal").count() == 1
+        details = browser_page.locator(".admin-disclosure").first
+        details.evaluate("element => { element.open = true; }")
+        assert details.locator(".admin-code-block").is_visible()
+        assert browser_page.evaluate(
+            "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+        )
+        theme_surfaces[theme] = browser_page.locator(".admin-data-view").evaluate(
+            "element => getComputedStyle(element).backgroundColor"
+        )
+
+    assert theme_surfaces["light"] != theme_surfaces["dark"]
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_ui_translation_editor_uses_shared_responsive_form_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "translator", "TranslatorPass1!")
+    path = (
+        "/admin/ui-translations/en/edit?msgid="
+        "Virheellinen+p%C3%A4iv%C3%A4m%C3%A4%C3%A4r%C3%A4n+muoto.+"
+        "Ole+hyv%C3%A4+ja+k%C3%A4yt%C3%A4+muotoa+vvvv-kk-pp."
+    )
+
+    theme_surfaces = {}
+    for theme in ("light", "dark"):
+        browser_page.goto(f"{live_server}{path}", wait_until="domcontentloaded")
+        browser_page.evaluate(
+            """theme => {
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+                document.documentElement.classList.toggle('light', theme === 'light');
+                document.documentElement.setAttribute('data-bs-theme', theme);
+            }""",
+            theme,
+        )
+        browser_page.locator(".admin-page-hero").wait_for(state="visible")
+        assert browser_page.locator(".admin-detail-layout").is_visible()
+        assert browser_page.locator(".admin-section-card").count() >= 2
+        assert browser_page.locator(".admin-sticky-actions").is_visible()
+        assert browser_page.locator("#proposed_text").is_visible()
+        assert browser_page.evaluate(
+            "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+        )
+        theme_surfaces[theme] = browser_page.locator(".admin-section-card").first.evaluate(
+            "element => getComputedStyle(element).backgroundColor"
+        )
+
+    assert theme_surfaces["light"] != theme_surfaces["dark"]
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_demo_merge_editor_uses_shared_responsive_form_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    seeded_data = _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    merge_url = (
+        f"{live_server}/admin/demo/merge?ids="
+        f"{seeded_data['demo_id']},{seeded_data['pending_demo_id']}"
+    )
+
+    theme_surfaces = {}
+    for theme in ("light", "dark"):
+        browser_page.goto(merge_url, wait_until="domcontentloaded")
+        browser_page.evaluate(
+            """theme => {
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+                document.documentElement.classList.toggle('light', theme === 'light');
+                document.documentElement.setAttribute('data-bs-theme', theme);
+            }""",
+            theme,
+        )
+        browser_page.locator(".admin-page-hero").wait_for(state="visible")
+        assert browser_page.locator(".admin-form-section").count() >= 5
+        manual_section = browser_page.locator("[data-manual-section]").first
+        assert manual_section.is_hidden()
+        browser_page.locator("#manual-mode-toggle").check()
+        assert manual_section.is_visible()
+        assert browser_page.locator(".admin-sticky-actions").is_visible()
+        assert browser_page.evaluate(
+            "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+        )
+        theme_surfaces[theme] = browser_page.locator(".admin-form-section").first.evaluate(
+            "element => getComputedStyle(element).backgroundColor"
+        )
+
+    assert theme_surfaces["light"] != theme_surfaces["dark"]
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_developer_collections_use_shared_responsive_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    seeded_data = _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+
+    paths = (
+        "/admin/developer/requests?kind=access",
+        "/admin/developer/requests?kind=scope",
+        f"/admin/developer/user/{seeded_data['developer_id']}/apps",
+    )
+    theme_surfaces = {}
+    for theme in ("light", "dark"):
+        rendered = []
+        for path in paths:
+            browser_page.goto(f"{live_server}{path}", wait_until="domcontentloaded")
+            browser_page.evaluate(
+                """theme => {
+                    document.documentElement.classList.toggle('dark', theme === 'dark');
+                    document.documentElement.classList.toggle('light', theme === 'light');
+                    document.documentElement.setAttribute('data-bs-theme', theme);
+                }""",
+                theme,
+            )
+            browser_page.locator(".admin-page-hero").wait_for(state="visible")
+            assert browser_page.locator(".admin-data-view").is_visible()
+            assert browser_page.locator(".admin-pagination").is_visible()
+            assert browser_page.evaluate(
+                "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+            )
+            rendered.append(
+                browser_page.locator(".admin-data-view").evaluate(
+                    "element => getComputedStyle(element).backgroundColor"
+                )
+            )
+        assert len(set(rendered)) == 1
+        theme_surfaces[theme] = rendered[0]
+
+    assert theme_surfaces["light"] != theme_surfaces["dark"]
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_demo_audit_views_use_shared_responsive_theme_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    seeded_data = _seed_database(app, db)
+    db.demo_audit_logs.insert_one(
+        {
+            "_id": ObjectId(),
+            "demo_id": str(seeded_data["demo_id"]),
+            "timestamp": datetime(2026, 9, 23, 14, 0, 0),
+            "action": "edit_demo",
+            "message": "Selainpistokokeen audit-merkintä",
+            "username": "admin",
+            "details": {"changed_fields": ["title"]},
+        }
+    )
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+
+    paths = (
+        f"/admin/demo/{seeded_data['demo_id']}/audit_log",
+        "/admin/demo/audit/logs",
+    )
+    theme_surfaces = {"light": [], "dark": []}
+    for theme in ("light", "dark"):
+        for path in paths:
+            browser_page.goto(f"{live_server}{path}", wait_until="domcontentloaded")
+            browser_page.evaluate(
+                """theme => {
+                    document.documentElement.classList.toggle('dark', theme === 'dark');
+                    document.documentElement.classList.toggle('light', theme === 'light');
+                    document.documentElement.setAttribute('data-bs-theme', theme);
+                }""",
+                theme,
+            )
+            browser_page.locator(".admin-page-hero").wait_for(state="visible")
+            assert browser_page.locator(".admin-audit-stream").is_visible()
+            assert browser_page.locator(".admin-audit-entry").first.is_visible()
+            assert browser_page.locator(".admin-pagination").is_visible()
+            assert browser_page.evaluate(
+                "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+            )
+            theme_surfaces[theme].append(
+                browser_page.locator(".admin-audit-entry").first.evaluate(
+                    "element => getComputedStyle(element).backgroundColor"
+                )
+            )
+
+    assert theme_surfaces["light"] != theme_surfaces["dark"]
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
 @pytest.mark.parametrize("viewport_height", [640, 844])
 def test_report_error_modal_vertical_fit_and_scroll_contract(
     app,

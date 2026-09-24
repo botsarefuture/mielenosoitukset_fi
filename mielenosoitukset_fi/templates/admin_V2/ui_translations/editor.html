@@ -4,7 +4,7 @@
 {% block title %}{{ _('Käyttöliittymäkäännös') }}{% endblock %}
 
 {% block main_content %}
-<div class="admin-page">
+<section class="admin-page admin-workspace">
   {% call admin_page_hero(
     _('Käyttöliittymäkäännös'),
     locale_label ~ ' · ' ~ _('Tarkista ja ehdota käännöstä yhdelle gettext-riville.'),
@@ -13,128 +13,92 @@
     back_url=url_for('admin.ui_translation_dashboard', locale=locale),
     back_label=_('Käyttöliittymäkäännökset')
   ) %}
-      {% if ui_translation_sync_enabled and can_review_ui_translations %}
-      <a class="admin-page-hero__action" href="{{ url_for('admin.ui_translation_sync_dashboard', locale=locale) }}">{{ _('GitHub-synkit') }}</a>
-      {% endif %}
+    {% if ui_translation_sync_enabled and can_review_ui_translations %}<a class="admin-page-hero__action" href="{{ url_for('admin.ui_translation_sync_dashboard', locale=locale) }}">{{ _('GitHub-synkit') }}</a>{% endif %}
   {% endcall %}
 
-  <div class="row g-4">
-    <div class="col-lg-6">
-      <div class="card admin-panel h-100">
-        <div class="card-body">
-          <h2 class="h5 mb-3">{{ _('Lähdeteksti') }}</h2>
-          <div class="mb-3">
-            <div class="small text-muted mb-1">msgid</div>
-            <pre class="admin-code-block">{{ entry.msgid }}</pre>
-          </div>
-          <div class="mb-3">
-            <div class="small text-muted mb-1">{{ _('Nykyinen käännös') }}</div>
-            <pre class="admin-code-block">{{ entry.msgstr or '—' }}</pre>
-          </div>
+  <div class="admin-detail-layout">
+    <div class="admin-stack">
+      <section class="admin-section-card" aria-labelledby="translation-source-heading">
+        <header class="admin-section-card__header"><div class="admin-section-card__title"><i class="fa-solid fa-language" aria-hidden="true"></i><h2 id="translation-source-heading">{{ _('Lähdeteksti') }}</h2></div></header>
+        <div class="admin-section-card__body admin-stack">
+          <div><strong>msgid</strong><pre class="admin-code-block">{{ entry.msgid }}</pre></div>
+          <div><strong>{{ _('Nykyinen käännös') }}</strong><pre class="admin-code-block">{{ entry.msgstr or '—' }}</pre></div>
           {% if entry.flags %}
-          <div class="mb-3">
-            <div class="small text-muted mb-1">{{ _('Liput') }}</div>
-            <div class="d-flex flex-wrap gap-2">
-              {% for flag in entry.flags %}
-              <span class="badge bg-secondary">{{ flag }}</span>
-              {% endfor %}
-            </div>
-          </div>
+          <div><strong>{{ _('Liput') }}</strong><div class="admin-row-actions">{% for flag in entry.flags %}<span class="admin-status-badge">{{ flag }}</span>{% endfor %}</div></div>
           {% endif %}
-          {% if entry.locations %}
-          <div>
-            <div class="small text-muted mb-1">{{ _('Sijainnit') }}</div>
-            <div class="small">{{ entry.locations|join(', ') }}</div>
+          {% if entry.locations %}<div><strong>{{ _('Sijainnit') }}</strong><p class="admin-field__help">{{ entry.locations|join(', ') }}</p></div>{% endif %}
+        </div>
+      </section>
+
+      {% if proposal %}
+      <section class="admin-section-card" aria-labelledby="translation-status-heading">
+        <header class="admin-section-card__header">
+          <div class="admin-section-card__title"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><h2 id="translation-status-heading">{{ _('Nykyinen ehdotustila') }}</h2></div>
+          {% set status_variant = 'success' if proposal.status == 'approved' else ('danger' if proposal.status == 'rejected' else 'warning') %}
+          {% set status_label = _('Hyväksytty') if proposal.status == 'approved' else (_('Hylätty') if proposal.status == 'rejected' else _('Odottaa tarkistusta')) %}
+          <span class="admin-status-badge admin-status-badge--{{ status_variant }}">{{ status_label }}</span>
+        </header>
+        <div class="admin-section-card__body admin-stack">
+          <div class="admin-fact-list">
+            {% if proposal.submitted_by_name %}<div class="admin-fact"><span class="admin-fact__icon"><i class="fa-solid fa-user" aria-hidden="true"></i></span><div class="admin-fact__content"><span>{{ _('Lähettäjä') }}</span><strong>{{ proposal.submitted_by_name }}</strong></div></div>{% endif %}
+            {% if proposal.notes %}<div class="admin-fact"><span class="admin-fact__icon"><i class="fa-solid fa-comment" aria-hidden="true"></i></span><div class="admin-fact__content"><span>{{ _('Kommentit') }}</span><strong>{{ proposal.notes }}</strong></div></div>{% endif %}
+            {% if proposal.review_notes %}<div class="admin-fact"><span class="admin-fact__icon"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i></span><div class="admin-fact__content"><span>{{ _('Tarkistusmuistiinpanot') }}</span><strong>{{ proposal.review_notes }}</strong></div></div>{% endif %}
+          </div>
+
+          {% if ui_translation_sync_enabled and proposal.status == 'approved' and proposal.github_sync %}
+          <div class="admin-panel-inset admin-stack">
+            <div><strong>{{ _('GitHub-synkin tila') }}:</strong> {{ proposal.github_sync.status }}</div>
+            {% if proposal.github_sync.branch_name %}<div><strong>{{ _('Branch') }}:</strong> <code>{{ proposal.github_sync.branch_name }}</code></div>{% endif %}
+            {% if proposal.github_sync.pr_url %}<div><strong>{{ _('Pull request') }}:</strong> <a href="{{ proposal.github_sync.pr_url }}" target="_blank" rel="noopener">{{ proposal.github_sync.pr_url }}</a></div>{% endif %}
+            {% if proposal.github_sync.merge_status %}<div><strong>{{ _('Merge-tila') }}:</strong> {{ proposal.github_sync.merge_status }}</div>{% endif %}
+            {% if proposal.github_sync.last_error %}<div class="admin-field__error"><strong>{{ _('Viimeisin virhe') }}:</strong> {{ proposal.github_sync.last_error }}</div>
+            {% elif proposal.github_sync.merge_message %}<div class="admin-field__help"><strong>{{ _('Merge-viesti') }}:</strong> {{ proposal.github_sync.merge_message }}</div>
+            {% elif proposal.github_sync.message %}<div class="admin-field__help"><strong>{{ _('Lisätieto') }}:</strong> {{ proposal.github_sync.message }}</div>{% endif %}
+            {% if can_review_ui_translations and proposal.github_sync.status in ['retry', 'committed_local_branch'] %}
+            <form method="POST" action="{{ url_for('admin.requeue_ui_translation_sync', locale=locale) }}"><input type="hidden" name="msgid" value="{{ entry.msgid }}"><button class="btn btn-outline-primary" type="submit">{{ _('Yritä GitHub-synkkiä uudelleen') }}</button></form>
+            {% endif %}
           </div>
           {% endif %}
         </div>
-      </div>
+      </section>
+      {% endif %}
     </div>
 
-    <div class="col-lg-6">
-      <div class="card admin-panel mb-4">
-        <div class="card-body">
-          <h2 class="h5 mb-3">{{ _('Käännösehdotus') }}</h2>
+    <div class="admin-stack">
+      <section class="admin-section-card" aria-labelledby="translation-proposal-heading">
+        <header class="admin-section-card__header"><div class="admin-section-card__title"><i class="fa-solid fa-pen" aria-hidden="true"></i><h2 id="translation-proposal-heading">{{ _('Käännösehdotus') }}</h2></div></header>
+        <div class="admin-section-card__body">
           {% if can_translate_ui %}
           <form class="admin-form" method="POST" action="{{ url_for('admin.submit_ui_translation_proposal', locale=locale) }}">
             <input type="hidden" name="msgid" value="{{ entry.msgid }}">
-            <div class="admin-field">
-              <label class="form-label" for="proposed_text">{{ _('Ehdotettu käännös') }}</label>
-              <textarea class="form-control" id="proposed_text" name="proposed_text" rows="6">{{ proposal.proposed_text if proposal else entry.msgstr }}</textarea>
-            </div>
-            <div class="admin-field">
-              <label class="form-label" for="notes">{{ _('Huomiot tarkistajalle') }}</label>
-              <textarea class="form-control" id="notes" name="notes" rows="3">{{ proposal.notes if proposal else '' }}</textarea>
-            </div>
-            <div class="admin-sticky-actions"><button class="btn btn-primary" type="submit">{{ _('Lähetä tarkistukseen') }}</button></div>
+            <div class="admin-field"><label for="proposed_text">{{ _('Ehdotettu käännös') }}</label><textarea id="proposed_text" name="proposed_text" rows="8" required aria-describedby="proposed-text-help">{{ proposal.proposed_text if proposal else entry.msgstr }}</textarea><p class="admin-field__help" id="proposed-text-help">{{ _('Kirjoita valmis käännös täsmälleen siinä muodossa, jossa sen tulee näkyä käyttöliittymässä.') }}</p></div>
+            <div class="admin-field"><label for="notes">{{ _('Huomiot tarkistajalle') }}</label><textarea id="notes" name="notes" rows="4" aria-describedby="proposal-notes-help">{{ proposal.notes if proposal else '' }}</textarea><p class="admin-field__help" id="proposal-notes-help">{{ _('Kerro tarvittaessa sanavalinnasta tai käyttöyhteydestä.') }}</p></div>
+            <div class="admin-sticky-actions"><a class="btn btn-secondary" href="{{ url_for('admin.ui_translation_dashboard', locale=locale) }}">{{ _('Peruuta') }}</a><button class="btn btn-primary" type="submit"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i>{{ _('Lähetä tarkistukseen') }}</button></div>
           </form>
           {% else %}
-          <p class="text-muted mb-0">{{ _('Sinulla ei ole oikeutta lähettää käännösehdotuksia.') }}</p>
+          <div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-lock" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Ei muokkausoikeutta') }}</strong><span>{{ _('Sinulla ei ole oikeutta lähettää käännösehdotuksia.') }}</span></div>
           {% endif %}
         </div>
-      </div>
+      </section>
 
-      {% if proposal %}
-      <div class="card admin-panel">
-        <div class="card-body">
-          <h2 class="h5 mb-3">{{ _('Nykyinen ehdotustila') }}</h2>
-          <p><strong>{{ _('Tila') }}:</strong> {{ proposal.status }}</p>
-          {% if proposal.submitted_by_name %}
-          <p><strong>{{ _('Lähettäjä') }}:</strong> {{ proposal.submitted_by_name }}</p>
-          {% endif %}
-          {% if proposal.notes %}
-          <p><strong>{{ _('Kommentit') }}:</strong> {{ proposal.notes }}</p>
-          {% endif %}
-          {% if proposal.review_notes %}
-          <p><strong>{{ _('Tarkistusmuistiinpanot') }}:</strong> {{ proposal.review_notes }}</p>
-          {% endif %}
-          {% if ui_translation_sync_enabled and proposal.status == 'approved' and proposal.github_sync %}
-          <div class="admin-panel-inset mb-3">
-            <p class="mb-2"><strong>{{ _('GitHub-synkin tila') }}:</strong> {{ proposal.github_sync.status }}</p>
-            {% if proposal.github_sync.branch_name %}
-            <p class="mb-2"><strong>{{ _('Branch') }}:</strong> <code>{{ proposal.github_sync.branch_name }}</code></p>
-            {% endif %}
-            {% if proposal.github_sync.pr_url %}
-            <p class="mb-2"><strong>{{ _('Pull request') }}:</strong> <a href="{{ proposal.github_sync.pr_url }}" target="_blank" rel="noopener">{{ proposal.github_sync.pr_url }}</a></p>
-            {% endif %}
-            {% if proposal.github_sync.merge_status %}
-            <p class="mb-2"><strong>{{ _('Merge-tila') }}:</strong> {{ proposal.github_sync.merge_status }}</p>
-            {% endif %}
-            {% if proposal.github_sync.last_error %}
-            <p class="mb-2 text-danger"><strong>{{ _('Viimeisin virhe') }}:</strong> {{ proposal.github_sync.last_error }}</p>
-            {% elif proposal.github_sync.merge_message %}
-            <p class="mb-2 text-muted"><strong>{{ _('Merge-viesti') }}:</strong> {{ proposal.github_sync.merge_message }}</p>
-            {% elif proposal.github_sync.message %}
-            <p class="mb-2 text-muted"><strong>{{ _('Lisätieto') }}:</strong> {{ proposal.github_sync.message }}</p>
-            {% endif %}
-            {% if can_review_ui_translations and proposal.github_sync.status in ['retry', 'committed_local_branch'] %}
-            <form class="admin-form" method="POST" action="{{ url_for('admin.requeue_ui_translation_sync', locale=locale) }}">
-              <input type="hidden" name="msgid" value="{{ entry.msgid }}">
-              <button class="btn btn-outline-primary btn-sm" type="submit">{{ _('Yritä GitHub-synkkiä uudelleen') }}</button>
-            </form>
-            {% endif %}
-          </div>
-          {% endif %}
-
-          {% if can_review_ui_translations and proposal.status == 'pending' %}
-          <form class="admin-form mb-3" method="POST" action="{{ url_for('admin.approve_ui_translation_proposal', locale=locale) }}">
+      {% if proposal and can_review_ui_translations and proposal.status == 'pending' %}
+      <section class="admin-section-card" aria-labelledby="translation-review-heading">
+        <header class="admin-section-card__header"><div class="admin-section-card__title"><i class="fa-solid fa-user-check" aria-hidden="true"></i><h2 id="translation-review-heading">{{ _('Tarkista ehdotus') }}</h2></div></header>
+        <div class="admin-section-card__body admin-stack">
+          <form class="admin-form" method="POST" action="{{ url_for('admin.approve_ui_translation_proposal', locale=locale) }}">
             <input type="hidden" name="msgid" value="{{ entry.msgid }}">
-            <div class="admin-field"><label class="form-label" for="review_notes_approve">{{ _('Tarkistusmuistiinpanot') }}</label>
-            <textarea class="form-control" id="review_notes_approve" name="review_notes" rows="3"></textarea></div>
-            <button class="btn btn-success" type="submit">{{ _('Hyväksy ja kirjoita katalogiin') }}</button>
+            <div class="admin-field"><label for="review_notes_approve">{{ _('Tarkistusmuistiinpanot') }}</label><textarea id="review_notes_approve" name="review_notes" rows="3"></textarea></div>
+            <button class="btn btn-success" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ _('Hyväksy ja kirjoita katalogiin') }}</button>
           </form>
-
           <form class="admin-form" method="POST" action="{{ url_for('admin.reject_ui_translation_proposal', locale=locale) }}">
             <input type="hidden" name="msgid" value="{{ entry.msgid }}">
-            <div class="admin-field"><label class="form-label" for="review_notes_reject">{{ _('Hylkäyksen syy') }}</label>
-            <textarea class="form-control" id="review_notes_reject" name="review_notes" rows="3"></textarea></div>
-            <button class="btn btn-outline-danger" type="submit">{{ _('Hylkää') }}</button>
+            <div class="admin-field"><label for="review_notes_reject">{{ _('Hylkäyksen syy') }}</label><textarea id="review_notes_reject" name="review_notes" rows="3" required></textarea></div>
+            <button class="btn btn-outline-danger" type="submit"><i class="fa-solid fa-xmark" aria-hidden="true"></i>{{ _('Hylkää') }}</button>
           </form>
-          {% endif %}
         </div>
-      </div>
+      </section>
       {% endif %}
     </div>
   </div>
-</div>
+</section>
 {% endblock %}

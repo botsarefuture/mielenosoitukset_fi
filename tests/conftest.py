@@ -823,7 +823,6 @@ def external_side_effects(monkeypatch):
     admin_recu_demo_bp = importlib.import_module(
         "mielenosoitukset_fi.admin.admin_recu_demo_bp"
     )
-    admin_media_bp = importlib.import_module("mielenosoitukset_fi.admin.admin_media_bp")
     admin_org_bp = importlib.import_module("mielenosoitukset_fi.admin.admin_org_bp")
     auth_bp = importlib.import_module("mielenosoitukset_fi.users.BPs.auth")
 
@@ -845,7 +844,6 @@ def external_side_effects(monkeypatch):
     monkeypatch.setattr(
         admin_recu_demo_bp, "upload_image_fileobj", upload_stub, raising=True
     )
-    monkeypatch.setattr(admin_media_bp, "upload_image_fileobj", upload_stub, raising=True)
     monkeypatch.setattr(admin_org_bp, "upload_image_fileobj", upload_stub, raising=True)
     monkeypatch.setattr(auth_bp, "upload_image_fileobj", upload_stub, raising=True)
 

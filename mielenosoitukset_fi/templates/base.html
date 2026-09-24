@@ -623,25 +623,12 @@ body.banner-closed {
 
       </ul>
       <!-- Authentication Links -->
-<<<<<<< HEAD
       <ul class="footer-links auth-buttons">
         {% if not current_user.is_authenticated %}
         <li><a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
         <li><a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a></li>
         {% else %}
         <li><a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a></li>
-=======
-      <ul class="footer-links">
-        {% if not current_user.is_authenticated %}
-        <li class="auth-buttons">
-          <a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a>
-          <a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a>
-        </li>
-        {% else %}
-        <li class="auth-buttons">
-          <a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a>
-        </li>
->>>>>>> d6b7c91 (Tidy public page chrome, theme, and flash feedback)
         {% endif %}
       </ul>
 

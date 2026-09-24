@@ -18,6 +18,7 @@
 * **Facebook event descriptions are no longer truncated** — the 50k character safety cap has been removed; full descriptions are preserved (with only script/style sanitization).
 
 ### Fixed
+* Public pages now expose a valid document language and correctly structured footer lists, so screen readers announce page language and navigation consistently. API documentation code blocks are keyboard-focusable and its inline links are visibly underlined with sufficient contrast.
 * Background-job detail filters now keep an off-page selected run visible while paginating, and the redesigned view's English and Swedish interface copy is included in the compiled translation catalogs.
 * The submission-error dashboard's `VIEW_LOGS` permission is now available in the assignable permission catalog, and its English and Swedish interface copy ships in the compiled catalogs.
 * The demonstration-submission error dashboard now uses the shared admin filter, result-summary, data-view, disclosure, empty-state, and server-side pagination contracts instead of a fixed 200-row Bootstrap view. Its technical request and form snapshots require the explicit `VIEW_LOGS` permission in both the route and navigation, filter links preserve the selected page size, and deterministic ordering prevents duplicate or skipped rows between pages.

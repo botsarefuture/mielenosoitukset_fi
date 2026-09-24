@@ -12719,3 +12719,51 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:205
 msgid "Mielenosoituslistalla käytetyt hakusanat."
 msgstr ""
+
+#: mielenosoitukset_fi/templates/detail.html:1995
+msgid "Kutsu kavereita osallistumaan"
+msgstr "Kutsu kavereita osallistumaan"
+
+#: mielenosoitukset_fi/templates/detail.html:2001
+msgid "Valitse kaverit, jotka haluat kutsua tähän mielenosoitukseen:"
+msgstr "Valitse kaverit, jotka haluat kutsua tähän mielenosoitukseen:"
+
+#: mielenosoitukset_fi/templates/detail.html:2007
+msgid "Kirjaudu sisään käyttääksesi kaverikutsuja"
+msgstr "Kirjaudu sisään käyttääksesi kaverikutsuja"
+
+#: mielenosoitukset_fi/templates/detail.html:2018
+msgid "Lähetä kutsut"
+msgstr "Lähetä kutsut"
+
+#: mielenosoitukset_fi/templates/detail.html:2760
+msgid "Kaverikutsuja ei ole käytettävissä tässä selaimessa."
+msgstr "Kaverikutsuja ei ole käytettävissä tässä selaimessa."
+
+#: mielenosoitukset_fi/templates/detail.html:2774
+msgid "Ladataan kavereita..."
+msgstr "Ladataan kavereita..."
+
+#: mielenosoitukset_fi/templates/detail.html:2784
+msgid "Sinulla ei ole vielä kutsuttavia kavereita."
+msgstr "Sinulla ei ole vielä kutsuttavia kavereita."
+
+#: mielenosoitukset_fi/templates/detail.html:2818
+msgid "Kaverien lataaminen epäonnistui. Yritä uudelleen."
+msgstr "Kaverien lataaminen epäonnistui. Yritä uudelleen."
+
+#: mielenosoitukset_fi/templates/detail.html:2825
+msgid "Valitse ainakin yksi kaveri."
+msgstr "Valitse ainakin yksi kaveri."
+
+#: mielenosoitukset_fi/templates/detail.html:2830
+msgid "Lähetetään kutsuja..."
+msgstr "Lähetetään kutsuja..."
+
+#: mielenosoitukset_fi/templates/detail.html:2842
+msgid "Kutsut lähetetty!"
+msgstr "Kutsut lähetetty!"
+
+#: mielenosoitukset_fi/templates/detail.html:2845
+msgid "Kutsujen lähettäminen epäonnistui. Yritä uudelleen."
+msgstr "Kutsujen lähettäminen epäonnistui. Yritä uudelleen."

@@ -12807,3 +12807,15 @@ msgstr "Jätä kenttä tyhjäksi, jos haluat säilyttää nykyisen profiilikuvas
 #: mielenosoitukset_fi/templates/users/auth/settings.html
 msgid "Profiilikuvan esikatselu"
 msgstr "Profiilikuvan esikatselu"
+
+#: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/templates/users/auth/register_next_steps.html
+msgid "Vahvistusviestin lähetys epäonnistui."
+msgstr "Vahvistusviestin lähetys epäonnistui."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin."
+msgstr "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin."
+
+#: mielenosoitukset_fi/templates/users/auth/register_next_steps.html
+msgid "Verkkovirhe, yritä uudelleen"
+msgstr "Verkkovirhe, yritä uudelleen"

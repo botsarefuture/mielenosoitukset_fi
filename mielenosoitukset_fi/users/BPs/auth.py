@@ -2,7 +2,6 @@ import json
 import re
 from flask import (
     Blueprint,
-    g,
     render_template,
     request,
     redirect,
@@ -322,18 +321,21 @@ def register():
         except Exception as e:
             flash_message(f"Virhe vahvistusviestin lähettämisessä: {e}", "error")
 
-        # lets add the email to the session for next steps
-        g.email = email 
+        # Keep the address across the redirect to the next-steps page.
+        session["registration_email"] = email
         return redirect(url_for("users.auth.register_next_steps"))
-        return redirect(url_for("users.auth.login"))
 
     return render_template("users/auth/register.html")
 
 
 @auth_bp.route("/register/next_steps")
 def register_next_steps():
-        
-    return render_template("users/auth/register_next_steps.html", email=g.get("email", 'Tapahtui virhe ja emme löydä sähköpostiasi.'), email_found=bool(g.get("email", None)))
+    email = session.get("registration_email", "")
+    return render_template(
+        "users/auth/register_next_steps.html",
+        email=email,
+        email_found=bool(email),
+    )
 
 
 # ------------------------
@@ -536,6 +538,7 @@ def confirm_email(token):
     """
     email = verify_confirmation_token(token)
     if email:
+        session.pop("registration_email", None)
         user = _find_user_by_email(email)
         if user:
             mongo.users.update_one({"_id": user["_id"]}, {"$set": {"confirmed": True}})
@@ -558,7 +561,12 @@ def resend_confirmation():
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         # AJAX request
         if not email_or_username:
-            return jsonify({"status": "error", "message": "Syötä sähköposti tai käyttäjänimi."}), 400
+            return jsonify(
+                {
+                    "status": "error",
+                    "message": _("Syötä sähköposti tai käyttäjänimi."),
+                }
+            ), 400
 
         user_doc = (
             _find_user_by_email(email_or_username)
@@ -571,12 +579,22 @@ def resend_confirmation():
             if not user.confirmed:
                 try:
                     verify_emailer(user.email, user.username)
-                except Exception as e:
-                    return jsonify({"status": "error", "message": f"Vahvistusviestin lähetys epäonnistui: {e}"}), 500
+                except Exception:
+                    current_app.logger.exception(
+                        "Failed to resend confirmation for user %s", user.id
+                    )
+                    return jsonify(
+                        {
+                            "status": "error",
+                            "message": _("Vahvistusviestin lähetys epäonnistui."),
+                        }
+                    ), 500
 
         return jsonify({
             "status": "success",
-            "message": "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin."
+            "message": _(
+                "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin."
+            )
         })
     # Non-AJAX request
     if not email_or_username:

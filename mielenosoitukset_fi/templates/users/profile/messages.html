@@ -83,7 +83,22 @@ function updateFriendsList(friends){
         btn.onclick = () => selectFriend(f.username);
 
         const unread = cachedMessages[f.username]?.filter(m => !m.read).length || 0;
-        btn.innerHTML = `<img src="${friend_pfp_cache[f.username]}" style="width:24px;height:24px;border-radius:50%;margin-right:0.25em;vertical-align:middle;"> ${f.displayname} ${unread>0? `<span class="unread-count" style="color:red">(${unread})</span>` : ""}`;
+        const avatar = document.createElement("img");
+        avatar.src = friend_pfp_cache[f.username];
+        avatar.style.width = "24px";
+        avatar.style.height = "24px";
+        avatar.style.borderRadius = "50%";
+        avatar.style.marginRight = "0.25em";
+        avatar.style.verticalAlign = "middle";
+        btn.appendChild(avatar);
+        btn.appendChild(document.createTextNode(` ${f.displayname}`));
+        if (unread > 0) {
+            const unreadBadge = document.createElement("span");
+            unreadBadge.className = "unread-count";
+            unreadBadge.style.color = "red";
+            unreadBadge.textContent = `(${unread})`;
+            btn.appendChild(unreadBadge);
+        }
         friendsListEl.appendChild(btn);
     });
 }
@@ -119,22 +134,28 @@ function appendMessage(msg){
     const sender = msg.sender_id === "{{ current_user._id }}" ? "Minä" : friend_id_to_name[msg.sender_id] || currentFriend;
 
     if(msg.type === "chat"){
-        div.innerHTML = `<strong>${sender}</strong>: ${msg.content}`;
+        const senderName = document.createElement("strong");
+        senderName.textContent = sender;
+        div.appendChild(senderName);
+        div.appendChild(document.createTextNode(`: ${msg.content}`));
     }
     else if(msg.type === "invitation"){
         const inv = msg.extra.invitation_type;
-        div.innerHTML = `
-            <strong>${sender}</strong> kutsui sinut mielenosoitukseen "${msg.extra.demo_title}"<br>
-            <button class="accept-invite btn btn-success btn-sm" data-demo-id="${msg.extra.demo_id}">
-                Hyväksy kutsu
-            </button>
-        `;
+        const senderName = document.createElement("strong");
+        senderName.textContent = `${sender} kutsui sinut mielenosoitukseen "${msg.extra.demo_title}"`;
+        div.appendChild(senderName);
+        div.appendChild(document.createElement("br"));
+        const inviteBtn = document.createElement("button");
+        inviteBtn.className = "accept-invite btn btn-success btn-sm";
+        inviteBtn.textContent = "Hyväksy kutsu";
+        inviteBtn.dataset.demoId = msg.extra.demo_id;
+        div.appendChild(inviteBtn);
         div.style.background = "#f0f9ff";
         div.style.padding = "0.25em";
         div.style.borderRadius = "0.5em";
 
         // Handle click
-        div.querySelector(".accept-invite").onclick = async (e) => {
+        inviteBtn.onclick = async (e) => {
             const btn = e.target;
             btn.disabled = true;
             btn.textContent = "Joining...";
@@ -160,7 +181,15 @@ function appendMessage(msg){
         };
     }
     else if(msg.type === "media"){
-        div.innerHTML = `<strong>${sender}</strong>:<br><img src="${msg.extra.media_url}" style="max-width:200px; border-radius:0.5em;">`;
+        const senderName = document.createElement("strong");
+        senderName.textContent = `${sender}:`;
+        div.appendChild(senderName);
+        div.appendChild(document.createElement("br"));
+        const mediaImg = document.createElement("img");
+        mediaImg.src = msg.extra.media_url;
+        mediaImg.style.maxWidth = "200px";
+        mediaImg.style.borderRadius = "0.5em";
+        div.appendChild(mediaImg);
     }
 
     chatMessages.appendChild(div);

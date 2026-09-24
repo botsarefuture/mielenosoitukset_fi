@@ -9,28 +9,30 @@ html.dark {
 }
 
 body {
-  --admin-workspace-blue: light-dark(#0033a0, #8bb1ff);
-  --admin-workspace-blue-dark: light-dark(#00267a, #b9ceff);
-  --admin-workspace-blue-soft: light-dark(#edf4ff, #17233b);
-  --admin-workspace-primary-bg: light-dark(#0033a0, #315ea8);
-  --admin-workspace-primary-hover: light-dark(#00267a, #416fbd);
-  --admin-workspace-on-primary: #ffffff;
-  --admin-workspace-orange: #ff6600;
-  --admin-workspace-orange-strong: light-dark(#9c3b00, #ffb078);
-  --admin-workspace-orange-soft: light-dark(#fff2e8, #3a2418);
-  --admin-workspace-surface: light-dark(#ffffff, #20252d);
-  --admin-workspace-surface-muted: light-dark(#f6f8fb, #292f39);
-  --admin-workspace-border: light-dark(#dce3ec, #424b59);
-  --admin-workspace-text: light-dark(#172033, #f2f5fa);
-  --admin-workspace-muted: light-dark(#647083, #b7c0ce);
-  --admin-workspace-success: light-dark(#18794e, #6ee7a8);
-  --admin-workspace-success-soft: light-dark(#eaf8f0, #183328);
-  --admin-workspace-danger: light-dark(#b42318, #ff9b91);
-  --admin-workspace-danger-soft: light-dark(#fff0ee, #3b2021);
-  --admin-workspace-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .08), rgba(0, 0, 0, .18));
+  /* Admin component aliases remain stable while their values come from the
+     product-wide semantic foundation. */
+  --admin-workspace-blue: var(--product-primary);
+  --admin-workspace-blue-dark: var(--product-primary-strong);
+  --admin-workspace-blue-soft: var(--product-primary-soft);
+  --admin-workspace-primary-bg: var(--product-action-bg);
+  --admin-workspace-primary-hover: var(--product-action-hover);
+  --admin-workspace-on-primary: var(--product-on-action);
+  --admin-workspace-orange: var(--product-accent);
+  --admin-workspace-orange-strong: var(--product-accent-strong);
+  --admin-workspace-orange-soft: var(--product-accent-soft);
+  --admin-workspace-surface: var(--product-surface);
+  --admin-workspace-surface-muted: var(--product-surface-muted);
+  --admin-workspace-border: var(--product-border);
+  --admin-workspace-text: var(--product-text);
+  --admin-workspace-muted: var(--product-text-muted);
+  --admin-workspace-success: var(--product-success);
+  --admin-workspace-success-soft: var(--product-success-soft);
+  --admin-workspace-danger: var(--product-danger);
+  --admin-workspace-danger-soft: var(--product-danger-soft);
+  --admin-workspace-shadow: var(--product-shadow);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--admin-workspace-text);
-  background: light-dark(#f6f8fb, #171b22);
+  background: var(--product-canvas);
 }
 
 /* Shared admin shell. Keep navigation, transient feedback and footer surfaces

@@ -36,6 +36,6 @@ def test_notification_states_use_shared_product_tokens():
     assert ".notif-state--error" in stylesheet
     assert ".notif-item.is-unread" in stylesheet
     assert ".notif-item__link:focus-visible" in stylesheet
-    assert "var(--admin-workspace-surface)" in stylesheet
-    assert "var(--admin-workspace-border)" in stylesheet
+    assert "var(--product-surface)" in stylesheet
+    assert "var(--product-border)" in stylesheet
     assert "@media (prefers-reduced-motion: reduce)" in stylesheet

@@ -12878,3 +12878,15 @@ msgstr "Lämna fältet tomt om du vill behålla din nuvarande profilbild."
 #: mielenosoitukset_fi/templates/users/auth/settings.html
 msgid "Profiilikuvan esikatselu"
 msgstr "Förhandsgranskning av profilbild"
+
+#: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/templates/users/auth/register_next_steps.html
+msgid "Vahvistusviestin lähetys epäonnistui."
+msgstr "Det gick inte att skicka bekräftelsemeddelandet."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin."
+msgstr "Om kontot finns och e-postadressen inte har bekräftats skickade vi en ny bekräftelselänk."
+
+#: mielenosoitukset_fi/templates/users/auth/register_next_steps.html
+msgid "Verkkovirhe, yritä uudelleen"
+msgstr "Nätverksfel, försök igen"

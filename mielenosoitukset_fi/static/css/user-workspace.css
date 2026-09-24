@@ -1427,6 +1427,78 @@ textarea.user-field__control {
 }
 
 /* ==========================
+   SHARED PUBLIC STEPS
+========================== */
+.user-step-list {
+  position: relative;
+  margin: 1.25rem 0;
+}
+
+.user-step {
+  display: flex;
+  position: relative;
+  align-items: flex-start;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1rem 0;
+}
+
+.user-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 3.65rem;
+  bottom: -0.35rem;
+  left: 1.5rem;
+  width: 2px;
+  background: var(--product-border);
+}
+
+.user-step__icon {
+  display: inline-flex;
+  position: relative;
+  z-index: 1;
+  flex: 0 0 3rem;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: 2px solid var(--product-border);
+  border-radius: 50%;
+  background: var(--product-surface);
+  color: var(--product-text-muted);
+}
+
+.user-step__content {
+  min-width: 0;
+  padding-top: 0.25rem;
+}
+
+.user-step__content h4 {
+  margin: 0 0 0.35rem;
+  color: var(--product-text);
+  font-size: 1.05rem;
+}
+
+.user-step__content p {
+  margin: 0.25rem 0 0;
+  color: var(--product-text-muted);
+  line-height: 1.55;
+}
+
+.user-step--active .user-step__icon {
+  border-color: var(--product-action-bg);
+  background: var(--product-action-bg);
+  color: var(--product-on-action);
+  box-shadow: 0 0 0 5px var(--product-primary-soft);
+}
+
+.user-step--complete .user-step__icon {
+  border-color: var(--product-success);
+  background: var(--product-success);
+  color: var(--product-surface);
+}
+
+/* ==========================
    RESPONSIVE
 ========================== */
 @media (max-width: 900px) {

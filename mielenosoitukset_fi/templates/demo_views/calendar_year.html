@@ -408,11 +408,11 @@
 
 <!-- Mobile: Month List View -->
 <div class="mobile-year-list">
-    {% set total_events = 0 %}
+    {% set month_count_list = [] %}
     {% for month in range(1, 13) %}
-        {% set month_event_count = year_demos[month]['days'].values()|map('length')|sum|default(0) %}
-        {% set total_events = total_events + month_event_count %}
+        {% set _ = month_count_list.append(year_demos[month]['days'].values()|map('length')|sum) %}
     {% endfor %}
+    {% set total_events = month_count_list|sum %}
     
     <!-- Stats -->
     <div class="mobile-stats">

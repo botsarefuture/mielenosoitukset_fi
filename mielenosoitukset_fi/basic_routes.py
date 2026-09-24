@@ -1195,10 +1195,17 @@ def init_routes(app):
                 },
             )
             api_doc_html = md.convert(docs_text)
+            # Markdown code blocks can overflow horizontally. Make every
+            # scrollable code block keyboard reachable, including on Safari.
+            api_doc_html = re.sub(
+                r"<pre(?=[\s>])(?![^>]*\btabindex=)",
+                '<pre tabindex="0"',
+                api_doc_html,
+            )
             api_doc_toc = md.toc
         except Exception:
             from markupsafe import escape
-            api_doc_html = "<pre>" + escape(docs_text) + "</pre>"
+            api_doc_html = '<pre tabindex="0">' + escape(docs_text) + "</pre>"
             api_doc_toc = ""
         return render_template(
             "api_docs.html",

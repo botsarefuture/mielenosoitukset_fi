@@ -381,11 +381,23 @@ def test_admin_summary_cards_center_icons_and_keep_copy_separate(
                 const value = element.querySelector(selectors.value);
                 const content = label ? label.parentElement : null;
                 const cardRect = element.getBoundingClientRect();
+                const iconStyles = icon ? getComputedStyle(icon) : null;
+                const glyphStyles = iconGlyph ? getComputedStyle(iconGlyph) : null;
                 return {
                     card: cardRect.toJSON(),
                     content: content ? content.getBoundingClientRect().toJSON() : null,
                     icon: icon ? icon.getBoundingClientRect().toJSON() : null,
                     iconGlyph: iconGlyph ? iconGlyph.getBoundingClientRect().toJSON() : null,
+                    iconStyles: iconStyles ? {
+                        display: iconStyles.display,
+                        alignItems: iconStyles.alignItems,
+                        justifyContent: iconStyles.justifyContent,
+                        textAlign: iconStyles.textAlign,
+                    } : null,
+                    glyphStyles: glyphStyles ? {
+                        display: glyphStyles.display,
+                        textAlign: glyphStyles.textAlign,
+                    } : null,
                     label: label ? label.getBoundingClientRect().toJSON() : null,
                     value: value ? value.getBoundingClientRect().toJSON() : null,
                     viewport: document.documentElement.clientWidth,
@@ -396,6 +408,16 @@ def test_admin_summary_cards_center_icons_and_keep_copy_separate(
 
         for item in geometry:
             assert item["icon"] and item["iconGlyph"] and item["content"] and item["label"] and item["value"], path
+            assert item["iconStyles"] == {
+                "display": "flex",
+                "alignItems": "center",
+                "justifyContent": "center",
+                "textAlign": "center",
+            }, path
+            assert item["glyphStyles"] == {
+                "display": "block",
+                "textAlign": "center",
+            }, path
             assert item["card"]["height"] >= 90, path
             assert item["icon"]["right"] < item["content"]["left"], path
             icon_center_x = item["icon"]["left"] + item["icon"]["width"] / 2

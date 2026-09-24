@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from '_macros/_hero.html' import hero_section %}
 
 {% block title %} #{{ tag_name }} {{ _('Mielenosoitukset') }} {% endblock %}
 
@@ -27,24 +28,15 @@
 
 <section class="main-content">
 
-  {% if tag and tag.cover_picture %}
-  <div class="page-banner-cover">
-    <img src="{{ tag.cover_picture }}" alt="{{ _('Tagin kansikuva') }}">
-  </div>
-  {% endif %}
-
-  <div class="page-banner">
-    <div class="page-banner-label">
-      <i class="fa-solid fa-hashtag"></i> {{ _('Tagi') }}
-    </div>
-    <div class="page-banner-title">#{{ tag_name }}</div>
-    <div class="page-banner-text">
-      {{ _('Näet tässä vain mielenosoitukset, jotka on merkitty tagilla') }}
-      <strong>#{{ tag_name }}</strong>.<br>
-      {{ _('Voit hakea, suodattaa ja selata vain tämän aiheen tapahtumia. Jos haluat nähdä kaikki mielenosoitukset,
-      palaa yleisnäkymään.') }}
-    </div>
-  </div>
+  {{ hero_section(
+    kind='page',
+    eyebrow=_('Tagi'),
+    title='#' ~ tag_name,
+    text=_('Näet tässä vain mielenosoitukset, jotka on merkitty tagilla') ~ ' #' ~ tag_name ~ '. ' ~ _('Voit hakea, suodattaa ja selata vain tämän aiheen tapahtumia. Jos haluat nähdä kaikki mielenosoitukset, palaa yleisnäkymään.'),
+    icon='fa-solid fa-hashtag',
+    cover_img=tag.cover_picture if tag and tag.cover_picture else none,
+    cover_alt=_('Tagin kansikuva')
+  ) }}
 
   <!-- Search Form (same as list.html) -->
   <form method="GET" action="#" class="search-form" id="search-form">
@@ -81,7 +73,7 @@
 
     <div id="demos-grid" class="demos-grid"></div>
 
-    <button id="load-more-btn" class="button button-secondary" style="display:none;">
+    <button id="load-more-btn" class="button button-secondary load-more" hidden>
       {{ _('Näytä lisää') }}
     </button>
 
@@ -104,6 +96,7 @@
 
 {% endblock %}
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/user-pagination.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
@@ -201,30 +194,24 @@
           <div class="spinner"></div>
           <p>Ladataan mielenosoituksia...</p>
         </div>`;
-      } else {
-        loadMoreBtn.classList.add("loading");
-        loadMoreBtn.disabled = true;
       }
 
       const result = await loadDemos(page, append, extraParams);
-
-      console.log(result);
-
-      loadMoreBtn.classList.remove("loading");
-      loadMoreBtn.disabled = false;
-
-
-      // No more pages?
-      if (page >= result.total_pages) {
-        loadMoreBtn.style.display = "none";
-      } else {
-        loadMoreBtn.style.display = "block";
+      if (result) {
+        window.userPaginationController?.setState(result.page, result.total_pages);
       }
     }
 
     /* -------------------------------------------------------------
      * Initial Load
      * -----------------------------------------------------------*/
+    window.userPaginationController = UserPagination.createLoadMoreController({
+      button: loadMoreBtn,
+      loadPage: page => loadDemosWrapper(page, true),
+      initialLabel: '{{ _('Näytä lisää') }}',
+      loadingLabel: '{{ _('Ladataan...') }}',
+    });
+
     loadDemosWrapper();
 
     /* -------------------------------------------------------------

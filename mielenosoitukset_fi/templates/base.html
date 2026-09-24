@@ -590,13 +590,13 @@ body.banner-closed {
       </p>
       <ul class="footer-links">
         <li><a href="{{ url_for('info') }}">{{ _('Tietoa sivustosta') }}</a></li>
-        |
+        <li class="footer-separator" aria-hidden="true">|</li>
         <li><a href="{{ url_for('privacy') }}">{{ _('Tietosuojaseloste') }}</a></li>
-        |
+        <li class="footer-separator" aria-hidden="true">|</li>
         <li><a href="{{ url_for('contact') }}">{{ _('Ota yhteyttä') }}</a></li>
-        |
+        <li class="footer-separator" aria-hidden="true">|</li>
         <li><a href="{{ url_for('public_guides') }}">{{ _('Ohjeet') }}</a></li>
-        |
+        <li class="footer-separator" aria-hidden="true">|</li>
         <li><a href="{{ url_for('developer.dashboard') }}">{{ _('Kehittäjille') }}</a></li>
       </ul>
       <ul class="social-media-links">
@@ -623,16 +623,12 @@ body.banner-closed {
 
       </ul>
       <!-- Authentication Links -->
-      <ul class="footer-links">
+      <ul class="footer-links auth-buttons">
         {% if not current_user.is_authenticated %}
-        <li class="auth-buttons">
-          <a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a>
-          <a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a>
-        </li>
+        <li><a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
+        <li><a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a></li>
         {% else %}
-        <li class="auth-buttons">
-          <a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a>
-        </li>
+        <li><a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a></li>
         {% endif %}
       </ul>
 

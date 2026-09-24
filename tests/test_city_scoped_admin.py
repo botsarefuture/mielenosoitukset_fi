@@ -39,6 +39,38 @@ def _create_scoped_admin(db, city_keys, permissions):
     return user_id
 
 
+def _create_organization_admin(db, organization_id, permissions):
+    user_id = ObjectId()
+    identity_suffix = str(user_id)[-8:]
+    user_doc = User.create_user(
+        username=f"organization-admin-{identity_suffix}",
+        password="OrganizationPass1!",
+        email=f"organization-admin-{identity_suffix}@example.test",
+        displayname="Organization Admin",
+    )
+    user_doc.update(
+        {
+            "_id": user_id,
+            "confirmed": True,
+            "active": True,
+            "role": "admin",
+            "global_admin": False,
+            "global_permissions": [],
+        }
+    )
+    db.users.insert_one(user_doc)
+    db.memberships.insert_one(
+        {
+            "_id": ObjectId(),
+            "user_id": user_id,
+            "organization_id": organization_id,
+            "role": "admin",
+            "permissions": permissions,
+        }
+    )
+    return user_id
+
+
 def test_city_admin_can_open_command_center_and_edit_only_for_assigned_city(
     app, db, seeded_data
 ):
@@ -185,6 +217,135 @@ def test_city_scoped_admin_suggestions_hide_other_city_rows_and_counts(
     assert "<strong>1</strong>" in page
     assert "sinulle näkyvää ehdotusta" in page
     assert client.get(f"/admin/demo/suggestions/{turku_suggestion_id}").status_code == 403
+
+
+def test_city_scoped_admin_audit_timeline_hides_other_city_rows_and_counts(
+    app, db, seeded_data
+):
+    scoped_user_id = _create_scoped_admin(db, ["helsinki"], ["VIEW_DEMO"])
+    helsinki_demo = db.demonstrations.find_one({"_id": seeded_data["demo_id"]})
+    turku_demo = deepcopy(helsinki_demo)
+    turku_demo["_id"] = ObjectId()
+    turku_demo["title"] = "Turku Audit Secret"
+    turku_demo["city"] = "Turku"
+    turku_demo["city_key"] = normalize_city_key("Turku")
+    turku_demo["slug"] = "turku-audit-secret"
+    turku_demo["editors"] = []
+    db.demonstrations.insert_one(turku_demo)
+
+    db.demo_audit_logs.delete_many({})
+    db.demo_audit_logs.insert_many(
+        [
+            {
+                "demo_id": str(helsinki_demo["_id"]),
+                "timestamp": helsinki_demo.get("updated_at"),
+                "action": "edit_demo",
+                "message": "Helsinki visible audit event",
+                "username": "admin",
+            },
+            {
+                "demo_id": str(turku_demo["_id"]),
+                "timestamp": turku_demo.get("updated_at"),
+                "action": "edit_demo",
+                "message": "Turku hidden audit event",
+                "username": "admin",
+            },
+        ]
+    )
+
+    client = _client_for_user(app, scoped_user_id)
+    response = client.get("/admin/demo/audit/logs")
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "Helsinki visible audit event" in page
+    assert "Turku hidden audit event" not in page
+    assert "1 merkinnästä" in page
+    assert (
+        client.get(f"/admin/demo/{turku_demo['_id']}/audit_log").status_code
+        == 403
+    )
+
+
+def test_explicit_object_id_editor_can_open_scoped_audit_views(app, db, seeded_data):
+    scoped_user_id = _create_organization_admin(
+        db,
+        seeded_data["org_id"],
+        ["VIEW_DEMO"],
+    )
+    demo_id = seeded_data["demo_id"]
+    db.demonstrations.update_one(
+        {"_id": demo_id},
+        {
+            "$set": {
+                "editors": [scoped_user_id],
+                "organizers": [],
+                "city": "Turku",
+                "city_key": normalize_city_key("Turku"),
+            }
+        },
+    )
+    db.demo_audit_logs.delete_many({})
+    db.demo_audit_logs.insert_one(
+        {
+            "demo_id": str(demo_id),
+            "action": "edit_demo",
+            "message": "ObjectId editor audit event",
+            "username": "admin",
+        }
+    )
+
+    client = _client_for_user(app, scoped_user_id)
+    timeline = client.get("/admin/demo/audit/logs")
+    detail = client.get(f"/admin/demo/{demo_id}/audit_log")
+
+    assert timeline.status_code == 200
+    assert "ObjectId editor audit event" in timeline.get_data(as_text=True)
+    assert detail.status_code == 200
+    detail_page = detail.get_data(as_text=True)
+    assert f"/admin/demo/command-center/{demo_id}" in detail_page
+    assert f"/admin/demo/edit_demo/{demo_id}" not in detail_page
+    assert client.get(f"/admin/demo/command-center/{demo_id}").status_code == 200
+    assert client.get(f"/admin/demo/edit_demo/{demo_id}").status_code == 403
+
+
+def test_string_organization_id_is_included_in_scoped_audit_query(
+    app, db, seeded_data
+):
+    scoped_user_id = _create_organization_admin(
+        db,
+        seeded_data["org_id"],
+        ["VIEW_DEMO"],
+    )
+    demo_id = seeded_data["demo_id"]
+    db.demonstrations.update_one(
+        {"_id": demo_id},
+        {
+            "$set": {
+                "editors": [],
+                "organizers": [
+                    {"organization_id": str(seeded_data["org_id"]), "role": "main"}
+                ],
+                "city": "Turku",
+                "city_key": normalize_city_key("Turku"),
+            }
+        },
+    )
+    db.demo_audit_logs.delete_many({})
+    db.demo_audit_logs.insert_one(
+        {
+            "demo_id": str(demo_id),
+            "action": "edit_demo",
+            "message": "String organization audit event",
+            "username": "admin",
+        }
+    )
+
+    client = _client_for_user(app, scoped_user_id)
+    timeline = client.get("/admin/demo/audit/logs")
+
+    assert timeline.status_code == 200
+    assert "String organization audit event" in timeline.get_data(as_text=True)
+    assert client.get(f"/admin/demo/{demo_id}/audit_log").status_code == 200
 
 
 def test_city_scoped_admin_suggestions_show_empty_state_outside_scope(app, db, seeded_data):

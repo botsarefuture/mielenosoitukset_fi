@@ -1,75 +1,81 @@
 {% extends "admin_base.html" %}
-{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
+
+{% block title %}{{ _('Audit-loki') }} – {{ demo.title }}{% endblock %}
+
 {% block main_content %}
-<div class="admin-page">
+<section class="admin-page admin-workspace">
   {{ admin_page_hero(
     _('Audit-loki:') ~ ' ' ~ demo.title,
     demo.date ~ ' · ' ~ demo.city,
     _('Mielenosoitukset'),
-    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (_('Audit-loki'), none)],
-    back_url=url_for('admin_demo.demo_control'),
-    back_label=_('Mielenosoitukset')
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (demo.title, url_for('admin_demo.demo_command_center', demo_id=demo._id)), (_('Audit-loki'), none)],
+    back_url=url_for('admin_demo.demo_command_center', demo_id=demo._id),
+    back_label=_('Takaisin mielenosoitukseen'),
+    metric_value=total_count,
+    metric_label=_('audit-merkintää')
   ) }}
 
-  {% if entries %}
-  <div class="card admin-data-view">
-    <div class="card-body p-0">
-      <div class="list-group list-group-flush audit-list">
+  <section class="admin-data-view" aria-labelledby="demo-audit-heading">
+    <header class="admin-data-view__header admin-result-summary" aria-live="polite">
+      <strong id="demo-audit-heading">{{ _('Mielenosoituksen tapahtumat') }}</strong>
+      <span>{{ _('Näytetään %(start)s–%(end)s / %(count)s merkinnästä', start=range_start, end=range_end, count=total_count) }}</span>
+    </header>
+
+    {% if entries %}
+    <div class="admin-data-view__viewport">
+      <div class="admin-audit-stream">
         {% for entry in entries %}
-        <div class="list-group-item" data-action="{{ entry.action }}">
-          <div class="d-flex justify-content-between align-items-start flex-wrap">
+        <article class="admin-audit-entry" data-action="{{ entry.action }}">
+          <header class="admin-audit-entry__header">
             <div>
-              <h6 class="mb-1">{{ entry.message or entry.action }}</h6>
-              <div class="text-muted small">
-                {{ entry.timestamp.strftime('%d.%m.%Y %H:%M:%S') if entry.timestamp else '' }}
-                · {{ entry.username or '–' }} · {{ entry.ip_address or '–' }}
+              <h2 class="admin-audit-entry__title">{{ entry.message or entry.action }}</h2>
+              <div class="admin-audit-entry__meta">
+                <time>{{ entry.timestamp.strftime('%d.%m.%Y %H:%M:%S') if entry.timestamp else '—' }}</time>
+                <span>{{ entry.username or _('Tuntematon käyttäjä') }}</span>
+                <code>{{ entry.ip_address or '—' }}</code>
               </div>
             </div>
-            {% if entry.details and entry.details.changed_fields %}
-            <span class="badge bg-light text-dark ms-auto">
-              {{ _('Muokatut kentät:') }} {{ entry.details.changed_fields|join(', ') }}
-            </span>
-            {% endif %}
-          </div>
+            {% if entry.details and entry.details.changed_fields %}<span class="admin-status-badge admin-status-badge--info">{{ _('Muokatut kentät:') }} {{ entry.details.changed_fields|join(', ') }}</span>{% endif %}
+          </header>
+
           {% if entry.details and entry.details.history_id %}
-          <div class="mt-2">
-            <a href="{{ url_for('admin_demo.view_demo_diff', history_id=entry.details.history_id) }}" class="btn btn-sm btn-outline-primary">
-              <i class="fa-solid fa-code-compare me-2"></i>{{ _('Näytä muutoshistoria') }}
-            </a>
-          </div>
+          <div class="admin-row-actions"><a href="{{ url_for('admin_demo.view_demo_diff', history_id=entry.details.history_id) }}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-code-compare" aria-hidden="true"></i>{{ _('Näytä muutoshistoria') }}</a></div>
           {% endif %}
+
           {% if entry.details and entry.details.merged_from %}
-          <div class="alert alert-info mt-2 mb-0 py-2 px-3">
-            <strong class="d-block mb-1">{{ _('Yhdistetyt mielenosoitukset:') }}</strong>
-            <ul class="mb-0 ps-3">
+          <div class="admin-audit-note">
+            <strong>{{ _('Yhdistetyt mielenosoitukset:') }}</strong>
+            <ul>
               {% for merged in entry.details.merged_from %}
-              <li>
-                {{ merged.title or _('Mielenosoitus') }} <code>{{ merged.demo_id }}</code>
-                {% if merged.edit_history_url %}
-                · <a href="{{ merged.edit_history_url }}">{{ _('Muokkaushistoria') }}</a>
-                {% endif %}
-                {% if merged.audit_log_url %}
-                · <a href="{{ merged.audit_log_url }}">{{ _('Audit-loki') }}</a>
-                {% endif %}
-              </li>
+              <li>{{ merged.title or _('Mielenosoitus') }} <code>{{ merged.demo_id }}</code>{% if merged.edit_history_url %} · <a href="{{ merged.edit_history_url }}">{{ _('Muokkaushistoria') }}</a>{% endif %}{% if merged.audit_log_url %} · <a href="{{ merged.audit_log_url }}">{{ _('Audit-loki') }}</a>{% endif %}</li>
               {% endfor %}
             </ul>
           </div>
           {% endif %}
-          {% if entry.details and entry.details.reason %}
-          <div class="alert alert-warning mt-2 mb-0 py-2 px-3">
-            <strong>{{ _('Syy:') }}</strong> {{ entry.details.reason }}
-          </div>
-          {% endif %}
-        </div>
+
+          {% if entry.details and entry.details.reason %}<div class="admin-audit-note admin-audit-note--warning"><strong>{{ _('Syy:') }}</strong> {{ entry.details.reason }}</div>{% endif %}
+        </article>
         {% endfor %}
       </div>
     </div>
-  </div>
-  {% else %}
-  <div class="alert alert-info">
-    <i class="fa-solid fa-circle-info me-2"></i>{{ _('Ei audit-merkintöjä tälle mielenosoitukselle.') }}
-  </div>
-  {% endif %}
-</div>
+    {% else %}
+    <div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-clock-rotate-left" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Ei audit-merkintöjä') }}</strong><span>{{ _('Tälle mielenosoitukselle ei ole vielä tallennettu tapahtumia.') }}</span></div>
+    {% endif %}
+
+    {{ admin_pagination(
+      current_page,
+      total_pages,
+      per_page=per_page,
+      prev_page=prev_page,
+      next_page=next_page,
+      prev_page_url=prev_page_url,
+      next_page_url=next_page_url,
+      visible_pages=visible_pages,
+      first_page_url=first_page_url,
+      last_page_url=last_page_url,
+      aria_label=_('Mielenosoituksen audit-lokin sivutus')
+    ) }}
+  </section>
+</section>
 {% endblock %}

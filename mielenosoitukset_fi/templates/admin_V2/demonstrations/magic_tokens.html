@@ -1,8 +1,10 @@
 {% extends "admin_base.html" %}
-{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
+
+{% block title %}{{ _('Kertakäyttölinkit') }}{% endblock %}
 
 {% block main_content %}
-<div class="admin-page">
+<section class="admin-page admin-workspace">
   {{ admin_page_hero(
     _('Kertakäyttölinkit'),
     _('Hallinnoi esikatselu-, hyväksyntä- ja hylkäyslinkkejä.'),
@@ -12,141 +14,131 @@
     back_label=_('Mielenosoitukset')
   ) }}
 
-  <form method="get" class="row g-3 admin-panel">
-    <div class="col-md-4">
-      <label class="form-label">{{ _('Toiminto') }}</label>
-      <select name="action" class="form-select">
-        <option value="">{{ _('Kaikki') }}</option>
-        {% for action in actions %}
-        <option value="{{ action }}" {% if filters.action == action %}selected{% endif %}>{{ action }}</option>
-        {% endfor %}
-      </select>
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Kertakäyttölinkkien suodattimet') }}">
+    <form method="get" action="{{ url_for('admin_demo.manage_magic_tokens') }}" class="admin-filter-bar">
+      <input type="hidden" name="page" value="1">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="admin-filter-bar__primary">
+        <div class="admin-field">
+          <label for="token-action">{{ _('Toiminto') }}</label>
+          <select id="token-action" name="action">
+            <option value="">{{ _('Kaikki toiminnot') }}</option>
+            {% for action in actions %}<option value="{{ action }}" {% if filters.action == action %}selected{% endif %}>{{ action }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="admin-field">
+          <label for="token-demo-id">{{ _('Mielenosoituksen ID') }}</label>
+          <input id="token-demo-id" type="search" name="demo_id" value="{{ filters.demo_id }}" autocomplete="off">
+        </div>
+        <div class="admin-field">
+          <label for="token-status">{{ _('Tila') }}</label>
+          <select id="token-status" name="status">
+            <option value="">{{ _('Kaikki tilat') }}</option>
+            <option value="active" {% if filters.status == 'active' %}selected{% endif %}>{{ _('Aktiivinen') }}</option>
+            <option value="revoked" {% if filters.status == 'revoked' %}selected{% endif %}>{{ _('Mitätöity') }}</option>
+            <option value="used" {% if filters.status == 'used' %}selected{% endif %}>{{ _('Käytetty') }}</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+      </div>
+    </form>
+
+    {% if active_filters %}
+    <div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">
+      {% for filter in active_filters %}<a class="admin-filter-chip" href="{{ filter.remove_url }}"><span>{{ filter.label }}: {{ filter.value }}</span><i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="visually-hidden">{{ _('Poista suodatin') }}</span></a>{% endfor %}
+      <a class="admin-clear-filters" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a>
     </div>
-    <div class="col-md-4">
-      <label class="form-label">{{ _('Mielenosoituksen ID') }}</label>
-      <input type="text" class="form-control" name="demo_id" value="{{ filters.demo_id }}">
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">{{ _('Tila') }}</label>
-      <select name="status" class="form-select">
-        <option value="">{{ _('Kaikki') }}</option>
-        <option value="active" {% if filters.status == 'active' %}selected{% endif %}>{{ _('Aktiivinen') }}</option>
-        <option value="revoked" {% if filters.status == 'revoked' %}selected{% endif %}>{{ _('Mitätöity') }}</option>
-        <option value="used" {% if filters.status == 'used' %}selected{% endif %}>{{ _('Käytetty') }}</option>
-      </select>
-    </div>
-    <div class="col-12 d-flex gap-2">
-      <button type="submit" class="btn btn-primary">
-        <i class="fa-solid fa-filter me-2"></i>{{ _('Suodata') }}
-      </button>
-      <a href="{{ url_for('admin_demo.manage_magic_tokens') }}" class="btn btn-outline-secondary">
-        {{ _('Tyhjennä') }}
-      </a>
-    </div>
-  </form>
+    {% endif %}
+  </section>
 
   {% if action_counts %}
-  <div class="d-flex flex-wrap gap-2 mb-4">
-    {% for action, count in action_counts.items() %}
-    <span class="badge bg-light text-dark">
-      <strong class="text-uppercase">{{ action }}</strong> · {{ count }}
-    </span>
-    {% endfor %}
-    <form method="post" class="ms-auto">
-      <input type="hidden" name="revoke_all" value="1">
-      <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{ _('Mitätöidäänkö kaikki käyttämättömät linkit?') }}');">
-        <i class="fa-solid fa-ban me-1"></i>{{ _('Mitätöi kaikki käyttämättömät linkit') }}
+  <section class="admin-section-card" aria-labelledby="token-summary-heading">
+    <header class="admin-section-card__header">
+      <div class="admin-section-card__title"><i class="fa-solid fa-link" aria-hidden="true"></i><h2 id="token-summary-heading">{{ _('Linkit nykyisessä haussa') }}</h2></div>
+      <button type="button" class="btn btn-danger" data-token-revoke-all data-bs-toggle="modal" data-bs-target="#revokeTokenModal">
+        <i class="fa-solid fa-ban" aria-hidden="true"></i>{{ _('Mitätöi kaikki käyttämättömät linkit') }}
       </button>
-    </form>
-  </div>
+    </header>
+    <div class="admin-section-card__body">
+      <div class="admin-fact-list">
+        {% for action, count in action_counts.items() %}
+        <div class="admin-fact"><span class="admin-fact__icon"><i class="fa-solid fa-link" aria-hidden="true"></i></span><div class="admin-fact__content"><span>{{ action }}</span><strong>{{ _('%(count)s linkkiä', count=count) }}</strong></div></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
   {% endif %}
 
-  <div class="card admin-data-view">
-    <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead>
-          <tr>
-            <th>{{ _('Toiminto') }}</th>
-            <th>{{ _('Mielenosoitus') }}</th>
-            <th>{{ _('Luotu') }}</th>
-            <th>{{ _('Vanhenee') }}</th>
-            <th>{{ _('Viimeisin käyttö') }}</th>
-            <th>{{ _('Luonut') }}</th>
-            <th>{{ _('IP') }}</th>
-            <th>{{ _('Tila') }}</th>
-            <th></th>
-          </tr>
-        </thead>
+  <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="magic-token-heading">
+    <header class="admin-data-view__header admin-result-summary" aria-live="polite">
+      <strong id="magic-token-heading">{{ _('Kertakäyttölinkit') }}</strong>
+      <span>{% if filters_active %}<strong>{{ _('%(count)s osumaa', count=filtered_count) }}</strong> · {{ _('yhteensä %(count)s linkkiä', count=total_count) }}{% else %}{{ _('Näytetään %(start)s–%(end)s / %(count)s linkistä', start=range_start, end=range_end, count=filtered_count) }}{% endif %}</span>
+    </header>
+
+    <div class="admin-data-view__viewport">
+      <table class="admin-data-view__table">
+        <thead><tr><th scope="col">{{ _('Toiminto') }}</th><th scope="col">{{ _('Mielenosoitus') }}</th><th scope="col">{{ _('Luotu / vanhenee') }}</th><th scope="col">{{ _('Käyttö') }}</th><th scope="col">{{ _('Tila') }}</th><th scope="col">{{ _('Toiminnot') }}</th></tr></thead>
         <tbody>
           {% for token in tokens %}
           <tr>
-            <td class="text-uppercase small">{{ token.action }}</td>
+            <td><code>{{ token.action }}</code></td>
+            <td>{% if token.demo_title %}<strong>{{ token.demo_title }}</strong><div class="admin-field__help">{{ token.demo_date }} · {{ token.demo_city }}</div>{% else %}<code>{{ token.demo_id }}</code>{% endif %}</td>
+            <td><div><strong>{{ _('Luotu') }}:</strong> {{ token.created_at_display }}</div><div class="admin-field__help">{{ _('Vanhenee') }}: {{ token.expires_at_display }} · {{ token.created_by_display }}</div></td>
             <td>
-              {% if token.demo_title %}
-                <strong>{{ token.demo_title }}</strong><br>
-                <small class="text-muted">{{ token.demo_date }} · {{ token.demo_city }}</small>
-              {% else %}
-                <code>{{ token.demo_id }}</code>
-              {% endif %}
+              <div><strong>{{ _('Viimeisin') }}:</strong> {{ token.used_at_display }}</div><div class="admin-field__help">{{ _('IP') }}: {{ token.bound_ip or '–' }}</div>
+              <details class="admin-disclosure"><summary>{{ _('Näytä tekniset tiedot') }}</summary><div class="admin-stack">
+                <div><strong>{{ _('Token-hash') }}</strong><pre class="admin-code-block">{{ token.token_hash or '–' }}</pre></div>
+                {% if token.first_seen_at %}<div><strong>{{ _('Ensimmäinen käyttö') }}</strong><span>{{ token.first_seen_display }}</span></div>{% endif %}
+                {% if token.ua_first_display %}<div><strong>{{ _('Ensimmäinen user agent') }}</strong><span>{{ token.ua_first_display }}</span></div>{% endif %}
+                {% if token.ua_last_display and token.ua_last_display != token.ua_first_display %}<div><strong>{{ _('Viimeisin user agent') }}</strong><span>{{ token.ua_last_display }}</span></div>{% endif %}
+                {% if token.demo_id %}<a href="{{ url_for('admin_demo.view_demo_audit_log', demo_id=token.demo_id) }}">{{ _('Avaa audit-loki') }}</a>{% endif %}
+              </div></details>
             </td>
-            <td>{{ token.created_at_display }}</td>
-            <td>{{ token.expires_at_display }}</td>
-            <td>{{ token.used_at_display }}</td>
-            <td>{{ token.created_by_display }}</td>
-            <td>
-              {{ token.bound_ip or '–' }}
-              {% if token.first_seen_display %}
-              <div class="text-muted small">{{ _('Ensimmäinen käyttö:') }} {{ token.first_seen_display }}</div>
-              {% endif %}
-            </td>
-            <td>
-              {% if token.revoked %}
-                <span class="badge bg-danger">{{ _('Mitätöity') }}</span>
-                {% if token.revoked_at %}
-                <div class="text-muted small mt-1">{{ token.revoked_at.strftime('%d.%m.%Y %H:%M') }}</div>
-                {% endif %}
-              {% elif token.used_at %}
-                <span class="badge bg-secondary">{{ _('Käytetty') }}</span>
-              {% else %}
-                <span class="badge bg-success">{{ _('Aktiivinen') }}</span>
-              {% endif %}
-            </td>
-            <td class="text-end">
-              {% if not token.used_at and not token.revoked %}
-              <form method="post" class="d-inline">
-                <input type="hidden" name="token_id" value="{{ token._id }}">
-                <button type="submit" class="btn btn-sm btn-outline-danger">
-                  <i class="fa-solid fa-ban me-1"></i>{{ _('Mitätöi') }}
-                </button>
-              </form>
-              {% endif %}
-            </td>
+            <td>{% if token.revoked %}<span class="admin-status-badge admin-status-badge--danger"><i class="fa-solid fa-ban" aria-hidden="true"></i>{{ _('Mitätöity') }}</span>{% if token.revoked_at %}<div class="admin-field__help">{{ token.revoked_at_display }}</div>{% endif %}{% elif token.used_at %}<span class="admin-status-badge"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ _('Käytetty') }}</span>{% else %}<span class="admin-status-badge admin-status-badge--success"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>{{ _('Aktiivinen') }}</span>{% endif %}</td>
+            <td>{% if not token.used_at and not token.revoked %}<button type="button" class="btn btn-outline-danger" data-token-id="{{ token._id }}" data-token-label="{{ token.demo_title or token.demo_id or token.action }}" data-bs-toggle="modal" data-bs-target="#revokeTokenModal"><i class="fa-solid fa-ban" aria-hidden="true"></i>{{ _('Mitätöi') }}</button>{% else %}—{% endif %}</td>
           </tr>
-          <tr class="bg-body-tertiary">
-            <td colspan="7" class="small text-muted">
-              <div>
-                {{ _('Token-hash:') }} <code>{{ token.token_hash }}</code>
-                {% if token.ua_first_display %}
-                  · {{ _('UA:') }} {{ token.ua_first_display }}
-                {% endif %}
-                {% if token.ua_last_display and token.ua_last_display != token.ua_first_display %}
-                  · {{ _('Viimeisin UA:') }} {{ token.ua_last_display }}
-                {% endif %}
-                {% if token.demo_id %}
-                  · <a href="{{ url_for('admin_demo.view_demo_audit_log', demo_id=token.demo_id) }}">{{ _('Audit-loki') }}</a>
-                {% endif %}
-              </div>
-            </td>
-          </tr>
+          {% else %}
+          <tr><td colspan="6"><div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-link-slash" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Linkkejä ei löytynyt') }}</strong><span>{{ _('Kokeile muuttaa suodattimia tai tyhjennä ne.') }}</span></div></td></tr>
           {% endfor %}
-          {% if not tokens %}
-          <tr>
-            <td colspan="7" class="admin-empty-state">{{ _('Ei linkkejä valituilla suodattimilla.') }}</td>
-          </tr>
-          {% endif %}
         </tbody>
       </table>
     </div>
-  </div>
+
+    {{ admin_pagination(current_page, total_pages, per_page=per_page, prev_page=prev_page, next_page=next_page, prev_page_url=prev_page_url, next_page_url=next_page_url, visible_pages=visible_pages, first_page_url=first_page_url, last_page_url=last_page_url, aria_label=_('Kertakäyttölinkkien sivutus')) }}
+  </section>
+</section>
+
+<div class="modal fade admin-modal" id="revokeTokenModal" tabindex="-1" aria-labelledby="revokeTokenModalTitle" aria-describedby="revokeTokenModalDescription" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><div><p class="admin-modal-kicker">{{ _('Kertakäyttölinkit') }}</p><h2 class="modal-title" id="revokeTokenModalTitle">{{ _('Mitätöi linkki') }}</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div>
+    <form method="post" action="{{ url_for('admin_demo.manage_magic_tokens') }}" id="revokeTokenForm">
+      <div class="modal-body"><p id="revokeTokenModalDescription">{{ _('Mitätöinti estää linkin myöhemmän käytön. Toimintoa ei voi perua.') }}</p><strong data-token-confirmation-label></strong></div>
+      <input type="hidden" name="token_id" value=""><input type="hidden" name="revoke_all" value="">
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button><button type="submit" class="btn btn-danger"><i class="fa-solid fa-ban" aria-hidden="true"></i>{{ _('Mitätöi') }}</button></div>
+    </form>
+  </div></div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('revokeTokenModal');
+  const form = document.getElementById('revokeTokenForm');
+  if (!modal || !form) return;
+  const tokenInput = form.elements.token_id;
+  const revokeAllInput = form.elements.revoke_all;
+  const title = document.getElementById('revokeTokenModalTitle');
+  const label = modal.querySelector('[data-token-confirmation-label]');
+  modal.addEventListener('show.bs.modal', (event) => {
+    const trigger = event.relatedTarget;
+    const revokeAll = Boolean(trigger && trigger.hasAttribute('data-token-revoke-all'));
+    tokenInput.value = revokeAll ? '' : (trigger?.dataset.tokenId || '');
+    revokeAllInput.value = revokeAll ? '1' : '';
+    title.textContent = revokeAll ? {{ _('Mitätöi käyttämättömät linkit') | tojson }} : {{ _('Mitätöi linkki') | tojson }};
+    label.textContent = revokeAll ? {{ _('Kaikki käyttämättömät linkit') | tojson }} : (trigger?.dataset.tokenLabel || '');
+  });
+});
+</script>
 {% endblock %}

@@ -17,6 +17,9 @@
 * **All organizers** from the Facebook event are now imported (not just the first), each populated into the form's dynamic organizer fields.
 * **Facebook event descriptions are no longer truncated** — the 50k character safety cap has been removed; full descriptions are preserved (with only script/style sanitization).
 
+### Changed
+* The public demo-list family (list, city, tag pages) now shares a single workspace stylesheet (`css/user-workspace.css`) loaded globally from `base.html`. The sheet uses the admin workspace token palette (admin blue `#0033a0` / `#8bb1ff` as the product primary) and ports the search/filter/suggestions, view toggle, section cards, grid/list views, demo tables, demo cards, badges, loading/empty states, and unified page banners. Per-page inline `<style>` blocks and legacy `v2/list.css` + `v2/demo_list.css` links were removed from these three templates; legacy `list.css` / `demo.css` were also dropped from them. The template previously rendered as `list copy.html` is now the canonical `list.html`.
+
 ### Fixed
 * The demonstration-list page is now served from its canonical file name: the live template was `templates/list copy.html` (a stray copy left by an editor), while the equally-named `list.html` next to it was dead and no longer rendered anywhere. The live template is now `templates/list.html`, the leftover is kept as `templates/list_legacy.html`, and the route (plus its docstring) points to the real file so editors and translators stop editing the wrong template.
 * Public pages now expose a valid document language and correctly structured footer lists, so screen readers announce page language and navigation consistently. API documentation code blocks are keyboard-focusable and its inline links are visibly underlined with sufficient contrast.

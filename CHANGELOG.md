@@ -24,6 +24,7 @@
 * The public demonstration detail invite dialog now renders friend names and avatars with DOM nodes, shows localized inline loading/error/success status, disables the send action while submitting, and reports success through the shared flash-message system instead of a native alert.
 
 ### Fixed
+* The authenticated public chat now uses the shared, non-blocking toast feedback for empty-send validation instead of a native browser alert, and the toast renderer builds messages with `textContent` so user-controlled feedback cannot inject markup.
 * The demonstration-list page is now served from its canonical file name: the live template was `templates/list copy.html` (a stray copy left by an editor), while the equally-named `list.html` next to it was dead and no longer rendered anywhere. The live template is now `templates/list.html`, the leftover is kept as `templates/list_legacy.html`, and the route (plus its docstring) points to the real file so editors and translators stop editing the wrong template.
 * Public pages now expose a valid document language and correctly structured footer lists, so screen readers announce page language and navigation consistently. API documentation code blocks are keyboard-focusable and its inline links are visibly underlined with sufficient contrast.
 * Background-job detail filters now keep an off-page selected run visible while paginating, and the redesigned view's English and Swedish interface copy is included in the compiled translation catalogs.

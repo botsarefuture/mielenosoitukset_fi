@@ -6015,6 +6015,10 @@ msgstr ""
 msgid "Virhe ladattaessa"
 msgstr ""
 
+#: mielenosoitukset_fi/templates/header.html:48
+msgid "Ilmoituksia ei voitu merkitä luetuiksi."
+msgstr "Notifications could not be marked as read."
+
 #: mielenosoitukset_fi/templates/index.html:605
 msgid "Tervetuloa Mielenosoitukset.fi"
 msgstr ""

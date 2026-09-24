@@ -13,6 +13,14 @@ def test_public_shell_has_language_and_semantic_footer_lists(client):
     assert '<div class="auth-buttons">' not in page
 
 
+def test_city_today_page_has_a_document_language(client):
+    response = client.get("/city/rovaniemi/tanaan")
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert re.search(r"<html lang=\"[^\"]+\"", page)
+
+
 def test_api_documentation_code_blocks_are_focusable_and_links_are_distinct(client):
     response = client.get("/api-docs/")
 

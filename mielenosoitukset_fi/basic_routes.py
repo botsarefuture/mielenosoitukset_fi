@@ -2490,13 +2490,13 @@ def init_routes(app):
         Returns
         -------
         flask.Response
-            Rendered HTML page (`list copy.html`), which serves as the frontend
+            Rendered HTML page (`list.html`), which serves as the frontend
             container for dynamic demonstration listings.
         """
         current_locale = (
             (session.get("locale") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
         )
-        return render_template("list copy.html", current_locale=current_locale)
+        return render_template("list.html", current_locale=current_locale)
 
     @app.route("/cities")
     def cities():

@@ -12790,3 +12790,51 @@ msgstr "Inga inskickningsfel hittades"
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
 msgid "Ilmoitusvirheiden sivutus"
 msgstr "Sidindelning för inskickningsfel"
+
+#: mielenosoitukset_fi/templates/detail.html:1995
+msgid "Kutsu kavereita osallistumaan"
+msgstr "Bjud in vänner att delta"
+
+#: mielenosoitukset_fi/templates/detail.html:2001
+msgid "Valitse kaverit, jotka haluat kutsua tähän mielenosoitukseen:"
+msgstr "Välj vänner som du vill bjuda in till den här demonstrationen:"
+
+#: mielenosoitukset_fi/templates/detail.html:2007
+msgid "Kirjaudu sisään käyttääksesi kaverikutsuja"
+msgstr "Logga in för att använda vännbjudningar"
+
+#: mielenosoitukset_fi/templates/detail.html:2018
+msgid "Lähetä kutsut"
+msgstr "Skicka inbjudningar"
+
+#: mielenosoitukset_fi/templates/detail.html:2760
+msgid "Kaverikutsuja ei ole käytettävissä tässä selaimessa."
+msgstr "Vännbjudningar är inte tillgängliga i den här webbläsaren."
+
+#: mielenosoitukset_fi/templates/detail.html:2774
+msgid "Ladataan kavereita..."
+msgstr "Laddar vänner..."
+
+#: mielenosoitukset_fi/templates/detail.html:2784
+msgid "Sinulla ei ole vielä kutsuttavia kavereita."
+msgstr "Du har inga vänner att bjuda in än."
+
+#: mielenosoitukset_fi/templates/detail.html:2818
+msgid "Kaverien lataaminen epäonnistui. Yritä uudelleen."
+msgstr "Det gick inte att ladda vänner. Försök igen."
+
+#: mielenosoitukset_fi/templates/detail.html:2825
+msgid "Valitse ainakin yksi kaveri."
+msgstr "Välj minst en vän."
+
+#: mielenosoitukset_fi/templates/detail.html:2830
+msgid "Lähetetään kutsuja..."
+msgstr "Skickar inbjudningar..."
+
+#: mielenosoitukset_fi/templates/detail.html:2842
+msgid "Kutsut lähetetty!"
+msgstr "Inbjudningar skickade!"
+
+#: mielenosoitukset_fi/templates/detail.html:2845
+msgid "Kutsujen lähettäminen epäonnistui. Yritä uudelleen."
+msgstr "Det gick inte att skicka inbjudningarna. Försök igen."

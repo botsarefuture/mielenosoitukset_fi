@@ -12799,3 +12799,51 @@ msgstr "No submission errors found"
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
 msgid "Ilmoitusvirheiden sivutus"
 msgstr "Submission error pagination"
+
+#: mielenosoitukset_fi/templates/detail.html:1995
+msgid "Kutsu kavereita osallistumaan"
+msgstr "Invite friends to participate"
+
+#: mielenosoitukset_fi/templates/detail.html:2001
+msgid "Valitse kaverit, jotka haluat kutsua tähän mielenosoitukseen:"
+msgstr "Select the friends you want to invite to this demonstration:"
+
+#: mielenosoitukset_fi/templates/detail.html:2007
+msgid "Kirjaudu sisään käyttääksesi kaverikutsuja"
+msgstr "Log in to use friend invitations"
+
+#: mielenosoitukset_fi/templates/detail.html:2018
+msgid "Lähetä kutsut"
+msgstr "Send invitations"
+
+#: mielenosoitukset_fi/templates/detail.html:2760
+msgid "Kaverikutsuja ei ole käytettävissä tässä selaimessa."
+msgstr "Friend invitations are not available in this browser."
+
+#: mielenosoitukset_fi/templates/detail.html:2774
+msgid "Ladataan kavereita..."
+msgstr "Loading friends..."
+
+#: mielenosoitukset_fi/templates/detail.html:2784
+msgid "Sinulla ei ole vielä kutsuttavia kavereita."
+msgstr "You don't have any friends to invite yet."
+
+#: mielenosoitukset_fi/templates/detail.html:2818
+msgid "Kaverien lataaminen epäonnistui. Yritä uudelleen."
+msgstr "Loading friends failed. Please try again."
+
+#: mielenosoitukset_fi/templates/detail.html:2825
+msgid "Valitse ainakin yksi kaveri."
+msgstr "Select at least one friend."
+
+#: mielenosoitukset_fi/templates/detail.html:2830
+msgid "Lähetetään kutsuja..."
+msgstr "Sending invitations..."
+
+#: mielenosoitukset_fi/templates/detail.html:2842
+msgid "Kutsut lähetetty!"
+msgstr "Invitations sent!"
+
+#: mielenosoitukset_fi/templates/detail.html:2845
+msgid "Kutsujen lähettäminen epäonnistui. Yritä uudelleen."
+msgstr "Sending invitations failed. Please try again."

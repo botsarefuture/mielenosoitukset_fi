@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% from '_macros/_hero.html' import hero_section %}
+{% from '_macros/_pagination.html' import load_more_button %}
 
 {% block title %} #{{ tag_name }} {{ _('Mielenosoitukset') }} {% endblock %}
 
@@ -12,57 +14,7 @@
 {% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}">
-
-<!-- New v2 styling like list.html -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/demo_list.css') }}">
-
-<style>
-  .tag-cover-picture img {
-    width: 100%;
-    max-height: 320px;
-    object-fit: cover;
-    border-radius: 1.2em;
-  }
-
-  .tag-banner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(90deg, var(--color-primary) 0%, #4ea1ff 100%);
-    color: #fff;
-    border-radius: 1.2em;
-    padding: 1.5em 1em 1.2em 1em;
-    margin: 2em 0;
-    box-shadow: 0 4px 24px rgba(0, 86, 179, 0.10), 0 2px 8px rgba(0, 0, 0, 0.04);
-  }
-
-  .tag-banner .tag-label {
-    font-size: 1.1em;
-    font-weight: 700;
-    padding: 0.3em 1.2em;
-    border-radius: 2em;
-    background: rgba(255, 255, 255, 0.15);
-    margin-bottom: 0.5em;
-  }
-
-  .tag-banner .tag-name {
-    font-size: 2em;
-    font-weight: 900;
-    margin-bottom: 0.2em;
-  }
-
-  .tag-banner .tag-desc {
-    font-size: 1.1em;
-    max-width: 600px;
-    text-align: center;
-    opacity: 0.9;
-  }
-</style>
-
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
 {% endblock %}
 
 {% block content %}
@@ -77,24 +29,15 @@
 
 <section class="main-content">
 
-  {% if tag and tag.cover_picture %}
-  <div class="tag-cover-picture">
-    <img src="{{ tag.cover_picture }}" alt="Tag Cover Photo">
-  </div>
-  {% endif %}
-
-  <div class="tag-banner">
-    <div class="tag-label">
-      <i class="fa-solid fa-hashtag"></i> {{ _('Tagi') }}
-    </div>
-    <div class="tag-name">#{{ tag_name }}</div>
-    <div class="tag-desc">
-      {{ _('Näet tässä vain mielenosoitukset, jotka on merkitty tagilla') }}
-      <strong>#{{ tag_name }}</strong>.<br>
-      {{ _('Voit hakea, suodattaa ja selata vain tämän aiheen tapahtumia. Jos haluat nähdä kaikki mielenosoitukset,
-      palaa yleisnäkymään.') }}
-    </div>
-  </div>
+  {{ hero_section(
+    kind='page',
+    eyebrow=_('Tagi'),
+    title='#' ~ tag_name,
+    text=_('Näet tässä vain mielenosoitukset, jotka on merkitty tagilla') ~ ' #' ~ tag_name ~ '. ' ~ _('Voit hakea, suodattaa ja selata vain tämän aiheen tapahtumia. Jos haluat nähdä kaikki mielenosoitukset, palaa yleisnäkymään.'),
+    icon='fa-solid fa-hashtag',
+    cover_img=tag.cover_picture if tag and tag.cover_picture else none,
+    cover_alt=_('Tagin kansikuva')
+  ) }}
 
   <!-- Search Form (same as list.html) -->
   <form method="GET" action="#" class="search-form" id="search-form">
@@ -131,9 +74,7 @@
 
     <div id="demos-grid" class="demos-grid"></div>
 
-    <button id="load-more-btn" class="button button-secondary" style="display:none;">
-      {{ _('Näytä lisää') }}
-    </button>
+    {{ load_more_button() }}
 
     <!-- Empty State -->
     <div id="no-results" class="no-results-card" style="display:none;">
@@ -154,6 +95,7 @@
 
 {% endblock %}
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/user-pagination.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
@@ -235,7 +177,11 @@
         if (window.TAG_FILTER) extraParams.tag = window.TAG_FILTER;
 
         // 🔹 Reload demos
-        loadDemosWrapper(1, false);
+        if (window.userPaginationController) {
+          window.userPaginationController.reload({ append: false });
+        } else {
+          loadDemosWrapper(1, false);
+        }
       });
 
     }
@@ -251,30 +197,25 @@
           <div class="spinner"></div>
           <p>Ladataan mielenosoituksia...</p>
         </div>`;
-      } else {
-        loadMoreBtn.classList.add("loading");
-        loadMoreBtn.disabled = true;
       }
 
       const result = await loadDemos(page, append, extraParams);
-
-      console.log(result);
-
-      loadMoreBtn.classList.remove("loading");
-      loadMoreBtn.disabled = false;
-
-
-      // No more pages?
-      if (page >= result.total_pages) {
-        loadMoreBtn.style.display = "none";
-      } else {
-        loadMoreBtn.style.display = "block";
+      if (result) {
+        window.userPaginationController?.setState(result.page, result.total_pages);
       }
+      return result;
     }
 
     /* -------------------------------------------------------------
      * Initial Load
      * -----------------------------------------------------------*/
+    window.userPaginationController = UserPagination.createLoadMoreController({
+      button: loadMoreBtn,
+      loadPage: (page, options = {}) => loadDemosWrapper(page, options.append ?? true),
+      initialLabel: '{{ _('Näytä lisää') }}',
+      loadingLabel: '{{ _('Ladataan...') }}',
+    });
+
     loadDemosWrapper();
 
     /* -------------------------------------------------------------
@@ -298,7 +239,11 @@
       if (dateStart) extraParams.date_start = dateStart;
       if (dateEnd) extraParams.date_end = dateEnd;
 
-      loadDemosWrapper(1, false);
+      if (window.userPaginationController) {
+        window.userPaginationController.reload({ append: false });
+      } else {
+        loadDemosWrapper(1, false);
+      }
     });
 
     /* ==================================================================
@@ -339,7 +284,11 @@
         pill.remove();
 
         extraParams.city = updated.join(",");
-        loadDemosWrapper(1, false);
+        if (window.userPaginationController) {
+          window.userPaginationController.reload({ append: false });
+        } else {
+          loadDemosWrapper(1, false);
+        }
       });
     }
 
@@ -392,7 +341,11 @@
             citySuggestions.empty().removeClass("show");
             cityInput.val("");
 
-            loadDemosWrapper(1, false);
+            if (window.userPaginationController) {
+          window.userPaginationController.reload({ append: false });
+        } else {
+          loadDemosWrapper(1, false);
+        }
           });
 
           citySuggestions.append(markup);

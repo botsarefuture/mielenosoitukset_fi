@@ -1,0 +1,10 @@
+{# Shared controls for user-facing demonstration listings. #}
+{% macro load_more_button(button_id='load-more-btn', label='') %}
+  <button id="{{ button_id }}" class="button button-secondary load-more" hidden>
+    {{ label or _('Näytä lisää') }}
+  </button>
+{% endmacro %}
+
+{% macro listing_end_message(message_id='end-of-content-message') %}
+  <div id="{{ message_id }}" class="end-of-content-message" hidden></div>
+{% endmacro %}

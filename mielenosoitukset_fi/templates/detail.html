@@ -1992,31 +1992,32 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Kutsu kavereita osallistumaan</h5>
-          <button type="button" class="btn-close" id="close-dialog-btn" aria-label="Close"></button>
+          <h5 class="modal-title">{{ _('Kutsu kavereita osallistumaan') }}</h5>
+          <button type="button" class="btn-close" id="close-dialog-btn" aria-label="{{ _('Sulje') }}"></button>
         </div>
 
         <div class="modal-body">
           {% if current_user.is_authenticated %}
-          <p>Valitse kaverit, jotka haluat kutsua tähän mielenosoitukseen:</p>
+          <p>{{ _('Valitse kaverit, jotka haluat kutsua tähän mielenosoitukseen:') }}</p>
           <div id="_friends-list" class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;"></div>
+          <p id="invite-friends-status" class="mt-3 mb-0" role="status" aria-live="polite"></p>
           {% else %}
           <div class="alert alert-warning d-flex align-items-center gap-2">
             <i class="fa-solid fa-user-lock"></i>
-            <span>Kirjaudu sisään käyttääksesi kaverikutsuja</span>
+            <span>{{ _('Kirjaudu sisään käyttääksesi kaverikutsuja') }}</span>
           </div>
           <a href="{{ url_for('users.auth.login', next=request.path) }}?action=inviteFriends" class="btn btn-primary">
-            <i class="fa-solid fa-right-to-bracket"></i> Kirjaudu sisään
+            <i class="fa-solid fa-right-to-bracket"></i> {{ _('Kirjaudu sisään') }}
           </a>
           {% endif %}
         </div>
 
         <div class="modal-footer">
           {% if current_user.is_authenticated %}
-          <button type="button" class="btn btn-secondary" id="cancel-invite-btn">Peruuta</button>
-          <button type="button" class="btn btn-primary" id="send-invite-btn">Lähetä kutsut</button>
+          <button type="button" class="btn btn-secondary" id="cancel-invite-btn">{{ _('Peruuta') }}</button>
+          <button type="button" class="btn btn-primary" id="send-invite-btn">{{ _('Lähetä kutsut') }}</button>
           {% else %}
-          <button type="button" class="btn btn-secondary" id="close-dialog-btn-unauth">Sulje</button>
+          <button type="button" class="btn btn-secondary" id="close-dialog-btn-unauth">{{ _('Sulje') }}</button>
           {% endif %}
         </div>
       </div>
@@ -2747,15 +2748,16 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
   function openInviteDialog(demoId) {
     const dialog = document.getElementById("invite-friends-dialog");
-
-
     const friendsList = document.getElementById("_friends-list");
+    const status = document.getElementById("invite-friends-status");
+    const sendInviteBtn = document.getElementById("send-invite-btn");
 
-    // Open dialog
+    if (!dialog || !friendsList || !status || !sendInviteBtn) return;
+
     if (typeof dialog.showModal === "function") {
       dialog.showModal();
     } else {
-      console.log("Something went wrong :/");
+      status.textContent = "{{ _('Kaverikutsuja ei ole käytettävissä tässä selaimessa.') }}";
       return;
     }
 
@@ -2769,41 +2771,81 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     const closeUnauthBtn = document.getElementById("close-dialog-btn-unauth");
     if (closeUnauthBtn) closeUnauthBtn.onclick = () => dialog.close();
 
-    // Fetch friends
+    status.textContent = "{{ _('Ladataan kavereita...') }}";
     fetch("/api/user/friends/")
-      .then(res => res.json())
-      .then(friends => {
-        friendsList.innerHTML = "";
-        friends.friends.forEach(f => {
-          const div = document.createElement("div");
-          div.className = "form-check d-flex align-items-center gap-2";
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to load friends");
+        return res.json();
+      })
+      .then(data => {
+        friendsList.replaceChildren();
+        const friends = Array.isArray(data.friends) ? data.friends : [];
+        if (!friends.length) {
+          status.textContent = "{{ _('Sinulla ei ole vielä kutsuttavia kavereita.') }}";
+          return;
+        }
 
-          div.innerHTML = `
-          <input class="form-check-input" type="checkbox" id="friend-${f._id}" value="${f._id}">
-          <label class="form-check-label d-flex align-items-center gap-2" for="friend-${f._id}">
-            <img src="${f.profile_picture}" alt="${f.displayname}" class="rounded-circle" width="30" height="30">
-            ${f.displayname}
-          </label>
-        `;
-          friendsList.appendChild(div);
+        friends.forEach(friend => {
+          const row = document.createElement("div");
+          row.className = "form-check d-flex align-items-center gap-2";
+
+          const checkbox = document.createElement("input");
+          checkbox.className = "form-check-input";
+          checkbox.type = "checkbox";
+          checkbox.id = `friend-${friend._id}`;
+          checkbox.value = friend._id;
+
+          const label = document.createElement("label");
+          label.className = "form-check-label d-flex align-items-center gap-2";
+          label.htmlFor = checkbox.id;
+
+          const avatar = document.createElement("img");
+          avatar.src = friend.profile_picture || "/static/default-avatar.png";
+          avatar.alt = friend.displayname || "";
+          avatar.className = "rounded-circle";
+          avatar.width = 30;
+          avatar.height = 30;
+          avatar.loading = "lazy";
+
+          label.appendChild(avatar);
+          label.appendChild(document.createTextNode(friend.displayname || ""));
+          row.append(checkbox, label);
+          friendsList.appendChild(row);
         });
+        status.textContent = "";
+      })
+      .catch(() => {
+        status.textContent = "{{ _('Kaverien lataaminen epäonnistui. Yritä uudelleen.') }}";
       });
 
-    // Send invites
-    document.getElementById("send-invite-btn").onclick = () => {
+    sendInviteBtn.onclick = async () => {
       const selected = Array.from(friendsList.querySelectorAll("input[type=checkbox]:checked"))
         .map(input => input.value);
+      if (!selected.length) {
+        status.textContent = "{{ _('Valitse ainakin yksi kaveri.') }}";
+        return;
+      }
 
-      fetch(`/api/demonstrations/${demoId}/invite`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ friend_ids: selected })
-      })
-        .then(res => res.json())
-        .then(() => {
-          alert("Kutsut lähetetty! 💌");
-          dialog.close();
+      sendInviteBtn.disabled = true;
+      status.textContent = "{{ _('Lähetetään kutsuja...') }}";
+      try {
+        const response = await fetch(`/api/demonstrations/${demoId}/invite`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ friend_ids: selected })
         });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload || payload.error) throw new Error("Failed to send invites");
+        status.textContent = "";
+        dialog.close();
+        if (typeof displayFlashMessage === "function") {
+          displayFlashMessage("success", "{{ _('Kutsut lähetetty!') }}");
+        }
+      } catch (error) {
+        status.textContent = "{{ _('Kutsujen lähettäminen epäonnistui. Yritä uudelleen.') }}";
+      } finally {
+        sendInviteBtn.disabled = false;
+      }
     };
   }
 

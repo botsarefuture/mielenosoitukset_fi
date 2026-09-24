@@ -30,6 +30,25 @@ def _short_hash(value):
     return hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
 
 
+def _style_attribute_values(source):
+    """Return style values in direct and script-generated HTML tags."""
+    tag_pattern = re.compile(
+        r'''<[A-Za-z][^"'<>]*(?:(?:"[^"]*"|'[^']*')[^"'<>]*)*>''',
+        re.S,
+    )
+    style_pattern = re.compile(
+        r'''(?<![-:\w])style\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))''',
+        re.I | re.S,
+    )
+    values = []
+    for tag in tag_pattern.findall(source):
+        values.extend(
+            next(value for value in match.groups() if value is not None)
+            for match in style_pattern.finditer(tag)
+        )
+    return values
+
+
 def _inline_style_snapshot():
     blocks = {}
     attributes = {}
@@ -39,12 +58,7 @@ def _inline_style_snapshot():
         style_blocks = re.findall(
             r"<style(?:\s[^>]*)?>(.*?)</style>", source, re.I | re.S
         )
-        style_attributes = [
-            match.group(2)
-            for match in re.finditer(
-                r'''style\s*=\s*(["'])(.*?)\1''', source, re.I | re.S
-            )
-        ]
+        style_attributes = _style_attribute_values(source)
 
         if style_blocks:
             blocks[relative] = sorted(_short_hash(value) for value in style_blocks)
@@ -90,3 +104,21 @@ def test_public_inline_style_baseline_scope_is_documented():
 
     assert baseline["excluded_top_level"] == sorted(EXCLUDED_TOP_LEVEL)
     assert baseline["policy"] == "exact-reviewed-content-hashes"
+
+
+def test_style_attribute_scanner_covers_all_valid_static_forms():
+    source = """
+        <div style="display: none"></div>
+        <div style='color: red'></div>
+        <div style=display:none></div>
+        <div data-style=ignored></div>
+        <script>const style = document.createElement("style");</script>
+        <script>const row = `<div style=cursor:pointer></div>`;</script>
+    """
+
+    assert _style_attribute_values(source) == [
+        "display: none",
+        "color: red",
+        "display:none",
+        "cursor:pointer",
+    ]

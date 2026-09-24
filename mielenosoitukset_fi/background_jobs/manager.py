@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
+from bson import ObjectId
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 
@@ -257,6 +258,15 @@ class BackgroundJobManager:
         for doc in cursor:
             runs.append(self._serialize_run(doc))
         return runs
+
+    def get_run(self, job_key: str, run_id: str) -> Optional[Dict[str, Any]]:
+        """Return one run scoped to its job, or ``None`` for an invalid id."""
+        if not ObjectId.is_valid(run_id):
+            return None
+        doc = self._db.background_job_runs.find_one(
+            {"_id": ObjectId(run_id), "job_key": job_key}
+        )
+        return self._serialize_run(doc) if doc else None
 
     def count_runs(self, job_key: Optional[str] = None) -> int:
         query: Dict[str, Any] = {}

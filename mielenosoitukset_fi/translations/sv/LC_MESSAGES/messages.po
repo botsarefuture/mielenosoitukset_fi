@@ -286,7 +286,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/tag_list.html:491
 #: mielenosoitukset_fi/templates/tag_list.html:544
 msgid "Aika"
-msgstr ""
+msgstr "Tid"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:195
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:118
@@ -558,7 +558,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:637
 msgid "Lisätiedot"
-msgstr ""
+msgstr "Detaljer"
 
 #: mielenosoitukset_fi/templates/detail.html:644
 msgid "Facebook-tapahtuma"
@@ -654,7 +654,7 @@ msgstr "Framsidan"
 #: mielenosoitukset_fi/templates/header.html:457
 #: mielenosoitukset_fi/templates/tag_list.html:3
 msgid "Mielenosoitukset"
-msgstr ""
+msgstr "Demonstrationer"
 
 #: mielenosoitukset_fi/templates/header.html:459
 #: mielenosoitukset_fi/templates/index.html:77
@@ -1055,7 +1055,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:8
 #: mielenosoitukset_fi/templates/submit.html:191
 msgid "Nimi"
-msgstr ""
+msgstr "Namn"
 
 #: mielenosoitukset_fi/templates/submit.html:192
 msgid "Järjestäjän nimi"
@@ -1376,7 +1376,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin/demonstrations/edit_history.html:24
 msgid "Tuntematon"
-msgstr ""
+msgstr "Okänd"
 
 #: mielenosoitukset_fi/templates/admin/demonstrations/edit_history.html:29
 msgid "Näytä muutokset tästä versiosta"
@@ -1456,7 +1456,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/organizations/view.html:351
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:164
 msgid "Rooli"
-msgstr ""
+msgstr "Roll"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:197
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:25
@@ -2201,7 +2201,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:615
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:153
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:532
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:620
@@ -4318,7 +4318,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:61
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:113
 msgid "Ei viestiä"
-msgstr ""
+msgstr "Inget meddelande"
 
 #: mielenosoitukset_fi/admin/admin_case_bp.py:190
 msgid "Tukipyyntö: {subject}"
@@ -4567,7 +4567,7 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:417
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:55
 msgid "tuntematon"
-msgstr ""
+msgstr "okänd"
 
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:452
 msgid "Seuraavat tapaukset suljettiin ja linkitettiin tähän: %(cases)s."
@@ -5354,7 +5354,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_base.html:300
 #: mielenosoitukset_fi/templates/header.html:932
 msgid "Hallintapaneeli"
-msgstr ""
+msgstr "Administrationspanel"
 
 #: mielenosoitukset_fi/templates/admin_base.html:307
 msgid "Kaupunkiadminin näkymä"
@@ -5392,7 +5392,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:10
 #: mielenosoitukset_fi/templates/admin_base.html:364
 msgid "Ilmoitusvirheet"
-msgstr ""
+msgstr "Inskickningsfel"
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/all.html:10
 #: mielenosoitukset_fi/templates/admin_V2/cases/blocklist.html:10
@@ -5429,7 +5429,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/status.html:10
 #: mielenosoitukset_fi/templates/admin_base.html:398
 msgid "Järjestelmä"
-msgstr ""
+msgstr "System"
 
 #: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:4
 #: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:26
@@ -5452,7 +5452,7 @@ msgstr "Tjänstens analys"
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:52
 #: mielenosoitukset_fi/templates/admin_base.html:417
 msgid "Taustatyöt"
-msgstr ""
+msgstr "Bakgrundsjobb"
 
 #: mielenosoitukset_fi/templates/admin_V2/developer/requests.html:7
 #: mielenosoitukset_fi/templates/admin_V2/developer/requests.html:10
@@ -6308,7 +6308,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:109
 #: mielenosoitukset_fi/templates/submit.html:1058
 msgid "Virhekoodi"
-msgstr ""
+msgstr "Felkod"
 
 #: mielenosoitukset_fi/templates/submit.html:1059
 msgid "Löytyi mahdollinen päällekkäinen ilmoitus"
@@ -6869,7 +6869,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:114
 #: mielenosoitukset_fi/templates/users/auth/settings.html:606
 msgid "IP-osoite"
-msgstr ""
+msgstr "IP-adress"
 
 #: mielenosoitukset_fi/templates/admin/suggestion_view.html:426
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:278
@@ -7221,135 +7221,135 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:16
 #: mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html:38
 msgid "Ei asetettu"
-msgstr ""
+msgstr "Inte angivet"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:24
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:73
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:39
 msgid "Käynnissä"
-msgstr ""
+msgstr "Körs"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:24
 msgid "Pois käytöstä"
-msgstr ""
+msgstr "Inaktiverat"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:27
 msgid "Manuaaliajo sallittu"
-msgstr ""
+msgstr "Manuell körning tillåten"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:29
 msgid "Manuaaliajo estetty"
-msgstr ""
+msgstr "Manuell körning inaktiverad"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:37
 msgid "Ajoituksen tiedot"
-msgstr ""
+msgstr "Schemainformation"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:39
 msgid "Tunniste"
-msgstr ""
+msgstr "Identifierare"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:41
 msgid "Ajoitus"
-msgstr ""
+msgstr "Schema"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:43
 msgid "Seuraava ajo"
-msgstr ""
+msgstr "Nästa körning"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:48
 msgid "Ei ajastusta"
-msgstr ""
+msgstr "Inte schemalagt"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:51
 msgid "Viimeisin ajo"
-msgstr ""
+msgstr "Senaste körning"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:55
 msgid "tila"
-msgstr ""
+msgstr "status"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:57
 msgid "Ei ajettu vielä"
-msgstr ""
+msgstr "Inte kört ännu"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:60
 msgid "Viimeisin viesti"
-msgstr ""
+msgstr "Senaste meddelande"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:68
 msgid "Nopeat toiminnot"
-msgstr ""
+msgstr "Snabbåtgärder"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:71
 msgid "Aja työ nyt"
-msgstr ""
+msgstr "Kör jobbet nu"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:83
 msgid "Lokitapahtumat"
-msgstr ""
+msgstr "Loggposter"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:84
 msgid "kirjausta"
-msgstr ""
+msgstr "poster"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:88
 msgid "Rivejä / sivu"
-msgstr ""
+msgstr "Rader per sida"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:92
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:37
 #: mielenosoitukset_fi/templates/admin_V2/status.html:14
 msgid "Päivitä"
-msgstr ""
+msgstr "Uppdatera"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:105
 msgid "Kesto"
-msgstr ""
+msgstr "Varaktighet"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:105
 msgid "Laukaisi"
-msgstr ""
+msgstr "Startades av"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:113
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:67
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:110
 msgid "Viesti"
-msgstr ""
+msgstr "Meddelande"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:117
 msgid "Näytä metadata"
-msgstr ""
+msgstr "Visa metadata"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:123
 msgid "Näytä virheen stack trace"
-msgstr ""
+msgstr "Visa felets stackspårning"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:131
 msgid "Ei kirjauksia valitulla suodatuksella."
-msgstr ""
+msgstr "Inga poster matchar de valda filtren."
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:136
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:213
 #: mielenosoitukset_fi/templates/admin_V2/cities/index.html:145
 msgid "Näytetään"
-msgstr ""
+msgstr "Visar"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:158
 msgid "Demomuutokset tämän työn toimesta"
-msgstr ""
+msgstr "Demonstrationsändringar gjorda av detta jobb"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:159
 msgid "viimeisintä merkintää"
-msgstr ""
+msgstr "senaste poster"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:165
 msgid "Rajaa ajokerralla"
-msgstr ""
+msgstr "Filtrera enligt körning"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:167
 msgid "Kaikki ajokerrat"
-msgstr ""
+msgstr "Alla körningar"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:176
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/audit_timeline.html:23
@@ -7364,32 +7364,32 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/dashboard.html:50
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:56
 msgid "Suodata"
-msgstr ""
+msgstr "Filtrera"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:189
 msgid "Demo"
-msgstr ""
+msgstr "Demonstration"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:196
 msgid "Muuttuneet kentät"
-msgstr ""
+msgstr "Ändrade fält"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:201
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:104
 msgid "Ei tietoa"
-msgstr ""
+msgstr "Ingen information"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:207
 msgid "Avaa muokkaushistoria"
-msgstr ""
+msgstr "Öppna redigeringshistoriken"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:212
 msgid "Näytä lisätiedot"
-msgstr ""
+msgstr "Visa detaljer"
 
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:219
 msgid "Ei demomuutoksia valitulla hakuehdolla."
-msgstr ""
+msgstr "Inga demonstrationsändringar matchar det valda filtret."
 
 #: mielenosoitukset_fi/templates/admin_V2/background_jobs.html:32
 msgid "Seuraa ajoja, päivitä aikatauluja ja käynnistä tehtäviä käsin."
@@ -7829,13 +7829,13 @@ msgstr "Tidsperiod"
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:51
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:63
 msgid "Alkaen"
-msgstr ""
+msgstr "Från"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:48
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:52
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:64
 msgid "Päättyen"
-msgstr ""
+msgstr "Till"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:200
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_dashboard.html:75
@@ -7847,7 +7847,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/dashboard.html:55
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:60
 msgid "Aktiiviset suodattimet"
-msgstr ""
+msgstr "Aktiva filter"
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:60
 msgid "Tekijä rajattu"
@@ -7869,7 +7869,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/dashboard.html:58
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:65
 msgid "Tyhjennä suodattimet"
-msgstr ""
+msgstr "Rensa filter"
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:72
 msgid "Hallintatapahtumat"
@@ -7881,7 +7881,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:74
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:60
 msgid "%(count)s osumaa"
-msgstr ""
+msgstr "%(count)s träffar"
 
 #: mielenosoitukset_fi/templates/admin_V2/governance/audit.html:53
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:74
@@ -7979,7 +7979,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/dashboard.html:116
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:107
 msgid "Kokeile muuttaa suodattimia tai tyhjennä ne."
-msgstr ""
+msgstr "Försök ändra eller rensa filtren."
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:147
 msgid "Hallintalokin sivutus"
@@ -8577,7 +8577,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:265
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/magic_tokens.html:75
 msgid "IP"
-msgstr ""
+msgstr "IP"
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:266
 msgid "Aikaleima"
@@ -9181,7 +9181,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:58
 msgid "Tekniset tiedot"
-msgstr ""
+msgstr "Tekniska detaljer"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:60
 msgid "Mongo ID"
@@ -9519,7 +9519,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:169
 msgid "Lisäsuodattimet"
-msgstr ""
+msgstr "Avancerade filter"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:172
 msgid "Menneet mielenosoitukset"
@@ -9946,7 +9946,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:24
 msgid "Kaikki koodit"
-msgstr ""
+msgstr "Alla koder"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:31
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:111
@@ -9959,17 +9959,17 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:41
 msgid "Esim. sähköposti"
-msgstr ""
+msgstr "Till exempel e-post"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:56
 msgid "Käyttäjän ID"
-msgstr ""
+msgstr "Användar-ID"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:60
 #: mielenosoitukset_fi/templates/admin_V2/super_audit/logs.html:30
 #: mielenosoitukset_fi/templates/admin_V2/super_audit/logs.html:47
 msgid "Polku"
-msgstr ""
+msgstr "Sökväg"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html:80
 msgid "Tulokset"
@@ -12722,3 +12722,71 @@ msgstr "Vanligaste sökningar"
 #: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:205
 msgid "Mielenosoituslistalla käytetyt hakusanat."
 msgstr "Sökord som använts på demonstrationslistan."
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "HTTP-status"
+msgstr "HTTP-status"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Tutki mielenosoitusten ilmoittamisessa tapahtuneita virheitä ja rajaa tekniset tiedot tukiselvitystä varten."
+msgstr "Undersök fel vid inskickning av demonstrationer och filtrera tekniska detaljer för supportutredning."
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Ilmoitusvirheiden suodattimet"
+msgstr "Filter för inskickningsfel"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Kaikki statukset"
+msgstr "Alla statusar"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Haku viestistä"
+msgstr "Sök i meddelanden"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Pyynnön polku"
+msgstr "Begärans sökväg"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Poista suodatin"
+msgstr "Ta bort filter"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Yleisimmät virhekoodit nykyisessä haussa"
+msgstr "Vanligaste felkoderna i den aktuella sökningen"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "%(count)s tapahtumaa"
+msgstr "%(count)s händelser"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "yhteensä %(count)s kirjattua virhettä"
+msgstr "totalt %(count)s registrerade fel"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Näytetään %(start)s–%(end)s / %(count)s virheestä"
+msgstr "Visar %(start)s–%(end)s / %(count)s fel"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "IP / käyttäjä"
+msgstr "IP / användare"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Näytä tiedot"
+msgstr "Visa detaljer"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Lomakkeen tilannekuva"
+msgstr "Ögonblicksbild av formuläret"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "HTTP-pyyntö"
+msgstr "HTTP-begäran"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Ilmoitusvirheitä ei löytynyt"
+msgstr "Inga inskickningsfel hittades"
+
+#: mielenosoitukset_fi/templates/admin_V2/demonstrations/submission_errors.html
+msgid "Ilmoitusvirheiden sivutus"
+msgstr "Sidindelning för inskickningsfel"

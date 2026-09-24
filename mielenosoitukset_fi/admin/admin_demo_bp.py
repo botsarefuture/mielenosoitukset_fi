@@ -1,6 +1,5 @@
 import sys
 import re
-import bson
 import hmac
 import secrets
 from flask import abort, current_app
@@ -30,7 +29,7 @@ from pymongo import DESCENDING, ReturnDocument
 from flask_babel import _, force_locale, gettext as babel_gettext
 from urllib.parse import quote_plus
 
-from mielenosoitukset_fi.utils.classes import Demonstration, Organizer, MemberShip, Case
+from mielenosoitukset_fi.utils.classes import Demonstration, MemberShip, Case
 from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo, queue_cancellation_links_for_demo
 from mielenosoitukset_fi.utils.demo_slugs import (
     demo_slug_is_available,
@@ -38,6 +37,10 @@ from mielenosoitukset_fi.utils.demo_slugs import (
 )
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
+from mielenosoitukset_fi.utils.admin.organizers import (
+    collect_admin_organizers,
+    linkable_admin_organization_ids,
+)
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.demo_translation_cache import (
     demo_is_translation_candidate,
@@ -709,8 +712,21 @@ def demo_edit_history(demo_id):
         return redirect(url_for("admin_demo.demo_control"))
     _abort_if_demo_forbidden(demo_data["_id"], "EDIT_DEMO")
 
+    history_query = {"demo_id": str(demo_data["_id"])}
+    page, per_page = parse_admin_pagination(request.args)
+    total_count = mongo.demo_edit_history.count_documents(history_query)
+    pagination = build_admin_pagination(
+        "admin_demo.demo_edit_history",
+        total_count=total_count,
+        page=page,
+        per_page=per_page,
+        query_args={"demo_id": str(demo_data["_id"])},
+    )
     history = list(
-        mongo.demo_edit_history.find({"demo_id": str(demo_data["_id"])}).sort("edited_at", -1)
+        mongo.demo_edit_history.find(history_query)
+        .sort([("edited_at", -1), ("_id", -1)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
     )
     demo = Demonstration.from_dict(demo_data)
     demo_name = demo.title
@@ -719,7 +735,9 @@ def demo_edit_history(demo_id):
         history=history,
         demo_id=str(demo_data["_id"]),
         demo_name=demo_name,
-        current_demo_data=demo_data
+        current_demo_data=demo_data,
+        total_count=total_count,
+        **pagination,
     )
 
 
@@ -731,8 +749,112 @@ def suggestions_list():
     """
     List incoming demo suggestions for admin review.
     """
-    suggestions = list(mongo.demo_suggestions.find({}).sort('created_at', -1).limit(200))
-    return render_template('admin/suggestions_list.html', suggestions=suggestions)
+    status_filter = (request.args.get("status") or "all").strip().lower()
+    if status_filter not in {"all", "new", "pending", "applied", "rejected"}:
+        status_filter = "all"
+    page, per_page = parse_admin_pagination(request.args)
+
+    # Suggestions inherit the demonstration's EDIT_DEMO scope. Resolve that
+    # scope at the query level (mirroring demo_control's permission filters) so
+    # city/organization administrators never receive global rows or counts.
+    # Global admins and holders of a global EDIT_DEMO grant skip the restriction
+    # exactly like the per-suggestion access check they replace.
+    demo_id_filter = None
+    if not _user_has_global_demo_permission("EDIT_DEMO"):
+        permission_scope = current_user._perm_in("EDIT_DEMO")
+        organization_ids = [
+            ObjectId(scope)
+            for scope in permission_scope
+            if str(scope) != "global" and ObjectId.is_valid(str(scope))
+        ]
+        city_keys = (
+            current_user.scoped_city_keys_for("EDIT_DEMO")
+            if hasattr(current_user, "scoped_city_keys_for")
+            else []
+        )
+        city_names = [
+            city for city in CITY_LIST if normalize_city_key(city) in city_keys
+        ]
+        permission_filters = [{"editors": current_user.id}]
+        if organization_ids:
+            permission_filters.append(
+                {
+                    "organizers": {
+                        "$elemMatch": {"organization_id": {"$in": organization_ids}}
+                    }
+                }
+            )
+        if city_keys:
+            permission_filters.append(
+                {
+                    "$or": [
+                        {"city_key": {"$in": city_keys}},
+                        {"city": {"$in": city_names}},
+                    ]
+                }
+            )
+        if "global" not in permission_scope:
+            accessible_demo_ids = [
+                str(demo["_id"])
+                for demo in mongo.demonstrations.find(
+                    {"$or": permission_filters}, {"_id": 1}
+                )
+            ]
+            demo_id_filter = {"demo_id": {"$in": accessible_demo_ids}}
+
+    if status_filter != "all":
+        # Mirror the Python-side fallback (missing/empty status counts as
+        # "pending") so the database filter matches the previous behaviour.
+        status_clause = (
+            {
+                "$or": [
+                    {"status": {"$in": ["new", "pending", ""]}},
+                    {"status": None},
+                    {"status": {"$exists": False}},
+                ]
+            }
+            if status_filter in {"new", "pending"}
+            else {"status": status_filter}
+        )
+    else:
+        status_clause = None
+
+    def query_from(clauses):
+        clauses = [clause for clause in clauses if clause]
+        if not clauses:
+            return {}
+        if len(clauses) == 1:
+            return clauses[0]
+        return {"$and": clauses}
+
+    base_query = query_from([demo_id_filter, status_clause])
+    total_count = mongo.demo_suggestions.count_documents(
+        query_from([demo_id_filter])
+    )
+    filtered_count = mongo.demo_suggestions.count_documents(base_query)
+    pagination = build_admin_pagination(
+        "admin_demo.suggestions_list",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args={"status": status_filter if status_filter != "all" else ""},
+    )
+    suggestions = list(
+        mongo.demo_suggestions.find(base_query)
+        .sort([("created_at", -1), ("_id", -1)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
+    )
+    return render_template(
+        "admin/suggestions_list.html",
+        suggestions=suggestions,
+        status_filter=status_filter,
+        total_count=total_count,
+        filtered_count=filtered_count,
+        has_active_filters=status_filter != "all",
+        clear_filters_url=url_for("admin_demo.suggestions_list", per_page=per_page),
+        **pagination,
+    )
 
 
 @admin_demo_bp.route('/suggestions/<suggestion_id>')
@@ -892,6 +1014,8 @@ def view_demo_diff(history_id):
     from markupsafe import Markup
 
     # Fetch the history entry
+    if not BsonObjectId.is_valid(history_id):
+        abort(404)
     hist = mongo.demo_edit_history.find_one({"_id": BsonObjectId(history_id)})
     if not hist:
         abort(404)
@@ -928,7 +1052,9 @@ def view_demo_diff(history_id):
         for tag, i1, i2, j1, j2 in sm.get_opcodes():
             if tag == "equal":
                 for line in a_lines[i1:i2]:
-                    html.append(f'<span class="diff-unchanged">{line}</span>')
+                    html.append(
+                        f'<span class="diff-unchanged">{Markup.escape(line)}</span>'
+                    )
             elif tag == "replace":
                 if (i2 - i1) == (j2 - j1):
                     for idx in range(i2 - i1):
@@ -937,37 +1063,66 @@ def view_demo_diff(history_id):
                         html.append('</span>')
                 else:
                     for line in a_lines[i1:i2]:
-                        html.append(f'<span class="diff-remove">{line}</span>')
+                        html.append(
+                            f'<span class="diff-remove">{Markup.escape(line)}</span>'
+                        )
                     for line in b_lines[j1:j2]:
-                        html.append(f'<span class="diff-add">{line}</span>')
+                        html.append(
+                            f'<span class="diff-add">{Markup.escape(line)}</span>'
+                        )
             elif tag == "delete":
                 for line in a_lines[i1:i2]:
-                    html.append(f'<span class="diff-remove">{line}</span>')
+                    html.append(
+                        f'<span class="diff-remove">{Markup.escape(line)}</span>'
+                    )
             elif tag == "insert":
                 for line in b_lines[j1:j2]:
-                    html.append(f'<span class="diff-add">{line}</span>')
+                    html.append(
+                        f'<span class="diff-add">{Markup.escape(line)}</span>'
+                    )
         return Markup("".join(html))
 
     # Compute diffs for each field
     diffs = {}
     all_fields = set(old.keys()) | set(new.keys())
-    for field in all_fields:
+    for field in sorted(all_fields):
         old_val = old.get(field, "")
         new_val = new.get(field, "")
-        if old_val != new_val:
-            diffs[field] = {
-                "old": old_val,
-                "new": new_val,
-                "diff_html": html_diff(old_val, new_val)
-            }
+        changed = old_val != new_val
+        diffs[field] = {
+            "old": old_val,
+            "new": new_val,
+            "changed": changed,
+            "diff_html": (
+                html_diff(old_val, new_val)
+                if changed
+                else Markup(
+                    f'<span class="diff-unchanged">'
+                    f'{Markup.escape(str(new_val))}</span>'
+                )
+            ),
+        }
+
+    demo_data = _find_demo_with_alias_support(hist.get("demo_id")) or {}
+    demo_name = (
+        demo_data.get("title")
+        or new.get("title")
+        or old.get("title")
+        or _("Mielenosoitus")
+    )
+    changed_count = sum(1 for diff in diffs.values() if diff["changed"])
 
     return render_template(
         "admin/demonstrations/demo_diff.html",
         diffs=diffs,
+        changed_count=changed_count,
+        unchanged_count=len(diffs) - changed_count,
         edited_by=hist.get("edited_by"),
         edited_at=hist.get("edited_at"),
         demo_id=hist.get("demo_id"),
-        history_id=history_id
+        demo_name=demo_name,
+        history_id=history_id,
+        rollbacked=bool(hist.get("rollbacked_from")),
     )
 @admin_demo_bp.route("/rollback_demo/<history_id>", methods=["POST"])
 @login_required
@@ -2880,13 +3035,11 @@ def create_demo():
         # Handle form submission for creating a new demonstration
         return handle_demo_form(request, is_edit=False)
 
-    # Fetch available organizations for the form
-    organizations = mongo.organizations.find()
+    organizations = _available_organizer_organizations("CREATE_DEMO")
 
     # Render the demonstration creation form
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/form.html",
-        organizations=organizations,
         all_organizations=organizations,
         form_action=url_for("admin_demo.create_demo"),
         title="Luo mielenosoitus",
@@ -2951,7 +3104,9 @@ def edit_demo(demo_id):
         title=_("Muokkaa mielenosoitusta"),
         submit_button_text=_("Tallenna muutokset"),
         city_list=CITY_LIST,
-        all_organizations=mongo.organizations.find(),
+        all_organizations=_available_organizer_organizations(
+            "EDIT_DEMO", existing_demo=demo_data
+        ),
         case_id=case_id,
         demo_edit_access=demo_edit_access,
         show_demo_access_panel=show_demo_access_panel,
@@ -3473,7 +3628,9 @@ def edit_demo_with_token(token):
         title=_("Muokkaa mielenosoitusta"),
         submit_button_text=_("Tallenna muutokset"),
         city_list=CITY_LIST,
-        all_organizations=mongo.organizations.find(),
+        all_organizations=_available_organizer_organizations(
+            "EDIT_DEMO", existing_demo=demo_data, token_edit=True
+        ),
         edit_demo_with_token=True,
         demo_edit_access=demo_edit_access,
         show_demo_access_panel=False,
@@ -3567,6 +3724,57 @@ def _user_can_create_recurring_demo() -> bool:
     )
 
 
+def _linkable_organization_ids(permission_name, *, existing_demo=None, token_edit=False):
+    """Return allowed organization ids, or ``None`` for unrestricted access.
+
+    Organization-scoped administrators may only add profiles in which they hold
+    the relevant demonstration permission. City-scoped and token editors may
+    preserve an existing linked organizer but cannot forge a new organization
+    relationship. Global administrators retain the existing unrestricted view.
+    """
+    return linkable_admin_organization_ids(
+        current_user,
+        permission_name,
+        existing_demo=existing_demo,
+        preserve_existing_only=token_edit,
+    )
+
+
+def _available_organizer_organizations(
+    permission_name, *, existing_demo=None, token_edit=False
+):
+    allowed_ids = _linkable_organization_ids(
+        permission_name,
+        existing_demo=existing_demo,
+        token_edit=token_edit,
+    )
+    query = {} if allowed_ids is None else {"_id": {"$in": list(allowed_ids)}}
+    return list(
+        mongo.organizations.find(
+            query, {"name": 1, "email": 1, "website": 1}
+        ).sort("name", 1)
+    )
+
+
+def _validate_organizer_organization_scope(
+    organizers, permission_name, *, existing_demo=None, token_edit=False
+):
+    allowed_ids = _linkable_organization_ids(
+        permission_name,
+        existing_demo=existing_demo,
+        token_edit=token_edit,
+    )
+    if allowed_ids is None:
+        return
+    submitted_ids = {
+        organizer.get("organization_id")
+        for organizer in organizers
+        if organizer.get("organization_id")
+    }
+    if not submitted_ids.issubset(allowed_ids):
+        abort(403)
+
+
 def handle_demo_form(
     request,
     is_edit=False,
@@ -3590,8 +3798,26 @@ def handle_demo_form(
 
 
     """
-    # Collect demonstration data from the form
-    demonstration_data = collect_demo_data(request)
+    existing_demo = (
+        mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+        if is_edit and demo_id
+        else None
+    )
+    try:
+        demonstration_data = collect_demo_data(
+            request,
+            existing_organizers=(existing_demo or {}).get("organizers", []),
+        )
+    except ValueError as error:
+        flash_message("Virhe: %(error)s", "error", error=str(error))
+        return redirect(request.url)
+
+    _validate_organizer_organization_scope(
+        demonstration_data["organizers"],
+        "EDIT_DEMO" if is_edit else "CREATE_DEMO",
+        existing_demo=existing_demo,
+        token_edit=token_edit,
+    )
     case_id = request.args.get("case_id") or None
 
     # Older integrations may not submit the newly exposed editor fields. In
@@ -3621,7 +3847,7 @@ def handle_demo_form(
 
     approval_scope_demo = demonstration_data
     if is_edit and demo_id:
-        approval_scope_demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+        approval_scope_demo = existing_demo
     can_change_approval = has_demo_approval_permission(
         current_user, approval_scope_demo
     )
@@ -3636,7 +3862,7 @@ def handle_demo_form(
         
     try:
         if is_edit and demo_id:
-            prev_demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+            prev_demo = existing_demo
             if prev_demo:
                 # The token route has already validated the signed bearer token,
                 # registry record, expiry and revocation state. Normal admin
@@ -4005,7 +4231,7 @@ def unfreeze_demo(demo_id):
 
 
 
-def collect_demo_data(request):
+def collect_demo_data(request, existing_organizers=None):
     """
     Collect demonstration data from the request form, including cover picture support.
 
@@ -4046,7 +4272,9 @@ def collect_demo_data(request):
         raise ValueError(_("Otsikko, päivämäärä ja kaupunki ovat pakollisia kenttiä."))
 
     # Process organizers and tags
-    organizers = collect_organizers(request)
+    organizers = collect_organizers(
+        request, existing_organizers=existing_organizers
+    )
     tags = collect_tags(request)
 
     description = request.form.get("description")
@@ -4099,7 +4327,7 @@ def collect_demo_data(request):
         "address": address,
         "type": event_type,
         "route": route,
-        "organizers": [org.to_dict() for org in organizers],
+        "organizers": organizers,
         "approved": approved,
         "tags": tags,
         "description": description,
@@ -4204,86 +4432,12 @@ def is_valid_longitude(lon):
         return False
 
 
-def collect_organizers(request):
-    """Collect organizer data from the request form.
+def collect_organizers(request, existing_organizers=None):
+    """Compatibility wrapper for callers that pass the Flask request object."""
+    return collect_admin_organizers(
+        request.form, existing_organizers=existing_organizers
+    )
 
-    This function extracts multiple organizers' information from the form and returns a list
-    of Organizer objects.
-
-    Parameters
-    ----------
-    request :
-        The incoming request object containing form data.
-
-    Returns
-    -------
-
-
-    """
-    organizers = []
-    i = 1
-
-    while True:
-        # Extract data for each organizer using a dynamic field naming pattern
-        name = request.form.get(f"organizer_name_{i}")
-        website = request.form.get(f"organizer_website_{i}")
-        email = request.form.get(f"organizer_email_{i}")
-        organizer_id = request.form.get(f"organizer_id_{i}")
-        is_private = request.form.get(f"organizer_is_private_{i}") == "on"
-        show_name_public = request.form.get(f"organizer_show_name_{i}") == "on"
-        show_email_public = request.form.get(f"organizer_show_email_{i}") == "on"
-
-        # Ensure non-private organizers keep their details visible unless explicitly hidden
-        if not is_private and request.form.get(f"organizer_show_name_{i}") is None:
-            show_name_public = True
-        if not is_private and request.form.get(f"organizer_show_email_{i}") is None:
-            show_email_public = True
-
-        # Stop when no name and no organization ID is provided (end of organizers)
-        if not name and not organizer_id:
-            break
-
-        # Create an Organizer object and append to the list
-        if organizer_id:
-            try:
-                organizers.append(
-                    Organizer(
-                        name=name.strip() if name else "",
-                        email=email.strip() if email else "",
-                        website=website.strip() if website else "",
-                        organization_id=ObjectId(organizer_id),
-                        is_private=False,
-                        show_name_public=show_name_public,
-                        show_email_public=show_email_public,
-                    )
-                )
-            except bson.errors.InvalidId as e:
-                organizers.append(
-                    Organizer(
-                        name=name.strip() if name else "",
-                        email=email.strip() if email else "",
-                        website=website.strip() if website else "",
-                        is_private=is_private,
-                        show_name_public=show_name_public,
-                        show_email_public=show_email_public,
-                    )
-                )
-                
-        else:
-            organizers.append(
-                Organizer(
-                    name=name.strip() if name else "",
-                    email=email.strip() if email else "",
-                    website=website.strip() if website else "",
-                    is_private=is_private,
-                    show_name_public=show_name_public,
-                    show_email_public=show_email_public,
-                )
-            )
-
-        i += 1  # Move to the next organizer field
-
-    return organizers
 
 
 @admin_demo_bp.route("/delete_demo", methods=["POST"])
@@ -4739,7 +4893,9 @@ def get_submitter_info(demo_id):
 
 
 @admin_demo_bp.route("/submission_errors", methods=["GET"])
+@login_required
 @admin_required
+@permission_required("VIEW_LOGS")
 def submission_errors_dashboard():
     args = request.args
     filters = []
@@ -4801,23 +4957,43 @@ def submission_errors_dashboard():
 
     query = {"$and": filters} if filters else {}
 
+    page, per_page = parse_admin_pagination(args)
+    filtered_count = mongo.demo_submission_errors.count_documents(query)
+    total_count = mongo.demo_submission_errors.count_documents({})
+    pagination = build_admin_pagination(
+        "admin_demo.submission_errors_dashboard",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args=selected,
+    )
+
     logs_cursor = (
         mongo.demo_submission_errors.find(query)
-        .sort("created_at", DESCENDING)
-        .limit(200)
+        .sort([("created_at", DESCENDING), ("_id", DESCENDING)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
     )
 
     logs = []
     for log in logs_cursor:
         log["_id"] = str(log.get("_id"))
+        log["extra"] = log.get("extra") or {}
+        log["form_snapshot"] = log.get("form_snapshot") or {}
+        for request_field in (
+            "request_path",
+            "request_method",
+            "query_args",
+            "referer",
+            "user_agent",
+        ):
+            log[request_field] = log.get(request_field)
         created = log.get("created_at")
         if isinstance(created, datetime):
             log["created_at_str"] = created.strftime("%d.%m.%Y %H:%M:%S")
         else:
             log["created_at_str"] = "-"
         logs.append(log)
-
-    total_count = mongo.demo_submission_errors.count_documents(query)
 
     pipeline = []
     if query:
@@ -4842,15 +5018,46 @@ def submission_errors_dashboard():
         [status for status in mongo.demo_submission_errors.distinct("status") if status is not None]
     )
 
+    filter_labels = {
+        "error_code": _("Virhekoodi"),
+        "status": _("HTTP-status"),
+        "q": _("Viesti"),
+        "start_date": _("Alkaen"),
+        "end_date": _("Päättyen"),
+        "ip": _("IP-osoite"),
+        "user_id": _("Käyttäjän ID"),
+        "path": _("Polku"),
+    }
+    active_filters = []
+    for key, value in selected.items():
+        remaining = dict(selected)
+        remaining.pop(key, None)
+        remaining["per_page"] = per_page
+        active_filters.append(
+            {
+                "label": filter_labels[key],
+                "value": value,
+                "remove_url": url_for(
+                    "admin_demo.submission_errors_dashboard", **remaining
+                ),
+            }
+        )
+
     return render_template(
         "admin_V2/demonstrations/submission_errors.html",
         logs=logs,
         filters=selected,
-        filters_active=bool(selected),
+        filters_active=bool(active_filters),
+        active_filters=active_filters,
+        clear_filters_url=url_for(
+            "admin_demo.submission_errors_dashboard", per_page=per_page
+        ),
         error_codes=error_codes,
         status_options=status_options,
         total_count=total_count,
+        filtered_count=filtered_count,
         error_stats=error_stats,
+        **pagination,
     )
 
 from flask import Blueprint, request, jsonify

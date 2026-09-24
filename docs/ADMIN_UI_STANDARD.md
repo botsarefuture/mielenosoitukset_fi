@@ -29,10 +29,13 @@ Use only the `--admin-workspace-*` semantic tokens for new shared UI:
   a safe filled-button background in every theme
 - `--admin-workspace-orange` and `--admin-workspace-orange-soft`
 
-Legacy token names are temporarily aliased in `workspace.css`. They are a
-migration aid, not an API for new code. Never hardcode a light-only surface or
-text color. Semantic success, warning, and danger colors must keep readable
-contrast in both themes.
+The retired `variables.css` and `admin_v2.css` palettes are not loaded by the
+admin shell, and `workspace.css` does not expose aliases for their token names.
+Admin stylesheets must consume the semantic tokens above directly. The public
+toolbar's isolated `admin/modal.css` is outside the admin shell and remains the
+only documented exception while that public modal is migrated separately.
+Never hardcode a light-only surface or text color. Semantic success, warning,
+and danger colors must keep readable contrast in both themes.
 
 ## Page structure
 
@@ -109,6 +112,20 @@ Bootstrap owns `.modal`. Never define layout or visibility on the global
 `.modal` selector. The old edit-link dialog is isolated as
 `.legacy-admin-modal` until it can be converted to Bootstrap. Modal content
 inherits the active admin theme.
+
+## Domain scope hooks
+
+Shared layout and components always use the canonical `admin-*` classes above.
+The remaining domain roots are deliberate CSS-module boundaries rather than
+visual aliases: `.admin-dashboard-shell` scopes the live operations dashboard,
+`.jobs-container` scopes background-job details, `.case-shell` scopes case
+cards, and `.status-grid` scopes system-health metrics. They may not redefine
+the workspace palette, hero, controls, buttons, or data-view contract.
+
+The retired `.dashboard-container`, `.dashboard-panel`, `.filter-card`,
+`.table-container`, and page-name layout aliases must not return. Use
+`.admin-page`, `.admin-workspace`, `.admin-panel`, `.admin-workspace-toolbar`,
+and `.admin-data-view` directly.
 
 ## Review checklist
 

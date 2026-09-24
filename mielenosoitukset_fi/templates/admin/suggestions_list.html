@@ -1,312 +1,79 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
 
-{% block styles %}
-<style>
-  :root {
-    --suggestion-text: light-dark(#172033, #f2f5fa);
-    --suggestion-muted: light-dark(#647083, #b7c0ce);
-    --suggestion-blue: light-dark(#0033a0, #8bb1ff);
-    --suggestion-blue-soft: light-dark(#edf4ff, #17233b);
-    --suggestion-orange: #ff6600;
-    --suggestion-orange-soft: light-dark(#fff2e8, #3a2418);
-    --suggestion-card-bg: light-dark(#ffffff, #20252d);
-    --suggestion-border: light-dark(#dce3ec, #424b59);
-    --suggestion-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, 0.08), rgba(0, 0, 0, 0.18));
-  }
-
-  .suggestions-page {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  .suggestions-header {
-    position: relative;
-    overflow: hidden;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 1.5rem;
-    align-items: end;
-    margin-bottom: 1.25rem;
-    padding: clamp(1.75rem, 4vw, 3rem);
-    border-radius: 1.5rem;
-    color: #fff;
-    background:
-      radial-gradient(circle at 94% 8%, rgba(255, 102, 0, .4), transparent 17rem),
-      linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
-    box-shadow: 0 20px 50px rgba(0, 43, 137, .18);
-  }
-
-  .suggestions-header h1 {
-    margin: .25rem 0 .5rem;
-    color: #fff;
-    font-size: clamp(2rem, 4vw, 3rem);
-    letter-spacing: -.035em;
-  }
-
-  .suggestions-header p {
-    max-width: 620px;
-    color: rgba(255,255,255,.8) !important;
-    line-height: 1.65;
-  }
-
-  .suggestions-kicker {
-    margin: 0;
-    color: #ffd6bc;
-    font-size: .76rem;
-    font-weight: 800;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-  }
-
-  .suggestions-count {
-    position: relative;
-    z-index: 1;
-    min-width: 110px;
-    padding: .9rem 1rem;
-    border: 1px solid rgba(255,255,255,.2);
-    border-radius: 1rem;
-    background: rgba(255,255,255,.1);
-    text-align: center;
-  }
-
-  .suggestions-count strong, .suggestions-count span { display: block; }
-  .suggestions-count strong { color: #fff; font-size: 1.7rem; line-height: 1; }
-  .suggestions-count span { margin-top: .3rem; color: rgba(255,255,255,.72); font-size: .78rem; }
-
-  .suggestions-intro {
-    display: flex;
-    gap: .75rem;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding: .8rem 1rem;
-    border: 1px solid var(--suggestion-border);
-    border-radius: .9rem;
-    color: var(--suggestion-muted);
-    background: light-dark(#f8fafc, #252b35);
-    font-size: .88rem;
-  }
-
-  .suggestions-intro i {
-    color: var(--suggestion-orange);
-  }
-
-  .suggestion-badge {
-    font-size: 0.85rem;
-    padding: 0.5rem 1rem;
-    border-radius: 999px;
-    font-weight: 600;
-  }
-
-  .suggestion-badge.new {
-    background: light-dark(#dcfce7, #1f3a3a);
-    color: light-dark(#166534, #86efac);
-  }
-
-  .suggestion-badge.applied {
-    background: light-dark(#dbeafe, #1e3a5f);
-    color: light-dark(#1e40af, #93c5fd);
-  }
-
-  .suggestion-badge.rejected {
-    background: light-dark(#fee2e2, #3a1f1f);
-    color: light-dark(#991b1b, #fca5a5);
-  }
-
-  .suggestion-card {
-    background: var(--suggestion-card-bg);
-    border: 1px solid var(--suggestion-border);
-    border-left: 4px solid var(--suggestion-blue);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    box-shadow: var(--suggestion-shadow);
-    transition: border-color .2s ease, transform .2s ease;
-  }
-
-  .suggestion-card:hover {
-    border-left-color: var(--suggestion-orange);
-    transform: translateY(-1px);
-  }
-
-  .suggestion-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-  }
-
-  .suggestion-card-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--suggestion-text);
-    margin: 0 0 0.5rem 0;
-  }
-
-  .suggestion-card-meta {
-    font-size: 0.9rem;
-    color: var(--suggestion-muted);
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .suggestion-card-meta span {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .suggestion-changes-summary {
-    font-size: 0.9rem;
-    color: var(--suggestion-muted);
-    margin-top: 0.75rem;
-  }
-
-  .suggestion-changes-count {
-    display: inline-block;
-    background: var(--suggestion-blue-soft);
-    color: var(--suggestion-blue);
-    padding: 0.25rem 0.75rem;
-    border-radius: 999px;
-    font-weight: 600;
-    font-size: 0.8rem;
-  }
-
-  .suggestion-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: 1rem;
-  }
-
-  .suggestion-actions a {
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-    text-decoration: none;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 3rem 2rem;
-    border: 1px dashed var(--suggestion-border);
-    border-radius: 1rem;
-    color: var(--suggestion-muted);
-    background: var(--suggestion-card-bg);
-  }
-
-  .empty-state i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
-  }
-
-  @media (max-width: 768px) {
-    .suggestions-header {
-      grid-template-columns: 1fr;
-    }
-
-    .suggestion-card-header {
-      flex-direction: column;
-    }
-
-    .suggestion-actions {
-      flex-direction: column;
-    }
-
-    .suggestion-actions a {
-      width: 100%;
-    }
-  }
-</style>
-{% endblock %}
+{% block title %}{{ _('Ehdotukset') }}{% endblock %}
 
 {% block main_content %}
-<div class="admin-page suggestions-page">
-  <header class="suggestions-header admin-page-hero">
-    <div>
-      <p class="suggestions-kicker admin-page-hero__kicker">{{ _('Ylläpidon työjono') }}</p>
-      <h1>{{ _('Ehdotukset') }}</h1>
-      <p class="text-muted mb-0">{{ _('Tarkista käyttäjien ehdottamat korjaukset ja pidä tapahtumatiedot ajan tasalla.') }}</p>
-    </div>
-    <div class="suggestions-count admin-page-hero__metric">
-      <strong>{{ suggestions|length }}</strong>
-      <span>{{ _('ehdotusta') }}</span>
-    </div>
-  </header>
+<div class="admin-page admin-workspace">
+  {{ admin_page_hero(
+    _('Ehdotukset'),
+    _('Tarkista käyttäjien ehdottamat korjaukset ja pidä tapahtumatiedot ajan tasalla.'),
+    _('Ylläpidon työjono'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (_('Ehdotukset'), none)],
+    back_url=url_for('admin_demo.demo_control'),
+    back_label=_('Mielenosoitukset'),
+    metric_value=total_count,
+    metric_label=_('sinulle näkyvää ehdotusta')
+  ) }}
 
-  {% if suggestions %}
-    <div class="suggestions-intro">
-      <i class="fas fa-circle-info" aria-hidden="true"></i>
-      <span>{{ _('Avaa ehdotus nähdäksesi alkuperäiset ja ehdotetut tiedot rinnakkain.') }}</span>
-    </div>
-    <div class="suggestions-list">
-      {% for s in suggestions %}
-        <div class="suggestion-card">
-          <div class="suggestion-card-header">
-            <div style="flex-grow: 1;">
-              <h3 class="suggestion-card-title">
-            
-                {{ s.original_values.get('title', 'Tuntematon mielenosoitus') }}
-              </h3>
-              <div class="suggestion-card-meta">
-                <span title="Mielenosoituksen ID">
-                  <i class="fas fa-hashtag" style="font-size: 0.8rem;"></i>
-                  {{ s.demo_id[:8] }}...
-                </span>
-                <span title="Luontiaika">
-                  <i class="fas fa-calendar"></i>
-                  {{ s.created_at.strftime('%d.%m.%Y %H:%M') if s.created_at else '—' }}
-                </span>
-                {% if s.reporter_email %}
-                  <span title="Tekijän sähköposti">
-                    <i class="fas fa-envelope"></i>
-                    {{ s.reporter_email[:20] }}{% if s.reporter_email|length > 20 %}...{% endif %}
-                  </span>
-                {% endif %}
-              </div>
-            </div>
-            <div>
-              <span class="suggestion-badge {{ s.status }}">
-                {% if s.status == 'new' %}
-                  <i class="fas fa-star me-1"></i>{{ _('Uusi') }}
-                {% elif s.status == 'applied' %}
-                  <i class="fas fa-check me-1"></i>{{ _('Hyväksytty') }}
-                {% elif s.status == 'rejected' %}
-                  <i class="fas fa-times me-1"></i>{{ _('Hylätty') }}
-                {% else %}
-                  {{ s.status }}
-                {% endif %}
-              </span>
-            </div>
-          </div>
-
-          {% if s.suggested_fields %}
-            <div class="suggestion-changes-summary">
-              <span class="suggestion-changes-count">
-                {{ s.suggested_fields|length }} {{ _('muutos') if s.suggested_fields|length == 1 else _('muutosta') }}
-              </span>
-              <span style="margin-left: 0.75rem;">
-                {{ s.suggested_fields.keys()|join(', ') }}
-              </span>
-            </div>
-          {% endif %}
-
-          <div class="suggestion-actions">
-            <a href="{{ url_for('admin_demo.suggestion_view', suggestion_id=s._id) }}" class="btn btn-primary">
-              <i class="fas fa-eye me-2"></i>{{ _('Tarkastele') }}
-            </a>
-            <a href="{{ url_for('demonstration_detail', demo_id=s.demo_id) }}" class="btn btn-outline-secondary" target="_blank">
-              <i class="fas fa-external-link-alt me-2"></i>{{ _('Mielenosoitus') }}
-            </a>
-          </div>
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Suodata ehdotuksia') }}">
+    <form method="get" class="admin-filter-bar">
+      <div class="admin-filter-bar__primary">
+        <input type="hidden" name="page" value="1">
+        <input type="hidden" name="per_page" value="{{ per_page }}">
+        <div class="admin-field">
+          <label for="status">{{ _('Tila') }}</label>
+          <select class="form-select" id="status" name="status">
+            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>{{ _('Kaikki tilat') }}</option>
+            <option value="pending" {% if status_filter in ('new', 'pending') %}selected{% endif %}>{{ _('Uudet') }}</option>
+            <option value="applied" {% if status_filter == 'applied' %}selected{% endif %}>{{ _('Hyväksytyt') }}</option>
+            <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>{{ _('Hylätyt') }}</option>
+          </select>
         </div>
-      {% endfor %}
+        <button class="btn btn-primary" type="submit"><i class="fas fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+        {% if has_active_filters %}<a class="btn btn-outline-secondary" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a>{% endif %}
+      </div>
+    </form>
+    {% if has_active_filters %}<div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}"><a class="admin-filter-chip" href="{{ clear_filters_url }}"><span>{{ _('Tila') }}: {{ _('Uudet') if status_filter in ('new', 'pending') else (_('Hyväksytyt') if status_filter == 'applied' else _('Hylätyt')) }}</span><i class="fas fa-xmark" aria-hidden="true"></i></a></div>{% endif %}
+  </section>
+
+  <section class="admin-data-view admin-data-view--scrollable" aria-label="{{ _('Mielenosoitusten muutosehdotukset') }}">
+    <div class="admin-data-view__header admin-result-summary" aria-live="polite">
+      {% if has_active_filters %}
+        <strong>{{ _('%(count)s osumaa', count=filtered_count) }}</strong>
+        <span>{{ _('yhteensä %(count)s sinulle näkyvää ehdotusta', count=total_count) }}</span>
+      {% else %}
+        <span>{{ _('Näytetään %(start)s–%(end)s / %(count)s ehdotuksesta', start=range_start, end=range_end, count=filtered_count) }}</span>
+      {% endif %}
     </div>
-  {% else %}
-    <div class="empty-state">
-      <i class="fas fa-inbox"></i>
-      <h3>{{ _('Ei ehdotuksia') }}</h3>
-      <p>{{ _('Kaikki ehdotukset on käsitelty tai ei ole vielä saapunut uusia ehdotuksia.') }}</p>
+    {% if suggestions %}
+    <div class="admin-data-view__viewport">
+      <table class="admin-data-view__table">
+        <thead><tr><th>{{ _('Mielenosoitus') }}</th><th>{{ _('Tila') }}</th><th>{{ _('Lähetetty') }}</th><th>{{ _('Lähettäjä') }}</th><th>{{ _('Muutokset') }}</th><th class="actions-cell-header">{{ _('Toiminnot') }}</th></tr></thead>
+        <tbody>
+          {% for suggestion in suggestions %}
+          {% set normalized_status = (suggestion.status or 'pending')|lower %}
+          <tr>
+            <td><strong>{{ suggestion.original_values.get('title', _('Tuntematon mielenosoitus')) }}</strong><small class="d-block text-muted">#{{ suggestion.demo_id[:12] }}{% if suggestion.demo_id|length > 12 %}…{% endif %}</small></td>
+            <td>
+              {% if normalized_status in ('new', 'pending') %}<span class="admin-status-badge admin-status-badge--info"><i class="fas fa-star" aria-hidden="true"></i>{{ _('Uusi') }}</span>
+              {% elif normalized_status == 'applied' %}<span class="admin-status-badge admin-status-badge--success"><i class="fas fa-check" aria-hidden="true"></i>{{ _('Hyväksytty') }}</span>
+              {% elif normalized_status == 'rejected' %}<span class="admin-status-badge admin-status-badge--danger"><i class="fas fa-xmark" aria-hidden="true"></i>{{ _('Hylätty') }}</span>
+              {% else %}<span class="admin-status-badge admin-status-badge--warning">{{ suggestion.status }}</span>{% endif %}
+            </td>
+            <td>{{ suggestion.created_at.strftime('%d.%m.%Y %H:%M') if suggestion.created_at else '—' }}</td>
+            <td>{{ suggestion.reporter_email or (suggestion.suggested_by or {}).get('email') or '—' }}</td>
+            <td>{% if suggestion.suggested_fields %}<strong>{{ suggestion.suggested_fields|length }}</strong><small class="d-block text-muted">{{ suggestion.suggested_fields.keys()|join(', ') }}</small>{% else %}—{% endif %}</td>
+            <td class="actions-cell"><div class="admin-row-actions"><a href="{{ url_for('admin_demo.suggestion_view', suggestion_id=suggestion._id) }}" class="btn btn-sm btn-primary"><i class="fas fa-eye" aria-hidden="true"></i>{{ _('Tarkastele') }}</a><a href="{{ url_for('demonstration_detail', demo_id=suggestion.demo_id) }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>{{ _('Mielenosoitus') }}</a></div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-  {% endif %}
+    {{ admin_pagination(current_page, total_pages, per_page, prev_page, next_page, prev_page_url, next_page_url, visible_pages, first_page_url, last_page_url, _('Ehdotusten sivutus')) }}
+    {% else %}
+    <div class="admin-empty-state"><span class="admin-empty-state__icon"><i class="fas fa-inbox" aria-hidden="true"></i></span><h2 class="admin-empty-state__title">{{ _('Ei ehdotuksia') }}</h2><p>{{ _('Valituilla suodattimilla ei löytynyt käsiteltäviä ehdotuksia.') if has_active_filters else _('Kaikki ehdotukset on käsitelty tai uusia ehdotuksia ei ole vielä saapunut.') }}</p>{% if has_active_filters %}<a class="btn btn-outline-secondary" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a>{% endif %}</div>
+    {% endif %}
+  </section>
 </div>
 {% endblock %}

@@ -153,6 +153,10 @@
     ],
     "Administration": [
         {
+            "name": "VIEW_LOGS",
+            "description": "View administrative and submission error logs."
+        },
+        {
             "name": "MANAGE_CLEARANCE",
             "description": "Grant and revoke board clearances."
         },

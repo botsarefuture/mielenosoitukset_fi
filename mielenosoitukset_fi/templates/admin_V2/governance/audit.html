@@ -17,7 +17,7 @@
 
   {% include 'admin_V2/governance/_tabs.html' %}
 
-  <section class="dashboard-panel admin-workspace-toolbar" aria-label="{{ _('Tapahtumalokin suodattimet') }}">
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Tapahtumalokin suodattimet') }}">
     <form method="GET" action="{{ url_for('admin_governance.audit_log') }}" class="admin-filter-bar">
       <input type="hidden" name="page" value="1">
       <input type="hidden" name="per_page" value="{{ per_page }}">

@@ -47,7 +47,9 @@ def test_demo_review_regressions_keep_shared_interaction_contracts():
         "mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html"
     ).read_text(encoding="utf-8")
 
-    assert dashboard.count("admin-page-hero__action non-suffperm") == 2
+    assert dashboard.count(
+        "admin-page-hero__action admin-page-hero__action--disabled"
+    ) == 2
     assert "admin-data-view admin-data-view--scrollable" in dashboard
     assert "prefers-reduced-motion: reduce" in dashboard
     assert "window.setTimeout(removeRow, 350)" in dashboard

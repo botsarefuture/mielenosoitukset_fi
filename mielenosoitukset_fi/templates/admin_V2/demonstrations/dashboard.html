@@ -79,7 +79,7 @@
 
 
 
-<section class="dashboard-container admin-workspace demo-management-page">
+<section class="admin-workspace demo-management-page">
   {% call admin_page_hero(
     _('Mielenosoitukset'),
     _('Hae, suodata ja hallitse mielenosoituksia, joihin sinulla on käyttöoikeus.'),
@@ -92,7 +92,7 @@
         <i class="fas fa-plus"></i>{{ _('Uusi mielenosoitus') }}
       </a>
       {% else %}
-      <span class="admin-page-hero__action non-suffperm" aria-disabled="true" data-tooltip="Ei käyttöoikeutta">
+      <span class="admin-page-hero__action admin-page-hero__action--disabled" aria-disabled="true" title="{{ _('Ei käyttöoikeutta') }}">
         <i class="fas fa-ban"></i>{{ _('Uusi mielenosoitus') }}
       </span>
       {% endif %}
@@ -102,7 +102,7 @@
         <i class="fas fa-plus-circle"></i>{{ _('Uusi toistuva mielenosoitus') }}
       </a>
       {% else %}
-      <span class="admin-page-hero__action non-suffperm" aria-disabled="true" data-tooltip="Ei käyttöoikeutta">
+      <span class="admin-page-hero__action admin-page-hero__action--disabled" aria-disabled="true" title="{{ _('Ei käyttöoikeutta') }}">
         <i class="fas fa-ban"></i>{{ _('Uusi toistuva mielenosoitus') }}
       </span>
       {% endif %}
@@ -133,7 +133,7 @@
     </article>
   </section>
 
-  <div class="dashboard-panel admin-workspace-toolbar">
+  <div class="admin-workspace-toolbar">
     <form method="GET" action="{{ url_for('admin_demo.demo_control') }}" class="admin-filter-bar" id="dashboard-filter-form">
       <input type="hidden" name="page" value="1">
       <input type="hidden" name="per_page" value="{{ per_page }}">

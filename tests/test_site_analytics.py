@@ -349,7 +349,7 @@ def test_admin_overview_labels_resourceless_page_types(admin_client, db):
     _clear(db)
     base = utcnow().replace(tzinfo=_tz.utc).astimezone(HELSINKI_TZ)
     for page_type in ("submit", "calendar", "index"):
-        increment_counter(page_type=page_type, when=base.replace(tzinfo=_tz.utc))
+        increment_counter(page_type=page_type, when=base.astimezone(_tz.utc))
 
     response = admin_client.get("/admin/analytics/")
     assert response.status_code == 200

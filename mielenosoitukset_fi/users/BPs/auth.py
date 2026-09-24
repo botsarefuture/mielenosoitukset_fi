@@ -11,6 +11,7 @@ from flask import (
     session,
 )
 from flask_login import login_user, logout_user, login_required, current_user
+from flask_babel import gettext as _
 
 from config import Config
 from mielenosoitukset_fi.users.models import MFAToken, PendingMFA, User, UserMFA
@@ -1396,7 +1397,10 @@ def password_reset_request():
         return redirect(url_for("users.auth.login"))
 
     return render_template("users/auth/password_reset_request.html")
+
+
 @auth_bp.route("/api/v2/user_profile", methods=["GET", "POST"])
+@login_required
 def user_profile():
     """
     JSON-only endpoint for user bio + profile picture updates.
@@ -1409,7 +1413,11 @@ def user_profile():
     user = current_user
 
     if request.method == "POST":
-        data = request.get_json(force=True)
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify(
+                {"status": "error", "message": _("Virheellinen pyyntö.")}
+            ), 400
 
         # Update bio
         bio = data.get("bio")
@@ -1429,7 +1437,7 @@ def user_profile():
                 bucket_name = current_app.config.get("S3_BUCKET")
                 import io
 
-                img_bytes = base64.b64decode(profile_picture_b64)
+                img_bytes = base64.b64decode(profile_picture_b64, validate=True)
                 img_stream = io.BytesIO(img_bytes)
              
                 photo_url = upload_image_fileobj(bucket_name, img_stream, filename, "profile_pics")
@@ -1437,9 +1445,22 @@ def user_profile():
                 if photo_url:
                     user.profile_picture = photo_url
                 else:
-                    return jsonify({"status": "error", "message": "Error uploading image to S3"}), 500
-            except Exception as e:
-                return jsonify({"status": "error", "message": f"Invalid image data: {str(e)}"}), 400
+                    return jsonify(
+                        {
+                            "status": "error",
+                            "message": _("Profiilikuvan tallennus epäonnistui."),
+                        }
+                    ), 500
+            except Exception:
+                current_app.logger.warning(
+                    "Invalid profile image upload for user %s", user.id
+                )
+                return jsonify(
+                    {
+                        "status": "error",
+                        "message": _("Profiilikuvan tiedot ovat virheelliset."),
+                    }
+                ), 400
 
         # Save changes in Mongo
         mongo.users.update_one(
@@ -1452,7 +1473,16 @@ def user_profile():
             },
         )
 
-        return jsonify({"status": "success", "message": "Profile updated successfully"})
+        return jsonify(
+            {
+                "status": "success",
+                "message": _("Profiili päivitetty."),
+                "data": {
+                    "bio": getattr(user, "bio", None),
+                    "profile_picture": getattr(user, "profile_picture", None),
+                },
+            }
+        )
 
     # GET request - return user profile data
     return jsonify({

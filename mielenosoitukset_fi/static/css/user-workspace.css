@@ -1229,6 +1229,204 @@ h1 {
 }
 
 /* ==========================
+   SHARED PUBLIC FORMS
+========================== */
+.user-form {
+  width: 100%;
+  color: var(--product-text);
+}
+
+.user-form-section {
+  overflow: clip;
+  border: 1px solid var(--product-border);
+  border-radius: 1.25rem;
+  background: var(--product-surface);
+  box-shadow: var(--product-shadow);
+}
+
+.user-form-section__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: clamp(1.15rem, 2vw, 1.5rem);
+  border-bottom: 1px solid var(--product-border);
+  background: var(--product-surface-muted);
+}
+
+.user-form-section__header h2 {
+  margin: 0;
+  color: var(--product-text);
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  line-height: 1.25;
+}
+
+.user-form-section__header p {
+  margin: 0.35rem 0 0;
+  color: var(--product-text-muted);
+  line-height: 1.55;
+}
+
+.user-form-section__icon {
+  display: inline-flex;
+  flex: 0 0 2.75rem;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.85rem;
+  background: var(--product-primary-soft);
+  color: var(--product-primary);
+}
+
+.user-form-section__body {
+  padding: clamp(1.15rem, 2vw, 1.5rem);
+}
+
+.user-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.user-field {
+  min-width: 0;
+}
+
+.user-field--full {
+  grid-column: 1 / -1;
+}
+
+.user-field__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  color: var(--product-text);
+  font-weight: 700;
+}
+
+.user-field__optional {
+  color: var(--product-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.user-field__control {
+  display: block;
+  width: 100%;
+  min-height: 2.9rem;
+  box-sizing: border-box;
+  border: 1px solid var(--product-border);
+  border-radius: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  background: var(--product-surface);
+  color: var(--product-text);
+  font: inherit;
+  line-height: 1.45;
+}
+
+textarea.user-field__control {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.user-field__control--file {
+  padding: 0.45rem;
+}
+
+.user-field__control--file::file-selector-button {
+  min-height: 2.15rem;
+  margin-right: 0.75rem;
+  border: 0;
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.75rem;
+  background: var(--product-primary-soft);
+  color: var(--product-primary-strong);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.user-field__control:hover {
+  border-color: var(--product-primary);
+}
+
+.user-field__control:focus-visible {
+  border-color: var(--product-primary);
+  outline: 3px solid color-mix(in srgb, var(--product-primary) 28%, transparent);
+  outline-offset: 2px;
+}
+
+.user-field__control:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+  background: var(--product-surface-muted);
+}
+
+.user-field__help {
+  margin: 0.5rem 0 0;
+  color: var(--product-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.user-file-preview {
+  min-height: 1px;
+  margin-top: 0.85rem;
+}
+
+.user-file-preview:empty {
+  display: none;
+}
+
+.user-file-preview__image {
+  display: block;
+  width: 9.5rem;
+  max-width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--product-border);
+  border-radius: 1rem;
+  object-fit: cover;
+  background: var(--product-surface-muted);
+}
+
+.user-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem clamp(1.15rem, 2vw, 1.5rem);
+  border-top: 1px solid var(--product-border);
+  background: var(--product-surface-muted);
+}
+
+.user-form-actions .btn {
+  min-height: 2.75rem;
+}
+
+.user-form-actions .btn-primary {
+  border-color: var(--product-action-bg);
+  background: var(--product-action-bg);
+  color: var(--product-on-action);
+}
+
+.user-form-actions .btn-primary:hover:not(:disabled) {
+  border-color: var(--product-action-hover);
+  background: var(--product-action-hover);
+  color: var(--product-on-action);
+}
+
+.user-form-actions .btn-primary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--product-primary) 32%, transparent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.user-form-actions .btn[aria-busy="true"] {
+  cursor: wait;
+}
+
+/* ==========================
    RESPONSIVE
 ========================== */
 @media (max-width: 900px) {
@@ -1237,6 +1435,19 @@ h1 {
 }
 
 @media (max-width: 600px) {
+  .user-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-form-section__header {
+    align-items: center;
+  }
+
+  .user-form-actions,
+  .user-form-actions .btn {
+    width: 100%;
+  }
+
   .demo-table th,
   .demo-table td { padding: 0.5em 0.2em; font-size: 0.95em; }
   .demo-table { font-size: 0.95em; }

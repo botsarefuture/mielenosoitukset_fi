@@ -69,7 +69,7 @@
       <form id="create-token-form">
         <div class="modal-header">
           <h5 class="modal-title" id="tokenModalLabel">{{ _('Luo lyhytkestoinen API Token') }}</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
@@ -129,13 +129,6 @@
               {% endif %}
             </div>
 
-
-            <div class="mb-3" id="generated-token-container" style="display:none;">
-              <p>{{ _('Kopioi token nyt, sillä se näkyy vain kerran!') }}</p>
-              <div class="raw-token" id="modal-token"></div>
-              <p class="mt-2"><strong>{{ _('Scopet:') }}</strong> <span id="modal-scopes"></span></p>
-              <p><strong>{{ _('Vanhenee:') }}</strong> <span id="modal-expires"></span></p>
-            </div>
           </div>
 
           <div class="modal-footer">
@@ -148,20 +141,20 @@
 </div>
 
 
-<!-- Modal -->
-<div class="modal fade" id="tokenModal" tabindex="-1" aria-labelledby="tokenModalLabel" aria-hidden="true">
+<!-- Token created: result modal -->
+<div class="modal fade" id="tokenResultModal" tabindex="-1" aria-labelledby="tokenResultModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="tokenModalLabel">{{ _('Uusi API Token') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title" id="tokenResultModalLabel">{{ _('Uusi API Token') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
       </div>
       <div class="modal-body">
         <p>{{ _('Kopioi token nyt, sillä se näkyy vain kerran!') }}</p>
-        <div class="raw-token" id="modal-token"></div>
-        <p class="mt-2"><strong>{{ _('Scopet:') }}</strong> <span id="modal-scopes"></span></p>
-        <p><strong>{{ _('Tyyppi:') }}</strong> <span id="modal-type"></span></p>
-        <p><strong>{{ _('Vanhenee:') }}</strong> <span id="modal-expires"></span></p>
+        <div class="raw-token" id="result-token"></div>
+        <p class="mt-2"><strong>{{ _('Scopet:') }}</strong> <span id="result-scopes"></span></p>
+        <p><strong>{{ _('Tyyppi:') }}</strong> <span id="result-type"></span></p>
+        <p><strong>{{ _('Vanhenee:') }}</strong> <span id="result-expires"></span></p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" id="copy-modal-token">{{ _('Kopioi') }}</button>
@@ -200,13 +193,13 @@
 
     // Modal elements
     const tokenModal = new bootstrap.Modal(document.getElementById('tokenModal'));
-    const modalTokenEl = document.getElementById('modal-token');
-    const modalScopesEl = document.getElementById('modal-scopes');
-    const modalTypeEl = document.getElementById('modal-type');
-    const modalExpiresEl = document.getElementById('modal-expires');
+    const tokenResultModal = new bootstrap.Modal(document.getElementById('tokenResultModal'));
+    const modalTokenEl = document.getElementById('result-token');
+    const modalScopesEl = document.getElementById('result-scopes');
+    const modalTypeEl = document.getElementById('result-type');
+    const modalExpiresEl = document.getElementById('result-expires');
     const copyModalBtn = document.getElementById('copy-modal-token');
     const form = document.getElementById("create-token-form");
-    const generatedContainer = document.getElementById("generated-token-container");
 
     // Load token list
     async function loadTokens() {
@@ -258,7 +251,7 @@
             modalScopesEl.textContent = newData.scopes.join(", ");
             modalTypeEl.textContent = newData.type;
             modalExpiresEl.textContent = newData.expires_at ? new Date(newData.expires_at).toLocaleString() : "Ei vanhentumisaikaa";
-            tokenModal.show();
+            tokenResultModal.show();
             loadTokens();
           } else {
             showTokenMessage("{{ _('Virhe tokenin luomisessa: ') }}" + (newData.error || ""));
@@ -287,7 +280,6 @@
 
     // Show modal to create new short-lived token
     genBtn.addEventListener("click", () => {
-      generatedContainer.style.display = "none";
       tokenModal.show();
     });
 
@@ -312,8 +304,8 @@
         modalScopesEl.textContent = data.scopes.join(", ");
         modalTypeEl.textContent = data.type;
         modalExpiresEl.textContent = data.expires_at ? new Date(data.expires_at).toLocaleString() : "Ei vanhentumisaikaa";
-        generatedContainer.style.display = "block";
-        tokenModal.show();
+        tokenModal.hide();
+        tokenResultModal.show();
         loadTokens();
       } else {
         showTokenMessage("{{ _('Virhe tokenin luomisessa: ') }}" + (data.error || ""));

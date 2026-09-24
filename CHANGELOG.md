@@ -19,6 +19,7 @@
 
 ### Fixed
 * Background-job detail filters now keep an off-page selected run visible while paginating, and the redesigned view's English and Swedish interface copy is included in the compiled translation catalogs.
+* The year-at-a-glance calendar's mobile stats no longer claim "0 Tapahtumaa": the total was accumulated with Jinja's `{% set %}` inside a `for` loop, which does not leak out of the loop, so the counter silently reset to zero. It is now summed from per-month counts.
 * The account-area chat no longer renders incoming text through `innerHTML`: chat messages, invitation lines, media embeds, and the friend-list buttons are now built with DOM nodes and `textContent`, so a message (or a friend's display name) containing markup can no longer inject HTML or script into a recipient's browser.
 * The API-token page no longer issues two modals with the same `id` (invalid HTML): the "view created token" modal and its fields got unique ids, and viewing or re-creating a token now actually shows the generated token — previously the token was written into a hidden duplicate of the dialog, so the "Näytä" action opened an empty modal.
 * Reaching the end of the paginated demonstration lists no longer throws a JavaScript error: the end-of-content message on the main list and city pages was set via an undefined `_()` helper (or a hard-coded English string), so it either crashed the pagination callback or ignored the active language. The message is now rendered from the session locale.

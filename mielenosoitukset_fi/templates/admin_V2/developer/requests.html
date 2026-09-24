@@ -1,8 +1,10 @@
 {% extends 'admin_base.html' %}
-{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
+
+{% block title %}{{ _('Kehittäjähallinta') }}{% endblock %}
 
 {% block main_content %}
-<div class="admin-page">
+<section class="admin-page admin-workspace">
   {{ admin_page_hero(
     _('Kehittäjähallinta'),
     _('Hallinnoi kehittäjäoikeuksia ja sovellusten scope-pyyntöjä.'),
@@ -12,127 +14,63 @@
     back_label=_('Käyttäjät')
   ) }}
 
-  <h4 class="mt-4 mb-3">Kehittäjäpaneelin avauspyynnöt</h4>
-  <div class="table-responsive admin-data-view admin-workspace-table mb-4">
-    <table class="table table-striped align-middle">
-      <thead>
-        <tr>
-          <th>Käyttäjä</th>
-          <th>Sähköposti</th>
-          <th>Perustelu</th>
-          <th>Aika</th>
-          <th>Tila</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in dev_reqs %}
-        <tr>
-          <td>
-            {{ r.user.username or 'Tuntematon' }}
-            {% if r.user_id %}
-            <a class="btn btn-link btn-sm" href="{{ url_for('admin_dev.user_apps', user_id=r.user_id) }}">Sovellukset</a>
-            {% endif %}
-          </td>
-          <td>{{ r.user.email or '' }}</td>
-          <td>{{ r.reason or '' }}</td>
-          <td>{{ r.requested_at or '' }}</td>
-          <td>{{ r.status or 'pending' }}</td>
-          <td class="text-end">
-            {% if r.status == 'pending' %}
-            <button class="btn btn-sm btn-success act-token" data-id="{{ r._id }}" data-action="approve">Hyväksy</button>
-            <button class="btn btn-sm btn-outline-danger act-token" data-id="{{ r._id }}" data-action="deny">Hylkää</button>
-            {% else %}
-            <span class="text-muted">–</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="6" class="admin-empty-state">Ei pyyntöjä.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  <nav class="admin-section-tabs" aria-label="{{ _('Pyyntötyyppi') }}">
+    <a href="{{ url_for('admin_dev.list_requests', kind='access', per_page=per_page) }}" {% if kind == 'access' %}aria-current="page"{% endif %}>{{ _('Kehittäjäoikeudet') }} <span class="admin-status-badge">{{ access_count }}</span></a>
+    <a href="{{ url_for('admin_dev.list_requests', kind='scope', per_page=per_page) }}" {% if kind == 'scope' %}aria-current="page"{% endif %}>{{ _('Sovellusten scopet') }} <span class="admin-status-badge">{{ scope_count }}</span></a>
+  </nav>
 
-  <div class="table-responsive admin-data-view admin-workspace-table">
-    <div class="admin-data-view__header"><h2>Scope-pyynnöt (sovellukset)</h2></div>
-    <table class="table table-striped align-middle">
-      <thead>
-        <tr>
-          <th>Sovellus</th>
-          <th>Käyttäjä</th>
-          <th>Pyydetyt scopet</th>
-          <th>Perustelu</th>
-          <th>Aika</th>
-          <th>Tila</th>
-          <th></th>
-        </tr>
-      </thead>
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Kehittäjäpyyntöjen suodattimet') }}">
+    <form method="get" action="{{ url_for('admin_dev.list_requests') }}" class="admin-filter-bar">
+      <input type="hidden" name="kind" value="{{ kind }}"><input type="hidden" name="page" value="1"><input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="admin-filter-bar__primary">
+        <div class="admin-field"><label for="request-status">{{ _('Tila') }}</label><select id="request-status" name="status"><option value="">{{ _('Kaikki tilat') }}</option><option value="pending" {% if status == 'pending' %}selected{% endif %}>{{ _('Odottaa') }}</option><option value="approved" {% if status == 'approved' %}selected{% endif %}>{{ _('Hyväksytty') }}</option><option value="denied" {% if status == 'denied' %}selected{% endif %}>{{ _('Hylätty') }}</option></select></div>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+      </div>
+    </form>
+    {% if active_filters %}<div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">{% for filter in active_filters %}<a class="admin-filter-chip" href="{{ filter.remove_url }}"><span>{{ filter.label }}: {{ filter.value }}</span><i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="visually-hidden">{{ _('Poista suodatin') }}</span></a>{% endfor %}<a class="admin-clear-filters" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a></div>{% endif %}
+  </section>
+
+  <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="developer-requests-heading">
+    <header class="admin-data-view__header admin-result-summary" aria-live="polite">
+      <strong id="developer-requests-heading">{% if kind == 'access' %}{{ _('Kehittäjäpaneelin avauspyynnöt') }}{% else %}{{ _('Sovellusten scope-pyynnöt') }}{% endif %}</strong>
+      <span>{% if filters_active %}<strong>{{ _('%(count)s osumaa', count=filtered_count) }}</strong> · {{ _('yhteensä %(count)s pyyntöä', count=total_count) }}{% else %}{{ _('Näytetään %(start)s–%(end)s / %(count)s pyynnöstä', start=range_start, end=range_end, count=filtered_count) }}{% endif %}</span>
+    </header>
+    <div class="admin-data-view__viewport"><table class="admin-data-view__table">
+      <thead><tr>{% if kind == 'scope' %}<th scope="col">{{ _('Sovellus') }}</th>{% endif %}<th scope="col">{{ _('Käyttäjä') }}</th><th scope="col">{{ _('Pyyntö') }}</th><th scope="col">{{ _('Aika') }}</th><th scope="col">{{ _('Tila') }}</th><th scope="col">{{ _('Toiminnot') }}</th></tr></thead>
       <tbody>
-        {% for r in scope_reqs %}
+        {% for row in rows %}
         <tr>
-          <td>{{ r.app.name or 'Tuntematon' }}</td>
-          <td>{{ r.user.username or 'Tuntematon' }}</td>
-          <td>{{ ', '.join(r.scopes or []) }}</td>
-          <td>{{ r.reason or '' }}</td>
-          <td>{{ r.requested_at or '' }}</td>
-          <td>{{ r.status or 'pending' }}</td>
-          <td class="text-end">
-            {% if r.status == 'pending' %}
-            <button class="btn btn-sm btn-success act-btn" data-id="{{ r._id }}" data-action="approve">Hyväksy</button>
-            <button class="btn btn-sm btn-outline-danger act-btn" data-id="{{ r._id }}" data-action="deny">Hylkää</button>
-            {% else %}
-            <span class="text-muted">–</span>
-            {% endif %}
-          </td>
+          {% if kind == 'scope' %}<td><strong>{{ row.app.name or _('Tuntematon') }}</strong><div class="admin-field__help"><code>{{ row.app_id or '—' }}</code></div></td>{% endif %}
+          <td><strong>{{ row.user.username or _('Tuntematon') }}</strong><div class="admin-field__help">{{ row.user.email or '—' }}</div>{% if kind == 'access' and row.user_id %}<a href="{{ url_for('admin_dev.user_apps', user_id=row.user_id) }}">{{ _('Avaa sovellukset') }}</a>{% endif %}</td>
+          <td>{% if kind == 'scope' %}<div><strong>{{ _('Pyydetyt scopet') }}:</strong> {{ ', '.join(row.scopes or []) or '—' }}</div>{% endif %}<div class="admin-field__help">{{ row.reason or _('Perustelua ei annettu.') }}</div></td>
+          <td><time>{{ row.requested_at or '—' }}</time></td>
+          <td>{% set row_status = row.status or 'pending' %}{% set status_variant = 'success' if row_status == 'approved' else ('danger' if row_status == 'denied' else 'warning') %}{% set status_label = _('Hyväksytty') if row_status == 'approved' else (_('Hylätty') if row_status == 'denied' else _('Odottaa')) %}<span class="admin-status-badge admin-status-badge--{{ status_variant }}">{{ status_label }}</span></td>
+          <td>{% if (row.status or 'pending') == 'pending' %}<div class="admin-row-actions"><button type="button" class="btn btn-success" data-request-url="{% if kind == 'access' %}{{ url_for('admin_dev.approve_access', req_id=row._id) }}{% else %}{{ url_for('admin_dev.approve_request', req_id=row._id) }}{% endif %}"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ _('Hyväksy') }}</button><button type="button" class="btn btn-outline-danger" data-request-url="{% if kind == 'access' %}{{ url_for('admin_dev.deny_access', req_id=row._id) }}{% else %}{{ url_for('admin_dev.deny_request', req_id=row._id) }}{% endif %}"><i class="fa-solid fa-xmark" aria-hidden="true"></i>{{ _('Hylkää') }}</button></div>{% else %}—{% endif %}</td>
         </tr>
-        {% else %}
-        <tr><td colspan="7" class="admin-empty-state">Ei pyyntöjä.</td></tr>
-        {% endfor %}
+        {% else %}<tr><td colspan="{% if kind == 'scope' %}6{% else %}5{% endif %}"><div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-code-pull-request" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Pyyntöjä ei löytynyt') }}</strong><span>{{ _('Kokeile toista tilasuodatinta.') }}</span></div></td></tr>{% endfor %}
       </tbody>
-    </table>
-  </div>
-</div>
+    </table></div>
+    {{ admin_pagination(current_page, total_pages, per_page=per_page, prev_page=prev_page, next_page=next_page, prev_page_url=prev_page_url, next_page_url=next_page_url, visible_pages=visible_pages, first_page_url=first_page_url, last_page_url=last_page_url, aria_label=_('Kehittäjäpyyntöjen sivutus')) }}
+  </section>
+</section>
 {% endblock %}
 
 {% block scripts %}
+{{ super() }}
 <script>
-  document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.act-token');
-    if (!btn) return;
-    const id = btn.dataset.id;
-    const action = btn.dataset.action;
-    try {
-      const res = await fetch(`/admin/developer/access/${id}/${action}`, { method: 'POST' });
-      const data = await res.json();
-      if (data.status === 'success') {
-        location.reload();
-      } else {
-        alert(data.message || 'Toiminto epäonnistui');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Toiminto epäonnistui');
-    }
-  });
-
-  document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.act-btn');
-    if (!btn) return;
-    const id = btn.dataset.id;
-    const action = btn.dataset.action;
-    try {
-      const res = await fetch(`/admin/developer/requests/${id}/${action}`, { method: 'POST' });
-      const data = await res.json();
-      if (data.status === 'success') {
-        location.reload();
-      } else {
-        alert(data.message || 'Toiminto epäonnistui');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Toiminto epäonnistui');
-    }
-  });
+document.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-request-url]');
+  if (!button || button.disabled) return;
+  button.disabled = true;
+  try {
+    const response = await fetch(button.dataset.requestUrl, { method: 'POST' });
+    const data = await response.json();
+    if (!response.ok || data.status !== 'success') throw new Error(data.message || {{ _('Toiminto epäonnistui.') | tojson }});
+    window.location.reload();
+  } catch (error) {
+    showToast(error.message || {{ _('Toiminto epäonnistui.') | tojson }}, 'danger');
+    button.disabled = false;
+  }
+});
 </script>
 {% endblock %}

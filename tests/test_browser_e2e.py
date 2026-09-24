@@ -1078,6 +1078,56 @@ def test_demo_merge_editor_uses_shared_responsive_form_contract(
 @pytest.mark.e2e
 @pytest.mark.integration
 @pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_developer_collections_use_shared_responsive_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    seeded_data = _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+
+    paths = (
+        "/admin/developer/requests?kind=access",
+        "/admin/developer/requests?kind=scope",
+        f"/admin/developer/user/{seeded_data['developer_id']}/apps",
+    )
+    theme_surfaces = {}
+    for theme in ("light", "dark"):
+        rendered = []
+        for path in paths:
+            browser_page.goto(f"{live_server}{path}", wait_until="domcontentloaded")
+            browser_page.evaluate(
+                """theme => {
+                    document.documentElement.classList.toggle('dark', theme === 'dark');
+                    document.documentElement.classList.toggle('light', theme === 'light');
+                    document.documentElement.setAttribute('data-bs-theme', theme);
+                }""",
+                theme,
+            )
+            browser_page.locator(".admin-page-hero").wait_for(state="visible")
+            assert browser_page.locator(".admin-data-view").is_visible()
+            assert browser_page.locator(".admin-pagination").is_visible()
+            assert browser_page.evaluate(
+                "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+            )
+            rendered.append(
+                browser_page.locator(".admin-data-view").evaluate(
+                    "element => getComputedStyle(element).backgroundColor"
+                )
+            )
+        assert len(set(rendered)) == 1
+        theme_surfaces[theme] = rendered[0]
+
+    assert theme_surfaces["light"] != theme_surfaces["dark"]
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
 def test_demo_audit_views_use_shared_responsive_theme_contract(
     app,
     db,

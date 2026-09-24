@@ -3683,11 +3683,14 @@ def _demo_scope_query_for_permission(permission_name: str) -> dict:
     if "global" in permission_scopes:
         return {}
 
-    organization_ids = [
-        ObjectId(scope)
-        for scope in permission_scopes
-        if str(scope) != "global" and ObjectId.is_valid(str(scope))
-    ]
+    organization_identifiers = []
+    for scope in permission_scopes:
+        scope_value = str(scope)
+        if scope_value == "global" or not ObjectId.is_valid(scope_value):
+            continue
+        for identifier in (ObjectId(scope_value), scope_value):
+            if identifier not in organization_identifiers:
+                organization_identifiers.append(identifier)
     city_keys = (
         current_user.scoped_city_keys_for(permission_name)
         if hasattr(current_user, "scoped_city_keys_for")
@@ -3695,12 +3698,27 @@ def _demo_scope_query_for_permission(permission_name: str) -> dict:
     )
     city_names = [city for city in CITY_LIST if normalize_city_key(city) in city_keys]
 
-    permission_filters = [{"editors": current_user.id}]
-    if organization_ids:
+    editor_identifiers = []
+    for user_identifier in (
+        getattr(current_user, "id", None),
+        getattr(current_user, "_id", None),
+    ):
+        if user_identifier is None:
+            continue
+        for identifier in (user_identifier, str(user_identifier)):
+            if identifier not in editor_identifiers:
+                editor_identifiers.append(identifier)
+
+    permission_filters = []
+    if editor_identifiers:
+        permission_filters.append({"editors": {"$in": editor_identifiers}})
+    if organization_identifiers:
         permission_filters.append(
             {
                 "organizers": {
-                    "$elemMatch": {"organization_id": {"$in": organization_ids}}
+                    "$elemMatch": {
+                        "organization_id": {"$in": organization_identifiers}
+                    }
                 }
             }
         )
@@ -3713,6 +3731,8 @@ def _demo_scope_query_for_permission(permission_name: str) -> dict:
                 ]
             }
         )
+    if not permission_filters:
+        return {"_id": {"$exists": False}}
     return {"$or": permission_filters}
 
 

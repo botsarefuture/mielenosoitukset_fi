@@ -9,8 +9,8 @@
     _('Audit-loki:') ~ ' ' ~ demo.title,
     demo.date ~ ' · ' ~ demo.city,
     _('Mielenosoitukset'),
-    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (demo.title, url_for('admin_demo.edit_demo', demo_id=demo._id)), (_('Audit-loki'), none)],
-    back_url=url_for('admin_demo.edit_demo', demo_id=demo._id),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (demo.title, url_for('admin_demo.demo_command_center', demo_id=demo._id)), (_('Audit-loki'), none)],
+    back_url=url_for('admin_demo.demo_command_center', demo_id=demo._id),
     back_label=_('Takaisin mielenosoitukseen'),
     metric_value=total_count,
     metric_label=_('audit-merkintää')

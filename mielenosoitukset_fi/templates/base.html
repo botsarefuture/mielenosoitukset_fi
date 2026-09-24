@@ -1,10 +1,29 @@
 <!DOCTYPE html>
 {% set current_locale = session.get('locale') %}
-<html lang="{{ current_locale if current_locale in get_supported_locales() else 'fi' }}" class="dark">
+<html lang="{{ current_locale if current_locale in get_supported_locales() else 'fi' }}">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Apply the theme before first paint to avoid a dark/light flash.
+       Mirrors static/js/theme.js (saved pref -> cached user pref -> system). -->
+  <script>
+    (function () {
+      let theme = null;
+      try { theme = localStorage.getItem('theme'); } catch (e) {}
+      if (!theme) {
+        try {
+          const user = JSON.parse(localStorage.getItem('current_user') || 'null');
+          if (user && typeof user.dark_mode === 'boolean') theme = user.dark_mode ? 'dark' : 'light';
+        } catch (e) {}
+      }
+      if (!theme) theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      const root = document.documentElement;
+      root.classList.toggle('dark', theme === 'dark');
+      root.classList.toggle('light', theme !== 'dark');
+    })();
+  </script>
 
   <!-- Primary Meta Tags -->
   <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
@@ -99,6 +118,7 @@
   <noscript><link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css"></noscript>
 
   {% block styles %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css', v='20260924-public-chrome-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/public_hero.css', v='20260907-centered-1') }}">
 
   <!-- Scripts moved to the end of the document and loaded with defer/async where appropriate to avoid blocking render -->
@@ -439,7 +459,7 @@ body.banner-closed {
       <div class="flash-content">
         <div class="flash-text">{{ message }}</div>
       </div>
-      <button class="flash-close" onclick="closeFlashMessage(this)" aria-label="Close">
+      <button class="flash-close" type="button" aria-label="{{ _('Sulje ilmoitus') }}">
         <i class="fa-solid fa-xmark"></i>
       </button>
       <div class="flash-progress"></div>
@@ -448,309 +468,6 @@ body.banner-closed {
   </div>
   {% endif %}
   {% endwith %}
-
-  <!-- Flash Messages Styles -->
-  <style>
-    :root {
-      --flash-success-bg: light-dark(rgba(22, 163, 74, 0.1), rgba(34, 197, 94, 0.15));
-      --flash-success-border: light-dark(rgba(22, 163, 74, 0.2), rgba(34, 197, 94, 0.3));
-      --flash-success-text: light-dark(#15803d, #4ade80);
-      --flash-success-icon: light-dark(#16a34a, #22c55e);
-
-      --flash-error-bg: light-dark(rgba(220, 38, 38, 0.1), rgba(239, 68, 68, 0.15));
-      --flash-error-border: light-dark(rgba(220, 38, 38, 0.2), rgba(239, 68, 68, 0.3));
-      --flash-error-text: light-dark(#991b1b, #fca5a5);
-      --flash-error-icon: light-dark(#dc2626, #ef4444);
-
-      --flash-warning-bg: light-dark(rgba(245, 158, 11, 0.1), rgba(251, 146, 60, 0.15));
-      --flash-warning-border: light-dark(rgba(245, 158, 11, 0.2), rgba(251, 146, 60, 0.3));
-      --flash-warning-text: light-dark(#92400e, #fbbf24);
-      --flash-warning-icon: light-dark(#f59e0b, #fb923c);
-
-      --flash-info-bg: light-dark(rgba(6, 182, 212, 0.1), rgba(34, 211, 238, 0.15));
-      --flash-info-border: light-dark(rgba(6, 182, 212, 0.2), rgba(34, 211, 238, 0.3));
-      --flash-info-text: light-dark(#0e7490, #67e8f9);
-      --flash-info-icon: light-dark(#06b6d4, #22d3ee);
-    }
-
-    .flash-messages {
-      position: fixed;
-      top: auto;
-      right: 20px;
-      z-index: 10001;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      max-width: 420px;
-      /*width: calc(100% - 40px);*/
-      width: fit-content;
-      pointer-events: none;
-      margin-top: 20px;
-    }
-
-    .flash-message {
-      position: relative;
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-      padding: 1.25rem 1.5rem;
-      background: var(--color-card-bg, light-dark(#ffffff, #1a1d23));
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
-      border: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
-      pointer-events: auto;
-      overflow: hidden;
-      animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .flash-message::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
-      background: var(--flash-accent);
-    }
-
-    /* Success */
-    .flash-success {
-      --flash-accent: var(--flash-success-icon);
-      background: var(--flash-success-bg);
-      border-color: var(--flash-success-border);
-    }
-
-    .flash-success .flash-icon {
-      color: var(--flash-success-icon);
-    }
-
-    .flash-success .flash-text {
-      color: var(--flash-success-text);
-    }
-
-    .flash-success .flash-progress {
-      background: var(--flash-success-icon);
-    }
-
-    /* Error/Danger */
-    .flash-error,
-    .flash-danger {
-      --flash-accent: var(--flash-error-icon);
-      background: var(--flash-error-bg);
-      border-color: var(--flash-error-border);
-    }
-
-    .flash-error .flash-icon,
-    .flash-danger .flash-icon {
-      color: var(--flash-error-icon);
-    }
-
-    .flash-error .flash-text,
-    .flash-danger .flash-text {
-      color: var(--flash-error-text);
-    }
-
-    .flash-error .flash-progress,
-    .flash-danger .flash-progress {
-      background: var(--flash-error-icon);
-    }
-
-    /* Warning */
-    .flash-warning {
-      --flash-accent: var(--flash-warning-icon);
-      background: var(--flash-warning-bg);
-      border-color: var(--flash-warning-border);
-    }
-
-    .flash-warning .flash-icon {
-      color: var(--flash-warning-icon);
-    }
-
-    .flash-warning .flash-text {
-      color: var(--flash-warning-text);
-    }
-
-    .flash-warning .flash-progress {
-      background: var(--flash-warning-icon);
-    }
-
-    /* Info */
-    .flash-info {
-      --flash-accent: var(--flash-info-icon);
-      background: var(--flash-info-bg);
-      border-color: var(--flash-info-border);
-    }
-
-    .flash-info .flash-icon {
-      color: var(--flash-info-icon);
-    }
-
-    .flash-info .flash-text {
-      color: var(--flash-info-text);
-    }
-
-    .flash-info .flash-progress {
-      background: var(--flash-info-icon);
-    }
-
-    /* Icon */
-    .flash-icon {
-      flex-shrink: 0;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      border-radius: 50%;
-      background: var(--color-card-bg, light-dark(#ffffff, #1a1d23));
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Content */
-    .flash-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      padding-top: 0.25rem;
-    }
-
-    .flash-text {
-      font-size: 0.95rem;
-      line-height: 1.5;
-      font-weight: 500;
-    }
-
-    /* Close Button */
-    .flash-close {
-      flex-shrink: 0;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--color-bg, light-dark(#f8fafc, #0f1419));
-      border: none;
-      border-radius: 50%;
-      color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      padding: 0;
-      font-size: 1rem;
-    }
-
-    .flash-close:hover {
-      background: var(--flash-accent);
-      color: white;
-      transform: rotate(90deg);
-    }
-
-    /* Progress Bar */
-    .flash-progress {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      height: 3px;
-      width: 100%;
-      background: var(--flash-accent);
-      transform-origin: left;
-      animation: shrink 5s linear forwards;
-    }
-
-    /* Animations */
-    @keyframes slideInRight {
-      from {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    @keyframes slideOutRight {
-      from {
-        transform: translateX(0);
-        opacity: 1;
-      }
-
-      to {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-    }
-
-    @keyframes shrink {
-      from {
-        transform: scaleX(1);
-      }
-
-      to {
-        transform: scaleX(0);
-      }
-    }
-
-    .flash-message.removing {
-      animation: slideOutRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 640px) {
-      .flash-messages {
-        top: 60px;
-        right: 10px;
-        left: 10px;
-        width: auto;
-        max-width: none;
-      }
-
-      .flash-message {
-        padding: 1rem 1.25rem;
-        font-size: 0.9rem;
-      }
-
-      .flash-icon {
-        width: 36px;
-        height: 36px;
-        font-size: 1.1rem;
-      }
-
-      .flash-close {
-        width: 28px;
-        height: 28px;
-        font-size: 0.9rem;
-      }
-    }
-
-    /* Accessibility */
-    @media (prefers-reduced-motion: reduce) {
-
-      .flash-message,
-      .flash-message.removing {
-        animation: none;
-      }
-
-      .flash-progress {
-        animation: none;
-      }
-    }
-
-    /* Focus Styles */
-    .flash-close:focus {
-      outline: 2px solid var(--flash-accent);
-      outline-offset: 2px;
-    }
-
-    /* High Contrast Mode */
-    @media (prefers-contrast: high) {
-      .flash-message {
-        border-width: 2px;
-      }
-    }
-  </style>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -906,12 +623,25 @@ body.banner-closed {
 
       </ul>
       <!-- Authentication Links -->
+<<<<<<< HEAD
       <ul class="footer-links auth-buttons">
         {% if not current_user.is_authenticated %}
         <li><a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
         <li><a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a></li>
         {% else %}
         <li><a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a></li>
+=======
+      <ul class="footer-links">
+        {% if not current_user.is_authenticated %}
+        <li class="auth-buttons">
+          <a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a>
+          <a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a>
+        </li>
+        {% else %}
+        <li class="auth-buttons">
+          <a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a>
+        </li>
+>>>>>>> d6b7c91 (Tidy public page chrome, theme, and flash feedback)
         {% endif %}
       </ul>
 
@@ -920,19 +650,14 @@ body.banner-closed {
 
   <!-- Scripts -->
   <script>
-    document.querySelector(".dropdown-toggle").addEventListener("click", function (event) {
-      event.preventDefault();
-      const dropdownMenu = this.nextElementSibling;
-      const isOpen = dropdownMenu.classList.toggle("show");
-      this.setAttribute("aria-expanded", isOpen);
-    });
-
-    window.addEventListener("click", function (event) {
-      const dropdowns = document.querySelectorAll(".dropdown-menu");
-      dropdowns.forEach(function (dropdown) {
-        if (!dropdown.parentElement.contains(event.target)) {
-          dropdown.classList.remove("show");
-        }
+    // Generic dropdown helper for any template that uses `.dropdown-toggle`.
+    document.querySelectorAll(".dropdown-toggle").forEach(function (toggle) {
+      toggle.addEventListener("click", function (event) {
+        event.preventDefault();
+        const dropdownMenu = toggle.nextElementSibling;
+        if (!dropdownMenu || !dropdownMenu.classList) return;
+        const isOpen = dropdownMenu.classList.toggle("show");
+        toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
       });
     });
   </script>
@@ -944,27 +669,68 @@ body.banner-closed {
      * Parameters
      * ----------
      * category : str
-     *     The flash message category.
+     *     The flash message category (success, error, warning, info, ...).
      * message : str
      *     The message to display.
      */
     function displayFlashMessage(category, message) {
-      const flashMessages = document.getElementById("flash-messages");
-      const messageList = document.getElementById("flash-message-list");
+      let container = document.getElementById("flash-messages");
+      if (!container) {
+        container = document.createElement("div");
+        container.id = "flash-messages";
+        container.className = "flash-messages";
+        document.body.appendChild(container);
+      }
 
-      const newMessage = document.createElement("li");
-      newMessage.className = `flash-${category}`;
-      newMessage.textContent = message;
+      const messageEl = document.createElement("div");
+      messageEl.className = `flash-message flash-${category}`;
+      messageEl.setAttribute("data-category", category);
 
-      messageList.appendChild(newMessage);
-      flashMessages.style.display = "block";
+      const icon = document.createElement("div");
+      icon.className = "flash-icon";
+      const iconEl = document.createElement("i");
+      iconEl.setAttribute("aria-hidden", "true");
+      const iconMap = {
+        success: "fa-circle-check",
+        error: "fa-circle-exclamation",
+        danger: "fa-circle-exclamation",
+        warning: "fa-triangle-exclamation",
+        info: "fa-circle-info",
+      };
+      iconEl.className = `fa-solid ${iconMap[category] || "fa-bell"}`;
+      icon.appendChild(iconEl);
 
-      setTimeout(() => {
-        newMessage.remove();
-        if (messageList.childElementCount === 0) {
-          flashMessages.style.display = "none";
-        }
-      }, 10000);
+      const content = document.createElement("div");
+      content.className = "flash-content";
+      const text = document.createElement("div");
+      text.className = "flash-text";
+      text.textContent = message;
+      content.appendChild(text);
+
+      const progress = document.createElement("div");
+      progress.className = "flash-progress";
+
+      messageEl.appendChild(icon);
+      messageEl.appendChild(content);
+      messageEl.appendChild(progress);
+      container.appendChild(messageEl);
+      container.style.display = "flex";
+
+      const remove = () => {
+        if (messageEl.classList.contains("removing")) return;
+        messageEl.classList.add("removing");
+        setTimeout(() => {
+          messageEl.remove();
+          if (container.querySelectorAll(".flash-message").length === 0) {
+            container.remove();
+          }
+        }, 400);
+      };
+
+      setTimeout(remove, 10000);
+      messageEl.addEventListener("click", (event) => {
+        if (event.target.closest(".flash-close")) remove();
+      });
     }
   </script>
 

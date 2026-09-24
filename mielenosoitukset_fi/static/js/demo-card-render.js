@@ -188,11 +188,12 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
   const loadMoreBtn = document.getElementById("load-more-btn");
   const demosGrid = document.getElementById("demos-grid");
   try {
-    // Show loading state
-    if (loadMoreBtn) {
+    // The shared controller owns button state when a page opts into it.
+    const paginationController = window.userPaginationController;
+    if (loadMoreBtn && !paginationController) {
       loadMoreBtn.disabled = true;
-      loadMoreBtn.textContent = `${t('loading', 'Ladataan mielenosoituksia...')}`; // temporary text
-      loadMoreBtn.classList.add('loading');   // optional CSS spinner class
+      loadMoreBtn.textContent = `${t('loading', 'Ladataan mielenosoituksia...')}`;
+      loadMoreBtn.classList.add('loading');
     }
     // Build query params
     const params = new URLSearchParams({
@@ -238,26 +239,34 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
 
     // handle "Load more" button
     if (currentPage < totalPages) {
-      if (loadMoreBtn) {
+      if (loadMoreBtn && !window.userPaginationController) {
         loadMoreBtn.style.display = "block";
         loadMoreBtn.disabled = false;
         loadMoreBtn.textContent = t('loadMore', 'Lataa lisää');
         loadMoreBtn.onclick = () => loadDemos(currentPage + 1, true, extraParams);
       }
-    } else {
-      if (loadMoreBtn) loadMoreBtn.style.display = "none";
+    } else if (loadMoreBtn && !window.userPaginationController) {
+      loadMoreBtn.style.display = "none";
     }
+
+    if (window.userPaginationController) {
+      window.userPaginationController.setState(currentPage, totalPages);
+    }
+
+    return { page: currentPage, total_pages: totalPages };
 
   } catch (err) {
     console.error("Failed to load demos:", err);
-    if (loadMoreBtn) {
+    if (loadMoreBtn && !window.userPaginationController) {
       loadMoreBtn.disabled = false;
       loadMoreBtn.textContent = t('loadMore', 'Lataa lisää');
     }
   }
 
   finally {
-    loadMoreBtn.classList.remove("loading");
+    if (loadMoreBtn && !window.userPaginationController) {
+      loadMoreBtn.classList.remove("loading");
+    }
   }
 }
 

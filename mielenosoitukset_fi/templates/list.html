@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from '_macros/_hero.html' import hero_section %}
 
 {% block title %} {{ _('Tulevat mielenosoitukset') }} {% endblock %}
 
@@ -23,14 +24,13 @@
 
 {% include "_modals/_demo-card-template.html" %}
 
-<section class="hero site-hero">
-  <!-- lets add hero here-->
-  <div class="hero-content">
-    <p class="site-hero__eyebrow"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i>{{ _('Tapahtumat') }}</p>
-    <h1>{{ _('Tulevat mielenosoitukset') }}</h1>
-    <p>{{ _('Löydä ja osallistu mielenosoituksiin ympäri Suomen. Selaa tulevia tapahtumia, etsi sijainnin tai aiheen mukaan ja vaikuta yhdessä muiden kanssa.') }}</p>
-  </div>
-</section>
+{{ hero_section(
+  kind='site',
+  eyebrow=_('Tapahtumat'),
+  title=_('Tulevat mielenosoitukset'),
+  text=_('Löydä ja osallistu mielenosoituksiin ympäri Suomen. Selaa tulevia tapahtumia, etsi sijainnin tai aiheen mukaan ja vaikuta yhdessä muiden kanssa.'),
+  icon='fa-solid fa-calendar-days'
+) }}
 <section class="main-content">
 
   <form method="GET" action="#" class="search-form" id="search-form">
@@ -57,7 +57,7 @@
   <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>{{ _('Kaikki mielenosoitukset') }}</h2>
 
   <div id="demos-grid" class="demos-grid"></div>
-  <button id="load-more-btn" class="button button-secondary" style="display:none;">
+  <button id="load-more-btn" class="button button-secondary load-more" hidden>
     {{ _('Näytä lisää') }}
   </button>
 
@@ -88,16 +88,20 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadDemosWrapper(page = 1, append = false) {
     if (!append) {
       grid.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>${window.demoCardI18n.loading}</p></div>`;
-    } else {
-      loadMoreBtn.classList.add('loading');
-      loadMoreBtn.disabled = true;
     }
 
-    await loadDemos(page, append, extraParams);
-
-    loadMoreBtn.classList.remove('loading');
-    loadMoreBtn.disabled = false;
+    const result = await loadDemos(page, append, extraParams);
+    if (result) {
+      window.userPaginationController?.setState(result.page, result.total_pages);
+    }
   }
+
+  window.userPaginationController = UserPagination.createLoadMoreController({
+    button: loadMoreBtn,
+    loadPage: page => loadDemosWrapper(page, true),
+    initialLabel: '{{ _('Näytä lisää') }}',
+    loadingLabel: '{{ _('Ladataan...') }}',
+  });
 
   // Initial load
   loadDemosWrapper();
@@ -133,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/user-pagination.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>

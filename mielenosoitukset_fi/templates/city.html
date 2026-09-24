@@ -1,4 +1,5 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
+{% from '_macros/_hero.html' import hero_section %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -234,18 +235,13 @@ document.addEventListener("DOMContentLoaded", function() {
 {% block content %}
 {% include "_modals/_demo-card-template.html" %}
 <div class="container-main-content">
-  <div class="page-banner">
-    <div class="page-banner-label">
-      <i class="fa-solid fa-city"></i>
-      {{ _('Kaupunki') }}
-    </div>
-    <div class="page-banner-title">{{ city_name }}</div>
-    <div class="page-banner-text">
-      {{ _('Näet tässä vain mielenosoitukset, jotka järjestetään kaupungissa') }}
-      <span style="font-weight:700;">{{ city_name }}</span>.<br>
-      {{ _('Voit hakea, suodattaa ja selata vain tämän kaupungin tapahtumia. Jos haluat nähdä kaikki mielenosoitukset, palaa yleisnäkymään.') }}
-    </div>
-  </div>
+  {{ hero_section(
+    kind='page',
+    eyebrow=_('Kaupunki'),
+    title=city_name,
+    text=_('Näet tässä vain mielenosoitukset, jotka järjestetään kaupungissa') ~ ' ' ~ city_name ~ '. ' ~ _('Voit hakea, suodattaa ja selata vain tämän kaupungin tapahtumia. Jos haluat nähdä kaikki mielenosoitukset, palaa yleisnäkymään.'),
+    icon='fa-solid fa-city'
+  ) }}
   <h1>
     {{ _('Tulevat mielenosoitukset kaupungissa: ') }} {{ city_name }}
   </h1>

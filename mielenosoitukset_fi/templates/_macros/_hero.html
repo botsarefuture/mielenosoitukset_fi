@@ -1,0 +1,27 @@
+{# Shared public page headers. Keep site heroes and compact listing banners on one contract. #}
+{% macro hero_section(kind='site', eyebrow='', title='', text='', icon='fa-solid fa-calendar-days', cover_img=none, cover_alt='') %}
+  {% if kind == 'page' %}
+    {% if cover_img %}
+      <div class="page-banner-cover">
+        <img src="{{ cover_img }}" alt="{{ cover_alt or _('Kansikuva') }}">
+      </div>
+    {% endif %}
+    <div class="page-banner">
+      <div class="page-banner-label">
+        <i class="{{ icon }}" aria-hidden="true"></i> {{ eyebrow }}
+      </div>
+      <div class="page-banner-title">{{ title }}</div>
+      <div class="page-banner-text">{{ text }}</div>
+    </div>
+  {% else %}
+    <section class="hero site-hero">
+      <div class="hero-content">
+        {% if eyebrow %}
+          <p class="site-hero__eyebrow"><i class="{{ icon }}" aria-hidden="true"></i>{{ eyebrow }}</p>
+        {% endif %}
+        <h1>{{ title }}</h1>
+        {% if text %}<p>{{ text }}</p>{% endif %}
+      </div>
+    </section>
+  {% endif %}
+{% endmacro %}

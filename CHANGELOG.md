@@ -18,6 +18,7 @@
 * **Facebook event descriptions are no longer truncated** — the 50k character safety cap has been removed; full descriptions are preserved (with only script/style sanitization).
 
 ### Fixed
+* The demonstration-list page is now served from its canonical file name: the live template was `templates/list copy.html` (a stray copy left by an editor), while the equally-named `list.html` next to it was dead and no longer rendered anywhere. The live template is now `templates/list.html`, the leftover is kept as `templates/list_legacy.html`, and the route (plus its docstring) points to the real file so editors and translators stop editing the wrong template.
 * Public pages now expose a valid document language and correctly structured footer lists, so screen readers announce page language and navigation consistently. API documentation code blocks are keyboard-focusable and its inline links are visibly underlined with sufficient contrast.
 * Background-job detail filters now keep an off-page selected run visible while paginating, and the redesigned view's English and Swedish interface copy is included in the compiled translation catalogs.
 * The year-at-a-glance calendar's mobile stats no longer claim "0 Tapahtumaa": the total was accumulated with Jinja's `{% set %}` inside a `for` loop, which does not leak out of the loop, so the counter silently reset to zero. It is now summed from per-month counts.

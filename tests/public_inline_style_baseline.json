@@ -1,0 +1,436 @@
+{
+  "excluded_top_level": [
+    "admin",
+    "admin_V2",
+    "developer",
+    "emails"
+  ],
+  "policy": "exact-reviewed-content-hashes",
+  "style_blocks": {
+    "_modals/report-error-modal.html": [
+      "52434f257b661355"
+    ],
+    "alarm.html": [
+      "8fbc9e161276154f"
+    ],
+    "api_docs.html": [
+      "141a2a17766e8893"
+    ],
+    "base.html": [
+      "3ee3299bb7a96814",
+      "4bad96e590558014",
+      "ca38077fb9f65197"
+    ],
+    "cities.html": [
+      "2ef8ebe23011ed29"
+    ],
+    "contact.html": [
+      "25d8fe68e9e7a0cd"
+    ],
+    "cropper-modal.html": [
+      "1e5e9517eda7d54d"
+    ],
+    "demo_views/calendar_grid.html": [
+      "1fb1f447a3d378ce",
+      "9f3b2cc67607c9e0"
+    ],
+    "demo_views/calendar_grid_old.html": [
+      "3fa5b6850eb5ac6a",
+      "ea168a5ec816a61a"
+    ],
+    "demo_views/calendar_year.html": [
+      "dc01ca48de0aec45"
+    ],
+    "detail.html": [
+      "101100cba172bfbd",
+      "5612e9af9d7f427f",
+      "8ac4688b82d08fc3"
+    ],
+    "errors/400.html": [
+      "4922ad7c1d7fe743"
+    ],
+    "errors/401.html": [
+      "4922ad7c1d7fe743"
+    ],
+    "errors/403.html": [
+      "4922ad7c1d7fe743"
+    ],
+    "errors/404.html": [
+      "4922ad7c1d7fe743"
+    ],
+    "errors/410.html": [
+      "4922ad7c1d7fe743"
+    ],
+    "errors/429.html": [
+      "4922ad7c1d7fe743"
+    ],
+    "errors/500.html": [
+      "4922ad7c1d7fe743"
+    ],
+    "header.html": [
+      "e6881b3c3ed0662a",
+      "f734164a40072d9b"
+    ],
+    "heavy.html": [
+      "ff0c428cadb71597"
+    ],
+    "index.html": [
+      "37dc13eea8b30a4b"
+    ],
+    "info.html": [
+      "fe00148d8b421b03"
+    ],
+    "kampanja/confirm_success.html": [
+      "8de69eb7dfc89015"
+    ],
+    "kampanja/index.html": [
+      "b72ee5dd6bb68ef7",
+      "efb7e9b7f38a6428"
+    ],
+    "list_legacy.html": [
+      "cee4037077acd701"
+    ],
+    "macros.html": [
+      "3dce4a74d1d6b1e1"
+    ],
+    "manual_base.html": [
+      "766aa1d32ab72d1e"
+    ],
+    "oauth/mcp_consent.html": [
+      "9440abecf9a425e1"
+    ],
+    "ohjeet/index.html": [
+      "d3f950af11ee6ad1"
+    ],
+    "organizations/details.html": [
+      "24136874b88a5813",
+      "796a3dcc712d6290",
+      "a6d1ad412ea888c6",
+      "e334e55e40cec6fd"
+    ],
+    "organizations/fill_info.html": [
+      "fbcd3137f6a97290"
+    ],
+    "paikkakunta-dropdown.html": [
+      "40aaa099c391a953"
+    ],
+    "preview.html": [
+      "43a83ace52d2c22c"
+    ],
+    "pride-nakyvaksi/index.html": [
+      "232fa411d63a1df7"
+    ],
+    "siblings.html": [
+      "a6653659259265f2"
+    ],
+    "status.html": [
+      "22bab53a5bff36df"
+    ],
+    "submit.html": [
+      "12b6769f4eface8e",
+      "67d616d3225d2fb8",
+      "7a4bf6fb6eed86c8",
+      "bdefd3c936ed8358",
+      "dc7a14570f46438b"
+    ],
+    "suggest_change.html": [
+      "6d6b70688716521b"
+    ],
+    "today_demos.html": [
+      "9892f6a5e110ebfa"
+    ],
+    "toolbar.html": [
+      "829e920422d74f8b"
+    ],
+    "upcoming/translations.html": [
+      "8b99bcd9abc5cace"
+    ],
+    "update_notice.html": [
+      "9a51ec09b73cdb78"
+    ],
+    "users/auth/password_reset.html": [
+      "6812cd3d4d59c587"
+    ],
+    "users/auth/register.html": [
+      "ae7f10ad42d1b419"
+    ],
+    "users/auth/register_next_steps.html": [
+      "b1e2fc75dd2c9bf3"
+    ],
+    "users/auth/settings.html": [
+      "cab05de1883fe94d"
+    ],
+    "users/auth/token_ui.html": [
+      "d9116febcfdea2a2"
+    ],
+    "users/profile/profile copy.html": [
+      "baf17a084a0adc7a"
+    ],
+    "users/profile/profile.html": [
+      "b32e7f2781009c57"
+    ]
+  },
+  "style_attributes": {
+    "_modals/_demo-card-template.html": [
+      "6e22c58a7a6a60cb",
+      "6e22c58a7a6a60cb"
+    ],
+    "_modals/report-error-modal.html": [
+      "ca702cd23b3b1410",
+      "d0466aa33fa8061c",
+      "d0466aa33fa8061c"
+    ],
+    "base.html": [
+      "b7e5d51828b3cd3d"
+    ],
+    "cities.html": [
+      "86724d88b8424a8b"
+    ],
+    "city.html": [
+      "1e4a9cdd73e35cc4",
+      "6e22c58a7a6a60cb",
+      "83ac1ceef76e7756"
+    ],
+    "contact.html": [
+      "4f8dbc76c79461a7",
+      "8c6874961e1d0717"
+    ],
+    "cropper-modal.html": [
+      "21dbca0c08716779",
+      "45286e50c6246783",
+      "98fea27bf8f06950",
+      "9ca3585307933be1",
+      "9f97649eb6e5065b",
+      "af1048ecd45e0870",
+      "bc26c0e30f26238d",
+      "c548e179169161a1"
+    ],
+    "demo_views/calendar_grid.html": [
+      "6e22c58a7a6a60cb",
+      "bdd1dcb76e67b308",
+      "bdd1dcb76e67b308"
+    ],
+    "demo_views/calendar_grid_old.html": [
+      "b17a8da8811e8195",
+      "bdd1dcb76e67b308"
+    ],
+    "demo_views/calendar_year.html": [
+      "065e568fb8f3e895",
+      "072ce4f6c2409470",
+      "6ce83b17e1bfca20",
+      "905008530ca922dd"
+    ],
+    "detail.html": [
+      "0f6ba93d4aac2331",
+      "1f73c2556c41ff70",
+      "1fca3931c057c583",
+      "40d3e793a07fd293",
+      "43a3262ddd20a3fe",
+      "43a3262ddd20a3fe",
+      "4793c75afe1c53c6",
+      "564fd1833f74015b",
+      "60b67b7075158a86",
+      "6dac03704a44d4b3",
+      "97bd7f41faf82379",
+      "a1a7dcdf1e0e3861",
+      "ab4a191d17458d82",
+      "adcb5cad86b797f8",
+      "ed08e28b319a215f",
+      "f0488d2e507a58da",
+      "f76dcd1e385122be"
+    ],
+    "errors/410.html": [
+      "57af2812aaa97702"
+    ],
+    "header.html": [
+      "060c74544a6fce20",
+      "0c09c5ad1d3296f0",
+      "6e22c58a7a6a60cb",
+      "6e22c58a7a6a60cb",
+      "8a112e11be5d589b"
+    ],
+    "heavy.html": [
+      "5a2dfef236e7d76b",
+      "5a2dfef236e7d76b",
+      "8c1ca60f9f4e9ac3",
+      "8c1ca60f9f4e9ac3",
+      "d0466aa33fa8061c"
+    ],
+    "index.html": [
+      "390316f315d83783",
+      "390316f315d83783"
+    ],
+    "info.html": [
+      "4f8dbc76c79461a7",
+      "f8f4fe46707cce61",
+      "f8f4fe46707cce61",
+      "fe9e899c0995cca9"
+    ],
+    "kampanja/confirm_success.html": [
+      "0011ec2529ce8bb0",
+      "43caf93229ff5c38"
+    ],
+    "kampanja/index.html": [
+      "06e794adae86502c",
+      "06e794adae86502c",
+      "452f29d613bfaa10",
+      "4f8dbc76c79461a7",
+      "525d27764727442d",
+      "5a53db362e3584e9",
+      "a6dcfd4e8b8a0f0b",
+      "cc090cf42e591658",
+      "cfed67a2d705039f"
+    ],
+    "list.html": [
+      "d0466aa33fa8061c"
+    ],
+    "list_legacy.html": [
+      "1e4a9cdd73e35cc4",
+      "436bb87e1e3861a1",
+      "6e22c58a7a6a60cb",
+      "83ac1ceef76e7756"
+    ],
+    "macros.html": [
+      "2afd3ac81e626e66",
+      "a0297d7a5058728f"
+    ],
+    "macros_new.html": [
+      "00ab30acc1f28ddd",
+      "0e2eba3a840b37e9",
+      "20ae1636133892b2",
+      "20ae1636133892b2",
+      "2a49463c1228e26b",
+      "2aedf6cde33441c7",
+      "2aedf6cde33441c7",
+      "537ac726bd723eb3",
+      "89549d1a33cbf98a",
+      "9cfb0f49efa64af8",
+      "ab9ae682dd2a9d2e",
+      "df3c62957a034e5c",
+      "f98591319f3c8ccc",
+      "f98591319f3c8ccc",
+      "f98591319f3c8ccc",
+      "fa7bfc03d46ea54f"
+    ],
+    "organizations/details.html": [
+      "68227a9129902957",
+      "6e22c58a7a6a60cb",
+      "d0466aa33fa8061c"
+    ],
+    "pride-nakyvaksi/index.html": [
+      "1cd8065303a6f897",
+      "2efec56b4b03dcc1",
+      "726cf47beb6feb68",
+      "8b6b19cac26c2ba6",
+      "8b6b19cac26c2ba6",
+      "b2d337164b95faf2",
+      "c51ec35a4e6a31e3",
+      "d0466aa33fa8061c",
+      "dfe1a7ab43510c8a",
+      "f8f4fe46707cce61"
+    ],
+    "siblings.html": [
+      "4f8dbc76c79461a7",
+      "d0466aa33fa8061c",
+      "d0466aa33fa8061c",
+      "f8f4fe46707cce61",
+      "fe9e899c0995cca9"
+    ],
+    "submit.html": [
+      "00e08c616d29b396",
+      "01f0880b4edf1f86",
+      "04fcfc1cec4f4dbf",
+      "0d5ff492ea5c1365",
+      "11f3c1239642bce8",
+      "11f3c1239642bce8",
+      "126244f1351e828f",
+      "126244f1351e828f",
+      "126244f1351e828f",
+      "13ceadab7822fa81",
+      "145c950d976b2585",
+      "196dcd4361d6ea89",
+      "1cd896a57696b762",
+      "1d6d3f1ab906f7cd",
+      "2493d399e63282b3",
+      "2d91e78a1bdf675e",
+      "2e7f7fe2c0104853",
+      "396b14d03d0aa717",
+      "412f45944044f1d8",
+      "455c183cb6c0e7d4",
+      "4f4fe0792744526b",
+      "4f8dbc76c79461a7",
+      "4fa00029d5b13baa",
+      "54f843b630e5b29a",
+      "54f843b630e5b29a",
+      "569b94b779cd968a",
+      "6e22c58a7a6a60cb",
+      "77cdc91c24ecfbe3",
+      "81b5de1857c19677",
+      "838560719f622364",
+      "8b6b19cac26c2ba6",
+      "9a7472a9ec3ae0b7",
+      "a0148a4721f301e6",
+      "a56e441bda85e11c",
+      "a75599e441dc8ef1",
+      "ad9eeb778ed3513f",
+      "b03a2e2df4c8b1dd",
+      "b391f1a0d62fa164",
+      "b8d1ed2fb7973ecb",
+      "b8f1b3821c1b82ae",
+      "c548e179169161a1",
+      "cac7d8a0b29749c1",
+      "cdcaf080bce359a7",
+      "ce02897c651f5b1f",
+      "e324e1ae09581056",
+      "e8e2de95277c394f"
+    ],
+    "tag_list.html": [
+      "d0466aa33fa8061c"
+    ],
+    "upcoming/translations.html": [
+      "02419cffd4a239de",
+      "7ebdb68f73a9d518",
+      "8de77ed0af454b0d",
+      "9a7472a9ec3ae0b7",
+      "9d8964f553516616",
+      "9d8964f553516616",
+      "fe9e899c0995cca9"
+    ],
+    "users/auth/login.html": [
+      "9a7472a9ec3ae0b7"
+    ],
+    "users/auth/register.html": [
+      "55e6cf3f6fe174f2"
+    ],
+    "users/auth/settings.html": [
+      "66ecfda7971b9b3c"
+    ],
+    "users/auth/token_ui.html": [
+      "d0466aa33fa8061c"
+    ],
+    "users/profile/edit_profile.html": [
+      "268e017d61968584"
+    ],
+    "users/profile/messages.html": [
+      "02ad4129df8995a6",
+      "0988b49fd8e2c18c",
+      "6280d90b402a3cb3",
+      "62f4a198efb560b7",
+      "720c6e682ddc2289",
+      "78f5c181b1c07130",
+      "8b3b56b696e78b77",
+      "9ccc4ca9d661907c",
+      "b6c61e6712b4d3bf",
+      "d29622ce8adf45ff",
+      "e2ea36c12417de79"
+    ],
+    "users/profile/profile copy.html": [
+      "002dc26c478b3c97"
+    ],
+    "users/profile/profile.html": [
+      "002dc26c478b3c97"
+    ]
+  }
+}
+
+

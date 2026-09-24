@@ -412,47 +412,6 @@ body {
   .admin-pagination__label { display: none; }
 }
 
-.admin-merge-form {
-  display: grid;
-  gap: 1rem;
-}
-
-.admin-merge-form .admin-form-section {
-  margin: 0;
-}
-
-.demo-merge-card {
-  height: 100%;
-  padding: 1rem;
-}
-
-.merge-field-value {
-  color: var(--admin-workspace-muted);
-  font-size: .9rem;
-  white-space: pre-wrap;
-}
-
-.merge-field-value code {
-  padding: .1rem .35rem;
-  border-radius: .35rem;
-  background: var(--admin-workspace-surface-muted);
-}
-
-.admin-merge-form .accordion-button:not(.collapsed) {
-  color: var(--admin-workspace-text);
-  background: var(--admin-workspace-blue-soft);
-}
-
-.guided-plan-list {
-  margin: 0;
-  padding-left: 0;
-  list-style: none;
-}
-
-.guided-plan-list li + li { margin-top: .35rem; }
-.admin-merge-form [data-manual-section] { display: none; }
-.manual-mode-active .admin-merge-form [data-manual-section] { display: block; }
-
 .admin-panel,
 .admin-data-view {
   box-sizing: border-box;

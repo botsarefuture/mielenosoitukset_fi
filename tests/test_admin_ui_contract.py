@@ -435,7 +435,10 @@ def test_secondary_editors_use_shared_form_primitives():
     ).read_text(encoding="utf-8")
 
     assert "{% block styles %}" not in merge
-    assert "admin-form admin-merge-form" in merge
+    assert "admin-form admin-form-stack" in merge
+    assert "admin-form-section__header" in merge
+    assert "admin-check-row" in merge
+    assert "admin-disclosure" in merge
     assert "admin-sticky-actions" in merge
     assert "admin-code-block" in ui_editor
     assert "admin-panel-inset" in ui_editor

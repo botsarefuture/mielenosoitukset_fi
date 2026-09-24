@@ -3,33 +3,22 @@
 
 {% macro render_field_value(demo, field) -%}
   {% set value = demo.get(field.key) %}
-  {% if value is none or value == [] or value == '' %}
-    <span class="text-muted">—</span>
-  {% elif field.type == "list" %}
-    {{ value | join(", ") }}
+  {% if value is none or value == [] or value == '' %}—
+  {% elif field.type == "list" %}{{ value | join(", ") }}
   {% elif field.type == "organizers" %}
     {% set names = [] %}
-    {% for org in value %}
-      {% if org is mapping %}
-        {% set _ = names.append(org.get("name") or org.get("organization_name") or org.get("title")) %}
-      {% else %}
-        {% set _ = names.append(org) %}
-      {% endif %}
-    {% endfor %}
+    {% for org in value %}{% if org is mapping %}{% set _ = names.append(org.get("name") or org.get("organization_name") or org.get("title")) %}{% else %}{% set _ = names.append(org) %}{% endif %}{% endfor %}
     {{ names | reject("equalto", None) | list | join(", ") }}
-  {% elif field.type == "bool" %}
-    {% if value %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}
-  {% elif field.type == "objectid" %}
-    <code>{{ value }}</code>
-  {% elif field.type == "longtext" %}
-    {{ value | truncate(160, True, "...") }}
-  {% else %}
-    {{ value }}
-  {% endif %}
+  {% elif field.type == "bool" %}{% if value %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}
+  {% elif field.type == "objectid" %}<code>{{ value }}</code>
+  {% elif field.type == "longtext" %}{{ value | truncate(160, True, "...") }}
+  {% else %}{{ value }}{% endif %}
 {%- endmacro %}
 
+{% block title %}{{ _('Yhdistä mielenosoituksia') }}{% endblock %}
+
 {% block main_content %}
-<div class="admin-page">
+<section class="admin-page admin-workspace">
   {{ admin_page_hero(
     _('Yhdistä mielenosoituksia'),
     _('Valittuja mielenosoituksia: %(count)s', count=demos|length),
@@ -39,282 +28,104 @@
     back_label=_('Mielenosoitukset')
   ) }}
 
-  <div class="alert alert-warning">
-    <i class="fa-solid fa-triangle-exclamation me-2"></i>
-    {{ _('Yhdistäminen siirtää tilastot, muistutukset ja seurannat valittuihin mielenosoituksiin. Järjestelmä ehdottaa turvallisia oletuksia, mutta tarvittaessa voit ottaa manuaalisen tilan käyttöön.') }}
+  <div class="admin-panel-inset" role="note">
+    <strong><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ _('Tarkista yhdistäminen huolellisesti') }}</strong>
+    <p class="admin-field__help">{{ _('Yhdistäminen siirtää tilastot, muistutukset ja seurannat päätapahtumaan ja poistaa muut valitut tapahtumat. Järjestelmä säilyttää palautusvarmuuskopion ja ehdottaa turvallisia oletuksia.') }}</p>
   </div>
 
-  <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
-    {% for demo in demos %}
-    <div class="col">
-      <div class="demo-merge-card admin-panel h-100">
-        <div class="d-flex justify-content-between align-items-start">
-          <div>
-            <h5 class="mb-1">{{ demo.title }}</h5>
-            <div class="text-muted small">{{ demo.date }} · {{ demo.city }}</div>
-          </div>
-          <div class="d-flex gap-2 flex-wrap">
-            {% if demo.status_label %}
-            <span class="badge bg-{{ demo.status_variant }}" data-bs-toggle="tooltip" title="{{ demo.status_hint }}">{{ demo.status_label }}</span>
-            {% endif %}
-            {% if demo.is_recommended %}
-            <span class="badge bg-success">{{ _('Suositeltu') }}</span>
-            {% endif %}
-          </div>
-        </div>
-        <dl class="mt-3 mb-0 small">
-          <dt class="text-muted">{{ _('ID') }}</dt>
-          <dd class="mb-2"><code>{{ demo.id }}</code></dd>
-          <dt class="text-muted">{{ _('Lyhytlinkki') }}</dt>
-          <dd class="mb-2">
-            {% if demo.slug %}
-            <code>{{ demo.slug }}</code>
-            {% else %}
-            <span class="text-muted">—</span>
-            {% endif %}
-          </dd>
-          <dt class="text-muted">{{ _('Ilmoittaja') }}</dt>
-          <dd class="mb-2">
-            {% if demo.submitter %}
-              <div>{{ demo.submitter.name or _('Nimi puuttuu') }}</div>
-              <div class="text-muted">{{ demo.submitter.email or _('Sähköposti puuttuu') }}</div>
-            {% else %}
-              <span class="text-muted">—</span>
-            {% endif %}
-          </dd>
-          <dt class="text-muted">{{ _('Osoite') }}</dt>
-          <dd class="mb-0">{{ demo.address or '—' }}</dd>
-        </dl>
+  <section class="admin-form-section" aria-labelledby="merge-selected-heading">
+    <header class="admin-form-section__header"><span class="admin-form-section__icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span><div><h2 id="merge-selected-heading">{{ _('Valitut mielenosoitukset') }}</h2><p>{{ _('Vertaa tunnisteita, tilaa ja ilmoittajatietoja ennen jatkamista.') }}</p></div></header>
+    <div class="admin-form-section__body">
+      <div class="admin-form-grid">
+        {% for demo in demos %}
+        <article class="admin-section-card">
+          <header class="admin-section-card__header">
+            <div class="admin-section-card__title"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i><h2>{{ demo.title }}</h2></div>
+            <div class="admin-row-actions">{% if demo.status_label %}<span class="admin-status-badge{% if demo.status_variant %} admin-status-badge--{{ demo.status_variant }}{% endif %}" title="{{ demo.status_hint }}">{{ demo.status_label }}</span>{% endif %}{% if demo.is_recommended %}<span class="admin-status-badge admin-status-badge--success">{{ _('Suositeltu') }}</span>{% endif %}</div>
+          </header>
+          <div class="admin-section-card__body"><div class="admin-fact-list">
+            <div class="admin-fact"><span class="admin-fact__icon"><i class="fa-solid fa-calendar" aria-hidden="true"></i></span><div class="admin-fact__content"><span>{{ _('Ajankohta ja kaupunki') }}</span><strong>{{ demo.date }} · {{ demo.city }}</strong></div></div>
+            <div class="admin-fact"><span class="admin-fact__icon"><i class="fa-solid fa-fingerprint" aria-hidden="true"></i></span><div class="admin-fact__content"><span>{{ _('ID / lyhytlinkki') }}</span><strong><code>{{ demo.id }}</code>{% if demo.slug %} · <code>{{ demo.slug }}</code>{% endif %}</strong></div></div>
+            <div class="admin-fact"><span class="admin-fact__icon"><i class="fa-solid fa-user" aria-hidden="true"></i></span><div class="admin-fact__content"><span>{{ _('Ilmoittaja') }}</span><strong>{% if demo.submitter %}{{ demo.submitter.name or _('Nimi puuttuu') }} · {{ demo.submitter.email or _('Sähköposti puuttuu') }}{% else %}—{% endif %}</strong></div></div>
+            <div class="admin-fact"><span class="admin-fact__icon"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></span><div class="admin-fact__content"><span>{{ _('Osoite') }}</span><strong>{{ demo.address or '—' }}</strong></div></div>
+          </div></div>
+        </article>
+        {% endfor %}
       </div>
     </div>
-    {% endfor %}
-  </div>
+  </section>
 
-  <form method="POST" action="{{ url_for('admin_demo.merge_demos') }}" class="admin-form admin-merge-form" id="mergeForm">
-    {% for demo_id in selected_ids %}
-      <input type="hidden" name="demo_ids" value="{{ demo_id }}">
-    {% endfor %}
+  <form method="POST" action="{{ url_for('admin_demo.merge_demos') }}" class="admin-form admin-form-stack" id="mergeForm">
+    {% for demo_id in selected_ids %}<input type="hidden" name="demo_ids" value="{{ demo_id }}">{% endfor %}
 
-    <section class="card admin-form-section" id="guided-summary-card">
-      <div class="card-header fw-semibold d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <span>{{ _('Ohjattu yhdistäminen') }}</span>
-        <div class="form-check form-switch mb-0">
-          <input class="form-check-input" type="checkbox" id="manual-mode-toggle" name="manual_mode" value="1">
-          <label class="form-check-label" for="manual-mode-toggle">
-            {{ _('Ota manuaalinen tila käyttöön') }}
-          </label>
-        </div>
-      </div>
-      <div class="card-body">
-        {% if merge_warnings %}
-        <div class="alert alert-danger mb-3">
-          <ul class="mb-0 ps-3">
-            {% for warning in merge_warnings %}
-              <li>{{ warning }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% endif %}
-        <div class="row g-3">
-          <div class="col-12 col-lg-6">
-            <h6 class="text-uppercase text-muted small">{{ _('Ehdotettu päätapahtuma') }}</h6>
-            <p class="mb-2">
-              <strong>{{ demo_lookup[default_primary].title }}</strong><br>
-              <small class="text-muted">{{ demo_lookup[default_primary].date }} · {{ demo_lookup[default_primary].city }}</small>
-            </p>
-            <h6 class="text-uppercase text-muted small">{{ _('Kenttien säilytys (automaattinen)') }}</h6>
-            <table class="table table-sm table-borderless align-middle mb-0">
-              <tbody>
-                {% for field in guided_field_summary %}
-                <tr>
-                  <td class="text-muted small">{{ field.label }}</td>
-                  <td class="small">{{ demo_lookup[field.source_id].title if field.source_id in demo_lookup else _('Tuntematon') }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+    <section class="admin-form-section" aria-labelledby="guided-merge-heading">
+      <header class="admin-form-section__header"><span class="admin-form-section__icon"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></span><div><h2 id="guided-merge-heading">{{ _('Ohjattu yhdistäminen') }}</h2><p>{{ _('Turvalliset oletukset ovat valmiina. Avaa manuaalinen tila vain, jos haluat valita jokaisen lähteen itse.') }}</p></div></header>
+      <div class="admin-form-section__body">
+        <label class="admin-check-row" for="manual-mode-toggle"><input class="form-check-input" type="checkbox" id="manual-mode-toggle" name="manual_mode" value="1"><span class="admin-check-row__content"><strong class="admin-check-row__label">{{ _('Ota manuaalinen tila käyttöön') }}</strong><span class="admin-check-row__help">{{ _('Näyttää päätapahtuman, kenttälähteiden ja suosittelun yksityiskohtaiset valinnat.') }}</span></span></label>
+
+        {% if merge_warnings %}<div class="admin-panel-inset" role="alert"><strong>{{ _('Tarkistettavaa ennen yhdistämistä') }}</strong><ul>{% for warning in merge_warnings %}<li>{{ warning }}</li>{% endfor %}</ul></div>{% endif %}
+
+        <div class="admin-form-grid">
+          <div class="admin-stack">
+            <div class="admin-fact"><span class="admin-fact__icon"><i class="fa-solid fa-star" aria-hidden="true"></i></span><div class="admin-fact__content"><span>{{ _('Ehdotettu päätapahtuma') }}</span><strong>{{ demo_lookup[default_primary].title }} · {{ demo_lookup[default_primary].date }} · {{ demo_lookup[default_primary].city }}</strong></div></div>
+            {% for field in guided_field_summary %}<div class="admin-fact"><span class="admin-fact__icon"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i></span><div class="admin-fact__content"><span>{{ field.label }}</span><strong>{{ demo_lookup[field.source_id].title if field.source_id in demo_lookup else _('Tuntematon') }}</strong></div></div>{% endfor %}
           </div>
-          <div class="col-12 col-lg-6">
-            <h6 class="text-uppercase text-muted small">{{ _('Tilannekuva') }}</h6>
-            <div class="table-responsive">
-              <table class="table table-sm table-borderless align-middle mb-0">
-                <thead>
-                  <tr class="text-muted small">
-                    <th>{{ _('Mielenosoitus') }}</th>
-                    <th>{{ _('Tila') }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for demo in demos %}
-                  <tr>
-                    <td class="small">
-                      <div class="fw-semibold">{{ demo.title }}</div>
-                      <div class="text-muted">{{ demo.date }} · {{ demo.city }}</div>
-                    </td>
-                    <td>
-                      {% if demo.status_label %}
-                      <span class="badge bg-{{ demo.status_variant }}" data-bs-toggle="tooltip" title="{{ demo.status_hint }}">{{ demo.status_label }}</span>
-                      {% endif %}
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            <div class="mt-3">
-              <h6 class="text-uppercase text-muted small">{{ _('Ilmoittajat') }}</h6>
-              {% if submitter_summary %}
-                <ul class="guided-plan-list small">
-                  {% for group in submitter_summary %}
-                  <li>
-                    <strong>{{ group.label }}</strong>
-                    <div class="text-muted">{{ _('%(count)s ilmoitusta', count=group.count) }}</div>
-                  </li>
-                  {% endfor %}
-                </ul>
-              {% else %}
-                <p class="text-muted small mb-0">{{ _('Ilmoittajatietoja ei löytynyt.') }}</p>
-              {% endif %}
-            </div>
+          <div class="admin-stack">
+            {% for demo in demos %}<div class="admin-fact"><span class="admin-fact__icon"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i></span><div class="admin-fact__content"><span>{{ demo.status_label or _('Tila puuttuu') }}</span><strong>{{ demo.title }} · {{ demo.date }} · {{ demo.city }}</strong></div></div>{% endfor %}
+            {% for group in submitter_summary %}<div class="admin-fact"><span class="admin-fact__icon"><i class="fa-solid fa-user" aria-hidden="true"></i></span><div class="admin-fact__content"><span>{{ _('Ilmoittaja') }}</span><strong>{{ group.label }} · {{ _('%(count)s ilmoitusta', count=group.count) }}</strong></div></div>{% else %}<p class="admin-field__help">{{ _('Ilmoittajatietoja ei löytynyt.') }}</p>{% endfor %}
           </div>
         </div>
-        <div id="manual-mode-hint" class="text-muted small mt-3">
-          {{ _('Ohjattu tila on käytössä. Jos tarvitset täydellistä hallintaa, kytke manuaalinen tila päälle yllä olevasta kytkimestä.') }}
-        </div>
+        <p id="manual-mode-hint" class="admin-field__help" aria-live="polite">{{ _('Ohjattu tila on käytössä. Kaikki alla olevat oletusvalinnat lähetetään lomakkeen mukana.') }}</p>
       </div>
     </section>
 
-    <section class="card admin-form-section" data-manual-section>
-      <div class="card-header fw-semibold">
-        {{ _('Valitse päätapahtuma (säilytettävä ID)') }}
-      </div>
-      <div class="card-body">
-        {% for demo in demos %}
-        <div class="form-check mb-2">
-          <input class="form-check-input" type="radio" name="primary_demo_id" id="primary-{{ demo.id }}"
-                 value="{{ demo.id }}" {% if demo.id == default_primary %}checked{% endif %} required>
-          <label class="form-check-label" for="primary-{{ demo.id }}">
-            {{ demo.title }} · <small class="text-muted">{{ demo.date }} · {{ demo.city }}</small>
-          </label>
-        </div>
+    <section class="admin-form-section" data-manual-section hidden aria-labelledby="merge-primary-heading">
+      <header class="admin-form-section__header"><span class="admin-form-section__icon"><i class="fa-solid fa-thumbtack" aria-hidden="true"></i></span><div><h2 id="merge-primary-heading">{{ _('Valitse päätapahtuma') }}</h2><p>{{ _('Tämän tapahtuman ID ja julkinen osoite säilyvät yhdistämisen jälkeen.') }}</p></div></header>
+      <div class="admin-form-section__body admin-stack">{% for demo in demos %}<label class="admin-check-row" for="primary-{{ demo.id }}"><input class="form-check-input" type="radio" name="primary_demo_id" id="primary-{{ demo.id }}" value="{{ demo.id }}" {% if demo.id == default_primary %}checked{% endif %} required><span class="admin-check-row__content"><strong class="admin-check-row__label">{{ demo.title }}</strong><span class="admin-check-row__help">{{ demo.date }} · {{ demo.city }} · {{ demo.id }}</span></span></label>{% endfor %}</div>
+    </section>
+
+    <section class="admin-form-section" data-manual-section hidden aria-labelledby="merge-field-sources-heading">
+      <header class="admin-form-section__header"><span class="admin-form-section__icon"><i class="fa-solid fa-code-branch" aria-hidden="true"></i></span><div><h2 id="merge-field-sources-heading">{{ _('Kenttien lähde') }}</h2><p>{{ _('Avaa kenttä ja valitse, mistä mielenosoituksesta sen arvo säilytetään.') }}</p></div></header>
+      <div class="admin-form-section__body admin-stack">
+        {% for field in merge_fields %}
+        <details class="admin-disclosure"><summary>{{ field.label }}</summary><div class="admin-stack">
+          {% set auto_source = guided_sources.get(field.key, default_primary) %}
+          {% for demo in demos %}<label class="admin-check-row" for="{{ field.key }}-{{ demo.id }}"><input class="form-check-input" type="radio" name="field_source[{{ field.key }}]" id="{{ field.key }}-{{ demo.id }}" value="{{ demo.id }}" {% if demo.id == auto_source %}checked{% endif %}><span class="admin-check-row__content"><strong class="admin-check-row__label">{{ demo.title }}</strong><span class="admin-check-row__help">{{ render_field_value(demo, field) }}</span></span></label>{% endfor %}
+        </div></details>
         {% endfor %}
       </div>
     </section>
 
-    <section class="card admin-form-section" data-manual-section>
-      <div class="card-header fw-semibold">
-        {{ _('Kenttien lähde') }}
-      </div>
-      <div class="card-body">
-        <div class="accordion" id="mergeFieldAccordion">
-          {% for field in merge_fields %}
-          <div class="accordion-item">
-            <h2 class="accordion-header" id="heading-{{ field.key }}">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                      data-bs-target="#collapse-{{ field.key }}" aria-expanded="false"
-                      aria-controls="collapse-{{ field.key }}">
-                {{ field.label }}
-              </button>
-            </h2>
-            <div id="collapse-{{ field.key }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ field.key }}"
-                 data-bs-parent="#mergeFieldAccordion">
-              <div class="accordion-body">
-                {% for demo in demos %}
-                <div class="form-check mb-3">
-                  <input class="form-check-input" type="radio"
-                         name="field_source[{{ field.key }}]" id="{{ field.key }}-{{ demo.id }}"
-                         value="{{ demo.id }}"
-                         {% set auto_source = guided_sources.get(field.key, default_primary) %}
-                         {% if demo.id == auto_source %}checked{% endif %}>
-                  <label class="form-check-label fw-semibold" for="{{ field.key }}-{{ demo.id }}">
-                    {{ demo.title }}
-                  </label>
-                  <div class="merge-field-value mt-1">
-                    {{ render_field_value(demo, field) }}
-                  </div>
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
+    <section class="admin-form-section" data-manual-section hidden aria-labelledby="merge-recommendation-heading">
+      <header class="admin-form-section__header"><span class="admin-form-section__icon"><i class="fa-solid fa-star" aria-hidden="true"></i></span><div><h2 id="merge-recommendation-heading">{{ _('Suosittelu') }}</h2><p>{{ _('Valitse, minkä tapahtuman suositusmerkintä säilytetään, tai poista suositus.') }}</p></div></header>
+      <div class="admin-form-section__body admin-stack">
+        <label class="admin-check-row" for="recommend-none"><input class="form-check-input" type="radio" name="recommendation_source" id="recommend-none" value="none" {% if guided_recommendation == 'none' %}checked{% endif %}><span class="admin-check-row__content"><strong class="admin-check-row__label">{{ _('Ei säilytettyä suositusta') }}</strong></span></label>
+        {% for demo in demos %}<label class="admin-check-row" for="recommend-{{ demo.id }}"><input class="form-check-input" type="radio" name="recommendation_source" id="recommend-{{ demo.id }}" value="{{ demo.id }}" {% if guided_recommendation == demo.id %}checked{% endif %}><span class="admin-check-row__content"><strong class="admin-check-row__label">{{ _('Pidä suositus mielenosoitukselta %(title)s', title=demo.title) }}</strong>{% if demo.recommendation and demo.recommendation.recommend_till %}<span class="admin-check-row__help">{{ _('Suositus voimassa: %(date)s', date=demo.recommendation.recommend_till) }}</span>{% endif %}</span></label>{% endfor %}
       </div>
     </section>
 
-    <section class="card admin-form-section" data-manual-section>
-      <div class="card-header fw-semibold">
-        {{ _('Suosittelu ja toistuvuus') }}
-      </div>
-      <div class="card-body">
-        <p class="text-muted mb-2">{{ _('Valitse, minkä demon suositusmerkintä säilytetään (tai poistetaan kokonaan).') }}</p>
-        <div class="form-check mb-2">
-          <input class="form-check-input" type="radio" name="recommendation_source" id="recommend-none"
-                 value="none" {% if guided_recommendation == 'none' %}checked{% endif %}>
-          <label class="form-check-label" for="recommend-none">
-            {{ _('Ei säilytettyä suositusta') }}
-          </label>
-        </div>
-        {% for demo in demos %}
-        <div class="form-check mb-2">
-          <input class="form-check-input" type="radio" name="recommendation_source"
-                 id="recommend-{{ demo.id }}" value="{{ demo.id }}"
-                 {% if guided_recommendation == demo.id %}checked{% endif %}>
-          <label class="form-check-label" for="recommend-{{ demo.id }}">
-            {{ _('Pidä suositus mielenosoitukselta %(title)s', title=demo.title) }}
-            {% if demo.is_recommended %}
-              <span class="badge bg-success ms-1">{{ _('Suositeltu') }}</span>
-            {% endif %}
-          </label>
-          {% if demo.recommendation and demo.recommendation.recommend_till %}
-          <div class="small text-muted ms-4">
-            {{ _('Suositus voimassa: %(date)s', date=demo.recommendation.recommend_till) }}
-          </div>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-    </section>
-
-    <div class="admin-sticky-actions">
-      <button type="submit" class="btn btn-primary btn-lg">
-        <i class="fa-solid fa-object-group me-2"></i>{{ _('Yhdistä mielenosoitukset') }}
-      </button>
-    </div>
+    <div class="admin-sticky-actions"><a class="btn btn-secondary" href="{{ url_for('admin_demo.demo_control') }}">{{ _('Peruuta') }}</a><button type="submit" class="btn btn-primary"><i class="fa-solid fa-object-group" aria-hidden="true"></i>{{ _('Yhdistä mielenosoitukset') }}</button></div>
   </form>
-</div>
+</section>
 {% endblock %}
 
 {% block scripts %}
+{{ super() }}
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const toggle = document.getElementById('manual-mode-toggle');
-    const form = document.getElementById('mergeForm');
-    const manualSections = form ? form.querySelectorAll('[data-manual-section]') : [];
-    const hint = document.getElementById('manual-mode-hint');
-    const container = document.querySelector('.admin-page');
-
-    const updateManualMode = () => {
-      const manualEnabled = toggle && toggle.checked;
-      if (container) {
-        container.classList.toggle('manual-mode-active', manualEnabled);
-      }
-      manualSections.forEach(section => {
-        section.style.display = manualEnabled ? '' : 'none';
-      });
-      if (hint) {
-        hint.style.display = manualEnabled ? 'none' : '';
-      }
-    };
-
-    if (toggle) {
-      toggle.addEventListener('change', updateManualMode);
-      updateManualMode();
-    }
-
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-      new bootstrap.Tooltip(el);
-    });
-  });
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.getElementById('manual-mode-toggle');
+  const form = document.getElementById('mergeForm');
+  const manualSections = form ? form.querySelectorAll('[data-manual-section]') : [];
+  const hint = document.getElementById('manual-mode-hint');
+  const updateManualMode = () => {
+    const manualEnabled = Boolean(toggle?.checked);
+    manualSections.forEach(section => { section.hidden = !manualEnabled; });
+    if (hint) hint.textContent = manualEnabled
+      ? {{ _('Manuaalinen tila on käytössä. Tarkista kaikki lähdevalinnat ennen yhdistämistä.') | tojson }}
+      : {{ _('Ohjattu tila on käytössä. Kaikki alla olevat oletusvalinnat lähetetään lomakkeen mukana.') | tojson }};
+  };
+  toggle?.addEventListener('change', updateManualMode);
+  updateManualMode();
+});
 </script>
 {% endblock %}

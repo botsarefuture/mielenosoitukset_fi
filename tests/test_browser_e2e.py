@@ -1031,6 +1031,53 @@ def test_ui_translation_editor_uses_shared_responsive_form_contract(
 @pytest.mark.e2e
 @pytest.mark.integration
 @pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_demo_merge_editor_uses_shared_responsive_form_contract(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    seeded_data = _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    merge_url = (
+        f"{live_server}/admin/demo/merge?ids="
+        f"{seeded_data['demo_id']},{seeded_data['pending_demo_id']}"
+    )
+
+    theme_surfaces = {}
+    for theme in ("light", "dark"):
+        browser_page.goto(merge_url, wait_until="domcontentloaded")
+        browser_page.evaluate(
+            """theme => {
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+                document.documentElement.classList.toggle('light', theme === 'light');
+                document.documentElement.setAttribute('data-bs-theme', theme);
+            }""",
+            theme,
+        )
+        browser_page.locator(".admin-page-hero").wait_for(state="visible")
+        assert browser_page.locator(".admin-form-section").count() >= 5
+        manual_section = browser_page.locator("[data-manual-section]").first
+        assert manual_section.is_hidden()
+        browser_page.locator("#manual-mode-toggle").check()
+        assert manual_section.is_visible()
+        assert browser_page.locator(".admin-sticky-actions").is_visible()
+        assert browser_page.evaluate(
+            "document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1"
+        )
+        theme_surfaces[theme] = browser_page.locator(".admin-form-section").first.evaluate(
+            "element => getComputedStyle(element).backgroundColor"
+        )
+
+    assert theme_surfaces["light"] != theme_surfaces["dark"]
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
 def test_demo_audit_views_use_shared_responsive_theme_contract(
     app,
     db,

@@ -2629,9 +2629,8 @@ msgstr "Submit a demonstration"
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:85
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:143
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:154
-#, fuzzy
 msgid "Ei käyttöoikeutta"
-msgstr "Users"
+msgstr "No permission"
 
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:93
 #, fuzzy
@@ -3134,24 +3133,23 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:3 mielenosoitukset_fi/templates/users/auth/token_ui.html:50
 msgid "API Tokenit"
-msgstr ""
+msgstr "API tokens"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:51
 msgid "Täällä voit hallita API-tokeneitasi."
-msgstr ""
+msgstr "Manage your API tokens here."
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:54
-#, fuzzy
 msgid "Luo uusi token"
-msgstr "Organizations"
+msgstr "Create new token"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:59
 msgid "Ladataan tokeneita..."
-msgstr ""
+msgstr "Loading tokens..."
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:69
 msgid "Luo lyhytkestoinen API Token"
-msgstr ""
+msgstr "Create a short-lived API token"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:74
 msgid "Scopes"
@@ -3159,35 +3157,35 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:132 mielenosoitukset_fi/templates/users/auth/token_ui.html:158
 msgid "Kopioi token nyt, sillä se näkyy vain kerran!"
-msgstr ""
+msgstr "Copy the token now; it is shown only once!"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:134 mielenosoitukset_fi/templates/users/auth/token_ui.html:160
 msgid "Scopet:"
-msgstr ""
+msgstr "Permissions:"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:135 mielenosoitukset_fi/templates/users/auth/token_ui.html:162
 msgid "Vanhenee:"
-msgstr ""
+msgstr "Expires:"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:140
 msgid "Luo Token"
-msgstr ""
+msgstr "Create token"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:154
 msgid "Uusi API Token"
-msgstr ""
+msgstr "New API token"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:161
 msgid "Tyyppi:"
-msgstr ""
+msgstr "Type:"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:165
 msgid "Kopioi"
-msgstr ""
+msgstr "Copy"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:200
 msgid "Ei aktiivisia tokeneita."
-msgstr ""
+msgstr "No active tokens."
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:215
 #, fuzzy
@@ -9777,7 +9775,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:852
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/magic_tokens.html:72
 msgid "Vanhenee"
-msgstr ""
+msgstr "Expires"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:852
 msgid "Luoja"
@@ -12312,7 +12310,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/settings.html:673
 #: mielenosoitukset_fi/templates/users/auth/settings.html:711
 msgid "Käyttöoikeudet"
-msgstr ""
+msgstr "Permissions"
 
 #: mielenosoitukset_fi/templates/users/auth/settings.html:688
 msgid "Admin-oikeudet myönnetään vain ylläpitäjille."
@@ -12483,7 +12481,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:279
 msgid "Token peruttu."
-msgstr ""
+msgstr "Token revoked."
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:281
 msgid "Virhe tokenin peruuttamisessa."
@@ -12491,11 +12489,11 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:327
 msgid "Token kopioitu leikepöydälle!"
-msgstr ""
+msgstr "Token copied to the clipboard!"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:328
 msgid "Kopiointi epäonnistui."
-msgstr ""
+msgstr "Copy failed."
 
 #: ⁨mielenosoitukset_fi/templates/users/profile/profile copy.html⁩:636
 #: mielenosoitukset_fi/templates/users/profile/profile.html:693
@@ -12926,3 +12924,76 @@ msgstr "The current password is incorrect."
 #: mielenosoitukset_fi/users/BPs/auth.py
 msgid "Salasana vaihdettu."
 msgstr "Password changed."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenin käyttöoikeuksien pitää olla merkkijonolista."
+msgstr "Token permissions must be a list of strings."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "API-tokenien käyttö on lukittu. Pyydä käyttöoikeutta ylläpidolta."
+msgstr "API token access is locked. Request access from an administrator."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+#, python-format
+msgid "Tuntemattomat token-oikeudet: %(scopes)s"
+msgstr "Unknown token permissions: %(scopes)s"
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Etuoikeutetut token-oikeudet vaativat globaalin ylläpitäjän."
+msgstr "Privileged token permissions require a global administrator."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Vahvista henkilöllisyytesi uudelleen ennen etuoikeutettujen avainten luontia."
+msgstr "Reconfirm your identity before creating privileged tokens."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenia ei voitu luoda annetuilla tiedoilla."
+msgstr "The token could not be created with the provided data."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Peruutettavan tokenin tunniste puuttuu."
+msgstr "The token ID to revoke is missing."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenin tunniste on virheellinen."
+msgstr "The token ID is invalid."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenia ei löytynyt."
+msgstr "Token not found."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Peruuta API-token"
+msgstr "Revoke API token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Haluatko varmasti peruuttaa tämän tokenin? Toimintoa ei voi kumota."
+msgstr "Are you sure you want to revoke this token? This cannot be undone."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Säilytä token"
+msgstr "Keep token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Peruuta token"
+msgstr "Revoke token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Tokenien lataaminen epäonnistui."
+msgstr "Failed to load tokens."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Ei vanhentumisaikaa"
+msgstr "Does not expire"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Luo vastaava uusi token"
+msgstr "Create a new equivalent token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Tokenin luominen epäonnistui."
+msgstr "Failed to create token."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Tokenin peruuttaminen epäonnistui."
+msgstr "Failed to revoke token."

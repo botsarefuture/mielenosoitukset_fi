@@ -12847,3 +12847,76 @@ msgstr "Nykyinen salasana on väärä."
 #: mielenosoitukset_fi/users/BPs/auth.py
 msgid "Salasana vaihdettu."
 msgstr "Salasana vaihdettu."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenin käyttöoikeuksien pitää olla merkkijonolista."
+msgstr "Tokenin käyttöoikeuksien pitää olla merkkijonolista."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "API-tokenien käyttö on lukittu. Pyydä käyttöoikeutta ylläpidolta."
+msgstr "API-tokenien käyttö on lukittu. Pyydä käyttöoikeutta ylläpidolta."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+#, python-format
+msgid "Tuntemattomat token-oikeudet: %(scopes)s"
+msgstr "Tuntemattomat token-oikeudet: %(scopes)s"
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Etuoikeutetut token-oikeudet vaativat globaalin ylläpitäjän."
+msgstr "Etuoikeutetut token-oikeudet vaativat globaalin ylläpitäjän."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Vahvista henkilöllisyytesi uudelleen ennen etuoikeutettujen avainten luontia."
+msgstr "Vahvista henkilöllisyytesi uudelleen ennen etuoikeutettujen avainten luontia."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenia ei voitu luoda annetuilla tiedoilla."
+msgstr "Tokenia ei voitu luoda annetuilla tiedoilla."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Peruutettavan tokenin tunniste puuttuu."
+msgstr "Peruutettavan tokenin tunniste puuttuu."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenin tunniste on virheellinen."
+msgstr "Tokenin tunniste on virheellinen."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenia ei löytynyt."
+msgstr "Tokenia ei löytynyt."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Peruuta API-token"
+msgstr "Peruuta API-token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Haluatko varmasti peruuttaa tämän tokenin? Toimintoa ei voi kumota."
+msgstr "Haluatko varmasti peruuttaa tämän tokenin? Toimintoa ei voi kumota."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Säilytä token"
+msgstr "Säilytä token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Peruuta token"
+msgstr "Peruuta token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Tokenien lataaminen epäonnistui."
+msgstr "Tokenien lataaminen epäonnistui."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Ei vanhentumisaikaa"
+msgstr "Ei vanhentumisaikaa"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Luo vastaava uusi token"
+msgstr "Luo vastaava uusi token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Tokenin luominen epäonnistui."
+msgstr "Tokenin luominen epäonnistui."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Tokenin peruuttaminen epäonnistui."
+msgstr "Tokenin peruuttaminen epäonnistui."

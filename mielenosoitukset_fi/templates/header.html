@@ -20,14 +20,19 @@ time (datetime) | iso string, read (bool)
           class="btn p-0 position-relative"
           aria-label="{{ _('Ilmoitukset') }}"
           aria-haspopup="true"
+          aria-controls="notif-panel"
           aria-expanded="false">
     <i class="fa-solid fa-bell fs-5"></i>
     {{ notif_badge(count) }}
   </button>
 
-  <div id="notif-panel" class="notif-panel card shadow border-0" role="menu" aria-labelledby="notif-btn">
+  <div id="notif-panel"
+       class="notif-panel card shadow border-0"
+       role="dialog"
+       aria-labelledby="notif-panel-title"
+       aria-hidden="true">
     <div class="card-header d-flex justify-content-between align-items-center py-2 px-3 border-0">
-      <span class="fw-semibold">{{ _('Ilmoitukset') }}</span>
+      <span class="fw-semibold" id="notif-panel-title">{{ _('Ilmoitukset') }}</span>
       <button id="mark-read-btn"
               class="btn btn-link btn-sm text-decoration-none d-none">{{ _('Merkitse luetuiksi') }}</button>
     </div>
@@ -35,8 +40,13 @@ time (datetime) | iso string, read (bool)
     {# list will be filled by JS #}
     <div class="list-group list-group-flush"
          id="notif-list"
-         style="max-height:360px;overflow-y:auto;">
-      <div class="p-3 text-center text-muted small" id="notif-loading">
+         aria-live="polite"
+         aria-busy="true"
+         data-empty-label="{{ _('Ei ilmoituksia') }}"
+         data-loading-label="{{ _('Ladataan…') }}"
+         data-load-error-label="{{ _('Virhe ladattaessa') }}"
+         data-mark-error-label="{{ _('Ilmoituksia ei voitu merkitä luetuiksi.') }}">
+      <div class="notif-state" id="notif-loading">
         <i class="fa-solid fa-spinner fa-spin me-1"></i> {{ _('Ladataan…') }}
       </div>
     </div>
@@ -631,188 +641,6 @@ time (datetime) | iso string, read (bool)
   }
 </style>
 
-<!-- CSS additions (inject into existing <style>) -->
-<style>
-  #notif-wrap {
-    margin-left: 0.25rem;
-  }
-
-  #notif-btn {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 50%;
-    color: var(--color-text);
-    transition: var(--transition);
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-  }
-
-  #notif-btn:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 3px;
-  }
-
-  #notif-btn .fa-bell {
-    color: var(--color-text);
-    transition: color .18s ease, transform .18s ease;
-  }
-
-  #notif-btn:hover,
-  #notif-wrap[aria-expanded="true"] #notif-btn {
-    background: light-dark(rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.22));
-    border-color: var(--color-primary);
-    transform: translateY(-1px);
-  }
-
-  #notif-btn:hover .fa-bell,
-  #notif-wrap[aria-expanded="true"] #notif-btn .fa-bell {
-    color: var(--color-primary);
-  }
-
-  #notif-btn:hover .fa-bell {
-    animation: notif-bell-ring 0.5s ease;
-  }
-
-  #notif-btn:active {
-    transform: scale(0.96);
-  }
-
-  @keyframes notif-bell-ring {
-    0%, 100% { transform: rotate(0); }
-    20%      { transform: rotate(14deg); }
-    40%      { transform: rotate(-14deg); }
-    60%      { transform: rotate(9deg); }
-    80%      { transform: rotate(-9deg); }
-  }
-
-  .notif-panel {
-    position: absolute;
-    top: calc(100% + .5rem);
-    right: 0;
-    width: 340px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all .18s ease-out;
-    z-index: 2000;
-    background: var(--color-card-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    box-shadow: 0 15px 45px rgba(15, 23, 42, 0.3);
-    color: var(--color-text);
-    overflow: hidden;
-  }
-
-  #notif-wrap[aria-expanded="true"] .notif-panel {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  }
-
-  .notif-panel .card-header {
-    background: light-dark(#f8fafc, #151923);
-    color: var(--color-text);
-    border-bottom: 1px solid var(--color-border);
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
-  }
-
-  .notif-panel .card-header,
-  .notif-panel .card-footer {
-    border-color: var(--color-border);
-    color: var(--color-text);
-  }
-
-  .notif-panel .card-footer {
-    background: light-dark(#f8fafc, #141922);
-  }
-
-  .notif-panel .card-footer a {
-    color: var(--color-primary);
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  .notif-panel .card-footer a:hover {
-    text-decoration: underline;
-  }
-
-  .notif-panel .list-group-item {
-    background: transparent;
-    color: var(--color-text);
-    border-color: var(--color-border);
-    border-width: 0 0 1px;
-    display: flex;
-    gap: 0.65rem;
-    align-items: flex-start;
-    padding-inline: 1rem;
-  }
-
-  .notif-panel .list-group-item .text-muted {
-    color: var(--color-text-secondary) !important;
-  }
-
-  .notif-panel .list-group-item.bg-light {
-    background: light-dark(#e8f0ff, rgba(59, 130, 246, 0.18));
-    border-radius: 12px;
-    margin: 0.4rem;
-    padding-inline: 0.85rem;
-    border-width: 0;
-  }
-
-  .notif-panel .list-group-item .fa-lg {
-    padding: 0.45rem;
-    border-radius: 12px;
-    background: light-dark(#eef2ff, rgba(59, 130, 246, 0.2));
-  }
-
-  #mark-read-btn {
-    color: var(--color-primary);
-  }
-
-  /* Notification count badge */
-  .notif-badge {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #fff;
-    font-size: 0.7rem;
-    font-weight: 700;
-    line-height: 1;
-    min-width: 1.2em;
-    padding: 0.2em 0.4em;
-    border-radius: 50px;
-    text-align: center;
-    white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.45);
-    animation: notif-badge-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .dark .notif-badge {
-    background: linear-gradient(135deg, #f87171, #ef4444);
-    box-shadow: 0 2px 10px rgba(248, 113, 113, 0.5);
-  }
-
-  @keyframes notif-badge-in {
-    from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-    to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  }
-
-  /* Unread dot indicator */
-  .list-group-item.bg-light::before {
-    content: "";
-    width: 8px;
-    height: 8px;
-    background: var(--color-primary);
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: .5rem;
-    align-self: center;
-  }
-</style>
-
 <!-- Skip to Content Link -->
 <a href="#main-content" class="skip-link">{{ _('Siirry sisältöön') }}</a>
 
@@ -1314,123 +1142,4 @@ time (datetime) | iso string, read (bool)
 {% include "toolbar.html" %}
 {% endif %}
 
-<script>
-  // Notification popover: fetch via /api/notifications/, render, mark-all-read
-  (async () => {
-    const wrap     = document.getElementById('notif-wrap');
-    if (!wrap) return;
-
-    const btn      = document.getElementById('notif-btn');
-    const listBox  = document.getElementById('notif-list');
-    const markBtn  = document.getElementById('mark-read-btn');
-    const badgeTpl = (count) => {
-      const display = count > 99 ? '99+' : count;
-      return `<span class="notif-badge position-absolute top-0 start-100 translate-middle">${display}</span>`;
-    };
-    const locale   = document.documentElement.lang || 'fi-FI';
-    const fallbackFormatter = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
-
-    if (!btn || !listBox || !markBtn) return;
-
-    const formatTimestamp = (value) => {
-      if (window.timeago?.format) {
-        try {
-          return window.timeago.format(value);
-        } catch (_) {
-          /* fall back below */
-        }
-      }
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return value;
-      return fallbackFormatter.format(date);
-    };
-
-    const render = (data = []) => {
-      // badge
-      btn.querySelector('.notif-badge')?.remove();
-      const unread = data.filter(n => !n.read);
-      if (unread.length) {
-        btn.insertAdjacentHTML('beforeend', badgeTpl(unread.length));
-      }
-
-      // mark-all-read button
-      markBtn.classList.toggle('d-none', !unread.length);
-
-      // list
-      if (!data.length) {
-        listBox.innerHTML = `<div class="p-3 text-center text-muted small">{{ _('Ei ilmoituksia') }}</div>`;
-        return;
-      }
-
-      listBox.innerHTML = data.map(n => {
-        const formattedTime = formatTimestamp(n.time);
-        return `
-          <a href="${n.link}"
-             class="list-group-item list-group-item-action py-2 d-flex gap-2 ${n.read ? '' : 'bg-light'}">
-            <div class="pt-1">
-              <i class="${n.icon} fa-lg ${n.read ? 'text-secondary' : 'text-primary'}"></i>
-            </div>
-            <div class="flex-grow-1">
-              <div class="small ${n.read ? '' : 'fw-semibold'}">${n.message}</div>
-              <div class="text-muted small">${formattedTime}</div>
-            </div>
-          </a>`;
-      }).join('');
-    };
-
-    async function loadNotifs() {
-      try {
-        const res  = await fetch('/api/notifications/');
-        const data = await res.json();
-        render(data);
-      } catch (err) {
-        console.error(err);
-        listBox.innerHTML = '<div class="p-3 text-center text-danger small">{{ _("Virhe ladattaessa") }}</div>';
-      }
-    }
-
-    const open  = () => {
-      btn.setAttribute('aria-expanded', 'true');
-      wrap.setAttribute('aria-expanded', 'true');
-    };
-    const close = () => {
-      btn.setAttribute('aria-expanded', 'false');
-      wrap.setAttribute('aria-expanded', 'false');
-    };
-    const toggle = () => {
-      if (btn.getAttribute('aria-expanded') === 'true') {
-        close();
-      } else {
-        open();
-        loadNotifs();
-      }
-    };
-
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      toggle();
-    });
-
-    document.addEventListener('click', e => {
-      if (!wrap.contains(e.target)) close();
-    });
-
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') close();
-    });
-
-    // mark-all-read
-    markBtn.addEventListener('click', async e => {
-      e.preventDefault();
-      try {
-        await fetch('/api/notifications/mark-read', { method: 'POST' });
-        await loadNotifs();
-      } catch (err) {
-        console.error(err);
-      }
-    });
-
-    // periodic refresh in background (badge + list contents)
-    setInterval(loadNotifs, 60_000);
-  })();
-</script>
+<script src="{{ url_for('static', filename='js/public-notifications.js', v='20260924-notifications-1') }}"></script>

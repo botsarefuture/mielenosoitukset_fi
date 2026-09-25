@@ -6003,6 +6003,10 @@ msgstr ""
 msgid "Virhe ladattaessa"
 msgstr ""
 
+#: mielenosoitukset_fi/templates/header.html:48
+msgid "Ilmoituksia ei voitu merkitä luetuiksi."
+msgstr "Ilmoituksia ei voitu merkitä luetuiksi."
+
 #: mielenosoitukset_fi/templates/index.html:605
 msgid "Tervetuloa Mielenosoitukset.fi"
 msgstr ""

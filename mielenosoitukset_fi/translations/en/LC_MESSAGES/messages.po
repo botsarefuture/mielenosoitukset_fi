@@ -3102,12 +3102,12 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/settings.html:286
 #, fuzzy
 msgid "Esittelyteksti"
-msgstr "Presentation text of the demonstration"
+msgstr "Introduction"
 
 #: mielenosoitukset_fi/templates/users/auth/settings.html:293
 #, fuzzy
 msgid "Tallenna profiili"
-msgstr "Save changes"
+msgstr "Save profile"
 
 #: mielenosoitukset_fi/templates/users/auth/settings.html:382
 msgid "MFA QR Code"
@@ -10466,7 +10466,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/kampanja/list.html:214
 #: mielenosoitukset_fi/templates/admin_V2/kampanja/list.html:478
 msgid "Tallennetaan…"
-msgstr ""
+msgstr "Saving…"
 
 #: mielenosoitukset_fi/templates/admin_V2/governance/clearances.html:117
 msgid "Tallennus epäonnistui."
@@ -12851,3 +12851,39 @@ msgstr "Invitations sent!"
 #: mielenosoitukset_fi/templates/detail.html:2845
 msgid "Kutsujen lähettäminen epäonnistui. Yritä uudelleen."
 msgstr "Sending invitations failed. Please try again."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Virheellinen pyyntö."
+msgstr "Invalid request."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Profiilikuvan tallennus epäonnistui."
+msgstr "Failed to save the profile picture."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Profiilikuvan tiedot ovat virheelliset."
+msgstr "The profile picture data is invalid."
+
+#: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/templates/users/auth/settings.html
+msgid "Profiili päivitetty."
+msgstr "Profile updated."
+
+#: mielenosoitukset_fi/templates/users/auth/settings.html
+msgid "Päivitä julkisessa profiilissasi näkyvä esittelyteksti ja kuva."
+msgstr "Update the introduction and picture shown on your public profile."
+
+#: mielenosoitukset_fi/templates/users/auth/settings.html
+msgid "Kerro lyhyesti itsestäsi. Teksti näkyy julkisella profiilisivullasi."
+msgstr "Tell others briefly about yourself. The text is shown on your public profile page."
+
+#: mielenosoitukset_fi/templates/users/auth/settings.html
+msgid "Valinnainen"
+msgstr "Optional"
+
+#: mielenosoitukset_fi/templates/users/auth/settings.html
+msgid "Jätä kenttä tyhjäksi, jos haluat säilyttää nykyisen profiilikuvasi."
+msgstr "Leave this field empty to keep your current profile picture."
+
+#: mielenosoitukset_fi/templates/users/auth/settings.html
+msgid "Profiilikuvan esikatselu"
+msgstr "Profile picture preview"

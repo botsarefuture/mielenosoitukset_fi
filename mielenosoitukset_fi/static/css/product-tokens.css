@@ -1,0 +1,29 @@
+/* Shared Mielenosoitukset.fi product tokens.
+
+   Public and admin interfaces have different information density and component
+   names, but their colors, surfaces, feedback states and elevation come from
+   this one semantic foundation. Component styles consume these tokens; page
+   templates must not redefine a competing palette. */
+
+:root {
+  --product-primary: light-dark(#0033a0, #8bb1ff);
+  --product-primary-strong: light-dark(#00267a, #b9ceff);
+  --product-primary-soft: light-dark(#edf4ff, #17233b);
+  --product-action-bg: light-dark(#0033a0, #315ea8);
+  --product-action-hover: light-dark(#00267a, #416fbd);
+  --product-on-action: #ffffff;
+  --product-accent: #ff6600;
+  --product-accent-strong: light-dark(#9c3b00, #ffb078);
+  --product-accent-soft: light-dark(#fff2e8, #3a2418);
+  --product-canvas: light-dark(#f6f8fb, #171b22);
+  --product-surface: light-dark(#ffffff, #20252d);
+  --product-surface-muted: light-dark(#f6f8fb, #292f39);
+  --product-border: light-dark(#dce3ec, #424b59);
+  --product-text: light-dark(#172033, #f2f5fa);
+  --product-text-muted: light-dark(#647083, #b7c0ce);
+  --product-success: light-dark(#18794e, #6ee7a8);
+  --product-success-soft: light-dark(#eaf8f0, #183328);
+  --product-danger: light-dark(#b42318, #ff9b91);
+  --product-danger-soft: light-dark(#fff0ee, #3b2021);
+  --product-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, 0.08), rgba(0, 0, 0, 0.18));
+}

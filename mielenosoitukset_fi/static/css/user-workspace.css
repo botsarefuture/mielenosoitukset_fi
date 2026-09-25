@@ -3,9 +3,8 @@
 
    Public list pages (demonstration list, city, tag) migrate onto this
    single stylesheet so the whole site speaks one token + component
-   language. Tokens reuse the admin workspace names and values
-   (admin/workspace.css) — the product primary is the admin blue — and
-   per-page inline <style> blocks are banned.
+   language. Product-wide values come from product-tokens.css; public
+   components deliberately do not depend on admin-scoped token names.
 
    Keep this file as the ONLY per-page-public stylesheet. Do not add
    page-specific classes here unless they are genuinely shared.
@@ -20,40 +19,19 @@ html.dark {
 }
 
 :root {
-  /* Shared product tokens (mirrors admin/workspace.css). */
-  --admin-workspace-blue: light-dark(#0033a0, #8bb1ff);
-  --admin-workspace-blue-dark: light-dark(#00267a, #b9ceff);
-  --admin-workspace-blue-soft: light-dark(#edf4ff, #17233b);
-  --admin-workspace-primary-bg: light-dark(#0033a0, #315ea8);
-  --admin-workspace-primary-hover: light-dark(#00267a, #416fbd);
-  --admin-workspace-on-primary: #ffffff;
-  --admin-workspace-orange: #ff6600;
-  --admin-workspace-orange-strong: light-dark(#9c3b00, #ffb078);
-  --admin-workspace-orange-soft: light-dark(#fff2e8, #3a2418);
-  --admin-workspace-surface: light-dark(#ffffff, #20252d);
-  --admin-workspace-surface-muted: light-dark(#f6f8fb, #292f39);
-  --admin-workspace-border: light-dark(#dce3ec, #424b59);
-  --admin-workspace-text: light-dark(#172033, #f2f5fa);
-  --admin-workspace-muted: light-dark(#647083, #b7c0ce);
-  --admin-workspace-success: light-dark(#18794e, #6ee7a8);
-  --admin-workspace-success-soft: light-dark(#eaf8f0, #183328);
-  --admin-workspace-danger: light-dark(#b42318, #ff9b91);
-  --admin-workspace-danger-soft: light-dark(#fff0ee, #3b2021);
-  --admin-workspace-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .08), rgba(0, 0, 0, .18));
-
   /* Public component radii (kept from the migrated v2 sheets). */
   --user-radius-main: 1.2em;
   --user-radius-small: 0.5em;
 }
 
 body {
-  background: var(--admin-workspace-surface-muted);
-  color: var(--admin-workspace-text);
+  background: var(--product-surface-muted);
+  color: var(--product-text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 h1 {
-  color: var(--admin-workspace-blue);
+  color: var(--product-primary);
   font-size: 2.1em;
   font-weight: 800;
   margin-bottom: 1.2em;
@@ -64,7 +42,7 @@ h1 {
 /* Scope global h1 to family containers to avoid site-wide bleed. */
 .main-content > h1,
 .container-main-content > h1 {
-  color: var(--admin-workspace-blue);
+  color: var(--product-primary);
   font-size: 2.1em;
   font-weight: 800;
   margin-bottom: 1.2em;
@@ -76,9 +54,9 @@ h1 {
    CONTAINERS
 ========================== */
 .container-main-content {
-  background: var(--admin-workspace-surface);
+  background: var(--product-surface);
   border-radius: var(--user-radius-main);
-  box-shadow: var(--admin-workspace-shadow);
+  box-shadow: var(--product-shadow);
   padding: 2em 1em 2em 1em;
   margin-bottom: 2em;
   margin-top: 1.5em;
@@ -104,12 +82,12 @@ h1 {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(90deg, var(--admin-workspace-blue) 0%, var(--admin-workspace-blue-dark) 100%);
-  color: var(--admin-workspace-on-primary);
+  background: linear-gradient(90deg, var(--product-primary) 0%, var(--product-primary-strong) 100%);
+  color: var(--product-on-action);
   border-radius: var(--user-radius-main);
   padding: 1.5em 1em 1.2em 1em;
   margin-bottom: 2em;
-  box-shadow: var(--admin-workspace-shadow);
+  box-shadow: var(--product-shadow);
   position: relative;
   overflow: hidden;
 }
@@ -129,7 +107,7 @@ h1 {
 .page-banner-title {
   font-size: 2.1em;
   font-weight: 900;
-  color: var(--admin-workspace-on-primary);
+  color: var(--product-on-action);
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
   margin-bottom: 0.2em;
   letter-spacing: 0.04em;
@@ -139,7 +117,7 @@ h1 {
 .page-banner-text {
   font-size: 1.12em;
   font-weight: 400;
-  color: var(--admin-workspace-blue-soft);
+  color: var(--product-primary-soft);
   margin-top: 0.2em;
   text-align: center;
   max-width: 600px;
@@ -163,8 +141,8 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: var(--admin-workspace-primary-bg);
-  color: var(--admin-workspace-on-primary);
+  background-color: var(--product-action-bg);
+  color: var(--product-on-action);
   padding: 0.7em 1.5em;
   border: none;
   border-radius: 2em;
@@ -190,8 +168,8 @@ h1 {
 }
 
 .button:hover {
-  background-color: var(--admin-workspace-primary-hover);
-  box-shadow: var(--admin-workspace-shadow);
+  background-color: var(--product-action-hover);
+  box-shadow: var(--product-shadow);
   filter: brightness(1.06);
 }
 
@@ -200,25 +178,25 @@ h1 {
 }
 
 .button-primary {
-  background: var(--admin-workspace-blue);
-  box-shadow: var(--admin-workspace-shadow);
+  background: var(--product-primary);
+  box-shadow: var(--product-shadow);
 }
 
 .button-primary:hover {
-  background: var(--admin-workspace-blue-dark);
+  background: var(--product-primary-strong);
 }
 
 .button-secondary {
-  background: var(--admin-workspace-orange);
-  box-shadow: var(--admin-workspace-shadow);
+  background: var(--product-accent);
+  box-shadow: var(--product-shadow);
 }
 
 .button-secondary:hover {
-  background: var(--admin-workspace-orange-strong);
+  background: var(--product-accent-strong);
 }
 
 .button:focus {
-  outline: 2px solid var(--admin-workspace-blue);
+  outline: 2px solid var(--product-primary);
   outline-offset: 2px;
 }
 
@@ -235,25 +213,25 @@ h1 {
 
 .search-form input[type="text"] {
   padding: 0.6em 1em;
-  border: 1px solid var(--admin-workspace-border);
+  border: 1px solid var(--product-border);
   border-radius: var(--user-radius-small);
-  background: var(--admin-workspace-surface);
+  background: var(--product-surface);
   font-size: 1em;
-  color: var(--admin-workspace-text);
+  color: var(--product-text);
   transition: border 0.2s;
 }
 
 .search-form input[type="text"]:focus {
-  border-color: var(--admin-workspace-blue);
+  border-color: var(--product-primary);
   outline: none;
 }
 
 .invalid-date {
-  border-color: var(--admin-workspace-danger) !important;
+  border-color: var(--product-danger) !important;
 }
 
 .date-error {
-  color: var(--admin-workspace-danger);
+  color: var(--product-danger);
   font-size: 0.98em;
   display: none;
   margin-top: -0.5em;
@@ -278,9 +256,9 @@ h1 {
 
 .filter {
   padding: 0.7em 1.2em;
-  background: var(--admin-workspace-blue);
+  background: var(--product-primary);
   border-radius: 2em;
-  color: var(--admin-workspace-on-primary);
+  color: var(--product-on-action);
   font-size: 1em;
   display: flex;
   align-items: center;
@@ -291,20 +269,20 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
-  background: var(--admin-workspace-blue-soft);
-  color: var(--admin-workspace-blue);
+  background: var(--product-primary-soft);
+  color: var(--product-primary);
   border-radius: 2em;
   padding: 0.35em 0.8em;
   font-size: 0.95em;
   font-weight: 600;
-  border: 1px solid var(--admin-workspace-blue);
+  border: 1px solid var(--product-primary);
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
 
 .filter-pill:hover {
-  background: var(--admin-workspace-blue);
-  color: var(--admin-workspace-on-primary);
-  box-shadow: var(--admin-workspace-shadow);
+  background: var(--product-primary);
+  color: var(--product-on-action);
+  box-shadow: var(--product-shadow);
 }
 
 .filter-pill i {
@@ -323,18 +301,18 @@ h1 {
 }
 
 .pill-remove:hover {
-  color: var(--admin-workspace-on-primary);
+  color: var(--product-on-action);
 }
 
 /* ==========================
    SUGGESTIONS
 ========================== */
 .suggestions {
-  background: var(--admin-workspace-surface);
+  background: var(--product-surface);
   width: 100%;
-  border: 1px solid var(--admin-workspace-border);
+  border: 1px solid var(--product-border);
   border-radius: var(--user-radius-small);
-  box-shadow: var(--admin-workspace-shadow);
+  box-shadow: var(--product-shadow);
   position: absolute;
   margin-top: -10px;
   z-index: 10;
@@ -353,8 +331,8 @@ h1 {
 }
 
 .suggestion-item:hover {
-  background: var(--admin-workspace-blue);
-  color: var(--admin-workspace-on-primary);
+  background: var(--product-primary);
+  color: var(--product-on-action);
 }
 
 /* ==========================
@@ -368,8 +346,8 @@ h1 {
 }
 
 .view-toggle-btn {
-  background: var(--admin-workspace-blue-soft);
-  color: var(--admin-workspace-blue);
+  background: var(--product-primary-soft);
+  color: var(--product-primary);
   border: none;
   border-radius: var(--user-radius-small);
   padding: 0.4em 1.2em;
@@ -384,20 +362,20 @@ h1 {
 
 .view-toggle-btn.active,
 .view-toggle-btn:hover {
-  background: var(--admin-workspace-blue);
-  color: var(--admin-workspace-on-primary);
+  background: var(--product-primary);
+  color: var(--product-on-action);
 }
 
 /* ==========================
    SECTION CARD
 ========================== */
 .section-card {
-  background: var(--admin-workspace-surface);
+  background: var(--product-surface);
   border-radius: var(--user-radius-main);
   padding: 2.5em 2em;
   margin-bottom: 2.5rem;
-  box-shadow: var(--admin-workspace-shadow);
-  border: 1px solid var(--admin-workspace-border);
+  box-shadow: var(--product-shadow);
+  border: 1px solid var(--product-border);
   position: relative;
   overflow: hidden;
 }
@@ -409,13 +387,13 @@ h1 {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--admin-workspace-blue), var(--admin-workspace-blue-dark));
+  background: linear-gradient(90deg, var(--product-primary), var(--product-primary-strong));
 }
 
 .section-title {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--admin-workspace-blue);
+  color: var(--product-primary);
   margin-bottom: 2rem;
   text-align: center;
   display: flex;
@@ -463,7 +441,7 @@ h1 {
 }
 
 .loading-container p {
-  color: var(--admin-workspace-muted);
+  color: var(--product-text-muted);
   font-size: 1.1rem;
   font-weight: 500;
   margin: 0;
@@ -472,8 +450,8 @@ h1 {
 .spinner {
   width: 60px;
   height: 60px;
-  border: 4px solid var(--admin-workspace-border);
-  border-top: 4px solid var(--admin-workspace-orange-strong);
+  border: 4px solid var(--product-border);
+  border-top: 4px solid var(--product-accent-strong);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1.5rem;
@@ -494,7 +472,7 @@ h1 {
   width: 18px;
   height: 18px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: var(--admin-workspace-on-primary);
+  border-top-color: var(--product-on-action);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -514,7 +492,7 @@ h1 {
   width: 16px;
   height: 16px;
   border: 2px solid transparent;
-  border-top-color: var(--admin-workspace-on-primary);
+  border-top-color: var(--product-on-action);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -527,7 +505,7 @@ h1 {
   display: block;
   text-align: center;
   padding: 1em;
-  color: var(--admin-workspace-muted);
+  color: var(--product-text-muted);
 }
 
 .end-of-content-message[hidden] {
@@ -542,10 +520,10 @@ h1 {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  background: var(--admin-workspace-surface);
+  background: var(--product-surface);
   border-radius: var(--user-radius-main);
   padding: 3rem 2rem;
-  box-shadow: var(--admin-workspace-shadow);
+  box-shadow: var(--product-shadow);
   margin: 2rem auto;
   max-width: 500px;
   transition: transform 0.2s ease;
@@ -557,7 +535,7 @@ h1 {
 
 .no-results-icon {
   font-size: 5rem;
-  color: var(--admin-workspace-danger);
+  color: var(--product-danger);
   margin-bottom: 1rem;
   animation: pop 0.6s ease;
 }
@@ -566,12 +544,12 @@ h1 {
   font-size: 1.6rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: var(--admin-workspace-text);
+  color: var(--product-text);
 }
 
 .no-results-text {
   font-size: 1rem;
-  color: var(--admin-workspace-muted);
+  color: var(--product-text-muted);
   margin-bottom: 1.5rem;
 }
 
@@ -583,7 +561,7 @@ h1 {
 
 .no-results-action .button:hover {
   transform: translateY(-2px);
-  box-shadow: var(--admin-workspace-shadow);
+  box-shadow: var(--product-shadow);
 }
 
 /* ==========================
@@ -598,8 +576,8 @@ h1 {
 .demo-table {
   width: 100%;
   border-collapse: collapse;
-  background: var(--admin-workspace-surface);
-  color: var(--admin-workspace-text);
+  background: var(--product-surface);
+  color: var(--product-text);
   border-radius: 1em;
   box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
   font-size: 1em;
@@ -609,13 +587,13 @@ h1 {
 .demo-table td {
   padding: 1em 0.7em;
   text-align: left;
-  border-bottom: 1px solid var(--admin-workspace-blue-soft);
+  border-bottom: 1px solid var(--product-primary-soft);
   vertical-align: middle;
 }
 
 .demo-table th {
-  background: var(--admin-workspace-blue-soft);
-  color: var(--admin-workspace-blue);
+  background: var(--product-primary-soft);
+  color: var(--product-primary);
   font-size: 1.08em;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -627,7 +605,7 @@ h1 {
 
 .demo-table .demo-table-title {
   font-weight: 700;
-  color: var(--admin-workspace-blue);
+  color: var(--product-primary);
   font-size: 1.08em;
 }
 
@@ -638,8 +616,8 @@ h1 {
 }
 
 .demo-table-tag {
-  background: var(--admin-workspace-blue-soft);
-  color: var(--admin-workspace-blue);
+  background: var(--product-primary-soft);
+  color: var(--product-primary);
   border-radius: 0.4em;
   padding: 0.1em 0.6em;
   font-size: 0.98em;
@@ -650,12 +628,12 @@ h1 {
 }
 
 .demo-table-tag:hover {
-  background: var(--admin-workspace-blue);
-  color: var(--admin-workspace-on-primary);
+  background: var(--product-primary);
+  color: var(--product-on-action);
 }
 
 .demo-table .demo-table-link {
-  color: var(--admin-workspace-blue);
+  color: var(--product-primary);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -668,11 +646,11 @@ h1 {
 }
 
 .demo-card {
-  background: var(--admin-workspace-surface);
+  background: var(--product-surface);
   border-radius: 1.1em;
   padding: 1.5em 1.3em 1.2em 1.3em;
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08), 0 1.5px 4px rgba(0, 0, 0, 0.04);
-  border: 1.5px solid var(--admin-workspace-blue-soft);
+  border: 1.5px solid var(--product-primary-soft);
   display: flex;
   flex-direction: column;
   gap: 0.7em;
@@ -685,7 +663,7 @@ h1 {
 .demo-card:hover,
 .demo-card:focus {
   box-shadow: 0 6px 24px light-dark(rgba(0, 51, 160, 0.13), rgba(139, 177, 255, 0.14)), 0 2px 8px rgba(0, 0, 0, 0.08);
-  border-color: var(--admin-workspace-blue);
+  border-color: var(--product-primary);
   transform: translateY(-2px) scale(1.012);
   z-index: 2;
 }
@@ -693,7 +671,7 @@ h1 {
 .demo-card-title {
   font-size: 1.25em;
   font-weight: 800;
-  color: var(--admin-workspace-blue);
+  color: var(--product-primary);
   margin-bottom: 0.2em;
   display: flex;
   align-items: center;
@@ -713,7 +691,7 @@ h1 {
 .demo-card-date-time,
 .demo-card-location-row {
   font-size: 1.05em;
-  color: var(--admin-workspace-muted);
+  color: var(--product-text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -724,7 +702,7 @@ h1 {
 
 .demo-card-date-time i,
 .demo-card-location-row i {
-  color: var(--admin-workspace-blue);
+  color: var(--product-primary);
   margin-right: 0.3em;
 }
 
@@ -747,8 +725,8 @@ h1 {
 
 .demo-card-tag,
 .demo-table-tag {
-  background: var(--admin-workspace-blue-soft);
-  color: var(--admin-workspace-blue);
+  background: var(--product-primary-soft);
+  color: var(--product-primary);
   border-radius: 0.5em;
   padding: 0.13em 0.8em;
   font-size: 1em;
@@ -761,8 +739,8 @@ h1 {
 
 .demo-card-tag:hover,
 .demo-table-tag:hover {
-  background: var(--admin-workspace-blue);
-  color: var(--admin-workspace-on-primary);
+  background: var(--product-primary);
+  color: var(--product-on-action);
 }
 
 .demo-card-actions {
@@ -773,8 +751,8 @@ h1 {
 }
 
 .demo-card-action-btn {
-  background: var(--admin-workspace-blue-soft);
-  color: var(--admin-workspace-blue);
+  background: var(--product-primary-soft);
+  color: var(--product-primary);
   border: none;
   border-radius: 0.5em;
   padding: 0.3em 1em;
@@ -789,16 +767,16 @@ h1 {
 
 .demo-card-action-btn:hover,
 .demo-card-action-btn:focus {
-  background: var(--admin-workspace-blue);
-  color: var(--admin-workspace-on-primary);
+  background: var(--product-primary);
+  color: var(--product-on-action);
 }
 
 .demo-card-badge {
   position: absolute;
   top: 1.1em;
   right: 1.1em;
-  background: var(--admin-workspace-blue);
-  color: var(--admin-workspace-on-primary);
+  background: var(--product-primary);
+  color: var(--product-on-action);
   font-size: 0.95em;
   font-weight: 700;
   border-radius: 1em;
@@ -820,7 +798,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--admin-workspace-surface);
+  background: var(--product-surface);
 }
 
 .demo-card-image img {
@@ -851,8 +829,8 @@ h1 {
   font-size: 0.74rem;
   font-weight: 700;
   border-radius: 999px;
-  color: var(--admin-workspace-on-primary);
-  background: var(--admin-workspace-muted);
+  color: var(--product-on-action);
+  background: var(--product-text-muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   opacity: 0;
@@ -874,7 +852,7 @@ h1 {
 
 .demo-card-pride {
   border: 1.5px solid transparent;
-  background: var(--admin-workspace-surface);
+  background: var(--product-surface);
   isolation: isolate;
   box-shadow: 0 0 0 1px rgba(115, 41, 130, 0.18), 0 8px 22px rgba(115, 41, 130, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
@@ -905,7 +883,7 @@ h1 {
   margin-top: 0.8em;
   flex-wrap: wrap;
   font-size: 0.95em;
-  color: var(--admin-workspace-muted);
+  color: var(--product-text-muted);
 }
 
 .demo-card-friends {
@@ -919,7 +897,7 @@ h1 {
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid var(--admin-workspace-orange);
+  border: 2px solid var(--product-accent);
   transition: transform 0.2s;
 }
 
@@ -929,7 +907,7 @@ h1 {
 
 .demo-card-friends .friends-text {
   font-weight: 500;
-  color: var(--admin-workspace-blue);
+  color: var(--product-primary);
 }
 
 .demo-card-no-friends {
@@ -948,23 +926,23 @@ h1 {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--admin-workspace-blue);
-  color: var(--admin-workspace-on-primary);
+  background: var(--product-primary);
+  color: var(--product-on-action);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 1.2em;
-  border: 2px solid var(--admin-workspace-orange);
+  border: 2px solid var(--product-accent);
 }
 
 .demo-card-no-friends:hover {
   transform: translateY(-2px);
-  color: var(--admin-workspace-orange-strong);
+  color: var(--product-accent-strong);
 }
 
 .demo-card-no-friends:hover .plus-avatar {
-  background: var(--admin-workspace-orange);
+  background: var(--product-accent);
 }
 
 .attending-loading {
@@ -973,7 +951,7 @@ h1 {
   justify-content: center;
   gap: 0.5em;
   font-size: 0.95em;
-  color: var(--admin-workspace-muted);
+  color: var(--product-text-muted);
   padding: 0.5em 0;
   opacity: 0.7;
 }
@@ -982,8 +960,8 @@ h1 {
   content: '';
   width: 16px;
   height: 16px;
-  border: 2px solid var(--admin-workspace-blue-soft);
-  border-top-color: var(--admin-workspace-blue);
+  border: 2px solid var(--product-primary-soft);
+  border-top-color: var(--product-primary);
   border-radius: 50%;
   display: inline-block;
   animation: spin 0.8s linear infinite;
@@ -1024,10 +1002,10 @@ h1 {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: var(--admin-workspace-surface);
-  border: 1px solid var(--admin-workspace-border);
+  background: var(--product-surface);
+  border: 1px solid var(--product-border);
   border-radius: 50%;
-  color: var(--admin-workspace-text);
+  color: var(--product-text);
   transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
   box-shadow: 0 2px 8px light-dark(rgba(15, 23, 42, 0.08), rgba(0, 0, 0, 0.22));
 }
@@ -1036,7 +1014,7 @@ h1 {
 #mark-read-btn:focus-visible,
 .notif-item__link:focus-visible,
 .notif-panel .card-footer a:focus-visible {
-  outline: 3px solid var(--admin-workspace-blue);
+  outline: 3px solid var(--product-primary);
   outline-offset: 2px;
 }
 
@@ -1047,9 +1025,9 @@ h1 {
 
 #notif-btn:hover,
 #notif-wrap[aria-expanded="true"] #notif-btn {
-  background: var(--admin-workspace-blue-soft);
-  border-color: var(--admin-workspace-blue);
-  color: var(--admin-workspace-blue);
+  background: var(--product-primary-soft);
+  border-color: var(--product-primary);
+  color: var(--product-primary);
   transform: translateY(-1px);
 }
 
@@ -1072,11 +1050,11 @@ h1 {
   transform: translateY(-0.5rem);
   transition: opacity 0.18s ease, visibility 0.18s ease, transform 0.18s ease;
   z-index: 2000;
-  background: var(--admin-workspace-surface);
-  border: 1px solid var(--admin-workspace-border) !important;
+  background: var(--product-surface);
+  border: 1px solid var(--product-border) !important;
   border-radius: 1rem;
-  box-shadow: var(--admin-workspace-shadow);
-  color: var(--admin-workspace-text);
+  box-shadow: var(--product-shadow);
+  color: var(--product-text);
   overflow: hidden;
 }
 
@@ -1088,27 +1066,27 @@ h1 {
 
 .notif-panel .card-header,
 .notif-panel .card-footer {
-  background: var(--admin-workspace-surface-muted);
-  border-color: var(--admin-workspace-border) !important;
-  color: var(--admin-workspace-text);
+  background: var(--product-surface-muted);
+  border-color: var(--product-border) !important;
+  color: var(--product-text);
 }
 
 .notif-panel .card-header {
-  border-bottom: 1px solid var(--admin-workspace-border) !important;
+  border-bottom: 1px solid var(--product-border) !important;
 }
 
 .notif-panel .card-footer {
-  border-top: 1px solid var(--admin-workspace-border) !important;
+  border-top: 1px solid var(--product-border) !important;
 }
 
 .notif-panel .card-footer a,
 #mark-read-btn {
-  color: var(--admin-workspace-blue);
+  color: var(--product-primary);
   font-weight: 700;
 }
 
 #mark-read-btn:disabled {
-  color: var(--admin-workspace-muted);
+  color: var(--product-text-muted);
   cursor: wait;
   opacity: 0.75;
 }
@@ -1117,7 +1095,7 @@ h1 {
   max-height: min(22.5rem, 60vh);
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: var(--admin-workspace-surface);
+  background: var(--product-surface);
 }
 
 .notif-state {
@@ -1127,19 +1105,19 @@ h1 {
   justify-content: center;
   gap: 0.55rem;
   padding: 1rem;
-  color: var(--admin-workspace-muted);
+  color: var(--product-text-muted);
   font-size: 0.9rem;
   text-align: center;
 }
 
 .notif-state--error {
-  color: var(--admin-workspace-danger);
-  background: var(--admin-workspace-danger-soft);
+  color: var(--product-danger);
+  background: var(--product-danger-soft);
 }
 
 .notif-item {
   position: relative;
-  border-bottom: 1px solid var(--admin-workspace-border);
+  border-bottom: 1px solid var(--product-border);
 }
 
 .notif-item:last-child {
@@ -1147,7 +1125,7 @@ h1 {
 }
 
 .notif-item.is-unread {
-  background: var(--admin-workspace-blue-soft);
+  background: var(--product-primary-soft);
 }
 
 .notif-item.is-unread::before {
@@ -1158,7 +1136,7 @@ h1 {
   width: 0.45rem;
   height: 0.45rem;
   border-radius: 50%;
-  background: var(--admin-workspace-blue);
+  background: var(--product-primary);
   transform: translateY(-50%);
 }
 
@@ -1168,13 +1146,13 @@ h1 {
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.8rem 1rem 0.8rem 1.35rem;
-  color: var(--admin-workspace-text);
+  color: var(--product-text);
   text-decoration: none;
 }
 
 .notif-item__link:hover {
-  background: color-mix(in srgb, var(--admin-workspace-blue-soft) 72%, transparent);
-  color: var(--admin-workspace-text);
+  background: color-mix(in srgb, var(--product-primary-soft) 72%, transparent);
+  color: var(--product-text);
 }
 
 .notif-item__icon {
@@ -1185,8 +1163,8 @@ h1 {
   justify-content: center;
   flex: 0 0 auto;
   border-radius: 0.7rem;
-  background: var(--admin-workspace-blue-soft);
-  color: var(--admin-workspace-blue);
+  background: var(--product-primary-soft);
+  color: var(--product-primary);
 }
 
 .notif-item__content {
@@ -1206,20 +1184,20 @@ h1 {
 }
 
 .notif-item__time {
-  color: var(--admin-workspace-muted);
+  color: var(--product-text-muted);
   font-size: 0.78rem;
   line-height: 1.3;
 }
 
 .notif-badge {
-  background: var(--admin-workspace-danger);
-  color: var(--admin-workspace-on-primary);
+  background: var(--product-danger);
+  color: var(--product-on-action);
   font-size: 0.7rem;
   font-weight: 800;
   line-height: 1;
   min-width: 1.25rem;
   padding: 0.24rem 0.36rem;
-  border: 2px solid var(--admin-workspace-surface);
+  border: 2px solid var(--product-surface);
   border-radius: 999px;
   text-align: center;
   white-space: nowrap;

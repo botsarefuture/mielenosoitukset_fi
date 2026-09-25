@@ -282,7 +282,14 @@ def register():
             flash_message(username_error, "error")
             return redirect(url_for("users.auth.register"))
 
-        if not password or not is_strong_password(password):
+        password_is_strong = False
+        if password:
+            password_is_strong, _password_error = is_strong_password(
+                password,
+                username,
+                email,
+            )
+        if not password_is_strong:
             flash_message(
                 "Virheellinen salasana.",
                 "error",
@@ -831,7 +838,12 @@ def forced_pwd_reset():
             flash_message("Salasanat eivät täsmää.", "error")
             return redirect(url_for("users.auth.forced_pwd_reset"))
 
-        if not is_strong_password(new_password, username=current_user.username, email=current_user.email):
+        password_is_strong, _password_error = is_strong_password(
+            new_password,
+            username=current_user.username,
+            email=current_user.email,
+        )
+        if not password_is_strong:
             log_entry["error"] = "Password does not meet requirements"
             mongo.password_changes.insert_one(log_entry)
             flash_message("Salasana ei täytä vaatimuksia.", "warning")
@@ -1567,7 +1579,12 @@ def password_reset(token):
             flash_message("Salasanat eivät täsmää!", "warning")
             return redirect(url_for("users.auth.password_reset", token=token))
 
-        if not is_strong_password(password, username=user.username, email=email):
+        password_is_strong, _password_error = is_strong_password(
+            password,
+            username=user.username,
+            email=email,
+        )
+        if not password_is_strong:
             log_entry["error"] = "Password does not meet requirements"
             mongo.password_changes.insert_one(log_entry)
             flash_message("Salasana ei täytä vaatimuksia.", "warning")
@@ -1703,18 +1720,21 @@ def api_change_password():
 
     if not all((cur, new, confirm)):
         return jsonify({"status": "error",
-                        "message": "All fields required."}), 400
+                        "message": _("Kaikki kentät ovat pakollisia.")}), 400
     if new != confirm:
         return jsonify({"status": "error",
-                        "message": "Passwords do not match."}), 400
+                        "message": _("Salasanat eivät täsmää.")}), 400
     if not current_user.check_password(cur):
         return jsonify({"status": "error",
-                        "message": "Current password is wrong."}), 400
-    if not is_strong_password(new,
-                              username=current_user.username,
-                              email=current_user.email):
+                        "message": _("Nykyinen salasana on väärä.")}), 400
+    password_is_strong, _password_error = is_strong_password(
+        new,
+        username=current_user.username,
+        email=current_user.email,
+    )
+    if not password_is_strong:
         return jsonify({"status": "error",
-                        "message": "Password too weak."}), 400
+                        "message": _("Salasana ei täytä vaatimuksia.")}), 400
 
     # actually change & log
     current_user._change_password(new)
@@ -1738,4 +1758,6 @@ def api_change_password():
     except Exception:
         pass
 
-    return jsonify({"status": "success", "message": "OK"})
+    return jsonify(
+        {"status": "success", "message": _("Salasana vaihdettu.")}
+    )

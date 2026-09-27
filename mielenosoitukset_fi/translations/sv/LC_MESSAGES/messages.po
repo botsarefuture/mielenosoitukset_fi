@@ -317,7 +317,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/tag_list.html:494
 #: mielenosoitukset_fi/templates/tag_list.html:548
 msgid "Sijainti"
-msgstr ""
+msgstr "Plats"
 
 #: mielenosoitukset_fi/templates/city.html:50
 #: mielenosoitukset_fi/templates/list.html:525
@@ -479,7 +479,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/contact.html:168
 msgid "Muu"
-msgstr ""
+msgstr "Annat"
 
 #: mielenosoitukset_fi/templates/contact.html:170
 msgid "Viesti:"
@@ -574,7 +574,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:671
 msgid "Järjestäjät"
-msgstr ""
+msgstr "Arrangörer"
 
 #: mielenosoitukset_fi/templates/detail.html:685
 msgid "Mielenosoitukset.fi -profiili"
@@ -1152,14 +1152,14 @@ msgstr ""
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:53
 #: mielenosoitukset_fi/templates/submit.html:339
 msgid "Paikallaan"
-msgstr ""
+msgstr "Stationär demonstration"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:142
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:143
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:50
 #: mielenosoitukset_fi/templates/submit.html:340
 msgid "Marssi"
-msgstr ""
+msgstr "Marsch"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:148
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:149
@@ -2108,7 +2108,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:216
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:14
 msgid "Kuvaus"
-msgstr ""
+msgstr "Beskrivning"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:245
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:333
@@ -4508,7 +4508,7 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:104
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:172
 msgid "Tapahtumatyyppi"
-msgstr ""
+msgstr "Evenemangstyp"
 
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:105
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:178
@@ -5298,7 +5298,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/governance/_tabs.html:3
 #: mielenosoitukset_fi/templates/admin_base.html:297
 msgid "Yleiskuva"
-msgstr ""
+msgstr "Översikt"
 
 #: mielenosoitukset_fi/templates/admin_V2/analytics.html:12
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:19
@@ -6118,7 +6118,7 @@ msgstr "Evenemang"
 #: mielenosoitukset_fi/templates/siblings.html:780
 #: mielenosoitukset_fi/templates/tag_list.html:135
 msgid "Näytä lisää"
-msgstr ""
+msgstr "Visa mer"
 
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:80
 #: mielenosoitukset_fi/templates/tag_list.html:141
@@ -8020,7 +8020,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/per_demo_analytics.html:85
 msgid "Ajankohta"
-msgstr ""
+msgstr "Datum och tid"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:118
 #: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:6
@@ -12995,3 +12995,35 @@ msgstr "Det gick inte att skapa tokenet."
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html
 msgid "Tokenin peruuttaminen epäonnistui."
 msgstr "Det gick inte att återkalla tokenet."
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Tapahtuman tiedot"
+msgstr "Evenemangsuppgifter"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Tiesulku"
+msgstr "Vägblockad"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Näytä vähemmän"
+msgstr "Visa mindre"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Tapahtumasivun näkymä"
+msgstr "Händelsesidans layout"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Näkymä"
+msgstr "Vy"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "käytössä"
+msgstr "vald"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Perinteinen"
+msgstr "Klassisk"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Anna palautetta tästä näkymästä"
+msgstr "Ge respons om den här layouten"

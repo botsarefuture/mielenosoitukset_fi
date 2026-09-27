@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Added
+* Repository agents now load the registered Project Memory Core overview and current-state notes when the local vault is available, keeping durable project decisions and branch/deployment status available across future tasks without blocking work when the vault is unavailable.
 * Public templates now have an exact inline-style debt contract: every remaining historical `<style>` block and static `style=` attribute is content-hashed in a reviewed baseline, so new or silently rewritten page-owned CSS fails CI while shared-component migrations can deliberately shrink the baseline.
 * Recurring-demonstration administrators now use the same scoped organizer editor as regular demonstrations: a series can combine permitted organization profiles with optional freeform organizers, preserve organizer record metadata across edits, and reject duplicate or forged organization links before saving.
 * Demonstration administrators can now manage multiple organizers in the regular create and edit form: permitted organization profiles can be linked alongside optional freeform organizers, rows can be added, edited, and removed without losing stored organizer metadata, and duplicate, incomplete, or forged organizer rows are rejected server-side. The shared organizer editor is keyboard-accessible, responsive, and uses the same light/dark admin form contract as the rest of the workspace.

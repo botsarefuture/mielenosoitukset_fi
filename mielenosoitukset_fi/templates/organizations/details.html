@@ -1450,7 +1450,10 @@
         updateOrgFollowButton(followBtn, data.following);
       } catch (err) {
         console.error(err);
-        alert("{{ _('Seurannan päivittäminen epäonnistui. Yritä uudelleen.') }}");
+        displayFlashMessage(
+          "error",
+          {{ _('Seurannan päivittäminen epäonnistui. Yritä uudelleen.')|tojson }}
+        );
       } finally {
         followBtn.dataset.loading = "0";
         followBtn.classList.remove("loading");

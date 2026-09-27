@@ -141,7 +141,10 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
           await toggleOrganizationFollow(btn);
         } catch (err) {
           console.error(err);
-          alert("{{ _('Seurannan päivittäminen epäonnistui. Yritä uudelleen.') }}");
+          displayFlashMessage(
+            "error",
+            {{ _('Seurannan päivittäminen epäonnistui. Yritä uudelleen.')|tojson }}
+          );
         }
       });
     });
@@ -153,7 +156,10 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
           await toggleRecurringFollow(recurringBtn);
         } catch (err) {
           console.error(err);
-          alert("{{ _('Seurannan päivittäminen epäonnistui. Yritä uudelleen.') }}");
+          displayFlashMessage(
+            "error",
+            {{ _('Seurannan päivittäminen epäonnistui. Yritä uudelleen.')|tojson }}
+          );
         }
       });
     }

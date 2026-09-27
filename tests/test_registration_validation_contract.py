@@ -80,6 +80,15 @@ def test_register_form_uses_safe_localized_shared_status_contract(client):
     assert ".strength-meter-fill.strength-strong" in css
 
 
+def test_register_form_matches_server_three_of_four_category_policy():
+    template = REGISTER_TEMPLATE.read_text(encoding="utf-8")
+
+    assert 'const reqDigit = document.getElementById("req-digit")' in template
+    assert "categoryRequirements.filter(([, met]) => met).length >= 3" in template
+    assert "if (!categoriesValid) allValid = false" in template
+    assert "if (!categoriesValid) missing.push(registerMessages.categories)" in template
+
+
 def test_auth_routes_unpack_password_validation_result():
     source = AUTH_ROUTES.read_text(encoding="utf-8")
 

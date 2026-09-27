@@ -2887,6 +2887,10 @@ msgstr "Minst en liten bokstav"
 msgid "Vähintään yksi iso kirjain"
 msgstr "Minst en stor bokstav"
 
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Vähintään yksi numero"
+msgstr "Minst en siffra"
+
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:118
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:169
 msgid "Vähintään yksi erikoismerkki"

@@ -87,8 +87,10 @@
             <div class="password-requirements-container">
                 <ul class="password-requirements">
                     <li id="req-length" class="invalid">{{ _('Vähintään 12 merkkiä pitkä') }}</li>
+                    <li id="req-categories" class="invalid">{{ _('Sisältää vähintään 3 seuraavista: pieni kirjain, iso kirjain, numero, erikoismerkki') }}</li>
                     <li id="req-lower" class="invalid">{{ _('Vähintään yksi pieni kirjain') }}</li>
                     <li id="req-upper" class="invalid">{{ _('Vähintään yksi iso kirjain') }}</li>
+                    <li id="req-digit" class="invalid">{{ _('Vähintään yksi numero') }}</li>
                     <li id="req-special" class="invalid">{{ _('Vähintään yksi erikoismerkki') }}</li>
                     <li id="req-no-username" class="invalid">{{ _('Ei saa sisältää käyttäjätunnusta tai sähköpostia') }}</li>
                 </ul>
@@ -132,17 +134,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const errorDiv = document.getElementById("error-message");
 
     const reqLength = document.getElementById("req-length");
+    const reqCategories = document.getElementById("req-categories");
     const reqLower = document.getElementById("req-lower");
     const reqUpper = document.getElementById("req-upper");
+    const reqDigit = document.getElementById("req-digit");
     const reqSpecial = document.getElementById("req-special");
     const reqNoUsername = document.getElementById("req-no-username");
     const specialRegex = /[!@#$%^&*()\-\_=+\[\]{};:,.<>?]/;
 
     const registerMessages = {
         minLength: {{ _('Vähintään 12 merkkiä')|tojson }},
-        lowercase: {{ _('Vähintään yksi pieni kirjain')|tojson }},
-        uppercase: {{ _('Vähintään yksi iso kirjain')|tojson }},
-        special: {{ _('Vähintään yksi erikoismerkki')|tojson }},
+        categories: {{ _('Sisältää vähintään 3 seuraavista: pieni kirjain, iso kirjain, numero, erikoismerkki')|tojson }},
         noIdentity: {{ _('Ei saa sisältää käyttäjätunnusta tai sähköpostia')|tojson }},
         requirementsComplete: {{ _('Kaikki vaatimukset täytetty!')|tojson }},
         passwordsMismatch: {{ _('Salasanat eivät täsmää')|tojson }},
@@ -213,6 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (pwd.length >= 12) score++;
         if (/[a-z]/.test(pwd)) score++;
         if (/[A-Z]/.test(pwd)) score++;
+        if (/\d/.test(pwd)) score++;
         if (specialRegex.test(pwd)) score++;
 
         if (score <= 2) {
@@ -233,12 +236,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Length
         if (pwd.length >= 12) reqLength.className = "valid"; else { reqLength.className = "invalid"; allValid=false; }
-        // Lower
-        if (/[a-z]/.test(pwd)) reqLower.className = "valid"; else { reqLower.className = "invalid"; allValid=false; }
-        // Upper
-        if (/[A-Z]/.test(pwd)) reqUpper.className = "valid"; else { reqUpper.className = "invalid"; allValid=false; }
-        // Special
-        if (specialRegex.test(pwd)) reqSpecial.className = "valid"; else { reqSpecial.className = "invalid"; allValid=false; }
+        // The server accepts any three of these four character categories.
+        const categoryRequirements = [
+            [reqLower, /[a-z]/.test(pwd)],
+            [reqUpper, /[A-Z]/.test(pwd)],
+            [reqDigit, /\d/.test(pwd)],
+            [reqSpecial, specialRegex.test(pwd)]
+        ];
+        categoryRequirements.forEach(([element, met]) => {
+            element.className = met ? "valid" : "invalid";
+        });
+        const categoriesValid = categoryRequirements.filter(([, met]) => met).length >= 3;
+        reqCategories.className = categoriesValid ? "valid" : "invalid";
+        if (!categoriesValid) allValid = false;
         // No username/email
         const lowerPwd = pwd.toLowerCase();
         const emailIdentity = email.includes("@") ? email.split("@", 1)[0] : email;
@@ -251,9 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Show missing
         const missing = [];
         if (reqLength.className==="invalid") missing.push(registerMessages.minLength);
-        if (reqLower.className==="invalid") missing.push(registerMessages.lowercase);
-        if (reqUpper.className==="invalid") missing.push(registerMessages.uppercase);
-        if (reqSpecial.className==="invalid") missing.push(registerMessages.special);
+        if (!categoriesValid) missing.push(registerMessages.categories);
         if (reqNoUsername.className==="invalid") missing.push(registerMessages.noIdentity);
 
         if(missing.length===0){

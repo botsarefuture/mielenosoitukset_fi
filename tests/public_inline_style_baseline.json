@@ -150,9 +150,6 @@
     "users/auth/password_reset.html": [
       "6812cd3d4d59c587"
     ],
-    "users/auth/register.html": [
-      "ae7f10ad42d1b419"
-    ],
     "users/auth/settings.html": [
       "cab05de1883fe94d"
     ],
@@ -391,9 +388,6 @@
     ],
     "users/auth/login.html": [
       "9a7472a9ec3ae0b7"
-    ],
-    "users/auth/register.html": [
-      "55e6cf3f6fe174f2"
     ],
     "users/auth/settings.html": [
       "66ecfda7971b9b3c"

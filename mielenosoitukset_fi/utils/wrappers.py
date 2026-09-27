@@ -13,6 +13,9 @@ def has_admin_access(user) -> bool:
     """Return True when a user may enter an admin surface."""
     if not getattr(user, "is_authenticated", False):
         return False
+    user_check = getattr(user, "has_admin_access", None)
+    if callable(user_check):
+        return bool(user_check())
     if getattr(user, "role", None) in ["global_admin", "admin", "god"]:
         return True
     if getattr(user, "global_admin", False):

@@ -15,6 +15,15 @@ from .utils import mongo, _ADMIN_TEMPLATE_FOLDER
 admin_dev_bp = Blueprint("admin_dev", __name__, url_prefix="/admin/developer")
 
 
+def _serialize_requested_at(value):
+    """Return a stable display value for legacy and current request rows."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value)
+
+
 @admin_dev_bp.route("/requests", methods=["GET"])
 @login_required
 @admin_required
@@ -81,8 +90,7 @@ def list_requests():
         if kind == "scope":
             row["app"] = apps.get(row.get("app_id"), {})
             row["app_id"] = str(row.get("app_id")) if row.get("app_id") else None
-        if row.get("requested_at"):
-            row["requested_at"] = row["requested_at"].isoformat()
+        row["requested_at"] = _serialize_requested_at(row.get("requested_at"))
 
     active_filters = []
     if status:

@@ -48,6 +48,9 @@ def test_token_manager_uses_safe_dom_and_shared_styles():
     assert "replaceChildren" in template
     assert "textContent" in template
     assert "bootstrap.Modal.getOrCreateInstance" in template
+    assert "if (tokenCreationInProgress) event.preventDefault()" in template
+    assert "showRevokeError(result.message || tokenMessages.revokeError)" in template
+    assert 'id="revoke-token-error"' in template
     assert "window.clearInterval" not in template
     assert "Luo vastaava uusi token" in template
     assert ".user-page-heading" in css

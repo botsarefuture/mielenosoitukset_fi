@@ -153,9 +153,6 @@
     "users/auth/settings.html": [
       "cab05de1883fe94d"
     ],
-    "users/auth/token_ui.html": [
-      "d9116febcfdea2a2"
-    ],
     "users/profile/profile copy.html": [
       "baf17a084a0adc7a"
     ],
@@ -391,9 +388,6 @@
     ],
     "users/auth/settings.html": [
       "66ecfda7971b9b3c"
-    ],
-    "users/auth/token_ui.html": [
-      "d0466aa33fa8061c"
     ],
     "users/profile/messages.html": [
       "02ad4129df8995a6",

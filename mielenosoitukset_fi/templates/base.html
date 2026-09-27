@@ -119,7 +119,7 @@
 
   {% block styles %}{% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/product-tokens.css', v='20260924-product-tokens-1') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20260927-user-workspace-9') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20260927-user-workspace-10') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css', v='20260924-public-chrome-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/public_hero.css', v='20260907-centered-1') }}">
 
@@ -586,46 +586,43 @@ body.banner-closed {
   {% endif %}
 
   <!-- Footer -->
-  <footer class="footer">
-    <div class="container-header-footer">
-      <p style="color: var(--secondary_color);">&copy; 2026 Mielenosoitukset.fi - {{ _('Kaikki oikeudet pidätetään.') }}
-      </p>
-      <ul class="footer-links">
+  <footer class="footer public-site-footer">
+    <div class="container-header-footer public-site-footer__inner">
+      <p class="public-site-footer__brand">&copy; 2026 Mielenosoitukset.fi · {{ _('Kaikki oikeudet pidätetään.') }}</p>
+      <nav aria-label="{{ _('Sivuston alatunniste') }}">
+      <ul class="footer-links public-site-footer__links">
         <li><a href="{{ url_for('info') }}">{{ _('Tietoa sivustosta') }}</a></li>
-        <li class="footer-separator" aria-hidden="true">|</li>
         <li><a href="{{ url_for('privacy') }}">{{ _('Tietosuojaseloste') }}</a></li>
-        <li class="footer-separator" aria-hidden="true">|</li>
         <li><a href="{{ url_for('contact') }}">{{ _('Ota yhteyttä') }}</a></li>
-        <li class="footer-separator" aria-hidden="true">|</li>
         <li><a href="{{ url_for('public_guides') }}">{{ _('Ohjeet') }}</a></li>
-        <li class="footer-separator" aria-hidden="true">|</li>
         <li><a href="{{ url_for('developer.dashboard') }}">{{ _('Kehittäjille') }}</a></li>
       </ul>
-      <ul class="social-media-links">
+      </nav>
+      <ul class="social-media-links public-site-footer__social" aria-label="{{ _('Mielenosoitukset.fi sosiaalisessa mediassa') }}">
         <li>
-          <a href="https://www.instagram.com/mielenosoitukset" target="_blank">
-            <i class="fab fa-instagram"></i> Instagram
+          <a href="https://www.instagram.com/mielenosoitukset" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-instagram" aria-hidden="true"></i> Instagram
           </a>
         </li>
         <li>
-          <a href="https://www.facebook.com/mielenosoitukset" target="_blank">
-            <i class="fab fa-facebook"></i> Facebook
+          <a href="https://www.facebook.com/mielenosoitukset" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-facebook" aria-hidden="true"></i> Facebook
           </a>
         </li>
         <li>
-          <a href="https://www.tiktok.com/@mielenosoitukset" target="_blank">
-            <i class="fab fa-tiktok"></i> TikTok
+          <a href="https://www.tiktok.com/@mielenosoitukset" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-tiktok" aria-hidden="true"></i> TikTok
           </a>
         </li>
         <li>
-          <a href="https://mastodon.social/@mielenosoitukset" target="_blank">
-            <i class="fab fa-mastodon"></i> Mastodon
+          <a href="https://mastodon.social/@mielenosoitukset" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-mastodon" aria-hidden="true"></i> Mastodon
           </a>
         </li>
 
       </ul>
       <!-- Authentication Links -->
-      <ul class="footer-links auth-buttons">
+      <ul class="footer-links auth-buttons public-site-footer__auth" aria-label="{{ _('Käyttäjätili') }}">
         {% if not current_user.is_authenticated %}
         <li><a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
         <li><a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a></li>

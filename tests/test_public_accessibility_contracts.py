@@ -9,8 +9,11 @@ def test_public_shell_has_language_and_semantic_footer_lists(client):
     page = response.get_data(as_text=True)
 
     assert re.search(r"<html lang=\"[^\"]+\"", page)
-    assert '<ul class="footer-links auth-buttons">' in page
-    assert '<li class="footer-separator" aria-hidden="true">|</li>' in page
+    assert '<footer class="footer public-site-footer">' in page
+    assert '<nav aria-label="Sivuston alatunniste">' in page
+    assert 'class="footer-links auth-buttons public-site-footer__auth"' in page
+    assert 'class="footer-separator"' not in page
+    assert 'style="color: var(--secondary_color);"' not in page
     assert '<div class="auth-buttons">' not in page
 
 
@@ -45,9 +48,12 @@ def test_api_documentation_code_blocks_are_focusable_and_links_are_distinct(clie
 
     assert response.status_code == 200
     page = response.get_data(as_text=True)
+    workspace = Path("mielenosoitukset_fi/static/css/user-workspace.css").read_text(
+        encoding="utf-8"
+    )
 
     assert '<pre tabindex="0">' in page
-    assert ".api-docs-content pre:focus-visible" in page
-    assert ".api-docs-meta a" in page
-    assert "text-decoration: underline" in page
-    assert "--api-docs-link: #0056b3" in page
+    assert ".api-docs-content pre:focus-visible" in workspace
+    assert ".api-docs-content a" in workspace
+    assert "text-decoration: underline" in workspace
+    assert "var(--product-primary)" in workspace

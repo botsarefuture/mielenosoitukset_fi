@@ -135,6 +135,354 @@ h1 {
 }
 
 /* ==========================
+   PUBLIC PAGE CHROME
+========================== */
+.public-page-shell {
+  width: min(100%, 70rem);
+  margin-inline: auto;
+  min-width: 0;
+}
+
+.public-page-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 1.5rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  color: var(--product-on-action);
+  background: linear-gradient(135deg, var(--product-primary), var(--product-primary-strong));
+  border-radius: 1.5rem;
+  box-shadow: var(--product-shadow);
+}
+
+.public-page-header__content {
+  min-width: 0;
+  max-width: 48rem;
+}
+
+.public-page-header__kicker {
+  margin: 0 0 0.5rem;
+  color: var(--product-primary-soft);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.public-page-header .public-page-header__title {
+  margin: 0;
+  color: var(--product-on-action);
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  text-align: left;
+  overflow-wrap: break-word;
+}
+
+.public-page-header__description {
+  max-width: 42rem;
+  margin: 0.85rem 0 0;
+  color: var(--product-primary-soft);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.public-page-header__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.public-page-header__meta > span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.85rem;
+  color: var(--product-on-action);
+  background: color-mix(in srgb, var(--product-surface) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--product-on-action) 28%, transparent);
+  border-radius: 0.75rem;
+}
+
+.public-page-header__meta a,
+.public-page-header__meta code {
+  color: inherit;
+}
+
+.public-page-header__meta a {
+  text-decoration: underline;
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.2em;
+}
+
+/* API documentation consumes the shared page chrome and product tokens. */
+.api-docs-wrap {
+  margin-block: 0 2rem;
+}
+
+.api-docs-layout {
+  display: grid;
+  grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.api-docs-sidebar,
+.api-docs-content {
+  min-width: 0;
+  background: var(--product-surface);
+  border: 1px solid var(--product-border);
+  border-radius: 1rem;
+  box-shadow: var(--product-shadow);
+}
+
+.api-docs-sidebar {
+  position: sticky;
+  top: 5.5rem;
+  align-self: start;
+  padding: 1rem;
+}
+
+.api-docs-sidebar h2 {
+  margin: 0 0 0.75rem;
+  color: var(--product-text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.api-docs-sidebar ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.api-docs-sidebar li {
+  margin: 0.35rem 0;
+}
+
+.api-docs-sidebar a,
+.api-docs-content a {
+  color: var(--product-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.18em;
+}
+
+.api-docs-content {
+  max-width: 100%;
+  padding: clamp(1rem, 3vw, 2rem);
+  color: var(--product-text);
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.api-docs-content p {
+  margin: 0.8rem 0;
+}
+
+.api-docs-content ul,
+.api-docs-content ol {
+  margin: 0.75rem 0 0.75rem 1.25rem;
+}
+
+.api-docs-content li {
+  margin: 0.35rem 0;
+}
+
+.api-docs-content pre,
+.api-docs-content code {
+  color: var(--product-text);
+  background: var(--product-surface-muted);
+  border-radius: 0.65rem;
+}
+
+.api-docs-content pre {
+  max-width: 100%;
+  padding: 1rem;
+  overflow: auto;
+  border: 1px solid var(--product-border);
+}
+
+.api-docs-content pre:focus-visible,
+.api-docs-sidebar a:focus-visible,
+.api-docs-content a:focus-visible,
+.public-page-header a:focus-visible {
+  outline: 3px solid var(--product-primary-strong);
+  outline-offset: 3px;
+}
+
+.api-docs-content code {
+  padding: 0.1rem 0.3rem;
+}
+
+.api-docs-content pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.api-docs-content h1,
+.api-docs-content h2,
+.api-docs-content h3 {
+  margin-top: 1.5rem;
+  color: var(--product-text);
+  text-align: left;
+}
+
+.api-docs-content h2 {
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--product-border);
+}
+
+.api-docs-content hr {
+  margin: 1.5rem 0;
+  border: 0;
+  border-top: 1px solid var(--product-border);
+}
+
+.api-docs-content table {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: collapse;
+}
+
+.api-docs-content th,
+.api-docs-content td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border: 1px solid var(--product-border);
+}
+
+.api-docs-content th {
+  background: var(--product-surface-muted);
+}
+
+.api-docs-content blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  color: var(--product-text-muted);
+  border-left: 0.25rem solid var(--product-border);
+}
+
+/* The legacy footer rules remain for untouched shells; this namespaced
+   contract owns the public base footer without broad overrides. */
+.public-site-footer {
+  width: 100%;
+  padding: 2rem 1rem;
+  color: var(--product-text) !important;
+  background: var(--product-surface);
+  border-top: 1px solid var(--product-border);
+}
+
+.public-site-footer__inner {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  width: min(100%, 75rem);
+  margin-inline: auto;
+}
+
+.public-site-footer__brand {
+  margin: 0;
+  color: var(--product-text-muted);
+  font-size: 0.9rem;
+}
+
+.public-site-footer .public-site-footer__links,
+.public-site-footer .public-site-footer__social,
+.public-site-footer .public-site-footer__auth {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.55rem 1rem;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.public-site-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.2rem;
+  color: var(--product-text);
+  border-radius: 0.5rem;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.25rem;
+}
+
+.public-site-footer a:hover {
+  color: var(--product-primary);
+  text-decoration-color: currentColor;
+}
+
+.public-site-footer a:focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: 2px;
+}
+
+.public-site-footer .public-site-footer__auth a {
+  padding-inline: 0.85rem;
+  color: var(--product-on-action);
+  background: var(--product-action-bg);
+  text-decoration: none;
+}
+
+.public-site-footer .public-site-footer__auth a:hover {
+  color: var(--product-on-action);
+  background: var(--product-action-hover);
+}
+
+@media (max-width: 56.25rem) {
+  .public-page-header {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .public-page-header__meta {
+    justify-content: flex-start;
+  }
+
+  .api-docs-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .api-docs-sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 37.5rem) {
+  .public-page-header {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
+
+  .public-page-header__meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .public-page-header__meta > span {
+    overflow-wrap: anywhere;
+  }
+
+  .api-docs-content {
+    overflow-x: auto;
+  }
+
+  .public-site-footer {
+    padding: 1.5rem 1rem;
+  }
+}
+
+/* ==========================
    BUTTONS
 ========================== */
 .button {

@@ -73,6 +73,7 @@ def test_event_detail_orders_core_information_before_secondary_actions():
     assert "{% set detail_layout = 'overview' %}" in source
     assert "{% if detail_layout == 'classic' %}" in source
     assert "{% if detail_layout == 'overview' %}" in source
+    assert "{% if not preview_mode %}" in source
 
 
 def test_event_detail_hierarchy_uses_shared_responsive_workspace_styles():

@@ -1478,6 +1478,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 {% block content %}
 <div class="container-main-content">
 
+  {% if not preview_mode %}
   <nav class="detail-layout-preference animate-fade-in-up"
        aria-label="{{ _('Tapahtumasivun näkymä') }}">
     <div class="detail-layout-preference__choice">
@@ -1502,6 +1503,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       {{ _('Anna palautetta tästä näkymästä') }}
     </a>
   </nav>
+  {% endif %}
 
   <!-- Demo Hero -->
   <section class="demo-hero site-hero animate-fade-in-up">

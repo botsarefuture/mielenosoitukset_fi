@@ -230,9 +230,20 @@ def test_change_password_requires_step_up(wapp, db, seeded_data):
     assert r.get_json()["error"] == "step_up_required"
 
     _elevate_with_password(client, password="UserPass1!")
-    r = client.post(
+    weak = client.post(
         "/users/auth/api/v2/change_password",
         json={"current": "UserPass1!", "new": "NewPass1!", "confirm": "NewPass1!"},
+    )
+    assert weak.status_code == 400
+    assert weak.get_json()["message"] == "Salasana ei täytä vaatimuksia."
+
+    r = client.post(
+        "/users/auth/api/v2/change_password",
+        json={
+            "current": "UserPass1!",
+            "new": "NewStrongPass1!",
+            "confirm": "NewStrongPass1!",
+        },
     )
     assert r.status_code == 200, r.get_data(as_text=True)
 

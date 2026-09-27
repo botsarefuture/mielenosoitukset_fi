@@ -2,7 +2,6 @@ import json
 import re
 from flask import (
     Blueprint,
-    g,
     render_template,
     request,
     redirect,
@@ -283,7 +282,14 @@ def register():
             flash_message(username_error, "error")
             return redirect(url_for("users.auth.register"))
 
-        if not password or not is_strong_password(password):
+        password_is_strong = False
+        if password:
+            password_is_strong, _password_error = is_strong_password(
+                password,
+                username,
+                email,
+            )
+        if not password_is_strong:
             flash_message(
                 "Virheellinen salasana.",
                 "error",
@@ -322,18 +328,21 @@ def register():
         except Exception as e:
             flash_message(f"Virhe vahvistusviestin lähettämisessä: {e}", "error")
 
-        # lets add the email to the session for next steps
-        g.email = email 
+        # Keep the address across the redirect to the next-steps page.
+        session["registration_email"] = email
         return redirect(url_for("users.auth.register_next_steps"))
-        return redirect(url_for("users.auth.login"))
 
     return render_template("users/auth/register.html")
 
 
 @auth_bp.route("/register/next_steps")
 def register_next_steps():
-        
-    return render_template("users/auth/register_next_steps.html", email=g.get("email", 'Tapahtui virhe ja emme löydä sähköpostiasi.'), email_found=bool(g.get("email", None)))
+    email = session.get("registration_email", "")
+    return render_template(
+        "users/auth/register_next_steps.html",
+        email=email,
+        email_found=bool(email),
+    )
 
 
 # ------------------------
@@ -351,7 +360,7 @@ def generate_api_token():
     ):
         return jsonify({
             "status": "error",
-            "error": "Token scopes must be a list of strings.",
+            "error": _("Tokenin käyttöoikeuksien pitää olla merkkijonolista."),
         }), 400
     scopes = list(dict.fromkeys(requested_scopes))
 
@@ -360,14 +369,18 @@ def generate_api_token():
     if not user_doc.get("api_tokens_enabled", False):
         return jsonify({
             "status": "error",
-            "error": "API token access is locked. Request access from an admin first."
+            "error": _(
+                "API-tokenien käyttö on lukittu. Pyydä käyttöoikeutta ylläpidolta."
+            )
         }), 403
 
     unsupported_scopes = set(scopes) - SUPPORTED_SCOPES
     if unsupported_scopes:
         return jsonify({
             "status": "error",
-            "error": f"Unsupported token scopes: {', '.join(sorted(unsupported_scopes))}",
+            "error": _("Tuntemattomat token-oikeudet: %(scopes)s") % {
+                "scopes": ", ".join(sorted(unsupported_scopes))
+            },
         }), 400
 
     requested_privileged_scopes = set(scopes) & PRIVILEGED_SCOPES
@@ -387,7 +400,9 @@ def generate_api_token():
         })
         return jsonify({
             "status": "error",
-            "error": "Privileged token scopes require a global administrator.",
+            "error": _(
+                "Etuoikeutetut token-oikeudet vaativat globaalin ylläpitäjän."
+            ),
         }), 403
 
     # Privileged scopes are destructive — require a recent step-up.
@@ -395,7 +410,9 @@ def generate_api_token():
         return jsonify({
             "status": "error",
             "error": "step_up_required",
-            "message": "Vahvista henkilöllisyytesi uudelleen ennen etuoikeutettujen avainten luontia.",
+            "message": _(
+                "Vahvista henkilöllisyytesi uudelleen ennen etuoikeutettujen avainten luontia."
+            ),
         }), 403
 
     try:
@@ -412,8 +429,14 @@ def generate_api_token():
             "scopes": scopes,
             "type": token_type
         })
-    except ValueError as e:
-        return jsonify({"status": "error", "error": str(e)}), 400
+    except ValueError:
+        current_app.logger.warning(
+            "Rejected API token creation for user %s", current_user.id
+        )
+        return jsonify({
+            "status": "error",
+            "error": _("Tokenia ei voitu luoda annetuilla tiedoilla."),
+        }), 400
     
 
 # ------------------------
@@ -443,11 +466,32 @@ def revoke_token():
     data = request.get_json() or {}
     token_id = data.get("token_id")
     if not token_id:
-        return jsonify({"status": "error", "message": "token_id required"}), 400
+        return jsonify({
+            "status": "error",
+            "message": _("Peruutettavan tokenin tunniste puuttuu."),
+        }), 400
 
-    result = tokens_collection().delete_one({"_id": ObjectId(token_id), "user_id": current_user._id})
+    try:
+        token_object_id = ObjectId(token_id)
+    except Exception:
+        return jsonify({
+            "status": "error",
+            "message": _("Tokenin tunniste on virheellinen."),
+        }), 400
+
+    result = tokens_collection().delete_one({
+        "_id": token_object_id,
+        "user_id": current_user._id,
+    })
     if result.deleted_count == 1:
-        return jsonify({"status": "success"})
+        return jsonify({
+            "status": "success",
+            "message": _("Token peruttu."),
+        })
+    return jsonify({
+        "status": "error",
+        "message": _("Tokenia ei löytynyt."),
+    }), 404
 
 
 # ------------------------
@@ -507,6 +551,7 @@ def request_api_token_access():
     })
 
 @auth_bp.route("/ui/tokens")
+@login_required
 def tokens_ui():
     return render_template("users/auth/token_ui.html")
 
@@ -536,6 +581,7 @@ def confirm_email(token):
     """
     email = verify_confirmation_token(token)
     if email:
+        session.pop("registration_email", None)
         user = _find_user_by_email(email)
         if user:
             mongo.users.update_one({"_id": user["_id"]}, {"$set": {"confirmed": True}})
@@ -558,7 +604,12 @@ def resend_confirmation():
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         # AJAX request
         if not email_or_username:
-            return jsonify({"status": "error", "message": "Syötä sähköposti tai käyttäjänimi."}), 400
+            return jsonify(
+                {
+                    "status": "error",
+                    "message": _("Syötä sähköposti tai käyttäjänimi."),
+                }
+            ), 400
 
         user_doc = (
             _find_user_by_email(email_or_username)
@@ -571,12 +622,22 @@ def resend_confirmation():
             if not user.confirmed:
                 try:
                     verify_emailer(user.email, user.username)
-                except Exception as e:
-                    return jsonify({"status": "error", "message": f"Vahvistusviestin lähetys epäonnistui: {e}"}), 500
+                except Exception:
+                    current_app.logger.exception(
+                        "Failed to resend confirmation for user %s", user.id
+                    )
+                    return jsonify(
+                        {
+                            "status": "error",
+                            "message": _("Vahvistusviestin lähetys epäonnistui."),
+                        }
+                    ), 500
 
         return jsonify({
             "status": "success",
-            "message": "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin."
+            "message": _(
+                "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin."
+            )
         })
     # Non-AJAX request
     if not email_or_username:
@@ -813,7 +874,12 @@ def forced_pwd_reset():
             flash_message("Salasanat eivät täsmää.", "error")
             return redirect(url_for("users.auth.forced_pwd_reset"))
 
-        if not is_strong_password(new_password, username=current_user.username, email=current_user.email):
+        password_is_strong, _password_error = is_strong_password(
+            new_password,
+            username=current_user.username,
+            email=current_user.email,
+        )
+        if not password_is_strong:
             log_entry["error"] = "Password does not meet requirements"
             mongo.password_changes.insert_one(log_entry)
             flash_message("Salasana ei täytä vaatimuksia.", "warning")
@@ -1549,7 +1615,12 @@ def password_reset(token):
             flash_message("Salasanat eivät täsmää!", "warning")
             return redirect(url_for("users.auth.password_reset", token=token))
 
-        if not is_strong_password(password, username=user.username, email=email):
+        password_is_strong, _password_error = is_strong_password(
+            password,
+            username=user.username,
+            email=email,
+        )
+        if not password_is_strong:
             log_entry["error"] = "Password does not meet requirements"
             mongo.password_changes.insert_one(log_entry)
             flash_message("Salasana ei täytä vaatimuksia.", "warning")
@@ -1685,18 +1756,21 @@ def api_change_password():
 
     if not all((cur, new, confirm)):
         return jsonify({"status": "error",
-                        "message": "All fields required."}), 400
+                        "message": _("Kaikki kentät ovat pakollisia.")}), 400
     if new != confirm:
         return jsonify({"status": "error",
-                        "message": "Passwords do not match."}), 400
+                        "message": _("Salasanat eivät täsmää.")}), 400
     if not current_user.check_password(cur):
         return jsonify({"status": "error",
-                        "message": "Current password is wrong."}), 400
-    if not is_strong_password(new,
-                              username=current_user.username,
-                              email=current_user.email):
+                        "message": _("Nykyinen salasana on väärä.")}), 400
+    password_is_strong, _password_error = is_strong_password(
+        new,
+        username=current_user.username,
+        email=current_user.email,
+    )
+    if not password_is_strong:
         return jsonify({"status": "error",
-                        "message": "Password too weak."}), 400
+                        "message": _("Salasana ei täytä vaatimuksia.")}), 400
 
     # actually change & log
     current_user._change_password(new)
@@ -1720,4 +1794,6 @@ def api_change_password():
     except Exception:
         pass
 
-    return jsonify({"status": "success", "message": "OK"})
+    return jsonify(
+        {"status": "success", "message": _("Salasana vaihdettu.")}
+    )

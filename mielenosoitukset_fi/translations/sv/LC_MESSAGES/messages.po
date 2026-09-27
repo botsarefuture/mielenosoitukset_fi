@@ -175,7 +175,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:141
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:166
 msgid "Sulje"
-msgstr ""
+msgstr "Stäng"
 
 #: mielenosoitukset_fi/templates/admin_base.html:339
 msgid "Oletko varma, että haluat kirjautua ulos?"
@@ -2607,7 +2607,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:143
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:154
 msgid "Ei käyttöoikeutta"
-msgstr ""
+msgstr "Ingen behörighet"
 
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:93
 msgid "Hae toistuvia mielenosoituksia:"
@@ -2841,7 +2841,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/register.html:58
 #: mielenosoitukset_fi/templates/users/auth/register.html:133
 msgid "Salasanat eivät täsmää"
-msgstr ""
+msgstr "Lösenorden stämmer inte överens"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:69
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:115
@@ -2870,7 +2870,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:76
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:129
 msgid "Luo vahva salasana"
-msgstr ""
+msgstr "Skapa ett starkt lösenord"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:77
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:130
@@ -2880,29 +2880,33 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:116
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:167
 msgid "Vähintään yksi pieni kirjain"
-msgstr ""
+msgstr "Minst en liten bokstav"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:117
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:168
 msgid "Vähintään yksi iso kirjain"
-msgstr ""
+msgstr "Minst en stor bokstav"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Vähintään yksi numero"
+msgstr "Minst en siffra"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:118
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:169
 msgid "Vähintään yksi erikoismerkki"
-msgstr ""
+msgstr "Minst ett specialtecken"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:121
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:172
 #: mielenosoitukset_fi/templates/users/auth/register.html:164
 msgid "Kaikki vaatimukset täytetty!"
-msgstr ""
+msgstr "Alla krav är uppfyllda!"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:133
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:184
 #: mielenosoitukset_fi/templates/users/auth/register.html:130
 msgid "Salasanat täsmäävät"
-msgstr ""
+msgstr "Lösenorden stämmer överens"
 
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:159
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:210
@@ -2981,7 +2985,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/register.html:69
 #: mielenosoitukset_fi/templates/users/auth/register.html:159
 msgid "Ei saa sisältää käyttäjätunnusta tai sähköpostia"
-msgstr ""
+msgstr "Får inte innehålla användarnamnet eller e-postadressen"
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:73
 msgid "Luo salasana"
@@ -3006,7 +3010,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:196
 msgid "Käyttäjätunnus on vapaa"
-msgstr ""
+msgstr "Användarnamnet är tillgängligt"
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:197
 msgid "Käyttäjätunnus on jo varattu"
@@ -3014,7 +3018,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:198
 msgid "Tarkistuksessa tapahtui virhe"
-msgstr ""
+msgstr "Ett fel uppstod vid kontrollen"
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:210
 msgid "Käyttäjätunnus on jo varattu!"
@@ -3106,23 +3110,23 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:3
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:50
 msgid "API Tokenit"
-msgstr ""
+msgstr "API-token"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:51
 msgid "Täällä voit hallita API-tokeneitasi."
-msgstr ""
+msgstr "Här kan du hantera dina API-token."
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:54
 msgid "Luo uusi token"
-msgstr ""
+msgstr "Skapa nytt token"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:59
 msgid "Ladataan tokeneita..."
-msgstr ""
+msgstr "Laddar token..."
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:69
 msgid "Luo lyhytkestoinen API Token"
-msgstr ""
+msgstr "Skapa ett kortlivat API-token"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:74
 msgid "Scopes"
@@ -3131,37 +3135,37 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:132
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:158
 msgid "Kopioi token nyt, sillä se näkyy vain kerran!"
-msgstr ""
+msgstr "Kopiera tokenet nu, eftersom det bara visas en gång!"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:134
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:160
 msgid "Scopet:"
-msgstr ""
+msgstr "Behörigheter:"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:135
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:162
 msgid "Vanhenee:"
-msgstr ""
+msgstr "Upphör:"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:140
 msgid "Luo Token"
-msgstr ""
+msgstr "Skapa token"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:154
 msgid "Uusi API Token"
-msgstr ""
+msgstr "Nytt API-token"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:161
 msgid "Tyyppi:"
-msgstr ""
+msgstr "Typ:"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:165
 msgid "Kopioi"
-msgstr ""
+msgstr "Kopiera"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:200
 msgid "Ei aktiivisia tokeneita."
-msgstr ""
+msgstr "Inga aktiva token."
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:215
 msgid "Näytä"
@@ -9769,7 +9773,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:852
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/magic_tokens.html:72
 msgid "Vanhenee"
-msgstr ""
+msgstr "Upphör"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:852
 msgid "Luoja"
@@ -12077,7 +12081,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:375
 msgid "Salasana luotu!"
-msgstr ""
+msgstr "Lösenord skapat!"
 
 #: mielenosoitukset_fi/templates/users/auth/password_reset_request.html:36
 #: mielenosoitukset_fi/templates/users/auth/register.html:49
@@ -12142,7 +12146,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:387
 msgid "Käyttäjätunnus on varattu"
-msgstr ""
+msgstr "Användarnamnet är upptaget"
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:388
 msgid "Käyttäjätunnuksen tarkistuksessa tapahtui virhe, yritä uudelleen"
@@ -12150,7 +12154,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/register.html:391
 msgid "Korjaa virheet ennen kuin jatkat"
-msgstr ""
+msgstr "Rätta felen innan du fortsätter"
 
 #: mielenosoitukset_fi/templates/users/auth/register_next_steps.html:69
 msgid "Kiitos rekisteröitymisestäsi!"
@@ -12304,7 +12308,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/settings.html:673
 #: mielenosoitukset_fi/templates/users/auth/settings.html:711
 msgid "Käyttöoikeudet"
-msgstr ""
+msgstr "Behörigheter"
 
 #: mielenosoitukset_fi/templates/users/auth/settings.html:688
 msgid "Admin-oikeudet myönnetään vain ylläpitäjille."
@@ -12475,7 +12479,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:279
 msgid "Token peruttu."
-msgstr ""
+msgstr "Tokenet har återkallats."
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:281
 msgid "Virhe tokenin peruuttamisessa."
@@ -12483,11 +12487,11 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:327
 msgid "Token kopioitu leikepöydälle!"
-msgstr ""
+msgstr "Tokenet har kopierats till urklipp!"
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:328
 msgid "Kopiointi epäonnistui."
-msgstr ""
+msgstr "Kopieringen misslyckades."
 
 #: ⁨mielenosoitukset_fi/templates/users/profile/profile copy.html⁩:636
 #: mielenosoitukset_fi/templates/users/profile/profile.html:693
@@ -12595,12 +12599,12 @@ msgstr ""
 
 #: mielenosoitukset_fi/users/BPs/auth.py:812
 msgid "Salasanat eivät täsmää."
-msgstr ""
+msgstr "Lösenorden stämmer inte överens."
 
 #: mielenosoitukset_fi/users/BPs/auth.py:818
 #: mielenosoitukset_fi/users/BPs/auth.py:1525
 msgid "Salasana ei täytä vaatimuksia."
-msgstr ""
+msgstr "Lösenordet uppfyller inte kraven."
 
 #: mielenosoitukset_fi/users/BPs/auth.py:827
 msgid "Salasana on vaihdettu onnistuneesti."
@@ -12878,3 +12882,116 @@ msgstr "Lämna fältet tomt om du vill behålla din nuvarande profilbild."
 #: mielenosoitukset_fi/templates/users/auth/settings.html
 msgid "Profiilikuvan esikatselu"
 msgstr "Förhandsgranskning av profilbild"
+
+#: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/templates/users/auth/register_next_steps.html
+msgid "Vahvistusviestin lähetys epäonnistui."
+msgstr "Det gick inte att skicka bekräftelsemeddelandet."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin."
+msgstr "Om kontot finns och e-postadressen inte har bekräftats skickade vi en ny bekräftelselänk."
+
+#: mielenosoitukset_fi/templates/users/auth/register_next_steps.html
+msgid "Verkkovirhe, yritä uudelleen"
+msgstr "Nätverksfel, försök igen"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Vähintään 12 merkkiä"
+msgstr "Minst 12 tecken"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Käyttäjätunnus liian lyhyt"
+msgstr "Användarnamnet är för kort"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Tarkistetaan saatavuutta…"
+msgstr "Kontrollerar tillgänglighet…"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Käyttäjätunnus ei kelpaa"
+msgstr "Användarnamnet är ogiltigt"
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Kaikki kentät ovat pakollisia."
+msgstr "Alla fält är obligatoriska."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Nykyinen salasana on väärä."
+msgstr "Det nuvarande lösenordet är felaktigt."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Salasana vaihdettu."
+msgstr "Lösenordet har ändrats."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenin käyttöoikeuksien pitää olla merkkijonolista."
+msgstr "Tokenbehörigheterna måste vara en lista med textvärden."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "API-tokenien käyttö on lukittu. Pyydä käyttöoikeutta ylläpidolta."
+msgstr "Åtkomsten till API-token är låst. Begär behörighet av en administratör."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+#, python-format
+msgid "Tuntemattomat token-oikeudet: %(scopes)s"
+msgstr "Okända tokenbehörigheter: %(scopes)s"
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Etuoikeutetut token-oikeudet vaativat globaalin ylläpitäjän."
+msgstr "Privilegierade tokenbehörigheter kräver en global administratör."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Vahvista henkilöllisyytesi uudelleen ennen etuoikeutettujen avainten luontia."
+msgstr "Bekräfta din identitet igen innan du skapar privilegierade token."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenia ei voitu luoda annetuilla tiedoilla."
+msgstr "Det gick inte att skapa tokenet med de angivna uppgifterna."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Peruutettavan tokenin tunniste puuttuu."
+msgstr "Identifieraren för tokenet som ska återkallas saknas."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenin tunniste on virheellinen."
+msgstr "Tokenidentifieraren är ogiltig."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenia ei löytynyt."
+msgstr "Tokenet hittades inte."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Peruuta API-token"
+msgstr "Återkalla API-token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Haluatko varmasti peruuttaa tämän tokenin? Toimintoa ei voi kumota."
+msgstr "Vill du säkert återkalla detta token? Åtgärden kan inte ångras."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Säilytä token"
+msgstr "Behåll token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Peruuta token"
+msgstr "Återkalla token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Tokenien lataaminen epäonnistui."
+msgstr "Det gick inte att ladda token."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Ei vanhentumisaikaa"
+msgstr "Upphör inte"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Luo vastaava uusi token"
+msgstr "Skapa ett nytt motsvarande token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Tokenin luominen epäonnistui."
+msgstr "Det gick inte att skapa tokenet."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Tokenin peruuttaminen epäonnistui."
+msgstr "Det gick inte att återkalla tokenet."

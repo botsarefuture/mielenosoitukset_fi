@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SETTINGS_TEMPLATE = ROOT / "mielenosoitukset_fi/templates/users/auth/settings.html"
 WORKSPACE_CSS = ROOT / "mielenosoitukset_fi/static/css/user-workspace.css"
+PROFILE_CSS = ROOT / "mielenosoitukset_fi/static/css/user/profile.css"
 
 
 def test_profile_editor_uses_shared_optional_field_contract(user_client):
@@ -71,6 +72,25 @@ def test_profile_api_preserves_picture_when_only_bio_changes(
     stored = db.users.find_one({"_id": seeded_data["user_id"]})
     assert stored["bio"] == "Updated public bio"
     assert stored["profile_picture"] == original_picture
+
+
+def test_saved_bio_is_safely_rendered_on_public_profile(
+    user_client, db, seeded_data
+):
+    db.users.update_one(
+        {"_id": seeded_data["user_id"]},
+        {"$set": {"bio": "Public bio <script>alert(1)</script>\nSecond line"}},
+    )
+
+    response = user_client.get("/users/profile/")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'class="profile-bio"' in html
+    assert "Public bio &lt;script&gt;alert(1)&lt;/script&gt;" in html
+    assert "<script>alert(1)</script>" not in html
+    assert "20260927-profile-bio-1" in html
+    assert "white-space: pre-wrap" in PROFILE_CSS.read_text(encoding="utf-8")
 
 
 def test_profile_api_returns_safe_localized_validation_errors(user_client):

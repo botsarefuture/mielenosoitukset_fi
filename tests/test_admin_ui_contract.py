@@ -490,7 +490,7 @@ def test_organization_workflows_use_shared_admin_components():
     assert "admin-data-view__viewport" in review
     assert "admin-selection-checkbox field-checkbox" in review
     assert "applyBtn.style" not in review
-    assert "--admin-workspace-on-primary: #ffffff;" in workspace
+    assert "--admin-workspace-on-primary: var(--product-on-action);" in workspace
     assert "background: var(--admin-workspace-primary-bg);" in workspace
     assert "background: var(--admin-workspace-primary-hover);" in workspace
 
@@ -1560,6 +1560,10 @@ def test_shipping_admin_styles_use_only_semantic_or_bootstrap_tokens():
             token
             for token in tokens
             if not token.startswith(("--admin-", "--bs-"))
+            and not (
+                stylesheet.name == "workspace.css"
+                and token.startswith("--product-")
+            )
         }
         assert not unsupported, f"{stylesheet}: {sorted(unsupported)}"
 

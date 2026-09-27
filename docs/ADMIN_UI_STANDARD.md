@@ -1,8 +1,26 @@
-# Admin UI standard
+# Shared product and admin UI standard
 
-This document is the contract for every view rendered inside the administration
-application. New admin pages should look like part of the same product without
-adding page-specific colors, controls, tables, or theme logic.
+This document defines the shared Mielenosoitukset.fi product language and the
+stricter component contract for views rendered inside the administration
+application. Public and admin views share semantic design foundations while
+keeping purpose-appropriate information architecture and density.
+
+## Product-wide token foundation
+
+`static/css/product-tokens.css` is the single source for product color,
+surface, feedback, border, text, action, and elevation values. Both
+`base.html` and `admin_base.html` load it before their component layers.
+
+- Public components consume neutral `--product-*` tokens directly.
+- Admin components keep their descriptive `--admin-workspace-*` API, whose
+  values alias the shared product tokens in `admin/workspace.css`.
+- Public styles must not consume or redefine `--admin-workspace-*` names.
+- Admin styles must not duplicate the product token values.
+- Geometry and density remain component concerns: sharing tokens does not make
+  public pages copies of admin layouts.
+
+This split gives the product one visual source of truth without coupling public
+templates to an admin-scoped naming scheme.
 
 ## Foundations
 
@@ -10,14 +28,18 @@ adding page-specific colors, controls, tables, or theme logic.
   `main_content`. Partials and email templates are the only exceptions.
 - `admin_base.html` owns theme initialization, the sidebar, the content width,
   flash messages, and the footer.
+- `static/css/product-tokens.css` is loaded before component styles and owns the
+  product-wide semantic values.
 - `static/css/admin/workspace.css` is loaded after page styles and owns shared
-  components. Do not recreate these components in a template `<style>` block.
+  admin components. Do not recreate these components in a template `<style>`
+  block.
 - Both themes use the same geometry and hierarchy. A theme may change colors
   and shadows, but not layout, font sizes, spacing, or information order.
 
 ## Canonical tokens
 
-Use only the `--admin-workspace-*` semantic tokens for new shared UI:
+Inside admin component styles, use only the `--admin-workspace-*` semantic
+aliases:
 
 - `--admin-workspace-surface` and `--admin-workspace-surface-muted`
 - `--admin-workspace-text` and `--admin-workspace-muted`

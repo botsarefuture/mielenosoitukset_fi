@@ -616,20 +616,50 @@
 
     <!-- Profiili Tab -->
     <div id="tab-profile">
-      <p>{{ _('Tässä voit muokata profiilitietojasi.') }}</p>
-      <form id="profile-form">
-        <div class="mb-3">
-          <label class="form-label" for="bio">{{ _('Esittelyteksti') }}</label>
-          <textarea class="form-control" id="bio" rows="3"></textarea>
-        </div>
-        <div class="mb-3">
-          <label class="form-label" for="profile-pic">{{ _('Profiilikuva') }}</label>
-          <input class="form-control" id="profile-pic" type="file" accept="image/*">
-        </div>
-        <div class="mt-2" id="profile-pic-preview"></div>
-        <button class="btn btn-primary" type="submit">
-          {{ _('Tallenna profiili') }}
-        </button>
+      <form class="user-form" id="profile-form" aria-labelledby="profile-form-title">
+        <section class="user-form-section">
+          <header class="user-form-section__header">
+            <span class="user-form-section__icon" aria-hidden="true">
+              <i class="fa-solid fa-user-pen"></i>
+            </span>
+            <div>
+              <h2 id="profile-form-title">{{ _('Profiili') }}</h2>
+              <p>{{ _('Päivitä julkisessa profiilissasi näkyvä esittelyteksti ja kuva.') }}</p>
+            </div>
+          </header>
+
+          <div class="user-form-section__body user-form-grid">
+            <div class="user-field user-field--full">
+              <label class="user-field__label" for="bio">{{ _('Esittelyteksti') }}</label>
+              <textarea class="user-field__control" id="bio" rows="5"
+                        aria-describedby="bio-help"></textarea>
+              <p class="user-field__help" id="bio-help">
+                {{ _('Kerro lyhyesti itsestäsi. Teksti näkyy julkisella profiilisivullasi.') }}
+              </p>
+            </div>
+
+            <div class="user-field user-field--full">
+              <label class="user-field__label" for="profile-pic">
+                {{ _('Profiilikuva') }}
+                <span class="user-field__optional">{{ _('Valinnainen') }}</span>
+              </label>
+              <input class="user-field__control user-field__control--file" id="profile-pic"
+                     type="file" accept="image/*" aria-describedby="profile-pic-help">
+              <p class="user-field__help" id="profile-pic-help">
+                {{ _('Jätä kenttä tyhjäksi, jos haluat säilyttää nykyisen profiilikuvasi.') }}
+              </p>
+              <div class="user-file-preview" id="profile-pic-preview"
+                   aria-live="polite" aria-label="{{ _('Profiilikuvan esikatselu') }}"></div>
+            </div>
+          </div>
+
+          <footer class="user-form-actions">
+            <button class="btn btn-primary" id="profile-submit" type="submit">
+              <span class="user-form-actions__label">{{ _('Tallenna profiili') }}</span>
+              <span class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
+            </button>
+          </footer>
+        </section>
       </form>
     </div>
 
@@ -730,10 +760,12 @@
 
     const icon = type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation';
     container.className = `alert alert-${type === 'success' ? 'success' : 'error'}`;
-    container.innerHTML = `
-      <i class="fa-solid ${icon}"></i>
-      <span>${message}</span>
-    `;
+    const iconElement = document.createElement('i');
+    iconElement.classList.add('fa-solid', icon);
+    iconElement.setAttribute('aria-hidden', 'true');
+    const textElement = document.createElement('span');
+    textElement.textContent = String(message ?? '');
+    container.replaceChildren(iconElement, textElement);
     container.classList.remove('hidden');
     container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
@@ -750,14 +782,24 @@
     const bioInput = document.getElementById("bio");
     const fileInput = document.getElementById("profile-pic");
     const previewContainer = document.getElementById("profile-pic-preview");
+    const submitButton = document.getElementById("profile-submit");
+    const submitLabel = submitButton.querySelector(".user-form-actions__label");
+    const submitSpinner = submitButton.querySelector(".spinner-border");
+    const submitText = submitLabel.textContent;
+
+    function setSubmitting(isSubmitting) {
+      submitButton.disabled = isSubmitting;
+      submitButton.setAttribute("aria-busy", String(isSubmitting));
+      submitLabel.textContent = isSubmitting ? "{{ _('Tallennetaan…') }}" : submitText;
+      submitSpinner.classList.toggle("d-none", !isSubmitting);
+    }
 
     function showPreview(url) {
-      previewContainer.innerHTML = "";
       const img = document.createElement("img");
       img.src = url;
-      img.className = "img-thumbnail";
-      img.style.maxWidth = "150px";
-      previewContainer.appendChild(img);
+      img.className = "user-file-preview__image";
+      img.alt = "{{ _('Profiilikuvan esikatselu') }}";
+      previewContainer.replaceChildren(img);
     }
 
     function toBase64(file) {
@@ -773,11 +815,13 @@
       try {
         const res = await fetch("/users/auth/api/v2/user_profile");
         const data = await res.json();
-        if (data.status === "success") {
+        if (res.ok && data.status === "success") {
           bioInput.value = data.data.bio || "";
           if (data.data.profile_picture) {
             showPreview(data.data.profile_picture);
           }
+        } else {
+          showSettingsMessage(data.message || "{{ _('Profiilin lataus epäonnistui') }}");
         }
       } catch (error) {
         console.error(error);
@@ -788,6 +832,7 @@
     profileForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       hideSettingsMessage();
+      setSubmitting(true);
 
       let base64Image = null;
       if (fileInput.files.length > 0) {
@@ -796,7 +841,9 @@
           base64Image = await toBase64(file);
         } catch (error) {
           console.error(error);
-          return showSettingsMessage("{{ _('Kuvan lukeminen epäonnistui') }}");
+          showSettingsMessage("{{ _('Kuvan lukeminen epäonnistui') }}");
+          setSubmitting(false);
+          return;
         }
       }
 
@@ -813,19 +860,20 @@
         });
 
         const data = await res.json();
-        if (data.status === "success") {
-          showSettingsMessage("{{ _('Profiili päivitetty!') }}", 'success');
-          if (base64Image) {
-            showPreview(`data:image/png;base64,${base64Image}`);
-          } else if (data.data && data.data.profile_picture) {
+        if (res.ok && data.status === "success") {
+          showSettingsMessage(data.message || "{{ _('Profiili päivitetty.') }}", 'success');
+          if (data.data && data.data.profile_picture) {
             showPreview(data.data.profile_picture);
           }
+          fileInput.value = "";
         } else {
-          showSettingsMessage("{{ _('Virhe: ') }}" + (data.message || "Tuntematon virhe"));
+          showSettingsMessage(data.message || "{{ _('Profiilin tallennus epäonnistui') }}");
         }
       } catch (error) {
         console.error(error);
         showSettingsMessage("{{ _('Profiilin tallennus epäonnistui') }}");
+      } finally {
+        setSubmitting(false);
       }
     });
 

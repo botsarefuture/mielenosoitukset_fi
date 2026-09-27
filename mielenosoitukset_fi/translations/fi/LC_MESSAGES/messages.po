@@ -2887,6 +2887,10 @@ msgstr ""
 msgid "Vähintään yksi iso kirjain"
 msgstr ""
 
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Vähintään yksi numero"
+msgstr "Vähintään yksi numero"
+
 #: mielenosoitukset_fi/templates/users/auth/forced_pwd_reset.html:118
 #: mielenosoitukset_fi/templates/users/auth/password_reset.html:169
 msgid "Vähintään yksi erikoismerkki"
@@ -6002,6 +6006,10 @@ msgstr ""
 #: mielenosoitukset_fi/templates/header.html:1389
 msgid "Virhe ladattaessa"
 msgstr ""
+
+#: mielenosoitukset_fi/templates/header.html:48
+msgid "Ilmoituksia ei voitu merkitä luetuiksi."
+msgstr "Ilmoituksia ei voitu merkitä luetuiksi."
 
 #: mielenosoitukset_fi/templates/index.html:605
 msgid "Tervetuloa Mielenosoitukset.fi"
@@ -12588,12 +12596,12 @@ msgstr ""
 
 #: mielenosoitukset_fi/users/BPs/auth.py:812
 msgid "Salasanat eivät täsmää."
-msgstr ""
+msgstr "Salasanat eivät täsmää."
 
 #: mielenosoitukset_fi/users/BPs/auth.py:818
 #: mielenosoitukset_fi/users/BPs/auth.py:1525
 msgid "Salasana ei täytä vaatimuksia."
-msgstr ""
+msgstr "Salasana ei täytä vaatimuksia."
 
 #: mielenosoitukset_fi/users/BPs/auth.py:827
 msgid "Salasana on vaihdettu onnistuneesti."
@@ -12767,3 +12775,152 @@ msgstr "Kutsut lähetetty!"
 #: mielenosoitukset_fi/templates/detail.html:2845
 msgid "Kutsujen lähettäminen epäonnistui. Yritä uudelleen."
 msgstr "Kutsujen lähettäminen epäonnistui. Yritä uudelleen."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Virheellinen pyyntö."
+msgstr "Virheellinen pyyntö."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Profiilikuvan tallennus epäonnistui."
+msgstr "Profiilikuvan tallennus epäonnistui."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Profiilikuvan tiedot ovat virheelliset."
+msgstr "Profiilikuvan tiedot ovat virheelliset."
+
+#: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/templates/users/auth/settings.html
+msgid "Profiili päivitetty."
+msgstr "Profiili päivitetty."
+
+#: mielenosoitukset_fi/templates/users/auth/settings.html
+msgid "Päivitä julkisessa profiilissasi näkyvä esittelyteksti ja kuva."
+msgstr "Päivitä julkisessa profiilissasi näkyvä esittelyteksti ja kuva."
+
+#: mielenosoitukset_fi/templates/users/auth/settings.html
+msgid "Kerro lyhyesti itsestäsi. Teksti näkyy julkisella profiilisivullasi."
+msgstr "Kerro lyhyesti itsestäsi. Teksti näkyy julkisella profiilisivullasi."
+
+#: mielenosoitukset_fi/templates/users/auth/settings.html
+msgid "Valinnainen"
+msgstr "Valinnainen"
+
+#: mielenosoitukset_fi/templates/users/auth/settings.html
+msgid "Jätä kenttä tyhjäksi, jos haluat säilyttää nykyisen profiilikuvasi."
+msgstr "Jätä kenttä tyhjäksi, jos haluat säilyttää nykyisen profiilikuvasi."
+
+#: mielenosoitukset_fi/templates/users/auth/settings.html
+msgid "Profiilikuvan esikatselu"
+msgstr "Profiilikuvan esikatselu"
+
+#: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/templates/users/auth/register_next_steps.html
+msgid "Vahvistusviestin lähetys epäonnistui."
+msgstr "Vahvistusviestin lähetys epäonnistui."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin."
+msgstr "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin."
+
+#: mielenosoitukset_fi/templates/users/auth/register_next_steps.html
+msgid "Verkkovirhe, yritä uudelleen"
+msgstr "Verkkovirhe, yritä uudelleen"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Vähintään 12 merkkiä"
+msgstr "Vähintään 12 merkkiä"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Käyttäjätunnus liian lyhyt"
+msgstr "Käyttäjätunnus liian lyhyt"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Tarkistetaan saatavuutta…"
+msgstr "Tarkistetaan saatavuutta…"
+
+#: mielenosoitukset_fi/templates/users/auth/register.html
+msgid "Käyttäjätunnus ei kelpaa"
+msgstr "Käyttäjätunnus ei kelpaa"
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Kaikki kentät ovat pakollisia."
+msgstr "Kaikki kentät ovat pakollisia."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Nykyinen salasana on väärä."
+msgstr "Nykyinen salasana on väärä."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Salasana vaihdettu."
+msgstr "Salasana vaihdettu."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenin käyttöoikeuksien pitää olla merkkijonolista."
+msgstr "Tokenin käyttöoikeuksien pitää olla merkkijonolista."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "API-tokenien käyttö on lukittu. Pyydä käyttöoikeutta ylläpidolta."
+msgstr "API-tokenien käyttö on lukittu. Pyydä käyttöoikeutta ylläpidolta."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+#, python-format
+msgid "Tuntemattomat token-oikeudet: %(scopes)s"
+msgstr "Tuntemattomat token-oikeudet: %(scopes)s"
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Etuoikeutetut token-oikeudet vaativat globaalin ylläpitäjän."
+msgstr "Etuoikeutetut token-oikeudet vaativat globaalin ylläpitäjän."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Vahvista henkilöllisyytesi uudelleen ennen etuoikeutettujen avainten luontia."
+msgstr "Vahvista henkilöllisyytesi uudelleen ennen etuoikeutettujen avainten luontia."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenia ei voitu luoda annetuilla tiedoilla."
+msgstr "Tokenia ei voitu luoda annetuilla tiedoilla."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Peruutettavan tokenin tunniste puuttuu."
+msgstr "Peruutettavan tokenin tunniste puuttuu."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenin tunniste on virheellinen."
+msgstr "Tokenin tunniste on virheellinen."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Tokenia ei löytynyt."
+msgstr "Tokenia ei löytynyt."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Peruuta API-token"
+msgstr "Peruuta API-token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Haluatko varmasti peruuttaa tämän tokenin? Toimintoa ei voi kumota."
+msgstr "Haluatko varmasti peruuttaa tämän tokenin? Toimintoa ei voi kumota."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Säilytä token"
+msgstr "Säilytä token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Peruuta token"
+msgstr "Peruuta token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Tokenien lataaminen epäonnistui."
+msgstr "Tokenien lataaminen epäonnistui."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Ei vanhentumisaikaa"
+msgstr "Ei vanhentumisaikaa"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Luo vastaava uusi token"
+msgstr "Luo vastaava uusi token"
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Tokenin luominen epäonnistui."
+msgstr "Tokenin luominen epäonnistui."
+
+#: mielenosoitukset_fi/templates/users/auth/token_ui.html
+msgid "Tokenin peruuttaminen epäonnistui."
+msgstr "Tokenin peruuttaminen epäonnistui."

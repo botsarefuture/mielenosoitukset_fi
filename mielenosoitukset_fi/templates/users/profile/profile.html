@@ -4,7 +4,7 @@
 {% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/user/profile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user/profile.css', v='20260927-profile-bio-1') }}">
 
 <style>
 * {
@@ -782,6 +782,10 @@ Voimme myös lisätä toisemme ystäviksi!</textarea>
             </span>
           {% endif %}
         </h1>
+
+        {% if user.bio %}
+          <p class="profile-bio">{{ user.bio }}</p>
+        {% endif %}
 
         <div class="profile-stats">
           <div class="stat-item">

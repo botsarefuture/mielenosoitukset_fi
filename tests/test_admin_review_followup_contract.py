@@ -21,20 +21,20 @@ def _contrast(first, second):
 
 
 def test_warning_foregrounds_meet_normal_text_contrast_in_both_themes():
-    workspace = Path(
-        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    product_tokens = Path(
+        "mielenosoitukset_fi/static/css/product-tokens.css"
     ).read_text(encoding="utf-8")
     users = Path("mielenosoitukset_fi/static/css/admin/users.css").read_text(
         encoding="utf-8"
     )
 
     strong = re.search(
-        r"--admin-workspace-orange-strong: light-dark\((#[0-9a-f]+), (#[0-9a-f]+)\)",
-        workspace,
+        r"--product-accent-strong: light-dark\((#[0-9a-f]+), (#[0-9a-f]+)\)",
+        product_tokens,
     ).groups()
     soft = re.search(
-        r"--admin-workspace-orange-soft: light-dark\((#[0-9a-f]+), (#[0-9a-f]+)\)",
-        workspace,
+        r"--product-accent-soft: light-dark\((#[0-9a-f]+), (#[0-9a-f]+)\)",
+        product_tokens,
     ).groups()
     assert all(_contrast(foreground, background) >= 4.5 for foreground, background in zip(strong, soft))
     assert not re.search(

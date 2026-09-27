@@ -45,7 +45,7 @@
 
   const safeNotificationHref = (value) => {
     if (value === "#") return "#";
-    if (typeof value !== "string" || !value.startsWith("/")) return "#";
+    if (typeof value !== "string") return "#";
 
     try {
       const url = new URL(value, window.location.origin);

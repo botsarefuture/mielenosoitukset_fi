@@ -27,7 +27,8 @@ def test_notification_payload_is_rendered_without_html_interpolation():
     assert "timestamp.textContent" in script
     assert "safeNotificationHref" in script
     assert 'url.origin !== window.location.origin' in script
-    assert 'value.startsWith("/")' in script
+    assert 'new URL(value, window.location.origin)' in script
+    assert 'value.startsWith("/")' not in script
 
 
 def test_notification_states_use_shared_product_tokens():

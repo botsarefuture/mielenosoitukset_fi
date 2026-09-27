@@ -12995,3 +12995,15 @@ msgstr "Det gick inte att skapa tokenet."
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html
 msgid "Tokenin peruuttaminen epäonnistui."
 msgstr "Det gick inte att återkalla tokenet."
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Tapahtuman tiedot"
+msgstr "Evenemangsuppgifter"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Tiesulku"
+msgstr "Vägblockad"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Näytä vähemmän"
+msgstr "Visa mindre"

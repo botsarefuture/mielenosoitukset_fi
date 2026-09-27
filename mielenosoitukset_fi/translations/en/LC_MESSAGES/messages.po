@@ -13001,3 +13001,15 @@ msgstr "Failed to create token."
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html
 msgid "Tokenin peruuttaminen epäonnistui."
 msgstr "Failed to revoke token."
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Tapahtuman tiedot"
+msgstr "Event details"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Tiesulku"
+msgstr "Road blockade"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Näytä vähemmän"
+msgstr "Show less"

@@ -12924,3 +12924,15 @@ msgstr "Tokenin luominen epäonnistui."
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html
 msgid "Tokenin peruuttaminen epäonnistui."
 msgstr "Tokenin peruuttaminen epäonnistui."
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Tapahtuman tiedot"
+msgstr "Tapahtuman tiedot"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Tiesulku"
+msgstr "Tiesulku"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Näytä vähemmän"
+msgstr "Näytä vähemmän"

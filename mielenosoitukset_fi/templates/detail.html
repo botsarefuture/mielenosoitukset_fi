@@ -1448,20 +1448,64 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   <section class="demo-hero site-hero animate-fade-in-up">
     <div class="demo-hero-content">
       <h1 class="demo-title">{{ demo['title'] }}</h1>
-      <div class="demo-datetime">
-        <i class="fa-solid fa-calendar-days"></i>
-        <span>{{ demo['date'] | date('%d.%m.%Y') }}</span>
-        <i class="fa-solid fa-clock"></i>
-        {% if demo['end_time'] %}
-        <span>{{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}</span>
-        {% else %}
-        <span>{{ demo['start_time'] | time('%H:%M') }} {{ _('alkaen') }}</span>
+      <dl class="demo-at-a-glance" aria-label="{{ _('Tapahtuman tiedot') }}">
+        <div class="demo-at-a-glance__item">
+          <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+          <div>
+            <dt>{{ _('Ajankohta') }}</dt>
+            <dd>
+              {{ demo['date'] | date('%d.%m.%Y') }}
+              {% if demo['end_time'] %}
+                · {{ demo['start_time'] | time('%H:%M') }}–{{ demo['end_time'] | time('%H:%M') }}
+              {% else %}
+                · {{ demo['start_time'] | time('%H:%M') }} {{ _('alkaen') }}
+              {% endif %}
+            </dd>
+          </div>
+        </div>
+        {% if demo['address'] or demo['city'] %}
+        <div class="demo-at-a-glance__item">
+          <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+          <div>
+            <dt>{{ _('Sijainti') }}</dt>
+            <dd>{% if demo['address'] %}{{ demo['address'] }}{% if demo['city'] %}, {% endif %}{% endif %}{{ demo['city'] or '' }}</dd>
+          </div>
+        </div>
         {% endif %}
-      </div>
-      <div class="demo-location">
-        <i class="fa-solid fa-location-dot"></i>
-        {{ demo['address'] }}, {{ demo['city'] }}
-      </div>
+        {% if demo['organizers'] and demo['organizers']|length > 0 %}
+        <div class="demo-at-a-glance__item">
+          <i class="fa-solid fa-users" aria-hidden="true"></i>
+          <div>
+            <dt>{{ _('Järjestäjät') }}</dt>
+            <dd>
+              {% for org in demo['organizers'] %}
+                {% if org.is_private and not org.show_name_public %}
+                  {{ _('Yksityishenkilö (nimi piilotettu)') }}
+                {% elif org.name %}
+                  {{ org.name }}
+                {% elif org.is_private %}
+                  {{ _('Yksityishenkilö') }}
+                {% else %}
+                  {{ _('Tuntematon järjestäjä') }}
+                {% endif %}{% if not loop.last %}, {% endif %}
+              {% endfor %}
+            </dd>
+          </div>
+        </div>
+        {% endif %}
+        <div class="demo-at-a-glance__item">
+          <i class="fa-solid fa-shapes" aria-hidden="true"></i>
+          <div>
+            <dt>{{ _('Tapahtumatyyppi') }}</dt>
+            <dd>
+              {% if demo.event_type == 'MARCH' %}{{ _('Marssi') }}
+              {% elif demo.event_type == 'STAY_STILL' %}{{ _('Paikallaan') }}
+              {% elif demo.event_type == 'ROAD_BLOCK' %}{{ _('Tiesulku') }}
+              {% else %}{{ _('Muu') }}{% endif %}
+            </dd>
+          </div>
+        </div>
+      </dl>
       {% if available_demo_languages and available_demo_languages|length > 1 %}
       <div class="demo-language-panel">
         <div class="demo-language-copy">
@@ -1524,6 +1568,31 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     <i class="fa-solid fa-ban"></i>
     <div>{{ _('Tämä mielenosoitus on peruttu.') }}</div>
   </div>
+  {% endif %}
+
+  {% if demo['description'] %}
+  <section class="event-description user-data-card animate-fade-in-up" data-collapsible-description>
+    <h2 class="section-title">
+      <i class="fa-solid fa-align-left" aria-hidden="true"></i>
+      {{ _('Kuvaus') }}
+    </h2>
+    <div class="event-description__content" id="demo-description">
+      {{ demo['description']|safe }}
+    </div>
+    <p class="visually-hidden"
+       data-description-accessible-preview
+       hidden></p>
+    <button class="event-description__toggle btn btn-outline-primary"
+            type="button"
+            aria-controls="demo-description"
+            aria-expanded="false"
+            data-more-label="{{ _('Näytä lisää') }}"
+            data-less-label="{{ _('Näytä vähemmän') }}"
+            hidden>
+      <span>{{ _('Näytä lisää') }}</span>
+      <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+    </button>
+  </section>
   {% endif %}
 
 
@@ -1661,19 +1730,6 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     </a>
     {% endfor %}
   </div>
-  {% endif %}
-
-  <!-- Description -->
-  {% if demo['description'] %}
-  <section class="content-section animate-fade-in-up">
-    <h2 class="section-title">
-      <i class="fa-solid fa-align-left"></i>
-      {{ _('Kuvaus') }}
-    </h2>
-    <div style="font-size: 1.1rem; line-height: 1.8;">
-      {{ demo['description']|safe }}
-    </div>
-  </section>
   {% endif %}
 
   <!-- Countdown / Cancellation info -->
@@ -2368,6 +2424,152 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 {% endblock %}
 
 {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("[data-collapsible-description]").forEach((section) => {
+      const content = section.querySelector(".event-description__content");
+      const toggle = section.querySelector(".event-description__toggle");
+      const accessiblePreview = section.querySelector("[data-description-accessible-preview]");
+      if (!content || !toggle || !accessiblePreview) return;
+
+      const focusableSelector = "a[href], button, input, select, textarea, [tabindex]";
+      const syncCollapsedSemantics = (collapsed) => {
+        content.querySelectorAll(focusableSelector).forEach((element) => {
+          const restoreTabindex = () => {
+            if (element.dataset.collapsedOriginalTabindex === "missing") {
+              element.removeAttribute("tabindex");
+            } else if (element.dataset.collapsedOriginalTabindex !== undefined) {
+              element.setAttribute("tabindex", element.dataset.collapsedOriginalTabindex);
+            }
+            delete element.dataset.collapsedOriginalTabindex;
+          };
+
+          if (!collapsed) {
+            restoreTabindex();
+            return;
+          }
+
+          if (element.dataset.collapsedOriginalTabindex === undefined) {
+            element.dataset.collapsedOriginalTabindex = element.hasAttribute("tabindex")
+              ? element.getAttribute("tabindex")
+              : "missing";
+          }
+          element.setAttribute("tabindex", "-1");
+        });
+
+        if (collapsed) {
+          content.setAttribute("aria-hidden", "true");
+          content.inert = true;
+          accessiblePreview.hidden = false;
+        } else {
+          content.removeAttribute("aria-hidden");
+          content.inert = false;
+          accessiblePreview.hidden = true;
+        }
+      };
+
+      const visiblePreviewText = () => {
+        const clipBottom = content.getBoundingClientRect().bottom;
+        const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+        const parts = [];
+        let node = walker.nextNode();
+
+        while (node) {
+          const value = node.nodeValue || "";
+          if (value.trim()) {
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            const rect = range.getBoundingClientRect();
+
+            if (rect.top >= clipBottom - 1) break;
+            if (rect.bottom <= clipBottom + 1) {
+              parts.push(value);
+            } else {
+              let low = 0;
+              let high = value.length;
+              while (low < high) {
+                const middle = Math.ceil((low + high) / 2);
+                range.setEnd(node, middle);
+                if (range.getBoundingClientRect().bottom <= clipBottom + 1) {
+                  low = middle;
+                } else {
+                  high = middle - 1;
+                }
+              }
+              parts.push(value.slice(0, low));
+              break;
+            }
+          }
+          node = walker.nextNode();
+        }
+
+        const preview = parts.join(" ").replace(/\s+/g, " ").trim();
+        return preview ? `${preview}…` : "";
+      };
+
+      const setExpanded = (expanded) => {
+        section.classList.toggle("is-expanded", expanded);
+        toggle.setAttribute("aria-expanded", String(expanded));
+        toggle.querySelector("span").textContent = expanded
+          ? toggle.dataset.lessLabel
+          : toggle.dataset.moreLabel;
+        syncCollapsedSemantics(!expanded && section.classList.contains("is-collapsible"));
+      };
+
+      const recomputeCollapsibility = () => {
+        const wasExpanded = section.classList.contains("is-expanded");
+        section.classList.add("is-collapsible");
+        section.classList.remove("is-expanded");
+        const needsCollapse = content.scrollHeight > content.clientHeight + 1;
+
+        section.classList.toggle("is-collapsible", needsCollapse);
+        toggle.hidden = !needsCollapse;
+        if (!needsCollapse) {
+          accessiblePreview.textContent = "";
+          setExpanded(false);
+          return;
+        }
+
+        if (wasExpanded) {
+          setExpanded(true);
+          return;
+        }
+
+        accessiblePreview.textContent = visiblePreviewText();
+        setExpanded(false);
+      };
+
+      toggle.addEventListener("click", () => {
+        const expanded = !section.classList.contains("is-expanded");
+        if (!expanded) {
+          section.classList.remove("is-expanded");
+          accessiblePreview.textContent = visiblePreviewText();
+        }
+        setExpanded(expanded);
+      });
+
+      recomputeCollapsibility();
+      if ("ResizeObserver" in window) {
+        let scheduled = false;
+        let observedWidth = content.getBoundingClientRect().width;
+        const observer = new ResizeObserver((entries) => {
+          const nextWidth = entries[0]?.contentRect.width ?? observedWidth;
+          if (Math.abs(nextWidth - observedWidth) < 0.5) return;
+          observedWidth = nextWidth;
+          if (scheduled) return;
+          scheduled = true;
+          window.requestAnimationFrame(() => {
+            scheduled = false;
+            recomputeCollapsibility();
+          });
+        });
+        observer.observe(content);
+      } else {
+        window.addEventListener("resize", recomputeCollapsibility);
+      }
+    });
+  });
+</script>
 <script>
   // Demo data initialization
   var demoData = {{ demo | tojson | safe }};

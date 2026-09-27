@@ -8,7 +8,7 @@ import uuid
 import hashlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, date, timedelta, timezone
-from urllib.parse import urlsplit
+from urllib.parse import urlencode, urlsplit
 from flask_babel import _, refresh, format_date, get_locale
 from flask import (
     Response,
@@ -84,6 +84,11 @@ from mielenosoitukset_fi.utils.facebook_event_importer import (
 )
 
 email_sender = EmailSender()
+
+DETAIL_LAYOUT_COOKIE = "detail-layout"
+DETAIL_LAYOUTS = frozenset({"classic", "overview"})
+DEFAULT_DETAIL_LAYOUT = "overview"
+DETAIL_LAYOUT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365
 
 # Initialize MongoDB
 db_manager = DatabaseManager().get_instance()
@@ -2747,6 +2752,34 @@ def init_routes(app):
             (demo_obj.hide and not current_user.has_permission("VIEW_DEMO")):
             abort(401)
 
+        requested_layout = request.args.get("detail_layout")
+        if "detail_layout" in request.args:
+            remaining_args = [
+                (key, value)
+                for key in request.args
+                if key != "detail_layout"
+                for value in request.args.getlist(key)
+            ]
+            canonical_url = request.path
+            if remaining_args:
+                canonical_url = f"{canonical_url}?{urlencode(remaining_args)}"
+            preference_response = redirect(canonical_url)
+            if requested_layout in DETAIL_LAYOUTS:
+                preference_response.set_cookie(
+                    DETAIL_LAYOUT_COOKIE,
+                    requested_layout,
+                    max_age=DETAIL_LAYOUT_COOKIE_MAX_AGE,
+                    path="/demonstration/",
+                    secure=request.is_secure,
+                    httponly=True,
+                    samesite="Lax",
+                )
+            return preference_response
+
+        detail_layout = request.cookies.get(DETAIL_LAYOUT_COOKIE)
+        if detail_layout not in DETAIL_LAYOUTS:
+            detail_layout = DEFAULT_DETAIL_LAYOUT
+
         # Determine whether to bypass cache
         bypass_cache = bool(request.query_string) or should_skip_cache(public_only=False)
 
@@ -2760,7 +2793,10 @@ def init_routes(app):
                 viewer_segment = f"user={current_user.get_id() or 'anon'}"
             except Exception:
                 viewer_segment = "user=unknown"
-        cache_key = f"demonstration_detail:v1:{demo_id}:locale={locale}:viewer={viewer_segment}"
+        cache_key = (
+            f"demonstration_detail:v2:{demo_id}:locale={locale}:"
+            f"viewer={viewer_segment}:layout={detail_layout}"
+        )
 
         # Try to serve from cache if allowed
         if not bypass_cache and hasattr(cache, "get"):
@@ -3018,6 +3054,7 @@ def init_routes(app):
                 current_demo_language=locale,
                 default_demo_language=default_demo_language,
                 available_demo_languages=available_demo_languages,
+                detail_layout=detail_layout,
             )
         )
         response.headers["X-Cache"] = "MISS"

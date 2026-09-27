@@ -8,6 +8,40 @@
     'recurring_following': False
   } %}
 {% endif %}
+{% if detail_layout not in ['classic', 'overview'] %}
+  {% set detail_layout = 'overview' %}
+{% endif %}
+
+{% macro event_description(collapsible=false) %}
+  {% if demo['description'] %}
+  <section class="{% if collapsible %}event-description user-data-card{% else %}content-section event-description--classic{% endif %} animate-fade-in-up"
+           {% if collapsible %}data-collapsible-description{% endif %}>
+    <h2 class="section-title">
+      <i class="fa-solid fa-align-left" aria-hidden="true"></i>
+      {{ _('Kuvaus') }}
+    </h2>
+    <div class="event-description__content{% if not collapsible %} event-description__content--classic{% endif %}"
+         id="demo-description">
+      {{ demo['description']|safe }}
+    </div>
+    {% if collapsible %}
+    <p class="event-description__preview"
+       data-description-accessible-preview
+       hidden></p>
+    <button class="event-description__toggle btn btn-outline-primary"
+            type="button"
+            aria-controls="demo-description"
+            aria-expanded="false"
+            data-more-label="{{ _('Näytä lisää') }}"
+            data-less-label="{{ _('Näytä vähemmän') }}"
+            hidden>
+      <span>{{ _('Näytä lisää') }}</span>
+      <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+    </button>
+    {% endif %}
+  </section>
+  {% endif %}
+{% endmacro %}
 
 {% block title %}
 {{ demo.get('title', 'Mielenosoitus') }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
@@ -1444,10 +1478,53 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 {% block content %}
 <div class="container-main-content">
 
+  <nav class="detail-layout-preference animate-fade-in-up"
+       aria-label="{{ _('Tapahtumasivun näkymä') }}">
+    <div class="detail-layout-preference__choice">
+      <span class="detail-layout-preference__label">{{ _('Näkymä') }}</span>
+      <div class="detail-layout-preference__options">
+        <a class="detail-layout-preference__option{% if detail_layout == 'overview' %} is-active{% endif %}"
+           href="{{ url_for('demonstration_detail', demo_id=request.view_args.get('demo_id'), detail_layout='overview') }}"
+           {% if detail_layout == 'overview' %}aria-current="true"{% endif %}>
+          {{ _('Yleiskuva') }}
+          {% if detail_layout == 'overview' %}<span class="visually-hidden">({{ _('käytössä') }})</span>{% endif %}
+        </a>
+        <a class="detail-layout-preference__option{% if detail_layout == 'classic' %} is-active{% endif %}"
+           href="{{ url_for('demonstration_detail', demo_id=request.view_args.get('demo_id'), detail_layout='classic') }}"
+           {% if detail_layout == 'classic' %}aria-current="true"{% endif %}>
+          {{ _('Perinteinen') }}
+          {% if detail_layout == 'classic' %}<span class="visually-hidden">({{ _('käytössä') }})</span>{% endif %}
+        </a>
+      </div>
+    </div>
+    <a class="detail-layout-preference__feedback"
+       href="{{ url_for('contact') }}#contact-form-section">
+      {{ _('Anna palautetta tästä näkymästä') }}
+    </a>
+  </nav>
+
   <!-- Demo Hero -->
   <section class="demo-hero site-hero animate-fade-in-up">
     <div class="demo-hero-content">
       <h1 class="demo-title">{{ demo['title'] }}</h1>
+      {% if detail_layout == 'classic' %}
+      <div class="demo-datetime">
+        <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+        <span>{{ demo['date'] | date('%d.%m.%Y') }}</span>
+        <i class="fa-solid fa-clock" aria-hidden="true"></i>
+        {% if demo['end_time'] %}
+        <span>{{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}</span>
+        {% else %}
+        <span>{{ demo['start_time'] | time('%H:%M') }} {{ _('alkaen') }}</span>
+        {% endif %}
+      </div>
+      {% if demo['address'] or demo['city'] %}
+      <div class="demo-location">
+        <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+        {% if demo['address'] %}{{ demo['address'] }}{% if demo['city'] %}, {% endif %}{% endif %}{{ demo['city'] or '' }}
+      </div>
+      {% endif %}
+      {% else %}
       <dl class="demo-at-a-glance" aria-label="{{ _('Tapahtuman tiedot') }}">
         <div class="demo-at-a-glance__item">
           <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
@@ -1506,6 +1583,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
           </div>
         </div>
       </dl>
+      {% endif %}
       {% if available_demo_languages and available_demo_languages|length > 1 %}
       <div class="demo-language-panel">
         <div class="demo-language-copy">
@@ -1570,29 +1648,8 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   </div>
   {% endif %}
 
-  {% if demo['description'] %}
-  <section class="event-description user-data-card animate-fade-in-up" data-collapsible-description>
-    <h2 class="section-title">
-      <i class="fa-solid fa-align-left" aria-hidden="true"></i>
-      {{ _('Kuvaus') }}
-    </h2>
-    <div class="event-description__content" id="demo-description">
-      {{ demo['description']|safe }}
-    </div>
-    <p class="visually-hidden"
-       data-description-accessible-preview
-       hidden></p>
-    <button class="event-description__toggle btn btn-outline-primary"
-            type="button"
-            aria-controls="demo-description"
-            aria-expanded="false"
-            data-more-label="{{ _('Näytä lisää') }}"
-            data-less-label="{{ _('Näytä vähemmän') }}"
-            hidden>
-      <span>{{ _('Näytä lisää') }}</span>
-      <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
-    </button>
-  </section>
+  {% if detail_layout == 'overview' %}
+    {{ event_description(collapsible=true) }}
   {% endif %}
 
 
@@ -1730,6 +1787,10 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     </a>
     {% endfor %}
   </div>
+  {% endif %}
+
+  {% if detail_layout == 'classic' %}
+    {{ event_description() }}
   {% endif %}
 
   <!-- Countdown / Cancellation info -->
@@ -2434,6 +2495,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
       const focusableSelector = "a[href], button, input, select, textarea, [tabindex]";
       const syncCollapsedSemantics = (collapsed) => {
+        section.classList.toggle("is-semantically-collapsed", collapsed);
         content.querySelectorAll(focusableSelector).forEach((element) => {
           const restoreTabindex = () => {
             if (element.dataset.collapsedOriginalTabindex === "missing") {
@@ -2518,6 +2580,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
       const recomputeCollapsibility = () => {
         const wasExpanded = section.classList.contains("is-expanded");
+        section.classList.remove("is-semantically-collapsed");
         section.classList.add("is-collapsible");
         section.classList.remove("is-expanded");
         const needsCollapse = content.scrollHeight > content.clientHeight + 1;
@@ -2563,7 +2626,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
             recomputeCollapsibility();
           });
         });
-        observer.observe(content);
+        observer.observe(section);
       } else {
         window.addEventListener("resize", recomputeCollapsibility);
       }

@@ -4514,7 +4514,7 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:104
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:172
 msgid "Tapahtumatyyppi"
-msgstr ""
+msgstr "Event type"
 
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:105
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:178
@@ -5304,7 +5304,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/governance/_tabs.html:3
 #: mielenosoitukset_fi/templates/admin_base.html:297
 msgid "Yleiskuva"
-msgstr ""
+msgstr "Overview"
 
 #: mielenosoitukset_fi/templates/admin_V2/analytics.html:12
 #: mielenosoitukset_fi/templates/admin_V2/background_job_detail.html:19
@@ -6124,7 +6124,7 @@ msgstr "Events"
 #: mielenosoitukset_fi/templates/siblings.html:780
 #: mielenosoitukset_fi/templates/tag_list.html:135
 msgid "Näytä lisää"
-msgstr ""
+msgstr "Show more"
 
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:80
 #: mielenosoitukset_fi/templates/tag_list.html:141
@@ -8026,7 +8026,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/per_demo_analytics.html:85
 msgid "Ajankohta"
-msgstr ""
+msgstr "Date and time"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:118
 #: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:6
@@ -13013,3 +13013,23 @@ msgstr "Road blockade"
 #: mielenosoitukset_fi/templates/detail.html
 msgid "Näytä vähemmän"
 msgstr "Show less"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Tapahtumasivun näkymä"
+msgstr "Event page layout"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Näkymä"
+msgstr "Layout"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "käytössä"
+msgstr "selected"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Perinteinen"
+msgstr "Classic"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Anna palautetta tästä näkymästä"
+msgstr "Give feedback on this layout"

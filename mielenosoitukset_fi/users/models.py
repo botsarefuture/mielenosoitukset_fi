@@ -30,6 +30,25 @@ CITY_ADMIN_ORGANIZATION_PERMISSIONS = {
 }
 
 class User(UserMixin):
+    def has_admin_access(self) -> bool:
+        """Return whether this account may enter any admin workspace."""
+        return (
+            self.has_full_permissions()
+            or self.role == "admin"
+            or self.role == "translator"
+            or any(
+                self.has_permission(permission)
+                for permission in (
+                    "TRANSLATE_DEMO",
+                    "REVIEW_DEMO_TRANSLATIONS",
+                    "TRANSLATE_UI",
+                    "REVIEW_UI_TRANSLATIONS",
+                )
+            )
+            or self.has_city_admin_scope_grants()
+            or self.has_admin_scope_grants()
+        )
+
     def has_full_permissions(self) -> bool:
         """Return whether this account bypasses individual permission grants."""
         return bool(self.global_admin) or self.role in {
@@ -778,6 +797,10 @@ class AnonymousUser(AnonymousUserMixin):
 
 
         """
+        return False
+
+    def has_admin_access(self) -> bool:
+        """Anonymous visitors never have administration access."""
         return False
 
     def has_city_admin_scope_grants(self) -> bool:

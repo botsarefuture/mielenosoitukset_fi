@@ -253,7 +253,11 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
       window.userPaginationController.setState(currentPage, totalPages);
     }
 
-    return { page: currentPage, total_pages: totalPages };
+    return {
+      page: currentPage,
+      total_pages: totalPages,
+      result_count: data.results.length,
+    };
 
   } catch (err) {
     console.error("Failed to load demos:", err);

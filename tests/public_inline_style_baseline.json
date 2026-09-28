@@ -64,9 +64,6 @@
     "errors/500.html": [
       "4922ad7c1d7fe743"
     ],
-    "header.html": [
-      "f734164a40072d9b"
-    ],
     "heavy.html": [
       "ff0c428cadb71597"
     ],
@@ -222,12 +219,6 @@
     ],
     "errors/410.html": [
       "57af2812aaa97702"
-    ],
-    "header.html": [
-      "0c09c5ad1d3296f0",
-      "6e22c58a7a6a60cb",
-      "6e22c58a7a6a60cb",
-      "8a112e11be5d589b"
     ],
     "heavy.html": [
       "5a2dfef236e7d76b",

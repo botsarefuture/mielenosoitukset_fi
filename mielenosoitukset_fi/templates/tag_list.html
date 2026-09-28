@@ -84,6 +84,9 @@
         {{ _('Tällä tagilla ei ole mielenosoituksia. Tarkista myöhemmin tai palaa takaisin.') }}
       </p>
       <div class="no-results-action">
+        <button type="button" id="clear-filters-btn" class="button button-secondary" hidden>
+          {{ _('Poista suodattimet') }}
+        </button>
         <a href="{{ url_for('submit') }}" class="button button-primary">
           <i class="fa-solid fa-plus"></i>{{ _('Ilmoita uusi mielenosoitus') }}
         </a>
@@ -118,7 +121,12 @@
     const loadMoreBtn = document.getElementById("load-more-btn");
     const searchForm = document.getElementById("search-form");
     const noResults = document.getElementById("no-results");
+    const clearFiltersButton = document.getElementById("clear-filters-btn");
     const filters = $("#filters");
+    const tagListI18n = Object.freeze({
+      filteredEmpty: {{ _('Ei löytynyt mielenosoituksia näillä hakukriteereillä. Kokeile poistaa suodattimia tai hae uudelleen.') | tojson }},
+      tagEmpty: {{ _('Tällä tagilla ei ole näkyvillä olevia mielenosoituksia.') | tojson }},
+    });
 
     let extraParams = {};
     let currentPage = 1;
@@ -146,45 +154,28 @@
 
       noResults.querySelector(".no-results-text").innerText =
         hasFilters
-          ? "Ei löytynyt mielenosoituksia näillä hakukriteereillä. Kokeile poistaa suodattimia tai hae uudelleen."
-          : "Tällä tagilla ei ole näkyvillä olevia mielenosoituksia.";
-
-      // Create dynamic clear filters button
-      const container = noResults.querySelector(".no-results-action");
-      container.innerHTML = `
-      <button id="clear-filters-btn" class="button button-secondary">
-  Poista suodattimet
-</button>
-
-      <a href="{{ url_for('submit') }}" class="button button-primary">
-        <i class="fa-solid fa-plus"></i> Ilmoita uusi mielenosoitus
-      </a>
-    `;
-
-      document.getElementById("clear-filters-btn")?.addEventListener("click", () => {
-        // 🔹 Reset hidden inputs
-        searchForm.search.value = "";
-        searchForm.city.value = "";
-        searchForm.location.value = "";
-        searchForm.date_start.value = "";
-        searchForm.date_end.value = "";
-
-        // 🔹 Remove pills
-        $("#filters").empty();
-
-        // 🔹 Reset search params keeping only tag
-        extraParams = {};
-        if (window.TAG_FILTER) extraParams.tag = window.TAG_FILTER;
-
-        // 🔹 Reload demos
-        if (window.userPaginationController) {
-          window.userPaginationController.reload({ append: false });
-        } else {
-          loadDemosWrapper(1, false);
-        }
-      });
-
+          ? tagListI18n.filteredEmpty
+          : tagListI18n.tagEmpty;
+      clearFiltersButton.hidden = !hasFilters;
     }
+
+    clearFiltersButton.addEventListener("click", () => {
+      searchForm.search.value = "";
+      searchForm.city.value = "";
+      searchForm.location.value = "";
+      searchForm.date_start.value = "";
+      searchForm.date_end.value = "";
+      filters.empty();
+
+      extraParams = {};
+      if (window.TAG_FILTER) extraParams.tag = window.TAG_FILTER;
+
+      if (window.userPaginationController) {
+        window.userPaginationController.reload({ append: false });
+      } else {
+        loadDemosWrapper(1, false);
+      }
+    });
 
     /* -------------------------------------------------------------
      * Helper: Load Demos
@@ -195,7 +186,7 @@
         grid.innerHTML = `
         <div class="loading-container">
           <div class="spinner"></div>
-          <p>Ladataan mielenosoituksia...</p>
+          <p>${window.demoCardI18n.loading}</p>
         </div>`;
       }
 

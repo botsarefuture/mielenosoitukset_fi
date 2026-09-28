@@ -6133,7 +6133,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/siblings.html:802
 #: mielenosoitukset_fi/templates/tag_list.html:147
 msgid "Ilmoita uusi mielenosoitus"
-msgstr ""
+msgstr "Anmäl en ny demonstration"
 
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:154
 msgid "Ladataan mielenosoituksia..."
@@ -13059,3 +13059,15 @@ msgstr "Mielenosoitukset.fi i sociala medier"
 #: mielenosoitukset_fi/templates/base.html
 msgid "Käyttäjätili"
 msgstr "Användarkonto"
+
+#: mielenosoitukset_fi/templates/tag_list.html
+msgid "Poista suodattimet"
+msgstr "Rensa filter"
+
+#: mielenosoitukset_fi/templates/tag_list.html
+msgid "Ei löytynyt mielenosoituksia näillä hakukriteereillä. Kokeile poistaa suodattimia tai hae uudelleen."
+msgstr "Inga demonstrationer matchade dessa filter. Ta bort några filter eller gör en ny sökning."
+
+#: mielenosoitukset_fi/templates/tag_list.html
+msgid "Tällä tagilla ei ole näkyvillä olevia mielenosoituksia."
+msgstr "Det finns inga synliga demonstrationer med denna tagg."

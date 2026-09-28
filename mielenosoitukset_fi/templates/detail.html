@@ -2707,6 +2707,9 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
   // Handle like click
   function handleLikeClick(demoId) {
+    const likeButton = document.getElementById("like-button");
+    if (!likeButton) return;
+
     {% if not current_user.is_authenticated %}
     window.location.href = "{{ url_for('users.auth.login') }}?next={{ request.path }}?action=like";
     return;
@@ -2716,11 +2719,13 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   }
 
   {% if not current_user.is_authenticated %}
-  const likeButton = document.getElementById("like-button");
-  const loginPrompt = likeButton.querySelector(".login-prompt");
-  if (loginPrompt) {
-    likeButton.addEventListener("mouseenter", () => loginPrompt.style.display = "block");
-    likeButton.addEventListener("mouseleave", () => loginPrompt.style.display = "none");
+  const anonymousLikeButton = document.getElementById("like-button");
+  if (anonymousLikeButton) {
+    const loginPrompt = anonymousLikeButton.querySelector(".login-prompt");
+    if (loginPrompt) {
+      anonymousLikeButton.addEventListener("mouseenter", () => loginPrompt.style.display = "block");
+      anonymousLikeButton.addEventListener("mouseleave", () => loginPrompt.style.display = "none");
+    }
   }
   {% endif %}
 
@@ -2736,16 +2741,19 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
   function animateLikeCount() {
     const count = document.getElementById("like-count");
+    if (!count) return;
+
     count.style.transform = "scale(1.2)";
     setTimeout(() => count.style.transform = "scale(1)", 300);
   }
 
   async function toggleLike(demoId) {
     if (likeRequestInProgress) return;
-    likeRequestInProgress = true;
 
     const likeButton = document.getElementById("like-button");
     const likeCountEl = document.getElementById("like-count");
+    if (!likeButton || !likeCountEl) return;
+    likeRequestInProgress = true;
 
     // Add loading state
     likeButton.classList.add('loading');
@@ -2789,6 +2797,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   async function getLikes(demoId) {
     const likeCountEl = document.getElementById("like-count");
     const likeButton = document.getElementById("like-button");
+    if (!likeButton || !likeCountEl) return;
 
     try {
       const response = await fetch(`/api/demonstrations/${demoId}/likes`, {

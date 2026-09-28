@@ -80,6 +80,25 @@ def test_public_header_uses_shared_scoped_component_css():
     assert "var(--product-" in css
     assert "--color-" not in css
     assert "var(--admin-" not in css
+    assert (
+        "linear-gradient(135deg, var(--product-action-bg), "
+        "var(--product-action-hover))" in css
+    )
+    assert (
+        "linear-gradient(135deg, var(--product-primary), "
+        "var(--product-primary-strong))" not in css
+    )
+    assert (
+        '.public-main-nav .user-dropdown[aria-expanded="true"] .dropdown-menu'
+        in css
+    )
+    assert ".user-dropdown:hover .dropdown-menu" in css
+    assert ".user-dropdown:focus-within .dropdown-menu" in css
+    assert (
+        '.user-dropdown[aria-expanded="true"] .public-main-nav .dropdown-menu'
+        not in css
+    )
+    assert ".user-dropdown:hover .public-main-nav .dropdown-menu" not in css
     assert not re.search(
         r"(?m)^\s*\.(?:dropdown-menu|nav-link|theme-toggle)(?=[\s,{:.#])",
         css,

@@ -193,6 +193,9 @@
       const result = await loadDemos(page, append, extraParams);
       if (result) {
         window.userPaginationController?.setState(result.page, result.total_pages);
+        if (!append && result.result_count === 0) {
+          showNoResults();
+        }
       }
       return result;
     }

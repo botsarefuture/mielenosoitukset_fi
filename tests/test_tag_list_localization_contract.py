@@ -22,6 +22,8 @@ def test_tag_list_uses_localized_stable_empty_state_markup():
     assert 'clearFiltersButton.addEventListener("click"' in source
     assert "clearFiltersButton.hidden = !hasFilters" in source
     assert "window.demoCardI18n.loading" in source
+    assert "result.result_count === 0" in source
+    assert "showNoResults();" in source
     assert 'container.innerHTML = `' not in source
     assert "<p>Ladataan mielenosoituksia...</p>" not in source
 

@@ -150,7 +150,7 @@ h1 {
   gap: 1.5rem;
   padding: clamp(1.5rem, 4vw, 2.5rem);
   color: var(--product-on-action);
-  background: linear-gradient(135deg, var(--product-primary), var(--product-primary-strong));
+  background: linear-gradient(135deg, var(--product-action-bg), var(--product-action-hover));
   border-radius: 1.5rem;
   box-shadow: var(--product-shadow);
 }
@@ -162,7 +162,7 @@ h1 {
 
 .public-page-header__kicker {
   margin: 0 0 0.5rem;
-  color: var(--product-primary-soft);
+  color: color-mix(in srgb, var(--product-on-action) 86%, transparent);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -182,7 +182,7 @@ h1 {
 .public-page-header__description {
   max-width: 42rem;
   margin: 0.85rem 0 0;
-  color: var(--product-primary-soft);
+  color: color-mix(in srgb, var(--product-on-action) 86%, transparent);
   font-size: 1rem;
   line-height: 1.65;
 }

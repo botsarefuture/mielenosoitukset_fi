@@ -46,6 +46,7 @@ def test_public_chrome_css_uses_product_tokens_and_namespaced_components():
 
     section = source.split("PUBLIC PAGE CHROME", 1)[1].split("BUTTONS", 1)[0]
     assert "var(--product-" in section
+    assert "linear-gradient(135deg, var(--product-action-bg), var(--product-action-hover))" in section
     assert "--api-docs-" not in section
     assert "var(--admin-" not in section
 
@@ -57,6 +58,8 @@ def test_public_chrome_css_uses_product_tokens_and_namespaced_components():
             "en",
             {
                 "API-dokumentaatio": "API documentation",
+                "Kehittäjille": "For developers",
+                "Sisältö": "Contents",
                 "Ihmisluettava dokumentaatio julkiselle API:lle.": "Human-readable documentation for the public API.",
                 "Sivuston alatunniste": "Site footer",
             },
@@ -65,6 +68,8 @@ def test_public_chrome_css_uses_product_tokens_and_namespaced_components():
             "sv",
             {
                 "API-dokumentaatio": "API-dokumentation",
+                "Kehittäjille": "För utvecklare",
+                "Sisältö": "Innehåll",
                 "Ihmisluettava dokumentaatio julkiselle API:lle.": "Läsbar dokumentation för det offentliga API:et.",
                 "Sivuston alatunniste": "Sidfot",
             },

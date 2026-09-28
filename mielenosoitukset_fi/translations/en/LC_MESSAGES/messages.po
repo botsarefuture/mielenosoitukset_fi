@@ -5373,7 +5373,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/super_audit/logs.html:63
 #: mielenosoitukset_fi/templates/admin_base.html:313
 msgid "Sisältö"
-msgstr ""
+msgstr "Contents"
 
 #: mielenosoitukset_fi/templates/admin_V2/dashboard.html:221
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:112
@@ -5533,7 +5533,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/base.html:882
 msgid "Kehittäjille"
-msgstr ""
+msgstr "For developers"
 
 #: mielenosoitukset_fi/templates/cancel_demonstration.html:5
 msgid "Mielenosoituksen peruminen"

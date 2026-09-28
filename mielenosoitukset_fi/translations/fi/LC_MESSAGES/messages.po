@@ -5071,7 +5071,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/admin/admin_org_bp.py:532
 msgid "Nimi ja sähköpostiosoite ovat pakollisia."
-msgstr ""
+msgstr "Nimi ja sähköpostiosoite ovat pakollisia."
 
 #: mielenosoitukset_fi/admin/admin_org_bp.py:536
 #: mielenosoitukset_fi/users/BPs/auth.py:293
@@ -13024,3 +13024,18 @@ msgstr "tapahtuma"
 #, python-format
 msgid "%(title)s – mielenosoitus kaupungissa %(city)s"
 msgstr "%(title)s – mielenosoitus kaupungissa %(city)s"
+#: mielenosoitukset_fi/templates/kampanja/index.html
+msgid "Tarkista korostetut tiedot ja yritä uudelleen."
+msgstr "Tarkista korostetut tiedot ja yritä uudelleen."
+
+#: mielenosoitukset_fi/templates/kampanja/index.html
+msgid "Kiitos ilmoittautumisestasi! Tarkista sähköpostisi vahvistaaksesi ilmoittautumisen."
+msgstr "Kiitos ilmoittautumisestasi! Tarkista sähköpostisi vahvistaaksesi ilmoittautumisen."
+
+#: mielenosoitukset_fi/templates/kampanja/index.html
+msgid "Ilmoittautuminen epäonnistui. Yritä uudelleen."
+msgstr "Ilmoittautuminen epäonnistui. Yritä uudelleen."
+
+#: mielenosoitukset_fi/templates/kampanja/index.html
+msgid "Yhteys palveluun epäonnistui. Yritä myöhemmin uudelleen."
+msgstr "Yhteys palveluun epäonnistui. Yritä myöhemmin uudelleen."

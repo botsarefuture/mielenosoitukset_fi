@@ -933,7 +933,7 @@ julisteita ja tarroja, ilmoita tapahtuma ja liity vapaaehtoiseksi.{% endblock %}
             <i class="fa-solid fa-users" aria-hidden="true"></i>
             <span>Tule vapaaehtoiseksi</span>
           </h2>
-          <form id="volunteer-form">
+          <form id="volunteer-form" novalidate aria-describedby="vol-msg">
             <div class="form-row">
               <div class="form-group">
                 <label for="vol-name" class="form-label">Nimi <span
@@ -963,11 +963,15 @@ julisteita ja tarroja, ilmoita tapahtuma ja liity vapaaehtoiseksi.{% endblock %}
               <textarea id="vol-notes" name="notes" class="form-control" rows="4"
                 placeholder="Esim. viikonloput, ilta-aikaan, erityisosaaminen..."></textarea>
             </div>
-            <button class="btn btn-primary" type="submit">
+            <button class="btn btn-primary" id="vol-submit" type="submit">
               <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
               <span>Lähetä ilmoittautuminen</span>
             </button>
-            <div id="vol-msg" class="success-message" role="alert"></div>
+            <div id="vol-msg" class="flash-message flash-message--inline" role="status" aria-live="polite"
+              aria-atomic="true" tabindex="-1" hidden>
+              <span class="flash-icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>
+              <span class="flash-content"><span id="vol-msg-text" class="flash-text"></span></span>
+            </div>
           </form>
         </div>
         <div class="card">
@@ -1148,10 +1152,61 @@ julisteita ja tarroja, ilmoita tapahtuma ja liity vapaaehtoiseksi.{% endblock %}
     (function () {
       const volunteerForm = document.getElementById('volunteer-form');
       const volunteerMsg = document.getElementById('vol-msg');
-      if (!volunteerForm) return;
+      const volunteerMsgText = document.getElementById('vol-msg-text');
+      const volunteerMsgIcon = volunteerMsg?.querySelector('.flash-icon i');
+      const volunteerSubmit = document.getElementById('vol-submit');
+      if (!volunteerForm || !volunteerMsg || !volunteerMsgText || !volunteerMsgIcon || !volunteerSubmit) return;
+
+      const volunteerMessages = {
+        required: {{ _('Nimi ja sähköpostiosoite ovat pakollisia.') | tojson }},
+        invalid: {{ _('Tarkista korostetut tiedot ja yritä uudelleen.') | tojson }},
+        success: {{ _('Kiitos ilmoittautumisestasi! Tarkista sähköpostisi vahvistaaksesi ilmoittautumisen.') | tojson }},
+        failed: {{ _('Ilmoittautuminen epäonnistui. Yritä uudelleen.') | tojson }},
+        network: {{ _('Yhteys palveluun epäonnistui. Yritä myöhemmin uudelleen.') | tojson }},
+      };
+
+      function showVolunteerFeedback(kind, message) {
+        volunteerMsgText.textContent = message;
+        volunteerMsg.classList.remove('flash-success', 'flash-error');
+        volunteerMsg.classList.add(kind === 'success' ? 'flash-success' : 'flash-error');
+        volunteerMsgIcon.classList.toggle('fa-circle-check', kind === 'success');
+        volunteerMsgIcon.classList.toggle('fa-circle-exclamation', kind !== 'success');
+        volunteerMsg.setAttribute('role', kind === 'success' ? 'status' : 'alert');
+        volunteerMsg.hidden = false;
+      }
+
+      function hideVolunteerFeedback() {
+        volunteerMsg.hidden = true;
+        volunteerMsgText.textContent = '';
+        volunteerMsg.classList.remove('flash-success', 'flash-error');
+        volunteerMsg.setAttribute('role', 'status');
+      }
+
+      volunteerForm.querySelectorAll('input, textarea').forEach((field) => {
+        field.addEventListener('input', () => field.removeAttribute('aria-invalid'));
+      });
 
       volunteerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        if (volunteerForm.dataset.requestPending === 'true') return;
+
+        hideVolunteerFeedback();
+
+        const invalidFields = Array.from(volunteerForm.querySelectorAll(':invalid'));
+        const firstInvalidField = invalidFields[0];
+        if (firstInvalidField) {
+          const requiredFieldsMissing = Array.from(
+            volunteerForm.querySelectorAll('[required]')
+          ).some((field) => !field.value.trim());
+          showVolunteerFeedback(
+            'error',
+            requiredFieldsMissing ? volunteerMessages.required : volunteerMessages.invalid
+          );
+          invalidFields.forEach((field) => field.setAttribute('aria-invalid', 'true'));
+          firstInvalidField.focus();
+          return;
+        }
 
         const formData = {
           name: document.getElementById('vol-name').value.trim(),
@@ -1161,20 +1216,33 @@ julisteita ja tarroja, ilmoita tapahtuma ja liity vapaaehtoiseksi.{% endblock %}
           notes: document.getElementById('vol-notes').value.trim(),
         };
 
-        if (!formData.name || !formData.email) { alert('Täytä vähintään nimi ja sähköposti.'); return; }
-
+        volunteerForm.dataset.requestPending = 'true';
+        volunteerSubmit.disabled = true;
+        volunteerSubmit.setAttribute('aria-busy', 'true');
         try {
           const response = await fetch('/kampanja/api/volunteers', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData)
           });
-          const result = await response.json();
-          if (response.ok && result.success) {
-            volunteerMsg.textContent = 'Kiitos ilmoittautumisestasi! Tarkista sähköpostisi vahvistaaksesi ilmoittautumisen.';
-            volunteerMsg.classList.add('show'); volunteerForm.reset(); setTimeout(() => { volunteerMsg.classList.remove('show'); }, 8000);
-          } else {
-            alert(result.error || 'Ilmoittautuminen epäonnistui. Yritä uudelleen.');
+          let result = null;
+          try {
+            result = await response.json();
+          } catch (parseError) {
+            console.error(parseError);
           }
-        } catch (err) { console.error(err); alert('Tapahtui virhe. Yritä myöhemmin uudelleen.'); }
+          if (response.ok && result?.success) {
+            showVolunteerFeedback('success', volunteerMessages.success);
+            volunteerForm.reset();
+          } else {
+            showVolunteerFeedback('error', result?.error || volunteerMessages.failed);
+          }
+        } catch (err) {
+          console.error(err);
+          showVolunteerFeedback('error', volunteerMessages.network);
+        } finally {
+          delete volunteerForm.dataset.requestPending;
+          volunteerSubmit.disabled = false;
+          volunteerSubmit.removeAttribute('aria-busy');
+        }
       });
     })();
 

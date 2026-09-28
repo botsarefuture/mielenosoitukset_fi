@@ -1,3 +1,18 @@
+{% set demo_card_locale = current_locale if current_locale is defined and current_locale else session.get('locale', 'fi') %}
+{% set demo_card_locale = demo_card_locale if demo_card_locale in get_supported_locales() else 'fi' %}
+<script>
+  window.currentLocale = {{ demo_card_locale | tojson }};
+  window.demoCardI18n = Object.freeze({
+    loading: {{ _('Ladataan mielenosoituksia...') | tojson }},
+    loadMore: {{ _('Lataa lisää') | tojson }},
+    cancelled: {{ _('Peruttu') | tojson }},
+    today: {{ _('Tänään') | tojson }},
+    startingFrom: {{ _('alkaen') | tojson }},
+    loginPrompt: {{ _('Kirjaudu sisään käyttääksesi sosiaalisia toimintoja') | tojson }},
+    attendingSuffix: {{ _('osallistuu') | tojson }},
+  });
+</script>
+
 <!-- Demo Card Template -->
 <template id="demo-card-template">
   <div class="grid-item demo-card" data-demo-id="" tabindex="0">
@@ -25,14 +40,13 @@
 
     <div class="demo-card-attending">
       <div class="attending-loading">
-        <span>Haetaan kavereita...</span>
+        <span>{{ _('Ladataan kavereita...') }}</span>
       </div>
       <div class="demo-card-friends" style="display: none;"></div>
       <div class="demo-card-no-friends" style="display: none;">
         <div class="plus-avatar">+</div>
-        <span class="invite-text">Kutsu kavereita</span>
+        <span class="invite-text">{{ _('Kutsu kavereita') }}</span>
       </div>
     </div>
   </div>
 </template>
-

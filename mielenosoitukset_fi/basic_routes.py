@@ -10,6 +10,7 @@ from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, date, timedelta, timezone
 from urllib.parse import urlencode, urlsplit
 from flask_babel import _, refresh, format_date, get_locale
+from babel.dates import format_date as babel_format_date, get_day_names
 from flask import (
     Response,
     redirect,
@@ -3971,6 +3972,20 @@ def init_routes(app):
     import calendar
     from flask import render_template
 
+    def _localized_calendar_labels(year):
+        locale = str(get_locale() or "fi")
+        month_names = {
+            month: babel_format_date(
+                date(year, month, 1), format="LLLL", locale=locale
+            )
+            for month in range(1, 13)
+        }
+        localized_days = get_day_names(
+            width="abbreviated", context="stand-alone", locale=locale
+        )
+        weekday_names = [localized_days[index] for index in range(7)]
+        return locale, month_names, weekday_names
+
     # ============================
     # Month view
     # ============================
@@ -4018,12 +4033,7 @@ def init_routes(app):
         next_month = month + 1 if month != 12 else 1
         next_year = year + 1 if month == 12 else year
 
-        # Kuukausien nimet
-        month_names = {
-            1: "Tammikuu", 2: "Helmikuu", 3: "Maaliskuu", 4: "Huhtikuu",
-            5: "Toukokuu", 6: "Kesäkuu", 7: "Heinäkuu", 8: "Elokuu",
-            9: "Syyskuu", 10: "Lokakuu", 11: "Marraskuu", 12: "Joulukuu",
-        }
+        calendar_locale, month_names, weekday_names = _localized_calendar_labels(year)
         
         old_view = request.cookies.get("old-calendar-view") == "true"
 
@@ -4035,6 +4045,8 @@ def init_routes(app):
             year=year,
             month=month,
             month_name=month_names[month],
+            calendar_locale=calendar_locale,
+            weekday_names=weekday_names,
             month_days=month_days,
             month_demos=month_demos,
             prev_year=prev_year,
@@ -4076,17 +4088,14 @@ def init_routes(app):
                         _localized_demo_copy(demo, _current_demo_language())
                     )
 
-        # Kuukausien nimet
-        month_names = {
-            1: "Tammikuu", 2: "Helmikuu", 3: "Maaliskuu", 4: "Huhtikuu",
-            5: "Toukokuu", 6: "Kesäkuu", 7: "Heinäkuu", 8: "Elokuu",
-            9: "Syyskuu", 10: "Lokakuu", 11: "Marraskuu", 12: "Joulukuu",
-        }
+        calendar_locale, month_names, weekday_names = _localized_calendar_labels(year)
 
         return render_template(
             "demo_views/calendar_year.html",
             year=year,
             month_names=month_names,
+            calendar_locale=calendar_locale,
+            weekday_names=weekday_names,
             year_demos=year_demos,
             noindex_nofollow=noindex_nofollow
         )

@@ -1548,7 +1548,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:174
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:179
 msgid "Edellinen"
-msgstr ""
+msgstr "Edellinen"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:115
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:272
@@ -1562,7 +1562,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:218
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:223
 msgid "Seuraava"
-msgstr ""
+msgstr "Seuraava"
 
 #: mielenosoitukset_fi/templates/admin_V2/analytics.html:3
 #: mielenosoitukset_fi/templates/admin_V2/analytics.html:52
@@ -4735,7 +4735,7 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:1857
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:153
 msgid "Vuosi"
-msgstr ""
+msgstr "Vuosi"
 
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:1858
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:119
@@ -13039,3 +13039,84 @@ msgstr "Ilmoittautuminen epäonnistui. Yritä uudelleen."
 #: mielenosoitukset_fi/templates/kampanja/index.html
 msgid "Yhteys palveluun epäonnistui. Yritä myöhemmin uudelleen."
 msgstr "Yhteys palveluun epäonnistui. Yritä myöhemmin uudelleen."
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Ei otsikkoa"
+msgstr "Ei otsikkoa"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+msgid "tapahtuma"
+msgstr "tapahtuma"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+msgid "tapahtumaa"
+msgstr "tapahtumaa"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+msgid "Kokeilemme uutta mobiilinäkymää"
+msgstr "Kokeilemme uutta mobiilinäkymää"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+msgid "Jos haluat palata vanhaan näkymään, voit vaihtaa sen alla"
+msgstr "Jos haluat palata vanhaan näkymään, voit vaihtaa sen alla"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+msgid "Palaa vanhaan näkymään"
+msgstr "Palaa vanhaan näkymään"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+msgid "Palaa uuteen näkymään"
+msgstr "Palaa uuteen näkymään"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Ei tapahtumia tässä kuussa"
+msgstr "Ei tapahtumia tässä kuussa"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+#, python-format
+msgid "Kalenteri %(year)s"
+msgstr "Kalenteri %(year)s"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Edellinen vuosi"
+msgstr "Edellinen vuosi"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Seuraava vuosi"
+msgstr "Seuraava vuosi"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Tapahtumaa"
+msgstr "Tapahtumaa"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Kuukautta"
+msgstr "Kuukautta"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Näytä kuukausinäkymä"
+msgstr "Näytä kuukausinäkymä"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Vuosinavigaatio"
+msgstr "Vuosinavigaatio"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Klikkaa nuolia siirtyäksesi edelliseen tai seuraavaan vuoteen."
+msgstr "Klikkaa nuolia siirtyäksesi edelliseen tai seuraavaan vuoteen."
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Kuukausilinkit"
+msgstr "Kuukausilinkit"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Klikkaa kuukauden nimeä siirtyäksesi kuukausinäkymään."
+msgstr "Klikkaa kuukauden nimeä siirtyäksesi kuukausinäkymään."
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Klikkaa mielenosoituksen nimeä siirtyäksesi yksittäisen mielenosoituksen sivulle."
+msgstr "Klikkaa mielenosoituksen nimeä siirtyäksesi yksittäisen mielenosoituksen sivulle."

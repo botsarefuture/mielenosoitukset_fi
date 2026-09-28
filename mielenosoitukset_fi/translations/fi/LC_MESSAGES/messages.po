@@ -12956,3 +12956,15 @@ msgstr "Perinteinen"
 #: mielenosoitukset_fi/templates/detail.html
 msgid "Anna palautetta tästä näkymästä"
 msgstr "Anna palautetta tästä näkymästä"
+
+#: mielenosoitukset_fi/templates/tag_list.html
+msgid "Poista suodattimet"
+msgstr "Poista suodattimet"
+
+#: mielenosoitukset_fi/templates/tag_list.html
+msgid "Ei löytynyt mielenosoituksia näillä hakukriteereillä. Kokeile poistaa suodattimia tai hae uudelleen."
+msgstr "Ei löytynyt mielenosoituksia näillä hakukriteereillä. Kokeile poistaa suodattimia tai hae uudelleen."
+
+#: mielenosoitukset_fi/templates/tag_list.html
+msgid "Tällä tagilla ei ole näkyvillä olevia mielenosoituksia."
+msgstr "Tällä tagilla ei ole näkyvillä olevia mielenosoituksia."

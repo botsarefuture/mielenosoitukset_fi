@@ -1193,15 +1193,19 @@ julisteita ja tarroja, ilmoita tapahtuma ja liity vapaaehtoiseksi.{% endblock %}
 
         hideVolunteerFeedback();
 
-        const invalidFields = Array.from(volunteerForm.querySelectorAll(':invalid'));
+        const missingRequiredFields = Array.from(
+          volunteerForm.querySelectorAll('[required]')
+        ).filter((field) => !field.value.trim());
+        const browserInvalidFields = Array.from(volunteerForm.querySelectorAll(':invalid'));
+        const invalidFields = Array.from(new Set([
+          ...missingRequiredFields,
+          ...browserInvalidFields,
+        ]));
         const firstInvalidField = invalidFields[0];
         if (firstInvalidField) {
-          const requiredFieldsMissing = Array.from(
-            volunteerForm.querySelectorAll('[required]')
-          ).some((field) => !field.value.trim());
           showVolunteerFeedback(
             'error',
-            requiredFieldsMissing ? volunteerMessages.required : volunteerMessages.invalid
+            missingRequiredFields.length ? volunteerMessages.required : volunteerMessages.invalid
           );
           invalidFields.forEach((field) => field.setAttribute('aria-invalid', 'true'));
           firstInvalidField.focus();

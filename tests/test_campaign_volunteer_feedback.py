@@ -25,6 +25,8 @@ def test_campaign_volunteer_feedback_contract_uses_accessible_in_page_status():
     assert "alert(" not in volunteer_script
     assert "volunteerMsgText.textContent = message" in volunteer_script
     assert "volunteerForm.querySelectorAll(':invalid')" in volunteer_script
+    assert ").filter((field) => !field.value.trim())" in volunteer_script
+    assert "...missingRequiredFields" in volunteer_script
     assert "field.setAttribute('aria-invalid', 'true')" in volunteer_script
     assert "firstInvalidField.focus()" in volunteer_script
     assert "if (volunteerForm.dataset.requestPending === 'true') return" in volunteer_script
@@ -55,6 +57,25 @@ def test_campaign_volunteer_api_localizes_required_fields_error(
 
     assert response.status_code == 400
     assert response.get_json() == {"success": False, "error": expected}
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"name": "   ", "email": "volunteer@example.test"},
+        {"name": "Volunteer", "email": "  \t"},
+        {"name": None, "email": "volunteer@example.test"},
+    ],
+)
+def test_campaign_volunteer_api_rejects_blank_normalized_required_values(
+    client, db, payload
+):
+    before = db.volunteers.count_documents({})
+
+    response = client.post("/kampanja/api/volunteers", json=payload)
+
+    assert response.status_code == 400
+    assert db.volunteers.count_documents({}) == before
 
 
 @pytest.mark.parametrize(
@@ -157,6 +178,31 @@ def test_campaign_volunteer_validation_focuses_first_invalid_field(
     assert "Nimi ja sähköpostiosoite ovat pakollisia." in browser_page.locator(
         "#vol-msg"
     ).inner_text()
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_campaign_volunteer_validation_rejects_whitespace_only_name(
+    live_server, browser_page
+):
+    request_count = 0
+
+    def handle_volunteer(route):
+        nonlocal request_count
+        request_count += 1
+        route.fulfill(status=201, body='{"success": true}', content_type="application/json")
+
+    browser_page.route("**/kampanja/api/volunteers", handle_volunteer)
+    browser_page.goto(f"{live_server}/kampanja/", wait_until="domcontentloaded")
+    browser_page.locator("#vol-name").fill("   ")
+    browser_page.locator("#vol-email").fill("volunteer@example.test")
+    browser_page.locator("#vol-submit").click()
+
+    assert browser_page.evaluate("document.activeElement.id") == "vol-name"
+    assert "Nimi ja sähköpostiosoite ovat pakollisia." in browser_page.locator(
+        "#vol-msg"
+    ).inner_text()
+    assert request_count == 0
 
 
 @pytest.mark.e2e

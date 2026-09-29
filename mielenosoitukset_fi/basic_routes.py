@@ -3972,11 +3972,17 @@ def init_routes(app):
     import calendar
     from flask import render_template
 
-    def _localized_calendar_labels(year):
+    def _localized_calendar_labels():
+        """Return locale-only calendar labels without constraining route years.
+
+        ``calendar.Calendar`` supports proleptic years outside ``datetime.date``'s
+        1..9999 range. Month names do not depend on the requested year, so use a
+        fixed valid reference year when asking Babel to format them.
+        """
         locale = str(get_locale() or "fi")
         month_names = {
             month: babel_format_date(
-                date(year, month, 1), format="LLLL", locale=locale
+                date(2000, month, 1), format="LLLL", locale=locale
             )
             for month in range(1, 13)
         }
@@ -4033,7 +4039,7 @@ def init_routes(app):
         next_month = month + 1 if month != 12 else 1
         next_year = year + 1 if month == 12 else year
 
-        calendar_locale, month_names, weekday_names = _localized_calendar_labels(year)
+        calendar_locale, month_names, weekday_names = _localized_calendar_labels()
         
         old_view = request.cookies.get("old-calendar-view") == "true"
 
@@ -4088,7 +4094,7 @@ def init_routes(app):
                         _localized_demo_copy(demo, _current_demo_language())
                     )
 
-        calendar_locale, month_names, weekday_names = _localized_calendar_labels(year)
+        calendar_locale, month_names, weekday_names = _localized_calendar_labels()
 
         return render_template(
             "demo_views/calendar_year.html",

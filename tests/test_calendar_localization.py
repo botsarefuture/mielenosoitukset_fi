@@ -135,3 +135,23 @@ def test_year_view_renders_active_locale(
     for text in (month_name, previous_year, next_year):
         assert text in body
     assert json.dumps(onboarding) in body
+
+
+@pytest.mark.parametrize(
+    ("locale", "path", "month_name"),
+    [
+        ("en", "/calendar/0/1/", "January"),
+        ("sv", "/calendar/10000/1/", "januari"),
+        ("en", "/calendar/0/", "January"),
+        ("sv", "/calendar/10000/", "januari"),
+    ],
+)
+def test_calendar_routes_keep_supporting_proleptic_years(
+    app, client, locale, path, month_name
+):
+    _set_locale(app, client, locale)
+
+    response = client.get(path)
+
+    assert response.status_code == 200
+    assert month_name in response.get_data(as_text=True)

@@ -32,11 +32,15 @@ def test_submit_feedback_replaces_native_dialogs_and_marks_invalid_fields():
 
     assert re.search(r"\balert\s*\(", template) is None
     assert re.search(r"(?:window\.)?confirm\s*\(", template) is None
-    assert "showInvalidFields(missingRequired, SUBMIT_REQUIRED_ERROR)" in template
+    assert "showInvalidFields(invalidFields, SUBMIT_REQUIRED_ERROR)" in template
+    assert "collectInvalidFields(currentPageElement)" in template
+    assert "!field.disabled && field.willValidate && !field.checkValidity()" in template
     assert "field.setAttribute('aria-invalid', 'true')" in template
     assert "firstInvalid.focus({ preventScroll: true })" in template
     assert "if (pageNumber && pageNumber !== currentPage) showPage(pageNumber)" in template
     assert "submitFeedbackText.textContent = String(message || SUBMIT_GENERIC_ERROR)" in template
+    assert "submitForm.addEventListener('input', clearDelegatedInvalidState)" in template
+    assert "submitForm.addEventListener('change', clearDelegatedInvalidState)" in template
 
 
 def test_submit_conflict_modal_renders_server_data_as_text_and_keeps_retry_contract():
@@ -64,7 +68,7 @@ def test_submit_feedback_has_shared_light_dark_component_and_cache_bump():
     assert "var(--product-danger-soft)" in workspace_css
     assert '[aria-invalid="true"]' in workspace_css
     assert ".user-conflict-list" in workspace_css
-    assert "20260929-user-workspace-10" in base
+    assert "20260929-user-workspace-12" in base
 
 
 def test_submit_new_feedback_copy_is_localized_in_english_and_swedish(app, client):
@@ -118,6 +122,32 @@ def test_submit_validation_and_conflict_modal_work_in_browser(live_server, brows
         """
     )
     browser_page.goto(f"{live_server}/submit", wait_until="domcontentloaded")
+
+    assert browser_page.evaluate(
+        """
+        () => {
+          const optionalUrl = document.createElement('input');
+          optionalUrl.type = 'url';
+          optionalUrl.value = 'not-a-url';
+          document.getElementById('myForm').appendChild(optionalUrl);
+          const detected = collectInvalidFields(document.getElementById('myForm')).includes(optionalUrl);
+          optionalUrl.remove();
+          return detected;
+        }
+        """
+    )
+
+    browser_page.evaluate("addOrganizer()")
+    dynamic_name = browser_page.locator('[name^="organizer_name_"]').last
+    dynamic_name.evaluate("element => element.setAttribute('aria-invalid', 'true')")
+    dynamic_name.evaluate(
+        """element => {
+          element.value = 'Dynamic organizer';
+          element.dispatchEvent(new Event('input', {bubbles: true}));
+        }"""
+    )
+    assert dynamic_name.get_attribute("aria-invalid") is None
+
     browser_page.evaluate("showPage(5)")
 
     browser_page.locator("#submit-form").click()

@@ -889,12 +889,11 @@
 
   function validateCurrentPage() {
     const currentPageElement = document.getElementById(`page-${currentPage}`);
-    const requiredInputs = currentPageElement.querySelectorAll('[required]');
-    const missingRequired = Array.from(requiredInputs).filter(isRequiredFieldMissing);
+    const invalidFields = collectInvalidFields(currentPageElement);
 
-    if (missingRequired.length) {
+    if (invalidFields.length) {
       showInvalidFields(
-        missingRequired,
+        invalidFields,
         {{ _('Täytä kaikki pakolliset kentät ennen jatkamista.') | tojson }}
       );
       return false;
@@ -1091,10 +1090,10 @@
     }
   }
 
-  function isRequiredFieldMissing(field) {
-    if (field.disabled) return false;
-    if (field.type === 'checkbox' || field.type === 'radio') return !field.checked;
-    return !String(field.value || '').trim() || !field.checkValidity();
+  function collectInvalidFields(container) {
+    return Array.from(container.querySelectorAll('input, select, textarea')).filter(field => (
+      !field.disabled && field.willValidate && !field.checkValidity()
+    ));
   }
 
   function clearInvalidField(field) {
@@ -1118,11 +1117,12 @@
     }
   }
 
-  document.querySelectorAll('#myForm input, #myForm select, #myForm textarea').forEach(field => {
-    const clear = () => clearInvalidField(field);
-    field.addEventListener('input', clear);
-    field.addEventListener('change', clear);
-  });
+  const submitForm = document.getElementById('myForm');
+  const clearDelegatedInvalidState = event => {
+    if (event.target.matches('input, select, textarea')) clearInvalidField(event.target);
+  };
+  submitForm.addEventListener('input', clearDelegatedInvalidState);
+  submitForm.addEventListener('change', clearDelegatedInvalidState);
 
   function confirmConflictSubmission(conflictData) {
     const modalElement = document.getElementById('submitConflictModal');
@@ -1212,10 +1212,10 @@
     }
 
     const form = event.currentTarget;
-    const missingRequired = Array.from(form.querySelectorAll("[required]")).filter(isRequiredFieldMissing);
+    const invalidFields = collectInvalidFields(form);
 
-    if (missingRequired.length) {
-      showInvalidFields(missingRequired, SUBMIT_REQUIRED_ERROR);
+    if (invalidFields.length) {
+      showInvalidFields(invalidFields, SUBMIT_REQUIRED_ERROR);
       return;
     }
 

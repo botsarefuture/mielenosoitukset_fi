@@ -5367,7 +5367,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/super_audit/logs.html:63
 #: mielenosoitukset_fi/templates/admin_base.html:313
 msgid "Sisältö"
-msgstr ""
+msgstr "Innehåll"
 
 #: mielenosoitukset_fi/templates/admin_V2/dashboard.html:221
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:112
@@ -5527,7 +5527,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/base.html:882
 msgid "Kehittäjille"
-msgstr ""
+msgstr "För utvecklare"
 
 #: mielenosoitukset_fi/templates/cancel_demonstration.html:5
 msgid "Mielenosoituksen peruminen"
@@ -13027,3 +13027,35 @@ msgstr "Klassisk"
 #: mielenosoitukset_fi/templates/detail.html
 msgid "Anna palautetta tästä näkymästä"
 msgstr "Ge respons om den här layouten"
+
+#: mielenosoitukset_fi/templates/api_docs.html
+msgid "API-dokumentaatio"
+msgstr "API-dokumentation"
+
+#: mielenosoitukset_fi/templates/api_docs.html
+msgid "Ihmisluettava dokumentaatio julkiselle API:lle."
+msgstr "Läsbar dokumentation för det offentliga API:et."
+
+#: mielenosoitukset_fi/templates/api_docs.html
+msgid "API:n perustiedot"
+msgstr "API-information"
+
+#: mielenosoitukset_fi/templates/api_docs.html
+msgid "OpenAPI-määrittely"
+msgstr "OpenAPI-specifikation"
+
+#: mielenosoitukset_fi/templates/api_docs.html
+msgid "Perusosoite"
+msgstr "Basadress"
+
+#: mielenosoitukset_fi/templates/base.html
+msgid "Sivuston alatunniste"
+msgstr "Sidfot"
+
+#: mielenosoitukset_fi/templates/base.html
+msgid "Mielenosoitukset.fi sosiaalisessa mediassa"
+msgstr "Mielenosoitukset.fi i sociala medier"
+
+#: mielenosoitukset_fi/templates/base.html
+msgid "Käyttäjätili"
+msgstr "Användarkonto"

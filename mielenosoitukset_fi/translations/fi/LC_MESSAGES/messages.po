@@ -12956,3 +12956,35 @@ msgstr "Perinteinen"
 #: mielenosoitukset_fi/templates/detail.html
 msgid "Anna palautetta tästä näkymästä"
 msgstr "Anna palautetta tästä näkymästä"
+
+#: mielenosoitukset_fi/templates/api_docs.html
+msgid "API-dokumentaatio"
+msgstr "API-dokumentaatio"
+
+#: mielenosoitukset_fi/templates/api_docs.html
+msgid "Ihmisluettava dokumentaatio julkiselle API:lle."
+msgstr "Ihmisluettava dokumentaatio julkiselle API:lle."
+
+#: mielenosoitukset_fi/templates/api_docs.html
+msgid "API:n perustiedot"
+msgstr "API:n perustiedot"
+
+#: mielenosoitukset_fi/templates/api_docs.html
+msgid "OpenAPI-määrittely"
+msgstr "OpenAPI-määrittely"
+
+#: mielenosoitukset_fi/templates/api_docs.html
+msgid "Perusosoite"
+msgstr "Perusosoite"
+
+#: mielenosoitukset_fi/templates/base.html
+msgid "Sivuston alatunniste"
+msgstr "Sivuston alatunniste"
+
+#: mielenosoitukset_fi/templates/base.html
+msgid "Mielenosoitukset.fi sosiaalisessa mediassa"
+msgstr "Mielenosoitukset.fi sosiaalisessa mediassa"
+
+#: mielenosoitukset_fi/templates/base.html
+msgid "Käyttäjätili"
+msgstr "Käyttäjätili"

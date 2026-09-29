@@ -244,6 +244,20 @@ def test_passkey_list_rename_delete(wapp, db, seeded_data):
     assert r.status_code == 200
     assert db.user_passkeys.find_one({"_id": ObjectId(passkey_id)})["name"] == "Laptop"
 
+    r = client.post(
+        "/users/auth/api/v2/passkeys/rename",
+        json={"id": passkey_id, "name": "   "},
+    )
+    assert r.status_code == 400
+
+    r = client.post(
+        "/users/auth/api/v2/passkeys/rename",
+        json={"id": passkey_id, "name": "  Security key  "},
+    )
+    assert r.status_code == 200
+    renamed_passkey = db.user_passkeys.find_one({"_id": ObjectId(passkey_id)})
+    assert renamed_passkey["name"] == "Security key"
+
     r = client.post("/users/auth/api/v2/passkeys/delete", json={"id": str(ObjectId())})
     assert r.status_code == 404
 

@@ -13191,3 +13191,19 @@ msgstr "Välj ett månadsnamn för att öppna månadsvyn."
 #: mielenosoitukset_fi/templates/demo_views/calendar_year.html
 msgid "Klikkaa mielenosoituksen nimeä siirtyäksesi yksittäisen mielenosoituksen sivulle."
 msgstr "Välj demonstrationens namn för att öppna dess detaljsida."
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Lähetysyrityksiä on liian monta. Odota hetki ja yritä uudelleen."
+msgstr "För många inskickningsförsök. Vänta en stund och försök igen."
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Lähetä silti"
+msgstr "Skicka ändå"
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid ""
+"Tarkista osumat alta. Jos tämä on eri tapahtuma, valitse Lähetä silti. "
+"Jos kyse on vahingossa duplikaatista, voit palata korjaamaan tietoja."
+msgstr ""
+"Granska träffarna nedan. Om det här är en annan händelse väljer du Skicka "
+"ändå. Om det är en oavsiktlig dubblett kan du gå tillbaka och rätta "
+"uppgifterna."

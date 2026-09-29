@@ -2045,6 +2045,68 @@ textarea.user-field__control {
   color: var(--product-text);
 }
 
+.user-form-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-block: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--product-primary);
+  border-radius: 0.85rem;
+  background: var(--product-primary-soft);
+  color: var(--product-primary-strong);
+  line-height: 1.5;
+}
+
+.user-form-feedback[hidden] {
+  display: none;
+}
+
+.user-form-feedback > i {
+  flex: 0 0 auto;
+  margin-top: 0.2em;
+}
+
+.user-form-feedback > p {
+  margin: 0;
+}
+
+.user-form-feedback--error {
+  border-color: var(--product-danger);
+  background: var(--product-danger-soft);
+  color: var(--product-danger);
+}
+
+.user-form-feedback--warning {
+  border-color: var(--product-accent);
+  background: var(--product-accent-soft);
+  color: var(--product-accent-strong);
+}
+
+.user-form-feedback:focus-visible {
+  outline: 3px solid color-mix(in srgb, currentColor 32%, transparent);
+  outline-offset: 2px;
+}
+
+.user-form :is(input, select, textarea):not([type="checkbox"]):not([type="radio"])[aria-invalid="true"] {
+  border-color: var(--product-danger);
+  outline: 3px solid color-mix(in srgb, var(--product-danger) 24%, transparent);
+  outline-offset: 2px;
+}
+
+.user-form :is(input[type="checkbox"], input[type="radio"])[aria-invalid="true"] {
+  outline: 3px solid color-mix(in srgb, var(--product-danger) 30%, transparent);
+  outline-offset: 3px;
+}
+
+.user-conflict-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding-inline-start: 1.5rem;
+  color: var(--product-text-muted);
+}
+
 .user-check-list {
   display: grid;
   gap: 0.5rem;

@@ -13120,3 +13120,18 @@ msgstr "Klikkaa kuukauden nimeä siirtyäksesi kuukausinäkymään."
 #: mielenosoitukset_fi/templates/demo_views/calendar_year.html
 msgid "Klikkaa mielenosoituksen nimeä siirtyäksesi yksittäisen mielenosoituksen sivulle."
 msgstr "Klikkaa mielenosoituksen nimeä siirtyäksesi yksittäisen mielenosoituksen sivulle."
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Lähetysyrityksiä on liian monta. Odota hetki ja yritä uudelleen."
+msgstr "Lähetysyrityksiä on liian monta. Odota hetki ja yritä uudelleen."
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Lähetä silti"
+msgstr "Lähetä silti"
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid ""
+"Tarkista osumat alta. Jos tämä on eri tapahtuma, valitse Lähetä silti. "
+"Jos kyse on vahingossa duplikaatista, voit palata korjaamaan tietoja."
+msgstr ""
+"Tarkista osumat alta. Jos tämä on eri tapahtuma, valitse Lähetä silti. "
+"Jos kyse on vahingossa duplikaatista, voit palata korjaamaan tietoja."

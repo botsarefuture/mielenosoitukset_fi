@@ -185,7 +185,7 @@ We will review and merge your changes after testing.
 > If you'd like to help — whether with code, translations, documentation, testing, design, or moderation — please get in touch. You can:
 >
 > - Open an issue or a pull request on GitHub to start a discussion.
-- Reach out directly to Emilia at emilia@mielenosoitukset.fi to talk about ways to contribute or to be added to the contributor channels.
+- Reach out directly to Olivia at olivia@mielenosoitukset.fi to talk about ways to contribute or to be added to the contributor channels.
 
 Suggested first tasks:
 

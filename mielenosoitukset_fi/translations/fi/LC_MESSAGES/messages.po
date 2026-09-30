@@ -13182,3 +13182,24 @@ msgstr "Passkeyta ei löytynyt."
 
 msgid "Passkey poistettu."
 msgstr "Passkey poistettu."
+
+msgid "Hallinnoi tilisi tietoja, turvallisuutta, profiilia ja API-avaimia yhdessä paikassa."
+msgstr "Hallinnoi tilisi tietoja, turvallisuutta, profiilia ja API-avaimia yhdessä paikassa."
+
+msgid "Asetusosiot"
+msgstr "Asetusosiot"
+
+msgid "Yleiset asetukset"
+msgstr "Yleiset asetukset"
+
+msgid "Valitse profiilissa näkyvä nimi, kotikaupunki ja käyttöliittymän asetukset."
+msgstr "Valitse profiilissa näkyvä nimi, kotikaupunki ja käyttöliittymän asetukset."
+
+msgid "Käytä vähintään 12 merkkiä ja vähintään kolmea näistä: pieni kirjain, iso kirjain, numero ja erikoismerkki."
+msgstr "Käytä vähintään 12 merkkiä ja vähintään kolmea näistä: pieni kirjain, iso kirjain, numero ja erikoismerkki."
+
+msgid "MFA-laite"
+msgstr "MFA-laite"
+
+msgid "Todennuslaite"
+msgstr "Todennuslaite"

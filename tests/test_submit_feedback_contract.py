@@ -68,7 +68,7 @@ def test_submit_feedback_has_shared_light_dark_component_and_cache_bump():
     assert "var(--product-danger-soft)" in workspace_css
     assert '[aria-invalid="true"]' in workspace_css
     assert ".user-conflict-list" in workspace_css
-    assert "20260929-user-workspace-12" in base
+    assert "20260930-user-workspace-13" in base
 
 
 def test_submit_new_feedback_copy_is_localized_in_english_and_swedish(app, client):

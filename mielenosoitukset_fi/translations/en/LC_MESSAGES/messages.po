@@ -13260,3 +13260,24 @@ msgstr "Passkey not found."
 
 msgid "Passkey poistettu."
 msgstr "Passkey removed."
+
+msgid "Hallinnoi tilisi tietoja, turvallisuutta, profiilia ja API-avaimia yhdessä paikassa."
+msgstr "Manage your account details, security, profile and API keys in one place."
+
+msgid "Asetusosiot"
+msgstr "Settings sections"
+
+msgid "Yleiset asetukset"
+msgstr "General settings"
+
+msgid "Valitse profiilissa näkyvä nimi, kotikaupunki ja käyttöliittymän asetukset."
+msgstr "Choose your public display name, home city and interface preferences."
+
+msgid "Käytä vähintään 12 merkkiä ja vähintään kolmea näistä: pieni kirjain, iso kirjain, numero ja erikoismerkki."
+msgstr "Use at least 12 characters and at least three of: lowercase, uppercase, number and special character."
+
+msgid "MFA-laite"
+msgstr "MFA device"
+
+msgid "Todennuslaite"
+msgstr "Authentication device"

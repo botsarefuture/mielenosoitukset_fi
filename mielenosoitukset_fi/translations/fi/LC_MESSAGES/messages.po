@@ -13135,3 +13135,50 @@ msgid ""
 msgstr ""
 "Tarkista osumat alta. Jos tämä on eri tapahtuma, valitse Lähetä silti. "
 "Jos kyse on vahingossa duplikaatista, voit palata korjaamaan tietoja."
+msgid "Anna nimi ennen tallentamista."
+msgstr "Anna nimi ennen tallentamista."
+
+msgid "Haluatko poistaa tämän laitteen?"
+msgstr "Haluatko poistaa tämän laitteen?"
+
+msgid "Poista MFA-laite"
+msgstr "Poista MFA-laite"
+
+msgid "Poista passkey"
+msgstr "Poista passkey"
+
+msgid "Laitteen tunniste puuttuu."
+msgstr "Laitteen tunniste puuttuu."
+
+msgid "Virheellinen laitteen tunniste."
+msgstr "Virheellinen laitteen tunniste."
+
+msgid "Laite poistettu."
+msgstr "Laite poistettu."
+
+msgid "Laitetta ei löytynyt."
+msgstr "Laitetta ei löytynyt."
+
+msgid "Anna laitteelle nimi."
+msgstr "Anna laitteelle nimi."
+
+msgid "Laite uudelleennimetty."
+msgstr "Laite uudelleennimetty."
+
+msgid "Passkeyn tunniste puuttuu."
+msgstr "Passkeyn tunniste puuttuu."
+
+msgid "Anna passkeylle nimi."
+msgstr "Anna passkeylle nimi."
+
+msgid "Virheellinen passkey-tunniste."
+msgstr "Virheellinen passkey-tunniste."
+
+msgid "Passkey uudelleennimetty."
+msgstr "Passkey uudelleennimetty."
+
+msgid "Passkeyta ei löytynyt."
+msgstr "Passkeyta ei löytynyt."
+
+msgid "Passkey poistettu."
+msgstr "Passkey poistettu."

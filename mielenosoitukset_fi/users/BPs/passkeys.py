@@ -14,6 +14,7 @@ and short-lived (see ``webauthn_utils``).
 """
 
 from flask import Blueprint, jsonify, request, url_for
+from flask_babel import gettext as _
 from flask_login import current_user, login_required, login_user
 from bson import ObjectId
 
@@ -90,17 +91,20 @@ def passkey_rename():
     data = request.get_json(silent=True) or {}
     passkey_id = data.get("id")
     name = data.get("name")
-    if not passkey_id or not name:
-        return jsonify({"status": "error", "message": "id and name required"}), 400
+    if not passkey_id:
+        return jsonify({"status": "error", "message": _("Passkeyn tunniste puuttuu.")}), 400
+    if not isinstance(name, str) or not name.strip():
+        return jsonify({"status": "error", "message": _("Anna passkeylle nimi.")}), 400
+    normalized_name = name.strip()[:60]
 
     try:
         object_id = ObjectId(passkey_id)
     except Exception:
-        return jsonify({"status": "error", "message": "Virheellinen passkey-tunniste."}), 400
+        return jsonify({"status": "error", "message": _("Virheellinen passkey-tunniste.")}), 400
 
-    if webauthn.rename_passkey(str(object_id), current_user._id, name):
-        return jsonify({"status": "success", "message": "Passkey uudelleennimetty."})
-    return jsonify({"status": "error", "message": "Passkeyta ei löytynyt."}), 404
+    if webauthn.rename_passkey(str(object_id), current_user._id, normalized_name):
+        return jsonify({"status": "success", "message": _("Passkey uudelleennimetty.")})
+    return jsonify({"status": "error", "message": _("Passkeyta ei löytynyt.")}), 404
 
 
 @passkeys_bp.route("/api/v2/passkeys/delete", methods=["POST"])
@@ -110,16 +114,16 @@ def passkey_delete():
     data = request.get_json(silent=True) or {}
     passkey_id = data.get("id")
     if not passkey_id:
-        return jsonify({"status": "error", "message": "id required"}), 400
+        return jsonify({"status": "error", "message": _("Passkeyn tunniste puuttuu.")}), 400
 
     try:
         object_id = ObjectId(passkey_id)
     except Exception:
-        return jsonify({"status": "error", "message": "Virheellinen passkey-tunniste."}), 400
+        return jsonify({"status": "error", "message": _("Virheellinen passkey-tunniste.")}), 400
 
     if webauthn.delete_passkey(str(object_id), current_user._id):
-        return jsonify({"status": "success", "message": "Passkey poistettu."})
-    return jsonify({"status": "error", "message": "Passkeyta ei löytynyt."}), 404
+        return jsonify({"status": "success", "message": _("Passkey poistettu.")})
+    return jsonify({"status": "error", "message": _("Passkeyta ei löytynyt.")}), 404
 
 
 # ---------------------------------------------------------------------------

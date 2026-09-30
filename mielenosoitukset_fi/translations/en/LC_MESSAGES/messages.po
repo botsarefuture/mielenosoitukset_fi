@@ -13213,3 +13213,50 @@ msgstr ""
 "Review the matches below. If this is a different event, choose Submit "
 "anyway. If it is an accidental duplicate, you can go back and correct the "
 "details."
+msgid "Anna nimi ennen tallentamista."
+msgstr "Enter a name before saving."
+
+msgid "Haluatko poistaa tämän laitteen?"
+msgstr "Do you want to remove this device?"
+
+msgid "Poista MFA-laite"
+msgstr "Remove MFA device"
+
+msgid "Poista passkey"
+msgstr "Remove passkey"
+
+msgid "Laitteen tunniste puuttuu."
+msgstr "Device identifier is missing."
+
+msgid "Virheellinen laitteen tunniste."
+msgstr "Invalid device identifier."
+
+msgid "Laite poistettu."
+msgstr "Device removed."
+
+msgid "Laitetta ei löytynyt."
+msgstr "Device not found."
+
+msgid "Anna laitteelle nimi."
+msgstr "Enter a name for the device."
+
+msgid "Laite uudelleennimetty."
+msgstr "Device renamed."
+
+msgid "Passkeyn tunniste puuttuu."
+msgstr "Passkey identifier is missing."
+
+msgid "Anna passkeylle nimi."
+msgstr "Enter a name for the passkey."
+
+msgid "Virheellinen passkey-tunniste."
+msgstr "Invalid passkey identifier."
+
+msgid "Passkey uudelleennimetty."
+msgstr "Passkey renamed."
+
+msgid "Passkeyta ei löytynyt."
+msgstr "Passkey not found."
+
+msgid "Passkey poistettu."
+msgstr "Passkey removed."

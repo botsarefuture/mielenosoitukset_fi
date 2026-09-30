@@ -13207,3 +13207,50 @@ msgstr ""
 "Granska träffarna nedan. Om det här är en annan händelse väljer du Skicka "
 "ändå. Om det är en oavsiktlig dubblett kan du gå tillbaka och rätta "
 "uppgifterna."
+msgid "Anna nimi ennen tallentamista."
+msgstr "Ange ett namn innan du sparar."
+
+msgid "Haluatko poistaa tämän laitteen?"
+msgstr "Vill du ta bort den här enheten?"
+
+msgid "Poista MFA-laite"
+msgstr "Ta bort MFA-enhet"
+
+msgid "Poista passkey"
+msgstr "Ta bort passkey"
+
+msgid "Laitteen tunniste puuttuu."
+msgstr "Enhetsidentifieraren saknas."
+
+msgid "Virheellinen laitteen tunniste."
+msgstr "Ogiltig enhetsidentifierare."
+
+msgid "Laite poistettu."
+msgstr "Enheten togs bort."
+
+msgid "Laitetta ei löytynyt."
+msgstr "Enheten hittades inte."
+
+msgid "Anna laitteelle nimi."
+msgstr "Ange ett namn för enheten."
+
+msgid "Laite uudelleennimetty."
+msgstr "Enheten döptes om."
+
+msgid "Passkeyn tunniste puuttuu."
+msgstr "Passkey-identifieraren saknas."
+
+msgid "Anna passkeylle nimi."
+msgstr "Ange ett namn för passkeyn."
+
+msgid "Virheellinen passkey-tunniste."
+msgstr "Ogiltig passkey-identifierare."
+
+msgid "Passkey uudelleennimetty."
+msgstr "Passkeyn döptes om."
+
+msgid "Passkeyta ei löytynyt."
+msgstr "Passkeyn hittades inte."
+
+msgid "Passkey poistettu."
+msgstr "Passkeyn togs bort."

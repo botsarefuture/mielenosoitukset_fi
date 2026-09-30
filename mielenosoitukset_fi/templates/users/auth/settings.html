@@ -882,7 +882,7 @@
 </script>
 
 <!-- MFA QR Code Modal -->
-<div class="modal fade" id="mfaModal" aria-hidden="true" aria-labelledby="mfaModalLabel" tabindex="-1">
+<div class="modal fade user-modal" id="mfaModal" aria-hidden="true" aria-labelledby="mfaModalLabel" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -908,7 +908,7 @@
 </div>
 
 <!-- Step-up (re-authentication) Modal -->
-<div class="modal fade" id="stepUpModal" aria-hidden="true" aria-labelledby="stepUpModalLabel" tabindex="-1">
+<div class="modal fade user-modal" id="stepUpModal" aria-hidden="true" aria-labelledby="stepUpModalLabel" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -956,11 +956,164 @@
     </div>
   </div>
 </div>
+
+<div class="modal fade user-modal" id="credentialRenameModal" aria-hidden="true"
+  aria-labelledby="credentialRenameModalLabel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content user-form" id="credential-rename-form" novalidate>
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="credentialRenameModalLabel"></h2>
+        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <label class="user-field__label" for="credential-rename-input">{{ _('Nimi') }}</label>
+        <input class="user-field__control" id="credential-rename-input" type="text" maxlength="60"
+          autocomplete="off" aria-describedby="credential-rename-error" required>
+        <div class="user-form-feedback user-form-feedback--error" id="credential-rename-error"
+          role="alert" aria-live="assertive" hidden>
+          <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+          <p>{{ _('Anna nimi ennen tallentamista.') }}</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">{{ _('Peruuta') }}</button>
+        <button class="btn btn-primary" id="credential-rename-submit" type="submit">{{ _('Tallenna') }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade user-modal" id="credentialRemovalModal" aria-hidden="true"
+  aria-labelledby="credentialRemovalModalLabel" aria-describedby="credential-removal-message" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="credentialRemovalModalLabel"></h2>
+        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p id="credential-removal-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="credential-removal-cancel" data-bs-dismiss="modal" type="button">{{ _('Peruuta') }}</button>
+        <button class="btn btn-danger" id="credential-removal-confirm" type="button">{{ _('Poista') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+<script>
+  const credentialRenameElement = document.getElementById('credentialRenameModal');
+  const credentialRenameForm = document.getElementById('credential-rename-form');
+  const credentialRenameTitle = document.getElementById('credentialRenameModalLabel');
+  const credentialRenameInput = document.getElementById('credential-rename-input');
+  const credentialRenameError = document.getElementById('credential-rename-error');
+  let credentialRenameResolve = null;
+  let credentialRenameValue = null;
+  let credentialRenameReturnFocus = null;
+
+  function credentialRenameModal() {
+    return bootstrap.Modal.getOrCreateInstance(credentialRenameElement);
+  }
+
+  function requestCredentialName(title, currentName) {
+    if (credentialRenameResolve) credentialRenameResolve(null);
+    credentialRenameReturnFocus = document.activeElement;
+    credentialRenameTitle.textContent = String(title || '');
+    credentialRenameInput.value = String(currentName || '');
+    credentialRenameError.hidden = true;
+    credentialRenameInput.removeAttribute('aria-invalid');
+    credentialRenameValue = null;
+
+    return new Promise(resolve => {
+      credentialRenameResolve = resolve;
+      credentialRenameModal().show();
+    });
+  }
+
+  credentialRenameForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const value = credentialRenameInput.value.trim();
+    if (!value) {
+      credentialRenameInput.setAttribute('aria-invalid', 'true');
+      credentialRenameError.hidden = false;
+      credentialRenameInput.focus();
+      return;
+    }
+    credentialRenameValue = value;
+    credentialRenameModal().hide();
+  });
+
+  credentialRenameInput.addEventListener('input', () => {
+    credentialRenameInput.removeAttribute('aria-invalid');
+    credentialRenameError.hidden = true;
+  });
+
+  credentialRenameElement.addEventListener('shown.bs.modal', () => {
+    credentialRenameInput.focus();
+    credentialRenameInput.select();
+  });
+
+  credentialRenameElement.addEventListener('hidden.bs.modal', () => {
+    const resolve = credentialRenameResolve;
+    const returnFocus = credentialRenameReturnFocus;
+    credentialRenameResolve = null;
+    credentialRenameReturnFocus = null;
+    if (resolve) resolve(credentialRenameValue);
+    credentialRenameValue = null;
+    if (returnFocus && returnFocus.isConnected) returnFocus.focus();
+  });
+
+  const credentialRemovalElement = document.getElementById('credentialRemovalModal');
+  const credentialRemovalTitle = document.getElementById('credentialRemovalModalLabel');
+  const credentialRemovalMessage = document.getElementById('credential-removal-message');
+  const credentialRemovalCancel = document.getElementById('credential-removal-cancel');
+  const credentialRemovalConfirm = document.getElementById('credential-removal-confirm');
+  let credentialRemovalResolve = null;
+  let credentialRemovalApproved = false;
+  let credentialRemovalReturnFocus = null;
+
+  function credentialRemovalModal() {
+    return bootstrap.Modal.getOrCreateInstance(credentialRemovalElement);
+  }
+
+  function confirmCredentialRemoval(title, message) {
+    if (credentialRemovalResolve) credentialRemovalResolve(false);
+    credentialRemovalReturnFocus = document.activeElement;
+    credentialRemovalTitle.textContent = String(title || '');
+    credentialRemovalMessage.textContent = String(message || '');
+    credentialRemovalApproved = false;
+
+    return new Promise(resolve => {
+      credentialRemovalResolve = resolve;
+      credentialRemovalModal().show();
+    });
+  }
+
+  credentialRemovalConfirm.addEventListener('click', () => {
+    credentialRemovalApproved = true;
+    credentialRemovalModal().hide();
+  });
+
+  credentialRemovalElement.addEventListener('shown.bs.modal', () => {
+    credentialRemovalCancel.focus();
+  });
+
+  credentialRemovalElement.addEventListener('hidden.bs.modal', () => {
+    const resolve = credentialRemovalResolve;
+    const returnFocus = credentialRemovalReturnFocus;
+    credentialRemovalResolve = null;
+    credentialRemovalReturnFocus = null;
+    if (resolve) resolve(credentialRemovalApproved);
+    credentialRemovalApproved = false;
+    if (returnFocus && returnFocus.isConnected) returnFocus.focus();
+  });
+</script>
 
 <script>
   $(function () {
@@ -1060,28 +1213,39 @@
             renameBtn.className = "btn btn-sm btn-outline-secondary me-1";
             renameBtn.textContent = "{{ _('Nimeä') }}";
             renameBtn.onclick = async () => {
-              const newName = prompt("{{ _('Uusi nimi laitteelle') }}", d.name);
+              const newName = await requestCredentialName(
+                {{ _('Uusi nimi laitteelle') | tojson }},
+                d.name
+              );
               if (!newName) return;
               const r = await fetchWithStepUp("/users/auth/api/v2/mfa_device_rename", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ device_id: d.id, name: newName })
               });
+              if (!r) return;
               const j = await r.json();
               showSettingsMessage(j.message, j.status === "success" ? "success" : "error");
               loadMFAStatus();
             };
             const revokeBtn = document.createElement("button");
             revokeBtn.className = "btn btn-sm btn-danger";
-            revokeBtn.textContent = "Poista";
+            revokeBtn.textContent = {{ _('Poista') | tojson }};
             revokeBtn.onclick = async () => {
-              if (confirm("Haluatko poistaa tämän laitteen?")) {
-                await fetchWithStepUp("/users/auth/api/v2/mfa_device_revoke", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ device_id: d.id })
-                });
-                loadMFAStatus();
+              const confirmed = await confirmCredentialRemoval(
+                {{ _('Poista MFA-laite') | tojson }},
+                {{ _('Haluatko poistaa tämän laitteen?') | tojson }}
+              );
+              if (!confirmed) return;
+              const response = await fetchWithStepUp("/users/auth/api/v2/mfa_device_revoke", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ device_id: d.id })
+              });
+              if (response) {
+                const result = await response.json();
+                showSettingsMessage(result.message, result.status === "success" ? "success" : "error");
+                if (result.status === "success") loadMFAStatus();
               }
             };
             li.appendChild(renameBtn);
@@ -1248,6 +1412,7 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
           });
+          if (!res) return;
           const j = await res.json();
           showSettingsMessage(j.message, j.status === "success" ? "success" : "error");
           if (j.status === "success") e.target.reset();
@@ -1429,6 +1594,7 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ type, scopes })
           });
+          if (!res) return;
           const data = await res.json();
           if (data.status === "success") {
             if (tokenValue) tokenValue.textContent = data.token;
@@ -1610,7 +1776,7 @@
     if (!body || body.error !== "step_up_required") return res;
 
     const ok = await requestStepUp();
-    if (!ok) return res;
+    if (!ok) return null;
     return fetch(url, options || {});
   }
 
@@ -1664,13 +1830,17 @@
         renameBtn.className = "btn btn-sm btn-outline-secondary me-1";
         renameBtn.textContent = "{{ _('Nimeä') }}";
         renameBtn.onclick = async () => {
-          const newName = prompt("{{ _('Uusi nimi passkeylle') }}", pk.name);
+          const newName = await requestCredentialName(
+            {{ _('Uusi nimi passkeylle') | tojson }},
+            pk.name
+          );
           if (!newName) return;
           const r = await fetchWithStepUp("/users/auth/api/v2/passkeys/rename", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: pk.id, name: newName })
           });
+          if (!r) return;
           const j = await r.json();
           showSettingsMessage(j.message, j.status === "success" ? "success" : "error");
           loadPasskeys();
@@ -1679,12 +1849,17 @@
         deleteBtn.className = "btn btn-sm btn-danger";
         deleteBtn.textContent = "{{ _('Poista') }}";
         deleteBtn.onclick = async () => {
-          if (!confirm("{{ _('Haluatko poistaa tämän passkeyn?') }}")) return;
+          const confirmed = await confirmCredentialRemoval(
+            {{ _('Poista passkey') | tojson }},
+            {{ _('Haluatko poistaa tämän passkeyn?') | tojson }}
+          );
+          if (!confirmed) return;
           const r = await fetchWithStepUp("/users/auth/api/v2/passkeys/delete", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: pk.id })
           });
+          if (!r) return;
           const j = await r.json();
           showSettingsMessage(j.message, j.status === "success" ? "success" : "error");
           loadPasskeys();

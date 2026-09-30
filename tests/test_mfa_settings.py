@@ -116,6 +116,20 @@ def test_mfa_device_rename_requires_step_up_and_updates_name(app, db):
     assert devices[0]["name"] == "YubiKey 5C"
     assert len(devices) == 1
 
+    r = client.post(
+        "/users/auth/api/v2/mfa_device_rename",
+        json={"device_id": device_id, "name": "   "},
+    )
+    assert r.status_code == 400
+
+    r = client.post(
+        "/users/auth/api/v2/mfa_device_rename",
+        json={"device_id": device_id, "name": "  Desk key  "},
+    )
+    assert r.status_code == 200
+    renamed_devices = client.get("/users/auth/api/v2/mfa_status").get_json()["devices"]
+    assert renamed_devices[0]["name"] == "Desk key"
+
     # Missing fields / unknown device are rejected cleanly.
     r = client.post("/users/auth/api/v2/mfa_device_rename", json={"device_id": device_id})
     assert r.status_code == 400

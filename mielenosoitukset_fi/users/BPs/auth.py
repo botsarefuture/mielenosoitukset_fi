@@ -1362,16 +1362,16 @@ def mfa_device_revoke():
     Removes a specific MFA device/secret for the user.
     """
     user = current_user
-    data = request.get_json(force=True)
+    data = request.get_json(silent=True) or {}
     device_id = data.get("device_id")
 
     if not device_id:
-        return jsonify({"status": "error", "message": "device_id is required"}), 400
+        return jsonify({"status": "error", "message": _("Laitteen tunniste puuttuu.")}), 400
 
     try:
         device_oid = ObjectId(str(device_id))
     except Exception:
-        return jsonify({"status": "error", "message": "Invalid device id"}), 400
+        return jsonify({"status": "error", "message": _("Virheellinen laitteen tunniste.")}), 400
 
     result = mongo.mfas.delete_one({"_id": device_oid, "user_id": user._id})
 
@@ -1381,9 +1381,9 @@ def mfa_device_revoke():
         if remaining == 0:
             user.mfa_enabled = False
             user.save()
-        return jsonify({"status": "success", "message": "Device removed"})
+        return jsonify({"status": "success", "message": _("Laite poistettu.")})
     else:
-        return jsonify({"status": "error", "message": "Device not found"}), 404
+        return jsonify({"status": "error", "message": _("Laitetta ei löytynyt.")}), 404
 
 
 # --- MFA Device Rename Endpoint ---
@@ -1395,26 +1395,29 @@ def mfa_device_rename():
     Renames a specific MFA device/secret for the user.
     """
     user = current_user
-    data = request.get_json(force=True)
+    data = request.get_json(silent=True) or {}
     device_id = data.get("device_id")
     name = data.get("name")
 
-    if not device_id or not name:
-        return jsonify({"status": "error", "message": "device_id and name are required"}), 400
+    if not device_id:
+        return jsonify({"status": "error", "message": _("Laitteen tunniste puuttuu.")}), 400
+    if not isinstance(name, str) or not name.strip():
+        return jsonify({"status": "error", "message": _("Anna laitteelle nimi.")}), 400
+    normalized_name = name.strip()[:60]
 
     try:
         device_oid = ObjectId(str(device_id))
     except Exception:
-        return jsonify({"status": "error", "message": "Invalid device id"}), 400
+        return jsonify({"status": "error", "message": _("Virheellinen laitteen tunniste.")}), 400
 
     result = mongo.mfas.update_one(
         {"_id": device_oid, "user_id": user._id},
-        {"$set": {"device_name": (name or "New device")[:60]}},
+        {"$set": {"device_name": normalized_name}},
     )
 
     if result.matched_count == 1:
-        return jsonify({"status": "success", "message": "Laite uudelleennimetty"})
-    return jsonify({"status": "error", "message": "Device not found"}), 404
+        return jsonify({"status": "success", "message": _("Laite uudelleennimetty.")})
+    return jsonify({"status": "error", "message": _("Laitetta ei löytynyt.")}), 404
 
 
 @auth_bp.route("/logout")

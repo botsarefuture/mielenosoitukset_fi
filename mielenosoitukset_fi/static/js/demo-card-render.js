@@ -7,8 +7,8 @@ function format_time(time) {
 const demoCardI18n = window.demoCardI18n || {};
 const currentLocale = window.currentLocale || document.documentElement.lang || "fi";
 
-function t(key, fallback) {
-  return demoCardI18n[key] || fallback;
+function t(key) {
+  return demoCardI18n[key] || "";
 }
 
 
@@ -79,7 +79,7 @@ function renderDemoCards(demoData, options = {}) {
     // Combine for display
     const timeText = demoEndTime
       ? `${demoStartTime} – ${demoEndTime}`
-      : `${demoStartTime} ${t('startingFrom', 'alkaen')}`;
+      : `${demoStartTime} ${t('startingFrom')}`;
 
     // Set in card
     card.querySelector('.demo-card-time').append(timeText);
@@ -94,18 +94,18 @@ function renderDemoCards(demoData, options = {}) {
     if (normalizedDemo.cancelled) {
       const cancelledBadge = document.createElement('span');
       cancelledBadge.className = 'demo-badge cancelled-badge';
-      cancelledBadge.textContent = t('cancelled', 'Peruttu');
+      cancelledBadge.textContent = t('cancelled');
       badgeContainer.appendChild(cancelledBadge);
     }
 
-    // 🌟 "Tänään" badge if demo is today
+    // Highlight demonstrations happening today.
     if (normalizedDemo.date) {
       const demoDateObj = new Date(normalizedDemo.date);
       demoDateObj.setHours(0, 0, 0, 0); // strip time
       if (demoDateObj.getTime() === todayDate.getTime()) {
         const todayBadge = document.createElement('span');
         todayBadge.className = 'demo-badge today-badge';
-        todayBadge.textContent = t('today', 'Tänään');
+        todayBadge.textContent = t('today');
         badgeContainer.appendChild(todayBadge);
       }
     }
@@ -192,7 +192,7 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
     const paginationController = window.userPaginationController;
     if (loadMoreBtn && !paginationController) {
       loadMoreBtn.disabled = true;
-      loadMoreBtn.textContent = `${t('loading', 'Ladataan mielenosoituksia...')}`;
+      loadMoreBtn.textContent = t('loading');
       loadMoreBtn.classList.add('loading');
     }
     // Build query params
@@ -242,7 +242,7 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
       if (loadMoreBtn && !window.userPaginationController) {
         loadMoreBtn.style.display = "block";
         loadMoreBtn.disabled = false;
-        loadMoreBtn.textContent = t('loadMore', 'Lataa lisää');
+        loadMoreBtn.textContent = t('loadMore');
         loadMoreBtn.onclick = () => loadDemos(currentPage + 1, true, extraParams);
       }
     } else if (loadMoreBtn && !window.userPaginationController) {
@@ -253,13 +253,17 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
       window.userPaginationController.setState(currentPage, totalPages);
     }
 
-    return { page: currentPage, total_pages: totalPages };
+    return {
+      page: currentPage,
+      total_pages: totalPages,
+      result_count: data.results.length,
+    };
 
   } catch (err) {
     console.error("Failed to load demos:", err);
     if (loadMoreBtn && !window.userPaginationController) {
       loadMoreBtn.disabled = false;
-      loadMoreBtn.textContent = t('loadMore', 'Lataa lisää');
+      loadMoreBtn.textContent = t('loadMore');
     }
   }
 
@@ -295,7 +299,7 @@ function updateDemoCardAttending(cardElement, friends) {
     friendsDiv.style.display = 'flex';
       friendsDiv.innerHTML = friends.slice(0, 3).map(f => `
       <img class="friend-avatar animate-fade-in-up" src="${f.avatar}" alt="${f.name}" title="${f.name}">
-    `).join('') + `<span class="friends-text">${friends[0].name} ${t('attendingSuffix', 'osallistuu')}</span>`;
+    `).join('') + `<span class="friends-text">${friends[0].name} ${t('attendingSuffix')}</span>`;
     noFriendsDiv.style.display = 'none';
   } else {
     friendsDiv.style.display = 'none';
@@ -324,7 +328,7 @@ function getFriendsAttending(demoCards) {
       if (friendsDiv) friendsDiv.style.display = 'none';
       if (noFriendsDiv) {
         noFriendsDiv.style.display = 'flex';
-        noFriendsDiv.innerHTML = `<span class="login-prompt">${t('loginPrompt', 'Kirjaudu sisään käyttääksesi sosiaalisia toimintoja')}</span>`;
+        noFriendsDiv.innerHTML = `<span class="login-prompt">${t('loginPrompt')}</span>`;
       }
     });
     return;

@@ -98,16 +98,6 @@
 <script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
 <script>
 const cityList = {{ city_list | tojson }};
-window.currentLocale = {{ (current_locale if current_locale is defined else session.get('locale') or 'fi') | tojson }};
-window.demoCardI18n = {
-  loading: {{ _('Ladataan mielenosoituksia...') | tojson }},
-  loadMore: {{ _('Lataa lisää') | tojson }},
-  cancelled: {{ _('Peruttu') | tojson }},
-  today: {{ _('Tänään') | tojson }},
-  startingFrom: {{ _('alkaen') | tojson }},
-  loginPrompt: {{ _('Kirjaudu sisään käyttääksesi sosiaalisia toimintoja') | tojson }},
-  attendingSuffix: {{ _('osallistuu') | tojson }},
-};
 </script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {

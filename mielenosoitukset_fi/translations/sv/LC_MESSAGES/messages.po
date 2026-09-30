@@ -503,7 +503,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:484
 msgid "alkaen"
-msgstr ""
+msgstr "och framåt"
 
 #: mielenosoitukset_fi/templates/detail.html:492
 #: mielenosoitukset_fi/templates/detail.html:493
@@ -4232,7 +4232,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:945
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:156
 msgid "Peruttu"
-msgstr ""
+msgstr "Inställd"
 
 #: mielenosoitukset_fi/admin/admin_case_bp.py:64
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:180
@@ -5796,7 +5796,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/detail.html:1615
 #: mielenosoitukset_fi/templates/detail.html:1620
 msgid "Kutsu kavereita"
-msgstr ""
+msgstr "Bjud in vänner"
 
 #: mielenosoitukset_fi/templates/detail.html:1630
 msgid "Osallistumisilmoituksia ei voi tehdä, koska mielenosoitus on peruttu."
@@ -6133,23 +6133,23 @@ msgstr ""
 #: mielenosoitukset_fi/templates/siblings.html:802
 #: mielenosoitukset_fi/templates/tag_list.html:147
 msgid "Ilmoita uusi mielenosoitus"
-msgstr ""
+msgstr "Anmäl en ny demonstration"
 
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:154
 msgid "Ladataan mielenosoituksia..."
-msgstr ""
+msgstr "Laddar demonstrationer..."
 
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:155
 msgid "Lataa lisää"
-msgstr ""
+msgstr "Ladda fler"
 
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:159
 msgid "Kirjaudu sisään käyttääksesi sosiaalisia toimintoja"
-msgstr ""
+msgstr "Logga in för att använda sociala funktioner"
 
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:160
 msgid "osallistuu"
-msgstr ""
+msgstr "deltar"
 
 #: mielenosoitukset_fi/templates/macros.html:54
 msgid "EiAiheita"
@@ -13059,3 +13059,15 @@ msgstr "Mielenosoitukset.fi i sociala medier"
 #: mielenosoitukset_fi/templates/base.html
 msgid "Käyttäjätili"
 msgstr "Användarkonto"
+
+#: mielenosoitukset_fi/templates/tag_list.html
+msgid "Poista suodattimet"
+msgstr "Rensa filter"
+
+#: mielenosoitukset_fi/templates/tag_list.html
+msgid "Ei löytynyt mielenosoituksia näillä hakukriteereillä. Kokeile poistaa suodattimia tai hae uudelleen."
+msgstr "Inga demonstrationer matchade dessa filter. Ta bort några filter eller gör en ny sökning."
+
+#: mielenosoitukset_fi/templates/tag_list.html
+msgid "Tällä tagilla ei ole näkyvillä olevia mielenosoituksia."
+msgstr "Det finns inga synliga demonstrationer med denna tagg."

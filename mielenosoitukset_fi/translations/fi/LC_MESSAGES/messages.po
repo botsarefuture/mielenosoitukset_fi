@@ -12988,3 +12988,15 @@ msgstr "Mielenosoitukset.fi sosiaalisessa mediassa"
 #: mielenosoitukset_fi/templates/base.html
 msgid "Käyttäjätili"
 msgstr "Käyttäjätili"
+
+#: mielenosoitukset_fi/templates/tag_list.html
+msgid "Poista suodattimet"
+msgstr "Poista suodattimet"
+
+#: mielenosoitukset_fi/templates/tag_list.html
+msgid "Ei löytynyt mielenosoituksia näillä hakukriteereillä. Kokeile poistaa suodattimia tai hae uudelleen."
+msgstr "Ei löytynyt mielenosoituksia näillä hakukriteereillä. Kokeile poistaa suodattimia tai hae uudelleen."
+
+#: mielenosoitukset_fi/templates/tag_list.html
+msgid "Tällä tagilla ei ole näkyvillä olevia mielenosoituksia."
+msgstr "Tällä tagilla ei ole näkyvillä olevia mielenosoituksia."

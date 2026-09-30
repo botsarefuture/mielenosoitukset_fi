@@ -1,12 +1,15 @@
 from pathlib import Path
+import re
 
 import pytest
 from babel.messages import pofile
 
 
 BASE = Path("mielenosoitukset_fi/templates/base.html")
+HEADER = Path("mielenosoitukset_fi/templates/header.html")
 API_DOCS = Path("mielenosoitukset_fi/templates/api_docs.html")
 WORKSPACE = Path("mielenosoitukset_fi/static/css/user-workspace.css")
+HEADER_CSS = Path("mielenosoitukset_fi/static/css/public-header.css")
 
 
 def test_api_docs_uses_shared_page_chrome_without_template_css():
@@ -49,6 +52,57 @@ def test_public_chrome_css_uses_product_tokens_and_namespaced_components():
     assert "linear-gradient(135deg, var(--product-action-bg), var(--product-action-hover))" in section
     assert "--api-docs-" not in section
     assert "var(--admin-" not in section
+
+
+def test_public_header_uses_shared_scoped_component_css():
+    base = BASE.read_text(encoding="utf-8")
+    header = HEADER.read_text(encoding="utf-8")
+    css = HEADER_CSS.read_text(encoding="utf-8")
+
+    assert "css/public-header.css" in base
+    assert '<header class="top-header public-site-header"' in header
+    assert '<nav class="main-nav public-main-nav"' in header
+    assert "<style" not in header
+    assert "style=" not in header
+
+    for hook in (
+        'class="mobile-menu-toggle"',
+        'class="nav-list"',
+        'class="mobile-nav-header"',
+        'class="mobile-only"',
+        'class="theme-toggle theme-toggle-mobile"',
+        'class="user-dropdown"',
+        'id="notif-btn"',
+        'id="notif-panel"',
+    ):
+        assert hook in header
+
+    assert "var(--product-" in css
+    assert "--color-" not in css
+    assert "var(--admin-" not in css
+    assert (
+        "linear-gradient(135deg, var(--product-action-bg), "
+        "var(--product-action-hover))" in css
+    )
+    assert (
+        "linear-gradient(135deg, var(--product-primary), "
+        "var(--product-primary-strong))" not in css
+    )
+    assert (
+        '.public-main-nav .user-dropdown[aria-expanded="true"] .dropdown-menu'
+        in css
+    )
+    assert ".user-dropdown:hover .dropdown-menu" in css
+    assert ".user-dropdown:focus-within .dropdown-menu" in css
+    assert (
+        '.user-dropdown[aria-expanded="true"] .public-main-nav .dropdown-menu'
+        not in css
+    )
+    assert ".user-dropdown:hover .public-main-nav .dropdown-menu" not in css
+    assert not re.search(
+        r"(?m)^\s*\.(?:dropdown-menu|nav-link|theme-toggle)(?=[\s,{:.#])",
+        css,
+    )
 
 
 @pytest.mark.parametrize(
@@ -110,3 +164,38 @@ def test_api_docs_chrome_is_theme_aware_and_portrait_safe(live_server, browser_p
         "document.documentElement.scrollWidth - document.documentElement.clientWidth"
     )
     assert overflow <= 1
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_public_header_mobile_menu_and_theme_contract(live_server, browser_page):
+    browser_page.add_init_script("localStorage.setItem('theme', 'light')")
+    browser_page.set_viewport_size({"width": 360, "height": 800})
+    browser_page.goto(f"{live_server}/", wait_until="domcontentloaded")
+
+    toggle = browser_page.locator(".mobile-menu-toggle")
+    navigation = browser_page.locator("#main-nav-list")
+    assert toggle.is_visible()
+    assert toggle.get_attribute("aria-expanded") == "false"
+
+    toggle.click()
+    assert toggle.get_attribute("aria-expanded") == "true"
+    assert "active" in (navigation.get_attribute("class") or "")
+    assert browser_page.locator(".mobile-nav-header").is_visible()
+
+    browser_page.locator(".theme-toggle").click()
+    assert "dark" in (browser_page.locator("html").get_attribute("class") or "")
+
+    browser_page.keyboard.press("Escape")
+    assert toggle.get_attribute("aria-expanded") == "false"
+    assert "active" not in (navigation.get_attribute("class") or "")
+
+    overflow = browser_page.evaluate(
+        "document.documentElement.scrollWidth - document.documentElement.clientWidth"
+    )
+    assert overflow <= 1
+
+    browser_page.set_viewport_size({"width": 1440, "height": 900})
+    assert toggle.is_hidden()
+    assert browser_page.locator(".public-site-header").is_visible()
+    assert browser_page.locator(".public-main-nav").is_visible()

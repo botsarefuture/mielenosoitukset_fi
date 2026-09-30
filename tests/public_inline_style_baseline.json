@@ -141,9 +141,6 @@
     "users/auth/password_reset.html": [
       "6812cd3d4d59c587"
     ],
-    "users/auth/settings.html": [
-      "cab05de1883fe94d"
-    ],
     "users/profile/profile copy.html": [
       "baf17a084a0adc7a"
     ],
@@ -365,9 +362,6 @@
     ],
     "users/auth/login.html": [
       "9a7472a9ec3ae0b7"
-    ],
-    "users/auth/settings.html": [
-      "66ecfda7971b9b3c"
     ],
     "users/profile/messages.html": [
       "02ad4129df8995a6",

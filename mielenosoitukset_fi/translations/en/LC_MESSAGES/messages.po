@@ -13197,3 +13197,19 @@ msgstr "Select a month name to open its month view."
 #: mielenosoitukset_fi/templates/demo_views/calendar_year.html
 msgid "Klikkaa mielenosoituksen nimeä siirtyäksesi yksittäisen mielenosoituksen sivulle."
 msgstr "Select a demonstration name to open its detail page."
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Lähetysyrityksiä on liian monta. Odota hetki ja yritä uudelleen."
+msgstr "Too many submission attempts. Wait a moment and try again."
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Lähetä silti"
+msgstr "Submit anyway"
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid ""
+"Tarkista osumat alta. Jos tämä on eri tapahtuma, valitse Lähetä silti. "
+"Jos kyse on vahingossa duplikaatista, voit palata korjaamaan tietoja."
+msgstr ""
+"Review the matches below. If this is a different event, choose Submit "
+"anyway. If it is an accidental duplicate, you can go back and correct the "
+"details."

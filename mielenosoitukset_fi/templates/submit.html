@@ -889,23 +889,18 @@
 
   function validateCurrentPage() {
     const currentPageElement = document.getElementById(`page-${currentPage}`);
-    const requiredInputs = currentPageElement.querySelectorAll('[required]');
-    let isValid = true;
+    const invalidFields = collectInvalidFields(currentPageElement);
 
-    requiredInputs.forEach(input => {
-      if (!input.value.trim()) {
-        input.style.borderColor = '#ef4444';
-        isValid = false;
-      } else {
-        input.style.borderColor = '';
-      }
-    });
-
-    if (!isValid) {
-      alert('{{ _("Täytä kaikki pakolliset kentät ennen jatkamista.") }}');
+    if (invalidFields.length) {
+      showInvalidFields(
+        invalidFields,
+        {{ _('Täytä kaikki pakolliset kentät ennen jatkamista.') | tojson }}
+      );
+      return false;
     }
 
-    return isValid;
+    clearSubmitFeedback();
+    return true;
   }
 
   // Organizer Management
@@ -1055,56 +1050,141 @@
     }
   };
 
-  const SUBMIT_ERROR_LABEL = "{{ _('Virhekoodi') }}";
-  const SUBMIT_CONFLICT_TITLE = "{{ _('Löytyi mahdollinen päällekkäinen ilmoitus') }}";
-  const SUBMIT_CONFLICT_INTRO = "{{ _('Samalle päivälle löytyi samankaltainen mielenosoitusilmoitus.') }}";
-  const SUBMIT_CONFLICT_REVIEW = "{{ _('Tarkista osumat alta. Jos tämä on silti eri tapahtuma, paina OK lähettääksesi ilmoituksen. Jos kyse on vahingossa duplikaatista, voimme yhdistää sen myöhemmin meidän päässä.') }}";
-  const SUBMIT_CONFLICT_MATCHES = "{{ _('Mahdolliset osumat') }}";
-  const SUBMIT_CONFLICT_CANCELLED = "{{ _('Lähetystä ei tehty vielä. Tarkista tiedot ja lähetä uudelleen, jos ilmoitus on oikea.') }}";
-  const SUBMIT_CONFLICT_FORCE_FAILED = "{{ _('Ilmoituksen lähetys ei onnistunut vahvistuksen jälkeen. Tarkista tiedot ja yritä uudelleen.') }}";
+  const SUBMIT_ERROR_LABEL = {{ _('Virhekoodi') | tojson }};
+  const SUBMIT_CONFLICT_INTRO = {{ _('Samalle päivälle löytyi samankaltainen mielenosoitusilmoitus.') | tojson }};
+  const SUBMIT_CONFLICT_CANCELLED = {{ _('Lähetystä ei tehty vielä. Tarkista tiedot ja lähetä uudelleen, jos ilmoitus on oikea.') | tojson }};
+  const SUBMIT_CONFLICT_FORCE_FAILED = {{ _('Ilmoituksen lähetys ei onnistunut vahvistuksen jälkeen. Tarkista tiedot ja yritä uudelleen.') | tojson }};
+  const SUBMIT_RATE_LIMITED = {{ _('Lähetysyrityksiä on liian monta. Odota hetki ja yritä uudelleen.') | tojson }};
+  const SUBMIT_GENERIC_ERROR = {{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') | tojson }};
+  const SUBMIT_REQUIRED_ERROR = {{ _('Täytä kaikki pakolliset kentät ennen lähettämistä.') | tojson }};
+  const SUBMIT_TERMS_ERROR = {{ _('Sinun täytyy hyväksyä käyttöehdot ja tietosuojaseloste ennen lähettämistä.') | tojson }};
 
-  function buildConflictConfirmationMessage(conflictData) {
-    const lines = [
-      SUBMIT_CONFLICT_TITLE,
-      "",
-      conflictData?.message || SUBMIT_CONFLICT_INTRO,
-      SUBMIT_CONFLICT_REVIEW,
-    ];
+  const submitFeedback = document.getElementById('submit-feedback');
+  const submitFeedbackText = document.getElementById('submit-feedback-text');
+  const submitFeedbackIcon = document.getElementById('submit-feedback-icon');
 
-    const matches = Array.isArray(conflictData?.demos) ? conflictData.demos : [];
-    if (matches.length) {
-      lines.push("", `${SUBMIT_CONFLICT_MATCHES}:`);
-      matches.slice(0, 5).forEach((demo, index) => {
-        const parts = [demo?.title, demo?.date, demo?.address].filter(Boolean);
-        lines.push(`${index + 1}. ${parts.join(" | ")}`);
-      });
+  function clearSubmitFeedback() {
+    submitFeedback.hidden = true;
+    submitFeedback.classList.remove('user-form-feedback--error', 'user-form-feedback--warning', 'user-form-feedback--info');
+    submitFeedback.removeAttribute('role');
+    submitFeedback.setAttribute('aria-live', 'polite');
+    submitFeedbackText.textContent = '';
+  }
+
+  function showSubmitFeedback(message, category = 'error', { focus = false } = {}) {
+    const normalizedCategory = ['error', 'warning', 'info'].includes(category) ? category : 'error';
+    submitFeedback.hidden = false;
+    submitFeedback.classList.remove('user-form-feedback--error', 'user-form-feedback--warning', 'user-form-feedback--info');
+    submitFeedback.classList.add(`user-form-feedback--${normalizedCategory}`);
+    submitFeedback.setAttribute('role', normalizedCategory === 'error' ? 'alert' : 'status');
+    submitFeedback.setAttribute('aria-live', normalizedCategory === 'error' ? 'assertive' : 'polite');
+    submitFeedbackText.textContent = String(message || SUBMIT_GENERIC_ERROR);
+    submitFeedbackIcon.className = normalizedCategory === 'error'
+      ? 'fa-solid fa-circle-exclamation'
+      : normalizedCategory === 'warning'
+        ? 'fa-solid fa-triangle-exclamation'
+        : 'fa-solid fa-circle-info';
+    if (focus) {
+      submitFeedback.focus({ preventScroll: true });
+      submitFeedback.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
+  function collectInvalidFields(container) {
+    return Array.from(container.querySelectorAll('input, select, textarea')).filter(field => (
+      !field.disabled && field.willValidate && !field.checkValidity()
+    ));
+  }
+
+  function clearInvalidField(field) {
+    field.removeAttribute('aria-invalid');
+  }
+
+  function showInvalidFields(fields, message) {
+    const firstInvalid = fields[0];
+    fields.forEach(field => field.setAttribute('aria-invalid', 'true'));
+
+    const page = firstInvalid?.closest('.form-page');
+    if (page && page.id.startsWith('page-')) {
+      const pageNumber = Number(page.id.replace('page-', ''));
+      if (pageNumber && pageNumber !== currentPage) showPage(pageNumber);
     }
 
-    return lines.join("\n");
+    showSubmitFeedback(message, 'error');
+    if (firstInvalid) {
+      firstInvalid.focus({ preventScroll: true });
+      firstInvalid.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
+  const submitForm = document.getElementById('myForm');
+  const clearDelegatedInvalidState = event => {
+    if (event.target.matches('input, select, textarea')) clearInvalidField(event.target);
+  };
+  submitForm.addEventListener('input', clearDelegatedInvalidState);
+  submitForm.addEventListener('change', clearDelegatedInvalidState);
+
+  function confirmConflictSubmission(conflictData) {
+    const modalElement = document.getElementById('submitConflictModal');
+    const messageElement = document.getElementById('submit-conflict-message');
+    const matchesElement = document.getElementById('submit-conflict-matches');
+    const confirmButton = document.getElementById('submit-conflict-confirm');
+    const cancelButton = document.getElementById('submit-conflict-cancel');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+
+    messageElement.textContent = conflictData?.message || SUBMIT_CONFLICT_INTRO;
+    matchesElement.replaceChildren();
+    const matches = Array.isArray(conflictData?.demos) ? conflictData.demos : [];
+    matches.slice(0, 5).forEach(demo => {
+      const item = document.createElement('li');
+      const parts = [demo?.title, demo?.date, demo?.address].filter(Boolean);
+      item.textContent = parts.join(' | ');
+      matchesElement.appendChild(item);
+    });
+    matchesElement.hidden = matchesElement.children.length === 0;
+
+    return new Promise(resolve => {
+      let confirmed = false;
+
+      const cleanup = () => {
+        confirmButton.removeEventListener('click', onConfirm);
+        modalElement.removeEventListener('hidden.bs.modal', onHidden);
+        modalElement.removeEventListener('shown.bs.modal', onShown);
+      };
+      const onConfirm = () => {
+        confirmed = true;
+        modal.hide();
+      };
+      const onShown = () => cancelButton.focus();
+      const onHidden = () => {
+        cleanup();
+        resolve(confirmed);
+      };
+
+      confirmButton.addEventListener('click', onConfirm);
+      modalElement.addEventListener('shown.bs.modal', onShown);
+      modalElement.addEventListener('hidden.bs.modal', onHidden);
+      modal.show();
+    });
   }
 
   async function showSubmitError(response, fallbackMessage) {
-    let message = fallbackMessage || "{{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') }}";
+    let message = response.status === 429 ? SUBMIT_RATE_LIMITED : (fallbackMessage || SUBMIT_GENERIC_ERROR);
     try {
       const contentType = response.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
         const data = await response.json();
-        if (data && data.message) {
+        if (response.status !== 429 && data && data.message) {
           message = data.message;
         }
         if (data && data.error_code) {
           message += ` (${SUBMIT_ERROR_LABEL}: ${data.error_code})`;
         }
-      } else {
-        const txt = await response.text();
-        if (txt && txt.trim()) {
-          message = txt;
-        }
       }
     } catch (err) {
       console.error('Error parsing server response', err);
     }
-    alert(message);
+    showSubmitFeedback(message, 'error', { focus: true });
   }
 
   // Type change handler
@@ -1127,20 +1207,15 @@
 
 
     if (!document.getElementById("accept_terms").checked) {
-      alert("{{ _('Sinun täytyy hyväksyä käyttöehdot ja tietosuojaseloste ennen lähettämistä.') }}");
+      showInvalidFields([document.getElementById('accept_terms')], SUBMIT_TERMS_ERROR);
       return;
     }
 
-    const form = document.querySelector("form");
-    const missingRequired = Array.from(form.querySelectorAll("[required]")).filter(el => {
-      if (el.type === "checkbox" || el.type === "radio") {
-        return !el.checked;
-      }
-      return !el.value || !el.value.trim();
-    });
+    const form = event.currentTarget;
+    const invalidFields = collectInvalidFields(form);
 
-    if (missingRequired.length) {
-      alert("{{ _('Täytä kaikki pakolliset kentät ennen lähettämistä.') }}");
+    if (invalidFields.length) {
+      showInvalidFields(invalidFields, SUBMIT_REQUIRED_ERROR);
       return;
     }
 
@@ -1148,6 +1223,7 @@
       return;
     }
     submittingDemo = true;
+    clearSubmitFeedback();
     const submitBtn = document.getElementById("submit-form");
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
@@ -1203,9 +1279,9 @@
           }
 
           if (conflictData && conflictData.conflict) {
-            const shouldForceSubmit = window.confirm(buildConflictConfirmationMessage(conflictData));
+            const shouldForceSubmit = await confirmConflictSubmission(conflictData);
             if (!shouldForceSubmit) {
-              alert(SUBMIT_CONFLICT_CANCELLED);
+              showSubmitFeedback(SUBMIT_CONFLICT_CANCELLED, 'info', { focus: true });
               return;
             }
 
@@ -1226,7 +1302,7 @@
               return;
             }
           } else {
-            alert("{{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') }} (" + SUBMIT_ERROR_LABEL + ": SUBMIT_CONFLICT)");
+            showSubmitFeedback(`${SUBMIT_GENERIC_ERROR} (${SUBMIT_ERROR_LABEL}: SUBMIT_CONFLICT)`, 'error', { focus: true });
             return;
           }
         }
@@ -1235,7 +1311,7 @@
       }
     } catch (e) {
       console.error("Network error:", e);
-      alert("{{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') }}");
+      showSubmitFeedback(SUBMIT_GENERIC_ERROR, 'error', { focus: true });
     } finally {
       submitBtn.classList.remove('loading');
       submitBtn.disabled = false;
@@ -1688,7 +1764,7 @@
   </div>
 
   <!-- Form Container -->
-  <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" id="myForm">
+  <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" id="myForm" class="user-form" novalidate>
     <input type="hidden" name="submission_token" value="{{ submission_token or '' }}">
     <div class="form-container">
       <div class="submit-help-card">
@@ -1700,6 +1776,11 @@
           {{ _('Jos tarvitset käännösapua, ota yhteyttä meihin:') }}
           <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>.
         </p>
+      </div>
+
+      <div id="submit-feedback" class="user-form-feedback" aria-live="polite" aria-atomic="true" tabindex="-1" hidden>
+        <i id="submit-feedback-icon" class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        <p id="submit-feedback-text"></p>
       </div>
 
       <!-- Page 1: How to add the event -->
@@ -2714,6 +2795,28 @@ function inSelection(selection, maxSelection) {
 
     </div>
   </form>
+
+  <div class="modal fade user-modal" id="submitConflictModal" tabindex="-1"
+    aria-labelledby="submitConflictModalLabel" aria-describedby="submit-conflict-message" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="submitConflictModalLabel">{{ _('Löytyi mahdollinen päällekkäinen ilmoitus') }}</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+        </div>
+        <div class="modal-body">
+          <p id="submit-conflict-message"></p>
+          <p>{{ _('Tarkista osumat alta. Jos tämä on eri tapahtuma, valitse Lähetä silti. Jos kyse on vahingossa duplikaatista, voit palata korjaamaan tietoja.') }}</p>
+          <h3 class="h6">{{ _('Mahdolliset osumat') }}</h3>
+          <ol id="submit-conflict-matches" class="user-conflict-list"></ol>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="submit-conflict-cancel" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+          <button type="button" class="btn btn-primary" id="submit-conflict-confirm">{{ _('Lähetä silti') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Help Section -->
   <div class="form-container" style="margin-top: 2rem;">

@@ -4071,7 +4071,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:223
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:77
 msgid "Mielenosoitus"
-msgstr ""
+msgstr "Demonstration"
 
 #: mielenosoitukset_fi/basic_routes.py:3141
 msgid "Kaikki kentät ovat pakollisia!"
@@ -13071,3 +13071,27 @@ msgstr "Inga demonstrationer matchade dessa filter. Ta bort några filter eller 
 #: mielenosoitukset_fi/templates/tag_list.html
 msgid "Tällä tagilla ei ole näkyvillä olevia mielenosoituksia."
 msgstr "Det finns inga synliga demonstrationer med denna tagg."
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Mielenosoituksen tiedot."
+msgstr "Demonstrationsuppgifter."
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Tuntematon osoite"
+msgstr "Okänd adress"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "Tuntematon kirjoittaja"
+msgstr "Okänd författare"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "mielenosoitus"
+msgstr "demonstration"
+
+#: mielenosoitukset_fi/templates/detail.html
+msgid "tapahtuma"
+msgstr "evenemang"
+
+#: mielenosoitukset_fi/templates/detail.html
+#, python-format
+msgid "%(title)s – mielenosoitus kaupungissa %(city)s"
+msgstr "%(title)s – demonstration i %(city)s"

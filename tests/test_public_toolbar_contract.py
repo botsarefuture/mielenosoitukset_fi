@@ -47,9 +47,10 @@ def test_toolbar_collapse_control_exposes_state_and_relationship():
     source = _template_source()
 
     assert 'aria-controls="public-toolbox-actions"' in source
-    assert 'aria-expanded="false"' in source
-    assert 'id="public-toolbox-actions" hidden' in source
+    assert 'aria-expanded="true"' in source
+    assert 'id="public-toolbox-actions" hidden' not in source
     assert "body.hidden = collapsed" in source
+    assert "setToolboxCollapsed(true)" in source
     assert "toggle.setAttribute('aria-expanded', String(!collapsed))" in source
     assert "data-collapse-label" in source
     assert "data-expand-label" in source
@@ -94,6 +95,8 @@ def test_toolbar_renders_for_authenticated_admin_demo_context(
     assert 'id="toolbox-sidebar"' in body
     assert 'id="toolbarConfirmModal"' in body
     assert 'aria-controls="public-toolbox-actions"' in body
+    assert 'id="public-toolbox-actions" hidden' not in body
+    assert 'aria-expanded="true"' in body
 
 
 def test_toolbar_is_omitted_without_demo_or_organization_context(admin_client):

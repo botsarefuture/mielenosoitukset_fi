@@ -6,19 +6,19 @@
 {% import 'admin_V2/organizations/macros.html' as org_macros %}
 {% if demo or org %}
 
-<aside id="toolbox-sidebar" class="public-toolbox collapsed" aria-label="{{ _('Työkalupakki') }}">
+<aside id="toolbox-sidebar" class="public-toolbox" aria-label="{{ _('Työkalupakki') }}">
     <div class="public-toolbox__card">
         <div class="public-toolbox__header">
             <h6 class="mb-0"><i class="fa-solid fa-toolbox me-2"></i>{{ _('Työkalupakki') }}</h6>
-            <button class="btn btn-sm collapse-toggle" type="button" aria-expanded="false"
+            <button class="btn btn-sm collapse-toggle" type="button" aria-expanded="true"
                 aria-controls="public-toolbox-actions" data-collapse-label="{{ _('Pienennä työkalupakki') }}"
-                data-expand-label="{{ _('Avaa työkalupakki') }}" aria-label="{{ _('Avaa työkalupakki') }}"
+                data-expand-label="{{ _('Avaa työkalupakki') }}" aria-label="{{ _('Pienennä työkalupakki') }}"
                 onclick="toggleToolbox()">
-                <i class="fa-solid fa-toolbox"></i>
+                <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
 
-        <div class="public-toolbox__body" id="public-toolbox-actions" hidden>
+        <div class="public-toolbox__body" id="public-toolbox-actions">
             {% if demo %}
             <div class="d-grid gap-2 mb-2">
                 {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
@@ -138,12 +138,11 @@
 </div>
 
 <script>
-    function toggleToolbox() {
+    function setToolboxCollapsed(collapsed) {
         const sidebar = document.getElementById('toolbox-sidebar');
         const body = document.getElementById('public-toolbox-actions');
         const toggle = sidebar.querySelector('.collapse-toggle');
-        sidebar.classList.toggle('collapsed');
-        const collapsed = sidebar.classList.contains('collapsed');
+        sidebar.classList.toggle('collapsed', collapsed);
         body.hidden = collapsed;
         toggle.setAttribute('aria-expanded', String(!collapsed));
         toggle.setAttribute('aria-label', collapsed ? toggle.dataset.expandLabel : toggle.dataset.collapseLabel);
@@ -152,6 +151,15 @@
         icon.classList.toggle('fa-toolbox', collapsed);
         icon.classList.toggle('fa-xmark', !collapsed);
     }
+
+    function toggleToolbox() {
+        const sidebar = document.getElementById('toolbox-sidebar');
+        setToolboxCollapsed(!sidebar.classList.contains('collapsed'));
+    }
+
+    // Keep server-rendered links available without JavaScript, then collapse the
+    // enhanced control as soon as this script executes.
+    setToolboxCollapsed(true);
 
     const toolbarConfirmElement = document.getElementById('toolbarConfirmModal');
     const toolbarConfirmMessage = document.getElementById('toolbar-confirm-message');

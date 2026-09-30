@@ -1,66 +1,33 @@
-<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css', v='20260930-public-toolbox-1') }}">
 {% if organization %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
 <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
 {% endif %}
 {% import 'admin_V2/organizations/macros.html' as org_macros %}
+{% if demo or org %}
 
-
-<style>
-#toolbox-sidebar {
-    transition: width 0.3s;
-    width: 280px; /* full size */
-    z-index: 10;
-}
-
-#toolbox-sidebar.collapsed {
-    width: 50px; /* only enough for the button */
-}
-
-#toolbox-sidebar .card-body,
-#toolbox-sidebar .card-header h6 {
-    transition: opacity 0.3s;
-}
-
-#toolbox-sidebar.collapsed .card-body,
-#toolbox-sidebar.collapsed .card-header h6 {
-    opacity: 0;
-    height: 0;
-    overflow: hidden;
-    pointer-events: none; /* prevent clicking hidden buttons */
-}
-
-#toolbox-sidebar .collapse-toggle {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-</style>
-
-
-<div id="toolbox-sidebar" class="position-fixed top-0 end-0 m-3">
-    <div class="card text-light bg-dark shadow">
-        <div class="card-header d-flex justify-content-between align-items-center bg-primary">
+<aside id="toolbox-sidebar" class="public-toolbox collapsed" aria-label="{{ _('Työkalupakki') }}">
+    <div class="public-toolbox__card">
+        <div class="public-toolbox__header">
             <h6 class="mb-0"><i class="fa-solid fa-toolbox me-2"></i>{{ _('Työkalupakki') }}</h6>
-            <button class="btn btn-sm btn-light collapse-toggle" onclick="toggleToolbox()">
-                <i class="fa-solid fa-angle-left"></i>
+            <button class="btn btn-sm collapse-toggle" type="button" aria-expanded="false"
+                aria-controls="public-toolbox-actions" data-collapse-label="{{ _('Pienennä työkalupakki') }}"
+                data-expand-label="{{ _('Avaa työkalupakki') }}" aria-label="{{ _('Avaa työkalupakki') }}"
+                onclick="toggleToolbox()">
+                <i class="fa-solid fa-toolbox"></i>
             </button>
         </div>
 
-        <div class="card-body p-2">
+        <div class="public-toolbox__body" id="public-toolbox-actions" hidden>
             {% if demo %}
             <div class="d-grid gap-2 mb-2">
                 {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
-                <button class="btn btn-success btn-sm"
-                    onclick="confirmAction(() => acceptDemo('{{ demo['_id'] }}'), '{{ _('Hyväksytkö tämän mielenosoituksen?') }}')">
+                <button class="btn btn-success btn-sm" type="button"
+                    onclick='confirmAction(() => acceptDemo({{ demo["_id"] | string | tojson }}), {{ _("Hyväksytkö tämän mielenosoituksen?") | tojson }}, "success")'>
                     <i class="fa-solid fa-check me-1"></i>{{ _('Hyväksy') }}
                 </button>
-                <button class="btn btn-danger btn-sm"
-                    onclick="confirmAction(() => rejectDemo('{{ demo['_id'] }}'), '{{ _('Hylkää tämä mielenosoitus?') }}')">
+                <button class="btn btn-danger btn-sm" type="button"
+                    onclick='confirmAction(() => rejectDemo({{ demo["_id"] | string | tojson }}), {{ _("Hylkää tämä mielenosoitus?") | tojson }}, "danger")'>
                     <i class="fa-solid fa-times me-1"></i>{{ _('Hylkää') }}
                 </button>
                 {% endif %}
@@ -75,14 +42,15 @@
                 <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="btn btn-info btn-sm">
                     <i class="fa-solid fa-eye me-1"></i>{{ _('Katsele') }}
                 </a>
-                <button class="btn btn-secondary btn-sm" onclick="fetchDemoInfo('{{ demo['_id'] }}')">
+                <button class="btn btn-secondary btn-sm" type="button"
+                    onclick='fetchDemoInfo({{ demo["_id"] | string | tojson }})'>
                     <i class="fa-solid fa-info me-1"></i>{{ _('Lisätietoja') }}
                 </button>
                 {% endif %}
 
                 {% if current_user.has_permission("DELETE_DEMO") %}
-                <button class="btn btn-danger btn-sm"
-                    onclick="confirmAction(() => openModal(event, '{{ demo.title }}', '{{ demo['_id'] }}'), '{{ _('Haluatko varmasti poistaa tämän mielenosoituksen? Tämä ei ole palautettavissa!') }}')">
+                <button class="btn btn-danger btn-sm" type="button"
+                    onclick='confirmAction(() => openModal(event, {{ demo.title | tojson }}, {{ demo["_id"] | string | tojson }}), {{ _("Haluatko varmasti poistaa tämän mielenosoituksen? Tämä ei ole palautettavissa!") | tojson }}, "danger")'>
                     <i class="fas fa-trash-alt me-1"></i>{{ _('Poista') }}
                 </button>
                 {% endif %}
@@ -112,14 +80,14 @@
                 {% endif %}
 
                 {% if current_user.has_permission("DELETE_ORGANIZATION") %}
-                <button class="btn btn-danger btn-sm"
-                    onclick="confirmAction(() => openModal(event, '{{ org.name }}', '{{ org['_id'] }}'), '{{ _('Haluatko varmasti poistaa tämän organisaation? Tämä ei ole palautettavissa!') }}')">
+                <button class="btn btn-danger btn-sm" type="button"
+                    onclick='confirmAction(() => openModal(event, {{ org.name | tojson }}, {{ org["_id"] | string | tojson }}), {{ _("Haluatko varmasti poistaa tämän organisaation? Tämä ei ole palautettavissa!") | tojson }}, "danger")'>
                     <i class="fas fa-trash-alt me-1"></i>{{ _('Poista') }}
                 </button>
                 {% endif %}
 
                 {% if current_user.has_permission("INVITE_TO_ORGANIZATION") %}
-                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#inviteModal">
+                <button class="btn btn-success btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal">
                     <i class="fas fa-user-plus me-1"></i>{{ _('Kutsu käyttäjiä') }}
                 </button>
                 <!-- script to add the invite modal right before backdrop -->
@@ -136,8 +104,8 @@
                 {% endif %}
 
                 {% if current_user.has_permission("VIEW_ORGANIZATION") %}
-                <button class="btn btn-secondary btn-sm"
-                    onclick="confirmAction(() => leaveOrganization('{{ org['_id'] }}'), '{{ _('Haluatko varmasti poistua organisaatiosta?') }}')">
+                <button class="btn btn-secondary btn-sm" type="button"
+                    onclick='confirmAction(() => leaveOrganization({{ org["_id"] | string | tojson }}), {{ _("Haluatko varmasti poistua organisaatiosta?") | tojson }}, "danger")'>
                     <i class="fas fa-sign-out-alt me-1"></i>{{ _('Poistu organisaatiosta') }}
                 </button>
                 {% endif %}
@@ -147,44 +115,115 @@
 
     </div>
 
+</aside>
+
+<div class="modal fade user-modal" id="toolbarConfirmModal" tabindex="-1" aria-hidden="true"
+    aria-labelledby="toolbarConfirmTitle" aria-describedby="toolbar-confirm-message">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="toolbarConfirmTitle">{{ _('Vahvista toiminto') }}</h2>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+            </div>
+            <div class="modal-body">
+                <p id="toolbar-confirm-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" id="toolbar-confirm-cancel" type="button"
+                    data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+                <button class="btn btn-primary" id="toolbar-confirm-submit" type="button">{{ _('Vahvista') }}</button>
+            </div>
+        </div>
+    </div>
 </div>
-
-
 
 <script>
     function toggleToolbox() {
-    const sidebar = document.getElementById('toolbox-sidebar');
-    sidebar.classList.toggle('collapsed');
+        const sidebar = document.getElementById('toolbox-sidebar');
+        const body = document.getElementById('public-toolbox-actions');
+        const toggle = sidebar.querySelector('.collapse-toggle');
+        sidebar.classList.toggle('collapsed');
+        const collapsed = sidebar.classList.contains('collapsed');
+        body.hidden = collapsed;
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+        toggle.setAttribute('aria-label', collapsed ? toggle.dataset.expandLabel : toggle.dataset.collapseLabel);
 
-    const icon = sidebar.querySelector('.collapse-toggle i');
-    if(sidebar.classList.contains('collapsed')){
-        icon.classList.remove('fa-angle-left');
-        icon.classList.add('fa-angle-right');
-    } else {
-        icon.classList.remove('fa-angle-right');
-        icon.classList.add('fa-angle-left');
+        const icon = toggle.querySelector('i');
+        icon.classList.toggle('fa-toolbox', collapsed);
+        icon.classList.toggle('fa-xmark', !collapsed);
     }
-}
 
-    // Confirm action for destructive stuff
-    function confirmAction(callback, message) {
-        if (confirm(message)) {
-            callback();
+    const toolbarConfirmElement = document.getElementById('toolbarConfirmModal');
+    const toolbarConfirmMessage = document.getElementById('toolbar-confirm-message');
+    const toolbarConfirmCancel = document.getElementById('toolbar-confirm-cancel');
+    const toolbarConfirmSubmit = document.getElementById('toolbar-confirm-submit');
+    let toolbarPendingAction = null;
+    let toolbarActionApproved = false;
+    let toolbarReturnFocus = null;
+
+    function getToolbarConfirmModal() {
+        return bootstrap.Modal.getOrCreateInstance(toolbarConfirmElement);
+    }
+
+    function confirmAction(callback, message, tone = 'primary') {
+        toolbarPendingAction = typeof callback === 'function' ? callback : null;
+        toolbarActionApproved = false;
+        toolbarReturnFocus = document.activeElement;
+        toolbarConfirmMessage.textContent = String(message || '');
+        const safeTone = tone === 'danger' || tone === 'success' ? tone : 'primary';
+        toolbarConfirmSubmit.className = `btn btn-${safeTone}`;
+        getToolbarConfirmModal().show();
+    }
+
+    toolbarConfirmSubmit.addEventListener('click', () => {
+        toolbarActionApproved = true;
+        getToolbarConfirmModal().hide();
+    });
+
+    toolbarConfirmElement.addEventListener('shown.bs.modal', () => {
+        toolbarConfirmCancel.focus();
+    });
+
+    toolbarConfirmElement.addEventListener('hidden.bs.modal', () => {
+        const action = toolbarPendingAction;
+        const approved = toolbarActionApproved;
+        const returnFocus = toolbarReturnFocus;
+        toolbarPendingAction = null;
+        toolbarActionApproved = false;
+        toolbarReturnFocus = null;
+        if (approved && action) {
+            action();
+        } else if (returnFocus && returnFocus.isConnected) {
+            returnFocus.focus();
         }
-    }
+    });
 
     {% if demo %}
     document.addEventListener("DOMContentLoaded", () => {
         fetch(`/api/demo/{{ demo['_id'] }}/stats`)
             .then(res => res.json())
             .then(data => {
-                document.getElementById("stats-content").innerHTML = `
-                <p><strong><i class="fa-solid fa-eye"></i> {{ _('Näyttökerrat:') }}</strong> ${data.views}</p>
-                <p><strong>{{ _('Osallistujat:') }}</strong> ${data.participants}</p>
-            `;
+                const container = document.getElementById('stats-content');
+                const createStat = (label, value, iconClass = null) => {
+                    const row = document.createElement('p');
+                    const heading = document.createElement('strong');
+                    if (iconClass) {
+                        const icon = document.createElement('i');
+                        icon.className = iconClass;
+                        icon.setAttribute('aria-hidden', 'true');
+                        heading.append(icon, document.createTextNode(' '));
+                    }
+                    heading.append(document.createTextNode(label));
+                    row.append(heading, document.createTextNode(` ${String(value ?? '—')}`));
+                    return row;
+                };
+                container.replaceChildren(
+                    createStat({{ _('Näyttökerrat:') | tojson }}, data.views, 'fa-solid fa-eye'),
+                    createStat({{ _('Osallistujat:') | tojson }}, data.participants)
+                );
             })
             .catch(console.error);
     });
     {% endif %}
 </script>
-
+{% endif %}

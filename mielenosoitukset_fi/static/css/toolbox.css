@@ -1,134 +1,196 @@
-/* HEADER */
-.toolbox-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    height: 10%;
-}
+/* Public contextual admin toolbox.
+ *
+ * This component deliberately consumes the shared product tokens so that the
+ * authenticated public-page controls follow the same light/dark contract as
+ * the rest of the site. Keep selectors scoped to .public-toolbox.
+ */
 
-.toolbox-header h3 {
-    margin: 0;
-    font-size: 24px;
-    color: var(--admin_section_text_color);
-    text-align: center;
-}
-
-/* BODY (BUTTONS) */
-.toolbox-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    height: 80%;
-}
-
-.toolbox .button {
-    background: var(--primary_color);
-    border: none;
-    padding: 8px 15px;
-    color: white;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s ease, transform 0.2s ease;
-}
-
-.toolbox .button i {
-    margin-right: 5px;
-}
-
-.toolbox .button:hover {
-    background: var(--primary_button_hover_color);
-    transform: translateY(-2px);
-}
-
-.toggle-toolbox {
-    background: var(--red);
-    border: none;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    color: white;
-    padding: 5px;
-    border-radius: 50%;
-    width: 100%;
-    height: 36px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: background 0.3s ease, transform 0.3s ease;
-    margin-top: auto;
-    margin-bottom: 1rem;
-}
-
-.toggle-toolbox:hover {
-    background: var(--dark_red);
-    transform: scale(1.1);
-}
-
-.toggle-toolbox:active {
-    transform: scale(0.95);
-}
-
-#toolbar-toggle {
-    margin-top: 0.5em;
-}
-
-/* FOOTER */
-.toolbox-footer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 10%;
-    margin: auto;
-    position: relative;
-    flex-direction: column;
-}
-
-/* OTHERS */
-.toolbox {
+.public-toolbox {
     position: fixed;
-    top: 0;
-    right: 0;
-    height: 100vh;
-    background: var(--background_light);
-    padding: 1rem 2rem;
-    z-index: 1000001;
-    border-left: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1);
+    top: 9rem;
+    right: 1rem;
+    z-index: 1040;
+    width: min(17.5rem, calc(100vw - 2rem));
+    color: var(--product-text);
+}
+
+.public-toolbox__card {
+    overflow: hidden;
+    background: var(--product-surface);
+    border: 1px solid var(--product-border);
+    border-radius: 1rem;
+    box-shadow: var(--product-shadow);
+}
+
+.public-toolbox__header {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    max-width: 300px;
+    justify-content: space-between;
+    min-height: 3.25rem;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem 0.6rem 1rem;
+    color: var(--product-on-action);
+    background: var(--product-action-bg);
+}
+
+.public-toolbox__header h6 {
+    min-width: 0;
     margin: 0;
-    transition: background 0.3s ease, box-shadow 0.3s ease;
+    color: inherit;
+    font-size: 0.95rem;
+    font-weight: 750;
+    overflow-wrap: anywhere;
 }
 
-@media (max-width: 768px) {
-    .toolbox {
-        padding: 0.5rem 1rem;
-        max-width: 100%;
-    }
-
-    .toolbox-buttons {
-        gap: 5px;
-    }
-
-    .toggle-toolbox {
-        width: 30px;
-        height: 30px;
-    }
+.public-toolbox .collapse-toggle {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    min-height: 2.25rem;
+    padding: 0;
+    color: var(--product-on-action);
+    background: color-mix(in srgb, var(--product-surface) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--product-on-action) 38%, transparent);
+    border-radius: 0.65rem;
 }
 
-demo-toolbar-buttons,
-org-toolbar-buttons {
-    all: inherit;
+.public-toolbox .collapse-toggle:hover {
+    color: var(--product-on-action);
+    background: color-mix(in srgb, var(--product-surface) 26%, transparent);
+}
+
+.public-toolbox .collapse-toggle:focus-visible,
+.public-toolbox__body :is(a, button):focus-visible {
+    outline: 3px solid var(--product-primary-strong);
+    outline-offset: 2px;
+}
+
+.public-toolbox__body {
+    padding: 0.85rem;
+    background: var(--product-surface);
+}
+
+.public-toolbox__body .d-grid {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.public-toolbox__body[hidden] {
     display: none;
 }
 
-demo-toolbar-buttons.display,
-org-toolbar-buttons.display {
-    display: inherit;
+#toolbarConfirmModal:not(.show) {
+    display: none;
+}
+
+.public-toolbox__body .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2.75rem;
+    padding: 0.6rem 0.8rem;
+    color: var(--product-text);
+    background: var(--product-surface-muted);
+    border: 1px solid var(--product-border);
+    border-radius: 0.7rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: normal;
+}
+
+.public-toolbox__body .btn:hover {
+    color: var(--product-primary-strong);
+    background: var(--product-primary-soft);
+    border-color: var(--product-primary);
+}
+
+.public-toolbox__body .btn-primary {
+    color: var(--product-on-action);
+    background: var(--product-action-bg);
+    border-color: var(--product-action-bg);
+}
+
+.public-toolbox__body .btn-primary:hover {
+    color: var(--product-on-action);
+    background: var(--product-action-hover);
+    border-color: var(--product-action-hover);
+}
+
+.public-toolbox__body .btn-success {
+    color: var(--product-success);
+    background: var(--product-success-soft);
+    border-color: var(--product-success);
+}
+
+.public-toolbox__body .btn-danger {
+    color: var(--product-danger);
+    background: var(--product-danger-soft);
+    border-color: var(--product-danger);
+}
+
+.public-toolbox__body .btn-warning {
+    color: var(--product-accent-strong);
+    background: var(--product-accent-soft);
+    border-color: var(--product-accent-strong);
+}
+
+.public-toolbox__body #stats-content {
+    padding: 0.6rem 0.7rem;
+    color: var(--product-text-muted);
+    background: var(--product-surface-muted);
+    border: 1px solid var(--product-border);
+    border-radius: 0.65rem;
+}
+
+.public-toolbox__body #stats-content:empty {
+    display: none;
+}
+
+.public-toolbox__body #stats-content p {
+    margin: 0;
+}
+
+.public-toolbox__body #stats-content p + p {
+    margin-top: 0.35rem;
+}
+
+.public-toolbox.collapsed {
+    width: 3.25rem;
+}
+
+.public-toolbox.collapsed .public-toolbox__header {
+    justify-content: center;
+    padding: 0.5rem;
+}
+
+.public-toolbox.collapsed .public-toolbox__header h6 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 35rem) {
+    .public-toolbox {
+        top: 8.5rem;
+        right: 0.75rem;
+        width: min(17.5rem, calc(100vw - 1.5rem));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .public-toolbox,
+    .public-toolbox * {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
 }

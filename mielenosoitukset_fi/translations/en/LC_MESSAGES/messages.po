@@ -13260,3 +13260,11 @@ msgstr "Passkey not found."
 
 msgid "Passkey poistettu."
 msgstr "Passkey removed."
+
+#: mielenosoitukset_fi/templates/toolbar.html
+msgid "Pienennä työkalupakki"
+msgstr "Collapse toolbox"
+
+#: mielenosoitukset_fi/templates/toolbar.html
+msgid "Avaa työkalupakki"
+msgstr "Expand toolbox"

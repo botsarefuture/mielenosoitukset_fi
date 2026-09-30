@@ -13254,3 +13254,11 @@ msgstr "Passkeyn hittades inte."
 
 msgid "Passkey poistettu."
 msgstr "Passkeyn togs bort."
+
+#: mielenosoitukset_fi/templates/toolbar.html
+msgid "Pienennä työkalupakki"
+msgstr "Minimera verktygslådan"
+
+#: mielenosoitukset_fi/templates/toolbar.html
+msgid "Avaa työkalupakki"
+msgstr "Öppna verktygslådan"

@@ -13304,3 +13304,79 @@ msgstr "Too many requests within an hour. Please try again later."
 
 msgid "Muistutus tilattu onnistuneesti!"
 msgstr "Reminder subscribed successfully!"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Käyttöehdot"
+msgstr "Terms of use"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Palvelun ehdot"
+msgstr "Service terms"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Näissä ehdoissa kerrotaan Mielenosoitukset.fi-palvelun käytön periaatteet."
+msgstr "These terms describe the principles governing the use of the Mielenosoitukset.fi service."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Asiakirjan tiedot"
+msgstr "Document information"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Päivitetty viimeksi"
+msgstr "Last updated"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Yleiset ehdot"
+msgstr "General terms"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Kaikkien sivustolla julkaistavien mielenosoitusten on oltava Suomen lakien ja asetusten mukaisia. Sivustollemme ilmoitetut mielenosoitukset eivät saa sisältää syrjintää, vihapuhetta, väkivaltaan yllyttämistä tai muuta epäasiallista sisältöä."
+msgstr "All demonstrations published on the site must comply with Finnish laws and regulations. Demonstrations submitted to the site must not contain discrimination, hate speech, incitement to violence, or other inappropriate content."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Pidätämme oikeuden olla julkaisematta sivustollemme ilmoitettua mielenosoitusta ilman erillistä perustelua, mikäli katsomme, että se ei täytä edellä mainittuja ehtoja tai muita sivuston periaatteita."
+msgstr "We reserve the right not to publish a demonstration submitted to the site without providing separate grounds if we determine that it does not meet the terms above or the site's other principles."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Sivustomme tietoja ja sisältöjä ei saa käyttää kaupallisiin tarkoituksiin ilman erillistä kirjallista lupaa."
+msgstr "Information and content from the site may not be used for commercial purposes without separate written permission."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Valitusprosessi"
+msgstr "Appeals process"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Jos mielenosoitustasi ei julkaista ja koet päätöksen olevan virheellinen, voit tehdä asiasta valituksen seuraavan prosessin mukaisesti:"
+msgstr "If your demonstration is not published and you believe the decision is incorrect, you may appeal it as follows:"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Lähetä valituksesi sähköpostilla osoitteeseen"
+msgstr "Send your appeal by email to"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Käsittelemme valituksesi 30 vuorokauden kuluessa sen vastaanottamisesta."
+msgstr "We will process your appeal within 30 days of receiving it."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Saat valituksestasi kirjallisen lopullisen päätöksen sähköpostilla. Tähän päätökseen ei voi hakea muutosta."
+msgstr "You will receive the final written decision on your appeal by email. This decision cannot be appealed."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Vastuunrajoitus"
+msgstr "Limitation of liability"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Emme vastaa sivustolla olevien tietojen mahdollisista virheistä tai puutteista emmekä mahdollisista vahingoista, joita virheellisistä tiedoista saattaa aiheutua. Emme myöskään vastaa mahdollisista teknisistä häiriöistä, käyttökatkoista tai muista palvelun toimintahäiriöistä johtuvista ongelmista."
+msgstr "We are not liable for errors or omissions in the information on the site or for any damage caused by inaccurate information. We are also not liable for problems caused by technical disruptions, service interruptions, or other service failures."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Muutokset käyttöehtoihin"
+msgstr "Changes to these terms"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Pidätämme oikeuden päivittää näitä käyttöehtoja tarvittaessa. Käyttäjien vastuulla on tutustua käyttöehtoihin säännöllisesti. Olennaisista muutoksista ilmoitamme selkeästi sivustollamme."
+msgstr "We reserve the right to update these terms when necessary. Users are responsible for reviewing the terms regularly. We will clearly announce material changes on the site."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Käyttämällä sivustoamme hyväksyt nämä ehdot."
+msgstr "By using the site, you accept these terms."

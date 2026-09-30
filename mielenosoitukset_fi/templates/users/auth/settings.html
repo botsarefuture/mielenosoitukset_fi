@@ -2,441 +2,53 @@
 
 {% block title %}{{ _('Asetukset') }}{% endblock %}
 
-{% block styles %}
-<link href="{{ url_for('static', filename='css/user/settings.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='css/v2/settings.css')}}" rel="stylesheet">
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-
-<style>
-  /* ----- Tabs & sections (light) ------------------------------- */
-  #settings-tabs {
-    border: none;
-  }
-
-  #settings-tabs .ui-tabs-nav {
-    border: none;
-    background: none;
-    padding: 0;
-    margin-bottom: 2rem;
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  #settings-tabs .ui-tabs-nav li {
-    border: none;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin: 0;
-  }
-
-  #settings-tabs .ui-tabs-nav li a {
-    padding: 0.75rem 1.5rem;
-    color: #6c757d;
-    text-decoration: none;
-    font-weight: 500;
-  }
-
-  #settings-tabs .ui-tabs-nav li.ui-tabs-active {
-    background: #0d6efd;
-  }
-
-  #settings-tabs .ui-tabs-nav li.ui-tabs-active a {
-    color: #ffffff;
-  }
-
-  .settings-section {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    margin-bottom: 1.5rem;
-  }
-
-  /* ----- Forms & buttons (light) -------------------------------- */
-  .form-label {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
-  }
-
-  .form-control,
-  .form-select {
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-    padding: 0.625rem 0.875rem;
-  }
-
-  .form-control:focus,
-  .form-select:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, .25);
-  }
-
-  .dropdown.mbCometDiv4109 {
-    position: relative;
-  }
-
-  .dropbtn {
-    width: 100%;
-    text-align: left;
-    background: #ffffff;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 0.625rem 0.875rem;
-    cursor: pointer;
-    transition: border-color 0.2s;
-  }
-
-  .dropbtn:hover {
-    border-color: #0d6efd;
-  }
-
-  .dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: #ffffff;
-    width: 100%;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    border-radius: 8px;
-    margin-top: 0.25rem;
-    max-height: 300px;
-    overflow-y: auto;
-  }
-
-  .dropdown-content .mbDracoDiv3949 {
-    padding: 0.75rem;
-    border-bottom: 1px solid #e9ecef;
-    position: sticky;
-    top: 0;
-    background: #ffffff;
-    z-index: 1;
-  }
-
-  .dropdown-content .mbSolarInput9963 {
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 0.5rem 0.75rem;
-    width: 100%;
-  }
-
-  .dropdown-item {
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    border: none;
-    display: block;
-    width: 100%;
-    text-align: left;
-    color: #212529;
-    text-decoration: none;
-  }
-
-  .dropdown-item:hover {
-    background-color: #f8f9fa;
-  }
-
-  .dropdown-item.active {
-    background-color: #e7f1ff;
-    color: #0d6efd;
-  }
-
-  .alert {
-    border-radius: 8px;
-    border: none;
-  }
-
-  .alert-warning {
-    background-color: #fff3cd;
-    color: #856404;
-  }
-
-  .btn {
-    border-radius: 8px;
-    padding: 0.625rem 1.5rem;
-    font-weight: 500;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
-  }
-
-  .btn-primary {
-    background-color: #0d6efd;
-    border: none;
-  }
-
-  .btn-primary:hover {
-    background-color: #0b5ed7;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
-  }
-
-  .spinner {
-    display: none;
-    width: 16px;
-    height: 16px;
-    border: 2px solid #ffffff;
-    border-top-color: transparent;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    margin-left: 0.5rem;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .list-group-item {
-    border-radius: 6px;
-    margin-bottom: 0.5rem;
-    border: 1px solid #dee2e6;
-  }
-
-  .form-text {
-    color: #6c757d;
-    font-size: 0.875rem;
-  }
-
-  .form-check {
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-  }
-
-  .form-check-input:checked {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
-  }
-
-  /* ----- Dark mode overrides ----------------------------------- */
-  html.dark #settings-tabs .ui-tabs-nav li {
-    background: #343a40;
-  }
-
-  html.dark #settings-tabs .ui-tabs-nav li a {
-    color: #adb5bd;
-  }
-
-  html.dark #settings-tabs .ui-tabs-nav li.ui-tabs-active {
-    background: #0d6efd;
-  }
-
-  html.dark #settings-tabs .ui-tabs-nav li.ui-tabs-active a {
-    color: #ffffff;
-  }
-
-  html.dark .settings-section {
-    background: #111827;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-  }
-
-  html.dark .form-label {
-    color: #e9ecef;
-  }
-
-  html.dark .form-control,
-  html.dark .form-select,
-  html.dark .dropbtn {
-    background-color: #1f2933;
-    border-color: #4b5563;
-    color: #e9ecef;
-  }
-
-  html.dark .form-control:focus,
-  html.dark .form-select:focus,
-  html.dark .dropbtn:hover {
-    background-color: #1f2933;
-    border-color: #3b82f6;
-    color: #e9ecef;
-  }
-
-  html.dark .form-control::placeholder {
-    color: #6c757d;
-  }
-
-  html.dark .dropdown-content {
-    background-color: #111827;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
-  }
-
-  html.dark .dropdown-content .mbDracoDiv3949 {
-    background: #111827;
-    border-bottom-color: #4b5563;
-  }
-
-  html.dark .dropdown-content .mbSolarInput9963 {
-    background-color: #020617;
-    border-color: #4b5563;
-    color: #e9ecef;
-  }
-
-  html.dark .dropdown-item {
-    color: #e9ecef;
-  }
-
-  html.dark .dropdown-item:hover {
-    background-color: #374151;
-  }
-
-  html.dark .dropdown-item.active {
-    background-color: #1d4ed8;
-    color: #ffffff;
-  }
-
-  html.dark .alert-warning {
-    background-color: #664d03;
-    color: #ffecb5;
-  }
-
-  html.dark .form-text {
-    color: #adb5bd;
-  }
-
-  html.dark .form-check {
-    background: #1f2933;
-  }
-
-  html.dark .list-group-item {
-    background-color: #020617;
-    border-color: #4b5563;
-    color: #e9ecef;
-  }
-
-  html.dark .modal-content {
-    background-color: #111827;
-    color: #e9ecef;
-  }
-
-  html.dark .modal-header {
-    border-bottom-color: #4b5563;
-  }
-
-  html.dark .modal-footer {
-    border-top-color: #4b5563;
-  }
-
-  html.dark .btn-close {
-    filter: invert(1);
-  }
-
-  html.dark .text-muted {
-    color: #6b7280 !important;
-  }
-
-  html.dark h5,
-  html.dark h6 {
-    color: #e9ecef;
-  }
-
-  html.dark p {
-    color: #9ca3af;
-  }
-
-  html.dark .badge.bg-secondary {
-    background-color: #4b5563 !important;
-  }
-
-  html.dark .badge.bg-success {
-    background-color: #16a34a !important;
-  }
-
-  /* ----- Login-history table (both themes) --------------------- */
-  #log-table {
-    font-size: 0.875rem;
-    border-collapse: separate;
-    border-spacing: 0;
-  }
-
-  #log-table thead th {
-    background: #f1f5f9;
-    color: #111827;
-    font-weight: 600;
-    padding: 0.65rem 0.75rem;
-    border-bottom: 2px solid #cbd5e1;
-    white-space: nowrap;
-  }
-
-  #log-table tbody td {
-    padding: 0.55rem 0.75rem;
-    color: #111827;
-  }
-
-  #log-table tbody tr:nth-child(odd) {
-    background: #ffffff;
-  }
-
-  #log-table tbody tr:nth-child(even) {
-    background: #f8fafc;
-  }
-
-  #log-table tbody tr:hover {
-    background: #e0f2fe;
-  }
-
-  html.dark #log-table thead th {
-    background: #020617;
-    color: #e5e7eb;
-    border-bottom-color: #4b5563;
-  }
-
-  html.dark #log-table tbody td {
-    color: #e5e7eb;
-  }
-
-  html.dark #log-table tbody tr:nth-child(odd) {
-    background: #020617;
-  }
-
-  html.dark #log-table tbody tr:nth-child(even) {
-    background: #111827;
-  }
-
-  html.dark #log-table tbody tr:hover {
-    background: #1f2937;
-  }
-
-  .badge.login-ok,
-  html.dark .badge.login-ok {
-    background-color: #16a34a !important;
-    color: #f9fafb !important;
-  }
-
-  .badge.login-fail,
-  html.dark .badge.login-fail {
-    background-color: #dc2626 !important;
-    color: #f9fafb !important;
-  }
-</style>
-{% endblock %}
+{% block styles %}{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <h1 class="mb-4"><i class="fas fa-cogs"></i> {{ _('Asetukset') }}</h1>
+<section class="container py-4 user-workspace-page user-settings-page" aria-labelledby="settings-page-title">
+  <header class="user-page-heading">
+    <div class="user-page-heading__content">
+      <span class="user-page-heading__icon" aria-hidden="true"><i class="fas fa-cogs"></i></span>
+      <div>
+        <h1 id="settings-page-title">{{ _('Asetukset') }}</h1>
+        <p>{{ _('Hallinnoi tilisi tietoja, turvallisuutta, profiilia ja API-avaimia yhdessä paikassa.') }}</p>
+      </div>
+    </div>
+  </header>
 
-  <div id="settings-message" class="hidden"></div>
+  <div class="user-form-feedback user-form-feedback--error" id="settings-message"
+       role="status" aria-live="polite" hidden></div>
 
-  <div id="settings-tabs">
-    <ul>
-      <li><a href="#tab-general">{{ _('Yleinen') }}</a></li>
-      <li><a href="#tab-security">{{ _('Turvallisuus') }}</a></li>
-      <li><a href="#tab-tokens">{{ _('API-avaimet') }}</a></li>
-      <li><a href="#tab-profile">{{ _('Profiili') }}</a></li>
+  <div class="user-settings-tabs" id="settings-tabs">
+    <ul class="user-settings-tabs__list" role="tablist" aria-label="{{ _('Asetusosiot') }}">
+      <li role="presentation"><a id="settings-tab-general" href="#tab-general" role="tab" aria-controls="tab-general" aria-selected="true">{{ _('Yleinen') }}</a></li>
+      <li role="presentation"><a id="settings-tab-security" href="#tab-security" role="tab" aria-controls="tab-security" aria-selected="false" tabindex="-1">{{ _('Turvallisuus') }}</a></li>
+      <li role="presentation"><a id="settings-tab-tokens" href="#tab-tokens" role="tab" aria-controls="tab-tokens" aria-selected="false" tabindex="-1">{{ _('API-avaimet') }}</a></li>
+      <li role="presentation"><a id="settings-tab-profile" href="#tab-profile" role="tab" aria-controls="tab-profile" aria-selected="false" tabindex="-1">{{ _('Profiili') }}</a></li>
     </ul>
 
     <!-- Yleinen Tab -->
-    <div id="tab-general">
-      <form id="settings-form">
+    <div class="user-settings-panel" id="tab-general" role="tabpanel" aria-labelledby="settings-tab-general">
+      <form class="user-form" id="settings-form">
+        <section class="user-form-section">
+          <header class="user-form-section__header">
+            <span class="user-form-section__icon" aria-hidden="true"><i class="fa-solid fa-sliders"></i></span>
+            <div>
+              <h2>{{ _('Yleiset asetukset') }}</h2>
+              <p>{{ _('Valitse profiilissa näkyvä nimi, kotikaupunki ja käyttöliittymän asetukset.') }}</p>
+            </div>
+          </header>
+          <div class="user-form-section__body user-form-grid">
         <!-- Näyttönimi input -->
-        <div class="mb-3">
-          <label class="form-label" for="display_name">
+        <div class="user-field user-field--full">
+          <label class="user-field__label" for="display_name">
             <i class="fa-solid fa-id-card me-2"></i>{{ _('Näyttönimi') }}
           </label>
 
-          <input class="form-control mbBlackHoleInput1866" id="display_name" name="display_name" type="text"
+          <input class="user-field__control" id="display_name" name="display_name" type="text"
                  placeholder="{{ _('Kirjoita haluamasi nimi, joka näkyy profiilissasi') }}" maxlength="40">
 
-          <div class="form-text mt-1 mbCoronaDiv2172">
+          <div class="user-field__help">
             <i class="fa-solid fa-circle-info me-1"></i>
             {{ _('Näyttönimi näkyy muille käyttäjille profiilissasi ja
             kommenteissa. Voit käyttää omaa nimeäsi tai
@@ -445,34 +57,33 @@
         </div>
 
         <!-- Kaupunki dropdown -->
-        <div class="mb-3">
-          <label class="form-label" for="city">
+        <div class="user-field user-field--full">
+          <label class="user-field__label" for="selected-city">
             <i class="fa-solid fa-city me-2"></i>{{ _('Kaupunki') }}
           </label>
 
-          <br>
-
-          <div class="dropdown mbCometDiv4109" id="paikkakunta-drop">
-            <button class="dropbtn form-control d-flex justify-content-between align-items-center mbSupernovaButton2432"
+          <div class="user-city-picker" id="paikkakunta-drop">
+            <button class="user-field__control user-city-picker__trigger"
                     type="button" aria-expanded="false" aria-haspopup="listbox"
+                    aria-controls="dropdown-content"
                     aria-label="{{ _('Avaa paikkakuntavalikko') }}">
               <span id="selected-city-text">{{ _('Valitse paikkakunta') }}</span>
               <i class="fa-solid fa-chevron-down ms-2"></i>
             </button>
 
-            <div class="dropdown-content shadow mbUranusDiv8836" id="dropdown-content" role="listbox"
-                 aria-labelledby="city">
+            <div class="user-city-picker__menu" id="dropdown-content" role="listbox"
+                 aria-labelledby="selected-city-text" hidden>
 
-              <div class="mbDracoDiv3949">
+              <div class="user-city-picker__search">
                 <i class="fa-solid fa-magnifying-glass me-2"></i>
-                <input class="form-control form-control-sm mbSolarInput9963" id="searchInput" type="text"
+                <input class="user-field__control" id="searchInput" type="search"
                        aria-label="{{ _('Hae kaupungeista') }}" onkeyup="filterFunction()"
                        placeholder="{{ _('Hae paikkakunta...') }}">
               </div>
 
               {% for city in city_list %}
-              <a class="dropdown-item py-2 {% if demo is defined and demo.city==city %}active{% endif %} mbApolloA7791"
-                 href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;">
+              <a class="user-city-picker__option {% if demo is defined and demo.city==city %}active{% endif %}"
+                 href="#" role="option" aria-selected="false" onclick='selectCity({{ city | tojson }}); return false;'>
                 <i class="fa-solid fa-location-dot me-2 text-muted"></i>{{ city }}
               </a>
               {% endfor %}
@@ -482,124 +93,129 @@
           <input id="selected-city" name="city" type="hidden" required>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label" for="language">
+        <div class="user-field user-field--full">
+          <label class="user-field__label" for="language">
             <i class="fa-solid fa-language me-2"></i>{{ _('Kieli') }}
           </label>
-          <select class="form-select" id="language" name="language">
+          <select class="user-field__control" id="language" name="language">
             <option value="fi">{{ _('Suomi') }}</option>
             <!-- <option value="en">{{ _('English') }}</option> -->
           </select>
 
-          <br>
-
-          <div class="alert alert-warning d-flex align-items-start mbPerseusDiv6913">
-            <i class="fa-solid fa-triangle-exclamation fa-xl mbAriesI9259"></i>
+          <div class="user-form-feedback user-form-feedback--warning">
+            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
             <div>
-              <h5 class="mb-1">{{ _('Käännökset ovat vielä kesken') }}</h5>
-              <p class="mb-2">
+              <h3>{{ _('Käännökset ovat vielä kesken') }}</h3>
+              <p>
                 {{ _('Sivusto on tällä hetkellä käytettävissä vain suomeksi,
                 mutta englannin ja ruotsin käännökset ovat
                 parhaillaan työn alla.') }}
                 {{ _('Voit seurata edistymistä ja halutessasi osallistua käännöstyöhön sivulla:') }}
               </p>
               <a class="btn btn-outline-dark btn-sm" href="https://mielenosoitukset.fi/upcoming/translations/"
-                 target="_blank">
+                 target="_blank" rel="noopener noreferrer">
                 <i class="fa-solid fa-globe me-2"></i>{{ _('Katso käännöshanke') }}
               </a>
             </div>
           </div>
         </div>
 
-        <div class="form-check mb-3">
+        <div class="form-check user-check-row user-field--full">
           <input class="form-check-input" id="dark_mode" name="dark_mode" type="checkbox">
           <label class="form-check-label" for="dark_mode">{{ _('Tumma tila') }}</label>
         </div>
 
-        <div class="form-check mb-3 hidden" aria-hidden="true">
+        <div class="form-check user-check-row user-field--full" aria-hidden="true" hidden>
           <input class="form-check-input" id="subscribe_newsletter" name="subscribe_newsletter" type="checkbox">
           <label class="form-check-label" for="subscribe_newsletter">{{ _('Tilaa uutiskirje') }}</label>
         </div>
 
-        <button class="btn btn-primary" type="submit">
+          </div>
+          <footer class="user-form-actions">
+        <button class="btn btn-primary" id="settings-submit" type="submit">
           {{ _('Tallenna muutokset') }}
-          <div class="spinner" id="spinner"></div>
+          <span class="spinner user-button-spinner" id="spinner" aria-hidden="true" hidden></span>
         </button>
+          </footer>
+        </section>
       </form>
     </div>
 
     <!-- Turvallisuus Tab -->
-    <div id="tab-security">
+    <div class="user-settings-panel" id="tab-security" role="tabpanel" aria-labelledby="settings-tab-security" hidden>
       <!-- icon and title -->
-      <div class="section-header mb-4">
-        <h4><i class="fas fa-shield-alt"></i> {{ _('Turvallisuusasetukset') }}</h4>
-        <p class="text-muted">
+      <header class="user-settings-intro">
+        <h2><i class="fas fa-shield-alt" aria-hidden="true"></i> {{ _('Turvallisuusasetukset') }}</h2>
+        <p>
           {{ _('Hallinnoi tilisi turvallisuusasetuksia, kuten kaksivaiheista tunnistautumista (MFA).') }}
         </p>
-      </div>
+      </header>
 
-      <div class="settings-section">
+      <section class="user-settings-card">
+        <h3><i class="fas fa-shield-alt" aria-hidden="true"></i> {{ _('Kaksivaiheinen tunnistus (MFA)') }}</h3>
         <p>{{ _('Hallinnoi kaksivaiheista tunnistautumista ja MFA-laitteita.') }}</p>
-
-        <label class="form-label" for="mfa">
-          <i class="fas fa-shield-alt"></i> {{ _('Kaksivaiheinen tunnistus (MFA)') }}
-        </label>
-        <div class="d-flex flex-column gap-2" id="mfa-section">
+        <div class="user-settings-stack" id="mfa-section">
           <div id="mfa-status-container">
             <span class="text-success" id="mfa-status">{{ _('MFA ei käytössä') }}</span>
           </div>
           <button class="btn btn-warning" id="init-mfa-btn" type="button">
             {{ _('Ota käyttöön MFA') }}
           </button>
-          <button class="btn btn-secondary mbCometButton1455" id="add-mfa-device-btn" type="button">
+          <button class="btn btn-secondary" id="add-mfa-device-btn" type="button" hidden>
             {{ _('Lisää uusi laite') }}
           </button>
-          <ul class="list-group mt-2" id="mfa-devices-list"></ul>
+          <div class="user-data-list" id="mfa-devices-list" aria-live="polite"></div>
         </div>
-      </div>
+      </section>
 
       <!-- 🔒 Password change -->
-      <div class="settings-section">
-        <h5><i class="fas fa-key"></i> {{ _('Vaihda salasana') }}</h5>
-        <form id="pw-form" class="row gy-2">
-          <div class="col-12 col-md-6">
-            <label class="form-label">{{ _('Nykyinen salasana') }}</label>
-            <input type="password" class="form-control" name="current" required>
+      <section class="user-settings-card">
+        <h3><i class="fas fa-key" aria-hidden="true"></i> {{ _('Vaihda salasana') }}</h3>
+        <form class="user-form user-form-grid" id="pw-form">
+          <div class="user-field">
+            <label class="user-field__label" for="current-password">{{ _('Nykyinen salasana') }}</label>
+            <input class="user-field__control" id="current-password" type="password"
+                   name="current" autocomplete="current-password" required>
           </div>
-          <div class="col-12 col-md-6">
-            <label class="form-label">{{ _('Uusi salasana') }}</label>
-            <input type="password" class="form-control" name="new" minlength="6" required>
+          <div class="user-field">
+            <label class="user-field__label" for="new-password">{{ _('Uusi salasana') }}</label>
+            <input class="user-field__control" id="new-password" type="password" name="new"
+                   minlength="12" autocomplete="new-password" aria-describedby="new-password-help" required>
+            <p class="user-field__help" id="new-password-help">
+              {{ _('Käytä vähintään 12 merkkiä ja vähintään kolmea näistä: pieni kirjain, iso kirjain, numero ja erikoismerkki.') }}
+            </p>
           </div>
-          <div class="col-12 col-md-6">
-            <label class="form-label">{{ _('Toista uusi salasana') }}</label>
-            <input type="password" class="form-control" name="confirm" minlength="6" required>
+          <div class="user-field">
+            <label class="user-field__label" for="confirm-password">{{ _('Toista uusi salasana') }}</label>
+            <input class="user-field__control" id="confirm-password" type="password" name="confirm"
+                   minlength="12" autocomplete="new-password" required>
           </div>
-          <div class="col-12">
-            <button class="btn btn-primary mt-2" type="submit">
+          <div class="user-form-actions user-field--full">
+            <button class="btn btn-primary" type="submit">
               <i class="fa-solid fa-key me-1"></i> {{ _('Vaihda salasana') }}
-              <span class="spinner" id="pw-spinner"></span>
+              <span class="spinner user-button-spinner" id="pw-spinner" aria-hidden="true" hidden></span>
             </button>
           </div>
         </form>
-      </div>
+      </section>
 
       <!-- 🔑 Passkeys -->
-      <div class="settings-section">
-        <h5><i class="fas fa-fingerprint"></i> {{ _('Passkeyt') }}</h5>
-        <p class="text-muted">
+      <section class="user-settings-card">
+        <h3><i class="fas fa-fingerprint" aria-hidden="true"></i> {{ _('Passkeyt') }}</h3>
+        <p>
           {{ _('Kirjaudu ilman salasanaa puhelimen, tietokoneen tai turva-avaimen tunnistuksella.') }}
         </p>
         <button class="btn btn-primary mb-2" id="add-passkey-btn" type="button">
           <i class="fa-solid fa-fingerprint me-1"></i> {{ _('Lisää passkey') }}
         </button>
-        <ul class="list-group mt-2" id="passkeys-list"></ul>
-      </div>
+        <div class="user-data-list" id="passkeys-list" aria-live="polite"></div>
+      </section>
 
       <!-- 📜 Login history -->
-      <div class="settings-section">
-        <h5><i class="fas fa-history"></i> {{ _('Kirjautumishistoria') }}</h5>
-        <div class="table-responsive">
-          <table class="table table-sm align-middle" id="log-table">
+      <section class="user-settings-card">
+        <h3><i class="fas fa-history" aria-hidden="true"></i> {{ _('Kirjautumishistoria') }}</h3>
+        <div class="user-data-view__viewport" tabindex="0" aria-label="{{ _('Kirjautumishistoria') }}">
+          <table class="user-data-table" id="log-table">
             <thead>
               <tr>
                 <th>{{ _('Aika') }}</th>
@@ -611,11 +227,11 @@
             <tbody><!-- populated by JS --></tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
 
     <!-- Profiili Tab -->
-    <div id="tab-profile">
+    <div class="user-settings-panel" id="tab-profile" role="tabpanel" aria-labelledby="settings-tab-profile" hidden>
       <form class="user-form" id="profile-form" aria-labelledby="profile-form-title">
         <section class="user-form-section">
           <header class="user-form-section__header">
@@ -664,77 +280,75 @@
     </div>
 
     <!-- API Tokens Tab -->
-    <div id="tab-tokens">
-      <div class="section-header mb-4">
-        <h4><i class="fa-solid fa-key"></i> {{ _('API-avaimet') }}</h4>
-        <p class="text-muted">
+    <div class="user-settings-panel" id="tab-tokens" role="tabpanel" aria-labelledby="settings-tab-tokens" hidden>
+      <header class="user-settings-intro">
+        <h2><i class="fa-solid fa-key" aria-hidden="true"></i> {{ _('API-avaimet') }}</h2>
+        <p>
           {{ _('Luo ja hallitse API-avaimia integraatioita varten. Avaimet näytetään vain kerran, tallenna ne turvallisesti.') }}
         </p>
-      </div>
+      </header>
 
-      <div id="token-message" class="alert d-none"></div>
+      <div class="user-form-feedback" id="token-message" role="status" aria-live="polite" hidden></div>
 
-      <div id="token-locked" class="settings-section mb-4 d-none">
-        <h5 class="mb-2">{{ _('API-avaimet lukittu') }}</h5>
-        <p class="text-muted mb-3">
+      <section class="user-settings-card d-none" id="token-locked">
+        <h3>{{ _('API-avaimet lukittu') }}</h3>
+        <p>
           {{ _('Tietoturvan vuoksi API-avaimet on avattava ylläpitäjän toimesta. Lähetä pyyntö alla.') }}
         </p>
         <button class="btn btn-secondary" id="token-request-btn" type="button">
           <i class="fa-solid fa-unlock"></i> {{ _('Pyydä käyttöoikeutta') }}
         </button>
-      </div>
+      </section>
 
-      <div class="settings-section mb-4">
-        <h5 class="mb-3">{{ _('Luo uusi avain') }}</h5>
-        <div class="mb-2">
+      <section class="user-settings-card">
+        <h3>{{ _('Luo uusi avain') }}</h3>
+          <div class="user-settings-card__actions">
           <a class="btn btn-outline-primary btn-sm" href="{{ url_for('developer.apps_home') }}">
             <i class="fa-solid fa-screwdriver-wrench"></i> {{ _('Kehittäjäpaneeli (sovellukset)') }}
           </a>
         </div>
-        <form id="token-form" class="row gy-3">
-          <div class="col-12 col-md-4">
-            <label class="form-label">{{ _('Tyyppi') }}</label>
-            <select class="form-select" id="token-type" name="type">
+        <form class="user-form user-form-grid" id="token-form">
+          <div class="user-field">
+            <label class="user-field__label" for="token-type">{{ _('Tyyppi') }}</label>
+            <select class="user-field__control" id="token-type" name="type">
               <option value="short">{{ _('Lyhytikäinen (2h)') }}</option>
               <option value="long">{{ _('Pitkäikäinen (90 päivää)') }}</option>
             </select>
           </div>
-          <div class="col-12 col-md-8">
-            <label class="form-label">{{ _('Käyttöoikeudet') }}</label>
-            <div class="d-flex flex-wrap gap-3">
-              <div class="form-check">
+          <fieldset class="user-check-list">
+            <legend class="user-field__label">{{ _('Käyttöoikeudet') }}</legend>
+            <div class="user-settings-scope-grid">
+              <div class="form-check user-check-row">
                 <input class="form-check-input" id="scope-read" type="checkbox" value="read" checked>
                 <label class="form-check-label" for="scope-read">read</label>
               </div>
-              <div class="form-check">
+              <div class="form-check user-check-row">
                 <input class="form-check-input" id="scope-write" type="checkbox" value="write">
                 <label class="form-check-label" for="scope-write">write</label>
               </div>
-              <div class="form-check">
+              <div class="form-check user-check-row">
                 <input class="form-check-input" id="scope-admin" type="checkbox" value="admin">
                 <label class="form-check-label" for="scope-admin">admin</label>
               </div>
             </div>
-            <div class="form-text">{{ _('Admin-oikeudet myönnetään vain ylläpitäjille.') }}</div>
-          </div>
-          <div class="col-12">
+            <p class="user-field__help">{{ _('Admin-oikeudet myönnetään vain ylläpitäjille.') }}</p>
+          </fieldset>
+          <div class="user-form-actions user-field--full">
             <button class="btn btn-primary" id="token-create-btn" type="submit">
               <i class="fa-solid fa-plus"></i> {{ _('Luo avain') }}
             </button>
           </div>
         </form>
         <div id="token-result" class="mt-3 d-none">
-          <label class="form-label">{{ _('Uusi avain (näytetään vain kerran)') }}</label>
-          <div class="alert alert-info">
-            <code id="token-value"></code>
-          </div>
+          <p class="user-field__label">{{ _('Uusi avain (näytetään vain kerran)') }}</p>
+          <code class="user-code-value" id="token-value"></code>
         </div>
-      </div>
+      </section>
 
-      <div class="settings-section">
-        <h5 class="mb-3">{{ _('Nykyiset avaimet') }}</h5>
-        <div class="table-responsive">
-          <table class="table table-sm align-middle">
+      <section class="user-settings-card">
+        <h3>{{ _('Nykyiset avaimet') }}</h3>
+        <div class="user-data-view__viewport" tabindex="0" aria-label="{{ _('Nykyiset avaimet') }}">
+          <table class="user-data-table">
             <thead>
               <tr>
                 <th>{{ _('Tyyppi') }}</th>
@@ -748,10 +362,10 @@
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   </div>
-</div>
+</section>
 
 <script>
   function showSettingsMessage(message, type = 'error') {
@@ -759,20 +373,20 @@
     if (!container) return;
 
     const icon = type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation';
-    container.className = `alert alert-${type === 'success' ? 'success' : 'error'}`;
+    container.className = `user-form-feedback user-form-feedback--${type === 'success' ? 'success' : 'error'}`;
     const iconElement = document.createElement('i');
     iconElement.classList.add('fa-solid', icon);
     iconElement.setAttribute('aria-hidden', 'true');
     const textElement = document.createElement('span');
     textElement.textContent = String(message ?? '');
     container.replaceChildren(iconElement, textElement);
-    container.classList.remove('hidden');
+    container.hidden = false;
     container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   function hideSettingsMessage() {
     const container = document.getElementById('settings-message');
-    if (container) container.classList.add('hidden');
+    if (container) container.hidden = true;
   }
 </script>
 
@@ -1004,9 +618,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-
 <script>
   const credentialRenameElement = document.getElementById('credentialRenameModal');
   const credentialRenameForm = document.getElementById('credential-rename-form');
@@ -1116,11 +727,49 @@
 </script>
 
 <script>
-  $(function () {
-    $("#settings-tabs").tabs({
-      show: { effect: "fadeIn", duration: 200 },
-      hide: { effect: "fadeOut", duration: 200 }
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabsRoot = document.getElementById('settings-tabs');
+    const tabs = Array.from(tabsRoot.querySelectorAll('[role="tab"]'));
+    const panels = Array.from(tabsRoot.querySelectorAll('[role="tabpanel"]'));
+
+    function activateSettingsTab(tab, { moveFocus = false } = {}) {
+      tabs.forEach(candidate => {
+        const selected = candidate === tab;
+        candidate.setAttribute('aria-selected', String(selected));
+        candidate.tabIndex = selected ? 0 : -1;
+      });
+      panels.forEach(panel => {
+        panel.hidden = panel.id !== tab.getAttribute('aria-controls');
+      });
+      if (moveFocus) tab.focus();
+      history.replaceState(null, '', `#${tab.getAttribute('aria-controls')}`);
+      queueMicrotask(() => {
+        tabsRoot.dispatchEvent(new CustomEvent('settings-tab-activate', {
+          detail: { panelId: tab.getAttribute('aria-controls') }
+        }));
+      });
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', event => {
+        event.preventDefault();
+        activateSettingsTab(tab);
+      });
+      tab.addEventListener('keydown', event => {
+        let targetIndex = null;
+        if (event.key === 'ArrowRight') targetIndex = (index + 1) % tabs.length;
+        if (event.key === 'ArrowLeft') targetIndex = (index - 1 + tabs.length) % tabs.length;
+        if (event.key === 'Home') targetIndex = 0;
+        if (event.key === 'End') targetIndex = tabs.length - 1;
+        if (targetIndex === null) return;
+        event.preventDefault();
+        activateSettingsTab(tabs[targetIndex], { moveFocus: true });
+      });
     });
+
+    const requestedPanel = window.location.hash.slice(1);
+    const initialTab = tabs.find(tab => tab.getAttribute('aria-controls') === requestedPanel) || tabs[0];
+    activateSettingsTab(initialTab);
   });
 </script>
 
@@ -1153,7 +802,7 @@
     form.addEventListener('submit', async e => {
       e.preventDefault();
       hideSettingsMessage();
-      spinner.style.display = 'inline-block';
+      spinner.hidden = false;
 
       const payload = {
         display_name: displayInput.value,
@@ -1170,7 +819,7 @@
       });
 
       const result = await response.json();
-      spinner.style.display = 'none';
+      spinner.hidden = true;
 
       if (result.status === "success") {
         showSettingsMessage(result.message, 'success');
@@ -1202,15 +851,23 @@
         if (data.status === "enabled") {
           mfaStatus.textContent = "{{ _('MFA on käytössä') }}";
           mfaStatus.className = "text-success";
-          mfaBtn.style.display = "none";
-          addDeviceBtn.style.display = "inline-block";
-          devicesList.innerHTML = "";
+          mfaBtn.hidden = true;
+          addDeviceBtn.hidden = false;
+          devicesList.replaceChildren();
           data.devices.forEach(d => {
-            const li = document.createElement("li");
-            li.className = "list-group-item d-flex justify-content-between align-items-center";
-            li.textContent = `${d.name} (${d.created_at})`;
+            const card = document.createElement("div");
+            card.className = "user-data-card";
+            const content = document.createElement("div");
+            content.className = "user-data-card__content";
+            const name = document.createElement("strong");
+            name.textContent = String(d.name || {{ _('MFA-laite') | tojson }});
+            const created = document.createElement("p");
+            created.textContent = String(d.created_at || "");
+            content.append(name, created);
+            const actions = document.createElement("div");
+            actions.className = "user-data-card__actions";
             const renameBtn = document.createElement("button");
-            renameBtn.className = "btn btn-sm btn-outline-secondary me-1";
+            renameBtn.className = "btn btn-sm btn-outline-secondary";
             renameBtn.textContent = "{{ _('Nimeä') }}";
             renameBtn.onclick = async () => {
               const newName = await requestCredentialName(
@@ -1248,16 +905,16 @@
                 if (result.status === "success") loadMFAStatus();
               }
             };
-            li.appendChild(renameBtn);
-            li.appendChild(revokeBtn);
-            devicesList.appendChild(li);
+            actions.append(renameBtn, revokeBtn);
+            card.append(content, actions);
+            devicesList.appendChild(card);
           });
         } else {
           mfaStatus.textContent = "{{ _('MFA ei käytössä') }}";
           mfaStatus.className = "text-muted";
-          mfaBtn.style.display = "inline-block";
-          addDeviceBtn.style.display = "none";
-          devicesList.innerHTML = "";
+          mfaBtn.hidden = false;
+          addDeviceBtn.hidden = true;
+          devicesList.replaceChildren();
         }
       } catch (e) {
         console.error("Failed to load MFA status", e);
@@ -1321,55 +978,75 @@
 
 <script>
   // Paikkakunta dropdown functions
-  document.querySelector(".dropbtn").addEventListener("click", function (event) {
+  const cityPicker = document.getElementById("paikkakunta-drop");
+  const cityPickerButton = cityPicker.querySelector(".user-city-picker__trigger");
+  const cityPickerMenu = document.getElementById("dropdown-content");
+
+  function closeCityPicker({ restoreFocus = false } = {}) {
+    cityPickerMenu.hidden = true;
+    cityPickerButton.setAttribute("aria-expanded", "false");
+    if (restoreFocus) cityPickerButton.focus();
+  }
+
+  cityPickerButton.addEventListener("click", function (event) {
     event.stopPropagation();
-    var dropdownContent = document.getElementById("dropdown-content");
-    var expanded = this.getAttribute("aria-expanded") === "true" || false;
-    dropdownContent.style.display = expanded ? "none" : "block";
-    this.setAttribute("aria-expanded", !expanded);
+    const expanded = this.getAttribute("aria-expanded") === "true";
+    cityPickerMenu.hidden = expanded;
+    this.setAttribute("aria-expanded", String(!expanded));
+    if (!expanded) document.getElementById("searchInput").focus();
   });
 
-  window.onclick = function (event) {
-    if (!event.target.matches('.dropbtn') && !event.target.closest('.dropdown')) {
-      const content = document.getElementById("dropdown-content");
-      if (content) content.style.display = "none";
-      const btn = document.querySelector(".dropbtn");
-      if (btn) btn.setAttribute("aria-expanded", "false");
+  document.addEventListener("click", event => {
+    if (!event.target.closest("#paikkakunta-drop")) closeCityPicker();
+  });
+
+  cityPicker.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !cityPickerMenu.hidden) {
+      event.preventDefault();
+      closeCityPicker({ restoreFocus: true });
     }
-  };
+  });
 
   function selectCity(city) {
-    var dropbtn = document.querySelector(".dropbtn");
-    var selectedText = document.getElementById("selected-city-text");
+    const selectedText = document.getElementById("selected-city-text");
     selectedText.textContent = city;
     document.getElementById("selected-city").value = city;
-    document.getElementById("dropdown-content").style.display = "none";
-    dropbtn.setAttribute("aria-expanded", "false");
+    cityPickerMenu.querySelectorAll('[role="option"]').forEach(option => {
+      const selected = option.textContent.trim() === city;
+      option.setAttribute("aria-selected", String(selected));
+      option.classList.toggle("active", selected);
+    });
+    closeCityPicker({ restoreFocus: true });
   }
 
   function filterFunction() {
     let input = document.getElementById("searchInput");
     let filter = input.value.toUpperCase();
-    let div = document.getElementById("dropdown-content");
-    let a = div.getElementsByTagName("a");
+    const options = cityPickerMenu.querySelectorAll('[role="option"]');
 
-    for (let i = 0; i < a.length; i++) {
-      let txtValue = a[i].textContent || a[i].innerText;
-      a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-    }
+    options.forEach(option => {
+      const text = option.textContent || "";
+      option.hidden = !text.toUpperCase().includes(filter);
+    });
   }
 </script>
 
 <script>
   /* helpers for login history + password change */
-  function badge(ok) {
-    return ok
-      ? '<span class="badge login-ok">OK</span>'
-      : '<span class="badge login-fail">FAIL</span>';
+  function timeFmt(iso) {
+    return new Date(iso).toLocaleString(document.documentElement.lang || 'fi', {
+      hour12: false
+    });
   }
 
-  function timeFmt(iso) {
-    return new Date(iso).toLocaleString('fi-FI', { hour12: false });
+  function appendEmptyTableRow(tbody, colspan, message) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = colspan;
+    cell.className = 'user-data-table__empty';
+    cell.textContent = message;
+    row.appendChild(cell);
+    tbody.replaceChildren(row);
   }
 
   async function loadLoginLogs() {
@@ -1377,17 +1054,34 @@
       const res = await fetch("/users/auth/api/v2/login_logs?limit=30");
       const json = await res.json();
       if (json.status !== "success") return;
-      const rows = json.logs.map(l => `
-        <tr>
-          <td>${timeFmt(l.time)}</td>
-          <td>${l.ip || ''}</td>
-          <td class="text-truncate" style="max-width:260px"
-              title="${l.ua || ''}">${(l.ua || '').slice(0, 60)}</td>
-          <td>${badge(l.ok)}</td>
-        </tr>`).join('');
-      document.querySelector("#log-table tbody").innerHTML = rows || `
-        <tr><td colspan="4" class="text-center text-muted">
-          {{ _('Ei kirjautumisia') }}</td></tr>`;
+      const tbody = document.querySelector("#log-table tbody");
+      const logs = Array.isArray(json.logs) ? json.logs : [];
+      if (!logs.length) {
+        appendEmptyTableRow(tbody, 4, {{ _('Ei kirjautumisia') | tojson }});
+        return;
+      }
+
+      const rows = logs.map(log => {
+        const row = document.createElement('tr');
+        const timeCell = document.createElement('td');
+        const ipCell = document.createElement('td');
+        const browserCell = document.createElement('td');
+        const resultCell = document.createElement('td');
+        const status = document.createElement('span');
+        const userAgent = String(log.ua || '');
+
+        timeCell.textContent = timeFmt(log.time);
+        ipCell.textContent = String(log.ip || '');
+        browserCell.className = 'user-settings-browser-cell';
+        browserCell.title = userAgent;
+        browserCell.textContent = userAgent.slice(0, 60);
+        status.className = `user-status-badge user-status-badge--${log.ok ? 'success' : 'danger'}`;
+        status.textContent = log.ok ? 'OK' : 'FAIL';
+        resultCell.appendChild(status);
+        row.append(timeCell, ipCell, browserCell, resultCell);
+        return row;
+      });
+      tbody.replaceChildren(...rows);
     } catch (e) {
       console.error(e);
     }
@@ -1401,7 +1095,7 @@
       pwForm.addEventListener("submit", async e => {
         e.preventDefault();
         hideSettingsMessage();
-        if (pwSpinner) pwSpinner.style.display = "inline-block";
+        if (pwSpinner) pwSpinner.hidden = false;
 
         const fd = new FormData(e.target);
         const payload = Object.fromEntries(fd.entries());
@@ -1420,19 +1114,14 @@
           console.error(err);
           showSettingsMessage("{{ _('Salasanan vaihtaminen epäonnistui') }}");
         } finally {
-          if (pwSpinner) pwSpinner.style.display = "none";
+          if (pwSpinner) pwSpinner.hidden = true;
         }
       });
     }
   });
 
-  /* load logs when security tab is activated */
-  $(function () {
-    $("#settings-tabs").on("tabsactivate", function (event, ui) {
-      if (ui.newTab.find("a").attr("href") === "#tab-security") {
-        loadLoginLogs();
-      }
-    });
+  document.getElementById('settings-tabs').addEventListener('settings-tab-activate', event => {
+    if (event.detail.panelId === 'tab-security') loadLoginLogs();
   });
 
   /* API token helpers */
@@ -1448,13 +1137,20 @@
 
     function setTokenMessage(msg, type = "info") {
       if (!tokenMsg) return;
-      tokenMsg.className = `alert alert-${type}`;
+      const feedbackType = type === 'success'
+        ? 'success'
+        : type === 'warning'
+          ? 'warning'
+          : type === 'danger'
+            ? 'error'
+            : 'info';
+      tokenMsg.className = `user-form-feedback user-form-feedback--${feedbackType}`;
       tokenMsg.textContent = msg;
-      tokenMsg.classList.remove("d-none");
+      tokenMsg.hidden = false;
     }
 
     function clearTokenMessage() {
-      if (tokenMsg) tokenMsg.classList.add("d-none");
+      if (tokenMsg) tokenMsg.hidden = true;
     }
 
     function showLocked() {
@@ -1512,30 +1208,47 @@
 
     async function loadTokens() {
       if (!tokenList) return;
-      tokenList.innerHTML = `<tr><td colspan="4" class="text-muted text-center">{{ _('Ladataan...') }}</td></tr>`;
+      appendEmptyTableRow(tokenList, 4, {{ _('Ladataan...') | tojson }});
       try {
         const res = await fetch("/users/auth/api_tokens/list");
         const data = await res.json();
         if (data.status !== "success") {
-          setTokenMessage(data.error || "Virhe ladattaessa avaimia", "warning");
+          setTokenMessage(data.error || {{ _('Avainten lataus epäonnistui') | tojson }}, "warning");
           return;
         }
-        const rows = (data.tokens || []).map(t => {
-          const scopes = (t.scopes || []).join(", ") || "-";
-          const exp = t.expires_at ? new Date(t.expires_at).toLocaleString("fi-FI", { hour12: false }) : "—";
-          return `
-            <tr>
-              <td>${t.type}</td>
-              <td>${scopes}</td>
-              <td>${exp}</td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-outline-danger token-revoke" data-id="${t._id}">
-                  <i class="fa-solid fa-trash"></i> {{ _('Peruuta') }}
-                </button>
-              </td>
-            </tr>`;
-        }).join("");
-        tokenList.innerHTML = rows || `<tr><td colspan="4" class="text-center text-muted">{{ _('Ei avaimia vielä') }}</td></tr>`;
+        const tokens = Array.isArray(data.tokens) ? data.tokens : [];
+        if (!tokens.length) {
+          appendEmptyTableRow(tokenList, 4, {{ _('Ei avaimia vielä') | tojson }});
+          tokensLoaded = true;
+          return;
+        }
+
+        const rows = tokens.map(token => {
+          const row = document.createElement('tr');
+          const typeCell = document.createElement('td');
+          const scopesCell = document.createElement('td');
+          const expiryCell = document.createElement('td');
+          const actionsCell = document.createElement('td');
+          const revokeButton = document.createElement('button');
+          const revokeIcon = document.createElement('i');
+
+          typeCell.textContent = String(token.type || '');
+          scopesCell.textContent = Array.isArray(token.scopes) && token.scopes.length
+            ? token.scopes.map(scope => String(scope)).join(', ')
+            : '-';
+          expiryCell.textContent = token.expires_at ? timeFmt(token.expires_at) : '—';
+          actionsCell.className = 'user-data-table__actions';
+          revokeButton.className = 'btn btn-sm btn-outline-danger token-revoke';
+          revokeButton.type = 'button';
+          revokeButton.dataset.id = String(token._id || '');
+          revokeIcon.className = 'fa-solid fa-trash';
+          revokeIcon.setAttribute('aria-hidden', 'true');
+          revokeButton.append(revokeIcon, document.createTextNode(` {{ _('Peruuta') }}`));
+          actionsCell.appendChild(revokeButton);
+          row.append(typeCell, scopesCell, expiryCell, actionsCell);
+          return row;
+        });
+        tokenList.replaceChildren(...rows);
         tokensLoaded = true;
       } catch (err) {
         console.error(err);
@@ -1555,7 +1268,7 @@
           clearTokenMessage();
           loadTokens();
         } else {
-          setTokenMessage(data.message || "Peruutus epäonnistui", "warning");
+          setTokenMessage(data.message || {{ _('Peruutus epäonnistui') | tojson }}, "warning");
         }
       } catch (err) {
         console.error(err);
@@ -1602,7 +1315,7 @@
             setTokenMessage("{{ _('Avain luotu. Tallenna se heti, sitä ei näytetä uudelleen.') }}", "success");
             loadTokens();
           } else {
-            setTokenMessage(data.error || "Avaimen luonti epäonnistui", "warning");
+            setTokenMessage(data.error || {{ _('Avaimen luonti epäonnistui') | tojson }}, "warning");
           }
         } catch (err) {
           console.error(err);
@@ -1620,16 +1333,8 @@
       });
     }
 
-    // load tokens when tab is opened first time
-    $(function () {
-      $("#settings-tabs").on("tabsactivate", function (event, ui) {
-        if (ui.newTab.find("a").attr("href") === "#tab-tokens") {
-          loadStatus();
-        }
-        if (ui.newTab.find("a").attr("href") === "#tab-security") {
-          loadLoginLogs();
-        }
-      });
+    document.getElementById('settings-tabs').addEventListener('settings-tab-activate', event => {
+      if (event.detail.panelId === 'tab-tokens') loadStatus();
     });
   });
 </script>
@@ -1804,30 +1509,37 @@
       const res = await fetch("/users/auth/api/v2/passkeys");
       const data = await res.json();
       if (data.status !== "success") return;
-      passkeysList.innerHTML = "";
+      passkeysList.replaceChildren();
       if (!data.passkeys.length) {
-        passkeysList.innerHTML = '<li class="list-group-item text-muted">' +
-          "{{ _('Ei passkeyjä vielä.') }}" + "</li>";
+        const empty = document.createElement('p');
+        empty.className = 'user-data-list__empty';
+        empty.textContent = {{ _('Ei passkeyjä vielä.') | tojson }};
+        passkeysList.appendChild(empty);
         return;
       }
       data.passkeys.forEach((pk) => {
-        const li = document.createElement("li");
-        li.className = "list-group-item d-flex justify-content-between align-items-center";
-        li.dataset.passkeyId = pk.id;
+        const card = document.createElement("article");
+        card.className = "user-data-card";
+        card.dataset.passkeyId = String(pk.id || '');
 
         const meta = document.createElement("div");
+        meta.className = 'user-data-card__content';
         const name = document.createElement("span");
-        name.className = "fw-semibold me-2";
-        name.textContent = pk.name || "Authenticator";
+        name.className = "user-data-card__title";
+        name.textContent = pk.name || {{ _('Todennuslaite') | tojson }};
         const created = document.createElement("small");
-        created.className = "text-muted";
-        created.textContent = new Date(pk.created_at).toLocaleDateString("fi-FI");
+        created.className = "user-data-card__meta";
+        created.textContent = new Date(pk.created_at).toLocaleDateString(
+          document.documentElement.lang || 'fi'
+        );
         meta.appendChild(name);
         meta.appendChild(created);
 
         const actions = document.createElement("div");
+        actions.className = 'user-data-card__actions';
         const renameBtn = document.createElement("button");
-        renameBtn.className = "btn btn-sm btn-outline-secondary me-1";
+        renameBtn.className = "btn btn-sm btn-outline-secondary";
+        renameBtn.type = 'button';
         renameBtn.textContent = "{{ _('Nimeä') }}";
         renameBtn.onclick = async () => {
           const newName = await requestCredentialName(
@@ -1847,6 +1559,7 @@
         };
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "btn btn-sm btn-danger";
+        deleteBtn.type = 'button';
         deleteBtn.textContent = "{{ _('Poista') }}";
         deleteBtn.onclick = async () => {
           const confirmed = await confirmCredentialRemoval(
@@ -1867,9 +1580,9 @@
         actions.appendChild(renameBtn);
         actions.appendChild(deleteBtn);
 
-        li.appendChild(meta);
-        li.appendChild(actions);
-        passkeysList.appendChild(li);
+        card.appendChild(meta);
+        card.appendChild(actions);
+        passkeysList.appendChild(card);
       });
     } catch (e) {
       console.error("Failed to load passkeys", e);
@@ -1897,12 +1610,8 @@
     }
   });
 
-  $(function () {
-    $("#settings-tabs").on("tabsactivate", function (event, ui) {
-      if (ui.newTab.find("a").attr("href") === "#tab-security") {
-        loadPasskeys();
-      }
-    });
+  document.getElementById('settings-tabs').addEventListener('settings-tab-activate', event => {
+    if (event.detail.panelId === 'tab-security') loadPasskeys();
   });
 
   // Expose the step-up retry wrapper to the earlier-registered password

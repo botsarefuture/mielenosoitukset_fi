@@ -53,6 +53,16 @@
   animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.flash-message[hidden] {
+  display: none;
+}
+
+.flash-message--inline {
+  width: 100%;
+  margin-top: 1.5rem;
+  animation: none;
+}
+
 .flash-message::before {
   content: '';
   position: absolute;

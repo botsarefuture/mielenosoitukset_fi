@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 # Third-party
 from flask import render_template, jsonify, request
+from flask_babel import _
 
 # Local imports
 from . import campaign_bp
@@ -27,15 +28,27 @@ def index():
 def add_volunteer():
     """Handle volunteer signups."""
     data = request.get_json()
-    if not data or "name" not in data or "email" not in data:
-        return jsonify({"success": False, "error": "Name and email are required"}), 400
+    name = (
+        data.get("name", "").strip()
+        if isinstance(data, dict) and isinstance(data.get("name"), str)
+        else ""
+    )
+    email = (
+        data.get("email", "").strip()
+        if isinstance(data, dict) and isinstance(data.get("email"), str)
+        else ""
+    )
+    if not name or not email:
+        return jsonify(
+            {"success": False, "error": _("Nimi ja sähköpostiosoite ovat pakollisia.")}
+        ), 400
 
     token = secrets.token_urlsafe(16)
     expires_at = utcnow() + timedelta(days=1)
 
     volunteer = {
-        "name": data["name"],
-        "email": data["email"],
+        "name": name,
+        "email": email,
         "phone": data.get("phone", ""),
         "city": data.get("city", ""),
         "notes": data.get("notes", ""),

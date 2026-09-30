@@ -13183,6 +13183,14 @@ msgstr "Passkeyta ei löytynyt."
 msgid "Passkey poistettu."
 msgstr "Passkey poistettu."
 
+#: mielenosoitukset_fi/templates/toolbar.html
+msgid "Pienennä työkalupakki"
+msgstr "Pienennä työkalupakki"
+
+#: mielenosoitukset_fi/templates/toolbar.html
+msgid "Avaa työkalupakki"
+msgstr "Avaa työkalupakki"
+
 msgid "Hallinnoi tilisi tietoja, turvallisuutta, profiilia ja API-avaimia yhdessä paikassa."
 msgstr "Hallinnoi tilisi tietoja, turvallisuutta, profiilia ja API-avaimia yhdessä paikassa."
 

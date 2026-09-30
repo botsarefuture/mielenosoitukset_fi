@@ -1548,7 +1548,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:174
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:179
 msgid "Edellinen"
-msgstr ""
+msgstr "Föregående"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:115
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:272
@@ -1562,7 +1562,7 @@ msgstr "Sida"
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:218
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:223
 msgid "Seuraava"
-msgstr ""
+msgstr "Nästa"
 
 #: mielenosoitukset_fi/templates/admin_V2/analytics.html:3
 #: mielenosoitukset_fi/templates/admin_V2/analytics.html:52
@@ -4735,7 +4735,7 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:1857
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:153
 msgid "Vuosi"
-msgstr ""
+msgstr "År"
 
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:1858
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:119
@@ -13110,3 +13110,84 @@ msgstr "Anmälan misslyckades. Försök igen."
 #: mielenosoitukset_fi/templates/kampanja/index.html
 msgid "Yhteys palveluun epäonnistui. Yritä myöhemmin uudelleen."
 msgstr "Det gick inte att ansluta till tjänsten. Försök igen senare."
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Ei otsikkoa"
+msgstr "Ingen titel"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+msgid "tapahtuma"
+msgstr "evenemang"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+msgid "tapahtumaa"
+msgstr "evenemang"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+msgid "Kokeilemme uutta mobiilinäkymää"
+msgstr "Vi testar en ny mobilvy"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+msgid "Jos haluat palata vanhaan näkymään, voit vaihtaa sen alla"
+msgstr "Du kan byta tillbaka till den tidigare vyn nedan"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+msgid "Palaa vanhaan näkymään"
+msgstr "Återgå till den tidigare vyn"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+msgid "Palaa uuteen näkymään"
+msgstr "Återgå till den nya vyn"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Ei tapahtumia tässä kuussa"
+msgstr "Inga evenemang den här månaden"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+#, python-format
+msgid "Kalenteri %(year)s"
+msgstr "Kalender %(year)s"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Edellinen vuosi"
+msgstr "Föregående år"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Seuraava vuosi"
+msgstr "Nästa år"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Tapahtumaa"
+msgstr "Evenemang"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Kuukautta"
+msgstr "Månader"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Näytä kuukausinäkymä"
+msgstr "Visa månadsvy"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Vuosinavigaatio"
+msgstr "Årsnavigering"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Klikkaa nuolia siirtyäksesi edelliseen tai seuraavaan vuoteen."
+msgstr "Använd pilarna för att gå till föregående eller nästa år."
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Kuukausilinkit"
+msgstr "Månadslänkar"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Klikkaa kuukauden nimeä siirtyäksesi kuukausinäkymään."
+msgstr "Välj ett månadsnamn för att öppna månadsvyn."
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Klikkaa mielenosoituksen nimeä siirtyäksesi yksittäisen mielenosoituksen sivulle."
+msgstr "Välj demonstrationens namn för att öppna dess detaljsida."

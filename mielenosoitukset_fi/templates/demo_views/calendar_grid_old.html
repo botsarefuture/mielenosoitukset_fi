@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}{{ month_name }} {{ year }} | Mielenosoitukset.fi{% endblock %}
+
 {% block content %}
 {% if noindex_nofollow %}
 <meta name="robots" content="noindex, nofollow">
@@ -254,21 +256,17 @@
 <!-- Navigation -->
 <div class="calendar-nav">
     <a id="prev-month-link" href="{{ url_for('calendar_month_view', year=prev_year, month=prev_month) }}">←
-        Edellinen</a>
-    <a id="year-view-btn" href="{{ url_for('calendar_year_view', year=year) }}">📅 Vuosi {{ year }}</a>
-    <a id="next-month-link" href="{{ url_for('calendar_month_view', year=next_year, month=next_month) }}">Seuraava →</a>
+        {{ _('Edellinen') }}</a>
+    <a id="year-view-btn" href="{{ url_for('calendar_year_view', year=year) }}">📅 {{ _('Vuosi') }} {{ year }}</a>
+    <a id="next-month-link" href="{{ url_for('calendar_month_view', year=next_year, month=next_month) }}">{{ _('Seuraava') }} →</a>
 </div>
 
 <!-- Desktop: Month Calendar Grid -->
 <table class="calendar-grid">
     <tr>
-        <th>Ma</th>
-        <th>Ti</th>
-        <th>Ke</th>
-        <th>To</th>
-        <th>Pe</th>
-        <th>La</th>
-        <th>Su</th>
+        {% for weekday_name in weekday_names %}
+        <th scope="col">{{ weekday_name }}</th>
+        {% endfor %}
     </tr>
     {% for week in month_days %}
     <tr>
@@ -281,9 +279,9 @@
                 {% for demo in month_demos.get(day) %}
                 <li>
                     <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="demo-cell"
-                        data-title="{{ demo.title|e or 'Ei otsikkoa' }}" data-desc="{{ demo.description|e or '' }}"
+                        data-title="{{ demo.title|e or _('Ei otsikkoa') }}" data-desc="{{ demo.description|e or '' }}"
                         data-img="{{ demo.preview_image|e or demo.img|e }}">
-                        {{ demo.title|e or 'Ei otsikkoa' }}
+                        {{ demo.title|e or _('Ei otsikkoa') }}
                     </a>
                 </li>
                 {% endfor %}
@@ -331,7 +329,7 @@
 <div class="mobile-new-view-switch mb-only" style="text-align:center; margin-bottom:15px;">
     <button id="return-new-btn">
         <i class="fa-solid fa-rotate-right"></i>
-        Palaa uuteen näkymään
+        {{ _('Palaa uuteen näkymään') }}
     </button>
 </div>
 
@@ -347,7 +345,7 @@
 
 <!-- Mobile: List View -->
 <div class="mobile-list-view">
-    {% set day_names = ['Ma', 'Ti', 'Ke', 'To', 'Pe', 'La', 'Su'] %}
+    {% set day_names = weekday_names %}
     {% for week in month_days %}
     {% for day_idx in range(week|length) %}
     {% set day = week[day_idx] %}
@@ -359,13 +357,14 @@
                 <div class="mobile-day-name">{{ day_names[day_idx] }}</div>
             </div>
             <div style="color: var(--pink-primary); font-weight: 600;">
-                {{ month_demos.get(day)|length }} tapahtuma{{ 'a' if month_demos.get(day)|length > 1 else '' }}
+                {% set event_count = month_demos.get(day)|length %}
+                {{ event_count }} {{ _('tapahtuma') if event_count == 1 else _('tapahtumaa') }}
             </div>
         </div>
 
         {% for demo in month_demos.get(day) %}
         <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="mobile-demo-item">
-            <div class="mobile-demo-title">{{ demo.title|e or 'Ei otsikkoa' }}</div>
+            <div class="mobile-demo-title">{{ demo.title|e or _('Ei otsikkoa') }}</div>
             {% if demo.description %}
             <div class="mobile-demo-desc">
                 {{ demo.description[:100]|safe }}
@@ -386,7 +385,7 @@
     {% if not month_demos or month_demos|length == 0 %}
     <div class="mobile-day-card">
         <div class="mobile-empty-day">
-            <p>📅 Ei tapahtumia tässä kuussa</p>
+            <p>📅 {{ _('Ei tapahtumia tässä kuussa') }}</p>
         </div>
     </div>
     {% endif %}

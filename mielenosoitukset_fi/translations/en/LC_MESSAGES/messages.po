@@ -4741,7 +4741,7 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:1857
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:153
 msgid "Vuosi"
-msgstr ""
+msgstr "Year"
 
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:1858
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:119
@@ -13116,3 +13116,84 @@ msgstr "Registration failed. Please try again."
 #: mielenosoitukset_fi/templates/kampanja/index.html
 msgid "Yhteys palveluun epäonnistui. Yritä myöhemmin uudelleen."
 msgstr "Could not connect to the service. Please try again later."
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Ei otsikkoa"
+msgstr "No title"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+msgid "tapahtuma"
+msgstr "event"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+msgid "tapahtumaa"
+msgstr "events"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+msgid "Kokeilemme uutta mobiilinäkymää"
+msgstr "We are testing a new mobile view"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+msgid "Jos haluat palata vanhaan näkymään, voit vaihtaa sen alla"
+msgstr "You can switch back to the previous view below"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid.html
+msgid "Palaa vanhaan näkymään"
+msgstr "Return to the previous view"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+msgid "Palaa uuteen näkymään"
+msgstr "Return to the new view"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_grid_old.html
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Ei tapahtumia tässä kuussa"
+msgstr "No events this month"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+#, python-format
+msgid "Kalenteri %(year)s"
+msgstr "Calendar %(year)s"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Edellinen vuosi"
+msgstr "Previous year"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Seuraava vuosi"
+msgstr "Next year"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Tapahtumaa"
+msgstr "Events"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Kuukautta"
+msgstr "Months"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Näytä kuukausinäkymä"
+msgstr "View month"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Vuosinavigaatio"
+msgstr "Year navigation"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Klikkaa nuolia siirtyäksesi edelliseen tai seuraavaan vuoteen."
+msgstr "Use the arrows to move to the previous or next year."
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Kuukausilinkit"
+msgstr "Month links"
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Klikkaa kuukauden nimeä siirtyäksesi kuukausinäkymään."
+msgstr "Select a month name to open its month view."
+
+#: mielenosoitukset_fi/templates/demo_views/calendar_year.html
+msgid "Klikkaa mielenosoituksen nimeä siirtyäksesi yksittäisen mielenosoituksen sivulle."
+msgstr "Select a demonstration name to open its detail page."

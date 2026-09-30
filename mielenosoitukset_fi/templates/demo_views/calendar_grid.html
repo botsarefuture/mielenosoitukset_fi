@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}{{ month_name }} {{ year }} | Mielenosoitukset.fi{% endblock %}
+
 {% block content %}
 
 {% if noindex_nofollow %}
@@ -285,22 +287,18 @@
 <!-- Navigation -->
 <div class="calendar-nav">
     <a id="prev-month-link" href="{{ url_for('calendar_month_view', year=prev_year, month=prev_month) }}">←
-        Edellinen</a>
-    <a id="year-view-btn" href="{{ url_for('calendar_year_view', year=year) }}">📅 Vuosi {{ year }}</a>
-    <a id="next-month-link" href="{{ url_for('calendar_month_view', year=next_year, month=next_month) }}">Seuraava →</a>
+        {{ _('Edellinen') }}</a>
+    <a id="year-view-btn" href="{{ url_for('calendar_year_view', year=year) }}">📅 {{ _('Vuosi') }} {{ year }}</a>
+    <a id="next-month-link" href="{{ url_for('calendar_month_view', year=next_year, month=next_month) }}">{{ _('Seuraava') }} →</a>
 </div>
 
 
 <!-- Desktop: Month Calendar Grid -->
 <table class="calendar-grid">
     <tr>
-        <th>Ma</th>
-        <th>Ti</th>
-        <th>Ke</th>
-        <th>To</th>
-        <th>Pe</th>
-        <th>La</th>
-        <th>Su</th>
+        {% for weekday_name in weekday_names %}
+        <th scope="col">{{ weekday_name }}</th>
+        {% endfor %}
     </tr>
     {% for week in month_days %}
     <tr>
@@ -313,9 +311,9 @@
                 {% for demo in month_demos.get(day) %}
                 <li>
                     <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="demo-cell"
-                        data-title="{{ demo.title|e or 'Ei otsikkoa' }}" data-desc="{{ demo.description|e or '' }}"
+                        data-title="{{ demo.title|e or _('Ei otsikkoa') }}" data-desc="{{ demo.description|e or '' }}"
                         data-img="{{ demo.preview_image|e or demo.img|e }}">
-                        {{ demo.title|e or 'Ei otsikkoa' }}
+                        {{ demo.title|e or _('Ei otsikkoa') }}
                     </a>
                 </li>
                 {% endfor %}
@@ -328,23 +326,6 @@
     {% endfor %}
 </table>
 
-
-{# <table class="calendar-grid">
-    <thead>
-        <tr>
-            <th>Ma</th>
-            <th>Ti</th>
-            <th>Ke</th>
-            <th>To</th>
-            <th>Pe</th>
-            <th>La</th>
-            <th>Su</th>
-        </tr>
-    </thead>
-    <tbody id="calendar-body"></tbody>
-</table>
-
-#}
 
 <template id="day-card">
     <div class="mobile-day-card">
@@ -370,7 +351,7 @@
 
 <template id="single-day-demo">
     <a data-href="{{ url_for('demonstration_detail', demo_id="") }}" class="mobile-demo-item">
-        <div class="mobile-demo-title">Ei otsikkoa</div> <!-- demo title here-->
+        <div class="mobile-demo-title">{{ _('Ei otsikkoa') }}</div> <!-- demo title here-->
 
         <div class="mobile-demo-desc" style="display: none;"> <!-- display only if there is a description -->
             <!-- if lenght over 100 chars, limit to 100, and include ... in hte end-->
@@ -596,7 +577,7 @@
 </style>
 
 <div class="to-old mb-only" id="to-old-banner">
-  <button class="dismiss-btn" id="dismiss-btn" aria-label="Dismiss">
+  <button class="dismiss-btn" id="dismiss-btn" aria-label="{{ _('Sulje') }}">
     <i class="fa-solid fa-times"></i>
   </button>
   
@@ -606,16 +587,16 @@
     </div>
     
     <div class="banner-title">
-      Kokeilemme uutta mobiilinäkymää
+      {{ _('Kokeilemme uutta mobiilinäkymää') }}
     </div>
     
     <div class="banner-subtitle">
-      Jos haluat palata vanhaan näkymään, voit vaihtaa sen alla 👇
+      {{ _('Jos haluat palata vanhaan näkymään, voit vaihtaa sen alla') }} 👇
     </div>
     
     <button id="return-old-btn">
       <i class="fa-solid fa-rotate-left"></i>
-      Palaa vanhaan näkymään
+      {{ _('Palaa vanhaan näkymään') }}
     </button>
   </div>
 </div>
@@ -665,61 +646,17 @@
 </div>
 
 
-{#
-
-<!-- Mobile: List View -->
-<div class="mobile-list-view">
-    <h3>Autorender</h3>
-    {% set day_names = ['Ma', 'Ti', 'Ke', 'To', 'Pe', 'La', 'Su'] %}
-    {% for week in month_days %}
-    {% for day_idx in range(week|length) %}
-    {% set day = week[day_idx] %}
-    {% if day != 0 and month_demos.get(day) %}
-    <div class="mobile-day-card">
-        <div class="mobile-day-header">
-            <div>
-                <div class="mobile-day-number">{{ day }}</div>
-                <div class="mobile-day-name">{{ day_names[day_idx] }}</div>
-            </div>
-            <div style="color: var(--pink-primary); font-weight: 600;">
-                {{ month_demos.get(day)|length }} tapahtuma{{ 'a' if month_demos.get(day)|length > 1 else '' }}
-            </div>
-        </div>
-
-        {% for demo in month_demos.get(day) %}
-        <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="mobile-demo-item">
-            <div class="mobile-demo-title">{{ demo.title|e or 'Ei otsikkoa' }}</div>
-            {% if demo.description %}
-            <div class="mobile-demo-desc">
-                {{ demo.description[:100]|safe }}
-                {% if demo.description|length > 100 %}...{% endif %}
-            </div>
-            {% endif %}
-            {% if demo.preview_image or demo.img %}
-            <img src="{{ demo.preview_image|e or demo.img|e }}" alt="{{ demo.title|e }}" class="mobile-demo-image">
-            {% endif %}
-        </a>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endfor %}
-    {% endfor %}
-
-    <!-- Empty state for mobile if no demos -->
-    {% if not month_demos or month_demos|length == 0 %}
-    <div class="mobile-day-card">
-        <div class="mobile-empty-day">
-            <p>📅 Ei tapahtumia tässä kuussa</p>
-        </div>
-    </div>
-    {% endif %}
-</div>
-#}
-
 <div id="demo-preview" aria-hidden="true"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script type="module">
+
+    const calendarI18n = Object.freeze({
+        locale: {{ calendar_locale | tojson }},
+        untitled: {{ _('Ei otsikkoa') | tojson }},
+        eventOne: {{ _('tapahtuma') | tojson }},
+        eventMany: {{ _('tapahtumaa') | tojson }},
+    });
 
     var mb_list_view = document.querySelector("#mb-list-view");
     let maxLen = 100;
@@ -808,7 +745,7 @@
                     const li = document.createElement("li");
                     const a = document.createElement("a");
                     a.href = `/demonstrations/${demo._id}`;
-                    a.textContent = demo.title || "Ei otsikkoa";
+                    a.textContent = demo.title || calendarI18n.untitled;
                     a.className = "demo-cell";
                     ul.appendChild(a);
                 });
@@ -826,18 +763,12 @@
     }
 
 
-    function ISO8001toFinnish(date) {
+    function formatCalendarDate(date) {
         const a = new Date(date);
-        const finnish_format = a.toLocaleDateString("FI-fi");
-
-        const num = a.getDay();
-
-        const dayNames = ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"];
-
-
-
-
-        return { date: finnish_format, dayName: dayNames[num] };
+        return {
+            date: a.toLocaleDateString(calendarI18n.locale),
+            dayName: a.toLocaleDateString(calendarI18n.locale, { weekday: "short" }),
+        };
 
     }
     async function fetchDemos({ page = 1, perPage = 10, ...extraParams } = {}) {
@@ -881,7 +812,7 @@
     function renderDay(demos, date) {
 
 
-        const { date: _date, dayName: _date_name } = ISO8001toFinnish(date);
+        const { date: _date, dayName: _date_name } = formatCalendarDate(date);
 
         const _date_template = document.getElementById("day-card");
 
@@ -901,7 +832,8 @@
 
         date_name.textContent = _date_name;
 
-        const event_count_text = `${demos.length} ${demos.length > 1 ? "tapahtumaa" : "tapahtuma"}`;
+        const eventLabel = demos.length === 1 ? calendarI18n.eventOne : calendarI18n.eventMany;
+        const event_count_text = `${demos.length} ${eventLabel}`;
 
 
         event_count.textContent = event_count_text;
@@ -920,7 +852,7 @@
 
             const title = link.querySelector(".mobile-demo-title");
 
-            title.textContent = demo.title;
+            title.textContent = demo.title || calendarI18n.untitled;
 
 
             if (demo.description) {

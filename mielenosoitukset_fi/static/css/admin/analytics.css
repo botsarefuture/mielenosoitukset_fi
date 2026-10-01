@@ -206,6 +206,32 @@ html.dark {
   overflow-wrap: anywhere;
 }
 
+/* Summary cards carry two metrics each (visitors and pageviews). Both are
+   labelled so the two numbers are never confused for each other. */
+.admin-site-analytics__metric {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.admin-site-analytics__metric + .admin-site-analytics__metric {
+  margin-top: 0.15rem;
+}
+
+.admin-site-analytics__metric-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+  color: var(--admin-workspace-muted, inherit);
+}
+
+/* An em dash marks a period that predates visitor tracking. */
+.admin-site-analytics__metric-unavailable {
+  color: var(--admin-workspace-muted, inherit);
+  font-weight: 400;
+}
+
 /* Compact label+value rows for breakdown cards: label left, count right,
    always on one visible line — no horizontal scrolling inside the card. */
 .admin-site-analytics__stats {

@@ -561,7 +561,7 @@ time (datetime) | iso string, read (bool)
   });
 </script>
 
-{% if current_user.role != "user" and current_user.is_authenticated %}
+{% if current_user.is_authenticated %}
 {% include "toolbar.html" %}
 {% endif %}
 

@@ -1,15 +1,24 @@
-<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css', v='20260930-public-toolbox-2') }}">
-{% if organization %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
-<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
-{% endif %}
-{% import 'admin_V2/organizations/macros.html' as org_macros %}
-{% if demo or org %}
+{% set demo_permissions = toolbox_demo_permissions|default({}) %}
+{% set org_permissions = toolbox_org_permissions|default({}) %}
+{% set can_manage_demo = demo and (
+    demo_permissions.get("VIEW_DEMO")
+    or demo_permissions.get("EDIT_DEMO")
+    or demo_permissions.get("DELETE_DEMO")
+    or demo_permissions.get("VIEW_ANALYTICS")
+) %}
+{% set can_manage_org = org and (
+    org_permissions.get("VIEW_ORGANIZATION")
+    or org_permissions.get("EDIT_ORGANIZATION")
+    or org_permissions.get("DELETE_ORGANIZATION")
+    or org_permissions.get("INVITE_TO_ORGANIZATION")
+) %}
+{% if can_manage_demo or can_manage_org %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css', v='20261001-public-toolbox-2') }}">
 
 <aside id="toolbox-sidebar" class="public-toolbox" aria-label="{{ _('Työkalupakki') }}">
     <div class="public-toolbox__card">
         <div class="public-toolbox__header">
-            <h6 class="mb-0"><i class="fa-solid fa-toolbox me-2"></i>{{ _('Työkalupakki') }}</h6>
+            <h2 class="public-toolbox__title"><i class="fa-solid fa-toolbox" aria-hidden="true"></i>{{ _('Työkalupakki') }}</h2>
             <button class="btn btn-sm collapse-toggle" type="button" aria-expanded="true"
                 aria-controls="public-toolbox-actions" data-collapse-label="{{ _('Pienennä työkalupakki') }}"
                 data-expand-label="{{ _('Avaa työkalupakki') }}" aria-label="{{ _('Pienennä työkalupakki') }}"
@@ -19,123 +28,56 @@
         </div>
 
         <div class="public-toolbox__body" id="public-toolbox-actions">
-            {% if demo %}
-            <div class="d-grid gap-2 mb-2">
-                {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
-                <button class="btn btn-success btn-sm" type="button" data-js-only hidden
-                    onclick='confirmAction(() => acceptDemo({{ demo["_id"] | string | tojson }}), {{ _("Hyväksytkö tämän mielenosoituksen?") | tojson }}, "success")'>
-                    <i class="fa-solid fa-check me-1"></i>{{ _('Hyväksy') }}
-                </button>
-                <button class="btn btn-danger btn-sm" type="button" data-js-only hidden
-                    onclick='confirmAction(() => rejectDemo({{ demo["_id"] | string | tojson }}), {{ _("Hylkää tämä mielenosoitus?") | tojson }}, "danger")'>
-                    <i class="fa-solid fa-times me-1"></i>{{ _('Hylkää') }}
-                </button>
-                {% endif %}
-
-                {% if current_user.has_permission("EDIT_DEMO") %}
-                <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo['_id']) }}" class="btn btn-warning btn-sm">
-                    <i class="fas fa-edit me-1"></i>{{ _('Muokkaa') }}
+            {% if can_manage_demo %}
+            <nav class="public-toolbox__actions" aria-label="{{ _('Toiminnot') }}">
+                {% if demo_permissions.get("VIEW_DEMO") %}
+                <a href="{{ url_for('admin_demo.demo_command_center', demo_id=demo['_id']) }}" class="public-toolbox__action public-toolbox__action--primary">
+                    <i class="fa-solid fa-sliders" aria-hidden="true"></i>{{ _('Avaa hallintapaneelissa') }}
                 </a>
                 {% endif %}
-
-                {% if current_user.has_permission("VIEW_DEMO") %}
-                <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="btn btn-info btn-sm">
-                    <i class="fa-solid fa-eye me-1"></i>{{ _('Katsele') }}
+                {% if demo_permissions.get("EDIT_DEMO") %}
+                <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo['_id']) }}" class="public-toolbox__action">
+                    <i class="fas fa-edit" aria-hidden="true"></i>{{ _('Muokkaa') }}
                 </a>
-                <button class="btn btn-secondary btn-sm" type="button" data-js-only hidden
-                    onclick='fetchDemoInfo({{ demo["_id"] | string | tojson }})'>
-                    <i class="fa-solid fa-info me-1"></i>{{ _('Lisätietoja') }}
-                </button>
                 {% endif %}
-
-                {% if current_user.has_permission("DELETE_DEMO") %}
-                <button class="btn btn-danger btn-sm" type="button" data-js-only hidden
-                    onclick='confirmAction(() => openModal(event, {{ demo.title | tojson }}, {{ demo["_id"] | string | tojson }}), {{ _("Haluatko varmasti poistaa tämän mielenosoituksen? Tämä ei ole palautettavissa!") | tojson }}, "danger")'>
-                    <i class="fas fa-trash-alt me-1"></i>{{ _('Poista') }}
-                </button>
-                {% endif %}
-
-                {% if current_user.has_permission("VIEW_ANALYTICS") %}
-                <a href="{{ url_for('admin.demo_analytics', demo_id=demo['_id']) }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-chart-line me-1"></i>{{ _('Tilastot') }}
+                {% if demo_permissions.get("VIEW_ANALYTICS") %}
+                <a href="{{ url_for('admin.demo_analytics', demo_id=demo['_id']) }}" class="public-toolbox__action">
+                    <i class="fas fa-chart-line" aria-hidden="true"></i>{{ _('Tilastot') }}
                 </a>
-                <div id="stats-content" class="mt-1 small"></div>
                 {% endif %}
-            </div>
+                {% if demo_permissions.get("DELETE_DEMO") %}
+                <a href="{{ url_for('admin_demo.confirm_delete_demo', demo_id=demo['_id']) }}" class="public-toolbox__action public-toolbox__action--danger">
+                    <i class="fas fa-trash-alt" aria-hidden="true"></i>{{ _('Poista') }}
+                </a>
+                {% endif %}
+            </nav>
             {% endif %}
 
-            {% if org %}
-            <div class="d-grid gap-2 mb-2">
-                {% if current_user.has_permission("EDIT_ORGANIZATION") %}
+            {% if can_manage_org %}
+            <nav class="public-toolbox__actions" aria-label="{{ _('Toiminnot') }}">
+                {% if org_permissions.get("VIEW_ORGANIZATION") or org_permissions.get("INVITE_TO_ORGANIZATION") %}
+                <a href="{{ url_for('admin_org.view_organization', org_id=org['_id']) }}" class="public-toolbox__action public-toolbox__action--primary">
+                    <i class="fa-solid fa-chart-simple" aria-hidden="true"></i>{{ _('Yhteenveto') }}
+                </a>
+                {% endif %}
+                {% if org_permissions.get("EDIT_ORGANIZATION") %}
                 <a href="{{ url_for('admin_org.edit_organization', org_id=org['_id']) }}"
-                    class="btn btn-warning btn-sm">
-                    <i class="fas fa-edit me-1"></i>{{ _('Muokkaa') }}
+                    class="public-toolbox__action">
+                    <i class="fas fa-edit" aria-hidden="true"></i>{{ _('Muokkaa') }}
                 </a>
                 {% endif %}
-
-                {% if current_user.has_permission("VIEW_ORGANIZATION") %}
-                <a href="{{ url_for('org', org_id=org['_id']) }}" class="btn btn-info btn-sm">
-                    <i class="fa-solid fa-eye me-1"></i>{{ _('Katsele') }}
+                {% if org_permissions.get("DELETE_ORGANIZATION") %}
+                <a href="{{ url_for('admin_org.confirm_delete_organization', org_id=org['_id']) }}" class="public-toolbox__action public-toolbox__action--danger">
+                    <i class="fas fa-trash-alt" aria-hidden="true"></i>{{ _('Poista') }}
                 </a>
                 {% endif %}
-
-                {% if current_user.has_permission("DELETE_ORGANIZATION") %}
-                <button class="btn btn-danger btn-sm" type="button" data-js-only hidden
-                    onclick='confirmAction(() => openModal(event, {{ org.name | tojson }}, {{ org["_id"] | string | tojson }}), {{ _("Haluatko varmasti poistaa tämän organisaation? Tämä ei ole palautettavissa!") | tojson }}, "danger")'>
-                    <i class="fas fa-trash-alt me-1"></i>{{ _('Poista') }}
-                </button>
-                {% endif %}
-
-                {% if current_user.has_permission("INVITE_TO_ORGANIZATION") %}
-                <button class="btn btn-success btn-sm" type="button" data-js-only hidden data-bs-toggle="modal" data-bs-target="#inviteModal">
-                    <i class="fas fa-user-plus me-1"></i>{{ _('Kutsu käyttäjiä') }}
-                </button>
-                <!-- script to add the invite modal right before backdrop -->
-                <script>
-                    document.addEventListener("DOMContentLoaded", () => {
-                        html_content = `
-                            {{ org_macros.invite_modal(org) }}
-                        `;
-                        document.body.insertAdjacentHTML("beforeend", html_content);
-                        // we want it before the backdrop
-                    });
-                </script>
-
-                {% endif %}
-
-                {% if current_user.has_permission("VIEW_ORGANIZATION") %}
-                <button class="btn btn-secondary btn-sm" type="button" data-js-only hidden
-                    onclick='confirmAction(() => leaveOrganization({{ org["_id"] | string | tojson }}), {{ _("Haluatko varmasti poistua organisaatiosta?") | tojson }}, "danger")'>
-                    <i class="fas fa-sign-out-alt me-1"></i>{{ _('Poistu organisaatiosta') }}
-                </button>
-                {% endif %}
-            </div>
+            </nav>
             {% endif %}
         </div>
 
     </div>
 
 </aside>
-
-<div class="modal fade user-modal" id="toolbarConfirmModal" tabindex="-1" aria-hidden="true"
-    aria-labelledby="toolbarConfirmTitle" aria-describedby="toolbar-confirm-message">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title fs-5" id="toolbarConfirmTitle">{{ _('Vahvista toiminto') }}</h2>
-                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
-            </div>
-            <div class="modal-body">
-                <p id="toolbar-confirm-message"></p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline-secondary" id="toolbar-confirm-cancel" type="button"
-                    data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
-                <button class="btn btn-primary" id="toolbar-confirm-submit" type="button">{{ _('Vahvista') }}</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script>
     function setToolboxCollapsed(collapsed) {
@@ -157,8 +99,8 @@
         setToolboxCollapsed(!sidebar.classList.contains('collapsed'));
     }
 
-    // Controls that only work through inline handlers or Bootstrap stay hidden in
-    // the no-script fallback; reveal them now that the handlers exist.
+    // The collapse control only works through its inline handler, so it stays
+    // hidden in the no-script fallback; reveal it now that the handler exists.
     document
         .getElementById('toolbox-sidebar')
         .querySelectorAll('[data-js-only]')
@@ -170,77 +112,5 @@
     // enhanced control as soon as this script executes.
     setToolboxCollapsed(true);
 
-    const toolbarConfirmElement = document.getElementById('toolbarConfirmModal');
-    const toolbarConfirmMessage = document.getElementById('toolbar-confirm-message');
-    const toolbarConfirmCancel = document.getElementById('toolbar-confirm-cancel');
-    const toolbarConfirmSubmit = document.getElementById('toolbar-confirm-submit');
-    let toolbarPendingAction = null;
-    let toolbarActionApproved = false;
-    let toolbarReturnFocus = null;
-
-    function getToolbarConfirmModal() {
-        return bootstrap.Modal.getOrCreateInstance(toolbarConfirmElement);
-    }
-
-    function confirmAction(callback, message, tone = 'primary') {
-        toolbarPendingAction = typeof callback === 'function' ? callback : null;
-        toolbarActionApproved = false;
-        toolbarReturnFocus = document.activeElement;
-        toolbarConfirmMessage.textContent = String(message || '');
-        const safeTone = tone === 'danger' || tone === 'success' ? tone : 'primary';
-        toolbarConfirmSubmit.className = `btn btn-${safeTone}`;
-        getToolbarConfirmModal().show();
-    }
-
-    toolbarConfirmSubmit.addEventListener('click', () => {
-        toolbarActionApproved = true;
-        getToolbarConfirmModal().hide();
-    });
-
-    toolbarConfirmElement.addEventListener('shown.bs.modal', () => {
-        toolbarConfirmCancel.focus();
-    });
-
-    toolbarConfirmElement.addEventListener('hidden.bs.modal', () => {
-        const action = toolbarPendingAction;
-        const approved = toolbarActionApproved;
-        const returnFocus = toolbarReturnFocus;
-        toolbarPendingAction = null;
-        toolbarActionApproved = false;
-        toolbarReturnFocus = null;
-        if (approved && action) {
-            action();
-        } else if (returnFocus && returnFocus.isConnected) {
-            returnFocus.focus();
-        }
-    });
-
-    {% if demo %}
-    document.addEventListener("DOMContentLoaded", () => {
-        fetch(`/api/demo/{{ demo['_id'] }}/stats`)
-            .then(res => res.json())
-            .then(data => {
-                const container = document.getElementById('stats-content');
-                const createStat = (label, value, iconClass = null) => {
-                    const row = document.createElement('p');
-                    const heading = document.createElement('strong');
-                    if (iconClass) {
-                        const icon = document.createElement('i');
-                        icon.className = iconClass;
-                        icon.setAttribute('aria-hidden', 'true');
-                        heading.append(icon, document.createTextNode(' '));
-                    }
-                    heading.append(document.createTextNode(label));
-                    row.append(heading, document.createTextNode(` ${String(value ?? '—')}`));
-                    return row;
-                };
-                container.replaceChildren(
-                    createStat({{ _('Näyttökerrat:') | tojson }}, data.views, 'fa-solid fa-eye'),
-                    createStat({{ _('Osallistujat:') | tojson }}, data.participants)
-                );
-            })
-            .catch(console.error);
-    });
-    {% endif %}
 </script>
 {% endif %}

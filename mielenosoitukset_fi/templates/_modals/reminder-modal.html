@@ -1,18 +1,19 @@
 {% macro render_reminder_modal(demo) %}
-<div class="modal fade" id="reminder-modal" tabindex="-1" aria-labelledby="reminderModalLabel" aria-hidden="true">
+<div class="modal fade user-modal" id="reminder-modal" tabindex="-1" aria-labelledby="reminderModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content shadow-lg border-0 rounded-3">
       <div class="modal-header">
         <h5 class="modal-title fw-bold" id="reminderModalLabel">
           <i class="fas fa-bell me-2 text-primary"></i> {{ _('Tilaa muistutus sähköpostiisi') }}
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
       </div>
 
       <div class="modal-body">
         <form id="reminder-form" method="POST"
               action="{{ url_for('subscribe_reminder', demo_id=demo['_id']) }}"
-              class="d-flex flex-column gap-3">
+              class="user-form d-flex flex-column gap-3">
+          <label class="form-label" for="reminder-email">{{ _('Sähköpostiosoite') }}</label>
           <input type="email" name="user_email" id="reminder-email"
                  class="form-control"
                  placeholder="{{ _('Sähköpostiosoite') }}" required>
@@ -23,7 +24,10 @@
           </button>
         </form>
         
-        <div id="reminder-result" class="mt-3 small"></div>
+        <div id="reminder-result" class="user-form-feedback" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" hidden>
+          <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+          <p id="reminder-result-text"></p>
+        </div>
       </div>
     </div>
   </div>
@@ -33,12 +37,36 @@
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("reminder-form");
   const result = document.getElementById("reminder-result");
+  const resultText = document.getElementById("reminder-result-text");
+  const resultIcon = result.querySelector("i");
   const btn = form.querySelector("button");
   const btnText = btn.querySelector(".btn-text");
   const spinner = document.getElementById("reminder-loading");
   const emailInput = document.getElementById("reminder-email");
   const modalEl = document.getElementById("reminder-modal");
-  const bootstrapModal = new bootstrap.Modal(modalEl);
+  const bootstrapModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  let closeTimer = null;
+
+  function setFeedback(tone, message, countdown = null) {
+    result.classList.remove("user-form-feedback--success", "user-form-feedback--error");
+    result.classList.add(`user-form-feedback--${tone}`);
+    resultIcon.className = tone === "success"
+      ? "fa-solid fa-circle-check"
+      : "fa-solid fa-circle-exclamation";
+    const suffix = countdown === null ? "" : ` (${countdown})`;
+    resultText.textContent = `${String(message || "")}${suffix}`;
+    result.hidden = false;
+  }
+
+  function resetFeedback() {
+    if (closeTimer) window.clearInterval(closeTimer);
+    closeTimer = null;
+    result.hidden = true;
+    resultText.textContent = "";
+    btn.disabled = false;
+    btn.removeAttribute("aria-busy");
+    spinner.classList.add("d-none");
+  }
 
   // 🔮 Auto-prefill from localStorage
   try {
@@ -55,8 +83,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    result.textContent = "";
+    resetFeedback();
     btn.disabled = true;
+    btn.setAttribute("aria-busy", "true");
     spinner.classList.remove("d-none");
 
     const formData = new FormData(form);
@@ -67,26 +96,31 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data.status === "OK") {
         form.reset();
         let countdown = 3;
-        result.innerHTML = `<div class="alert alert-success">${data.message} (${countdown})</div>`;
+        setFeedback("success", data.message, countdown);
         
-        const interval = setInterval(() => {
+        closeTimer = window.setInterval(() => {
           countdown--;
-          result.innerHTML = `<div class="alert alert-success">${data.message} (${countdown})</div>`;
+          setFeedback("success", data.message, countdown);
           if (countdown <= 0) {
-            clearInterval(interval);
+            window.clearInterval(closeTimer);
+            closeTimer = null;
             bootstrapModal.hide();
           }
         }, 1000);
       } else {
-        result.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+        setFeedback("error", data.message);
       }
     } catch {
-      result.innerHTML = `<div class="alert alert-danger">{{ _('Virhe tilauksessa. Yritä uudelleen.') }}</div>`;
+      setFeedback("error", {{ _('Virhe tilauksessa. Yritä uudelleen.') | tojson }});
     } finally {
       btn.disabled = false;
+      btn.removeAttribute("aria-busy");
       spinner.classList.add("d-none");
     }
   });
+
+  modalEl.addEventListener("shown.bs.modal", () => emailInput.focus());
+  modalEl.addEventListener("hidden.bs.modal", resetFeedback);
 });
 </script>
 {% endmacro %}

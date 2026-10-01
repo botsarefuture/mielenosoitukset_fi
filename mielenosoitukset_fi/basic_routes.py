@@ -3728,7 +3728,7 @@ def init_routes(app):
         user_agent = request.headers.get("User-Agent", "")
 
         if not user_email:
-            return jsonify({"status": "ERROR", "message": "Sähköpostiosoite vaaditaan."})
+            return jsonify({"status": "ERROR", "message": _("Sähköpostiosoite vaaditaan.")})
 
         if not is_valid_email(user_email):
             report_malicious(
@@ -3738,7 +3738,7 @@ def init_routes(app):
                 demo_id=demo_id,
                 user_agent=user_agent
             )
-            return jsonify({"status": "ERROR", "message": "Sähköpostiosoite ei ole kelvollinen."})
+            return jsonify({"status": "ERROR", "message": _("Sähköpostiosoite ei ole kelvollinen.")})
 
         reminders_collection = mongo["demo_reminders"]
 
@@ -3748,7 +3748,7 @@ def init_routes(app):
             "user_email": user_email
         })
         if existing:
-            return jsonify({"status": "OK", "message": "Olet jo tilannut muistutuksen tälle mielenosoitukselle."})
+            return jsonify({"status": "OK", "message": _("Olet jo tilannut muistutuksen tälle mielenosoitukselle.")})
 
         # Rate limit by IP (max 5 per hour)
         one_hour_ago = utcnow() - timedelta(hours=1)
@@ -3764,7 +3764,7 @@ def init_routes(app):
                 demo_id=demo_id,
                 user_agent=user_agent
             )
-            return jsonify({"status": "ERROR", "message": "Liian monta pyyntöä tunnin sisällä, yritä myöhemmin."})
+            return jsonify({"status": "ERROR", "message": _("Liian monta pyyntöä tunnin sisällä, yritä myöhemmin.")})
 
         # Insert reminder
         reminders_collection.insert_one({
@@ -3776,7 +3776,7 @@ def init_routes(app):
         })
         record_event_for_request("reminder_subscribe", resource_id=str(demo_id))
 
-        return jsonify({"status": "OK", "message": "Muistutus tilattu onnistuneesti!"})
+        return jsonify({"status": "OK", "message": _("Muistutus tilattu onnistuneesti!")})
 
     def _resolve_recurring_follow_id(raw_demo_id):
         """Return the canonical recurring parent ID for follow actions."""

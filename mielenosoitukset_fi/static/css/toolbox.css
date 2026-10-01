@@ -9,13 +9,17 @@
     position: fixed;
     top: 9rem;
     right: 1rem;
+    max-height: calc(100dvh - 10rem);
     z-index: 1040;
     width: min(17.5rem, calc(100vw - 2rem));
     color: var(--product-text);
 }
 
 .public-toolbox__card {
+    display: flex;
+    max-height: inherit;
     overflow: hidden;
+    flex-direction: column;
     background: var(--product-surface);
     border: 1px solid var(--product-border);
     border-radius: 1rem;
@@ -33,7 +37,10 @@
     background: var(--product-action-bg);
 }
 
-.public-toolbox__header h6 {
+.public-toolbox__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
     min-width: 0;
     margin: 0;
     color: inherit;
@@ -63,21 +70,29 @@
 
 .public-toolbox .collapse-toggle:focus-visible,
 .public-toolbox__body :is(a, button):focus-visible {
-    outline: 3px solid var(--product-primary-strong);
+    outline: 3px solid var(--product-primary);
     outline-offset: 2px;
 }
 
+.public-toolbox .collapse-toggle:focus-visible {
+    outline-color: var(--product-on-action);
+}
+
 .public-toolbox__body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 0.85rem;
     background: var(--product-surface);
 }
 
-.public-toolbox__body .d-grid {
+.public-toolbox__actions {
     display: grid;
     gap: 0.5rem;
 }
 
-.public-toolbox__body[hidden] {
+.public-toolbox__body[hidden],
+.public-toolbox [data-js-only][hidden] {
     display: none;
 }
 
@@ -85,10 +100,10 @@
     display: none;
 }
 
-.public-toolbox__body .btn {
+.public-toolbox__action {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 0.45rem;
     min-height: 2.75rem;
     padding: 0.6rem 0.8rem;
@@ -102,60 +117,41 @@
     white-space: normal;
 }
 
-.public-toolbox__body .btn:hover {
+.public-toolbox__action i {
+    flex: 0 0 1.15rem;
+    width: 1.15rem;
+    text-align: center;
+}
+
+.public-toolbox__action:hover {
     color: var(--product-primary-strong);
     background: var(--product-primary-soft);
     border-color: var(--product-primary);
 }
 
-.public-toolbox__body .btn-primary {
+.public-toolbox__action--primary {
     color: var(--product-on-action);
     background: var(--product-action-bg);
     border-color: var(--product-action-bg);
 }
 
-.public-toolbox__body .btn-primary:hover {
+.public-toolbox__action--primary:hover {
     color: var(--product-on-action);
     background: var(--product-action-hover);
     border-color: var(--product-action-hover);
 }
 
-.public-toolbox__body .btn-success {
-    color: var(--product-success);
-    background: var(--product-success-soft);
-    border-color: var(--product-success);
-}
-
-.public-toolbox__body .btn-danger {
+.public-toolbox__action--danger {
+    margin-top: 0.25rem;
     color: var(--product-danger);
     background: var(--product-danger-soft);
     border-color: var(--product-danger);
 }
 
-.public-toolbox__body .btn-warning {
-    color: var(--product-accent-strong);
-    background: var(--product-accent-soft);
-    border-color: var(--product-accent-strong);
-}
-
-.public-toolbox__body #stats-content {
-    padding: 0.6rem 0.7rem;
-    color: var(--product-text-muted);
-    background: var(--product-surface-muted);
-    border: 1px solid var(--product-border);
-    border-radius: 0.65rem;
-}
-
-.public-toolbox__body #stats-content:empty {
-    display: none;
-}
-
-.public-toolbox__body #stats-content p {
-    margin: 0;
-}
-
-.public-toolbox__body #stats-content p + p {
-    margin-top: 0.35rem;
+.public-toolbox__action--danger:hover {
+    color: var(--product-danger);
+    background: color-mix(in srgb, var(--product-danger-soft) 75%, var(--product-danger) 25%);
+    border-color: var(--product-danger);
 }
 
 .public-toolbox.collapsed {
@@ -167,7 +163,7 @@
     padding: 0.5rem;
 }
 
-.public-toolbox.collapsed .public-toolbox__header h6 {
+.public-toolbox.collapsed .public-toolbox__title {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -183,6 +179,7 @@
     .public-toolbox {
         top: 8.5rem;
         right: 0.75rem;
+        max-height: calc(100dvh - 9.25rem);
         width: min(17.5rem, calc(100vw - 1.5rem));
     }
 }

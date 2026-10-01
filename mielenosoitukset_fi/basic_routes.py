@@ -46,7 +46,11 @@ from mielenosoitukset_fi.utils.site_analytics import (
     record_beacon_event,
     record_event_for_request,
 )
-from mielenosoitukset_fi.utils.wrappers import permission_required, depracated_endpoint
+from mielenosoitukset_fi.utils.wrappers import (
+    depracated_endpoint,
+    has_demo_permission,
+    permission_required,
+)
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.utils.request_ip import get_client_ip
@@ -3056,6 +3060,19 @@ def init_routes(app):
                 default_demo_language=default_demo_language,
                 available_demo_languages=available_demo_languages,
                 detail_layout=detail_layout,
+                toolbox_demo_permissions={
+                    permission: has_demo_permission(
+                        current_user, demo_obj._id, permission
+                    )
+                    for permission in (
+                        "VIEW_DEMO",
+                        "EDIT_DEMO",
+                        "DELETE_DEMO",
+                        "VIEW_ANALYTICS",
+                    )
+                }
+                if current_user.is_authenticated
+                else {},
             )
         )
         response.headers["X-Cache"] = "MISS"
@@ -3480,6 +3497,17 @@ def init_routes(app):
             org=_org,
             org_id=str(org_id),
             is_following_org=is_following_org,
+            toolbox_org_permissions={
+                permission: current_user.has_permission(permission, _org._id)
+                for permission in (
+                    "VIEW_ORGANIZATION",
+                    "EDIT_ORGANIZATION",
+                    "DELETE_ORGANIZATION",
+                    "INVITE_TO_ORGANIZATION",
+                )
+            }
+            if current_user.is_authenticated
+            else {},
         )
         
     @app.route("/organization/<org_id>/save_suggestion", methods=["POST"])

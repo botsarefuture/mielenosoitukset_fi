@@ -13,7 +13,7 @@ All challenges are stored server-side, bound to the browser session, single-use
 and short-lived (see ``webauthn_utils``).
 """
 
-from flask import Blueprint, jsonify, request, url_for
+from flask import Blueprint, jsonify, request, session, url_for
 from flask_babel import gettext as _
 from flask_login import current_user, login_required, login_user
 from bson import ObjectId
@@ -22,6 +22,7 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.users.models import User, UserMFA
 from mielenosoitukset_fi.utils import webauthn_utils as webauthn
 from mielenosoitukset_fi.utils.step_up import (
+    create_fresh_step_up_token,
     grant_elevation,
     sudo_required,
 )
@@ -280,6 +281,131 @@ def step_up_status():
     from mielenosoitukset_fi.utils.step_up import is_elevated
 
     return jsonify({"status": "success", "elevated": is_elevated()})
+
+
+# ---------------------------------------------------------------------------
+# Fresh step-up authentication (single-use, action-bound)
+# ---------------------------------------------------------------------------
+
+
+@passkeys_bp.route("/api/v2/step-up/fresh/options", methods=["POST"])
+@login_required
+def fresh_step_up_options():
+    """Return WebAuthn options for a fresh step-up authentication.
+
+    The request body may contain:
+    - action: string (required) - the action being protected (e.g., "delete_user")
+    - target_id: string (optional) - the target resource ID (e.g., user_id to delete)
+
+    These are stored in the session to bind the subsequent verification.
+    """
+    data = request.get_json(silent=True) or {}
+    action = data.get("action")
+    target_id = data.get("target_id")
+
+    if not action:
+        return jsonify({"status": "error", "message": "Action is required"}), 400
+
+    # Store action and target_id in session for verification
+    session["fresh_step_up_action"] = action
+    session["fresh_step_up_target_id"] = target_id
+    session.modified = True
+
+    options = webauthn.authentication_options(
+        user_id=current_user._id, purpose=webauthn.PURPOSE_STEP_UP
+    )
+    return jsonify({"status": "success", "options": options, "action": action, "target_id": target_id})
+
+
+@passkeys_bp.route("/api/v2/step-up/fresh/webauthn/verify", methods=["POST"])
+@login_required
+def fresh_step_up_webauthn_verify():
+    """Verify a fresh step-up WebAuthn assertion and return a single-use token.
+
+    The action and target_id must match what was stored in the session by
+    the fresh_step_up_options endpoint.
+    """
+    action = session.get("fresh_step_up_action")
+    target_id = session.get("fresh_step_up_target_id")
+
+    if not action:
+        return jsonify({"status": "error", "message": "No fresh step-up in progress"}), 400
+
+    data = request.get_json(silent=True) or {}
+    credential = data.get("credential")
+    if not credential:
+        return jsonify({"status": "error", "message": "credential missing"}), 400
+
+    record, error = webauthn.verify_authentication(
+        credential, user_id=current_user._id, purpose=webauthn.PURPOSE_STEP_UP
+    )
+    if error or not record:
+        return jsonify({"status": "error", "message": error or "Tuntematon passkey."}), 403
+
+    # Clear session binding
+    session.pop("fresh_step_up_action", None)
+    session.pop("fresh_step_up_target_id", None)
+    session.modified = True
+
+    # Create and return the fresh step-up token
+    token = create_fresh_step_up_token(action, target_id)
+    return jsonify(
+        {
+            "status": "success",
+            "message": "Henkilöllisyys vahvistettu.",
+            "fresh_step_up_token": token,
+            "action": action,
+            "target_id": target_id,
+        }
+    )
+
+
+@passkeys_bp.route("/api/v2/step-up/fresh/password", methods=["POST"])
+@login_required
+def fresh_step_up_password():
+    """Step up with password (+TOTP if MFA enabled) and return a fresh step-up token."""
+    action = session.get("fresh_step_up_action")
+    target_id = session.get("fresh_step_up_target_id")
+
+    if not action:
+        return jsonify({"status": "error", "message": "No fresh step-up in progress"}), 400
+
+    data = request.get_json(silent=True) or {}
+    password = data.get("password")
+
+    if not isinstance(password, str) or not password:
+        return jsonify({"status": "error", "message": "Salasana vaaditaan."}), 400
+
+    user_doc = _get_user_doc(current_user._id)
+    user = User.from_db(user_doc) if user_doc else current_user
+    if not user.check_password(password):
+        return jsonify({"status": "error", "message": "Väärä salasana."}), 403
+
+    if _user_requires_totp():
+        totp_code = data.get("totp_code")
+        if not isinstance(totp_code, str) or not totp_code.strip():
+            return jsonify(
+                {"status": "error", "message": "Syötä myös MFA-koodi.", "error": "totp_required"}
+            ), 400
+        if not UserMFA(user._id).verify_token(totp_code.strip()):
+            return jsonify({"status": "error", "message": "Väärä MFA-koodi."}), 403
+
+    # Clear session binding
+    session.pop("fresh_step_up_action", None)
+    session.pop("fresh_step_up_target_id", None)
+    session.modified = True
+
+    # Create and return the fresh step-up token
+    token = create_fresh_step_up_token(action, target_id)
+    return jsonify(
+        {
+            "status": "success",
+            "message": "Henkilöllisyys vahvistettu.",
+            "fresh_step_up_token": token,
+            "action": action,
+            "target_id": target_id,
+        }
+    )
 
 
 # ---------------------------------------------------------------------------

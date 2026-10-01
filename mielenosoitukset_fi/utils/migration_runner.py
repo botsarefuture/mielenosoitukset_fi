@@ -9,6 +9,7 @@ from mielenosoitukset_fi.utils.migrations import (
     migration_006_passkeys,
     migration_007_site_analytics,
     migration_008_visitor_analytics,
+    migration_008_fresh_step_up,
 )
 
 
@@ -42,6 +43,11 @@ MIGRATIONS = [
         "id": "008_visitor_analytics",
         "description": "Add indexes and retention for anonymous distinct-visitor counting.",
         "run": migration_008_visitor_analytics.migrate_visitor_analytics,
+    },
+    {
+        "id": "008_fresh_step_up",
+        "description": "Add storage and indexes for fresh step-up tokens.",
+        "run": migration_008_fresh_step_up.migrate_fresh_step_up_storage,
     },
 ]
 

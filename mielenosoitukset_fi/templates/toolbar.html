@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css', v='20260930-public-toolbox-1') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css', v='20260930-public-toolbox-2') }}">
 {% if organization %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
 <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
@@ -13,7 +13,7 @@
             <button class="btn btn-sm collapse-toggle" type="button" aria-expanded="true"
                 aria-controls="public-toolbox-actions" data-collapse-label="{{ _('Pienennä työkalupakki') }}"
                 data-expand-label="{{ _('Avaa työkalupakki') }}" aria-label="{{ _('Pienennä työkalupakki') }}"
-                onclick="toggleToolbox()">
+                data-js-only hidden onclick="toggleToolbox()">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -22,11 +22,11 @@
             {% if demo %}
             <div class="d-grid gap-2 mb-2">
                 {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
-                <button class="btn btn-success btn-sm" type="button"
+                <button class="btn btn-success btn-sm" type="button" data-js-only hidden
                     onclick='confirmAction(() => acceptDemo({{ demo["_id"] | string | tojson }}), {{ _("Hyväksytkö tämän mielenosoituksen?") | tojson }}, "success")'>
                     <i class="fa-solid fa-check me-1"></i>{{ _('Hyväksy') }}
                 </button>
-                <button class="btn btn-danger btn-sm" type="button"
+                <button class="btn btn-danger btn-sm" type="button" data-js-only hidden
                     onclick='confirmAction(() => rejectDemo({{ demo["_id"] | string | tojson }}), {{ _("Hylkää tämä mielenosoitus?") | tojson }}, "danger")'>
                     <i class="fa-solid fa-times me-1"></i>{{ _('Hylkää') }}
                 </button>
@@ -42,14 +42,14 @@
                 <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="btn btn-info btn-sm">
                     <i class="fa-solid fa-eye me-1"></i>{{ _('Katsele') }}
                 </a>
-                <button class="btn btn-secondary btn-sm" type="button"
+                <button class="btn btn-secondary btn-sm" type="button" data-js-only hidden
                     onclick='fetchDemoInfo({{ demo["_id"] | string | tojson }})'>
                     <i class="fa-solid fa-info me-1"></i>{{ _('Lisätietoja') }}
                 </button>
                 {% endif %}
 
                 {% if current_user.has_permission("DELETE_DEMO") %}
-                <button class="btn btn-danger btn-sm" type="button"
+                <button class="btn btn-danger btn-sm" type="button" data-js-only hidden
                     onclick='confirmAction(() => openModal(event, {{ demo.title | tojson }}, {{ demo["_id"] | string | tojson }}), {{ _("Haluatko varmasti poistaa tämän mielenosoituksen? Tämä ei ole palautettavissa!") | tojson }}, "danger")'>
                     <i class="fas fa-trash-alt me-1"></i>{{ _('Poista') }}
                 </button>
@@ -80,14 +80,14 @@
                 {% endif %}
 
                 {% if current_user.has_permission("DELETE_ORGANIZATION") %}
-                <button class="btn btn-danger btn-sm" type="button"
+                <button class="btn btn-danger btn-sm" type="button" data-js-only hidden
                     onclick='confirmAction(() => openModal(event, {{ org.name | tojson }}, {{ org["_id"] | string | tojson }}), {{ _("Haluatko varmasti poistaa tämän organisaation? Tämä ei ole palautettavissa!") | tojson }}, "danger")'>
                     <i class="fas fa-trash-alt me-1"></i>{{ _('Poista') }}
                 </button>
                 {% endif %}
 
                 {% if current_user.has_permission("INVITE_TO_ORGANIZATION") %}
-                <button class="btn btn-success btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal">
+                <button class="btn btn-success btn-sm" type="button" data-js-only hidden data-bs-toggle="modal" data-bs-target="#inviteModal">
                     <i class="fas fa-user-plus me-1"></i>{{ _('Kutsu käyttäjiä') }}
                 </button>
                 <!-- script to add the invite modal right before backdrop -->
@@ -104,7 +104,7 @@
                 {% endif %}
 
                 {% if current_user.has_permission("VIEW_ORGANIZATION") %}
-                <button class="btn btn-secondary btn-sm" type="button"
+                <button class="btn btn-secondary btn-sm" type="button" data-js-only hidden
                     onclick='confirmAction(() => leaveOrganization({{ org["_id"] | string | tojson }}), {{ _("Haluatko varmasti poistua organisaatiosta?") | tojson }}, "danger")'>
                     <i class="fas fa-sign-out-alt me-1"></i>{{ _('Poistu organisaatiosta') }}
                 </button>
@@ -156,6 +156,15 @@
         const sidebar = document.getElementById('toolbox-sidebar');
         setToolboxCollapsed(!sidebar.classList.contains('collapsed'));
     }
+
+    // Controls that only work through inline handlers or Bootstrap stay hidden in
+    // the no-script fallback; reveal them now that the handlers exist.
+    document
+        .getElementById('toolbox-sidebar')
+        .querySelectorAll('[data-js-only]')
+        .forEach((control) => {
+            control.hidden = false;
+        });
 
     // Keep server-rendered links available without JavaScript, then collapse the
     // enhanced control as soon as this script executes.

@@ -77,7 +77,8 @@
     gap: 0.5rem;
 }
 
-.public-toolbox__body[hidden] {
+.public-toolbox__body[hidden],
+.public-toolbox [data-js-only][hidden] {
     display: none;
 }
 

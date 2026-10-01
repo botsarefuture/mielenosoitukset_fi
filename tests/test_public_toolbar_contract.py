@@ -50,6 +50,7 @@ def test_toolbar_collapse_control_exposes_state_and_relationship():
     assert 'aria-expanded="true"' in source
     assert 'id="public-toolbox-actions" hidden' not in source
     assert "body.hidden = collapsed" in source
+    assert "querySelectorAll('[data-js-only]')" in source
     assert "setToolboxCollapsed(true)" in source
     assert "toggle.setAttribute('aria-expanded', String(!collapsed))" in source
     assert "data-collapse-label" in source
@@ -80,7 +81,7 @@ def test_toolbar_inline_style_debt_was_removed_from_baseline():
 def test_toolbar_stylesheet_cache_key_is_versioned():
     source = _template_source()
 
-    assert "20260930-public-toolbox-1" in source
+    assert "20260930-public-toolbox-2" in source
 
 
 def test_toolbar_renders_for_authenticated_admin_demo_context(
@@ -97,6 +98,23 @@ def test_toolbar_renders_for_authenticated_admin_demo_context(
     assert 'aria-controls="public-toolbox-actions"' in body
     assert 'id="public-toolbox-actions" hidden' not in body
     assert 'aria-expanded="true"' in body
+
+
+def test_toolbar_hides_javascript_only_controls_until_enhanced(
+    admin_client, seeded_data
+):
+    response = admin_client.get(
+        f"/demonstration/{seeded_data['demo_id']}?force_reload=1"
+    )
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert body.count("data-js-only hidden") > 0
+    for marker in (
+        'data-js-only hidden\n                    onclick=\'fetchDemoInfo',
+        'data-js-only hidden\n                    onclick=\'confirmAction(() => openModal',
+    ):
+        assert marker in body, marker
 
 
 def test_toolbar_is_omitted_without_demo_or_organization_context(admin_client):

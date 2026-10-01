@@ -8,6 +8,7 @@ import re
 from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
+from mielenosoitukset_fi.utils.step_up import require_fresh_step_up
 from mielenosoitukset_fi.utils.variables import CITY_LIST, PERMISSIONS_GROUPS
 from mielenosoitukset_fi.utils.cities import CITY_KEY_TO_NAME, CITY_NAME_TO_KEY, normalize_city_key
 from mielenosoitukset_fi.utils.city_settings import (
@@ -717,6 +718,7 @@ def is_valid_email(email):
 @login_required
 @admin_required
 @permission_required("DELETE_USER")
+@require_fresh_step_up("delete_user", target_id_param="user_id")
 def delete_user():
     """Delete a user from the system.
 

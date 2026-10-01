@@ -125,7 +125,7 @@
         } else {
           clearInterval(countdownInterval);
           countdownText.textContent = "{{ _('Poistetaan käyttäjää...') }}";
-          sendDeleteRequest(userId);
+          performFreshStepUpAndDelete(userId);
         }
       }, 1000);
     };
@@ -136,34 +136,68 @@
     document.getElementById('deleteModal').addEventListener('hidden.bs.modal', stopAll, { once: true });
   }
 
-  function sendDeleteRequest(userId) {
-    fetch("{{ url_for('admin_user.delete_user') }}", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: userId })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "OK") {
-          const row = document.getElementById(`user-${userId}`);
-          if (row) row.remove();
-          showToast(data.message);
-        } else {
-          countdownText.textContent = data.message || "{{ _('Käyttäjän poistaminen epäonnistui.') }}";
-          finalDeleteBtn.disabled = false;
-          finalDeleteBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i>{{ _("Poista käyttäjä") }}';
-          showToast("Virhe: " + data.message, "danger");
-          return;
-        }
+  async function performFreshStepUpAndDelete(userId) {
+    const countdownText = document.getElementById('countdownText');
+    const finalDeleteBtn = document.getElementById('finalDeleteBtn');
+
+    try {
+      // Step 1: Get fresh step-up options (binds action and target_id in session)
+      countdownText.textContent = "{{ _('Pyydetään vahvistusta...') }}";
+      const optionsResp = await fetch("/users/auth/api/v2/step-up/fresh/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete_user", target_id: userId })
+      });
+      const optionsData = await optionsResp.json();
+      if (optionsData.status !== "success") {
+        throw new Error(optionsData.message || "{{ _('Vahvistuksen pyytäminen epäonnistui.') }}");
+      }
+
+      // Step 2: Perform WebAuthn authentication
+      countdownText.textContent = "{{ _('Vahvista henkilöllisyytesi passkeyllä...') }}";
+      const options = optionsData.options;
+      const credential = await navigator.credentials.get({ publicKey: options });
+
+      // Step 3: Verify the WebAuthn assertion and get fresh step-up token
+      const verifyResp = await fetch("/users/auth/api/v2/step-up/fresh/webauthn/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credential })
+      });
+      const verifyData = await verifyResp.json();
+      if (verifyData.status !== "success") {
+        throw new Error(verifyData.message || "{{ _('Vahvistus epäonnistui.') }}");
+      }
+
+      const freshToken = verifyData.fresh_step_up_token;
+
+      // Step 4: Delete the user with the fresh step-up token
+      countdownText.textContent = "{{ _('Poistetaan käyttäjää...') }}";
+      const deleteResp = await fetch("{{ url_for('admin_user.delete_user') }}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, fresh_step_up_token: freshToken })
+      });
+      const deleteData = await deleteResp.json();
+
+      if (deleteData.status === "OK") {
+        const row = document.getElementById(`user-${userId}`);
+        if (row) row.remove();
+        showToast(deleteData.message);
         const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
         deleteModal.hide();
-      })
-      .catch(() => {
-        countdownText.textContent = "{{ _('Käyttäjän poistaminen epäonnistui.') }}";
+      } else {
+        countdownText.textContent = deleteData.message || "{{ _('Käyttäjän poistaminen epäonnistui.') }}";
         finalDeleteBtn.disabled = false;
         finalDeleteBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i>{{ _("Poista käyttäjä") }}';
-        showToast("{{ _('Käyttäjän poistaminen epäonnistui.') }}", "danger");
-      });
+        showToast("Virhe: " + deleteData.message, "danger");
+      }
+    } catch (err) {
+      countdownText.textContent = err.message || "{{ _('Käyttäjän poistaminen epäonnistui.') }}";
+      finalDeleteBtn.disabled = false;
+      finalDeleteBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i>{{ _("Poista käyttäjä") }}';
+      showToast("{{ _('Käyttäjän poistaminen epäonnistui.') }}: " + err.message, "danger");
+    }
   }
 </script>
 

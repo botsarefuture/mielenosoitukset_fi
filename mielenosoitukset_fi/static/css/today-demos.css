@@ -150,10 +150,16 @@
   margin-top: 1.25rem;
 }
 
-.today-action--outline {
+.today-empty__actions .today-action--outline {
   color: var(--product-primary-strong);
   background: var(--product-surface-muted);
   border: 1px solid var(--product-border);
+}
+
+.today-empty__actions .today-action--outline:hover {
+  background: var(--product-surface);
+  border-color: var(--product-primary-strong);
+  filter: none;
 }
 
 @media (max-width: 42.5rem) {

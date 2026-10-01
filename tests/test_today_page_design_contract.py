@@ -15,7 +15,7 @@ def test_today_page_uses_shared_header_and_scoped_stylesheet():
     assert 'class="public-page-header__title"' in source
     assert 'class="public-page-header__description"' in source
     assert 'class="public-page-header__meta today-actions"' in source
-    assert "20260930-today-demos-1" in source
+    assert "20260930-today-demos-2" in source
     assert "<style" not in source
     assert "style=" not in source
     assert "<main" not in source
@@ -39,6 +39,24 @@ def test_today_component_uses_product_tokens_for_all_states():
     assert "--color-" not in css
     assert "--admin-workspace-" not in css
     assert "#ffffff" not in css
+
+
+def test_empty_state_secondary_action_outweighs_shared_button_rules():
+    """`base.html` loads `user-workspace.css` after this page stylesheet.
+
+    The shared ``.button`` and ``.button:hover`` rules therefore win any tie on
+    source order, so the empty state's secondary action has to be scoped to its
+    container (0-2-0 / 0-3-0) to keep its outlined treatment instead of silently
+    rendering as a second primary action.
+    """
+    css = CSS.read_text(encoding="utf-8")
+
+    assert "\n.today-action--outline" not in css
+    assert ".today-empty__actions .today-action--outline {" in css
+    assert ".today-empty__actions .today-action--outline:hover {" in css
+
+    scoped = css.index(".today-empty__actions .today-action--outline {")
+    assert "var(--product-surface-muted)" in css[scoped:css.index("}", scoped)]
 
 
 @pytest.mark.e2e

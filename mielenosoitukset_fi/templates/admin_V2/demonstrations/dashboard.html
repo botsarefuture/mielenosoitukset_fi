@@ -4,7 +4,6 @@
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demonstrations.css', v='20260914-admin-ui-51') }}">{% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/admin_demo_edit_links.js') }}"></script>
-<!--<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>-->
 <script>
   function acceptSty(demoId) {
     const demo = document.getElementById(`demo-${demoId}`);

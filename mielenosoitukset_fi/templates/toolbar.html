@@ -13,17 +13,27 @@
     or org_permissions.get("INVITE_TO_ORGANIZATION")
 ) %}
 {% if can_manage_demo or can_manage_org %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css', v='20261001-public-toolbox-2') }}">
+{% set toolbox_context_title = demo.title if can_manage_demo else org.name %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css', v='20261001-public-toolbox-3') }}">
 
 <aside id="toolbox-sidebar" class="public-toolbox" aria-label="{{ _('Työkalupakki') }}">
     <div class="public-toolbox__card">
         <div class="public-toolbox__header">
-            <h2 class="public-toolbox__title"><i class="fa-solid fa-toolbox" aria-hidden="true"></i>{{ _('Työkalupakki') }}</h2>
+            <div class="public-toolbox__identity">
+                <span class="public-toolbox__identity-icon" aria-hidden="true">
+                    <i class="fa-solid fa-sliders"></i>
+                </span>
+                <div class="public-toolbox__identity-copy">
+                    <span class="public-toolbox__eyebrow">{{ _('Työkalupakki') }}</span>
+                    <h2 class="public-toolbox__title" title="{{ toolbox_context_title }}">{{ toolbox_context_title }}</h2>
+                </div>
+            </div>
             <button class="btn btn-sm collapse-toggle" type="button" aria-expanded="true"
                 aria-controls="public-toolbox-actions" data-collapse-label="{{ _('Pienennä työkalupakki') }}"
                 data-expand-label="{{ _('Avaa työkalupakki') }}" aria-label="{{ _('Pienennä työkalupakki') }}"
                 data-js-only hidden onclick="toggleToolbox()">
-                <i class="fa-solid fa-xmark"></i>
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                <span class="collapse-toggle__label">{{ _('Työkalupakki') }}</span>
             </button>
         </div>
 
@@ -32,23 +42,33 @@
             <nav class="public-toolbox__actions" aria-label="{{ _('Toiminnot') }}">
                 {% if demo_permissions.get("VIEW_DEMO") %}
                 <a href="{{ url_for('admin_demo.demo_command_center', demo_id=demo['_id']) }}" class="public-toolbox__action public-toolbox__action--primary">
-                    <i class="fa-solid fa-sliders" aria-hidden="true"></i>{{ _('Avaa hallintapaneelissa') }}
+                    <span class="public-toolbox__action-icon" aria-hidden="true"><i class="fa-solid fa-sliders"></i></span>
+                    <span class="public-toolbox__action-label">{{ _('Avaa hallintapaneelissa') }}</span>
+                    <i class="fa-solid fa-chevron-right public-toolbox__action-arrow" aria-hidden="true"></i>
                 </a>
                 {% endif %}
                 {% if demo_permissions.get("EDIT_DEMO") %}
                 <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo['_id']) }}" class="public-toolbox__action">
-                    <i class="fas fa-edit" aria-hidden="true"></i>{{ _('Muokkaa') }}
+                    <span class="public-toolbox__action-icon" aria-hidden="true"><i class="fas fa-edit"></i></span>
+                    <span class="public-toolbox__action-label">{{ _('Muokkaa') }}</span>
+                    <i class="fa-solid fa-chevron-right public-toolbox__action-arrow" aria-hidden="true"></i>
                 </a>
                 {% endif %}
                 {% if demo_permissions.get("VIEW_ANALYTICS") %}
                 <a href="{{ url_for('admin.demo_analytics', demo_id=demo['_id']) }}" class="public-toolbox__action">
-                    <i class="fas fa-chart-line" aria-hidden="true"></i>{{ _('Tilastot') }}
+                    <span class="public-toolbox__action-icon" aria-hidden="true"><i class="fas fa-chart-line"></i></span>
+                    <span class="public-toolbox__action-label">{{ _('Tilastot') }}</span>
+                    <i class="fa-solid fa-chevron-right public-toolbox__action-arrow" aria-hidden="true"></i>
                 </a>
                 {% endif %}
                 {% if demo_permissions.get("DELETE_DEMO") %}
-                <a href="{{ url_for('admin_demo.confirm_delete_demo', demo_id=demo['_id']) }}" class="public-toolbox__action public-toolbox__action--danger">
-                    <i class="fas fa-trash-alt" aria-hidden="true"></i>{{ _('Poista') }}
-                </a>
+                <div class="public-toolbox__danger-zone">
+                    <a href="{{ url_for('admin_demo.confirm_delete_demo', demo_id=demo['_id']) }}" class="public-toolbox__action public-toolbox__action--danger">
+                        <span class="public-toolbox__action-icon" aria-hidden="true"><i class="fas fa-trash-alt"></i></span>
+                        <span class="public-toolbox__action-label">{{ _('Poista') }}</span>
+                        <i class="fa-solid fa-chevron-right public-toolbox__action-arrow" aria-hidden="true"></i>
+                    </a>
+                </div>
                 {% endif %}
             </nav>
             {% endif %}
@@ -57,19 +77,27 @@
             <nav class="public-toolbox__actions" aria-label="{{ _('Toiminnot') }}">
                 {% if org_permissions.get("VIEW_ORGANIZATION") or org_permissions.get("INVITE_TO_ORGANIZATION") %}
                 <a href="{{ url_for('admin_org.view_organization', org_id=org['_id']) }}" class="public-toolbox__action public-toolbox__action--primary">
-                    <i class="fa-solid fa-chart-simple" aria-hidden="true"></i>{{ _('Yhteenveto') }}
+                    <span class="public-toolbox__action-icon" aria-hidden="true"><i class="fa-solid fa-sliders"></i></span>
+                    <span class="public-toolbox__action-label">{{ _('Avaa hallintapaneelissa') }}</span>
+                    <i class="fa-solid fa-chevron-right public-toolbox__action-arrow" aria-hidden="true"></i>
                 </a>
                 {% endif %}
                 {% if org_permissions.get("EDIT_ORGANIZATION") %}
                 <a href="{{ url_for('admin_org.edit_organization', org_id=org['_id']) }}"
                     class="public-toolbox__action">
-                    <i class="fas fa-edit" aria-hidden="true"></i>{{ _('Muokkaa') }}
+                    <span class="public-toolbox__action-icon" aria-hidden="true"><i class="fas fa-edit"></i></span>
+                    <span class="public-toolbox__action-label">{{ _('Muokkaa') }}</span>
+                    <i class="fa-solid fa-chevron-right public-toolbox__action-arrow" aria-hidden="true"></i>
                 </a>
                 {% endif %}
                 {% if org_permissions.get("DELETE_ORGANIZATION") %}
-                <a href="{{ url_for('admin_org.confirm_delete_organization', org_id=org['_id']) }}" class="public-toolbox__action public-toolbox__action--danger">
-                    <i class="fas fa-trash-alt" aria-hidden="true"></i>{{ _('Poista') }}
-                </a>
+                <div class="public-toolbox__danger-zone">
+                    <a href="{{ url_for('admin_org.confirm_delete_organization', org_id=org['_id']) }}" class="public-toolbox__action public-toolbox__action--danger">
+                        <span class="public-toolbox__action-icon" aria-hidden="true"><i class="fas fa-trash-alt"></i></span>
+                        <span class="public-toolbox__action-label">{{ _('Poista') }}</span>
+                        <i class="fa-solid fa-chevron-right public-toolbox__action-arrow" aria-hidden="true"></i>
+                    </a>
+                </div>
                 {% endif %}
             </nav>
             {% endif %}
@@ -92,6 +120,14 @@
         const icon = toggle.querySelector('i');
         icon.classList.toggle('fa-toolbox', collapsed);
         icon.classList.toggle('fa-xmark', !collapsed);
+
+        if (!window.matchMedia('(max-width: 35rem)').matches) {
+            try {
+                window.sessionStorage.setItem('publicToolboxCollapsed', String(collapsed));
+            } catch (error) {
+                // Storage can be unavailable in privacy-restricted contexts.
+            }
+        }
     }
 
     function toggleToolbox() {
@@ -110,7 +146,15 @@
 
     // Keep server-rendered links available without JavaScript, then collapse the
     // enhanced control as soon as this script executes.
-    setToolboxCollapsed(true);
+    let toolboxStartsCollapsed = true;
+    if (!window.matchMedia('(max-width: 35rem)').matches) {
+        try {
+            toolboxStartsCollapsed = window.sessionStorage.getItem('publicToolboxCollapsed') !== 'false';
+        } catch (error) {
+            toolboxStartsCollapsed = true;
+        }
+    }
+    setToolboxCollapsed(toolboxStartsCollapsed);
 
 </script>
 {% endif %}

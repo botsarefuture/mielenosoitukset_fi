@@ -474,7 +474,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:510 mielenosoitukset_fi/templates/detail.html:511
 msgid "Tilaa muistutus sähköpostiisi"
-msgstr ""
+msgstr "Subscribe to an email reminder"
 
 #: mielenosoitukset_fi/templates/detail.html:516
 msgid "Osallistuminen"
@@ -4031,15 +4031,15 @@ msgstr ""
 
 #: mielenosoitukset_fi/basic_routes.py:2915
 msgid "Kirjoita vähintään yksi kenttämuutos tai kommentti ennen lähettämistä."
-msgstr ""
+msgstr "Enter at least one field change or comment before submitting."
 
 #: mielenosoitukset_fi/basic_routes.py:2931
 msgid "Ehdotuksesi on vastaanotettu. Kiitos!"
-msgstr ""
+msgstr "Your suggestion has been received. Thank you!"
 
 #: mielenosoitukset_fi/basic_routes.py:2944
 msgid "Palvelinvirhe: ehdotuksen tallentaminen epäonnistui."
-msgstr ""
+msgstr "Server error: the suggestion could not be saved."
 
 #: mielenosoitukset_fi/basic_routes.py:2968
 msgid "Peruutuslinkkiä ei tunnistettu."
@@ -5766,7 +5766,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/_modals/reminder-modal.html:21
 #: mielenosoitukset_fi/templates/detail.html:1551
 msgid "Tilaa muistutus"
-msgstr ""
+msgstr "Subscribe to reminder"
 
 #: mielenosoitukset_fi/templates/detail.html:1564
 #: mielenosoitukset_fi/templates/detail.html:1571
@@ -6751,7 +6751,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/_modals/reminder-modal.html:84
 msgid "Virhe tilauksessa. Yritä uudelleen."
-msgstr ""
+msgstr "The subscription failed. Please try again."
 
 #: mielenosoitukset_fi/templates/_modals/report-error-modal.html:582
 msgid "Korjausehdotukset"
@@ -13289,3 +13289,18 @@ msgstr "MFA device"
 
 msgid "Todennuslaite"
 msgstr "Authentication device"
+
+msgid "Sähköpostiosoite vaaditaan."
+msgstr "Email address is required."
+
+msgid "Sähköpostiosoite ei ole kelvollinen."
+msgstr "The email address is invalid."
+
+msgid "Olet jo tilannut muistutuksen tälle mielenosoitukselle."
+msgstr "You have already subscribed to a reminder for this demonstration."
+
+msgid "Liian monta pyyntöä tunnin sisällä, yritä myöhemmin."
+msgstr "Too many requests within an hour. Please try again later."
+
+msgid "Muistutus tilattu onnistuneesti!"
+msgstr "Reminder subscribed successfully!"

@@ -24,6 +24,7 @@
       }
       if (!theme) theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       const root = document.documentElement;
+      root.classList.add('js');
       root.classList.toggle('dark', theme === 'dark');
       root.classList.toggle('light', theme !== 'dark');
     })();
@@ -124,7 +125,7 @@
   {% block styles %}{% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/product-tokens.css', v='20260924-product-tokens-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20260930-user-workspace-13') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/public-header.css', v='20260928-public-header-2') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/public-header.css', v='20261002-public-header-4') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css', v='20260928-campaign-feedback-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/public_hero.css', v='20260907-centered-1') }}">
 

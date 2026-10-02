@@ -60,6 +60,8 @@ def test_public_header_uses_shared_scoped_component_css():
     css = HEADER_CSS.read_text(encoding="utf-8")
 
     assert "css/public-header.css" in base
+    assert "20261002-public-header-4" in base
+    assert "root.classList.add('js')" in base
     assert '<header class="top-header public-site-header"' in header
     assert '<nav class="main-nav public-main-nav"' in header
     assert "<style" not in header
@@ -99,10 +101,29 @@ def test_public_header_uses_shared_scoped_component_css():
         not in css
     )
     assert ".user-dropdown:hover .public-main-nav .dropdown-menu" not in css
+    assert "html.js .public-main-nav .mobile-menu-toggle" in css
+    assert "html.js .public-main-nav .nav-list.active" in css
+    assert "body.public-nav-open" in css
+    assert "env(safe-area-inset-bottom)" in css
     assert not re.search(
         r"(?m)^\s*\.(?:dropdown-menu|nav-link|theme-toggle)(?=[\s,{:.#])",
         css,
     )
+
+
+def test_mobile_navigation_owns_accessibility_state_without_inline_handlers():
+    header = HEADER.read_text(encoding="utf-8")
+
+    assert 'id="mobile-menu-toggle"' in header
+    assert 'id="mobile-menu-close"' in header
+    assert "onclick=\"toggleMobileMenu()\"" not in header
+    assert "setMobileMenuOpen" in header
+    assert "navList.setAttribute('aria-hidden', 'true')" in header
+    assert "navList.setAttribute('inert', '')" in header
+    assert "navList.removeAttribute('inert')" in header
+    assert "document.body.classList.add('public-nav-open')" in header
+    assert "mobileMenuReturnFocus.focus()" in header
+    assert "mobileNavigationQuery.addEventListener('change'" in header
 
 
 @pytest.mark.parametrize(
@@ -168,34 +189,102 @@ def test_api_docs_chrome_is_theme_aware_and_portrait_safe(live_server, browser_p
 
 @pytest.mark.e2e
 @pytest.mark.integration
-def test_public_header_mobile_menu_and_theme_contract(live_server, browser_page):
-    browser_page.add_init_script("localStorage.setItem('theme', 'light')")
-    browser_page.set_viewport_size({"width": 360, "height": 800})
+@pytest.mark.parametrize("theme", ["light", "dark"])
+@pytest.mark.parametrize("width", [320, 390])
+def test_public_header_mobile_menu_and_theme_contract(
+    live_server, browser_page, theme, width
+):
+    browser_page.add_init_script(f"localStorage.setItem('theme', '{theme}')")
+    browser_page.set_viewport_size({"width": width, "height": 800})
     browser_page.goto(f"{live_server}/", wait_until="domcontentloaded")
+
+    skip_link = browser_page.locator(".skip-link")
+    skip_box = skip_link.bounding_box()
+    assert skip_box["y"] + skip_box["height"] <= 0
+    skip_link.focus()
+    assert skip_link.bounding_box()["y"] >= 0
+    browser_page.locator("body").click(position={"x": width - 1, "y": 200})
 
     toggle = browser_page.locator(".mobile-menu-toggle")
     navigation = browser_page.locator("#main-nav-list")
     assert toggle.is_visible()
     assert toggle.get_attribute("aria-expanded") == "false"
+    assert navigation.get_attribute("aria-hidden") == "true"
+    assert navigation.get_attribute("inert") == ""
+    toggle_box = toggle.bounding_box()
+    assert toggle_box["width"] >= 44
+    assert toggle_box["height"] >= 44
 
     toggle.click()
     assert toggle.get_attribute("aria-expanded") == "true"
+    assert toggle.is_hidden()
     assert "active" in (navigation.get_attribute("class") or "")
+    assert navigation.get_attribute("aria-hidden") == "false"
+    assert navigation.get_attribute("inert") is None
+    assert "public-nav-open" in (browser_page.locator("body").get_attribute("class") or "")
     assert browser_page.locator(".mobile-nav-header").is_visible()
-
+    assert browser_page.evaluate(
+        "document.activeElement === document.getElementById('mobile-menu-close')"
+    )
+    assert browser_page.locator('.nav-link[aria-current="page"]').is_visible()
+    theme_before = browser_page.locator("html").get_attribute("class") or ""
     browser_page.locator(".theme-toggle").click()
-    assert "dark" in (browser_page.locator("html").get_attribute("class") or "")
+    theme_after = browser_page.locator("html").get_attribute("class") or ""
+    assert ("dark" in theme_before) != ("dark" in theme_after)
 
     browser_page.keyboard.press("Escape")
     assert toggle.get_attribute("aria-expanded") == "false"
+    assert toggle.is_visible()
     assert "active" not in (navigation.get_attribute("class") or "")
+    assert navigation.get_attribute("aria-hidden") == "true"
+    assert navigation.get_attribute("inert") == ""
+    assert browser_page.evaluate(
+        "document.activeElement === document.getElementById('mobile-menu-toggle')"
+    )
+    assert "public-nav-open" not in (browser_page.locator("body").get_attribute("class") or "")
 
     overflow = browser_page.evaluate(
         "document.documentElement.scrollWidth - document.documentElement.clientWidth"
     )
     assert overflow <= 1
 
+    toggle.click()
+    browser_page.wait_for_function(
+        "document.activeElement === document.getElementById('mobile-menu-close')"
+    )
     browser_page.set_viewport_size({"width": 1440, "height": 900})
     assert toggle.is_hidden()
+    browser_page.wait_for_function(
+        "document.getElementById('main-nav-list').getAttribute('aria-hidden') === null"
+    )
+    assert navigation.get_attribute("aria-hidden") is None
+    assert navigation.get_attribute("inert") is None
+    assert browser_page.evaluate(
+        "document.activeElement === document.querySelector('#main-nav-list .nav-link')"
+    )
     assert browser_page.locator(".public-site-header").is_visible()
     assert browser_page.locator(".public-main-nav").is_visible()
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_public_navigation_remains_available_without_javascript(
+    live_server, playwright_browser
+):
+    context = playwright_browser.new_context(
+        java_script_enabled=False,
+        locale="fi-FI",
+        viewport={"width": 360, "height": 800},
+    )
+    page = context.new_page()
+    try:
+        page.goto(f"{live_server}/", wait_until="domcontentloaded")
+        navigation = page.locator("#main-nav-list")
+        assert page.locator(".mobile-menu-toggle").is_hidden()
+        assert page.locator(".theme-toggle-item").is_hidden()
+        assert navigation.is_visible()
+        assert navigation.get_attribute("inert") is None
+        assert navigation.locator('a[href="/"]').is_visible()
+        assert navigation.locator('a[href="/demonstrations"]').is_visible()
+    finally:
+        context.close()

@@ -8,6 +8,7 @@ from mielenosoitukset_fi.utils.migrations import (
     migration_005_user_identity_uniqueness,
     migration_006_passkeys,
     migration_007_site_analytics,
+    migration_008_fresh_step_up,
 )
 
 
@@ -36,6 +37,11 @@ MIGRATIONS = [
         "id": "007_site_analytics",
         "description": "Add indexes for built-in first-party site analytics counters.",
         "run": migration_007_site_analytics.migrate_site_analytics,
+    },
+    {
+        "id": "008_fresh_step_up",
+        "description": "Add storage and indexes for fresh step-up tokens.",
+        "run": migration_008_fresh_step_up.migrate_fresh_step_up_storage,
     },
 ]
 

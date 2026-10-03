@@ -302,7 +302,7 @@ msgstr "Tid"
 #: mielenosoitukset_fi/templates/tag_list.html:753
 #: mielenosoitukset_fi/templates/users/auth/settings.html:99
 msgid "Kaupunki"
-msgstr ""
+msgstr "Stad"
 
 #: mielenosoitukset_fi/templates/city.html:41
 #: mielenosoitukset_fi/templates/city.html:723

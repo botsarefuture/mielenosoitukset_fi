@@ -27,14 +27,6 @@
     "cropper-modal.html": [
       "1e5e9517eda7d54d"
     ],
-    "demo_views/calendar_grid.html": [
-      "1fb1f447a3d378ce",
-      "9f3b2cc67607c9e0"
-    ],
-    "demo_views/calendar_grid_old.html": [
-      "3fa5b6850eb5ac6a",
-      "ea168a5ec816a61a"
-    ],
     "demo_views/calendar_year.html": [
       "dc01ca48de0aec45"
     ],
@@ -174,14 +166,6 @@
       "af1048ecd45e0870",
       "bc26c0e30f26238d",
       "c548e179169161a1"
-    ],
-    "demo_views/calendar_grid.html": [
-      "6e22c58a7a6a60cb",
-      "bdd1dcb76e67b308"
-    ],
-    "demo_views/calendar_grid_old.html": [
-      "b17a8da8811e8195",
-      "bdd1dcb76e67b308"
     ],
     "demo_views/calendar_year.html": [
       "065e568fb8f3e895",

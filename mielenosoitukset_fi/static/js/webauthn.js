@@ -68,7 +68,7 @@ function formatAssertionCredential(publicKeyCredential) {
   };
 }
 
-async function signInWithPasskey(username) {
+async function signInWithPasskey(username, credentialOptions = {}) {
   const optionsRes = await fetch("/users/auth/api/v2/passkeys/login/options", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -79,9 +79,12 @@ async function signInWithPasskey(username) {
     throw new Error(optionsData.message || "Passkey-asetuksia ei saatu haettua");
   }
 
-  const assertion = await navigator.credentials.get({
+  const request = {
     publicKey: decodePublicKeyOptions(optionsData.options)
-  });
+  };
+  if (credentialOptions.mediation) request.mediation = credentialOptions.mediation;
+  if (credentialOptions.signal) request.signal = credentialOptions.signal;
+  const assertion = await navigator.credentials.get(request);
   const credential = formatAssertionCredential(assertion);
 
   const verifyRes = await fetch("/users/auth/api/v2/passkeys/login/verify", {

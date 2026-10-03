@@ -1,15 +1,20 @@
 /**
  * Toggles between dark and light mode.
  */
-function toggleDarkMode() {
-    const isDarkMode = $("html").toggleClass("dark").hasClass("dark");
-    $("html").toggleClass("light", !isDarkMode);
+function applyThemeState(isDarkMode) {
+    const root = document.documentElement;
+    root.classList.toggle("dark", isDarkMode);
+    root.classList.toggle("light", !isDarkMode);
 
-    // Update theme icons
-    $(".theme-icon").each(function () {
-        $(this).toggleClass("fa-moon", isDarkMode);
-        $(this).toggleClass("fa-sun", !isDarkMode);
+    document.querySelectorAll(".theme-icon").forEach(icon => {
+        icon.classList.toggle("fa-moon", isDarkMode);
+        icon.classList.toggle("fa-sun", !isDarkMode);
     });
+}
+
+function toggleDarkMode() {
+    const isDarkMode = !document.documentElement.classList.contains("dark");
+    applyThemeState(isDarkMode);
 
     // Store the theme in localStorage
     localStorage.setItem("theme", isDarkMode ? "dark" : "light");
@@ -41,16 +46,5 @@ function applyPreferredTheme() {
         theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
 
-    // Apply the theme
-    $("html").toggleClass("dark", theme === "dark");
-    $("html").toggleClass("light", theme !== "dark");
-
-    // Update icons
-    $(".theme-icon").each(function () {
-        $(this).toggleClass("fa-moon", theme === "dark");
-        $(this).toggleClass("fa-sun", theme !== "dark");
-    });
+    applyThemeState(theme === "dark");
 }
-
-// Call this on page load
-$(document).ready(() => applyPreferredTheme());

@@ -5,8 +5,9 @@
 /* Skip to Content Link */
   .skip-link {
     position: absolute;
-    top: -40px;
+    top: 0;
     left: 0;
+    transform: translateY(-120%);
     background: var(--product-action-bg);
     color: var(--product-on-action);
     padding: 0.75rem 1.5rem;
@@ -17,7 +18,7 @@
   }
 
   .skip-link:focus {
-    top: 0;
+    transform: translateY(0);
   }
 
   /* Top Header */
@@ -235,6 +236,10 @@
     margin-left: auto;
   }
 
+  html:not(.js) .public-main-nav .theme-toggle-item {
+    display: none;
+  }
+
   /* Active Link Indicator */
   .public-main-nav .nav-link.active::after {
     content: '';
@@ -396,6 +401,10 @@
     outline-offset: 2px;
   }
 
+  body.public-nav-open {
+    overflow: hidden;
+  }
+
   /* Admin Alert */
   .public-main-nav .admin-alert {
     background: var(--product-danger-soft);
@@ -445,21 +454,40 @@
       }
     }
 
-    .public-main-nav .mobile-menu-toggle {
+    .public-main-nav .nav-container {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      padding: 0.5rem 1rem;
+    }
+
+    html.js .public-main-nav .mobile-menu-toggle {
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 2.75rem;
+      min-height: 2.75rem;
+    }
+
+    html.js .public-main-nav .mobile-menu-toggle[aria-expanded="true"] {
+      display: none;
     }
 
     .public-main-nav .nav-list {
+      width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.25rem;
+      padding: 0.75rem;
+    }
+
+    html.js .public-main-nav .nav-list {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
       background: var(--product-surface);
-      flex-direction: column;
-      padding: 2rem;
+      padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
       gap: 0;
       transform: translateX(-100%);
       transition: 0.2s ease;
@@ -467,11 +495,11 @@
       z-index: 9999;
     }
 
-    .public-main-nav .nav-list.active {
+    html.js .public-main-nav .nav-list.active {
       transform: translateX(0);
     }
 
-    .public-main-nav .mobile-nav-header {
+    html.js .public-main-nav .nav-list.active .mobile-nav-header {
       width: 100%;
       display: flex;
       justify-content: space-between;
@@ -482,10 +510,15 @@
     }
 
     .public-main-nav .mobile-close {
-      background: var(--product-action-bg);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.75rem;
+      min-height: 2.75rem;
+      padding: 0;
       color: var(--product-on-action);
-      border: none;
-      padding: 0.75rem;
+      background: var(--product-action-bg);
+      border: 1px solid var(--product-action-bg);
       border-radius: var(--user-radius-main);
       cursor: pointer;
       font-size: 1.25rem;
@@ -500,6 +533,22 @@
       padding: 1rem 1.5rem;
       font-size: 1.1rem;
       justify-content: flex-start;
+    }
+
+    .public-main-nav .nav-link.active {
+      color: var(--product-primary-strong);
+      background: var(--product-primary-soft);
+      font-weight: 700;
+    }
+
+    .public-main-nav .nav-link.active::after {
+      top: 50%;
+      bottom: auto;
+      left: 0.35rem;
+      width: 3px;
+      height: 55%;
+      transform: translateY(-50%);
+      border-radius: 0 3px 3px 0;
     }
 
     .public-main-nav .user-dropdown {
@@ -533,6 +582,10 @@
       content: attr(aria-label);
       font-size: 1.1rem;
       font-weight: 500;
+    }
+
+    html.js .public-main-nav .nav-list.active .mobile-only {
+      display: block;
     }
   }
 

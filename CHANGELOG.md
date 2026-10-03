@@ -854,3 +854,6 @@
 ---
 
 ✅ **Overall:** Improved security, performance, accessibility, and polished UI for a more professional and reliable experience.
+
+### 2025-10-01
+- Added visitor analytics (distinct anonymous Kävijät) to admin Site Analytics alongside pageviews. Introduced `site_analytics_visitors` collection with privacy-safe visitor hashing, weekly salt rotation, 400-day retention/TTL, kill switch `SITE_ANALYTICS_VISITORS_ENABLED`, migration `008_visitor_analytics`, UI chart/cards updates with clear limitations text, CSS styles, and translation additions. Visitor recording only affects public eligible pageviews; excluded traffic (admin/API/static/bots) produces no visitor records. Periods before first visitor data show unavailable state (—); multi-week ranges can count the same person once per salt week as an estimate.

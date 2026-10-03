@@ -240,9 +240,7 @@ time (datetime) | iso string, read (bool)
     if (!navList || !toggle) return;
 
     if (!mobileNavigationQuery.matches) {
-      if (navList.classList.contains('active')) {
-        navList.querySelector('.nav-link, .user-toggle, #notif-btn, .theme-toggle')?.focus();
-      }
+      const drawerWasOpen = navList.classList.contains('active');
       navList.classList.remove('active');
       navList.removeAttribute('aria-hidden');
       navList.removeAttribute('inert');
@@ -250,6 +248,9 @@ time (datetime) | iso string, read (bool)
       toggle.setAttribute('aria-label', '{{ _("Avaa navigaatiovalikko") }}');
       document.body.classList.remove('public-nav-open');
       mobileMenuReturnFocus = null;
+      if (drawerWasOpen) {
+        navList.querySelector('.nav-link[aria-current="page"], .nav-link, .user-toggle, #notif-btn, .theme-toggle')?.focus();
+      }
       return;
     }
 

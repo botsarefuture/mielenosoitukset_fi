@@ -259,8 +259,8 @@ def test_public_header_mobile_menu_and_theme_contract(
     )
     assert navigation.get_attribute("aria-hidden") is None
     assert navigation.get_attribute("inert") is None
-    assert browser_page.evaluate(
-        "document.activeElement === document.querySelector('#main-nav-list .nav-link')"
+    browser_page.wait_for_function(
+        "document.activeElement === document.querySelector('#main-nav-list .nav-link[aria-current=\"page\"]')"
     )
     assert browser_page.locator(".public-site-header").is_visible()
     assert browser_page.locator(".public-main-nav").is_visible()

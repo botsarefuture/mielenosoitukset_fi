@@ -2919,7 +2919,7 @@ msgstr ""
 #: mielenosoitukset_fi/users/templates/login.html:15
 #: mielenosoitukset_fi/users/templates/register.html:22
 msgid "Salasana"
-msgstr ""
+msgstr "Lösenord"
 
 #: mielenosoitukset_fi/templates/users/auth/login.html:27
 #: mielenosoitukset_fi/users/templates/login.html:25
@@ -3173,7 +3173,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/verify_mfa.html:12
 msgid "MFA-koodi"
-msgstr ""
+msgstr "MFA-kod"
 
 #: mielenosoitukset_fi/templates/users/auth/verify_mfa.html:22
 msgid "Lähetä koodi uudelleen"
@@ -7040,13 +7040,13 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:127
 msgid "Poistetaan käyttäjää..."
-msgstr ""
+msgstr "Tar bort användaren..."
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:152
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:162
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:165
 msgid "Käyttäjän poistaminen epäonnistui."
-msgstr ""
+msgstr "Det gick inte att ta bort användaren."
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:176
 #: mielenosoitukset_fi/templates/admin_V2/dashboard.html:157
@@ -11985,7 +11985,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/password_reset_request.html:53
 #: mielenosoitukset_fi/templates/users/auth/register.html:111
 msgid "tai"
-msgstr ""
+msgstr "eller"
 
 #: mielenosoitukset_fi/templates/users/auth/login.html:88
 msgid "Kirjaudu passkeyllä"
@@ -12348,7 +12348,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/settings.html:869
 msgid "Vahvista henkilöllisyytesi"
-msgstr ""
+msgstr "Verifiera din identitet"
 
 #: mielenosoitukset_fi/templates/users/auth/settings.html:875
 msgid "Tämä toiminto vaatii tuoreen tunnistautumisen. Vahvista alla."
@@ -12356,7 +12356,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/settings.html:881
 msgid "Vahvista passkeyllä"
-msgstr ""
+msgstr "Verifiera med en passkey"
 
 #: mielenosoitukset_fi/templates/users/auth/settings.html:889
 msgid "Kirjoita salasana"
@@ -12368,7 +12368,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/users/auth/settings.html:899
 msgid "Vahvista salasanalla"
-msgstr ""
+msgstr "Verifiera med ditt lösenord"
 
 #: mielenosoitukset_fi/templates/users/auth/settings.html:977
 msgid "Virhe asetusten tallennuksessa."
@@ -12632,7 +12632,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/users/BPs/auth.py:942
 msgid "Väärä MFA-koodi."
-msgstr ""
+msgstr "Fel MFA-kod."
 
 #: mielenosoitukset_fi/users/BPs/auth.py:990
 msgid "Väärä MFA-koodi"
@@ -13283,3 +13283,57 @@ msgstr "MFA-enhet"
 
 msgid "Todennuslaite"
 msgstr "Autentiseringsenhet"
+
+msgid "Käyttäjän poistaminen vaatii uuden vahvistuksen joka kerta."
+msgstr "Att ta bort en användare kräver en ny verifiering varje gång."
+
+msgid "Vahvistus epäonnistui."
+msgstr "Verifieringen misslyckades."
+
+msgid "Pyydetään vahvistusta..."
+msgstr "Begär verifiering..."
+
+msgid "Vahvista henkilöllisyytesi ennen poistoa."
+msgstr "Verifiera din identitet innan användaren tas bort."
+
+msgid "Vahvistuksen pyytäminen epäonnistui."
+msgstr "Det gick inte att begära verifiering."
+
+msgid "Passkey-vahvistus keskeytettiin. Voit yrittää uudelleen tai käyttää salasanaa."
+msgstr "Passkey-verifieringen avbröts. Försök igen eller använd ditt lösenord."
+
+msgid "Tuntematon vahvistettava toiminto."
+msgstr "Okänd åtgärd som kräver verifiering."
+
+msgid "Virheellinen käyttäjätunniste."
+msgstr "Ogiltigt användar-ID."
+
+msgid "Vahvistuspyyntö ei ole enää voimassa."
+msgstr "Verifieringsbegäran är inte längre giltig."
+
+msgid "Passkey-vastaus puuttuu."
+msgstr "Passkey-svaret saknas."
+
+msgid "Tuntematon passkey."
+msgstr "Okänd passkey."
+
+msgid "Henkilöllisyys vahvistettu."
+msgstr "Identiteten har verifierats."
+
+msgid "Salasana vaaditaan."
+msgstr "Lösenord krävs."
+
+msgid "Väärä salasana."
+msgstr "Fel lösenord."
+
+msgid "Syötä myös MFA-koodi."
+msgstr "Ange även MFA-koden."
+
+msgid "Kirjaudu sisään ennen tätä toimintoa."
+msgstr "Logga in innan du utför den här åtgärden."
+
+msgid "Tämä toiminto vaatii tuoreen vahvistuksen. Vahvista henkilöllisyytesi uudelleen."
+msgstr "Den här åtgärden kräver en ny verifiering. Verifiera din identitet igen."
+
+msgid "Vahvistus on virheellinen, vanhentunut tai jo käytetty. Vahvista henkilöllisyytesi uudelleen."
+msgstr "Verifieringen är ogiltig, har gått ut eller har redan använts. Verifiera din identitet igen."

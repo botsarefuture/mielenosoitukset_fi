@@ -12,14 +12,16 @@ fresh tokens cannot be reused and must be obtained through a new authentication
 ceremony for each action.
 """
 
+import hashlib
 import secrets
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
 from functools import wraps
 from typing import Optional
 
 from bson import ObjectId
-from flask import current_app, jsonify, session
+from flask import jsonify, request, session
+from flask_babel import gettext as _
 from flask_login import current_user
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
@@ -102,7 +104,7 @@ def sudo_required(timeout_seconds: Optional[float] = None):
                     jsonify(
                         {
                             "error": "authentication_required",
-                            "message": "Kirjaudu sisään ennen tätä toimintoa.",
+                            "message": _("Kirjaudu sisään ennen tätä toimintoa."),
                         }
                     ),
                     401,
@@ -148,32 +150,24 @@ def create_fresh_step_up_token(action: str, target_id: Optional[str] = None) -> 
     token = secrets.token_urlsafe(32)
     token_hash = _hash_token(token)
 
+    normalized_target_id = str(target_id) if target_id is not None else None
+    now = utcnow()
     doc = {
         "token_hash": token_hash,
         "user_id": ObjectId(current_user._id),
         "action": action,
-        "target_id": target_id,
-        "created_at": utcnow(),
-        "expires_at": utcnow() + timedelta(seconds=FRESH_STEP_UP_TTL_SECONDS),
+        "target_id": normalized_target_id,
+        "created_at": now,
+        "expires_at": now + timedelta(seconds=FRESH_STEP_UP_TTL_SECONDS),
         "used": False,
     }
     _get_mongo()[FRESH_STEP_UP_COLLECTION].insert_one(doc)
-
-    # Also create a TTL index if not exists (idempotent)
-    try:
-        _get_mongo()[FRESH_STEP_UP_COLLECTION].create_index(
-            "expires_at", expireAfterSeconds=0, name="fresh_step_up_ttl"
-        )
-    except Exception:
-        pass
 
     return token
 
 
 def _hash_token(token: str) -> str:
     """Hash a token for storage."""
-    import hashlib
-
     return hashlib.sha256(token.encode()).hexdigest()
 
 
@@ -196,8 +190,7 @@ def consume_fresh_step_up_token(token: str, action: str, target_id: Optional[str
         "used": False,
         "expires_at": {"$gt": utcnow()},
     }
-    if target_id is not None:
-        query["target_id"] = target_id
+    query["target_id"] = str(target_id) if target_id is not None else None
 
     result = _get_mongo()[FRESH_STEP_UP_COLLECTION].find_one_and_update(
         query,
@@ -231,23 +224,11 @@ def require_fresh_step_up(action: str, target_id_param: str = "user_id"):
                     401,
                 )
 
-            # Get token from JSON body or form data
-            data = None
-            if hasattr(func, "__wrapped__"):
-                # Try to get from request context
-                from flask import request
-
-                if request.is_json:
-                    data = request.get_json(silent=True) or {}
-                else:
-                    data = request.form.to_dict()
-            else:
-                from flask import request
-
-                if request.is_json:
-                    data = request.get_json(silent=True) or {}
-                else:
-                    data = request.form.to_dict()
+            data = (
+                request.get_json(silent=True) or {}
+                if request.is_json
+                else request.form.to_dict()
+            )
 
             token = data.get("fresh_step_up_token") if data else None
             target_id = data.get(target_id_param) if data else None
@@ -257,7 +238,10 @@ def require_fresh_step_up(action: str, target_id_param: str = "user_id"):
                     jsonify(
                         {
                             "error": "fresh_step_up_required",
-                            "message": "Tämä toiminto vaatii tuoreen vahvistuksen. Vahvista henkilöllisyytesi uudelleen.",
+                            "message": _(
+                                "Tämä toiminto vaatii tuoreen vahvistuksen. "
+                                "Vahvista henkilöllisyytesi uudelleen."
+                            ),
                         }
                     ),
                     403,
@@ -268,7 +252,10 @@ def require_fresh_step_up(action: str, target_id_param: str = "user_id"):
                     jsonify(
                         {
                             "error": "fresh_step_up_required",
-                            "message": "Vahvistus on virheellinen, vanhentunut tai jo käytetty. Vahvista henkilöllisyytesi uudelleen.",
+                            "message": _(
+                                "Vahvistus on virheellinen, vanhentunut tai jo käytetty. "
+                                "Vahvista henkilöllisyytesi uudelleen."
+                            ),
                         }
                     ),
                     403,

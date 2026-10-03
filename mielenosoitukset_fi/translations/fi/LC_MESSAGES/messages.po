@@ -13211,3 +13211,57 @@ msgstr "MFA-laite"
 
 msgid "Todennuslaite"
 msgstr "Todennuslaite"
+
+msgid "Käyttäjän poistaminen vaatii uuden vahvistuksen joka kerta."
+msgstr "Käyttäjän poistaminen vaatii uuden vahvistuksen joka kerta."
+
+msgid "Vahvistus epäonnistui."
+msgstr "Vahvistus epäonnistui."
+
+msgid "Pyydetään vahvistusta..."
+msgstr "Pyydetään vahvistusta..."
+
+msgid "Vahvista henkilöllisyytesi ennen poistoa."
+msgstr "Vahvista henkilöllisyytesi ennen poistoa."
+
+msgid "Vahvistuksen pyytäminen epäonnistui."
+msgstr "Vahvistuksen pyytäminen epäonnistui."
+
+msgid "Passkey-vahvistus keskeytettiin. Voit yrittää uudelleen tai käyttää salasanaa."
+msgstr "Passkey-vahvistus keskeytettiin. Voit yrittää uudelleen tai käyttää salasanaa."
+
+msgid "Tuntematon vahvistettava toiminto."
+msgstr "Tuntematon vahvistettava toiminto."
+
+msgid "Virheellinen käyttäjätunniste."
+msgstr "Virheellinen käyttäjätunniste."
+
+msgid "Vahvistuspyyntö ei ole enää voimassa."
+msgstr "Vahvistuspyyntö ei ole enää voimassa."
+
+msgid "Passkey-vastaus puuttuu."
+msgstr "Passkey-vastaus puuttuu."
+
+msgid "Tuntematon passkey."
+msgstr "Tuntematon passkey."
+
+msgid "Henkilöllisyys vahvistettu."
+msgstr "Henkilöllisyys vahvistettu."
+
+msgid "Salasana vaaditaan."
+msgstr "Salasana vaaditaan."
+
+msgid "Väärä salasana."
+msgstr "Väärä salasana."
+
+msgid "Syötä myös MFA-koodi."
+msgstr "Syötä myös MFA-koodi."
+
+msgid "Kirjaudu sisään ennen tätä toimintoa."
+msgstr "Kirjaudu sisään ennen tätä toimintoa."
+
+msgid "Tämä toiminto vaatii tuoreen vahvistuksen. Vahvista henkilöllisyytesi uudelleen."
+msgstr "Tämä toiminto vaatii tuoreen vahvistuksen. Vahvista henkilöllisyytesi uudelleen."
+
+msgid "Vahvistus on virheellinen, vanhentunut tai jo käytetty. Vahvista henkilöllisyytesi uudelleen."
+msgstr "Vahvistus on virheellinen, vanhentunut tai jo käytetty. Vahvista henkilöllisyytesi uudelleen."

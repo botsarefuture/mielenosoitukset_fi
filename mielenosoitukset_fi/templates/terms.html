@@ -1,53 +1,69 @@
-<!--
-terms.html
+{% extends "base.html" %}
 
-Usage Terms for Mielenosoitukset.fi
+{% block title %}{{ _('Käyttöehdot') }} | Mielenosoitukset.fi{% endblock %}
 
-This document outlines the terms of use for the Mielenosoitukset.fi service.
--->
+{% block content %}
+<div class="public-page-shell" aria-labelledby="terms-title">
+  <header class="public-page-header">
+    <div class="public-page-header__content">
+      <p class="public-page-header__kicker">{{ _('Palvelun ehdot') }}</p>
+      <h1 class="public-page-header__title" id="terms-title">{{ _('Käyttöehdot') }}</h1>
+      <p class="public-page-header__description">
+        {{ _('Näissä ehdoissa kerrotaan Mielenosoitukset.fi-palvelun käytön periaatteet.') }}
+      </p>
+    </div>
+    <div class="public-page-header__meta" aria-label="{{ _('Asiakirjan tiedot') }}">
+      <span>
+        <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+        {{ _('Päivitetty viimeksi') }}:
+        <time datetime="2025-10-12">12.10.2025</time>
+      </span>
+    </div>
+  </header>
 
-<!DOCTYPE html>
-<html lang="fi">
-<head>
-    <meta charset="UTF-8">
-    <title>Käyttöehdot – Mielenosoitukset.fi</title>
-</head>
-<body>
-    <h1>Käyttöehdot – mielenosoitukset.fi</h1>
-    <p><em>Päivitetty viimeksi: 12.10.2025</em></p>
+  <div class="public-content-stack">
+    <section class="public-prose-card" aria-labelledby="terms-general">
+      <h2 id="terms-general">{{ _('Yleiset ehdot') }}</h2>
+      <p>
+        {{ _('Kaikkien sivustolla julkaistavien mielenosoitusten on oltava Suomen lakien ja asetusten mukaisia. Sivustollemme ilmoitetut mielenosoitukset eivät saa sisältää syrjintää, vihapuhetta, väkivaltaan yllyttämistä tai muuta epäasiallista sisältöä.') }}
+      </p>
+      <p>
+        {{ _('Pidätämme oikeuden olla julkaisematta sivustollemme ilmoitettua mielenosoitusta ilman erillistä perustelua, mikäli katsomme, että se ei täytä edellä mainittuja ehtoja tai muita sivuston periaatteita.') }}
+      </p>
+      <p>
+        {{ _('Sivustomme tietoja ja sisältöjä ei saa käyttää kaupallisiin tarkoituksiin ilman erillistä kirjallista lupaa.') }}
+      </p>
+    </section>
 
-    <h2>Yleiset ehdot</h2>
-    <p></p>
-        Kaikkien sivustolla julkaistavien mielenosoitusten on oltava Suomen lakien ja asetusten mukaisia. Sivustollemme ilmoitetut mielenosoitukset eivät saa sisältää syrjintää, vihapuhetta, väkivaltaan yllyttämistä tai muuta epäasiallista sisältöä.
-    </p>
-    <p>
-        Pidätämme oikeuden olla julkaisematta sivustollemme ilmoitettua mielenosoitusta ilman erillistä perustelua, mikäli katsomme, että se ei täytä edellä mainittuja ehtoja tai muita sivuston periaatteita.
-    </p>
-    <p>
-        Sivustomme tietoja ja sisältöjä ei saa käyttää kaupallisiin tarkoituksiin ilman erillistä kirjallista lupaa.
-    </p>
+    <section class="public-prose-card" aria-labelledby="terms-appeal">
+      <h2 id="terms-appeal">{{ _('Valitusprosessi') }}</h2>
+      <p>
+        {{ _('Jos mielenosoitustasi ei julkaista ja koet päätöksen olevan virheellinen, voit tehdä asiasta valituksen seuraavan prosessin mukaisesti:') }}
+      </p>
+      <ol>
+        <li>
+          {{ _('Lähetä valituksesi sähköpostilla osoitteeseen') }}
+          <a href="mailto:hallinto@mielenosoitukset.fi">hallinto@mielenosoitukset.fi</a>.
+        </li>
+        <li>{{ _('Käsittelemme valituksesi 30 vuorokauden kuluessa sen vastaanottamisesta.') }}</li>
+        <li>{{ _('Saat valituksestasi kirjallisen lopullisen päätöksen sähköpostilla. Tähän päätökseen ei voi hakea muutosta.') }}</li>
+      </ol>
+    </section>
 
-    <h2>Valitusprosessi</h2>
-    <p>
-        Jos mielenosoitustasi ei julkaista ja koet päätöksen olevan virheellinen, voit tehdä asiasta valituksen seuraavan prosessin mukaisesti:
-    </p>
-    <ol>
-        <li>Lähetä valituksesi sähköpostilla osoitteeseen <strong><a href="mailto:hallinto@mielenosoitukset.fi">hallinto@mielenosoitukset.fi</a></strong></li>
-        <li>Käsittelemme valituksesi 30 vuorokauden kuluessa sen vastaanottamisesta.</li>
-        <li>Saat valituksestasi kirjallisen lopullisen päätöksen sähköpostilla. Tähän päätökseen ei voi hakea muutosta.</li>
-    </ol>
+    <section class="public-prose-card" aria-labelledby="terms-liability">
+      <h2 id="terms-liability">{{ _('Vastuunrajoitus') }}</h2>
+      <p>
+        {{ _('Emme vastaa sivustolla olevien tietojen mahdollisista virheistä tai puutteista emmekä mahdollisista vahingoista, joita virheellisistä tiedoista saattaa aiheutua. Emme myöskään vastaa mahdollisista teknisistä häiriöistä, käyttökatkoista tai muista palvelun toimintahäiriöistä johtuvista ongelmista.') }}
+      </p>
+    </section>
 
-    <h2>Vastuunrajoitus</h2>
-    <p>
-        Emme vastaa sivustolla olevien tietojen mahdollisista virheistä tai puutteista emmekä mahdollisista vahingoista, joita virheellisistä tiedoista saattaa aiheutua. Emme myöskään vastaa mahdollisista teknisistä häiriöistä, käyttökatkoista tai muista palvelun toimintahäiriöistä johtuvista ongelmista.
-    </p>
-
-    <h2>Muutokset käyttöehtoihin</h2>
-    <p>
-        Pidätämme oikeuden päivittää näitä käyttöehtoja tarvittaessa. Käyttäjien vastuulla on tutustua käyttöehtoihin säännöllisesti. Olennaisista muutoksista ilmoitamme selkeästi sivustollamme.
-    </p>
-    <p>
-        Käyttämällä sivustoamme hyväksyt nämä ehdot.
-    </p>
-</body>
-</html>
+    <section class="public-prose-card" aria-labelledby="terms-changes">
+      <h2 id="terms-changes">{{ _('Muutokset käyttöehtoihin') }}</h2>
+      <p>
+        {{ _('Pidätämme oikeuden päivittää näitä käyttöehtoja tarvittaessa. Käyttäjien vastuulla on tutustua käyttöehtoihin säännöllisesti. Olennaisista muutoksista ilmoitamme selkeästi sivustollamme.') }}
+      </p>
+      <p><strong>{{ _('Käyttämällä sivustoamme hyväksyt nämä ehdot.') }}</strong></p>
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -216,6 +216,57 @@ h1 {
   text-underline-offset: 0.2em;
 }
 
+.public-content-stack {
+  display: grid;
+  gap: 1rem;
+  margin-block: 1.5rem 2rem;
+}
+
+.public-prose-card {
+  min-width: 0;
+  padding: clamp(1.15rem, 3vw, 2rem);
+  color: var(--product-text);
+  background: var(--product-surface);
+  border: 1px solid var(--product-border);
+  border-radius: 1rem;
+  box-shadow: var(--product-shadow);
+  line-height: 1.7;
+}
+
+.public-prose-card h2,
+.public-prose-card h3 {
+  margin: 0 0 0.75rem;
+  color: var(--product-text);
+  line-height: 1.25;
+}
+
+.public-prose-card p {
+  margin: 0.75rem 0 0;
+}
+
+.public-prose-card ol,
+.public-prose-card ul {
+  margin: 0.75rem 0 0;
+  padding-inline-start: 1.4rem;
+}
+
+.public-prose-card li + li {
+  margin-top: 0.55rem;
+}
+
+.public-prose-card a {
+  color: var(--product-primary-strong);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.18em;
+}
+
+.public-prose-card a:focus-visible {
+  outline: 3px solid var(--product-primary-strong);
+  outline-offset: 3px;
+}
+
 /* API documentation consumes the shared page chrome and product tokens. */
 .api-docs-wrap {
   margin-block: 0 2rem;

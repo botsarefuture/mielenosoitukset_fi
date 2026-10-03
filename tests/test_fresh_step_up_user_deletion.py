@@ -6,6 +6,11 @@ administrator already has a valid recent authenticated/sudo session.
 """
 
 import time
+from pathlib import Path
+import re
+import shutil
+import subprocess
+
 import pytest
 from bson import ObjectId
 
@@ -70,7 +75,7 @@ def _elevate_with_password(client, password="AdminPass1!"):
 
 def _get_fresh_step_up_token_via_webauthn(wapp, admin_user_id, target_user_id, admin_password="AdminPass1!"):
     """Helper to get a fresh step-up token via WebAuthn flow.
-    
+
     First registers a passkey if needed, then uses it for fresh step-up.
     """
     client = _client_for_user(wapp, admin_user_id)
@@ -130,7 +135,7 @@ def test_delete_user_without_fresh_step_up_rejected(wapp, db, seeded_data):
 
 def test_delete_user_with_recent_sudo_session_still_requires_fresh(wapp, db, seeded_data):
     """Test 2: Admin has valid recent sudo session from another action.
-    
+
     Deletion should STILL require fresh authentication.
     """
     admin_id = seeded_data["admin_id"]
@@ -139,7 +144,7 @@ def test_delete_user_with_recent_sudo_session_still_requires_fresh(wapp, db, see
 
     # First, get a regular sudo elevation (e.g., for passkey management)
     _elevate_with_password(client)
-    
+
     # Verify session is elevated
     r = client.get("/users/auth/api/v2/step-up/status")
     assert r.get_json()["elevated"] is True
@@ -160,7 +165,7 @@ def test_delete_user_with_fresh_webauthn_step_up_succeeds(wapp, db, seeded_data)
     """Test 3: Admin completes fresh WebAuthn step-up, deletion succeeds."""
     admin_id = seeded_data["admin_id"]
     target_id = seeded_data["user_id"]
-    
+
     # Register a passkey for the admin first
     client = _client_for_user(wapp, admin_id)
     _elevate_with_password(client)
@@ -225,12 +230,12 @@ def test_delete_user_fresh_token_cannot_be_reused(wapp, db, seeded_data):
     """Test 6: Fresh token cannot be reused for another deletion."""
     admin_id = seeded_data["admin_id"]
     target_id = seeded_data["user_id"]
-    
+
     # Create a second target user
     target2_id = _create_user(db, "target2", "Passw0rd1!")
-    
+
     client = _client_for_user(wapp, admin_id)
-    
+
     # Register a passkey for the admin
     _elevate_with_password(client)
     key = sim.generate_key()
@@ -292,7 +297,7 @@ def test_delete_user_without_admin_permission_rejected(wapp, db, seeded_data):
     r = client.post("/users/auth/api/v2/passkeys/register/options")
     # This will fail without sudo - need to elevate first
     assert r.status_code == 403
-    
+
     _elevate_with_password(client, password="Passw0rd1!")
     r = client.post("/users/auth/api/v2/passkeys/register/options")
     options = r.get_json()["options"]
@@ -322,7 +327,7 @@ def test_fresh_step_up_token_expires(wapp, db, seeded_data):
 
     # Get a fresh token via the normal flow
     fresh_token = _get_fresh_step_up_token_via_webauthn(wapp, admin_id, target_id)
-    
+
     # Verify token works initially
     r = client.post(
         "/admin/user/delete_user",
@@ -330,7 +335,7 @@ def test_fresh_step_up_token_expires(wapp, db, seeded_data):
     )
     # Need a fresh target since first one might be deleted
     target2_id = _create_user(db, "target2", "Passw0rd1!")
-    
+
     # Token should be consumed after first use
     r = client.post(
         "/admin/user/delete_user",
@@ -338,7 +343,7 @@ def test_fresh_step_up_token_expires(wapp, db, seeded_data):
     )
     assert r.status_code == 403
     assert r.get_json()["error"] == "fresh_step_up_required"
-    
+
     # User should still exist
     assert db.users.find_one({"_id": target2_id}) is not None
 
@@ -376,7 +381,7 @@ def test_fresh_step_up_token_not_valid_for_other_actions(wapp, db, seeded_data):
     # We'll use the internal function with a test request context
     from flask_login import login_user
     from mielenosoitukset_fi.utils.step_up import create_fresh_step_up_token
-    
+
     with wapp.test_request_context():
         user_doc = db.users.find_one({"_id": admin_id})
         user = User.from_db(user_doc)
@@ -417,7 +422,7 @@ def test_fresh_step_up_password_requires_totp_when_mfa_enabled(wapp, db):
     # Get fresh step-up options
     r = client.post(
         "/users/auth/api/v2/step-up/fresh/options",
-        json={"action": "delete_user", "target_id": "some-id"}
+        json={"action": "delete_user", "target_id": str(ObjectId())}
     )
     assert r.status_code == 200
 
@@ -449,7 +454,7 @@ def test_fresh_step_up_options_requires_action(wapp, db, seeded_data):
         json={}
     )
     assert r.status_code == 400
-    assert "action" in r.get_json()["message"].lower() or "required" in r.get_json()["message"].lower()
+    assert r.get_json()["error"] == "invalid_action"
 
 
 def test_fresh_step_up_verify_without_options_fails(wapp, db, seeded_data):
@@ -466,7 +471,62 @@ def test_fresh_step_up_verify_without_options_fails(wapp, db, seeded_data):
         json={"credential": {}}
     )
     assert r.status_code == 400
-    assert "no fresh step-up" in r.get_json()["message"].lower() or "in progress" in r.get_json()["message"].lower()
+    assert r.get_json()["error"] == "fresh_step_up_not_started"
+
+
+def test_fresh_step_up_options_rejects_unknown_action_and_invalid_target(
+    wapp, seeded_data
+):
+    client = _client_for_user(wapp, seeded_data["admin_id"])
+
+    unknown = client.post(
+        "/users/auth/api/v2/step-up/fresh/options",
+        json={"action": "future_sensitive_action", "target_id": str(seeded_data["user_id"])},
+    )
+    assert unknown.status_code == 400
+    assert unknown.get_json()["error"] == "invalid_action"
+
+    malformed = client.post(
+        "/users/auth/api/v2/step-up/fresh/options",
+        json={"action": "delete_user", "target_id": "not-an-object-id"},
+    )
+    assert malformed.status_code == 400
+    assert malformed.get_json()["error"] == "invalid_target"
+
+
+def test_user_delete_modal_supports_real_webauthn_and_password_fallback():
+    source = Path(
+        "mielenosoitukset_fi/templates/admin_V2/_modals_users.html"
+    ).read_text(encoding="utf-8")
+
+    assert "decodePublicKeyOptions(freshStepUpOptions)" in source
+    assert "formatAssertionCredential(credential)" in source
+    assert 'id="freshStepUpPasswordForm"' in source
+    assert 'id="freshStepUpTotpGroup" hidden' in source
+    assert 'filename=\'js/webauthn.js\'' in source
+
+
+def test_rendered_user_delete_javascript_parses(admin_client):
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js is unavailable")
+
+    response = admin_client.get("/admin/user/")
+    assert response.status_code == 200
+    scripts = re.findall(
+        r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>",
+        response.get_data(as_text=True),
+        flags=re.S,
+    )
+    script = next(item for item in scripts if "freshStepUpOptions" in item)
+    result = subprocess.run(
+        [node, "--check"],
+        input=script,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 if __name__ == "__main__":

@@ -44,6 +44,33 @@
         <label class="workflow-confirm-label" for="confirmInput">{{ _('Kirjoita VAHVISTA vahvistaaksesi poiston') }}</label>
         <input type="text" id="confirmInput" class="form-control" autocomplete="off" placeholder="VAHVISTA">
         <div id="countdownText" class="workflow-status danger" aria-live="polite"></div>
+        <section class="workflow-step-up" id="freshStepUpPanel" aria-labelledby="freshStepUpTitle" hidden>
+          <div class="workflow-step-up-heading">
+            <span class="workflow-heading-icon"><i class="fas fa-shield-halved" aria-hidden="true"></i></span>
+            <div>
+              <h6 id="freshStepUpTitle">{{ _('Vahvista henkilöllisyytesi') }}</h6>
+              <p>{{ _('Käyttäjän poistaminen vaatii uuden vahvistuksen joka kerta.') }}</p>
+            </div>
+          </div>
+          <div class="workflow-status" id="freshStepUpStatus" role="status" aria-live="polite"></div>
+          <button type="button" class="workflow-button workflow-step-up-passkey btn btn-outline-primary" id="freshStepUpPasskeyBtn">
+            <i class="fas fa-key" aria-hidden="true"></i>{{ _('Vahvista passkeyllä') }}
+          </button>
+          <div class="workflow-step-up-divider" role="separator"><span>{{ _('tai') }}</span></div>
+          <form id="freshStepUpPasswordForm" class="workflow-step-up-form">
+            <div class="admin-field">
+              <label for="freshStepUpPassword">{{ _('Salasana') }}</label>
+              <input type="password" id="freshStepUpPassword" class="form-control" autocomplete="current-password" required>
+            </div>
+            <div class="admin-field" id="freshStepUpTotpGroup" hidden>
+              <label for="freshStepUpTotp">{{ _('MFA-koodi') }}</label>
+              <input type="text" id="freshStepUpTotp" class="form-control" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*">
+            </div>
+            <button type="submit" class="workflow-button btn btn-primary" id="freshStepUpPasswordBtn">
+              <i class="fas fa-lock" aria-hidden="true"></i>{{ _('Vahvista salasanalla') }}
+            </button>
+          </form>
+        </section>
       </div>
       <div class="modal-footer">
         <button type="button" class="workflow-button btn btn-outline-secondary" id="cancelDeleteBtn" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
@@ -55,9 +82,12 @@
   </div>
 </div>
 
+<script src="{{ url_for('static', filename='js/webauthn.js') }}"></script>
 <script>
   let countdown3Sec;
   let countdownInterval;
+  let freshStepUpOptions = null;
+  let freshStepUpTargetId = null;
 
   function openDeleteModal(event, username, userId) {
     event.preventDefault();
@@ -68,6 +98,7 @@
     const countdownText = document.getElementById('countdownText');
     const cancelBtn = document.getElementById('cancelDeleteBtn');
 
+    resetFreshStepUp();
     userTitle.textContent = username;
     confirmInput.value = "";
     finalDeleteBtn.disabled = true;
@@ -82,6 +113,7 @@
       finalDeleteBtn.disabled = true;
       finalDeleteBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i>{{ _("Poista käyttäjä") }}';
       countdownText.textContent = "";
+      resetFreshStepUp();
     };
 
     cancelBtn.onclick = stopAll;
@@ -124,8 +156,8 @@
           countdownText.textContent = `{{ _('Käyttäjä poistetaan') }} ${countdown} {{ _('sekunnin kuluttua...') }}`;
         } else {
           clearInterval(countdownInterval);
-          countdownText.textContent = "{{ _('Poistetaan käyttäjää...') }}";
-          performFreshStepUpAndDelete(userId);
+          countdownText.textContent = "";
+          prepareFreshStepUp(userId);
         }
       }, 1000);
     };
@@ -136,69 +168,140 @@
     document.getElementById('deleteModal').addEventListener('hidden.bs.modal', stopAll, { once: true });
   }
 
-  async function performFreshStepUpAndDelete(userId) {
+  function resetFreshStepUp() {
+    const panel = document.getElementById('freshStepUpPanel');
+    const status = document.getElementById('freshStepUpStatus');
+    const password = document.getElementById('freshStepUpPassword');
+    const totp = document.getElementById('freshStepUpTotp');
+    panel.hidden = true;
+    status.textContent = "";
+    status.classList.remove('danger');
+    password.value = "";
+    totp.value = "";
+    document.getElementById('freshStepUpTotpGroup').hidden = true;
+    document.getElementById('finalDeleteBtn').hidden = false;
+    freshStepUpOptions = null;
+    freshStepUpTargetId = null;
+    setFreshStepUpBusy(false);
+  }
+
+  function setFreshStepUpBusy(busy) {
+    document.getElementById('freshStepUpPasskeyBtn').disabled = busy;
+    document.getElementById('freshStepUpPasswordBtn').disabled = busy;
+    document.getElementById('freshStepUpPassword').disabled = busy;
+    document.getElementById('freshStepUpTotp').disabled = busy;
+  }
+
+  function showFreshStepUpError(message) {
+    const status = document.getElementById('freshStepUpStatus');
+    status.textContent = message || "{{ _('Vahvistus epäonnistui.') }}";
+    status.classList.add('danger');
+  }
+
+  async function responseJson(response) {
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.status === 'error') {
+      throw new Error(data.message || "{{ _('Vahvistus epäonnistui.') }}");
+    }
+    return data;
+  }
+
+  async function prepareFreshStepUp(userId) {
     const countdownText = document.getElementById('countdownText');
     const finalDeleteBtn = document.getElementById('finalDeleteBtn');
+    const panel = document.getElementById('freshStepUpPanel');
+    const passkeyBtn = document.getElementById('freshStepUpPasskeyBtn');
 
     try {
-      // Step 1: Get fresh step-up options (binds action and target_id in session)
       countdownText.textContent = "{{ _('Pyydetään vahvistusta...') }}";
       const optionsResp = await fetch("/users/auth/api/v2/step-up/fresh/options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "delete_user", target_id: userId })
       });
-      const optionsData = await optionsResp.json();
-      if (optionsData.status !== "success") {
-        throw new Error(optionsData.message || "{{ _('Vahvistuksen pyytäminen epäonnistui.') }}");
-      }
+      const optionsData = await responseJson(optionsResp);
+      freshStepUpOptions = optionsData.options;
+      freshStepUpTargetId = userId;
+      panel.hidden = false;
+      countdownText.textContent = "{{ _('Vahvista henkilöllisyytesi ennen poistoa.') }}";
+      passkeyBtn.hidden = !(window.PublicKeyCredential && navigator.credentials);
+      finalDeleteBtn.hidden = true;
+      (passkeyBtn.hidden ? document.getElementById('freshStepUpPassword') : passkeyBtn).focus();
+    } catch (err) {
+      countdownText.textContent = err.message || "{{ _('Vahvistuksen pyytäminen epäonnistui.') }}";
+      finalDeleteBtn.disabled = false;
+      finalDeleteBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i>{{ _("Poista käyttäjä") }}';
+    }
+  }
 
-      // Step 2: Perform WebAuthn authentication
-      countdownText.textContent = "{{ _('Vahvista henkilöllisyytesi passkeyllä...') }}";
-      const options = optionsData.options;
-      const credential = await navigator.credentials.get({ publicKey: options });
-
-      // Step 3: Verify the WebAuthn assertion and get fresh step-up token
+  async function freshStepUpWithPasskey() {
+    setFreshStepUpBusy(true);
+    try {
+      const credential = await navigator.credentials.get({
+        publicKey: decodePublicKeyOptions(freshStepUpOptions)
+      });
       const verifyResp = await fetch("/users/auth/api/v2/step-up/fresh/webauthn/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: credential })
+        body: JSON.stringify({ credential: formatAssertionCredential(credential) })
       });
-      const verifyData = await verifyResp.json();
-      if (verifyData.status !== "success") {
-        throw new Error(verifyData.message || "{{ _('Vahvistus epäonnistui.') }}");
-      }
-
-      const freshToken = verifyData.fresh_step_up_token;
-
-      // Step 4: Delete the user with the fresh step-up token
-      countdownText.textContent = "{{ _('Poistetaan käyttäjää...') }}";
-      const deleteResp = await fetch("{{ url_for('admin_user.delete_user') }}", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, fresh_step_up_token: freshToken })
-      });
-      const deleteData = await deleteResp.json();
-
-      if (deleteData.status === "OK") {
-        const row = document.getElementById(`user-${userId}`);
-        if (row) row.remove();
-        showToast(deleteData.message);
-        const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
-        deleteModal.hide();
-      } else {
-        countdownText.textContent = deleteData.message || "{{ _('Käyttäjän poistaminen epäonnistui.') }}";
-        finalDeleteBtn.disabled = false;
-        finalDeleteBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i>{{ _("Poista käyttäjä") }}';
-        showToast("Virhe: " + deleteData.message, "danger");
-      }
+      const verifyData = await responseJson(verifyResp);
+      await deleteUserWithFreshToken(verifyData.fresh_step_up_token);
     } catch (err) {
-      countdownText.textContent = err.message || "{{ _('Käyttäjän poistaminen epäonnistui.') }}";
-      finalDeleteBtn.disabled = false;
-      finalDeleteBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i>{{ _("Poista käyttäjä") }}';
-      showToast("{{ _('Käyttäjän poistaminen epäonnistui.') }}: " + err.message, "danger");
+      showFreshStepUpError(
+        err.name === 'NotAllowedError'
+          ? "{{ _('Passkey-vahvistus keskeytettiin. Voit yrittää uudelleen tai käyttää salasanaa.') }}"
+          : err.message
+      );
+      setFreshStepUpBusy(false);
     }
   }
+
+  async function freshStepUpWithPassword(event) {
+    event.preventDefault();
+    const password = document.getElementById('freshStepUpPassword').value;
+    const totp = document.getElementById('freshStepUpTotp').value.trim();
+    setFreshStepUpBusy(true);
+    try {
+      const verifyResp = await fetch("/users/auth/api/v2/step-up/fresh/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: password, totp_code: totp })
+      });
+      const verifyData = await verifyResp.json().catch(() => ({}));
+      if (!verifyResp.ok || verifyData.status !== 'success') {
+        if (verifyData.error === 'totp_required') {
+          document.getElementById('freshStepUpTotpGroup').hidden = false;
+          document.getElementById('freshStepUpTotp').focus();
+        }
+        throw new Error(verifyData.message || "{{ _('Vahvistus epäonnistui.') }}");
+      }
+      await deleteUserWithFreshToken(verifyData.fresh_step_up_token);
+    } catch (err) {
+      showFreshStepUpError(err.message);
+      setFreshStepUpBusy(false);
+    }
+  }
+
+  async function deleteUserWithFreshToken(freshToken) {
+    document.getElementById('countdownText').textContent = "{{ _('Poistetaan käyttäjää...') }}";
+    const deleteResp = await fetch("{{ url_for('admin_user.delete_user') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: freshStepUpTargetId, fresh_step_up_token: freshToken })
+    });
+    const deleteData = await deleteResp.json().catch(() => ({}));
+    if (!deleteResp.ok || deleteData.status !== "OK") {
+      throw new Error(deleteData.message || "{{ _('Käyttäjän poistaminen epäonnistui.') }}");
+    }
+    const row = document.getElementById(`user-${freshStepUpTargetId}`);
+    if (row) row.remove();
+    showToast(deleteData.message);
+    bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+  }
+
+  document.getElementById('freshStepUpPasskeyBtn').addEventListener('click', freshStepUpWithPasskey);
+  document.getElementById('freshStepUpPasswordForm').addEventListener('submit', freshStepUpWithPassword);
 </script>
 
 <!-- Create User Modal -->

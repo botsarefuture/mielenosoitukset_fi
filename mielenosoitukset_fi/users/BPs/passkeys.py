@@ -303,8 +303,30 @@ def fresh_step_up_options():
     action = data.get("action")
     target_id = data.get("target_id")
 
-    if not action:
-        return jsonify({"status": "error", "message": "Action is required"}), 400
+    if action != "delete_user":
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "error": "invalid_action",
+                    "message": _("Tuntematon vahvistettava toiminto."),
+                }
+            ),
+            400,
+        )
+    try:
+        target_id = str(ObjectId(str(target_id)))
+    except Exception:
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "error": "invalid_target",
+                    "message": _("Virheellinen käyttäjätunniste."),
+                }
+            ),
+            400,
+        )
 
     # Store action and target_id in session for verification
     session["fresh_step_up_action"] = action
@@ -314,7 +336,14 @@ def fresh_step_up_options():
     options = webauthn.authentication_options(
         user_id=current_user._id, purpose=webauthn.PURPOSE_STEP_UP
     )
-    return jsonify({"status": "success", "options": options, "action": action, "target_id": target_id})
+    return jsonify(
+        {
+            "status": "success",
+            "options": options,
+            "action": action,
+            "target_id": target_id,
+        }
+    )
 
 
 @passkeys_bp.route("/api/v2/step-up/fresh/webauthn/verify", methods=["POST"])
@@ -329,18 +358,36 @@ def fresh_step_up_webauthn_verify():
     target_id = session.get("fresh_step_up_target_id")
 
     if not action:
-        return jsonify({"status": "error", "message": "No fresh step-up in progress"}), 400
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "error": "fresh_step_up_not_started",
+                    "message": _("Vahvistuspyyntö ei ole enää voimassa."),
+                }
+            ),
+            400,
+        )
 
     data = request.get_json(silent=True) or {}
     credential = data.get("credential")
     if not credential:
-        return jsonify({"status": "error", "message": "credential missing"}), 400
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "error": "credential_missing",
+                    "message": _("Passkey-vastaus puuttuu."),
+                }
+            ),
+            400,
+        )
 
     record, error = webauthn.verify_authentication(
         credential, user_id=current_user._id, purpose=webauthn.PURPOSE_STEP_UP
     )
     if error or not record:
-        return jsonify({"status": "error", "message": error or "Tuntematon passkey."}), 403
+        return jsonify({"status": "error", "message": error or _("Tuntematon passkey.")}), 403
 
     # Clear session binding
     session.pop("fresh_step_up_action", None)
@@ -352,7 +399,7 @@ def fresh_step_up_webauthn_verify():
     return jsonify(
         {
             "status": "success",
-            "message": "Henkilöllisyys vahvistettu.",
+            "message": _("Henkilöllisyys vahvistettu."),
             "fresh_step_up_token": token,
             "action": action,
             "target_id": target_id,
@@ -368,27 +415,36 @@ def fresh_step_up_password():
     target_id = session.get("fresh_step_up_target_id")
 
     if not action:
-        return jsonify({"status": "error", "message": "No fresh step-up in progress"}), 400
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "error": "fresh_step_up_not_started",
+                    "message": _("Vahvistuspyyntö ei ole enää voimassa."),
+                }
+            ),
+            400,
+        )
 
     data = request.get_json(silent=True) or {}
     password = data.get("password")
 
     if not isinstance(password, str) or not password:
-        return jsonify({"status": "error", "message": "Salasana vaaditaan."}), 400
+        return jsonify({"status": "error", "message": _("Salasana vaaditaan.")}), 400
 
     user_doc = _get_user_doc(current_user._id)
     user = User.from_db(user_doc) if user_doc else current_user
     if not user.check_password(password):
-        return jsonify({"status": "error", "message": "Väärä salasana."}), 403
+        return jsonify({"status": "error", "message": _("Väärä salasana.")}), 403
 
     if _user_requires_totp():
         totp_code = data.get("totp_code")
         if not isinstance(totp_code, str) or not totp_code.strip():
             return jsonify(
-                {"status": "error", "message": "Syötä myös MFA-koodi.", "error": "totp_required"}
+                {"status": "error", "message": _("Syötä myös MFA-koodi."), "error": "totp_required"}
             ), 400
         if not UserMFA(user._id).verify_token(totp_code.strip()):
-            return jsonify({"status": "error", "message": "Väärä MFA-koodi."}), 403
+            return jsonify({"status": "error", "message": _("Väärä MFA-koodi.")}), 403
 
     # Clear session binding
     session.pop("fresh_step_up_action", None)
@@ -400,7 +456,7 @@ def fresh_step_up_password():
     return jsonify(
         {
             "status": "success",
-            "message": "Henkilöllisyys vahvistettu.",
+            "message": _("Henkilöllisyys vahvistettu."),
             "fresh_step_up_token": token,
             "action": action,
             "target_id": target_id,

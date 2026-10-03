@@ -13497,3 +13497,87 @@ msgstr "Referrers"
 #: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:181
 msgid "Sivunäytöt sivustolle saapuneen viittauslähteen mukaan."
 msgstr "Page views by the referring source that led to the site."
+
+#: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:52
+msgid "Käyttäjän poistaminen vaatii uuden vahvistuksen joka kerta."
+msgstr "Deleting a user requires a new verification every time."
+
+#: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:197
+#: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:204
+#: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:277
+msgid "Vahvistus epäonnistui."
+msgstr "Verification failed."
+
+#: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:216
+msgid "Pyydetään vahvistusta..."
+msgstr "Requesting verification..."
+
+#: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:226
+msgid "Vahvista henkilöllisyytesi ennen poistoa."
+msgstr "Verify your identity before deleting the user."
+
+#: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:231
+msgid "Vahvistuksen pyytäminen epäonnistui."
+msgstr "Could not request verification."
+
+#: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:253
+msgid ""
+"Passkey-vahvistus keskeytettiin. Voit yrittää uudelleen tai käyttää "
+"salasanaa."
+msgstr "Passkey verification was cancelled. Try again or use your password."
+
+#: mielenosoitukset_fi/users/BPs/passkeys.py:312
+msgid "Tuntematon vahvistettava toiminto."
+msgstr "Unknown action requiring verification."
+
+#: mielenosoitukset_fi/users/BPs/passkeys.py:325
+msgid "Virheellinen käyttäjätunniste."
+msgstr "Invalid user ID."
+
+#: mielenosoitukset_fi/users/BPs/passkeys.py:366
+#: mielenosoitukset_fi/users/BPs/passkeys.py:423
+msgid "Vahvistuspyyntö ei ole enää voimassa."
+msgstr "The verification request is no longer valid."
+
+#: mielenosoitukset_fi/users/BPs/passkeys.py:380
+msgid "Passkey-vastaus puuttuu."
+msgstr "The passkey response is missing."
+
+#: mielenosoitukset_fi/users/BPs/passkeys.py:390
+msgid "Tuntematon passkey."
+msgstr "Unknown passkey."
+
+#: mielenosoitukset_fi/users/BPs/passkeys.py:402
+#: mielenosoitukset_fi/users/BPs/passkeys.py:459
+msgid "Henkilöllisyys vahvistettu."
+msgstr "Identity verified."
+
+#: mielenosoitukset_fi/users/BPs/passkeys.py:433
+msgid "Salasana vaaditaan."
+msgstr "Password is required."
+
+#: mielenosoitukset_fi/users/BPs/passkeys.py:438
+msgid "Väärä salasana."
+msgstr "Incorrect password."
+
+#: mielenosoitukset_fi/users/BPs/passkeys.py:444
+msgid "Syötä myös MFA-koodi."
+msgstr "Enter your MFA code too."
+
+#: mielenosoitukset_fi/utils/step_up.py:107
+msgid "Kirjaudu sisään ennen tätä toimintoa."
+msgstr "Sign in before performing this action."
+
+#: mielenosoitukset_fi/utils/step_up.py:242
+msgid ""
+"Tämä toiminto vaatii tuoreen vahvistuksen. Vahvista henkilöllisyytesi "
+"uudelleen."
+msgstr "This action requires fresh verification. Verify your identity again."
+
+#: mielenosoitukset_fi/utils/step_up.py:256
+msgid ""
+"Vahvistus on virheellinen, vanhentunut tai jo käytetty. Vahvista "
+"henkilöllisyytesi uudelleen."
+msgstr ""
+"The verification is invalid, expired or already used. Verify your identity "
+"again."

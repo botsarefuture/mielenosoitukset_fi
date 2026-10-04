@@ -13581,3 +13581,14 @@ msgid ""
 msgstr ""
 "The verification is invalid, expired or already used. Verify your identity "
 "again."
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaun tulokset"
+msgstr "Organization search results"
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaku ei onnistunut. Yritä uudelleen."
+msgstr "Organization search failed. Try again."
+
+#: mielenosoitukset_fi/basic_routes.py
+msgid "Hakuteksti on liian pitkä."
+msgstr "The search text is too long."

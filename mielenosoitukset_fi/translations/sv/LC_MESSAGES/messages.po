@@ -13575,3 +13575,14 @@ msgid ""
 msgstr ""
 "Verifieringen är ogiltig, har gått ut eller har redan använts. Verifiera din"
 " identitet igen."
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaun tulokset"
+msgstr "Resultat för organisationssökning"
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaku ei onnistunut. Yritä uudelleen."
+msgstr "Organisationssökningen misslyckades. Försök igen."
+
+#: mielenosoitukset_fi/basic_routes.py
+msgid "Hakuteksti on liian pitkä."
+msgstr "Söktexten är för lång."

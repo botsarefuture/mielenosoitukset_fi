@@ -3677,3 +3677,15 @@ msgid ""
 "Vahvistus on virheellinen, vanhentunut tai jo käytetty. Vahvista "
 "henkilöllisyytesi uudelleen."
 msgstr ""
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaun tulokset"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaku ei onnistunut. Yritä uudelleen."
+msgstr ""
+
+#: mielenosoitukset_fi/basic_routes.py
+msgid "Hakuteksti on liian pitkä."
+msgstr ""

@@ -1651,28 +1651,46 @@ def init_routes(app):
         
         Returns JSON array of matching organizations with id, name, email, website.
         """
+        max_query_length = 100
         query = (request.args.get("q") or "").strip()
         
         if not query or len(query) < 2:
             return jsonify([])
+
+        if len(query) > max_query_length:
+            return jsonify({"error": _("Hakuteksti on liian pitkä.")}), 400
         
-        # Search in organizations collection using case-insensitive regex
+        # Treat visitor input as text, never as a caller-controlled regular expression.
         mongo = DatabaseManager().get_instance().get_db()
         organizations = mongo["organizations"].find(
             {
-                "name": {"$regex": query, "$options": "i"}
+                "name": {"$regex": re.escape(query), "$options": "i"}
             },
-            {"_id": 1, "name": 1, "email": 1, "website": 1, "description": 1}
+            {
+                "_id": 1,
+                "name": 1,
+                "email": 1,
+                "website": 1,
+                "description": 1,
+            },
         ).limit(10)
+
+        def normalized_text(value, max_length):
+            if not isinstance(value, str):
+                return ""
+            return value[:max_length]
         
         results = []
         for org in organizations:
+            description = normalized_text(org.get("description"), 101)
+            if len(description) > 100:
+                description = f"{description[:100]}..."
             results.append({
                 "id": str(org["_id"]),
-                "name": org.get("name", ""),
-                "email": org.get("email", ""),
-                "website": org.get("website", ""),
-                "description": org.get("description", "")[:100] + "..." if len(org.get("description", "")) > 100 else org.get("description", "")
+                "name": normalized_text(org.get("name"), 200),
+                "email": normalized_text(org.get("email"), 254),
+                "website": normalized_text(org.get("website"), 2048),
+                "description": description,
             })
         
         return jsonify(results)

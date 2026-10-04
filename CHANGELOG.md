@@ -44,6 +44,7 @@
 * The public demonstration detail invite dialog now renders friend names and avatars with DOM nodes, shows localized inline loading/error/success status, disables the send action while submitting, and reports success through the shared flash-message system instead of a native alert.
 
 ### Fixed
+* The public demonstration submission form now renders organization-search results with text-safe native controls instead of HTML strings and inline handlers. Server-side organization searches treat visitor input as bounded literal text, and the shared autocomplete component provides consistent light/dark, focus, empty, and error states.
 * Demonstration change-suggestion flashes and reminder-subscription responses now follow the active Finnish, English, or Swedish locale instead of returning Finnish text in every language. The reminder dialog also uses the shared public modal/form-feedback contract, renders server messages as text, exposes busy/live status to assistive technology, and resets cleanly between openings.
 * Public contextual toolbox links remain visible and usable when JavaScript is unavailable, while the collapse control that depends on an inline handler stays hidden until the toolbox is enhanced; JavaScript-enhanced sessions still collapse the panel immediately into the compact launcher before interaction.
 * Cancelled demonstration pages no longer initialize missing participation controls, preventing anonymous and authenticated detail-page JavaScript from failing when the like button is intentionally absent.

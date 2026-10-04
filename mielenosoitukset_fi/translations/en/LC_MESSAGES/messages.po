@@ -13380,3 +13380,120 @@ msgstr "We reserve the right to update these terms when necessary. Users are res
 #: mielenosoitukset_fi/templates/terms.html
 msgid "Käyttämällä sivustoamme hyväksyt nämä ehdot."
 msgstr "By using the site, you accept these terms."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:12
+msgid "Kävijätietoja ei ole vielä kerätty"
+msgstr "No visitor data collected yet"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:37
+msgid ""
+"Luvut kerätään palvelimella. Analytiikkaa varten ei käytetä evästeitä eikä "
+"kolmannen osapuolen palveluita, ja kävijät lasketaan anonyymisti arviona."
+msgstr ""
+"The figures are collected on the server. No cookies or third-party services "
+"are used for analytics, and visitors are counted anonymously as an estimate."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:58
+msgid "Kävijät ja sivunäytöt"
+msgstr "Visitors and page views"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:61
+#, python-format
+msgid "eilen %(count)s sivunäyttöä"
+msgstr "%(count)s page views yesterday"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:64
+#, python-format
+msgid "edellinen viikko %(count)s sivunäyttöä"
+msgstr "previous week %(count)s page views"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:67
+#, python-format
+msgid "edellinen kuukausi vastaavana aikana %(count)s sivunäyttöä"
+msgstr "previous month %(count)s page views at the same time"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:70
+#, python-format
+msgid "edellinen vastaava jakso %(count)s sivunäyttöä"
+msgstr "previous comparable period %(count)s page views"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:78
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:363
+msgid "Kävijät"
+msgstr "Visitors"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:95
+msgid ""
+"Laskuriin kirjataan vain julkiset sivunäytöt: hallintapaneelin, käyttäjien "
+"oma alue, rajapinnat, staattiset tiedostot ja botit on jätetty "
+"tarkoituksella pois, eivätkä ne kasvata kävijämäärää."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:100
+msgid ""
+"Kävijät ovat arvio, eivätkä laskettuja henkilöitä. Kävijä tunnistetaan "
+"palvelimella IP-osoitteen ja laitteen perusteella, ja tunnisteeseen "
+"sekoitetaan viikoittain vaihtuva avain, jotta samaa ihmistä ei voi yhdistää "
+"eri viikkojen välillä. Tunniste on lyhyt ja anonyymi: sitä ei voi palauttaa "
+"IP-osoitteeksi, eikä kävijälle muodostu pysyvää profiilia. Evästeitä ei "
+"käytetä eikä kolmannen osapuolen analytiikkapalveluita ole mukana. Sama "
+"henkilö voi näyttää useita kerroja esimerkiksi jaetun verkon, vaihtuvan IP-"
+"osoitteen tai eri laitteiden vuoksi. Kävijät lasketaan uudelleen joka "
+"viikko, joten viikon mittaisella jaksolla sama kävijä voidaan laskea kerran "
+"viikossa."
+msgstr ""
+"Visitor counts are estimates, not a count of individual people. A visitor is"
+" identified on the server from the IP address and the device type, and a key"
+" that changes every week is mixed into the identifier, so the same person "
+"cannot be linked across different weeks. The identifier is short and "
+"anonymous: it cannot be turned back into an IP address, and no permanent "
+"profile is created for a visitor. No cookies are used and no third-party "
+"analytics services are involved. The same person may be counted more than "
+"once, for example because of a shared network, a changing IP address or "
+"different devices. Visitor counts are recalculated every week, so over a "
+"period longer than a week the same visitor can be counted once per week."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:103
+#, python-format
+msgid ""
+"Kävijätietoja on kerätty %(date)s alkaen, joten sitä vanhemmat jaksot "
+"näytetään viivalla —."
+msgstr ""
+"Visitor data has been collected since %(date)s, so older periods are shown "
+"with a dash —."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:112
+msgid "Kävijät ja sivunäytöt päivittäin"
+msgstr "Daily visitors and page views"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:113
+msgid ""
+"Sivunäytöt ovat katsottujen sivujen määrä, kävijät saman päivän aikana "
+"erillisinä pidettyjen kävijöiden määrä."
+msgstr ""
+"Page views are the number of pages viewed, and visitors are the number of "
+"visitors counted as separate during the same day."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:119
+msgid "Päivittäiset sivunäytöt ja kävijät viivakaaviona"
+msgstr "Daily page views and visitors on a line chart"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:121
+msgid "Kävijäsarja loppuu päivään, jolloin kävijätietoja ei ole vielä kerätty."
+msgstr "The visitor series ends on the day visitor data was first collected."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:132
+msgid "Sivunäytöt palvelimen kieliasetuksen mukaan."
+msgstr "Page views by the server's language setting."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:156
+msgid "Sivunäytöt laitteen tyypin mukaan."
+msgstr "Page views by device type."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:180
+msgid "Mistä tullaan"
+msgstr "Referrers"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:181
+msgid "Sivunäytöt sivustolle saapuneen viittauslähteen mukaan."
+msgstr "Page views by the referring source that led to the site."

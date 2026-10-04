@@ -19,6 +19,7 @@
 * **Facebook event descriptions are no longer truncated** — the 50k character safety cap has been removed; full descriptions are preserved (with only script/style sanitization).
 
 ### Changed
+* The periodic email-queue drainer now refreshes its database collection handles on every run, so scheduler reloads, tests, and maintenance commands cannot leave it polling a stale database while current queued mail remains unsent.
 * Public feedback now has a CI-enforced product-UI contract: active public templates and shared scripts cannot add native browser alerts, confirmations, or prompts. Two unreferenced legacy scripts for an obsolete registration form and demonstration quick-delete modal were removed so their hard-coded dialogs and stale duplicate behavior cannot return accidentally.
 * The public context toolbox now uses a resource-aware, modern action-card layout with a discoverable 44-pixel launcher, aligned icon tiles, a consistently named admin destination, a structurally separated destructive action, remembered desktop state, and a mobile bottom-sheet position that avoids the responsive header and safe area in both themes.
 * The public context toolbox is now a focused, reliable navigation launcher instead of a second admin dashboard: it links to the permission-protected demonstration or organization management views for state-changing work, removes broken duplicate approve/reject/delete/leave handlers and misleading current-page actions, uses one clear primary action plus separated destructive navigation, hides itself when no contextual action is available, and keeps long action sets vertically reachable on short mobile viewports.
@@ -854,3 +855,6 @@
 ---
 
 ✅ **Overall:** Improved security, performance, accessibility, and polished UI for a more professional and reliable experience.
+
+### 2025-10-01
+- Added visitor analytics (distinct anonymous Kävijät) to admin Site Analytics alongside pageviews. Introduced `site_analytics_visitors` collection with privacy-safe visitor hashing, weekly salt rotation, 400-day retention/TTL, kill switch `SITE_ANALYTICS_VISITORS_ENABLED`, migration `008_visitor_analytics`, UI chart/cards updates with clear limitations text, CSS styles, and translation additions. Visitor recording only affects public eligible pageviews; excluded traffic (admin/API/static/bots) produces no visitor records. Periods before first visitor data show unavailable state (—); multi-week ranges can count the same person once per salt week as an estimate.

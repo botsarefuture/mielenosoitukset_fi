@@ -5,6 +5,16 @@
 
 {% set range_options = [(7, _('Viimeiset 7 päivää')), (14, _('Viimeiset 14 päivää')), (30, _('Viimeiset 30 päivää')), (90, _('Viimeiset 90 päivää'))] %}
 
+{# A metric is unavailable when visitor tracking had not started yet for that
+   period. Show an em dash then, never a number derived from pageviews. #}
+{% macro metric_value(value) %}
+  {%- if value is none -%}
+    <strong class="admin-site-analytics__metric-unavailable" title="{{ _('Kävijätietoja ei ole vielä kerätty') }}">—</strong>
+  {%- else -%}
+    <strong>{{ value }}</strong>
+  {%- endif -%}
+{% endmacro %}
+
 {% macro period_badge(card) %}
   {% set current = card.current %}
   {% set previous = card.previous %}
@@ -24,7 +34,7 @@
 <section class="admin-page admin-site-analytics">
   {{ admin_page_hero(
     _('Palvelun analytiikka'),
-    _('Sivunäyttömäärät kerätään palvelimella ilman evästeitä tai kolmannen osapuolen palveluita.'),
+    _('Luvut kerätään palvelimella. Analytiikkaa varten ei käytetä evästeitä eikä kolmannen osapuolen palveluita, ja kävijät lasketaan anonyymisti arviona.'),
     _('Analytiikka'),
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Palvelun analytiikka'), none)],
     metric_value=overview.today.current,
@@ -42,64 +52,73 @@
     </div>
   </form>
 
-  <section class="admin-workspace-summary" aria-label="{{ _('Sivunäyttöjen yhteenveto') }}">
-    <article class="admin-workspace-summary-card">
-      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i></span>
-      <div>
-        <span>{{ _('Tänään') }}</span>
-        <strong>{{ overview.today.current }}</strong>
-        {{ period_badge(overview.today) }}
-        <small>{{ _('eilen %(count)s', count=overview.yesterday) }}</small>
+{# Both metrics are always shown side by side: "kävijät" is the number of
+   distinct anonymous visitors in the period, "sivunäytöt" is the total number
+   of public pages viewed. One visitor viewing ten pages is 1 + 10. #}
+<section class="admin-workspace-summary admin-site-analytics__summary" aria-label="{{ _('Kävijät ja sivunäytöt') }}">
+  {% for card in [
+    {'key': 'today', 'icon': 'fa-calendar-day', 'label': _('Tänään'),
+     'previous_label': _('eilen %(count)s sivunäyttöä', count=overview.yesterday),
+     'pageviews': overview.today, 'visitors': visitors.today},
+    {'key': 'week', 'icon': 'fa-calendar-week', 'label': _('Tämä viikko'),
+     'previous_label': _('edellinen viikko %(count)s sivunäyttöä', count=overview.week.previous),
+     'pageviews': overview.week, 'visitors': visitors.week},
+    {'key': 'month', 'icon': 'fa-calendar', 'label': _('Tämä kuukausi'),
+     'previous_label': _('edellinen kuukausi vastaavana aikana %(count)s sivunäyttöä', count=overview.month.previous),
+     'pageviews': overview.month, 'visitors': visitors.month},
+    {'key': 'window', 'icon': 'fa-chart-column', 'label': _('Valittu aikaväli'),
+     'previous_label': _('edellinen vastaava jakso %(count)s sivunäyttöä', count=overview.window.previous),
+     'pageviews': overview.window, 'visitors': visitors.window},
+  ] %}
+  <article class="admin-workspace-summary-card">
+    <span class="admin-workspace-summary-icon"><i class="fa-solid {{ card.icon }}" aria-hidden="true"></i></span>
+    <div>
+      <span>{{ card.label }}</span>
+      <div class="admin-site-analytics__metric">
+        <span class="admin-site-analytics__metric-name">{{ _('Kävijät') }}</span>
+        {{ metric_value(card.visitors.current) }}
+        {{ period_badge(card.visitors) }}
       </div>
-    </article>
-    <article class="admin-workspace-summary-card">
-      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i></span>
-      <div>
-        <span>{{ _('Tämä viikko') }}</span>
-        <strong>{{ overview.week.current }}</strong>
-        {{ period_badge(overview.week) }}
-        <small>{{ _('edellinen viikko %(count)s', count=overview.week.previous) }}</small>
+      <div class="admin-site-analytics__metric">
+        <span class="admin-site-analytics__metric-name">{{ _('Sivunäytöt') }}</span>
+        {{ metric_value(card.pageviews.current) }}
+        {{ period_badge(card.pageviews) }}
       </div>
-    </article>
-    <article class="admin-workspace-summary-card">
-      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-calendar" aria-hidden="true"></i></span>
-      <div>
-        <span>{{ _('Tämä kuukausi') }}</span>
-        <strong>{{ overview.month.current }}</strong>
-        {{ period_badge(overview.month) }}
-        <small>{{ _('edellinen kuukausi vastaavana aikana %(count)s', count=overview.month.previous) }}</small>
-      </div>
-    </article>
-    <article class="admin-workspace-summary-card">
-      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></span>
-      <div>
-        <span>{{ _('Valittu aikaväli') }}</span>
-        <strong>{{ overview.window.current }}</strong>
-        {{ period_badge(overview.window) }}
-        <small>{{ _('edellinen vastaava jakso %(count)s', count=overview.window.previous) }}</small>
-      </div>
-    </article>
-  </section>
+      <small>{{ card.previous_label }}</small>
+    </div>
+  </article>
+  {% endfor %}
+</section>
 
-  <p class="admin-site-analytics__limits">
-    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-    {{ _('Laskuriin kirjataan vain julkiset sivunäytöt: hallintapaneelin, käyttäjien oma alue, rajapinnat, staattiset tiedostot ja botit on jätetty tarkoituksella pois. Indeksointibottien käynnit eivät näy luvuissa, eikä yksittäisiä vierailijoita tunnisteta tai tallenneta mitenkään.') }}
-  </p>
+<p class="admin-site-analytics__limits">
+  <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+  {{ _('Laskuriin kirjataan vain julkiset sivunäytöt: hallintapaneelin, käyttäjien oma alue, rajapinnat, staattiset tiedostot ja botit on jätetty tarkoituksella pois, eivätkä ne kasvata kävijämäärää.') }}
+</p>
+
+<p class="admin-site-analytics__limits">
+  <i class="fa-solid fa-user-secret" aria-hidden="true"></i>
+  {{ _('Kävijät ovat arvio, eivätkä laskettuja henkilöitä. Kävijä tunnistetaan palvelimella IP-osoitteen ja laitteen perusteella, ja tunnisteeseen sekoitetaan viikoittain vaihtuva avain, jotta samaa ihmistä ei voi yhdistää eri viikkojen välillä. Tunniste on lyhyt ja anonyymi: sitä ei voi palauttaa IP-osoitteeksi, eikä kävijälle muodostu pysyvää profiilia. Evästeitä ei käytetä eikä kolmannen osapuolen analytiikkapalveluita ole mukana. Sama henkilö voi näyttää useita kerroja esimerkiksi jaetun verkon, vaihtuvan IP-osoitteen tai eri laitteiden vuoksi. Kävijät lasketaan uudelleen joka viikko, joten viikon mittaisella jaksolla sama kävijä voidaan laskea kerran viikossa.') }}
+  {% if visitors.tracked_from %}
+  <br>
+  {{ _('Kävijätietoja on kerätty %(date)s alkaen, joten sitä vanhemmat jaksot näytetään viivalla —.', date=visitors.tracked_from) }}
+  {% endif %}
+</p>
 
   <section class="admin-section-card" aria-labelledby="site-traffic-title">
     <header class="admin-section-card__header">
       <div class="admin-section-card__title">
         <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
         <div>
-          <h2 id="site-traffic-title">{{ _('Liike selvityksellä aikaulottuvuudessa') }}</h2>
-          <p>{{ _('Päivittäiset sivunäytöt valitulla aikavälillä.') }}</p>
+          <h2 id="site-traffic-title">{{ _('Kävijät ja sivunäytöt päivittäin') }}</h2>
+          <p>{{ _('Sivunäytöt ovat katsottujen sivujen määrä, kävijät saman päivän aikana erillisinä pidettyjen kävijöiden määrä.') }}</p>
         </div>
       </div>
     </header>
     <div class="admin-section-card__body">
       <div class="admin-analytics__chart-frame">
-        <canvas id="siteTrafficChart" role="img" aria-label="{{ _('Päivittäiset sivunäytöt viivakaaviona') }}"></canvas>
+        <canvas id="siteTrafficChart" role="img" aria-label="{{ _('Päivittäiset sivunäytöt ja kävijät viivakaaviona') }}"></canvas>
       </div>
+      <p class="admin-analytics__description">{{ _('Kävijäsarja loppuu päivään, jolloin kävijätietoja ei ole vielä kerätty.') }}</p>
     </div>
   </section>
 
@@ -108,7 +127,10 @@
       <header class="admin-section-card__header">
         <div class="admin-section-card__title">
           <i class="fa-solid fa-language" aria-hidden="true"></i>
-          <div><h2 id="site-languages-title">{{ _('Kielet') }}</h2></div>
+          <div>
+            <h2 id="site-languages-title">{{ _('Kielet') }}</h2>
+            <p>{{ _('Sivunäytöt palvelimen kieliasetuksen mukaan.') }}</p>
+          </div>
         </div>
       </header>
       <div class="admin-section-card__body">
@@ -129,7 +151,10 @@
       <header class="admin-section-card__header">
         <div class="admin-section-card__title">
           <i class="fa-solid fa-mobile-screen" aria-hidden="true"></i>
-          <div><h2 id="site-devices-title">{{ _('Laitteet') }}</h2></div>
+          <div>
+            <h2 id="site-devices-title">{{ _('Laitteet') }}</h2>
+            <p>{{ _('Sivunäytöt laitteen tyypin mukaan.') }}</p>
+          </div>
         </div>
       </header>
       <div class="admin-section-card__body">
@@ -146,11 +171,15 @@
       </div>
     </section>
 
+    {# These breakdowns count pageviews, not distinct visitors. #}
     <section class="admin-section-card" aria-labelledby="site-referrers-title">
       <header class="admin-section-card__header">
         <div class="admin-section-card__title">
           <i class="fa-solid fa-link" aria-hidden="true"></i>
-          <div><h2 id="site-referrers-title">{{ _('Viittaajat') }}</h2></div>
+          <div>
+            <h2 id="site-referrers-title">{{ _('Mistä tullaan') }}</h2>
+            <p>{{ _('Sivunäytöt sivustolle saapuneen viittauslähteen mukaan.') }}</p>
+          </div>
         </div>
       </header>
       <div class="admin-section-card__body">
@@ -237,6 +266,7 @@
             <th scope="col">{{ _('Sivunäyttöä') }}</th>
           </tr>
         </thead>
+        {# Column counts pageviews, not distinct visitors. #}
         <tbody>
           {% for row in top_pages %}
           <tr>
@@ -300,7 +330,8 @@
     if (!canvas) return;
 
     const labels = {{ series['labels'] | tojson }};
-    const values = {{ series['values'] | tojson }};
+    const pageviewValues = {{ series['values'] | tojson }};
+    const visitorValues = {{ visitor_series['values'] | tojson }};
 
     function getAdminChartColors() {
       const styles = getComputedStyle(document.documentElement);
@@ -308,7 +339,8 @@
         text: styles.getPropertyValue('--admin-chart-text').trim(),
         grid: styles.getPropertyValue('--admin-chart-grid').trim(),
         background: styles.getPropertyValue('--admin-chart-surface').trim(),
-        primary: styles.getPropertyValue('--admin-chart-primary').trim()
+        primary: styles.getPropertyValue('--admin-chart-primary').trim(),
+        secondary: styles.getPropertyValue('--admin-chart-secondary').trim()
       };
     }
 
@@ -317,15 +349,28 @@
       type: 'line',
       data: {
         labels: labels,
-        datasets: [{
-          label: '{{ _("Sivunäytöt") }}',
-          data: values,
-          fill: true,
-          tension: 0.3,
-          pointRadius: 2,
-          borderColor: chartColors.primary,
-          backgroundColor: chartColors.primary + '33'
-        }]
+        datasets: [
+          {
+            label: {{ _('Sivunäytöt') | tojson }},
+            data: pageviewValues,
+            fill: true,
+            tension: 0.3,
+            pointRadius: 2,
+            borderColor: chartColors.primary,
+            backgroundColor: chartColors.primary + '33'
+          },
+          {
+            label: {{ _('Kävijät') | tojson }},
+            data: visitorValues,
+            fill: false,
+            tension: 0.3,
+            pointRadius: 2,
+            borderDash: [5, 4],
+            borderColor: chartColors.secondary,
+            backgroundColor: chartColors.secondary,
+            spanGaps: false
+          }
+        ]
       },
       options: {
         responsive: true,
@@ -336,7 +381,13 @@
           y: { beginAtZero: true, ticks: { color: chartColors.text, precision: 0 }, grid: { color: chartColors.grid } }
         },
         plugins: {
-          legend: { display: false },
+          // Both series share one axis, so the legend must stay visible for an
+          // admin to tell visitors and pageviews apart.
+          legend: {
+            display: true,
+            position: 'top',
+            labels: { color: chartColors.text, usePointStyle: true, boxWidth: 8 }
+          },
           tooltip: {
             backgroundColor: chartColors.background,
             titleColor: chartColors.text,
@@ -352,9 +403,12 @@
       const colors = getAdminChartColors();
       trafficChart.data.datasets[0].borderColor = colors.primary;
       trafficChart.data.datasets[0].backgroundColor = colors.primary + '33';
+      trafficChart.data.datasets[1].borderColor = colors.secondary;
+      trafficChart.data.datasets[1].backgroundColor = colors.secondary;
       trafficChart.options.scales.x.ticks.color = colors.text;
       trafficChart.options.scales.y.ticks.color = colors.text;
       trafficChart.options.scales.y.grid.color = colors.grid;
+      trafficChart.options.plugins.legend.labels.color = colors.text;
       trafficChart.update('none');
     });
   })();

@@ -13302,3 +13302,104 @@ msgstr "Pidätämme oikeuden päivittää näitä käyttöehtoja tarvittaessa. K
 #: mielenosoitukset_fi/templates/terms.html
 msgid "Käyttämällä sivustoamme hyväksyt nämä ehdot."
 msgstr "Käyttämällä sivustoamme hyväksyt nämä ehdot."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:12
+msgid "Kävijätietoja ei ole vielä kerätty"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:37
+msgid ""
+"Luvut kerätään palvelimella. Analytiikkaa varten ei käytetä evästeitä eikä "
+"kolmannen osapuolen palveluita, ja kävijät lasketaan anonyymisti arviona."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:58
+msgid "Kävijät ja sivunäytöt"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:61
+#, python-format
+msgid "eilen %(count)s sivunäyttöä"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:64
+#, python-format
+msgid "edellinen viikko %(count)s sivunäyttöä"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:67
+#, python-format
+msgid "edellinen kuukausi vastaavana aikana %(count)s sivunäyttöä"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:70
+#, python-format
+msgid "edellinen vastaava jakso %(count)s sivunäyttöä"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:78
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:363
+msgid "Kävijät"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:95
+msgid ""
+"Laskuriin kirjataan vain julkiset sivunäytöt: hallintapaneelin, käyttäjien "
+"oma alue, rajapinnat, staattiset tiedostot ja botit on jätetty "
+"tarkoituksella pois, eivätkä ne kasvata kävijämäärää."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:100
+msgid ""
+"Kävijät ovat arvio, eivätkä laskettuja henkilöitä. Kävijä tunnistetaan "
+"palvelimella IP-osoitteen ja laitteen perusteella, ja tunnisteeseen "
+"sekoitetaan viikoittain vaihtuva avain, jotta samaa ihmistä ei voi yhdistää "
+"eri viikkojen välillä. Tunniste on lyhyt ja anonyymi: sitä ei voi palauttaa "
+"IP-osoitteeksi, eikä kävijälle muodostu pysyvää profiilia. Evästeitä ei "
+"käytetä eikä kolmannen osapuolen analytiikkapalveluita ole mukana. Sama "
+"henkilö voi näyttää useita kerroja esimerkiksi jaetun verkon, vaihtuvan IP-"
+"osoitteen tai eri laitteiden vuoksi. Kävijät lasketaan uudelleen joka "
+"viikko, joten viikon mittaisella jaksolla sama kävijä voidaan laskea kerran "
+"viikossa."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:103
+#, python-format
+msgid ""
+"Kävijätietoja on kerätty %(date)s alkaen, joten sitä vanhemmat jaksot "
+"näytetään viivalla —."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:112
+msgid "Kävijät ja sivunäytöt päivittäin"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:113
+msgid ""
+"Sivunäytöt ovat katsottujen sivujen määrä, kävijät saman päivän aikana "
+"erillisinä pidettyjen kävijöiden määrä."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:119
+msgid "Päivittäiset sivunäytöt ja kävijät viivakaaviona"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:121
+msgid "Kävijäsarja loppuu päivään, jolloin kävijätietoja ei ole vielä kerätty."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:132
+msgid "Sivunäytöt palvelimen kieliasetuksen mukaan."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:156
+msgid "Sivunäytöt laitteen tyypin mukaan."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:180
+msgid "Mistä tullaan"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:181
+msgid "Sivunäytöt sivustolle saapuneen viittauslähteen mukaan."
+msgstr ""

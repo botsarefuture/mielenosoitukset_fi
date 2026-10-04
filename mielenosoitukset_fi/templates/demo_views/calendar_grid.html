@@ -168,7 +168,7 @@
 <div id="demo-preview" aria-hidden="true"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="{{ url_for('static', filename='js/calendar-preview.js', v='20261004-calendar-preview-1') }}"></script>
+<script src="{{ url_for('static', filename='js/calendar-preview.js', v='20261004-calendar-preview-2') }}"></script>
 <script type="module">
 
     const calendarI18n = Object.freeze({
@@ -378,8 +378,9 @@
             if (demo.description) {
                 const desc = link.querySelector(".mobile-demo-desc");
                 desc.hidden = false;
-                let tex = demo.description.substring(0, maxLen);
-                if (demo.description.length > maxLen) {
+                const plainDescription = window.CalendarPreview.toPlainText(demo.description);
+                let tex = plainDescription.substring(0, maxLen);
+                if (plainDescription.length > maxLen) {
                     tex += "...";
                 }
                 desc.textContent = tex;

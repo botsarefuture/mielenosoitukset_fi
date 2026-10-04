@@ -12,7 +12,7 @@ TEMPLATE_PATHS = (
 HELPER_PATH = Path("mielenosoitukset_fi/static/js/calendar-preview.js")
 VERSIONED_HELPER_INCLUDE = (
     "url_for('static', filename='js/calendar-preview.js', "
-    "v='20261004-calendar-preview-1')"
+    "v='20261004-calendar-preview-2')"
 )
 
 
@@ -31,7 +31,10 @@ def test_calendar_mobile_descriptions_are_not_marked_as_html():
     legacy_source = TEMPLATE_PATHS[1].read_text(encoding="utf-8")
     year_source = TEMPLATE_PATHS[2].read_text(encoding="utf-8")
 
+    assert "window.CalendarPreview.toPlainText(demo.description)" in current_source
     assert "desc.textContent = tex" in current_source
+    assert "demo.description|striptags|trim" in legacy_source
+    assert "demo.description|striptags|trim" in year_source
     assert "demo.description[:100]|safe" not in legacy_source
     assert "demo.description[:80]|e|safe" not in year_source
 
@@ -43,6 +46,8 @@ def test_calendar_preview_helper_only_builds_text_dom_nodes():
     assert 'document.createElement("strong")' in source
     assert 'document.createElement("p")' in source
     assert ".textContent" in source
+    assert "new DOMParser()" in source
+    assert "OMITTED_ELEMENTS" in source
     assert "replaceChildren(" in source
     assert "innerHTML" not in source
     assert re.search(r"\.html\s*\(", source) is None
@@ -51,6 +56,10 @@ def test_calendar_preview_helper_only_builds_text_dom_nodes():
 @pytest.mark.e2e
 def test_calendar_preview_renders_untrusted_values_as_text_in_browser(browser_page):
     payload = '<img src=x onerror="window.calendarPreviewExecuted=true">'
+    rich_description = (
+        '<p>Join us <strong>today</strong></p>'
+        '<script>window.calendarPreviewExecuted=true</script>'
+    )
 
     browser_page.set_content('<div id="preview"></div>')
     browser_page.add_script_tag(path=str(HELPER_PATH.resolve()))
@@ -65,11 +74,11 @@ def test_calendar_preview_renders_untrusted_values_as_text_in_browser(browser_pa
 
     rendered = browser_page.evaluate(
         """
-        ({ payload }) => {
+        ({ payload, richDescription }) => {
           const preview = document.getElementById("preview");
           window.CalendarPreview.render(preview, {
             title: payload,
-            description: payload,
+            description: richDescription,
             imageUrl: "/preview.png",
           });
           return {
@@ -82,13 +91,13 @@ def test_calendar_preview_renders_untrusted_values_as_text_in_browser(browser_pa
           };
         }
         """,
-        {"payload": payload},
+        {"payload": payload, "richDescription": rich_description},
     )
 
     assert rendered == {
         "tags": ["IMG", "STRONG", "P"],
         "title": payload,
-        "description": payload,
+        "description": "Join us today",
         "imageSrc": "/preview.png",
         "imageAlt": payload,
         "executed": False,

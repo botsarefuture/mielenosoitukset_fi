@@ -103,9 +103,10 @@
         <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="mobile-demo-item">
             <div class="mobile-demo-title">{{ demo.title|e or _('Ei otsikkoa') }}</div>
             {% if demo.description %}
+            {% set plain_description = demo.description|striptags|trim %}
             <div class="mobile-demo-desc">
-                {{ demo.description[:100]|e }}
-                {% if demo.description|length > 100 %}...{% endif %}
+                {{ plain_description[:100] }}
+                {% if plain_description|length > 100 %}...{% endif %}
             </div>
             {% endif %}
             {% if demo.preview_image or demo.img %}
@@ -131,7 +132,7 @@
 <div id="demo-preview" aria-hidden="true"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="{{ url_for('static', filename='js/calendar-preview.js', v='20261004-calendar-preview-1') }}"></script>
+<script src="{{ url_for('static', filename='js/calendar-preview.js', v='20261004-calendar-preview-2') }}"></script>
 <script>
     $(function () {
         // Check if mobile view is being used

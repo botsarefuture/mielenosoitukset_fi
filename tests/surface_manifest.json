@@ -306,8 +306,8 @@
       ]
     },
     "mielenosoitukset_fi/users/BPs/passkeys.py": {
-      "count": 12,
-      "sha256": "4bcb9dbd230fe29c0c3e42bb08d65ae9bc72d9dd0d5a9cfac8854fdd72813664",
+      "count": 15,
+      "sha256": "8bf5e31be118753b3bd05fa0118f948398f320b04177beb48ac147d4429ce8ec",
       "coverage": [
         "integration"
       ]

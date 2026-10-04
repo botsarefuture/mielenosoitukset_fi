@@ -254,6 +254,64 @@
 .workflow-status.warning { color: var(--admin-workspace-orange-strong); }
 .workflow-status.danger { color: var(--admin-workspace-danger); }
 
+.workflow-step-up {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .85rem;
+  background: var(--admin-workspace-surface-muted);
+}
+
+.workflow-step-up[hidden],
+.workflow-step-up [hidden] { display: none; }
+
+.workflow-step-up-heading {
+  display: flex;
+  gap: .75rem;
+  align-items: flex-start;
+}
+
+.workflow-step-up-heading h6 {
+  margin: 0;
+  color: var(--admin-workspace-text);
+  font-size: .95rem;
+  font-weight: 850;
+}
+
+.workflow-step-up-heading p {
+  margin: .2rem 0 0;
+  color: var(--admin-workspace-muted);
+  font-size: .78rem;
+  line-height: 1.5;
+}
+
+.workflow-step-up-passkey,
+.workflow-step-up-form .workflow-button { width: 100%; }
+
+.workflow-step-up-divider {
+  display: flex;
+  gap: .65rem;
+  align-items: center;
+  margin: .85rem 0;
+  color: var(--admin-workspace-muted);
+  font-size: .72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.workflow-step-up-divider::before,
+.workflow-step-up-divider::after {
+  flex: 1;
+  height: 1px;
+  background: var(--admin-workspace-border);
+  content: "";
+}
+
+.workflow-step-up-form {
+  display: grid;
+  gap: .75rem;
+}
+
 .workflow-button {
   display: inline-flex;
   gap: .45rem;

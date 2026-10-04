@@ -2,254 +2,18 @@
 
 {% block title %}{{ month_name }} {{ year }} | Mielenosoitukset.fi{% endblock %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/public-calendar.css', v='20261003-calendar-theme-1') }}">
+{% endblock %}
+
 {% block content %}
 {% if noindex_nofollow %}
 <meta name="robots" content="noindex, nofollow">
 {% endif %}
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.css">
+<div class="public-calendar public-calendar--legacy">
 
-<style>
-    /* --- Base styles --- */
-    :root {
-        --pink-primary: #ff3366;
-        --pink-light: #ff99c8;
-        --pink-lighter: #ffd6e8;
-        --pink-bg: #fff0f6;
-        --pink-pale: #fffafc;
-        --pink-dark: #ff4d91;
-    }
 
-    /* --- Calendar styles --- */
-    .calendar-grid {
-        width: 100%;
-        table-layout: fixed;
-        border-collapse: collapse;
-        font-family: 'Poppins', sans-serif;
-        background: var(--pink-pale);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-
-    .calendar-grid th,
-    .calendar-grid td {
-        width: 14.28%;
-        text-align: center;
-        vertical-align: top;
-        word-wrap: break-word;
-    }
-
-    .calendar-grid th {
-        background: #f8c8dc;
-        color: #fff;
-        padding: 10px 0;
-        font-weight: 600;
-        font-size: 14px;
-    }
-
-    .calendar-grid td {
-        background: var(--pink-bg);
-        padding: 5px;
-        border: 1px solid var(--pink-lighter);
-        position: relative;
-        min-height: 80px;
-    }
-
-    .calendar-grid td strong {
-        display: block;
-        margin-bottom: 5px;
-        color: var(--pink-primary);
-    }
-
-    .calendar-grid td ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .demo-cell {
-        display: block;
-        background: #ff66a3;
-        color: #fff;
-        text-decoration: none;
-        border-radius: 6px;
-        padding: 2px 4px;
-        margin-bottom: 2px;
-        font-size: 12px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .demo-cell:hover {
-        background: var(--pink-dark);
-    }
-
-    #demo-preview {
-        position: absolute;
-        display: none;
-        background: var(--pink-pale);
-        border: 1px solid #ffb3d1;
-        border-radius: 10px;
-        padding: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        max-width: 300px;
-        z-index: 9999;
-    }
-
-    #demo-preview img {
-        max-width: 100%;
-        border-radius: 6px;
-        margin-bottom: 5px;
-    }
-
-    .calendar-nav,
-    .calendar-year-nav {
-        margin-bottom: 15px;
-        text-align: center;
-        
-    }
-
-    .calendar-nav a,
-    .calendar-year-nav a,
-    #year-view-btn {
-        background: var(--pink-light);
-        color: #fff;
-        padding: 6px 12px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: background 0.2s;
-        margin: 0 2px;
-        display: inline-block;
-    }
-
-    .calendar-nav a:hover,
-    .calendar-year-nav a:hover,
-    #year-view-btn:hover {
-        background: #ff66a3;
-    }
-
-    /* --- Mobile List View --- */
-    .mobile-list-view {
-        display: none;
-    }
-
-    .mobile-day-card {
-        background: white;
-        border-radius: 12px;
-        padding: 15px;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid var(--pink-primary);
-    }
-
-    .mobile-day-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid var(--pink-bg);
-    }
-
-    .mobile-day-number {
-        font-size: 24px;
-        font-weight: 700;
-        color: var(--pink-primary);
-    }
-
-    .mobile-day-name {
-        font-size: 14px;
-        color: #666;
-        font-weight: 500;
-    }
-
-    .mobile-demo-item {
-        background: var(--pink-bg);
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 8px;
-        display: block;
-        text-decoration: none;
-        color: inherit;
-        transition: all 0.2s;
-        border: 1px solid var(--pink-lighter);
-    }
-
-    .mobile-demo-item:hover,
-    .mobile-demo-item:active {
-        background: var(--pink-lighter);
-        transform: translateX(5px);
-    }
-
-    .mobile-demo-title {
-        font-weight: 600;
-        color: var(--pink-primary);
-        margin-bottom: 5px;
-    }
-
-    .mobile-demo-desc {
-        font-size: 13px;
-        color: #666;
-        line-height: 1.4;
-    }
-
-    .mobile-demo-image {
-        width: 100%;
-        height: 150px;
-        object-fit: cover;
-        border-radius: 6px;
-        margin-top: 8px;
-    }
-
-    .mobile-empty-day {
-        text-align: center;
-        color: #999;
-        font-size: 14px;
-        padding: 20px 0;
-    }
-
-    /* --- Responsive --- */
-    @media(max-width: 768px) {
-        .calendar-grid {
-            display: none;
-        }
-
-        .mobile-list-view {
-            display: block;
-        }
-
-        .calendar-nav {
-            display: flex;
-        gap: 5px;
-        }
-
-        .calendar-nav a,
-        #year-view-btn {
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-
-        h1 {
-            font-size: 24px;
-        }
-    }
-
-    @media(min-width: 769px) {
-
-        .calendar-grid th,
-        .calendar-grid td {
-            font-size: 12px;
-            padding: 3px;
-        }
-
-        .demo-cell {
-            font-size: 10px;
-        }
-    }
-</style>
 
 <h1>{{ month_name|e }} {{ year }}</h1>
 
@@ -294,39 +58,9 @@
     {% endfor %}
 </table>
 
-<style>
-    #return-new-btn {
-    background: var(--pink-light);
-    color: #fff;
-    border: none;
-    border-radius: 0.75rem;
-    padding: 0.65rem 1.25rem;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s;
-}
-
-#return-new-btn:hover {
-    background: #ff66a3;
-    transform: translateY(-2px);
-}
-
-#return-new-btn i {
-    transition: transform 0.3s ease;
-}
-
-#return-new-btn:hover i {
-    transform: rotate(180deg);
-}
-
-</style>
 
 <!-- Mobile: Switch back to new calendar view -->
-<div class="mobile-new-view-switch mb-only" style="text-align:center; margin-bottom:15px;">
+<div class="mobile-new-view-switch mb-only">
     <button id="return-new-btn">
         <i class="fa-solid fa-rotate-right"></i>
         {{ _('Palaa uuteen näkymään') }}
@@ -334,12 +68,15 @@
 </div>
 
 <script>
-    $('#return-new-btn').on('click', function() {
-    // Set a cookie to force the new view
-    document.cookie = "old-calendar-view=false; path=/; max-age=31536000"; // 1 year
-    location.reload(); // reload page to apply new view
-});
+    document.addEventListener("DOMContentLoaded", function () {
+        const returnButton = document.getElementById("return-new-btn");
+        if (!returnButton) return;
 
+        returnButton.addEventListener("click", function () {
+            document.cookie = "old-calendar-view=false; path=/; max-age=31536000";
+            location.reload();
+        });
+    });
 </script>
 
 
@@ -356,7 +93,7 @@
                 <div class="mobile-day-number">{{ day }}</div>
                 <div class="mobile-day-name">{{ day_names[day_idx] }}</div>
             </div>
-            <div style="color: var(--pink-primary); font-weight: 600;">
+            <div class="event-count">
                 {% set event_count = month_demos.get(day)|length %}
                 {{ event_count }} {{ _('tapahtuma') if event_count == 1 else _('tapahtumaa') }}
             </div>
@@ -452,4 +189,5 @@
         [prevMonthURL, nextMonthURL].forEach(url => { $.get(url, data => cache[url] = data); });
     });
 </script>
+</div>
 {% endblock %}

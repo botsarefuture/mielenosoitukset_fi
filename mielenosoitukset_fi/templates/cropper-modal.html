@@ -199,11 +199,6 @@
             cropper.destroy();
             cropper = null;
 
-            try {
-                localStorage.setItem('form_image_preview', dataURL);
-            } catch (e) {
-                console.warn('Could not save image preview to localStorage:', e);
-            }
         });
 
         cancelCropBtn.addEventListener('click', () => {
@@ -217,14 +212,6 @@
 
         modal.addEventListener('click', (e) => {
             if (e.target === modal) cancelCropBtn.click();
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedImage = localStorage.getItem('form_image_preview');
-            if (savedImage) {
-                preview.src = savedImage;
-                preview.style.display = 'block';
-            }
         });
 
         window.cropperModal = {

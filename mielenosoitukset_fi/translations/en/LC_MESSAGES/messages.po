@@ -13581,3 +13581,11 @@ msgid ""
 msgstr ""
 "The verification is invalid, expired or already used. Verify your identity "
 "again."
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Luonnos palautettiin tästä selaimesta. Se poistuu automaattisesti 24 tunnin kuluttua."
+msgstr "Draft restored from this browser. It will be deleted automatically after 24 hours."
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Poista luonnos ja aloita alusta"
+msgstr "Delete draft and start over"

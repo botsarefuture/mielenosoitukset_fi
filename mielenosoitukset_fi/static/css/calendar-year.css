@@ -1,0 +1,462 @@
+/* Year-at-a-glance calendar. Product tokens own every theme value; the page
+   class keeps the calendar's dense table and mobile-card rules self-contained. */
+
+.calendar-year-page {
+  color: var(--product-text);
+}
+
+.calendar-year-page .year-header {
+  margin: 0 0 1.25rem;
+  color: var(--product-text);
+  text-align: center;
+}
+
+.calendar-year-page .calendar-year-nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 42rem;
+  margin: 0 auto 1.5rem;
+  text-align: center;
+}
+
+.calendar-year-page .calendar-year-nav a,
+.calendar-year-page .onboarding-next {
+  min-height: 2.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  color: var(--product-on-action);
+  background: var(--product-action-bg);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 160ms ease, box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.calendar-year-page .calendar-year-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1rem;
+}
+
+.calendar-year-page .calendar-year-nav a:first-child {
+  justify-self: end;
+}
+
+.calendar-year-page .calendar-year-nav a:last-child {
+  justify-self: start;
+}
+
+.calendar-year-page .calendar-year-nav a:hover,
+.calendar-year-page .onboarding-next:hover {
+  color: var(--product-on-action);
+  background: var(--product-action-hover);
+}
+
+.calendar-year-page .calendar-year-nav__current {
+  min-width: 4ch;
+  color: var(--product-text);
+  font-weight: 700;
+}
+
+.calendar-year-page .year-calendar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.calendar-year-page .calendar-month {
+  min-width: 0;
+}
+
+.calendar-year-page .calendar-month__heading {
+  margin: 0 0 0.625rem;
+  text-align: center;
+}
+
+.calendar-year-page .calendar-month__link {
+  color: var(--product-primary);
+  text-decoration: none;
+}
+
+.calendar-year-page .calendar-month__link:hover {
+  color: var(--product-primary-strong);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.calendar-year-page .month-grid {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--product-border);
+  border-radius: 0.75rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  background: var(--product-surface);
+  box-shadow: var(--product-shadow);
+}
+
+.calendar-year-page .month-grid th,
+.calendar-year-page .month-grid td {
+  width: 14.285%;
+  padding: 0.25rem;
+  border-inline-end: 1px solid var(--product-border);
+  border-block-end: 1px solid var(--product-border);
+  text-align: center;
+  vertical-align: top;
+}
+
+.calendar-year-page .month-grid th:last-child,
+.calendar-year-page .month-grid td:last-child {
+  border-inline-end: 0;
+}
+
+.calendar-year-page .month-grid tr:last-child td {
+  border-block-end: 0;
+}
+
+.calendar-year-page .month-grid th {
+  color: var(--product-on-action);
+  background: var(--product-action-bg);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.calendar-year-page .month-grid td {
+  position: relative;
+  height: 3.5rem;
+  color: var(--product-text);
+  background: var(--product-surface-muted);
+}
+
+.calendar-year-page .month-grid td strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: var(--product-primary);
+  font-size: 0.75rem;
+}
+
+.calendar-year-page .calendar-day-events {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calendar-year-page .demo-cell {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 0.125rem;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.375rem;
+  color: var(--product-on-action);
+  background: var(--product-action-bg);
+  font-size: 0.625rem;
+  line-height: 1.35;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background-color 160ms ease;
+}
+
+.calendar-year-page .demo-cell:hover {
+  color: var(--product-on-action);
+  background: var(--product-action-hover);
+}
+
+.calendar-year-page :is(
+    .calendar-year-nav a,
+    .calendar-month__link,
+    .demo-cell,
+    .mobile-month-link,
+    .mobile-event-card,
+    .onboarding-next
+  ):focus-visible {
+  outline: 3px solid var(--product-accent-strong);
+  outline-offset: 3px;
+}
+
+.calendar-year-page .mobile-month-link:focus-visible {
+  outline-color: var(--product-on-action);
+}
+
+.calendar-year-page #demo-preview {
+  position: absolute;
+  z-index: 9999;
+  display: none;
+  width: min(20rem, calc(100vw - 2rem));
+  padding: 0.75rem;
+  border: 1px solid var(--product-border);
+  border-radius: 0.75rem;
+  color: var(--product-text);
+  background: var(--product-surface);
+  box-shadow: var(--product-shadow);
+}
+
+.calendar-year-page #demo-preview img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.calendar-year-page #demo-preview p {
+  margin: 0.5rem 0 0;
+  color: var(--product-text-muted);
+}
+
+.calendar-year-page .onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000002;
+  display: none;
+  background: color-mix(in srgb, var(--product-text) 60%, transparent);
+}
+
+.calendar-year-page .onboarding-tooltip {
+  position: absolute;
+  z-index: 1000003;
+  width: min(15.625rem, calc(100vw - 2rem));
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--product-border);
+  border-radius: 0.75rem;
+  color: var(--product-text);
+  background: var(--product-surface);
+  box-shadow: var(--product-shadow);
+  text-align: center;
+  pointer-events: auto;
+}
+
+.calendar-year-page .onboarding-tooltip::after {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  z-index: 1000004;
+  border-width: 0.5rem;
+  border-style: solid;
+  border-color: var(--product-surface) transparent transparent;
+  content: "";
+  transform: translateX(-50%);
+}
+
+.calendar-year-page .onboarding-tooltip strong {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 1rem;
+}
+
+.calendar-year-page .onboarding-tooltip p {
+  margin-bottom: 0.625rem;
+  color: var(--product-text-muted);
+  font-size: 0.875rem;
+}
+
+.calendar-year-page .onboarding-next {
+  position: relative;
+  z-index: 1000005;
+  padding: 0.5rem 0.875rem;
+  cursor: pointer;
+}
+
+.calendar-year-page .mobile-year-list {
+  display: none;
+}
+
+.calendar-year-page .mobile-month-section {
+  margin-bottom: 1.875rem;
+}
+
+.calendar-year-page .mobile-month-header {
+  margin-bottom: 0.9375rem;
+  padding: 0.9375rem;
+  border-radius: 0.75rem;
+  color: var(--product-on-action);
+  background: linear-gradient(
+    135deg,
+    var(--product-action-bg),
+    var(--product-action-hover)
+  );
+  box-shadow: var(--product-shadow);
+  text-align: center;
+}
+
+.calendar-year-page .mobile-month-title {
+  margin-bottom: 0.3125rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.calendar-year-page .mobile-month-link {
+  color: var(--product-on-action);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.2em;
+}
+
+.calendar-year-page .mobile-month-link:hover {
+  color: var(--product-on-action);
+  text-decoration-color: currentColor;
+}
+
+.calendar-year-page .mobile-events-grid {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.calendar-year-page .mobile-event-card {
+  display: block;
+  padding: 0.75rem;
+  border: 1px solid var(--product-border);
+  border-inline-start: 0.25rem solid var(--product-primary);
+  border-radius: 0.625rem;
+  color: var(--product-text);
+  background: var(--product-surface);
+  box-shadow: var(--product-shadow);
+  text-decoration: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.calendar-year-page .mobile-event-card:hover,
+.calendar-year-page .mobile-event-card:active {
+  color: var(--product-text);
+  border-color: var(--product-primary);
+  transform: translateX(0.25rem);
+}
+
+.calendar-year-page .mobile-event-date,
+.calendar-year-page .mobile-event-desc,
+.calendar-year-page .mobile-stat-label {
+  color: var(--product-text-muted);
+}
+
+.calendar-year-page .mobile-event-date {
+  margin-bottom: 0.3125rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.calendar-year-page .mobile-event-title {
+  margin-bottom: 0.3125rem;
+  color: var(--product-primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.calendar-year-page .mobile-event-desc {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.calendar-year-page .mobile-event-image {
+  width: 100%;
+  height: 7.5rem;
+  margin-top: 0.5rem;
+  border-radius: 0.5rem;
+  object-fit: cover;
+}
+
+.calendar-year-page .mobile-empty-month {
+  padding: 1.25rem;
+  border: 1px solid var(--product-border);
+  border-radius: 0.5rem;
+  color: var(--product-text-muted);
+  background: var(--product-surface-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.calendar-year-page .mobile-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 1.25rem;
+  padding: 0.9375rem;
+  border: 1px solid var(--product-border);
+  border-radius: 0.75rem;
+  background: var(--product-surface);
+  box-shadow: var(--product-shadow);
+  text-align: center;
+}
+
+.calendar-year-page .mobile-stat-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.calendar-year-page .mobile-stat-number {
+  display: block;
+  color: var(--product-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.calendar-year-page .mobile-stat-label {
+  font-size: 0.75rem;
+}
+
+@media (max-width: 1100px) and (min-width: 769px) {
+  .calendar-year-page .year-calendar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-year-page .year-calendar {
+    display: none;
+  }
+
+  .calendar-year-page .mobile-year-list {
+    display: block;
+  }
+
+  .calendar-year-page .calendar-year-nav {
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.375rem;
+  }
+
+  .calendar-year-page .calendar-year-nav a {
+    width: 100%;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.875rem;
+  }
+
+  .calendar-year-page .year-header {
+    font-size: 1.75rem;
+  }
+
+  .calendar-year-page #demo-preview {
+    position: fixed !important;
+    top: 50% !important;
+    left: 1rem !important;
+    transform: translateY(-50%);
+  }
+}
+
+@media (max-width: 420px) {
+  .calendar-year-page .calendar-year-nav {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .calendar-year-page .calendar-year-nav__current {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendar-year-page .calendar-year-nav a,
+  .calendar-year-page .demo-cell,
+  .calendar-year-page .mobile-event-card,
+  .calendar-year-page .onboarding-next {
+    transition: none;
+  }
+
+  .calendar-year-page .mobile-event-card:hover,
+  .calendar-year-page .mobile-event-card:active {
+    transform: none;
+  }
+}

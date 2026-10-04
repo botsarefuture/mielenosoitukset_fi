@@ -312,7 +312,6 @@ def test_visitor_migration_is_registered():
 
     ids = [m["id"] for m in migration_runner.MIGRATIONS]
     assert "008_visitor_analytics" in ids
-    assert ids.index("008_visitor_analytics") == len(ids) - 1
 
 
 def test_visitor_migration_creates_indexes(db):

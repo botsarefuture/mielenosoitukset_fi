@@ -19,6 +19,7 @@
 * **Facebook event descriptions are no longer truncated** — the 50k character safety cap has been removed; full descriptions are preserved (with only script/style sanitization).
 
 ### Changed
+* The year-at-a-glance calendar now uses a scoped product-token stylesheet instead of a template-owned pink palette, with responsive desktop, tablet, and mobile layouts, light/dark surfaces, visible keyboard focus, and reduced-motion behavior. Its duplicate jQuery UI stylesheet and static inline styles were removed while existing calendar routes, localization, onboarding, and event-preview hooks remain unchanged.
 * The periodic email-queue drainer now refreshes its database collection handles on every run, so scheduler reloads, tests, and maintenance commands cannot leave it polling a stale database while current queued mail remains unsent.
 * Public feedback now has a CI-enforced product-UI contract: active public templates and shared scripts cannot add native browser alerts, confirmations, or prompts. Two unreferenced legacy scripts for an obsolete registration form and demonstration quick-delete modal were removed so their hard-coded dialogs and stale duplicate behavior cannot return accidentally.
 * The public context toolbox now uses a resource-aware, modern action-card layout with a discoverable 44-pixel launcher, aligned icon tiles, a consistently named admin destination, a structurally separated destructive action, remembered desktop state, and a mobile bottom-sheet position that avoids the responsive header and safe area in both themes.

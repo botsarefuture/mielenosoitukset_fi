@@ -168,6 +168,7 @@
 <div id="demo-preview" aria-hidden="true"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="{{ url_for('static', filename='js/calendar-preview.js', v='20261004-calendar-preview-2') }}"></script>
 <script type="module">
 
     const calendarI18n = Object.freeze({
@@ -377,11 +378,12 @@
             if (demo.description) {
                 const desc = link.querySelector(".mobile-demo-desc");
                 desc.hidden = false;
-                let tex = demo.description.substring(0, maxLen);
-                if (demo.description.length > maxLen) {
+                const plainDescription = window.CalendarPreview.toPlainText(demo.description);
+                let tex = plainDescription.substring(0, maxLen);
+                if (plainDescription.length > maxLen) {
                     tex += "...";
                 }
-                desc.innerHTML = tex; // ✅ render HTML
+                desc.textContent = tex;
             }
 
             const ima = link.querySelector("img.mobile-demo-image");
@@ -453,12 +455,12 @@ function setupInfiniteScrollObserver() {
                 const desc = el.data('desc');
                 const img = el.data('img');
 
-                let html = '';
-                if (img) html += `<img src="${img}" alt="${title}">`;
-                html += `<strong>${title}</strong>`;
-                if (desc) html += `<p>${desc}</p>`;
-
-                preview.html(html).fadeIn(200);
+                window.CalendarPreview.render(preview[0], {
+                    title: title,
+                    description: desc,
+                    imageUrl: img,
+                });
+                preview.fadeIn(200);
             }, 150);
         }, function () {
             clearTimeout(hoverTimeout);

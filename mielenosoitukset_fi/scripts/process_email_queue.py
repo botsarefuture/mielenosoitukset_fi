@@ -20,6 +20,13 @@ setattr(_sender_config, "ENABLE_EMAIL_WORKER", False)
 _sender = EmailSender(_sender_config)
 
 
+def _bind_sender_to_database(db):
+    """Refresh the module sender's collection handles for the active database."""
+    _sender._db = db
+    _sender._queue_collection = db["email_queue"]
+    _sender._cases_collection = db["cases"]
+
+
 def run(max_jobs: int = 50):
     """Process queued email jobs from the database.
 
@@ -36,6 +43,11 @@ def run(max_jobs: int = 50):
     from the queue after a successful send.
     """
     db = DatabaseManager().get_instance().get_db()
+    # The drainer is imported by the scheduler at process start, while tests
+    # and maintenance commands may subsequently select another database.
+    # Always follow DatabaseManager's current database instead of retaining
+    # stale collection objects captured at module import time.
+    _bind_sender_to_database(db)
     queue = db["email_queue"]
     processed = 0
 

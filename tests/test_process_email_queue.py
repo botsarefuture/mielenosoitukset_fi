@@ -38,6 +38,27 @@ def _patch_sender(monkeypatch, fail_first=0):
 
 @pytest.mark.integration
 @pytest.mark.jobs
+def test_process_email_queue_rebinds_sender_to_active_database(db, monkeypatch):
+    from mielenosoitukset_fi.scripts import process_email_queue as script
+
+    stale_db = db.client[f"{db.name}_stale_sender"]
+    stale_db.email_queue.delete_many({})
+    script._sender._db = stale_db
+    script._sender._queue_collection = stale_db.email_queue
+    script._sender._cases_collection = stale_db.cases
+
+    db.email_queue.delete_many({})
+    db.email_queue.insert_one(_queued_email("Current database", ["ok@example.test"]))
+    sent = _patch_sender(monkeypatch)
+
+    assert script.run(max_jobs=1) == 1
+    assert [job["subject"] for job in sent] == ["Current database"]
+    assert db.email_queue.count_documents({}) == 0
+    assert stale_db.email_queue.count_documents({}) == 0
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
 def test_process_email_queue_drains_orphaned_jobs_regardless_of_instance(db, monkeypatch):
     from mielenosoitukset_fi.scripts.process_email_queue import run
 

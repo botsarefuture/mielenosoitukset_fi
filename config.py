@@ -271,6 +271,14 @@ class Config:
         # false to stop recording (dashboards keep working on existing data).
         cls.SITE_ANALYTICS_ENABLED = bool(config.get("SITE_ANALYTICS_ENABLED", True))
 
+        # Distinct-visitor counting on top of the same pageview signal. It
+        # stores only a weekly-rotating hash of the trusted client IP plus the
+        # coarse device bucket: no raw IP, no user agent, no cookie, no
+        # profile. Set to false to count pageviews only.
+        cls.SITE_ANALYTICS_VISITORS_ENABLED = bool(
+            config.get("SITE_ANALYTICS_VISITORS_ENABLED", True)
+        )
+
         # ---- Matomo (optional, client-side) ----------------------------------
         # The legacy client-side Matomo tracker in base.html can be turned off
         # now that built-in analytics cover basic pageviews. It is enabled by

@@ -7,8 +7,9 @@ Design goals
   third-party service.
 * Only cheap atomic ``$inc`` upserts happen on the request path. All reporting
   reads pre-aggregated counters, so dashboards never scan raw events.
-* Nothing visitor-identifying is stored: no IPs, no user agents, no cookies,
-  no per-visitor documents. Every tracked request only bumps a counter.
+* Pageview counters stay purely aggregate. A second, separate collection keeps
+  one small document per (day, anonymous visitor) so a distinct-visitor count is
+  possible without ever storing an IP address, a cookie or a user profile.
 
 Data model
 ----------
@@ -30,17 +31,47 @@ device, referrer) combination in the ``site_analytics`` collection::
 Events use the same collection with ``event`` instead of ``page_type`` so new
 event kinds can be added later without a new schema.
 
+Distinct visitors
+-----------------
+A "visitor" is a *distinct anonymous visitor inside a reporting period*, not a
+person. The identifier is a keyed hash (HMAC-SHA256) of the trusted client IP
+and the already-computed coarse device bucket, salted per rotating week so the
+same person is never linkable across weeks and no permanent identifier is ever
+created. Raw IPs, user-agent strings and cookies are never stored.
+
+One document per (Helsinki-local date, visitor hash) in the
+``site_analytics_visitors`` collection::
+
+    {
+        "_id": ObjectId(...),
+        "date": "2026-09-22",
+        "visitor_hash": "9f2c…",        # weekly-salted HMAC, truncated
+        "bucket": 3287,                 # which weekly salt produced the hash
+        "pageviews": 4,                 # atomic counter
+        "expires_at": ISODate(...),     # retention, enforced by a TTL index
+    }
+
+Because the salt rotates weekly, a visitor is deduplicated *within* a week. A
+period longer than one week can therefore count the same person more than once.
+That is a deliberate, bounded trade-off, documented on the dashboard itself.
+
 Filtering (what is NOT counted) lives in :func:`classify_request` and
 :func:`should_count_response` and is deliberately simple to read and modify.
+Visitors are recorded through the exact same filter, so excluded traffic can
+never create a visitor.
 """
 
+import hashlib
+import hmac
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
+from ipaddress import ip_address
 from urllib.parse import urlsplit
 
 import pytz
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 from mielenosoitukset_fi.utils.time_utils import utcnow
 
 HELSINKI_TZ = pytz.timezone("Europe/Helsinki")
@@ -48,10 +79,33 @@ HELSINKI_TZ = pytz.timezone("Europe/Helsinki")
 # MongoDB collection used for all aggregate counters.
 SITE_ANALYTICS_COLLECTION = "site_analytics"
 
+# MongoDB collection used for distinct-visitor counting. Kept separate from the
+# pageview counters so existing pageview queries and numbers cannot change.
+SITE_ANALYTICS_VISITORS_COLLECTION = "site_analytics_visitors"
+
 # Maximum stored length for resource identifiers (demo ids, search terms,
 # external hostnames). Anything longer is truncated — analytics counters do
 # not need (and should not keep) long free-form values.
 MAX_RESOURCE_LENGTH = 200
+
+# --- Distinct visitors -----------------------------------------------------
+# How long one visitor identifier stays stable. The salt is derived from the
+# application secret plus the week number, so identifiers cannot be correlated
+# across weeks and rotating the application secret invalidates them all.
+VISITOR_SALT_PERIOD_DAYS = 7
+
+# Length of the stored hash prefix. 16 hex characters is 64 bits: enough that
+# colliding two real visitors in one week is negligible, short enough that the
+# stored value carries no usable information on its own.
+VISITOR_HASH_LENGTH = 16
+
+# Raw visitor documents are only useful for the longest supported range plus a
+# comparison period. A TTL index drops them afterwards.
+VISITOR_RETENTION_DAYS = 400
+
+# Unspecified / unroutable addresses must never be treated as a shared visitor,
+# or every such request would collapse into one "visitor".
+_UNKNOWN_CLIENT_ADDRESSES = {"0.0.0.0", "::", ""}
 
 # Events accepted from the browser beacon. Deliberately tiny: these are the
 # only browser-side signals with a real dashboard use case. Everything else
@@ -181,6 +235,10 @@ def _mongo():
 
 def _collection():
     return _mongo()[SITE_ANALYTICS_COLLECTION]
+
+
+def _visitor_collection():
+    return _mongo()[SITE_ANALYTICS_VISITORS_COLLECTION]
 
 
 # ---------------------------------------------------------------------------
@@ -388,6 +446,9 @@ def record_pageview_from_request(request, response):
 
     Safe to call for every response: non-trackable requests are skipped and
     any storage failure is swallowed (analytics must never break a page).
+
+    Visitor counting reuses this same eligibility decision, so a visitor is
+    only ever counted for traffic that also produced a pageview.
     """
     try:
         if not should_count_response(response):
@@ -402,9 +463,148 @@ def record_pageview_from_request(request, response):
             device=classified.get("device"),
             referrer=classified.get("referrer"),
         )
+    except Exception:
+        return False
+
+    # Counted separately so a visitor-storage failure can never roll back or
+    # delay the pageview counter above.
+    try:
+        record_visitor_for_request(request, device=classified.get("device"))
+    except Exception:
+        return False
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Visitor identification
+# ---------------------------------------------------------------------------
+
+
+def _visitor_secret():
+    """Application secret used to key the visitor hash.
+
+    Uses the same secret that already signs sessions and tokens, through the
+    app config when available. It is never stored in the database, so the
+    stored hashes cannot be reproduced or reversed from the data alone.
+    """
+    try:
+        from flask import current_app
+
+        secret = current_app.config.get("SECRET_KEY")
+        if secret:
+            return str(secret).encode("utf-8")
+    except Exception:
+        pass
+    try:
+        from config import Config
+
+        if Config.SECRET_KEY:
+            return str(Config.SECRET_KEY).encode("utf-8")
+    except Exception:
+        pass
+    return None
+
+
+def _normalize_client_ip(value):
+    """Canonical textual form of a client address, or ``None``.
+
+    IPv4 and IPv6 are normalized to one canonical string so that the many
+    spellings of the same address (``::ffff:203.0.113.5``, expanded IPv6, ...)
+    collapse into a single visitor instead of several.
+    """
+    candidate = (value or "").strip()
+    if candidate.lower() in _UNKNOWN_CLIENT_ADDRESSES:
+        return None
+    try:
+        parsed = ip_address(candidate)
+    except ValueError:
+        return None
+    # An IPv4-mapped IPv6 address is the same host as the plain IPv4 address.
+    mapped = getattr(parsed, "ipv4_mapped", None)
+    if mapped is not None:
+        parsed = mapped
+    if str(parsed) in _UNKNOWN_CLIENT_ADDRESSES:
+        return None
+    return str(parsed)
+
+
+def _visitor_salt_bucket(when):
+    """Index of the rotating salt period containing ``when``."""
+    moment = when or utcnow()
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    local_day = moment.astimezone(HELSINKI_TZ).date()
+    epoch = date(2020, 1, 1)
+    return (local_day - epoch).days // VISITOR_SALT_PERIOD_DAYS
+
+
+def visitor_hash(client_ip, device=None, when=None, secret=None):
+    """Anonymous, weekly-rotating hash for one client, or ``None``.
+
+    The input is the trusted client IP plus the coarse device bucket that
+    :func:`classify_device` already produced. Two different people behind one
+    address are therefore two visitors when they use different device types,
+    and one visitor when they do not. Browser versions, screen sizes, fonts and
+    other fingerprinting signals are deliberately not used.
+    """
+    normalized = _normalize_client_ip(client_ip)
+    if normalized is None:
+        return None
+    key = secret if secret is not None else _visitor_secret()
+    if not key:
+        return None
+
+    bucket = _visitor_salt_bucket(when)
+    message = f"{bucket}|{normalized}|{(device or '').strip().lower()}".encode("utf-8")
+    return hmac.new(key, message, hashlib.sha256).hexdigest()[:VISITOR_HASH_LENGTH]
+
+
+def record_visitor_for_request(request, device=None, when=None):
+    """Count one distinct visitor for an already-counted pageview.
+
+    Returns ``True`` when a visitor was recorded. Any failure is swallowed:
+    analytics must never break a page.
+    """
+    if not visitors_enabled():
+        return False
+    try:
+        client_ip = get_client_ip(default="", request=request)
+        identifier = visitor_hash(client_ip, device=device, when=when)
+        if not identifier:
+            return False
+
+        moment = when or utcnow()
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=timezone.utc)
+        local = moment.astimezone(HELSINKI_TZ)
+
+        _visitor_collection().update_one(
+            {"date": local.strftime("%Y-%m-%d"), "visitor_hash": identifier},
+            {
+                "$inc": {"pageviews": 1},
+                "$setOnInsert": {
+                    "bucket": _visitor_salt_bucket(moment),
+                    "expires_at": local.replace(
+                        hour=0, minute=0, second=0, microsecond=0
+                    )
+                    + timedelta(days=VISITOR_RETENTION_DAYS),
+                },
+            },
+            upsert=True,
+        )
         return True
     except Exception:
         return False
+
+
+def visitors_enabled():
+    """Whether distinct-visitor counting is switched on for this app."""
+    try:
+        from flask import current_app
+
+        return bool(current_app.config.get("SITE_ANALYTICS_VISITORS_ENABLED", True))
+    except Exception:
+        return True
 
 
 def increment_counter(page_type=None, event=None, resource_id=None, language=None,
@@ -588,6 +788,116 @@ def get_overview(days=30, start=None, end=None):
         "window": _pair(start, end),
         "window_days": (end - start).days + 1,
     }
+
+
+# ---------------------------------------------------------------------------
+# Distinct visitors (read path)
+# ---------------------------------------------------------------------------
+
+
+def visitor_data_start():
+    """First Helsinki-local date for which visitor data exists, or ``None``.
+
+    Used by the dashboard to tell "no visitors" apart from "visitor tracking
+    did not exist yet", so history is never invented.
+    """
+    try:
+        row = _visitor_collection().find_one(
+            {}, {"date": 1}, sort=[("date", 1)]
+        )
+    except Exception:
+        return None
+    if not row:
+        return None
+    return row.get("date")
+
+
+def _visitor_total(start, end):
+    """Distinct visitors between two Helsinki-local dates (inclusive)."""
+    pipeline = [
+        {
+            "$match": {
+                "date": {
+                    "$gte": start.strftime(_DATE_FMT),
+                    "$lte": end.strftime(_DATE_FMT),
+                }
+            }
+        },
+        {"$group": {"_id": "$visitor_hash"}},
+        {"$count": "visitors"},
+    ]
+    rows = list(_visitor_collection().aggregate(pipeline))
+    return rows[0]["visitors"] if rows else 0
+
+
+def _period(start, end, tracked_from):
+    """Visitor pair for one period, or ``None`` values when not yet tracked."""
+    if tracked_from is None or tracked_from > end.strftime(_DATE_FMT):
+        return {"current": None, "previous": None, "available": False}
+    length = (end - start).days + 1
+    previous_end = start - timedelta(days=1)
+    previous_start = previous_end - timedelta(days=length - 1)
+    return {
+        "current": _visitor_total(start, end),
+        "previous": _visitor_total(previous_start, previous_end),
+        "available": True,
+    }
+
+
+def get_visitor_overview(days=30, start=None, end=None):
+    """Distinct-visitor counts mirroring :func:`get_overview`.
+
+    Counts are ``None`` for any period that predates visitor tracking, so the
+    dashboard can show that the figure is unavailable instead of inventing a
+    number from pageviews.
+    """
+    today = _helsinki_today()
+    _, start, end = _match_window(days=days, start=start, end=end)
+    tracked_from = visitor_data_start()
+
+    week_start = today - timedelta(days=today.weekday())
+    month_start = today.replace(day=1)
+
+    return {
+        "today": _period(today, today, tracked_from),
+        "week": _period(week_start, today, tracked_from),
+        "month": _period(month_start, today, tracked_from),
+        "window": _period(start, end, tracked_from),
+        "window_days": (end - start).days + 1,
+        "tracked_from": tracked_from,
+        "available": tracked_from is not None,
+    }
+
+
+def get_visitor_series(days=30, start=None, end=None):
+    """Distinct visitors per day between two Helsinki-local dates.
+
+    Days before visitor tracking started are reported as ``None`` so a chart
+    can leave them visibly empty instead of plotting a false zero.
+    """
+    match, start, end = _match_window(days=days, start=start, end=end)
+    pipeline = [
+        {"$match": match},
+        {"$group": {"_id": "$date", "count": {"$sum": 1}}},
+        {"$sort": {"_id": 1}},
+    ]
+    by_date = {
+        row["_id"]: row["count"]
+        for row in _visitor_collection().aggregate(pipeline)
+    }
+    tracked_from = visitor_data_start()
+
+    labels, values = [], []
+    cursor = start
+    while cursor <= end:
+        key = cursor.strftime(_DATE_FMT)
+        labels.append(cursor.strftime("%d.%m"))
+        if tracked_from is None or tracked_from > key:
+            values.append(None)
+        else:
+            values.append(by_date.get(key, 0))
+        cursor += timedelta(days=1)
+    return {"labels": labels, "values": values, "tracked_from": tracked_from}
 
 
 def get_traffic_series(days=30, start=None, end=None):

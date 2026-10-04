@@ -16,6 +16,7 @@ Design rules (mirroring the requirements behind passkey support):
 """
 
 import datetime
+import json
 import logging
 import secrets
 from typing import Optional
@@ -297,6 +298,27 @@ def credential_owner(credential_id_b64: str) -> Optional[dict]:
     )
 
 
+def _assertion_challenge_b64(credential) -> Optional[str]:
+    """Read the challenge signed into an authentication assertion.
+
+    The returned value is still verified against a single-use challenge bound
+    to the current browser session, purpose, and optional user. Selecting the
+    exact signed challenge avoids rejecting a valid assertion when another
+    tab or conditional-mediation request creates a newer challenge first.
+    """
+    if not isinstance(credential, dict):
+        return None
+    encoded = (credential.get("response") or {}).get("clientDataJSON")
+    if not isinstance(encoded, str) or not encoded:
+        return None
+    try:
+        client_data = json.loads(base64url_to_bytes(encoded))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+    challenge = client_data.get("challenge")
+    return challenge if isinstance(challenge, str) and challenge else None
+
+
 def verify_authentication(
     credential,
     user_id: Optional[ObjectId] = None,
@@ -308,7 +330,7 @@ def verify_authentication(
     Returns ``(record_or_None, error_message)`` where ``record`` includes the
     embedded ``user_id`` so callers can resolve the authenticated user.
     """
-    challenge_b64 = pending_challenge_b64(purpose, user_id)
+    challenge_b64 = _assertion_challenge_b64(credential)
     if not challenge_b64 or not consume_challenge(challenge_b64, purpose, user_id):
         return None, "Challenge puuttuu, on jo käytetty tai se on vanhentunut."
 

@@ -22,6 +22,7 @@ def test_login_uses_shared_layout_and_conditional_passkey_contract(client):
 
     assert 'class="auth-layout"' in html
     assert 'class="auth-intro"' in html
+    assert '<main class="auth-wrapper">' not in template
     assert 'autocomplete="username webauthn"' in html
     assert "isConditionalMediationAvailable" in template
     assert "mediation: 'conditional'" in template
@@ -41,6 +42,7 @@ def test_register_uses_grouped_accessible_shared_form_contract(client):
     template = REGISTER_TEMPLATE.read_text(encoding="utf-8")
 
     assert 'class="auth-layout"' in html
+    assert '<main class="auth-wrapper">' not in template
     assert html.count('class="form-section"') == 2
     assert 'id="password-toggle-button"' in html
     assert 'id="password-confirm-toggle-button"' in html

@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<main class="auth-wrapper">
+<div class="auth-wrapper">
   <div class="auth-layout">
     <aside class="auth-intro" aria-labelledby="auth-intro-title">
       <div>
@@ -123,7 +123,7 @@
     <p class="verification-hint">{{ _('Tarkista myös roskaposti. Linkki vanhenee, joten lähetämme aina uuden.') }}</p>
   </div>
 </div>
-</main>
+</div>
 
 <script src="{{ url_for('static', filename='js/webauthn.js', v='20261003-conditional-passkey-1') }}"></script>
 <script>

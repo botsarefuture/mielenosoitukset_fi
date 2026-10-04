@@ -3,22 +3,39 @@
 {% block title %}{{ _('Rekisteröidy') }}{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css', v='20261003-auth-refresh-1') }}">
 {% endblock %}
 
 {% block content %}
 <div class="auth-wrapper">
+  <div class="auth-layout">
+    <aside class="auth-intro" aria-labelledby="register-intro-title">
+      <div>
+        <p class="auth-intro__eyebrow">Mielenosoitukset.fi</p>
+        <h1 id="register-intro-title">{{ _('Tervetuloa mukaan') }}</h1>
+        <p class="auth-intro__description">{{ _('Tilillä voit hallita ilmoituksiasi, seurata käsittelyä ja osallistua organisaatioiden toimintaan.') }}</p>
+      </div>
+      <ul class="auth-intro__points" aria-label="{{ _('Tilin edut') }}">
+        <li><i class="fa-solid fa-envelope-circle-check" aria-hidden="true"></i><span>{{ _('Vahvista sähköpostisi rekisteröitymisen jälkeen.') }}</span></li>
+        <li><i class="fa-solid fa-key" aria-hidden="true"></i><span>{{ _('Voit lisätä passkeyn turvallista kirjautumista varten tilin asetuksissa.') }}</span></li>
+      </ul>
+    </aside>
     <div class="auth-container">
         <div class="auth-header">
-            <div class="auth-icon"><i class="fa-solid fa-user-plus"></i></div>
-            <h1>{{ _('Luo uusi tili') }}</h1>
-            <p class="auth-subtitle">{{ _('Rekisteröidy aloittaaksesi') }}</p>
+            <p class="auth-card__eyebrow">{{ _('Käyttäjätili') }}</p>
+            <h2>{{ _('Luo uusi tili') }}</h2>
+            <p class="auth-subtitle">{{ _('Täytä perustiedot ja valitse turvallinen salasana.') }}</p>
         </div>
 
         <div id="error-message" class="hidden" role="alert"></div>
 
         <form id="register-form" action="{{ url_for('users.auth.register') }}" method="POST">
 
+            <section class="form-section" aria-labelledby="account-details-title">
+              <div class="form-section__header">
+                <h2 id="account-details-title">{{ _('Tilin tiedot') }}</h2>
+                <p>{{ _('Käyttäjänimi näkyy palvelussa. Sähköpostia käytetään tilin vahvistamiseen ja tärkeisiin viesteihin.') }}</p>
+              </div>
             <!-- Username -->
             <div class="form-group">
                 <label class="form-label" for="username">
@@ -46,7 +63,13 @@
                 </div>
                 <p class="form-hint"><i class="fa-solid fa-circle-info"></i>{{ _('Käytämme sähköpostia tiliisi liittyvään viestintään') }}</p>
             </div>
+            </section>
 
+            <section class="form-section" aria-labelledby="password-details-title">
+              <div class="form-section__header">
+                <h2 id="password-details-title">{{ _('Suojaa tilisi') }}</h2>
+                <p>{{ _('Käytä vähintään 12 merkkiä ja kolmea eri merkkityyppiä.') }}</p>
+              </div>
             <!-- Password -->
             <div class="form-group">
                 <label class="form-label" for="password">
@@ -56,7 +79,8 @@
                     <i class="fa-solid fa-lock form-input-icon"></i>
                     <input type="password" id="password" name="password" required minlength="12" class="form-input"
                            placeholder="{{ _('Luo vahva salasana') }}" autocomplete="new-password">
-                    <button type="button" class="password-toggle" aria-label="{{ _('Näytä/piilota salasana') }}">
+                    <button type="button" class="password-toggle" id="password-toggle-button"
+                            aria-label="{{ _('Näytä salasana') }}" aria-pressed="false">
                         <i class="fa-solid fa-eye" id="password-toggle-icon"></i>
                     </button>
                 </div>
@@ -73,11 +97,12 @@
                     <i class="fa-solid fa-lock form-input-icon"></i>
                     <input type="password" id="password_confirm" name="password_confirm" required class="form-input"
                            placeholder="{{ _('Syötä salasana uudelleen') }}" autocomplete="new-password">
-                    <button type="button" class="password-toggle" aria-label="{{ _('Näytä/piilota salasana') }}">
+                    <button type="button" class="password-toggle" id="password-confirm-toggle-button"
+                            aria-label="{{ _('Näytä salasana') }}" aria-pressed="false">
                         <i class="fa-solid fa-eye" id="password_confirm-toggle-icon"></i>
                     </button>
                 </div>
-                <div id="password-match-message" class="password-match user-inline-status" aria-live="polite">
+                <div id="password-match-message" class="password-match user-inline-status hidden" aria-live="polite">
                     <i class="fa-solid fa-xmark"></i>
                     <span>{{ _('Salasanat eivät täsmää') }}</span>
                 </div>
@@ -85,38 +110,43 @@
 
             <!-- Password Requirements -->
             <div class="password-requirements-container">
+                <p>{{ _('Salasanan vaatimukset') }}</p>
                 <ul class="password-requirements">
                     <li id="req-length" class="invalid">{{ _('Vähintään 12 merkkiä pitkä') }}</li>
                     <li id="req-categories" class="invalid">{{ _('Sisältää vähintään 3 seuraavista: pieni kirjain, iso kirjain, numero, erikoismerkki') }}</li>
+                    <li id="req-no-username" class="invalid">{{ _('Ei saa sisältää käyttäjätunnusta tai sähköpostia') }}</li>
+                </ul>
+                <details class="password-requirements-details">
+                  <summary>{{ _('Näytä merkkityyppien tilanne') }}</summary>
+                  <ul class="password-requirements password-requirements--details">
                     <li id="req-lower" class="invalid">{{ _('Vähintään yksi pieni kirjain') }}</li>
                     <li id="req-upper" class="invalid">{{ _('Vähintään yksi iso kirjain') }}</li>
                     <li id="req-digit" class="invalid">{{ _('Vähintään yksi numero') }}</li>
                     <li id="req-special" class="invalid">{{ _('Vähintään yksi erikoismerkki') }}</li>
-                    <li id="req-no-username" class="invalid">{{ _('Ei saa sisältää käyttäjätunnusta tai sähköpostia') }}</li>
-                </ul>
+                  </ul>
+                </details>
             </div>
 
-            <button type="button" id="generate-password" class="btn btn-secondary user-action--full">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>{{ _('Luo vahva salasana') }}
-            </button>
-
-            <button type="submit" class="btn btn-primary" id="submit-btn">
-                <i class="fa-solid fa-user-plus"></i>{{ _('Luo tili') }}
-            </button>
+            <div class="auth-actions">
+              <button type="button" id="generate-password" class="btn btn-secondary">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>{{ _('Luo vahva salasana') }}
+              </button>
+              <button type="submit" class="btn btn-primary" id="submit-btn">
+                  <i class="fa-solid fa-user-plus"></i>{{ _('Luo tili') }}
+              </button>
+            </div>
+            </section>
         </form>
 
         <div class="register-prompt">
-                    <div class="auth-divider"><span>{{ _('tai') }}</span></div>
-
             <p>{{ _('Onko sinulla jo tili?') }}</p>
-            <a href="{{ url_for('users.auth.login') }}" class="btn btn-secondary">
-                <i class="fa-solid fa-right-to-bracket"></i>{{ _('Kirjaudu sisään') }}
-            </a>
+            <a href="{{ url_for('users.auth.login') }}" class="auth-text-link">{{ _('Kirjaudu sisään') }}</a>
         </div>
         <div class="auth-footer">
             <p class="help-text"><i class="fa-solid fa-shield-halved"></i>{{ _('Luomalla tilin hyväksyt palvelumme käyttöehdot') }}</p>
         </div>
     </div>
+  </div>
 </div>
 
 <script>
@@ -195,18 +225,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Password toggle ---
-    function setupToggle(inputId, iconId) {
+    function setupToggle(inputId, buttonId, iconId) {
         const input = document.getElementById(inputId);
+        const button = document.getElementById(buttonId);
         const icon = document.getElementById(iconId);
-        if (!input || !icon) return;
-        icon.addEventListener("click", () => {
-            input.type = input.type === "password" ? "text" : "password";
+        if (!input || !button || !icon) return;
+        button.addEventListener("click", () => {
+            const showPassword = input.type === "password";
+            input.type = showPassword ? "text" : "password";
             icon.classList.toggle("fa-eye");
             icon.classList.toggle("fa-eye-slash");
+            button.setAttribute("aria-pressed", String(showPassword));
+            button.setAttribute("aria-label", showPassword ? {{ _('Piilota salasana')|tojson }} : {{ _('Näytä salasana')|tojson }});
         });
     }
-    setupToggle("password", "password-toggle-icon");
-    setupToggle("password_confirm", "password_confirm-toggle-icon");
+    setupToggle("password", "password-toggle-button", "password-toggle-icon");
+    setupToggle("password_confirm", "password-confirm-toggle-button", "password_confirm-toggle-icon");
 
     // --- Password strength ---
     function updateStrength() {
@@ -283,7 +317,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const matchIcon = matchMessage.querySelector("i");
         const matchText = matchMessage.querySelector("span");
 
-        if(!confirmInput.value || passwordInput.value!==confirmInput.value){
+        if (!confirmInput.value) {
+            matchMessage.classList.add("hidden");
+            return false;
+        }
+        matchMessage.classList.remove("hidden");
+        if(passwordInput.value!==confirmInput.value){
             matchIcon.className="fa-solid fa-xmark";
             matchText.textContent=registerMessages.passwordsMismatch;
             matchMessage.classList.remove("valid");
@@ -298,10 +337,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Generate password ---
     function generatePassword(length=16){
-        const chars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{};:,.<>?";
-        let pwd="";
-        for(let i=0;i<length;i++) pwd+=chars.charAt(Math.floor(Math.random()*chars.length));
-        return pwd;
+        const groups = [
+            "abcdefghijklmnopqrstuvwxyz",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            "0123456789",
+            "!@#$%^&*()-_=+[]{};:,.<>?"
+        ];
+        const chars = groups.join("");
+        const randomIndex = (limit) => crypto.getRandomValues(new Uint32Array(1))[0] % limit;
+        const password = groups.map((group) => group[randomIndex(group.length)]);
+        while (password.length < length) password.push(chars[randomIndex(chars.length)]);
+        for (let index = password.length - 1; index > 0; index--) {
+            const swapIndex = randomIndex(index + 1);
+            [password[index], password[swapIndex]] = [password[swapIndex], password[index]];
+        }
+        return password.join("");
     }
 
     generateBtn.addEventListener("click", ()=>{

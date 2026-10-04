@@ -77,4 +77,6 @@ def test_calendar_year_keeps_behavioral_hooks_and_respects_reduced_motion():
         assert hook in template
 
     assert "window.matchMedia('(prefers-reduced-motion: reduce)')" in template
-    assert "preview.html(html)" in template
+    assert "window.CalendarPreview.render(preview[0]" in template
+    assert "preview.fadeIn(reduceMotion ? 0 : 200)" in template
+    assert "preview.html(html)" not in template

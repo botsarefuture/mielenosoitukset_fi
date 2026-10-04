@@ -28,6 +28,8 @@ from mielenosoitukset_fi.utils.site_analytics import (
     get_top_event_resources,
     get_top_pages,
     get_traffic_series,
+    get_visitor_overview,
+    get_visitor_series,
 )
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from mielenosoitukset_fi.admin.utils import _ADMIN_TEMPLATE_FOLDER, log_admin_action_V2
@@ -123,6 +125,8 @@ def site_overview():
     try:
         overview = get_overview(days=days)
         series = get_traffic_series(days=days)
+        visitors = get_visitor_overview(days=days)
+        visitor_series = get_visitor_series(days=days)
         top_pages = _resolve_titles(
             get_top_pages(days=days, limit=10, title_resolver=lambda t, r: None)
         )
@@ -157,6 +161,8 @@ def site_overview():
         range_days=days,
         overview=overview,
         series=series,
+        visitors=visitors,
+        visitor_series=visitor_series,
         top_pages=rows,
         top_demos=demo_rows,
         languages=languages,

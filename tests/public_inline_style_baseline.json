@@ -35,9 +35,6 @@
       "3fa5b6850eb5ac6a",
       "ea168a5ec816a61a"
     ],
-    "demo_views/calendar_year.html": [
-      "dc01ca48de0aec45"
-    ],
     "detail.html": [
       "101100cba172bfbd",
       "5612e9af9d7f427f",
@@ -182,12 +179,6 @@
     "demo_views/calendar_grid_old.html": [
       "b17a8da8811e8195",
       "bdd1dcb76e67b308"
-    ],
-    "demo_views/calendar_year.html": [
-      "065e568fb8f3e895",
-      "072ce4f6c2409470",
-      "6ce83b17e1bfca20",
-      "905008530ca922dd"
     ],
     "detail.html": [
       "0f6ba93d4aac2331",

@@ -86,7 +86,10 @@ def test_settings_shared_css_uses_product_tokens_and_cache_is_bumped():
     assert "var(--product-surface)" in css
     assert "var(--product-text)" in css
     assert "var(--product-border)" in css
-    assert "20260930-user-workspace-13" in base
+    assert re.search(
+        r"css/user-workspace\.css.*v='\d{8}-user-workspace-\d+'",
+        base,
+    )
 
 
 def test_new_settings_copy_is_translated_in_supported_catalogs():

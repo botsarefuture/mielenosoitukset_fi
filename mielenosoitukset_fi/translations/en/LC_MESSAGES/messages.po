@@ -13304,3 +13304,196 @@ msgstr "Too many requests within an hour. Please try again later."
 
 msgid "Muistutus tilattu onnistuneesti!"
 msgstr "Reminder subscribed successfully!"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Käyttöehdot"
+msgstr "Terms of use"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Palvelun ehdot"
+msgstr "Service terms"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Näissä ehdoissa kerrotaan Mielenosoitukset.fi-palvelun käytön periaatteet."
+msgstr "These terms describe the principles governing the use of the Mielenosoitukset.fi service."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Asiakirjan tiedot"
+msgstr "Document information"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Päivitetty viimeksi"
+msgstr "Last updated"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Yleiset ehdot"
+msgstr "General terms"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Kaikkien sivustolla julkaistavien mielenosoitusten on oltava Suomen lakien ja asetusten mukaisia. Sivustollemme ilmoitetut mielenosoitukset eivät saa sisältää syrjintää, vihapuhetta, väkivaltaan yllyttämistä tai muuta epäasiallista sisältöä."
+msgstr "All demonstrations published on the site must comply with Finnish laws and regulations. Demonstrations submitted to the site must not contain discrimination, hate speech, incitement to violence, or other inappropriate content."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Pidätämme oikeuden olla julkaisematta sivustollemme ilmoitettua mielenosoitusta ilman erillistä perustelua, mikäli katsomme, että se ei täytä edellä mainittuja ehtoja tai muita sivuston periaatteita."
+msgstr "We reserve the right not to publish a demonstration submitted to the site without providing separate grounds if we determine that it does not meet the terms above or the site's other principles."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Sivustomme tietoja ja sisältöjä ei saa käyttää kaupallisiin tarkoituksiin ilman erillistä kirjallista lupaa."
+msgstr "Information and content from the site may not be used for commercial purposes without separate written permission."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Valitusprosessi"
+msgstr "Appeals process"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Jos mielenosoitustasi ei julkaista ja koet päätöksen olevan virheellinen, voit tehdä asiasta valituksen seuraavan prosessin mukaisesti:"
+msgstr "If your demonstration is not published and you believe the decision is incorrect, you may appeal it as follows:"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Lähetä valituksesi sähköpostilla osoitteeseen"
+msgstr "Send your appeal by email to"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Käsittelemme valituksesi 30 vuorokauden kuluessa sen vastaanottamisesta."
+msgstr "We will process your appeal within 30 days of receiving it."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Saat valituksestasi kirjallisen lopullisen päätöksen sähköpostilla. Tähän päätökseen ei voi hakea muutosta."
+msgstr "You will receive the final written decision on your appeal by email. This decision cannot be appealed."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Vastuunrajoitus"
+msgstr "Limitation of liability"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Emme vastaa sivustolla olevien tietojen mahdollisista virheistä tai puutteista emmekä mahdollisista vahingoista, joita virheellisistä tiedoista saattaa aiheutua. Emme myöskään vastaa mahdollisista teknisistä häiriöistä, käyttökatkoista tai muista palvelun toimintahäiriöistä johtuvista ongelmista."
+msgstr "We are not liable for errors or omissions in the information on the site or for any damage caused by inaccurate information. We are also not liable for problems caused by technical disruptions, service interruptions, or other service failures."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Muutokset käyttöehtoihin"
+msgstr "Changes to these terms"
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Pidätämme oikeuden päivittää näitä käyttöehtoja tarvittaessa. Käyttäjien vastuulla on tutustua käyttöehtoihin säännöllisesti. Olennaisista muutoksista ilmoitamme selkeästi sivustollamme."
+msgstr "We reserve the right to update these terms when necessary. Users are responsible for reviewing the terms regularly. We will clearly announce material changes on the site."
+
+#: mielenosoitukset_fi/templates/terms.html
+msgid "Käyttämällä sivustoamme hyväksyt nämä ehdot."
+msgstr "By using the site, you accept these terms."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:12
+msgid "Kävijätietoja ei ole vielä kerätty"
+msgstr "No visitor data collected yet"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:37
+msgid ""
+"Luvut kerätään palvelimella. Analytiikkaa varten ei käytetä evästeitä eikä "
+"kolmannen osapuolen palveluita, ja kävijät lasketaan anonyymisti arviona."
+msgstr ""
+"The figures are collected on the server. No cookies or third-party services "
+"are used for analytics, and visitors are counted anonymously as an estimate."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:58
+msgid "Kävijät ja sivunäytöt"
+msgstr "Visitors and page views"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:61
+#, python-format
+msgid "eilen %(count)s sivunäyttöä"
+msgstr "%(count)s page views yesterday"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:64
+#, python-format
+msgid "edellinen viikko %(count)s sivunäyttöä"
+msgstr "previous week %(count)s page views"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:67
+#, python-format
+msgid "edellinen kuukausi vastaavana aikana %(count)s sivunäyttöä"
+msgstr "previous month %(count)s page views at the same time"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:70
+#, python-format
+msgid "edellinen vastaava jakso %(count)s sivunäyttöä"
+msgstr "previous comparable period %(count)s page views"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:78
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:363
+msgid "Kävijät"
+msgstr "Visitors"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:95
+msgid ""
+"Laskuriin kirjataan vain julkiset sivunäytöt: hallintapaneelin, käyttäjien "
+"oma alue, rajapinnat, staattiset tiedostot ja botit on jätetty "
+"tarkoituksella pois, eivätkä ne kasvata kävijämäärää."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:100
+msgid ""
+"Kävijät ovat arvio, eivätkä laskettuja henkilöitä. Kävijä tunnistetaan "
+"palvelimella IP-osoitteen ja laitteen perusteella, ja tunnisteeseen "
+"sekoitetaan viikoittain vaihtuva avain, jotta samaa ihmistä ei voi yhdistää "
+"eri viikkojen välillä. Tunniste on lyhyt ja anonyymi: sitä ei voi palauttaa "
+"IP-osoitteeksi, eikä kävijälle muodostu pysyvää profiilia. Evästeitä ei "
+"käytetä eikä kolmannen osapuolen analytiikkapalveluita ole mukana. Sama "
+"henkilö voi näyttää useita kerroja esimerkiksi jaetun verkon, vaihtuvan IP-"
+"osoitteen tai eri laitteiden vuoksi. Kävijät lasketaan uudelleen joka "
+"viikko, joten viikon mittaisella jaksolla sama kävijä voidaan laskea kerran "
+"viikossa."
+msgstr ""
+"Visitor counts are estimates, not a count of individual people. A visitor is"
+" identified on the server from the IP address and the device type, and a key"
+" that changes every week is mixed into the identifier, so the same person "
+"cannot be linked across different weeks. The identifier is short and "
+"anonymous: it cannot be turned back into an IP address, and no permanent "
+"profile is created for a visitor. No cookies are used and no third-party "
+"analytics services are involved. The same person may be counted more than "
+"once, for example because of a shared network, a changing IP address or "
+"different devices. Visitor counts are recalculated every week, so over a "
+"period longer than a week the same visitor can be counted once per week."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:103
+#, python-format
+msgid ""
+"Kävijätietoja on kerätty %(date)s alkaen, joten sitä vanhemmat jaksot "
+"näytetään viivalla —."
+msgstr ""
+"Visitor data has been collected since %(date)s, so older periods are shown "
+"with a dash —."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:112
+msgid "Kävijät ja sivunäytöt päivittäin"
+msgstr "Daily visitors and page views"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:113
+msgid ""
+"Sivunäytöt ovat katsottujen sivujen määrä, kävijät saman päivän aikana "
+"erillisinä pidettyjen kävijöiden määrä."
+msgstr ""
+"Page views are the number of pages viewed, and visitors are the number of "
+"visitors counted as separate during the same day."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:119
+msgid "Päivittäiset sivunäytöt ja kävijät viivakaaviona"
+msgstr "Daily page views and visitors on a line chart"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:121
+msgid "Kävijäsarja loppuu päivään, jolloin kävijätietoja ei ole vielä kerätty."
+msgstr "The visitor series ends on the day visitor data was first collected."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:132
+msgid "Sivunäytöt palvelimen kieliasetuksen mukaan."
+msgstr "Page views by the server's language setting."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:156
+msgid "Sivunäytöt laitteen tyypin mukaan."
+msgstr "Page views by device type."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:180
+msgid "Mistä tullaan"
+msgstr "Referrers"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html:181
+msgid "Sivunäytöt sivustolle saapuneen viittauslähteen mukaan."
+msgstr "Page views by the referring source that led to the site."

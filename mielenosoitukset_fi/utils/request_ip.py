@@ -41,12 +41,20 @@ def _is_cloudflare_ip(value):
     return any(address in network for network in _cloudflare_networks())
 
 
-def get_client_ip(default="0.0.0.0"):
-    """Return the visitor IP, trusting Cloudflare's header only from Cloudflare."""
-    if not has_request_context():
-        return default
+def get_client_ip(default="0.0.0.0", request=None):
+    """Return the visitor IP, trusting Cloudflare's header only from Cloudflare.
 
-    proxy_ip = _valid_ip(request.remote_addr)
+    If ``request`` is provided, use it instead of the Flask global ``request``.
+    This allows the function to be used outside a request context (e.g. in tests).
+    """
+    from flask import has_request_context, request as flask_request
+
+    if request is None:
+        if not has_request_context():
+            return default
+        request = flask_request
+
+    proxy_ip = _valid_ip(request.environ.get("REMOTE_ADDR"))
     cloudflare_ip = (
         _valid_ip(request.headers.get("CF-Connecting-IPv6"))
         or _valid_ip(request.headers.get("CF-Connecting-IP"))

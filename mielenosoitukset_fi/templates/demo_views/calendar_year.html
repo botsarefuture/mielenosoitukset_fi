@@ -2,348 +2,16 @@
 
 {% block title %}{{ _('Kalenteri %(year)s', year=year) }} | Mielenosoitukset.fi{% endblock %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calendar-year.css', v='20261004-calendar-year-1') }}">
+{% endblock %}
+
 {% block content %}
 {% if noindex_nofollow %}
 <meta name="robots" content="noindex, nofollow">
 {% endif %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.css">
 
-<style>
-:root {
-    --pink-primary: #ff3366;
-    --pink-light: #ff99c8;
-    --pink-lighter: #ffd6e8;
-    --pink-bg: #fff0f6;
-    --pink-pale: #fffafc;
-    --pink-dark: #ff4d91;
-}
-
-.year-calendar {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    font-family: 'Poppins', sans-serif;
-}
-
-.month-grid {
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-    background: var(--pink-pale);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.month-grid th,
-.month-grid td {
-    width: 14.28%;
-    text-align: center;
-    vertical-align: top;
-    padding: 3px;
-    border: 1px solid var(--pink-lighter);
-}
-
-.month-grid th {
-    background: #f8c8dc;
-    color: #fff;
-    font-weight: 600;
-    font-size: 12px;
-}
-
-.month-grid td {
-    background: var(--pink-bg);
-    position: relative;
-}
-
-.month-grid td strong {
-    display: block;
-    margin-bottom: 3px;
-    color: var(--pink-primary);
-    font-size: 12px;
-}
-
-.demo-cell {
-    display: block;
-    background: #ff66a3;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 6px;
-    padding: 1px 3px;
-    margin-bottom: 1px;
-    font-size: 10px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.demo-cell:hover {
-    background: var(--pink-dark);
-}
-
-#demo-preview {
-    position: absolute;
-    display: none;
-    background: var(--pink-pale);
-    border: 1px solid #ffb3d1;
-    border-radius: 10px;
-    padding: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    max-width: 300px;
-    z-index: 9999;
-}
-
-#demo-preview img {
-    max-width: 100%;
-    border-radius: 6px;
-    margin-bottom: 5px;
-}
-
-.year-header {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.calendar-year-nav {
-    text-align: center;
-    margin-bottom: 15px;
-}
-
-.calendar-year-nav a {
-    background: var(--pink-light);
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    margin: 0 2px;
-    transition: background 0.2s;
-}
-
-.calendar-year-nav a:hover {
-    background: #ff66a3;
-}
-
-.onboarding-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
-    z-index: 1000002;
-    display: none;
-}
-
-.onboarding-tooltip {
-    position: absolute;
-    background: #fff;
-    color: #333;
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    max-width: 250px;
-    text-align: center;
-    z-index: 1000003;
-    pointer-events: auto;
-}
-
-.onboarding-tooltip::after {
-    content:'';
-    position: absolute;
-    border-width: 8px;
-    border-style: solid;
-    border-color: #fff transparent transparent transparent;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000004;
-}
-
-.onboarding-tooltip strong {
-    display:block;
-    font-size:16px;
-    margin-bottom:6px;
-}
-
-.onboarding-tooltip p {
-    font-size:14px;
-    margin-bottom:10px;
-}
-
-.onboarding-tooltip button {
-    background:#0056b3;
-    color:#fff;
-    border:none;
-    border-radius:5px;
-    padding:6px 12px;
-    cursor:pointer;
-    font-weight:600;
-    transition: background 0.2s;
-    z-index: 1000005;
-}
-
-.onboarding-tooltip button:hover {
-    background:#004080;
-}
-
-/* Mobile List View */
-.mobile-year-list {
-    display: none;
-}
-
-.mobile-month-section {
-    margin-bottom: 30px;
-}
-
-.mobile-month-header {
-    background: var(--pink-light);
-    color: white;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 15px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.mobile-month-title {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 5px;
-}
-
-.mobile-month-link {
-    color: white;
-    text-decoration: none;
-    font-size: 14px;
-    opacity: 0.9;
-}
-
-.mobile-month-link:hover {
-    opacity: 1;
-    text-decoration: underline;
-}
-
-.mobile-events-grid {
-    display: grid;
-    gap: 10px;
-}
-
-.mobile-event-card {
-    background: white;
-    border-radius: 10px;
-    padding: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    border-left: 4px solid var(--pink-primary);
-    display: block;
-    text-decoration: none;
-    color: inherit;
-    transition: all 0.2s;
-}
-
-.mobile-event-card:hover, .mobile-event-card:active {
-    transform: translateX(5px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.mobile-event-date {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 5px;
-    font-weight: 500;
-}
-
-.mobile-event-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--pink-primary);
-    margin-bottom: 5px;
-}
-
-.mobile-event-desc {
-    font-size: 13px;
-    color: #666;
-    line-height: 1.4;
-}
-
-.mobile-event-image {
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
-    border-radius: 6px;
-    margin-top: 8px;
-}
-
-.mobile-empty-month {
-    background: var(--pink-bg);
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    color: #999;
-    font-size: 14px;
-}
-
-.mobile-stats {
-    background: white;
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    display: flex;
-    justify-content: space-around;
-    text-align: center;
-}
-
-.mobile-stat-item {
-    flex: 1;
-}
-
-.mobile-stat-number {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--pink-primary);
-    display: block;
-}
-
-.mobile-stat-label {
-    font-size: 12px;
-    color: #666;
-}
-
-@media(max-width: 768px){
-    .year-calendar {
-        display: none;
-    }
-    
-    .mobile-year-list {
-        display: block;
-    }
-
-    .calendar-year-nav {
-        display: flex;
-        align-items: center;
-    }
-    
-    .calendar-year-nav a {
-        padding: 8px 16px;
-        font-size: 14px;
-    }
-    
-    .year-header {
-        font-size: 28px;
-    }
-    
-    #demo-preview {
-        position: fixed !important;
-        max-width: 90%;
-        left: 5% !important;
-        top: 50% !important;
-        transform: translateY(-50%);
-    }
-}
-
-@media(min-width: 769px){
-    .month-grid th, .month-grid td { font-size: 10px; padding: 2px; }
-    .demo-cell { font-size: 9px; }
-}
-</style>
+<div class="calendar-year-page">
 
 <!-- Onboarding Overlay -->
 <div id="calendar-onboarding" class="onboarding-overlay" aria-hidden="true">
@@ -358,17 +26,17 @@
 
 <div class="calendar-year-nav">
     <a href="{{ url_for('calendar_year_view', year=year-1) }}">← {{ _('Edellinen vuosi') }}</a>
-    <span style="margin:0 10px; font-weight:600;">{{ year }}</span>
+    <span class="calendar-year-nav__current">{{ year }}</span>
     <a href="{{ url_for('calendar_year_view', year=year+1) }}">{{ _('Seuraava vuosi') }} →</a>
 </div>
 
 <!-- Desktop: Year Calendar Grid -->
 <div class="year-calendar">
     {% for month in range(1, 13) %}
-    <div>
-        <h3 style="text-align:center">
-            <a href="{{ url_for('calendar_month_view', year=year, month=month) }}" 
-               style="text-decoration:none; color:#ff3366;">
+    <div class="calendar-month">
+        <h3 class="calendar-month__heading">
+            <a href="{{ url_for('calendar_month_view', year=year, month=month) }}"
+               class="calendar-month__link">
                {{ month_names[month] }}
             </a>
         </h3>
@@ -386,7 +54,7 @@
                     {% if day != 0 %}
                         <strong>{{ day }}</strong>
                         {% if year_demos[month]['days'].get(day) %}
-                        <ul style="padding:0; margin:0; list-style:none;">
+                        <ul class="calendar-day-events">
                             {% for demo in year_demos[month]['days'][day] %}
                             <li>
                                 <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" 
@@ -475,6 +143,7 @@
 </div>
 
 <div id="demo-preview" aria-hidden="true"></div>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 
@@ -482,6 +151,7 @@
 $(function() {
     // Check if mobile view
     const isMobileView = window.matchMedia('(max-width: 768px)').matches;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
     if (isMobileView) {
         // Skip desktop features on mobile
@@ -522,7 +192,7 @@ $(function() {
             $tooltip.find('strong').text(step.title);
             $tooltip.find('p').text(step.text);
 
-            $overlay.fadeIn(200).css('z-index',1000002);
+            $overlay.fadeIn(reduceMotion ? 0 : 200).css('z-index',1000002);
 
             // Temporarily show tooltip off-screen to measure
             $tooltip.css({ top: -9999, left: -9999, display: 'block' });
@@ -551,7 +221,7 @@ $(function() {
             if(stepIndex < steps.length){
                 showStep(stepIndex);
             } else {
-                $overlay.fadeOut(300);
+                $overlay.fadeOut(reduceMotion ? 0 : 300);
                 localStorage.setItem('calendarOnboardingDone','true');
             }
         });
@@ -577,7 +247,7 @@ $(function() {
         if(img) html += `<img src="${img}" alt="${title}">`;
         html += `<strong>${title}</strong>`;
         if(desc) html += `<p>${desc}</p>`;
-        preview.html(html).fadeIn(200);
+        preview.html(html).fadeIn(reduceMotion ? 0 : 200);
     }
 
     $('.demo-cell').on('mouseenter', function(e) {
@@ -586,7 +256,7 @@ $(function() {
 
     $('.demo-cell').on('mouseleave', function() {
         clearTimeout(hoverTimeout);
-        preview.fadeOut(200);
+        preview.fadeOut(reduceMotion ? 0 : 200);
     });
 
     $('.demo-cell').on('mousemove', function(e) {

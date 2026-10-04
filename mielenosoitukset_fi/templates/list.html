@@ -140,33 +140,20 @@ document.addEventListener('DOMContentLoaded', () => {
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/user-pagination.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="{{ url_for('static', filename='js/date.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 <script>
 const cityList = {{ city_list | tojson }};
+const publicListI18n = Object.freeze({
+  city: {{ _('Kaupunki') | tojson }},
+  removeFilter: {{ _('Poista suodatin') | tojson }},
+});
 </script>
 <script>
 /**
  * Fetches demonstration data from the API and renders cards or table rows.
- * Handles infinite scroll, search, and view toggling.
+ * Handles pagination, search, and filters.
  */
 document.addEventListener("DOMContentLoaded", function () {
-  function isTodayDate(dateStr) {
-    if (!dateStr) return false;
-    const today = new Date();
-    const [d, m, y] = dateStr.split(".");
-    return (
-      today.getDate() === parseInt(d, 10) &&
-      today.getMonth() + 1 === parseInt(m, 10) &&
-      today.getFullYear() === parseInt(y, 10)
-    );
-  }
-
-    document.getElementById("search-form").addEventListener("submit", e => {
-    e.preventDefault();
-    setView(view);
-  });
-
   // City autocomplete
   const cityInput = $("#city_input");
   const selectedCitiesInput = $("#city");
@@ -194,7 +181,18 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!currentCities.includes(selectedCity)) {
               currentCities.push(selectedCity);
               selectedCitiesInput.val(currentCities.join(","));
-              const filterDiv = $(`<div class="filter"><span>${_("Kaupunki")}: ${selectedCity}</span><a href="#" data-city="${selectedCity}"><i class="fas fa-times"></i></a></div>`);
+              const filterDiv = $("<div>").addClass("filter");
+              $("<span>")
+                .text(`${publicListI18n.city}: ${selectedCity}`)
+                .appendTo(filterDiv);
+              const removeFilter = $("<a>", {
+                href: "#",
+                "data-city": selectedCity,
+                "aria-label": `${publicListI18n.removeFilter}: ${selectedCity}`,
+              }).append(
+                $("<i>").addClass("fas fa-times").attr("aria-hidden", "true")
+              );
+              removeFilter.appendTo(filterDiv);
               filters.append(filterDiv);
               filterDiv.find("a").on("click", function (event) {
                 event.preventDefault();
@@ -217,6 +215,20 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  const activeLocale = {{ current_locale | tojson }};
+  const formatCalendarPart = (date, options) => new Intl.DateTimeFormat(
+    activeLocale,
+    { ...options, timeZone: "UTC" }
+  ).format(date);
+  const weekdayDates = Array.from(
+    { length: 7 },
+    (_, index) => new Date(Date.UTC(2024, 0, 7 + index, 12))
+  );
+  const monthDates = Array.from(
+    { length: 12 },
+    (_, index) => new Date(Date.UTC(2024, index, 1, 12))
+  );
+
   const dateConfig = {
     dateFormat: "d.m.Y",
     minDate: "today",
@@ -224,12 +236,12 @@ document.addEventListener("DOMContentLoaded", function () {
     locale: {
       firstDayOfWeek: 1,
       weekdays: {
-        shorthand: ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
-        longhand: ["Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai"]
+        shorthand: weekdayDates.map(date => formatCalendarPart(date, { weekday: "short" })),
+        longhand: weekdayDates.map(date => formatCalendarPart(date, { weekday: "long" }))
       },
       months: {
-        shorthand: ["Tam", "Hel", "Maa", "Huh", "Tou", "Kes", "Hei", "Elo", "Syy", "Lok", "Mar", "Jou"],
-        longhand: ["Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu", "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu"]
+        shorthand: monthDates.map(date => formatCalendarPart(date, { month: "short" })),
+        longhand: monthDates.map(date => formatCalendarPart(date, { month: "long" }))
       }
     }
   };
@@ -251,8 +263,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
   });
-
-  setView(view);
 });
 </script>
 

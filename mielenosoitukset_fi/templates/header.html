@@ -96,20 +96,21 @@ time (datetime) | iso string, read (bool)
 <nav class="main-nav public-main-nav" role="navigation" aria-label="{{ _('Päävalikko') }}">
   <div class="nav-container">
     <button class="mobile-menu-toggle"
-            onclick="toggleMobileMenu()"
+            id="mobile-menu-toggle"
+            type="button"
             aria-expanded="false"
             aria-controls="main-nav-list"
             aria-label="{{ _('Avaa navigaatiovalikko') }}">
-      <i class="fa-solid fa-bars"></i>
-      <i class="fa-solid fa-times"></i>
+      <i class="fa-solid fa-bars" aria-hidden="true"></i>
+      <i class="fa-solid fa-times" aria-hidden="true"></i>
     </button>
 
     <ul class="nav-list" id="main-nav-list">
       <!-- Mobile Header -->
       <li class="mobile-nav-header">
         <span class="logo mobile-nav-title">{{ _('Valikko') }}</span>
-        <button class="mobile-close" onclick="toggleMobileMenu()" aria-label="{{ _('Sulje valikko') }}">
-          <i class="fa-solid fa-times"></i>
+        <button class="mobile-close" id="mobile-menu-close" type="button" aria-label="{{ _('Sulje valikko') }}">
+          <i class="fa-solid fa-times" aria-hidden="true"></i>
         </button>
       </li>
 
@@ -224,36 +225,89 @@ time (datetime) | iso string, read (bool)
 </nav>
 
 <script>
-  // Toggle mobile menu
-  function toggleMobileMenu() {
+  const mobileNavigationQuery = window.matchMedia('(max-width: 768px)');
+  let mobileMenuReturnFocus = null;
+
+  function getMobileNavigationElements() {
     const navList = document.getElementById('main-nav-list');
-    const toggle = document.querySelector('.mobile-menu-toggle');
-    const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-
-    toggle.setAttribute('aria-expanded', !isExpanded);
-    navList.classList.toggle('active');
-
-    // Update label
-    if (!isExpanded) {
-      toggle.setAttribute('aria-label', '{{ _("Sulje navigaatiovalikko") }}');
-      document.body.style.overflow = 'hidden';
-
-      // Show mobile header
-      const mobileHeader = document.querySelector('.mobile-nav-header');
-      const mobileOnly = document.querySelector('.mobile-only');
-      if (mobileHeader) mobileHeader.style.display = 'flex';
-      if (mobileOnly) mobileOnly.style.display = 'block';
-    } else {
-      toggle.setAttribute('aria-label', '{{ _("Avaa navigaatiovalikko") }}');
-      document.body.style.overflow = '';
-
-      // Hide mobile header
-      const mobileHeader = document.querySelector('.mobile-nav-header');
-      const mobileOnly = document.querySelector('.mobile-only');
-      if (mobileHeader) mobileHeader.style.display = 'none';
-      if (mobileOnly) mobileOnly.style.display = 'none';
-    }
+    const toggle = document.getElementById('mobile-menu-toggle');
+    const close = document.getElementById('mobile-menu-close');
+    return { navList, toggle, close };
   }
+
+  function setMobileMenuOpen(open, { restoreFocus = true } = {}) {
+    const { navList, toggle, close } = getMobileNavigationElements();
+    if (!navList || !toggle) return;
+
+    if (!mobileNavigationQuery.matches) {
+      const drawerWasOpen = navList.classList.contains('active');
+      navList.classList.remove('active');
+      navList.removeAttribute('aria-hidden');
+      navList.removeAttribute('inert');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', '{{ _("Avaa navigaatiovalikko") }}');
+      document.body.classList.remove('public-nav-open');
+      mobileMenuReturnFocus = null;
+      if (drawerWasOpen) {
+        navList.querySelector('.nav-link[aria-current="page"], .nav-link, .user-toggle, #notif-btn, .theme-toggle')?.focus();
+      }
+      return;
+    }
+
+    const shouldOpen = Boolean(open);
+    if (shouldOpen) {
+      mobileMenuReturnFocus = document.activeElement;
+      navList.removeAttribute('inert');
+      navList.setAttribute('aria-hidden', 'false');
+      navList.classList.add('active');
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.setAttribute('aria-label', '{{ _("Sulje navigaatiovalikko") }}');
+      document.body.classList.add('public-nav-open');
+      window.requestAnimationFrame(() => close?.focus());
+      return;
+    }
+
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', '{{ _("Avaa navigaatiovalikko") }}');
+    if (
+      restoreFocus
+      && mobileMenuReturnFocus
+      && mobileMenuReturnFocus.isConnected
+      && typeof mobileMenuReturnFocus.focus === 'function'
+    ) {
+      mobileMenuReturnFocus.focus();
+    }
+    mobileMenuReturnFocus = null;
+    navList.classList.remove('active');
+    navList.setAttribute('aria-hidden', 'true');
+    navList.setAttribute('inert', '');
+    document.body.classList.remove('public-nav-open');
+  }
+
+  function toggleMobileMenu() {
+    const { toggle } = getMobileNavigationElements();
+    if (!toggle) return;
+    setMobileMenuOpen(toggle.getAttribute('aria-expanded') !== 'true');
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const { navList, toggle, close } = getMobileNavigationElements();
+    if (!navList || !toggle || !close) return;
+
+    toggle.addEventListener('click', toggleMobileMenu);
+    close.addEventListener('click', () => setMobileMenuOpen(false));
+    navList.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => setMobileMenuOpen(false, { restoreFocus: false }));
+    });
+
+    const syncMobileNavigation = () => setMobileMenuOpen(false, { restoreFocus: false });
+    if (typeof mobileNavigationQuery.addEventListener === 'function') {
+      mobileNavigationQuery.addEventListener('change', syncMobileNavigation);
+    } else {
+      mobileNavigationQuery.addListener(syncMobileNavigation);
+    }
+    syncMobileNavigation();
+  });
 
   // Toggle user dropdown
   function toggleUserDropdown() {
@@ -486,7 +540,7 @@ time (datetime) | iso string, read (bool)
     if (e.key === 'Escape') {
       const toggle = document.querySelector('.mobile-menu-toggle');
       if (toggle && toggle.getAttribute('aria-expanded') === 'true') {
-        toggleMobileMenu();
+        setMobileMenuOpen(false);
       }
       closeUserDropdown();
     }
@@ -545,7 +599,9 @@ time (datetime) | iso string, read (bool)
 
     navList.addEventListener('keydown', function (e) {
       if (e.key === 'Tab' && navList.classList.contains('active')) {
-        const focusableElements = navList.querySelectorAll('a, button');
+        const focusableElements = Array.from(navList.querySelectorAll('a, button'))
+          .filter((element) => !element.disabled && element.getAttribute('aria-hidden') !== 'true');
+        if (!focusableElements.length) return;
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
 

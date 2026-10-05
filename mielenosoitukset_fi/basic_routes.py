@@ -2860,7 +2860,11 @@ def init_routes(app):
             and recurring_parent_is_accessible
         ):
             return redirect(
-                url_for("siblings_meeting", parent=str(recurring_parent_id)),
+                url_for(
+                    "siblings_meeting",
+                    parent=str(recurring_parent_id),
+                    occurrence=getattr(demo_obj, "slug", None) or str(demo_obj._id),
+                ),
                 code=301,
             )
 

@@ -36,8 +36,7 @@
           <ul class="occurrence-list">
             {% for item in occurrences %}
               <li class="occurrence-item">
-                <a class="occurrence-link" href="{{ url_for('demonstration_detail', demo_id=item.id) }}"
-                   {% if item.cancelled %}aria-disabled="true"{% endif %}>
+                <a class="occurrence-link" href="{{ url_for('demonstration_detail', demo_id=item.id) }}">
                   <time class="occurrence-date" datetime="{{ item.date }}">{{ item.date | date('%d.%m.%Y') }}</time>
                   <span class="occurrence-time">
                     {{ item.start_time | time('%H:%M') }}
@@ -65,8 +64,7 @@
           <ul class="occurrence-list occurrence-list-dense">
             {% for item in past_occurrences %}
               <li class="occurrence-item">
-                <a class="occurrence-link" href="{{ url_for('demonstration_detail', demo_id=item.id) }}"
-                   {% if item.cancelled %}aria-disabled="true"{% endif %}>
+                <a class="occurrence-link" href="{{ url_for('demonstration_detail', demo_id=item.id) }}">
                   <time class="occurrence-date" datetime="{{ item.date }}">{{ item.date | date('%d.%m.%Y') }}</time>
                   <span class="occurrence-time">
                     {{ item.start_time | time('%H:%M') }}

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Recurring child links now show the requested visible occurrence outside the bounded 90-day chooser. Cancelled dates no longer crowd out active dates; recent history and cancelled dates remain accessible in a bounded disclosure.
+
 - Removed follow controls from the recurring-series empty page to keep the discovery update focused on occurrence selection and SEO.
 - Public API cards and today-page links now fall back to the standalone demonstration URL when a child's parent series is missing, hidden, or unapproved, matching the sitemap's standalone grouping instead of advertising a series URL that public visitors cannot open.
 - Series pages are now indexed at the series level: the clean series URL stays indexable whenever any occurrence sits in the sitemap discovery window, even when the selector renders an occurrence beyond the future horizon, so the sitemap no longer lists series URLs that the page marks `noindex`.

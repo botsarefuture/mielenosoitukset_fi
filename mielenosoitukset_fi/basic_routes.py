@@ -20,6 +20,8 @@ from flask import (
     url_for,
     request,
     abort,
+    g,
+    has_app_context,
     jsonify,
     session,
     current_app,
@@ -91,6 +93,8 @@ from mielenosoitukset_fi.utils.demo_seo import (
     demo_date_is_in_sitemap_window,
     demo_is_beyond_future_horizon,
     demo_sitemap_priority,
+    occurrence_end_at,
+    select_relevant_occurrence,
     sitemap_date_window,
 )
 
@@ -235,6 +239,39 @@ def _city_inessive_phrase(city_name):
 
 def _demo_detail_identifier(demo):
     return demo.get("slug") or demo.get("running_number") or str(demo.get("_id"))
+
+
+def _parent_series_publicly_visible(parent_id):
+    """Whether the recurring parent series is publicly visible (sitemap rule)."""
+    if not parent_id or not ObjectId.is_valid(str(parent_id)):
+        return False
+
+    parent_oid = ObjectId(str(parent_id))
+    cache = None
+    if has_app_context():
+        cache = getattr(g, "_series_visibility_cache", None)
+        if cache is None:
+            cache = g._series_visibility_cache = {}
+        elif str(parent_oid) in cache:
+            return cache[str(parent_oid)]
+
+    visible = bool(
+        mongo.recu_demos.find_one({"_id": parent_oid, **DEMO_FILTER}, {"_id": 1})
+    )
+    if cache is not None:
+        cache[str(parent_oid)] = visible
+    return visible
+
+
+def _demo_public_path(demo):
+    """Return the canonical public path for a standalone demo or recurring series."""
+    parent_id = demo.get("parent")
+    if parent_id and _parent_series_publicly_visible(parent_id):
+        return url_for("siblings_meeting", parent=str(parent_id))
+    return url_for(
+        "demonstration_detail",
+        demo_id=_demo_detail_identifier(demo),
+    )
 
 
 def _today_demo_query(city_name=None):
@@ -744,6 +781,8 @@ def format_demo_for_api(demo, language=None):
 
     return {
         "_id": str(localized_demo.get("_id")),
+        "parent": str(localized_demo.get("parent") or ""),
+        "detail_url": _demo_public_path(localized_demo),
         "title": localized_demo.get("title", ""),
         "default_language": localized_demo.get("default_language", "fi"),
         "resolved_language": localized_demo.get("resolved_language"),
@@ -1493,12 +1532,54 @@ def init_routes(app):
                 if tag_name:
                     _add_url_with_alternates(urlset, "tag_detail", tag_name=tag_name)
 
+            sitemap_demos = []
             for demo in demonstrations_collection.find(query_filter):
                 if not demo_date_is_in_sitemap_window(
                     demo.get("date"),
                     reference_date=seo_reference_date,
                 ):
                     continue
+                sitemap_demos.append(demo)
+
+            recurring_parent_ids = set()
+            for demo in sitemap_demos:
+                raw_parent_id = demo.get("parent")
+                if isinstance(raw_parent_id, ObjectId):
+                    recurring_parent_ids.add(raw_parent_id)
+                elif ObjectId.is_valid(str(raw_parent_id or "")):
+                    recurring_parent_ids.add(ObjectId(str(raw_parent_id)))
+            visible_recurring_parents = {
+                parent_doc["_id"]
+                for parent_doc in mongo.recu_demos.find(
+                    {**DEMO_FILTER, "_id": {"$in": list(recurring_parent_ids)}},
+                    {"_id": 1},
+                )
+            }
+            recurring_groups = {}
+            standalone_demos = []
+            for demo in sitemap_demos:
+                raw_parent_id = demo.get("parent")
+                parent_id = (
+                    raw_parent_id
+                    if isinstance(raw_parent_id, ObjectId)
+                    else ObjectId(str(raw_parent_id))
+                    if ObjectId.is_valid(str(raw_parent_id or ""))
+                    else None
+                )
+                if parent_id in visible_recurring_parents:
+                    recurring_groups.setdefault(parent_id, []).append(demo)
+                else:
+                    standalone_demos.append(demo)
+
+            sitemap_entries = [(None, demo) for demo in standalone_demos]
+            local_timezone = current_app.config["LOCAL_TIMEZONE"]
+            local_now = datetime.now(local_timezone)
+            for parent_id, occurrences in recurring_groups.items():
+                selected = select_relevant_occurrence(occurrences, local_now)
+                if selected:
+                    sitemap_entries.append((parent_id, selected))
+
+            for recurring_parent_id, demo in sitemap_entries:
                 demo_identifier = (
                     demo.get("slug")
                     or demo.get("running_number")
@@ -1506,9 +1587,13 @@ def init_routes(app):
                 )
                 url_el = ET.SubElement(urlset, "url")
                 loc_el = ET.SubElement(url_el, "loc")
-                loc_el.text = url_for(
-                    "demonstration_detail", demo_id=demo_identifier, _external=True
+                endpoint = "siblings_meeting" if recurring_parent_id else "demonstration_detail"
+                endpoint_values = (
+                    {"parent": str(recurring_parent_id)}
+                    if recurring_parent_id
+                    else {"demo_id": demo_identifier}
                 )
+                loc_el.text = url_for(endpoint, _external=True, **endpoint_values)
 
                 # lastmod for the demonstration if available
                 lastmod_val = _format_lastmod_for_doc(demo)
@@ -1529,10 +1614,10 @@ def init_routes(app):
                                 "rel": "alternate",
                                 "hreflang": lang,
                                 "href": url_for(
-                                    "demonstration_detail",
-                                    demo_id=demo_identifier,
+                                    endpoint,
                                     lang_code=lang,
                                     _external=True,
+                                    **endpoint_values,
                                 ),
                             },
                         )
@@ -2628,6 +2713,7 @@ def init_routes(app):
         demos = list(demonstrations_collection.find(query).sort("start_time", ASCENDING))
         for demo in demos:
             demo["detail_identifier"] = _demo_detail_identifier(demo)
+            demo["detail_url"] = _demo_public_path(demo)
 
         today_value = date.today()
         if city_name:
@@ -2783,7 +2869,7 @@ def init_routes(app):
         return False
 
     @app.route("/demonstration/<demo_id>")
-    def demonstration_detail(demo_id):
+    def demonstration_detail(demo_id, recurring_context=None):
         """
         Display demonstration detail with a cached HTML response and a reliable X-Cache header.
 
@@ -2804,6 +2890,37 @@ def init_routes(app):
         if (not demo_obj.approved and not current_user.has_permission("VIEW_DEMO")) or \
             (demo_obj.hide and not current_user.has_permission("VIEW_DEMO")):
             abort(401)
+
+        recurring_parent_id = getattr(demo_obj, "parent", None)
+        recurring_parent = None
+        if recurring_parent_id and ObjectId.is_valid(str(recurring_parent_id)):
+            recurring_parent = mongo.recu_demos.find_one(
+                {"_id": ObjectId(str(recurring_parent_id))},
+                {"approved": 1, "hide": 1, "rejected": 1},
+            )
+        recurring_parent_is_accessible = bool(
+            recurring_parent
+            and (
+                (
+                    recurring_parent.get("approved")
+                    and not recurring_parent.get("hide")
+                    and not recurring_parent.get("rejected")
+                )
+                or current_user.has_permission("VIEW_DEMO")
+            )
+        )
+        if (
+            recurring_context is None
+            and recurring_parent_is_accessible
+        ):
+            return redirect(
+                url_for(
+                    "siblings_meeting",
+                    parent=str(recurring_parent_id),
+                    occurrence=getattr(demo_obj, "slug", None) or str(demo_obj._id),
+                ),
+                code=301,
+            )
 
         requested_layout = request.args.get("detail_layout")
         if "detail_layout" in request.args:
@@ -2839,10 +2956,17 @@ def init_routes(app):
         # Resolve locale once and reuse the exact same value for rendering and caching.
         locale = _current_demo_language()
         seo_reference_date = date.today()
-        seo_noindex = demo_is_beyond_future_horizon(
-            demo_obj.date,
-            reference_date=seo_reference_date,
-        )
+        if recurring_context is not None and "series_indexable" in recurring_context:
+            # Series pages are indexed at the series level: the sitemap lists the
+            # clean series URL whenever any occurrence sits in the discovery
+            # window, so indexability must not depend on which occurrence the
+            # selector happened to render.
+            seo_noindex = not recurring_context["series_indexable"]
+        else:
+            seo_noindex = demo_is_beyond_future_horizon(
+                demo_obj.date,
+                reference_date=seo_reference_date,
+            )
 
         # Build a cache key that is stable for public users; include locale so localized pages differ
         viewer_segment = "anon"
@@ -2854,7 +2978,8 @@ def init_routes(app):
         cache_key = (
             f"demonstration_detail:v2:{demo_id}:locale={locale}:"
             f"viewer={viewer_segment}:layout={detail_layout}:"
-            f"seo-day={seo_reference_date.isoformat()}:seo-state={'noindex' if seo_noindex else 'index'}"
+            f"seo-day={seo_reference_date.isoformat()}:seo-state={'noindex' if seo_noindex else 'index'}:"
+            f"series={recurring_context['parent_id'] if recurring_context else 'none'}"
         )
 
         # Try to serve from cache if allowed
@@ -3115,6 +3240,16 @@ def init_routes(app):
                 available_demo_languages=available_demo_languages,
                 detail_layout=detail_layout,
                 seo_noindex=seo_noindex,
+                recurring_context=recurring_context,
+                detail_canonical_url=(
+                    recurring_context["canonical_url"]
+                    if recurring_context
+                    else url_for(
+                        "demonstration_detail",
+                        demo_id=(demo.get("slug") or demo.get("running_number") or demo["_id"]),
+                        _external=True,
+                    )
+                ),
                 toolbox_demo_permissions={
                     permission: has_demo_permission(
                         current_user, demo_obj._id, permission
@@ -3465,27 +3600,103 @@ def init_routes(app):
 
     @app.route("/demonstration/<parent>/children", methods=["GET"])
     def siblings_meeting(parent):
-        parent_demo = RecurringDemonstration.from_id(parent)
+        """Render the chosen series occurrence or a noindex page for an empty series."""
+        if not ObjectId.is_valid(parent):
+            abort(404)
+        parent_id = ObjectId(parent)
+        parent_doc = mongo.recu_demos.find_one({"_id": parent_id})
+        if not parent_doc:
+            abort(404)
+        if (
+            not parent_doc.get("approved")
+            or parent_doc.get("hide")
+            or parent_doc.get("rejected")
+        ) and not current_user.has_permission("VIEW_DEMO"):
+            abort(401)
 
-        
-        # Fetch precomputed stats
-        stats = mongo.recu_stats.find_one({"parent": ObjectId(parent)}) or {}
-        total_count = stats.get("total_count", 0)
-        future_count = stats.get("future_count", 0)
-        past_count = stats.get("past_count", 0)
-        recurring_target_id = str(parent_demo._id)
-        recurring_following = recurring_target_id in _get_followed_recurring_ids()
-
-        return render_template(
-            "siblings.html",
-            parent_demo=parent_demo,
-            total_count=total_count,
-            future_count=future_count,
-            past_count=past_count,
-            parent_id=parent,
-            recurring_target_id=recurring_target_id,
-            recurring_following=recurring_following,
+        child_filter = {
+            "parent": {"$in": [parent_id, str(parent_id)]},
+            "approved": True,
+            "$and": DEMO_FILTER["$and"],
+        }
+        occurrences = list(
+            mongo.demonstrations.find(child_filter).sort(
+                [("date", ASCENDING), ("start_time", ASCENDING), ("_id", ASCENDING)]
+            )
         )
+        local_timezone = current_app.config["LOCAL_TIMEZONE"]
+        local_now = datetime.now(local_timezone)
+        default_selected = select_relevant_occurrence(occurrences, local_now)
+        selected = default_selected
+
+        requested_occurrence = request.args.get("occurrence", "").strip()
+        if requested_occurrence:
+            requested = next(
+                (
+                    occurrence
+                    for occurrence in occurrences
+                    if requested_occurrence
+                    in {
+                        str(occurrence.get("_id") or ""),
+                        str(occurrence.get("slug") or ""),
+                        str(occurrence.get("running_number") or ""),
+                    }
+                ),
+                None,
+            )
+            if requested:
+                selected = requested
+
+        canonical_url = url_for("siblings_meeting", parent=parent, _external=True)
+        if not selected:
+            response = make_response(
+                render_template(
+                    "siblings.html",
+                    parent_demo=_localized_demo_copy(parent_doc),
+                    canonical_url=canonical_url,
+                )
+            )
+            response.headers["X-Robots-Tag"] = "noindex, follow"
+            return response
+
+        occurrence_items = []
+        for occurrence in occurrences:
+            end_at = occurrence_end_at(occurrence, local_timezone)
+            identifier = occurrence.get("slug") or str(occurrence["_id"])
+            occurrence_items.append(
+                {
+                    "id": str(occurrence["_id"]),
+                    "date": occurrence.get("date"),
+                    "start_time": occurrence.get("start_time"),
+                    "end_time": occurrence.get("end_time"),
+                    "cancelled": bool(occurrence.get("cancelled")),
+                    "is_past": bool(end_at and end_at < local_now),
+                    "is_selected": occurrence["_id"] == selected["_id"],
+                    "url": url_for(
+                        "siblings_meeting",
+                        parent=parent,
+                        occurrence=identifier,
+                    ),
+                }
+            )
+
+        recurring_context = {
+            "parent_id": parent,
+            "canonical_url": canonical_url,
+            "occurrences": occurrence_items,
+            "series_indexable": any(
+                demo_date_is_in_sitemap_window(occurrence.get("date"))
+                for occurrence in occurrences
+            ),
+            "has_upcoming": any(
+                not item["cancelled"] and not item["is_past"]
+                for item in occurrence_items
+            ),
+            "selected_is_default": bool(
+                default_selected and default_selected["_id"] == selected["_id"]
+            ),
+        }
+        return demonstration_detail(str(selected["_id"]), recurring_context)
 
     @app.route("/ohjeet/")
     @app.route("/ohjeet")

@@ -94,7 +94,7 @@ def test_submit_autocomplete_uses_shared_safe_native_controls():
     assert "maxlength=\"100\"" in template
     assert ".user-autocomplete__option:focus-visible" in css
     assert "min-height: 2.75rem" in css
-    assert "20261004-user-workspace-15" in base
+    assert "20261005-user-workspace-2" in base
 
 
 def test_submit_autocomplete_feedback_is_localized_in_english_and_swedish(

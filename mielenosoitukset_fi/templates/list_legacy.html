@@ -116,7 +116,9 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function renderDemoTableRow(demo) {
-    const demoUrl = `/demonstration/${demo.slug || demo.running_number || demo._id}`;
+    const demoUrl = demo.detail_url || (demo.parent
+      ? `/demonstration/${demo.parent}/children`
+      : `/demonstration/${demo.slug || demo.running_number || demo._id}`);
     return `
       <tr onclick="window.location='${demoUrl}'" style="cursor:pointer;">
         <td><i class="fa-regular fa-calendar"></i> ${demo.date_display}</td>

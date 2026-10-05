@@ -3829,6 +3829,25 @@ msgstr "Söktexten är för lång."
 
 #~ msgid "Seuraa"
 #~ msgstr ""
+
+# Recurring series occurrence chooser
+msgid "Valitse ajankohta nähdäksesi sen tarkat tiedot."
+msgstr "Välj ett datum för att se fullständig information."
+
+msgid "Ei tulevia ajankohtia. Näytetään sarjan viimeisin tapahtuma."
+msgstr "Det finns inga kommande datum. Det senaste evenemanget i serien visas."
+
+msgid "Valittu"
+msgstr "Valt"
+
+msgid "Aiemmat ajankohdat"
+msgstr "Tidigare datum"
+
+msgid "Ei tulevia ajankohtia"
+msgstr "Inga kommande datum"
+
+msgid "Tälle toistuvalle tapahtumalle ei ole vielä julkaistu ajankohtia."
+msgstr "Inga datum har ännu publicerats för detta återkommande evenemang."
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/confirm_delete.html:7
 msgid "Tarkista poistettava mielenosoitus ennen peruuttamatonta toimintoa."
 msgstr "Kontrollera demonstrationen som ska tas bort innan den oåterkalleliga åtgärden."

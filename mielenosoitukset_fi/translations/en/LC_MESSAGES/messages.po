@@ -13421,3 +13421,21 @@ msgstr "The search text is too long."
 #~ msgid "Seuraa"
 #~ msgstr ""
 
+# Recurring series occurrence chooser
+msgid "Valitse ajankohta nähdäksesi sen tarkat tiedot."
+msgstr "Choose a date to view its full details."
+
+msgid "Ei tulevia ajankohtia. Näytetään sarjan viimeisin tapahtuma."
+msgstr "There are no upcoming dates. Showing the latest event in the series."
+
+msgid "Valittu"
+msgstr "Selected"
+
+msgid "Aiemmat ajankohdat"
+msgstr "Previous dates"
+
+msgid "Ei tulevia ajankohtia"
+msgstr "No upcoming dates"
+
+msgid "Tälle toistuvalle tapahtumalle ei ole vielä julkaistu ajankohtia."
+msgstr "No dates have been published for this recurring event yet."

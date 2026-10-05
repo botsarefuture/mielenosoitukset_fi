@@ -4,7 +4,14 @@
 
 ## UNRELEASED
 
+- Removed follow controls from the recurring-series empty page to keep the discovery update focused on occurrence selection and SEO.
+- Public API cards and today-page links now fall back to the standalone demonstration URL when a child's parent series is missing, hidden, or unapproved, matching the sitemap's standalone grouping instead of advertising a series URL that public visitors cannot open.
+- Series pages are now indexed at the series level: the clean series URL stays indexable whenever any occurrence sits in the sitemap discovery window, even when the selector renders an occurrence beyond the future horizon, so the sitemap no longer lists series URLs that the page marks `noindex`.
+- Fixed recurring-series occurrence selection to parse start times and preserve the midnight fallback for missing or invalid values.
+- Consolidated recurring demonstrations into one search-canonical series page that opens the next relevant occurrence by default and exposes every date in an accessible server-rendered chooser.
+- Recurring series whose every occurrence is cancelled now use the empty-series noindex state instead of selecting a cancelled date as the default or advertising the series in the sitemap.
 - Kept demonstration detail pages aligned with the sitemap's future discovery horizon: events beyond two years now use `noindex, follow`, while sitemap event priorities decrease with distance from the current date.
+- The shared public stylesheet cache-bust key in `base.html` was corrected to the reviewed `YYYYMMDD-user-workspace-N` format after the recurring-series CSS additions, so shared-style contract tests pass while caches still bust.
 
 ### Added
 * **Fresh step-up authentication for user deletion** — Every admin-initiated user deletion now requires a fresh WebAuthn/passkey/sudo authentication ceremony, even if the administrator already has a valid recent authenticated/sudo session. The previous "recent authentication" window is explicitly ignored for this operation. A new single-use, action-bound fresh step-up token is issued after a successful WebAuthn or password+TOTP verification and must be presented with the deletion request. Tokens expire after 60 seconds and cannot be reused for multiple deletions. The deletion modal offers both passkey and password plus MFA paths, so administrators without a passkey are not locked out.

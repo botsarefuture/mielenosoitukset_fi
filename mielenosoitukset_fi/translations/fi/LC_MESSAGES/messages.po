@@ -3829,6 +3829,25 @@ msgstr "Hakuteksti on liian pitkä."
 
 #~ msgid "Seuraa"
 #~ msgstr ""
+
+# Recurring series occurrence chooser
+msgid "Valitse ajankohta nähdäksesi sen tarkat tiedot."
+msgstr "Valitse ajankohta nähdäksesi sen tarkat tiedot."
+
+msgid "Ei tulevia ajankohtia. Näytetään sarjan viimeisin tapahtuma."
+msgstr "Ei tulevia ajankohtia. Näytetään sarjan viimeisin tapahtuma."
+
+msgid "Valittu"
+msgstr "Valittu"
+
+msgid "Aiemmat ajankohdat"
+msgstr "Aiemmat ajankohdat"
+
+msgid "Ei tulevia ajankohtia"
+msgstr "Ei tulevia ajankohtia"
+
+msgid "Tälle toistuvalle tapahtumalle ei ole vielä julkaistu ajankohtia."
+msgstr "Tälle toistuvalle tapahtumalle ei ole vielä julkaistu ajankohtia."
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/confirm_delete.html:7
 msgid "Tarkista poistettava mielenosoitus ennen peruuttamatonta toimintoa."
 msgstr "Tarkista poistettava mielenosoitus ennen peruuttamatonta toimintoa."

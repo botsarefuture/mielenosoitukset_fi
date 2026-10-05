@@ -35,6 +35,7 @@
   <meta name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa." />
   <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
   {% block robots %}<meta name="robots" content="index, follow" />{% endblock %}
+  {% block canonical %}{% endblock %}
   <meta name="author" content="Mielenosoitukset.fi" />
   <meta name="theme-color" content="#007bff" />
 
@@ -57,7 +58,7 @@
   <meta property="og:description"
     content="{% block og_description %}Tietoa mielenosoituksista Suomessa.{% endblock %}" />
   <meta property="og:image" content="{% block og_image %}/static/images/og-default.jpg{% endblock %}" />
-  <meta property="og:url" content="{{ request.url }}" />
+  <meta property="og:url" content="{% block og_url %}{{ request.base_url }}{% endblock %}" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Mielenosoitukset.fi" />
   <meta property="og:locale" content="{{ session.get('locale', 'fi') }}_FI" />
@@ -124,7 +125,7 @@
 
   {% block styles %}{% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/product-tokens.css', v='20260924-product-tokens-1') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20261004-user-workspace-15') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20261005-user-workspace-2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/public-header.css', v='20261002-public-header-4') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css', v='20260928-campaign-feedback-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/public_hero.css', v='20260907-centered-1') }}">

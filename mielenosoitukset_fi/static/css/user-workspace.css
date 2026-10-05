@@ -2730,6 +2730,119 @@ textarea.user-field__control {
   .demo-table td { padding: 0.7em 0.3em; font-size: 0.98em; }
 }
 
+/* Public text-search suggestions use native buttons so keyboard and pointer
+   users receive the same selection behavior without inline event handlers. */
+.user-autocomplete {
+  position: relative;
+}
+
+.user-autocomplete__control {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--product-border);
+  border-radius: 0.65rem;
+  padding: 0.7rem 0.8rem;
+  background: var(--product-surface);
+  color: var(--product-text);
+  font: inherit;
+}
+
+.user-autocomplete__control:focus-visible {
+  outline: 3px solid var(--product-primary-strong);
+  outline-offset: 2px;
+}
+
+.user-autocomplete__results {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  left: 0;
+  max-height: 18.75rem;
+  overflow-y: auto;
+  margin: 0;
+  border: 1px solid var(--product-border);
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+  background: var(--product-surface);
+  box-shadow: var(--product-shadow);
+  list-style: none;
+}
+
+.user-autocomplete__results[hidden] {
+  display: none;
+}
+
+.user-autocomplete__item + .user-autocomplete__item {
+  border-top: 1px solid var(--product-border);
+}
+
+.user-autocomplete__option {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  background: transparent;
+  color: var(--product-text);
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+
+.user-autocomplete__option:hover {
+  background: var(--product-primary-soft);
+}
+
+.user-autocomplete__option:focus-visible {
+  outline: 3px solid var(--product-primary-strong);
+  outline-offset: -1px;
+  background: var(--product-primary-soft);
+}
+
+.user-autocomplete__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.user-autocomplete__name,
+.user-autocomplete__detail {
+  overflow-wrap: anywhere;
+}
+
+.user-autocomplete__name {
+  color: var(--product-text);
+}
+
+.user-autocomplete__detail,
+.user-autocomplete__help,
+.user-autocomplete__message {
+  color: var(--product-text-muted);
+}
+
+.user-autocomplete__detail {
+  display: block;
+}
+
+.user-autocomplete__help {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.user-autocomplete__message {
+  padding: 0.8rem;
+  text-align: center;
+}
+
+.user-autocomplete__message--error {
+  color: var(--product-danger);
+  background: var(--product-danger-soft);
+}
+
 @media (max-width: 600px) {
   .detail-layout-preference,
   .detail-layout-preference__choice {

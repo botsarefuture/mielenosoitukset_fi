@@ -3685,3 +3685,16 @@ msgstr ""
 #: mielenosoitukset_fi/templates/submit.html
 msgid "Poista luonnos ja aloita alusta"
 msgstr ""
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaun tulokset"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaku ei onnistunut. Yritä uudelleen."
+msgstr ""
+
+#: mielenosoitukset_fi/basic_routes.py
+msgid "Hakuteksti on liian pitkä."
+msgstr ""
+

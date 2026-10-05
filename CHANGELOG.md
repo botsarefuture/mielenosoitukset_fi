@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Fixed MFA login so the password is verified once and never copied into hidden browser fields; the second step now uses a short-lived server-side pending login and submits only the one-time code.
+
 - Kept demonstration detail pages aligned with the sitemap's future discovery horizon: events beyond two years now use `noindex, follow`, while sitemap event priorities decrease with distance from the current date.
 
 ### Added

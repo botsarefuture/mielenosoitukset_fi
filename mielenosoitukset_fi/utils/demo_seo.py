@@ -132,4 +132,4 @@ def select_relevant_occurrence(
             return document
 
     non_cancelled = [document for document in ordered if not document.get("cancelled")]
-    return (non_cancelled or ordered)[-1]
+    return non_cancelled[-1] if non_cancelled else None

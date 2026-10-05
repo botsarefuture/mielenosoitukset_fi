@@ -215,6 +215,56 @@ def test_selection_skips_cancelled_future_occurrence():
     assert select_relevant_occurrence([cancelled, active], now) is active
 
 
+def test_selection_returns_none_when_every_occurrence_is_cancelled():
+    now = datetime.fromisoformat("2026-10-05T12:00:00+03:00")
+    cancelled_occurrences = [
+        {
+            "_id": ObjectId(),
+            "date": "2026-10-04",
+            "start_time": "12:00",
+            "end_time": "14:00",
+            "cancelled": True,
+        },
+        {
+            "_id": ObjectId(),
+            "date": "2026-10-06",
+            "start_time": "12:00",
+            "end_time": "14:00",
+            "cancelled": True,
+        },
+    ]
+
+    assert select_relevant_occurrence(cancelled_occurrences, now) is None
+
+
+def test_all_cancelled_series_is_noindex_and_omitted_from_sitemap(
+    app, db, seeded_data
+):
+    today = date.today()
+    parent_id, children = _insert_occurrences(
+        db,
+        seeded_data,
+        [
+            (today - timedelta(days=2)).isoformat(),
+            (today + timedelta(days=2)).isoformat(),
+        ],
+    )
+    db.demonstrations.update_many(
+        {"_id": {"$in": [child["_id"] for child in children]}},
+        {"$set": {"cancelled": True}},
+    )
+
+    client = app.test_client()
+    page_response = client.get(f"/demonstration/{parent_id}/children")
+    sitemap_response = client.get("/sitemap.xml", base_url="https://example.test")
+
+    assert page_response.status_code == 200
+    assert page_response.headers["X-Robots-Tag"] == "noindex, follow"
+    assert f"https://example.test/demonstration/{parent_id}/children" not in _sitemap_locs(
+        sitemap_response
+    )
+
+
 @pytest.mark.parametrize(
     "start_fields",
     [

@@ -3626,7 +3626,8 @@ def init_routes(app):
         )
         local_timezone = current_app.config["LOCAL_TIMEZONE"]
         local_now = datetime.now(local_timezone)
-        selected = select_relevant_occurrence(occurrences, local_now)
+        default_selected = select_relevant_occurrence(occurrences, local_now)
+        selected = default_selected
 
         requested_occurrence = request.args.get("occurrence", "").strip()
         if requested_occurrence:
@@ -3679,7 +3680,6 @@ def init_routes(app):
                 }
             )
 
-        default_selected = select_relevant_occurrence(occurrences, local_now)
         recurring_context = {
             "parent_id": parent,
             "canonical_url": canonical_url,

@@ -3,7 +3,7 @@
 {% block title %}{{ _('Kirjaudu sisään') }}{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css', v='20261003-auth-refresh-1') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css', v='20261004-auth-trust-mobile-1') }}">
 {% endblock %}
 
 {% block content %}
@@ -75,9 +75,9 @@
 
       <div class="auth-support">
         <p>{{ _('Tarvitsetko apua tilillesi pääsyssä?') }}</p>
-        <div class="auth-support__links">
-          <button type="button" class="auth-text-button" id="open-verification-modal">{{ _('Lähetä uusi vahvistuslinkki') }}</button>
-          <a href="{{ url_for('users.auth.register') }}" class="auth-text-link">{{ _('Luo uusi tili') }}</a>
+        <div class="auth-secondary-actions">
+          <button type="button" class="auth-secondary-action auth-secondary-action--tertiary" id="open-verification-modal">{{ _('Lähetä uusi vahvistuslinkki') }}</button>
+          <a href="{{ url_for('users.auth.register') }}" class="auth-secondary-action auth-secondary-action--secondary">{{ _('Luo uusi tili') }}</a>
         </div>
       </div>
     </section>
@@ -279,7 +279,6 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && !verificationModal.classList.contains('hidden')) hideVerificationModal();
 });
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('username').focus();
   startConditionalPasskey();
 });
 </script>

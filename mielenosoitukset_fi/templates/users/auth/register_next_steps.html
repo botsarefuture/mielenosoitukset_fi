@@ -3,7 +3,7 @@
 {% block title %}{{ _('Rekisteröidy') }}{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css', v='20261003-auth-refresh-1') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css', v='20261004-auth-trust-mobile-1') }}">
 {% endblock %}
 
 {% block content %}
@@ -71,11 +71,8 @@
 
         </div>
 
-        <div class="register-prompt">
-            <div class="auth-divider">
-                <span>{{ _('Tarvitsetko apua?') }}</span>
-            </div>
-
+        <div class="auth-support">
+            <h2 class="auth-support__title">{{ _('Tarvitsetko apua?') }}</h2>
             <p>
                 {{ _('Jos et saanut vahvistussähköpostia muutaman minuutin kuluessa, tarkista roskapostikansiosi tai
                 lähetä viesti uudelleen.') }}
@@ -84,7 +81,7 @@
             <form method="POST" action="{{ url_for('users.auth.resend_confirmation') }}" id="resend_form">
                
                 <input type="hidden" name="email_or_username" value="{{ email }}">
-                <button type="submit" class="btn btn-link" id="resend-confirmation-button">
+                <button type="submit" class="auth-secondary-action auth-secondary-action--tertiary" id="resend-confirmation-button">
                     <span>{{ _('Lähetä vahvistussähköposti uudelleen') }}</span>
                     <span class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
                 </button>
@@ -99,11 +96,13 @@
         <div class="auth-footer">
             <p class="help-text">
                 <i class="fa-solid fa-circle-question"></i>
-                {{ _('Tarvitsetko apua?') }}
-                <a href="{{ url_for('contact') }}">
+                <span>{{ _('Tarvitsetko apua?') }}</span>
+            </p>
+            <div class="auth-secondary-actions auth-secondary-actions--single">
+                <a href="{{ url_for('contact') }}" class="auth-secondary-action auth-secondary-action--secondary">
                     {{ _('Ota yhteyttä tukeen') }}
                 </a>
-            </p>
+            </div>
         </div>
 
     </div>

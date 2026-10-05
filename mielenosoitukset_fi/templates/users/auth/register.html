@@ -3,7 +3,7 @@
 {% block title %}{{ _('Rekisteröidy') }}{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css', v='20261003-auth-refresh-1') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css', v='20261004-auth-trust-mobile-1') }}">
 {% endblock %}
 
 {% block content %}
@@ -138,9 +138,11 @@
             </section>
         </form>
 
-        <div class="register-prompt">
+        <div class="auth-support">
             <p>{{ _('Onko sinulla jo tili?') }}</p>
-            <a href="{{ url_for('users.auth.login') }}" class="auth-text-link">{{ _('Kirjaudu sisään') }}</a>
+            <div class="auth-secondary-actions auth-secondary-actions--single">
+              <a href="{{ url_for('users.auth.login') }}" class="auth-secondary-action auth-secondary-action--secondary">{{ _('Kirjaudu sisään') }}</a>
+            </div>
         </div>
         <div class="auth-footer">
             <p class="help-text"><i class="fa-solid fa-shield-halved"></i>{{ _('Luomalla tilin hyväksyt palvelumme käyttöehdot') }}</p>
@@ -489,7 +491,6 @@ usernameInput.addEventListener("input", () => {
         submitBtn.classList.add("loading"); submitBtn.disabled=true;
     });
 
-    usernameInput.focus();
 });
 </script>
 {% endblock %}

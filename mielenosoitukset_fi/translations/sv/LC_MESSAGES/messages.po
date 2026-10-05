@@ -13594,3 +13594,11 @@ msgid ""
 msgstr ""
 "Verifieringen är ogiltig, har gått ut eller har redan använts. Verifiera din"
 " identitet igen."
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Luonnos palautettiin tästä selaimesta. Se poistuu automaattisesti 24 tunnin kuluttua."
+msgstr "Utkastet återställdes från den här webbläsaren. Det raderas automatiskt efter 24 timmar."
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Poista luonnos ja aloita alusta"
+msgstr "Radera utkastet och börja om"

@@ -3500,6 +3500,18 @@ msgid_plural "{len_type} values are required, but {len_value} were given."
 msgstr[0] ""
 msgstr[1] ""
 
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaun tulokset"
+msgstr "Organisaatiohaun tulokset"
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaku ei onnistunut. Yritä uudelleen."
+msgstr "Organisaatiohaku ei onnistunut. Yritä uudelleen."
+
+#: mielenosoitukset_fi/basic_routes.py
+msgid "Hakuteksti on liian pitkä."
+msgstr "Hakuteksti on liian pitkä."
+
 #~ msgid "Hallinnoi pyöröä"
 #~ msgstr ""
 
@@ -13491,14 +13503,11 @@ msgid ""
 msgstr ""
 "Vahvistus on virheellinen, vanhentunut tai jo käytetty. Vahvista "
 "henkilöllisyytesi uudelleen."
-#: mielenosoitukset_fi/templates/submit.html
-msgid "Organisaatiohaun tulokset"
-msgstr "Organisaatiohaun tulokset"
 
 #: mielenosoitukset_fi/templates/submit.html
-msgid "Organisaatiohaku ei onnistunut. Yritä uudelleen."
-msgstr "Organisaatiohaku ei onnistunut. Yritä uudelleen."
+msgid "Luonnos palautettiin tästä selaimesta. Se poistuu automaattisesti 24 tunnin kuluttua."
+msgstr "Luonnos palautettiin tästä selaimesta. Se poistuu automaattisesti 24 tunnin kuluttua."
 
-#: mielenosoitukset_fi/basic_routes.py
-msgid "Hakuteksti on liian pitkä."
-msgstr "Hakuteksti on liian pitkä."
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Poista luonnos ja aloita alusta"
+msgstr "Poista luonnos ja aloita alusta"

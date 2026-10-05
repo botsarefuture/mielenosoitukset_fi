@@ -302,7 +302,7 @@ msgstr "Tid"
 #: mielenosoitukset_fi/templates/tag_list.html:753
 #: mielenosoitukset_fi/templates/users/auth/settings.html:99
 msgid "Kaupunki"
-msgstr ""
+msgstr "Stad"
 
 #: mielenosoitukset_fi/templates/city.html:41
 #: mielenosoitukset_fi/templates/city.html:723
@@ -3499,6 +3499,18 @@ msgid "{len_type} values are required, but {len_value} was given."
 msgid_plural "{len_type} values are required, but {len_value} were given."
 msgstr[0] ""
 msgstr[1] ""
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaun tulokset"
+msgstr "Resultat för organisationssökning"
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaku ei onnistunut. Yritä uudelleen."
+msgstr "Organisationssökningen misslyckades. Försök igen."
+
+#: mielenosoitukset_fi/basic_routes.py
+msgid "Hakuteksti on liian pitkä."
+msgstr "Söktexten är för lång."
 
 #~ msgid "Hallinnoi pyöröä"
 #~ msgstr ""
@@ -13575,14 +13587,11 @@ msgid ""
 msgstr ""
 "Verifieringen är ogiltig, har gått ut eller har redan använts. Verifiera din"
 " identitet igen."
-#: mielenosoitukset_fi/templates/submit.html
-msgid "Organisaatiohaun tulokset"
-msgstr "Resultat för organisationssökning"
 
 #: mielenosoitukset_fi/templates/submit.html
-msgid "Organisaatiohaku ei onnistunut. Yritä uudelleen."
-msgstr "Organisationssökningen misslyckades. Försök igen."
+msgid "Luonnos palautettiin tästä selaimesta. Se poistuu automaattisesti 24 tunnin kuluttua."
+msgstr "Utkastet återställdes från den här webbläsaren. Det raderas automatiskt efter 24 timmar."
 
-#: mielenosoitukset_fi/basic_routes.py
-msgid "Hakuteksti on liian pitkä."
-msgstr "Söktexten är för lång."
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Poista luonnos ja aloita alusta"
+msgstr "Radera utkastet och börja om"

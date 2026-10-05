@@ -96,6 +96,49 @@ def test_passkey_register_and_login_end_to_end(wapp, db, seeded_data):
     assert db.user_passkeys.find_one({"_id": stored["_id"]})["sign_count"] == 1
 
 
+def test_passkey_login_verifies_the_assertion_bound_challenge(
+    wapp, db, seeded_data
+):
+    """A second options request must not invalidate an earlier assertion."""
+    client = _client_for_user(wapp, seeded_data["user_id"])
+    _elevate(client, "UserPass1!")
+    key = sim.generate_key()
+    options = client.post("/users/auth/api/v2/passkeys/register/options").get_json()[
+        "options"
+    ]
+    response, credential = _register_passkey(client, options, key)
+    assert response.status_code == 200
+
+    anon = wapp.test_client()
+    first_options = anon.post(
+        "/users/auth/api/v2/passkeys/login/options", json={}
+    ).get_json()["options"]
+    second_options = anon.post(
+        "/users/auth/api/v2/passkeys/login/options", json={}
+    ).get_json()["options"]
+    assert first_options["challenge"] != second_options["challenge"]
+
+    assertion = sim.assertion_credential_json(
+        first_options,
+        key,
+        origin=ORIGIN,
+        credential_id=credential["id"],
+        counter=1,
+    )
+    response = anon.post(
+        "/users/auth/api/v2/passkeys/login/verify",
+        json={"credential": assertion},
+    )
+
+    assert response.status_code == 200, response.get_data(as_text=True)
+    assert db.passkey_challenges.find_one(
+        {"challenge": first_options["challenge"]}
+    )["used"] is True
+    assert db.passkey_challenges.find_one(
+        {"challenge": second_options["challenge"]}
+    )["used"] is False
+
+
 def test_passkey_registration_requires_step_up(wapp, db, seeded_data):
     client = _client_for_user(wapp, seeded_data["user_id"])
     r = client.post("/users/auth/api/v2/passkeys/register/options")

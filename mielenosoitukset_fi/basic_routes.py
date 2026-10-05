@@ -87,6 +87,12 @@ from mielenosoitukset_fi.utils.facebook_event_importer import (
     FacebookImportError,
     parse_event_url,
 )
+from mielenosoitukset_fi.utils.demo_seo import (
+    demo_date_is_in_sitemap_window,
+    demo_is_beyond_future_horizon,
+    demo_sitemap_priority,
+    sitemap_date_window,
+)
 
 email_sender = EmailSender()
 
@@ -495,6 +501,29 @@ if Config.ENABLE_PANIC_THREAD:
 
 def _new_submission_token():
     return uuid.uuid4().hex
+
+
+def _collect_submission_organizers(form):
+    """Collect organizer rows without assuming their numeric indexes are contiguous."""
+    organizer_indices = sorted(
+        {
+            int(match.group(1))
+            for key in form.keys()
+            if (match := re.fullmatch(r"organizer_name_(\d+)", key))
+        }
+    )
+
+    return [
+        Organizer(
+            name=(form.get(f"organizer_name_{index}") or "").strip(),
+            email=(form.get(f"organizer_email_{index}") or "").strip(),
+            website=(form.get(f"organizer_website_{index}") or "").strip(),
+            is_private=f"organizer_is_private_{index}" in form,
+            show_name_public=f"organizer_show_name_{index}" in form,
+            show_email_public=f"organizer_show_email_{index}" in form,
+        )
+        for index in organizer_indices
+    ]
 
 
 def _build_submission_fingerprint(payload: dict) -> str:
@@ -1062,6 +1091,7 @@ def add_api_routes(app):
 
 
 def init_routes(app):
+    """Register public routes, request hooks, and template context processors."""
     from mielenosoitukset_fi.utils.cache import cache
     
     
@@ -1310,9 +1340,12 @@ def init_routes(app):
 
             # Demonstration URLs: limit to demos in reasonable date window
             query_filter = DEMO_FILTER.copy()
-            start_date = (date.today() - timedelta(days=365)).strftime("%Y-%m-%d")
-            end_date = (date.today() + timedelta(days=365 * 2)).strftime("%Y-%m-%d")
-            query_filter["date"] = {"$gte": start_date, "$lte": end_date}
+            seo_reference_date = date.today()
+            start_date, end_date = sitemap_date_window(seo_reference_date)
+            query_filter["date"] = {
+                "$gte": start_date.isoformat(),
+                "$lte": end_date.isoformat(),
+            }
 
             def _format_lastmod_for_doc(doc):
                 """
@@ -1461,6 +1494,11 @@ def init_routes(app):
                     _add_url_with_alternates(urlset, "tag_detail", tag_name=tag_name)
 
             for demo in demonstrations_collection.find(query_filter):
+                if not demo_date_is_in_sitemap_window(
+                    demo.get("date"),
+                    reference_date=seo_reference_date,
+                ):
+                    continue
                 demo_identifier = (
                     demo.get("slug")
                     or demo.get("running_number")
@@ -1476,6 +1514,11 @@ def init_routes(app):
                 lastmod_val = _format_lastmod_for_doc(demo)
                 if lastmod_val:
                     ET.SubElement(url_el, "lastmod").text = lastmod_val
+
+                ET.SubElement(url_el, "priority").text = demo_sitemap_priority(
+                    demo.get("date"),
+                    reference_date=seo_reference_date,
+                )
 
                 if include_alternates:
                     for lang in locales:
@@ -1972,20 +2015,7 @@ def init_routes(app):
                 )
 
             # --- Collect organizers ---
-            organizers = []
-            i = 1
-            while True:
-                name_field = request.form.get(f"organizer_name_{i}")
-                if not name_field and f"organizer_name_{i}" not in request.form:
-                    break
-                organizers.append(
-                    Organizer(
-                        name=(name_field or "").strip(),
-                        email=(request.form.get(f"organizer_email_{i}") or "").strip(),
-                        website=(request.form.get(f"organizer_website_{i}") or "").strip(),
-                    )
-                )
-                i += 1
+            organizers = _collect_submission_organizers(request.form)
 
             
 
@@ -2808,6 +2838,11 @@ def init_routes(app):
 
         # Resolve locale once and reuse the exact same value for rendering and caching.
         locale = _current_demo_language()
+        seo_reference_date = date.today()
+        seo_noindex = demo_is_beyond_future_horizon(
+            demo_obj.date,
+            reference_date=seo_reference_date,
+        )
 
         # Build a cache key that is stable for public users; include locale so localized pages differ
         viewer_segment = "anon"
@@ -2818,7 +2853,8 @@ def init_routes(app):
                 viewer_segment = "user=unknown"
         cache_key = (
             f"demonstration_detail:v2:{demo_id}:locale={locale}:"
-            f"viewer={viewer_segment}:layout={detail_layout}"
+            f"viewer={viewer_segment}:layout={detail_layout}:"
+            f"seo-day={seo_reference_date.isoformat()}:seo-state={'noindex' if seo_noindex else 'index'}"
         )
 
         # Try to serve from cache if allowed
@@ -3078,6 +3114,7 @@ def init_routes(app):
                 default_demo_language=default_demo_language,
                 available_demo_languages=available_demo_languages,
                 detail_layout=detail_layout,
+                seo_noindex=seo_noindex,
                 toolbox_demo_permissions={
                     permission: has_demo_permission(
                         current_user, demo_obj._id, permission
@@ -3094,6 +3131,8 @@ def init_routes(app):
             )
         )
         response.headers["X-Cache"] = "MISS"
+        if seo_noindex:
+            response.headers["X-Robots-Tag"] = "noindex, follow"
 
         # Store response in cache for future requests (if available)
         if not (bypass_cache or should_skip_cache(public_only=False)) and hasattr(cache, "set"):

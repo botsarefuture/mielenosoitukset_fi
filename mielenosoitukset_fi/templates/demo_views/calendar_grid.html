@@ -2,285 +2,20 @@
 
 {% block title %}{{ month_name }} {{ year }} | Mielenosoitukset.fi{% endblock %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/public-calendar.css', v='20261003-calendar-theme-1') }}">
+{% endblock %}
+
 {% block content %}
 
 {% if noindex_nofollow %}
 <meta name="robots" content="noindex, nofollow">
 {% endif %}
 
+<div class="public-calendar public-calendar--current">
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.css">
 
-<style>
-    /* --- Base styles --- */
-    :root {
-        --pink-primary: #ff3366;
-        --pink-light: #ff99c8;
-        --pink-lighter: #ffd6e8;
-        --pink-bg: #fff0f6;
-        --pink-pale: #fffafc;
-        --pink-dark: #ff4d91;
-    }
 
-    /* --- Calendar styles --- */
-    .calendar-grid {
-        width: 100%;
-        table-layout: fixed;
-        border-collapse: collapse;
-        font-family: 'Poppins', sans-serif;
-        background: var(--pink-pale);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-
-    .calendar-grid th,
-    .calendar-grid td {
-        width: 14.28%;
-        text-align: center;
-        vertical-align: top;
-        word-wrap: break-word;
-    }
-
-    .calendar-grid th {
-        background: #f8c8dc;
-        color: #fff;
-        padding: 10px 0;
-        font-weight: 600;
-        font-size: 14px;
-    }
-
-    .calendar-grid td {
-        background: var(--pink-bg);
-        padding: 5px;
-        border: 1px solid var(--pink-lighter);
-        position: relative;
-        min-height: 80px;
-    }
-
-    .calendar-grid td strong {
-        display: block;
-        margin-bottom: 5px;
-        color: var(--pink-primary);
-    }
-
-    .calendar-grid td ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .demo-cell {
-        display: block;
-        background: #ff66a3;
-        color: #fff;
-        text-decoration: none;
-        border-radius: 6px;
-        padding: 2px 4px;
-        margin-bottom: 2px;
-        font-size: 12px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .demo-cell:hover {
-        background: var(--pink-dark);
-    }
-
-    #demo-preview {
-        position: absolute;
-        display: none;
-        background: var(--pink-pale);
-        border: 1px solid #ffb3d1;
-        border-radius: 10px;
-        padding: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        max-width: 300px;
-        z-index: 9999;
-    }
-
-    #demo-preview img {
-        max-width: 100%;
-        border-radius: 6px;
-        margin-bottom: 5px;
-    }
-
-    .calendar-nav,
-    .calendar-year-nav {
-        margin-bottom: 15px;
-        text-align: center;
-
-    }
-
-    .calendar-nav a,
-    .calendar-year-nav a,
-    #year-view-btn {
-        background: var(--pink-light);
-        color: #fff;
-        padding: 6px 12px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: background 0.2s;
-        margin: 0 2px;
-        display: inline-block;
-    }
-
-    .calendar-nav a:hover,
-    .calendar-year-nav a:hover,
-    #year-view-btn:hover {
-        background: #ff66a3;
-    }
-
-    /* --- Mobile List View --- */
-    .mobile-list-view {
-        display: none;
-    }
-
-    .mobile-day-card {
-        background: white;
-        border-radius: 12px;
-        padding: 15px;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid var(--pink-primary);
-    }
-
-    .mobile-day-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid var(--pink-bg);
-    }
-
-    .mobile-day-number {
-        font-size: 24px;
-        font-weight: 700;
-        color: var(--pink-primary);
-    }
-
-    .mobile-day-name {
-        font-size: 14px;
-        color: #666;
-        font-weight: 500;
-    }
-
-    .mobile-demo-item {
-        background: var(--pink-bg);
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 8px;
-        display: block;
-        text-decoration: none;
-        color: inherit;
-        transition: all 0.2s;
-        border: 1px solid var(--pink-lighter);
-    }
-
-    .mobile-demo-item:hover,
-    .mobile-demo-item:active {
-        background: var(--pink-lighter);
-        transform: translateX(5px);
-    }
-
-    .mobile-demo-title {
-        font-weight: 600;
-        color: var(--pink-primary);
-        margin-bottom: 5px;
-    }
-
-    .mobile-demo-desc {
-        font-size: 13px;
-        color: #666;
-        line-height: 1.4;
-    }
-
-    .mobile-demo-image {
-        width: 100%;
-        height: 150px;
-        object-fit: cover;
-        border-radius: 6px;
-        margin-top: 8px;
-    }
-
-    .mobile-empty-day {
-        text-align: center;
-        color: #999;
-        font-size: 14px;
-        padding: 20px 0;
-    }
-
-    /* --- Responsive --- */
-    @media(max-width: 768px) {
-        .calendar-grid {
-            display: none;
-        }
-
-        .mobile-list-view {
-            display: block;
-        }
-
-        .calendar-nav {
-            display: flex;
-            gap: 5px;
-        }
-
-        .calendar-nav a,
-        #year-view-btn {
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-
-        h1 {
-            font-size: 24px;
-        }
-    }
-
-    @media(min-width: 769px) {
-
-        .calendar-grid th,
-        .calendar-grid td {
-            font-size: 12px;
-            padding: 3px;
-        }
-
-        .demo-cell {
-            font-size: 10px;
-        }
-    }
-
-    @media (max-width: 768px) {
-
-        h1,
-        .calendar-nav {
-            display: none !important;
-        }
-    }
-
-    .loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  font-size: 1.1rem;
-  color: #aaa;
-  padding: 1rem;
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-.loading.hidden {
-    display: none;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-</style>
 
 <h1>{{ month_name|e }} {{ year }}</h1>
 
@@ -334,7 +69,7 @@
                 <div class="mobile-day-number"></div> <!-- the date (e.g. 12.10.2025) here-->
                 <div class="mobile-day-name"></div> <!-- the weekday name here (e.g. PE)-->
             </div>
-            <div class="event-count" style="color: var(--pink-primary); font-weight: 600;">
+            <div class="event-count">
                 {# {{ month_demos.get(day)|length }} tapahtuma{{ 'a' if month_demos.get(day)|length > 1 else '' }} #}
                 <!-- the count of the events here + tapahtuma(a) the extra a if multiple events -->
             </div>
@@ -353,228 +88,12 @@
     <a data-href="{{ url_for('demonstration_detail', demo_id="") }}" class="mobile-demo-item">
         <div class="mobile-demo-title">{{ _('Ei otsikkoa') }}</div> <!-- demo title here-->
 
-        <div class="mobile-demo-desc" style="display: none;"> <!-- display only if there is a description -->
+        <div class="mobile-demo-desc" hidden> <!-- display only if there is a description -->
             <!-- if lenght over 100 chars, limit to 100, and include ... in hte end-->
         </div>
         <img src="" alt="" class="mobile-demo-image">
     </a>
 </template>
-<style>
-.to-old {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #ffffff;
-  padding: 1.5rem;
-  border-radius: 1rem;
-  text-align: center;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25), 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin: 1rem auto;
-  max-width: 500px;
-  position: relative;
-  overflow: hidden;
-  animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.to-old::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-  animation: floatBg 8s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes floatBg {
-  0%, 100% {
-    transform: translate(0, 0);
-  }
-  50% {
-    transform: translate(-30px, -30px);
-  }
-}
-
-.to-old-content {
-  position: relative;
-  z-index: 1;
-}
-
-.banner-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border-radius: 50%;
-  margin-bottom: 0.75rem;
-  animation: iconPulse 2s ease-in-out infinite;
-}
-
-@keyframes iconPulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
-  }
-}
-
-.to-old i.fa-flask {
-  color: #ffffff;
-  font-size: 1.5rem;
-}
-
-.banner-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.01em;
-}
-
-.banner-subtitle {
-  font-size: 0.9rem;
-  opacity: 0.95;
-  margin-bottom: 1rem;
-  line-height: 1.5;
-}
-
-.to-old button:not(.dismiss-btn) {
-  background: rgba(255, 255, 255, 0.95);
-  color: #667eea;
-  border: none;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.to-old button:not(.dismiss-btn)::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
-  transition: left 0.5s;
-}
-
-.to-old button:not(.dismiss-btn):hover::before {
-  left: 100%;
-}
-
-.to-old button:not(.dismiss-btn):hover {
-  background: #ffffff;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-}
-
-.to-old button:not(.dismiss-btn):active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.to-old button:not(.dismiss-btn) i {
-  transition: transform 0.3s ease;
-}
-
-.to-old button:not(.dismiss-btn):hover i {
-  transform: rotate(-180deg);
-}
-
-.dismiss-btn {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border: none;
-  color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  z-index: 2;
-  font-size: 0.9rem;
-}
-
-.dismiss-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: rotate(90deg);
-}
-
-.to-old.dismissed {
-  animation: slideUp 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
-}
-
-@keyframes slideUp {
-  to {
-    opacity: 0;
-    transform: translateY(-20px);
-    max-height: 0;
-    margin: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-}
-
-.mb-only {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mb-only {
-    display: block;
-  }
-  
-  .to-old {
-    margin: 1rem;
-    padding: 1.25rem;
-  }
-  
-  .banner-title {
-    font-size: 1rem;
-  }
-  
-  .banner-subtitle {
-    font-size: 0.85rem;
-  }
-  
-  .to-old button:not(.dismiss-btn) {
-    padding: 0.65rem 1.25rem;
-    font-size: 0.9rem;
-  }
-}
-</style>
 
 <div class="to-old mb-only" id="to-old-banner">
   <button class="dismiss-btn" id="dismiss-btn" aria-label="{{ _('Sulje') }}">
@@ -649,6 +168,7 @@
 <div id="demo-preview" aria-hidden="true"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="{{ url_for('static', filename='js/calendar-preview.js', v='20261004-calendar-preview-2') }}"></script>
 <script type="module">
 
     const calendarI18n = Object.freeze({
@@ -857,12 +377,13 @@
 
             if (demo.description) {
                 const desc = link.querySelector(".mobile-demo-desc");
-                desc.style.display = "";
-                let tex = demo.description.substring(0, maxLen);
-                if (demo.description.length > maxLen) {
+                desc.hidden = false;
+                const plainDescription = window.CalendarPreview.toPlainText(demo.description);
+                let tex = plainDescription.substring(0, maxLen);
+                if (plainDescription.length > maxLen) {
                     tex += "...";
                 }
-                desc.innerHTML = tex; // ✅ render HTML
+                desc.textContent = tex;
             }
 
             const ima = link.querySelector("img.mobile-demo-image");
@@ -934,12 +455,12 @@ function setupInfiniteScrollObserver() {
                 const desc = el.data('desc');
                 const img = el.data('img');
 
-                let html = '';
-                if (img) html += `<img src="${img}" alt="${title}">`;
-                html += `<strong>${title}</strong>`;
-                if (desc) html += `<p>${desc}</p>`;
-
-                preview.html(html).fadeIn(200);
+                window.CalendarPreview.render(preview[0], {
+                    title: title,
+                    description: desc,
+                    imageUrl: img,
+                });
+                preview.fadeIn(200);
             }, 150);
         }, function () {
             clearTimeout(hoverTimeout);
@@ -970,4 +491,5 @@ function setupInfiniteScrollObserver() {
         [prevMonthURL, nextMonthURL].forEach(url => { $.get(url, data => cache[url] = data); });
     });
 </script>
+</div>
 {% endblock %}

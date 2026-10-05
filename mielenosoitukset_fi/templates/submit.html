@@ -835,7 +835,7 @@
     if (page) {
       page.classList.add('active');
       currentPage = pageNumber;
-      localStorage.setItem("form_step", currentPage);
+      window.saveSubmitDraft?.();
 
       updateProgressBar();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -906,7 +906,7 @@
   // Organizer Management
   let organizerCount = 0;
 
-  window.addOrganizer = function () {
+  window.addOrganizer = function (persistDraft = true) {
     organizerCount++;
     const container = document.getElementById("organizers-container");
     const organizerDiv = document.createElement("div");
@@ -981,6 +981,9 @@
       organizerDiv.style.opacity = '1';
       organizerDiv.style.transform = 'translateY(0)';
     }, 10);
+    if (persistDraft) {
+      window.saveSubmitDraft?.();
+    }
   };
 
   window.handlePrivateToggle = function (index) {
@@ -1135,7 +1138,10 @@
     if (organizer) {
       organizer.style.opacity = '0';
       organizer.style.transform = 'translateY(-20px)';
-      setTimeout(() => organizer.remove(), 300);
+      setTimeout(() => {
+        organizer.remove();
+        window.saveSubmitDraft?.();
+      }, 300);
     }
   };
 
@@ -1352,9 +1358,7 @@
       // Treat 2xx and 3xx statuses as success (redirects from server are 302).
       if (response.ok || (response.status >= 300 && response.status < 400)) {
         showPage(6); // Show success page
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith("form_")) localStorage.removeItem(key);
-        });
+        window.clearSubmitDraft?.();
       } else {
         if (response.status === 409) {
           let conflictData = null;
@@ -1382,9 +1386,7 @@
             });
             if (response2.ok || (response2.status >= 300 && response2.status < 400)) {
               showPage(6);
-              Object.keys(localStorage).forEach(key => {
-                if (key.startsWith("form_")) localStorage.removeItem(key);
-              });
+              window.clearSubmitDraft?.();
               return;
             } else {
               await showSubmitError(response2, SUBMIT_CONFLICT_FORCE_FAILED);
@@ -1409,6 +1411,7 @@
   });
 
   // Expose functions globally
+  window.showPage = showPage;
   window.nextPage = nextPage;
   window.previousPage = previousPage;
   window.chooseImport = chooseImport;
@@ -1795,9 +1798,9 @@
     </div>
   </section>
 
-  <div id="cacheNotice" class="cache-notice hidden">
-    Lomake ladattiin automaattisesti tallennetuista tiedoista 💾
-    <button id="resetCacheBtn" type="button">Tyhjennä ja aloita alusta</button>
+  <div id="cacheNotice" class="cache-notice hidden" role="status">
+    {{ _('Luonnos palautettiin tästä selaimesta. Se poistuu automaattisesti 24 tunnin kuluttua.') }}
+    <button id="resetCacheBtn" type="button">{{ _('Poista luonnos ja aloita alusta') }}</button>
   </div>
 
 
@@ -2096,19 +2099,18 @@
               const el = document.getElementById(id);
               if (!el) return;
               el.value = (val === undefined || val === null) ? '' : String(val);
-              if (el.name) localStorage.setItem('form_' + el.name, el.value);
             };
 
             set('name', e.title);
 
             if (typeof quill !== 'undefined' && quill && quill.root) {
               if (e.description_html) {
-                quill.root.innerHTML = e.description_html;
-                // keep the hidden sync field and localStorage draft in sync
+                const importedDelta = quill.clipboard.convert(e.description_html);
+                quill.setContents(importedDelta, 'silent');
+                // Keep the hidden sync field aligned with Quill's normalized output.
                 const descEl = document.getElementById('description');
                 if (descEl) {
-                  descEl.value = e.description_html;
-                  localStorage.setItem('form_description', e.description_html);
+                  descEl.value = quill.root.innerHTML;
                 }
               }
             } else {
@@ -2132,36 +2134,33 @@
             // Fill all organizers from the imported event
             if (e.organizers && e.organizers.length > 0) {
               // Fill first organizer
-              let orgInput = document.querySelector('[name^="organizer_name_"]');
+              let orgInput = document.querySelector('[name="organizer_name_1"]');
               if (!orgInput && typeof addOrganizer === 'function') {
-                addOrganizer();
-                orgInput = document.querySelector('[name^="organizer_name_"]');
+                addOrganizer(false);
+                orgInput = document.querySelector('[name="organizer_name_1"]');
               }
               if (orgInput) {
                 orgInput.value = e.organizers[0];
-                localStorage.setItem('form_' + orgInput.name, e.organizers[0]);
               }
               // Fill additional organizers
               for (let i = 1; i < e.organizers.length; i++) {
                 if (typeof addOrganizer === 'function') {
-                  addOrganizer();
-                  const newInput = document.querySelector('[name^="organizer_name_"]');
+                  addOrganizer(false);
+                  const newInput = document.querySelector(`[name="organizer_name_${i + 1}"]`);
                   if (newInput) {
                     newInput.value = e.organizers[i];
-                    localStorage.setItem('form_' + newInput.name, e.organizers[i]);
                   }
                 }
               }
             } else if (e.organizer) {
               // Fallback: single organizer
-              let orgInput = document.querySelector('[name^="organizer_name_"]');
+              let orgInput = document.querySelector('[name="organizer_name_1"]');
               if (!orgInput && typeof addOrganizer === 'function') {
-                addOrganizer();
-                orgInput = document.querySelector('[name^="organizer_name_"]');
+                addOrganizer(false);
+                orgInput = document.querySelector('[name="organizer_name_1"]');
               }
               if (orgInput) {
                 orgInput.value = e.organizer;
-                localStorage.setItem('form_' + orgInput.name, e.organizer);
               }
             }
 
@@ -2175,13 +2174,12 @@
               if (preview) {
                 preview.src = e.image_url;
                 preview.style.display = 'block';
-                // Also cache in localStorage for visual persistence
-                localStorage.setItem('form_image_preview', e.image_url);
               }
             }
 
             set('facebook', e.facebook_url);
             importedFlag.value = '1';
+            window.saveSubmitDraft?.();
           }
 
           btn.addEventListener('click', async function () {
@@ -2780,7 +2778,7 @@ function inSelection(selection, maxSelection) {
       <!-- by default at least one organizer -->
       <script>
         document.addEventListener('DOMContentLoaded', () => {
-          addOrganizer();
+          addOrganizer(false);
         });
       </script>
 
@@ -2931,79 +2929,5 @@ function inSelection(selection, maxSelection) {
 </div>
 
 
-<script>
-  document.querySelectorAll("input, select, textarea").forEach(el => {
-    el.addEventListener("input", () => {
-      if (el.type === "file") return;   // DO NOT STORE FILE INPUTS
-      localStorage.setItem(`form_${el.name}`, el.value);
-    });
-  });
-
-  document.querySelectorAll("input, select, textarea").forEach(el => {
-    const saved = localStorage.getItem(`form_${el.name}`);
-    if (el.type === "file") {
-      // never restore files from cache
-      return;
-    }
-    if (saved !== null) {
-      el.value = saved;
-    } else {
-      if (el.type === "checkbox" || el.type === "radio") {
-        el.checked = false; // ensure unchecked if nothing saved
-      } else {
-        el.value = ""; // ensure empty if nothing saved, so that it does not pull from browser autofill
-        // this helps with checkboxes/radio buttons too
-      }
-    }
-  });
-
-  // Check if there is ANY form data stored
-  function formCacheExists() {
-    return Object.keys(localStorage).some(key => key.startsWith("form_") && key !== "form_step"); // form step is not form data
-  }
-
-  // Show notice if cached
-  window.addEventListener("DOMContentLoaded", () => {
-    const notice = document.getElementById("cacheNotice");
-
-    if (formCacheExists()) {
-      notice.classList.remove("hidden");
-    } else {
-      notice.classList.add("hidden");
-
-      // Clear any step info if no form data
-      localStorage.removeItem("form_step");
-      // clear all form data // set value to "" in form
-      formData = document.querySelectorAll("input, select, textarea");
-      formData.forEach(el => {
-        localStorage.removeItem(`form_${el.name}`);
-        el.value = "";
-      });
-    }
-
-    const savedStep = localStorage.getItem("form_step");
-    if (savedStep) {
-      showPage(parseInt(savedStep));
-    }
-
-  });
-
-  // Reset function
-  document.getElementById("resetCacheBtn")?.addEventListener("click", () => {
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith("form_")) localStorage.removeItem(key);
-    });
-
-    localStorage.removeItem("form_step");
-
-    // reload page clean
-    location.reload();
-  });
-
-
-
-  // no-op duplicate submit listener removed
-
-
-</script>
+<script src="{{ url_for('static', filename='js/submit-draft.js', v='20261004-submit-draft-1') }}"></script>
 {% endblock %}

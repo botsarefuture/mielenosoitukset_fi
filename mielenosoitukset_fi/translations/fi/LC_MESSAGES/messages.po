@@ -3500,6 +3500,18 @@ msgid_plural "{len_type} values are required, but {len_value} were given."
 msgstr[0] ""
 msgstr[1] ""
 
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaun tulokset"
+msgstr "Organisaatiohaun tulokset"
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Organisaatiohaku ei onnistunut. Yritä uudelleen."
+msgstr "Organisaatiohaku ei onnistunut. Yritä uudelleen."
+
+#: mielenosoitukset_fi/basic_routes.py
+msgid "Hakuteksti on liian pitkä."
+msgstr "Hakuteksti on liian pitkä."
+
 #~ msgid "Hallinnoi pyöröä"
 #~ msgstr ""
 

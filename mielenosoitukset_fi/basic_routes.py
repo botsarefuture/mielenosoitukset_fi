@@ -3614,53 +3614,61 @@ def init_routes(app):
         ) and not current_user.has_permission("VIEW_DEMO"):
             abort(401)
 
-        child_filter = {
+        # Share visibility checks with explicit selection, but keep date/size
+        # limits on the chooser independent of the requested occurrence.
+        visible_children = {
             "parent": {"$in": [parent_id, str(parent_id)]},
             "approved": True,
             "$and": DEMO_FILTER["$and"],
         }
+        today = date.today().isoformat()
+        window_end = (date.today() + timedelta(days=90)).isoformat()
+        occurrence_order = [("date", ASCENDING), ("start_time", ASCENDING), ("_id", ASCENDING)]
+        active_children = {**visible_children, "cancelled": {"$ne": True}}
         occurrences = list(
-            mongo.demonstrations.find(child_filter).sort(
-                [("date", ASCENDING), ("start_time", ASCENDING), ("_id", ASCENDING)]
-            )
+            mongo.demonstrations.find({
+                **active_children,
+                "date": {"$gte": today, "$lte": window_end},
+            }).sort(occurrence_order).limit(16)
+        )
+        past_occurrences = list(
+            mongo.demonstrations.find({
+                **active_children, "date": {"$lt": today},
+            }).sort([(field, -direction) for field, direction in occurrence_order]).limit(16)
+        )
+        cancelled_occurrences = list(
+            mongo.demonstrations.find({
+                **visible_children,
+                "cancelled": True,
+                "date": {
+                    "$gte": (date.today() - timedelta(days=90)).isoformat(),
+                    "$lte": window_end,
+                },
+            }).sort(occurrence_order).limit(16)
         )
         local_timezone = current_app.config["LOCAL_TIMEZONE"]
         local_now = datetime.now(local_timezone)
-        default_selected = select_relevant_occurrence(occurrences, local_now)
+        default_selected = select_relevant_occurrence(
+            occurrences + past_occurrences, local_now
+        )
         selected = default_selected
 
         requested_occurrence = request.args.get("occurrence", "").strip()
         if requested_occurrence:
-            requested = next(
-                (
-                    occurrence
-                    for occurrence in occurrences
-                    if requested_occurrence
-                    in {
-                        str(occurrence.get("_id") or ""),
-                        str(occurrence.get("slug") or ""),
-                        str(occurrence.get("running_number") or ""),
-                    }
-                ),
-                None,
-            )
+            identifiers = [{"slug": requested_occurrence}]
+            if ObjectId.is_valid(requested_occurrence):
+                identifiers.append({"_id": ObjectId(requested_occurrence)})
+            if requested_occurrence.isascii() and requested_occurrence.isdigit() and len(requested_occurrence) <= 18:
+                identifiers.append({"running_number": int(requested_occurrence)})
+            requested = mongo.demonstrations.find_one({
+                **visible_children, "$or": identifiers,
+            })
             if requested:
                 selected = requested
 
         canonical_url = url_for("siblings_meeting", parent=parent, _external=True)
-        if not selected:
-            response = make_response(
-                render_template(
-                    "siblings.html",
-                    parent_demo=_localized_demo_copy(parent_doc),
-                    canonical_url=canonical_url,
-                )
-            )
-            response.headers["X-Robots-Tag"] = "noindex, follow"
-            return response
-
         occurrence_items = []
-        for occurrence in occurrences:
+        for occurrence in occurrences + past_occurrences + cancelled_occurrences:
             end_at = occurrence_end_at(occurrence, local_timezone)
             identifier = occurrence.get("slug") or str(occurrence["_id"])
             occurrence_items.append(
@@ -3671,7 +3679,7 @@ def init_routes(app):
                     "end_time": occurrence.get("end_time"),
                     "cancelled": bool(occurrence.get("cancelled")),
                     "is_past": bool(end_at and end_at < local_now),
-                    "is_selected": occurrence["_id"] == selected["_id"],
+                    "is_selected": bool(selected and occurrence["_id"] == selected["_id"]),
                     "url": url_for(
                         "siblings_meeting",
                         parent=parent,
@@ -3680,13 +3688,35 @@ def init_routes(app):
                 }
             )
 
+        upcoming_items = [
+            item for item in occurrence_items if not item["is_past"] and not item["cancelled"]
+        ]
+        past_items = sorted(
+            (item for item in occurrence_items if item["is_past"] or item["cancelled"]),
+            key=lambda item: (item["date"], item["start_time"] or "", item["id"]),
+            reverse=True,
+        )
+        if not selected:
+            response = make_response(
+                render_template(
+                    "siblings.html",
+                    parent_demo=_localized_demo_copy(parent_doc),
+                    canonical_url=canonical_url,
+                    occurrences=upcoming_items,
+                    past_occurrences=past_items,
+                )
+            )
+            response.headers["X-Robots-Tag"] = "noindex, follow"
+            return response
+
         recurring_context = {
             "parent_id": parent,
             "canonical_url": canonical_url,
-            "occurrences": occurrence_items,
+            "occurrences": upcoming_items,
+            "past_occurrences": past_items,
             "series_indexable": any(
                 demo_date_is_in_sitemap_window(occurrence.get("date"))
-                for occurrence in occurrences
+                for occurrence in occurrences + past_occurrences
             ),
             "has_upcoming": any(
                 not item["cancelled"] and not item["is_past"]

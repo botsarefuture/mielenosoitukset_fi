@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+- Recurring series now include approved children whose `hide` field is absent in occurrence lists and explicit selection, matching the shared public visibility filter.
+
+- Recurring child links now show the requested visible occurrence outside the bounded 90-day chooser. Cancelled dates no longer crowd out active dates; recent history and cancelled dates remain accessible in a bounded disclosure.
+
 - Removed follow controls from the recurring-series empty page to keep the discovery update focused on occurrence selection and SEO.
 - Public API cards and today-page links now fall back to the standalone demonstration URL when a child's parent series is missing, hidden, or unapproved, matching the sitemap's standalone grouping instead of advertising a series URL that public visitors cannot open.
 - Series pages are now indexed at the series level: the clean series URL stays indexable whenever any occurrence sits in the sitemap discovery window, even when the selector renders an occurrence beyond the future horizon, so the sitemap no longer lists series URLs that the page marks `noindex`.
@@ -56,6 +60,7 @@
 * The public demonstration detail invite dialog now renders friend names and avatars with DOM nodes, shows localized inline loading/error/success status, disables the send action while submitting, and reports success through the shared flash-message system instead of a native alert.
 
 ### Fixed
+* The public recurring-series "Kaikki tapahtuman ajankohdat" page no longer dumps every generated child occurrence into the page. The siblings route now renders a small capped future window first, keeps past and cancelled occurrences in a collapsed section, and avoids rendering thousands of links for pathological long series (live page dropped from ~5.8 MB and ~15k occurrence links to a small, usable set). A regression test asserts the public route stays bounded for a deliberately huge series.
 * The public demonstration submission form now renders organization-search results with text-safe native controls instead of HTML strings and inline handlers. Server-side organization searches treat visitor input as bounded literal text, and the shared autocomplete component provides consistent light/dark, focus, empty, and error states.
 * Login, registration, verification, and password-reset entry pages now share one clear secondary-action hierarchy, compact mobile card geometry, 44-pixel touch targets, dark-theme autofill styling, and non-intrusive initial focus so account screens remain trustworthy and usable at 320–390 pixel widths.
 * The current and cookie-selected legacy month calendars now share one scoped, product-token stylesheet with consistent light/dark surfaces, high-contrast actions, keyboard focus states, and responsive layouts. Their template-local palettes and duplicate jQuery UI stylesheet were removed, and the legacy mobile “return to new view” control now initializes safely without requiring jQuery to load first.

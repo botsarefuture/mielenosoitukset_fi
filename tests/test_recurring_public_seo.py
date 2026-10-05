@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 from urllib.parse import parse_qs, urlsplit
 
 from bson import ObjectId
+import html5lib
 import pytest
 
 from mielenosoitukset_fi.utils.demo_seo import select_relevant_occurrence
@@ -503,3 +504,137 @@ def test_recurring_series_chooser_is_theme_aware_and_portrait_safe(
     assert browser_page.evaluate(
         "document.documentElement.scrollWidth <= window.innerWidth + 1"
     )
+
+
+@pytest.mark.parametrize("offset", [-5, 30, 120])
+@pytest.mark.parametrize("identifier", ["_id", "slug", "running_number"])
+def test_requested_occurrence_is_independent_of_chooser_limits(
+    app, db, seeded_data, offset, identifier
+):
+    today = date.today()
+    parent_id, children = _insert_occurrences(
+        db, seeded_data,
+        [(today + timedelta(days=day)).isoformat() for day in range(1, 18)]
+        + [(today + timedelta(days=offset)).isoformat()],
+    )
+    requested = children[-1]
+    db.demonstrations.update_one(
+        {"_id": requested["_id"]}, {"$set": {"title": "Requested occurrence"}}
+    )
+    response = app.test_client().get(
+        f"/demonstration/{parent_id}/children",
+        query_string={"occurrence": str(requested[identifier])},
+    )
+    page = html5lib.parse(response.data, namespaceHTMLElements=False)
+
+    assert response.status_code == 200
+    assert "Requested occurrence" in page.find(".//title").text
+    upcoming = page.find(".//ol[@class='recurring-occurrence-list']")
+    assert len(upcoming.findall(".//a")) == 16
+    assert all(str(requested[identifier]) not in a.get("href") for a in upcoming.findall(".//a"))
+
+
+@pytest.mark.parametrize("offset,cancelled", [(-2, False), (2, False), (2, True)])
+def test_occurrence_without_hide_field_remains_visible(
+    app, db, seeded_data, offset, cancelled
+):
+    today = date.today()
+    parent_id, children = _insert_occurrences(
+        db, seeded_data,
+        [(today + timedelta(days=2)).isoformat(),
+         (today + timedelta(days=offset)).isoformat()],
+    )
+    requested = children[1]
+    db.demonstrations.update_one(
+        {"_id": requested["_id"]},
+        {"$unset": {"hide": ""},
+         "$set": {"title": "Occurrence without hide", "cancelled": cancelled}},
+    )
+    client = app.test_client()
+    series_path = f"/demonstration/{parent_id}/children"
+    response = client.get(series_path)
+    assert response.status_code == 200
+    page = html5lib.parse(response.data, namespaceHTMLElements=False)
+    chooser = page.find(".//section[@class='recurring-occurrence-switcher animate-fade-in-up']")
+    assert any(requested["slug"] in a.get("href") for a in chooser.findall(".//a"))
+
+    response = client.get(series_path, query_string={"occurrence": requested["slug"]})
+    assert response.status_code == 200
+    page = html5lib.parse(response.data, namespaceHTMLElements=False)
+    assert "Occurrence without hide" in page.find(".//title").text
+
+
+@pytest.mark.parametrize("changes", [
+    {"approved": False}, {"hide": True}, {"rejected": True}, {"parent": ObjectId()},
+])
+def test_requested_occurrence_obeys_series_visibility(app, db, seeded_data, changes):
+    today = date.today()
+    parent_id, children = _insert_occurrences(
+        db, seeded_data,
+        [(today + timedelta(days=2)).isoformat(), (today + timedelta(days=120)).isoformat()],
+    )
+    db.demonstrations.update_one(
+        {"_id": children[1]["_id"]}, {"$set": {"title": "Invisible occurrence", **changes}}
+    )
+    response = app.test_client().get(
+        f"/demonstration/{parent_id}/children?occurrence={children[1]['slug']}"
+    )
+    assert response.status_code == 200
+    page = html5lib.parse(response.data, namespaceHTMLElements=False)
+    assert "Invisible occurrence" not in page.find(".//title").text
+    chooser = page.find(".//section[@class='recurring-occurrence-switcher animate-fade-in-up']")
+    assert all(children[1]["slug"] not in a.get("href") for a in chooser.findall(".//a"))
+
+
+def test_cancelled_rows_do_not_consume_active_limit_and_remain_linked(app, db, seeded_data):
+    today = date.today()
+    parent_id, children = _insert_occurrences(
+        db, seeded_data,
+        [(today + timedelta(days=day)).isoformat() for day in range(1, 18)]
+        + [(today - timedelta(days=day)).isoformat() for day in range(1, 21)],
+    )
+    db.demonstrations.update_many(
+        {"_id": {"$in": [child["_id"] for child in children[:16]]}},
+        {"$set": {"cancelled": True}},
+    )
+    db.demonstrations.update_one(
+        {"_id": children[16]["_id"]}, {"$set": {"title": "Active occurrence"}}
+    )
+    client = app.test_client()
+    response = client.get(f"/demonstration/{parent_id}/children")
+    page = html5lib.parse(response.data, namespaceHTMLElements=False)
+
+    assert response.status_code == 200
+    assert "Active occurrence" in page.find(".//title").text
+    upcoming = page.find(".//ol[@class='recurring-occurrence-list']")
+    assert len(upcoming.findall(".//a")) == 1
+    history = page.find(".//details[@class='recurring-occurrence-history']")
+    assert "open" not in history.attrib
+    assert len(history.findall(".//a")) == 32  # 16 past + 16 cancelled
+    cancelled = history.find(".//a[@class='recurring-occurrence-link is-cancelled']")
+    assert cancelled is not None
+    assert "aria-disabled" not in cancelled.attrib
+    requested = client.get(cancelled.get("href"))
+    assert requested.status_code == 200
+    assert "Peruttu" in requested.get_data(as_text=True)
+
+
+def test_all_cancelled_series_exposes_working_occurrence_links(app, db, seeded_data):
+    parent_id, children = _insert_occurrences(
+        db, seeded_data, [(date.today() + timedelta(days=2)).isoformat()],
+    )
+    db.demonstrations.update_one(
+        {"_id": children[0]["_id"]},
+        {"$set": {"cancelled": True, "title": "Cancelled occurrence"}},
+    )
+    client = app.test_client()
+    response = client.get(f"/demonstration/{parent_id}/children")
+    page = html5lib.parse(response.data, namespaceHTMLElements=False)
+    link = page.find(".//details//a[@class='occurrence-link']")
+    assert link is not None
+    assert "aria-disabled" not in link.attrib
+    requested = client.get(link.get("href"), follow_redirects=True)
+    assert requested.status_code == 200
+    assert "Cancelled occurrence" in html5lib.parse(
+        requested.data, namespaceHTMLElements=False
+    ).find(".//title").text

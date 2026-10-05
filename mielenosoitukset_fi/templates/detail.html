@@ -82,8 +82,8 @@
     </div>
   </div>
 
-  {% set upcoming_occurrences = context.occurrences | rejectattr('is_past') | list %}
-  {% set past_occurrences = context.occurrences | selectattr('is_past') | reverse | list %}
+  {% set upcoming_occurrences = context.occurrences %}
+  {% set past_occurrences = context.past_occurrences %}
 
   {% if upcoming_occurrences %}
   <nav aria-label="{{ _('Tulevat tapahtumat') }}">
@@ -112,7 +112,7 @@
 
   {% if past_occurrences %}
   <details class="recurring-occurrence-history" {% if not context.has_upcoming %}open{% endif %}>
-    <summary>{{ _('Aiemmat ajankohdat') }} ({{ past_occurrences | length }})</summary>
+    <summary>{{ _('Menneet ja perutut ajankohdat') }} ({{ past_occurrences | length }})</summary>
     <ol class="recurring-occurrence-list recurring-occurrence-list--past">
       {% for occurrence in past_occurrences %}
       <li>
@@ -135,6 +135,9 @@
     </ol>
   </details>
   {% endif %}
+  <a class="btn btn-secondary" href="{{ url_for('demonstrations') }}">
+    {{ _('Selaa kaikkia mielenosoituksia') }}
+  </a>
 </section>
 {% endmacro %}
 

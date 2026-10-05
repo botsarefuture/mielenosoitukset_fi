@@ -1091,6 +1091,7 @@ def add_api_routes(app):
 
 
 def init_routes(app):
+    """Register public routes, request hooks, and template context processors."""
     from mielenosoitukset_fi.utils.cache import cache
     
     

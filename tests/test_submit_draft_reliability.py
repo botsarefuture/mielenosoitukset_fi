@@ -14,6 +14,7 @@ DRAFT_KEY = "mielenosoitukset.submit-draft.v2"
 
 
 def install_quill_stub(browser_page):
+    """Install a minimal Quill substitute for browser draft restoration tests."""
     browser_page.add_init_script(
         """
         window.Quill = class Quill {
@@ -50,6 +51,7 @@ def install_quill_stub(browser_page):
 
 
 def test_submit_draft_contract_is_scoped_versioned_and_exactly_cleared():
+    """Verify draft storage limits, excluded fields, and template integration hooks."""
     template = TEMPLATE.read_text(encoding="utf-8")
     script = DRAFT_SCRIPT.read_text(encoding="utf-8")
     city_partial = CITY_PARTIAL.read_text(encoding="utf-8")
@@ -70,6 +72,7 @@ def test_submit_draft_contract_is_scoped_versioned_and_exactly_cleared():
 
 
 def test_sparse_organizer_indexes_are_collected_in_numeric_order():
+    """Preserve contacts and visibility flags when organizer row indexes have gaps."""
     organizers = _collect_submission_organizers(
         MultiDict(
             [
@@ -96,6 +99,7 @@ def test_sparse_organizer_indexes_are_collected_in_numeric_order():
 
 
 def test_submit_draft_notice_is_localized_in_english_and_swedish(app, client):
+    """Render the draft notice and reset action in the selected public locale."""
     app.config.update(
         BABEL_SUPPORTED_LOCALES=["fi", "en", "sv"],
         BABEL_PUBLIC_LOCALES=["fi", "en", "sv"],
@@ -123,6 +127,7 @@ def test_submit_draft_notice_is_localized_in_english_and_swedish(app, client):
 @pytest.mark.e2e
 @pytest.mark.integration
 def test_clean_submit_page_preserves_server_defaults(live_server, browser_page):
+    """Keep server defaults and unchecked consent when no draft has been saved."""
     browser_page.goto(f"{live_server}/submit", wait_until="domcontentloaded")
 
     token = browser_page.locator('[name="submission_token"]').input_value()
@@ -141,6 +146,7 @@ def test_clean_submit_page_preserves_server_defaults(live_server, browser_page):
 def test_submit_draft_restores_fields_quill_city_and_organizers(
     live_server, browser_page
 ):
+    """Restore draft content and wizard state while refreshing consent and tokens."""
     install_quill_stub(browser_page)
     browser_page.goto(f"{live_server}/submit", wait_until="domcontentloaded")
     editor = browser_page.locator(".ql-editor")
@@ -230,6 +236,7 @@ def test_submit_draft_restores_fields_quill_city_and_organizers(
 @pytest.mark.e2e
 @pytest.mark.integration
 def test_submit_draft_flushes_pending_edits_on_pagehide(live_server, browser_page):
+    """Persist the latest field edit when the page hides before the debounce fires."""
     browser_page.goto(f"{live_server}/submit", wait_until="domcontentloaded")
     browser_page.wait_for_function("() => window.__submitDraftReady === true")
     browser_page.evaluate("showPage(2)")
@@ -248,6 +255,7 @@ def test_submit_draft_flushes_pending_edits_on_pagehide(live_server, browser_pag
 def test_invalid_submit_draft_fails_open_without_clearing_server_defaults(
     live_server, browser_page, stored_value
 ):
+    """Discard malformed or expired drafts while preserving server form defaults."""
     if stored_value == "expired":
         stored_value = json.dumps(
             {

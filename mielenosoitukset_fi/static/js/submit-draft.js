@@ -1,3 +1,4 @@
+/** Set up bounded browser draft storage for the demonstration submission form. */
 (() => {
   "use strict";
 
@@ -39,6 +40,7 @@
   let ready = false;
   let saveTimer = null;
 
+  /** Read a local storage value, returning null when storage is unavailable. */
   function storageGet(key) {
     try {
       return window.localStorage.getItem(key);
@@ -48,6 +50,7 @@
     }
   }
 
+  /** Store a serialized value and report whether the write succeeded. */
   function storageSet(key, value) {
     try {
       window.localStorage.setItem(key, value);
@@ -58,6 +61,7 @@
     }
   }
 
+  /** Remove a storage entry while tolerating unavailable browser storage. */
   function storageRemove(key) {
     try {
       window.localStorage.removeItem(key);
@@ -66,6 +70,7 @@
     }
   }
 
+  /** List legacy form storage keys, or return an empty list on storage failure. */
   function legacyKeys() {
     try {
       return Object.keys(window.localStorage).filter(
@@ -76,19 +81,23 @@
     }
   }
 
+  /** Remove all legacy form draft entries from browser storage. */
   function clearLegacyDraft() {
     legacyKeys().forEach(storageRemove);
   }
 
+  /** Parse a wizard step from 1 through 5, falling back to the first step. */
   function clampStep(value) {
     const step = Number.parseInt(value, 10);
     return Number.isInteger(step) && step >= 1 && step <= 5 ? step : 1;
   }
 
+  /** Truncate strings to the length limit and replace nonstrings with emptiness. */
   function boundedString(value, maxLength = 20000) {
     return typeof value === "string" ? value.slice(0, maxLength) : "";
   }
 
+  /** Validate text-only Quill operations and retain supported formatting, or return null. */
   function normalizeDelta(delta) {
     if (!delta || !Array.isArray(delta.ops) || delta.ops.length > 2000) {
       return null;
@@ -126,6 +135,7 @@
     return { ops };
   }
 
+  /** Bound organizer fields and normalize visibility flags, or reject nonobjects. */
   function normalizeOrganizer(raw) {
     if (!raw || typeof raw !== "object") return null;
     return {
@@ -138,6 +148,7 @@
     };
   }
 
+  /** Reject invalid versions or timestamps and normalize the restorable draft data. */
   function normalizeDraft(raw) {
     if (!raw || raw.version !== DRAFT_VERSION || typeof raw.savedAt !== "number") {
       return null;
@@ -169,6 +180,7 @@
     };
   }
 
+  /** Read a validated draft, removing oversized, malformed, or expired entries. */
   function readDraft() {
     const serialized = storageGet(DRAFT_KEY);
     if (!serialized) return null;
@@ -186,6 +198,7 @@
     }
   }
 
+  /** Migrate allowed legacy fields and organizer contacts, then remove legacy entries. */
   function readLegacyDraft() {
     const fields = {};
     FIELD_NAMES.forEach((name) => {
@@ -225,6 +238,7 @@
     return draft;
   }
 
+  /** Read a named form field as a string bounded by its declared length or the default. */
   function fieldValue(name) {
     const field = form.elements.namedItem(name);
     if (!field || typeof field.value !== "string") return "";
@@ -232,6 +246,7 @@
     return boundedString(field.value, maxLength);
   }
 
+  /** Collect bounded organizer rows in display order, including visibility choices. */
   function collectOrganizers() {
     return Array.from(form.querySelectorAll(".organizer-card"))
       .slice(0, MAX_ORGANIZERS)
@@ -248,6 +263,7 @@
       });
   }
 
+  /** Read validated Quill content, returning null when the editor cannot supply it. */
   function descriptionDelta() {
     try {
       return typeof quill !== "undefined" && quill?.getContents
@@ -258,6 +274,7 @@
     }
   }
 
+  /** Check whether fields, organizer choices, description, or wizard progress merit saving. */
   function draftHasContent(draft) {
     const fieldContent = Object.values(draft.fields).some(Boolean);
     const organizerContent = draft.organizers.some(
@@ -275,6 +292,7 @@
     return fieldContent || organizerContent || descriptionContent || draft.step > 1;
   }
 
+  /** Save the current form within the storage limit, or remove an empty draft once ready. */
   function persistDraft() {
     if (!ready) return;
     const fields = {};
@@ -299,12 +317,14 @@
     if (serialized.length <= MAX_DRAFT_BYTES) storageSet(DRAFT_KEY, serialized);
   }
 
+  /** Debounce draft persistence by 200 milliseconds after initialization. */
   function scheduleSave() {
     if (!ready) return;
     window.clearTimeout(saveTimer);
     saveTimer = window.setTimeout(persistDraft, 200);
   }
 
+  /** Cancel the pending save timer and immediately persist the initialized form. */
   function flushDraft() {
     if (!ready) return;
     window.clearTimeout(saveTimer);
@@ -312,6 +332,7 @@
     persistDraft();
   }
 
+  /** Restore eligible fields, municipality, and image preview, then refresh dependent UI. */
   function restoreFields(fields) {
     Object.entries(fields).forEach(([name, value]) => {
       if (name === "city") return;
@@ -345,6 +366,7 @@
     form.elements.namedItem("route")?.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
+  /** Create missing organizer rows and restore their contact and visibility fields. */
   function restoreOrganizers(organizers) {
     if (!organizers.length) return;
     while (form.querySelectorAll(".organizer-card").length < organizers.length) {
@@ -356,10 +378,12 @@
       const card = cards[position];
       if (!card) return;
       const index = card.id.replace("organizer-", "");
+      /** Set a contact field in the current organizer row when it exists. */
       const setValue = (prefix, value) => {
         const field = document.getElementById(`${prefix}_${index}`);
         if (field) field.value = value;
       };
+      /** Set a visibility checkbox in the current organizer row when it exists. */
       const setChecked = (prefix, checked) => {
         const field = document.getElementById(`${prefix}_${index}`);
         if (field) field.checked = checked;
@@ -374,6 +398,7 @@
     });
   }
 
+  /** Apply a validated Delta silently and synchronize the submitted description HTML. */
   function restoreDescription(delta) {
     if (!delta) return;
     try {
@@ -387,6 +412,7 @@
     }
   }
 
+  /** Stop saves, remove current and legacy drafts, and hide the restoration notice. */
   function clearDraft() {
     ready = false;
     window.clearTimeout(saveTimer);
@@ -398,6 +424,7 @@
   window.saveSubmitDraft = scheduleSave;
   window.clearSubmitDraft = clearDraft;
 
+  /** Restore or migrate a draft, then enable form, editor, page-exit, and reset listeners. */
   function initializeDraft() {
     let draft = readDraft();
     if (!draft) draft = readLegacyDraft();

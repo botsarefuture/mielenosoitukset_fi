@@ -3619,7 +3619,6 @@ def init_routes(app):
         visible_children = {
             "parent": {"$in": [parent_id, str(parent_id)]},
             "approved": True,
-            "hide": False,
             "$and": DEMO_FILTER["$and"],
         }
         today = date.today().isoformat()

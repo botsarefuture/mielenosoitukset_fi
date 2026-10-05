@@ -534,6 +534,36 @@ def test_requested_occurrence_is_independent_of_chooser_limits(
     assert all(str(requested[identifier]) not in a.get("href") for a in upcoming.findall(".//a"))
 
 
+@pytest.mark.parametrize("offset,cancelled", [(-2, False), (2, False), (2, True)])
+def test_occurrence_without_hide_field_remains_visible(
+    app, db, seeded_data, offset, cancelled
+):
+    today = date.today()
+    parent_id, children = _insert_occurrences(
+        db, seeded_data,
+        [(today + timedelta(days=2)).isoformat(),
+         (today + timedelta(days=offset)).isoformat()],
+    )
+    requested = children[1]
+    db.demonstrations.update_one(
+        {"_id": requested["_id"]},
+        {"$unset": {"hide": ""},
+         "$set": {"title": "Occurrence without hide", "cancelled": cancelled}},
+    )
+    client = app.test_client()
+    series_path = f"/demonstration/{parent_id}/children"
+    response = client.get(series_path)
+    assert response.status_code == 200
+    page = html5lib.parse(response.data, namespaceHTMLElements=False)
+    chooser = page.find(".//section[@class='recurring-occurrence-switcher animate-fade-in-up']")
+    assert any(requested["slug"] in a.get("href") for a in chooser.findall(".//a"))
+
+    response = client.get(series_path, query_string={"occurrence": requested["slug"]})
+    assert response.status_code == 200
+    page = html5lib.parse(response.data, namespaceHTMLElements=False)
+    assert "Occurrence without hide" in page.find(".//title").text
+
+
 @pytest.mark.parametrize("changes", [
     {"approved": False}, {"hide": True}, {"rejected": True}, {"parent": ObjectId()},
 ])

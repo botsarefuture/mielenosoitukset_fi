@@ -3550,6 +3550,7 @@ def init_routes(app):
 
     @app.route("/demonstration/<parent>/children", methods=["GET"])
     def siblings_meeting(parent):
+        """Render the chosen series occurrence or a noindex page for an empty series."""
         if not ObjectId.is_valid(parent):
             abort(404)
         parent_id = ObjectId(parent)
@@ -3601,8 +3602,6 @@ def init_routes(app):
                 render_template(
                     "siblings.html",
                     parent_demo=_localized_demo_copy(parent_doc),
-                    parent_id=parent,
-                    recurring_following=str(parent_id) in _get_followed_recurring_ids(),
                     canonical_url=canonical_url,
                 )
             )

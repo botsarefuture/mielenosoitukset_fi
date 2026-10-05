@@ -12,6 +12,7 @@ function t(key) {
 }
 
 
+/** Normalize card display fields and resolve the canonical event or series URL. */
 function normalizeDemoCardData(demo) {
   const tags = Array.isArray(demo.tags) ? demo.tags : [];
   const coverImage = demo.cover_picture || demo.cover_image || demo.preview_image || demo.img || "";

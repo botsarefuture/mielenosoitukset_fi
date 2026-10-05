@@ -10,6 +10,7 @@ from mielenosoitukset_fi.utils.demo_seo import select_relevant_occurrence
 
 
 def _insert_occurrences(db, seeded_data, dates):
+    """Publish a seeded series and insert distinct occurrences for the supplied dates."""
     parent_id = seeded_data["recu_demo_id"]
     db.recu_demos.update_one(
         {"_id": parent_id},
@@ -38,12 +39,14 @@ def _insert_occurrences(db, seeded_data, dates):
 
 
 def _sitemap_locs(response):
+    """Extract location URLs from a sitemap response using its XML namespace."""
     root = ET.fromstring(response.data)
     ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
     return [loc.text for loc in root.findall(".//sm:loc", ns)]
 
 
 def test_recurring_series_has_one_sitemap_url_and_no_child_urls(app, db, seeded_data):
+    """A series contributes one canonical sitemap URL regardless of its occurrence dates."""
     today = date.today()
     parent_id, children = _insert_occurrences(
         db,
@@ -66,6 +69,7 @@ def test_recurring_series_has_one_sitemap_url_and_no_child_urls(app, db, seeded_
 
 
 def test_series_page_selects_next_occurrence_and_aligns_seo_metadata(app, db, seeded_data):
+    """The default occurrence supplies event metadata while canonical URLs identify the series."""
     today = date.today()
     parent_id, children = _insert_occurrences(
         db,
@@ -103,6 +107,7 @@ def test_series_page_selects_next_occurrence_and_aligns_seo_metadata(app, db, se
 
 
 def test_old_child_url_redirects_to_current_series_page(app, db, seeded_data):
+    """Legacy occurrence URLs permanently redirect visitors to the series page."""
     today = date.today()
     parent_id, children = _insert_occurrences(
         db,
@@ -124,6 +129,7 @@ def test_old_child_url_redirects_to_current_series_page(app, db, seeded_data):
 def test_authenticated_old_child_url_also_redirects_to_series(
     user_client, db, seeded_data
 ):
+    """Signed-in visitors receive the same permanent series redirect as anonymous visitors."""
     today = date.today()
     parent_id, children = _insert_occurrences(
         db,
@@ -143,6 +149,7 @@ def test_authenticated_old_child_url_also_redirects_to_series(
 
 
 def test_explicit_occurrence_keeps_clean_series_canonical(app, db, seeded_data):
+    """Choosing a historical occurrence preserves the clean canonical and Open Graph URLs."""
     today = date.today()
     parent_id, children = _insert_occurrences(
         db,
@@ -166,6 +173,7 @@ def test_explicit_occurrence_keeps_clean_series_canonical(app, db, seeded_data):
 
 
 def test_all_past_series_selects_latest_and_explains_state(app, db, seeded_data):
+    """An ended series displays its latest occurrence and explains the lack of future dates."""
     today = date.today()
     parent_id, children = _insert_occurrences(
         db,
@@ -186,6 +194,7 @@ def test_all_past_series_selects_latest_and_explains_state(app, db, seeded_data)
 
 
 def test_selection_skips_cancelled_future_occurrence():
+    """A cancelled occurrence cannot displace the next active occurrence as the default."""
     now = datetime.fromisoformat("2026-10-05T12:00:00+03:00")
     cancelled = {
         "_id": ObjectId(),
@@ -218,6 +227,7 @@ def test_selection_skips_cancelled_future_occurrence():
     ],
 )
 def test_selection_orders_start_times_with_midnight_fallback(start_fields):
+    """Selection orders parsed start times and treats absent or invalid times as midnight."""
     early = {
         "_id": "z",
         "date": "2026-10-06",
@@ -238,6 +248,7 @@ def test_selection_orders_start_times_with_midnight_fallback(start_fields):
 
 
 def test_same_day_occurrence_remains_current_until_its_end_time():
+    """The default advances to the next occurrence only after the current one ends."""
     occurrence = {
         "_id": ObjectId(),
         "date": "2026-10-05",
@@ -261,6 +272,7 @@ def test_same_day_occurrence_remains_current_until_its_end_time():
 
 
 def test_invalid_recurring_parent_is_404(app):
+    """Malformed and nonexistent series identifiers both return a not-found response."""
     client = app.test_client()
 
     assert client.get("/demonstration/not-an-object-id/children").status_code == 404
@@ -270,6 +282,7 @@ def test_invalid_recurring_parent_is_404(app):
 def test_empty_recurring_series_is_noindex_in_html_and_response_header(
     app, db, seeded_data
 ):
+    """An empty series suppresses indexing through both HTML metadata and HTTP headers."""
     parent_id = seeded_data["recu_demo_id"]
     db.recu_demos.update_one(
         {"_id": parent_id},
@@ -290,6 +303,7 @@ def test_empty_recurring_series_is_noindex_in_html_and_response_header(
 def test_public_api_and_today_page_link_recurring_occurrences_to_series(
     app, db, seeded_data
 ):
+    """API results and today listings link recurring occurrences to the canonical series."""
     today = date.today()
     parent_id, children = _insert_occurrences(
         db,
@@ -332,6 +346,7 @@ def test_recurring_series_chooser_is_theme_aware_and_portrait_safe(
     theme,
     viewport,
 ):
+    """The chooser keeps one selected date and fits desktop and portrait layouts in both themes."""
     today = date.today()
     parent_id, _ = _insert_occurrences(
         db,

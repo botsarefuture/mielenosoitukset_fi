@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Kept demonstration detail pages aligned with the sitemap's future discovery horizon: events beyond two years now use `noindex, follow`, while sitemap event priorities decrease with distance from the current date.
+
 ### Added
 * **Fresh step-up authentication for user deletion** — Every admin-initiated user deletion now requires a fresh WebAuthn/passkey/sudo authentication ceremony, even if the administrator already has a valid recent authenticated/sudo session. The previous "recent authentication" window is explicitly ignored for this operation. A new single-use, action-bound fresh step-up token is issued after a successful WebAuthn or password+TOTP verification and must be presented with the deletion request. Tokens expire after 60 seconds and cannot be reused for multiple deletions. The deletion modal offers both passkey and password plus MFA paths, so administrators without a passkey are not locked out.
 * Public templates now have an exact inline-style debt contract: every remaining historical `<style>` block and static `style=` attribute is content-hashed in a reviewed baseline, so new or silently rewritten page-owned CSS fails CI while shared-component migrations can deliberately shrink the baseline.
@@ -47,6 +49,7 @@
 * The public demonstration detail invite dialog now renders friend names and avatars with DOM nodes, shows localized inline loading/error/success status, disables the send action while submitting, and reports success through the shared flash-message system instead of a native alert.
 
 ### Fixed
+* Login, registration, verification, and password-reset entry pages now share one clear secondary-action hierarchy, compact mobile card geometry, 44-pixel touch targets, dark-theme autofill styling, and non-intrusive initial focus so account screens remain trustworthy and usable at 320–390 pixel widths.
 * The current and cookie-selected legacy month calendars now share one scoped, product-token stylesheet with consistent light/dark surfaces, high-contrast actions, keyboard focus states, and responsive layouts. Their template-local palettes and duplicate jQuery UI stylesheet were removed, and the legacy mobile “return to new view” control now initializes safely without requiring jQuery to load first.
 * Demonstration-submission drafts now preserve server-generated idempotency tokens and locale defaults, restore bounded 24-hour local drafts for scalar fields, city, structured Quill content, and every organizer, and exclude consent and file controls. Corrupt or expired drafts fail open, last-second edits are flushed during navigation, successful submissions/reset clear only the namespaced draft, and sparse organizer indexes retain later rows with their privacy choices.
 * Public calendar hover cards and mobile description previews now render event titles, plain-text rich descriptions, and images with safe DOM APIs instead of interpreting event data as HTML, preventing stored markup from becoming executable browser content or appearing as literal tags across current, legacy, and year calendar views.

@@ -6,6 +6,8 @@
 
 - Consolidated recurring demonstrations into one search-canonical series page that opens the next relevant occurrence by default and exposes every date in an accessible server-rendered chooser.
 - Kept demonstration detail pages aligned with the sitemap's future discovery horizon: events beyond two years now use `noindex, follow`, while sitemap event priorities decrease with distance from the current date.
+- Recurring-series pages with no upcoming occurrences regain the "Seuraa sarjaa" follow button: signed-in users can still watch a series for new dates from the empty state, signed-out users get a sign-in hint, and follow failures show the shared safe flash feedback instead of native dialogs. The empty-state route now also passes the current follow state.
+- The shared public stylesheet cache-bust key in `base.html` was corrected to the reviewed `YYYYMMDD-user-workspace-N` format after the recurring-series CSS additions, so shared-style contract tests pass while caches still bust.
 
 ### Added
 * **Fresh step-up authentication for user deletion** — Every admin-initiated user deletion now requires a fresh WebAuthn/passkey/sudo authentication ceremony, even if the administrator already has a valid recent authenticated/sudo session. The previous "recent authentication" window is explicitly ignored for this operation. A new single-use, action-bound fresh step-up token is issued after a successful WebAuthn or password+TOTP verification and must be presented with the deletion request. Tokens expire after 60 seconds and cannot be reused for multiple deletions. The deletion modal offers both passkey and password plus MFA paths, so administrators without a passkey are not locked out.

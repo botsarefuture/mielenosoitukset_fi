@@ -3587,6 +3587,7 @@ def init_routes(app):
                     "siblings.html",
                     parent_demo=_localized_demo_copy(parent_doc),
                     parent_id=parent,
+                    recurring_following=str(parent_id) in _get_followed_recurring_ids(),
                     canonical_url=canonical_url,
                 )
             )

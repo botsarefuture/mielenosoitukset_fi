@@ -2,6 +2,7 @@ import json
 import re
 import xml.etree.ElementTree as ET
 from datetime import date, datetime, timedelta
+from urllib.parse import parse_qs, urlsplit
 
 from bson import ObjectId
 import pytest
@@ -121,9 +122,9 @@ def test_old_child_url_redirects_to_current_series_page(app, db, seeded_data):
     response = app.test_client().get(f"/demonstration/{children[0]['slug']}")
 
     assert response.status_code == 301
-    assert response.headers["Location"].endswith(
-        f"/demonstration/{parent_id}/children"
-    )
+    redirect = urlsplit(response.headers["Location"])
+    assert redirect.path == f"/demonstration/{parent_id}/children"
+    assert parse_qs(redirect.query)["occurrence"] == [children[0]["slug"]]
 
 
 def test_authenticated_old_child_url_also_redirects_to_series(
@@ -143,9 +144,9 @@ def test_authenticated_old_child_url_also_redirects_to_series(
     response = user_client.get(f"/demonstration/{children[0]['slug']}")
 
     assert response.status_code == 301
-    assert response.headers["Location"].endswith(
-        f"/demonstration/{parent_id}/children"
-    )
+    redirect = urlsplit(response.headers["Location"])
+    assert redirect.path == f"/demonstration/{parent_id}/children"
+    assert parse_qs(redirect.query)["occurrence"] == [children[0]["slug"]]
 
 
 def test_explicit_occurrence_keeps_clean_series_canonical(app, db, seeded_data):
@@ -326,6 +327,84 @@ def test_public_api_and_today_page_link_recurring_occurrences_to_series(
     assert api_child["parent"] == str(parent_id)
     assert api_child["detail_url"] == series_path
     assert f'href="{series_path}"' in today_response.get_data(as_text=True)
+
+
+def test_api_cards_use_standalone_url_when_parent_series_is_invisible(
+    app, db, seeded_data
+):
+    today = date.today()
+    parent_id, children = _insert_occurrences(db, seeded_data, [today.isoformat()])
+    db.recu_demos.update_one({"_id": parent_id}, {"$set": {"hide": True}})
+    child_id = str(children[0]["_id"])
+    standalone_path = f"/demonstration/{children[0]['slug']}"
+
+    client = app.test_client()
+    api_response = client.get("/api/v1/demonstrations")
+    today_response = client.get("/mielenosoitukset-tanaan")
+
+    assert api_response.status_code == 200
+    api_child = next(
+        item
+        for item in api_response.get_json()["demonstrations"]
+        if item["_id"] == child_id
+    )
+    assert api_child["detail_url"] == standalone_path
+    assert f'href="{standalone_path}"' in today_response.get_data(as_text=True)
+    assert f"/demonstration/{parent_id}/children" not in today_response.get_data(
+        as_text=True
+    )
+
+
+def test_series_page_stays_indexable_when_selected_occurrence_is_beyond_horizon(
+    app, db, seeded_data
+):
+    today = date.today()
+    parent_id, _children = _insert_occurrences(
+        db,
+        seeded_data,
+        [
+            (today - timedelta(days=5)).isoformat(),
+            (today + timedelta(days=800)).isoformat(),
+        ],
+    )
+    series_url = f"https://example.test/demonstration/{parent_id}/children"
+
+    client = app.test_client()
+    sitemap_response = client.get("/sitemap.xml", base_url="https://example.test")
+    page_response = client.get(
+        f"/demonstration/{parent_id}/children",
+        base_url="https://example.test",
+    )
+
+    assert page_response.status_code == 200
+    assert page_response.headers.get("X-Robots-Tag") != "noindex, follow"
+    assert (
+        '<meta name="robots" content="index, follow"'
+        in page_response.get_data(as_text=True)
+    )
+    assert _sitemap_locs(sitemap_response).count(series_url) == 1
+
+
+def test_series_page_is_noindex_when_no_occurrence_is_in_discovery_window(
+    app, db, seeded_data
+):
+    today = date.today()
+    parent_id, _children = _insert_occurrences(
+        db,
+        seeded_data,
+        [(today + timedelta(days=800)).isoformat()],
+    )
+    series_url = f"https://example.test/demonstration/{parent_id}/children"
+
+    client = app.test_client()
+    sitemap_response = client.get("/sitemap.xml", base_url="https://example.test")
+    page_response = client.get(
+        f"/demonstration/{parent_id}/children",
+        base_url="https://example.test",
+    )
+
+    assert _sitemap_locs(sitemap_response).count(series_url) == 0
+    assert page_response.headers.get("X-Robots-Tag") == "noindex, follow"
 
 
 @pytest.mark.e2e

@@ -53,7 +53,7 @@
     </div>
     <div class="today-list">
       {% for demo in demonstrations %}
-      <a class="today-demo" href="{% if demo.parent %}{{ url_for('siblings_meeting', parent=demo.parent) }}{% else %}{{ url_for('demonstration_detail', demo_id=demo.detail_identifier) }}{% endif %}">
+      <a class="today-demo" href="{{ demo.detail_url }}">
         <div class="today-time">
           {{ demo.start_time or _('Aika avoin') }}
           <span>{{ demo.end_time or '' }}</span>

@@ -20,6 +20,8 @@ from flask import (
     url_for,
     request,
     abort,
+    g,
+    has_app_context,
     jsonify,
     session,
     current_app,
@@ -239,10 +241,32 @@ def _demo_detail_identifier(demo):
     return demo.get("slug") or demo.get("running_number") or str(demo.get("_id"))
 
 
+def _parent_series_publicly_visible(parent_id):
+    """Whether the recurring parent series is publicly visible (sitemap rule)."""
+    if not parent_id or not ObjectId.is_valid(str(parent_id)):
+        return False
+
+    parent_oid = ObjectId(str(parent_id))
+    cache = None
+    if has_app_context():
+        cache = getattr(g, "_series_visibility_cache", None)
+        if cache is None:
+            cache = g._series_visibility_cache = {}
+        elif str(parent_oid) in cache:
+            return cache[str(parent_oid)]
+
+    visible = bool(
+        mongo.recu_demos.find_one({"_id": parent_oid, **DEMO_FILTER}, {"_id": 1})
+    )
+    if cache is not None:
+        cache[str(parent_oid)] = visible
+    return visible
+
+
 def _demo_public_path(demo):
     """Return the canonical public path for a standalone demo or recurring series."""
     parent_id = demo.get("parent")
-    if parent_id:
+    if parent_id and _parent_series_publicly_visible(parent_id):
         return url_for("siblings_meeting", parent=str(parent_id))
     return url_for(
         "demonstration_detail",
@@ -2671,6 +2695,7 @@ def init_routes(app):
         demos = list(demonstrations_collection.find(query).sort("start_time", ASCENDING))
         for demo in demos:
             demo["detail_identifier"] = _demo_detail_identifier(demo)
+            demo["detail_url"] = _demo_public_path(demo)
 
         today_value = date.today()
         if city_name:
@@ -2913,10 +2938,17 @@ def init_routes(app):
         # Resolve locale once and reuse the exact same value for rendering and caching.
         locale = _current_demo_language()
         seo_reference_date = date.today()
-        seo_noindex = demo_is_beyond_future_horizon(
-            demo_obj.date,
-            reference_date=seo_reference_date,
-        )
+        if recurring_context is not None and "series_indexable" in recurring_context:
+            # Series pages are indexed at the series level: the sitemap lists the
+            # clean series URL whenever any occurrence sits in the discovery
+            # window, so indexability must not depend on which occurrence the
+            # selector happened to render.
+            seo_noindex = not recurring_context["series_indexable"]
+        else:
+            seo_noindex = demo_is_beyond_future_horizon(
+                demo_obj.date,
+                reference_date=seo_reference_date,
+            )
 
         # Build a cache key that is stable for public users; include locale so localized pages differ
         viewer_segment = "anon"
@@ -3634,6 +3666,10 @@ def init_routes(app):
             "parent_id": parent,
             "canonical_url": canonical_url,
             "occurrences": occurrence_items,
+            "series_indexable": any(
+                demo_date_is_in_sitemap_window(occurrence.get("date"))
+                for occurrence in occurrences
+            ),
             "has_upcoming": any(
                 not item["cancelled"] and not item["is_past"]
                 for item in occurrence_items

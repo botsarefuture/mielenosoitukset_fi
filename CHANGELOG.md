@@ -5,6 +5,8 @@
 ## UNRELEASED
 
 - Removed follow controls from the recurring-series empty page to keep the discovery update focused on occurrence selection and SEO.
+- Public API cards and today-page links now fall back to the standalone demonstration URL when a child's parent series is missing, hidden, or unapproved, matching the sitemap's standalone grouping instead of advertising a series URL that public visitors cannot open.
+- Series pages are now indexed at the series level: the clean series URL stays indexable whenever any occurrence sits in the sitemap discovery window, even when the selector renders an occurrence beyond the future horizon, so the sitemap no longer lists series URLs that the page marks `noindex`.
 - Fixed recurring-series occurrence selection to parse start times and preserve the midnight fallback for missing or invalid values.
 - Consolidated recurring demonstrations into one search-canonical series page that opens the next relevant occurrence by default and exposes every date in an accessible server-rendered chooser.
 - Kept demonstration detail pages aligned with the sitemap's future discovery horizon: events beyond two years now use `noindex, follow`, while sitemap event priorities decrease with distance from the current date.

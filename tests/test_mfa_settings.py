@@ -141,30 +141,65 @@ def test_mfa_device_rename_requires_step_up_and_updates_name(app, db):
     assert r.status_code == 404
 
 
-def test_mfa_blocks_login_without_code_and_allows_with_code(app, db):
+def test_mfa_login_uses_short_lived_server_side_pending_state(app, db):
     user_id = _create_mfa_user(db)
     secret = UserMFA(user_id).add_device()
     db.users.update_one({"_id": user_id}, {"$set": {"mfa_enabled": True}})
+    username = db.users.find_one({"_id": user_id})["username"]
 
     client = app.test_client()
 
-    r = client.post("/users/auth/2fa_check", data={})
-    assert r.status_code in (200, 400)
+    login_page = client.get("/users/auth/login").get_data(as_text=True)
+    assert 'id="mfauser"' not in login_page
+    assert 'id="mfapass"' not in login_page
 
-    r = client.post("/users/auth/login", data={
-        "username": "mfa-user",
-        "password": TEST_PASSWORD,
-        "2fa_code": "000000",
-    })
-    page = r.get_data(as_text=True)
-    assert "Väärä" in page or r.status_code == 302
+    response = client.post(
+        "/users/auth/2fa_check",
+        data={"username": username, "password": TEST_PASSWORD},
+    )
+    assert response.status_code == 200
+    assert response.get_json() == {"enabled": True, "valid": True}
+    with client.session_transaction() as login_session:
+        pending = login_session["mfa_pending_login"]
+        assert pending["user_id"] == str(user_id)
+        assert "password" not in pending
+        assert "username" not in pending
 
-    r = client.post("/users/auth/login", data={
-        "username": "mfa-user",
-        "password": TEST_PASSWORD,
-        "2fa_code": _totp_code(secret),
-    }, follow_redirects=True)
-    assert r.status_code in (200, 302)
+    response = client.post(
+        "/users/auth/login",
+        data={"2fa_code": _totp_code(secret)},
+    )
+    assert response.status_code == 302
+    with client.session_transaction() as login_session:
+        assert login_session["_user_id"] == str(user_id)
+        assert "mfa_pending_login" not in login_session
+
+
+def test_expired_pending_mfa_login_requires_password_again(app, db):
+    user_id = _create_mfa_user(db)
+    secret = UserMFA(user_id).add_device()
+    db.users.update_one({"_id": user_id}, {"$set": {"mfa_enabled": True}})
+    username = db.users.find_one({"_id": user_id})["username"]
+    client = app.test_client()
+
+    response = client.post(
+        "/users/auth/2fa_check",
+        data={"username": username, "password": TEST_PASSWORD},
+    )
+    assert response.get_json() == {"enabled": True, "valid": True}
+    with client.session_transaction() as login_session:
+        pending = dict(login_session["mfa_pending_login"])
+        pending["created_at"] = 0
+        login_session["mfa_pending_login"] = pending
+
+    response = client.post(
+        "/users/auth/login",
+        data={"2fa_code": _totp_code(secret)},
+    )
+    assert response.status_code == 302
+    with client.session_transaction() as login_session:
+        assert "_user_id" not in login_session
+        assert "mfa_pending_login" not in login_session
 
 
 def test_verify_mfa_route_does_not_500(app, db):

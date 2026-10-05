@@ -99,8 +99,6 @@
           </div>
           <p class="form-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>{{ _('Avaa todennussovelluksesi ja syötä näkyvä koodi.') }}</p>
         </div>
-        <input id="mfauser" type="hidden" name="username">
-        <input id="mfapass" type="hidden" name="password">
         <div class="auth-actions">
           <button type="submit" class="btn btn-primary" id="2fa-btn"><i class="fa-solid fa-check-circle" aria-hidden="true"></i>{{ _('Vahvista ja kirjaudu') }}</button>
           <button type="button" class="btn btn-secondary" id="back-to-login"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>{{ _('Takaisin kirjautumiseen') }}</button>
@@ -188,8 +186,7 @@ loginForm.addEventListener('submit', async function (event) {
     } else if (data.enabled) {
       loginContainer.classList.add('hidden');
       twoFaContainer.classList.remove('hidden');
-      document.getElementById('mfauser').value = formData.get('username');
-      document.getElementById('mfapass').value = formData.get('password');
+      document.getElementById('password').value = '';
       document.getElementById('2fa_code').focus();
     } else if (data.valid) {
       setMessage('error-message', loginMessages.loginSuccess, 'success');

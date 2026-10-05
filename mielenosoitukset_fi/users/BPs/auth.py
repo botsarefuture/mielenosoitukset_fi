@@ -1,5 +1,6 @@
 import json
 import re
+import time
 from flask import (
     Blueprint,
     render_template,
@@ -55,6 +56,54 @@ from mielenosoitukset_fi.utils.tokens import (
     tokens_collection,
 )
 from mielenosoitukset_fi.utils.step_up import clear_elevation, is_elevated, sudo_required
+
+
+MFA_PENDING_LOGIN_KEY = "mfa_pending_login"
+MFA_PENDING_LOGIN_TTL_SECONDS = 5 * 60
+
+
+def _clear_pending_mfa_login():
+    session.pop(MFA_PENDING_LOGIN_KEY, None)
+    session.modified = True
+
+
+def _set_pending_mfa_login(user):
+    """Remember a verified first factor without retaining its password."""
+    session[MFA_PENDING_LOGIN_KEY] = {
+        "user_id": str(user._id),
+        "created_at": int(time.time()),
+    }
+    session.modified = True
+
+
+def _get_pending_mfa_user():
+    """Return the short-lived pending MFA user, clearing invalid state."""
+    pending = session.get(MFA_PENDING_LOGIN_KEY)
+    if not isinstance(pending, dict):
+        return None
+
+    try:
+        created_at = int(pending["created_at"])
+        user_id = ObjectId(pending["user_id"])
+    except (KeyError, TypeError, ValueError):
+        _clear_pending_mfa_login()
+        return None
+
+    if time.time() - created_at > MFA_PENDING_LOGIN_TTL_SECONDS:
+        _clear_pending_mfa_login()
+        return None
+
+    user_doc = _get_mongo().users.find_one({"_id": user_id})
+    if not user_doc:
+        _clear_pending_mfa_login()
+        return None
+
+    user = User.from_db(user_doc)
+    if not user.confirmed or not user.mfa_enabled:
+        _clear_pending_mfa_login()
+        return None
+
+    return user
 
 
 def generate_qr(url: str) -> str:
@@ -695,6 +744,7 @@ def mfa_check():
     """
 
     try:
+        _clear_pending_mfa_login()
         username = normalize_username(request.form.get("username"))
         user = _find_user_by_username(username)
         user = User.from_db(user)
@@ -707,6 +757,11 @@ def mfa_check():
             except Exception:
                 pass
             return jsonify({"enabled": False, "valid": False, "unverified": True})
+
+        if user.mfa_enabled:
+            _set_pending_mfa_login(user)
+        else:
+            _clear_pending_mfa_login()
 
         return jsonify({"enabled": user.mfa_enabled, "valid": True})
 
@@ -770,42 +825,68 @@ def login():
     if request.method == "POST":
         username = normalize_username(request.form.get("username"))
         password = request.form.get("password")
+        mfa_code = (request.form.get("2fa_code") or "").strip()
 
-        if not username or not password:
-            flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
-            return redirect(url_for("users.auth.login", next=safe_next_page))
-
-        user_doc = _find_user_by_username(username)
-        
         user_ip = get_client_ip()
         user_agent = request.headers.get("User-Agent", "")
 
-        if not user_doc:
-            flash_message(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
-            log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="User not found")
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+        # JavaScript-assisted MFA posts only the one-time code. The password was
+        # already verified by /2fa_check and is never copied into the DOM.
+        if mfa_code and not username and not password:
+            user = _get_pending_mfa_user()
+            if not user:
+                flash_message(
+                    "Kirjautumisvahvistus on vanhentunut. Syötä käyttäjänimi ja salasana uudelleen.",
+                    "warning",
+                )
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        user = User.from_db(user_doc)
-        if not user.check_password(password):
-            flash_message("Käyttäjänimi tai salasana on väärin.", "error")
-            log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Invalid password", user_id=user.id)
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+            username = user.username
+            if not UserMFA(user._id).verify_token(mfa_code):
+                log_login_attempt(
+                    username,
+                    success=False,
+                    ip=user_ip,
+                    user_agent=user_agent,
+                    reason="MFA failed",
+                    user_id=user._id,
+                )
+                flash_message("Väärä MFA-koodi.", "error")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+        else:
+            if not username or not password:
+                flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        if not user.confirmed:
-            flash_message(
-                "Kirjautuminen estetty: vahvista sähköpostiosoitteesi ennen kirjautumista. "
-                "Tarkista sähköpostisi ja avaa vahvistuslinkki (lähetimme uuden linkin).",
-                "warning",
-            )
-            verify_emailer(user.email, username)
-            log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Email not verified", user_id=user.id)
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+            user_doc = _find_user_by_username(username)
+            if not user_doc:
+                flash_message(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
+                log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="User not found")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        # MFA check (assuming your meow function does this)
-        if user.mfa_enabled and not meow(user):
-            log_login_attempt(username, success=False, ip=user_ip, user_agent=user_agent, reason="MFA failed", user_id=user._id)
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+            user = User.from_db(user_doc)
+            if not user.check_password(password):
+                flash_message("Käyttäjänimi tai salasana on väärin.", "error")
+                log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Invalid password", user_id=user.id)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
+            if not user.confirmed:
+                flash_message(
+                    "Kirjautuminen estetty: vahvista sähköpostiosoitteesi ennen kirjautumista. "
+                    "Tarkista sähköpostisi ja avaa vahvistuslinkki (lähetimme uuden linkin).",
+                    "warning",
+                )
+                verify_emailer(user.email, username)
+                log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Email not verified", user_id=user.id)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+
+            # Keep direct/no-JavaScript login compatible: credentials and an MFA
+            # code may still be submitted together in a single request.
+            if user.mfa_enabled and not meow(user):
+                log_login_attempt(username, success=False, ip=user_ip, user_agent=user_agent, reason="MFA failed", user_id=user._id)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+
+        _clear_pending_mfa_login()
 
         # Everything good, log the user in
         login_user(user)

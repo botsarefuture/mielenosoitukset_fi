@@ -96,6 +96,16 @@ def occurrence_end_at(document: dict[str, Any], timezone) -> datetime | None:
     return datetime.combine(occurrence_date, end_time, tzinfo=timezone)
 
 
+def _parse_clock(value: Any) -> time | None:
+    """Return a clock time for demonstration storage formats, or None."""
+    for pattern in ("%H:%M:%S", "%H:%M"):
+        try:
+            return datetime.strptime(str(value), pattern).time()
+        except ValueError:
+            continue
+    return None
+
+
 def select_relevant_occurrence(
     documents: list[dict[str, Any]],
     now: datetime,

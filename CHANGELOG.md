@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Fixed recurring-series occurrence selection to parse start times and preserve the midnight fallback for missing or invalid values.
 - Consolidated recurring demonstrations into one search-canonical series page that opens the next relevant occurrence by default and exposes every date in an accessible server-rendered chooser.
 - Kept demonstration detail pages aligned with the sitemap's future discovery horizon: events beyond two years now use `noindex, follow`, while sitemap event priorities decrease with distance from the current date.
 - Recurring-series pages with no upcoming occurrences regain the "Seuraa sarjaa" follow button: signed-in users can still watch a series for new dates from the empty state, signed-out users get a sign-in hint, and follow failures show the shared safe flash feedback instead of native dialogs. The empty-state route now also passes the current follow state.

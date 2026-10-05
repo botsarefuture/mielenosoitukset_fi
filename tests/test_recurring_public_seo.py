@@ -205,6 +205,38 @@ def test_selection_skips_cancelled_future_occurrence():
     assert select_relevant_occurrence([cancelled, active], now) is active
 
 
+@pytest.mark.parametrize(
+    "start_fields",
+    [
+        {"start_time": "09:00"},
+        {"start_time": "09:00:30"},
+        {},
+        {"start_time": None},
+        {"start_time": ""},
+        {"start_time": "invalid"},
+        {"start_time": "25:00"},
+    ],
+)
+def test_selection_orders_start_times_with_midnight_fallback(start_fields):
+    early = {
+        "_id": "z",
+        "date": "2026-10-06",
+        "end_time": "14:00",
+        **start_fields,
+    }
+    late = {
+        "_id": "a",
+        "date": "2026-10-06",
+        "start_time": "12:00",
+        "end_time": "14:00",
+    }
+    before = datetime.fromisoformat("2026-10-05T12:00:00+03:00")
+    after = datetime.fromisoformat("2026-10-07T12:00:00+03:00")
+
+    assert select_relevant_occurrence([late, early], before) is early
+    assert select_relevant_occurrence([early, late], after) is late
+
+
 def test_same_day_occurrence_remains_current_until_its_end_time():
     occurrence = {
         "_id": ObjectId(),

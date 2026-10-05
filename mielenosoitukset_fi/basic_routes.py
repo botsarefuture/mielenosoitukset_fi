@@ -3614,15 +3614,20 @@ def init_routes(app):
         ) and not current_user.has_permission("VIEW_DEMO"):
             abort(401)
 
+        # Public recurring siblings must stay usable: do not load every generated
+        # child occurrence into the page/view object. Cap the visible window so the
+        # page is not a multi-MB dump for long-running series.
         child_filter = {
             "parent": {"$in": [parent_id, str(parent_id)]},
             "approved": True,
+            "hide": False,
+            "date": {"$gte": date.today().isoformat(), "$lte": (date.today() + timedelta(days=90)).isoformat()},
             "$and": DEMO_FILTER["$and"],
         }
         occurrences = list(
             mongo.demonstrations.find(child_filter).sort(
                 [("date", ASCENDING), ("start_time", ASCENDING), ("_id", ASCENDING)]
-            )
+            ).limit(16)
         )
         local_timezone = current_app.config["LOCAL_TIMEZONE"]
         local_now = datetime.now(local_timezone)

@@ -1,0 +1,148 @@
+/*
+  Recurring series siblings page (public)
+  Kept intentionally small: the page now renders a capped future window plus a
+  collapsed past/cancelled list, instead of dumping every generated child into
+  the DOM.
+*/
+
+.user-workspace.recurring-series {
+  --occurrence-gap: 1rem;
+}
+
+.user-data-card__header {
+  margin-bottom: 1.25rem;
+}
+
+.user-data-card__subheading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--bs-body-color);
+  margin: 0 0 0.75rem;
+}
+
+.user-data-card__subheading i {
+  color: var(--bs-success);
+}
+
+.occurrence-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--occurrence-gap);
+}
+
+.occurrence-item {
+  margin: 0;
+}
+
+.occurrence-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.625rem;
+  background-color: var(--bs-card-bg);
+  color: var(--bs-body-color);
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.occurrence-link:hover,
+.occurrence-link:focus-visible {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 3px var(--bs-primary-bg-subtle);
+  transform: translateY(-1px);
+}
+
+.occurrence-link[aria-disabled="true"] {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.occurrence-date {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.occurrence-time {
+  color: var(--bs-secondary-color);
+  font-size: 0.9rem;
+}
+
+.occurrence-badge {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.occurrence-badge-cancelled {
+  background-color: var(--bs-danger-bg-subtle);
+  color: var(--bs-danger-text-emphasis);
+}
+
+.user-data-card__details {
+  margin-top: 1.25rem;
+}
+
+.user-data-card__details-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--bs-border-color);
+}
+
+.user-data-card__details-summary i {
+  color: var(--bs-secondary-color);
+}
+
+.user-data-card__details-count {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--bs-secondary-color);
+  background-color: var(--bs-secondary-bg-subtle);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.user-data-card__details[open] .user-data-card__details-summary {
+  border-bottom: 1px solid var(--bs-border-color);
+  border-bottom-color: var(--bs-border-color);
+}
+
+.user-data-card__details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.occurrence-list-dense {
+  margin-top: 0.75rem;
+}
+
+.user-data-card__more {
+  margin-top: 1rem;
+  color: var(--bs-secondary-color);
+  font-size: 0.9rem;
+}
+
+.user-data-card__more .btn {
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 576px) {
+  .occurrence-list,
+  .occurrence-list-dense {
+    grid-template-columns: 1fr;
+  }
+}

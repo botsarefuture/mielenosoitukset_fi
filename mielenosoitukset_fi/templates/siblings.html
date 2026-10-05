@@ -6,7 +6,7 @@
 {% block robots %}<meta name="robots" content="noindex, follow" />{% endblock %}
 
 {% block content %}
-<main class="user-workspace recurring-series-empty">
+<main class="user-workspace recurring-series">
   <header class="user-page-heading">
     <div class="user-page-heading__content">
       <p class="user-page-heading__eyebrow">
@@ -18,17 +18,102 @@
     </div>
   </header>
 
-  <section class="user-data-card" aria-labelledby="recurring-empty-title">
-    <div class="user-data-card__content">
-      <h2 id="recurring-empty-title">{{ _('Ei tulevia ajankohtia') }}</h2>
-      <p>{{ _('Tälle toistuvalle tapahtumalle ei ole vielä julkaistu ajankohtia.') }}</p>
-    </div>
-    <div class="user-data-card__actions">
-      <a class="btn btn-primary" href="{{ url_for('demonstrations') }}">
-        <i class="fa-solid fa-list" aria-hidden="true"></i>
-        {{ _('Selaa kaikkia mielenosoituksia') }}
-      </a>
-    </div>
-  </section>
+  {% if occurrences or past_occurrences %}
+    <section class="user-data-card" aria-labelledby="recurring-dates-title">
+      <div class="user-data-card__header">
+        <h2 id="recurring-dates-title" class="user-data-card__title">
+          <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+          {{ _('Kaikki tapahtuman ajankohdat') }}
+        </h2>
+      </div>
+
+      {% if occurrences %}
+        <div class="user-data-card__section">
+          <h3 class="user-data-card__subheading">
+            <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+            {{ _('Tulevat ajankohdat') }}
+          </h3>
+          <ul class="occurrence-list">
+            {% for item in occurrences %}
+              <li class="occurrence-item">
+                <a class="occurrence-link" href="{{ url_for('demonstration_detail', demo_id=item.id) }}"
+                   {% if item.cancelled %}aria-disabled="true"{% endif %}>
+                  <time class="occurrence-date" datetime="{{ item.date }}">{{ item.date | date('%d.%m.%Y') }}</time>
+                  <span class="occurrence-time">
+                    {{ item.start_time | time('%H:%M') }}
+                    {% if item.end_time %}
+                      – {{ item.end_time | time('%H:%M') }}
+                    {% endif %}
+                  </span>
+                  {% if item.cancelled %}
+                    <span class="occurrence-badge occurrence-badge-cancelled">{{ _('Peruttu') }}</span>
+                  {% endif %}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      {% if past_occurrences %}
+        <details class="user-data-card__details">
+          <summary class="user-data-card__details-summary">
+            <i class="fa-solid fa-calendar-arrow-down" aria-hidden="true"></i>
+            {{ _('Menneet ja perutut ajankohdat') }}
+            <span class="user-data-card__details-count">{{ past_occurrences|length }}</span>
+          </summary>
+          <ul class="occurrence-list occurrence-list-dense">
+            {% for item in past_occurrences %}
+              <li class="occurrence-item">
+                <a class="occurrence-link" href="{{ url_for('demonstration_detail', demo_id=item.id) }}"
+                   {% if item.cancelled %}aria-disabled="true"{% endif %}>
+                  <time class="occurrence-date" datetime="{{ item.date }}">{{ item.date | date('%d.%m.%Y') }}</time>
+                  <span class="occurrence-time">
+                    {{ item.start_time | time('%H:%M') }}
+                    {% if item.end_time %}
+                      – {{ item.end_time | time('%H:%M') }}
+                    {% endif %}
+                  </span>
+                  {% if item.cancelled %}
+                    <span class="occurrence-badge occurrence-badge-cancelled">{{ _('Peruttu') }}</span>
+                  {% endif %}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% endif %}
+
+      {% if more_available %}
+        <p class="user-data-card__more">
+          {{ _('Sarjassa on enemmän ajankohtia. Tämä julkisivu näyttää vain ajankohdat seuraavien kahden vuoden aikataulussa.') }}
+        </p>
+        <a class="btn btn-secondary" href="{{ url_for('demonstrations') }}">
+          <i class="fa-solid fa-list" aria-hidden="true"></i>
+          {{ _('Selaa kaikkia mielenosoituksia') }}
+        </a>
+      {% else %}
+        <div class="user-data-card__actions">
+          <a class="btn btn-primary" href="{{ url_for('demonstrations') }}">
+            <i class="fa-solid fa-list" aria-hidden="true"></i>
+            {{ _('Selaa kaikkia mielenosoituksia') }}
+          </a>
+        </div>
+      {% endif %}
+    </section>
+  {% else %}
+    <section class="user-data-card" aria-labelledby="recurring-empty-title">
+      <div class="user-data-card__content">
+        <h2 id="recurring-empty-title">{{ _('Ei tulevia ajankohtia') }}</h2>
+        <p>{{ _('Tälle toistuvalle tapahtumalle ei ole vielä julkaistu ajankohtia.') }}</p>
+      </div>
+      <div class="user-data-card__actions">
+        <a class="btn btn-primary" href="{{ url_for('demonstrations') }}">
+          <i class="fa-solid fa-list" aria-hidden="true"></i>
+          {{ _('Selaa kaikkia mielenosoituksia') }}
+        </a>
+      </div>
+    </section>
+  {% endif %}
 </main>
 {% endblock %}

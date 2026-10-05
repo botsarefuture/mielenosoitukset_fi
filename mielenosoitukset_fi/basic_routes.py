@@ -503,6 +503,29 @@ def _new_submission_token():
     return uuid.uuid4().hex
 
 
+def _collect_submission_organizers(form):
+    """Collect organizer rows without assuming their numeric indexes are contiguous."""
+    organizer_indices = sorted(
+        {
+            int(match.group(1))
+            for key in form.keys()
+            if (match := re.fullmatch(r"organizer_name_(\d+)", key))
+        }
+    )
+
+    return [
+        Organizer(
+            name=(form.get(f"organizer_name_{index}") or "").strip(),
+            email=(form.get(f"organizer_email_{index}") or "").strip(),
+            website=(form.get(f"organizer_website_{index}") or "").strip(),
+            is_private=f"organizer_is_private_{index}" in form,
+            show_name_public=f"organizer_show_name_{index}" in form,
+            show_email_public=f"organizer_show_email_{index}" in form,
+        )
+        for index in organizer_indices
+    ]
+
+
 def _build_submission_fingerprint(payload: dict) -> str:
     """Build a stable fingerprint to detect quick duplicate submissions."""
     def _norm(value):
@@ -1068,6 +1091,7 @@ def add_api_routes(app):
 
 
 def init_routes(app):
+    """Register public routes, request hooks, and template context processors."""
     from mielenosoitukset_fi.utils.cache import cache
     
     
@@ -1973,20 +1997,7 @@ def init_routes(app):
                 )
 
             # --- Collect organizers ---
-            organizers = []
-            i = 1
-            while True:
-                name_field = request.form.get(f"organizer_name_{i}")
-                if not name_field and f"organizer_name_{i}" not in request.form:
-                    break
-                organizers.append(
-                    Organizer(
-                        name=(name_field or "").strip(),
-                        email=(request.form.get(f"organizer_email_{i}") or "").strip(),
-                        website=(request.form.get(f"organizer_website_{i}") or "").strip(),
-                    )
-                )
-                i += 1
+            organizers = _collect_submission_organizers(request.form)
 
             
 

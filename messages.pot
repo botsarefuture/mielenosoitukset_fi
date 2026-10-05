@@ -3677,3 +3677,11 @@ msgid ""
 "Vahvistus on virheellinen, vanhentunut tai jo käytetty. Vahvista "
 "henkilöllisyytesi uudelleen."
 msgstr ""
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Luonnos palautettiin tästä selaimesta. Se poistuu automaattisesti 24 tunnin kuluttua."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/submit.html
+msgid "Poista luonnos ja aloita alusta"
+msgstr ""

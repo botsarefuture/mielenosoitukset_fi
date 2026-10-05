@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Kept demonstration detail pages aligned with the sitemap's future discovery horizon: events beyond two years now use `noindex, follow`, while sitemap event priorities decrease with distance from the current date.
+
 ### Added
 * **Fresh step-up authentication for user deletion** — Every admin-initiated user deletion now requires a fresh WebAuthn/passkey/sudo authentication ceremony, even if the administrator already has a valid recent authenticated/sudo session. The previous "recent authentication" window is explicitly ignored for this operation. A new single-use, action-bound fresh step-up token is issued after a successful WebAuthn or password+TOTP verification and must be presented with the deletion request. Tokens expire after 60 seconds and cannot be reused for multiple deletions. The deletion modal offers both passkey and password plus MFA paths, so administrators without a passkey are not locked out.
 * Public templates now have an exact inline-style debt contract: every remaining historical `<style>` block and static `style=` attribute is content-hashed in a reviewed baseline, so new or silently rewritten page-owned CSS fails CI while shared-component migrations can deliberately shrink the baseline.

@@ -34,7 +34,7 @@
   <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
   <meta name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa." />
   <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
-  <meta name="robots" content="index, follow" />
+  {% block robots %}<meta name="robots" content="index, follow" />{% endblock %}
   <meta name="author" content="Mielenosoitukset.fi" />
   <meta name="theme-color" content="#007bff" />
 

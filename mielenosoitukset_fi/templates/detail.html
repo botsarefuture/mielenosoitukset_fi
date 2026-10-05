@@ -59,6 +59,10 @@
 {{ metadata_title }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
 {% endblock %}
 
+{% block robots %}
+<meta name="robots" content="{{ 'noindex, follow' if seo_noindex else 'index, follow' }}" />
+{% endblock %}
+
 {% block og_title %}
 {{ metadata_title }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
 {% endblock %}

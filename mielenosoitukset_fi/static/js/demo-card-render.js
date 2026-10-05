@@ -19,6 +19,9 @@ function normalizeDemoCardData(demo) {
   const startTime = demo.start_time_display || format_time(demo.start_time);
   const endTime = demo.end_time_display || (demo.end_time ? format_time(demo.end_time) : "");
   const detailId = demo.slug || demo.running_number || demo._id;
+  const detailUrl = demo.detail_url || (demo.parent
+    ? `/demonstration/${demo.parent}/children`
+    : (detailId ? `/demonstration/${detailId}` : ""));
 
   return {
     ...demo,
@@ -27,7 +30,7 @@ function normalizeDemoCardData(demo) {
     formattedDate,
     startTime,
     endTime,
-    detailUrl: detailId ? `/demonstration/${detailId}` : "",
+    detailUrl,
   };
 }
 

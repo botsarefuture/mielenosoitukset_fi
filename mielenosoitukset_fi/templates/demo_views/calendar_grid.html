@@ -45,7 +45,7 @@
             <ul>
                 {% for demo in month_demos.get(day) %}
                 <li>
-                    <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="demo-cell"
+                    <a href="{% if demo.parent %}{{ url_for('siblings_meeting', parent=demo.parent) }}{% else %}{{ url_for('demonstration_detail', demo_id=demo._id) }}{% endif %}" class="demo-cell"
                         data-title="{{ demo.title|e or _('Ei otsikkoa') }}" data-desc="{{ demo.description|e or '' }}"
                         data-img="{{ demo.preview_image|e or demo.img|e }}">
                         {{ demo.title|e or _('Ei otsikkoa') }}
@@ -264,7 +264,9 @@
                 grouped[dateStr].forEach(demo => {
                     const li = document.createElement("li");
                     const a = document.createElement("a");
-                    a.href = `/demonstrations/${demo._id}`;
+                    a.href = demo.detail_url || (demo.parent
+                        ? `/demonstration/${demo.parent}/children`
+                        : `/demonstration/${demo._id}`);
                     a.textContent = demo.title || calendarI18n.untitled;
                     a.className = "demo-cell";
                     ul.appendChild(a);
@@ -368,7 +370,9 @@
 
             const link = __.querySelector("a.mobile-demo-item");
             const baseHref = link.dataset.href;
-            link.href = `${baseHref}${demo._id}`;
+            link.href = demo.detail_url || (demo.parent
+                ? `/demonstration/${demo.parent}/children`
+                : `${baseHref}${demo._id}`);
 
             const title = link.querySelector(".mobile-demo-title");
 

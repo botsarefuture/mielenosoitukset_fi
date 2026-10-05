@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from typing import Any
 
 
@@ -76,3 +76,50 @@ def demo_sitemap_priority(value: Any, reference_date: date | None = None) -> str
     distance_days = min(abs((demo_date - today).days), SITEMAP_FUTURE_DAYS)
     priority = 1.0 - (0.5 * distance_days / SITEMAP_FUTURE_DAYS)
     return f"{priority:.3f}".rstrip("0").rstrip(".")
+
+
+def occurrence_end_at(document: dict[str, Any], timezone) -> datetime | None:
+    """Return the local end instant used to decide whether an occurrence is over."""
+    occurrence_date = parse_demo_date(document.get("date"))
+    if occurrence_date is None:
+        return None
+
+    raw_end = document.get("end_time") or document.get("start_time")
+    end_time = time(23, 59, 59)
+    if raw_end:
+        for pattern in ("%H:%M:%S", "%H:%M"):
+            try:
+                end_time = datetime.strptime(str(raw_end), pattern).time()
+                break
+            except ValueError:
+                continue
+    return datetime.combine(occurrence_date, end_time, tzinfo=timezone)
+
+
+def select_relevant_occurrence(
+    documents: list[dict[str, Any]],
+    now: datetime,
+) -> dict[str, Any] | None:
+    """Select the next active occurrence, or the latest past one as fallback."""
+    valid_documents = [
+        document for document in documents if occurrence_end_at(document, now.tzinfo)
+    ]
+    if not valid_documents:
+        return None
+
+    ordered = sorted(
+        valid_documents,
+        key=lambda document: (
+            str(document.get("date") or ""),
+            str(document.get("start_time") or ""),
+            str(document.get("_id") or ""),
+        ),
+    )
+    for document in ordered:
+        if document.get("cancelled"):
+            continue
+        if occurrence_end_at(document, now.tzinfo) >= now:
+            return document
+
+    non_cancelled = [document for document in ordered if not document.get("cancelled")]
+    return (non_cancelled or ordered)[-1]

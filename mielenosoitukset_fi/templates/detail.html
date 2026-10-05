@@ -23,6 +23,15 @@
 {% if detail_layout not in ['classic', 'overview'] %}
   {% set detail_layout = 'overview' %}
 {% endif %}
+{% if recurring_context is not defined %}
+  {% set recurring_context = none %}
+{% endif %}
+{% if seo_noindex is not defined %}
+  {% set seo_noindex = false %}
+{% endif %}
+{% if detail_canonical_url is not defined %}
+  {% set detail_canonical_url = request.base_url %}
+{% endif %}
 
 {% macro event_description(collapsible=false) %}
   {% if demo['description'] %}
@@ -55,6 +64,80 @@
   {% endif %}
 {% endmacro %}
 
+{% macro recurring_occurrence_switcher(context) %}
+<section class="recurring-occurrence-switcher animate-fade-in-up"
+         aria-labelledby="recurring-occurrence-title">
+  <div class="recurring-occurrence-switcher__header">
+    <div>
+      <p class="recurring-occurrence-switcher__kicker">
+        <i class="fa-solid fa-repeat" aria-hidden="true"></i>
+        {{ _('Toistuva tapahtuma') }}
+      </p>
+      <h2 id="recurring-occurrence-title">{{ _('Kaikki tapahtuman ajankohdat') }}</h2>
+      {% if context.has_upcoming %}
+      <p>{{ _('Valitse ajankohta nähdäksesi sen tarkat tiedot.') }}</p>
+      {% else %}
+      <p>{{ _('Ei tulevia ajankohtia. Näytetään sarjan viimeisin tapahtuma.') }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% set upcoming_occurrences = context.occurrences | rejectattr('is_past') | list %}
+  {% set past_occurrences = context.occurrences | selectattr('is_past') | reverse | list %}
+
+  {% if upcoming_occurrences %}
+  <nav aria-label="{{ _('Tulevat tapahtumat') }}">
+    <ol class="recurring-occurrence-list">
+      {% for occurrence in upcoming_occurrences %}
+      <li>
+        <a class="recurring-occurrence-link{% if occurrence.is_selected %} is-selected{% endif %}{% if occurrence.cancelled %} is-cancelled{% endif %}"
+           href="{{ occurrence.url }}"
+           {% if occurrence.is_selected %}aria-current="date"{% endif %}>
+          <span class="recurring-occurrence-link__date">{{ occurrence.date | date('%d.%m.%Y') }}</span>
+          <span class="recurring-occurrence-link__time">
+            {{ occurrence.start_time | time('%H:%M') }}
+            {% if occurrence.end_time %}–{{ occurrence.end_time | time('%H:%M') }}{% endif %}
+          </span>
+          {% if occurrence.cancelled %}
+          <span class="recurring-occurrence-link__status">{{ _('Peruttu') }}</span>
+          {% elif occurrence.is_selected %}
+          <span class="recurring-occurrence-link__status">{{ _('Valittu') }}</span>
+          {% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ol>
+  </nav>
+  {% endif %}
+
+  {% if past_occurrences %}
+  <details class="recurring-occurrence-history" {% if not context.has_upcoming %}open{% endif %}>
+    <summary>{{ _('Aiemmat ajankohdat') }} ({{ past_occurrences | length }})</summary>
+    <ol class="recurring-occurrence-list recurring-occurrence-list--past">
+      {% for occurrence in past_occurrences %}
+      <li>
+        <a class="recurring-occurrence-link{% if occurrence.is_selected %} is-selected{% endif %}{% if occurrence.cancelled %} is-cancelled{% endif %}"
+           href="{{ occurrence.url }}"
+           {% if occurrence.is_selected %}aria-current="date"{% endif %}>
+          <span class="recurring-occurrence-link__date">{{ occurrence.date | date('%d.%m.%Y') }}</span>
+          <span class="recurring-occurrence-link__time">
+            {{ occurrence.start_time | time('%H:%M') }}
+            {% if occurrence.end_time %}–{{ occurrence.end_time | time('%H:%M') }}{% endif %}
+          </span>
+          {% if occurrence.cancelled %}
+          <span class="recurring-occurrence-link__status">{{ _('Peruttu') }}</span>
+          {% elif occurrence.is_selected %}
+          <span class="recurring-occurrence-link__status">{{ _('Valittu') }}</span>
+          {% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ol>
+  </details>
+  {% endif %}
+</section>
+{% endmacro %}
+
 {% block title %}
 {{ metadata_title }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
 {% endblock %}
@@ -62,6 +145,12 @@
 {% block robots %}
 <meta name="robots" content="{{ 'noindex, follow' if seo_noindex else 'index, follow' }}" />
 {% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="{{ detail_canonical_url }}" />
+{% endblock %}
+
+{% block og_url %}{{ detail_canonical_url }}{% endblock %}
 
 {% block og_title %}
 {{ metadata_title }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
@@ -127,7 +216,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     },
     "description": {{ metadata_description | tojson }},
     "image": {{ (demo.get('preview_image') or url_for('screenshot', demo_id=demo['_id'], _external=True)) | tojson }},
-    "url": {{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) | tojson }},
+    "url": {{ detail_canonical_url | tojson }},
     "organizer": {
       "@type": "Organization",
       "name": {{ metadata_author | tojson }},
@@ -1494,13 +1583,13 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       <span class="detail-layout-preference__label">{{ _('Näkymä') }}</span>
       <div class="detail-layout-preference__options">
         <a class="detail-layout-preference__option{% if detail_layout == 'overview' %} is-active{% endif %}"
-           href="{{ url_for('demonstration_detail', demo_id=request.view_args.get('demo_id'), detail_layout='overview') }}"
+           href="{% if recurring_context %}{{ url_for('siblings_meeting', parent=recurring_context.parent_id, occurrence=demo.get('slug') or demo['_id'], detail_layout='overview') }}{% else %}{{ url_for('demonstration_detail', demo_id=request.view_args.get('demo_id'), detail_layout='overview') }}{% endif %}"
            {% if detail_layout == 'overview' %}aria-current="true"{% endif %}>
           {{ _('Yleiskuva') }}
           {% if detail_layout == 'overview' %}<span class="visually-hidden">({{ _('käytössä') }})</span>{% endif %}
         </a>
         <a class="detail-layout-preference__option{% if detail_layout == 'classic' %} is-active{% endif %}"
-           href="{{ url_for('demonstration_detail', demo_id=request.view_args.get('demo_id'), detail_layout='classic') }}"
+           href="{% if recurring_context %}{{ url_for('siblings_meeting', parent=recurring_context.parent_id, occurrence=demo.get('slug') or demo['_id'], detail_layout='classic') }}{% else %}{{ url_for('demonstration_detail', demo_id=request.view_args.get('demo_id'), detail_layout='classic') }}{% endif %}"
            {% if detail_layout == 'classic' %}aria-current="true"{% endif %}>
           {{ _('Perinteinen') }}
           {% if detail_layout == 'classic' %}<span class="visually-hidden">({{ _('käytössä') }})</span>{% endif %}
@@ -1618,6 +1707,10 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     </div>
   </section>
 
+  {% if recurring_context %}
+    {{ recurring_occurrence_switcher(recurring_context) }}
+  {% endif %}
+
   {% set gallery_images = get_demo_gallery_images(demo, include_preview=False) %}
   {% set cover_source = (demo.cover_source or '')|lower %}
   {% set has_manual_gallery = (demo.gallery_images and demo.gallery_images|length > 0) or demo.img %}
@@ -1722,9 +1815,9 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
   <!-- Social Share -->
   <div class="action-buttons animate-fade-in-up">
-    {% set demo_url = url_for('demonstration_detail', demo_id=demo['_id'], _external=True) %}
+    {% set demo_url = detail_canonical_url %}
     {% set share_text = demo['title'] ~ ' ' ~ demo_url %}
-    <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ demo_url|urlencode }}"
       target="_blank" class="btn btn-social facebook">
       <i class="fa-brands fa-facebook-f"></i>
       {{ _('Jaa Facebookissa') }}
@@ -1739,7 +1832,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       <i class="fa-brands fa-x-twitter"></i>
       {{ _('Jaa X:ssä') }}
     </a>
-    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
+    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ demo_url|urlencode }}&title={{ demo['title']|urlencode }}"
       target="_blank" class="btn btn-social linkedin">
       <i class="fa-brands fa-linkedin-in"></i>
       {{ _('Jaa LinkedInissä') }}
@@ -1881,7 +1974,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       </div>
       {% endif %}
 
-      {% if demo["recurs"] and demo['repeat_schedule'] %}
+      {% if demo["recurs"] and demo['repeat_schedule'] and not recurring_context %}
       <div class="info-alert warning">
         <i class="fa-solid fa-repeat"></i>
         <div>

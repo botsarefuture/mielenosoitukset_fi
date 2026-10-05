@@ -110,8 +110,8 @@ def select_relevant_occurrence(
     ordered = sorted(
         valid_documents,
         key=lambda document: (
-            str(document.get("date") or ""),
-            str(document.get("start_time") or ""),
+            parse_demo_date(document.get("date")),
+            _parse_clock(document.get("start_time")) or time(0, 0),
             str(document.get("_id") or ""),
         ),
     )

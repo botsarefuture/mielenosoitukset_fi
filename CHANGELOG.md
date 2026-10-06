@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- The analytics rollup (`prep` background job) and the admin analytics overview now count views per demonstration with a server-side MongoDB `$group` aggregation instead of streaming the whole `analytics` collection (~1.04M documents, ~77 MB per run) into Python. This removes the repeated COLLSCAN cursor batches (`getMore`, ~205k documents each) that appeared as slow queries every 15 minutes; no index change was needed.
 - Recurring series now include approved children whose `hide` field is absent in occurrence lists and explicit selection, matching the shared public visibility filter.
 
 - Recurring child links now show the requested visible occurrence outside the bounded 90-day chooser. Cancelled dates no longer crowd out active dates; recent history and cancelled dates remain accessible in a bounded disclosure.

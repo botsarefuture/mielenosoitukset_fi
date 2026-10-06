@@ -55,6 +55,10 @@ def test_background_job_manager_executes_prep_job_and_records_audit(app, seeded_
         seeded_data["pending_demo_id"],
     }
 
+    counts = {doc["demo_id"]: doc["views"] for doc in prepped}
+    assert counts[seeded_data["demo_id"]] == 2
+    assert counts[seeded_data["pending_demo_id"]] == 1
+
     job_doc = db.background_jobs.find_one({"_id": "prep"})
     assert job_doc["last_run_status"] == "success"
     assert job_doc["last_run_triggered_by"] == "pytest"

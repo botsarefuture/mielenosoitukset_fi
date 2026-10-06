@@ -44,7 +44,7 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.city_assignment import NOT_ESCALATED_ASSIGNMENT_CLAUSE, CITY_ASSIGNMENT_FIELD
 from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.variables import CITY_LIST
-from mielenosoitukset_fi.utils.analytics import get_demo_views
+from mielenosoitukset_fi.utils.analytics import count_views_per_demo
 from mielenosoitukset_fi.utils.cache import cache
 from mielenosoitukset_fi.utils.ui_translation_catalog import (
     entry_state,
@@ -2285,8 +2285,10 @@ def admin_analytics():
 
 def render_analytics_overview():
     """ """
-    data = get_demo_views()
-    data = count_per_demo(data)
+    data = [
+        DemoViewCount(row["demo_id"], row["views"])
+        for row in count_views_per_demo()
+    ]
 
     return render_template(f"{_ADMIN_TEMPLATE_FOLDER}analytics.html", data=data)
 

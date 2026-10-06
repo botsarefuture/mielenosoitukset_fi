@@ -118,6 +118,31 @@ def count_per_demo(data):
 # And we could still fetch the data every time the report
 
 
+def count_views_per_demo():
+    """Count raw view events per demonstration using a server-side aggregation.
+
+    Returns
+    -------
+    list of dict
+        One ``{"demo_id": ObjectId, "views": int}`` entry per demonstration
+        that has at least one recorded view.
+
+    Notes
+    -----
+    Counting inside MongoDB keeps the application from pulling the whole
+    ``analytics`` collection into Python: the old ``find()`` cursor returned
+    every document (1M+) in 16 MB ``getMore`` batches on a COLLSCAN, which
+    showed up as repeated slow queries every time the rollup ran.
+    """
+    rows = mongo.analytics.aggregate(
+        [
+            {"$group": {"_id": "$demo_id", "views": {"$sum": 1}}},
+            {"$sort": {"_id": 1}},
+        ]
+    )
+    return [{"demo_id": row["_id"], "views": row["views"]} for row in rows]
+
+
 def prep():
     """This function prepares the analytics data for reporting by counting the number of views per demonstration
     and saving the data to the "prepped_analytics" collection in the database.
@@ -130,12 +155,7 @@ def prep():
 
 
     """
-    data = get_demo_views()
-    demo_count = count_per_demo(data)
-
-    prepped_data = [
-        {"demo_id": ObjectId(demo.id), "views": demo.views} for demo in demo_count
-    ]
+    prepped_data = count_views_per_demo()
 
     mongo.prepped_analytics.drop()
     mongo.prepped_analytics.insert_many(prepped_data)

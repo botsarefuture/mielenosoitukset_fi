@@ -2,6 +2,7 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from datetime import datetime, timezone
 
 from bson.objectid import ObjectId
+from pymongo import DeleteOne, InsertOne, UpdateOne
 
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 
@@ -147,18 +148,45 @@ def prep():
     """This function prepares the analytics data for reporting by counting the number of views per demonstration
     and saving the data to the "prepped_analytics" collection in the database.
 
+    Unlike the old ``drop()`` + ``insert_many()`` (which rewrote all 28k+ rows
+    every 15 minutes), rows are tracked by ``demo_id`` and written in place: a
+    ``bulk_write`` only updates rows whose count changed, inserts new demos
+    (keyed on ``demo_id``), and deletes rows for demos that no longer have raw
+    events. Unchanged counters now touch nothing, so the collection stops
+    churning and its read path never sees an empty window during the rewrite.
+
     Parameters
     ----------
-
     Returns
     -------
 
 
     """
-    prepped_data = count_views_per_demo()
+    rows = count_views_per_demo()
+    new_counts = {row["demo_id"]: row["views"] for row in rows}
 
-    mongo.prepped_analytics.drop()
-    mongo.prepped_analytics.insert_many(prepped_data)
+    existing = {
+        doc.get("demo_id"): doc
+        for doc in mongo.prepped_analytics.find({}, {"_id": 1, "demo_id": 1, "views": 1})
+        if doc.get("demo_id") is not None
+    }
+
+    ops = []
+    for demo_id, views in new_counts.items():
+        current = existing.get(demo_id)
+        if current is None:
+            ops.append(InsertOne({"_id": demo_id, "demo_id": demo_id, "views": views}))
+        elif current["views"] != views:
+            ops.append(
+                UpdateOne({"_id": current["_id"]}, {"$set": {"views": views, "demo_id": demo_id}})
+            )
+
+    # Demos that still exist as documents but no longer have raw view events.
+    for demo_id in set(existing) - set(new_counts):
+        ops.append(DeleteOne({"_id": existing[demo_id]["_id"]}))
+
+    if ops:
+        mongo.prepped_analytics.bulk_write(ops, ordered=False)
 
 
 def get_prepped_data(demo_id=None):

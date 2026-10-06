@@ -147,3 +147,87 @@ def test_rebuild_job_is_registered(app, db):
     job_doc = db.background_jobs.find_one({"_id": "rebuild_d_analytics"})
     assert job_doc is not None
     assert job_doc["allow_manual_trigger"] is True
+
+
+def _insert_raw_events(db, demo_id, count):
+    now = datetime(2026, 6, 1, 9, 50, 0, tzinfo=timezone.utc)
+    db.analytics.insert_many(
+        {"_id": _oid_at(now), "demo_id": demo_id, "timestamp": now}
+        for _ in range(count)
+    )
+    return now
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_prep_writes_in_place_and_is_idempotent(db):
+    from mielenosoitukset_fi.utils.analytics import prep
+
+    demo_id = ObjectId()
+    _insert_raw_events(db, demo_id, 2)
+    db.prepped_analytics.drop()
+
+    prep()
+    prep()  # Second run must not duplicate the rows.
+
+    docs = list(db.prepped_analytics.find({"demo_id": demo_id}))
+    assert len(docs) == 1
+    assert docs[0]["_id"] == demo_id
+    assert docs[0]["views"] == 2
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_prep_updates_changed_counts_without_duplicating(db):
+    from mielenosoitukset_fi.utils.analytics import prep
+
+    demo_id = ObjectId()
+    _insert_raw_events(db, demo_id, 1)
+    db.prepped_analytics.drop()
+
+    prep()
+    _insert_raw_events(db, demo_id, 2)  # three raw events in total now
+    prep()
+
+    docs = list(db.prepped_analytics.find({"demo_id": demo_id}))
+    assert len(docs) == 1
+    assert docs[0]["views"] == 3
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_prep_updates_legacy_random_id_rows_in_place(db):
+    from mielenosoitukset_fi.utils.analytics import prep
+
+    demo_id = ObjectId()
+    _insert_raw_events(db, demo_id, 2)
+    db.prepped_analytics.drop()
+    legacy_id = ObjectId()  # random _id, as the old drop+reinsert wrote
+    db.prepped_analytics.insert_one(
+        {"_id": legacy_id, "demo_id": demo_id, "views": 0}
+    )
+
+    prep()
+
+    docs = list(db.prepped_analytics.find({"demo_id": demo_id}))
+    assert len(docs) == 1
+    assert docs[0]["views"] == 2
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_prep_removes_rows_for_demos_without_raw_events(db):
+    from mielenosoitukset_fi.utils.analytics import prep
+
+    demo_id = ObjectId()
+    _insert_raw_events(db, demo_id, 1)
+    stale_demo_id = ObjectId()
+    db.prepped_analytics.drop()
+    db.prepped_analytics.insert_one(
+        {"_id": stale_demo_id, "demo_id": stale_demo_id, "views": 9}
+    )
+
+    prep()
+
+    assert db.prepped_analytics.find_one({"_id": stale_demo_id}) is None
+    assert db.prepped_analytics.find_one({"_id": demo_id})["views"] == 1

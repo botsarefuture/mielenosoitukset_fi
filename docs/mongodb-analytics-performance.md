@@ -2,8 +2,9 @@
 
 **Status:** investigated, fix implemented on branch `codex/analytics-rollup-aggregation`
 (commit `250684b2`), **awaiting merge/deploy**. No index was created — none was justified.
-The branch also carries the follow-up fix for the `d_analytics` double counting (see below),
-implemented but likewise not yet deployed.
+The branch also carries the follow-up fixes for the `d_analytics` double counting and the
+`prepped_analytics` drop/reinsert churn (see below), implemented but likewise not yet
+deployed.
 
 **Scope:** Task #2 of the infrastructure reliability plan (production MongoDB `lc-db`,
 `mielenosoitukset`, MongoDB 7.0.37). Read-only evidence gathering only; production was never
@@ -252,8 +253,12 @@ Redis/MailHog/LocalStack) not run locally; repo has no lint config (CI runs pyte
 2. **`demonstrations` is the biggest slow-query source:** 20,724 slow ops in the same log
    window (20,187 IXSCAN, **533 COLLSCAN**; 11,762 `aggregate`, 8,689 `find`) — matches
    the previously reported demonstrations issue.
-3. **`prepped_analytics` churn:** `prep()` still `drop()`s + re-inserts 28,604 docs every
-   15 min → 4,385 slow inserts (100–430 ms). A bulk-upsert variant would remove this.
+3. **`prepped_analytics` churn** — fixed on this branch. `prep()` used to
+   `drop()` + re-insert 28,604 rows every 15 min (4,385 slow inserts). It now
+   tracks rows by `demo_id` and bulk-writes only rows whose count changed or
+   demos that appeared/disappeared — an ordinary run touches a handful of
+   documents, the read path never sees an empty collection mid-rewrite, and
+   unchanged rows keep their identity.
 4. **Admin overview renders 28,604 rows/labels** into one table and chart — UI/performance
    smell independent of MongoDB.
 5. **Long-term:** an incremental rollup keyed on `_id` would remove the residual

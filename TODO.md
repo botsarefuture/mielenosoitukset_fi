@@ -54,8 +54,12 @@ Full status and evidence: `docs/mongodb-analytics-performance.md`.
       per pass, `ROLLUP_IN_APP` opt-in, era-aware bucketing. Tests
       `tests/test_analytics_rollup.py` (5) pass; awaiting merge/deploy, then run the rebuild
       once on prod and verify `sum(d_analytics…) == db.analytics.countDocuments()`.
-- [ ] Related follow-ups: `prepped_analytics` drop+reinsert churn (28,604 docs / 15 min),
-      `demonstrations` COLLSCAN slow ops, admin overview rendering 28,604 rows.
+- [x] `prepped_analytics` drop+reinsert churn — `prep()` now rewrites rows in
+      place keyed on `demo_id` (bulk update/insert/delete), touching only changed
+      counters instead of 28,604 drop+insert per 15 min. Implemented on branch
+      `codex/analytics-rollup-aggregation`; tests pass.
+- [ ] Related follow-ups: `demonstrations` COLLSCAN slow ops, admin overview
+      rendering 28,604 rows.
 
 ## Process
 

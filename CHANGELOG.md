@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 - The analytics rollup (`prep` background job) and the admin analytics overview now count views per demonstration with a server-side MongoDB `$group` aggregation instead of streaming the whole `analytics` collection (~1.04M documents, ~77 MB per run) into Python. This removes the repeated COLLSCAN cursor batches (`getMore`, ~205k documents each) that appeared as slow queries every 15 minutes; no index change was needed.
+- Fixed the per-demonstration dashboard analytics (`d_analytics`) double counting: the incremental rollup re-read its stored cursor every pass, wrote a per-demo `last_event_id` marker atomically with the counter increment so any replay is idempotent, and stopped swallowing rollup errors. The duplicate in-app rollup thread in `run.py` is now opt-in (`ROLLUP_IN_APP=1`); the production `anal_aggregate.service` unit stays the single writer. A new `rebuild_d_analytics` background job (interval 30 days, manual run allowed) recounts every `d_analytics` document from the raw events in one server-side aggregation, pausing the live rollup first and pruning stale documents, so inflated historical counters can be repaired on deploy.
 - Recurring series now include approved children whose `hide` field is absent in occurrence lists and explicit selection, matching the shared public visibility filter.
 
 - Recurring child links now show the requested visible occurrence outside the bounded 90-day chooser. Cancelled dates no longer crowd out active dates; recent history and cancelled dates remain accessible in a bounded disclosure.

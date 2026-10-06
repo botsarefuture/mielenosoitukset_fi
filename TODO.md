@@ -47,9 +47,13 @@ Full status and evidence: `docs/mongodb-analytics-performance.md`.
 - [x] `d_analytics` overcount investigation (Task #1) — `d_analytics` counters total
       1,930,142 vs 1,041,654 raw events (≈1.85×); minute-level proof of exact 2×
       duplicates. Live rollup has been exact since 2026-07-01, so damage is historical.
-- [ ] Repair `d_analytics` from raw events (rebuild job) + make the rollup replay-safe
+- [x] Repair `d_analytics` from raw events (rebuild job) + make the rollup replay-safe
       (per-demo `last_event_id` written atomically with the `$inc`, no swallowed errors,
-      single writer only).
+      single writer only) — **implemented on branch `codex/analytics-rollup-aggregation`**:
+      `rebuild_d_analytics` job (server-side recount + pause/`last_event_id`), cursor re-read
+      per pass, `ROLLUP_IN_APP` opt-in, era-aware bucketing. Tests
+      `tests/test_analytics_rollup.py` (5) pass; awaiting merge/deploy, then run the rebuild
+      once on prod and verify `sum(d_analytics…) == db.analytics.countDocuments()`.
 - [ ] Related follow-ups: `prepped_analytics` drop+reinsert churn (28,604 docs / 15 min),
       `demonstrations` COLLSCAN slow ops, admin overview rendering 28,604 rows.
 

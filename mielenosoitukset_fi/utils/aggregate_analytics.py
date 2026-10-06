@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+import logging
 import time
 from datetime import datetime, timezone
+
 from bson import ObjectId
 from pymongo import MongoClient, UpdateOne
 from tqdm import tqdm
@@ -15,16 +17,36 @@ RAW_COLL      = "analytics"     # incoming view events
 AGGR_COLL     = "d_analytics"   # rolled-up analytics
 META_COLL     = "_meta"         # stores last processed ObjectId
 POLL_INTERVAL = 60              # seconds
+META_ID       = "analytics_rollup"
+
+LOGGER = logging.getLogger(__name__)
+
+# Events written before 2026-01-26 stored the Helsinki wall clock in a
+# timezone-naive datetime (pymongo keeps the naive fields and labels them UTC);
+# later events store a real UTC instant. The gap between the ObjectId creation
+# time and the stored timestamp therefore identifies the legacy shape.
+LEGACY_TIMESTAMP_GAP_MIN = 90
+
+# A rebuild waits at most this long for an in-flight rollup pass to finish.
+REBUILD_SETTLE_TIMEOUT_S = 30.0
 
 # ── TIMEZONE SETUP ─────────────────────────────────────────────
 HELSINKI_TZ = pytz.timezone("Europe/Helsinki")
 
 # ── SETUP ───────────────────────────────────────────────────────
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-raw = db[RAW_COLL]
-aggr = db[AGGR_COLL]
-meta = db[META_COLL]
+_clients: dict[str, MongoClient] = {}
+
+
+def _collections():
+    """Resolve the collections from the current config (tests reload it)."""
+    uri = Config.MONGO_URI or MONGO_URI
+    name = Config.MONGO_DBNAME or DB_NAME
+    client = _clients.get(uri)
+    if client is None:
+        client = MongoClient(uri)
+        _clients[uri] = client
+    database = client[name]
+    return database[RAW_COLL], database[AGGR_COLL], database[META_COLL]
 
 def iso_date(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%d")
@@ -32,24 +54,45 @@ def iso_date(dt: datetime) -> str:
 def two(n: int) -> str:
     return f"{n:02d}"
 
-def get_last_seen_id() -> ObjectId:
-    doc = meta.find_one({"_id": "analytics_rollup"})
+def get_last_seen_id(meta=None) -> ObjectId:
+    meta = meta if meta is not None else _collections()[2]
+    doc = meta.find_one({"_id": META_ID})
     if doc and "last_seen_id" in doc:
         return doc["last_seen_id"]
     return ObjectId("000000000000000000000000")
 
-def set_last_seen_id(obj_id: ObjectId):
+def set_last_seen_id(obj_id: ObjectId, meta=None):
+    meta = meta if meta is not None else _collections()[2]
     meta.update_one(
-        {"_id": "analytics_rollup"},
+        {"_id": META_ID},
         {"$set": {"last_seen_id": obj_id}},
         upsert=True
     )
 
-def get_on_demand_max_ids() -> dict[str, ObjectId]:
-    doc = meta.find_one({"_id": "analytics_rollup"}, {"on_demand_max_ids": 1})
+def get_on_demand_max_ids(meta=None) -> dict[str, ObjectId]:
+    meta = meta if meta is not None else _collections()[2]
+    doc = meta.find_one({"_id": META_ID}, {"on_demand_max_ids": 1})
     if not doc:
         return {}
-    return doc.get("on_demand_max_ids", {})
+    return doc.get("on_demand_max_ids", {}) or {}
+
+
+def _rollup_is_paused(meta) -> bool:
+    """True while a rebuild is rewriting the rolled-up counters."""
+    return bool(meta.find_one({"_id": META_ID, "paused": True}, {"_id": 1}))
+
+
+def _set_pass_in_progress(meta, in_progress: bool) -> None:
+    meta.update_one(
+        {"_id": META_ID},
+        {"$set": {"pass_in_progress": bool(in_progress)}},
+        upsert=True,
+    )
+
+
+def _pass_in_progress(meta) -> bool:
+    doc = meta.find_one({"_id": META_ID}, {"pass_in_progress": 1})
+    return bool(doc and doc.get("pass_in_progress"))
 
 
 def _normalize_timestamp(ts: datetime) -> datetime | None:
@@ -60,7 +103,118 @@ def _normalize_timestamp(ts: datetime) -> datetime | None:
         return ts.replace(tzinfo=timezone.utc)
     return ts
 
-def rollup_events(run_once: bool = False):
+
+def _is_legacy_timestamp(ts: datetime, event_id: ObjectId | None) -> bool:
+    """Return True for events whose stored timestamp is a Helsinki wall clock."""
+    if event_id is None:
+        return False
+    try:
+        gap_minutes = (ts - event_id.generation_time).total_seconds() / 60.0
+    except Exception:
+        return False
+    return gap_minutes > LEGACY_TIMESTAMP_GAP_MIN
+
+
+def bucket_keys(ts: datetime | None, event_id: ObjectId | None):
+    """Return ``(day, hour, minute)`` in the frame the timestamp was written in.
+
+    Legacy events store the Helsinki wall clock labelled as UTC, so their keys
+    are the stored fields themselves; modern events store a real UTC instant and
+    need converting to Europe/Helsinki. The rebuild aggregation mirrors this
+    rule, so Python and MongoDB always bucket an event identically.
+    """
+    if ts is None:
+        return None
+    ts = _normalize_timestamp(ts)
+    if ts is None:
+        return None
+    if _is_legacy_timestamp(ts, event_id):
+        ts = ts.astimezone(timezone.utc)
+    else:
+        ts = ts.astimezone(HELSINKI_TZ)
+    return iso_date(ts), two(ts.hour), two(ts.minute)
+
+
+def _load_markers(aggr, demo_ids) -> dict[ObjectId, ObjectId]:
+    """Return the newest raw event id already counted per demo document."""
+    markers = {}
+    ids = list(demo_ids)
+    for start in range(0, len(ids), 1000):
+        chunk = ids[start:start + 1000]
+        for doc in aggr.find({"_id": {"$in": chunk}}, {"last_event_id": 1}):
+            marker = doc.get("last_event_id")
+            if marker is not None:
+                markers[doc["_id"]] = marker
+    return markers
+
+
+def _rollup_pass(raw, aggr, meta) -> dict:
+    """Count every raw event newer than the cursor exactly once."""
+    last_seen_id = get_last_seen_id(meta)
+    new_events = list(
+        raw.find({"_id": {"$gt": last_seen_id}}, {"demo_id": 1, "timestamp": 1})
+           .sort("_id", 1)
+    )
+    if not new_events:
+        return {"events": 0, "counted": 0, "skipped": 0}
+
+    on_demand_max_ids = get_on_demand_max_ids(meta)
+    markers = _load_markers(aggr, {ev["demo_id"] for ev in new_events})
+    counters: dict = {}  # { demo_id: { date: { hour: { minute: count } } } }
+    newest: dict[ObjectId, ObjectId] = {}
+    skipped = 0
+
+    for ev in new_events:
+        demo_id = ev["demo_id"]
+        ev_id = ev["_id"]
+        if demo_id not in newest or ev_id > newest[demo_id]:
+            newest[demo_id] = ev_id
+
+        # Skip events a previous pass (or an on-demand rebuild) already counted
+        # so a replayed cursor cannot increment the same event twice.
+        marker = markers.get(demo_id)
+        if marker is not None and ev_id <= marker:
+            skipped += 1
+            continue
+        max_on_demand_id = on_demand_max_ids.get(str(demo_id))
+        if max_on_demand_id is not None and ev_id <= max_on_demand_id:
+            skipped += 1
+            continue
+
+        keys = bucket_keys(ev.get("timestamp"), ev_id)
+        if keys is None:
+            continue
+        d, h, m = keys
+
+        counters.setdefault(demo_id, {})
+        counters[demo_id].setdefault(d, {})
+        counters[demo_id][d].setdefault(h, {})
+        counters[demo_id][d][h].setdefault(m, 0)
+        counters[demo_id][d][h][m] += 1
+
+    ops = []
+    for demo_id, dates in counters.items():
+        inc_dict = {}
+        for d, hours in dates.items():
+            for h, minutes in hours.items():
+                for m, count in minutes.items():
+                    inc_dict[f"analytics.{d}.{h}.{m}"] = count
+
+        ops.append(UpdateOne(
+            {"_id": demo_id},
+            {"$inc": inc_dict, "$max": {"last_event_id": newest[demo_id]}},
+            upsert=True
+        ))
+
+    if ops:
+        aggr.bulk_write(ops, ordered=False)
+    # The cursor only advances after the increments landed, and the per-demo
+    # marker above keeps a replay of the same range idempotent.
+    set_last_seen_id(new_events[-1]["_id"], meta)
+    return {"events": len(new_events), "counted": len(new_events) - skipped, "skipped": skipped}
+
+
+def rollup_events(run_once: bool = False) -> dict | None:
     """
     Process incoming analytics events.
 
@@ -69,70 +223,34 @@ def rollup_events(run_once: bool = False):
     run_once : bool
         If True, process currently available events once and return.
         If False (default), run as a continuous poller (existing behaviour).
+
+    Returns
+    -------
+    dict | None
+        Counters of the last pass, or None while a rebuild holds the pause.
     """
-    last_seen_id = get_last_seen_id()
+    result: dict | None = None
 
-    # Single iteration or continuous loop depending on run_once
     while True:
+        raw, aggr, meta = _collections()
         try:
-            new_events = list(
-                raw.find({"_id": {"$gt": last_seen_id}}, {"demo_id": 1, "timestamp": 1})
-                   .sort("_id", 1)
-            )
-
-            if new_events:
-                on_demand_max_ids = get_on_demand_max_ids()
-                counters = {}  # { demo_id: { date: { hour: { minute: count } } } }
-
-                for ev in new_events:
-                    demo_id_str = str(ev["demo_id"])
-                    max_on_demand_id = on_demand_max_ids.get(demo_id_str)
-                    if max_on_demand_id is not None and ev["_id"] <= max_on_demand_id:
-                        continue
-                    demo_id = ev["demo_id"]
-                    ts = ev["timestamp"]
-                    ts = _normalize_timestamp(ts)
-                    if not ts:
-                        continue
-
-                    ts_hel = ts.astimezone(HELSINKI_TZ)
-                    d = iso_date(ts_hel)
-                    h = two(ts_hel.hour)
-                    m = two(ts_hel.minute)
-
-                    counters.setdefault(demo_id, {})
-                    counters[demo_id].setdefault(d, {})
-                    counters[demo_id][d].setdefault(h, {})
-                    counters[demo_id][d][h].setdefault(m, 0)
-                    counters[demo_id][d][h][m] += 1
-
-                ops = []
-                for demo_id, dates in counters.items():
-                    inc_dict = {}
-                    for d, hours in dates.items():
-                        for h, minutes in hours.items():
-                            for m, count in minutes.items():
-                                inc_dict[f"analytics.{d}.{h}.{m}"] = count
-
-                    ops.append(UpdateOne(
-                        {"_id": demo_id},
-                        {"$inc": inc_dict},
-                        upsert=True
-                    ))
-
-                if ops:
-                    aggr.bulk_write(ops, ordered=False)
-                last_seen_id = new_events[-1]["_id"]
-                set_last_seen_id(last_seen_id)
-
+            if _rollup_is_paused(meta):
+                LOGGER.info("Analytics rollup is paused (rebuild in progress); skipping pass.")
+                result = {"paused": True}
+            else:
+                _set_pass_in_progress(meta, True)
+                try:
+                    result = _rollup_pass(raw, aggr, meta)
+                finally:
+                    _set_pass_in_progress(meta, False)
         except Exception:
-            # silently ignore errors; optionally log them if needed
-            pass
+            # Log instead of dropping the failure silently: an unnoticed error
+            # here used to hide gaps and duplicate counts in the counters.
+            LOGGER.exception("Analytics rollup pass failed")
+            result = {"error": True}
 
         # If caller requested only a single run, exit now
         if run_once:
-            # print with yellow color: run once set 
-            
             break
 
         # Wait until next poll interval (existing behaviour)
@@ -141,6 +259,132 @@ def rollup_events(run_once: bool = False):
             for _ in range(int(sleep_time)):
                 time.sleep(1)
                 pbar.update(1)
+
+    return result
+
+
+# Server-side mirror of ``bucket_keys``: one collection scan produces the
+# finished per-demo minute buckets without shipping raw events to Python.
+REBUILD_PIPELINE = [
+    {"$project": {
+        "demo_id": 1,
+        "timestamp": 1,
+        "tz": {"$cond": [
+            {"$gt": [
+                {"$dateDiff": {
+                    "startDate": {"$toDate": "$_id"},
+                    "endDate": "$timestamp",
+                    "unit": "minute",
+                }},
+                LEGACY_TIMESTAMP_GAP_MIN,
+            ]},
+            "UTC",
+            "Europe/Helsinki",
+        ]},
+    }},
+    {"$group": {
+        "_id": {
+            "demo": "$demo_id",
+            "d": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp", "timezone": "$tz"}},
+            "h": {"$dateToString": {"format": "%H", "date": "$timestamp", "timezone": "$tz"}},
+            "m": {"$dateToString": {"format": "%M", "date": "$timestamp", "timezone": "$tz"}},
+        },
+        "n": {"$sum": 1},
+        "max_id": {"$max": "$_id"},
+    }},
+    {"$group": {
+        "_id": {"demo": "$_id.demo", "d": "$_id.d", "h": "$_id.h"},
+        "mins": {"$push": {"k": "$_id.m", "v": "$n"}},
+        "events": {"$sum": "$n"},
+        "max_id": {"$max": "$max_id"},
+    }},
+    {"$addFields": {"min_obj": {"$arrayToObject": "$mins"}}},
+    {"$group": {
+        "_id": {"demo": "$_id.demo", "d": "$_id.d"},
+        "hours": {"$push": {"k": "$_id.h", "v": "$min_obj"}},
+        "events": {"$sum": "$events"},
+        "max_id": {"$max": "$max_id"},
+    }},
+    {"$addFields": {"hour_obj": {"$arrayToObject": "$hours"}}},
+    {"$group": {
+        "_id": "$_id.demo",
+        "days": {"$push": {"k": "$_id.d", "v": "$hour_obj"}},
+        "events": {"$sum": "$events"},
+        "last_event_id": {"$max": "$max_id"},
+    }},
+    {"$addFields": {"analytics": {"$arrayToObject": "$days"}}},
+    {"$project": {"analytics": 1, "events": 1, "last_event_id": 1}},
+]
+
+
+def _wait_for_idle_pass(meta, timeout_s: float) -> bool:
+    """Wait until no rollup pass is running; False when the timeout elapsed."""
+    deadline = time.monotonic() + timeout_s
+    while _pass_in_progress(meta):
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.2)
+    return True
+
+
+def _rebuild_from_raw(raw, aggr) -> dict:
+    """Replace every rolled-up document with a recount of the raw events."""
+    ops = []
+    seen = set()
+    events = 0
+    replaced = 0
+
+    def _flush():
+        if ops:
+            aggr.bulk_write(ops, ordered=False)
+            ops.clear()
+
+    for doc in raw.aggregate(REBUILD_PIPELINE, allowDiskUse=True):
+        demo_id = doc["_id"]
+        seen.add(demo_id)
+        events += doc.get("events", 0)
+        ops.append(UpdateOne(
+            {"_id": demo_id},
+            {
+                "$set": {"analytics": doc.get("analytics") or {}},
+                "$max": {"last_event_id": doc.get("last_event_id")},
+            },
+            upsert=True,
+        ))
+        replaced += 1
+        if len(ops) >= 500:
+            _flush()
+    _flush()
+
+    stale_ids = [doc["_id"] for doc in aggr.find({}, {"_id": 1}) if doc["_id"] not in seen]
+    removed = 0
+    for start in range(0, len(stale_ids), 1000):
+        result = aggr.delete_many({"_id": {"$in": stale_ids[start:start + 1000]}})
+        removed += result.deleted_count
+
+    return {"rebuilt": replaced, "events": events, "removed": removed}
+
+
+def rebuild_demo_analytics(timeout_s: float = REBUILD_SETTLE_TIMEOUT_S) -> dict:
+    """Recount ``d_analytics`` from the raw ``analytics`` events.
+
+    The live rollup is paused first so no ``$inc`` can land on top of the
+    rewritten counters, and each rewritten document records the newest raw
+    event id it counted so later rollup passes skip that range instead of
+    counting it again.
+    """
+    raw, aggr, meta = _collections()
+    meta.update_one({"_id": META_ID}, {"$set": {"paused": True}}, upsert=True)
+    try:
+        if not _wait_for_idle_pass(meta, timeout_s):
+            LOGGER.warning("Rebuild started while a rollup pass was still running.")
+        stats = _rebuild_from_raw(raw, aggr)
+    finally:
+        meta.update_one({"_id": META_ID}, {"$set": {"paused": False}}, upsert=True)
+
+    LOGGER.info("Rebuilt %s", stats)
+    return stats
+
 
 if __name__ == "__main__":
     rollup_events()

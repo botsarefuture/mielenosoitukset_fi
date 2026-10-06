@@ -53,7 +53,12 @@ def main():
         "t",
     )
 
-    run_rollup_in_thread()
+    # The analytics rollup must have exactly one writer: the production
+    # poller is the anal_aggregate.service systemd unit (run_aggregate.py).
+    # Starting a second poller here historically double-counted every event,
+    # so the in-app thread is opt-in for local development only.
+    if os.getenv("ROLLUP_IN_APP", "").lower() in ("1", "true", "yes"):
+        run_rollup_in_thread()
 
     app.run(host=host, debug=debug, port=port)
 

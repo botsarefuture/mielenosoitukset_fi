@@ -2,6 +2,8 @@
 
 **Status:** investigated, fix implemented on branch `codex/analytics-rollup-aggregation`
 (commit `250684b2`), **awaiting merge/deploy**. No index was created — none was justified.
+The branch also carries the follow-up fix for the `d_analytics` double counting (see below),
+implemented but likewise not yet deployed.
 
 **Scope:** Task #2 of the infrastructure reliability plan (production MongoDB `lc-db`,
 `mielenosoitukset`, MongoDB 7.0.37). Read-only evidence gathering only; production was never
@@ -224,12 +226,29 @@ Redis/MailHog/LocalStack) not run locally; repo has no lint config (CI runs pyte
 
 ---
 
-## Related findings (not fixed here — next performance task)
+## Related findings (fixes on this branch where noted)
 
-1. **`d_analytics` double-counting:** counters sum to 1,930,142 vs 1,041,654 raw events
-   (1.85×). Blocks any future reuse of `d_analytics` as a source of truth; investigate
-   the incremental rollup vs on-demand replace interaction in
-   `utils/aggregate_analytics.py` / `_rollup_demo_analytics_on_demand()`.
+1. **`d_analytics` double-counting** — counters sum to 1,930,142 vs 1,041,654 raw events
+   (1.85×). **Root cause (verified at minute level on prod):** `rollup_events()` read
+   `_meta.analytics_rollup.last_seen_id` *once before* its polling loop, so two concurrent
+   pollers each counted everything from their cursor → systematic exact 2× on
+   2025-07-05→2026-01-26 (+ smaller windows afterwards; live pipeline correct since
+   2026-07-01). A second historical writer could not be proven (logs rotated).
+   **Fixed on this branch** (`mielenosoitukset_fi/utils/aggregate_analytics.py` +
+   `admin/admin_bp.py` + `run.py` + `background_jobs/definitions.py`):
+   - cursor `last_seen_id` re-read every pass; per-demo `last_event_id` markers make any
+     cursor replay idempotent (`$max` marker written atomically with the `$inc`);
+   - `run.py` in-app rollup thread now opt-in (`ROLLUP_IN_APP=1`) — the production writer is
+     the single `anal_aggregate.service` unit;
+   - new `rebuild_demo_analytics()` job (`rebuild_d_analytics`, interval 30 d + manual)
+     recalculates every `d_analytics` doc from raw events in one server-side aggregation,
+     pauses the live rollup first, prunes stale docs, and records `last_event_id` so the
+     live rollup does not double-count the rebuild range;
+   - era-aware bucketing (stored-timestamp − `_id` time > 90 min ⇒ legacy wall-clock frame)
+     so historical and modern events land in the same minute buckets for rollup, rebuild
+     and on-demand rebuild alike;
+   - after deploy: run the rebuild job once on prod, then verify
+     `sum(d_analytics.analytics.**) == db.analytics.countDocuments()`.
 2. **`demonstrations` is the biggest slow-query source:** 20,724 slow ops in the same log
    window (20,187 IXSCAN, **533 COLLSCAN**; 11,762 `aggregate`, 8,689 `find`) — matches
    the previously reported demonstrations issue.

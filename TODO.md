@@ -37,6 +37,22 @@ Consolidated list of fixes/features requested (so none are forgotten). Tick item
   - [ ] Add automated completeness, authorization, redaction, retention, migration and cross-source correlation tests, plus periodic production audit sampling
   - [ ] Complete and record a GDPR/privacy review with the responsible privacy or legal owner; technical tests alone must not be treated as proof of full legal compliance
 
+## Infrastructure reliability (MongoDB performance)
+
+Full status and evidence: `docs/mongodb-analytics-performance.md`.
+
+- [x] `analytics` COLLSCAN investigation (Task #2) — root cause: `prep()`/admin overview
+      streamed all 1,041,654 raw view events into Python every 15 minutes (no index can
+      fix an unfiltered count). Fix = server-side `$group`; no index added.
+- [x] `d_analytics` overcount investigation (Task #1) — `d_analytics` counters total
+      1,930,142 vs 1,041,654 raw events (≈1.85×); minute-level proof of exact 2×
+      duplicates. Live rollup has been exact since 2026-07-01, so damage is historical.
+- [ ] Repair `d_analytics` from raw events (rebuild job) + make the rollup replay-safe
+      (per-demo `last_event_id` written atomically with the `$inc`, no swallowed errors,
+      single writer only).
+- [ ] Related follow-ups: `prepped_analytics` drop+reinsert churn (28,604 docs / 15 min),
+      `demonstrations` COLLSCAN slow ops, admin overview rendering 28,604 rows.
+
 ## Process
 
 - [x] Update CHANGELOG.md for every user-facing change

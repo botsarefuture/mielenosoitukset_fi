@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Added read-only operational visibility to the admin system-status page: background-job duration p50/p95/p99 values with sample size and failures, plus email-queue pending, in-flight, failed, and exhausted counts. A low-impact HTTP latency probe now produces the same percentile baseline for selected endpoints.
+- Reduced the cold public-page critical path by removing the unused site-wide jQuery UI download and duplicate Font Awesome/Google Font loads from high-traffic pages. Demonstration maps now load Leaflet and map tiles only when the below-the-fold map approaches the viewport, and Bootstrap 5.3.0 is served as an immutable versioned asset from the project's own CDN instead of a third-party origin.
 - `/robots.txt` now advertises the canonical XML sitemap with a `Sitemap: https://mielenosoitukset.fi/sitemap.xml` line (no cache-busting query parameter), so crawlers can discover the sitemap without guessing; all existing crawler rules are unchanged.
 
 - Recurring series now include approved children whose `hide` field is absent in occurrence lists and explicit selection, matching the shared public visibility filter.

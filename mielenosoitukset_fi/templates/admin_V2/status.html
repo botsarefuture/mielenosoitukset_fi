@@ -87,6 +87,52 @@
     </div>
   </section>
 
+  <!-- Background jobs and email queue -->
+  <section class="admin-health-panel admin-health-grid__full">
+    <h2 class="admin-health-panel__title"><i class="fa-solid fa-gauge-high"></i> Taustatyöt ja sähköpostijono</h2>
+    {% if operations %}
+    <div class="admin-health-metrics">
+      <div class="admin-health-metric">
+        <strong>{{ operations.jobs.duration_seconds.p50 if operations.jobs.duration_seconds.p50 is not none else '—' }} s</strong>
+        <span>Taustatyöt p50</span>
+      </div>
+      <div class="admin-health-metric">
+        <strong>{{ operations.jobs.duration_seconds.p95 if operations.jobs.duration_seconds.p95 is not none else '—' }} s</strong>
+        <span>Taustatyöt p95</span>
+      </div>
+      <div class="admin-health-metric">
+        <strong>{{ operations.jobs.duration_seconds.p99 if operations.jobs.duration_seconds.p99 is not none else '—' }} s</strong>
+        <span>Taustatyöt p99</span>
+      </div>
+      <div class="admin-health-metric">
+        <strong>{{ operations.jobs.failed_count }} / {{ operations.jobs.sample_count }}</strong>
+        <span>Epäonnistuneet / otos</span>
+      </div>
+      <div class="admin-health-metric">
+        <strong>{{ operations.email_queue.pending }}</strong>
+        <span>Sähköpostia odottaa</span>
+      </div>
+      <div class="admin-health-metric">
+        <strong>{{ operations.email_queue.in_flight }}</strong>
+        <span>Sähköpostia käsittelyssä</span>
+      </div>
+      <div class="admin-health-metric">
+        <strong>{{ operations.email_queue.failed }}</strong>
+        <span>Sähköpostia epäonnistunut</span>
+      </div>
+      <div class="admin-health-metric">
+        <strong>{{ operations.email_queue.exhausted }}</strong>
+        <span>Uudelleenyritykset loppu</span>
+      </div>
+    </div>
+    <p class="admin-health-service__message">
+      Taustatyöluvut perustuvat enintään 500 viimeisimpään tallennettuun ajoon. Tyhjä otos näytetään viivana.
+    </p>
+    {% else %}
+    <div class="admin-empty-state">Operatiivisia mittareita ei voitu hakea</div>
+    {% endif %}
+  </section>
+
   <!-- Recent errors -->
   <section class="admin-health-panel admin-health-grid__full">
     <h2 class="admin-health-panel__title"><i class="fa-solid fa-triangle-exclamation"></i> Viimeisimmät virheet</h2>

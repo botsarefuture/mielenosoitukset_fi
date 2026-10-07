@@ -3005,14 +3005,21 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       if ("IntersectionObserver" in window) {
         const mapObserver = new IntersectionObserver((entries, observer) => {
           if (entries.some((entry) => entry.isIntersecting)) {
-            observer.disconnect();
-            initializeMap().catch((error) => console.warn("Map loading failed", error));
+            initializeMap()
+              .then(() => observer.disconnect())
+              .catch((error) => {
+                mapStarted = false;
+                console.warn("Map loading failed", error);
+              });
           }
         }, { rootMargin: "400px" });
         mapObserver.observe(mapElement);
       } else {
         window.addEventListener("load", () => {
-          initializeMap().catch((error) => console.warn("Map loading failed", error));
+          initializeMap().catch((error) => {
+            mapStarted = false;
+            console.warn("Map loading failed", error);
+          });
         }, { once: true });
       }
     } else {

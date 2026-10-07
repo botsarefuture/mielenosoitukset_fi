@@ -29,6 +29,21 @@ _MACHINE_BYTES = os.urandom(5)
 _MACHINE_COUNTER = itertools.count(1)
 
 
+@pytest.fixture(autouse=True)
+def isolated_analytics(db):
+    """Keep raw events, derived counts, and the rollup cursor local to each test."""
+    def clear_analytics():
+        for name in ("analytics", "d_analytics", "prepped_analytics"):
+            db[name].delete_many({})
+        db["_meta"].delete_one({"_id": META_ID})
+
+    # The shared db fixture does not clear data left by seeded app tests.
+    # Their newer ObjectIds can advance the cursor past our fixed-date events.
+    clear_analytics()
+    yield
+    clear_analytics()
+
+
 def _oid_at(dt) -> ObjectId:
     """Build a unique ObjectId whose creation time is ``dt`` (UTC)."""
     ts = int(dt.replace(tzinfo=timezone.utc).timestamp())
@@ -108,27 +123,26 @@ def test_rollup_replay_does_not_double_count(db):
     db.analytics.insert_one({"_id": ev1, "demo_id": demo_id, "timestamp": now})
     db.analytics.insert_one({"_id": ev2, "demo_id": demo_id, "timestamp": now})
 
-    # Simulate a replay: the cursor is reset to the beginning of time. Events
-    # for demos that were already rolled up (in this or earlier tests) have a
-    # last_event_id marker and must be skipped rather than counted again.
-    set_last_seen_id(ObjectId("000000000000000000000000"), db["_meta"])
+    # Count the events before replaying them within this test.
     stats = rollup_events(run_once=True)
+    assert stats == {"events": 2, "counted": 2, "skipped": 0}
 
     doc = db.d_analytics.find_one({"_id": demo_id})
     assert _total_views(doc["analytics"]) == 2
     assert doc["last_event_id"] == max(ev1, ev2)
-    assert stats["counted"] == stats["events"] - stats["skipped"]
 
-    # Replaying again must not change the already-counted demo.
+    # Reset the cursor; the per-demo marker must prevent double counting.
     set_last_seen_id(ObjectId("000000000000000000000000"), db["_meta"])
-    rollup_events(run_once=True)
+    stats = rollup_events(run_once=True)
+    assert stats == {"events": 2, "counted": 0, "skipped": 2}
     doc = db.d_analytics.find_one({"_id": demo_id})
     assert _total_views(doc["analytics"]) == 2
 
     # New events are still counted on top of the marker.
     ev3 = _oid_at(now)
     db.analytics.insert_one({"_id": ev3, "demo_id": demo_id, "timestamp": now})
-    rollup_events(run_once=True)
+    stats = rollup_events(run_once=True)
+    assert stats == {"events": 1, "counted": 1, "skipped": 0}
     doc = db.d_analytics.find_one({"_id": demo_id})
     assert _total_views(doc["analytics"]) == 3
     assert doc["last_event_id"] == ev3

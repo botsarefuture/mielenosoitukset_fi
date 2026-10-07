@@ -30,6 +30,16 @@
   {% endif %}
 {% endmacro %}
 
+{% macro web_vital_value(row, key) %}
+  {%- if not row.sufficient -%}
+    <span aria-label="{{ _('Ei riittävästi otoksia') }}">—</span>
+  {%- elif row.metric == 'CLS' -%}
+    {{ row[key] | round(2) }}
+  {%- else -%}
+    {{ row[key] | round | int }}&nbsp;ms
+  {%- endif -%}
+{% endmacro %}
+
 {% block main_content %}
 <section class="admin-page admin-site-analytics">
   {{ admin_page_hero(
@@ -103,6 +113,47 @@
   {{ _('Kävijätietoja on kerätty %(date)s alkaen, joten sitä vanhemmat jaksot näytetään viivalla —.', date=visitors.tracked_from) }}
   {% endif %}
 </p>
+
+  <section class="admin-section-card" aria-labelledby="site-web-vitals-title">
+    <header class="admin-section-card__header">
+      <div class="admin-section-card__title">
+        <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
+        <div>
+          <h2 id="site-web-vitals-title">Core Web Vitals</h2>
+          <p>{{ _('Käyttäjien selaimissa mitatut suorituskykyarvot valitulta aikaväliltä.') }}</p>
+        </div>
+      </div>
+    </header>
+    <div class="admin-section-card__body">
+      <table class="admin-data-view__table">
+        <thead>
+          <tr>
+            <th scope="col">{{ _('Mittari') }}</th>
+            <th scope="col">p50</th>
+            <th scope="col">p75</th>
+            <th scope="col">p95</th>
+            <th scope="col">p99</th>
+            <th scope="col">{{ _('Otokset') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in web_vitals %}
+          <tr>
+            <th scope="row">{{ row.metric }}</th>
+            <td>{{ web_vital_value(row, 'p50') }}</td>
+            <td>{{ web_vital_value(row, 'p75') }}</td>
+            <td>{{ web_vital_value(row, 'p95') }}</td>
+            <td>{{ web_vital_value(row, 'p99') }}</td>
+            <td>{{ row.count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="admin-analytics__description">
+        {{ _('Prosenttipisteet näytetään vasta vähintään kymmenestä otoksesta. Arvot ovat kiinteiden histogrammirajojen ylärajoja. Reitti ja laitetyyppi tallennetaan vain karkeina ryhminä; URL-osoitetta, käyttäjä- tai istuntotunnistetta, mittaustunnistetta tai DOM-elementtiä ei tallenneta.') }}
+      </p>
+    </div>
+  </section>
 
   <section class="admin-section-card" aria-labelledby="site-traffic-title">
     <header class="admin-section-card__header">

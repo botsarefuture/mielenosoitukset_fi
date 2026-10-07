@@ -741,8 +741,13 @@ body.banner-closed {
   {# Legacy client-side Matomo tracker. Built-in server-side analytics now cover basic pageviews; disable MATOMO_ENABLED in config to stop double-counting. #}
   <script src="{{ url_for('static', filename='js/matomo.js') }}" async></script>
   {% endif %}
-  {% if config.get('SITE_ANALYTICS_ENABLED', true) %}
-  {# Built-in analytics beacon: map interactions and external link clicks only; pageviews are recorded server-side. #}
+  {% if config.get('SITE_ANALYTICS_ENABLED', true)
+        and not request.path.startswith('/admin')
+        and not request.path.startswith('/users')
+        and not request.path.startswith('/board')
+        and not request.path.startswith('/developer') %}
+  {# Pinned first-party Web Vitals plus anonymous aggregate analytics beacons; pageviews are recorded server-side. #}
+  <script src="https://cdn2.mielenosoitukset.fi/vendor/web-vitals/6.2.2/web-vitals.iife.js" integrity="sha256-Hl6bmva41xz+9QjlqGnFO0zyu8ytjJtaxmTDTpP2FRo=" defer crossorigin="anonymous"></script>
   <script src="{{ url_for('static', filename='js/site_analytics.js') }}" defer></script>
   {% endif %}
   <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}" defer></script>

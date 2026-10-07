@@ -53,14 +53,44 @@ dependencies included:
 
 ## Verification and next measurements
 
-The same seven-run browser profile must be repeated after production deployment.
-The immediate acceptance checks are:
+The same seven-run browser profile was repeated after production deployment of
+commit `86466e54eb607dca9e3af1b5bbc936c88555257e` on 2026-10-08. All seven
+responses were HTTP 200 with no failed browser requests. A separate browser
+smoke test confirmed that Bootstrap loaded from the first-party CDN, Leaflet
+was absent before scrolling, and the map initialized after it entered the
+viewport with no console errors.
 
-1. no public template regression tests fail;
-2. health endpoint and build SHA match the deployed commit;
-3. the front page, list and a new detail page return 2xx responses;
-4. demonstration interactions and lazy map work in a real browser;
-5. cold-mobile LCP, DOMContentLoaded and load p50/p95/p99 are recorded here.
+| Cold-mobile metric | Before p50 | After p50 | Change | Before p95 | After p95 | Before p99 | After p99 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| TTFB | 57.7 ms | 61.9 ms | +7.3% | 86.7 ms | 78.1 ms | 94.7 ms | 79.0 ms |
+| FCP | 1,620 ms | 1,092 ms | -32.6% | 1,636 ms | 1,235 ms | 1,636 ms | 1,239 ms |
+| LCP | 2,136 ms | 1,604 ms | -24.9% | 2,163 ms | 1,710 ms | 2,167 ms | 1,715 ms |
+| DOMContentLoaded | 4,391 ms | 1,840 ms | -58.1% | 4,413 ms | 1,960 ms | 4,416 ms | 1,977 ms |
+| Load event | 5,315 ms | 3,666 ms | -31.0% | 5,325 ms | 3,692 ms | 5,328 ms | 3,694 ms |
+
+The cold page made 38 requests after the change instead of 46 before it, a
+17.4% reduction. The slightly higher median TTFB in this small sample is within
+normal network variation; its p95 and p99 both improved, while the targeted
+browser rendering milestones improved materially.
+
+The post-deployment HTTP probe used 20 sequential requests after three warm-ups:
+
+| Page | p50 | p95 | p99 | Failures |
+| --- | ---: | ---: | ---: | ---: |
+| Front page | 62.9 ms | 101.0 ms | 112.1 ms | 0 / 20 |
+| Demonstration list | 53.6 ms | 70.6 ms | 72.6 ms | 0 / 20 |
+| Measured demonstration | 67.2 ms | 82.6 ms | 91.0 ms | 0 / 20 |
+| Health endpoint | 40.7 ms | 46.2 ms | 46.2 ms | 0 / 20 |
+| Public status endpoint | 47.5 ms | 89.6 ms | 91.3 ms | 0 / 20 |
+
+The acceptance checks completed as follows:
+
+1. the full CI suite passed;
+2. the health endpoint returned `status: ok` and the deployed commit SHA;
+3. the front page, list and measured detail page returned HTTP 200;
+4. first-party Bootstrap and the lazy map worked in a real browser; and
+5. cold-mobile TTFB, FCP, LCP, DOMContentLoaded and load p50/p95/p99 are
+   recorded above.
 
 The next performance iteration should add production real-user Core Web Vitals
 (LCP, INP, CLS and TTFB) by route family so p75 can be optimized from actual

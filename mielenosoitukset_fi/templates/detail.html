@@ -338,12 +338,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/toolbox.css' )}}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/modal.css') }}" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
   :root {
@@ -2955,26 +2950,89 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     // Load likes
     getLikes("{{ demo['_id'] }}");
 
-    // Initialize map if coordinates available
+    // Load the below-the-fold map only when it is close to the viewport. This
+    // keeps Leaflet and map tiles out of the critical path for initial content.
     if (_has_coords(demoData)) {
-      const map = L.map("map", {
-        center: [demoData.latitude, demoData.longitude],
-        zoom: 13,
-        scrollWheelZoom: false,
-        zoomControl: true,
-        attributionControl: true,
-      });
+      const mapElement = document.getElementById("map");
+      let mapStarted = false;
+      let mapAttempts = 0;
+      let mapRetryTimer = null;
+      const maxMapAttempts = 3;
+      const initializeMap = async () => {
+        const stylesheet = document.createElement("link");
+        stylesheet.rel = "stylesheet";
+        stylesheet.href = "{{ url_for('static', filename='leaflet/leaflet.css') }}";
+        const stylesheetLoaded = new Promise((resolve, reject) => {
+          stylesheet.onload = resolve;
+          stylesheet.onerror = reject;
+        });
+        document.head.appendChild(stylesheet);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(map);
+        const scriptLoaded = new Promise((resolve, reject) => {
+          if (window.L) {
+            resolve();
+            return;
+          }
+          const script = document.createElement("script");
+          script.src = "{{ url_for('static', filename='leaflet/leaflet.js') }}";
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+        await Promise.all([stylesheetLoaded, scriptLoaded]);
 
-      L.marker([demoData.latitude, demoData.longitude])
-        .addTo(map)
-        .bindPopup(demoData.address)
-        .openPopup();
+        const map = L.map(mapElement, {
+          center: [demoData.latitude, demoData.longitude],
+          zoom: 13,
+          scrollWheelZoom: false,
+          zoomControl: true,
+          attributionControl: true,
+        });
 
-      setTimeout(() => { map.invalidateSize(); }, 300);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+
+        L.marker([demoData.latitude, demoData.longitude])
+          .addTo(map)
+          .bindPopup(demoData.address)
+          .openPopup();
+
+        setTimeout(() => { map.invalidateSize(); }, 300);
+      };
+
+      const startMapWithRetry = (onSuccess) => {
+        if (mapStarted || mapRetryTimer !== null || mapAttempts >= maxMapAttempts || !mapElement) return;
+        mapStarted = true;
+        mapAttempts += 1;
+
+        initializeMap()
+          .then(onSuccess)
+          .catch((error) => {
+            mapStarted = false;
+            console.warn("Map loading failed", error);
+            if (mapAttempts < maxMapAttempts) {
+              mapRetryTimer = window.setTimeout(() => {
+                mapRetryTimer = null;
+                startMapWithRetry(onSuccess);
+              }, mapAttempts * 1000);
+            }
+          });
+      };
+
+      if ("IntersectionObserver" in window) {
+        const mapObserver = new IntersectionObserver((entries, observer) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            startMapWithRetry(() => observer.disconnect());
+          }
+        }, { rootMargin: "400px" });
+        mapObserver.observe(mapElement);
+      } else {
+        window.addEventListener("load", () => {
+          startMapWithRetry(() => {});
+        }, { once: true });
+      }
     } else {
       const mapElement = document.getElementById("map");
       if (mapElement) {
@@ -3299,7 +3357,5 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     };
   })();
 </script>
-<!-- Leaflet JS -->
-<script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
 <script src="{{ url_for('static', filename='js/admin_demo_info.js') }}"></script>
 {% endblock %}

@@ -123,6 +123,28 @@ def test_admin_status_shows_recent_errors(app, seeded_data, admin_client):
     assert "Viimeisimmät virheet" in html
 
 
+def test_admin_status_shows_operational_percentiles(
+    app, db, seeded_data, admin_client
+):
+    db.background_job_runs.insert_many(
+        [
+            {"status": "success", "duration_seconds": 1.0},
+            {"status": "success", "duration_seconds": 2.0},
+            {"status": "failed", "duration_seconds": 4.0},
+        ]
+    )
+    db.email_queue.insert_one({"status": "pending", "attempts": 0})
+
+    html = admin_client.get("/admin/status").get_data(as_text=True)
+
+    assert "Taustatyöt ja sähköpostijono" in html
+    assert "Taustatyöt p50" in html
+    assert "Taustatyöt p95" in html
+    assert "Taustatyöt p99" in html
+    assert "Epäonnistuneet / otos" in html
+    assert "Sähköpostia odottaa" in html
+
+
 def test_admin_status_shows_email_delivery_errors(
     app, db, seeded_data, admin_client
 ):

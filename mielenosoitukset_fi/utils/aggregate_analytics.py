@@ -2,7 +2,8 @@
 
 import logging
 import time
-from datetime import datetime, timezone
+import uuid
+from datetime import datetime, timedelta, timezone
 
 from bson import ObjectId
 from pymongo import MongoClient, UpdateOne
@@ -29,6 +30,11 @@ LEGACY_TIMESTAMP_GAP_MIN = 90
 
 # A rebuild waits at most this long for an in-flight rollup pass to finish.
 REBUILD_SETTLE_TIMEOUT_S = 30.0
+
+# A pass/rebuild claim older than this is treated as abandoned (its worker
+# crashed) and may be taken over by the next caller.
+ROLLUP_PASS_STALE_S = 300
+REBUILD_STALE_S = 3600
 
 # ── TIMEZONE SETUP ─────────────────────────────────────────────
 HELSINKI_TZ = pytz.timezone("Europe/Helsinki")
@@ -82,17 +88,90 @@ def _rollup_is_paused(meta) -> bool:
     return bool(meta.find_one({"_id": META_ID, "paused": True}, {"_id": 1}))
 
 
-def _set_pass_in_progress(meta, in_progress: bool) -> None:
+def _ensure_meta_doc(meta) -> None:
+    """Guarantee the coordination document exists before it is claimed."""
     meta.update_one(
         {"_id": META_ID},
-        {"$set": {"pass_in_progress": bool(in_progress)}},
+        {"$setOnInsert": {"paused": False}},
         upsert=True,
     )
 
 
-def _pass_in_progress(meta) -> bool:
-    doc = meta.find_one({"_id": META_ID}, {"pass_in_progress": 1})
-    return bool(doc and doc.get("pass_in_progress"))
+def _claim_pass(meta, owner: str) -> bool:
+    """Atomically claim the rollup pass for ``owner``.
+
+    The check-paused and set-in-progress steps are a single atomic update, so
+    two workers can never both believe they hold the pass. A missing or stale
+    ``pass_started_at`` is treated as abandoned and can be taken over, so a
+    crashed worker cannot wedge the rollup forever.
+    """
+    now = datetime.now(timezone.utc)
+    stale_before = now - timedelta(seconds=ROLLUP_PASS_STALE_S)
+    claimed = meta.find_one_and_update(
+        {"_id": META_ID,
+         "paused": {"$ne": True},
+         "$or": [
+             {"pass_in_progress": {"$ne": True}},
+             # Comparison operators never match a missing field, so an absent
+             # pass_started_at (legacy/crashed state) must be matched explicitly.
+             {"pass_started_at": {"$exists": False}},
+             {"pass_started_at": {"$lt": stale_before}},
+         ]},
+        {"$set": {"pass_in_progress": True, "pass_owner": owner, "pass_started_at": now}},
+        upsert=False,
+    )
+    return claimed is not None
+
+
+def _release_pass(meta, owner: str) -> None:
+    """Release the pass, but only if ``owner`` still holds it."""
+    meta.update_one(
+        {"_id": META_ID, "pass_owner": owner},
+        {"$set": {"pass_in_progress": False}, "$unset": {"pass_owner": ""}},
+    )
+
+
+def _pass_is_live(meta) -> bool:
+    """True only while a pass claim is held by someone right now."""
+    doc = meta.find_one({"_id": META_ID}, {"pass_in_progress": 1, "pass_started_at": 1})
+    if not doc or not doc.get("pass_in_progress"):
+        return False
+    started = doc.get("pass_started_at")
+    if not isinstance(started, datetime):
+        # A flag without a timestamp is a half-written/crashed state, not a
+        # running pass, so a rebuild may proceed.
+        return False
+    started = _normalize_timestamp(started)
+    return (datetime.now(timezone.utc) - started).total_seconds() < ROLLUP_PASS_STALE_S
+
+
+def _acquire_rebuild(meta, owner: str) -> bool:
+    """Atomically claim the rebuild pause for ``owner``.
+
+    A second concurrent rebuild caller sees ``paused`` already True (its claim
+    fails and it exits), so only one rebuild rewrites the counters at a time.
+    """
+    now = datetime.now(timezone.utc)
+    stale_before = now - timedelta(seconds=REBUILD_STALE_S)
+    claimed = meta.find_one_and_update(
+        {"_id": META_ID,
+         "$or": [
+             {"paused": {"$ne": True}},
+             {"rebuild_started_at": {"$exists": False}},
+             {"rebuild_started_at": {"$lt": stale_before}},
+         ]},
+        {"$set": {"paused": True, "rebuild_owner": owner, "rebuild_started_at": now}},
+        upsert=False,
+    )
+    return claimed is not None
+
+
+def _release_rebuild(meta, owner: str) -> None:
+    """Release the rebuild pause, but only if ``owner`` still holds it."""
+    meta.update_one(
+        {"_id": META_ID, "rebuild_owner": owner},
+        {"$set": {"paused": False}, "$unset": {"rebuild_owner": ""}},
+    )
 
 
 def _normalize_timestamp(ts: datetime) -> datetime | None:
@@ -218,6 +297,10 @@ def rollup_events(run_once: bool = False) -> dict | None:
     """
     Process incoming analytics events.
 
+    Only one worker holds the pass at a time; a second worker returns
+    immediately with ``{"pass_not_acquired": True}`` instead of racing the
+    first one.
+
     Parameters
     ----------
     run_once : bool
@@ -227,22 +310,30 @@ def rollup_events(run_once: bool = False) -> dict | None:
     Returns
     -------
     dict | None
-        Counters of the last pass, or None while a rebuild holds the pause.
+        Counters of the last pass, ``{"paused": True}`` while a rebuild holds
+        the pause, ``{"pass_not_acquired": True}`` when another worker owns the
+        pass, or None while running continuously.
     """
+    def _single_pass(raw, aggr, meta) -> dict:
+        _ensure_meta_doc(meta)
+        owner = uuid.uuid4().hex
+        if not _claim_pass(meta, owner):
+            if _rollup_is_paused(meta):
+                LOGGER.info("Analytics rollup is paused (rebuild in progress); skipping pass.")
+                return {"paused": True}
+            LOGGER.info("Another worker holds the rollup pass; skipping pass.")
+            return {"pass_not_acquired": True}
+        try:
+            return _rollup_pass(raw, aggr, meta)
+        finally:
+            _release_pass(meta, owner)
+
     result: dict | None = None
 
     while True:
-        raw, aggr, meta = _collections()
         try:
-            if _rollup_is_paused(meta):
-                LOGGER.info("Analytics rollup is paused (rebuild in progress); skipping pass.")
-                result = {"paused": True}
-            else:
-                _set_pass_in_progress(meta, True)
-                try:
-                    result = _rollup_pass(raw, aggr, meta)
-                finally:
-                    _set_pass_in_progress(meta, False)
+            raw, aggr, meta = _collections()
+            result = _single_pass(raw, aggr, meta)
         except Exception:
             # Log instead of dropping the failure silently: an unnoticed error
             # here used to hide gaps and duplicate counts in the counters.
@@ -318,9 +409,9 @@ REBUILD_PIPELINE = [
 
 
 def _wait_for_idle_pass(meta, timeout_s: float) -> bool:
-    """Wait until no rollup pass is running; False when the timeout elapsed."""
+    """Wait until no live rollup pass is running; False when the timeout elapsed."""
     deadline = time.monotonic() + timeout_s
-    while _pass_in_progress(meta):
+    while _pass_is_live(meta):
         if time.monotonic() >= deadline:
             return False
         time.sleep(0.2)
@@ -368,19 +459,32 @@ def _rebuild_from_raw(raw, aggr) -> dict:
 def rebuild_demo_analytics(timeout_s: float = REBUILD_SETTLE_TIMEOUT_S) -> dict:
     """Recount ``d_analytics`` from the raw ``analytics`` events.
 
-    The live rollup is paused first so no ``$inc`` can land on top of the
-    rewritten counters, and each rewritten document records the newest raw
-    event id it counted so later rollup passes skip that range instead of
-    counting it again.
+    The rebuild claim is acquired atomically, so a second concurrent caller
+    (e.g. the scheduled job while an admin runs it manually) is skipped with
+    ``{"skipped": True}`` instead of racing. The live rollup is paused first so
+    no ``$inc`` can land on top of the rewritten counters, and each rewritten
+    document records the newest raw event id it counted so later rollup passes
+    skip that range instead of counting it again. If a rollup pass is still
+    running when ``timeout_s`` elapses, the rebuild aborts before touching any
+    counter (``{"aborted": True, "reason": ...}``) and releases its own claim.
     """
     raw, aggr, meta = _collections()
-    meta.update_one({"_id": META_ID}, {"$set": {"paused": True}}, upsert=True)
+    _ensure_meta_doc(meta)
+    owner = uuid.uuid4().hex
+    if not _acquire_rebuild(meta, owner):
+        LOGGER.warning("Rebuild skipped: another rebuild is already running.")
+        return {"skipped": True}
+
     try:
         if not _wait_for_idle_pass(meta, timeout_s):
-            LOGGER.warning("Rebuild started while a rollup pass was still running.")
+            LOGGER.warning(
+                "Rebuild aborted: a rollup pass was still running after %.0fs.",
+                timeout_s,
+            )
+            return {"aborted": True, "reason": "rollup_pass_still_running"}
         stats = _rebuild_from_raw(raw, aggr)
     finally:
-        meta.update_one({"_id": META_ID}, {"$set": {"paused": False}}, upsert=True)
+        _release_rebuild(meta, owner)
 
     LOGGER.info("Rebuilt %s", stats)
     return stats

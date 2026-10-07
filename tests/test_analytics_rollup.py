@@ -14,6 +14,7 @@ from mielenosoitukset_fi.utils.aggregate_analytics import (
     rebuild_demo_analytics,
     get_last_seen_id,
     set_last_seen_id,
+    _rollup_pass,
     _claim_pass,
     _release_pass,
     _ensure_meta_doc,
@@ -431,3 +432,38 @@ def test_flag_without_timestamp_is_not_a_live_pass(db):
     assert _pass_is_live(meta) is False
     assert _claim_pass(meta, "worker-a") is True
     _release_pass(meta, "worker-a")
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_taken_over_pass_lease_aborts_without_writing(db):
+    _reset_meta(db)
+    meta = db["_meta"]
+
+    demo_id = ObjectId()
+    now = datetime(2026, 6, 1, 9, 50, 0, tzinfo=timezone.utc)
+    db.analytics.insert_one({"_id": _oid_at(now), "demo_id": demo_id, "timestamp": now})
+
+    # Worker A claims the pass, then worker B's takeover replaces A's lease
+    # before A's increments land (the expired-lease stall path).
+    _claim_pass(meta, "worker-a")
+    meta.update_one(
+        {"_id": META_ID},
+        {"$set": {
+            "pass_in_progress": True,
+            "pass_owner": "worker-b",
+            "pass_started_at": now,
+        }},
+    )
+
+    stats = _rollup_pass(db.analytics, db.d_analytics, meta, "worker-a")
+
+    assert stats == {"stale": True}
+    # A's fence gate failed, so nothing was incremented and the cursor did not
+    # move; B owns the lease untouched.
+    assert db.d_analytics.find_one({"_id": demo_id}) is None
+    assert get_last_seen_id(meta) == ObjectId("000000000000000000000000")
+    doc = meta.find_one({"_id": META_ID})
+    assert doc["pass_owner"] == "worker-b"
+
+    _release_pass(meta, "worker-b")

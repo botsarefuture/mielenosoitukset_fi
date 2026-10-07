@@ -132,7 +132,12 @@ def _release_pass(meta, owner: str) -> None:
 
 
 def _pass_is_live(meta) -> bool:
-    """True only while a pass claim is held by someone right now."""
+    """True only while a pass lease is held by a live worker right now.
+
+    The holder renews ``pass_started_at`` on every pass, so a still-running
+    worker never looks expired and a rebuild waits for it; a worker that stops
+    renewing is treated as abandoned after the stale window.
+    """
     doc = meta.find_one({"_id": META_ID}, {"pass_in_progress": 1, "pass_started_at": 1})
     if not doc or not doc.get("pass_in_progress"):
         return False
@@ -227,8 +232,31 @@ def _load_markers(aggr, demo_ids) -> dict[ObjectId, ObjectId]:
     return markers
 
 
-def _rollup_pass(raw, aggr, meta) -> dict:
-    """Count every raw event newer than the cursor exactly once."""
+def _renew_pass_lease(meta, owner: str) -> bool:
+    """Atomically extend the pass lease for ``owner``, if still owned.
+
+    The renewal is conditional on still holding the pass, so a worker whose
+    lease was taken over (or that crashed and restarted elsewhere) cannot sneak
+    an increment in after the new owner started: the update matches zero
+    documents and the pass aborts before writing anything. Because a live
+    worker renews its lease on every pass, a running pass never looks
+    abandoned, while a genuinely dead worker stops renewing and its lease is
+    reclaimed after the stale window.
+    """
+    result = meta.update_one(
+        {"_id": META_ID, "pass_owner": owner},
+        {"$set": {"pass_started_at": datetime.now(timezone.utc)}},
+    )
+    return result.matched_count > 0
+
+
+def _rollup_pass(raw, aggr, meta, owner: str) -> dict:
+    """Count every raw event newer than the cursor exactly once.
+
+    ``owner`` is the pass lease holder; increments are only written after
+    atomically renewing the lease, so a worker whose lease was replaced fails
+    here (``{"stale": True}``) instead of racing the new owner.
+    """
     last_seen_id = get_last_seen_id(meta)
     new_events = list(
         raw.find({"_id": {"$gt": last_seen_id}}, {"demo_id": 1, "timestamp": 1})
@@ -286,6 +314,11 @@ def _rollup_pass(raw, aggr, meta) -> dict:
         ))
 
     if ops:
+        # Fence gate: only write the increments while still owning the lease,
+        # refreshed atomically so a takeover makes this worker's write fail.
+        if not _renew_pass_lease(meta, owner):
+            LOGGER.warning("Rollup pass lease lost (%s); aborting without writing.", owner)
+            return {"stale": True}
         aggr.bulk_write(ops, ordered=False)
     # The cursor only advances after the increments landed, and the per-demo
     # marker above keeps a replay of the same range idempotent.
@@ -312,7 +345,8 @@ def rollup_events(run_once: bool = False) -> dict | None:
     dict | None
         Counters of the last pass, ``{"paused": True}`` while a rebuild holds
         the pause, ``{"pass_not_acquired": True}`` when another worker owns the
-        pass, or None while running continuously.
+        pass, ``{"stale": True}`` when the lease was lost mid-pass, or None
+        while running continuously.
     """
     def _single_pass(raw, aggr, meta) -> dict:
         _ensure_meta_doc(meta)
@@ -324,7 +358,7 @@ def rollup_events(run_once: bool = False) -> dict | None:
             LOGGER.info("Another worker holds the rollup pass; skipping pass.")
             return {"pass_not_acquired": True}
         try:
-            return _rollup_pass(raw, aggr, meta)
+            return _rollup_pass(raw, aggr, meta, owner)
         finally:
             _release_pass(meta, owner)
 

@@ -34,6 +34,9 @@ def test_detail_map_is_lazy_loaded_below_the_fold():
     assert 'script.src = "{{ url_for(\'static\', filename=\'leaflet/leaflet.js\') }}"' in source
     assert "new IntersectionObserver" in source
     assert "await Promise.all([stylesheetLoaded, scriptLoaded])" in source
-    assert ".then(() => observer.disconnect())" in source
+    assert "const maxMapAttempts = 3" in source
+    assert "mapAttempts < maxMapAttempts" in source
+    assert "startMapWithRetry(() => observer.disconnect())" in source
+    assert "startMapWithRetry(() => {})" in source
     assert "mapStarted = false" in source
     assert '<script src="{{ url_for(\'static\', filename=\'leaflet/leaflet.js\') }}"></script>' not in source

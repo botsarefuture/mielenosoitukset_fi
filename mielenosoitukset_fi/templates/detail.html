@@ -2955,10 +2955,10 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     if (_has_coords(demoData)) {
       const mapElement = document.getElementById("map");
       let mapStarted = false;
+      let mapAttempts = 0;
+      let mapRetryTimer = null;
+      const maxMapAttempts = 3;
       const initializeMap = async () => {
-        if (mapStarted || !mapElement) return;
-        mapStarted = true;
-
         const stylesheet = document.createElement("link");
         stylesheet.rel = "stylesheet";
         stylesheet.href = "{{ url_for('static', filename='leaflet/leaflet.css') }}";
@@ -3002,24 +3002,35 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
         setTimeout(() => { map.invalidateSize(); }, 300);
       };
 
+      const startMapWithRetry = (onSuccess) => {
+        if (mapStarted || mapRetryTimer !== null || mapAttempts >= maxMapAttempts || !mapElement) return;
+        mapStarted = true;
+        mapAttempts += 1;
+
+        initializeMap()
+          .then(onSuccess)
+          .catch((error) => {
+            mapStarted = false;
+            console.warn("Map loading failed", error);
+            if (mapAttempts < maxMapAttempts) {
+              mapRetryTimer = window.setTimeout(() => {
+                mapRetryTimer = null;
+                startMapWithRetry(onSuccess);
+              }, mapAttempts * 1000);
+            }
+          });
+      };
+
       if ("IntersectionObserver" in window) {
         const mapObserver = new IntersectionObserver((entries, observer) => {
           if (entries.some((entry) => entry.isIntersecting)) {
-            initializeMap()
-              .then(() => observer.disconnect())
-              .catch((error) => {
-                mapStarted = false;
-                console.warn("Map loading failed", error);
-              });
+            startMapWithRetry(() => observer.disconnect());
           }
         }, { rootMargin: "400px" });
         mapObserver.observe(mapElement);
       } else {
         window.addEventListener("load", () => {
-          initializeMap().catch((error) => {
-            mapStarted = false;
-            console.warn("Map loading failed", error);
-          });
+          startMapWithRetry(() => {});
         }, { once: true });
       }
     } else {

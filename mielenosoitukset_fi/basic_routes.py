@@ -1215,12 +1215,14 @@ def init_routes(app):
 
     @app.route("/robots.txt")
     def robots_txt():
-        txt = """User-agent: *
-    Disallow: /admin/
-    Disallow: /users/auth/login/
-    Disallow: /users/auth/register/
-    Disallow: /users/auth/forgot/
-    """
+        txt = (
+            "User-agent: *\n"
+            "    Disallow: /admin/\n"
+            "    Disallow: /users/auth/login/\n"
+            "    Disallow: /users/auth/register/\n"
+            "    Disallow: /users/auth/forgot/\n"
+            "Sitemap: https://mielenosoitukset.fi/sitemap.xml\n"
+        )
         return Response(txt, mimetype="text/plain")
 
     @app.route("/api/analytics/track_view", methods=["POST"])

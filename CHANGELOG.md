@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- `/robots.txt` now advertises the canonical XML sitemap with a `Sitemap: https://mielenosoitukset.fi/sitemap.xml` line (no cache-busting query parameter), so crawlers can discover the sitemap without guessing; all existing crawler rules are unchanged.
+
 - Recurring series now include approved children whose `hide` field is absent in occurrence lists and explicit selection, matching the shared public visibility filter.
 
 - Recurring child links now show the requested visible occurrence outside the bounded 90-day chooser. Cancelled dates no longer crowd out active dates; recent history and cancelled dates remain accessible in a bounded disclosure.

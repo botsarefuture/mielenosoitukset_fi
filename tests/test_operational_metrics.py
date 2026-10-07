@@ -29,11 +29,13 @@ def test_summarize_samples_ignores_non_numeric_and_non_finite_values():
     }
 
 
-def test_collect_operational_metrics_uses_bounded_run_sample_and_queue_counts(db):
+def test_collect_operational_metrics_uses_bounded_run_sample_and_queue_counts(
+    db, seeded_data
+):
     db.background_job_runs.insert_many(
         [
             {"status": "success", "duration_seconds": 1.0},
-            {"status": "failed", "duration_seconds": 3.0},
+            {"status": "error", "duration_seconds": 3.0},
             {"status": "success", "duration_seconds": 100.0},
         ]
     )
@@ -63,3 +65,27 @@ def test_collect_operational_metrics_uses_bounded_run_sample_and_queue_counts(db
         "exhausted": 1,
         "oldest_age_seconds": pytest.approx(120, abs=2),
     }
+
+
+def test_collect_operational_metrics_uses_effective_oldest_queue_timestamp(
+    db, seeded_data
+):
+    now = datetime.now(timezone.utc)
+    db.email_queue.insert_many(
+        [
+            {"status": "pending"},
+            {
+                "status": "pending",
+                "created_at": now - timedelta(minutes=2),
+            },
+            {
+                "status": "failed",
+                "created_at": None,
+                "queued_at": now - timedelta(minutes=5),
+            },
+        ]
+    )
+
+    result = collect_operational_metrics(db)
+
+    assert result["email_queue"]["oldest_age_seconds"] == pytest.approx(300, abs=2)

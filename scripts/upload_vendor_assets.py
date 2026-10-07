@@ -6,8 +6,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 from pathlib import Path
+import sys
 
 import boto3
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
 
 from config import Config
 
@@ -16,6 +21,12 @@ ALLOWED_FILES = {
     "bootstrap.min.css": "text/css; charset=utf-8",
     "bootstrap.bundle.min.js": "application/javascript; charset=utf-8",
     "LICENSE": "text/plain; charset=utf-8",
+}
+
+TRUSTED_SHA256 = {
+    "bootstrap.min.css": "7f1d37f0d90b6385354c2ac10e2bb91563c46bd7a266ed351222ebcac8496c2a",
+    "bootstrap.bundle.min.js": "aa53d582f97eb594c2a5cc5824574707f9ba9837bce3046bfa5f3556860f4e04",
+    "LICENSE": "3d0b0c88216e4752b9afd3d24e36faaf27873b5a45a61458bb3c83e794c26832",
 }
 
 
@@ -49,6 +60,10 @@ def main(argv=None) -> int:
         key = f"{prefix}/{filename}"
         content = path.read_bytes()
         digest = sha256(content)
+        if digest != TRUSTED_SHA256.get(filename):
+            raise RuntimeError(
+                f"refusing untrusted vendor content for {filename}: sha256={digest}"
+            )
         exists = False
         existing_digest = None
         try:

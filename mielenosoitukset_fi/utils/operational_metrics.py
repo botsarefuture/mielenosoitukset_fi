@@ -90,7 +90,9 @@ def collect_operational_metrics(db, *, job_sample_limit: int = 500) -> dict:
     )
     durations = [run.get("duration_seconds") for run in job_runs]
     job_duration = summarize_samples(durations)
-    failed_runs = sum(1 for run in job_runs if run.get("status") == "failed")
+    failed_runs = sum(
+        1 for run in job_runs if run.get("status") in {"error", "failed"}
+    )
 
     queue = db["email_queue"]
     pending_query = {"status": {"$in": [None, "pending"]}}
@@ -98,14 +100,30 @@ def collect_operational_metrics(db, *, job_sample_limit: int = 500) -> dict:
     in_flight_query = {"status": "in_flight"}
     exhausted_query = {"status": "failed", "attempts": {"$gte": 30}}
 
-    oldest = queue.find_one(
-        {"status": {"$in": [None, "pending", "failed", "in_flight"]}},
-        {"created_at": 1, "queued_at": 1},
-        sort=[("_id", 1)],
+    eligible_status = {"status": {"$in": [None, "pending", "failed", "in_flight"]}}
+    oldest_created = queue.find_one(
+        {**eligible_status, "created_at": {"$type": "date"}},
+        {"created_at": 1},
+        sort=[("created_at", 1)],
     )
-    oldest_timestamp = None
-    if oldest:
-        oldest_timestamp = oldest.get("created_at") or oldest.get("queued_at")
+    oldest_queued = queue.find_one(
+        {
+            **eligible_status,
+            "created_at": {"$not": {"$type": "date"}},
+            "queued_at": {"$type": "date"},
+        },
+        {"queued_at": 1},
+        sort=[("queued_at", 1)],
+    )
+    timestamp_candidates = [
+        timestamp
+        for timestamp in (
+            oldest_created.get("created_at") if oldest_created else None,
+            oldest_queued.get("queued_at") if oldest_queued else None,
+        )
+        if isinstance(timestamp, datetime)
+    ]
+    oldest_timestamp = min(timestamp_candidates) if timestamp_candidates else None
 
     now = datetime.now(timezone.utc)
     return {

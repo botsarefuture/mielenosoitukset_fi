@@ -37,6 +37,7 @@ def _oid_at(dt) -> ObjectId:
 
 
 def _total_views(analytics) -> int:
+    """Sum view counts across all day, hour, and minute buckets."""
     return sum(
         minute_count
         for days in analytics.values()
@@ -48,6 +49,7 @@ def _total_views(analytics) -> int:
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_rollup_buckets_legacy_and_modern_timestamps_into_same_counts(db):
+    """Verify legacy and UTC timestamps for one instant share a Helsinki bucket."""
     demo_id = ObjectId()
     legacy_oid = _oid_at(datetime(2026, 6, 1, 9, 50, 0, tzinfo=timezone.utc))
     modern_oid = _oid_at(datetime(2026, 6, 1, 9, 50, 0, tzinfo=timezone.utc))
@@ -69,6 +71,7 @@ def test_rollup_buckets_legacy_and_modern_timestamps_into_same_counts(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_rebuild_repairs_inflated_counters_and_prunes_stale_docs(db):
+    """Verify rebuilding corrects counts, records event markers, and prunes stale demos."""
     demo_id = ObjectId()
     stale_demo_id = ObjectId()
     now = datetime(2026, 6, 1, 9, 50, 0, tzinfo=timezone.utc)
@@ -97,6 +100,7 @@ def test_rebuild_repairs_inflated_counters_and_prunes_stale_docs(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_rollup_replay_does_not_double_count(db):
+    """Verify cursor replays skip counted events while new events still increment counts."""
     demo_id = ObjectId()
     now = datetime(2026, 6, 1, 9, 50, 0, tzinfo=timezone.utc)
     ev1 = _oid_at(now)
@@ -133,6 +137,7 @@ def test_rollup_replay_does_not_double_count(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_rollup_skips_pass_while_rebuild_paused(db):
+    """Verify a rebuild pause prevents the rollup from counting events."""
     demo_id = ObjectId()
     now = datetime(2026, 6, 1, 9, 50, 0, tzinfo=timezone.utc)
     db.analytics.insert_one({"_id": _oid_at(now), "demo_id": demo_id, "timestamp": now})
@@ -147,6 +152,7 @@ def test_rollup_skips_pass_while_rebuild_paused(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_rebuild_job_is_registered(app, db):
+    """Verify the rebuild job is registered and allows manual triggering."""
     job_manager = app.extensions["job_manager"]
     job_manager._ensure_job_documents()
 
@@ -158,6 +164,7 @@ def test_rebuild_job_is_registered(app, db):
 
 
 def _insert_raw_events(db, demo_id, count):
+    """Insert a demo's events at a fixed UTC instant and return that timestamp."""
     now = datetime(2026, 6, 1, 9, 50, 0, tzinfo=timezone.utc)
     db.analytics.insert_many(
         {"_id": _oid_at(now), "demo_id": demo_id, "timestamp": now}
@@ -169,6 +176,7 @@ def _insert_raw_events(db, demo_id, count):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_prep_writes_in_place_and_is_idempotent(db):
+    """Verify repeated preparation preserves one row per demo with the correct count."""
     from mielenosoitukset_fi.utils.analytics import prep
 
     demo_id = ObjectId()
@@ -187,6 +195,7 @@ def test_prep_writes_in_place_and_is_idempotent(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_prep_updates_changed_counts_without_duplicating(db):
+    """Verify preparation updates changed counts without creating duplicate rows."""
     from mielenosoitukset_fi.utils.analytics import prep
 
     demo_id = ObjectId()
@@ -205,6 +214,7 @@ def test_prep_updates_changed_counts_without_duplicating(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_prep_updates_legacy_random_id_rows_in_place(db):
+    """Verify preparation updates legacy rows without creating a second row for the demo."""
     from mielenosoitukset_fi.utils.analytics import prep
 
     demo_id = ObjectId()
@@ -225,6 +235,7 @@ def test_prep_updates_legacy_random_id_rows_in_place(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_prep_removes_rows_for_demos_without_raw_events(db):
+    """Verify preparation removes stale demos while preserving current view counts."""
     from mielenosoitukset_fi.utils.analytics import prep
 
     demo_id = ObjectId()
@@ -248,6 +259,7 @@ def test_prep_removes_rows_for_demos_without_raw_events(db):
 
 
 def _reset_meta(db):
+    """Replace rollup coordination metadata with an unpaused initial document."""
     db["_meta"].delete_many({"_id": META_ID})
     _ensure_meta_doc(db["_meta"])
 
@@ -255,6 +267,7 @@ def _reset_meta(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_two_rebuilds_cannot_run_concurrently(db):
+    """Verify only one rebuild holds the pause and only its owner can release it."""
     _reset_meta(db)
     meta = db["_meta"]
 
@@ -281,6 +294,7 @@ def test_two_rebuilds_cannot_run_concurrently(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_public_rebuild_is_skipped_while_another_rebuild_holds(db):
+    """Verify rebuilding skips an existing claim without releasing its owner's pause."""
     _reset_meta(db)
     meta = db["_meta"]
 
@@ -300,6 +314,7 @@ def test_public_rebuild_is_skipped_while_another_rebuild_holds(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_two_workers_cannot_claim_the_same_pass(db):
+    """Verify a pass admits one worker until that worker releases its claim."""
     _reset_meta(db)
     meta = db["_meta"]
 
@@ -320,6 +335,7 @@ def test_two_workers_cannot_claim_the_same_pass(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_failed_pass_claim_stops_without_overwriting_pass_state(db):
+    """Verify a rejected worker leaves counters and the current pass claim unchanged."""
     _reset_meta(db)
     meta = db["_meta"]
 
@@ -345,6 +361,7 @@ def test_failed_pass_claim_stops_without_overwriting_pass_state(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_rebuild_aborts_when_rollup_pass_does_not_settle(db):
+    """Verify a rebuild timeout preserves counters and releases only the rebuild claim."""
     _reset_meta(db)
     meta = db["_meta"]
 
@@ -380,6 +397,7 @@ def test_rebuild_aborts_when_rollup_pass_does_not_settle(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_stale_pass_claim_can_be_taken_over(db):
+    """Verify expired pass and rebuild claims can be acquired by new owners."""
     _reset_meta(db)
     meta = db["_meta"]
 
@@ -423,6 +441,7 @@ def test_stale_pass_claim_can_be_taken_over(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_flag_without_timestamp_is_not_a_live_pass(db):
+    """Verify a pass flag without a timestamp permits a new worker to claim the pass."""
     _reset_meta(db)
     meta = db["_meta"]
 
@@ -437,6 +456,7 @@ def test_flag_without_timestamp_is_not_a_live_pass(db):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_taken_over_pass_lease_aborts_without_writing(db):
+    """Verify a displaced worker leaves counters, the cursor, and the new owner unchanged."""
     _reset_meta(db)
     meta = db["_meta"]
 

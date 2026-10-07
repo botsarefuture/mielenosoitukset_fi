@@ -61,6 +61,7 @@ def two(n: int) -> str:
     return f"{n:02d}"
 
 def get_last_seen_id(meta=None) -> ObjectId:
+    """Return the stored rollup cursor, or the zero ObjectId if none exists."""
     meta = meta if meta is not None else _collections()[2]
     doc = meta.find_one({"_id": META_ID})
     if doc and "last_seen_id" in doc:
@@ -68,6 +69,7 @@ def get_last_seen_id(meta=None) -> ObjectId:
     return ObjectId("000000000000000000000000")
 
 def set_last_seen_id(obj_id: ObjectId, meta=None):
+    """Persist the last processed event ID in the rollup metadata."""
     meta = meta if meta is not None else _collections()[2]
     meta.update_one(
         {"_id": META_ID},
@@ -76,6 +78,7 @@ def set_last_seen_id(obj_id: ObjectId, meta=None):
     )
 
 def get_on_demand_max_ids(meta=None) -> dict[str, ObjectId]:
+    """Return per-demo event markers from on-demand rebuilds, or an empty map."""
     meta = meta if meta is not None else _collections()[2]
     doc = meta.find_one({"_id": META_ID}, {"on_demand_max_ids": 1})
     if not doc:
@@ -349,6 +352,7 @@ def rollup_events(run_once: bool = False) -> dict | None:
         while running continuously.
     """
     def _single_pass(raw, aggr, meta) -> dict:
+        """Claim and run one rollup pass, releasing the claim even on failure."""
         _ensure_meta_doc(meta)
         owner = uuid.uuid4().hex
         if not _claim_pass(meta, owner):
@@ -460,6 +464,7 @@ def _rebuild_from_raw(raw, aggr) -> dict:
     replaced = 0
 
     def _flush():
+        """Write pending rebuild operations and clear the batch after success."""
         if ops:
             aggr.bulk_write(ops, ordered=False)
             ops.clear()

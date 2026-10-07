@@ -2284,7 +2284,7 @@ def admin_analytics():
 
 
 def render_analytics_overview():
-    """ """
+    """Render the admin analytics overview with aggregated per-demo view counts."""
     data = [
         DemoViewCount(row["demo_id"], row["views"])
         for row in count_views_per_demo()

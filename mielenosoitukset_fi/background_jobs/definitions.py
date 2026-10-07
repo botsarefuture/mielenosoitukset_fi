@@ -53,6 +53,7 @@ class JobDefinition:
 
 
 def _interval(hours: int = 0, minutes: int = 0, days: int = 0) -> Dict[str, Any]:
+    """Build an interval trigger configuration from hours, minutes, and days."""
     return {"trigger": "interval", "trigger_args": {"hours": hours, "minutes": minutes, "days": days}}
 
 

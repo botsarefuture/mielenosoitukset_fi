@@ -40,6 +40,7 @@ def _audit_actions_for_demo(db, demo_id):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_background_job_manager_executes_prep_job_and_records_audit(app, seeded_data, db):
+    """Verify the prep job saves view counts and records a successful run."""
     job_manager = app.extensions["job_manager"]
     job_manager._ensure_job_documents()
 

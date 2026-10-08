@@ -75,10 +75,7 @@
     window.webVitals.onTTFB(sendVital);
   }
 
-  window.addEventListener("pagehide", function (event) {
-    if (event.persisted) return;
-    flushVitals();
-  });
+  window.addEventListener("pagehide", flushVitals);
 
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "hidden") flushVitals();

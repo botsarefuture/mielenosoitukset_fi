@@ -193,6 +193,82 @@ def test_public_pages_load_pinned_first_party_vitals_without_identifiers():
     assert "metric.attribution" not in script
 
 
+@pytest.mark.e2e
+@pytest.mark.parametrize("persisted", [False, True])
+def test_pagehide_flushes_vitals_once_and_restoration_starts_a_new_visit(
+    browser_page, persisted
+):
+    browser_page.evaluate(
+        """() => {
+            window.vitalCallbacks = {};
+            window.vitalBeacons = [];
+            window.webVitals = {};
+            for (const name of ["CLS", "INP", "LCP", "TTFB"]) {
+                window.webVitals[`on${name}`] = callback => {
+                    window.vitalCallbacks[name] = callback;
+                };
+            }
+            navigator.sendBeacon = (url, body) => {
+                window.vitalBeacons.push({ url, body });
+                return true;
+            };
+        }"""
+    )
+    browser_page.add_script_tag(
+        path=str(ROOT / "mielenosoitukset_fi/static/js/site_analytics.js")
+    )
+
+    def beacons():
+        return browser_page.evaluate(
+            """() => Promise.all(window.vitalBeacons.map(async ({ url, body }) => ({
+                url, payload: JSON.parse(await body.text())
+            })))"""
+        )
+
+    # Exercise pagehide without visibilitychange, as a fallback for cache entry.
+    browser_page.evaluate(
+        """persisted => {
+            window.vitalCallbacks.LCP({ name: "LCP", value: 1200 });
+            window.vitalCallbacks.LCP({ name: "LCP", value: 1600 });
+            window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted }));
+        }""",
+        persisted,
+    )
+    first_visit = [
+        {"url": "/api/analytics/vitals", "payload": {"metric": "LCP", "value": 1600}}
+    ]
+    assert beacons() == first_visit
+
+    browser_page.evaluate(
+        """() => {
+            Object.defineProperty(document, "visibilityState", { value: "hidden" });
+            document.dispatchEvent(new Event("visibilitychange"));
+            window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: false }));
+            window.vitalCallbacks.LCP({ name: "LCP", value: 1800 });
+            window.dispatchEvent(new PageTransitionEvent("pagehide"));
+        }"""
+    )
+    assert beacons() == first_visit
+
+    browser_page.evaluate(
+        """() => {
+            window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+            window.dispatchEvent(new PageTransitionEvent("pagehide"));
+        }"""
+    )
+    assert beacons() == first_visit
+
+    browser_page.evaluate(
+        """() => {
+            window.vitalCallbacks.LCP({ name: "LCP", value: 900 });
+            window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true }));
+        }"""
+    )
+    assert beacons() == first_visit + [
+        {"url": "/api/analytics/vitals", "payload": {"metric": "LCP", "value": 900}}
+    ]
+
+
 @pytest.mark.parametrize("summary_fails", [False, True])
 def test_admin_overview_reads_vitals_once_and_preserves_devices(
     app, monkeypatch, summary_fails

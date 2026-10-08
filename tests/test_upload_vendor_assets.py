@@ -124,3 +124,58 @@ def test_only_explicit_versioned_manifests_are_accepted(tmp_path):
         upload_vendor_assets.main(
             [str(tmp_path), "--prefix", "vendor/untrusted/9.9.9"]
         )
+
+
+@pytest.mark.parametrize("prefix", ["vendor/bootstrap/5.3.0", "vendor/web-vitals/6.2.2"])
+@pytest.mark.parametrize("apply", [False, True])
+def test_selected_manifest_controls_uploads_and_content_types(monkeypatch, tmp_path, prefix, apply):
+    from copy import deepcopy
+    from unittest.mock import Mock
+
+    # Keep each real manifest's filenames and types; use synthetic trusted bytes.
+    manifests = deepcopy(upload_vendor_assets.VENDOR_MANIFESTS)
+    selected = manifests[prefix]
+    for filename, specification in selected.items():
+        content = f"fixture:{prefix}/{filename}".encode()
+        (tmp_path / filename).write_bytes(content)
+        specification["sha256"] = upload_vendor_assets.sha256(content)
+    (tmp_path / "unlisted.js").write_text("must not be uploaded")
+    monkeypatch.setattr(upload_vendor_assets, "VENDOR_MANIFESTS", manifests)
+    client = Mock()
+    client.exceptions.ClientError = ClientError
+    client.head_object.side_effect = ClientError({"Error": {"Code": "NoSuchKey"}}, "HeadObject")
+    monkeypatch.setattr(upload_vendor_assets.boto3, "client", Mock(return_value=client))
+
+    args = [str(tmp_path), "--prefix", f"/{prefix}/"]
+    if apply:
+        args.append("--apply")
+    assert upload_vendor_assets.main(args) == 0
+    assert {entry.kwargs["Key"] for entry in client.head_object.call_args_list} == {
+        f"{prefix}/{filename}" for filename in selected
+    }
+    if not apply:
+        client.put_object.assert_not_called()
+        return
+    assert client.put_object.call_count == len(selected)
+    for entry in client.put_object.call_args_list:
+        fields = entry.kwargs
+        filename = fields["Key"].removeprefix(f"{prefix}/")
+        assert fields == {
+            "Bucket": upload_vendor_assets.Config.S3_BUCKET,
+            "Key": f"{prefix}/{filename}", "Body": (tmp_path / filename).read_bytes(),
+            "ContentType": selected[filename]["content_type"],
+            "CacheControl": "public, max-age=31536000, immutable",
+            "Metadata": {"sha256": selected[filename]["sha256"]}, "IfNoneMatch": "*",
+        }
+
+
+def test_selected_manifest_requires_its_license_before_s3_access(monkeypatch, tmp_path):
+    from unittest.mock import Mock
+
+    (tmp_path / "web-vitals.iife.js").write_text("fixture")
+    client_factory = Mock()
+    monkeypatch.setattr(upload_vendor_assets.boto3, "client", client_factory)
+    with pytest.raises(SystemExit) as error:
+        upload_vendor_assets.main([str(tmp_path), "--prefix", "vendor/web-vitals/6.2.2", "--apply"])
+    assert error.value.code == 2
+    client_factory.assert_not_called()

@@ -304,3 +304,183 @@ def test_admin_overview_reads_vitals_once_and_preserves_devices(
     assert render.call_args.kwargs["web_vitals"] == ([] if summary_fails else summary)
     assert render.call_args.kwargs["range_days"] == 7
     assert breakdown.call_args_list[1].args == ("device",)
+
+
+@pytest.fixture
+def vital_browser(browser_page):
+    """Capture the real script's callbacks and beacons without external traffic."""
+    browser_page.evaluate(
+        """() => {
+            window.vitalCallbacks = {};
+            window.vitalBeacons = [];
+            window.webVitals = {};
+            for (const name of ["CLS", "INP", "LCP", "TTFB"]) {
+                window.webVitals[`on${name}`] = callback => {
+                    window.vitalCallbacks[name] = callback;
+                };
+            }
+            navigator.sendBeacon = (url, body) => {
+                window.vitalBeacons.push({url, body});
+                return true;
+            };
+        }"""
+    )
+    browser_page.add_script_tag(
+        path=str(ROOT / "mielenosoitukset_fi/static/js/site_analytics.js")
+    )
+    return browser_page
+
+
+def _vital_beacons(page):
+    return page.evaluate(
+        """() => Promise.all(window.vitalBeacons.map(async ({url, body}) => ({
+            url, type: body.type, payload: JSON.parse(await body.text())
+        })))"""
+    )
+
+
+@pytest.mark.e2e
+@pytest.mark.parametrize("failure", ["rejected", "exception"])
+def test_failed_beacon_retries_latest_value_without_resending_successes(vital_browser, failure):
+    vital_browser.evaluate(
+        """failure => {
+            const send = navigator.sendBeacon;
+            let first = true;
+            navigator.sendBeacon = (url, body) => {
+                if (first) {
+                    first = false;
+                    if (failure === "exception") throw new Error("beacon failed");
+                    return false;
+                }
+                return send(url, body);
+            };
+            window.vitalCallbacks.CLS({name: "CLS", value: 0.02});
+            window.vitalCallbacks.LCP({name: "LCP", value: 1200});
+            window.dispatchEvent(new PageTransitionEvent("pagehide"));
+        }""",
+        failure,
+    )
+    lcp = {"url": "/api/analytics/vitals", "type": "application/json",
+           "payload": {"metric": "LCP", "value": 1200}}
+    assert _vital_beacons(vital_browser) == [lcp]
+    vital_browser.evaluate(
+        """() => {
+            window.vitalCallbacks.CLS({name: "CLS", value: 0.03});
+            window.vitalCallbacks.LCP({name: "LCP", value: 1800});
+            Object.defineProperty(document, "visibilityState", {value: "hidden"});
+            document.dispatchEvent(new Event("visibilitychange"));
+            window.dispatchEvent(new PageTransitionEvent("pagehide"));
+        }"""
+    )
+    assert _vital_beacons(vital_browser) == [lcp, {
+        "url": "/api/analytics/vitals", "type": "application/json",
+        "payload": {"metric": "CLS", "value": 0.03},
+    }]
+
+
+@pytest.mark.e2e
+def test_browser_rejects_invalid_metrics_and_only_sends_latest_numeric_values(vital_browser):
+    vital_browser.evaluate(
+        """() => {
+            const callback = window.vitalCallbacks.LCP;
+            for (const metric of [null, {}, {name: "FID", value: 1},
+                    ...[NaN, Infinity, -Infinity, -1, "42", null, true].map(
+                        value => ({name: "LCP", value}))]) {
+                callback(metric);
+            }
+            window.dispatchEvent(new PageTransitionEvent("pagehide"));
+        }"""
+    )
+    assert _vital_beacons(vital_browser) == []
+    vital_browser.evaluate(
+        """() => {
+            for (const name of ["CLS", "INP", "LCP", "TTFB"]) {
+                window.vitalCallbacks[name]({name, value: 42});
+                window.vitalCallbacks[name]({name, value: 0, id: "private",
+                    attribution: {url: "https://secret.example", target: "#secret"}});
+            }
+            Object.defineProperty(document, "visibilityState", {
+                value: "visible", configurable: true
+            });
+            document.dispatchEvent(new Event("visibilitychange"));
+        }"""
+    )
+    assert _vital_beacons(vital_browser) == []
+    vital_browser.evaluate(
+        """() => {
+            Object.defineProperty(document, "visibilityState", {value: "hidden"});
+            document.dispatchEvent(new Event("visibilitychange"));
+            window.dispatchEvent(new PageTransitionEvent("pagehide"));
+        }"""
+    )
+    assert _vital_beacons(vital_browser) == [
+        {"url": "/api/analytics/vitals", "type": "application/json",
+         "payload": {"metric": name, "value": 0}}
+        for name in ("CLS", "INP", "LCP", "TTFB")
+    ]
+
+
+@pytest.mark.e2e
+def test_missing_vitals_library_preserves_other_analytics(browser_page):
+    browser_page.set_content('<div class="leaflet-container"></div>')
+    browser_page.evaluate(
+        """() => {
+            delete window.webVitals;
+            window.vitalBeacons = [];
+            navigator.sendBeacon = (url, body) => {
+                window.vitalBeacons.push({url, body});
+                return true;
+            };
+        }"""
+    )
+    browser_page.add_script_tag(path=str(ROOT / "mielenosoitukset_fi/static/js/site_analytics.js"))
+    browser_page.evaluate(
+        """() => {
+            const map = document.querySelector(".leaflet-container");
+            map.dispatchEvent(new Event("pointerdown"));
+            map.dispatchEvent(new Event("pointerdown"));
+            window.dispatchEvent(new PageTransitionEvent("pagehide"));
+        }"""
+    )
+    beacons = _vital_beacons(browser_page)
+    assert len(beacons) == 1
+    assert beacons[0]["url"] == "/api/analytics/event"
+    assert beacons[0]["payload"]["event"] == "map_interaction"
+
+
+@pytest.mark.parametrize("body,content_type", [
+    (b'{"metric":"CLS",', "application/json"),
+    (b'{"metric":"CLS","value":"\xff"}', "application/json"),
+    (b"metric=CLS&value=\xff", "application/x-www-form-urlencoded"),
+    (b"[]", "application/json"),
+    (b"null", "application/json"),
+    (b'{"metric":"CLS","value":0.1}', "text/plain"),
+])
+def test_vitals_endpoint_malformed_body_is_successful_without_storage(client, db, body, content_type):
+    response = client.post("/api/analytics/vitals", data=body, content_type=content_type, headers=_headers())
+    assert response.status_code == 200
+    assert response.get_json() == {"ok": True}
+    assert _collection(db).count_documents({}) == 0
+
+
+@pytest.mark.parametrize("chunked", [False, True])
+def test_vitals_endpoint_accepts_exactly_512_bytes(client, db, chunked):
+    body = b'{"metric":"TTFB","value":321}'.ljust(512, b" ")
+    overrides = {"CONTENT_LENGTH": "", "wsgi.input_terminated": True} if chunked else {}
+    response = client.open(
+        "/api/analytics/vitals", method="POST", data=body, content_type="application/json",
+        headers=_headers(), environ_overrides=overrides,
+    )
+    assert response.status_code == 200
+    assert _collection(db).find_one({"metric": "TTFB"})["sum"] == 321
+
+
+def test_vitals_endpoint_accepts_urlencoded_beacons(client, db):
+    response = client.post(
+        "/api/analytics/vitals", data="metric=+cls+&value=0.125",
+        content_type="application/x-www-form-urlencoded", headers=_headers(),
+    )
+    assert response.status_code == 200
+    document = _collection(db).find_one({"metric": "CLS"})
+    assert document["sum"] == 0.125
+    assert document["histogram"] == {"b012": 1}

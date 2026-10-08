@@ -118,8 +118,8 @@
     ]
   },
   "background_jobs": {
-    "count": 13,
-    "sha256": "d0baaa5d978cefc47272f601e689488dcc6d40ba4a2186c5c5f95119cac7f890",
+    "count": 14,
+    "sha256": "b3fb7dd55e88d58e4e6b04851f7706c35f333d88f9755d5a600af14a343fb2dc",
     "coverage": [
       "jobs",
       "integration"

@@ -90,7 +90,7 @@ class ConfigReloadTests(unittest.TestCase):
                 {"fi": "Suomi", "en": "English"},
             )
             self.assertFalse(
-                config_module.Config.TICKET_WRAPPER_AUTO_REPLY_ENABLED
+                config_module.Config.TICKET_AUTO_REPLY_ENABLED
             )
 
 

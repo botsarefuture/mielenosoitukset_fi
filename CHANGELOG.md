@@ -4,7 +4,7 @@
 
 ## UNRELEASED
 
-- Temporarily suppress automatic acknowledgement emails for support cases created through the unauthenticated contact-form wrapper, while preserving acknowledgements for direct support emails; an explicit configuration opt-in can restore the wrapper acknowledgement after incident containment.
+- Temporarily suppress automatic acknowledgement emails for all unauthenticated support ingress paths while preserving case creation and staff escalation; an explicit configuration opt-in can restore acknowledgements after incident containment.
 
 - Fixed the admin analytics dashboard's missing device breakdown after merge resolution and removed a duplicate Web Vitals query, preserving dashboard availability when the optional summary fails.
 - Fixed the Web Vitals pagehide fallback to flush pending metrics when entering the back/forward cache, with browser regression coverage for duplicate suppression and fresh metrics after restoration.

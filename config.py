@@ -245,8 +245,8 @@ class Config:
             "olivia@mielenosoitukset.fi",
         )
         cls.TICKET_SLA_HOURS = config.get("TICKET_SLA_HOURS", 48)
-        cls.TICKET_WRAPPER_AUTO_REPLY_ENABLED = config.get(
-            "TICKET_WRAPPER_AUTO_REPLY_ENABLED",
+        cls.TICKET_AUTO_REPLY_ENABLED = config.get(
+            "TICKET_AUTO_REPLY_ENABLED",
             False,
         )
         cls.TICKET_SENDER = config.get(

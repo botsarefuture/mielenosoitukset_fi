@@ -113,22 +113,22 @@ def test_delivery_error_sanitizer_redacts_recipient_addresses():
     assert "No such user here" in sanitized
 
 
-def test_wrapper_origin_auto_reply_is_disabled_by_default():
+def test_support_auto_reply_is_disabled_by_default():
     config = SimpleNamespace()
 
-    assert not _should_queue_auto_reply({"from_wrapper": True}, config)
+    assert not _should_queue_auto_reply(config)
 
 
-def test_wrapper_origin_auto_reply_requires_explicit_opt_in():
-    config = SimpleNamespace(TICKET_WRAPPER_AUTO_REPLY_ENABLED=True)
+def test_support_auto_reply_requires_explicit_opt_in():
+    config = SimpleNamespace(TICKET_AUTO_REPLY_ENABLED=True)
 
-    assert _should_queue_auto_reply({"from_wrapper": True}, config)
+    assert _should_queue_auto_reply(config)
 
 
-def test_direct_support_email_keeps_auto_reply_when_wrapper_replies_are_disabled():
-    config = SimpleNamespace(TICKET_WRAPPER_AUTO_REPLY_ENABLED=False)
+def test_support_auto_reply_respects_explicit_disable():
+    config = SimpleNamespace(TICKET_AUTO_REPLY_ENABLED=False)
 
-    assert _should_queue_auto_reply({"from_wrapper": False}, config)
+    assert not _should_queue_auto_reply(config)
 
 
 def _process_new_ticket(monkeypatch, *, from_wrapper):
@@ -172,7 +172,7 @@ def _process_new_ticket(monkeypatch, *, from_wrapper):
         TICKET_IMAP_USERNAME="support@mielenosoitukset.test",
         TICKET_SENDER="support@mielenosoitukset.test",
         MAIL_DEFAULT_SENDER="no-reply@mielenosoitukset.test",
-        TICKET_WRAPPER_AUTO_REPLY_ENABLED=False,
+        TICKET_AUTO_REPLY_ENABLED=False,
         TICKET_SLA_HOURS=48,
         TICKET_URGENT_KEYWORD="URGENT",
     )
@@ -194,9 +194,8 @@ def test_wrapper_ticket_does_not_queue_external_acknowledgement(monkeypatch):
     assert queued == []
 
 
-def test_direct_mail_still_queues_auto_reply(monkeypatch):
+def test_direct_mail_does_not_queue_external_acknowledgement(monkeypatch):
     result, queued = _process_new_ticket(monkeypatch, from_wrapper=False)
 
     assert result == 100500
-    assert len(queued) == 1
-    assert queued[0]["template_name"] == "customer_support/ticket_auto_reply.html"
+    assert queued == []

@@ -387,13 +387,25 @@ def _process_email(raw: bytes, mongo, email_sender, config, blocklist: Optional[
         meta=meta,
     )
 
-    # Auto-reply with the ticket id + SLA note. The reply goes to the real
-    # human sender only. Its Message-ID is kept so the user's reply can be
-    # threaded back onto this ticket.
+    # Auto-reply with the ticket id + SLA note. During incident containment,
+    # acknowledgements are disabled for every ingress path because an
+    # unauthenticated sender address cannot be trusted as a reply target.
     ticket_label = f"#{case.running_num}"
-    auto_reply_msg_id = _queue_auto_reply(
-        email_sender, config, sender_email, ticket_label, parsed["subject"], in_reply_to=message_id
-    )
+    auto_reply_msg_id = None
+    if _should_queue_auto_reply(config):
+        auto_reply_msg_id = _queue_auto_reply(
+            email_sender,
+            config,
+            sender_email,
+            ticket_label,
+            parsed["subject"],
+            in_reply_to=message_id,
+        )
+    else:
+        logger.warning(
+            "Suppressed automatic acknowledgement for support ticket %s",
+            ticket_label,
+        )
 
     urgent_msg_id = None
     if urgent:
@@ -468,6 +480,16 @@ def _append_followup(parent, parsed: Dict[str, Any], mongo, email_sender, config
 def _new_outbound_message_id() -> str:
     """Generate a Message-ID for an outbound ticket email (threading anchor)."""
     return f"<{uuid.uuid4()}@mielenosoitukset.fi>"
+
+
+def _should_queue_auto_reply(config) -> bool:
+    """Return whether a new support ticket may receive an automatic reply.
+
+    All support ingress paths accept an unauthenticated sender address. Keep
+    acknowledgements disabled by default until trusted recipient provenance is
+    implemented and verified, with an explicit opt-in for rollback.
+    """
+    return bool(getattr(config, "TICKET_AUTO_REPLY_ENABLED", False))
 
 
 def _queue_auto_reply(email_sender, config, reply_to: str, ticket_label: str, original_subject: str, in_reply_to: Optional[str] = None) -> str:

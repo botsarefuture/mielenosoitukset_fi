@@ -245,6 +245,11 @@ class Config:
             "olivia@mielenosoitukset.fi",
         )
         cls.TICKET_SLA_HOURS = config.get("TICKET_SLA_HOURS", 48)
+        # Incident rollback: set TICKET_AUTO_REPLY_ENABLED: true explicitly.
+        cls.TICKET_AUTO_REPLY_ENABLED = config.get(
+            "TICKET_AUTO_REPLY_ENABLED",
+            False,
+        )
         cls.TICKET_SENDER = config.get(
             "TICKET_SENDER",
             cls.MAIL_DEFAULT_SENDER,

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Temporarily suppress automatic acknowledgement emails for support cases created through the unauthenticated contact-form wrapper, while preserving acknowledgements for direct support emails; an explicit configuration opt-in can restore the wrapper acknowledgement after incident containment.
+
 - Fixed the admin analytics dashboard's missing device breakdown after merge resolution and removed a duplicate Web Vitals query, preserving dashboard availability when the optional summary fails.
 - Fixed the Web Vitals pagehide fallback to flush pending metrics when entering the back/forward cache, with browser regression coverage for duplicate suppression and fresh metrics after restoration.
 - Added privacy-preserving first-party real-user Web Vitals for LCP, INP, CLS, and TTFB. Public pages send only each metric's final name and numeric value when a page is left; the server stores bounded daily histograms by coarse route and device, and administrators see p50/p75/p95/p99 after the minimum sample size is met. A Web Vitals read failure no longer prevents the rest of the analytics dashboard from rendering.

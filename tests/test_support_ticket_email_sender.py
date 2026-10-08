@@ -5,7 +5,11 @@ import smtplib
 from config import Config
 from mielenosoitukset_fi.emailer.EmailJob import Sender
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender, _sanitize_delivery_error
-from mielenosoitukset_fi.scripts.process_support_tickets import _ticket_sender
+from mielenosoitukset_fi.scripts import process_support_tickets
+from mielenosoitukset_fi.scripts.process_support_tickets import (
+    _should_queue_auto_reply,
+    _ticket_sender,
+)
 
 
 def test_ticket_sender_profile_does_not_persist_smtp_credentials(monkeypatch):
@@ -107,3 +111,92 @@ def test_delivery_error_sanitizer_redacts_recipient_addresses():
     assert "victim@example.test" not in sanitized
     assert "[redacted]" in sanitized
     assert "No such user here" in sanitized
+
+
+def test_wrapper_origin_auto_reply_is_disabled_by_default():
+    config = SimpleNamespace()
+
+    assert not _should_queue_auto_reply({"from_wrapper": True}, config)
+
+
+def test_wrapper_origin_auto_reply_requires_explicit_opt_in():
+    config = SimpleNamespace(TICKET_WRAPPER_AUTO_REPLY_ENABLED=True)
+
+    assert _should_queue_auto_reply({"from_wrapper": True}, config)
+
+
+def test_direct_support_email_keeps_auto_reply_when_wrapper_replies_are_disabled():
+    config = SimpleNamespace(TICKET_WRAPPER_AUTO_REPLY_ENABLED=False)
+
+    assert _should_queue_auto_reply({"from_wrapper": False}, config)
+
+
+def _process_new_ticket(monkeypatch, *, from_wrapper):
+    parsed = {
+        "message_id": "<incoming@example.test>",
+        "in_reply_to": None,
+        "references": None,
+        "subject": "Test request",
+        "from_header": "Visitor <visitor@example.test>",
+        "sender_name": "Visitor",
+        "sender_email": "visitor@example.test",
+        "body": "Test request",
+        "html_body": "<p>Test request</p>",
+        "urgent": False,
+        "from_wrapper": from_wrapper,
+    }
+    monkeypatch.setattr(process_support_tickets, "_parse_message", lambda *_args: parsed)
+    monkeypatch.setattr(
+        process_support_tickets.Case,
+        "create_new",
+        lambda **_kwargs: SimpleNamespace(running_num=100500, _id="case-id"),
+    )
+
+    class Cases:
+        def find_one(self, *_args, **_kwargs):
+            return None
+
+        def update_one(self, *_args, **_kwargs):
+            return None
+
+    class EmailSender:
+        def __init__(self):
+            self.queued = []
+
+        def queue_email(self, **kwargs):
+            self.queued.append(kwargs)
+
+    mongo = SimpleNamespace(cases=Cases())
+    email_sender = EmailSender()
+    config = SimpleNamespace(
+        TICKET_IMAP_USERNAME="support@mielenosoitukset.test",
+        TICKET_SENDER="support@mielenosoitukset.test",
+        MAIL_DEFAULT_SENDER="no-reply@mielenosoitukset.test",
+        TICKET_WRAPPER_AUTO_REPLY_ENABLED=False,
+        TICKET_SLA_HOURS=48,
+        TICKET_URGENT_KEYWORD="URGENT",
+    )
+
+    result = process_support_tickets._process_email(
+        b"ignored",
+        mongo,
+        email_sender,
+        config,
+        blocklist=[],
+    )
+    return result, email_sender.queued
+
+
+def test_wrapper_ticket_does_not_queue_external_acknowledgement(monkeypatch):
+    result, queued = _process_new_ticket(monkeypatch, from_wrapper=True)
+
+    assert result == 100500
+    assert queued == []
+
+
+def test_direct_mail_still_queues_auto_reply(monkeypatch):
+    result, queued = _process_new_ticket(monkeypatch, from_wrapper=False)
+
+    assert result == 100500
+    assert len(queued) == 1
+    assert queued[0]["template_name"] == "customer_support/ticket_auto_reply.html"

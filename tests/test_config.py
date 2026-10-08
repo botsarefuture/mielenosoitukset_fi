@@ -89,6 +89,9 @@ class ConfigReloadTests(unittest.TestCase):
                 config_module.Config.BABEL_LANGUAGES,
                 {"fi": "Suomi", "en": "English"},
             )
+            self.assertFalse(
+                config_module.Config.TICKET_WRAPPER_AUTO_REPLY_ENABLED
+            )
 
 
 if __name__ == "__main__":

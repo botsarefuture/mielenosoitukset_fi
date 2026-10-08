@@ -50,6 +50,20 @@ def sha256(content: bytes) -> str:
 
 
 def main(argv=None) -> int:
+    """Validate trusted vendor assets and optionally publish missing CDN objects.
+
+    Parse ``argv`` (process arguments when omitted) for an asset directory, a
+    trusted versioned ``--prefix``, and optional ``--apply``. Print a plan after
+    checking local hashes and existing S3 hash metadata, even in dry runs.
+    With ``--apply``, create missing objects with immutable caching; matching
+    objects are skipped. Return 0 on success.
+
+    Invalid arguments or missing files cause ``SystemExit``. Untrusted local
+    content or conflicting remote hash metadata raises ``RuntimeError``.
+    File and unhandled S3 errors propagate. Concurrent creation is accepted
+    only when the remote hash metadata matches; upload failures can leave
+    earlier objects published.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("asset_dir", type=Path)
     parser.add_argument("--prefix", required=True)

@@ -265,6 +265,7 @@ def _visitor_collection():
 
 
 def _web_vitals_collection():
+    """Return the daily histogram collection, propagating database setup errors."""
     return _mongo()[WEB_VITALS_COLLECTION]
 
 
@@ -752,17 +753,29 @@ def record_beacon_event(payload, request=None):
 
 
 def _web_vital_buckets(metric):
+    """Return unitless upper bounds for CLS, or millisecond bounds otherwise."""
     return _WEB_VITAL_CLS_BUCKETS if metric == "CLS" else _WEB_VITAL_MS_BUCKETS
 
 
 def record_web_vital(payload, request=None, when=None):
     """Add one anonymous browser metric to a bounded daily histogram.
 
-    The route family comes from a same-origin ``Referer`` and the device is the
-    existing coarse user-agent bucket. The client cannot choose either stored
-    dimension, and no raw path, visitor, session, metric id, or DOM target is
-    retained. Invalid input and storage failures are intentionally invisible
-    to the page.
+    ``payload`` must be a dict with ``metric`` and ``value``. Metric names are
+    stripped and uppercased; values are converted to floats and must be finite,
+    from 0 through 5 for unitless CLS or 0 through 60000 milliseconds for INP,
+    LCP, and TTFB. Other payload fields are ignored.
+
+    The route family comes from a public ``Referer`` path whose hostname
+    matches the request host, ignoring case, scheme, and port. The device is
+    the coarse user-agent bucket; bots are rejected. No raw path, visitor,
+    session, metric id, or DOM target is retained.
+
+    ``request`` defaults to the active Flask request. ``when`` defaults to now;
+    naive datetimes are treated as UTC. Aggregates use the Helsinki-local date,
+    with expiry set to 400 days after that date's local midnight.
+
+    Return ``True`` after the aggregate update succeeds, or ``False`` for
+    rejected input or caught request, conversion, and storage errors.
     """
     try:
         if not isinstance(payload, dict):
@@ -835,7 +848,14 @@ def record_web_vital(payload, request=None, when=None):
 
 
 def _histogram_percentile(histogram, count, boundaries, percentile):
-    """Return the fixed-bucket upper bound for a nearest-rank percentile."""
+    """Return the fixed-bucket upper bound for a nearest-rank percentile.
+
+    ``percentile`` is a fraction such as 0.75. ``boundaries`` supplies ascending
+    upper bounds for histogram keys ``b000``, ``b001``, and so on. Return
+    ``None`` for nonpositive counts, or the last boundary if the bucket counts
+    never reach the target rank. Invalid bucket counts propagate conversion
+    errors; positive counts require nonempty boundaries.
+    """
     if count <= 0:
         return None
     target = math.ceil(count * percentile)
@@ -848,7 +868,20 @@ def _histogram_percentile(histogram, count, boundaries, percentile):
 
 
 def get_web_vitals_summary(days=30, minimum_samples=10):
-    """Return site-wide approximate Web Vitals percentiles from histograms."""
+    """Return site-wide approximate Web Vitals percentiles from histograms.
+
+    Combine all routes and devices over ``days`` Helsinki-local dates ending
+    today, inclusive; a falsey ``days`` selects 30 days. Return one dict each
+    for LCP, INP, CLS, and TTFB, in that order, including empty metrics.
+
+    Each row contains ``metric``, ``count``, ``sufficient``, ``average``, and
+    ``p50``/``p75``/``p95``/``p99``. Percentiles are nearest-rank bucket upper
+    bounds, or ``None`` below ``minimum_samples`` or with no samples. The
+    average is available whenever the count is nonzero. CLS is unitless;
+    other values are in milliseconds.
+
+    Database errors and errors converting stored counts or sums propagate.
+    """
     match, _start, _end = _match_window(days=days)
     documents = _web_vitals_collection().find(match)
     combined = {

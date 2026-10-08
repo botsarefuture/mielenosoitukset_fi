@@ -4,7 +4,12 @@ from mielenosoitukset_fi.utils.site_analytics import WEB_VITALS_COLLECTION
 
 
 def migrate_web_vitals(db):
-    """Create the uniqueness, reporting, and TTL indexes for daily histograms."""
+    """Create the uniqueness, reporting, and TTL indexes for daily histograms.
+
+    Documents become eligible for TTL deletion at their ``expires_at`` value.
+    Return ``web_vitals_indexes`` mapped to all collection index names, sorted.
+    Database errors propagate, potentially after earlier indexes were created.
+    """
     collection = db[WEB_VITALS_COLLECTION]
     collection.create_index(
         [("date", 1), ("page_type", 1), ("device", 1), ("metric", 1)],

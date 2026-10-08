@@ -1139,7 +1139,11 @@ def init_routes(app):
     route_limiter = next(iter(limiter_extensions), None)
 
     def _optional_limit(value):
-        """Apply a route limit when Flask-Limiter is enabled for this app."""
+        """Apply a route limit when Flask-Limiter is enabled for this app.
+
+        Return a decorator using Flask-Limiter's ``value`` syntax in addition
+        to application defaults, or an identity decorator without a limiter.
+        """
         if route_limiter is None:
             return lambda function: function
         return route_limiter.limit(value, override_defaults=False)
@@ -1272,10 +1276,12 @@ def init_routes(app):
     def track_web_vital():
         """Add an anonymous metric to a bounded aggregate histogram.
 
-        Accepted and validation-rejected beacons receive a small successful
-        response; Flask-Limiter still returns HTTP 429 when a client exceeds
-        the endpoint or shared application limits, and that request is not
-        recorded.
+        Accept JSON or URL-encoded form bodies of at most 512 bytes. Accepted,
+        oversized, malformed, and validation-rejected beacons receive HTTP 200
+        with ``{"ok": True}``, as do caught storage failures. Request-stream
+        read errors propagate. Flask-Limiter returns HTTP 429 when a client
+        exceeds the endpoint or shared application limits, and that request
+        is not recorded.
         """
         if request.content_length is not None and request.content_length > 512:
             return jsonify({"ok": True})

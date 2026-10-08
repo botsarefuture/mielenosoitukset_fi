@@ -30,6 +30,7 @@ from mielenosoitukset_fi.utils.site_analytics import (
     get_traffic_series,
     get_visitor_overview,
     get_visitor_series,
+    get_web_vitals_summary,
 )
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from mielenosoitukset_fi.admin.utils import _ADMIN_TEMPLATE_FOLDER, log_admin_action_V2
@@ -142,6 +143,12 @@ def site_overview():
         logger.exception("Failed to build site analytics overview")
         abort(503)
 
+    try:
+        web_vitals = get_web_vitals_summary(days=days)
+    except Exception:
+        logger.exception("Failed to read Web Vitals summary")
+        web_vitals = []
+
     rows = [
         {**row, "url": _page_views_endpoint(row["page_type"], row["resource_id"])}
         for row in top_pages
@@ -170,6 +177,7 @@ def site_overview():
         referrers=referrers,
         events=events,
         search_terms=search_terms,
+        web_vitals=web_vitals,
         language_labels=LANGUAGE_LABELS,
         device_labels=DEVICE_LABELS,
         referrer_labels=REFERRER_LABELS,

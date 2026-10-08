@@ -92,6 +92,8 @@ The acceptance checks completed as follows:
 5. cold-mobile TTFB, FCP, LCP, DOMContentLoaded and load p50/p95/p99 are
    recorded above.
 
-The next performance iteration should add production real-user Core Web Vitals
-(LCP, INP, CLS and TTFB) by route family so p75 can be optimized from actual
-visitor devices and networks rather than synthetic tests alone.
+The follow-up described in [`web-vitals-rum.md`](web-vitals-rum.md) adds
+production real-user LCP, INP, CLS and TTFB as bounded anonymous histograms by
+coarse route and device. After deployment and the minimum sample count, use its
+p75 as the primary visitor-health view and p95/p99 to prioritize tail latency;
+keep this seven-run profile as the reproducible release comparison.

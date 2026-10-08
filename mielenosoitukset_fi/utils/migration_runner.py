@@ -10,6 +10,7 @@ from mielenosoitukset_fi.utils.migrations import (
     migration_007_site_analytics,
     migration_008_visitor_analytics,
     migration_009_fresh_step_up,
+    migration_010_web_vitals,
 )
 
 
@@ -48,6 +49,11 @@ MIGRATIONS = [
         "id": "009_fresh_step_up",
         "description": "Add storage and indexes for fresh step-up tokens.",
         "run": migration_009_fresh_step_up.migrate_fresh_step_up_storage,
+    },
+    {
+        "id": "010_web_vitals",
+        "description": "Add bounded daily histograms for anonymous Web Vitals.",
+        "run": migration_010_web_vitals.migrate_web_vitals,
     },
 ]
 

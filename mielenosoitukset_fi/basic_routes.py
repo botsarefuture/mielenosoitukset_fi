@@ -1,5 +1,6 @@
 import copy
 import ast
+import json
 import os
 import re
 import threading
@@ -8,7 +9,7 @@ import uuid
 import hashlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, date, timedelta, timezone
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import parse_qs, urlencode, urlsplit
 from flask_babel import _, refresh, format_date, get_locale
 from babel.dates import format_date as babel_format_date, get_day_names
 from flask import (
@@ -47,6 +48,7 @@ from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.site_analytics import (
     record_beacon_event,
     record_event_for_request,
+    record_web_vital,
 )
 from mielenosoitukset_fi.utils.wrappers import (
     depracated_endpoint,
@@ -1132,9 +1134,16 @@ def add_api_routes(app):
 def init_routes(app):
     """Register public routes, request hooks, and template context processors."""
     from mielenosoitukset_fi.utils.cache import cache
-    
-    
-    
+
+    limiter_extensions = app.extensions.get("limiter") or ()
+    route_limiter = next(iter(limiter_extensions), None)
+
+    def _optional_limit(value):
+        """Apply a route limit when Flask-Limiter is enabled for this app."""
+        if route_limiter is None:
+            return lambda function: function
+        return route_limiter.limit(value, override_defaults=False)
+
     # register genereate_demo_sentence function
     @app.context_processor
     def inject_demo_sentence():
@@ -1256,6 +1265,37 @@ def init_routes(app):
         if payload is None:
             payload = request.form.to_dict()
         record_beacon_event(payload)
+        return jsonify({"ok": True})
+
+    @app.route("/api/analytics/vitals", methods=["POST"])
+    @_optional_limit("120 per minute")
+    def track_web_vital():
+        """Add an anonymous metric to a bounded aggregate histogram.
+
+        Accepted and validation-rejected beacons receive a small successful
+        response; Flask-Limiter still returns HTTP 429 when a client exceeds
+        the endpoint or shared application limits, and that request is not
+        recorded.
+        """
+        if request.content_length is not None and request.content_length > 512:
+            return jsonify({"ok": True})
+        raw_payload = request.stream.read(513)
+        if len(raw_payload) > 512:
+            return jsonify({"ok": True})
+        payload = None
+        try:
+            if request.is_json:
+                payload = json.loads(raw_payload.decode("utf-8"))
+            elif request.mimetype == "application/x-www-form-urlencoded":
+                payload = {
+                    key: values[-1]
+                    for key, values in parse_qs(
+                        raw_payload.decode("utf-8"), keep_blank_values=True
+                    ).items()
+                }
+        except (UnicodeDecodeError, ValueError):
+            payload = None
+        record_web_vital(payload)
         return jsonify({"ok": True})
 
     @app.route("/api-docs/")

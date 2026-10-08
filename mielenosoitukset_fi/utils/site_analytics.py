@@ -63,7 +63,9 @@ never create a visitor.
 
 import hashlib
 import hmac
+import math
 import re
+from bisect import bisect_left
 from datetime import date, datetime, time, timedelta, timezone
 from ipaddress import ip_address
 from urllib.parse import urlsplit
@@ -82,6 +84,27 @@ SITE_ANALYTICS_COLLECTION = "site_analytics"
 # MongoDB collection used for distinct-visitor counting. Kept separate from the
 # pageview counters so existing pageview queries and numbers cannot change.
 SITE_ANALYTICS_VISITORS_COLLECTION = "site_analytics_visitors"
+
+# Daily, anonymous Web Vitals histograms. Documents contain aggregate bucket
+# counts only; no visitor, session, URL, metric-instance, or element identifier
+# is stored.
+WEB_VITALS_COLLECTION = "web_vitals_daily"
+WEB_VITALS_RETENTION_DAYS = 400
+WEB_VITAL_NAMES = {"CLS", "INP", "LCP", "TTFB"}
+
+# Fixed buckets keep storage cardinality bounded even when the public endpoint
+# receives hostile or unusual values. Millisecond metrics retain 50 ms
+# resolution through 5 seconds and 250 ms through 10 seconds. CLS retains 0.01
+# resolution through 1.0 and 0.1 through the hard 5.0 validation ceiling.
+_WEB_VITAL_MS_BUCKETS = tuple(
+    list(range(50, 5001, 50))
+    + list(range(5250, 10001, 250))
+    + [15000, 30000, 60000]
+)
+_WEB_VITAL_CLS_BUCKETS = tuple(
+    [round(value / 100, 2) for value in range(1, 101)]
+    + [round(value / 10, 1) for value in range(11, 51)]
+)
 
 # Maximum stored length for resource identifiers (demo ids, search terms,
 # external hostnames). Anything longer is truncated — analytics counters do
@@ -239,6 +262,10 @@ def _collection():
 
 def _visitor_collection():
     return _mongo()[SITE_ANALYTICS_VISITORS_COLLECTION]
+
+
+def _web_vitals_collection():
+    return _mongo()[WEB_VITALS_COLLECTION]
 
 
 # ---------------------------------------------------------------------------
@@ -722,6 +749,146 @@ def record_beacon_event(payload, request=None):
         return record_event_for_request(event, resource_id or None, request=request)
     except Exception:
         return False
+
+
+def _web_vital_buckets(metric):
+    return _WEB_VITAL_CLS_BUCKETS if metric == "CLS" else _WEB_VITAL_MS_BUCKETS
+
+
+def record_web_vital(payload, request=None, when=None):
+    """Add one anonymous browser metric to a bounded daily histogram.
+
+    The route family comes from a same-origin ``Referer`` and the device is the
+    existing coarse user-agent bucket. The client cannot choose either stored
+    dimension, and no raw path, visitor, session, metric id, or DOM target is
+    retained. Invalid input and storage failures are intentionally invisible
+    to the page.
+    """
+    try:
+        if not isinstance(payload, dict):
+            return False
+        metric = str(payload.get("metric") or "").strip().upper()
+        if metric not in WEB_VITAL_NAMES:
+            return False
+        value = float(payload.get("value"))
+        maximum = 5.0 if metric == "CLS" else 60000.0
+        if not math.isfinite(value) or value < 0 or value > maximum:
+            return False
+
+        if request is None:
+            from flask import request as _request
+
+            request = _request
+        try:
+            referrer = urlsplit(request.headers.get("Referer") or "")
+        except ValueError:
+            return False
+        current_host = (request.host or "").split(":")[0].lower()
+        if not referrer.hostname or referrer.hostname.lower() != current_host:
+            return False
+        classified = classify_path(referrer.path or "/")
+        if not classified:
+            return False
+        device = classify_device(request.headers.get("User-Agent") or "")
+        if device == BOT:
+            return False
+
+        moment = when or utcnow()
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=timezone.utc)
+        local = moment.astimezone(HELSINKI_TZ)
+        expires_at = local.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
+            days=WEB_VITALS_RETENTION_DAYS
+        )
+        boundaries = _web_vital_buckets(metric)
+        bucket_index = bisect_left(boundaries, value)
+        bucket_key = f"b{bucket_index:03d}"
+        dimensions = {
+            "date": local.strftime("%Y-%m-%d"),
+            "page_type": classified["page_type"],
+            "device": device,
+            "metric": metric,
+        }
+        _web_vitals_collection().update_one(
+            dimensions,
+            {
+                "$inc": {
+                    "count": 1,
+                    "sum": value,
+                    f"histogram.{bucket_key}": 1,
+                },
+                "$min": {"min": value},
+                "$max": {"max": value},
+                "$set": {"last_seen_at": moment.astimezone(timezone.utc)},
+                "$setOnInsert": {
+                    **dimensions,
+                    "expires_at": expires_at.astimezone(timezone.utc),
+                },
+            },
+            upsert=True,
+        )
+        return True
+    except (TypeError, ValueError):
+        return False
+    except Exception:
+        return False
+
+
+def _histogram_percentile(histogram, count, boundaries, percentile):
+    """Return the fixed-bucket upper bound for a nearest-rank percentile."""
+    if count <= 0:
+        return None
+    target = math.ceil(count * percentile)
+    seen = 0
+    for index, boundary in enumerate(boundaries):
+        seen += int(histogram.get(f"b{index:03d}", 0) or 0)
+        if seen >= target:
+            return boundary
+    return boundaries[-1]
+
+
+def get_web_vitals_summary(days=30, minimum_samples=10):
+    """Return site-wide approximate Web Vitals percentiles from histograms."""
+    match, _start, _end = _match_window(days=days)
+    documents = _web_vitals_collection().find(match)
+    combined = {
+        metric: {"count": 0, "sum": 0.0, "histogram": {}}
+        for metric in sorted(WEB_VITAL_NAMES)
+    }
+    for document in documents:
+        metric = document.get("metric")
+        if metric not in combined:
+            continue
+        target = combined[metric]
+        target["count"] += int(document.get("count", 0) or 0)
+        target["sum"] += float(document.get("sum", 0) or 0)
+        for bucket, bucket_count in (document.get("histogram") or {}).items():
+            target["histogram"][bucket] = (
+                target["histogram"].get(bucket, 0) + int(bucket_count or 0)
+            )
+
+    result = []
+    for metric in ("LCP", "INP", "CLS", "TTFB"):
+        values = combined[metric]
+        count = values["count"]
+        boundaries = _web_vital_buckets(metric)
+        sufficient = count >= minimum_samples
+        row = {
+            "metric": metric,
+            "count": count,
+            "sufficient": sufficient,
+            "average": (values["sum"] / count) if count else None,
+        }
+        for label, percentile in (("p50", 0.50), ("p75", 0.75), ("p95", 0.95), ("p99", 0.99)):
+            row[label] = (
+                _histogram_percentile(
+                    values["histogram"], count, boundaries, percentile
+                )
+                if sufficient
+                else None
+            )
+        result.append(row)
+    return result
 
 
 # ---------------------------------------------------------------------------

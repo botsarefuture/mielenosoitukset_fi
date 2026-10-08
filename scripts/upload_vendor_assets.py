@@ -17,16 +17,31 @@ if str(REPOSITORY_ROOT) not in sys.path:
 from config import Config
 
 
-ALLOWED_FILES = {
-    "bootstrap.min.css": "text/css; charset=utf-8",
-    "bootstrap.bundle.min.js": "application/javascript; charset=utf-8",
-    "LICENSE": "text/plain; charset=utf-8",
-}
-
-TRUSTED_SHA256 = {
-    "bootstrap.min.css": "7f1d37f0d90b6385354c2ac10e2bb91563c46bd7a266ed351222ebcac8496c2a",
-    "bootstrap.bundle.min.js": "aa53d582f97eb594c2a5cc5824574707f9ba9837bce3046bfa5f3556860f4e04",
-    "LICENSE": "3d0b0c88216e4752b9afd3d24e36faaf27873b5a45a61458bb3c83e794c26832",
+VENDOR_MANIFESTS = {
+    "vendor/bootstrap/5.3.0": {
+        "bootstrap.min.css": {
+            "content_type": "text/css; charset=utf-8",
+            "sha256": "7f1d37f0d90b6385354c2ac10e2bb91563c46bd7a266ed351222ebcac8496c2a",
+        },
+        "bootstrap.bundle.min.js": {
+            "content_type": "application/javascript; charset=utf-8",
+            "sha256": "aa53d582f97eb594c2a5cc5824574707f9ba9837bce3046bfa5f3556860f4e04",
+        },
+        "LICENSE": {
+            "content_type": "text/plain; charset=utf-8",
+            "sha256": "3d0b0c88216e4752b9afd3d24e36faaf27873b5a45a61458bb3c83e794c26832",
+        },
+    },
+    "vendor/web-vitals/6.2.2": {
+        "web-vitals.iife.js": {
+            "content_type": "application/javascript; charset=utf-8",
+            "sha256": "1e5e9b9af6b8d71cfef508e5a869c53b4cf2bbccad8c9b5ac664c34e93f6151a",
+        },
+        "LICENSE": {
+            "content_type": "text/plain; charset=utf-8",
+            "sha256": "bfdeded4040e05da31ca9b6239dc83bd23fa26ac8db87342a7ca4363f68916ff",
+        },
+    },
 }
 
 
@@ -44,7 +59,10 @@ def main(argv=None) -> int:
     prefix = args.prefix.strip("/")
     if not prefix.startswith("vendor/") or ".." in prefix.split("/"):
         parser.error("prefix must be a versioned path below vendor/")
-    if not all((args.asset_dir / name).is_file() for name in ALLOWED_FILES):
+    manifest = VENDOR_MANIFESTS.get(prefix)
+    if manifest is None:
+        parser.error("prefix is not a trusted versioned vendor manifest")
+    if not all((args.asset_dir / name).is_file() for name in manifest):
         parser.error("asset directory is missing an expected vendor file")
 
     client = boto3.client(
@@ -55,12 +73,12 @@ def main(argv=None) -> int:
     )
 
     planned = []
-    for filename, content_type in ALLOWED_FILES.items():
+    for filename, specification in manifest.items():
         path = args.asset_dir / filename
         key = f"{prefix}/{filename}"
         content = path.read_bytes()
         digest = sha256(content)
-        if digest != TRUSTED_SHA256.get(filename):
+        if digest != specification["sha256"]:
             raise RuntimeError(
                 f"refusing untrusted vendor content for {filename}: sha256={digest}"
             )
@@ -82,7 +100,7 @@ def main(argv=None) -> int:
             {
                 "action": action,
                 "content": content,
-                "content_type": content_type,
+                "content_type": specification["content_type"],
                 "digest": digest,
                 "key": key,
             }

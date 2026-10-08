@@ -121,7 +121,11 @@ def _page_views_endpoint(page_type, resource_id):
 @admin_required
 @permission_required("VIEW_ANALYTICS")
 def site_overview():
-    """Site-wide analytics dashboard built from aggregate counters."""
+    """Site-wide analytics dashboard built from aggregate counters.
+
+    Failures while building the core overview produce HTTP 503. A failed
+    Web Vitals read instead supplies an empty summary to the dashboard.
+    """
     days = _parse_range()
     try:
         overview = get_overview(days=days)

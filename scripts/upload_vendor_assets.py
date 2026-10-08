@@ -50,6 +50,20 @@ def sha256(content: bytes) -> str:
 
 
 def main(argv=None) -> int:
+    """Validate trusted vendor assets and optionally publish missing objects.
+
+    Parse ``argv`` (process arguments when None) for an asset directory,
+    a trusted versioned prefix, and optional --apply. Even a dry run reads
+    files, queries S3 metadata, and prints planned actions. All manifest
+    files are checked before uploads begin; matching objects are skipped.
+    With --apply, create missing objects with immutable one-year caching.
+    Return 0 on success.
+
+    Argument errors raise SystemExit. Untrusted file hashes or conflicting
+    stored hashes raise RuntimeError, including conflicts during concurrent
+    publication. File errors and unhandled S3 errors propagate; a failed
+    upload can leave earlier uploads in place.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("asset_dir", type=Path)
     parser.add_argument("--prefix", required=True)

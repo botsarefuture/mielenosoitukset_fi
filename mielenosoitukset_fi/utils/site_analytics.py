@@ -265,6 +265,7 @@ def _visitor_collection():
 
 
 def _web_vitals_collection():
+    """Resolve the daily Web Vitals collection from the current database."""
     return _mongo()[WEB_VITALS_COLLECTION]
 
 
@@ -752,17 +753,28 @@ def record_beacon_event(payload, request=None):
 
 
 def _web_vital_buckets(metric):
+    """Return unitless bounds for CLS, or millisecond bounds otherwise."""
     return _WEB_VITAL_CLS_BUCKETS if metric == "CLS" else _WEB_VITAL_MS_BUCKETS
 
 
 def record_web_vital(payload, request=None, when=None):
     """Add one anonymous browser metric to a bounded daily histogram.
 
-    The route family comes from a same-origin ``Referer`` and the device is the
-    existing coarse user-agent bucket. The client cannot choose either stored
+    ``payload`` supplies a metric name (trimmed and uppercased) and a value
+    convertible to a finite float. CLS accepts unitless values from 0 to 5;
+    INP, LCP, and TTFB accept 0 to 60,000 milliseconds, inclusive.
+
+    The route family comes from a ``Referer`` whose hostname matches the
+    request host; scheme and port are not compared. The device comes from
+    the coarse user-agent bucket. The client cannot choose either stored
     dimension, and no raw path, visitor, session, metric id, or DOM target is
-    retained. Invalid input and storage failures are intentionally invisible
-    to the page.
+    retained. Excluded paths and recognized bots are rejected.
+
+    ``request`` defaults to Flask's current request. ``when`` defaults to
+    now; naive datetimes are treated as UTC. Samples use the Helsinki-local
+    date, with expiry set 400 days after that day's midnight on insertion.
+    Return True after updating the aggregate, or False for rejected input
+    or any caught exception, including request-context and storage errors.
     """
     try:
         if not isinstance(payload, dict):
@@ -835,7 +847,15 @@ def record_web_vital(payload, request=None, when=None):
 
 
 def _histogram_percentile(histogram, count, boundaries, percentile):
-    """Return the fixed-bucket upper bound for a nearest-rank percentile."""
+    """Return the fixed-bucket upper bound for a nearest-rank percentile.
+
+    ``percentile`` is a fraction, such as 0.75. ``boundaries`` is a nonempty
+    ascending sequence whose counts are keyed as b000, b001, etc. in
+    ``histogram``. Return None for a nonpositive total ``count``, or the last
+    boundary if the accumulated counts never reach the requested rank.
+    Invalid counts that cannot be converted to integers raise TypeError or
+    ValueError.
+    """
     if count <= 0:
         return None
     target = math.ceil(count * percentile)
@@ -848,7 +868,19 @@ def _histogram_percentile(histogram, count, boundaries, percentile):
 
 
 def get_web_vitals_summary(days=30, minimum_samples=10):
-    """Return site-wide approximate Web Vitals percentiles from histograms."""
+    """Return site-wide approximate Web Vitals percentiles from histograms.
+
+    Combine all routes and devices over ``days`` Helsinki-local dates,
+    including today; a falsey ``days`` selects 30 days. Rows are ordered
+    LCP, INP, CLS, TTFB and contain the metric, count, average, sufficient
+    flag, and p50/p75/p95/p99 bucket upper bounds. CLS is unitless; other
+    metrics use milliseconds.
+
+    ``sufficient`` means the count meets ``minimum_samples``. Percentiles
+    are None below that threshold or with no samples; the average is None
+    only with no samples. Database errors and TypeError or ValueError from
+    invalid arguments or stored numeric values propagate to the caller.
+    """
     match, _start, _end = _match_window(days=days)
     documents = _web_vitals_collection().find(match)
     combined = {

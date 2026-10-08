@@ -1272,6 +1272,9 @@ def init_routes(app):
     def track_web_vital():
         """Add an anonymous metric to a bounded aggregate histogram.
 
+        Accept JSON or URL-encoded form data up to 512 bytes. Oversized,
+        malformed, or unsupported payloads are ignored. Storage failures
+        caught by the recorder also receive {"ok": True} with HTTP 200.
         Accepted and validation-rejected beacons receive a small successful
         response; Flask-Limiter still returns HTTP 429 when a client exceeds
         the endpoint or shared application limits, and that request is not

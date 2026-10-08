@@ -41,6 +41,11 @@
     }
   }
 
+  /**
+   * Retain the latest finite, nonnegative CLS, INP, LCP, or TTFB value until
+   * flushing. CLS is unitless; the other values are milliseconds. Ignore
+   * invalid metrics and names already queued successfully for this visit.
+   */
   function sendVital(metric) {
     if (!metric || ["CLS", "INP", "LCP", "TTFB"].indexOf(metric.name) === -1) return;
     if (typeof metric.value !== "number" || !isFinite(metric.value) || metric.value < 0) return;
@@ -48,6 +53,11 @@
     pendingVitals[metric.name] = metric.value;
   }
 
+  /**
+   * Attempt to queue each pending metric once per visit. Failed queueing
+   * remains eligible for a later flush, and beacon errors are swallowed.
+   * Restoring a page from the back/forward cache resets the visit state.
+   */
   function flushVitals() {
     ["CLS", "INP", "LCP", "TTFB"].forEach(function (name) {
       if (!Object.prototype.hasOwnProperty.call(pendingVitals, name) || sentVitals[name]) return;

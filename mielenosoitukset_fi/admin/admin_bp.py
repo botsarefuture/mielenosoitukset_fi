@@ -44,7 +44,8 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.city_assignment import NOT_ESCALATED_ASSIGNMENT_CLAUSE, CITY_ASSIGNMENT_FIELD
 from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.variables import CITY_LIST
-from mielenosoitukset_fi.utils.analytics import get_demo_views
+from mielenosoitukset_fi.utils.analytics import count_views_per_demo
+from mielenosoitukset_fi.utils.aggregate_analytics import bucket_keys
 from mielenosoitukset_fi.utils.cache import cache
 from mielenosoitukset_fi.utils.operational_metrics import collect_operational_metrics
 from mielenosoitukset_fi.utils.ui_translation_catalog import (
@@ -924,20 +925,19 @@ def _rollup_demo_analytics_on_demand(demo_id: ObjectId):
         ev_id = ev.get("_id")
         if ev_id is not None:
             max_event_id = ev_id if max_event_id is None else max(max_event_id, ev_id)
-        ts = ev.get("timestamp")
-        if not ts:
+        keys = bucket_keys(ev.get("timestamp"), ev_id)
+        if keys is None:
             continue
-        if ts.tzinfo is None:
-            ts = ts.replace(tzinfo=timezone.utc)
-        ts_hel = ts.astimezone(HELSINKI_TZ)
-        day_key = ts_hel.strftime("%Y-%m-%d")
-        hour_key = f"{ts_hel.hour:02d}"
-        minute_key = f"{ts_hel.minute:02d}"
+        day_key, hour_key, minute_key = keys
         day_bucket = rolled.setdefault(day_key, {})
         hour_bucket = day_bucket.setdefault(hour_key, {})
         hour_bucket[minute_key] = hour_bucket.get(minute_key, 0) + 1
 
     doc = {"_id": demo_id, "analytics": rolled}
+    if max_event_id is not None:
+        # Recorded so the live rollup skips the range this rebuild already
+        # counted instead of adding it a second time.
+        doc["last_event_id"] = max_event_id
     mongo["d_analytics"].replace_one({"_id": demo_id}, doc, upsert=True)
     if max_event_id is not None:
         mongo["_meta"].update_one(
@@ -2291,9 +2291,11 @@ def admin_analytics():
 
 
 def render_analytics_overview():
-    """ """
-    data = get_demo_views()
-    data = count_per_demo(data)
+    """Render the admin analytics overview with aggregated per-demo view counts."""
+    data = [
+        DemoViewCount(row["demo_id"], row["views"])
+        for row in count_views_per_demo()
+    ]
 
     return render_template(f"{_ADMIN_TEMPLATE_FOLDER}analytics.html", data=data)
 

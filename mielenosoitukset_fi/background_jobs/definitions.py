@@ -20,6 +20,7 @@ from mielenosoitukset_fi.scripts.process_ui_translation_sync import (
     run as process_ui_translation_sync,
 )
 from mielenosoitukset_fi.utils.analytics import prep
+from mielenosoitukset_fi.utils.aggregate_analytics import rebuild_demo_analytics
 from mielenosoitukset_fi.scripts.auto_close_cases import main as auto_close_cases
 from mielenosoitukset_fi.scripts.process_support_tickets import main as process_support_tickets
 from mielenosoitukset_fi.scripts.process_email_queue import run as process_email_queue
@@ -51,8 +52,9 @@ class JobDefinition:
         }
 
 
-def _interval(hours: int = 0, minutes: int = 0) -> Dict[str, Any]:
-    return {"trigger": "interval", "trigger_args": {"hours": hours, "minutes": minutes}}
+def _interval(hours: int = 0, minutes: int = 0, days: int = 0) -> Dict[str, Any]:
+    """Build an interval trigger configuration from hours, minutes, and days."""
+    return {"trigger": "interval", "trigger_args": {"hours": hours, "minutes": minutes, "days": days}}
 
 
 JOB_DEFINITIONS: List[JobDefinition] = [
@@ -83,6 +85,13 @@ JOB_DEFINITIONS: List[JobDefinition] = [
         description="Aggregates analytics stats for dashboards.",
         func=prep,
         default_trigger=_interval(minutes=15),
+    ),
+    JobDefinition(
+        key="rebuild_d_analytics",
+        name="Demo analytics rebuild",
+        description="Recounts d_analytics from the raw analytics events, repairing inflated or stale counters.",
+        func=rebuild_demo_analytics,
+        default_trigger=_interval(days=30),
     ),
     JobDefinition(
         key="run_preview",

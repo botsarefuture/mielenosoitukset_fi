@@ -1,6 +1,11 @@
 """Privacy, aggregation, and delivery contracts for first-party Web Vitals."""
 
+from importlib import import_module
+from inspect import unwrap
 from pathlib import Path
+from unittest.mock import Mock
+
+import pytest
 
 from mielenosoitukset_fi.utils import site_analytics
 
@@ -183,15 +188,43 @@ def test_public_pages_load_pinned_first_party_vitals_without_identifiers():
     assert "if (!event.persisted) return;" in script
     assert script.count("pendingVitals = Object.create(null)") == 2
     assert script.count("sentVitals = Object.create(null)") == 2
-    assert "if (event.persisted) return" in script
+    assert 'window.addEventListener("pagehide", flushVitals)' in script
     assert "metric.id" not in script
     assert "metric.attribution" not in script
 
 
-def test_web_vitals_summary_failure_is_optional_for_admin_overview():
-    source = (
-        ROOT / "mielenosoitukset_fi/admin/admin_site_analytics_bp.py"
-    ).read_text()
+@pytest.mark.parametrize("summary_fails", [False, True])
+def test_admin_overview_reads_vitals_once_and_preserves_devices(
+    app, monkeypatch, summary_fails
+):
+    analytics = import_module("mielenosoitukset_fi.admin.admin_site_analytics_bp")
 
-    assert 'logger.exception("Failed to read Web Vitals summary")' in source
-    assert "web_vitals = []" in source
+    for name in (
+        "get_overview", "get_traffic_series", "get_visitor_overview",
+        "get_visitor_series", "get_top_pages", "get_event_totals",
+        "get_top_event_resources",
+    ):
+        monkeypatch.setattr(analytics, name, Mock(return_value=[]))
+    devices = [{"value": "mobile", "count": 12}]
+    breakdown = Mock(
+        side_effect=lambda dimension, **kwargs: devices if dimension == "device" else []
+    )
+    monkeypatch.setattr(analytics, "get_breakdown", breakdown)
+    summary = [{"metric": "LCP", "count": 12}]
+    read_vitals = Mock(
+        return_value=summary,
+        side_effect=RuntimeError("optional storage unavailable") if summary_fails else None,
+    )
+    monkeypatch.setattr(analytics, "get_web_vitals_summary", read_vitals)
+    monkeypatch.setattr(analytics, "log_admin_action_V2", Mock())
+    render = Mock(return_value="dashboard rendered")
+    monkeypatch.setattr(analytics, "render_template", render)
+
+    with app.test_request_context("/admin/analytics/?range=7"):
+        assert unwrap(analytics.site_overview)() == "dashboard rendered"
+
+    read_vitals.assert_called_once_with(days=7)
+    assert render.call_args.kwargs["devices"] == devices
+    assert render.call_args.kwargs["web_vitals"] == ([] if summary_fails else summary)
+    assert render.call_args.kwargs["range_days"] == 7
+    assert breakdown.call_args_list[1].args == ("device",)

@@ -47,6 +47,7 @@ from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.analytics import count_views_per_demo
 from mielenosoitukset_fi.utils.aggregate_analytics import bucket_keys
 from mielenosoitukset_fi.utils.cache import cache
+from mielenosoitukset_fi.utils.operational_metrics import collect_operational_metrics
 from mielenosoitukset_fi.utils.ui_translation_catalog import (
     entry_state,
     get_catalog_entry,
@@ -2121,6 +2122,11 @@ def admin_status():
     counts = _collect_collection_counts()
     recent_errors = _collect_recent_errors()
     dashboard = _calculate_dashboard_snapshot()
+    try:
+        operations = collect_operational_metrics(mongo)
+    except Exception:
+        logger.exception("Failed to collect operational status metrics")
+        operations = None
 
     latency_ms = round((_time.monotonic() - start) * 1000)
     now = _utcnow().replace(tzinfo=timezone.utc).strftime("%d.%m.%Y %H:%M:%S UTC")
@@ -2134,6 +2140,7 @@ def admin_status():
         counts=counts,
         recent_errors=recent_errors,
         dashboard=dashboard,
+        operations=operations,
         updated_at=now,
         latency_ms=latency_ms,
     )

@@ -58,11 +58,17 @@
     <p>Täytä alla oleva lomake ja lähetä, niin olemme sinuun yhteydessä!</p>
 
     <form id="contact-form" action="{{ url_for('contact') }}" method="POST" class="container-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div hidden aria-hidden="true">
+        <label for="website">{{ _('Verkkosivusto') }}</label>
+        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+      </div>
+
       <label for="name">{{ _('Nimi:') }}</label>
-      <input type="text" id="name" name="name" required placeholder="{{ _('Kirjoita nimesi') }}">
+      <input type="text" id="name" name="name" required maxlength="{{ contact_name_max_length }}" autocomplete="name" placeholder="{{ _('Kirjoita nimesi') }}">
 
       <label for="email">{{ _('Sähköposti:') }}</label>
-      <input type="email" id="email" name="email" required placeholder="{{ _('Kirjoita sähköpostisi') }}">
+      <input type="email" id="email" name="email" required maxlength="{{ contact_email_max_length }}" autocomplete="email" placeholder="{{ _('Kirjoita sähköpostisi') }}">
 
       <label for="subject">{{ _('Aihe:') }}</label>
       <select id="subject" name="subject" required>
@@ -74,7 +80,7 @@
       </select>
 
       <label for="message">{{ _('Viesti:') }}</label>
-      <textarea id="message" name="message" rows="6" required placeholder="{{ _('Kirjoita viestisi tähän') }}"></textarea>
+      <textarea id="message" name="message" rows="6" required minlength="{{ contact_message_min_length }}" maxlength="{{ contact_message_max_length }}" placeholder="{{ _('Kirjoita viestisi tähän') }}"></textarea>
 
       <button type="submit" class="button button-primary">{{ _('Lähetä') }}</button>
     </form>

@@ -4,7 +4,7 @@ import smtplib
 from datetime import datetime, timezone, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from .EmailJob import EmailJob
 import time
@@ -46,7 +46,11 @@ class EmailSender:
         self._queue_collection = self._db["email_queue"]
         self._cases_collection = self._db["cases"]
         self._env = Environment(
-            loader=FileSystemLoader("mielenosoitukset_fi/templates/emails")
+            loader=FileSystemLoader("mielenosoitukset_fi/templates/emails"),
+            autoescape=select_autoescape(
+                enabled_extensions=("html", "htm", "xml"),
+                default_for_string=True,
+            ),
         )
         self._logger = logger
         self._mailer_name = getattr(self._config, "MAILER_NAME", "MielenosoituksetMail")

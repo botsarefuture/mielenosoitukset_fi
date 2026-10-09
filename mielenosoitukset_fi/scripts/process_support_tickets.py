@@ -243,6 +243,9 @@ def _parse_message(raw: bytes, keyword: str) -> Dict[str, Any]:
 
     wrapper_sender = _extract_sender_from_body(msg, html, plain)
     header_sender = _extract_from_header(from_value)
+    request_id = (msg.get("X-MF-Request-ID") or "").strip().lower()
+    if not re.fullmatch(r"[a-f0-9]{32}", request_id):
+        request_id = None
 
     # Prefer the human sender from the contact-form wrapper; fall back to the
     # From header. Never auto-reply to the no-reply wrapper account.
@@ -266,6 +269,7 @@ def _parse_message(raw: bytes, keyword: str) -> Dict[str, Any]:
         "html_body": html,
         "urgent": _contains_urgent([subject, plain, html], keyword),
         "from_wrapper": bool(wrapper_sender),
+        "request_id": request_id,
     }
 
 
@@ -366,6 +370,7 @@ def _process_email(raw: bytes, mongo, email_sender, config, blocklist: Optional[
             "subject": parsed["subject"],
             "from_header": parsed["from_header"],
             "from_wrapper": parsed["from_wrapper"],
+            "request_id": parsed.get("request_id"),
         },
         "urgent": urgent,
     }

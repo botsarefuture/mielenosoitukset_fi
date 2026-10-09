@@ -1,4 +1,5 @@
 import re
+from urllib.parse import urlencode
 
 
 def _contact_token(client):
@@ -76,6 +77,69 @@ def test_contact_rejects_missing_or_replayed_csrf_token(app, client, monkeypatch
 
     assert missing.status_code == 400
     assert replayed.status_code == 400
+    assert queued == []
+
+
+def test_contact_rejects_token_replay_from_restored_session_cookie(
+    app,
+    client,
+    monkeypatch,
+):
+    import basic_routes
+
+    app.config["CONTACT_MIN_FORM_SECONDS"] = 0
+    queued = []
+    monkeypatch.setattr(
+        basic_routes.email_sender,
+        "queue_email",
+        lambda **kwargs: queued.append(kwargs),
+    )
+    token = _contact_token(client)
+    cookie_name = app.config.get("SESSION_COOKIE_NAME", "session")
+    original_cookie = client.get_cookie(cookie_name)
+    assert original_cookie is not None
+
+    accepted = client.post("/contact", data=_valid_payload(token))
+    client.set_cookie(cookie_name, original_cookie.value)
+    replayed = client.post("/contact", data=_valid_payload(token))
+
+    assert accepted.status_code == 302
+    assert replayed.status_code == 400
+    assert len(queued) == 1
+
+
+def test_contact_rejects_streamed_body_without_content_length(
+    app,
+    client,
+    monkeypatch,
+):
+    import basic_routes
+
+    app.config["CONTACT_MIN_FORM_SECONDS"] = 0
+    app.config["CONTACT_MAX_REQUEST_BYTES"] = 128
+    queued = []
+    monkeypatch.setattr(
+        basic_routes.email_sender,
+        "queue_email",
+        lambda **kwargs: queued.append(kwargs),
+    )
+    payload = _valid_payload(
+        _contact_token(client),
+        message="x" * 512,
+    )
+
+    response = client.open(
+        "/contact",
+        method="POST",
+        data=urlencode(payload).encode("utf-8"),
+        content_type="application/x-www-form-urlencoded",
+        environ_overrides={
+            "CONTENT_LENGTH": "",
+            "wsgi.input_terminated": True,
+        },
+    )
+
+    assert response.status_code == 413
     assert queued == []
 
 

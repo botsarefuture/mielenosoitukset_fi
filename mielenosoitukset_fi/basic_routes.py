@@ -131,6 +131,12 @@ submission_tokens_collection.create_index("token", unique=True, background=True)
 submission_tokens_collection.create_index(
     [("fingerprint", ASCENDING), ("created_at", DESCENDING)], background=True
 )
+contact_form_tokens_collection = mongo["contact_form_tokens"]
+contact_form_tokens_collection.create_index(
+    "expires_at",
+    expireAfterSeconds=0,
+    background=True,
+)
 demo_notifications_queue = mongo["demo_notifications_queue"]
 demo_notifications_queue.create_index("status", background=True)
 demo_notifications_queue.create_index("created_at", background=True)
@@ -3803,12 +3809,30 @@ def init_routes(app):
     )
 
     def _new_contact_form_token():
+        """Issue a signed-session token whose use is tracked server-side."""
         token = secrets.token_urlsafe(32)
         session["contact_form_token"] = token
         session["contact_form_issued_at"] = int(time.time())
         return token
 
+    def _consume_contact_form_token(token):
+        """Atomically consume a token hash so restored cookies cannot replay it."""
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        max_age = app.config.get("CONTACT_FORM_TOKEN_MAX_AGE_SECONDS", 7200)
+        try:
+            contact_form_tokens_collection.insert_one(
+                {
+                    "_id": token_hash,
+                    "expires_at": datetime.now(timezone.utc)
+                    + timedelta(seconds=max_age),
+                }
+            )
+        except DuplicateKeyError:
+            return False
+        return True
+
     def _contact_redirect(category, message, request_id=None):
+        """Return a no-store redirect with an optional correlation ID."""
         flash_message(message, category)
         response = redirect(url_for("contact"))
         if request_id:
@@ -3841,14 +3865,25 @@ def init_routes(app):
                     request_id,
                 )
 
+            max_request_bytes = app.config.get("CONTACT_MAX_REQUEST_BYTES", 16384)
+            request.max_content_length = max_request_bytes
             content_length = request.content_length or 0
-            if content_length > app.config.get("CONTACT_MAX_REQUEST_BYTES", 16384):
+            if content_length > max_request_bytes:
                 logger.warning(
                     "Rejected oversized contact form request_id=%s bytes=%s",
                     request_id,
                     content_length,
                 )
                 abort(413)
+            if not request.content_length:
+                streamed_body = request.get_data(cache=True)
+                if len(streamed_body) >= max_request_bytes:
+                    logger.warning(
+                        "Rejected bounded streamed contact form request_id=%s bytes>=%s",
+                        request_id,
+                        max_request_bytes,
+                    )
+                    abort(413)
 
             expected_token = session.pop("contact_form_token", "")
             issued_at = session.pop("contact_form_issued_at", 0)
@@ -3863,6 +3898,8 @@ def init_routes(app):
                 and token_age
                 <= app.config.get("CONTACT_FORM_TOKEN_MAX_AGE_SECONDS", 7200)
             )
+            if token_valid:
+                token_valid = _consume_contact_form_token(supplied_token)
             if not token_valid:
                 logger.warning(
                     "Rejected contact form token request_id=%s",

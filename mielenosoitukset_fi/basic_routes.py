@@ -3811,9 +3811,42 @@ def init_routes(app):
     def _new_contact_form_token():
         """Issue a signed-session token whose use is tracked server-side."""
         token = secrets.token_urlsafe(32)
-        session["contact_form_token"] = token
-        session["contact_form_issued_at"] = int(time.time())
+        issued_at = int(time.time())
+        max_age = app.config.get("CONTACT_FORM_TOKEN_MAX_AGE_SECONDS", 7200)
+        max_tokens = max(
+            1,
+            app.config.get("CONTACT_FORM_MAX_OUTSTANDING_TOKENS", 5),
+        )
+        outstanding = [
+            entry
+            for entry in session.get("contact_form_tokens", [])
+            if isinstance(entry, dict)
+            and isinstance(entry.get("issued_at"), int)
+            and issued_at - entry["issued_at"] <= max_age
+            and isinstance(entry.get("token"), str)
+        ]
+        outstanding.append({"token": token, "issued_at": issued_at})
+        session["contact_form_tokens"] = outstanding[-max_tokens:]
         return token
+
+    def _take_contact_form_token(supplied_token):
+        """Remove and return one matching outstanding token from the session."""
+        outstanding = session.get("contact_form_tokens", [])
+        matched = None
+        remaining = []
+        for entry in outstanding:
+            candidate = entry.get("token", "") if isinstance(entry, dict) else ""
+            if (
+                matched is None
+                and supplied_token
+                and candidate
+                and hmac.compare_digest(candidate, supplied_token)
+            ):
+                matched = entry
+            else:
+                remaining.append(entry)
+        session["contact_form_tokens"] = remaining
+        return matched or {}
 
     def _consume_contact_form_token(token):
         """Atomically consume a token hash so restored cookies cannot replay it."""
@@ -3885,9 +3918,10 @@ def init_routes(app):
                     )
                     abort(413)
 
-            expected_token = session.pop("contact_form_token", "")
-            issued_at = session.pop("contact_form_issued_at", 0)
             supplied_token = request.form.get("csrf_token", "")
+            token_entry = _take_contact_form_token(supplied_token)
+            expected_token = token_entry.get("token", "")
+            issued_at = token_entry.get("issued_at", 0)
             now = int(time.time())
             token_age = now - issued_at if isinstance(issued_at, int) else -1
             token_valid = bool(

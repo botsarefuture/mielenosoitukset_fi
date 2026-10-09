@@ -60,7 +60,7 @@ def test_contact_accepts_bounded_submission_and_adds_correlation_id(
     assert queued[0]["extra_headers"] == {"X-MF-Request-ID": request_id}
 
 
-def test_contact_rejects_missing_or_replayed_csrf_token(app, client, monkeypatch):
+def test_contact_rejects_missing_and_consumed_csrf_tokens(app, client, monkeypatch):
     import basic_routes
 
     app.config["CONTACT_MIN_FORM_SECONDS"] = 0
@@ -73,11 +73,13 @@ def test_contact_rejects_missing_or_replayed_csrf_token(app, client, monkeypatch
     token = _contact_token(client)
 
     missing = client.post("/contact", data=_valid_payload(""))
+    accepted = client.post("/contact", data=_valid_payload(token))
     replayed = client.post("/contact", data=_valid_payload(token))
 
     assert missing.status_code == 400
+    assert accepted.status_code == 302
     assert replayed.status_code == 400
-    assert queued == []
+    assert len(queued) == 1
 
 
 def test_contact_rejects_token_replay_from_restored_session_cookie(
@@ -106,6 +108,31 @@ def test_contact_rejects_token_replay_from_restored_session_cookie(
     assert accepted.status_code == 302
     assert replayed.status_code == 400
     assert len(queued) == 1
+
+
+def test_contact_allows_bounded_tokens_from_concurrent_forms(
+    app,
+    client,
+    monkeypatch,
+):
+    import basic_routes
+
+    app.config["CONTACT_MIN_FORM_SECONDS"] = 0
+    queued = []
+    monkeypatch.setattr(
+        basic_routes.email_sender,
+        "queue_email",
+        lambda **kwargs: queued.append(kwargs),
+    )
+
+    first_token = _contact_token(client)
+    second_token = _contact_token(client)
+    first = client.post("/contact", data=_valid_payload(first_token))
+    second = client.post("/contact", data=_valid_payload(second_token))
+
+    assert first.status_code == 302
+    assert second.status_code == 302
+    assert len(queued) == 2
 
 
 def test_contact_rejects_streamed_body_without_content_length(

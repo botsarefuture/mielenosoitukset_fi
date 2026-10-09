@@ -228,6 +228,9 @@ class Config:
         cls.CONTACT_FORM_TOKEN_MAX_AGE_SECONDS = int(
             config.get("CONTACT_FORM_TOKEN_MAX_AGE_SECONDS", 7200)
         )
+        cls.CONTACT_FORM_MAX_OUTSTANDING_TOKENS = int(
+            config.get("CONTACT_FORM_MAX_OUTSTANDING_TOKENS", 5)
+        )
         cls.CONTACT_MAX_REQUEST_BYTES = int(
             config.get("CONTACT_MAX_REQUEST_BYTES", 16384)
         )

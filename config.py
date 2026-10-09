@@ -209,6 +209,41 @@ class Config:
         cls.UPLOADS_FOLDER = cls.S3_CONFIG.get("UPLOADS_FOLDER", "uploads")
         cls.ENFORCE_RATELIMIT = config.get("ENFORCE_RATELIMIT", True)
 
+        # ---- Public contact form -------------------------------------------
+        # These controls are deliberately independent from the broad default
+        # limiter so support ingress can be contained without affecting other
+        # public routes.
+        cls.CONTACT_FORM_ENABLED = bool(config.get("CONTACT_FORM_ENABLED", True))
+        cls.CONTACT_PER_IP_LIMIT = config.get(
+            "CONTACT_PER_IP_LIMIT",
+            "3 per 10 minutes; 10 per day",
+        )
+        cls.CONTACT_GLOBAL_LIMIT = config.get(
+            "CONTACT_GLOBAL_LIMIT",
+            "25 per 10 minutes; 100 per day",
+        )
+        cls.CONTACT_MIN_FORM_SECONDS = int(
+            config.get("CONTACT_MIN_FORM_SECONDS", 2)
+        )
+        cls.CONTACT_FORM_TOKEN_MAX_AGE_SECONDS = int(
+            config.get("CONTACT_FORM_TOKEN_MAX_AGE_SECONDS", 7200)
+        )
+        cls.CONTACT_MAX_REQUEST_BYTES = int(
+            config.get("CONTACT_MAX_REQUEST_BYTES", 16384)
+        )
+        cls.CONTACT_NAME_MAX_LENGTH = int(
+            config.get("CONTACT_NAME_MAX_LENGTH", 120)
+        )
+        cls.CONTACT_EMAIL_MAX_LENGTH = int(
+            config.get("CONTACT_EMAIL_MAX_LENGTH", 254)
+        )
+        cls.CONTACT_MESSAGE_MIN_LENGTH = int(
+            config.get("CONTACT_MESSAGE_MIN_LENGTH", 10)
+        )
+        cls.CONTACT_MESSAGE_MAX_LENGTH = int(
+            config.get("CONTACT_MESSAGE_MAX_LENGTH", 5000)
+        )
+
         cls.ADMIN_EMAIL = config.get("ADMIN_EMAIL", "itc@luova.club")
         cls.ADMIN_MCP = config.get("ADMIN_MCP", {})
 

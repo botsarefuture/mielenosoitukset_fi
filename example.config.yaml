@@ -10,9 +10,25 @@ MAIL:
   PASSWORD: "example_password"  # SMTP password
   DEFAULT_SENDER: "example@example.com"  # Default sender email address
 
+# Public contact-form containment controls. Keep the global limit comfortably
+# above legitimate support traffic; CONTACT_FORM_ENABLED is the emergency
+# circuit breaker and leaves the published support email path available.
+CONTACT_FORM_ENABLED: true
+CONTACT_PER_IP_LIMIT: "3 per 10 minutes; 10 per day"
+CONTACT_GLOBAL_LIMIT: "25 per 10 minutes; 100 per day"
+CONTACT_MIN_FORM_SECONDS: 2
+CONTACT_FORM_TOKEN_MAX_AGE_SECONDS: 7200
+CONTACT_MAX_REQUEST_BYTES: 16384
+CONTACT_NAME_MAX_LENGTH: 120
+CONTACT_EMAIL_MAX_LENGTH: 254
+CONTACT_MESSAGE_MIN_LENGTH: 10
+CONTACT_MESSAGE_MAX_LENGTH: 5000
+
 # Support ticket system (IMAP ingress)
-# Polls the tuki@ mailbox and creates support_ticket cases with auto-reply.
+# Polls the tuki@ mailbox and creates support_ticket cases. Automatic external
+# acknowledgements remain disabled until a verified-recipient design exists.
 TICKET_INGRESS_ENABLED: true
+TICKET_AUTO_REPLY_ENABLED: false
 TICKET_IMAP_SERVER: "mail.luova.club"
 TICKET_IMAP_PORT: 993
 TICKET_IMAP_USE_SSL: true

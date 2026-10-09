@@ -2,6 +2,7 @@ from bson.objectid import ObjectId, InvalidId
 from pymongo.errors import DuplicateKeyError
 from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify
 from flask_login import current_user, login_required
+from markupsafe import Markup
 import math
 import re
 
@@ -662,7 +663,10 @@ def save_user(user_id):
             "role": role,
             "action": "päivitetty",
             "updated_email": email,
-            "permissions_summary": permission_summary_html,
+            # This fragment is assembled exclusively from the static
+            # permission registry above. Mark it trusted at the source while
+            # every user-controlled email value remains autoescaped.
+            "permissions_summary": Markup(permission_summary_html),
             "login_link": url_for("users.auth.login", _external=True),
             "support_contact": "tuki@mielenosoitukset.fi",
         },

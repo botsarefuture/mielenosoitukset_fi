@@ -3,6 +3,8 @@ import ast
 import json
 import os
 import re
+import hmac
+import secrets
 import threading
 import time
 import uuid
@@ -58,6 +60,7 @@ from mielenosoitukset_fi.utils.wrappers import (
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.utils.request_ip import get_client_ip
+from mielenosoitukset_fi.utils.validators import normalize_email, valid_email
 from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
 from pymongo import ASCENDING, DESCENDING
@@ -1138,11 +1141,22 @@ def init_routes(app):
     limiter_extensions = app.extensions.get("limiter") or ()
     route_limiter = next(iter(limiter_extensions), None)
 
-    def _optional_limit(value):
+    def _optional_limit(value, **kwargs):
         """Apply a route limit when Flask-Limiter is enabled for this app."""
         if route_limiter is None:
             return lambda function: function
-        return route_limiter.limit(value, override_defaults=False)
+        return route_limiter.limit(value, override_defaults=False, **kwargs)
+
+    def _optional_shared_limit(value, scope, **kwargs):
+        """Apply a shared endpoint limit when Flask-Limiter is enabled."""
+        if route_limiter is None:
+            return lambda function: function
+        return route_limiter.shared_limit(
+            value,
+            scope=scope,
+            override_defaults=False,
+            **kwargs,
+        )
 
     # register genereate_demo_sentence function
     @app.context_processor
@@ -3784,18 +3798,119 @@ def init_routes(app):
     def privacy():
         return render_template("privacy.html")
 
+    contact_subjects = frozenset(
+        {"Tuki", "Yleinen kysymys", "Palautetta", "Muu"}
+    )
+
+    def _new_contact_form_token():
+        token = secrets.token_urlsafe(32)
+        session["contact_form_token"] = token
+        session["contact_form_issued_at"] = int(time.time())
+        return token
+
+    def _contact_redirect(category, message, request_id=None):
+        flash_message(message, category)
+        response = redirect(url_for("contact"))
+        if request_id:
+            response.headers["X-MF-Request-ID"] = request_id
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
     @app.route("/contact", methods=["GET", "POST"])
+    @_optional_limit(
+        app.config.get("CONTACT_PER_IP_LIMIT", "3 per 10 minutes; 10 per day"),
+        methods=["POST"],
+    )
+    @_optional_shared_limit(
+        app.config.get("CONTACT_GLOBAL_LIMIT", "25 per 10 minutes; 100 per day"),
+        scope="public-contact-ingress",
+        key_func=lambda: "global",
+        methods=["POST"],
+    )
     def contact():
         if request.method == "POST":
-            name = request.form.get("name")
-            email = request.form.get("email")
-            subject = request.form.get("subject")
-            message = request.form.get("message")
-            
-            if not name or not email or not message:
-                flash_message("Kaikki kentät ovat pakollisia!", "error")
-                return redirect(url_for("contact"))
-            
+            request_id = uuid.uuid4().hex
+            if not app.config.get("CONTACT_FORM_ENABLED", True):
+                logger.warning(
+                    "Contact form disabled request_id=%s",
+                    request_id,
+                )
+                return _contact_redirect(
+                    "warning",
+                    "Yhteydenottolomake on tilapäisesti poissa käytöstä. Voit lähettää sähköpostia tukeen.",
+                    request_id,
+                )
+
+            content_length = request.content_length or 0
+            if content_length > app.config.get("CONTACT_MAX_REQUEST_BYTES", 16384):
+                logger.warning(
+                    "Rejected oversized contact form request_id=%s bytes=%s",
+                    request_id,
+                    content_length,
+                )
+                abort(413)
+
+            expected_token = session.pop("contact_form_token", "")
+            issued_at = session.pop("contact_form_issued_at", 0)
+            supplied_token = request.form.get("csrf_token", "")
+            now = int(time.time())
+            token_age = now - issued_at if isinstance(issued_at, int) else -1
+            token_valid = bool(
+                expected_token
+                and supplied_token
+                and hmac.compare_digest(expected_token, supplied_token)
+                and token_age >= app.config.get("CONTACT_MIN_FORM_SECONDS", 2)
+                and token_age
+                <= app.config.get("CONTACT_FORM_TOKEN_MAX_AGE_SECONDS", 7200)
+            )
+            if not token_valid:
+                logger.warning(
+                    "Rejected contact form token request_id=%s",
+                    request_id,
+                )
+                abort(400)
+
+            if request.form.get("website", "").strip():
+                logger.warning(
+                    "Suppressed contact form honeypot request_id=%s",
+                    request_id,
+                )
+                return _contact_redirect(
+                    "success",
+                    "Yhteydenottopyyntö välitetty onnistuneesti!",
+                    request_id,
+                )
+
+            name = request.form.get("name", "").strip()
+            email = normalize_email(request.form.get("email", ""))
+            subject = request.form.get("subject", "").strip()
+            message = request.form.get("message", "").strip()
+
+            valid_fields = all(
+                (
+                    name,
+                    email,
+                    message,
+                    len(name) <= app.config.get("CONTACT_NAME_MAX_LENGTH", 120),
+                    len(email) <= app.config.get("CONTACT_EMAIL_MAX_LENGTH", 254),
+                    valid_email(email),
+                    subject in contact_subjects,
+                    app.config.get("CONTACT_MESSAGE_MIN_LENGTH", 10)
+                    <= len(message)
+                    <= app.config.get("CONTACT_MESSAGE_MAX_LENGTH", 5000),
+                )
+            )
+            if not valid_fields:
+                logger.warning(
+                    "Rejected invalid contact form request_id=%s",
+                    request_id,
+                )
+                return _contact_redirect(
+                    "error",
+                    "Tarkista lomakkeen tiedot ja yritä uudelleen.",
+                    request_id,
+                )
+
             email_sender.queue_email(
                 template_name="customer_support/new_ticket.html",
                 subject="Uusi tukipyyntö!",
@@ -3805,13 +3920,26 @@ def init_routes(app):
                     "email": email,
                     "subject": subject,
                     "message": message,
+                    "request_id": request_id,
                 },
+                extra_headers={"X-MF-Request-ID": request_id},
             )
-            
-            flash_message("Yhteydenottopyyntö välitetty onnistuneesti!", "success")
+
+            logger.info("Accepted contact form request_id=%s", request_id)
             record_event_for_request("contact_message")
-            return redirect(url_for("contact"))
-        return render_template("contact.html")
+            return _contact_redirect(
+                "success",
+                "Yhteydenottopyyntö välitetty onnistuneesti!",
+                request_id,
+            )
+        return render_template(
+            "contact.html",
+            csrf_token=_new_contact_form_token(),
+            contact_name_max_length=app.config.get("CONTACT_NAME_MAX_LENGTH", 120),
+            contact_email_max_length=app.config.get("CONTACT_EMAIL_MAX_LENGTH", 254),
+            contact_message_min_length=app.config.get("CONTACT_MESSAGE_MIN_LENGTH", 10),
+            contact_message_max_length=app.config.get("CONTACT_MESSAGE_MAX_LENGTH", 5000),
+        )
 
 
     DEMOS_PER_PAGE = 6  # adjust how many demos per page

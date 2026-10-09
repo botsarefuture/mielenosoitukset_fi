@@ -113,6 +113,52 @@ def test_delivery_error_sanitizer_redacts_recipient_addresses():
     assert "No such user here" in sanitized
 
 
+def test_email_templates_autoescape_untrusted_contact_fields(db):
+    sender = EmailSender(
+        config=SimpleNamespace(
+            ENABLE_EMAIL_WORKER=False,
+            MAILER_NAME="Test",
+            MAILER_VERSION="1",
+        )
+    )
+
+    rendered = sender._env.get_template(
+        "customer_support/new_ticket.html"
+    ).render(
+        {
+            "name": "<script>alert(1)</script>",
+            "email": "visitor@example.test",
+            "subject": "Tuki",
+            "message": "<img src=x onerror=alert(2)>",
+            "request_id": "a" * 32,
+        }
+    )
+
+    assert "<script>" not in rendered
+    assert "<img src=x" not in rendered
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in rendered
+    assert "&lt;img src=x onerror=alert(2)&gt;" in rendered
+
+
+def test_support_ingress_preserves_valid_contact_request_id():
+    raw = b"\r\n".join(
+        [
+            b"From: Visitor <visitor@example.test>",
+            b"To: support@example.test",
+            b"Subject: Test request",
+            b"Message-ID: <incoming@example.test>",
+            b"X-MF-Request-ID: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            b"Content-Type: text/plain; charset=utf-8",
+            b"",
+            b"Test request body",
+        ]
+    )
+
+    parsed = process_support_tickets._parse_message(raw, "URGENT")
+
+    assert parsed["request_id"] == "a" * 32
+
+
 def test_support_auto_reply_is_disabled_by_default():
     config = SimpleNamespace()
 
@@ -144,6 +190,7 @@ def _process_new_ticket(monkeypatch, *, from_wrapper):
         "html_body": "<p>Test request</p>",
         "urgent": False,
         "from_wrapper": from_wrapper,
+        "request_id": "a" * 32,
     }
     monkeypatch.setattr(process_support_tickets, "_parse_message", lambda *_args: parsed)
     monkeypatch.setattr(

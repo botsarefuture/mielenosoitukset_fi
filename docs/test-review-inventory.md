@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-141 Python test files; 1,000 test definitions (995 in 140 files under `tests/`, plus five standalone recurrence tests in one file). SEC-02 adds three definitions to the original 997-test baseline. Fourteen account/passkey definitions have individual review records below; remaining entries are pending review. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities. Open #901's separate MFA additions/reviews must be reconciled after merge.
+142 Python test files; 1,006 test definitions (1,001 in 141 files under `tests/`, plus five standalone recurrence tests in one file). This SEC-03 slice adds six definitions to main's 1,000-test inventory. Twenty account/passkey/organization-action definitions have individual review records below; remaining entries are pending review. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities. Reconcile separate open #901/#916/#917 inventories after integration.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -800,6 +800,28 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 ## tests/test_org_logo_referrer_policy.py
 
 - [ ] `test_organization_logo_images_do_not_send_preview_referrers`
+
+## tests/test_org_action_validation.py
+
+- [x] `test_org_action_rejects_malformed_json_or_identifiers`
+- [x] `test_invitation_actions_reject_invalid_addresses`
+- [x] `test_invite_role_normalizes_input_and_matches_legacy_address`
+- [x] `test_organization_editor_cannot_mutate_another_org_invite`
+- [x] `test_invite_form_rejects_invalid_object_identifier`
+- [x] `test_membership_delete_requires_resolved_target_organization`
+
+SEC-03 / QA-01 review, 2026-10-12, Codex, P1; actual Flask endpoints, roles, membership grants and disposable MongoDB. External delivery is isolated by existing fixtures; no permission/DB-write mock. Unique actor/target IDs prevent parametrized identity collisions. Error/audit assertions do not claim the full canonical audit/redaction programme is complete.
+
+| Definition | Requirement / assertions | Cases and limits | Disposition |
+|---|---|---|---|
+| `test_org_action_rejects_malformed_json_or_identifiers` | Invalid payloads return JSON 400 rather than reaching unsafe ObjectId conversion. | Five APIs × list/string/invalid-ID payloads, exact status and error envelope. Empty/malformed JSON syntax uses same validator but not separately parameterized. | Keep. |
+| `test_invitation_actions_reject_invalid_addresses` | Invalid or non-string email rejected before invite handling. | Three invite APIs × malformed/list/header-shaped address. Valid delivery integration not part of this test. | Keep. |
+| `test_invite_role_normalizes_input_and_matches_legacy_address` | Mixed-case legacy invite updated without duplication, then cancelled. | Actual legacy string → canonical dict and persisted empty list; valid role member used. Other role policies remain #550. | Keep. |
+| `test_organization_editor_cannot_mutate_another_org_invite` | Own-org rights do not authorize foreign owner invitation. | Real unrelated verified organization, exact 403 and unchanged invitations. | Keep. |
+| `test_invite_form_rejects_invalid_object_identifier` | Browser form identifier checked before BSON conversion. | Exact 400; HTTP redirect/success rendering unaffected. | Keep. |
+| `test_membership_delete_requires_resolved_target_organization` | Deletion only succeeds for authorized resolved organization. | Own, foreign, orphan and malformed stored ID; exact status and record existence. Revealed broad edit helper bypass, which was corrected. Owner-transfer/last-owner policy and concurrent permissions changes need separate acceptance. | Keep. |
+
+Final focused run/revision evidence is recorded in the delivery PR. Review completion marks these definitions assessed; organization role lifecycle, destructive confirmations and audit architecture remain open.
 
 ## tests/test_organization_fill_page.py
 

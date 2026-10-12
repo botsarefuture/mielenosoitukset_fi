@@ -103,7 +103,7 @@ def test_public_list_filters_and_date_picker_follow_active_locale(
     browser_page.locator("#city_input").fill("Hel")
     browser_page.locator("#city_suggestions .suggestion-item", has_text="Helsinki").click()
 
-    assert browser_page.locator("#filters .filter span").inner_text() == (
+    assert browser_page.locator("#filters .public-filter-chip span").inner_text() == (
         f"{city_label}: Helsinki"
     )
     assert browser_page.locator("#date_start").evaluate(

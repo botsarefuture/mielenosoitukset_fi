@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-143 Python test files; 1,027 test definitions (1,022 in 142 files under `tests/`, plus five standalone recurrence tests in one file). Fifty-one definitions have review records below; remaining entries are pending review. This request-state slice stacks on #920's API contract; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+144 Python test files; 1,030 test definitions (1,025 in 143 files under `tests/`, plus five standalone recurrence tests in one file). Fifty-four definitions have review records below; remaining entries are pending review. This URL/history slice stacks on #920/#921; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1017,6 +1017,22 @@ Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-requ
 - [ ] `test_public_inline_style_debt_matches_reviewed_baseline`
 - [ ] `test_public_inline_style_baseline_scope_is_documented`
 - [ ] `test_style_attribute_scanner_covers_all_valid_static_forms`
+
+## tests/test_public_list_filter_history.py
+
+- [x] `test_public_filter_url_restores_page_and_back_forward`
+- [x] `test_restored_city_chip_is_text_safe_and_removal_resets_url`
+- [x] `test_tag_page_invalid_pagination_does_not_raise_500`
+
+DATA-01 / QA-02, 2026-10-12, Codex, P1, stacked on #921. Actual routes/templates/form/history/loader/CSS; synthetic API responses isolate browser contracts and the externally blocked picker is stubbed. Backend ordering/query plans remain #920's real-DB evidence. The tag numeric regression uses real Flask GETs. Final revision/run/PR evidence recorded at delivery.
+
+| Definition | Purpose / assertions | Setup / coverage / reliability | Disposition |
+|---|---|---|---|
+| `test_public_filter_url_restores_page_and_back_forward` | URL restores page 3/size/date/search; search resets page 1, load-more updates URL, Back/Forward restore form and accurate deep-page ranges, retry updates page after 503. | Three route variants; actual browser history; API captures prove fixed city/tag overrides and preserved location/date/size. Explicit waits for state transitions; not a live-data or snapshot-pagination test. | Keep. |
+| `test_restored_city_chip_is_text_safe_and_removal_resets_url` | Markup-shaped city stays text, keyboard removal clears city/reset page without dropping date; invalid calendar day shows error without mutating URL. | List/tag × light/dark × 1440/390px (eight cases), exact DOM fields/URL, chip geometry and 44px target; selected chip screenshots inspected. Does not claim whole-page overflow is fixed or complete autocomplete accessibility. | Keep. |
+| `test_tag_page_invalid_pagination_does_not_raise_500` | Tag GET rejects neither malformed numeric strings nor zero/negative values with server error. | Three real route cases, exact 200; shared parser retains original tag default size. Huge integer bounds remain explicit server-pagination follow-up. | Keep. |
+
+Deep links/history restore the latest requested page as a new window; subsequent Load more extends that window. They do not replay every previously accumulated page. Remaining acceptance includes production integration, API pagination bounds/legacy times and broader discovery/no-JS behavior.
 
 ## tests/test_public_list_request_state.py
 

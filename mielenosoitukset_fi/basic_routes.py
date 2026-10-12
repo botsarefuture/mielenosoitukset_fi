@@ -4167,8 +4167,7 @@ def init_routes(app):
     def tag_detail(tag_name):
         tag_regex = re.compile(f"^{re.escape(tag_name)}$", re.IGNORECASE)
         demonstrations_query = {"tags": tag_regex, **DEMO_FILTER}
-        page = int(request.args.get("page", 1))
-        per_page = int(request.args.get("per_page", 10) or 10)
+        page, per_page = public_page_args(request.args, default_per_page=10)
         total_demos = mongo.demonstrations.count_documents(demonstrations_query)
         total_pages = (total_demos + per_page - 1) // per_page
         demonstrations_cursor = mongo.demonstrations.find(demonstrations_query)

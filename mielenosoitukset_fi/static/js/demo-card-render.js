@@ -190,6 +190,7 @@ const perPage = 12; // default per-page
 let listRequestGeneration = 0;
 let listRequestAbort = null;
 let displayedResults = 0;
+let displayedStart = 0;
 let appendGeneration = null;
 
 async function loadDemos(page = 1, append = false, extraParams = {}) {
@@ -244,11 +245,12 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
     const grid = document.getElementById("demos-grid");
     if (!append) grid.innerHTML = ""; // clear on first load
     displayedResults = (append ? displayedResults : 0) + data.results.length;
+    if (!append) displayedStart = data.result_start || (data.results.length ? (data.page - 1) * Number(params.get('per_page')) + 1 : 0);
     if (summary) {
       const number = new Intl.NumberFormat(currentLocale);
       summary.textContent = summary.dataset.format
-        .replace("__START__", number.format(displayedResults ? 1 : 0))
-        .replace("__END__", number.format(displayedResults))
+        .replace("__START__", number.format(displayedResults ? displayedStart : 0))
+        .replace("__END__", number.format(displayedResults ? displayedStart + displayedResults - 1 : 0))
         .replace("__COUNT__", number.format(data.total));
       summary.hidden = false;
     }
@@ -277,6 +279,7 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
     // update pagination state
     currentPage = data.page;
     totalPages = data.total_pages;
+    window.publicListHistory?.pageLoaded(data);
 
     // handle "Load more" button
     if (currentPage < totalPages) {

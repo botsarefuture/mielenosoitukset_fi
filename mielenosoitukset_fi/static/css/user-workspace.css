@@ -28,6 +28,22 @@ html.light {
   display: none;
 }
 
+.search-form #filters { display: flex; flex-wrap: wrap; gap: .5rem; }
+.public-filter-chip {
+  display: inline-flex; align-items: center; gap: .5rem; max-width: 100%;
+  padding-inline: .75rem 0; border: 1px solid var(--product-border);
+  border-radius: var(--user-radius-small); color: var(--product-text);
+  background: var(--product-surface-muted); overflow-wrap: anywhere;
+}
+.public-filter-chip__remove {
+  min-width: 44px; min-height: 44px; border: 0; border-radius: inherit;
+  background: transparent; color: inherit; cursor: pointer; font-size: 1.25rem;
+}
+.public-filter-chip span { min-width: 0; }
+.public-filter-chip__remove:focus-visible {
+  outline: 2px solid var(--product-primary); outline-offset: 2px;
+}
+
 html.dark {
   color-scheme: dark;
 }

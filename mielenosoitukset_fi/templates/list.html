@@ -21,7 +21,7 @@
 
 {% block content %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261012-list-state-1') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261012-filter-history-1') }}" defer></script>
 
 {% include "_modals/_demo-card-template.html" %}
 
@@ -96,6 +96,17 @@ document.addEventListener('DOMContentLoaded', () => {
     return result;
   }
 
+  const listHistory = UserPagination.createFilterHistory({
+    form: searchForm, fixed: {},
+    cityLabel: publicListI18n.city, removeLabel: publicListI18n.removeFilter,
+    onChange: (params, page) => {
+      extraParams = params;
+      return window.userPaginationController.reload({ page, append: false });
+    },
+  });
+  window.publicListHistory = listHistory;
+  extraParams = listHistory.params;
+
   window.userPaginationController = UserPagination.createLoadMoreController({
     button: loadMoreBtn,
     loadPage: (page, options = {}) => loadDemosWrapper(page, options.append ?? true),
@@ -104,30 +115,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Initial load
-  loadDemosWrapper();
+  window.userPaginationController.reload({ page: listHistory.page, append: false });
 
   // Search form submit
-  searchForm.addEventListener('submit', e => {
-    e.preventDefault();
-
-    // Collect search/filter values
-    const searchValue = searchForm.querySelector('input[name="search"]').value.trim();
-    const cityValue = searchForm.querySelector('input[name="city"]').value.trim();
-    const locationValue = searchForm.querySelector('input[name="location"]').value.trim();
-    const dateStart = searchForm.querySelector('input[name="date_start"]').value;
-    const dateEnd = searchForm.querySelector('input[name="date_end"]').value;
-
-    // Build extraParams for API
-    extraParams = {};
-    if (searchValue) extraParams.search = searchValue;
-    if (cityValue) extraParams.city = cityValue;
-    if (locationValue) extraParams.location = locationValue;
-    if (dateStart) extraParams.date_start = dateStart;
-    if (dateEnd) extraParams.date_end = dateEnd;
-
-    // Reset to first page
-    window.userPaginationController?.reload({ append: false });
-    if (!window.userPaginationController) loadDemosWrapper(1, false);
+  searchForm.addEventListener("submit", event => {
+    event.preventDefault();
+    listHistory.submit();
   });
 
 
@@ -138,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261012-list-state-1') }}"></script>
+<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261012-filter-history-1') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 <script>
@@ -181,25 +174,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!currentCities.includes(selectedCity)) {
               currentCities.push(selectedCity);
               selectedCitiesInput.val(currentCities.join(","));
-              const filterDiv = $("<div>").addClass("filter");
-              $("<span>")
-                .text(`${publicListI18n.city}: ${selectedCity}`)
-                .appendTo(filterDiv);
-              const removeFilter = $("<a>", {
-                href: "#",
-                "data-city": selectedCity,
-                "aria-label": `${publicListI18n.removeFilter}: ${selectedCity}`,
-              }).append(
-                $("<i>").addClass("fas fa-times").attr("aria-hidden", "true")
-              );
-              removeFilter.appendTo(filterDiv);
-              filters.append(filterDiv);
-              filterDiv.find("a").on("click", function (event) {
-                event.preventDefault();
-                const cityToRemove = $(this).data("city");
-                selectedCitiesInput.val(currentCities.filter(c => c !== cityToRemove).join(","));
-                filterDiv.remove();
-              });
+              window.publicListHistory.renderCities();
             }
           });
       });

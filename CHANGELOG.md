@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Public list, city and tag filters now restore from shareable URLs, reset to page one on search, and follow Back/Forward history with accurate deep-page ranges. City/tag context cannot be overridden by conflicting URL values; shared removable city chips are text-safe, and invalid tag pagination no longer raises HTTP 500.
+
 - Public demonstration lists now ignore stale search responses, keep cumulative result counts, prevent overlapping page appends, and offer localized retry feedback. Shared load-more controls disappear correctly at the last page in both themes; the main list's date-picker locale safely defaults for first-time visitors.
 
 - Both public demonstration list APIs now order by date, start time and ID before pagination, report matching totals and exact page ranges, and safely normalize invalid numeric page arguments. Existing filters and response fields are preserved.

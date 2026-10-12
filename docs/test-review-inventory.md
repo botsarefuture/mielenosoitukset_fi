@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-140 Python test files; 997 test definitions (992 in 139 files under `tests/`, plus five standalone recurrence tests in one file). All test entries are **pending review**. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim execution, parameter coverage or pytest collection. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+140 Python test files; 1,004 test definitions (999 in 139 files under `tests/`, plus five standalone recurrence tests in one file). Eleven MFA definitions have review records below; remaining entries are pending review. The initial inventory came from the baseline revision above; SEC-01 adds seven net definitions on PR #901. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the whole suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -771,10 +771,37 @@ Individual review records (all Backlog; owner unassigned):
 
 ## tests/test_mfa_settings.py
 
-- [ ] `test_mfa_enable_flow_end_to_end`
-- [ ] `test_mfa_device_rename_requires_step_up_and_updates_name`
-- [ ] `test_mfa_blocks_login_without_code_and_allows_with_code`
-- [ ] `test_verify_mfa_route_does_not_500`
+- [x] `test_mfa_enable_flow_end_to_end`
+- [x] `test_mfa_device_rename_requires_step_up_and_updates_name`
+- [x] `test_mfa_login_uses_short_lived_server_side_pending_state`
+- [x] `test_expired_pending_mfa_login_requires_password_again`
+- [x] `test_copied_pending_cookie_cannot_replay_successful_mfa`
+- [x] `test_password_change_revokes_pending_first_factor`
+- [x] `test_parallel_pending_challenge_consumption_has_one_winner`
+- [x] `test_pending_mfa_attempt_limit_cannot_be_reset_by_cookie_replay`
+- [x] `test_verify_mfa_route_does_not_500`
+- [x] `test_password_login_without_javascript_renders_mfa_step`
+- [x] `test_legacy_mfa_flag_does_not_replace_first_factor_proof`
+
+SEC-01 / QA-01 review, 2026-10-12, Codex, P1, PR #901. The old `test_mfa_blocks_login_without_code_and_allows_with_code` used a username absent from its fixture and accepted a broad response range. It was replaced with actual identity/session and challenge assertions; it was not silently dropped.
+
+Shared setup: disposable MongoDB and real Flask test clients/session cookies, actual password hashes and stored MFA devices. External email/network side effects are isolated by `tests/conftest.py`. No mock bypasses challenge persistence, consumption or credential revocation. TOTP uses real time; invalid-code selection excludes the accepted window with a boundary margin. These tests do not prove browser focus/layout or all inactive-account entrypoints (SEC-02).
+
+| Definition | Requirement / assertions | Cases, isolation and limitations | Disposition |
+|---|---|---|---|
+| `test_mfa_enable_flow_end_to_end` | Issued setup secret only; wrong/unissued code rejected, activation/device state persists, sudo required for removal. | Real API/database state; invalid code strengthened to avoid random valid-code collisions. QR prefix is structural coverage, not scanning compatibility. | Keep; strengthened invalid-code assertion. |
+| `test_mfa_device_rename_requires_step_up_and_updates_name` | Forbidden without sudo; valid rename persists; blank/missing/unknown device rejected. | Real client/DB; ownership across two users remains a separate permission-test requirement. | Keep. |
+| `test_mfa_login_uses_short_lived_server_side_pending_state` | Cookie contains opaque handle, DB binds actual user, no password/raw password hash stored; completion sets exact identity and clears proof. | Real first-factor and TOTP; markup verifies removed hidden fields but does not execute browser JS. | Keep; strengthened proof assertions. |
+| `test_expired_pending_mfa_login_requires_password_again` | Expired DB challenge cannot authenticate and is removed. | Database expiry moved into past; no sleeps or host-clock change. | Keep. |
+| `test_copied_pending_cookie_cannot_replay_successful_mfa` | Successful identity established, then saved pre-login cookie fails with a valid code. | Separate Flask clients; proves server revocation independent of response-cookie clearing. | Keep. |
+| `test_password_change_revokes_pending_first_factor` | Model password change invalidates pending proof despite valid TOTP; no user session and challenge removed. | Real password change, hash persistence and endpoint. Reset uses the same hash contract; concurrent reset/login ordering is not simulated. | Keep. |
+| `test_parallel_pending_challenge_consumption_has_one_winner` | Two simultaneous database consume attempts yield exactly one success. | Separate request contexts, two worker threads and barrier; tests atomic storage invariant, not parallel browser HTTP dispatch. | Keep. |
+| `test_pending_mfa_attempt_limit_cannot_be_reset_by_cookie_replay` | Saved cookie cannot reset server attempt count; later valid code fails after exhaustion. | Only TOTP rejection mocked during failure phase; real verifier restored before final valid-code assertion. Fresh password verification can intentionally issue new proof. | Keep. |
+| `test_verify_mfa_route_does_not_500` | Legacy POST forwards with 307 and preserves existing authenticated identity. | Was a loose non-500 assertion; now checks destination, status and user ID. Anonymous legacy proof is covered separately. | Keep; strengthened. |
+| `test_password_login_without_javascript_renders_mfa_step` | Ordinary form POST renders visible MFA step with no password field copy; code then establishes correct session. | Server-rendered requests without browser JavaScript; client rendering/focus remains browser coverage work. | Keep. |
+| `test_legacy_mfa_flag_does_not_replace_first_factor_proof` | Legacy boolean flag plus valid code cannot establish anonymous login. | Real anonymous request through forwarded legacy endpoint; exact unauthenticated session assertion. | Keep. |
+
+Validation: focused MFA, username, passkey and fresh-deletion test files run for this PR; final counts and commit evidence are recorded in the PR. The review completion marks assessment of these definitions, not completion of the broader QA-01 programme.
 
 ## tests/test_operational_metrics.py
 

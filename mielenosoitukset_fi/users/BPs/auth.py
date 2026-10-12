@@ -1,6 +1,8 @@
 import json
 import re
-import time
+import hashlib
+import secrets
+from datetime import timedelta
 from flask import (
     Blueprint,
     render_template,
@@ -60,50 +62,101 @@ from mielenosoitukset_fi.utils.step_up import clear_elevation, is_elevated, sudo
 
 MFA_PENDING_LOGIN_KEY = "mfa_pending_login"
 MFA_PENDING_LOGIN_TTL_SECONDS = 5 * 60
+MFA_PENDING_LOGIN_MAX_ATTEMPTS = 5
+
+
+def _pending_mfa_collection():
+    """Resolve challenges through the active database, including in tests."""
+    return _get_mongo()["mfa_login_challenges"]
+
+
+def _pending_mfa_digest(value):
+    """Store a digest rather than a bearer challenge or password hash."""
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 def _clear_pending_mfa_login():
-    session.pop(MFA_PENDING_LOGIN_KEY, None)
+    """Revoke this browser's pending first factor and remove its handle."""
+    challenge = session.pop(MFA_PENDING_LOGIN_KEY, None)
+    if isinstance(challenge, str):
+        _pending_mfa_collection().delete_one(
+            {"_id": _pending_mfa_digest(challenge)}
+        )
     session.modified = True
 
 
 def _set_pending_mfa_login(user):
     """Remember a verified first factor without retaining its password."""
-    session[MFA_PENDING_LOGIN_KEY] = {
-        "user_id": str(user._id),
-        "created_at": int(time.time()),
-    }
+    challenge = secrets.token_urlsafe(32)
+    now = utcnow()
+    collection = _pending_mfa_collection()
+    # Expiry is enforced on every read/consume even before physical cleanup.
+    collection.delete_many({"expires_at": {"$lte": now}})
+    collection.insert_one({
+        "_id": _pending_mfa_digest(challenge),
+        "user_id": user._id,
+        "credential_version": _pending_mfa_digest(user.password_hash),
+        "expires_at": now + timedelta(seconds=MFA_PENDING_LOGIN_TTL_SECONDS),
+        "attempts": 0,
+        "used": False,
+    })
+    session[MFA_PENDING_LOGIN_KEY] = challenge
     session.modified = True
 
 
 def _get_pending_mfa_user():
-    """Return the short-lived pending MFA user, clearing invalid state."""
-    pending = session.get(MFA_PENDING_LOGIN_KEY)
-    if not isinstance(pending, dict):
-        return None
-
-    try:
-        created_at = int(pending["created_at"])
-        user_id = ObjectId(pending["user_id"])
-    except (KeyError, TypeError, ValueError):
+    """Reserve one bounded verification attempt on a live server-held proof."""
+    challenge = session.get(MFA_PENDING_LOGIN_KEY)
+    if not isinstance(challenge, str):
         _clear_pending_mfa_login()
         return None
-
-    if time.time() - created_at > MFA_PENDING_LOGIN_TTL_SECONDS:
+    pending = _pending_mfa_collection().find_one_and_update(
+        {
+            "_id": _pending_mfa_digest(challenge),
+            "used": False,
+            "expires_at": {"$gt": utcnow()},
+            "attempts": {"$lt": MFA_PENDING_LOGIN_MAX_ATTEMPTS},
+        },
+        {"$inc": {"attempts": 1}},
+    )
+    if not pending:
         _clear_pending_mfa_login()
         return None
-
-    user_doc = _get_mongo().users.find_one({"_id": user_id})
+    user_doc = _get_mongo().users.find_one({"_id": pending["user_id"]})
     if not user_doc:
         _clear_pending_mfa_login()
         return None
 
     user = User.from_db(user_doc)
-    if not user.confirmed or not user.mfa_enabled:
+    if (
+        not user.confirmed
+        or not user.mfa_enabled
+        or not user.active
+        or user.banned
+        or pending["credential_version"] != _pending_mfa_digest(user.password_hash)
+    ):
         _clear_pending_mfa_login()
         return None
-
     return user
+
+
+def _consume_pending_mfa_login(user):
+    """Atomically consume proof so copied cookies and parallel requests lose."""
+    challenge = session.get(MFA_PENDING_LOGIN_KEY)
+    if not isinstance(challenge, str):
+        return False
+    result = _pending_mfa_collection().update_one(
+        {
+            "_id": _pending_mfa_digest(challenge),
+            "user_id": user._id,
+            "credential_version": _pending_mfa_digest(user.password_hash),
+            "used": False,
+            "expires_at": {"$gt": utcnow()},
+            "attempts": {"$lte": MFA_PENDING_LOGIN_MAX_ATTEMPTS},
+        },
+        {"$set": {"used": True}},
+    )
+    return result.modified_count == 1
 
 
 def generate_qr(url: str) -> str:
@@ -811,6 +864,7 @@ def _check(safe_next_page, request):
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+    """Verify password or pending MFA proof, then establish the login session."""
     # Get the next page from GET param or from session fallback
     next_page = request.args.get("next") or session.get("next_page") or ""
     safe_next_page = _normalize_post_login_target(next_page)
@@ -825,7 +879,7 @@ def login():
     if request.method == "POST":
         username = normalize_username(request.form.get("username"))
         password = request.form.get("password")
-        mfa_code = (request.form.get("2fa_code") or "").strip()
+        mfa_code = (request.form.get("2fa_code") or request.form.get("token") or "").strip()
 
         user_ip = get_client_ip()
         user_agent = request.headers.get("User-Agent", "")
@@ -852,6 +906,10 @@ def login():
                     user_id=user._id,
                 )
                 flash_message("Väärä MFA-koodi.", "error")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+            if not _consume_pending_mfa_login(user):
+                _clear_pending_mfa_login()
+                flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
                 return redirect(url_for("users.auth.login", next=safe_next_page))
         else:
             if not username or not password:
@@ -882,6 +940,10 @@ def login():
 
             # Keep direct/no-JavaScript login compatible: credentials and an MFA
             # code may still be submitted together in a single request.
+            if user.mfa_enabled and not mfa_code:
+                _clear_pending_mfa_login()
+                _set_pending_mfa_login(user)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
             if user.mfa_enabled and not meow(user):
                 log_login_attempt(username, success=False, ip=user_ip, user_agent=user_agent, reason="MFA failed", user_id=user._id)
                 return redirect(url_for("users.auth.login", next=safe_next_page))
@@ -919,7 +981,11 @@ def login():
         return redirect(safe_next_page)
 
     # GET request just renders login page
-    return render_template("users/auth/login.html", next=safe_next_page)
+    return render_template(
+        "users/auth/login.html",
+        next=safe_next_page,
+        pending_mfa=isinstance(session.get(MFA_PENDING_LOGIN_KEY), str),
+    )
 from datetime import datetime
 
 @auth_bp.route("/forced_pwd_reset/", methods=["GET", "POST"])
@@ -1095,50 +1161,15 @@ def meow(user):
 
 @auth_bp.route("/verify_mfa", methods=["GET", "POST"])
 def verify_mfa():
-    """ """
-    if not session.get("mfa_required"):
-        return redirect(url_for("users.auth.login"))
-
-    if request.method == "POST":
-        token = request.form.get("token")
-        next_page = _normalize_post_login_target(request.args.get("next"))
-        user = current_user._get_current_object()
-
-        if UserMFA(user._id).verify_token(token):
-            
-            login_user(user)
-            session.permanent = True  # ~12h authenticated session
-            session.modified = True
-            
-            session["mfa_required"] = False
-            session["modified"] = True
-            
-            # Check if this is a popup login request
-            if request.args.get("popup") == "1":
-                # Return HTML that closes the popup and reloads opener
-                return f"""
-                <script>
-                    if (window.opener) {{
-                        window.opener.location.reload();
-                        window.close();
-                    }} else {{
-                        window.location = "{next_page}";
-                    }}
-                </script>
-                """
-
-            if user.forced_pwd_reset:
-                return redirect(url_for("users.auth.forced_pwd_reset"))
-
-            if user.forced_identity_change:
-                return redirect(url_for("users.auth.forced_identity_change"))
-
-            return redirect(next_page)
-
-        flash_message("Väärä MFA-koodi", "error")
-        return redirect(url_for("users.auth.verify_mfa"))
-
-    return render_template("users/auth/verify_mfa.html")
+    """Route legacy MFA links through the same pending-proof login contract."""
+    return redirect(
+        url_for(
+            "users.auth.login",
+            next=_normalize_post_login_target(request.args.get("next")),
+            popup=request.args.get("popup", ""),
+        ),
+        code=307 if request.method == "POST" else 302,
+    )
 
 @auth_bp.route("/api/v1/settings/", methods=["POST"])
 @login_required

@@ -21,7 +21,7 @@
       </ul>
     </aside>
 
-    <section class="auth-container" id="login-cont" aria-labelledby="login-title">
+    <section class="auth-container{% if pending_mfa %} hidden{% endif %}" id="login-cont" aria-labelledby="login-title">
       <div class="auth-header">
         <p class="auth-card__eyebrow">{{ _('Käyttäjätili') }}</p>
         <h2 id="login-title">{{ _('Kirjaudu sisään') }}</h2>
@@ -82,7 +82,7 @@
       </div>
     </section>
 
-    <section class="auth-container hidden" id="2fa" aria-labelledby="two-fa-title">
+    <section class="auth-container{% if not pending_mfa %} hidden{% endif %}" id="2fa" aria-labelledby="two-fa-title">
       <div class="auth-header">
         <p class="auth-card__eyebrow">{{ _('Tilin suojaus') }}</p>
         <h2 id="two-fa-title">{{ _('Kaksivaiheinen tunnistautuminen') }}</h2>

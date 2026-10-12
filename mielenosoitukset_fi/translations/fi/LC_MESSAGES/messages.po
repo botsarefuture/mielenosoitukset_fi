@@ -13530,3 +13530,7 @@ msgstr "Luonnos palautettiin tästä selaimesta. Se poistuu automaattisesti 24 t
 #: mielenosoitukset_fi/templates/submit.html
 msgid "Poista luonnos ja aloita alusta"
 msgstr "Poista luonnos ja aloita alusta"
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Kirjautumisvahvistus on vanhentunut. Syötä käyttäjänimi ja salasana uudelleen."
+msgstr "Kirjautumisvahvistus on vanhentunut. Syötä käyttäjänimi ja salasana uudelleen."

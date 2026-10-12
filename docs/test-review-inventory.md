@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-142 Python test files; 1,022 test definitions (1,017 in 141 files under `tests/`, plus five standalone recurrence tests in one file). Forty-one definitions have review records below; remaining entries are pending review. This API pagination slice adds three definitions to main's reconciled 1,019-definition inventory; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+143 Python test files; 1,026 test definitions (1,021 in 142 files under `tests/`, plus five standalone recurrence tests in one file). Fifty definitions have review records below; remaining entries are pending review. This request-state slice stacks on #920's API contract; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1016,13 +1016,41 @@ Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-requ
 - [ ] `test_public_inline_style_baseline_scope_is_documented`
 - [ ] `test_style_attribute_scanner_covers_all_valid_static_forms`
 
+## tests/test_public_list_request_state.py
+
+- [x] `test_public_loader_ignores_stale_search_and_counts_appended_results`
+- [x] `test_public_controller_old_finally_cannot_unlock_new_search`
+- [x] `test_public_loader_http_failure_offers_retry_without_erasing_append`
+- [x] `test_public_listing_summary_is_shared_responsive_and_keyboard_operable`
+
+DATA-01 / QA-02, 2026-10-12, Codex, P1; stacked on #920. Browser harnesses use actual shipped JS with controlled deferred fetch responses (deliberately ignoring abort), safe lightweight card-render stubs and no server ordering mock claim. The template/browser matrix uses actual routes, cards, CSS and keyboard with stubbed API/date-picker dependency; server order/count evidence belongs to #920. Final revision/run evidence linked in PR.
+
+| Definition | Purpose / assertions | Fixtures / coverage / reliability | Disposition |
+|---|---|---|---|
+| `test_public_loader_ignores_stale_search_and_counts_appended_results` | New search wins; aborted older response cannot repaint; append counts accumulate and empty append does not erase cards. | Actual loader, deferred response order, exact DOM/count/abort state. Card/friend/navigation rendering isolated; not a backend snapshot test. | Keep. |
+| `test_public_controller_old_finally_cannot_unlock_new_search` | Old load-next completion cannot unlock or alter newer reset state. | Actual controller, exact lock/page/page-count/request assertions with manual resolvers; no timing sleeps. | Keep. |
+| `test_public_loader_http_failure_offers_retry_without_erasing_append` | HTTP failure preserves prior cards and offers successful retry; overlapping retry/append is suppressed. | Actual loader and 503 mock, exact DOM/count/request count; replacement-failure and malformed payload matrices remain follow-up. | Keep. |
+| `test_public_listing_summary_is_shared_responsive_and_keyboard_operable` | Three list families share live summary, keyboard load-more, final hidden control and viewport-fitting summary in both themes/sizes. | Twelve cases: list/city/tag × light/dark × 1440/390px. Actual UI, synthetic API and external date-picker stub; page errors asserted, summary geometry checked. Does not prove whole-page overflow, all date-picker behavior or live data. | Keep. |
+
+Screenshots of representative list states are inspected separately. Existing page/footer overflow and full URL/history behavior remain explicit follow-up work; this review does not silently declare broad UI acceptance.
+
 ## tests/test_public_listing_contract.py
 
-- [ ] `test_public_listing_family_uses_shared_hero_and_pagination_markup`
-- [ ] `test_public_listing_pagination_controller_supports_buttons_and_sentinels`
-- [ ] `test_public_workspace_styles_cover_listing_end_message`
-- [ ] `test_public_list_runtime_uses_defined_localized_browser_contracts`
-- [ ] `test_public_list_filters_and_date_picker_follow_active_locale`
+- [x] `test_public_listing_family_uses_shared_hero_and_pagination_markup`
+- [x] `test_public_listing_pagination_controller_supports_buttons_and_sentinels`
+- [x] `test_public_workspace_styles_cover_listing_end_message`
+- [x] `test_public_list_runtime_uses_defined_localized_browser_contracts`
+- [x] `test_public_list_filters_and_date_picker_follow_active_locale`
+
+DATA-01 / QA-02 supporting review, 2026-10-12, Codex, P1. Source-only assertions retained as wiring guards, not treated as runtime or visual proof; meaningful browser behavior is covered in request-state regressions above.
+
+| Definition | Purpose and assertion review | Fixtures / coverage / reliability | Disposition |
+|---|---|---|---|
+| `test_public_listing_family_uses_shared_hero_and_pagination_markup` | Three templates import shared hero and render load-more macro. | Exact source strings only; does not prove runtime geometry or semantics. | Keep as wiring guard alongside browser matrix. |
+| `test_public_listing_pagination_controller_supports_buttons_and_sentinels` | Controller retains button/sentinel/reload hooks. | Source strings cannot prove concurrency; new deferred-controller regression supplies behavioral evidence. Intersection-observer triggering remains unreviewed runtime gap. | Keep. |
+| `test_public_workspace_styles_cover_listing_end_message` | End-message selectors remain in shared CSS. | String presence, not light/dark/hidden computed-style proof. | Keep with narrow claim. |
+| `test_public_list_runtime_uses_defined_localized_browser_contracts` | Removed undefined view/translation/jQuery contracts stay removed; locale-derived picker wiring remains. | Exact obsolete/required strings; cannot prove translation completeness or runtime. | Keep alongside locale/browser tests. |
+| `test_public_list_filters_and_date_picker_follow_active_locale` | FI/EN/SV city chip labels, January names, summary formats and retry text follow selected locale without page errors. | Actual page/autocomplete, compiled catalogs and Intl formatter; date-picker stub records locale config; three parameter cases. Does not test date-picker library internals, chip URL reset or complete keyboard selection. | Keep; strengthened localization evidence; remaining gaps tracked. |
 
 ## tests/test_public_locales.py
 

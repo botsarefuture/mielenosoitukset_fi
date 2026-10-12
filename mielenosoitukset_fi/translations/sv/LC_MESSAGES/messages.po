@@ -6170,6 +6170,9 @@ msgstr "Anmäl en ny demonstration"
 msgid "Ladataan mielenosoituksia..."
 msgstr "Laddar demonstrationer..."
 
+msgid "Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen."
+msgstr "Det gick inte att ladda demonstrationer. Försök igen."
+
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:155
 msgid "Lataa lisää"
 msgstr "Ladda fler"
@@ -8287,7 +8290,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_dashboard.html:88
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:66
 msgid "Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta"
-msgstr ""
+msgstr "Visar %(start)s–%(end)s av %(count)s demonstrationer"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:114
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:70

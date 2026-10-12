@@ -98,14 +98,14 @@
 
 {% endblock %}
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/user-pagination.js') }}"></script>
+<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261012-list-state-1') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 
 <!-- Shared v2 JS -->
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261012-list-state-1') }}" defer></script>
 
 <script>
   const cityList = {{ city_list | tojson }};

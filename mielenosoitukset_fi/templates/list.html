@@ -21,7 +21,7 @@
 
 {% block content %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261012-list-state-1') }}" defer></script>
 
 {% include "_modals/_demo-card-template.html" %}
 
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/user-pagination.js') }}"></script>
+<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261012-list-state-1') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 <script>
@@ -215,7 +215,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  const activeLocale = {{ current_locale | tojson }};
+  const activeLocale = {{ current_locale | tojson }} || document.documentElement.lang || 'fi';
   const formatCalendarPart = (date, options) => new Intl.DateTimeFormat(
     activeLocale,
     { ...options, timeZone: "UTC" }

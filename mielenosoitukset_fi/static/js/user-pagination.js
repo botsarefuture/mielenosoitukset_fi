@@ -21,11 +21,12 @@
     let totalPages = 1;
     let loading = false;
     let observer = null;
+    let generation = 0;
 
     function setButtonState() {
       if (!button) return;
       button.textContent = initialLabel;
-      button.disabled = false;
+      button.disabled = loading;
       button.classList.remove("loading");
       button.hidden = currentPage >= totalPages;
     }
@@ -36,14 +37,16 @@
       setButtonState();
     }
 
-    async function loadPageWithState(pageNumber, options = {}) {
+    async function loadPageWithState(pageNumber, options = {}, requestGeneration = generation) {
       const result = await loadPage(pageNumber, options);
+      if (requestGeneration !== generation) return null;
       if (result) setState(result.page, result.total_pages);
       return result;
     }
 
     async function loadNext() {
       if (loading || currentPage >= totalPages) return;
+      const requestGeneration = generation;
       loading = true;
       if (button) {
         button.disabled = true;
@@ -52,20 +55,28 @@
       }
 
       try {
-        await loadPageWithState(currentPage + 1, { append: true });
+        await loadPageWithState(currentPage + 1, { append: true }, requestGeneration);
       } finally {
-        loading = false;
-        if (button && currentPage < totalPages) setButtonState();
+        if (requestGeneration === generation) {
+          loading = false;
+          setButtonState();
+        }
       }
     }
 
     async function reload(options = {}) {
+      const requestGeneration = ++generation;
+      currentPage = 1;
+      totalPages = 1;
       loading = true;
+      if (button) button.disabled = true;
       try {
-        return await loadPageWithState(1, { ...options, reset: true });
+        return await loadPageWithState(1, { ...options, reset: true }, requestGeneration);
       } finally {
-        loading = false;
-        if (button) setButtonState();
+        if (requestGeneration === generation) {
+          loading = false;
+          setButtonState();
+        }
       }
     }
 

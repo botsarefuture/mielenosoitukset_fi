@@ -6167,6 +6167,9 @@ msgstr ""
 msgid "Ladataan mielenosoituksia..."
 msgstr ""
 
+msgid "Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen."
+msgstr "Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen."
+
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:155
 msgid "Lataa lisää"
 msgstr ""
@@ -8284,7 +8287,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_dashboard.html:88
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:66
 msgid "Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta"
-msgstr ""
+msgstr "Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:114
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:70

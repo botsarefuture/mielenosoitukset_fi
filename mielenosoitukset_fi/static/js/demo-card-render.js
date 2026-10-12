@@ -187,10 +187,35 @@ function setup_grid_navigation(cards) {
 let currentPage = 1;
 let totalPages = 1;
 const perPage = 12; // default per-page
+let listRequestGeneration = 0;
+let listRequestAbort = null;
+let displayedResults = 0;
+let appendGeneration = null;
 
 async function loadDemos(page = 1, append = false, extraParams = {}) {
+  // A replacement search invalidates every earlier response, even if abort
+  // arrives after its response headers or the browser ignores cancellation.
+  if (!append) {
+    listRequestGeneration += 1;
+    listRequestAbort?.abort();
+    listRequestAbort = new AbortController();
+    appendGeneration = null;
+  }
+  const requestGeneration = listRequestGeneration;
+  if (append && appendGeneration === requestGeneration) return null;
+  if (append) appendGeneration = requestGeneration;
+  const signal = listRequestAbort?.signal;
   const loadMoreBtn = document.getElementById("load-more-btn");
   const demosGrid = document.getElementById("demos-grid");
+  const errorState = document.getElementById("listing-load-error");
+  if (errorState) errorState.hidden = true;
+  const summary = document.getElementById("listing-result-summary");
+  if (!append && summary) summary.hidden = true;
+  if (!append) {
+    const emptyState = document.getElementById("no-results");
+    if (emptyState) emptyState.style.display = "none";
+    if (demosGrid) demosGrid.style.display = "";
+  }
   try {
     // The shared controller owns button state when a page opts into it.
     const paginationController = window.userPaginationController;
@@ -210,13 +235,25 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
       params.set("lang", currentLocale);
     }
 
-    const res = await fetch(`/api/demonstrations?${params.toString()}`);
+    const res = await fetch(`/api/demonstrations?${params.toString()}`, { signal });
+    if (!res.ok) throw new Error(`Demonstration list HTTP ${res.status}`);
     const data = await res.json();
+    if (requestGeneration !== listRequestGeneration || signal?.aborted) return null;
+    if (!Array.isArray(data.results)) throw new Error("Invalid demonstration list response");
 
     const grid = document.getElementById("demos-grid");
     if (!append) grid.innerHTML = ""; // clear on first load
+    displayedResults = (append ? displayedResults : 0) + data.results.length;
+    if (summary) {
+      const number = new Intl.NumberFormat(currentLocale);
+      summary.textContent = summary.dataset.format
+        .replace("__START__", number.format(displayedResults ? 1 : 0))
+        .replace("__END__", number.format(displayedResults))
+        .replace("__COUNT__", number.format(data.total));
+      summary.hidden = false;
+    }
 
-    if (data.results.length === 0) {
+    if (displayedResults === 0) {
       const noResultsDiv = document.getElementById("no-results");
       noResultsDiv.style.display = ""; // ✅ just set the property
       demosGrid.style.display = "none";
@@ -261,10 +298,19 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
       page: currentPage,
       total_pages: totalPages,
       result_count: data.results.length,
+      total: data.total,
+      displayed_count: displayedResults,
     };
 
   } catch (err) {
+    if (requestGeneration !== listRequestGeneration || err.name === "AbortError") return null;
     console.error("Failed to load demos:", err);
+    if (errorState) {
+      errorState.hidden = false;
+      const retry = errorState.querySelector("button");
+      if (retry) retry.onclick = () => loadDemos(page, append, { ...extraParams });
+      if (!append) demosGrid.replaceChildren();
+    }
     if (loadMoreBtn && !window.userPaginationController) {
       loadMoreBtn.disabled = false;
       loadMoreBtn.textContent = t('loadMore');
@@ -272,7 +318,8 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
   }
 
   finally {
-    if (loadMoreBtn && !window.userPaginationController) {
+    if (append && requestGeneration === listRequestGeneration) appendGeneration = null;
+    if (requestGeneration === listRequestGeneration && loadMoreBtn && !window.userPaginationController) {
       loadMoreBtn.classList.remove("loading");
     }
   }

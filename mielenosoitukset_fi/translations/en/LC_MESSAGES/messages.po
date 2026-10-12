@@ -5764,6 +5764,9 @@ msgstr "Submit a new demonstration"
 msgid "Ladataan mielenosoituksia..."
 msgstr "Loading demonstrations..."
 
+msgid "Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen."
+msgstr "Could not load demonstrations. Please try again."
+
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:155
 msgid "Lataa lisää"
 msgstr "Load more"
@@ -7845,7 +7848,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:66
 #, python-format
 msgid "Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta"
-msgstr ""
+msgstr "Showing %(start)s–%(end)s of %(count)s demonstrations"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:114
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:70

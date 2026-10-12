@@ -109,4 +109,16 @@ def test_public_list_filters_and_date_picker_follow_active_locale(
     assert browser_page.locator("#date_start").evaluate(
         "element => element._flatpickr.l10n.months.longhand[0]"
     ) == january_label
+    summary_formats = {
+        "fi": "Näytetään __START__–__END__ / __COUNT__ mielenosoituksesta",
+        "en": "Showing __START__–__END__ of __COUNT__ demonstrations",
+        "sv": "Visar __START__–__END__ av __COUNT__ demonstrationer",
+    }
+    errors = {
+        "fi": "Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen.",
+        "en": "Could not load demonstrations. Please try again.",
+        "sv": "Det gick inte att ladda demonstrationer. Försök igen.",
+    }
+    assert browser_page.locator("#listing-result-summary").get_attribute("data-format") == summary_formats[locale]
+    assert browser_page.locator("#listing-load-error p").text_content() == errors[locale]
     assert not [error for error in page_errors if "ResizeObserver" not in error]

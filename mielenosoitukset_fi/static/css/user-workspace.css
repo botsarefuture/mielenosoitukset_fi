@@ -14,6 +14,20 @@ html.light {
   color-scheme: light;
 }
 
+.public-listing-summary {
+  margin-block: 1rem;
+  color: var(--product-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.public-listing-summary[hidden] {
+  display: none;
+}
+
+#load-more-btn[hidden] {
+  display: none;
+}
+
 html.dark {
   color-scheme: dark;
 }

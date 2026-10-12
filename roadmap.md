@@ -8,7 +8,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** DATA-01 — public list pagination/count contract, then browser summary/URL/race behavior. Independent security slices await review.
+- **Next:** DATA-01 — verify/address #920's compound-sort index review with disposable-DB query plans, then URL/filter restoration/reset and history across public list/city/tag. API and request-state slices await review; independent security slices remain in review.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
@@ -91,7 +91,7 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 ### Product and shared UI
 
 - [ ] **UI-01 · P1:** Complete labels, focus and cropper behavior first.
-- [ ] **UI-02 · P2:** Consolidate homepage/city discovery using the existing shared design language; verify icon centering, content widths, restrained hero hierarchy, themes and mobile.
+- [ ] **UI-02 · P2:** Consolidate homepage/city discovery using the existing shared design language; verify icon centering, content widths, restrained hero hierarchy, themes and mobile. Request-state browser evidence exposed remaining whole-page horizontal overflow: a 390px demonstration-list full-page capture is 447px wide despite the new summary fitting the viewport. Diagnose overflowing page/footer elements before declaring mobile acceptance.
 - [ ] **FORM-01 · P2:** Organization details/forms and submission wizard migrate incrementally to shared sections/fields/modals. Preserve current permission and request contracts.
 - [ ] **UI-03 · P2:** Consolidate detail styles and invite modal, then shared error/status pages. Preserve recurring canonical URLs, cancellation notices, layout preferences and future-event navigation.
 - [ ] **UI-04 · P2:** Audit remaining public/admin form, list, editor and feedback surfaces against the written product standard, including dropdown clipping (#743), moderation affordances (#552) and #770's visual-quality expectations. Admin #677 is completed work, not a reason to repeat its migration.
@@ -131,7 +131,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Inspected main has 1,019 definitions; this public API slice brings its branch to **1,022 definitions across 142 files**, with forty-one reviewed records. Separate open #916/#917/#919 additions are excluded until integration reconciliation. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Inspected main has 1,019 definitions; the public API + request-state stack brings its branch to **1,026 definitions across 143 files**, with fifty reviewed records. Separate open #916/#917/#919 additions are excluded until integration reconciliation. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 
@@ -175,9 +175,9 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | QA-01 | P1 | In progress | Codex | M1, then ongoing | Thirty-seven MFA/account/passkey/organization-action definitions reviewed in the combined inventory; remaining authentication/permission tests pending. |
 | SEC-02 | P1 | In review | Codex | M1 | #915 merged; #916 admin status open; #763 integration/release evidence pending. |
 | SEC-03 | P0/P1 | In review | Codex | M1 | #918 merged; #917 case scope and #919 user hierarchy/delegation open. Remaining role/audit requirements pending. |
-| QA-02 | P1 | In progress | Codex | M2–M3 | Four public API definitions reviewed on this main-based branch; remaining data/workflow tests pending. |
+| QA-02 | P1 | In progress | Codex | M2–M3 | Four API, four request-state and five listing-contract definitions reviewed on this stack. Remaining data/workflow tests pending. |
 | QA-03–QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI, browser/locale and operations/remaining tests. |
-| DATA-01 | P1 | In progress | Codex | M2 | Both APIs now share date/time/ID order and filtered page metadata on this branch. Browser cumulative summary, URL/filter reset, stale-request handling and visual acceptance remain next slice. |
+| DATA-01 | P1 | In progress | Codex | M2 | #920 API foundation open; compound-sort index review needs query-plan verification before integration. Request-state slice stacks on it with cumulative summaries, stale-response guards, append locks and retry feedback. Both themes/sizes on list/city/tag checked. URL/filter/history behavior and broader acceptance remain next. |
 | UI-01 | P1 | Backlog | Unassigned | M2 | Verify labels/cropper and define focused browser acceptance. |
 | DATA-02 / OPS-01 | P1 | Backlog | Unassigned | M3 | Verify #908 and load the existing continuity plan. |
 | ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |

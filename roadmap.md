@@ -74,7 +74,7 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 ### Security and permissions
 
 - [ ] **SEC-01 · P1:** Complete the pending MFA challenge contract described above; review the legacy MFA verification route and no-JavaScript behavior as part of the same authentication workflow.
-- [ ] **SEC-02 · P1:** Verify inactive/banned-account enforcement (#763) across password, MFA, passkey, session loading and protected requests; fix only remaining gaps.
+- [ ] **SEC-02 · P1:** Inactive/banned-account enforcement (#763): password/MFA/passkey and Flask-Login session-loading changes implemented on `codex/account-access-enforcement`, with fourteen account/passkey test reviews. Admin status visibility and permission-protected activate/deactivate workflow remain pending; retain #763 until those requirements are proved.
 - [ ] **SEC-03 · P1:** Verify city-admin case access (#778), organization invite/member rules (#550/#342), and privileged user operations (#547). Prove allowed and forbidden scopes server-side.
 - [ ] **SEC-04 · P1:** Reconcile token/approval lifecycle requirements and prior completed trackers against current routes; prove revocation, expiry, replay behavior, idempotent decisions, case closure, audit and notification effects for every entrypoint.
 - [ ] **SEC-05 · P1:** Review incident #912/#913 protections and credential/session lifecycle regressions before touching related code. Keep secrets out of documentation and audit data.
@@ -172,7 +172,8 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | ID | Priority | Status | Owner | Milestone | Evidence / next action |
 |---|---|---|---|---|---|
 | SEC-01 | P1 | In review | Codex; human reviewer unassigned | M1 | [#901](https://github.com/botsarefuture/mielenosoitukset_fi/pull/901); repair lifecycle findings against current main before approval. |
-| QA-01 | P1 | Backlog | Unassigned | M1, then ongoing | Inventory exists; review security tests individually. |
+| QA-01 | P1 | In progress | Codex | M1, then ongoing | Fourteen account/passkey definitions reviewed on SEC-02 branch; remaining tests and noted ownership/tampering gaps pending. Reconcile #901's separate MFA reviews after merge. |
+| SEC-02 | P1 | In progress | Codex | M1 | Backend access enforcement implemented; admin status/toggle workflow still pending in #763. |
 | QA-02 | P1 | Backlog | Unassigned | M2–M3 | Review data/workflow assertions alongside delivery. |
 | QA-03–QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI, browser/locale and operations/remaining tests. |
 | DATA-01 | P1 | Backlog | Unassigned | M2 | Confirm API/controller behavior, then implement shared ordering/count contract. |

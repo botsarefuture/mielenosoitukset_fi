@@ -13614,3 +13614,7 @@ msgstr "Utkastet återställdes från den här webbläsaren. Det raderas automat
 #: mielenosoitukset_fi/templates/submit.html
 msgid "Poista luonnos ja aloita alusta"
 msgstr "Radera utkastet och börja om"
+
+#: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/users/BPs/passkeys.py
+msgid "Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon."
+msgstr "Det här kontot är inaktiverat. Kontakta webbplatsens administratörer."

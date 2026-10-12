@@ -25,7 +25,7 @@ P0–P3 are common engineering conventions. The definitions below are this repos
 | **P2 — Medium** | Important usability, consistency, performance or maintainability improvement with a working core path. | Schedule after related P1 work and required dependencies. | Component consolidation, broader localization, measured performance improvements. |
 | **P3 — Low** | Optional enhancement or low-risk cleanup without immediate user harm. | Pull when higher-priority dependencies are clear. | Verified orphan assets, optional new product features. |
 
-Priorities below are planning assignments. Revalidate reported defects before implementation; promote a confirmed urgent defect to P0 and record the evidence. There is **no active P0 asserted by this roadmap**.
+Priorities below are planning assignments. Revalidate reported defects before implementation; promote a confirmed urgent defect to P0 and record the evidence. SEC-03 now includes a confirmed P0 code defect in case read authorization, addressed by open #917; no live exploitation or production fix is claimed.
 
 ## Status and ownership
 

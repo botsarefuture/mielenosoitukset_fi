@@ -1,6 +1,8 @@
 import pyotp
 import hashlib
 import time
+import importlib
+from pymongo.collection import Collection
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 from bson import ObjectId
@@ -269,6 +271,87 @@ def test_password_change_revokes_pending_first_factor(app, db):
     assert db.mfa_login_challenges.count_documents({"user_id": user._id}) == 0
 
 
+def test_reset_after_mfa_user_load_does_not_call_login_user(app, db, monkeypatch):
+    client, user, secret = _pending_login(app, db)
+    auth = importlib.import_module("mielenosoitukset_fi.users.BPs.auth")
+    verify = UserMFA.verify_token
+    login_calls = []
+
+    def verify_then_reset(self, code):
+        result = verify(self, code)
+        user._change_password("ReplacementPassword1!")
+        return result
+
+    monkeypatch.setattr(UserMFA, "verify_token", verify_then_reset)
+    monkeypatch.setattr(auth, "login_user", lambda user: login_calls.append(user.id))
+    client.post("/users/auth/login", data={"2fa_code": _totp_code(secret)})
+    assert login_calls == []
+    with client.session_transaction() as login_session:
+        assert "_user_id" not in login_session
+
+
+def test_reset_between_persisted_read_and_atomic_authorization_is_rejected(app, db, monkeypatch):
+    client, user, secret = _pending_login(app, db)
+    update = Collection.find_one_and_update
+    reset_ran = []
+
+    def reset_before_update(collection, query, change, *args, **kwargs):
+        if collection.name == "users" and "last_mfa_login_at" in change.get("$set", {}):
+            user._change_password("ReplacementPassword1!")
+            reset_ran.append(True)
+        return update(collection, query, change, *args, **kwargs)
+
+    monkeypatch.setattr(Collection, "find_one_and_update", reset_before_update)
+    client.post("/users/auth/login", data={"2fa_code": _totp_code(secret)})
+    assert reset_ran == [True]
+    with client.session_transaction() as login_session:
+        assert "_user_id" not in login_session
+
+
+def test_reset_after_consumption_before_session_creation_is_rejected(app, db, monkeypatch):
+    client, user, secret = _pending_login(app, db)
+    auth = importlib.import_module("mielenosoitukset_fi.users.BPs.auth")
+    clear = auth._clear_pending_mfa_login
+    login_calls = []
+
+    def clear_then_reset():
+        clear()
+        user._change_password("ReplacementPassword1!")
+
+    monkeypatch.setattr(auth, "_clear_pending_mfa_login", clear_then_reset)
+    monkeypatch.setattr(auth, "login_user", lambda user: login_calls.append(user.id))
+    client.post("/users/auth/login", data={"2fa_code": _totp_code(secret)})
+    assert login_calls == []
+    with client.session_transaction() as login_session:
+        assert "_user_id" not in login_session
+
+
+def test_reset_at_session_creation_revokes_the_response_cookie(app, db, monkeypatch):
+    client, user, secret = _pending_login(app, db)
+    auth = importlib.import_module("mielenosoitukset_fi.users.BPs.auth")
+    sign_in = auth.login_user
+
+    def sign_in_then_reset(current):
+        result = sign_in(current)
+        user._change_password("ReplacementPassword1!")
+        return result
+
+    with monkeypatch.context() as patch:
+        patch.setattr(auth, "login_user", sign_in_then_reset)
+        response = client.post("/users/auth/login", data={"2fa_code": _totp_code(secret)})
+    assert response.status_code == 302
+    protected = client.get("/users/auth/api/v2/passkeys")
+    assert protected.status_code == 302
+    assert "/users/auth/login" in protected.headers["Location"]
+
+    # A new login with current credentials must replace the invalid binding.
+    client.post("/users/auth/login", data={
+        "username": user.username, "password": "ReplacementPassword1!",
+        "2fa_code": _totp_code(secret),
+    })
+    assert client.get("/users/auth/api/v2/passkeys").status_code == 200
+
+
 def test_parallel_pending_challenge_consumption_has_one_winner(app, db):
     client, user, _secret = _pending_login(app, db)
     with client.session_transaction() as login_session:
@@ -279,7 +362,7 @@ def test_parallel_pending_challenge_consumption_has_one_winner(app, db):
         with app.test_request_context():
             session["mfa_pending_login"] = challenge
             barrier.wait(timeout=5)
-            return _consume_pending_mfa_login(user)
+            return bool(_consume_pending_mfa_login(user))
 
     with ThreadPoolExecutor(max_workers=2) as pool:
         outcomes = list(pool.map(lambda _: consume(), range(2)))

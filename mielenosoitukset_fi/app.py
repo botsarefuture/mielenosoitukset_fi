@@ -3,7 +3,8 @@ from datetime import datetime, date, time
 import time as process_time
 from flask import Flask, redirect, request, session, g, url_for
 from flask_babel import Babel
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager, current_user, user_logged_in
+import hashlib
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.background_jobs import JOB_DEFINITIONS, init_background_jobs
 
@@ -158,11 +159,20 @@ def create_app(config_overrides=None) -> Flask:
     
     login_manager.anonymous_user = AnonymousUser
 
+    @user_logged_in.connect_via(app)
+    def clear_old_mfa_binding(sender, user, **extra):
+        """A new sign-in replaces any prior MFA credential binding."""
+        session.pop("mfa_credential_version", None)
+
     # User Loader function
     @login_manager.user_loader
     def load_user(user_id):
         user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
         if user_doc:
+            bound_version = session.get("mfa_credential_version")
+            current_version = hashlib.sha256(user_doc["password_hash"].encode("utf-8")).hexdigest()
+            if bound_version is not None and bound_version != current_version:
+                return None
             logger.info(f"User loaded: {user_doc.get('username')}")
             return User.from_db(user_doc)
         logger.warning(f"User not found with id: {user_id}")

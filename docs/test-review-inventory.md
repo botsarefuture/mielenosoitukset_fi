@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-140 Python test files; 1,004 test definitions (999 in 139 files under `tests/`, plus five standalone recurrence tests in one file). Eleven MFA definitions have review records below; remaining entries are pending review. The initial inventory came from the baseline revision above; SEC-01 adds seven net definitions on PR #901. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the whole suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+140 Python test files; 1,008 test definitions (1,003 in 139 files under `tests/`, plus five standalone recurrence tests in one file). Fifteen MFA definitions have review records below; remaining entries are pending review. The initial inventory came from the baseline revision above; SEC-01 adds eleven net definitions on PR #901. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the whole suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -777,6 +777,10 @@ Individual review records (all Backlog; owner unassigned):
 - [x] `test_expired_pending_mfa_login_requires_password_again`
 - [x] `test_copied_pending_cookie_cannot_replay_successful_mfa`
 - [x] `test_password_change_revokes_pending_first_factor`
+- [x] `test_reset_after_mfa_user_load_does_not_call_login_user`
+- [x] `test_reset_between_persisted_read_and_atomic_authorization_is_rejected`
+- [x] `test_reset_after_consumption_before_session_creation_is_rejected`
+- [x] `test_reset_at_session_creation_revokes_the_response_cookie`
 - [x] `test_parallel_pending_challenge_consumption_has_one_winner`
 - [x] `test_pending_mfa_attempt_limit_cannot_be_reset_by_cookie_replay`
 - [x] `test_verify_mfa_route_does_not_500`
@@ -794,7 +798,11 @@ Shared setup: disposable MongoDB and real Flask test clients/session cookies, ac
 | `test_mfa_login_uses_short_lived_server_side_pending_state` | Cookie contains opaque handle, DB binds actual user, no password/raw password hash stored; completion sets exact identity and clears proof. | Real first-factor and TOTP; markup verifies removed hidden fields but does not execute browser JS. | Keep; strengthened proof assertions. |
 | `test_expired_pending_mfa_login_requires_password_again` | Expired DB challenge cannot authenticate and is removed. | Database expiry moved into past; no sleeps or host-clock change. | Keep. |
 | `test_copied_pending_cookie_cannot_replay_successful_mfa` | Successful identity established, then saved pre-login cookie fails with a valid code. | Separate Flask clients; proves server revocation independent of response-cookie clearing. | Keep. |
-| `test_password_change_revokes_pending_first_factor` | Model password change invalidates pending proof despite valid TOTP; no user session and challenge removed. | Real password change, hash persistence and endpoint. Reset uses the same hash contract; concurrent reset/login ordering is not simulated. | Keep. |
+| `test_password_change_revokes_pending_first_factor` | Model password change invalidates pending proof despite valid TOTP; no user session and challenge removed. | Real password change, hash persistence and endpoint. Concurrent interleavings are covered by the four cases below. | Keep. |
+| `test_reset_after_mfa_user_load_does_not_call_login_user` | A reset after initial user loading rejects authorization without calling login_user. | Real reset after actual TOTP validation; login_user spy proves no session creation call. | Keep. |
+| `test_reset_between_persisted_read_and_atomic_authorization_is_rejected` | Reset winning before the user-record compare-and-set rejects authentication. | Hook schedules real reset at MongoDB update boundary; actual conditional write rejects stale hash. | Keep. |
+| `test_reset_after_consumption_before_session_creation_is_rejected` | Reset before final credential read prevents login_user. | Real mutation during proof cleanup; exact empty login-call assertion. | Keep. |
+| `test_reset_at_session_creation_revokes_the_response_cookie` | Reset at session creation invalidates protected access; current-password login recovers. | Real cookie/loader; controlled reset after login_user, no cryptographic bypass. | Keep. |
 | `test_parallel_pending_challenge_consumption_has_one_winner` | Two simultaneous database consume attempts yield exactly one success. | Separate request contexts, two worker threads and barrier; tests atomic storage invariant, not parallel browser HTTP dispatch. | Keep. |
 | `test_pending_mfa_attempt_limit_cannot_be_reset_by_cookie_replay` | Saved cookie cannot reset server attempt count; later valid code fails after exhaustion. | Only TOTP rejection mocked during failure phase; real verifier restored before final valid-code assertion. Fresh password verification can intentionally issue new proof. | Keep. |
 | `test_verify_mfa_route_does_not_500` | Legacy POST forwards with 307 and preserves existing authenticated identity. | Was a loose non-500 assertion; now checks destination, status and user ID. Anonymous legacy proof is covered separately. | Keep; strengthened. |

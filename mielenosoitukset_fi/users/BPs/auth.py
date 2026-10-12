@@ -37,6 +37,7 @@ from mielenosoitukset_fi.utils.request_ip import get_client_ip
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from bson.objectid import ObjectId
 from pymongo.errors import DuplicateKeyError
+from pymongo import ReturnDocument
 from werkzeug.utils import secure_filename
 import importlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
@@ -141,22 +142,41 @@ def _get_pending_mfa_user():
 
 
 def _consume_pending_mfa_login(user):
-    """Atomically consume proof so copied cookies and parallel requests lose."""
+    """Consume once, then authorize against persisted credentials atomically."""
     challenge = session.get(MFA_PENDING_LOGIN_KEY)
     if not isinstance(challenge, str):
-        return False
-    result = _pending_mfa_collection().update_one(
+        return None
+    proof = _pending_mfa_collection().find_one_and_update(
         {
             "_id": _pending_mfa_digest(challenge),
             "user_id": user._id,
-            "credential_version": _pending_mfa_digest(user.password_hash),
             "used": False,
             "expires_at": {"$gt": utcnow()},
             "attempts": {"$lte": MFA_PENDING_LOGIN_MAX_ATTEMPTS},
         },
         {"$set": {"used": True}},
     )
-    return result.modified_count == 1
+    if not proof:
+        return None
+    users = _get_mongo().users
+    current = users.find_one({"_id": proof["user_id"]})
+    if not current or proof["credential_version"] != _pending_mfa_digest(current["password_hash"]):
+        return None
+    # Password changes write this same document. If a reset wins before this
+    # compare-and-set, authorization fails; the already-used proof stays burned.
+    authorized = users.find_one_and_update(
+        {
+            "_id": proof["user_id"],
+            "password_hash": current["password_hash"],
+            "confirmed": True,
+            "mfa_enabled": True,
+            "banned": {"$ne": True},
+            "$or": [{"active": True}, {"active": {"$exists": False}}],
+        },
+        {"$set": {"last_mfa_login_at": utcnow()}},
+        return_document=ReturnDocument.AFTER,
+    )
+    return User.from_db(authorized) if authorized else None
 
 
 def generate_qr(url: str) -> str:
@@ -880,6 +900,7 @@ def login():
         username = normalize_username(request.form.get("username"))
         password = request.form.get("password")
         mfa_code = (request.form.get("2fa_code") or request.form.get("token") or "").strip()
+        mfa_credential_version = None
 
         user_ip = get_client_ip()
         user_agent = request.headers.get("User-Agent", "")
@@ -907,10 +928,12 @@ def login():
                 )
                 flash_message("Väärä MFA-koodi.", "error")
                 return redirect(url_for("users.auth.login", next=safe_next_page))
-            if not _consume_pending_mfa_login(user):
+            user = _consume_pending_mfa_login(user)
+            if not user:
                 _clear_pending_mfa_login()
                 flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
                 return redirect(url_for("users.auth.login", next=safe_next_page))
+            mfa_credential_version = _pending_mfa_digest(user.password_hash)
         else:
             if not username or not password:
                 flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
@@ -950,8 +973,20 @@ def login():
 
         _clear_pending_mfa_login()
 
+        if mfa_credential_version is not None:
+            current = _get_mongo().users.find_one({
+                "_id": user._id, "password_hash": user.password_hash,
+            })
+            if not current:
+                flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+            user = User.from_db(current)
         # Everything good, log the user in
         login_user(user)
+        if mfa_credential_version is not None:
+            # A reset after the final read must also invalidate the response
+            # cookie before it can access any subsequent protected request.
+            session["mfa_credential_version"] = mfa_credential_version
         session.permanent = True  # ~12h authenticated session (PERMANENT_SESSION_LIFETIME)
         session.modified = True
         log_login_attempt(username, success=True, ip=user_ip, user_agent=user_agent, user_id=user._id)

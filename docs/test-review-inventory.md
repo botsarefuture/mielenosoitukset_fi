@@ -2,16 +2,38 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-140 Python test files; 994 test definitions. All entries are **pending review**. This inventory was extracted from Python AST; it does not claim execution, parameter coverage or pytest collection. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+140 Python test files; 997 test definitions (992 in 139 files under `tests/`, plus five standalone recurrence tests in one file). All test entries are **pending review**. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim execution, parameter coverage or pytest collection. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
 Use the roadmap's P0–P3 policy and status vocabulary. Initial review status for every entry is Backlog; assign an owner and justified priority when triaging it. A discovered security/core-workflow defect can escalate immediately, regardless of its review batch.
 
-## tests/conftest.py
+## Supporting audit — tests/conftest.py
+
+These two functions are `@pytest.fixture` definitions despite their names. They require supporting review and are excluded from the 997-test total.
 
 - [ ] `test_settings`
 - [ ] `test_config_path`
+
+## mielenosoitukset_fi/scripts/test_repeat_v2.py
+
+Standalone unittest script; these methods are included in the test total even if the configured pytest discovery does not collect this path. Review its imports, invocation and scheduling assumptions alongside the individual records below. Source inspection shows missing `timedelta`/`relativedelta` imports and a `scripts.repeat_v2` import whose resolution needs verification; no execution or completed review is claimed here.
+
+- [ ] `TestCalculateNextDates::test_daily_frequency`
+- [ ] `TestCalculateNextDates::test_weekly_frequency`
+- [ ] `TestCalculateNextDates::test_monthly_frequency`
+- [ ] `TestCalculateNextDates::test_yearly_frequency`
+- [ ] `TestCalculateNextDates::test_custom_interval`
+
+Individual review records (all Backlog; owner unassigned):
+
+| Definition | Requirement to verify | Setup / assertions to review | Variants / reliability gaps | Disposition and validation evidence |
+|---|---|---|---|---|
+| `test_daily_frequency` | Daily schedule dates and inclusive start. | Fixed start/schedule; asserts count 365 and first two dates. | Establish horizon policy, end boundary and date arithmetic imports. | Pending; not run. Record reviewer, revision, node/invocation and any fix PR. |
+| `test_weekly_frequency` | Weekly schedule dates and inclusive start. | Fixed start/schedule; asserts count 53 and one-week spacing. | Establish horizon policy, year boundary and date arithmetic imports. | Pending; not run. Record reviewer, revision, node/invocation and any fix PR. |
+| `test_monthly_frequency` | Monthly recurrence dates. | Fixed January start; asserts count 12 and next month. | Verify month-end/leap-year policy and missing date arithmetic import. | Pending; not run. Record reviewer, revision, node/invocation and any fix PR. |
+| `test_yearly_frequency` | Yearly recurrence dates. | Fixed start; asserts count two and next year. | Verify inclusive end/horizon policy and leap-day behavior. | Pending; not run. Record reviewer, revision, node/invocation and any fix PR. |
+| `test_custom_interval` | Two-day interval recurrence. | Fixed start/schedule; asserts count 183 and first increment. | Verify interval validation, horizon boundary and date arithmetic imports. | Pending; not run. Record reviewer, revision, node/invocation and any fix PR. |
 
 ## tests/test_admin_audit_indexes.py
 
@@ -1421,4 +1443,3 @@ Use the roadmap's P0–P3 policy and status vocabulary. Initial review status fo
 - [ ] `WrapperDecoratorTests::test_permission_required_aborts_when_demo_permission_is_missing`
 - [ ] `WrapperDecoratorTests::test_permission_required_allows_demonstration_access_when_granted`
 - [ ] `WrapperDecoratorTests::test_deprecated_endpoint_aborts_with_gone`
-

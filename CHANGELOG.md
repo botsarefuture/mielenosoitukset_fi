@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 - Added a repository-wide delivery roadmap with defined P0–P3 priorities, delivery milestones, ownership/status tracking, acceptance gates, and an individual test-review inventory across security, backend, UI, operations, privacy, and maintenance.
+- Corrected the roadmap's test inventory to include standalone recurrence tests and distinguish supporting fixtures from test definitions.
 
 - Hardened the public contact form after `INC-2026-0001` with independent per-client and global rate limits, a runtime circuit breaker, bounded concurrent form tokens with server-consumed one-time CSRF and form-age checks, streamed request-size enforcement, a honeypot, strict normalized input bounds, safe email-template escaping, and a privacy-safe request ID that follows accepted submissions into the mail queue and support case. Automatic external acknowledgements remain disabled.
 

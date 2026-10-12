@@ -116,3 +116,45 @@ def test_public_pagination_normalizes_invalid_numeric_args(client, endpoint, arg
     assert response.status_code == 200
     data = response.get_json()
     assert (data["page"], data["per_page"]) == expected
+
+
+def test_public_chronological_sort_has_index_backed_plan(app, db, seeded_data):
+    from mielenosoitukset_fi.utils.database import DEMO_FILTER
+    from mielenosoitukset_fi.utils.public_pagination import (
+        PUBLIC_DEMONSTRATION_ORDER, PUBLIC_DEMONSTRATION_INDEX,
+        ensure_public_demo_pagination_index,
+    )
+
+    indexes_before = db.demonstrations.index_information()
+    ensure_public_demo_pagination_index(db)
+    ensure_public_demo_pagination_index(db)
+    indexes_after = db.demonstrations.index_information()
+    assert indexes_after == indexes_before
+    assert indexes_after[PUBLIC_DEMONSTRATION_INDEX]['key'] == [('approved', 1), *PUBLIC_DEMONSTRATION_ORDER]
+
+    base = db.demonstrations.find_one({"_id": seeded_data["demo_id"]})
+    documents = []
+    for index in range(200):
+        item = deepcopy(base)
+        item.update(_id=ObjectId(), date=(date.today() + timedelta(days=index % 8)).isoformat(),
+                    start_time=f"{index % 24:02}:00")
+        documents.append(item)
+    db.demonstrations.insert_many(documents)
+    query = deepcopy(DEMO_FILTER)
+    query['date'] = {'$gte': date.today().isoformat()}
+    def stages(node):
+        if isinstance(node, dict):
+            if 'stage' in node:
+                yield node['stage']
+            for value in node.values():
+                yield from stages(value)
+        elif isinstance(node, list):
+            for value in node:
+                yield from stages(value)
+
+    for offset in [0, 12]:
+        plan = db.demonstrations.find(query).sort(PUBLIC_DEMONSTRATION_ORDER).skip(offset).limit(12).explain()
+        winning = plan['queryPlanner']['winningPlan']
+        assert 'SORT' not in set(stages(winning)), winning
+        assert 'IXSCAN' in set(stages(winning)), winning
+        assert plan['executionStats']['nReturned'] == 12

@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 - Both public demonstration list APIs now order by date, start time and ID before pagination, report matching totals and exact page ranges, and safely normalize invalid numeric page arguments. Existing filters and response fields are preserved.
+- The public chronological order now has a matching approved/date/start-time/ID index, avoiding a blocking sort for broad public date-range queries while retaining legacy visibility flags and existing indexes.
 
 - Combined password-and-TOTP sign-in now binds the MFA session to the verified credentials, so concurrent and later password changes reject stale authentication just like the two-step flow.
 

@@ -131,7 +131,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Inspected main has 1,019 definitions; this public API slice brings its branch to **1,022 definitions across 142 files**, with forty-one reviewed records. Separate open #916/#917/#919 additions are excluded until integration reconciliation. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Inspected main has 1,019 definitions; this public API slice brings its branch to **1,023 definitions across 142 files**, with forty-two reviewed records. Separate open #916/#917/#919/#921 additions are excluded until integration reconciliation. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 
@@ -175,9 +175,9 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | QA-01 | P1 | In progress | Codex | M1, then ongoing | Thirty-seven MFA/account/passkey/organization-action definitions reviewed in the combined inventory; remaining authentication/permission tests pending. |
 | SEC-02 | P1 | In review | Codex | M1 | #915 merged; #916 admin status open; #763 integration/release evidence pending. |
 | SEC-03 | P0/P1 | In review | Codex | M1 | #918 merged; #917 case scope and #919 user hierarchy/delegation open. Remaining role/audit requirements pending. |
-| QA-02 | P1 | In progress | Codex | M2–M3 | Four public API definitions reviewed on this main-based branch; remaining data/workflow tests pending. |
+| QA-02 | P1 | In progress | Codex | M2–M3 | Five public API definitions reviewed on this main-based branch, including real query-plan/index regression; remaining data/workflow tests pending. |
 | QA-03–QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI, browser/locale and operations/remaining tests. |
-| DATA-01 | P1 | In progress | Codex | M2 | Both APIs now share date/time/ID order and filtered page metadata on this branch. Browser cumulative summary, URL/filter reset, stale-request handling and visual acceptance remain next slice. |
+| DATA-01 | P1 | In progress | Codex | M2 | #920 shares date/time/ID order and page metadata; matching named approved/order index now removes blocking SORT in disposable-DB evidence. #921 browser state/summary slice open. URL/filter/history and broader acceptance remain next; production index rollout/verification requires authorized release. |
 | UI-01 | P1 | Backlog | Unassigned | M2 | Verify labels/cropper and define focused browser acceptance. |
 | DATA-02 / OPS-01 | P1 | Backlog | Unassigned | M3 | Verify #908 and load the existing continuity plan. |
 | ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |

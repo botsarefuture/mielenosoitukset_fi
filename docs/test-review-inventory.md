@@ -6,6 +6,8 @@ Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
+Use the roadmap's P0–P3 policy and status vocabulary. Initial review status for every entry is Backlog; assign an owner and justified priority when triaging it. A discovered security/core-workflow defect can escalate immediately, regardless of its review batch.
+
 ## tests/conftest.py
 
 - [ ] `test_settings`
@@ -1419,5 +1421,4 @@ For each checked definition, add its review record under the file heading (requi
 - [ ] `WrapperDecoratorTests::test_permission_required_aborts_when_demo_permission_is_missing`
 - [ ] `WrapperDecoratorTests::test_permission_required_allows_demonstration_access_when_granted`
 - [ ] `WrapperDecoratorTests::test_deprecated_endpoint_aborts_with_gone`
-
 

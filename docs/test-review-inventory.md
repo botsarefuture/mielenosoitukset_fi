@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-142 Python test files; 1,019 test definitions (1,014 in 141 files under `tests/`, plus five standalone recurrence tests in one file). Thirty-seven MFA/account/passkey/organization-action definitions have review records below; remaining entries are pending review. Counts reconcile the MFA branch with current main's account-access and organization-action changes. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+143 Python test files; 1,030 test definitions (1,025 in 142 files under `tests/`, plus five standalone recurrence tests in one file). Fifty-eight MFA/account/passkey/organization/user-action definitions have review records below; remaining entries are pending review. This slice adds eleven definitions to main's reconciled 1,019-test inventory. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -300,16 +300,31 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 
 ## tests/test_admin_user_bp.py
 
-- [ ] `test_user_control_paginates_results`
-- [ ] `test_user_control_searches_display_names`
-- [ ] `test_user_control_filters_by_city_admin_scope`
-- [ ] `test_edit_user_exposes_translator_role_and_auto_assigns_permission`
-- [ ] `test_create_user_can_assign_translator_role`
-- [ ] `test_create_user_can_assign_city_admin_scope`
-- [ ] `test_create_city_admin_requires_city_selection`
-- [ ] `test_create_user_rejects_reserved_admin_identity`
-- [ ] `test_create_user_persists_active_true`
-- [ ] `test_user_from_db_defaults_active_true`
+- [x] `test_user_control_paginates_results`
+- [x] `test_user_control_searches_display_names`
+- [x] `test_user_control_filters_by_city_admin_scope`
+- [x] `test_edit_user_exposes_translator_role_and_auto_assigns_permission`
+- [x] `test_create_user_can_assign_translator_role`
+- [x] `test_create_user_can_assign_city_admin_scope`
+- [x] `test_create_city_admin_requires_city_selection`
+- [x] `test_create_user_rejects_reserved_admin_identity`
+- [x] `test_create_user_persists_active_true`
+- [x] `test_user_from_db_defaults_active_true`
+
+SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Real admin client, disposable MongoDB and stored grant data; external delivery isolated by fixtures. None of these positive tests alone proves forbidden actions are blocked; the privileged-action tests below supply negative paths. Final run/commit evidence recorded in PR.
+
+| Definition | Requirement / assertions | Coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_user_control_paginates_results` | Expected records/pages split with per_page two. | Fixed unique usernames; not equal-sort-key or concurrent insertion proof. | Keep; deterministic tie-breaker remains data-view work. |
+| `test_user_control_searches_display_names` | Display-name search returns matching identity. | Positive substring case only; no permission claim. | Keep. |
+| `test_user_control_filters_by_city_admin_scope` | Grant city filter includes/excludes expected users. | Three grant cases; role/grant labeling verified via real list. | Keep. |
+| `test_edit_user_exposes_translator_role_and_auto_assigns_permission` | Edit/save preserve translator role and canonical name; implied translation rights persist. | Global admin positive path; delegation refusal covered separately. | Keep. |
+| `test_create_user_can_assign_translator_role` | Creation UI options and persisted implied translator capabilities. | Real POST/database; email delivery not verified. | Keep. |
+| `test_create_user_can_assign_city_admin_scope` | New city grant has exactly expected cities/default capabilities. | Prevents unrequested permission expansion; #917's explicit new case choices remain separate integration. | Keep. |
+| `test_create_city_admin_requires_city_selection` | Missing city prevents account creation. | Redirect plus absent DB identity; no malformed-city matrix. | Keep. |
+| `test_create_user_rejects_reserved_admin_identity` | Reserved display identity rejected without persistence. | One reserved variant; validator suite covers broader names. | Keep. |
+| `test_create_user_persists_active_true` | New user explicitly enabled/unbanned. | Normal creation contract. | Keep. |
+| `test_user_from_db_defaults_active_true` | Legacy missing-active field defaults enabled. | Model compatibility only; runtime access checks covered by account-access tests. | Keep. |
 
 ## tests/test_analytics_rollup.py
 
@@ -901,6 +916,38 @@ Shared setup: simulated hardware authenticator signs real registration/assertion
 | `test_passkey_rejects_disabled_accounts` | Valid assertion denied after account disabled, no user session created. | Active=false and banned=true separately; registers while enabled, then DB status update; unique identities prevent fixture collisions. | Keep; strengthened old weak test. |
 
 Focused run evidence is linked in the delivery PR; checked entries mean assessed definitions, not closure of all WebAuthn security requirements. Crypto-origin/RP tampering, consumed assertion replay and cross-user mutations need coverage verification in the remaining QA-01 inventory.
+
+## tests/test_privileged_user_actions.py
+
+- [x] `test_direct_user_edit_cannot_change_higher_role_target`
+- [x] `test_admin_cannot_self_promote_through_either_entrypoint`
+- [x] `test_restricted_editor_cannot_delegate_unowned_global_permission`
+- [x] `test_restricted_editor_cannot_edit_globally_privileged_legacy_user`
+- [x] `test_organization_admin_role_does_not_grant_global_user_management`
+- [x] `test_force_password_change_respects_target_hierarchy`
+- [x] `test_ordinary_target_profile_edit_still_works`
+- [x] `test_admin_can_edit_own_basic_profile_without_changing_authority`
+- [x] `test_hard_coded_identity_has_no_hierarchy_exception`
+- [x] `test_admin_user_audit_excludes_credentials_and_request_payload`
+- [x] `test_create_user_cannot_bypass_superuser_promotion_process`
+
+SEC-03 / QA-01 review, 2026-10-12, Codex, P1 review batch; corrected privilege-escalation paths are P0 code defects. Real Flask/DB/roles/grants with no authorization mocks. Synthetic payload marker is not a real credential; assertions inspect scoped audit events, not the whole service logging system. Final run and revision recorded in PR.
+
+| Definition | Requirement / assertions | Variants and remaining limits | Disposition |
+|---|---|---|---|
+| `test_direct_user_edit_cannot_change_higher_role_target` | Both edit and save deny higher-level target with no DB change. | Two entrypoints, exact 403 and full stored-document equality. | Keep. |
+| `test_admin_cannot_self_promote_through_either_entrypoint` | Direct own-role God promotion rejected. | Both routes; real ObjectId/string distinction; stored state unchanged. | Keep. |
+| `test_restricted_editor_cannot_delegate_unowned_global_permission` | Explicit EDIT_USER does not authorize granting DELETE_USER. | Real restricted actor and target, exact denial/state equality. | Keep. |
+| `test_restricted_editor_cannot_edit_globally_privileged_legacy_user` | Low base-role user with global_admin flag still protected. | Real flag/role mismatch; separate from named God-role test. | Keep. |
+| `test_organization_admin_role_does_not_grant_global_user_management` | Organization rights do not grant list/save/forced-reset/clearance global authority. | Four route checks; actual org membership and no global capability. | Keep. |
+| `test_force_password_change_respects_target_hierarchy` | Self, peer and higher target forcing denied. | Three cases with unchanged DB flag. Lower target success exercised by audit test. | Keep. |
+| `test_ordinary_target_profile_edit_still_works` | Authorized ordinary profile update persists. | Positive save POST/display name; full-field round-trip remains form tests. | Keep. |
+| `test_admin_can_edit_own_basic_profile_without_changing_authority` | Own basic profile may change without a role/rights change. | Valid public username isolates authority checks from reserved-name validation; exact role/permission preservation. | Keep. |
+| `test_hard_coded_identity_has_no_hierarchy_exception` | Former exception ID gains no authority and target role is not mutated. | Direct helper test, not a production identity query. | Keep. |
+| `test_admin_user_audit_excludes_credentials_and_request_payload` | Actual forced reset works, scoped request events exclude synthetic body/header and password hash. | Real DB log writes; does not prove all audit sources/retention/redaction. | Keep. |
+| `test_create_user_cannot_bypass_superuser_promotion_process` | Hidden God role/early global-admin creation rejected without persistence. | Two roles with exact expected status, existing UI notice and clearance promotion flow preserved. | Keep. |
+
+Known remaining acceptance: dedicated full-role alias cases, concurrent authorization changes, invalid-ID matrices for every legacy form route and cross-source audit completeness. Those are not silently declared covered.
 
 ## tests/test_privacy_policy.py
 

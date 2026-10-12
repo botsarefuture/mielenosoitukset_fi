@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Privileged user actions now share target/role/delegation checks across edit and save routes, reject self-escalation and cross-level password-reset forcing, and use explicit global capabilities. User-action request audits no longer serialize form bodies, cookies, headers or user credential records.
+
 - Combined password-and-TOTP sign-in now binds the MFA session to the verified credentials, so concurrent and later password changes reject stale authentication just like the two-step flow.
 
 - MFA proof authorization now uses an atomic comparison against persisted credentials, and MFA sessions are invalidated by password changes, closing concurrent password-reset login races.

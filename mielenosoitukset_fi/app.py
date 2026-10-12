@@ -173,8 +173,11 @@ def create_app(config_overrides=None) -> Flask:
             current_version = hashlib.sha256(user_doc["password_hash"].encode("utf-8")).hexdigest()
             if bound_version is not None and bound_version != current_version:
                 return None
+            user = User.from_db(user_doc)
+            if not user.is_active:
+                return None
             logger.info(f"User loaded: {user_doc.get('username')}")
-            return User.from_db(user_doc)
+            return user
         logger.warning(f"User not found with id: {user_id}")
         return None
 

@@ -6,6 +6,8 @@
 
 - MFA proof authorization now uses an atomic comparison against persisted credentials, and MFA sessions are invalidated by password changes, closing concurrent password-reset login races.
 
+- Disabled and banned accounts can no longer sign in with a password, MFA or passkey; protected requests also reject their existing sessions after the account status changes.
+
 - Added a repository-wide delivery roadmap with defined P0–P3 priorities, delivery milestones, ownership/status tracking, acceptance gates, and an individual test-review inventory across security, backend, UI, operations, privacy, and maintenance.
 - Corrected the roadmap's test inventory to include standalone recurrence tests and distinguish supporting fixtures from test definitions.
 

@@ -2,7 +2,8 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-140 Python test files; 1,008 test definitions (1,003 in 139 files under `tests/`, plus five standalone recurrence tests in one file). Fifteen MFA definitions have review records below; remaining entries are pending review. The initial inventory came from the baseline revision above; SEC-01 adds eleven net definitions on PR #901. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the whole suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+141 Python test files; 1,011 test definitions (1,006 in 140 files under `tests/`, plus five standalone recurrence tests in one file). Twenty-nine MFA/account/passkey definitions have review records below; remaining entries are pending review. The initial inventory came from the baseline revision above; SEC-01 adds eleven net definitions on PR #901. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the whole suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+Merged #915 adds three account-access definitions; both branches' reviews are retained.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -34,6 +35,20 @@ Individual review records (all Backlog; owner unassigned):
 | `test_monthly_frequency` | Monthly recurrence dates. | Fixed January start; asserts count 12 and next month. | Verify month-end/leap-year policy and missing date arithmetic import. | Pending; not run. Record reviewer, revision, node/invocation and any fix PR. |
 | `test_yearly_frequency` | Yearly recurrence dates. | Fixed start; asserts count two and next year. | Verify inclusive end/horizon policy and leap-day behavior. | Pending; not run. Record reviewer, revision, node/invocation and any fix PR. |
 | `test_custom_interval` | Two-day interval recurrence. | Fixed start/schedule; asserts count 183 and first increment. | Verify interval validation, horizon boundary and date arithmetic imports. | Pending; not run. Record reviewer, revision, node/invocation and any fix PR. |
+
+## tests/test_account_access.py
+
+- [x] `test_password_and_mfa_login_reject_disabled_account`
+- [x] `test_existing_session_loses_access_after_account_disabled`
+- [x] `test_legacy_account_without_active_field_remains_enabled`
+
+SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable MongoDB; real password hashing/TOTP, no mocked authorization. External mail/network side effects use the existing fixture isolation. Evidence: focused suite on this branch and final PR commit/run record.
+
+| Definition | Requirement / assertions | Variants, reliability and limitations | Disposition |
+|---|---|---|---|
+| `test_password_and_mfa_login_reject_disabled_account` | Correct first/second factors cannot establish session for disabled user; preflight returns invalid. | Four status × MFA combinations; real DB update, exact redirect and absent user ID. TOTP time is real; no expiry boundary claim. | Keep. |
+| `test_existing_session_loses_access_after_account_disabled` | Protected access succeeds before status update and fails afterward. | Inactive and banned independently; same client retains existing cookie; verifies loader enforcement, not permanent revocation after future reactivation or WebSocket events. | Keep. |
+| `test_legacy_account_without_active_field_remains_enabled` | Missing legacy active flag defaults enabled. | Real model and successful password session; ensures no forced migration requirement. | Keep. |
 
 ## tests/test_admin_audit_indexes.py
 
@@ -830,17 +845,37 @@ Validation: focused MFA, username, passkey and fresh-deletion test files run for
 
 ## tests/test_passkeys_webauthn.py
 
-- [ ] `test_passkey_register_and_login_end_to_end`
-- [ ] `test_passkey_login_verifies_the_assertion_bound_challenge`
-- [ ] `test_passkey_registration_requires_step_up`
-- [ ] `test_passkey_register_verify_without_pending_challenge_rejected`
-- [ ] `test_passkey_rejects_unknown_credential_at_login`
-- [ ] `test_passkey_login_requires_confirmed_account`
-- [ ] `test_login_options_respect_username_scope`
-- [ ] `test_passkey_duplicate_registration_rejected`
-- [ ] `test_passkey_list_rename_delete`
-- [ ] `test_passkeys_are_isolated_between_users`
-- [ ] `test_banned_and_inactive_users_can_log_in_with_passkey_bodies`
+- [x] `test_passkey_register_and_login_end_to_end`
+- [x] `test_passkey_login_verifies_the_assertion_bound_challenge`
+- [x] `test_passkey_registration_requires_step_up`
+- [x] `test_passkey_register_verify_without_pending_challenge_rejected`
+- [x] `test_passkey_rejects_unknown_credential_at_login`
+- [x] `test_passkey_login_requires_confirmed_account`
+- [x] `test_login_options_respect_username_scope`
+- [x] `test_passkey_duplicate_registration_rejected`
+- [x] `test_passkey_list_rename_delete`
+- [x] `test_passkeys_are_isolated_between_users`
+- [x] `test_passkey_rejects_disabled_accounts`
+
+SEC-02 / QA-01 review, 2026-10-12, Codex, P1. The old `test_banned_and_inactive_users_can_log_in_with_passkey_bodies` accepted either 200 or 403 and never proved denial. Replaced with two exact-denial parameter cases and absent-session assertions.
+
+Shared setup: simulated hardware authenticator signs real registration/assertion bodies; actual WebAuthn crypto verifier, localhost RP/origin, disposable MongoDB, real password step-up. Browser/physical hardware compatibility is not proven. Shared database identity uniqueness matters: disabled-account parameter cases now use unique usernames/emails after an initial duplicate-key failure. Each test has a fresh Flask client and stored challenge; fixtures stop app resources.
+
+| Definition | Requirement / assertions | Cases and remaining coverage limitations | Disposition |
+|---|---|---|---|
+| `test_passkey_register_and_login_end_to_end` | Registration persists credential/name, excludes duplicate, anonymous valid assertion authenticates and increments counter. | Exact API/storage checks; a browser device chooser is outside scope. | Keep. |
+| `test_passkey_login_verifies_the_assertion_bound_challenge` | Earlier signed challenge remains usable after second options request. | Distinct challenges; selected one consumed, other untouched. Same client sequential requests, not threaded HTTP. | Keep. |
+| `test_passkey_registration_requires_step_up` | Registration options forbidden without elevation. | Exact 403/error; verify endpoint's elevation covered elsewhere. | Keep. |
+| `test_passkey_register_verify_without_pending_challenge_rejected` | Used challenge cannot register credentials. | Actual signed body after used-state mutation; explicitly checks rejection. Expiry is separate coverage. | Keep. |
+| `test_passkey_rejects_unknown_credential_at_login` | Unknown credential rejected. | Signed assertion with nonexistent ID, 403 and absent user ID. | Keep; strengthened session assertion. |
+| `test_passkey_login_requires_confirmed_account` | Unconfirmed account denied despite valid key. | Real registration fixture; 403/reason and absent user ID; active remains true to isolate confirmation. | Keep; strengthened session assertion. |
+| `test_login_options_respect_username_scope` | Known username options contain corresponding credential; unknown has no explicit list. | Preserves discoverable-key fallback, not username enumeration resistance. | Keep. |
+| `test_passkey_duplicate_registration_rejected` | Reused credential ID rejected. | Fresh challenge and valid crypto; exact 400/localized reason. | Keep. |
+| `test_passkey_list_rename_delete` | List reflects own key, rename requires sudo, normalization persists, unknown deletion fails and real deletion removes row. | Real DB; valid-sudo delete covered, non-sudo delete belongs to step-up tests. | Keep. |
+| `test_passkeys_are_isolated_between_users` | Another user's list is empty; anonymous step-up leads to login. | Does not prove forged cross-user rename/delete denial; record as remaining QA-01 ownership gap. | Keep; schedule scoped mutation tests. |
+| `test_passkey_rejects_disabled_accounts` | Valid assertion denied after account disabled, no user session created. | Active=false and banned=true separately; registers while enabled, then DB status update; unique identities prevent fixture collisions. | Keep; strengthened old weak test. |
+
+Focused run evidence is linked in the delivery PR; checked entries mean assessed definitions, not closure of all WebAuthn security requirements. Crypto-origin/RP tampering, consumed assertion replay and cross-user mutations need coverage verification in the remaining QA-01 inventory.
 
 ## tests/test_privacy_policy.py
 

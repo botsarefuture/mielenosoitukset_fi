@@ -824,6 +824,9 @@ def mfa_check():
         if not user.check_password(request.form.get("password")):
             return jsonify({"enabled": False, "valid": False})
 
+        if not user.is_active:
+            return jsonify({"enabled": False, "valid": False})
+
         if not user.confirmed:
             try:
                 verify_emailer(user.email, user.username)
@@ -949,6 +952,14 @@ def login():
             if not user.check_password(password):
                 flash_message("Käyttäjänimi tai salasana on väärin.", "error")
                 log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Invalid password", user_id=user.id)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+
+            if not user.is_active:
+                flash_message("Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon.", "error")
+                log_login_attempt(
+                    username, False, user_ip, user_agent=user_agent,
+                    reason="Account disabled", user_id=user.id,
+                )
                 return redirect(url_for("users.auth.login", next=safe_next_page))
 
             if not user.confirmed:

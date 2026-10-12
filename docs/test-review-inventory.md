@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-141 Python test files; 1,011 test definitions (1,006 in 140 files under `tests/`, plus five standalone recurrence tests in one file). Twenty-nine MFA/account/passkey definitions have review records below; remaining entries are pending review. The initial inventory came from the baseline revision above; SEC-01 adds eleven net definitions on PR #901. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the whole suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+141 Python test files; 1,013 test definitions (1,008 in 140 files under `tests/`, plus five standalone recurrence tests in one file). Thirty-one MFA/account/passkey definitions have review records below; remaining entries are pending review. The initial inventory came from the baseline revision above; SEC-01 adds thirteen net definitions on PR #901. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the whole suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 Merged #915 adds three account-access definitions; both branches' reviews are retained.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
@@ -797,6 +797,8 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 - [x] `test_reset_after_consumption_before_session_creation_is_rejected`
 - [x] `test_reset_at_session_creation_revokes_the_response_cookie`
 - [x] `test_parallel_pending_challenge_consumption_has_one_winner`
+- [x] `test_combined_mfa_login_binds_credentials_and_rejects_password_change`
+- [x] `test_reset_during_combined_mfa_verification_prevents_login`
 - [x] `test_pending_mfa_attempt_limit_cannot_be_reset_by_cookie_replay`
 - [x] `test_verify_mfa_route_does_not_500`
 - [x] `test_password_login_without_javascript_renders_mfa_step`
@@ -819,6 +821,8 @@ Shared setup: disposable MongoDB and real Flask test clients/session cookies, ac
 | `test_reset_after_consumption_before_session_creation_is_rejected` | Reset before final credential read prevents login_user. | Real mutation during proof cleanup; exact empty login-call assertion. | Keep. |
 | `test_reset_at_session_creation_revokes_the_response_cookie` | Reset at session creation invalidates protected access; current-password login recovers. | Real cookie/loader; controlled reset after login_user, no cryptographic bypass. | Keep. |
 | `test_parallel_pending_challenge_consumption_has_one_winner` | Two simultaneous database consume attempts yield exactly one success. | Separate request contexts, two worker threads and barrier; tests atomic storage invariant, not parallel browser HTTP dispatch. | Keep. |
+| `test_combined_mfa_login_binds_credentials_and_rejects_password_change` | Combined password/TOTP login sets the exact credential binding; a later reset blocks protected access. | Real factors, DB password mutation and session loader; exact cookie binding and redirect assertions. | Keep. |
+| `test_reset_during_combined_mfa_verification_prevents_login` | Reset after password validation during TOTP verification prevents login_user. | Real TOTP verifier followed by deterministic reset; login_user spy confirms no session creation. | Keep. |
 | `test_pending_mfa_attempt_limit_cannot_be_reset_by_cookie_replay` | Saved cookie cannot reset server attempt count; later valid code fails after exhaustion. | Only TOTP rejection mocked during failure phase; real verifier restored before final valid-code assertion. Fresh password verification can intentionally issue new proof. | Keep. |
 | `test_verify_mfa_route_does_not_500` | Legacy POST forwards with 307 and preserves existing authenticated identity. | Was a loose non-500 assertion; now checks destination, status and user ID. Anonymous legacy proof is covered separately. | Keep; strengthened. |
 | `test_password_login_without_javascript_renders_mfa_step` | Ordinary form POST renders visible MFA step with no password field copy; code then establishes correct session. | Server-rendered requests without browser JavaScript; client rendering/focus remains browser coverage work. | Keep. |

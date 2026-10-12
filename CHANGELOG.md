@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Combined password-and-TOTP sign-in now binds the MFA session to the verified credentials, so concurrent and later password changes reject stale authentication just like the two-step flow.
+
 - MFA proof authorization now uses an atomic comparison against persisted credentials, and MFA sessions are invalidated by password changes, closing concurrent password-reset login races.
 
 - Disabled and banned accounts can no longer sign in with a password, MFA or passkey; protected requests also reject their existing sessions after the account status changes.

@@ -981,6 +981,8 @@ def login():
             if user.mfa_enabled and not meow(user):
                 log_login_attempt(username, success=False, ip=user_ip, user_agent=user_agent, reason="MFA failed", user_id=user._id)
                 return redirect(url_for("users.auth.login", next=safe_next_page))
+            if user.mfa_enabled:
+                mfa_credential_version = _pending_mfa_digest(user.password_hash)
 
         _clear_pending_mfa_login()
 

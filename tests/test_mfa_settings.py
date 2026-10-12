@@ -369,6 +369,48 @@ def test_parallel_pending_challenge_consumption_has_one_winner(app, db):
     assert sorted(outcomes) == [False, True]
 
 
+def test_combined_mfa_login_binds_credentials_and_rejects_password_change(app, db):
+    client, user, secret = _pending_login(app, db)
+    response = client.post("/users/auth/login", data={
+        "username": user.username, "password": TEST_PASSWORD,
+        "2fa_code": _totp_code(secret),
+    })
+    assert response.status_code == 302
+    with client.session_transaction() as login_session:
+        assert login_session["_user_id"] == user.id
+        assert login_session["mfa_credential_version"] == hashlib.sha256(
+            user.password_hash.encode(),
+        ).hexdigest()
+    assert client.get("/users/auth/api/v2/passkeys").status_code == 200
+    user._change_password("ReplacementPassword1!")
+    protected = client.get("/users/auth/api/v2/passkeys")
+    assert protected.status_code == 302
+    assert "/users/auth/login" in protected.headers["Location"]
+
+
+def test_reset_during_combined_mfa_verification_prevents_login(app, db, monkeypatch):
+    client, user, secret = _pending_login(app, db)
+    auth = importlib.import_module("mielenosoitukset_fi.users.BPs.auth")
+    verify = UserMFA.verify_token
+    login_calls = []
+
+    def verify_then_reset(self, code):
+        result = verify(self, code)
+        user._change_password("ReplacementPassword1!")
+        return result
+
+    monkeypatch.setattr(UserMFA, "verify_token", verify_then_reset)
+    monkeypatch.setattr(auth, "login_user", lambda user: login_calls.append(user.id))
+    response = client.post("/users/auth/login", data={
+        "username": user.username, "password": TEST_PASSWORD,
+        "2fa_code": _totp_code(secret),
+    })
+    assert response.status_code == 302
+    assert login_calls == []
+    with client.session_transaction() as login_session:
+        assert "_user_id" not in login_session
+
+
 def test_pending_mfa_attempt_limit_cannot_be_reset_by_cookie_replay(app, db, monkeypatch):
     client, _user, secret = _pending_login(app, db)
     old_cookie = client.get_cookie(app.config["SESSION_COOKIE_NAME"]).value

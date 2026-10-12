@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-142 Python test files; 1,019 test definitions (1,014 in 141 files under `tests/`, plus five standalone recurrence tests in one file). Thirty-seven MFA/account/passkey/organization-action definitions have review records below; remaining entries are pending review. Counts reconcile the MFA branch with current main's account-access and organization-action changes. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+142 Python test files; 1,022 test definitions (1,017 in 141 files under `tests/`, plus five standalone recurrence tests in one file). Forty-one definitions have review records below; remaining entries are pending review. This API pagination slice adds three definitions to main's reconciled 1,019-definition inventory; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -975,7 +975,21 @@ Focused run evidence is linked in the delivery PR; checked entries mean assessed
 
 ## tests/test_public_demonstrations_api.py
 
-- [ ] `test_public_demonstrations_list_uses_summary_payload`
+- [x] `test_public_demonstrations_list_uses_summary_payload`
+- [x] `test_public_pages_have_chronological_tie_breaks_and_filtered_counts`
+- [x] `test_public_page_metadata_handles_empty_and_out_of_range`
+- [x] `test_public_pagination_normalizes_invalid_numeric_args`
+
+DATA-01 / QA-02, 2026-10-12, Codex, P1. Real Flask/public routes and MongoDB fixtures; no ordering/count/authorization mocks. Separate tag isolates fixture rows. Dates are relative to today; inserted order intentionally disagrees with time and ID. Both API shapes are parameterized; existing localization and recurring SEO regressions run alongside this slice. Final run/revision linked in PR.
+
+| Definition | Purpose and assertion review | Setup, variants and reliability | Disposition |
+|---|---|---|---|
+| `test_public_demonstrations_list_uses_summary_payload` | Summary fields retained; internal payload/history/notes excluded. | Existing future-dated seeded record with exact public values and excluded keys. Does not prove every sensitive field is excluded; projection audit remains separate. | Keep. |
+| `test_public_pages_have_chronological_tie_breaks_and_filtered_counts` | Exact date/time/ID sequence across three pages, no duplicate/gap, same filtered total/ranges; modern next links preserve filters and page size. | Six reverse-inserted records plus hidden matching record; both endpoints, tied time/IDs and different days. Stable-dataset contract only; concurrent inserts need separate snapshot/cursor policy. | Keep. |
+| `test_public_page_metadata_handles_empty_and_out_of_range` | Empty pages have 0–0 range and correct filtered total/page count. | Both endpoints, no matches versus beyond-last page; exact empty arrays. UI handling remains next slice. | Keep. |
+| `test_public_pagination_normalizes_invalid_numeric_args` | Malformed/negative args do not crash and independent valid arg survives. | Six parameter cases: two endpoints × three input variants. Huge page-size/offset bounds and legacy time normalization remain follow-up evidence. | Keep. |
+
+Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-request protection across list/city/tag; representative light/dark/mobile checks. API pagination does not claim snapshot stability during concurrent insert/delete, nor canonicalization of non-normalized historical times.
 
 ## tests/test_public_detail_invite_contract.py
 

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Both public demonstration list APIs now order by date, start time and ID before pagination, report matching totals and exact page ranges, and safely normalize invalid numeric page arguments. Existing filters and response fields are preserved.
+
 - Combined password-and-TOTP sign-in now binds the MFA session to the verified credentials, so concurrent and later password changes reject stale authentication just like the two-step flow.
 
 - MFA proof authorization now uses an atomic comparison against persisted credentials, and MFA sessions are invalidated by password changes, closing concurrent password-reset login races.

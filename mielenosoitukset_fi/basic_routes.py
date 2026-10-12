@@ -46,6 +46,9 @@ from mielenosoitukset_fi.utils.city_assignment import (
 from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
+from mielenosoitukset_fi.utils.public_pagination import (
+    PUBLIC_DEMONSTRATION_ORDER, public_page_args, public_page_metadata,
+)
 from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.site_analytics import (
     record_beacon_event,
@@ -1000,8 +1003,7 @@ def get_api_pagination_args():
     dict
         Contains page, per_page, search, city, location, date_start, date_end, tag.
     """
-    page = int(request.args.get("page", 1))
-    per_page = int(request.args.get("per_page", 20) or 20)
+    page, per_page = public_page_args(request.args)
     search_query = request.args.get("search", "").lower()
     city_query = parse_city_query(request.args.get("city", ""))
     location_query = request.args.get("location", "").lower()
@@ -1089,15 +1091,17 @@ def add_api_routes(app):
                 )
 
         total = demonstrations_collection.count_documents(query)
-        total_pages = max((total + per_page - 1) // per_page, 1)
         demos_cursor = (
             demonstrations_collection.find(query)
-            .sort("date", ASCENDING)
+            .sort(PUBLIC_DEMONSTRATION_ORDER)
             .skip((page - 1) * per_page)
             .limit(per_page)
         )
         result = [format_demo_for_api(demo, requested_language) for demo in demos_cursor]
-        return jsonify(demonstrations=result, total_pages=total_pages)
+        return jsonify(
+            demonstrations=result,
+            **public_page_metadata(page, per_page, total, len(result)),
+        )
 
     @app.route("/api/v1/check_demo_conflict", methods=["GET"])
     def api_check_demo_conflict():

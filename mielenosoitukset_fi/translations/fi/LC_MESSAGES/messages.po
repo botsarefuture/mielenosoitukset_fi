@@ -302,7 +302,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/tag_list.html:753
 #: mielenosoitukset_fi/templates/users/auth/settings.html:99
 msgid "Kaupunki"
-msgstr ""
+msgstr "Kaupunki"
 
 #: mielenosoitukset_fi/templates/city.html:41
 #: mielenosoitukset_fi/templates/city.html:723
@@ -373,7 +373,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/list.html:416
 #: mielenosoitukset_fi/templates/tag_list.html:467
 msgid "Hae mielenosoituksia"
-msgstr ""
+msgstr "Hae mielenosoituksia"
 
 #: mielenosoitukset_fi/templates/city.html:728
 #: mielenosoitukset_fi/templates/city.html:729
@@ -382,7 +382,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/tag_list.html:473
 #: mielenosoitukset_fi/templates/tag_list.html:474
 msgid "Alkupäivä (pp.mm.vvvv)"
-msgstr ""
+msgstr "Alkupäivä (pp.kk.vvvv)"
 
 #: mielenosoitukset_fi/templates/city.html:731
 #: mielenosoitukset_fi/templates/city.html:732
@@ -391,13 +391,13 @@ msgstr ""
 #: mielenosoitukset_fi/templates/tag_list.html:476
 #: mielenosoitukset_fi/templates/tag_list.html:477
 msgid "Loppupäivä (pp.mm.vvvv)"
-msgstr ""
+msgstr "Loppupäivä (pp.kk.vvvv)"
 
 #: mielenosoitukset_fi/templates/city.html:734
 #: mielenosoitukset_fi/templates/list.html:428
 #: mielenosoitukset_fi/templates/tag_list.html:479
 msgid "Valitse kelvollinen päivämääräväli tulevaisuudesta"
-msgstr ""
+msgstr "Valitse kelvollinen päivämääräväli tulevaisuudesta"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:165
 #: mielenosoitukset_fi/templates/admin_V2/organizations/dashboard.html:36

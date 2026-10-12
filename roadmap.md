@@ -8,7 +8,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** UI-01 — public search labels and cropper accessibility, while DATA-01 integration/acceptance remains pending. Public API/request-state/URL-history slices are in review; independent security slices remain in review.
+- **Next:** UI-01 — real date-picker lifecycle/locale and cropper accessibility; shared search-field labels/layout are in review. DATA-01 integration/acceptance and independent security slices remain pending.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
@@ -131,7 +131,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Inspected main has 1,019 definitions; the public API + request-state + URL/history stack brings its branch to **1,030 definitions across 144 files**, with fifty-four reviewed records. Separate open #916/#917/#919 additions are excluded until integration reconciliation. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Inspected main has 1,019 definitions; the public collection/search stack brings its branch to **1,032 definitions across 145 files**, with sixty reviewed records. Separate open #916/#917/#919 additions are excluded until integration reconciliation. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 
@@ -176,9 +176,10 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | SEC-02 | P1 | In review | Codex | M1 | #915 merged; #916 admin status open; #763 integration/release evidence pending. |
 | SEC-03 | P0/P1 | In review | Codex | M1 | #918 merged; #917 case scope and #919 user hierarchy/delegation open. Remaining role/audit requirements pending. |
 | QA-02 | P1 | In progress | Codex | M2–M3 | Five API, four request-state, five listing-contract and three URL/history definitions reviewed on this stack. Remaining data/workflow tests pending. |
-| QA-03–QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI, browser/locale and operations/remaining tests. |
+| QA-03, QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI and operations/remaining tests. |
+| QA-04 | P2 | In progress | Codex | M2, then M4–M6 | Two new field and four existing accessibility definitions assessed; wider browser/locale evidence remains pending. |
 | DATA-01 | P1 | In progress | Codex | M2 | #920 indexed API foundation and #921 request-state slices open; URL/history slice implements shared restoration/reset, fixed context, page ranges and safe chips. Bounds/legacy times, integration and release acceptance remain pending. |
-| UI-01 | P1 | Backlog | Unassigned | M2 | Verify labels/cropper and define focused browser acceptance. |
+| UI-01 | P1 | In progress | Codex | M2 | Shared search-field labels/layout implemented with FI/EN/SV and theme/mobile/focus checks. Real date-picker reset/localization, autocomplete keyboard and cropper remain pending. |
 | DATA-02 / OPS-01 | P1 | Backlog | Unassigned | M3 | Verify #908 and load the existing continuity plan. |
 | ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |
 | All other IDs | As assigned above | Backlog | Unassigned | Assign before starting | Verify requirement, dependencies and acceptance before promoting to Ready. |

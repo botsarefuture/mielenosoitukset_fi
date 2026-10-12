@@ -102,6 +102,7 @@ def test_restored_city_chip_is_text_safe_and_removal_resets_url(live_server, bro
     browser_page.locator('#search-form button[type=submit]').click()
     assert browser_page.url == previous_url
     assert browser_page.locator('#date-error').is_visible()
+    assert browser_page.locator('#date_start').get_attribute('aria-invalid') == 'true'
 
 
 @pytest.mark.parametrize('query', ['page=bad', 'per_page=bad', 'per_page=0&page=-1'])

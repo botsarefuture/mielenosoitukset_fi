@@ -29,6 +29,22 @@ html.light {
 }
 
 .search-form #filters { display: flex; flex-wrap: wrap; gap: .5rem; }
+.search-form.public-search-form {
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: end; gap: 1rem;
+}
+.public-search-field { flex: 1 1 12rem; min-width: 0; }
+.public-search-field label {
+  display: block; margin-bottom: .5rem; font-weight: 600; color: var(--product-text);
+}
+.public-search-form .public-search-field input[type="text"] {
+  box-sizing: border-box; width: 100%; min-height: 44px; margin: 0;
+}
+.public-search-form .public-search-dates { display: flex; flex: 2 1 25rem; flex-wrap: wrap; gap: 1rem; min-width: 0; align-items: end; }
+.public-search-form #date-error, .public-search-form #filters { flex-basis: 100%; }
+.public-search-submit { min-height: 44px; }
+@media (max-width: 600px) {
+  .public-search-form .public-search-field, .public-search-dates, .public-search-submit { flex-basis: 100%; }
+}
 .public-filter-chip {
   display: inline-flex; align-items: center; gap: .5rem; max-width: 100%;
   padding-inline: .75rem 0; border: 1px solid var(--product-border);

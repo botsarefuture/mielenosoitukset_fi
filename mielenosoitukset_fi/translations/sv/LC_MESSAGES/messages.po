@@ -373,7 +373,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/list.html:416
 #: mielenosoitukset_fi/templates/tag_list.html:467
 msgid "Hae mielenosoituksia"
-msgstr ""
+msgstr "Sök demonstrationer"
 
 #: mielenosoitukset_fi/templates/city.html:728
 #: mielenosoitukset_fi/templates/city.html:729
@@ -382,7 +382,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/tag_list.html:473
 #: mielenosoitukset_fi/templates/tag_list.html:474
 msgid "Alkupäivä (pp.mm.vvvv)"
-msgstr ""
+msgstr "Startdatum (dd.mm.åååå)"
 
 #: mielenosoitukset_fi/templates/city.html:731
 #: mielenosoitukset_fi/templates/city.html:732
@@ -391,13 +391,13 @@ msgstr ""
 #: mielenosoitukset_fi/templates/tag_list.html:476
 #: mielenosoitukset_fi/templates/tag_list.html:477
 msgid "Loppupäivä (pp.mm.vvvv)"
-msgstr ""
+msgstr "Slutdatum (dd.mm.åååå)"
 
 #: mielenosoitukset_fi/templates/city.html:734
 #: mielenosoitukset_fi/templates/list.html:428
 #: mielenosoitukset_fi/templates/tag_list.html:479
 msgid "Valitse kelvollinen päivämääräväli tulevaisuudesta"
-msgstr ""
+msgstr "Välj ett giltigt framtida datumintervall"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:165
 #: mielenosoitukset_fi/templates/admin_V2/organizations/dashboard.html:36

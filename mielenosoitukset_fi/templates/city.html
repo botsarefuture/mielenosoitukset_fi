@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% from '_macros/_hero.html' import hero_section %}
 {% from '_macros/_pagination.html' import load_more_button %}
+{% from '_macros/_public_search.html' import public_demo_search with context %}
 
 {% block title %} {{ city_name }} {{ _('Mielenosoitukset') }} {% endblock %}
 
@@ -36,33 +37,7 @@
     icon='fa-solid fa-city'
   ) }}
 
-  <form method="GET" action="#" class="search-form" id="search-form">
-    <input
-      type="text"
-      name="search"
-      placeholder="{{ _('Hae mielenosoituksia...') }}"
-      aria-label="{{ _('Hae mielenosoituksia') }}"
-      value="{{ request.args.get('search', '') }}"
-    />
-    <input type="hidden" name="city" value="{{ city_name }}" />
-    <input
-      type="text"
-      name="location"
-      placeholder="{{ _('Sijainti') }}"
-      aria-label="{{ _('Sijainti') }}"
-      value="{{ request.args.get('location', '') }}"
-    />
-    <div class="date-range">
-      <input type="text" name="display_date_start" id="date_start" placeholder="{{ _('Alkupäivä (pp.mm.vvvv)') }}" aria-label="{{ _('Alkupäivä (pp.mm.vvvv)') }}" />
-      <span>-</span>
-      <input type="text" name="display_date_end" id="date_end" placeholder="{{ _('Loppupäivä (pp.mm.vvvv)') }}" aria-label="{{ _('Loppupäivä (pp.mm.vvvv)') }}" />
-    </div>
-    <div class="date-error" id="date-error">{{ _('Valitse kelvollinen päivämääräväli tulevaisuudesta') }}</div>
-    <input type="hidden" name="date_start" id="iso_date_start">
-    <input type="hidden" name="date_end" id="iso_date_end">
-    <div class="filters" id="filters"></div>
-    <button type="submit" class="button">{{ _('Hae') }}</button>
-  </form>
+  {{ public_demo_search(fixed_city=city_name) }}
 
   <section class="section-card">
     <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>{{ _('Tulevat mielenosoitukset kaupungissa: ') }}{{ city_name }}</h2>
@@ -90,12 +65,12 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261012-filter-history-1') }}"></script>
+<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261012-search-fields-1') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261012-filter-history-1') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261012-search-fields-1') }}" defer></script>
 <script>
 const cityList = {{ city_list | tojson }};
 </script>

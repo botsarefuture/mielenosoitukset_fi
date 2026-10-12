@@ -1,0 +1,42 @@
+{# Shared public collection fields. Keep backend names and JS hooks stable. #}
+{% macro public_demo_search(fixed_city=none) %}
+<form method="GET" action="#" class="search-form public-search-form" id="search-form">
+  <div class="public-search-field">
+    <label for="demo-search">{{ _('Hae mielenosoituksia') }}</label>
+    <input type="text" id="demo-search" name="search" value="{{ request.args.get('search', '') }}"
+           placeholder="{{ _('Hae mielenosoituksia...') }}">
+  </div>
+  {% if fixed_city is none %}
+  <div class="public-search-field">
+    <label for="city_input">{{ _('Kaupunki') }}</label>
+    <input type="text" id="city_input" placeholder="{{ _('Kaupunki') }}" autocomplete="off">
+    <input type="hidden" name="city" id="city" value="{{ request.args.get('city', '') }}">
+    <div class="suggestions" id="city_suggestions"></div>
+  </div>
+  {% else %}
+  <input type="hidden" name="city" value="{{ fixed_city }}">
+  {% endif %}
+  <div class="public-search-field">
+    <label for="demo-location">{{ _('Sijainti') }}</label>
+    <input type="text" id="demo-location" name="location" value="{{ request.args.get('location', '') }}"
+           placeholder="{{ _('Sijainti') }}">
+  </div>
+  <div class="date-range public-search-dates">
+    <div class="public-search-field">
+      <label for="date_start">{{ _('Alkupäivä (pp.mm.vvvv)') }}</label>
+      <input type="text" name="display_date_start" id="date_start" aria-describedby="date-error"
+             placeholder="{{ _('Alkupäivä (pp.mm.vvvv)') }}">
+    </div>
+    <div class="public-search-field">
+      <label for="date_end">{{ _('Loppupäivä (pp.mm.vvvv)') }}</label>
+      <input type="text" name="display_date_end" id="date_end" aria-describedby="date-error"
+             placeholder="{{ _('Loppupäivä (pp.mm.vvvv)') }}">
+    </div>
+  </div>
+  <div class="date-error" id="date-error" role="alert">{{ _('Valitse kelvollinen päivämääräväli tulevaisuudesta') }}</div>
+  <input type="hidden" name="date_start" id="iso_date_start">
+  <input type="hidden" name="date_end" id="iso_date_end">
+  <div class="filters" id="filters" aria-live="polite"></div>
+  <button type="submit" class="button button-primary public-search-submit">{{ _('Hae') }}</button>
+</form>
+{% endmacro %}

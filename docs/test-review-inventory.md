@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-144 Python test files; 1,030 test definitions (1,025 in 143 files under `tests/`, plus five standalone recurrence tests in one file). Fifty-four definitions have review records below; remaining entries are pending review. This URL/history slice stacks on #920/#921; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+145 Python test files; 1,032 test definitions (1,027 in 144 files under `tests/`, plus five standalone recurrence tests in one file). Sixty definitions have review records below; remaining entries are pending review. This shared-search-label slice stacks on #922; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -932,10 +932,19 @@ Focused run evidence is linked in the delivery PR; checked entries mean assessed
 
 ## tests/test_public_accessibility_contracts.py
 
-- [ ] `test_public_shell_has_language_and_semantic_footer_lists`
-- [ ] `test_city_today_page_has_a_document_language`
-- [ ] `test_public_chat_feedback_uses_safe_shared_toast`
-- [ ] `test_api_documentation_code_blocks_are_focusable_and_links_are_distinct`
+- [x] `test_public_shell_has_language_and_semantic_footer_lists`
+- [x] `test_city_today_page_has_a_document_language`
+- [x] `test_public_chat_feedback_uses_safe_shared_toast`
+- [x] `test_api_documentation_code_blocks_are_focusable_and_links_are_distinct`
+
+UI-01 / QA-04 supporting review, 2026-10-12, Codex, P1. Anonymous real Flask responses and source-string checks are wiring evidence, not complete accessibility/security acceptance. Existing external-service isolation remains in the common fixture; no mocked UI rendering or permission result.
+
+| Definition | Purpose / assertions | Fixtures / coverage / reliability | Disposition |
+|---|---|---|---|
+| `test_public_shell_has_language_and_semantic_footer_lists` | Nonempty HTML language and intended footer/nav/list wiring; obsolete separator/inline auth markup absent. | Real submit GET, exact strings/regex. Does not prove complete DOM validity or footer viewport fit. | Keep with narrow claim. |
+| `test_city_today_page_has_a_document_language` | Empty stored locale still renders Finnish document language. | Explicit test-session locale, real city/today response, exact lang attribute. Other locale fallback variants remain locale tests. | Keep. |
+| `test_public_chat_feedback_uses_safe_shared_toast` | Chat uses shared toast; text assignment, no innerHTML/native alert, status/live hooks remain. | Static JS/template reads only, not execution of stored chat data or actual screen-reader behavior. | Keep as guard; runtime sink coverage separate. |
+| `test_api_documentation_code_blocks_are_focusable_and_links_are_distinct` | Code pre blocks are tabbable; scoped focus/link tokens remain. | Real docs GET plus CSS strings. Does not prove computed contrast, keyboard behavior or every link. | Keep; broaden behavior in later QA-04. |
 
 ## tests/test_public_calendar_theme_contract.py
 
@@ -1119,6 +1128,18 @@ DATA-01 / QA-02 supporting review, 2026-10-12, Codex, P1. Source-only assertions
 - [ ] `test_saved_bio_is_safely_rendered_on_public_profile`
 - [ ] `test_profile_api_returns_safe_localized_validation_errors`
 - [ ] `test_profile_editor_uses_safe_dom_and_shared_css`
+
+## tests/test_public_search_fields.py
+
+- [x] `test_public_search_labels_are_explicit_and_unique`
+- [x] `test_public_search_fields_are_visible_aligned_and_focusable`
+
+UI-01 / QA-04, 2026-10-12, Codex, P1, stacked on #922. Actual shared macro and compiled catalogs; browser uses actual product styles, with synthetic API and isolated external date picker. Final run/revision/PR evidence linked at delivery.
+
+| Definition | Purpose / assertions | Fixtures / coverage / reliability | Disposition |
+|---|---|---|---|
+| `test_public_search_labels_are_explicit_and_unique` | Every text field has a unique explicit label/target; exact FI/EN/SV search/start/end copy; hidden backend names and fixed city preserved; error linkage present. | Three routes × three locales (nine cases), real Flask/Jinja/catalog rendering. Regex limited to controlled form structure; full DOM/accessibility audits remain separate. | Keep. |
+| `test_public_search_fields_are_visible_aligned_and_focusable` | Label click focuses correct input; label/input left edges align; 44px controls fit viewport; logical first Tab target. | Three routes × two themes × 1440/390px (twelve cases). Actual DOM/style/focus, mocked picker/API; representative form screenshots inspected. Does not verify actual picker popup, autocomplete keyboard behavior or whole-page overflow. | Keep; remaining UI-01/UI-02 items explicit. |
 
 ## tests/test_public_token_manager.py
 

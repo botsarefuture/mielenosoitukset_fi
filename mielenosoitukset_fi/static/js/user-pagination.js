@@ -193,6 +193,7 @@
       if (next.date_start && next.date_end && next.date_start > next.date_end) valid = false;
       const error = form.querySelector('#date-error');
       if (error) error.style.display = valid ? 'none' : 'block';
+      ['start', 'end'].forEach(edge => field(`display_date_${edge}`)?.setAttribute('aria-invalid', String(!valid)));
       if (!valid) return null;
       Object.assign(next, fixed);
       params = next; page = 1; renderCities(); write(true);

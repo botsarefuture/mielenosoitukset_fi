@@ -131,7 +131,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The initial [individual review inventory](docs/test-review-inventory.md) lists **997 test definitions across 140 Python test files** at the baseline revision: 992 under `tests/` and five in the standalone recurrence script. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. SEC-01 in PR #901 combined with current main brings the inventory to **1,019 definitions across 142 files**, with thirty-seven MFA/account/passkey/organization-action review records. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 
@@ -171,8 +171,8 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 
 | ID | Priority | Status | Owner | Milestone | Evidence / next action |
 |---|---|---|---|---|---|
-| SEC-01 | P1 | In review | Codex; human reviewer unassigned | M1 | [#901](https://github.com/botsarefuture/mielenosoitukset_fi/pull/901); repair lifecycle findings against current main before approval. |
-| QA-01 | P1 | In progress | Codex | M1, then ongoing | Fourteen account/passkey definitions reviewed on SEC-02 branch; remaining tests and noted ownership/tampering gaps pending. Reconcile #901's separate MFA reviews after merge. |
+| SEC-01 | P1 | In review | Codex; human reviewer unassigned | M1 | [#901](https://github.com/botsarefuture/mielenosoitukset_fi/pull/901); server-held atomic challenges, credential revocation, bounded retries and legacy/no-JS flow implemented on branch; focused regression evidence in PR. |
+| QA-01 | P1 | In progress | Codex | M1, then ongoing | Thirty-seven MFA/account/passkey/organization-action definitions reviewed in the combined inventory; remaining authentication/permission tests pending. |
 | SEC-02 | P1 | In progress | Codex | M1 | Backend access enforcement implemented; admin status/toggle workflow still pending in #763. |
 | SEC-03 | P0/P1 | In review | Codex | M1 | #917 handles case read/scope; organization validation/target-membership fix on this branch. Remaining role/audit/user-operation requirements pending. |
 | QA-02 | P1 | Backlog | Unassigned | M2–M3 | Review data/workflow assertions alongside delivery. |

@@ -2,8 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-141 Python test files; 1,013 test definitions (1,008 in 140 files under `tests/`, plus five standalone recurrence tests in one file). Thirty-one MFA/account/passkey definitions have review records below; remaining entries are pending review. The initial inventory came from the baseline revision above; SEC-01 adds thirteen net definitions on PR #901. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the whole suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
-Merged #915 adds three account-access definitions; both branches' reviews are retained.
+142 Python test files; 1,019 test definitions (1,014 in 141 files under `tests/`, plus five standalone recurrence tests in one file). Thirty-seven MFA/account/passkey/organization-action definitions have review records below; remaining entries are pending review. Counts reconcile the MFA branch with current main's account-access and organization-action changes. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -840,6 +839,28 @@ Validation: focused MFA, username, passkey and fresh-deletion test files run for
 ## tests/test_org_logo_referrer_policy.py
 
 - [ ] `test_organization_logo_images_do_not_send_preview_referrers`
+
+## tests/test_org_action_validation.py
+
+- [x] `test_org_action_rejects_malformed_json_or_identifiers`
+- [x] `test_invitation_actions_reject_invalid_addresses`
+- [x] `test_invite_role_normalizes_input_and_matches_legacy_address`
+- [x] `test_organization_editor_cannot_mutate_another_org_invite`
+- [x] `test_invite_form_rejects_invalid_object_identifier`
+- [x] `test_membership_delete_requires_resolved_target_organization`
+
+SEC-03 / QA-01 review, 2026-10-12, Codex, P1; actual Flask endpoints, roles, membership grants and disposable MongoDB. External delivery is isolated by existing fixtures; no permission/DB-write mock. Unique actor/target IDs prevent parametrized identity collisions. Error/audit assertions do not claim the full canonical audit/redaction programme is complete.
+
+| Definition | Requirement / assertions | Cases and limits | Disposition |
+|---|---|---|---|
+| `test_org_action_rejects_malformed_json_or_identifiers` | Invalid payloads return JSON 400 rather than reaching unsafe ObjectId conversion. | Five APIs × list/string/invalid-ID payloads, exact status and error envelope. Empty/malformed JSON syntax uses same validator but not separately parameterized. | Keep. |
+| `test_invitation_actions_reject_invalid_addresses` | Invalid or non-string email rejected before invite handling. | Three invite APIs × malformed/list/header-shaped address. Valid delivery integration not part of this test. | Keep. |
+| `test_invite_role_normalizes_input_and_matches_legacy_address` | Mixed-case legacy invite updated without duplication, then cancelled. | Actual legacy string → canonical dict and persisted empty list; valid role member used. Other role policies remain #550. | Keep. |
+| `test_organization_editor_cannot_mutate_another_org_invite` | Own-org rights do not authorize foreign owner invitation. | Real unrelated verified organization, exact 403 and unchanged invitations. | Keep. |
+| `test_invite_form_rejects_invalid_object_identifier` | Browser form identifier checked before BSON conversion. | Exact 400; HTTP redirect/success rendering unaffected. | Keep. |
+| `test_membership_delete_requires_resolved_target_organization` | Deletion only succeeds for authorized resolved organization. | Own, foreign, orphan and malformed stored ID; exact status and record existence. Revealed broad edit helper bypass, which was corrected. Owner-transfer/last-owner policy and concurrent permissions changes need separate acceptance. | Keep. |
+
+Final focused run/revision evidence is recorded in the delivery PR. Review completion marks these definitions assessed; organization role lifecycle, destructive confirmations and audit architecture remain open.
 
 ## tests/test_organization_fill_page.py
 

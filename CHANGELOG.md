@@ -8,6 +8,9 @@
 
 - MFA proof authorization now uses an atomic comparison against persisted credentials, and MFA sessions are invalidated by password changes, closing concurrent password-reset login races.
 
+- Organization membership and invitation APIs now reject malformed JSON, invalid object identifiers and invalid invite addresses with consistent localized 400 responses before database operations; invite addresses are normalized.
+- Organization editing now requires explicit rights to the target organization rather than merely an admin role. Membership deletion also requires a valid target organization; orphan records no longer fall through to unrelated organization permissions.
+
 - Disabled and banned accounts can no longer sign in with a password, MFA or passkey; protected requests also reject their existing sessions after the account status changes.
 
 - Added a repository-wide delivery roadmap with defined P0–P3 priorities, delivery milestones, ownership/status tracking, acceptance gates, and an individual test-review inventory across security, backend, UI, operations, privacy, and maintenance.

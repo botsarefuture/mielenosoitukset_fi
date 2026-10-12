@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-141 Python test files; 1,000 test definitions (995 in 140 files under `tests/`, plus five standalone recurrence tests in one file). SEC-02 adds three definitions to the original 997-test baseline. Fourteen account/passkey definitions have individual review records below; remaining entries are pending review. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities. Open #901's separate MFA additions/reviews must be reconciled after merge.
+142 Python test files; 1,009 test definitions (1,004 in 141 files under `tests/`, plus five standalone recurrence tests in one file). SEC-02 adds twelve definitions to the original 997-test baseline. Twenty-three account/passkey/admin-status definitions have individual review records below; remaining entries are pending review. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities. Open #901's separate MFA additions/reviews must be reconciled after merge.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -48,6 +48,36 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 | `test_password_and_mfa_login_reject_disabled_account` | Correct first/second factors cannot establish session for disabled user; preflight returns invalid. | Four status × MFA combinations; real DB update, exact redirect and absent user ID. TOTP time is real; no expiry boundary claim. | Keep. |
 | `test_existing_session_loses_access_after_account_disabled` | Protected access succeeds before status update and fails afterward. | Inactive and banned independently; same client retains existing cookie; verifies loader enforcement, not permanent revocation after future reactivation or WebSocket events. | Keep. |
 | `test_legacy_account_without_active_field_remains_enabled` | Missing legacy active flag defaults enabled. | Real model and successful password session; ensures no forced migration requirement. | Keep. |
+
+## tests/test_admin_account_status.py
+
+- [x] `test_admin_can_disable_and_reenable_with_audited_confirmation`
+- [x] `test_admin_cannot_change_self_or_peer_or_higher_status`
+- [x] `test_viewer_without_edit_permission_cannot_change_status`
+- [x] `test_status_confirmation_rejects_missing_tampered_or_wrong_target_proof`
+- [x] `test_saved_status_form_cannot_replay_after_disable_enable_cycle`
+- [x] `test_user_list_and_editor_show_account_status`
+- [x] `test_status_confirmation_expires`
+- [x] `test_confirmation_is_bound_to_the_authenticated_actor`
+- [x] `test_confirmation_layout_and_keyboard_actions_in_both_themes`
+
+Nine definitions; the hierarchy test expands into three cases.
+
+SEC-02 / QA-01 review, 2026-10-12, Codex, P1; real Flask sessions, signed forms and MongoDB. No mocked permission or write path. The shared seeded identities are isolated by the test fixtures. The expiry case uses a dedicated old-timestamp signer solely for its confirmation token; the session signer and application clock remain unchanged.
+
+| Definition | Requirement / assertion | Cases, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_admin_can_disable_and_reenable_with_audited_confirmation` | DB state changes, activation removes ban, audit records state and excludes proof. | Actual signed confirmation and audit writes; email notification not part of this action. | Keep. |
+| `test_admin_cannot_change_self_or_peer_or_higher_status` | GET and POST denied for unauthorized hierarchy. | Self, equal-level and higher-level parameter cases; preserves existing hierarchy policy. | Keep. |
+| `test_viewer_without_edit_permission_cannot_change_status` | A scoped admin lacking EDIT_USER cannot read confirmation or mutate. | Explicit lower-privilege fixture, exact 403; broader scope semantics remain SEC-03. | Keep. |
+| `test_status_confirmation_rejects_missing_tampered_or_wrong_target_proof` | Missing/modified proof or different target rejected. | Real signer; no cryptographic stub. | Keep. |
+| `test_saved_status_form_cannot_replay_after_disable_enable_cycle` | Original cookie/proof rejected despite matching active state later. | Real saved cookie, two accepted actions, exact conflict response verifies versioning. | Keep. |
+| `test_user_list_and_editor_show_account_status` | List and editor expose disabled state and status heading. | Actual rendered routes; semantic text checks, not pixel/theme validation. | Keep. |
+| `test_status_confirmation_expires` | Expired signed proof rejected. | Controlled signer timestamp; no sleep or altered application clock. | Keep. |
+| `test_confirmation_is_bound_to_the_authenticated_actor` | Another privileged actor cannot use leaked proof, even with copied nonce. | Distinct allowed admin, exact 400 and unchanged target state. | Keep. |
+| `test_confirmation_layout_and_keyboard_actions_in_both_themes` | Hero/action visible, no horizontal body overflow, keyboard reaches submit from cancel. | Real authenticated route at 390/1440px in light/dark with local resources; verifies geometry/focus, not a full contrast or pixel-quality audit. | Keep. |
+
+Evidence: 37 focused admin-status/user/fresh-deletion backend cases passed, followed by the focused Chromium layout/keyboard case across both widths/themes. Final commit is recorded in the delivery PR. New template uses the existing hero, form-section, buttons and sticky actions; broader contrast/visual acceptance remains QA-04.
 
 ## tests/test_admin_audit_indexes.py
 

@@ -57,6 +57,14 @@ document.addEventListener('DOMContentLoaded', () => {
         back_label=_('Käyttäjät')
     ) }}
 
+    <section class="admin-form-section">
+      <div class="admin-form-section__header"><h2>{{ _('Käyttötila') }}</h2></div>
+      <p>{{ _('Estetty') if user.banned else (_('Aktiivinen') if user.active else _('Suljettu')) }}</p>
+      {% if user._id != current_user._id %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('admin_user.account_status', user_id=user.id) }}">{{ _('Käyttäjän käyttötila') }}</a>
+      {% endif %}
+    </section>
+
     <form class="admin-form admin-user-form" method="POST" action="{{ url_for('admin_user.save_user', user_id=user.id) }}">
       <section class="admin-form-section">
         <div class="admin-form-section__header"><h2>{{ _('Perustiedot') }}</h2><p>{{ _('Tunnistetiedot ja tilin kirjautumiseen vaikuttavat asetukset.') }}</p></div>

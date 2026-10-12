@@ -1,6 +1,9 @@
 from bson.objectid import ObjectId, InvalidId
 from pymongo.errors import DuplicateKeyError
-from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify
+from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify, current_app, abort
+from itsdangerous import URLSafeTimedSerializer, BadSignature
+import secrets
+from types import SimpleNamespace
 from flask_login import current_user, login_required
 from markupsafe import Markup
 import math
@@ -44,6 +47,14 @@ from flask_login import current_user
 @admin_user_bp.before_request
 def log_request_info():
     """Log request information before handling it."""
+    if request.endpoint == "admin_user.account_status":
+        # The confirmation token and browser cookie are not audit content.
+        log_admin_action_V2({
+            "event": "user_account_status_request",
+            "actor_id": str(current_user.id) if current_user.is_authenticated else None,
+            "method": request.method,
+        })
+        return
     log_admin_action_V2(
         AdminActParser().log_request_info(request.__dict__, current_user)
     )
@@ -137,6 +148,13 @@ def user_control():
     for user in users:
         if user.get("role") in {None, "user"} and str(user["_id"]) in scoped_user_ids:
             user["role"] = "city_admin"
+        user["can_change_status"] = (
+            current_user.has_permission("EDIT_USER")
+            and user["_id"] != current_user._id
+            and compare_user_levels(
+                current_user, SimpleNamespace(_id=user["_id"], role=user.get("role") or "user")
+            )
+        )
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}user/list.html",
@@ -318,6 +336,76 @@ def safe_redirect(target):
         flash_message("Liian monta uudelleenohjausta, palaa käyttäjälistaukseen.", "error")
         return redirect(url_for("admin_user.user_control"))
     return redirect(target)
+
+
+@admin_user_bp.route("/account_status/<user_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_USER")
+def account_status(user_id):
+    """Confirm a permission-checked status change with scoped CSRF protection."""
+    try:
+        target_id = ObjectId(user_id)
+    except (InvalidId, TypeError):
+        abort(404)
+    doc = mongo.users.find_one({"_id": target_id})
+    if not doc:
+        abort(404)
+    target = User.from_db(doc)
+    if target_id == current_user._id or not compare_user_levels(current_user, target):
+        abort(403)
+
+    serializer = URLSafeTimedSerializer(current_app.secret_key, salt="admin-account-status")
+    snapshot = {
+        "active": bool(doc.get("active", True)), "banned": bool(doc.get("banned", False)),
+        "version": doc.get("account_status_version", 0),
+    }
+    if request.method == "POST":
+        try:
+            proof = serializer.loads(request.form.get("status_token", ""), max_age=900)
+        except BadSignature:
+            abort(400)
+        if (
+            proof.get("actor") != str(current_user._id)
+            or proof.get("target") != user_id
+            or proof.get("nonce") != session.get("account_status_nonce")
+        ):
+            abort(400)
+        if proof["snapshot"] != snapshot:
+            abort(409)
+        # Versioning stops saved-cookie/form replay after disable/enable cycles.
+        predicates = [
+            {field: doc[field]} if field in doc else {field: {"$exists": False}}
+            for field in ("active", "banned", "role", "account_status_version")
+        ]
+        enabled = proof["enable"]
+        result = mongo.users.update_one(
+            {"_id": target_id, "$and": predicates},
+            {"$set": {"active": enabled, "banned": False if enabled else snapshot["banned"]},
+             "$inc": {"account_status_version": 1}},
+        )
+        if result.modified_count != 1:
+            abort(409)
+        session.pop("account_status_nonce", None)
+        log_admin_action_V2({
+            "event": "user_account_status_changed",
+            "actor_id": str(current_user._id), "entity_type": "user", "entity_id": user_id,
+            "old_state": snapshot,
+            "new_state": {"active": enabled, "banned": False if enabled else snapshot["banned"]},
+        }, related_id=target_id)
+        flash_message("Käyttäjän käyttötila päivitetty.", "success")
+        return redirect(url_for("admin_user.user_control"))
+
+    nonce = secrets.token_urlsafe(32)
+    session["account_status_nonce"] = nonce
+    enable = not target.is_active
+    token = serializer.dumps({
+        "actor": str(current_user._id), "target": user_id, "nonce": nonce,
+        "snapshot": snapshot, "enable": enable,
+    })
+    return render_template(
+        "admin_V2/user/account_status.html", user=target, enable=enable, status_token=token,
+    )
 
 
 @admin_user_bp.route("/edit_user/<user_id>", methods=["GET", "POST"])

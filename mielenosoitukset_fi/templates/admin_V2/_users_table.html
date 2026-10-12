@@ -14,6 +14,7 @@
         <th class="sortable">{{ _('Käyttäjä') }}</th>
         <th class="sortable">{{ _('Sähköpostiosoite') }}</th>
         <th class="sortable">{{ _('Rooli') }}</th>
+        <th>{{ _('Käyttötila') }}</th>
         <th class="sortable">{{ _('Viimeksi kirjautunut') }}</th>
         <th>{{ _('Toiminnot') }}</th>
       </tr>
@@ -56,6 +57,15 @@
           {% endif %}
         </td>
         <td>
+          {% if user.banned %}
+            <span class="admin-status-badge admin-status-badge--danger">{{ _('Estetty') }}</span>
+          {% elif not user.get('active', true) %}
+            <span class="admin-status-badge admin-status-badge--warning">{{ _('Suljettu') }}</span>
+          {% else %}
+            <span class="admin-status-badge admin-status-badge--success">{{ _('Aktiivinen') }}</span>
+          {% endif %}
+        </td>
+        <td>
           {% if user.last_login %}
             <span class="user-login">{{ user.last_login.strftime('%d.%m.%Y %H:%M') }}</span>
           {% else %}
@@ -71,6 +81,9 @@
             <ul class="dropdown-menu" aria-labelledby="userActions-{{ user._id }}">
               {% if current_user.has_permission("EDIT_USER") %}
               <li><a class="dropdown-item" href="{{ url_for('admin_user.edit_user', user_id=user._id) }}"><i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}</a></li>
+              {% if user.can_change_status %}
+              <li><a class="dropdown-item" href="{{ url_for('admin_user.account_status', user_id=user._id) }}">{{ _('Käyttäjän käyttötila') }}</a></li>
+              {% endif %}
               {% endif %}
               {% if current_user.has_permission("FORCE_PASSWORD_CHANGE") %}
               <li><button class="dropdown-item text-warning" type="button" onclick="openForcePwdModal('{{ user.displayname or user.username }}', '{{ user._id }}')"><i class="fas fa-key me-2"></i>{{ _('Pakota salasananvaihto') }}</button></li>

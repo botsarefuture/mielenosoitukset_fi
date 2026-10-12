@@ -13618,3 +13618,36 @@ msgstr "Radera utkastet och börja om"
 #: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/users/BPs/passkeys.py
 msgid "Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon."
 msgstr "Det här kontot är inaktiverat. Kontakta webbplatsens administratörer."
+
+msgid "Käyttäjän käyttötila"
+msgstr "Användarkontots status"
+
+msgid "Käyttötila"
+msgstr "Kontostatus"
+
+msgid "Estetty"
+msgstr "Blockerad"
+
+msgid "Suljettu"
+msgstr "Inaktiverad"
+
+msgid "Aktiivinen"
+msgstr "Aktiv"
+
+msgid "Aktivoi käyttäjä"
+msgstr "Aktivera användare"
+
+msgid "Sulje käyttäjätili"
+msgstr "Inaktivera konto"
+
+msgid "Vahvista kirjautumisoikeuden muutos."
+msgstr "Bekräfta ändringen av inloggningsåtkomsten."
+
+msgid "Käyttäjän käyttötila päivitetty."
+msgstr "Användarkontots status har uppdaterats."
+
+msgid "Aktivointi sallii kirjautumisen ja poistaa mahdollisen käyttöeston. Rooli ja käyttöoikeudet säilyvät ennallaan."
+msgstr "Aktivering tillåter inloggning och tar bort eventuell kontoblockering. Rollen och behörigheterna ändras inte."
+
+msgid "Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta."
+msgstr "Inaktivering blockerar inloggning och åtkomst till skyddade sidor via befintliga sessioner. Användarens uppgifter raderas inte."

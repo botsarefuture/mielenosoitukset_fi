@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Admin user lists and editors now show enabled, disabled and banned status; authorized administrators can confirm activation or disabling with scoped expiring CSRF protection and stale-form/replay checks.
+
 - Disabled and banned accounts can no longer sign in with a password, MFA or passkey; protected requests also reject their existing sessions after the account status changes.
 
 - Added a repository-wide delivery roadmap with defined P0–P3 priorities, delivery milestones, ownership/status tracking, acceptance gates, and an individual test-review inventory across security, backend, UI, operations, privacy, and maintenance.

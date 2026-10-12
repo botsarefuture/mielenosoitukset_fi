@@ -19,6 +19,9 @@ from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from .utils import mongo, log_admin_action_V2, AdminActParser, _ADMIN_TEMPLATE_FOLDER
 from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo
+from mielenosoitukset_fi.utils.case_access import (
+    case_scope_query, can_access_case, global_case_permission,
+)
 
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.logger import logger
@@ -33,6 +36,34 @@ admin_case_bp = Blueprint("admin_case", __name__, url_prefix="/admin/case")
 # --- logging every admin action ---
 @admin_case_bp.before_request
 def log_request_info():
+    """Enforce case capability/scope before audit logging and route work."""
+    if not current_user.is_authenticated:
+        return
+    endpoint = request.endpoint.rsplit(".", 1)[-1]
+    permission = (
+        "LIST_CASES" if endpoint == "cases"
+        else "VIEW_CASE" if request.method == "GET"
+        else "DELETE_CASE" if endpoint == "delete_action"
+        else "EDIT_CASE"
+    )
+    scope = case_scope_query(current_user, permission)
+    if scope is None:
+        abort(403)
+    case_id = (request.view_args or {}).get("case_id")
+    if case_id:
+        oid = _safe_objectid(case_id)
+        if not oid:
+            abort(404)
+        if not can_access_case(current_user, permission, oid):
+            abort(403)
+    # Global blocklists, organization edits and unlinking do not have a city
+    # boundary. Keep those operations global rather than guessing a scope.
+    city_actions = {
+        "cases", "single_case", "add_action", "link_demo", "reply_to_ticket",
+        "close_case", "reopen_case",
+    }
+    if scope and endpoint not in city_actions:
+        abort(403)
     log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
 
 
@@ -219,7 +250,7 @@ def cases():
     auto_closed = 0
     actor = getattr(current_user, "username", "system")
 
-    for doc in mongo.cases.find({}, sort=[("created_at", -1)]):
+    for doc in mongo.cases.find(case_scope_query(current_user, "LIST_CASES"), sort=[("created_at", -1), ("_id", -1)]):
         case = Case.from_dict(doc)
         demo_doc = None
         org_doc = None
@@ -232,7 +263,7 @@ def cases():
         if case.case_type == "organization_edit_suggestion" and case.organization_id:
             org_doc = mongo.organizations.find_one({"_id": _safe_objectid(case.organization_id)}, {"name": 1, "updated_at": 1})
 
-        if not bool((case.meta or {}).get("closed")):
+        if not bool((case.meta or {}).get("closed")) and can_access_case(current_user, "EDIT_CASE", case._id):
             reason = _case_resolution_reason(case, demo_doc=demo_doc, org_doc=org_doc)
             if reason:
                 _auto_close_case(case, reason, actor)
@@ -451,7 +482,9 @@ def single_case(case_id):
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}cases/case.html",
         case=case,
-        case_data=case_data
+        case_data=case_data,
+        can_edit_case=can_access_case(current_user, "EDIT_CASE", case._id),
+        global_case_controls=global_case_permission(current_user, "EDIT_CASE"),
     )
 
 
@@ -507,6 +540,11 @@ def link_demo(case_id):
     if not demo:
         flash_message(_("Mielenosoitusta ei löytynyt annetulla tunnisteella."), "error")
         return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+    if not global_case_permission(current_user, "EDIT_CASE"):
+        scoped_demo_ids = case_scope_query(current_user, "EDIT_CASE")["demo_id"]["$in"]
+        if ObjectId(demo_id) not in scoped_demo_ids:
+            abort(403)
 
     case.demo_id = ObjectId(demo_id)
     case._touch()

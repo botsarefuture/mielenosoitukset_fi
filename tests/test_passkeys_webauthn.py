@@ -180,6 +180,8 @@ def test_passkey_rejects_unknown_credential_at_login(wapp, db, seeded_data):
     )
     r = anon.post("/users/auth/api/v2/passkeys/login/verify", json={"credential": assertion})
     assert r.status_code == 403
+    with anon.session_transaction() as login_session:
+        assert "_user_id" not in login_session
 
 
 def test_passkey_login_requires_confirmed_account(wapp, db):
@@ -207,6 +209,8 @@ def test_passkey_login_requires_confirmed_account(wapp, db):
     r = anon.post("/users/auth/api/v2/passkeys/login/verify", json={"credential": assertion})
     assert r.status_code == 403
     assert "sähköposti" in r.get_json()["message"].lower()
+    with anon.session_transaction() as login_session:
+        assert "_user_id" not in login_session
 
 
 def test_login_options_respect_username_scope(wapp, db, seeded_data):
@@ -328,13 +332,15 @@ def test_passkeys_are_isolated_between_users(wapp, db, seeded_data):
     assert b"Mielenosoitukset" in r.data  # no elevation API JSON leaked
 
 
-def test_banned_and_inactive_users_can_log_in_with_passkey_bodies(wapp, db):
-    """Regression guard: passkey login must never 500 on a missing user._id."""
+@pytest.mark.parametrize("status", [{"active": False}, {"banned": True}])
+def test_passkey_rejects_disabled_accounts(wapp, db, status):
+    """A valid cryptographic assertion cannot bypass disabled account status."""
     user_id = ObjectId()
+    suffix = str(user_id)[-8:]
     user_doc = User.create_user(
-        username="ghost", password="GhostPass1!", email="ghost2@example.test"
+        username=f"ghost-{suffix}", password="GhostPass1!", email=f"ghost-{suffix}@example.test"
     )
-    user_doc.update({"_id": user_id, "confirmed": True, "active": False})
+    user_doc.update({"_id": user_id, "confirmed": True, "active": True})
     db.users.insert_one(user_doc)
 
     client = _client_for_user(wapp, user_id)
@@ -342,6 +348,7 @@ def test_banned_and_inactive_users_can_log_in_with_passkey_bodies(wapp, db):
     key = sim.generate_key()
     r = client.post("/users/auth/api/v2/passkeys/register/options")
     _register_passkey(client, r.get_json()["options"], key)
+    db.users.update_one({"_id": user_id}, {"$set": status})
 
     anon = wapp.test_client()
     r = anon.post("/users/auth/api/v2/passkeys/login/options", json={})
@@ -353,6 +360,7 @@ def test_banned_and_inactive_users_can_log_in_with_passkey_bodies(wapp, db):
         counter=1,
     )
     r = anon.post("/users/auth/api/v2/passkeys/login/verify", json={"credential": assertion})
-    assert r.status_code in (200, 403)
-    if r.status_code == 200:
-        anon.get("/users/auth/api/v2/passkeys", follow_redirects=True)
+    assert r.status_code == 403
+    assert r.get_json()["status"] == "error"
+    with anon.session_transaction() as login_session:
+        assert "_user_id" not in login_session

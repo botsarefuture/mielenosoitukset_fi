@@ -470,6 +470,11 @@ class User(UserMixin):
 
     # ---------- PASSWORD / LOGIN -------------------------------------------------
 
+    @property
+    def is_active(self) -> bool:
+        """Allow authentication only while the account is enabled and unbanned."""
+        return bool(self.active) and not bool(self.banned)
+
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
 

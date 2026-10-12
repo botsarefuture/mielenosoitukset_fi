@@ -13530,3 +13530,7 @@ msgstr "Luonnos palautettiin tästä selaimesta. Se poistuu automaattisesti 24 t
 #: mielenosoitukset_fi/templates/submit.html
 msgid "Poista luonnos ja aloita alusta"
 msgstr "Poista luonnos ja aloita alusta"
+
+#: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/users/BPs/passkeys.py
+msgid "Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon."
+msgstr "Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon."

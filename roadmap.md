@@ -8,7 +8,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** DATA-01 — verify/address #920's compound-sort index review with disposable-DB query plans, then URL/filter restoration/reset and history across public list/city/tag. API and request-state slices await review; independent security slices remain in review.
+- **Next:** DATA-01 — URL/filter restoration/reset and history across public list/city/tag. #920's index review is fixed with disposable-DB query-plan evidence; API and request-state slices await review. Independent security slices remain in review.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
@@ -131,7 +131,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Inspected main has 1,019 definitions; the public API + request-state stack brings its branch to **1,026 definitions across 143 files**, with fifty reviewed records. Separate open #916/#917/#919 additions are excluded until integration reconciliation. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Inspected main has 1,019 definitions; the public API + request-state stack brings its branch to **1,027 definitions across 143 files**, with fifty-one reviewed records. Separate open #916/#917/#919 additions are excluded until integration reconciliation. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 
@@ -175,9 +175,9 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | QA-01 | P1 | In progress | Codex | M1, then ongoing | Thirty-seven MFA/account/passkey/organization-action definitions reviewed in the combined inventory; remaining authentication/permission tests pending. |
 | SEC-02 | P1 | In review | Codex | M1 | #915 merged; #916 admin status open; #763 integration/release evidence pending. |
 | SEC-03 | P0/P1 | In review | Codex | M1 | #918 merged; #917 case scope and #919 user hierarchy/delegation open. Remaining role/audit requirements pending. |
-| QA-02 | P1 | In progress | Codex | M2–M3 | Four API, four request-state and five listing-contract definitions reviewed on this stack. Remaining data/workflow tests pending. |
+| QA-02 | P1 | In progress | Codex | M2–M3 | Five API, four request-state and five listing-contract definitions reviewed on this stack. Remaining data/workflow tests pending. |
 | QA-03–QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI, browser/locale and operations/remaining tests. |
-| DATA-01 | P1 | In progress | Codex | M2 | #920 API foundation open; compound-sort index review needs query-plan verification before integration. Request-state slice stacks on it with cumulative summaries, stale-response guards, append locks and retry feedback. Both themes/sizes on list/city/tag checked. URL/filter/history behavior and broader acceptance remain next. |
+| DATA-01 | P1 | In progress | Codex | M2 | #920 API foundation open; matching approved/order index now avoids blocking SORT in disposable-DB first-page and skip=12 plans. Request-state slice stacks on it with cumulative summaries, stale-response guards, append locks and retry feedback. Both themes/sizes on list/city/tag checked. URL/filter/history and broader acceptance remain next; production index rollout/verification requires authorized release. |
 | UI-01 | P1 | Backlog | Unassigned | M2 | Verify labels/cropper and define focused browser acceptance. |
 | DATA-02 / OPS-01 | P1 | Backlog | Unassigned | M3 | Verify #908 and load the existing continuity plan. |
 | ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |

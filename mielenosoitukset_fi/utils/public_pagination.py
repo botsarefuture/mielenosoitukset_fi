@@ -3,6 +3,21 @@
 # ISO dates and normalized HH:MM start times sort chronologically. _id owns
 # ties, including legacy documents without a start time, before skip/limit.
 PUBLIC_DEMONSTRATION_ORDER = [("date", 1), ("start_time", 1), ("_id", 1)]
+PUBLIC_DEMONSTRATION_INDEX = "public_demo_chronological"
+
+
+def ensure_public_demo_pagination_index(database):
+    """Support approved public date ranges without a blocking in-memory sort.
+
+    approved is an equality predicate; the remaining keys match the complete
+    order before skip/limit. Visibility exclusions stay in the query because
+    missing/legacy hide and rejected flags are intentionally supported.
+    """
+    database.demonstrations.create_index(
+        [("approved", 1), *PUBLIC_DEMONSTRATION_ORDER],
+        name=PUBLIC_DEMONSTRATION_INDEX,
+        background=True,
+    )
 
 
 def public_page_args(args):

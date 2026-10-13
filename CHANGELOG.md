@@ -4,7 +4,11 @@
 
 ## UNRELEASED
 
+- Back/Forward restores date-picker constraints alongside the fields and no longer counts restored result requests as new searches.
+
 - Public list, city and tag filters now restore from shareable URLs, reset to page one on search, and follow Back/Forward history with accurate deep-page ranges. City/tag context cannot be overridden by conflicting URL values; shared removable city chips are text-safe, and invalid tag pagination no longer raises HTTP 500.
+
+- Public list retry controls now use compiled English and Swedish translations; stylesheet version checks accept subsequent valid cache bumps instead of pinning an obsolete version.
 
 - Public demonstration lists now ignore stale search responses, keep cumulative result counts, prevent overlapping page appends, and offer localized retry feedback. Shared load-more controls disappear correctly at the last page in both themes; the main list's date-picker locale safely defaults for first-time visitors.
 

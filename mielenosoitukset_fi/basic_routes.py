@@ -1084,7 +1084,7 @@ def add_api_routes(app):
         # searches). City/tag filtering is intentionally not recorded here:
         # city pages load the API with city params on every view, so those
         # are already covered by the pageview counters.
-        if page == 1:
+        if page == 1 and request.args.get("history_restore") != "1":
             search_term = str(args.get("search_query") or "").strip()
             if len(search_term) >= 2:
                 record_event_for_request(

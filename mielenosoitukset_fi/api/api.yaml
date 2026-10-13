@@ -494,7 +494,7 @@ paths:
     get:
       tags: [API v1]
       summary: List demonstrations (legacy /api/v1)
-      description: Legacy demonstration list returning `demonstrations` and `total_pages`.
+      description: Legacy demonstration list with filtered counts and page ranges. Both list APIs order by date, start time and ID before pagination.
       operationId: apiV1Demonstrations
       security: []
       parameters:
@@ -568,6 +568,19 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/V1Demonstration"
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                    description: Total publicly visible demonstrations matching these filters.
+                  result_start:
+                    type: integer
+                    description: One-based first result, or zero for an empty page.
+                  result_end:
+                    type: integer
+                    description: One-based last result, or zero for an empty page.
                   total_pages:
                     type: integer
                 required: [demonstrations, total_pages]
@@ -1092,6 +1105,13 @@ components:
           type: integer
         total:
           type: integer
+          description: Total publicly visible demonstrations matching these filters.
+        result_start:
+          type: integer
+          description: One-based first result, or zero for an empty page.
+        result_end:
+          type: integer
+          description: One-based last result, or zero for an empty page.
         total_pages:
           type: integer
         next_url:

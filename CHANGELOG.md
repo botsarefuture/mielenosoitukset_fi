@@ -8,9 +8,13 @@
 
 - Public list, city and tag filters now restore from shareable URLs, reset to page one on search, and follow Back/Forward history with accurate deep-page ranges. City/tag context cannot be overridden by conflicting URL values; shared removable city chips are text-safe, and invalid tag pagination no longer raises HTTP 500.
 
+- Swedish listing summaries now use count-neutral wording for both one and many results. Runtime catalog/browser coverage and the individual test-review inventory include the retry translation regression.
+
 - Public list retry controls now use compiled English and Swedish translations; stylesheet version checks accept subsequent valid cache bumps instead of pinning an obsolete version.
 
 - Public demonstration lists now ignore stale search responses, keep cumulative result counts, prevent overlapping page appends, and offer localized retry feedback. Shared load-more controls disappear correctly at the last page in both themes; the main list's date-picker locale safely defaults for first-time visitors.
+
+- Public pagination indexes are now provisioned before deployment reloads rather than blocking application worker imports; provisioning failures leave existing workers running.
 
 - Both public demonstration list APIs now order by date, start time and ID before pagination, report matching totals and exact page ranges, and safely normalize invalid numeric page arguments. Existing filters and response fields are preserved.
 - The public chronological order now has a matching approved/date/start-time/ID index, avoiding a blocking sort for broad public date-range queries while retaining legacy visibility flags and existing indexes.

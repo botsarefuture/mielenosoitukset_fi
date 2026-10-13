@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-144 Python test files; 1,030 test definitions (1,025 in 143 files under `tests/`, plus five standalone recurrence tests in one file). Fifty-four definitions have review records below; remaining entries are pending review. This URL/history slice stacks on #920/#921; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+144 Python test files; 1,032 test definitions (1,027 in 143 files under `tests/`, plus five standalone recurrence tests in one file). Fifty-five definitions have review records below; remaining entries are pending review. This URL/history slice stacks on #920/#921; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -975,6 +975,7 @@ Focused run evidence is linked in the delivery PR; checked entries mean assessed
 
 ## tests/test_public_demonstrations_api.py
 
+- [ ] `test_public_index_provisioning_is_not_part_of_route_import`
 - [x] `test_public_demonstrations_list_uses_summary_payload`
 - [x] `test_public_pages_have_chronological_tie_breaks_and_filtered_counts`
 - [x] `test_public_page_metadata_handles_empty_and_out_of_range`
@@ -1036,6 +1037,7 @@ Deep links/history restore the latest requested page as a new window; subsequent
 
 ## tests/test_public_list_request_state.py
 
+- [x] `test_public_retry_uses_compiled_locale_catalog`
 - [x] `test_public_loader_ignores_stale_search_and_counts_appended_results`
 - [x] `test_public_controller_old_finally_cannot_unlock_new_search`
 - [x] `test_public_loader_http_failure_offers_retry_without_erasing_append`
@@ -1045,6 +1047,7 @@ DATA-01 / QA-02, 2026-10-12, Codex, P1; stacked on #920. Browser harnesses use a
 
 | Definition | Purpose / assertions | Fixtures / coverage / reliability | Disposition |
 |---|---|---|---|
+| `test_public_retry_uses_compiled_locale_catalog` | Runtime MO files translate the retry label in English and Swedish. | Two cases read actual compiled GNU catalogs, without Babel mocks; catches PO-only fixes that fail to ship runtime translations. Does not claim full catalog completeness. | Keep; reviewed 2026-10-13; focused run linked in #921. |
 | `test_public_loader_ignores_stale_search_and_counts_appended_results` | New search wins; aborted older response cannot repaint; append counts accumulate and empty append does not erase cards. | Actual loader, deferred response order, exact DOM/count/abort state. Card/friend/navigation rendering isolated; not a backend snapshot test. | Keep. |
 | `test_public_controller_old_finally_cannot_unlock_new_search` | Old load-next completion cannot unlock or alter newer reset state. | Actual controller, exact lock/page/page-count/request assertions with manual resolvers; no timing sleeps. | Keep. |
 | `test_public_loader_http_failure_offers_retry_without_erasing_append` | HTTP failure preserves prior cards and offers successful retry; overlapping retry/append is suppressed. | Actual loader and 503 mock, exact DOM/count/request count; replacement-failure and malformed payload matrices remain follow-up. | Keep. |
@@ -1068,7 +1071,7 @@ DATA-01 / QA-02 supporting review, 2026-10-12, Codex, P1. Source-only assertions
 | `test_public_listing_pagination_controller_supports_buttons_and_sentinels` | Controller retains button/sentinel/reload hooks. | Source strings cannot prove concurrency; new deferred-controller regression supplies behavioral evidence. Intersection-observer triggering remains unreviewed runtime gap. | Keep. |
 | `test_public_workspace_styles_cover_listing_end_message` | End-message selectors remain in shared CSS. | String presence, not light/dark/hidden computed-style proof. | Keep with narrow claim. |
 | `test_public_list_runtime_uses_defined_localized_browser_contracts` | Removed undefined view/translation/jQuery contracts stay removed; locale-derived picker wiring remains. | Exact obsolete/required strings; cannot prove translation completeness or runtime. | Keep alongside locale/browser tests. |
-| `test_public_list_filters_and_date_picker_follow_active_locale` | FI/EN/SV city chip labels, January names, summary formats and retry text follow selected locale without page errors. | Actual page/autocomplete, compiled catalogs and Intl formatter; date-picker stub records locale config; three parameter cases. Does not test date-picker library internals, chip URL reset or complete keyboard selection. | Keep; strengthened localization evidence; remaining gaps tracked. |
+| `test_public_list_filters_and_date_picker_follow_active_locale` | FI/EN/SV city chip labels, January names, actual one/many-result summaries and retry text follow selected locale without page errors. | Six cases: three locales × 1/3 results. Actual page/autocomplete, compiled catalogs and controlled API responses; date-picker stub records locale config. Does not test library internals or backend totals. | Keep; strengthened 2026-10-13, focused run in #921. |
 
 ## tests/test_public_locales.py
 

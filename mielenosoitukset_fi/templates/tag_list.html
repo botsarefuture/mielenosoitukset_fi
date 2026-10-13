@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from '_macros/_hero.html' import hero_section %}
 {% from '_macros/_pagination.html' import load_more_button %}
-{% from '_macros/_public_search.html' import public_demo_search with context %}
+{% from '_macros/_public_search.html' import public_demo_search, public_search_styles, public_search_scripts with context %}
 
 {% block title %} #{{ tag_name }} {{ _('Mielenosoitukset') }} {% endblock %}
 
@@ -15,6 +15,7 @@
 {% endblock %}
 
 {% block styles %}
+{{ public_search_styles() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
 {% endblock %}
 
@@ -75,14 +76,13 @@
 
 {% endblock %}
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261012-search-fields-1') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261013-date-range-1') }}"></script>
+{{ public_search_scripts() }}
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 
 <!-- Shared v2 JS -->
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261012-search-fields-1') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261013-date-range-1') }}" defer></script>
 
 <script>
   const cityList = {{ city_list | tojson }};
@@ -136,6 +136,8 @@
       searchForm.date_end.value = "";
       searchForm.display_date_start.value = "";
       searchForm.display_date_end.value = "";
+      delete searchForm.display_date_start.dataset.invalidDateEntry;
+      delete searchForm.display_date_end.dataset.invalidDateEntry;
       filters.empty();
 
       listHistory.submit();

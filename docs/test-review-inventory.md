@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-145 Python test files; 1,032 test definitions (1,027 in 144 files under `tests/`, plus five standalone recurrence tests in one file). Sixty definitions have review records below; remaining entries are pending review. This shared-search-label slice stacks on #922; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+146 Python test files; 1,036 test definitions (1,031 in 145 files under `tests/`, plus five standalone recurrence tests in one file). Sixty-four definitions have review records below; remaining entries are pending review. This real date-range lifecycle slice stacks on #923; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -966,6 +966,24 @@ UI-01 / QA-04 supporting review, 2026-10-12, Codex, P1. Anonymous real Flask res
 - [ ] `test_public_header_mobile_menu_and_theme_contract`
 - [ ] `test_public_navigation_remains_available_without_javascript`
 
+## tests/test_public_date_range.py
+
+- [x] `test_public_date_vendor_files_match_reviewed_release_hashes`
+- [x] `test_actual_date_picker_locale_bounds_history_and_clear`
+- [x] `test_actual_calendar_is_theme_safe_and_keyboard_reachable`
+- [x] `test_public_dates_remain_manually_usable_if_picker_asset_fails`
+
+UI-01 / QA-04, 2026-10-13, Codex, P1, stacked on #923. Tests execute the same pinned local Flatpickr JS/CSS as the product, not a stub. API results are isolated because these definitions assess widget state/URL integration rather than database search. Upstream npm tarball SHA-512 integrity and normalized JS/CSS/license members were independently checked; final revision/run/PR evidence linked at delivery.
+
+| Definition | Purpose / assertions | Setup / coverage / reliability | Disposition |
+|---|---|---|---|
+| `test_public_date_vendor_files_match_reviewed_release_hashes` | Shipped JS/CSS/MIT license match reviewed version bytes. | Local SHA-256 against independently integrity-checked npm release, terminal newline normalization documented. Hash match does not prove absence of all upstream defects. | Keep. |
+| `test_actual_date_picker_locale_bounds_history_and_clear` | Real picker shows FI/EN/SV names; changed range submits, Back restores coupled bounds, clear removes selections/max bound and restores current-year floor; explicit 2020 ranges survive restoration. | Three routes × three locales (nine cases), actual selectedDates/config plus DOM/URL waits. Synthetic API only; not live-data/count proof. Does not cover every unusual year/time-zone boundary. | Keep. |
+| `test_actual_calendar_is_theme_safe_and_keyboard_reachable` | ArrowDown enters actual day grid, selected hover uses contrast-safe semantic colors, viewport fit/light-dark surface, Escape closes and restores field focus. | Two themes × 1440/390px (four cases), actual JS/CSS and DOM focus; selected screenshots inspected. Not a full assistive-technology or all-browser audit. | Keep. |
+| `test_public_dates_remain_manually_usable_if_picker_asset_fails` | Date fields still submit ISO URL filters without picker JS and no page exception. | Three actual routes, one specific asset aborted deliberately, normal adapter/history scripts run. Dependency-failure fallback, not whole no-JavaScript listing acceptance. | Keep. |
+
+Earlier filter/history regressions now also execute the real bundled picker and still cover invalid typed dates: the adapter retains the invalid raw entry instead of allowing vendor close/blur parsing to silently erase it. Cropper/autocomplete/full accessibility and broader DATA-01 acceptance remain separate.
+
 ## tests/test_public_demo_localization.py
 
 - [ ] `test_demo_detail_renders_translated_fields_and_language_switcher`
@@ -1033,7 +1051,7 @@ Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-requ
 - [x] `test_restored_city_chip_is_text_safe_and_removal_resets_url`
 - [x] `test_tag_page_invalid_pagination_does_not_raise_500`
 
-DATA-01 / QA-02, 2026-10-12, Codex, P1, stacked on #921. Actual routes/templates/form/history/loader/CSS; synthetic API responses isolate browser contracts and the externally blocked picker is stubbed. Backend ordering/query plans remain #920's real-DB evidence. The tag numeric regression uses real Flask GETs. Final revision/run/PR evidence recorded at delivery.
+DATA-01 / QA-02, 2026-10-12, Codex, P1, stacked on #921. Actual routes/templates/form/history/loader/CSS; synthetic API responses isolate browser contracts; the pinned local picker now executes. Backend ordering/query plans remain #920's real-DB evidence. The tag numeric regression uses real Flask GETs. Final revision/run/PR evidence recorded at delivery.
 
 | Definition | Purpose / assertions | Setup / coverage / reliability | Disposition |
 |---|---|---|---|
@@ -1050,14 +1068,14 @@ Deep links/history restore the latest requested page as a new window; subsequent
 - [x] `test_public_loader_http_failure_offers_retry_without_erasing_append`
 - [x] `test_public_listing_summary_is_shared_responsive_and_keyboard_operable`
 
-DATA-01 / QA-02, 2026-10-12, Codex, P1; stacked on #920. Browser harnesses use actual shipped JS with controlled deferred fetch responses (deliberately ignoring abort), safe lightweight card-render stubs and no server ordering mock claim. The template/browser matrix uses actual routes, cards, CSS and keyboard with stubbed API/date-picker dependency; server order/count evidence belongs to #920. Final revision/run evidence linked in PR.
+DATA-01 / QA-02, 2026-10-12, Codex, P1; stacked on #920. Browser harnesses use actual shipped JS with controlled deferred fetch responses (deliberately ignoring abort), safe lightweight card-render stubs and no server ordering mock claim. The template/browser matrix uses actual routes, cards, CSS and keyboard with isolated API data and actual pinned date-picker runtime; server order/count evidence belongs to #920. Final revision/run evidence linked in PR.
 
 | Definition | Purpose / assertions | Fixtures / coverage / reliability | Disposition |
 |---|---|---|---|
 | `test_public_loader_ignores_stale_search_and_counts_appended_results` | New search wins; aborted older response cannot repaint; append counts accumulate and empty append does not erase cards. | Actual loader, deferred response order, exact DOM/count/abort state. Card/friend/navigation rendering isolated; not a backend snapshot test. | Keep. |
 | `test_public_controller_old_finally_cannot_unlock_new_search` | Old load-next completion cannot unlock or alter newer reset state. | Actual controller, exact lock/page/page-count/request assertions with manual resolvers; no timing sleeps. | Keep. |
 | `test_public_loader_http_failure_offers_retry_without_erasing_append` | HTTP failure preserves prior cards and offers successful retry; overlapping retry/append is suppressed. | Actual loader and 503 mock, exact DOM/count/request count; replacement-failure and malformed payload matrices remain follow-up. | Keep. |
-| `test_public_listing_summary_is_shared_responsive_and_keyboard_operable` | Three list families share live summary, keyboard load-more, final hidden control and viewport-fitting summary in both themes/sizes. | Twelve cases: list/city/tag × light/dark × 1440/390px. Actual UI, synthetic API and external date-picker stub; page errors asserted, summary geometry checked. Does not prove whole-page overflow, all date-picker behavior or live data. | Keep. |
+| `test_public_listing_summary_is_shared_responsive_and_keyboard_operable` | Three list families share live summary, keyboard load-more, final hidden control and viewport-fitting summary in both themes/sizes. | Twelve cases: list/city/tag × light/dark × 1440/390px. Actual UI, synthetic API and actual pinned date picker; page errors asserted, summary geometry checked. Does not prove whole-page overflow, all date-picker behavior or live data. | Keep. |
 
 Screenshots of representative list states are inspected separately. Existing page/footer overflow and full URL/history behavior remain explicit follow-up work; this review does not silently declare broad UI acceptance.
 
@@ -1077,7 +1095,7 @@ DATA-01 / QA-02 supporting review, 2026-10-12, Codex, P1. Source-only assertions
 | `test_public_listing_pagination_controller_supports_buttons_and_sentinels` | Controller retains button/sentinel/reload hooks. | Source strings cannot prove concurrency; new deferred-controller regression supplies behavioral evidence. Intersection-observer triggering remains unreviewed runtime gap. | Keep. |
 | `test_public_workspace_styles_cover_listing_end_message` | End-message selectors remain in shared CSS. | String presence, not light/dark/hidden computed-style proof. | Keep with narrow claim. |
 | `test_public_list_runtime_uses_defined_localized_browser_contracts` | Removed undefined view/translation/jQuery contracts stay removed; locale-derived picker wiring remains. | Exact obsolete/required strings; cannot prove translation completeness or runtime. | Keep alongside locale/browser tests. |
-| `test_public_list_filters_and_date_picker_follow_active_locale` | FI/EN/SV city chip labels, January names, summary formats and retry text follow selected locale without page errors. | Actual page/autocomplete, compiled catalogs and Intl formatter; date-picker stub records locale config; three parameter cases. Does not test date-picker library internals, chip URL reset or complete keyboard selection. | Keep; strengthened localization evidence; remaining gaps tracked. |
+| `test_public_list_filters_and_date_picker_follow_active_locale` | FI/EN/SV city chip labels, January names, summary formats and retry text follow selected locale without page errors. | Actual page/autocomplete, compiled catalogs, Intl formatter and pinned picker locale config; three parameter cases. Does not test date-picker library internals, chip URL reset or complete keyboard selection. | Keep; strengthened localization evidence; remaining gaps tracked. |
 
 ## tests/test_public_locales.py
 
@@ -1134,12 +1152,12 @@ DATA-01 / QA-02 supporting review, 2026-10-12, Codex, P1. Source-only assertions
 - [x] `test_public_search_labels_are_explicit_and_unique`
 - [x] `test_public_search_fields_are_visible_aligned_and_focusable`
 
-UI-01 / QA-04, 2026-10-12, Codex, P1, stacked on #922. Actual shared macro and compiled catalogs; browser uses actual product styles, with synthetic API and isolated external date picker. Final run/revision/PR evidence linked at delivery.
+UI-01 / QA-04, 2026-10-12, Codex, P1, stacked on #922. Actual shared macro and compiled catalogs; browser uses actual product styles, with synthetic API and actual pinned date picker. Final run/revision/PR evidence linked at delivery.
 
 | Definition | Purpose / assertions | Fixtures / coverage / reliability | Disposition |
 |---|---|---|---|
 | `test_public_search_labels_are_explicit_and_unique` | Every text field has a unique explicit label/target; exact FI/EN/SV search/start/end copy; hidden backend names and fixed city preserved; error linkage present. | Three routes × three locales (nine cases), real Flask/Jinja/catalog rendering. Regex limited to controlled form structure; full DOM/accessibility audits remain separate. | Keep. |
-| `test_public_search_fields_are_visible_aligned_and_focusable` | Label click focuses correct input; label/input left edges align; 44px controls fit viewport; logical first Tab target. | Three routes × two themes × 1440/390px (twelve cases). Actual DOM/style/focus, mocked picker/API; representative form screenshots inspected. Does not verify actual picker popup, autocomplete keyboard behavior or whole-page overflow. | Keep; remaining UI-01/UI-02 items explicit. |
+| `test_public_search_fields_are_visible_aligned_and_focusable` | Label click focuses correct input; label/input left edges align; 44px controls fit viewport; logical first Tab target. | Three routes × two themes × 1440/390px (twelve cases). Actual DOM/style/focus, actual pinned picker/synthetic API; representative form screenshots inspected. Does not verify actual picker popup, autocomplete keyboard behavior or whole-page overflow. | Keep; remaining UI-01/UI-02 items explicit. |
 
 ## tests/test_public_token_manager.py
 

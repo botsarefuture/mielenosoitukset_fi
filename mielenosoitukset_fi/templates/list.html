@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from '_macros/_hero.html' import hero_section %}
 {% from '_macros/_pagination.html' import load_more_button %}
-{% from '_macros/_public_search.html' import public_demo_search with context %}
+{% from '_macros/_public_search.html' import public_demo_search, public_search_styles, public_search_scripts with context %}
 
 {% block title %} {{ _('Tulevat mielenosoitukset') }} {% endblock %}
 
@@ -17,12 +17,12 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+{{ public_search_styles() }}
 {% endblock %}
 
 {% block content %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261012-search-fields-1') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261013-date-range-1') }}" defer></script>
 
 {% include "_modals/_demo-card-template.html" %}
 
@@ -113,8 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261012-search-fields-1') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261013-date-range-1') }}"></script>
+{{ public_search_scripts() }}
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 <script>
 const cityList = {{ city_list | tojson }};
@@ -172,54 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  const activeLocale = {{ current_locale | tojson }} || document.documentElement.lang || 'fi';
-  const formatCalendarPart = (date, options) => new Intl.DateTimeFormat(
-    activeLocale,
-    { ...options, timeZone: "UTC" }
-  ).format(date);
-  const weekdayDates = Array.from(
-    { length: 7 },
-    (_, index) => new Date(Date.UTC(2024, 0, 7 + index, 12))
-  );
-  const monthDates = Array.from(
-    { length: 12 },
-    (_, index) => new Date(Date.UTC(2024, index, 1, 12))
-  );
 
-  const dateConfig = {
-    dateFormat: "d.m.Y",
-    minDate: "today",
-    allowInput: true,
-    locale: {
-      firstDayOfWeek: 1,
-      weekdays: {
-        shorthand: weekdayDates.map(date => formatCalendarPart(date, { weekday: "short" })),
-        longhand: weekdayDates.map(date => formatCalendarPart(date, { weekday: "long" }))
-      },
-      months: {
-        shorthand: monthDates.map(date => formatCalendarPart(date, { month: "short" })),
-        longhand: monthDates.map(date => formatCalendarPart(date, { month: "long" }))
-      }
-    }
-  };
-
-  const startPicker = flatpickr("#date_start", {
-    ...dateConfig,
-    onChange: selectedDates => {
-      if (selectedDates[0]) {
-        endPicker.set("minDate", selectedDates[0]);
-      }
-    }
-  });
-
-  const endPicker = flatpickr("#date_end", {
-    ...dateConfig,
-    onChange: selectedDates => {
-      if (selectedDates[0]) {
-        startPicker.set("maxDate", selectedDates[0]);
-      }
-    }
-  });
 });
 </script>
 

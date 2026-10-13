@@ -115,6 +115,7 @@
     let params = {};
     let page = 1;
     const field = name => form.elements.namedItem(name);
+    const dateRange = global.PublicDateRange?.create(form);
     const positive = (value, fallback) => /^\d+$/.test(value || "") && Number.isSafeInteger(Number(value)) && Number(value) > 0 ? Number(value) : fallback;
 
     function renderCities() {
@@ -158,6 +159,7 @@
           display._flatpickr?.setDate?.(formatted, false);
         }
       });
+      dateRange?.setValues(params.date_start, params.date_end);
       renderCities();
       return { ...params };
     }
@@ -178,6 +180,7 @@
       ['start', 'end'].forEach(edge => {
         const display = field(`display_date_${edge}`);
         if (!display) return;
+        if (display.dataset.invalidDateEntry) display.value = display.dataset.invalidDateEntry;
         delete next[`date_${edge}`];
         if (field(`date_${edge}`)) field(`date_${edge}`).value = '';
         if (!display.value.trim()) return;
@@ -195,6 +198,7 @@
       if (error) error.style.display = valid ? 'none' : 'block';
       ['start', 'end'].forEach(edge => field(`display_date_${edge}`)?.setAttribute('aria-invalid', String(!valid)));
       if (!valid) return null;
+      dateRange?.setValues(next.date_start, next.date_end);
       Object.assign(next, fixed);
       params = next; page = 1; renderCities(); write(true);
       return onChange({ ...params }, page);
@@ -205,7 +209,7 @@
     hydrate(); write();
     return { get params() { return { ...params }; }, get page() { return page; }, submit, renderCities,
       pageLoaded(result) { page = result.page; write(); },
-      destroy() { global.removeEventListener('popstate', restore); } };
+      destroy() { global.removeEventListener('popstate', restore); dateRange?.destroy(); } };
   }
 
   global.UserPagination = { createLoadMoreController, createFilterHistory };

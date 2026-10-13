@@ -28,6 +28,35 @@ html.light {
   display: none;
 }
 
+.public-date-calendar {
+  background: var(--product-surface); color: var(--product-text);
+  border: 1px solid var(--product-border); box-shadow: var(--product-shadow);
+}
+.public-date-calendar.arrowTop:after { border-bottom-color: var(--product-surface); }
+.public-date-calendar.arrowTop:before { border-bottom-color: var(--product-border); }
+.public-date-calendar.arrowBottom:after { border-top-color: var(--product-surface); }
+.public-date-calendar.arrowBottom:before { border-top-color: var(--product-border); }
+.public-date-calendar .numInputWrapper span.arrowUp:after { border-bottom-color: var(--product-text); }
+.public-date-calendar .numInputWrapper span.arrowDown:after { border-top-color: var(--product-text); }
+.public-date-calendar .flatpickr-month, .public-date-calendar .flatpickr-weekday,
+.public-date-calendar .flatpickr-current-month .flatpickr-monthDropdown-months,
+.public-date-calendar .flatpickr-day, .public-date-calendar input.cur-year {
+  color: var(--product-text); background: transparent;
+}
+.public-date-calendar .flatpickr-day:hover, .public-date-calendar .flatpickr-day:focus {
+  background: var(--product-surface-muted); border-color: var(--product-border);
+}
+.public-date-calendar .flatpickr-day.selected,
+.public-date-calendar .flatpickr-day.selected:hover, .public-date-calendar .flatpickr-day.selected:focus {
+  background: var(--product-action-bg); border-color: var(--product-action-bg); color: var(--product-on-action);
+}
+.public-date-calendar .flatpickr-day.flatpickr-disabled, .public-date-calendar .flatpickr-day.flatpickr-disabled:hover,
+.public-date-calendar .flatpickr-day.prevMonthDay, .public-date-calendar .flatpickr-day.nextMonthDay {
+  color: var(--product-text-muted);
+}
+.public-date-calendar .flatpickr-prev-month svg, .public-date-calendar .flatpickr-next-month svg { fill: var(--product-text); }
+.public-date-calendar :focus-visible { outline: 2px solid var(--product-primary); outline-offset: -2px; }
+
 .search-form #filters { display: flex; flex-wrap: wrap; gap: .5rem; }
 .search-form.public-search-form {
   display: flex; flex-direction: row; flex-wrap: wrap; align-items: end; gap: 1rem;

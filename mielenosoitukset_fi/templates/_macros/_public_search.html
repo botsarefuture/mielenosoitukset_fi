@@ -1,6 +1,14 @@
 {# Shared public collection fields. Keep backend names and JS hooks stable. #}
+{% macro public_search_styles() %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/flatpickr/4.6.13/flatpickr.min.css') }}">
+{% endmacro %}
+{% macro public_search_scripts() %}
+<script src="{{ url_for('static', filename='vendor/flatpickr/4.6.13/flatpickr.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/public-date-range.js', v='20261013-date-range-1') }}"></script>
+{% endmacro %}
 {% macro public_demo_search(fixed_city=none) %}
-<form method="GET" action="#" class="search-form public-search-form" id="search-form">
+<form method="GET" action="#" class="search-form public-search-form" id="search-form"
+      data-date-year-label="{{ _('Vuosi') }}" data-date-month-label="{{ _('Kuukausi') }}">
   <div class="public-search-field">
     <label for="demo-search">{{ _('Hae mielenosoituksia') }}</label>
     <input type="text" id="demo-search" name="search" value="{{ request.args.get('search', '') }}"

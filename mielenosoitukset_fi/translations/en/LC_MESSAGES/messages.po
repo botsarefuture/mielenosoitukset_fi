@@ -4423,6 +4423,9 @@ msgstr ""
 msgid "Vuosi"
 msgstr "Year"
 
+msgid "Kuukausi"
+msgstr "Month"
+
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:1858 mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:119
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:963
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:51

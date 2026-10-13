@@ -47,8 +47,10 @@ def test_public_list_runtime_uses_defined_localized_browser_contracts():
     assert '${_("Kaupunki")}' not in source
     assert "publicListI18n.city" in source
     assert "publicListI18n.removeFilter" in source
-    assert "new Intl.DateTimeFormat" in source
-    assert "activeLocale" in source
+    range_source = (Path("mielenosoitukset_fi/static/js/public-date-range.js")).read_text(encoding="utf-8")
+    assert "new Intl.DateTimeFormat" in range_source
+    assert "activeLocale" in range_source
+    assert "public_search_scripts()" in source
     assert 'filename=\'js/date.js\'' not in source
     assert '["Sunnuntai", "Maanantai"' not in source
     assert '["Tammikuu", "Helmikuu"' not in source
@@ -75,20 +77,6 @@ def test_public_list_filters_and_date_picker_follow_active_locale(
     app.config.update(
         BABEL_SUPPORTED_LOCALES=["fi", "en", "sv"],
         BABEL_PUBLIC_LOCALES=["fi", "en", "sv"],
-    )
-    browser_page.route(
-        "https://cdn.jsdelivr.net/npm/flatpickr",
-        lambda route: route.fulfill(
-            content_type="application/javascript",
-            body=(
-                "window.flatpickr = (selector, config) => {"
-                "const element = document.querySelector(selector);"
-                "const instance = {l10n: config.locale, set() {}};"
-                "element._flatpickr = instance;"
-                "return instance;"
-                "};"
-            ),
-        ),
     )
     browser_page.goto(f"{live_server}/set_language/{locale}")
     page_errors = []

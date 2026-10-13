@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Public list, city and tag date ranges now share a pinned locally served picker with active-locale calendar names, reliable history/clear bounds, keyboard calendar entry and theme-safe states. Invalid typed dates remain visible for validation, and manual input still works if the picker asset fails.
+
 - Public list, city and tag search forms now share visible, linked field labels and responsive product-token styling, with 44px controls and announced date errors. FI/EN/SV labels distinguish start/end dates correctly while existing field names, filters and fixed city context remain unchanged.
 
 - Public list, city and tag filters now restore from shareable URLs, reset to page one on search, and follow Back/Forward history with accurate deep-page ranges. City/tag context cannot be overridden by conflicting URL values; shared removable city chips are text-safe, and invalid tag pagination no longer raises HTTP 500.

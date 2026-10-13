@@ -39,8 +39,6 @@ def test_public_search_labels_are_explicit_and_unique(app, client, path, field_c
 def test_public_search_fields_are_visible_aligned_and_focusable(live_server, browser_page, path, theme, width):
     browser_page.set_viewport_size({'width': width, 'height': 1000})
     browser_page.add_init_script(f"localStorage.setItem('theme', '{theme}')")
-    browser_page.route('https://cdn.jsdelivr.net/npm/flatpickr', lambda route: route.fulfill(
-        content_type='application/javascript', body="window.flatpickr = () => ({set(){}});"))
     browser_page.route('**/api/demonstrations?*', lambda route: route.fulfill(
         content_type='application/json', body='{"page":1,"total_pages":1,"total":0,"results":[]}'))
     browser_page.goto(f'{live_server}{path}', wait_until='domcontentloaded')

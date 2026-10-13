@@ -10,8 +10,6 @@ import pytest
 def test_public_filter_url_restores_page_and_back_forward(live_server, browser_page, path, fixed):
     requests = []
     attempts = {}
-    browser_page.route('https://cdn.jsdelivr.net/npm/flatpickr', lambda route: route.fulfill(
-        content_type='application/javascript', body="window.flatpickr = () => ({set(){}});"))
 
     def serve(route):
         args = {key: values[0] for key, values in parse_qs(urlsplit(route.request.url).query).items()}
@@ -75,8 +73,6 @@ def test_public_filter_url_restores_page_and_back_forward(live_server, browser_p
 def test_restored_city_chip_is_text_safe_and_removal_resets_url(live_server, browser_page, path, theme, width):
     browser_page.set_viewport_size({'width': width, 'height': 1000})
     browser_page.add_init_script(f"localStorage.setItem('theme', '{theme}')")
-    browser_page.route('https://cdn.jsdelivr.net/npm/flatpickr', lambda route: route.fulfill(
-        content_type='application/javascript', body="window.flatpickr = () => ({set(){}});"))
     browser_page.route('**/api/demonstrations?*', lambda route: route.fulfill(
         content_type='application/json', body=json.dumps({'page': 1, 'total_pages': 1, 'total': 0, 'results': []})))
     browser_page.goto(f'{live_server}{path}?city=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E&date_start=2099-01-01', wait_until='domcontentloaded')

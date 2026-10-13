@@ -107,15 +107,6 @@ def test_public_listing_summary_is_shared_responsive_and_keyboard_operable(live_
     from urllib.parse import parse_qs, urlsplit
     browser_page.set_viewport_size({'width': width, 'height': 1000})
     browser_page.add_init_script(f"localStorage.setItem('theme', '{theme}')")
-    # The fixture blocks external traffic. Isolate the unrelated date-picker
-    # dependency while exercising actual templates, card renderer and styles.
-    browser_page.route('https://cdn.jsdelivr.net/npm/flatpickr', lambda route: route.fulfill(
-        content_type='application/javascript', body='''window.flatpickr = (selector, config) => {
-          const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
-          const instance = {l10n: config.locale, set() {}};
-          if (element) element._flatpickr = instance;
-          return instance;
-        };'''))
 
     def serve_page(route):
         page = int(parse_qs(urlsplit(route.request.url).query)['page'][0])

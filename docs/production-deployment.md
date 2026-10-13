@@ -6,13 +6,20 @@ The workflow connects with a dedicated SSH credential and invokes
 
 The server script serializes deployments, refuses stale SHAs, fast-forwards the
 production checkout, installs dependencies only when `requirements.txt`
-changed, atomically records the deployed commit in `.deploy-build-sha`, and asks
+changed, provisions the public pagination index before worker startup,
+atomically records the deployed commit in `.deploy-build-sha`, and asks
 systemd/Gunicorn for a graceful reload. Existing workers keep serving while
 replacements start. Each worker captures that commit when its Flask app starts,
 and `/health` publishes it as `build_sha` with `Cache-Control: no-store`. Both
 the server and GitHub Actions wait for a healthy worker whose `build_sha`
 exactly matches the requested commit; a response from an old worker cannot
 finish the deployment.
+
+Index provisioning runs as `python3 -m
+mielenosoitukset_fi.scripts.provision_public_indexes` before the reload, not
+during route imports or application migrations. A failure stops deployment
+before reloading workers. Operators using a different deployment entrypoint
+must run this idempotent command before starting replacement workers.
 
 Configure the GitHub `production` environment with:
 

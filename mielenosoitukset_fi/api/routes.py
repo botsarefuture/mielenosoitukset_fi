@@ -15,6 +15,9 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.users.BPs.chat_ws import serialize_message
 from mielenosoitukset_fi.utils.classes import Demonstration
 from mielenosoitukset_fi.utils.database import stringify_object_ids
+from mielenosoitukset_fi.utils.public_pagination import (
+    PUBLIC_DEMONSTRATION_ORDER, public_page_args, public_page_metadata,
+)
 from mielenosoitukset_fi.utils.notifications import create_notification    # NEW
 from mielenosoitukset_fi.utils.analytics import get_prepped_data
 from mielenosoitukset_fi.utils.demo_localization import (
@@ -146,7 +149,9 @@ def make_cache_key():
     params = request.args.to_dict(flat=True)
     # sort keys to make order irrelevant
     params_str = json.dumps(params, sort_keys=True)
-    return "demonstrations:" + hashlib.md5(params_str.encode("utf-8")).hexdigest()
+    # Version the ordering/metadata contract; old cached pages must not survive
+    # deployment with date-only order or missing result ranges.
+    return "demonstrations:page-v2:" + hashlib.md5(params_str.encode("utf-8")).hexdigest()
 
 
 def _case_insensitive_contains(value):
@@ -332,11 +337,7 @@ def list_demonstrations():
             pass
 
     # --- Pagination ---
-    try:
-        page = max(int(request.args.get("page", 1)), 1)
-        per_page = max(int(request.args.get("per_page", 20)), 1)
-    except ValueError:
-        page, per_page = 1, 20
+    page, per_page = public_page_args(request.args)
 
     # --- Prepare date ranges ---
     today = datetime.now().date()
@@ -423,7 +424,7 @@ def list_demonstrations():
         )
         for demo in (
             mongo.demonstrations.find(query, PUBLIC_DEMONSTRATION_LIST_PROJECTION)
-            .sort("date", 1)
+            .sort(PUBLIC_DEMONSTRATION_ORDER)
             .skip((page - 1) * per_page)
             .limit(per_page)
         )
@@ -454,10 +455,7 @@ def list_demonstrations():
 
     # --- Response object to cache ---
     response_data = {
-        "page": page,
-        "per_page": per_page,
-        "total": total,
-        "total_pages": total_pages,
+        **public_page_metadata(page, per_page, total, len(paginated)),
         "next_url": next_url,
         "prev_url": prev_url,
         "results": paginated,

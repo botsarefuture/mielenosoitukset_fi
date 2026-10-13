@@ -14,6 +14,24 @@
 
 - Privileged user actions now share target/role/delegation checks across edit and save routes, reject self-escalation and cross-level password-reset forcing, and use explicit global capabilities. User-action request audits no longer serialize form bodies, cookies, headers or user credential records.
 
+- Back/Forward restores date-picker constraints alongside the fields and no longer counts restored result requests as new searches.
+
+- Historical date ranges can now move backward in the calendar, including ranges restored with only an end date; clearing the range restores the future-only default.
+
+- Public list, city and tag date ranges now share a pinned locally served picker with active-locale calendar names, reliable history/clear bounds, keyboard calendar entry and theme-safe states. Invalid typed dates remain visible for validation, and manual input still works if the picker asset fails.
+
+- City suggestions are now anchored to their own search field, preventing desktop dropdown overlap and horizontal overflow.
+
+- Swedish listing summaries now use count-neutral wording for both one and many results. Runtime catalog/browser coverage and the individual test-review inventory include the retry translation regression.
+
+- Public list retry controls now use compiled English and Swedish translations; stylesheet version checks accept subsequent valid cache bumps instead of pinning an obsolete version.
+
+- Public list, city and tag search forms now share visible, linked field labels and responsive product-token styling, with 44px controls and announced date errors. FI/EN/SV labels distinguish start/end dates correctly while existing field names, filters and fixed city context remain unchanged.
+
+- Public list, city and tag filters now restore from shareable URLs, reset to page one on search, and follow Back/Forward history with accurate deep-page ranges. City/tag context cannot be overridden by conflicting URL values; shared removable city chips are text-safe, and invalid tag pagination no longer raises HTTP 500.
+
+- Public demonstration lists now ignore stale search responses, keep cumulative result counts, prevent overlapping page appends, and offer localized retry feedback. Shared load-more controls disappear correctly at the last page in both themes; the main list's date-picker locale safely defaults for first-time visitors.
+
 - Every case route now declares its exact permission and city-scope policy, with undeclared routes rejected; case lists reuse one edit scope for automatic closure instead of querying permissions per row.
 
 - Case lists, details and actions now enforce explicit case permissions and inherit city scope from linked demonstrations; ordinary accounts and out-of-city direct requests are rejected. City admins can receive case list/view/edit grants without gaining global blocklist or organization controls.

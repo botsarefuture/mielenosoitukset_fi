@@ -8,7 +8,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** DATA-01 — public list pagination/count contract, then browser summary/URL/race behavior. Independent security slices await review.
+- **Next:** UI-01 — cropper accessibility, then city-autocomplete keyboard behavior. Shared search labels and real date-range lifecycle are in review; DATA-01 integration/acceptance and independent security slices remain pending.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
@@ -90,8 +90,8 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 
 ### Product and shared UI
 
-- [ ] **UI-01 · P1:** Complete labels, focus and cropper behavior first.
-- [ ] **UI-02 · P2:** Consolidate homepage/city discovery using the existing shared design language; verify icon centering, content widths, restrained hero hierarchy, themes and mobile.
+- [ ] **UI-01 · P1:** Shared labels and real pinned picker locale/min-max/selected-state/history/clear/keyboard/theme behavior are implemented and verified on this stack. Cropper, autocomplete keyboard, broader assistive-technology/browser and integration/release acceptance remain pending.
+- [ ] **UI-02 · P2:** Consolidate homepage/city discovery using the existing shared design language; verify icon centering, content widths, restrained hero hierarchy, themes and mobile. Request-state browser evidence exposed remaining whole-page horizontal overflow: a 390px demonstration-list full-page capture is 447px wide despite the new summary fitting the viewport. Diagnose overflowing page/footer elements before declaring mobile acceptance.
 - [ ] **FORM-01 · P2:** Organization details/forms and submission wizard migrate incrementally to shared sections/fields/modals. Preserve current permission and request contracts.
 - [ ] **UI-03 · P2:** Consolidate detail styles and invite modal, then shared error/status pages. Preserve recurring canonical URLs, cancellation notices, layout preferences and future-event navigation.
 - [ ] **UI-04 · P2:** Audit remaining public/admin form, list, editor and feedback surfaces against the written product standard, including dropdown clipping (#743), moderation affordances (#552) and #770's visual-quality expectations. Admin #677 is completed work, not a reason to repeat its migration.
@@ -131,7 +131,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. After merging main fb663b51, this branch has **1,039 definitions across 143 files**, with 67 assessed definitions. Other open branches are excluded until integration reconciliation. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Verified branch snapshot after integrating main 4cb8eefe: **1,054 definitions across 147 files**, with 81 assessed definitions. Other open branches are excluded until integration reconciliation. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 
@@ -175,10 +175,11 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | QA-01 | P1 | In progress | Codex | M1, then ongoing | Thirty-seven MFA/account/passkey/organization-action definitions reviewed in the combined inventory; remaining authentication/permission tests pending. |
 | SEC-02 | P1 | In review | Codex | M1 | #915 merged; #916 admin status open; #763 integration/release evidence pending. |
 | SEC-03 | P0/P1 | In review | Codex | M1 | #918 merged; #917 case scope and #919 user hierarchy/delegation open. Remaining role/audit requirements pending. |
-| QA-02 | P1 | In progress | Codex | M2–M3 | Five public API definitions reviewed; clearance hierarchy/global-scope and audit search regressions are assessed in #919. Remaining data/workflow tests pending. |
-| QA-03–QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI, browser/locale and operations/remaining tests. |
-| DATA-01 | P1 | In progress | Codex | M2 | #920 shares date/time/ID order and page metadata; matching named approved/order index now removes blocking SORT in disposable-DB evidence. #921 browser state/summary slice open. URL/filter/history and broader acceptance remain next; production index rollout/verification requires authorized release. |
-| UI-01 | P1 | Backlog | Unassigned | M2 | Verify labels/cropper and define focused browser acceptance. |
+| QA-02 | P1 | In progress | Codex | M2–M3 | Five API, five request-state, five listing-contract and three URL/history definitions reviewed on this stack. Remaining data/workflow tests pending. |
+| QA-03, QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI and operations/remaining tests. |
+| QA-04 | P2 | In progress | Codex | M2, then M4–M6 | Two field, four existing accessibility and four real-picker definitions assessed; broader browser/assistive-technology evidence remains pending. |
+| DATA-01 | P1 | In progress | Codex | M2 | #920 indexed API foundation and #921 request-state slices open; URL/history slice implements shared restoration/reset, fixed context, page ranges and safe chips. Bounds/legacy times, integration and release acceptance remain pending. |
+| UI-01 | P1 | In progress | Codex | M2 | Shared search labels and pinned real picker locale/history/clear/keyboard/theme behavior implemented and verified on this stack. Cropper, autocomplete keyboard and broader acceptance remain pending. |
 | DATA-02 / OPS-01 | P1 | Backlog | Unassigned | M3 | Verify #908 and load the existing continuity plan. |
 | ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |
 | All other IDs | As assigned above | Backlog | Unassigned | Assign before starting | Verify requirement, dependencies and acceptance before promoting to Ready. |

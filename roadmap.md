@@ -10,6 +10,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 - **Next:** Review DATA-01a/#927 and DATA-01b bounded automatic loading, then resume UI-01 cropper accessibility and city-autocomplete keyboard behavior. Open PRs are not deployed fixes.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
+- **Current merge gate:** #928 now targets main and includes #927 plus its approved resolved-language cache correction. Mounted-page attendance cancellation is fixed with a delayed-request regression; 76 focused cases passed. Await required CI and current review before normal stack merge; no release claim.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
 - **Tracking:** stable task IDs below; detailed implementation lives in linked issues/PRs. Tests have their own [review inventory](docs/test-review-inventory.md).

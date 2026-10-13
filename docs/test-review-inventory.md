@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified bounded-loading snapshot based on main 175cb1fd, 2026-10-13: 151 Python test files; 1,095 definitions; 132 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified bounded-loading review snapshot based on main 175cb1fd, 2026-10-13: 152 Python test files; 1,096 definitions; 133 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1248,6 +1248,12 @@ DATA-01 / QA-02, 2026-10-12, Codex, P1; stacked on #920. Browser harnesses use a
 | `test_public_listing_summary_is_shared_responsive_and_keyboard_operable` | Three list families share live summary, keyboard load-more, final hidden control and viewport-fitting summary in both themes/sizes. | Twelve cases: list/city/tag × light/dark × 1440/390px. Actual UI, synthetic API and actual pinned date picker; page errors asserted, summary geometry checked. Does not prove whole-page overflow, all date-picker behavior or live data. | Keep. |
 
 Screenshots of representative list states are inspected separately. Existing page/footer overflow and full URL/history behavior remain explicit follow-up work; this review does not silently declare broad UI acceptance.
+
+## tests/test_public_attendance_window.py
+
+- [x] `test_slow_attendance_survives_append_and_cancels_only_eviction_or_search`
+
+DATA-01b review correction, 2026-10-13, Codex, P2: actual shipped attendance updater, loader and bounded window with controlled delayed fetch responses and lightweight card rendering. Six pages leave at most five pending page requests; the removed page is aborted while all retained-page requests survive. Completing a retained request clears its actual loading element. Replacement search aborts remaining old requests and leaves one new active request/page. No live friends API, real-user graph, or delivery-timing guarantee. Keep: catches the former unconditional append cancellation; final combined focused run passed 76 cases.
 
 ## tests/test_public_windowed_loading.py
 

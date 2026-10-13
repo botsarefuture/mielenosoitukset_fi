@@ -192,7 +192,7 @@ let listRequestAbort = null;
 let displayedResults = 0;
 let displayedStart = 0;
 let appendGeneration = null;
-let friendsRequestAbort = null;
+const friendsRequests = new Map();
 
 async function loadDemos(page = 1, append = false, extraParams = {}, previous = false, manual = false) {
   const pageWindow = window.publicListWindow;
@@ -202,7 +202,8 @@ async function loadDemos(page = 1, append = false, extraParams = {}, previous = 
   if (!append) {
     listRequestGeneration += 1;
     listRequestAbort?.abort();
-    friendsRequestAbort?.abort();
+    friendsRequests.forEach(controller => controller.abort());
+    friendsRequests.clear();
     listRequestAbort = new AbortController();
     appendGeneration = null;
   }
@@ -291,10 +292,22 @@ async function loadDemos(page = 1, append = false, extraParams = {}, previous = 
     }
 
 
-    // Fetch friends attending in one batch
-    friendsRequestAbort?.abort();
-    friendsRequestAbort = new AbortController();
-    getFriendsAttending(newCards, friendsRequestAbort.signal);
+    // Retain pending attendance for every mounted page. Cancel only evicted
+    // pages; slow earlier requests must not leave visible cards loading forever.
+    for (const [node, controller] of friendsRequests) {
+      if (node instanceof Element && !node.isConnected) {
+        controller.abort();
+        friendsRequests.delete(node);
+      }
+    }
+    if (newCards.length) {
+      const node = newCards[0].closest('.public-list-page') || newCards[0];
+      const controller = new AbortController();
+      friendsRequests.set(node, controller);
+      Promise.resolve(getFriendsAttending(newCards, controller.signal)).finally(() => {
+        if (friendsRequests.get(node) === controller) friendsRequests.delete(node);
+      });
+    }
 
     setup_grid_navigation(newCards);
 
@@ -414,7 +427,7 @@ function getFriendsAttending(demoCards, signal) {
     return;
   }
 
-  fetch('/api/friends-attending', {
+  return fetch('/api/friends-attending', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ demo_ids: demoIds }),

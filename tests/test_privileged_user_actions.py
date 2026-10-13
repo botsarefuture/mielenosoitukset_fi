@@ -127,17 +127,19 @@ def test_hard_coded_identity_has_no_hierarchy_exception():
 
 def test_admin_user_audit_excludes_credentials_and_request_payload(admin_client, db, seeded_data):
     marker = "synthetic-private-payload"
-    response = admin_client.post("/admin/user/api/force_password_change/", json={
+    response = admin_client.post("/admin/user/api/force_password_change/", query_string={'secret': marker}, json={
         "user_id": str(seeded_data["user_id"]), "password": marker,
     }, headers={"Authorization": marker})
     assert response.status_code == 200
     logs = list(db.admin_logs.find({"event": "admin_user_request"}))
     assert logs
     assert marker not in repr(logs)
+    assert logs[0]['request']['args'] == {'secret': []}
     assert "password_hash" not in repr(logs)
     action = db.admin_logs.find_one({"event": "user_password_reset_required"})
     assert action["entity_id"] == str(seeded_data["user_id"])
     assert marker not in repr(action)
+    assert action['request']['args'] == {'secret': []}
 
 
 @pytest.mark.parametrize("role,expected_status", [("god", 302), ("global_admin", 403)])

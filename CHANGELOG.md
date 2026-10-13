@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- User-management audit contexts now retain query parameter names without their values, including secondary action logs, so secrets in URLs are not persisted.
+
 - Full-permission administrators with a legacy admin base role can again complete cleared global-admin promotions; target hierarchy, self-escalation and board-clearance checks remain enforced.
 
 - Privileged user actions now share target/role/delegation checks across edit and save routes, reject self-escalation and cross-level password-reset forcing, and use explicit global capabilities. User-action request audits no longer serialize form bodies, cookies, headers or user credential records.

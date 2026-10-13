@@ -65,7 +65,7 @@ Use one task record: **ID · priority · status · owner · milestone · issue/P
 | **M5 — Localization and maintainability** | P2/P3 | I18N-01, CLEAN-01, CLEAN-02 | Complete route-family translations and remove verified styling/dead-code debt. | Actual FI/EN/SV translations; reference audit before deletion; legacy calendar decision; smaller inline baseline and valid shipping variables/cache keys. |
 | **M6 — Acceptance** | P1 gate | ACCEPT-01, QA-01–QA-05 | Reconcile all delivered work with original requirements and test reviews. | Individual reviews complete, required CI and representative browser checks pass, trackers reflect actual merge/release evidence. Outstanding repository work remains visible. |
 
-Inspected main `3c2c8d3c` contains merged #901, #915 and #918. #916, #917 and #919 are independent open security slices. Merge does not establish release acceptance. DATA-01 now progresses independently, starting with both public APIs; retain #900 recurring discovery behavior.
+Inspected main `60992b19` contains #901, #915, #918, #917 and the public #920–#924 stack. #921/#924 were merged; intermediate #922/#923 were closed only after their commits were verified in main. #916/#919 account-management changes are integrated for one final review/CI/merge in #919. Merge does not establish release acceptance; retain #900 recurring discovery behavior.
 
 Test review runs alongside each milestone. Operations and privacy planning may proceed independently when their dependencies and ownership are clear. A confirmed P0/P1 failure takes precedence over the milestone sequence.
 
@@ -75,7 +75,7 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 
 - [ ] **SEC-01 · P1:** #901 MFA challenge implementation is merged; preserve the shared legacy/no-JS behavior and obtain required release acceptance evidence.
 - [ ] **SEC-02 · P1:** Inactive/banned-account enforcement (#763): password/MFA/passkey and Flask-Login session-loading changes implemented on `codex/account-access-enforcement`, with fourteen account/passkey test reviews. Admin status visibility and permission-protected activate/deactivate workflow remain pending; retain #763 until those requirements are proved.
-- [ ] **SEC-03 · P0/P1:** #918 target-organization/input validation is merged; #917 case scope and #919 user-action hierarchy/delegation are open. Broader role lifecycle, concurrency, destructive-action and canonical audit requirements remain tracked.
+- [ ] **SEC-03 · P0/P1:** #918 target-organization/input validation and #917 case scope are merged; #919 user-action hierarchy/delegation, global clearance scope and audit searchability are in the final account-management integration. Broader role lifecycle, concurrency, destructive-action and canonical audit requirements remain tracked.
 - [ ] **SEC-04 · P1:** Reconcile token/approval lifecycle requirements and prior completed trackers against current routes; prove revocation, expiry, replay behavior, idempotent decisions, case closure, audit and notification effects for every entrypoint.
 - [ ] **SEC-05 · P1:** Review incident #912/#913 protections and credential/session lifecycle regressions before touching related code. Keep secrets out of documentation and audit data.
 
@@ -131,7 +131,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Verified branch snapshot after integrating main 4cb8eefe: **1,054 definitions across 147 files**, with 81 assessed definitions. Other open branches are excluded until integration reconciliation. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Verified #916/#919 integration on main 60992b19: **1,084 definitions across 149 files**, with 121 assessed definitions. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 
@@ -173,13 +173,13 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 |---|---|---|---|---|---|
 | SEC-01 | P1 | Merged | Codex | M1 | #901 in inspected main `3c2c8d3c`; release acceptance not established here. |
 | QA-01 | P1 | In progress | Codex | M1, then ongoing | Thirty-seven MFA/account/passkey/organization-action definitions reviewed in the combined inventory; remaining authentication/permission tests pending. |
-| SEC-02 | P1 | In review | Codex | M1 | #915 merged; #916 admin status open; #763 integration/release evidence pending. |
-| SEC-03 | P0/P1 | In review | Codex | M1 | #918 merged; #917 case scope and #919 user hierarchy/delegation open. Remaining role/audit requirements pending. |
+| SEC-02 | P1 | In review | Codex | M1 | #915 merged; #916 integrated into #919 with shared status-action visibility and synchronized duplicate-submit coverage. #763 integration/release acceptance remains pending. |
+| SEC-03 | P0/P1 | In review | Codex | M1 | #918/#917 merged; #919 combines user hierarchy/delegation, global clearance gates and searchable redacted audits with #916. Remaining role/audit acceptance is pending. |
 | QA-02 | P1 | In progress | Codex | M2–M3 | Five API, five request-state, five listing-contract and three URL/history definitions reviewed on this stack. Remaining data/workflow tests pending. |
 | QA-03, QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI and operations/remaining tests. |
 | QA-04 | P2 | In progress | Codex | M2, then M4–M6 | Two field, four existing accessibility and four real-picker definitions assessed; broader browser/assistive-technology evidence remains pending. |
-| DATA-01 | P1 | In progress | Codex | M2 | #920 indexed API foundation and #921 request-state slices open; URL/history slice implements shared restoration/reset, fixed context, page ranges and safe chips. Bounds/legacy times, integration and release acceptance remain pending. |
-| UI-01 | P1 | In progress | Codex | M2 | Shared search labels and pinned real picker locale/history/clear/keyboard/theme behavior implemented and verified on this stack. Cropper, autocomplete keyboard and broader acceptance remain pending. |
+| DATA-01 | P1 | In progress | Codex | M2 | #920–#924 public API/request/history/search/picker code is in main 60992b19. Bounds/legacy times, broader integration and release acceptance remain pending. |
+| UI-01 | P1 | In progress | Codex | M2 | Shared search labels and real picker are merged through #924, including review fixes. Cropper, autocomplete keyboard and broader acceptance remain pending. |
 | DATA-02 / OPS-01 | P1 | Backlog | Unassigned | M3 | Verify #908 and load the existing continuity plan. |
 | ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |
 | All other IDs | As assigned above | Backlog | Unassigned | Assign before starting | Verify requirement, dependencies and acceptance before promoting to Ready. |

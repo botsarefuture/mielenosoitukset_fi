@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified branch snapshot after integrating main 4cb8eefe, 2026-10-13: 147 Python test files; 1,054 definitions; 81 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Other open branches are excluded; this is not completed suite review.
+Verified #916/#919 integration snapshot on main 60992b19, 2026-10-13: 149 Python test files; 1,084 definitions; 121 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -48,6 +48,47 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 | `test_password_and_mfa_login_reject_disabled_account` | Correct first/second factors cannot establish session for disabled user; preflight returns invalid. | Four status × MFA combinations; real DB update, exact redirect and absent user ID. TOTP time is real; no expiry boundary claim. | Keep. |
 | `test_existing_session_loses_access_after_account_disabled` | Protected access succeeds before status update and fails afterward. | Inactive and banned independently; same client retains existing cookie; verifies loader enforcement, not permanent revocation after future reactivation or WebSocket events. | Keep. |
 | `test_legacy_account_without_active_field_remains_enabled` | Missing legacy active flag defaults enabled. | Real model and successful password session; ensures no forced migration requirement. | Keep. |
+
+## tests/test_admin_account_status.py
+
+- [x] `test_same_status_token_has_one_winner_under_concurrent_submit`
+- [x] `test_status_action_visibility_uses_shared_hierarchy`
+
+Approved review follow-up, 2026-10-13: the synchronized race uses two independent clients with the same cookie/proof and a barrier immediately before the real conditional Mongo update, after both requests have read their snapshots. Exactly one 302, one 409, one persisted version increment and one action audit must result. The collection method wrapper adds synchronization only; it does not mock the write outcome. The visibility test covers lower/self/peer/higher targets, exact template link presence/absence and a membership-only permission denied by the shared predicate. No sleeps or production requests. Both definitions are retained; sequential disable/enable/replay coverage is not replaced. Final combined run and revision are recorded in the integration PR.
+Review follow-up, 2026-10-13: real Flask/MongoDB confirmation tests prove independent target tabs survive each other's consumption, the eight-nonce bound rejects evicted forms, and a supported superuser can list/change ordinary accounts. Runtime GNUTranslations tests prove FI/EN/SV account-status contexts do not replace uncontextualized case labels. Focused result: 17 parameterized cases passed; no claim of a full-suite or production run.
+
+- [x] `test_independent_confirmation_tabs_keep_their_nonces`
+- [x] `test_confirmation_nonce_collection_is_bounded`
+- [x] `test_superuser_can_list_and_change_ordinary_account_status`
+- [x] `test_compiled_status_labels_have_distinct_gettext_context`
+
+- [x] `test_admin_can_disable_and_reenable_with_audited_confirmation`
+- [x] `test_admin_cannot_change_self_or_peer_or_higher_status`
+- [x] `test_viewer_without_edit_permission_cannot_change_status`
+- [x] `test_status_confirmation_rejects_missing_tampered_or_wrong_target_proof`
+- [x] `test_saved_status_form_cannot_replay_after_disable_enable_cycle`
+- [x] `test_user_list_and_editor_show_account_status`
+- [x] `test_status_confirmation_expires`
+- [x] `test_confirmation_is_bound_to_the_authenticated_actor`
+- [x] `test_confirmation_layout_and_keyboard_actions_in_both_themes`
+
+The original nine definitions are supplemented by six reviewed follow-up definitions. Parameter expansion is reported separately from definition counts.
+
+SEC-02 / QA-01 review, 2026-10-12, Codex, P1; real Flask sessions, signed forms and MongoDB. No mocked permission or write path. The shared seeded identities are isolated by the test fixtures. The expiry case uses a dedicated old-timestamp signer solely for its confirmation token; the session signer and application clock remain unchanged.
+
+| Definition | Requirement / assertion | Cases, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_admin_can_disable_and_reenable_with_audited_confirmation` | DB state changes, activation removes ban, audit records state and excludes proof. | Actual signed confirmation and audit writes; email notification not part of this action. | Keep. |
+| `test_admin_cannot_change_self_or_peer_or_higher_status` | GET and POST denied for unauthorized hierarchy. | Self, equal-level and higher-level parameter cases; preserves existing hierarchy policy. | Keep. |
+| `test_viewer_without_edit_permission_cannot_change_status` | A scoped admin lacking EDIT_USER cannot read confirmation or mutate. | Explicit lower-privilege fixture, exact 403; broader scope semantics remain SEC-03. | Keep. |
+| `test_status_confirmation_rejects_missing_tampered_or_wrong_target_proof` | Missing/modified proof or different target rejected. | Real signer; no cryptographic stub. | Keep. |
+| `test_saved_status_form_cannot_replay_after_disable_enable_cycle` | Original cookie/proof rejected despite matching active state later. | Real saved cookie, two accepted actions, exact conflict response verifies versioning. | Keep. |
+| `test_user_list_and_editor_show_account_status` | List and editor expose disabled state and status heading. | Actual rendered routes; semantic text checks, not pixel/theme validation. | Keep. |
+| `test_status_confirmation_expires` | Expired signed proof rejected. | Controlled signer timestamp; no sleep or altered application clock. | Keep. |
+| `test_confirmation_is_bound_to_the_authenticated_actor` | Another privileged actor cannot use leaked proof, even with copied nonce. | Distinct allowed admin, exact 400 and unchanged target state. | Keep. |
+| `test_confirmation_layout_and_keyboard_actions_in_both_themes` | Hero/action visible, no horizontal body overflow, keyboard reaches submit from cancel. | Real authenticated route at 390/1440px in light/dark with local resources; verifies geometry/focus, not a full contrast or pixel-quality audit. | Keep. |
+
+Evidence: 37 focused admin-status/user/fresh-deletion backend cases passed, followed by the focused Chromium layout/keyboard case across both widths/themes. Final commit is recorded in the delivery PR. New template uses the existing hero, form-section, buttons and sticky actions; broader contrast/visual acceptance remains QA-04.
 
 ## tests/test_admin_audit_indexes.py
 

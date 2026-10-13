@@ -13451,3 +13451,39 @@ msgstr "The sign-in confirmation has expired. Enter your username and password a
 #: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/users/BPs/passkeys.py
 msgid "Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon."
 msgstr "This account is disabled. Contact the site administrators."
+
+msgid "Käyttäjän käyttötila"
+msgstr "User account status"
+
+msgid "Käyttötila"
+msgstr "Account status"
+
+msgctxt "account-status"
+msgid "Estetty"
+msgstr "Banned"
+
+msgctxt "account-status"
+msgid "Suljettu"
+msgstr "Disabled"
+
+msgctxt "account-status"
+msgid "Aktiivinen"
+msgstr "Active"
+
+msgid "Aktivoi käyttäjä"
+msgstr "Activate user"
+
+msgid "Sulje käyttäjätili"
+msgstr "Disable account"
+
+msgid "Vahvista kirjautumisoikeuden muutos."
+msgstr "Confirm the change to sign-in access."
+
+msgid "Käyttäjän käyttötila päivitetty."
+msgstr "User account status updated."
+
+msgid "Aktivointi sallii kirjautumisen ja poistaa mahdollisen käyttöeston. Rooli ja käyttöoikeudet säilyvät ennallaan."
+msgstr "Activation allows sign-in and removes any account ban. The role and permissions stay unchanged."
+
+msgid "Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta."
+msgstr "Disabling blocks sign-in and access to protected pages through existing sessions. User data is not deleted."

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Back/Forward restores date-picker constraints alongside the fields and no longer counts restored result requests as new searches.
+
 - Historical date ranges can now move backward in the calendar, including ranges restored with only an end date; clearing the range restores the future-only default.
 
 - Public list, city and tag date ranges now share a pinned locally served picker with active-locale calendar names, reliable history/clear bounds, keyboard calendar entry and theme-safe states. Invalid typed dates remain visible for validation, and manual input still works if the picker asset fails.

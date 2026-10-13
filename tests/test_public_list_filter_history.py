@@ -55,6 +55,8 @@ def test_public_filter_url_restores_page_and_back_forward(live_server, browser_p
     browser_page.wait_for_function("document.getElementById('listing-result-summary').textContent.includes('3–4')")
     assert browser_page.locator('[name=search]').input_value() == 'new search'
     assert requests[-1]['location'] == 'place' and requests[-1]['date_end'] == '2099-01-31'
+    assert requests[-1]['history_restore'] == '1'
+    assert 'history_restore' not in parse_qs(urlsplit(browser_page.url).query)
     for key, value in fixed.items():
         assert requests[-1][key] == value
     assert not errors

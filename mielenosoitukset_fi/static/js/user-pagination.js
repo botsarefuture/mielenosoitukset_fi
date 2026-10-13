@@ -150,6 +150,11 @@
       names.forEach(name => {
         if (field(name)) field(name).value = params[name] || '';
       });
+      // Clear stale cross-field limits before setDate validates restored dates.
+      const pickers = ['start', 'end'].map(edge => field(`display_date_${edge}`)?._flatpickr);
+      pickers.forEach(picker => {
+        picker?.set?.('minDate', undefined); picker?.set?.('maxDate', undefined);
+      });
       ['start', 'end'].forEach(edge => {
         const display = field(`display_date_${edge}`);
         const value = params[`date_${edge}`] || '';
@@ -204,7 +209,7 @@
       return onChange({ ...params }, page);
     }
 
-    const restore = () => { hydrate(); return onChange({ ...params }, page); };
+    const restore = () => { hydrate(); return onChange({ ...params, history_restore: '1' }, page); };
     global.addEventListener('popstate', restore);
     hydrate(); write();
     return { get params() { return { ...params }; }, get page() { return page; }, submit, renderCities,

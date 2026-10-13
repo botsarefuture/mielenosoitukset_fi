@@ -4,6 +4,22 @@
 
 ## UNRELEASED
 
+- User editors and lists now share the account-status target hierarchy check; synchronized duplicate-submit coverage verifies that only one use of a confirmation token succeeds.
+
+- Admin account status now supports superusers and concurrent confirmation tabs; status labels have separate translation contexts and compiled FI/EN/SV catalogs.
+
+- Admin user lists and editors now show enabled, disabled and banned status; authorized administrators can confirm activation or disabling with scoped expiring CSRF protection and stale-form/replay checks.
+
+- Clearance routes now require explicit global authority, and the legacy user clearance check enforces target hierarchy. User-request audit metadata is searchable by actor in the admin log filter.
+
+- User-management super-audit entries now also redact query values, preventing the independent audit layer from retaining secrets already removed from primary admin logs.
+
+- User-management audit contexts now retain query parameter names without their values, including secondary action logs, so secrets in URLs are not persisted.
+
+- Full-permission administrators with a legacy admin base role can again complete cleared global-admin promotions; target hierarchy, self-escalation and board-clearance checks remain enforced.
+
+- Privileged user actions now share target/role/delegation checks across edit and save routes, reject self-escalation and cross-level password-reset forcing, and use explicit global capabilities. User-action request audits no longer serialize form bodies, cookies, headers or user credential records.
+
 - Back/Forward restores date-picker constraints alongside the fields and no longer counts restored result requests as new searches.
 
 - Historical date ranges can now move backward in the calendar, including ranges restored with only an end date; clearing the range restores the future-only default.

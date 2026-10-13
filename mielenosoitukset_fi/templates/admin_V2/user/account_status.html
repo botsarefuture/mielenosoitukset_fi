@@ -1,0 +1,26 @@
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% block main_content %}
+<div class="admin-page">
+  {{ admin_page_hero(
+    _('Käyttäjän käyttötila'), _('Vahvista kirjautumisoikeuden muutos.'), _('Käyttäjähallinta'),
+    [(_('Käyttäjät'), url_for('admin_user.user_control')), (_('Käyttötila'), none)],
+    back_url=url_for('admin_user.user_control'), back_label=_('Käyttäjät')
+  ) }}
+  <form method="post" class="admin-form">
+    <input type="hidden" name="status_token" value="{{ status_token }}">
+    <section class="admin-form-section">
+      <div class="admin-form-section__header"><h2>{{ user.displayname or user.username }}</h2><p>@{{ user.username }}</p></div>
+      {% if enable %}
+        <p>{{ _('Aktivointi sallii kirjautumisen ja poistaa mahdollisen käyttöeston. Rooli ja käyttöoikeudet säilyvät ennallaan.') }}</p>
+      {% else %}
+        <p>{{ _('Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta.') }}</p>
+      {% endif %}
+    </section>
+    <div class="admin-sticky-actions">
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin_user.user_control') }}">{{ _('Peruuta') }}</a>
+      <button class="btn {{ 'btn-primary' if enable else 'btn-danger' }}" type="submit">{{ _('Aktivoi käyttäjä') if enable else _('Sulje käyttäjätili') }}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

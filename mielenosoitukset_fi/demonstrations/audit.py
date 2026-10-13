@@ -193,7 +193,9 @@ def log_super_audit(
             doc["request"] = {
                 "path": request_path,
                 "method": request.method,
-                "args": request.args.to_dict(flat=False),
+                "args": ({key: [] for key in request.args}
+                         if request.blueprint == "admin_user"
+                         else request.args.to_dict(flat=False)),
                 "form_keys": list(request.form.keys()),
                 "remote_addr": get_client_ip(),
                 "user_agent": getattr(request.user_agent, "string", str(request.user_agent)),

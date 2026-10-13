@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
+
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.
 
 - Automatically loaded lists preserve pending friends-attendance requests for mounted pages; only evicted pages or replaced searches cancel them.

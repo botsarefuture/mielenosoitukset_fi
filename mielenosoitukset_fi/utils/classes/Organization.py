@@ -71,7 +71,10 @@ class Organization(BaseEntity):
             user.permissions = m.permissions
             user._ship_id    = m._id
             members.append(user)
-        self._members = members
+        if self._members is None:
+            self._members = members
+        else:
+            self._members[:] = members
 
     def is_member(self,  email: str = None, user_id: ObjectId = None) -> bool:
         if not email and not user_id:

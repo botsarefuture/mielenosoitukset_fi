@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- User-management super-audit entries now also redact query values, preventing the independent audit layer from retaining secrets already removed from primary admin logs.
+
 - User-management audit contexts now retain query parameter names without their values, including secondary action logs, so secrets in URLs are not persisted.
 
 - Full-permission administrators with a legacy admin base role can again complete cleared global-admin promotions; target hierarchy, self-escalation and board-clearance checks remain enforced.

@@ -140,6 +140,14 @@ def test_admin_user_audit_excludes_credentials_and_request_payload(admin_client,
     assert action["entity_id"] == str(seeded_data["user_id"])
     assert marker not in repr(action)
     assert action['request']['args'] == {'secret': []}
+    super_logs = list(db.super_audit_logs.find({'event': {'$in': [
+        'admin:admin_user_request', 'admin:user_password_reset_required',
+    ]}}))
+    assert {event['event'] for event in super_logs} == {
+        'admin:admin_user_request', 'admin:user_password_reset_required',
+    }
+    assert marker not in repr(super_logs)
+    assert all(event['request']['args'] == {'secret': []} for event in super_logs)
 
 
 @pytest.mark.parametrize("role,expected_status", [("god", 302), ("global_admin", 403)])

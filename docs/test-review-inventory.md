@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-142 Python test files; 1,029 test definitions (1,024 in 141 files under `tests/`, plus five standalone recurrence tests in one file). Fifty-three definitions have review records below; remaining entries are pending review. The origin-health deployment slice adds five definitions and reviews all eleven definitions in `test_deploy_build_sha.py`; it also records main's previously omitted index-provisioning test as pending. Separate open PR changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+Snapshot after merging main `4cb8eefe`, 2026-10-13: 143 Python test files; 1,042 definitions (1,037 in 142 files under `tests/`, plus five standalone recurrence tests). The origin-health deployment slice adds five definitions and reviews all eleven definitions in `test_deploy_build_sha.py`; it also records main's previously omitted index-provisioning test as pending. Other open PRs are excluded. This tracked-Python AST inventory excludes fixtures and parameter expansion and does not claim completed suite review. Individual review records follow; see [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -55,12 +55,23 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 
 ## tests/test_admin_case_bp.py
 
-- [ ] `test_accept_demo_closes_linked_support_case`
-- [ ] `test_case_pages_render_clean_support_case_views`
-- [ ] `test_approve_demo_token_closes_linked_support_case`
-- [ ] `test_reject_demo_token_closes_linked_support_case`
-- [ ] `test_deescalate_writes_case_history`
-- [ ] `test_auto_close_cases_respects_approved_field`
+- [x] `test_accept_demo_closes_linked_support_case`
+- [x] `test_case_pages_render_clean_support_case_views`
+- [x] `test_approve_demo_token_closes_linked_support_case`
+- [x] `test_reject_demo_token_closes_linked_support_case`
+- [x] `test_deescalate_writes_case_history`
+- [x] `test_auto_close_cases_respects_approved_field`
+
+SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Disposable MongoDB, seeded real demo/case/token registry, actual routes; external mail delivery isolated by existing fixtures. Final delivery PR records revision/run evidence. These cases do not prove approval retry idempotency or the whole token lifecycle.
+
+| Definition | Requirement / assertions | Cases, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_accept_demo_closes_linked_support_case` | Legacy approval closes linked case with canonical reason/action log. | Real admin POST and stored state; notification multiplicity not asserted. | Keep; broader idempotency remains SEC-04. |
+| `test_case_pages_render_clean_support_case_views` | Global list/detail render expected sections/demo. | Actual routes and content; no pixel/focus proof. | Keep; scoped read denial added separately. |
+| `test_approve_demo_token_closes_linked_support_case` | Registered approval token drives case closure/history. | Real token/registry and redirect; no replay or expiry variant here. | Keep. |
+| `test_reject_demo_token_closes_linked_support_case` | Registered rejection token drives rejected closure/history. | Symmetric case state assertions; sibling-token policy not covered. | Keep. |
+| `test_deescalate_writes_case_history` | Escalation cleared and canonical history field used. | Actual JSON route and DB state; scope denial covered below. | Keep. |
+| `test_auto_close_cases_respects_approved_field` | Background resolver recognizes approved flag and closes once. | Direct real DB job; test assumes isolated seeded cases for exact closed count. | Keep; read-only UI side effect tested below. |
 
 ## tests/test_admin_case_component_contract.py
 
@@ -442,6 +453,36 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 
 - [ ] `test_cities_page_renders`
 - [ ] `test_cities_page_contains_cards`
+
+## tests/test_case_city_scope.py
+
+- [x] `test_ordinary_user_cannot_read_cases`
+- [x] `test_city_case_list_and_detail_use_same_scope`
+- [x] `test_city_case_mutations_reject_foreign_targets`
+- [x] `test_city_admin_can_add_note_to_own_case`
+- [x] `test_case_relink_cannot_cross_city_boundary`
+- [x] `test_revoked_case_grant_loses_access`
+- [x] `test_view_only_case_grant_cannot_write_or_autoclose`
+- [x] `test_unlinked_case_and_global_tools_remain_outside_city_scope`
+- [x] `test_city_case_reply_and_close_reopen_are_scoped_and_persisted`
+- [x] `test_city_key_is_authoritative_over_conflicting_city_text`
+
+SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Real grants, case/demo records and Flask clients; no mocked permission or writes. Fixtures create unique actor/demo/case IDs and reuse canonical stored `type`, not the model attribute name `case_type`. External email delivery isolated; outbound message persistence still exercised. Final commit/run evidence is in the delivery PR.
+
+| Definition | Requirement / assertions | Cases and limitations | Disposition |
+|---|---|---|---|
+| `test_ordinary_user_cannot_read_cases` | Both list and direct detail deny a logged-in ordinary user. | Exact 403, closes previous login-only exposure. | Keep. |
+| `test_city_case_list_and_detail_use_same_scope` | Scoped navigation permission, own row visible, foreign row absent, direct scope enforced. | Real Helsinki/Turku records; query and detail compared. | Keep. |
+| `test_city_case_mutations_reject_foreign_targets` | Cross-city note/close/reopen rejected before any write. | Three endpoint parameter cases; full target document remains identical. | Keep. |
+| `test_city_admin_can_add_note_to_own_case` | Permitted internal note persists. | Real form and action log. | Keep. |
+| `test_case_relink_cannot_cross_city_boundary` | Known case cannot be moved to foreign demo. | Valid foreign demo ID and unchanged link. | Keep. |
+| `test_revoked_case_grant_loses_access` | Fresh requests respect grant revocation. | Same cookie, DB revoked marker; no cache-invalidation assumption across requests. | Keep. |
+| `test_view_only_case_grant_cannot_write_or_autoclose` | List read does not mutate approved case; POST and rendered note/close controls unavailable. | Actual stored-state equality and rendered HTML; no browser interaction proof. | Keep. |
+| `test_unlinked_case_and_global_tools_remain_outside_city_scope` | Unrouted case/global blocklist unavailable to city actor. | Removes linked demo and checks exact denials. | Keep. |
+| `test_city_case_reply_and_close_reopen_are_scoped_and_persisted` | Own support reply persists as outbound message; close/reopen state changes work. | Actual queue helper; does not prove external mail delivery. | Keep. |
+| `test_city_key_is_authoritative_over_conflicting_city_text` | Stale display city cannot override normalized key. | Deliberately contradictory stored fields, exact denial. | Keep. |
+
+Validation: 51 focused city/case/component/user-management cases passed, including the unchanged default city grant regression. Historical grant backfill and global case capabilities require explicit owner policy, not automatic privilege expansion.
 
 ## tests/test_city_assignment.py
 

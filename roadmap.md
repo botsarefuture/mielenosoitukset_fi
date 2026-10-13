@@ -8,7 +8,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** UI-01 — cropper accessibility, then city-autocomplete keyboard behavior. Shared search labels and real date-range lifecycle are in review; DATA-01 integration/acceptance and independent security slices remain pending.
+- **Next:** DATA-01a — bound public page sizes and out-of-range database work (verified resource-exhaustion gap). Then DATA-01b — automatic, memory-bounded listing loading; resume UI-01 cropper accessibility and city-autocomplete keyboard behavior afterward.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
@@ -65,7 +65,7 @@ Use one task record: **ID · priority · status · owner · milestone · issue/P
 | **M5 — Localization and maintainability** | P2/P3 | I18N-01, CLEAN-01, CLEAN-02 | Complete route-family translations and remove verified styling/dead-code debt. | Actual FI/EN/SV translations; reference audit before deletion; legacy calendar decision; smaller inline baseline and valid shipping variables/cache keys. |
 | **M6 — Acceptance** | P1 gate | ACCEPT-01, QA-01–QA-05 | Reconcile all delivered work with original requirements and test reviews. | Individual reviews complete, required CI and representative browser checks pass, trackers reflect actual merge/release evidence. Outstanding repository work remains visible. |
 
-Inspected main `60992b19` contains #901, #915, #918, #917 and the public #920–#924 stack. #921/#924 were merged; intermediate #922/#923 were closed only after their commits were verified in main. #916/#919 account-management changes are integrated for one final review/CI/merge in #919. Merge does not establish release acceptance; retain #900 recurring discovery behavior.
+Inspected main `175cb1fd` contains #901, #915, #918, #917, #916/#919 and the public #920–#924 stack. #921/#924 were merged; intermediate #922/#923 were closed only after their commits were verified in main. Merge does not establish release acceptance; retain #900 recurring discovery behavior.
 
 Test review runs alongside each milestone. Operations and privacy planning may proceed independently when their dependencies and ownership are clear. A confirmed P0/P1 failure takes precedence over the milestone sequence.
 
@@ -82,6 +82,8 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 ### Backend, data, jobs and integrations
 
 - [ ] **DATA-01 · P1:** Finish public pagination and totals; verify the API and browser controller together.
+  - **DATA-01a · P1 · In progress · Codex · M2:** Clamp public tag/demo/organization page sizes to 1–100; skip out-of-range database offsets; isolate old oversized cache entries. Seven individually reviewed test definitions, 92 focused cases passed locally on 2026-10-13. No production load test, deployment or broader denial-of-service-resistance claim.
+  - **DATA-01b · P2 · Ready · Codex · M2 · depends on DATA-01a:** Load near the viewport without requiring repeated button clicks. Bound concurrent requests and retained cards/data; preserve backscroll, focus, filter cancellation and URL/history restoration. Keep an accessible manual/retry fallback. Acceptance requires long-list memory/DOM bounds and slow/failing-network browser tests; naive unlimited append is not sufficient.
 - [ ] **DATA-02 · P1:** Resolve worker fencing/rebuild pruning (#908) with multi-worker, retry, crash and rebuild overlap evidence. Verify rather than assume historical analytics repair has run in production.
 - [ ] **DATA-03 · P2:** Review analytics accuracy/access/pagination (#551), large admin overview queries, and demonstration slow-query evidence from TODO.md. Establish measurement before index changes.
 - [ ] **DATA-04 · P1:** Verify email queue retries/idempotency, outgoing case reply history (#771), background job leadership and external service failure handling (#176). Define redacted audit metadata separately from user message retention.

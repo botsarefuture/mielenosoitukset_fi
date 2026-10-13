@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified #916/#919 integration snapshot on main 60992b19, 2026-10-13: 149 Python test files; 1,084 definitions; 121 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified public resource-limit snapshot based on main 175cb1fd, 2026-10-13: 150 Python test files; 1,091 definitions; 128 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1105,6 +1105,28 @@ UI-01 / QA-04 supporting review, 2026-10-12, Codex, P1. Anonymous real Flask res
 - [ ] `test_api_docs_chrome_is_theme_aware_and_portrait_safe`
 - [ ] `test_public_header_mobile_menu_and_theme_contract`
 - [ ] `test_public_navigation_remains_available_without_javascript`
+
+## tests/test_public_pagination_limits.py
+
+- [x] `test_public_page_size_is_bounded_and_existing_defaults_survive`
+- [x] `test_demo_apis_cap_the_real_query_and_return_bounded_metadata`
+- [x] `test_tag_page_materializes_only_the_bounded_page`
+- [x] `test_public_organization_api_cannot_bypass_page_size_limit`
+- [x] `test_enormous_out_of_range_pages_never_reach_database_skip`
+- [x] `test_public_cache_normalizes_page_sizes_and_excludes_old_unbounded_namespace`
+- [x] `test_old_oversized_cached_response_cannot_bypass_the_new_limit`
+
+DATA-01a / QA-02, P1; reviewed 2026-10-13 by Codex. Disposable local database and real Flask queries only; no production stress request. Together with existing public API/history/analytics coverage, 92 focused cases passed. These tests establish response/query bounds, not rate limiting or bounded browser memory.
+
+| Definition | Requirement / assertions | Fixtures, variants and limitations | Disposition |
+|---|---|---|---|
+| `test_public_page_size_is_bounded_and_existing_defaults_survive` | Maximum 100, minimum 1, malformed/default handling preserved. | Nine raw variants; direct shared parser, tag default 10. | Keep; fails without the cap. |
+| `test_demo_apis_cap_the_real_query_and_return_bounded_metadata` | Both APIs return 100 then 5 records with exact counts/ranges and no overlap. | 105 uniquely tagged real records; modern next URL carries bounded size. No production query-plan measurement. | Keep. |
+| `test_tag_page_materializes_only_the_bounded_page` | HTML tag context contains only 100 records and two pages. | Actual render signal, disconnected in finally; does not assess visual layout. | Keep. |
+| `test_public_organization_api_cannot_bypass_page_size_limit` | Organization endpoint applies the same bound, including last page. | 105 uniquely searchable local records; real database query. | Keep. |
+| `test_enormous_out_of_range_pages_never_reach_database_skip` | Four endpoint variants return empty results without huge Mongo offsets. | Cursor skip wrapper raises rather than mocking returned records; 100-digit page. Count cost remains outside this guarantee. | Keep. |
+| `test_public_cache_normalizes_page_sizes_and_excludes_old_unbounded_namespace` | Excessive and bounded query sizes share the new cache key. | Real request contexts; exact new namespace. | Keep. |
+| `test_old_oversized_cached_response_cannot_bypass_the_new_limit` | Pre-fix cache cannot bypass handler bounds; new stored payload is bounded. | Synthetic legacy cache marker, real database and handler. Does not prove a live Redis deployment. | Keep. |
 
 ## tests/test_public_date_range.py
 

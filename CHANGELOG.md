@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Public tag pages and demonstration/organization APIs now cap page size at 100. Out-of-range pages avoid unbounded database skips, and normalized cache keys cannot reuse older oversized result payloads.
+
 - User editors and lists now share the account-status target hierarchy check; synchronized duplicate-submit coverage verifies that only one use of a confirmation token succeeds.
 
 - Admin account status now supports superusers and concurrent confirmation tabs; status labels have separate translation contexts and compiled FI/EN/SV catalogs.

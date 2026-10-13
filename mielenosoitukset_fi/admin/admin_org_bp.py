@@ -877,14 +877,7 @@ def view_organization(org_id):
             invited_users.append({"email": invite, "role": "member"})
     # Now invited_users is always a list of dicts with email and role
 
-    memberships = MemberShip.all_in_organization(organization_id=ObjectId(org_id))
-    members = []
-    for m in memberships:
-        user = User.from_OID(m.user_id)
-        user.role = m.role
-        user.permissions = m.permissions
-        user._ship_id = m._id
-        members.append(user)
+    members = organization.members
 
     _log_org_event("organization_view", org_id=org_id)
     return render_template(

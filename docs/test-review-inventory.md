@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-142 Python test files; 1,023 test definitions (1,018 in 141 files under `tests/`, plus five standalone recurrence tests in one file). Forty-two definitions have review records below; remaining entries are pending review. This API pagination slice adds four definitions to main's reconciled 1,019-definition inventory, including the review-driven real MongoDB query-plan regression; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+Snapshot on PR #916 after merging main fb663b51, 2026-10-13: 144 Python test files; 1,039 definitions (1,034 in 143 files under tests/, plus five standalone recurrence tests). Other open PRs are excluded. This tracked-Python AST inventory excludes fixtures and parameter expansion and does not claim completed suite review. Individual review records follow; see the repository roadmap for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 

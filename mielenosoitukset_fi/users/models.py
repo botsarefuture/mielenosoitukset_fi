@@ -6,6 +6,7 @@ import pyotp, datetime
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.cities import normalize_city_key
+from mielenosoitukset_fi.utils.case_access import CASE_PERMISSIONS
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.classes.MemberShip import MemberShip
 #from mielenosoitukset_fi.utils.classes.BaseModel import BaseModel  # if still needed
@@ -494,6 +495,8 @@ class User(UserMixin):
             return True
         if perm in self.global_permissions:
             return True
+        if perm in CASE_PERMISSIONS:
+            return bool(self.scoped_city_keys_for(perm))
         
         if organization_id:
             ms = self.membership_for(organization_id)

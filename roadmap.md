@@ -10,7 +10,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 - **Next:** Review DATA-01a/#927 and DATA-01b bounded automatic loading, then resume UI-01 cropper accessibility and city-autocomplete keyboard behavior. Open PRs are not deployed fixes.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
-- **Current merge gate:** #928 now targets main and includes #927 plus its approved resolved-language cache correction. Mounted-page attendance and successful-retry scheduling are fixed with delayed-request regressions; 77 focused cases passed. Await required CI and current review before normal stack merge; no release claim.
+- **Current merge gate:** #928 targets main and integrates authorized #926/#927, including the admin orphan-member route fix and resolved-language cache correction. Mounted-page attendance and successful-retry scheduling have delayed-request regressions. Combined focused validation passed 88 cases; await required CI and current review before normal stack merge. No release claim.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
 - **Tracking:** stable task IDs below; detailed implementation lives in linked issues/PRs. Tests have their own [review inventory](docs/test-review-inventory.md).
@@ -134,7 +134,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Verified #916/#919 integration on main 60992b19: **1,084 definitions across 149 files**, with 121 assessed definitions. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Organization member-loading snapshot based on main 175cb1fd: **1,091 definitions across 150 files**, with 128 assessed definitions. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 

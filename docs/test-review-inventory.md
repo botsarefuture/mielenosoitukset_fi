@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-143 Python test files; 1,029 test definitions (1,024 in 142 files under `tests/`, plus five standalone recurrence tests in one file). Fifty-two definitions have review records below; remaining entries are pending review. Reconciled against tracked-Python AST membership on 2026-10-13, including the compiled-catalog regression and merged index-provisioning test. Separate open #916/#917/#919 changes are not counted here. Fixtures and parameter expansion are excluded; this is not completed suite review.
+Verified branch snapshot after integrating main 4cb8eefe, 2026-10-13: 144 Python test files; 1,042 definitions; 68 assessed definitions. Tracked-Python AST membership includes standalone recurrence tests and excludes fixtures and parameter expansion. Other open branches are excluded; this is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -456,6 +456,9 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Disposable MongoDB, seeded real de
 
 ## tests/test_case_city_scope.py
 
+- [ ] `test_case_list_reuses_edit_scope_and_preserves_autoclose`
+- [ ] `test_every_case_route_declares_its_permission`
+- [ ] `test_undeclared_case_route_fails_closed`
 - [x] `test_ordinary_user_cannot_read_cases`
 - [x] `test_city_case_list_and_detail_use_same_scope`
 - [x] `test_city_case_mutations_reject_foreign_targets`

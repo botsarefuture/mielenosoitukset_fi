@@ -8,6 +8,14 @@ from tests.conftest import _client_for_user
 from tests.test_city_scoped_admin import _create_organization_admin
 
 
+def test_full_permission_actor_can_assign_global_role_with_legacy_base_role():
+    from mielenosoitukset_fi.admin.admin_user_bp import _check_user_assignment
+    actor = SimpleNamespace(_id=ObjectId(), role='admin', global_permissions=[],
+                            has_full_permissions=lambda: True)
+    target = SimpleNamespace(_id=ObjectId(), role='user', global_permissions=[])
+    _check_user_assignment(actor, 'global_admin', [], target)
+
+
 def _form(user, role="user"):
     return {
         "username": user["username"], "displayname": user.get("displayname") or user["username"],

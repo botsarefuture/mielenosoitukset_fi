@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Full-permission administrators with a legacy admin base role can again complete cleared global-admin promotions; target hierarchy, self-escalation and board-clearance checks remain enforced.
+
 - Privileged user actions now share target/role/delegation checks across edit and save routes, reject self-escalation and cross-level password-reset forcing, and use explicit global capabilities. User-action request audits no longer serialize form bodies, cookies, headers or user credential records.
 
 - Combined password-and-TOTP sign-in now binds the MFA session to the verified credentials, so concurrent and later password changes reject stale authentication just like the two-step flow.

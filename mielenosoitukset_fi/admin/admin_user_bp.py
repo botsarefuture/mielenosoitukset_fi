@@ -327,7 +327,7 @@ def _check_user_assignment(actor, role, permissions, target=None):
         allowed.add(target.role)
     if not isinstance(role, str) or role not in allowed:
         abort(403)
-    if USER_ACCESS_LEVELS.get(role, 99) > USER_ACCESS_LEVELS.get(actor.role, 0):
+    if not actor.has_full_permissions() and USER_ACCESS_LEVELS.get(role, 99) > USER_ACCESS_LEVELS.get(actor.role, 0):
         abort(403)
     existing = set(target.global_permissions) if target else set()
     added = set(permissions) - existing

@@ -36,31 +36,42 @@ class Organization(BaseEntity):
         self.fill_url = fill_url or (f"/organization/{self._id}/fill" if not verified and self._id else None)
 
 
-        self.members: List["User"] = []        # populated below
-        self.init_members()
+        # Public organization pages do not need membership/user records.
+        self._members = None
 
     # ------------------------------------------------------------------ members
 
+    @property
+    def members(self):
+        """Load members on demand, retaining the existing member API."""
+        if self._members is None:
+            self.init_members()
+        return self._members
+
     def init_members(self):
-        """Refresh `self.members` from the memberships collection."""
+        """Refresh members in one batch; missing legacy users grant no access."""
         memberships = Membership.all_in_organization(self._id)
-        self.members.clear()
 
         # Lazy import (avoids circular import with users.models)
         from mielenosoitukset_fi.users.models import User
 
-        for m in memberships:
-            try:
-                user = User.from_OID(m.user_id)
-            except ValueError as error:
-                # Legacy user deletions can leave membership references behind.
-                # Skip only missing users; other loading failures must surface.
-                if error.args != ("User not found",):
-                    raise
+        user_ids = [ObjectId(m.user_id) if isinstance(m.user_id, str) else m.user_id
+                    for m in memberships]
+        documents = {doc["_id"]: doc for doc in DB["users"].find(
+            {"_id": {"$in": user_ids}}
+        )} if user_ids else {}
+        members = []
+        for m, user_id in zip(memberships, user_ids):
+            document = documents.get(user_id)
+            if document is None:
                 continue
+            # Invalid persisted user data still raises rather than hiding errors.
+            user = User.from_db(document)
             user.role        = m.role
             user.permissions = m.permissions
-            self.members.append(user)
+            user._ship_id    = m._id
+            members.append(user)
+        self._members = members
 
     def is_member(self,  email: str = None, user_id: ObjectId = None) -> bool:
         if not email and not user_id:
@@ -123,6 +134,12 @@ class Organization(BaseEntity):
 
     # ------------------------------------------------------------------ storage
 
+    def to_dict(self, json=False):
+        """Serialize organization fields, never cached member credentials."""
+        data = super().to_dict(json=json)
+        data.pop("_members", None)
+        return data
+
     def save(self):
         DB["organizations"].update_one(
             {"_id": self._id}, {"$set": self.to_dict()}, upsert=True
@@ -130,6 +147,7 @@ class Organization(BaseEntity):
 
     @classmethod
     def from_dict(cls, data: dict):
+        data = data.copy()
         data.pop("social_medias", None)  # prune legacy keys
         data.pop("members", None)
 

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Organization models now load members only when needed and batch related user reads, eliminating unnecessary public-page membership queries. The admin member view shares the missing-user-safe loader, and cached users are excluded from organization serialization.
+
 - Organization pages now tolerate memberships referencing missing users instead of returning HTTP 500, while retaining valid members and permissions without deleting stored membership records.
 
 - User editors and lists now share the account-status target hierarchy check; synchronized duplicate-submit coverage verifies that only one use of a confirmation token succeeds.

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% from '_macros/_hero.html' import hero_section %}
 {% from '_macros/_pagination.html' import load_more_button %}
+{% from '_macros/_public_search.html' import public_demo_search, public_search_styles, public_search_scripts with context %}
 
 {% block title %} {{ _('Tulevat mielenosoitukset') }} {% endblock %}
 
@@ -16,12 +17,12 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+{{ public_search_styles() }}
 {% endblock %}
 
 {% block content %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261013-date-range-1') }}" defer></script>
 
 {% include "_modals/_demo-card-template.html" %}
 
@@ -34,26 +35,7 @@
 ) }}
 <section class="main-content">
 
-  <form method="GET" action="#" class="search-form" id="search-form">
-    <input type="text" name="search" placeholder="{{ _('Hae mielenosoituksia...') }}"
-      aria-label="{{ _('Hae mielenosoituksia') }}" />
-    <input type="text" placeholder="{{ _('Kaupunki') }}" aria-label="{{ _('Kaupunki') }}" id="city_input" />
-    <input type="hidden" name="city" id="city" />
-    <div class="suggestions" id="city_suggestions"></div>
-    <input type="text" name="location" placeholder="{{ _('Sijainti') }}" aria-label="{{ _('Sijainti') }}" />
-    <div class="date-range">
-      <input type="text" name="display_date_start" id="date_start" placeholder="{{ _('Alkupäivä (pp.mm.vvvv)') }}"
-        aria-label="{{ _('Alkupäivä (pp.mm.vvvv)') }}" />
-      <span>-</span>
-      <input type="text" name="display_date_end" id="date_end" placeholder="{{ _('Loppupäivä (pp.mm.vvvv)') }}"
-        aria-label="{{ _('Loppupäivä (pp.mm.vvvv)') }}" />
-    </div>
-    <div class="date-error" id="date-error">{{ _('Valitse kelvollinen päivämääräväli tulevaisuudesta') }}</div>
-    <input type="hidden" name="date_start" id="iso_date_start">
-    <input type="hidden" name="date_end" id="iso_date_end">
-    <div class="filters" id="filters"></div>
-    <button type="submit" class="button">{{ _('Hae') }}</button>
-  </form>
+  {{ public_demo_search() }}
 <section class="section-card">
   <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>{{ _('Kaikki mielenosoitukset') }}</h2>
 
@@ -96,6 +78,17 @@ document.addEventListener('DOMContentLoaded', () => {
     return result;
   }
 
+  const listHistory = UserPagination.createFilterHistory({
+    form: searchForm, fixed: {},
+    cityLabel: publicListI18n.city, removeLabel: publicListI18n.removeFilter,
+    onChange: (params, page) => {
+      extraParams = params;
+      return window.userPaginationController.reload({ page, append: false });
+    },
+  });
+  window.publicListHistory = listHistory;
+  extraParams = listHistory.params;
+
   window.userPaginationController = UserPagination.createLoadMoreController({
     button: loadMoreBtn,
     loadPage: (page, options = {}) => loadDemosWrapper(page, options.append ?? true),
@@ -104,30 +97,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Initial load
-  loadDemosWrapper();
+  window.userPaginationController.reload({ page: listHistory.page, append: false });
 
   // Search form submit
-  searchForm.addEventListener('submit', e => {
-    e.preventDefault();
-
-    // Collect search/filter values
-    const searchValue = searchForm.querySelector('input[name="search"]').value.trim();
-    const cityValue = searchForm.querySelector('input[name="city"]').value.trim();
-    const locationValue = searchForm.querySelector('input[name="location"]').value.trim();
-    const dateStart = searchForm.querySelector('input[name="date_start"]').value;
-    const dateEnd = searchForm.querySelector('input[name="date_end"]').value;
-
-    // Build extraParams for API
-    extraParams = {};
-    if (searchValue) extraParams.search = searchValue;
-    if (cityValue) extraParams.city = cityValue;
-    if (locationValue) extraParams.location = locationValue;
-    if (dateStart) extraParams.date_start = dateStart;
-    if (dateEnd) extraParams.date_end = dateEnd;
-
-    // Reset to first page
-    window.userPaginationController?.reload({ append: false });
-    if (!window.userPaginationController) loadDemosWrapper(1, false);
+  searchForm.addEventListener("submit", event => {
+    event.preventDefault();
+    listHistory.submit();
   });
 
 
@@ -138,8 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/user-pagination.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261013-date-range-3') }}"></script>
+{{ public_search_scripts() }}
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 <script>
 const cityList = {{ city_list | tojson }};
@@ -181,25 +156,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!currentCities.includes(selectedCity)) {
               currentCities.push(selectedCity);
               selectedCitiesInput.val(currentCities.join(","));
-              const filterDiv = $("<div>").addClass("filter");
-              $("<span>")
-                .text(`${publicListI18n.city}: ${selectedCity}`)
-                .appendTo(filterDiv);
-              const removeFilter = $("<a>", {
-                href: "#",
-                "data-city": selectedCity,
-                "aria-label": `${publicListI18n.removeFilter}: ${selectedCity}`,
-              }).append(
-                $("<i>").addClass("fas fa-times").attr("aria-hidden", "true")
-              );
-              removeFilter.appendTo(filterDiv);
-              filters.append(filterDiv);
-              filterDiv.find("a").on("click", function (event) {
-                event.preventDefault();
-                const cityToRemove = $(this).data("city");
-                selectedCitiesInput.val(currentCities.filter(c => c !== cityToRemove).join(","));
-                filterDiv.remove();
-              });
+              window.publicListHistory.renderCities();
             }
           });
       });
@@ -215,54 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  const activeLocale = {{ current_locale | tojson }};
-  const formatCalendarPart = (date, options) => new Intl.DateTimeFormat(
-    activeLocale,
-    { ...options, timeZone: "UTC" }
-  ).format(date);
-  const weekdayDates = Array.from(
-    { length: 7 },
-    (_, index) => new Date(Date.UTC(2024, 0, 7 + index, 12))
-  );
-  const monthDates = Array.from(
-    { length: 12 },
-    (_, index) => new Date(Date.UTC(2024, index, 1, 12))
-  );
 
-  const dateConfig = {
-    dateFormat: "d.m.Y",
-    minDate: "today",
-    allowInput: true,
-    locale: {
-      firstDayOfWeek: 1,
-      weekdays: {
-        shorthand: weekdayDates.map(date => formatCalendarPart(date, { weekday: "short" })),
-        longhand: weekdayDates.map(date => formatCalendarPart(date, { weekday: "long" }))
-      },
-      months: {
-        shorthand: monthDates.map(date => formatCalendarPart(date, { month: "short" })),
-        longhand: monthDates.map(date => formatCalendarPart(date, { month: "long" }))
-      }
-    }
-  };
-
-  const startPicker = flatpickr("#date_start", {
-    ...dateConfig,
-    onChange: selectedDates => {
-      if (selectedDates[0]) {
-        endPicker.set("minDate", selectedDates[0]);
-      }
-    }
-  });
-
-  const endPicker = flatpickr("#date_end", {
-    ...dateConfig,
-    onChange: selectedDates => {
-      if (selectedDates[0]) {
-        startPicker.set("maxDate", selectedDates[0]);
-      }
-    }
-  });
 });
 </script>
 

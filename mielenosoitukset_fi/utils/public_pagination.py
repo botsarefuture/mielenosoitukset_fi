@@ -20,7 +20,7 @@ def ensure_public_demo_pagination_index(database):
     )
 
 
-def public_page_args(args):
+def public_page_args(args, default_per_page=20):
     """Normalize each numeric argument independently without changing filters."""
     def positive_int(name, default):
         try:
@@ -28,7 +28,7 @@ def public_page_args(args):
         except (TypeError, ValueError):
             return default
 
-    return positive_int("page", 1), positive_int("per_page", 20)
+    return positive_int("page", 1), positive_int("per_page", default_per_page)
 
 
 def public_page_metadata(page, per_page, total, result_count):

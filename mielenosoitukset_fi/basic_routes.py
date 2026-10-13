@@ -48,7 +48,6 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.public_pagination import (
     PUBLIC_DEMONSTRATION_ORDER, public_page_args, public_page_metadata,
-    ensure_public_demo_pagination_index,
 )
 from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.site_analytics import (
@@ -128,7 +127,6 @@ demonstrations_collection.create_index(
     ],
     background=True,
 )
-ensure_public_demo_pagination_index(mongo)
 submitters_collection = mongo["submitters"]  # <-- Add this line
 malicious_reports_collection = mongo["malicious_reports"]
 submission_tokens_collection = mongo["demo_submission_tokens"]

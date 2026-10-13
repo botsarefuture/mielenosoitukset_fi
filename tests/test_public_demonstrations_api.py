@@ -127,9 +127,12 @@ def test_public_chronological_sort_has_index_backed_plan(app, db, seeded_data):
 
     indexes_before = db.demonstrations.index_information()
     ensure_public_demo_pagination_index(db)
+    provisioned = db.demonstrations.index_information()
     ensure_public_demo_pagination_index(db)
     indexes_after = db.demonstrations.index_information()
-    assert indexes_after == indexes_before
+    assert indexes_after == provisioned
+    for name, specification in indexes_before.items():
+        assert indexes_after[name] == specification
     assert indexes_after[PUBLIC_DEMONSTRATION_INDEX]['key'] == [('approved', 1), *PUBLIC_DEMONSTRATION_ORDER]
 
     base = db.demonstrations.find_one({"_id": seeded_data["demo_id"]})
@@ -158,3 +161,24 @@ def test_public_chronological_sort_has_index_backed_plan(app, db, seeded_data):
         assert 'SORT' not in set(stages(winning)), winning
         assert 'IXSCAN' in set(stages(winning)), winning
         assert plan['executionStats']['nReturned'] == 12
+
+
+def test_public_index_provisioning_is_not_part_of_route_import(monkeypatch):
+    import ast
+    from pathlib import Path
+    from types import SimpleNamespace
+    from mielenosoitukset_fi.scripts import provision_public_indexes
+
+    source = ast.parse(Path('mielenosoitukset_fi/basic_routes.py').read_text())
+    assert not any(isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                   and node.func.id == 'ensure_public_demo_pagination_index'
+                   for node in ast.walk(source))
+    database = object()
+    calls = []
+    monkeypatch.setattr(provision_public_indexes, 'DatabaseManager', SimpleNamespace(
+        get_instance=lambda: SimpleNamespace(get_db=lambda: database)))
+    monkeypatch.setattr(provision_public_indexes, 'ensure_public_demo_pagination_index', calls.append)
+    provision_public_indexes.main()
+    assert calls == [database]
+    script = Path('deploy/production_deploy.sh').read_text()
+    assert script.index('python3 -m mielenosoitukset_fi.scripts.provision_public_indexes') < script.index('systemctl reload')

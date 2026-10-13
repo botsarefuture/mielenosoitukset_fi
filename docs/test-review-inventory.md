@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-146 Python test files; 1,036 test definitions (1,031 in 145 files under `tests/`, plus five standalone recurrence tests in one file). Sixty-four definitions have review records below; remaining entries are pending review. This real date-range lifecycle slice stacks on #923; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+146 Python test files; 1,038 test definitions (1,033 in 145 files under `tests/`, plus five standalone recurrence tests in one file). Sixty-five definitions have review records below; remaining entries are pending review. This real date-range lifecycle slice stacks on #923; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1002,6 +1002,7 @@ Earlier filter/history regressions now also execute the real bundled picker and 
 
 ## tests/test_public_demonstrations_api.py
 
+- [ ] `test_public_index_provisioning_is_not_part_of_route_import`
 - [x] `test_public_demonstrations_list_uses_summary_payload`
 - [x] `test_public_pages_have_chronological_tie_breaks_and_filtered_counts`
 - [x] `test_public_page_metadata_handles_empty_and_out_of_range`
@@ -1063,6 +1064,7 @@ Deep links/history restore the latest requested page as a new window; subsequent
 
 ## tests/test_public_list_request_state.py
 
+- [x] `test_public_retry_uses_compiled_locale_catalog`
 - [x] `test_public_loader_ignores_stale_search_and_counts_appended_results`
 - [x] `test_public_controller_old_finally_cannot_unlock_new_search`
 - [x] `test_public_loader_http_failure_offers_retry_without_erasing_append`
@@ -1072,6 +1074,7 @@ DATA-01 / QA-02, 2026-10-12, Codex, P1; stacked on #920. Browser harnesses use a
 
 | Definition | Purpose / assertions | Fixtures / coverage / reliability | Disposition |
 |---|---|---|---|
+| `test_public_retry_uses_compiled_locale_catalog` | Runtime MO files translate the retry label in English and Swedish. | Two cases read actual compiled GNU catalogs, without Babel mocks; catches PO-only fixes that fail to ship runtime translations. Does not claim full catalog completeness. | Keep; reviewed 2026-10-13; focused run linked in #921. |
 | `test_public_loader_ignores_stale_search_and_counts_appended_results` | New search wins; aborted older response cannot repaint; append counts accumulate and empty append does not erase cards. | Actual loader, deferred response order, exact DOM/count/abort state. Card/friend/navigation rendering isolated; not a backend snapshot test. | Keep. |
 | `test_public_controller_old_finally_cannot_unlock_new_search` | Old load-next completion cannot unlock or alter newer reset state. | Actual controller, exact lock/page/page-count/request assertions with manual resolvers; no timing sleeps. | Keep. |
 | `test_public_loader_http_failure_offers_retry_without_erasing_append` | HTTP failure preserves prior cards and offers successful retry; overlapping retry/append is suppressed. | Actual loader and 503 mock, exact DOM/count/request count; replacement-failure and malformed payload matrices remain follow-up. | Keep. |

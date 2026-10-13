@@ -63,6 +63,7 @@ def test_public_list_runtime_uses_defined_localized_browser_contracts():
 
 @pytest.mark.e2e
 @pytest.mark.integration
+@pytest.mark.parametrize('count', [1, 3])
 @pytest.mark.parametrize(
     ("locale", "city_label", "january_label"),
     [
@@ -72,12 +73,21 @@ def test_public_list_runtime_uses_defined_localized_browser_contracts():
     ],
 )
 def test_public_list_filters_and_date_picker_follow_active_locale(
-    app, live_server, browser_page, locale, city_label, january_label
+    app, live_server, browser_page, locale, city_label, january_label, count
 ):
+    import json
     app.config.update(
         BABEL_SUPPORTED_LOCALES=["fi", "en", "sv"],
         BABEL_PUBLIC_LOCALES=["fi", "en", "sv"],
     )
+    browser_page.route('**/api/demonstrations?*', lambda route: route.fulfill(
+        content_type='application/json', body=json.dumps({
+            'page': 1, 'total_pages': 1, 'total': count,
+            'results': [{'_id': str(index), 'title': f'Demo {index}',
+                         'date': '2099-01-01', 'start_time': '12:00',
+                         'city': 'Helsinki', 'tags': []} for index in range(count)],
+        }),
+    ))
     browser_page.goto(f"{live_server}/set_language/{locale}")
     page_errors = []
     browser_page.on(
@@ -100,7 +110,7 @@ def test_public_list_filters_and_date_picker_follow_active_locale(
     summary_formats = {
         "fi": "Näytetään __START__–__END__ / __COUNT__ mielenosoituksesta",
         "en": "Showing __START__–__END__ of __COUNT__ demonstrations",
-        "sv": "Visar __START__–__END__ av __COUNT__ demonstrationer",
+        "sv": "Visar __START__–__END__ av totalt __COUNT__",
     }
     errors = {
         "fi": "Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen.",
@@ -108,5 +118,8 @@ def test_public_list_filters_and_date_picker_follow_active_locale(
         "sv": "Det gick inte att ladda demonstrationer. Försök igen.",
     }
     assert browser_page.locator("#listing-result-summary").get_attribute("data-format") == summary_formats[locale]
+    expected_summary = summary_formats[locale].replace('__START__', '1').replace('__END__', str(count)).replace('__COUNT__', str(count))
+    browser_page.wait_for_function('(expected) => document.getElementById("listing-result-summary").textContent === expected', arg=expected_summary)
+    assert browser_page.locator('#listing-result-summary').inner_text() == expected_summary
     assert browser_page.locator("#listing-load-error p").text_content() == errors[locale]
     assert not [error for error in page_errors if "ResizeObserver" not in error]

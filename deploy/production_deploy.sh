@@ -62,6 +62,10 @@ trap - EXIT
 
 chown -R www-data:www-data "$repo_dir"
 
+# Index builds are synchronous even with background=True. Finish the
+# idempotent provisioning step while old workers still serve traffic.
+python3 -m mielenosoitukset_fi.scripts.provision_public_indexes
+
 # New workers capture this value while creating their Flask application. Write
 # it atomically so an existing worker can never observe a partial SHA. Existing
 # workers retain the value they captured at their own startup.

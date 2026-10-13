@@ -8293,7 +8293,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_dashboard.html:88
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:66
 msgid "Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta"
-msgstr "Visar %(start)s–%(end)s av %(count)s demonstrationer"
+msgstr "Visar %(start)s–%(end)s av totalt %(count)s"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:114
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:70

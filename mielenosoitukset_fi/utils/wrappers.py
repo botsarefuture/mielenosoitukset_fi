@@ -9,6 +9,26 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.logger import logger
 
 
+def has_global_permission(user, permission_name: str) -> bool:
+    """Require an explicit global grant, never an organization membership."""
+    return bool(user.is_authenticated and (
+        user.has_full_permissions()
+        or permission_name in (user.global_permissions or [])
+    ))
+
+
+def global_permission_required(permission_name: str):
+    """Protect global-only operations while preserving wrapped route metadata."""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not has_global_permission(current_user, permission_name):
+                abort(403)
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
 def has_admin_access(user) -> bool:
     """Return True when a user may enter an admin surface."""
     if not getattr(user, "is_authenticated", False):

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Clearance routes now require explicit global authority, and the legacy user clearance check enforces target hierarchy. User-request audit metadata is searchable by actor in the admin log filter.
+
 - User-management super-audit entries now also redact query values, preventing the independent audit layer from retaining secrets already removed from primary admin logs.
 
 - User-management audit contexts now retain query parameter names without their values, including secondary action logs, so secrets in URLs are not persisted.

@@ -58,13 +58,13 @@ def log_request_info():
     ):
         log_admin_action_V2({
             "event": "admin_user_forbidden", "endpoint": request.endpoint,
-            "actor_id": str(current_user.id), "required_permission": capability,
+            "actor": {"id": str(current_user.id)}, "required_permission": capability,
         })
         abort(403)
     log_admin_action_V2({
         "event": "admin_user_request", "method": request.method,
         "endpoint": request.endpoint,
-        "actor_id": str(current_user.id) if current_user.is_authenticated else None,
+        "actor": {"id": str(current_user.id) if current_user.is_authenticated else None},
     })
 
 
@@ -717,6 +717,12 @@ import warnings
 @permission_required("MANAGE_CLEARANCE")
 def check_clearance(user_id):
     """Compatibility endpoint for checking global-admin board approval."""
+    if not ObjectId.is_valid(user_id):
+        abort(404)
+    user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
+    if not user_doc:
+        abort(404)
+    _check_user_target(current_user, User.from_db(user_doc))
     return jsonify({"has_clearance": has_board_clearance(user_id)})
 
 

@@ -135,6 +135,11 @@ def test_admin_user_audit_excludes_credentials_and_request_payload(admin_client,
     assert logs
     assert marker not in repr(logs)
     assert logs[0]['request']['args'] == {'secret': []}
+    from mielenosoitukset_fi.admin.admin_bp import _build_logs_query
+    query = _build_logs_query({'user': str(seeded_data['admin_id'])})
+    assert db.admin_logs.count_documents({
+        '$and': [query, {'event': 'admin_user_request'}],
+    }) == len(logs)
     assert "password_hash" not in repr(logs)
     action = db.admin_logs.find_one({"event": "user_password_reset_required"})
     assert action["entity_id"] == str(seeded_data["user_id"])
@@ -157,3 +162,51 @@ def test_create_user_cannot_bypass_superuser_promotion_process(admin_client, db,
     })
     assert response.status_code == expected_status
     assert db.users.find_one({"username": "forged-root"}) is None
+
+
+@pytest.mark.parametrize('kind,status', [
+    ('lower', 200), ('self', 403), ('peer', 403), ('higher', 403),
+    ('invalid', 404), ('missing', 404),
+])
+def test_clearance_check_enforces_target_hierarchy(admin_client, db, seeded_data, kind, status):
+    target = seeded_data['admin_id'] if kind == 'self' else seeded_data['user_id']
+    if kind in {'peer', 'higher'}:
+        db.users.update_one({'_id': target}, {'$set': {'role': 'admin' if kind == 'peer' else 'god'}})
+    if kind == 'invalid':
+        target = 'invalid'
+    elif kind == 'missing':
+        target = ObjectId()
+    response = admin_client.get(f'/admin/user/api/check_clearance/{target}')
+    assert response.status_code == status
+    if status == 200:
+        assert response.json == {'has_clearance': False}
+
+
+@pytest.mark.parametrize('authority,status', [('organization', 403), ('global', 200)])
+@pytest.mark.parametrize('path', [
+    '/board/api/clearance/{target}', '/board/api/clearances', '/board/ui',
+    '/admin/governance/clearances',
+])
+def test_clearance_routes_require_global_not_membership_permission(app, db, seeded_data, authority, status, path):
+    actor = _create_organization_admin(db, seeded_data['org_id'], ['MANAGE_CLEARANCE'])
+    if authority == 'global':
+        db.users.update_one({'_id': actor}, {'$set': {'global_permissions': ['MANAGE_CLEARANCE']}})
+    client = _client_for_user(app, actor)
+    response = client.get(path.format(target=seeded_data['user_id']))
+    assert response.status_code == (302 if path == '/board/ui' and status == 200 else status)
+
+
+@pytest.mark.parametrize('authority,status', [('organization', 403), ('global', 200)])
+def test_clearance_write_requires_global_permission_even_with_valid_csrf(app, db, seeded_data, authority, status):
+    actor = _create_organization_admin(db, seeded_data['org_id'], ['MANAGE_CLEARANCE'])
+    if authority == 'global':
+        db.users.update_one({'_id': actor}, {'$set': {'global_permissions': ['MANAGE_CLEARANCE']}})
+    client = _client_for_user(app, actor)
+    with client.session_transaction() as session:
+        session['governance_csrf_token'] = 'synthetic-csrf'
+    target = str(seeded_data['user_id'])
+    response = client.post(f'/board/api/clearance/{target}', json={'approved': True},
+                           headers={'X-CSRF-Token': 'synthetic-csrf'})
+    assert response.status_code == status
+    clearance = db.board_clearances.find_one({'user_id': target})
+    assert bool(clearance and clearance['approved']) == (status == 200)

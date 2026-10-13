@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Snapshot on PR #919 after merging main fb663b51, 2026-10-13: 144 Python test files; 1,038 definitions (1,033 in 143 files under tests/, plus five standalone recurrence tests). Other open PRs are excluded. This tracked-Python AST inventory excludes fixtures and parameter expansion and does not claim completed suite review. Individual review records follow; see the repository roadmap for required evidence and priorities.
+Snapshot on PR #919 after merging main fb663b51 and clearance review fixes, 2026-10-13: 143 Python test files; 1,039 definitions (1,034 in 142 files under tests/, plus five standalone recurrence tests), with 67 assessed definitions. Other open PRs are excluded. Counts were reconciled against tracked-Python AST membership, correcting the previous snapshot totals. Fixtures and parameter expansion are excluded; this is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -919,6 +919,10 @@ Focused run evidence is linked in the delivery PR; checked entries mean assessed
 
 ## tests/test_privileged_user_actions.py
 
+- [x] `test_full_permission_actor_can_assign_global_role_with_legacy_base_role`
+- [x] `test_clearance_check_enforces_target_hierarchy`
+- [x] `test_clearance_routes_require_global_not_membership_permission`
+- [x] `test_clearance_write_requires_global_permission_even_with_valid_csrf`
 - [x] `test_direct_user_edit_cannot_change_higher_role_target`
 - [x] `test_admin_cannot_self_promote_through_either_entrypoint`
 - [x] `test_restricted_editor_cannot_delegate_unowned_global_permission`
@@ -935,6 +939,10 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1 review batch; corrected privilege-e
 
 | Definition | Requirement / assertions | Variants and remaining limits | Disposition |
 |---|---|---|---|
+| `test_full_permission_actor_can_assign_global_role_with_legacy_base_role` | Full-authority legacy base role accepts a valid global-role assignment. | Direct helper with explicit SimpleNamespace capabilities; clearance and persisted promotion covered separately. | Keep; reviewed 2026-10-13. |
+| `test_clearance_check_enforces_target_hierarchy` | Legacy clearance GET allows a lower target; denies self, peer and higher; missing/invalid IDs return 404. | Six real Flask/DB cases, no authorization mocks. Does not cover concurrent role changes. | Keep; reviewed 2026-10-13, #919 focused run. |
+| `test_clearance_routes_require_global_not_membership_permission` | Board read/list/legacy UI and governance clearance page require global authority, not an organization grant. | Eight real membership-vs-global cases, exact 403/200/redirect outcomes; same base role isolates permission scope. | Keep; reviewed 2026-10-13, #919 focused run. |
+| `test_clearance_write_requires_global_permission_even_with_valid_csrf` | A valid CSRF token cannot turn an organization permission into global write authority. | Two real POST cases; exact status and persisted approval presence/absence. Existing governance tests retain missing-CSRF coverage. | Keep; reviewed 2026-10-13, #919 focused run. |
 | `test_direct_user_edit_cannot_change_higher_role_target` | Both edit and save deny higher-level target with no DB change. | Two entrypoints, exact 403 and full stored-document equality. | Keep. |
 | `test_admin_cannot_self_promote_through_either_entrypoint` | Direct own-role God promotion rejected. | Both routes; real ObjectId/string distinction; stored state unchanged. | Keep. |
 | `test_restricted_editor_cannot_delegate_unowned_global_permission` | Explicit EDIT_USER does not authorize granting DELETE_USER. | Real restricted actor and target, exact denial/state equality. | Keep. |
@@ -944,7 +952,7 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1 review batch; corrected privilege-e
 | `test_ordinary_target_profile_edit_still_works` | Authorized ordinary profile update persists. | Positive save POST/display name; full-field round-trip remains form tests. | Keep. |
 | `test_admin_can_edit_own_basic_profile_without_changing_authority` | Own basic profile may change without a role/rights change. | Valid public username isolates authority checks from reserved-name validation; exact role/permission preservation. | Keep. |
 | `test_hard_coded_identity_has_no_hierarchy_exception` | Former exception ID gains no authority and target role is not mutated. | Direct helper test, not a production identity query. | Keep. |
-| `test_admin_user_audit_excludes_credentials_and_request_payload` | Actual forced reset works, scoped request events exclude synthetic body/header and password hash. | Real DB log writes; does not prove all audit sources/retention/redaction. | Keep. |
+| `test_admin_user_audit_excludes_credentials_and_request_payload` | Actual forced reset works; synthetic secrets excluded in both audit layers; admin actor filter retrieves request events. | Real DB writes and actual `_build_logs_query` actor predicate; does not prove all audit sources/retention/redaction. | Keep; strengthened 2026-10-13. |
 | `test_create_user_cannot_bypass_superuser_promotion_process` | Hidden God role/early global-admin creation rejected without persistence. | Two roles with exact expected status, existing UI notice and clearance promotion flow preserved. | Keep. |
 
 Known remaining acceptance: dedicated full-role alias cases, concurrent authorization changes, invalid-ID matrices for every legacy form route and cross-source audit completeness. Those are not silently declared covered.
@@ -1022,6 +1030,7 @@ Known remaining acceptance: dedicated full-role alias cases, concurrent authoriz
 
 ## tests/test_public_demonstrations_api.py
 
+- [ ] `test_public_index_provisioning_is_not_part_of_route_import`
 - [x] `test_public_demonstrations_list_uses_summary_payload`
 - [x] `test_public_pages_have_chronological_tie_breaks_and_filtered_counts`
 - [x] `test_public_page_metadata_handles_empty_and_out_of_range`

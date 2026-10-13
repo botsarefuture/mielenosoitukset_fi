@@ -6747,7 +6747,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:323
 msgid "Yritä uudelleen"
-msgstr ""
+msgstr "Try again"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:334
 msgid "Haetaan kirjautumisia..."

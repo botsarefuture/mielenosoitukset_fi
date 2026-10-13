@@ -61,7 +61,10 @@ html.light {
 .search-form.public-search-form {
   display: flex; flex-direction: row; flex-wrap: wrap; align-items: end; gap: 1rem;
 }
-.public-search-field { flex: 1 1 12rem; min-width: 0; }
+.public-search-field { position: relative; flex: 1 1 12rem; min-width: 0; }
+.public-search-field .suggestions {
+  box-sizing: border-box; inset-inline-start: 0; top: 100%; margin-top: .25rem;
+}
 .public-search-field label {
   display: block; margin-bottom: .5rem; font-weight: 600; color: var(--product-text);
 }

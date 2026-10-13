@@ -57,6 +57,27 @@ def test_actual_date_picker_locale_bounds_history_and_clear(app, live_server, br
 
 @pytest.mark.e2e
 @pytest.mark.integration
+@pytest.mark.parametrize('path', ['/demonstrations', '/city/Helsinki', '/tag/test-tag'])
+@pytest.mark.parametrize('query', ['date_start=2020-01-05&date_end=2020-01-10', 'date_end=2020-01-10'])
+def test_restored_historical_range_can_select_an_earlier_start(live_server, browser_page, path, query):
+    browser_page.route('**/api/demonstrations?*', lambda route: route.fulfill(
+        content_type='application/json', body='{"page":1,"total_pages":1,"total":0,"results":[]}'))
+    browser_page.goto(f'{live_server}{path}?{query}', wait_until='domcontentloaded')
+    browser_page.wait_for_function("document.getElementById('date_end')._flatpickr?.selectedDates.length === 1")
+    assert browser_page.locator('#date_start').evaluate('element => element._flatpickr.config.minDate === undefined')
+    browser_page.evaluate("document.getElementById('date_start')._flatpickr.setDate('01.01.2020', true)")
+    assert browser_page.locator('#date_start').input_value() == '01.01.2020'
+    browser_page.locator('#search-form button[type=submit]').click()
+    browser_page.wait_for_function("new URLSearchParams(location.search).get('date_start') === '2020-01-01'")
+    browser_page.locator('#date_start').fill('')
+    browser_page.locator('#date_end').fill('')
+    browser_page.locator('#search-form button[type=submit]').click()
+    browser_page.wait_for_function("!new URLSearchParams(location.search).has('date_start')")
+    assert browser_page.locator('#date_start').evaluate('element => element._flatpickr.config.minDate.getFullYear()') == date.today().year
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
 @pytest.mark.parametrize('theme,width', [('light', 1440), ('dark', 1440), ('light', 390), ('dark', 390)])
 def test_actual_calendar_is_theme_safe_and_keyboard_reachable(live_server, browser_page, theme, width):
     browser_page.set_viewport_size({'width': width, 'height': 1000})

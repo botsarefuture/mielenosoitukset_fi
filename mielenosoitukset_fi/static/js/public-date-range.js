@@ -28,9 +28,10 @@
     let pickers = [];
     function bounds(start, end) {
       const today = new Date(); today.setHours(0, 0, 0, 0);
-      // The API supports explicitly requested historical ranges too. Restoring
-      // one must not silently clear it; an empty range returns to today's floor.
-      const floor = new Date(Math.min(today, start || today, end || today));
+      // Historical endpoints enable historical browsing, not a new lower
+      // bound at the restored value. Clearing both returns to today's floor.
+      const historical = (start && start < today) || (end && end < today);
+      const floor = historical ? undefined : today;
       pickers[0].set('minDate', floor);
       pickers[0].set('maxDate', end);
       pickers[1].set('minDate', start || floor);

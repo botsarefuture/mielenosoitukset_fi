@@ -5,6 +5,13 @@ import pytest
 SCRIPTS = Path('mielenosoitukset_fi/static/js')
 
 
+@pytest.mark.parametrize('locale,label', [('en', 'Try again'), ('sv', 'Försök igen')])
+def test_public_retry_uses_compiled_locale_catalog(locale, label):
+    import gettext
+    with Path(f'mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.mo').open('rb') as stream:
+        assert gettext.GNUTranslations(stream).gettext('Yritä uudelleen') == label
+
+
 def _loader_harness(page):
     page.set_content('''<div id="demos-grid"></div><div id="no-results"></div>
       <p id="listing-result-summary" data-format="Showing __START__–__END__ / __COUNT__" hidden></p>

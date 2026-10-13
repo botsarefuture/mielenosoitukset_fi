@@ -7171,7 +7171,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:323
 msgid "Yritä uudelleen"
-msgstr ""
+msgstr "Försök igen"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:334
 msgid "Haetaan kirjautumisia..."

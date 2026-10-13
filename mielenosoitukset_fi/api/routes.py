@@ -145,10 +145,11 @@ import hashlib
 import json
 from flask import request
 
-def make_cache_key():
+def make_cache_key(requested_language=None):
     params = request.args.to_dict(flat=True)
     page, per_page = public_page_args(request.args)
     params.update(page=str(page), per_page=str(per_page))
+    params['_resolved_language'] = requested_language or ''
     # sort keys to make order irrelevant
     params_str = json.dumps(params, sort_keys=True)
     # Old unbounded cached payloads must not bypass the new server limit.
@@ -283,7 +284,7 @@ def list_demonstrations():
     include_translations = (
         request.args.get("include_translations", "").strip().lower() == "true"
     )
-    cache_key = make_cache_key()
+    cache_key = make_cache_key(requested_language)
     use_cache = bool(cache) and not should_skip_cache(public_only=False)
 
     cached_response = cache.get(cache_key) if use_cache else None

@@ -6,6 +6,8 @@
 
 - Public demonstration, city and tag lists now load automatically near the viewport, retain at most five pages of cards, and restore earlier pages when scrolling back. Manual controls remain available for keyboard use, retries and data-saving clients.
 
+- Public demonstration caches now distinguish the resolved request language, including session-selected languages, while keeping page-size limits normalized.
+
 - Public tag pages and demonstration/organization APIs now cap page size at 100. Out-of-range pages avoid unbounded database skips, and normalized cache keys cannot reuse older oversized result payloads.
 
 - User editors and lists now share the account-status target hierarchy check; synchronized duplicate-submit coverage verifies that only one use of a confirmation token succeeds.

@@ -1125,8 +1125,8 @@ DATA-01a / QA-02, P1; reviewed 2026-10-13 by Codex. Disposable local database an
 | `test_tag_page_materializes_only_the_bounded_page` | HTML tag context contains only 100 records and two pages. | Actual render signal, disconnected in finally; does not assess visual layout. | Keep. |
 | `test_public_organization_api_cannot_bypass_page_size_limit` | Organization endpoint applies the same bound, including last page. | 105 uniquely searchable local records; real database query. | Keep. |
 | `test_enormous_out_of_range_pages_never_reach_database_skip` | Four endpoint variants return empty results without huge Mongo offsets. | Cursor skip wrapper raises rather than mocking returned records; 100-digit page. Count cost remains outside this guarantee. | Keep. |
-| `test_public_cache_normalizes_page_sizes_and_excludes_old_unbounded_namespace` | Excessive and bounded query sizes share the new cache key. | Real request contexts; exact new namespace. | Keep. |
-| `test_old_oversized_cached_response_cannot_bypass_the_new_limit` | Pre-fix cache cannot bypass handler bounds; new stored payload is bounded. | Synthetic legacy cache marker, real database and handler. Does not prove a live Redis deployment. | Keep. |
+| `test_public_cache_normalizes_page_sizes_and_excludes_old_unbounded_namespace` | Excessive and bounded query sizes share the new cache key; different resolved languages do not. | Real request contexts, no explicit URL language; exact new namespace. Strengthened for approved #927 review correction on 2026-10-13. | Keep. |
+| `test_old_oversized_cached_response_cannot_bypass_the_new_limit` | Pre-fix cache cannot bypass handler bounds; new stored payload is bounded. A session-language change reaches a distinct route cache key without changing the URL. | Synthetic legacy cache marker, real database, handler and session locale selector. Does not prove a live Redis deployment. | Keep. |
 
 ## tests/test_public_date_range.py
 

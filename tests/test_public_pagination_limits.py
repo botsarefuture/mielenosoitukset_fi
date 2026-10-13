@@ -105,12 +105,19 @@ def test_public_cache_normalizes_page_sizes_and_excludes_old_unbounded_namespace
         normalized = make_cache_key()
     assert excessive == normalized
     assert excessive.startswith('demonstrations:page-v3:')
+    # Resolved request/session language affects localized output even when
+    # the URL has no explicit lang parameter.
+    with app.test_request_context('/api/demonstrations?per_page=101'):
+        finnish = make_cache_key('fi')
+    with app.test_request_context('/api/demonstrations?per_page=100'):
+        english = make_cache_key('en')
+        assert finnish != english
+        assert english == make_cache_key('en')
 
 
 def test_old_oversized_cached_response_cannot_bypass_the_new_limit(client, db, seeded_data, monkeypatch):
     import hashlib
     import json
-    import mielenosoitukset_fi.api.routes as routes
     _many_demos(db, seeded_data)
     raw = {'tag': 'pagination-limits', 'per_page': '600000'}
     old_key = 'demonstrations:page-v2:' + hashlib.md5(json.dumps(raw, sort_keys=True).encode()).hexdigest()
@@ -123,9 +130,25 @@ def test_old_oversized_cached_response_cannot_bypass_the_new_limit(client, db, s
             return None
         def set(self, key, value):
             assert value['per_page'] == 100 and len(value['results']) == 100
-    monkeypatch.setattr(routes, 'cache', LegacyCache())
-    monkeypatch.setattr(routes, 'should_skip_cache', lambda **_kwargs: False)
+    # The application registers the legacy `api.routes` import path. Patch the
+    # actual registered view globals, not a second package-qualified module.
+    endpoint = next(rule.endpoint for rule in client.application.url_map.iter_rules()
+                    if rule.rule == '/api/demonstrations')
+    view_globals = client.application.view_functions[endpoint].__globals__
+    monkeypatch.setitem(view_globals, 'cache', LegacyCache())
+    monkeypatch.setitem(view_globals, 'should_skip_cache', lambda **_kwargs: False)
+    # Baseline fixtures publish Finnish only; enable both locales for this
+    # actual selector/session isolation test, without mocking get_locale.
+    monkeypatch.setitem(client.application.config, 'BABEL_PUBLIC_LOCALES', ['fi', 'en'])
+    with client.session_transaction() as state:
+        state['locale'] = 'fi'
     response = client.get('/api/demonstrations', query_string=raw)
     assert response.status_code == 200
     assert response.json['per_page'] == 100 and len(response.json['results']) == 100
     assert old_key not in requested_keys
+    first_language_key = requested_keys[-1]
+    with client.session_transaction() as state:
+        state['locale'] = 'en'
+    localized = client.get('/api/demonstrations', query_string=raw)
+    assert localized.status_code == 200
+    assert requested_keys[-1] != first_language_key

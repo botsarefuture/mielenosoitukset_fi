@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Snapshot on PR #919 after merging main fb663b51 and clearance review fixes, 2026-10-13: 144 Python test files; 1,051 definitions (1,046 in 143 files under tests/, plus five standalone recurrence tests), with 77 assessed definitions. Other open PRs are excluded. Counts were reconciled against tracked-Python AST membership, correcting the previous snapshot totals. Fixtures and parameter expansion are excluded; this is not completed suite review.
+Snapshot on PR #919 after integrating merged #917 and clearance review fixes, 2026-10-13: 144 Python test files; 1,052 definitions (1,047 in 143 files under tests/, plus five standalone recurrence tests), with 83 assessed definitions. Other open PRs are excluded. Counts were reconciled against tracked-Python AST membership. Fixtures and parameter expansion are excluded; this is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 

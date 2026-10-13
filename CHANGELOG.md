@@ -8,6 +8,11 @@
 
 - Admin user lists and editors now show enabled, disabled and banned status; authorized administrators can confirm activation or disabling with scoped expiring CSRF protection and stale-form/replay checks.
 
+- Public pagination indexes are now provisioned before deployment reloads rather than blocking application worker imports; provisioning failures leave existing workers running.
+
+- Both public demonstration list APIs now order by date, start time and ID before pagination, report matching totals and exact page ranges, and safely normalize invalid numeric page arguments. Existing filters and response fields are preserved.
+- The public chronological order now has a matching approved/date/start-time/ID index, avoiding a blocking sort for broad public date-range queries while retaining legacy visibility flags and existing indexes.
+
 - Combined password-and-TOTP sign-in now binds the MFA session to the verified credentials, so concurrent and later password changes reject stale authentication just like the two-step flow.
 
 - MFA proof authorization now uses an atomic comparison against persisted credentials, and MFA sessions are invalidated by password changes, closing concurrent password-reset login races.

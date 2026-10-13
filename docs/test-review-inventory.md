@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified public resource-limit snapshot based on main 175cb1fd, 2026-10-13: 150 Python test files; 1,091 definitions; 128 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified bounded-loading snapshot based on main 175cb1fd, 2026-10-13: 151 Python test files; 1,095 definitions; 132 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1211,6 +1211,8 @@ Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-requ
 
 ## tests/test_public_list_filter_history.py
 
+2026-10-13 follow-up: the existing explicit page/history lifecycle test now selects the supported data-saving manual fallback. Its page/filter/back/forward/retry assertions remain intact; automatic windowing is independently exercised below. A passing manual test is not automatic-loading evidence.
+
 - [x] `test_public_filter_url_restores_page_and_back_forward`
 - [x] `test_restored_city_chip_is_text_safe_and_removal_resets_url`
 - [x] `test_tag_page_invalid_pagination_does_not_raise_500`
@@ -1226,6 +1228,8 @@ DATA-01 / QA-02, 2026-10-12, Codex, P1, stacked on #921. Actual routes/templates
 Deep links/history restore the latest requested page as a new window; subsequent Load more extends that window. They do not replay every previously accumulated page. Remaining acceptance includes production integration, API pagination bounds/legacy times and broader discovery/no-JS behavior.
 
 ## tests/test_public_list_request_state.py
+
+2026-10-13 follow-up: keyboard-control geometry tests explicitly use the data-saving manual fallback so each intermediate range remains observable. Actual automatic loading, bounded DOM, focus and delayed-response behavior have separate runtime coverage below.
 
 - [x] `test_public_retry_uses_compiled_locale_catalog`
 - [x] `test_public_loader_ignores_stale_search_and_counts_appended_results`
@@ -1244,6 +1248,22 @@ DATA-01 / QA-02, 2026-10-12, Codex, P1; stacked on #920. Browser harnesses use a
 | `test_public_listing_summary_is_shared_responsive_and_keyboard_operable` | Three list families share live summary, keyboard load-more, final hidden control and viewport-fitting summary in both themes/sizes. | Twelve cases: list/city/tag × light/dark × 1440/390px. Actual UI, synthetic API and actual pinned date picker; page errors asserted, summary geometry checked. Does not prove whole-page overflow, all date-picker behavior or live data. | Keep. |
 
 Screenshots of representative list states are inspected separately. Existing page/footer overflow and full URL/history behavior remain explicit follow-up work; this review does not silently declare broad UI acceptance.
+
+## tests/test_public_windowed_loading.py
+
+- [x] `test_automatic_public_lists_bound_dom_and_restore_discarded_pages`
+- [x] `test_delayed_append_preserves_new_focus_and_cannot_restore_old_filter_pages`
+- [x] `test_window_does_not_discard_keyboard_focus_and_preserves_scroll_anchor`
+- [x] `test_automatic_requests_are_single_flight_and_failure_never_loops`
+
+DATA-01b / QA-02 / QA-04, P2; reviewed 2026-10-13 by Codex. Nine parameterized cases; 75 focused cases passed with existing request/history/listing/inline-style/CSS and server-resource-limit checks. API responses are isolated for browser behavior; this does not prove live database performance or a numerical heap ceiling. Five retained pages are a constant bound on mounted cards and page references, not a claim that the entire browser uses constant RAM. Final PR records revision/run evidence.
+
+| Definition | Requirement / assertions | Fixtures, mocks, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_automatic_public_lists_bound_dom_and_restore_discarded_pages` | Scroll through ten pages without clicking Load more; at most five mounted pages / 60 default-size cards; discarded prior page re-fetched, contiguous range restored. | Six actual list/city/tag × light desktop/dark mobile cases with real renderer/controller/CSS. Synthetic 30-page API isolates UI; exact bounds, captured requests and page errors. Representative screenshots inspected. No real-API load benchmark or screen-reader claim. | Keep. |
+| `test_delayed_append_preserves_new_focus_and_cannot_restore_old_filter_pages` | Focus gained during an in-flight request prevents eviction; replacement search aborts old request and stale response cannot repopulate old pages. | Shipped loader/window with deferred responses deliberately ignoring abort; lightweight render/friends stubs isolate state. Exact focus/connectivity, single new page, text and aria-busy assertions. | Keep. |
+| `test_window_does_not_discard_keyboard_focus_and_preserves_scroll_anchor` | Offscreen focused page cannot be pruned, even manually; removing it after blur retains surviving page position within one pixel. Explicit manual advance can replace a visible unfocused edge to avoid a small-page/large-viewport dead end. | Real shared window and browser geometry; fixed 600px fixture pages isolate anchor correction. Does not prove every image/font layout-shift case. | Keep. |
+| `test_automatic_requests_are_single_flight_and_failure_never_loops` | Repeated scroll/manual events cannot overlap page requests; failure stops automatic retries; explicit manual retry works; destroyed controller ignores late state. | Real shared controller, deferred load callback, explicit frame/state waits; no arbitrary sleep. Does not prove server cancellation after an aborted HTTP request. | Keep. |
 
 ## tests/test_public_listing_contract.py
 

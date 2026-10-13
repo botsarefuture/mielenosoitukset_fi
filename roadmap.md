@@ -8,7 +8,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** DATA-01a — bound public page sizes and out-of-range database work (verified resource-exhaustion gap). Then DATA-01b — automatic, memory-bounded listing loading; resume UI-01 cropper accessibility and city-autocomplete keyboard behavior afterward.
+- **Next:** Review DATA-01a/#927 and DATA-01b bounded automatic loading, then resume UI-01 cropper accessibility and city-autocomplete keyboard behavior. Open PRs are not deployed fixes.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
@@ -82,8 +82,8 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 ### Backend, data, jobs and integrations
 
 - [ ] **DATA-01 · P1:** Finish public pagination and totals; verify the API and browser controller together.
-  - **DATA-01a · P1 · In progress · Codex · M2:** Clamp public tag/demo/organization page sizes to 1–100; skip out-of-range database offsets; isolate old oversized cache entries. Seven individually reviewed test definitions, 92 focused cases passed locally on 2026-10-13. No production load test, deployment or broader denial-of-service-resistance claim.
-  - **DATA-01b · P2 · Ready · Codex · M2 · depends on DATA-01a:** Load near the viewport without requiring repeated button clicks. Bound concurrent requests and retained cards/data; preserve backscroll, focus, filter cancellation and URL/history restoration. Keep an accessible manual/retry fallback. Acceptance requires long-list memory/DOM bounds and slow/failing-network browser tests; naive unlimited append is not sufficient.
+  - **DATA-01a · P1 · In review · Codex · M2 · #927:** Clamp public tag/demo/organization page sizes to 1–100; skip out-of-range database offsets; isolate old oversized cache entries. Seven individually reviewed test definitions, 92 focused cases passed locally on 2026-10-13. No production load test, deployment or broader denial-of-service-resistance claim.
+  - **DATA-01b · P2 · In review · Codex · M2 · codex/public-windowed-loading · depends on #927:** Automatic near-viewport loading, one list request at a time, five retained DOM pages (60 cards by default), no detached-page data cache. Backscroll re-fetches discarded pages; scroll anchor and focused cards are protected, including focus changes during slow requests. Filter/history cancellation and manual/retry/data-saving fallback remain. Four definitions individually assessed; nine new browser cases and 75 combined focused cases passed. Representative light desktop/dark mobile screenshots inspected. Live API performance, numerical heap profiling and broader assistive-technology acceptance remain unverified.
 - [ ] **DATA-02 · P1:** Resolve worker fencing/rebuild pruning (#908) with multi-worker, retry, crash and rebuild overlap evidence. Verify rather than assume historical analytics repair has run in production.
 - [ ] **DATA-03 · P2:** Review analytics accuracy/access/pagination (#551), large admin overview queries, and demonstration slow-query evidence from TODO.md. Establish measurement before index changes.
 - [ ] **DATA-04 · P1:** Verify email queue retries/idempotency, outgoing case reply history (#771), background job leadership and external service failure handling (#176). Define redacted audit metadata separately from user message retention.

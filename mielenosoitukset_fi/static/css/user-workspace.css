@@ -892,6 +892,20 @@ h1 {
   margin-bottom: 3rem;
 }
 
+/* Windowed public lists keep the existing responsive grid inside each page.
+   Page removal/prepending uses one explicit scroll-anchor correction. */
+.public-list-window {
+  display: block;
+  overflow-anchor: none;
+}
+.public-list-page {
+  overflow-anchor: none;
+  margin-bottom: 2rem;
+}
+.public-list-page:last-child {
+  margin-bottom: 0;
+}
+
 @media (min-width: 1200px) {
   .demos-grid { grid-template-columns: repeat(3, 1fr); }
 }

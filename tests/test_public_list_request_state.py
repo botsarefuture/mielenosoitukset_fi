@@ -110,6 +110,8 @@ def test_public_loader_http_failure_offers_retry_without_erasing_append(browser_
 @pytest.mark.parametrize('path', ['/demonstrations', '/city/Helsinki', '/tag/test-tag'])
 @pytest.mark.parametrize('theme,width', [('light', 1440), ('dark', 1440), ('light', 390), ('dark', 390)])
 def test_public_listing_summary_is_shared_responsive_and_keyboard_operable(live_server, browser_page, path, theme, width):
+    # Exercise the manual keyboard fallback used by data-saving clients.
+    browser_page.add_init_script("Object.defineProperty(navigator, 'connection', {value: {saveData: true}})")
     import json
     from urllib.parse import parse_qs, urlsplit
     browser_page.set_viewport_size({'width': width, 'height': 1000})

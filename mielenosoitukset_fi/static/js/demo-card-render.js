@@ -38,7 +38,7 @@ function normalizeDemoCardData(demo) {
 
 // 1️⃣ Render all demo cards
 function renderDemoCards(demoData, options = {}) {
-  const container = document.getElementById(options.containerId || 'demos-grid');
+  const container = options.container || document.getElementById(options.containerId || 'demos-grid');
   const template = document.getElementById('demo-card-template');
   if (!container || !template) return [];
 
@@ -192,13 +192,17 @@ let listRequestAbort = null;
 let displayedResults = 0;
 let displayedStart = 0;
 let appendGeneration = null;
+let friendsRequestAbort = null;
 
-async function loadDemos(page = 1, append = false, extraParams = {}) {
+async function loadDemos(page = 1, append = false, extraParams = {}, previous = false, manual = false) {
+  const pageWindow = window.publicListWindow;
+  if (append && pageWindow && !pageWindow.canExtend(previous, manual)) return null;
   // A replacement search invalidates every earlier response, even if abort
   // arrives after its response headers or the browser ignores cancellation.
   if (!append) {
     listRequestGeneration += 1;
     listRequestAbort?.abort();
+    friendsRequestAbort?.abort();
     listRequestAbort = new AbortController();
     appendGeneration = null;
   }
@@ -208,6 +212,7 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
   const signal = listRequestAbort?.signal;
   const loadMoreBtn = document.getElementById("load-more-btn");
   const demosGrid = document.getElementById("demos-grid");
+  demosGrid?.setAttribute('aria-busy', 'true');
   const errorState = document.getElementById("listing-load-error");
   if (errorState) errorState.hidden = true;
   const summary = document.getElementById("listing-result-summary");
@@ -241,11 +246,29 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
     const data = await res.json();
     if (requestGeneration !== listRequestGeneration || signal?.aborted) return null;
     if (!Array.isArray(data.results)) throw new Error("Invalid demonstration list response");
+    // Focus or viewport may have changed while the request was in flight.
+    if (append && pageWindow && !pageWindow.canExtend(previous, manual)) {
+      // This is a viewport/focus deferral, not a network failure. Let later
+      // scrolling resume automatically without evicting the user's focus.
+      return { page: pageWindow.last, total_pages: data.total_pages, deferred: true };
+    }
 
     const grid = document.getElementById("demos-grid");
-    if (!append) grid.innerHTML = ""; // clear on first load
+    if (!append) {
+      if (pageWindow) pageWindow.reset();
+      else grid.innerHTML = "";
+    }
+    // Only five pages of cards remain mounted. No detached-page data cache.
+    const newCards = pageWindow
+      ? pageWindow.mount({ ...data, per_page: data.per_page || Number(params.get('per_page')) },
+          container => renderDemoCards(data.results, { container }))
+      : renderDemoCards(data.results);
     displayedResults = (append ? displayedResults : 0) + data.results.length;
     if (!append) displayedStart = data.result_start || (data.results.length ? (data.page - 1) * Number(params.get('per_page')) + 1 : 0);
+    if (pageWindow) {
+      displayedResults = pageWindow.range.count;
+      displayedStart = pageWindow.range.start;
+    }
     if (summary) {
       const number = new Intl.NumberFormat(currentLocale);
       summary.textContent = summary.dataset.format
@@ -268,11 +291,10 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
     }
 
 
-    // Render demo cards
-    const newCards = renderDemoCards(data.results);
-
     // Fetch friends attending in one batch
-    getFriendsAttending(newCards);
+    friendsRequestAbort?.abort();
+    friendsRequestAbort = new AbortController();
+    getFriendsAttending(newCards, friendsRequestAbort.signal);
 
     setup_grid_navigation(newCards);
 
@@ -311,7 +333,10 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
     if (errorState) {
       errorState.hidden = false;
       const retry = errorState.querySelector("button");
-      if (retry) retry.onclick = () => loadDemos(page, append, { ...extraParams });
+      if (retry) retry.onclick = async () => {
+        const result = await loadDemos(page, append, { ...extraParams }, previous, true);
+        if (result) window.userPaginationController?.resumeAuto?.();
+      };
       if (!append) demosGrid.replaceChildren();
     }
     if (loadMoreBtn && !window.userPaginationController) {
@@ -321,6 +346,7 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
   }
 
   finally {
+    if (requestGeneration === listRequestGeneration) demosGrid?.setAttribute('aria-busy', 'false');
     if (append && requestGeneration === listRequestGeneration) appendGeneration = null;
     if (requestGeneration === listRequestGeneration && loadMoreBtn && !window.userPaginationController) {
       loadMoreBtn.classList.remove("loading");
@@ -367,7 +393,7 @@ function updateDemoCardAttending(cardElement, friends) {
 //   .then(res => res.json())
 //   .then(data => updateDemoCardAttending(card, data.friends));
 // 3️⃣ Fetch friends attending in one batch
-function getFriendsAttending(demoCards) {
+function getFriendsAttending(demoCards, signal) {
   const demoIds = demoCards.map(card => card.dataset.demoId);
   if (demoIds.length === 0) return; // Don't query API if empty :3
 
@@ -392,15 +418,17 @@ function getFriendsAttending(demoCards) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ demo_ids: demoIds }),
+    signal,
 
   })
     .then(res => res.json())
     .then(data => {
       demoCards.forEach(card => {
+        if (!card.isConnected || signal?.aborted) return;
         const id = card.dataset.demoId;
         const friends = data[id] || [];
         updateDemoCardAttending(card, friends);
       });
     })
-    .catch(err => console.error('Failed to fetch friends attending:', err));
+    .catch(err => { if (err.name !== 'AbortError') console.error('Failed to fetch friends attending:', err); });
 }

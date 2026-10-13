@@ -1,5 +1,8 @@
 import json
 import re
+import hashlib
+import secrets
+from datetime import timedelta
 from flask import (
     Blueprint,
     render_template,
@@ -34,6 +37,7 @@ from mielenosoitukset_fi.utils.request_ip import get_client_ip
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from bson.objectid import ObjectId
 from pymongo.errors import DuplicateKeyError
+from pymongo import ReturnDocument
 from werkzeug.utils import secure_filename
 import importlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
@@ -55,6 +59,124 @@ from mielenosoitukset_fi.utils.tokens import (
     tokens_collection,
 )
 from mielenosoitukset_fi.utils.step_up import clear_elevation, is_elevated, sudo_required
+
+
+MFA_PENDING_LOGIN_KEY = "mfa_pending_login"
+MFA_PENDING_LOGIN_TTL_SECONDS = 5 * 60
+MFA_PENDING_LOGIN_MAX_ATTEMPTS = 5
+
+
+def _pending_mfa_collection():
+    """Resolve challenges through the active database, including in tests."""
+    return _get_mongo()["mfa_login_challenges"]
+
+
+def _pending_mfa_digest(value):
+    """Store a digest rather than a bearer challenge or password hash."""
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _clear_pending_mfa_login():
+    """Revoke this browser's pending first factor and remove its handle."""
+    challenge = session.pop(MFA_PENDING_LOGIN_KEY, None)
+    if isinstance(challenge, str):
+        _pending_mfa_collection().delete_one(
+            {"_id": _pending_mfa_digest(challenge)}
+        )
+    session.modified = True
+
+
+def _set_pending_mfa_login(user):
+    """Remember a verified first factor without retaining its password."""
+    challenge = secrets.token_urlsafe(32)
+    now = utcnow()
+    collection = _pending_mfa_collection()
+    # Expiry is enforced on every read/consume even before physical cleanup.
+    collection.delete_many({"expires_at": {"$lte": now}})
+    collection.insert_one({
+        "_id": _pending_mfa_digest(challenge),
+        "user_id": user._id,
+        "credential_version": _pending_mfa_digest(user.password_hash),
+        "expires_at": now + timedelta(seconds=MFA_PENDING_LOGIN_TTL_SECONDS),
+        "attempts": 0,
+        "used": False,
+    })
+    session[MFA_PENDING_LOGIN_KEY] = challenge
+    session.modified = True
+
+
+def _get_pending_mfa_user():
+    """Reserve one bounded verification attempt on a live server-held proof."""
+    challenge = session.get(MFA_PENDING_LOGIN_KEY)
+    if not isinstance(challenge, str):
+        _clear_pending_mfa_login()
+        return None
+    pending = _pending_mfa_collection().find_one_and_update(
+        {
+            "_id": _pending_mfa_digest(challenge),
+            "used": False,
+            "expires_at": {"$gt": utcnow()},
+            "attempts": {"$lt": MFA_PENDING_LOGIN_MAX_ATTEMPTS},
+        },
+        {"$inc": {"attempts": 1}},
+    )
+    if not pending:
+        _clear_pending_mfa_login()
+        return None
+    user_doc = _get_mongo().users.find_one({"_id": pending["user_id"]})
+    if not user_doc:
+        _clear_pending_mfa_login()
+        return None
+
+    user = User.from_db(user_doc)
+    if (
+        not user.confirmed
+        or not user.mfa_enabled
+        or not user.active
+        or user.banned
+        or pending["credential_version"] != _pending_mfa_digest(user.password_hash)
+    ):
+        _clear_pending_mfa_login()
+        return None
+    return user
+
+
+def _consume_pending_mfa_login(user):
+    """Consume once, then authorize against persisted credentials atomically."""
+    challenge = session.get(MFA_PENDING_LOGIN_KEY)
+    if not isinstance(challenge, str):
+        return None
+    proof = _pending_mfa_collection().find_one_and_update(
+        {
+            "_id": _pending_mfa_digest(challenge),
+            "user_id": user._id,
+            "used": False,
+            "expires_at": {"$gt": utcnow()},
+            "attempts": {"$lte": MFA_PENDING_LOGIN_MAX_ATTEMPTS},
+        },
+        {"$set": {"used": True}},
+    )
+    if not proof:
+        return None
+    users = _get_mongo().users
+    current = users.find_one({"_id": proof["user_id"]})
+    if not current or proof["credential_version"] != _pending_mfa_digest(current["password_hash"]):
+        return None
+    # Password changes write this same document. If a reset wins before this
+    # compare-and-set, authorization fails; the already-used proof stays burned.
+    authorized = users.find_one_and_update(
+        {
+            "_id": proof["user_id"],
+            "password_hash": current["password_hash"],
+            "confirmed": True,
+            "mfa_enabled": True,
+            "banned": {"$ne": True},
+            "$or": [{"active": True}, {"active": {"$exists": False}}],
+        },
+        {"$set": {"last_mfa_login_at": utcnow()}},
+        return_document=ReturnDocument.AFTER,
+    )
+    return User.from_db(authorized) if authorized else None
 
 
 def generate_qr(url: str) -> str:
@@ -695,6 +817,7 @@ def mfa_check():
     """
 
     try:
+        _clear_pending_mfa_login()
         username = normalize_username(request.form.get("username"))
         user = _find_user_by_username(username)
         user = User.from_db(user)
@@ -710,6 +833,11 @@ def mfa_check():
             except Exception:
                 pass
             return jsonify({"enabled": False, "valid": False, "unverified": True})
+
+        if user.mfa_enabled:
+            _set_pending_mfa_login(user)
+        else:
+            _clear_pending_mfa_login()
 
         return jsonify({"enabled": user.mfa_enabled, "valid": True})
 
@@ -759,6 +887,7 @@ def _check(safe_next_page, request):
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+    """Verify password or pending MFA proof, then establish the login session."""
     # Get the next page from GET param or from session fallback
     next_page = request.args.get("next") or session.get("next_page") or ""
     safe_next_page = _normalize_post_login_target(next_page)
@@ -773,53 +902,104 @@ def login():
     if request.method == "POST":
         username = normalize_username(request.form.get("username"))
         password = request.form.get("password")
+        mfa_code = (request.form.get("2fa_code") or request.form.get("token") or "").strip()
+        mfa_credential_version = None
 
-        if not username or not password:
-            flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
-            return redirect(url_for("users.auth.login", next=safe_next_page))
-
-        user_doc = _find_user_by_username(username)
-        
         user_ip = get_client_ip()
         user_agent = request.headers.get("User-Agent", "")
 
-        if not user_doc:
-            flash_message(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
-            log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="User not found")
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+        # JavaScript-assisted MFA posts only the one-time code. The password was
+        # already verified by /2fa_check and is never copied into the DOM.
+        if mfa_code and not username and not password:
+            user = _get_pending_mfa_user()
+            if not user:
+                flash_message(
+                    "Kirjautumisvahvistus on vanhentunut. Syötä käyttäjänimi ja salasana uudelleen.",
+                    "warning",
+                )
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        user = User.from_db(user_doc)
-        if not user.check_password(password):
-            flash_message("Käyttäjänimi tai salasana on väärin.", "error")
-            log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Invalid password", user_id=user.id)
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+            username = user.username
+            if not UserMFA(user._id).verify_token(mfa_code):
+                log_login_attempt(
+                    username,
+                    success=False,
+                    ip=user_ip,
+                    user_agent=user_agent,
+                    reason="MFA failed",
+                    user_id=user._id,
+                )
+                flash_message("Väärä MFA-koodi.", "error")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+            user = _consume_pending_mfa_login(user)
+            if not user:
+                _clear_pending_mfa_login()
+                flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+            mfa_credential_version = _pending_mfa_digest(user.password_hash)
+        else:
+            if not username or not password:
+                flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        if not user.is_active:
-            flash_message("Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon.", "error")
-            log_login_attempt(
-                username, False, user_ip, user_agent=user_agent,
-                reason="Account disabled", user_id=user.id,
-            )
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+            user_doc = _find_user_by_username(username)
+            if not user_doc:
+                flash_message(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
+                log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="User not found")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        if not user.confirmed:
-            flash_message(
-                "Kirjautuminen estetty: vahvista sähköpostiosoitteesi ennen kirjautumista. "
-                "Tarkista sähköpostisi ja avaa vahvistuslinkki (lähetimme uuden linkin).",
-                "warning",
-            )
-            verify_emailer(user.email, username)
-            log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Email not verified", user_id=user.id)
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+            user = User.from_db(user_doc)
+            if not user.check_password(password):
+                flash_message("Käyttäjänimi tai salasana on väärin.", "error")
+                log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Invalid password", user_id=user.id)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        # MFA check (assuming your meow function does this)
-        if user.mfa_enabled and not meow(user):
-            log_login_attempt(username, success=False, ip=user_ip, user_agent=user_agent, reason="MFA failed", user_id=user._id)
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+            if not user.is_active:
+                flash_message("Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon.", "error")
+                log_login_attempt(
+                    username, False, user_ip, user_agent=user_agent,
+                    reason="Account disabled", user_id=user.id,
+                )
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
+            if not user.confirmed:
+                flash_message(
+                    "Kirjautuminen estetty: vahvista sähköpostiosoitteesi ennen kirjautumista. "
+                    "Tarkista sähköpostisi ja avaa vahvistuslinkki (lähetimme uuden linkin).",
+                    "warning",
+                )
+                verify_emailer(user.email, username)
+                log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Email not verified", user_id=user.id)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
+            # Keep direct/no-JavaScript login compatible: credentials and an MFA
+            # code may still be submitted together in a single request.
+            if user.mfa_enabled and not mfa_code:
+                _clear_pending_mfa_login()
+                _set_pending_mfa_login(user)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+            if user.mfa_enabled and not meow(user):
+                log_login_attempt(username, success=False, ip=user_ip, user_agent=user_agent, reason="MFA failed", user_id=user._id)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+            if user.mfa_enabled:
+                mfa_credential_version = _pending_mfa_digest(user.password_hash)
+
+        _clear_pending_mfa_login()
+
+        if mfa_credential_version is not None:
+            current = _get_mongo().users.find_one({
+                "_id": user._id, "password_hash": user.password_hash,
+            })
+            if not current:
+                flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+            user = User.from_db(current)
         # Everything good, log the user in
         login_user(user)
+        if mfa_credential_version is not None:
+            # A reset after the final read must also invalidate the response
+            # cookie before it can access any subsequent protected request.
+            session["mfa_credential_version"] = mfa_credential_version
         session.permanent = True  # ~12h authenticated session (PERMANENT_SESSION_LIFETIME)
         session.modified = True
         log_login_attempt(username, success=True, ip=user_ip, user_agent=user_agent, user_id=user._id)
@@ -849,7 +1029,11 @@ def login():
         return redirect(safe_next_page)
 
     # GET request just renders login page
-    return render_template("users/auth/login.html", next=safe_next_page)
+    return render_template(
+        "users/auth/login.html",
+        next=safe_next_page,
+        pending_mfa=isinstance(session.get(MFA_PENDING_LOGIN_KEY), str),
+    )
 from datetime import datetime
 
 @auth_bp.route("/forced_pwd_reset/", methods=["GET", "POST"])
@@ -1025,50 +1209,15 @@ def meow(user):
 
 @auth_bp.route("/verify_mfa", methods=["GET", "POST"])
 def verify_mfa():
-    """ """
-    if not session.get("mfa_required") or not current_user.is_authenticated:
-        return redirect(url_for("users.auth.login"))
-
-    if request.method == "POST":
-        token = request.form.get("token")
-        next_page = _normalize_post_login_target(request.args.get("next"))
-        user = current_user._get_current_object()
-
-        if UserMFA(user._id).verify_token(token):
-            
-            login_user(user)
-            session.permanent = True  # ~12h authenticated session
-            session.modified = True
-            
-            session["mfa_required"] = False
-            session["modified"] = True
-            
-            # Check if this is a popup login request
-            if request.args.get("popup") == "1":
-                # Return HTML that closes the popup and reloads opener
-                return f"""
-                <script>
-                    if (window.opener) {{
-                        window.opener.location.reload();
-                        window.close();
-                    }} else {{
-                        window.location = "{next_page}";
-                    }}
-                </script>
-                """
-
-            if user.forced_pwd_reset:
-                return redirect(url_for("users.auth.forced_pwd_reset"))
-
-            if user.forced_identity_change:
-                return redirect(url_for("users.auth.forced_identity_change"))
-
-            return redirect(next_page)
-
-        flash_message("Väärä MFA-koodi", "error")
-        return redirect(url_for("users.auth.verify_mfa"))
-
-    return render_template("users/auth/verify_mfa.html")
+    """Route legacy MFA links through the same pending-proof login contract."""
+    return redirect(
+        url_for(
+            "users.auth.login",
+            next=_normalize_post_login_target(request.args.get("next")),
+            popup=request.args.get("popup", ""),
+        ),
+        code=307 if request.method == "POST" else 302,
+    )
 
 @auth_bp.route("/api/v1/settings/", methods=["POST"])
 @login_required

@@ -14,13 +14,13 @@ v2.4.0:
 
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
-from bson.objectid import ObjectId
+from bson.objectid import ObjectId, InvalidId
 from flask import Blueprint, abort, redirect, render_template, request, url_for, jsonify, Response, current_app, has_request_context
 from flask_babel import gettext as _
 from flask_login import current_user, login_required
 from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.utils.flashing import flash_message
-from mielenosoitukset_fi.utils.validators import valid_email
+from mielenosoitukset_fi.utils.validators import valid_email, normalize_email
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from .utils import mongo, get_org_name as get_organization_name
 from mielenosoitukset_fi.utils.classes import Organization, MemberShip
@@ -100,6 +100,33 @@ def _normalized_suggestion_fields(suggestion):
     return legacy_fields
 
 
+def _validated_org_action_input(*id_fields, email_required=False):
+    """Validate API shape before identifiers or addresses reach DB operations."""
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        _log_org_event("organization_action_invalid_input", reason="json_object_required")
+        return None, (jsonify({"status": "error", "error": _("Virheellinen pyyntö.")}), 400)
+    data = dict(data)
+    for field in id_fields:
+        value = data.get(field)
+        if not isinstance(value, str) or not ObjectId.is_valid(value):
+            _log_org_event("organization_action_invalid_input", reason="invalid_id", field=field)
+            return None, (jsonify({"status": "error", "error": _("Virheellinen pyyntö.")}), 400)
+    if email_required:
+        value = data.get("email")
+        if not isinstance(value, str) or len(value) > 254 or not valid_email(value.strip()):
+            _log_org_event("organization_action_invalid_input", reason="invalid_email")
+            return None, (jsonify({"status": "error", "error": _("Virheellinen pyyntö.")}), 400)
+        data["email"] = normalize_email(value)
+    return data, None
+
+
+def _invite_matches_email(invite, email):
+    """Match canonical addresses while preserving legacy invitation formats."""
+    address = invite.get("email") if isinstance(invite, dict) else invite
+    return isinstance(address, str) and normalize_email(address) == email
+
+
 @admin_org_bp.before_request
 def log_request_info():
     """Log request information before handling it."""
@@ -146,8 +173,15 @@ def _can_edit_organization(user, organization) -> bool:
     permissions (via membership or global_permissions) can still edit
     verified organizations.
     """
+    org_id = (
+        organization.get("_id")
+        if isinstance(organization, dict)
+        else getattr(organization, "_id", None)
+    )
+    if org_id is None:
+        return False
     if not _is_limited_city_admin(user):
-        return True
+        return _has_explicit_organization_permission(user, "EDIT_ORGANIZATION", org_id)
     verified = (
         organization.get("verified", False)
         if isinstance(organization, dict)
@@ -790,6 +824,14 @@ def invite():
     """ """
     invitee_email = request.form.get("invitee_email")
     organization_id = request.form.get("organization_id")
+    if (
+        not isinstance(organization_id, str) or not ObjectId.is_valid(organization_id)
+        or not isinstance(invitee_email, str) or len(invitee_email) > 254
+        or not valid_email(invitee_email.strip())
+    ):
+        _log_org_event("organization_action_invalid_input", reason="invalid_invite_form")
+        abort(400)
+    invitee_email = normalize_email(invitee_email)
     organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
     if not organization:
         abort(404)
@@ -894,7 +936,9 @@ def delete_membership() -> Tuple[Response, int]:
       global `edit_organization` access, or superuser status before deletion.
     """
     # --- Parse input ---
-    data: Dict[str, Any] = request.get_json() or {}
+    data, error = _validated_org_action_input("membership_id")
+    if error:
+        return error
     membership_id: str | None = data.get("membership_id")
 
     if not membership_id:
@@ -903,25 +947,32 @@ def delete_membership() -> Tuple[Response, int]:
 
     # --- Verify org edit rights for city admins ---
     membership_doc = mongo.memberships.find_one({"_id": ObjectId(membership_id)})
-    if membership_doc and membership_doc.get("organization_id"):
-        org_doc = mongo.organizations.find_one({"_id": membership_doc["organization_id"]})
-        if not _can_edit_organization(current_user, org_doc or {}):
-            _log_org_event(
-                "membership_delete_error",
-                membership_id=membership_id,
-                reason="city_admin_verified_org",
-            )
-            return jsonify({"error": "Sinulla ei ole oikeutta muokata varmennettua organisaatiota."}), 403
+    if not membership_doc:
+        return jsonify({"status": "error", "error": _("Virheellinen pyyntö.")}), 404
+    raw_org_id = membership_doc.get("organization_id")
+    try:
+        org_id = ObjectId(raw_org_id) if raw_org_id else None
+    except (TypeError, ValueError, InvalidId):
+        org_id = None
+    org_doc = mongo.organizations.find_one({"_id": org_id}) if org_id else None
+    if not org_doc:
+        _log_org_event("membership_delete_error", membership_id=membership_id, reason="organization_not_found")
+        return jsonify({"status": "error", "error": _("Virheellinen pyyntö.")}), 404
+    if not _can_edit_organization(current_user, org_doc):
+        _log_org_event("membership_delete_error", membership_id=membership_id, reason="forbidden")
+        return jsonify({"error": "Sinulla ei ole oikeutta muokata varmennettua organisaatiota."}), 403
 
     # --- Delete membership ---
-    result = mongo.memberships.delete_one({"_id": ObjectId(membership_id)})
+    result = mongo.memberships.delete_one({
+        "_id": ObjectId(membership_id), "organization_id": raw_org_id,
+    })
 
     if result.deleted_count == 1:
         _log_org_event("membership_deleted", membership_id=membership_id)
         return jsonify({"message": "Käyttäjä poistettu organisaatiosta"}), 200
 
     _log_org_event("membership_delete_error", membership_id=membership_id, reason="not_deleted")
-    return jsonify({"error": "Poisto epäonnistui"}), 500
+    return jsonify({"error": _("Virheellinen pyyntö.")}), 409
 
 @admin_org_bp.route("/<org_id>/suggestion/<suggestion_id>")
 @login_required
@@ -1255,7 +1306,9 @@ def force_accept_invite() -> Tuple[Response, int]:
         )
 
     # --- Parse input ---
-    data: Dict[str, Any] = request.get_json() or {}
+    data, error = _validated_org_action_input("organization_id", email_required=True)
+    if error:
+        return error
     email: str | None = data.get("email")
     org_id: str | None = data.get("organization_id")
 
@@ -1281,15 +1334,15 @@ def force_accept_invite() -> Tuple[Response, int]:
         invite
         for invite in invitations
         if not (
-            (isinstance(invite, dict) and invite.get("email") == email)
-            or (isinstance(invite, str) and invite == email)
+            _invite_matches_email(invite, email)
         )
     ]
 
     # --- Fetch user ---
     from mielenosoitukset_fi.users.models import User
 
-    user_doc = mongo.users.find_one({"email": email})
+    from mielenosoitukset_fi.users.BPs.auth import _find_user_by_email
+    user_doc = _find_user_by_email(email)
     if not user_doc:
         _log_org_event("organization_invite_force_accept_error", reason="user_not_found", organization_id=org_id, email=email)
         return (
@@ -1304,7 +1357,7 @@ def force_accept_invite() -> Tuple[Response, int]:
     for invite in invitations:
         if (
             isinstance(invite, dict)
-            and invite.get("email") == email
+            and _invite_matches_email(invite, email)
             and invite.get("role")
         ):
             role = invite.get("role")
@@ -1375,7 +1428,9 @@ def cancel_invite() -> Tuple[Response, int]:
             or {"status": "error", "error": "Invitation not found."}
     """
     # --- Parse input ---
-    data: Dict[str, Any] = request.get_json() or {}
+    data, error = _validated_org_action_input("organization_id", email_required=True)
+    if error:
+        return error
     email: str | None = data.get("email")
     org_id: str | None = data.get("organization_id")
 
@@ -1404,8 +1459,7 @@ def cancel_invite() -> Tuple[Response, int]:
 
     for invite in invitations:
         if (
-            (isinstance(invite, dict) and invite.get("email") == email)
-            or (isinstance(invite, str) and invite == email)
+            _invite_matches_email(invite, email)
         ):
             removed = True
             continue
@@ -1469,7 +1523,9 @@ def set_invite_role() -> Tuple[Response, int]:
     - If no invite exists for the email, a new one is created.
     """
     # --- Parse input ---
-    data: Dict[str, Any] = request.get_json() or {}
+    data, error = _validated_org_action_input("organization_id", email_required=True)
+    if error:
+        return error
     email: str | None = data.get("email")
     org_id: str | None = data.get("organization_id")
     role: str | None = data.get("role")
@@ -1496,13 +1552,13 @@ def set_invite_role() -> Tuple[Response, int]:
     updated = False
 
     for invite in invitations:
-        if isinstance(invite, dict) and invite.get("email") == email:
+        if isinstance(invite, dict) and _invite_matches_email(invite, email):
             invite["role"] = role
             updated = True
             break
 
         # Legacy format: invite stored as just email string
-        if isinstance(invite, str) and invite == email:
+        if isinstance(invite, str) and _invite_matches_email(invite, email):
             invitations[invitations.index(invite)] = {"email": email, "role": role}
             updated = True
             break
@@ -1569,7 +1625,9 @@ def change_access_level() -> Tuple[Response, int]:
     """
 
     # --- Parse input ---
-    data: Dict[str, Any] = request.json or {}
+    data, error = _validated_org_action_input("organization_id", "user_id")
+    if error:
+        return error
     user_id: str | None = data.get("user_id")
     organization_id: str | None = data.get("organization_id")
     role: str | None = data.get("role")

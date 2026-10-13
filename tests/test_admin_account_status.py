@@ -34,6 +34,44 @@ def test_admin_can_disable_and_reenable_with_audited_confirmation(admin_client, 
     assert doc["active"] is True and doc["banned"] is False
 
 
+def test_independent_confirmation_tabs_keep_their_nonces(admin_client, db, seeded_data):
+    targets = [seeded_data['user_id'], seeded_data['friend_id']]
+    tokens = [_confirmation(admin_client, target) for target in targets]
+    for target, token in zip(targets, tokens):
+        assert admin_client.post(f'/admin/user/account_status/{target}', data={'status_token': token}).status_code == 302
+        assert db.users.find_one({'_id': target})['active'] is False
+    with admin_client.session_transaction() as session:
+        assert session['account_status_nonces'] == []
+
+
+def test_confirmation_nonce_collection_is_bounded(admin_client, seeded_data):
+    target = seeded_data['user_id']
+    tokens = [_confirmation(admin_client, target) for _ in range(9)]
+    with admin_client.session_transaction() as session:
+        assert len(session['account_status_nonces']) == 8
+    assert admin_client.post(f'/admin/user/account_status/{target}', data={'status_token': tokens[0]}).status_code == 400
+    assert admin_client.post(f'/admin/user/account_status/{target}', data={'status_token': tokens[-1]}).status_code == 302
+
+
+def test_superuser_can_list_and_change_ordinary_account_status(admin_client, db, seeded_data):
+    db.users.update_one({'_id': seeded_data['admin_id']}, {'$set': {'role': 'superuser'}})
+    assert admin_client.get('/admin/user/').status_code == 200
+    target = seeded_data['user_id']
+    token = _confirmation(admin_client, target)
+    assert admin_client.post(f'/admin/user/account_status/{target}', data={'status_token': token}).status_code == 302
+
+
+@pytest.mark.parametrize('locale,labels', [('en', ['Banned', 'Disabled', 'Active']), ('sv', ['Blockerad', 'Inaktiverad', 'Aktiv']), ('fi', ['Estetty', 'Suljettu', 'Aktiivinen'])])
+def test_compiled_status_labels_have_distinct_gettext_context(locale, labels):
+    import gettext
+    from pathlib import Path
+    with Path(f'mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.mo').open('rb') as stream:
+        catalog = gettext.GNUTranslations(stream)
+    assert [catalog.pgettext('account-status', label) for label in ['Estetty', 'Suljettu', 'Aktiivinen']] == labels
+    if locale in {'en', 'sv'}:
+        assert catalog.gettext('Suljettu') != labels[1]
+
+
 @pytest.mark.parametrize("target_kind", ["self", "peer", "higher"])
 def test_admin_cannot_change_self_or_peer_or_higher_status(admin_client, db, seeded_data, target_kind):
     target = seeded_data["admin_id"] if target_kind == "self" else seeded_data["user_id"]
@@ -116,9 +154,9 @@ def test_confirmation_is_bound_to_the_authenticated_actor(app, admin_client, db,
     db.users.update_one({"_id": actor}, {"$set": {"role": "god", "global_admin": True}})
     other = _client_for_user(app, actor)
     with admin_client.session_transaction() as source:
-        nonce = source["account_status_nonce"]
+        nonces = source["account_status_nonces"]
     with other.session_transaction() as destination:
-        destination["account_status_nonce"] = nonce
+        destination["account_status_nonces"] = nonces
     response = other.post(
         f"/admin/user/account_status/{target}", data={"status_token": token},
     )

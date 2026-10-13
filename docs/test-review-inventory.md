@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-142 Python test files; 1,009 test definitions (1,004 in 141 files under `tests/`, plus five standalone recurrence tests in one file). SEC-02 adds twelve definitions to the original 997-test baseline. Twenty-three account/passkey/admin-status definitions have individual review records below; remaining entries are pending review. This inventory was extracted from Python AST across tracked repository Python files, excluding fixture definitions; it does not claim parameter expansion or completed review of the suite. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities. Open #901's separate MFA additions/reviews must be reconciled after merge.
+Branch snapshot after #916 review fixes, 2026-10-13: 144 Python test files; 1,034 definitions (1,029 in 143 files under `tests/`, plus five standalone recurrence tests). Counts reconcile current main with this account-status branch and exclude other open PRs. This tracked-Python AST inventory excludes fixtures and parameter expansion and does not claim completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -50,6 +50,13 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 | `test_legacy_account_without_active_field_remains_enabled` | Missing legacy active flag defaults enabled. | Real model and successful password session; ensures no forced migration requirement. | Keep. |
 
 ## tests/test_admin_account_status.py
+
+Review follow-up, 2026-10-13: real Flask/MongoDB confirmation tests prove independent target tabs survive each other's consumption, the eight-nonce bound rejects evicted forms, and a supported superuser can list/change ordinary accounts. Runtime GNUTranslations tests prove FI/EN/SV account-status contexts do not replace uncontextualized case labels. Focused result: 17 parameterized cases passed; no claim of a full-suite or production run.
+
+- [x] `test_independent_confirmation_tabs_keep_their_nonces`
+- [x] `test_confirmation_nonce_collection_is_bounded`
+- [x] `test_superuser_can_list_and_change_ordinary_account_status`
+- [x] `test_compiled_status_labels_have_distinct_gettext_context`
 
 - [x] `test_admin_can_disable_and_reenable_with_audited_confirmation`
 - [x] `test_admin_cannot_change_self_or_peer_or_higher_status`
@@ -815,10 +822,49 @@ Evidence: 37 focused admin-status/user/fresh-deletion backend cases passed, foll
 
 ## tests/test_mfa_settings.py
 
-- [ ] `test_mfa_enable_flow_end_to_end`
-- [ ] `test_mfa_device_rename_requires_step_up_and_updates_name`
-- [ ] `test_mfa_blocks_login_without_code_and_allows_with_code`
-- [ ] `test_verify_mfa_route_does_not_500`
+- [x] `test_mfa_enable_flow_end_to_end`
+- [x] `test_mfa_device_rename_requires_step_up_and_updates_name`
+- [x] `test_mfa_login_uses_short_lived_server_side_pending_state`
+- [x] `test_expired_pending_mfa_login_requires_password_again`
+- [x] `test_copied_pending_cookie_cannot_replay_successful_mfa`
+- [x] `test_password_change_revokes_pending_first_factor`
+- [x] `test_reset_after_mfa_user_load_does_not_call_login_user`
+- [x] `test_reset_between_persisted_read_and_atomic_authorization_is_rejected`
+- [x] `test_reset_after_consumption_before_session_creation_is_rejected`
+- [x] `test_reset_at_session_creation_revokes_the_response_cookie`
+- [x] `test_parallel_pending_challenge_consumption_has_one_winner`
+- [x] `test_combined_mfa_login_binds_credentials_and_rejects_password_change`
+- [x] `test_reset_during_combined_mfa_verification_prevents_login`
+- [x] `test_pending_mfa_attempt_limit_cannot_be_reset_by_cookie_replay`
+- [x] `test_verify_mfa_route_does_not_500`
+- [x] `test_password_login_without_javascript_renders_mfa_step`
+- [x] `test_legacy_mfa_flag_does_not_replace_first_factor_proof`
+
+SEC-01 / QA-01 review, 2026-10-12, Codex, P1, PR #901. The old `test_mfa_blocks_login_without_code_and_allows_with_code` used a username absent from its fixture and accepted a broad response range. It was replaced with actual identity/session and challenge assertions; it was not silently dropped.
+
+Shared setup: disposable MongoDB and real Flask test clients/session cookies, actual password hashes and stored MFA devices. External email/network side effects are isolated by `tests/conftest.py`. No mock bypasses challenge persistence, consumption or credential revocation. TOTP uses real time; invalid-code selection excludes the accepted window with a boundary margin. These tests do not prove browser focus/layout or all inactive-account entrypoints (SEC-02).
+
+| Definition | Requirement / assertions | Cases, isolation and limitations | Disposition |
+|---|---|---|---|
+| `test_mfa_enable_flow_end_to_end` | Issued setup secret only; wrong/unissued code rejected, activation/device state persists, sudo required for removal. | Real API/database state; invalid code strengthened to avoid random valid-code collisions. QR prefix is structural coverage, not scanning compatibility. | Keep; strengthened invalid-code assertion. |
+| `test_mfa_device_rename_requires_step_up_and_updates_name` | Forbidden without sudo; valid rename persists; blank/missing/unknown device rejected. | Real client/DB; ownership across two users remains a separate permission-test requirement. | Keep. |
+| `test_mfa_login_uses_short_lived_server_side_pending_state` | Cookie contains opaque handle, DB binds actual user, no password/raw password hash stored; completion sets exact identity and clears proof. | Real first-factor and TOTP; markup verifies removed hidden fields but does not execute browser JS. | Keep; strengthened proof assertions. |
+| `test_expired_pending_mfa_login_requires_password_again` | Expired DB challenge cannot authenticate and is removed. | Database expiry moved into past; no sleeps or host-clock change. | Keep. |
+| `test_copied_pending_cookie_cannot_replay_successful_mfa` | Successful identity established, then saved pre-login cookie fails with a valid code. | Separate Flask clients; proves server revocation independent of response-cookie clearing. | Keep. |
+| `test_password_change_revokes_pending_first_factor` | Model password change invalidates pending proof despite valid TOTP; no user session and challenge removed. | Real password change, hash persistence and endpoint. Concurrent interleavings are covered by the four cases below. | Keep. |
+| `test_reset_after_mfa_user_load_does_not_call_login_user` | A reset after initial user loading rejects authorization without calling login_user. | Real reset after actual TOTP validation; login_user spy proves no session creation call. | Keep. |
+| `test_reset_between_persisted_read_and_atomic_authorization_is_rejected` | Reset winning before the user-record compare-and-set rejects authentication. | Hook schedules real reset at MongoDB update boundary; actual conditional write rejects stale hash. | Keep. |
+| `test_reset_after_consumption_before_session_creation_is_rejected` | Reset before final credential read prevents login_user. | Real mutation during proof cleanup; exact empty login-call assertion. | Keep. |
+| `test_reset_at_session_creation_revokes_the_response_cookie` | Reset at session creation invalidates protected access; current-password login recovers. | Real cookie/loader; controlled reset after login_user, no cryptographic bypass. | Keep. |
+| `test_parallel_pending_challenge_consumption_has_one_winner` | Two simultaneous database consume attempts yield exactly one success. | Separate request contexts, two worker threads and barrier; tests atomic storage invariant, not parallel browser HTTP dispatch. | Keep. |
+| `test_combined_mfa_login_binds_credentials_and_rejects_password_change` | Combined password/TOTP login sets the exact credential binding; a later reset blocks protected access. | Real factors, DB password mutation and session loader; exact cookie binding and redirect assertions. | Keep. |
+| `test_reset_during_combined_mfa_verification_prevents_login` | Reset after password validation during TOTP verification prevents login_user. | Real TOTP verifier followed by deterministic reset; login_user spy confirms no session creation. | Keep. |
+| `test_pending_mfa_attempt_limit_cannot_be_reset_by_cookie_replay` | Saved cookie cannot reset server attempt count; later valid code fails after exhaustion. | Only TOTP rejection mocked during failure phase; real verifier restored before final valid-code assertion. Fresh password verification can intentionally issue new proof. | Keep. |
+| `test_verify_mfa_route_does_not_500` | Legacy POST forwards with 307 and preserves existing authenticated identity. | Was a loose non-500 assertion; now checks destination, status and user ID. Anonymous legacy proof is covered separately. | Keep; strengthened. |
+| `test_password_login_without_javascript_renders_mfa_step` | Ordinary form POST renders visible MFA step with no password field copy; code then establishes correct session. | Server-rendered requests without browser JavaScript; client rendering/focus remains browser coverage work. | Keep. |
+| `test_legacy_mfa_flag_does_not_replace_first_factor_proof` | Legacy boolean flag plus valid code cannot establish anonymous login. | Real anonymous request through forwarded legacy endpoint; exact unauthenticated session assertion. | Keep. |
+
+Validation: focused MFA, username, passkey and fresh-deletion test files run for this PR; final counts and commit evidence are recorded in the PR. The review completion marks assessment of these definitions, not completion of the broader QA-01 programme.
 
 ## tests/test_operational_metrics.py
 
@@ -830,6 +876,28 @@ Evidence: 37 focused admin-status/user/fresh-deletion backend cases passed, foll
 ## tests/test_org_logo_referrer_policy.py
 
 - [ ] `test_organization_logo_images_do_not_send_preview_referrers`
+
+## tests/test_org_action_validation.py
+
+- [x] `test_org_action_rejects_malformed_json_or_identifiers`
+- [x] `test_invitation_actions_reject_invalid_addresses`
+- [x] `test_invite_role_normalizes_input_and_matches_legacy_address`
+- [x] `test_organization_editor_cannot_mutate_another_org_invite`
+- [x] `test_invite_form_rejects_invalid_object_identifier`
+- [x] `test_membership_delete_requires_resolved_target_organization`
+
+SEC-03 / QA-01 review, 2026-10-12, Codex, P1; actual Flask endpoints, roles, membership grants and disposable MongoDB. External delivery is isolated by existing fixtures; no permission/DB-write mock. Unique actor/target IDs prevent parametrized identity collisions. Error/audit assertions do not claim the full canonical audit/redaction programme is complete.
+
+| Definition | Requirement / assertions | Cases and limits | Disposition |
+|---|---|---|---|
+| `test_org_action_rejects_malformed_json_or_identifiers` | Invalid payloads return JSON 400 rather than reaching unsafe ObjectId conversion. | Five APIs × list/string/invalid-ID payloads, exact status and error envelope. Empty/malformed JSON syntax uses same validator but not separately parameterized. | Keep. |
+| `test_invitation_actions_reject_invalid_addresses` | Invalid or non-string email rejected before invite handling. | Three invite APIs × malformed/list/header-shaped address. Valid delivery integration not part of this test. | Keep. |
+| `test_invite_role_normalizes_input_and_matches_legacy_address` | Mixed-case legacy invite updated without duplication, then cancelled. | Actual legacy string → canonical dict and persisted empty list; valid role member used. Other role policies remain #550. | Keep. |
+| `test_organization_editor_cannot_mutate_another_org_invite` | Own-org rights do not authorize foreign owner invitation. | Real unrelated verified organization, exact 403 and unchanged invitations. | Keep. |
+| `test_invite_form_rejects_invalid_object_identifier` | Browser form identifier checked before BSON conversion. | Exact 400; HTTP redirect/success rendering unaffected. | Keep. |
+| `test_membership_delete_requires_resolved_target_organization` | Deletion only succeeds for authorized resolved organization. | Own, foreign, orphan and malformed stored ID; exact status and record existence. Revealed broad edit helper bypass, which was corrected. Owner-transfer/last-owner policy and concurrent permissions changes need separate acceptance. | Keep. |
+
+Final focused run/revision evidence is recorded in the delivery PR. Review completion marks these definitions assessed; organization role lifecycle, destructive confirmations and audit architecture remain open.
 
 ## tests/test_organization_fill_page.py
 

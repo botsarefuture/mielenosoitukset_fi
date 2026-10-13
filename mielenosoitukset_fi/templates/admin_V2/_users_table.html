@@ -58,11 +58,11 @@
         </td>
         <td>
           {% if user.banned %}
-            <span class="admin-status-badge admin-status-badge--danger">{{ _('Estetty') }}</span>
+            <span class="admin-status-badge admin-status-badge--danger">{{ pgettext('account-status', 'Estetty') }}</span>
           {% elif not user.get('active', true) %}
-            <span class="admin-status-badge admin-status-badge--warning">{{ _('Suljettu') }}</span>
+            <span class="admin-status-badge admin-status-badge--warning">{{ pgettext('account-status', 'Suljettu') }}</span>
           {% else %}
-            <span class="admin-status-badge admin-status-badge--success">{{ _('Aktiivinen') }}</span>
+            <span class="admin-status-badge admin-status-badge--success">{{ pgettext('account-status', 'Aktiivinen') }}</span>
           {% endif %}
         </td>
         <td>

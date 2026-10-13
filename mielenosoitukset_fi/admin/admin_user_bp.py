@@ -178,6 +178,7 @@ def user_control():
 
 
 USER_ACCESS_LEVELS = {
+    "superuser": 5,
     "god": 5,
     "global_admin": 4,
     "admin": 3,
@@ -368,7 +369,7 @@ def account_status(user_id):
         if (
             proof.get("actor") != str(current_user._id)
             or proof.get("target") != user_id
-            or proof.get("nonce") != session.get("account_status_nonce")
+            or proof.get("nonce") not in session.get("account_status_nonces", [])
         ):
             abort(400)
         if proof["snapshot"] != snapshot:
@@ -386,7 +387,10 @@ def account_status(user_id):
         )
         if result.modified_count != 1:
             abort(409)
-        session.pop("account_status_nonce", None)
+        session["account_status_nonces"] = [
+            nonce for nonce in session.get("account_status_nonces", [])
+            if nonce != proof["nonce"]
+        ]
         log_admin_action_V2({
             "event": "user_account_status_changed",
             "actor_id": str(current_user._id), "entity_type": "user", "entity_id": user_id,
@@ -397,7 +401,8 @@ def account_status(user_id):
         return redirect(url_for("admin_user.user_control"))
 
     nonce = secrets.token_urlsafe(32)
-    session["account_status_nonce"] = nonce
+    # Bound cookie growth while allowing independent confirmation tabs.
+    session["account_status_nonces"] = (session.get("account_status_nonces", []) + [nonce])[-8:]
     enable = not target.is_active
     token = serializer.dumps({
         "actor": str(current_user._id), "target": user_id, "nonce": nonce,

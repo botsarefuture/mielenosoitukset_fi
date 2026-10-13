@@ -13615,6 +13615,10 @@ msgstr "Utkastet återställdes från den här webbläsaren. Det raderas automat
 msgid "Poista luonnos ja aloita alusta"
 msgstr "Radera utkastet och börja om"
 
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Kirjautumisvahvistus on vanhentunut. Syötä käyttäjänimi ja salasana uudelleen."
+msgstr "Inloggningsbekräftelsen har gått ut. Ange ditt användarnamn och lösenord igen."
+
 #: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/users/BPs/passkeys.py
 msgid "Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon."
 msgstr "Det här kontot är inaktiverat. Kontakta webbplatsens administratörer."
@@ -13625,12 +13629,15 @@ msgstr "Användarkontots status"
 msgid "Käyttötila"
 msgstr "Kontostatus"
 
+msgctxt "account-status"
 msgid "Estetty"
 msgstr "Blockerad"
 
+msgctxt "account-status"
 msgid "Suljettu"
 msgstr "Inaktiverad"
 
+msgctxt "account-status"
 msgid "Aktiivinen"
 msgstr "Aktiv"
 

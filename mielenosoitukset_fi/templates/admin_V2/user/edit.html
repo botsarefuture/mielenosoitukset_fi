@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     <section class="admin-form-section">
       <div class="admin-form-section__header"><h2>{{ _('Käyttötila') }}</h2></div>
-      <p>{{ _('Estetty') if user.banned else (_('Aktiivinen') if user.active else _('Suljettu')) }}</p>
+      <p>{{ pgettext('account-status', 'Estetty') if user.banned else (pgettext('account-status', 'Aktiivinen') if user.active else pgettext('account-status', 'Suljettu')) }}</p>
       {% if user._id != current_user._id %}
         <a class="btn btn-outline-secondary" href="{{ url_for('admin_user.account_status', user_id=user.id) }}">{{ _('Käyttäjän käyttötila') }}</a>
       {% endif %}

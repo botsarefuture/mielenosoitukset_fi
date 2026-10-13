@@ -13440,6 +13440,10 @@ msgstr "No upcoming dates"
 msgid "Tälle toistuvalle tapahtumalle ei ole vielä julkaistu ajankohtia."
 msgstr "No dates have been published for this recurring event yet."
 
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Kirjautumisvahvistus on vanhentunut. Syötä käyttäjänimi ja salasana uudelleen."
+msgstr "The sign-in confirmation has expired. Enter your username and password again."
+
 #: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/users/BPs/passkeys.py
 msgid "Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon."
 msgstr "This account is disabled. Contact the site administrators."
@@ -13450,12 +13454,15 @@ msgstr "User account status"
 msgid "Käyttötila"
 msgstr "Account status"
 
+msgctxt "account-status"
 msgid "Estetty"
 msgstr "Banned"
 
+msgctxt "account-status"
 msgid "Suljettu"
 msgstr "Disabled"
 
+msgctxt "account-status"
 msgid "Aktiivinen"
 msgstr "Active"
 

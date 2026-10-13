@@ -25,7 +25,7 @@ P0–P3 are common engineering conventions. The definitions below are this repos
 | **P2 — Medium** | Important usability, consistency, performance or maintainability improvement with a working core path. | Schedule after related P1 work and required dependencies. | Component consolidation, broader localization, measured performance improvements. |
 | **P3 — Low** | Optional enhancement or low-risk cleanup without immediate user harm. | Pull when higher-priority dependencies are clear. | Verified orphan assets, optional new product features. |
 
-Priorities below are planning assignments. Revalidate reported defects before implementation; promote a confirmed urgent defect to P0 and record the evidence. There is **no active P0 asserted by this roadmap**.
+Priorities below are planning assignments. Revalidate reported defects before implementation; promote a confirmed urgent defect to P0 and record the evidence. SEC-03 has confirmed P0 code defects in case reads (#917) and cross-organization edit/membership authorization (this slice). Neither live exploitation nor a deployed fix is claimed.
 
 ## Status and ownership
 
@@ -74,8 +74,8 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 ### Security and permissions
 
 - [ ] **SEC-01 · P1:** Complete the pending MFA challenge contract described above; review the legacy MFA verification route and no-JavaScript behavior as part of the same authentication workflow.
-- [ ] **SEC-02 · P1:** Inactive/banned-account enforcement (#763): backend enforcement in open #915; status badges and authorized confirmation workflow on `codex/admin-account-status`, stacked on #915. Twenty-three account/passkey/admin-status reviews recorded, including representative browser geometry/focus checks. Keep open until both PRs merge and required release evidence is established.
-- [ ] **SEC-03 · P1:** Verify city-admin case access (#778), organization invite/member rules (#550/#342), and privileged user operations (#547). Prove allowed and forbidden scopes server-side.
+- [ ] **SEC-02 · P1:** Inactive/banned-account backend enforcement is merged (#915). Admin status badges and confirmation workflow remain in review (#916), including bounded multi-tab nonces, superuser support and contextual compiled translations; retain #763 until merge and release acceptance.
+- [ ] **SEC-03 · P0/P1:** Open #917 addresses the confirmed P0 case-read authorization gap and city scope (#778). This organization slice fixes another confirmed P0 cross-org edit/membership bypass and P1 member/invite input validation (#550/#342), with six individual test reviews. Broader role lifecycle/destructive/audit rules and privileged user operations (#547) remain to verify.
 - [ ] **SEC-04 · P1:** Reconcile token/approval lifecycle requirements and prior completed trackers against current routes; prove revocation, expiry, replay behavior, idempotent decisions, case closure, audit and notification effects for every entrypoint.
 - [ ] **SEC-05 · P1:** Review incident #912/#913 protections and credential/session lifecycle regressions before touching related code. Keep secrets out of documentation and audit data.
 
@@ -131,7 +131,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The initial [individual review inventory](docs/test-review-inventory.md) lists **997 test definitions across 140 Python test files** at the baseline revision: 992 under `tests/` and five in the standalone recurrence script. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. SEC-01 in PR #901 combined with current main brings the inventory to **1,019 definitions across 142 files**, with thirty-seven MFA/account/passkey/organization-action review records. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 
@@ -171,9 +171,10 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 
 | ID | Priority | Status | Owner | Milestone | Evidence / next action |
 |---|---|---|---|---|---|
-| SEC-01 | P1 | In review | Codex; human reviewer unassigned | M1 | [#901](https://github.com/botsarefuture/mielenosoitukset_fi/pull/901); repair lifecycle findings against current main before approval. |
-| QA-01 | P1 | In progress | Codex | M1, then ongoing | Fourteen account/passkey definitions reviewed on SEC-02 branch; remaining tests and noted ownership/tampering gaps pending. Reconcile #901's separate MFA reviews after merge. |
-| SEC-02 | P1 | In review | Codex | M1 | Backend #915 plus stacked admin-status confirmation workflow; exact permissions/CSRF/stale-form tests recorded. Merge, browser acceptance and release evidence pending. |
+| SEC-01 | P1 | In review | Codex; human reviewer unassigned | M1 | [#901](https://github.com/botsarefuture/mielenosoitukset_fi/pull/901); server-held atomic challenges, credential revocation, bounded retries and legacy/no-JS flow implemented on branch; focused regression evidence in PR. |
+| QA-01 | P1 | In progress | Codex | M1, then ongoing | Thirty-seven MFA/account/passkey/organization-action definitions reviewed in the combined inventory; remaining authentication/permission tests pending. |
+| SEC-02 | P1 | In review | Codex | M1 | Backend #915 merged; #916 status/toggle workflow and review fixes validated locally. Merge and release acceptance pending. |
+| SEC-03 | P0/P1 | In review | Codex | M1 | #917 handles case read/scope; organization validation/target-membership fix on this branch. Remaining role/audit/user-operation requirements pending. |
 | QA-02 | P1 | Backlog | Unassigned | M2–M3 | Review data/workflow assertions alongside delivery. |
 | QA-03–QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI, browser/locale and operations/remaining tests. |
 | DATA-01 | P1 | Backlog | Unassigned | M2 | Confirm API/controller behavior, then implement shared ordering/count contract. |

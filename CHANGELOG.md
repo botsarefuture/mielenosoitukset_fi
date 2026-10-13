@@ -4,7 +4,16 @@
 
 ## UNRELEASED
 
+- Admin account status now supports superusers and concurrent confirmation tabs; status labels have separate translation contexts and compiled FI/EN/SV catalogs.
+
 - Admin user lists and editors now show enabled, disabled and banned status; authorized administrators can confirm activation or disabling with scoped expiring CSRF protection and stale-form/replay checks.
+
+- Combined password-and-TOTP sign-in now binds the MFA session to the verified credentials, so concurrent and later password changes reject stale authentication just like the two-step flow.
+
+- MFA proof authorization now uses an atomic comparison against persisted credentials, and MFA sessions are invalidated by password changes, closing concurrent password-reset login races.
+
+- Organization membership and invitation APIs now reject malformed JSON, invalid object identifiers and invalid invite addresses with consistent localized 400 responses before database operations; invite addresses are normalized.
+- Organization editing now requires explicit rights to the target organization rather than merely an admin role. Membership deletion also requires a valid target organization; orphan records no longer fall through to unrelated organization permissions.
 
 - Disabled and banned accounts can no longer sign in with a password, MFA or passkey; protected requests also reject their existing sessions after the account status changes.
 
@@ -41,6 +50,8 @@
 - Fixed recurring-series occurrence selection to parse start times and preserve the midnight fallback for missing or invalid values.
 - Consolidated recurring demonstrations into one search-canonical series page that opens the next relevant occurrence by default and exposes every date in an accessible server-rendered chooser.
 - Recurring series whose every occurrence is cancelled now use the empty-series noindex state instead of selecting a cancelled date as the default or advertising the series in the sitemap.
+- Fixed MFA login so the password is verified once and never copied into hidden browser fields. The code-only step uses a five-minute server-held challenge with atomic consumption, password-change revocation and a shared retry limit; copied cookies cannot replay successful or exhausted challenges. JavaScript-free and legacy MFA entrypoints use the same proof contract.
+
 - Kept demonstration detail pages aligned with the sitemap's future discovery horizon: events beyond two years now use `noindex, follow`, while sitemap event priorities decrease with distance from the current date.
 - The shared public stylesheet cache-bust key in `base.html` was corrected to the reviewed `YYYYMMDD-user-workspace-N` format after the recurring-series CSS additions, so shared-style contract tests pass while caches still bust.
 

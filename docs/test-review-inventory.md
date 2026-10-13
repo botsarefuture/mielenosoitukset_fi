@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified #916/#919 integration snapshot on main 60992b19, 2026-10-13: 149 Python test files; 1,084 definitions; 121 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Organization orphan-member hotfix snapshot based on main 175cb1fd, 2026-10-13: 150 Python test files; 1,088 definitions; 125 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -961,6 +961,22 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1; actual Flask endpoints, roles, mem
 | `test_membership_delete_requires_resolved_target_organization` | Deletion only succeeds for authorized resolved organization. | Own, foreign, orphan and malformed stored ID; exact status and record existence. Revealed broad edit helper bypass, which was corrected. Owner-transfer/last-owner policy and concurrent permissions changes need separate acceptance. | Keep. |
 
 Final focused run/revision evidence is recorded in the delivery PR. Review completion marks these definitions assessed; organization role lifecycle, destructive confirmations and audit architecture remain open.
+
+## tests/test_organization_orphan_members.py
+
+- [x] `test_organization_detail_renders_with_missing_member`
+- [x] `test_organization_preserves_valid_members_and_permissions`
+- [x] `test_organization_with_only_orphan_members_renders_empty_members`
+- [x] `test_organization_does_not_suppress_other_user_loading_errors`
+
+Organization HTTP 500 regression review, 2026-10-13. Disposable database and real Flask/model lookups; no production records are changed. Four request variants reproduced the same missing-user exception before the fix. Seven new cases and 51 existing organization/deletion cases passed afterward (58 total); final commit and PR identify the delivery revision.
+
+| Definition | Requirement / assertions | Fixtures, coverage and limits | Disposition |
+|---|---|---|---|
+| `test_organization_detail_renders_with_missing_member` | Real detail GET returns 200 with organization content; no missing user invented or stored membership deleted. | ObjectId/string references × anonymous/authenticated clients; four real database/render cases. Not a production or all-browser check. | Keep. |
+| `test_organization_preserves_valid_members_and_permissions` | Valid members retain roles/permissions, missing member gets no membership/access, refresh is idempotent and user records remain unchanged. | Real seeded users plus one orphan; exact member IDs and stored-user equality. Does not audit every permission policy. | Keep. |
+| `test_organization_with_only_orphan_members_renders_empty_members` | No valid members is a supported empty state and still renders 200. | Separate synthetic organization, two missing users; both stored memberships remain. | Keep. |
+| `test_organization_does_not_suppress_other_user_loading_errors` | Unrelated user-deserialization errors still propagate rather than disappearing as missing users. | One injected ValueError, narrowly scoped to the loader. Does not prove every upstream exception type. | Keep. |
 
 ## tests/test_organization_fill_page.py
 

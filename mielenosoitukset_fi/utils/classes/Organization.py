@@ -50,7 +50,14 @@ class Organization(BaseEntity):
         from mielenosoitukset_fi.users.models import User
 
         for m in memberships:
-            user = User.from_OID(m.user_id)
+            try:
+                user = User.from_OID(m.user_id)
+            except ValueError as error:
+                # Legacy user deletions can leave membership references behind.
+                # Skip only missing users; other loading failures must surface.
+                if error.args != ("User not found",):
+                    raise
+                continue
             user.role        = m.role
             user.permissions = m.permissions
             self.members.append(user)

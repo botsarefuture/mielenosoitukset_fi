@@ -4,7 +4,8 @@ set -euo pipefail
 
 repo_dir="${PRODUCTION_REPO_DIR:-/var/www/mielenosoitukset_fi}"
 service_name="${PRODUCTION_SERVICE_NAME:-mielenosoitukset_fi}"
-health_url="${PRODUCTION_HEALTH_URL:-https://mielenosoitukset.fi/health}"
+health_url="${PRODUCTION_HEALTH_URL:-http://mielenosoitukset.fi/health}"
+health_socket="${PRODUCTION_HEALTH_SOCKET:-${repo_dir}/mielenosoitus.sock}"
 build_sha_file="${PRODUCTION_BUILD_SHA_FILE:-${repo_dir}/.deploy-build-sha}"
 expected_sha="${1:-}"
 
@@ -80,7 +81,8 @@ systemctl reload "$service_name"
 
 if systemctl is-active --quiet "$service_name" && \
    python3 "$repo_dir/deploy/verify_health_sha.py" \
-     "$expected_sha" "$health_url" --attempts 30 --delay 2 --timeout 5; then
+     "$expected_sha" "$health_url" --unix-socket "$health_socket" \
+     --attempts 30 --delay 2 --timeout 5; then
   echo "Deployed ${expected_sha} with a verified graceful worker reload."
   exit 0
 fi

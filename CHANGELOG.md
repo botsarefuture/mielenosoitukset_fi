@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Production deployment now verifies replacement workers directly through Gunicorn's local Unix socket, avoiding Cloudflare challenges on the server-side health check. The separate public HTTPS check remains required and reports HTTP failures, including Cloudflare challenges, explicitly.
+
 - Public pagination indexes are now provisioned before deployment reloads rather than blocking application worker imports; provisioning failures leave existing workers running.
 
 - Both public demonstration list APIs now order by date, start time and ID before pagination, report matching totals and exact page ranges, and safely normalize invalid numeric page arguments. Existing filters and response fields are preserved.

@@ -1,5 +1,15 @@
 """Regression tests for commit-aware production health verification."""
 
+import io
+import socketserver
+import tempfile
+from http.server import BaseHTTPRequestHandler
+from pathlib import Path
+from threading import Thread
+from urllib.error import HTTPError
+
+import pytest
+
 from deploy import verify_health_sha
 from mielenosoitukset_fi.utils import build_info
 
@@ -77,6 +87,96 @@ def test_production_deploy_contract_is_sha_bound():
     assert ".deploy-build-sha" in deploy_script
     assert "deploy/verify_health_sha.py" in deploy_script
     assert "deploy/verify_health_sha.py" in workflow
+    assert '--unix-socket "$health_socket"' in deploy_script
+    assert "PRODUCTION_HEALTH_SOCKET" in deploy_script
+    assert "https://mielenosoitukset.fi/health" in workflow
+    assert "--unix-socket" not in workflow
     assert "?deploy=" not in workflow
     assert 'restrict,command="' in documentation
     assert "no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty" in documentation
+
+
+@pytest.mark.parametrize("status,body,expected", [
+    (200, '{"status":"ok","build_sha":"' + SHA + '"}', SHA),
+    (503, '{"status":"ok","build_sha":"' + SHA + '"}', None),
+    (200, "not JSON", None),
+    (200, '{"status":"unhealthy","build_sha":"' + SHA + '"}', None),
+    (200, '{"status":"ok","build_sha":"abc123"}', None),
+])
+def test_verifier_reads_origin_socket_without_proxy(monkeypatch, status, body, expected):
+    requests = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            requests.append((self.path, self.headers.get("Host")))
+            self.send_response(status)
+            self.end_headers()
+            self.wfile.write(body.encode())
+
+        def log_message(self, *_args):
+            pass
+
+    # Short paths avoid platform-specific Unix socket path-length limits.
+    with tempfile.TemporaryDirectory(prefix="health-test-", dir="/tmp") as directory:
+        socket_path = str(Path(directory) / "app.sock")
+        with socketserver.UnixStreamServer(socket_path, Handler) as server:
+            thread = Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            monkeypatch.setenv("http_proxy", "http://127.0.0.1:1")
+            monkeypatch.setattr(verify_health_sha, "urlopen", lambda *_a, **_k: pytest.fail("Origin probe used public transport"))
+            try:
+                assert verify_health_sha.fetch_build_sha(
+                    "http://mielenosoitukset.fi/health", 1, unix_socket=socket_path,
+                ) == expected
+            finally:
+                server.shutdown()
+                thread.join(timeout=2)
+    assert requests == [("/health", "mielenosoitukset.fi")]
+
+
+def test_verifier_reports_cloudflare_challenge_without_body_or_url(monkeypatch, capsys):
+    def blocked(*_args, **_kwargs):
+        raise HTTPError("https://private.invalid/?secret=redact", 403, "Forbidden", {
+            "cf-mitigated": "challenge",
+        }, io.BytesIO(b"private response body"))
+
+    monkeypatch.setattr(verify_health_sha, "urlopen", blocked)
+    assert verify_health_sha.fetch_build_sha("https://example.test/health", 1) is None
+    error = capsys.readouterr().err
+    assert "HTTP 403 (Cloudflare challenge)" in error
+    assert "private" not in error
+    assert "secret" not in error
+
+
+def test_verifier_reports_missing_origin_socket(capsys):
+    with tempfile.TemporaryDirectory(prefix="health-test-", dir="/tmp") as directory:
+        assert verify_health_sha.fetch_build_sha(
+            "http://mielenosoitukset.fi/health", 1,
+            unix_socket=str(Path(directory) / "missing.sock"),
+        ) is None
+    assert "FileNotFoundError" in capsys.readouterr().err
+
+
+def test_verifier_passes_socket_while_waiting_for_new_worker(monkeypatch):
+    observed = iter([OLD_SHA, SHA])
+    sockets = []
+
+    def probe(_url, _timeout, *, unix_socket):
+        sockets.append(unix_socket)
+        return next(observed)
+
+    monkeypatch.setattr(verify_health_sha, "fetch_build_sha", probe)
+    monkeypatch.setattr(verify_health_sha.time, "sleep", lambda _delay: None)
+    assert verify_health_sha.wait_for_build(
+        SHA, "http://mielenosoitukset.fi/health", attempts=2, delay=0, timeout=1,
+        unix_socket="/example/app.sock",
+    )
+    assert sockets == ["/example/app.sock", "/example/app.sock"]
+
+
+@pytest.mark.parametrize("url", ["https://example.test/health", "http://user:password@example.test/health"])
+def test_verifier_rejects_misleading_tls_or_credentials_for_socket(monkeypatch, url):
+    monkeypatch.setattr("sys.argv", ["verify", SHA, url, "--unix-socket", "/example/app.sock"])
+    with pytest.raises(SystemExit) as exc:
+        verify_health_sha.main()
+    assert exc.value.code == 2

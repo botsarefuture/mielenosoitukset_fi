@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-142 Python test files; 1,023 test definitions (1,018 in 141 files under `tests/`, plus five standalone recurrence tests in one file). Forty-two definitions have review records below; remaining entries are pending review. This API pagination slice adds four definitions to main's reconciled 1,019-definition inventory, including the review-driven real MongoDB query-plan regression; separate open #916/#917/#919 changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+142 Python test files; 1,029 test definitions (1,024 in 141 files under `tests/`, plus five standalone recurrence tests in one file). Fifty-three definitions have review records below; remaining entries are pending review. The origin-health deployment slice adds five definitions and reviews all eleven definitions in `test_deploy_build_sha.py`; it also records main's previously omitted index-provisioning test as pending. Separate open PR changes are not counted here. This repository-wide tracked-Python AST inventory excludes fixtures and does not claim parameter expansion or completed suite review. See [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -629,12 +629,35 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 
 ## tests/test_deploy_build_sha.py
 
-- [ ] `test_build_sha_is_captured_from_environment`
-- [ ] `test_build_sha_file_rejects_partial_or_invalid_values`
-- [ ] `test_health_endpoint_publishes_uncached_worker_build`
-- [ ] `test_verifier_waits_past_old_worker_for_replacement`
-- [ ] `test_verifier_rejects_plain_200_without_matching_metadata`
-- [ ] `test_production_deploy_contract_is_sha_bound`
+- [x] `test_build_sha_is_captured_from_environment`
+- [x] `test_build_sha_file_rejects_partial_or_invalid_values`
+- [x] `test_health_endpoint_publishes_uncached_worker_build`
+- [x] `test_verifier_waits_past_old_worker_for_replacement`
+- [x] `test_verifier_rejects_plain_200_without_matching_metadata`
+- [x] `test_production_deploy_contract_is_sha_bound`
+- [x] `test_verifier_reads_origin_socket_without_proxy`
+- [x] `test_verifier_reports_cloudflare_challenge_without_body_or_url`
+- [x] `test_verifier_reports_missing_origin_socket`
+- [x] `test_verifier_passes_socket_while_waiting_for_new_worker`
+- [x] `test_verifier_rejects_misleading_tls_or_credentials_for_socket`
+
+OPS / QA-01 review, 2026-10-13, Codex, P1. Base `fb663b51`; validation:
+`pytest -o addopts='' -q tests/test_deploy_build_sha.py` (16 cases), Bash syntax
+and `git diff --check`. No production reload or end-to-end deployment performed.
+
+| Definition | Purpose / setup / assertions | Reliability / coverage / disposition |
+|---|---|---|
+| `test_build_sha_is_captured_from_environment` | Monkeypatched environment; exact valid SHA resolution. | Deterministic; environment precedence only. Keep. |
+| `test_build_sha_file_rejects_partial_or_invalid_values` | Temporary file, unset environment; rejects partial SHA and accepts full SHA. | Real file reads; not a concurrent atomic-write test. Keep. |
+| `test_health_endpoint_publishes_uncached_worker_build` | Real Flask fixture; config SHA, 200 JSON, no-store and build header. | Tests endpoint contract, not real Gunicorn reload. Keep. |
+| `test_verifier_waits_past_old_worker_for_replacement` | Mocked SHA sequence/sleep; two old responses followed by expected SHA. | Deterministic retry logic; transport covered separately. Keep. |
+| `test_verifier_rejects_plain_200_without_matching_metadata` | Mocked absent SHA/sleep; bounded retries cannot succeed. | Transport payload validation covered by origin tests. Keep. |
+| `test_production_deploy_contract_is_sha_bound` | Reads real shell/workflow/docs; SHA verifier, socket argument, independent public HTTPS and restricted SSH contract. | Static guard, not shell execution or actual key permissions. Keep. |
+| `test_verifier_reads_origin_socket_without_proxy` | Real temporary Unix HTTP server; five HTTP/body variants, broken proxy, public transport forbidden; exact Host/path and result. | Short socket path is portable to macOS/Linux; proves local transport, not production process setup. Keep. |
+| `test_verifier_reports_cloudflare_challenge_without_body_or_url` | Mock urllib HTTP 403/challenge containing private URL/body; captured stderr names challenge without leaking data. | Reproduces known Cloudflare response contract; no live WAF dependency. Keep. |
+| `test_verifier_reports_missing_origin_socket` | Real nonexistent short socket path; None result and safe exception class diagnostic. | Deterministic filesystem failure; no remote request. Keep. |
+| `test_verifier_passes_socket_while_waiting_for_new_worker` | Mocked transport old/new sequence; exact socket passed on both probes. | Socket transport tested separately; keeps retry wiring covered. Keep. |
+| `test_verifier_rejects_misleading_tls_or_credentials_for_socket` | Two CLI argument variants; argparse exit 2 for HTTPS or embedded credentials. | No real connection; prevents silently downgrading TLS semantics. Keep. |
 
 ## tests/test_detail_metadata_localization.py
 
@@ -974,6 +997,8 @@ Focused run evidence is linked in the delivery PR; checked entries mean assessed
 - [ ] `test_language_switcher_keeps_current_page_and_query_string`
 
 ## tests/test_public_demonstrations_api.py
+
+- [ ] `test_public_index_provisioning_is_not_part_of_route_import`
 
 - [x] `test_public_demonstrations_list_uses_summary_payload`
 - [x] `test_public_pages_have_chronological_tie_breaks_and_filtered_counts`

@@ -15,6 +15,24 @@ the server and GitHub Actions wait for a healthy worker whose `build_sha`
 exactly matches the requested commit; a response from an old worker cannot
 finish the deployment.
 
+The server probes Gunicorn directly through its Unix socket, not through
+Cloudflare. The default socket is `${PRODUCTION_REPO_DIR}/mielenosoitus.sock`
+(repository default `/var/www/mielenosoitukset_fi`); override it with
+`PRODUCTION_HEALTH_SOCKET` if Gunicorn uses a different path. The default
+`PRODUCTION_HEALTH_URL` is `http://mielenosoitukset.fi/health`: its hostname is
+sent as the HTTP Host header, but the connection stays on the local socket.
+Use plain HTTP for this socket transport; it is not an insecure public request.
+No TCP listener, TLS bypass, authentication bypass or firewall exception is added.
+
+GitHub Actions retains the independent public HTTPS/build-SHA check. A
+Cloudflare challenge makes that check fail with an explicit `HTTP 403
+(Cloudflare challenge)` diagnostic rather than being confused with a stale
+worker. If bot protection blocks it, operators must configure a narrowly scoped
+Cloudflare exception for the health probe (GET `/health` on the production
+hostname, limited to the necessary challenge rule), not disable site-wide WAF
+or bot protection. No exception is installed by this code change. The public
+probe remains a release gate until it can return the expected SHA.
+
 Index provisioning runs as `python3 -m
 mielenosoitukset_fi.scripts.provision_public_indexes` before the reload, not
 during route imports or application migrations. A failure stops deployment

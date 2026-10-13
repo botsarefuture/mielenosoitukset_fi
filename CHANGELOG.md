@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Back/Forward restores date-picker constraints alongside the fields and no longer counts restored result requests as new searches.
+
 - City suggestions are now anchored to their own search field, preventing desktop dropdown overlap and horizontal overflow.
 
 - Public list retry controls now use compiled English and Swedish translations; stylesheet version checks accept subsequent valid cache bumps instead of pinning an obsolete version.

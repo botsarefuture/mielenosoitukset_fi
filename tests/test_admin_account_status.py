@@ -126,6 +126,65 @@ def test_user_list_and_editor_show_account_status(admin_client, db, seeded_data)
     assert "Suljettu" in editor.get_data(as_text=True)
 
 
+def test_same_status_token_has_one_winner_under_concurrent_submit(app, admin_client, db, seeded_data, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+    target = seeded_data['user_id']
+    endpoint = f'/admin/user/account_status/{target}'
+    token = _confirmation(admin_client, target)
+    cookie = admin_client.get_cookie(app.config['SESSION_COOKIE_NAME']).value
+    collection_type = type(db.users)
+    original = collection_type.update_one
+    both_have_snapshot = Barrier(2)
+
+    def synchronized_update(collection, query, update, *args, **kwargs):
+        if (collection.full_name == db.users.full_name and query.get('_id') == target
+                and update.get('$inc', {}).get('account_status_version') == 1):
+            both_have_snapshot.wait(timeout=10)
+        return original(collection, query, update, *args, **kwargs)
+
+    monkeypatch.setattr(collection_type, 'update_one', synchronized_update)
+    def submit(_index):
+        with app.test_client() as client:
+            client.set_cookie(app.config['SESSION_COOKIE_NAME'], cookie)
+            return client.post(endpoint, data={'status_token': token}).status_code
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert sorted(pool.map(submit, range(2))) == [302, 409]
+    doc = db.users.find_one({'_id': target})
+    assert doc['active'] is False and doc['account_status_version'] == 1
+    assert db.admin_logs.count_documents({'event': 'user_account_status_changed', 'entity_id': str(target)}) == 1
+
+
+@pytest.mark.parametrize('kind,visible', [('lower', True), ('self', False), ('peer', False), ('higher', False)])
+def test_status_action_visibility_uses_shared_hierarchy(app, admin_client, db, seeded_data, kind, visible):
+    from types import SimpleNamespace
+    from mielenosoitukset_fi.admin.admin_user_bp import can_change_account_status
+    from mielenosoitukset_fi.users.models import User
+    target = seeded_data['admin_id'] if kind == 'self' else seeded_data['user_id']
+    role = 'admin' if kind in {'self', 'peer'} else 'god' if kind == 'higher' else 'user'
+    with app.test_request_context():
+        actor = User.from_db(db.users.find_one({'_id': seeded_data['admin_id']}))
+        assert can_change_account_status(actor, SimpleNamespace(_id=target, role=role)) is visible
+    if kind == 'lower':
+        restricted = SimpleNamespace(_id=actor._id, role=actor.role,
+            has_full_permissions=lambda: False, global_permissions=[],
+            has_permission=lambda _permission: True)
+        assert not can_change_account_status(restricted, SimpleNamespace(_id=target, role=role))
+        page = admin_client.get(f'/admin/user/edit_user/{target}').get_data(as_text=True)
+        assert f'/admin/user/account_status/{target}' in page
+    else:
+        from flask import render_template
+        # Isolate visibility from the edit route's own stricter authorization.
+        subject = User.from_db(dict(db.users.find_one({'_id': target}), role=role))
+        with app.test_request_context():
+            from flask_login import login_user
+            login_user(actor)
+            page = render_template('admin_V2/user/edit.html', user=subject, can_change_status=False,
+                PERMISSIONS_GROUPS={}, city_list=[], enabled_city_list=[], city_name_to_key={},
+                city_scope_grant=None, city_admin_permissions=[])
+            assert f'/admin/user/account_status/{subject.id}' not in page
+
+
 def test_status_confirmation_expires(admin_client, seeded_data):
     target = seeded_data["user_id"]
     token = _confirmation(admin_client, target)

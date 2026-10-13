@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Snapshot on PR #916 after integrating merged #917, 2026-10-13: 144 Python test files; 1,050 definitions (1,045 in 143 files under tests/, plus five standalone recurrence tests), with 71 assessed definitions. AST membership is reconciled; other open PRs are excluded. Fixtures and parameter expansion are excluded; this is not completed suite review.
+Snapshot on PR #916 after integrating merged #917 and approved review fixes, 2026-10-13: 144 Python test files; 1,052 definitions (1,047 in 143 files under tests/, plus five standalone recurrence tests), with 73 assessed definitions. AST membership is reconciled; other open PRs are excluded. Fixtures and parameter expansion are excluded; this is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -51,6 +51,10 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 
 ## tests/test_admin_account_status.py
 
+- [x] `test_same_status_token_has_one_winner_under_concurrent_submit`
+- [x] `test_status_action_visibility_uses_shared_hierarchy`
+
+Approved review follow-up, 2026-10-13: the synchronized race uses two independent clients with the same cookie/proof and a barrier immediately before the real conditional Mongo update, after both requests have read their snapshots. Exactly one 302, one 409, one persisted version increment and one action audit must result. The collection method wrapper adds synchronization only; it does not mock the write outcome. The visibility test covers lower/self/peer/higher targets, exact template link presence/absence and a membership-only permission denied by the shared predicate. No sleeps or production requests. Both definitions are retained; sequential disable/enable/replay coverage is not replaced. Final combined run and revision are recorded in the integration PR.
 Review follow-up, 2026-10-13: real Flask/MongoDB confirmation tests prove independent target tabs survive each other's consumption, the eight-nonce bound rejects evicted forms, and a supported superuser can list/change ordinary accounts. Runtime GNUTranslations tests prove FI/EN/SV account-status contexts do not replace uncontextualized case labels. Focused result: 17 parameterized cases passed; no claim of a full-suite or production run.
 
 - [x] `test_independent_confirmation_tabs_keep_their_nonces`

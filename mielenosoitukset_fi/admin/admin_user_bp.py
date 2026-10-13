@@ -148,12 +148,9 @@ def user_control():
     for user in users:
         if user.get("role") in {None, "user"} and str(user["_id"]) in scoped_user_ids:
             user["role"] = "city_admin"
-        user["can_change_status"] = (
-            current_user.has_permission("EDIT_USER")
-            and user["_id"] != current_user._id
-            and compare_user_levels(
-                current_user, SimpleNamespace(_id=user["_id"], role=user.get("role") or "user")
-            )
+        user["can_change_status"] = can_change_account_status(
+            current_user, SimpleNamespace(_id=user["_id"], role=user.get("role") or "user",
+                                          global_admin=user.get("global_admin", False))
         )
 
     return render_template(
@@ -342,6 +339,13 @@ def safe_redirect(target):
     return redirect(target)
 
 
+def can_change_account_status(actor, target):
+    """Share status-action visibility with the authoritative target hierarchy."""
+    return ((actor.has_full_permissions() or "EDIT_USER" in actor.global_permissions)
+            and actor._id != target._id
+            and compare_user_levels(actor, target))
+
+
 @admin_user_bp.route("/account_status/<user_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -356,7 +360,7 @@ def account_status(user_id):
     if not doc:
         abort(404)
     target = User.from_db(doc)
-    if target_id == current_user._id or not compare_user_levels(current_user, target):
+    if not can_change_account_status(current_user, target):
         abort(403)
 
     serializer = URLSafeTimedSerializer(current_app.secret_key, salt="admin-account-status")
@@ -557,6 +561,7 @@ def edit_user(user_id):
         user=user,
         PERMISSIONS_GROUPS=PERMISSIONS_GROUPS,
         global_permissions=user.global_permissions,
+        can_change_status=can_change_account_status(current_user, user),
         can_manage_scope_grants=_can_manage_scope_grants(current_user),
         city_list=CITY_LIST,
         enabled_city_list=enabled_city_names(mongo),

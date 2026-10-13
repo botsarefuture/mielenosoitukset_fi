@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Swedish listing summaries now use count-neutral wording for both one and many results. Runtime catalog/browser coverage and the individual test-review inventory include the retry translation regression.
+
 - Public list retry controls now use compiled English and Swedish translations; stylesheet version checks accept subsequent valid cache bumps instead of pinning an obsolete version.
 
 - Public demonstration lists now ignore stale search responses, keep cumulative result counts, prevent overlapping page appends, and offer localized retry feedback. Shared load-more controls disappear correctly at the last page in both themes; the main list's date-picker locale safely defaults for first-time visitors.

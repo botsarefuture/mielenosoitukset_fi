@@ -14,6 +14,10 @@
 
 - Privileged user actions now share target/role/delegation checks across edit and save routes, reject self-escalation and cross-level password-reset forcing, and use explicit global capabilities. User-action request audits no longer serialize form bodies, cookies, headers or user credential records.
 
+- Every case route now declares its exact permission and city-scope policy, with undeclared routes rejected; case lists reuse one edit scope for automatic closure instead of querying permissions per row.
+
+- Case lists, details and actions now enforce explicit case permissions and inherit city scope from linked demonstrations; ordinary accounts and out-of-city direct requests are rejected. City admins can receive case list/view/edit grants without gaining global blocklist or organization controls.
+
 - Public pagination indexes are now provisioned before deployment reloads rather than blocking application worker imports; provisioning failures leave existing workers running.
 
 - Both public demonstration list APIs now order by date, start time and ID before pagination, report matching totals and exact page ranges, and safely normalize invalid numeric page arguments. Existing filters and response fields are preserved.

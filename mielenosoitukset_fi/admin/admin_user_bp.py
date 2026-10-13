@@ -205,6 +205,9 @@ CITY_ADMIN_PERMISSIONS = [
     "CREATE_DEMO",
     "GENERATE_EDIT_LINK",
 ]
+CITY_ADMIN_AVAILABLE_PERMISSIONS = CITY_ADMIN_PERMISSIONS + [
+    "LIST_CASES", "VIEW_CASE", "EDIT_CASE",
+]
 
 
 def _can_manage_scope_grants(actor) -> bool:
@@ -230,7 +233,7 @@ def _city_scope_grant_for_user(user_id: ObjectId) -> dict:
         scope_keys = [grant.get("scope_key")]
     grant["scope_keys"] = [normalize_city_key(key) for key in scope_keys or [] if normalize_city_key(key)]
     grant["permissions"] = [
-        permission for permission in grant.get("permissions", []) if permission in CITY_ADMIN_PERMISSIONS
+        permission for permission in grant.get("permissions", []) if permission in CITY_ADMIN_AVAILABLE_PERMISSIONS
     ]
     return grant
 
@@ -255,7 +258,7 @@ def _auto_activate_granted_cities(city_keys: list[str]) -> None:
 
 def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions: list[str]) -> None:
     city_keys = sorted({normalize_city_key(key) for key in city_keys if normalize_city_key(key) in CITY_KEY_TO_NAME})
-    permissions = sorted({permission for permission in permissions if permission in CITY_ADMIN_PERMISSIONS})
+    permissions = sorted({permission for permission in permissions if permission in CITY_ADMIN_AVAILABLE_PERMISSIONS})
     if city_keys and permissions:
         permissions = sorted(set(permissions) | {"LIST_DEMOS", "VIEW_DEMO"})
         _auto_activate_granted_cities(city_keys)
@@ -495,7 +498,7 @@ def edit_user(user_id):
         enabled_city_list=enabled_city_names(mongo),
         city_name_to_key=CITY_NAME_TO_KEY,
         city_scope_grant=city_scope_grant,
-        city_admin_permissions=CITY_ADMIN_PERMISSIONS,
+        city_admin_permissions=CITY_ADMIN_AVAILABLE_PERMISSIONS,
     )
 
 

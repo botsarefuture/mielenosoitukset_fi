@@ -61,3 +61,24 @@ def test_public_search_fields_are_visible_aligned_and_focusable(live_server, bro
     assert browser_page.evaluate('document.activeElement.id') == ('demo-location' if path.startswith('/city/') else 'city_input')
     if path == '/demonstrations':
         browser_page.locator('#search-form').screenshot(path=f'/tmp/moso-search-form-{theme}-{width}.png')
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize('path', ['/demonstrations', '/tag/test-tag'])
+@pytest.mark.parametrize('width', [1440, 390])
+def test_city_suggestions_stay_within_their_search_field(live_server, browser_page, path, width):
+    browser_page.set_viewport_size({'width': width, 'height': 1000})
+    browser_page.route('**/api/demonstrations?*', lambda route: route.fulfill(
+        content_type='application/json', body='{"page":1,"total_pages":1,"total":0,"results":[]}'))
+    browser_page.goto(f'{live_server}{path}', wait_until='domcontentloaded')
+    menu = browser_page.locator('#city_input').evaluate('''input => {
+      const field = input.closest('.public-search-field');
+      const menu = field.querySelector('.suggestions');
+      menu.textContent = 'Helsinki'; menu.classList.add('show');
+      const fieldRect = field.getBoundingClientRect(), menuRect = menu.getBoundingClientRect();
+      return {left: menuRect.left, right: menuRect.right,
+        fieldLeft: fieldRect.left, fieldRight: fieldRect.right};
+    }''')
+    assert abs(menu['left'] - menu['fieldLeft']) <= 1
+    assert menu['right'] <= menu['fieldRight'] + 1

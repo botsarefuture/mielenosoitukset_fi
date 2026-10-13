@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+- City suggestions are now anchored to their own search field, preventing desktop dropdown overlap and horizontal overflow.
+
+- Public list retry controls now use compiled English and Swedish translations; stylesheet version checks accept subsequent valid cache bumps instead of pinning an obsolete version.
+
 - Public list, city and tag search forms now share visible, linked field labels and responsive product-token styling, with 44px controls and announced date errors. FI/EN/SV labels distinguish start/end dates correctly while existing field names, filters and fixed city context remain unchanged.
 
 - Public list, city and tag filters now restore from shareable URLs, reset to page one on search, and follow Back/Forward history with accurate deep-page ranges. City/tag context cannot be overridden by conflicting URL values; shared removable city chips are text-safe, and invalid tag pagination no longer raises HTTP 500.

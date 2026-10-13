@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Successful public-list retries resume nearby automatic loading without requiring another scroll.
+
 - Automatically loaded lists preserve pending friends-attendance requests for mounted pages; only evicted pages or replaced searches cancel them.
 
 - Public demonstration, city and tag lists now load automatically near the viewport, retain at most five pages of cards, and restore earlier pages when scrolling back. Manual controls remain available for keyboard use, retries and data-saving clients.

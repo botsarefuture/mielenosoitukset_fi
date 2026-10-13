@@ -221,7 +221,7 @@
       setState,
       reload,
       loadNext,
-      resumeAuto() { autoFailed = false; lastScroll = scrollPosition(); },
+      resumeAuto() { autoFailed = false; lastScroll = scrollPosition(); scheduleAuto(); },
       get currentPage() {
         return currentPage;
       },

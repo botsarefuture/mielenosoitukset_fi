@@ -178,3 +178,32 @@ def test_automatic_requests_are_single_flight_and_failure_never_loops(browser_pa
     browser_page.evaluate('controller.destroy(); pending[1].resolve({page:2,total_pages:10})')
     browser_page.evaluate('() => new Promise(resolve => requestAnimationFrame(resolve))')
     assert browser_page.evaluate('controller.currentPage') == 1
+
+
+@pytest.mark.e2e
+def test_successful_retry_resumes_automatic_loading_without_another_scroll(browser_page):
+    browser_page.set_viewport_size({'width': 1280, 'height': 900})
+    browser_page.set_content('''<div style="height:3000px"></div><div id="demos-grid"></div>
+      <button id="load-previous-btn" hidden>Previous</button><button id="more">More</button>''')
+    browser_page.add_script_tag(path=str(Path('mielenosoitukset_fi/static/js/user-pagination.js')))
+    browser_page.evaluate('''() => {
+      window.pending=[];
+      window.controller=UserPagination.createLoadMoreController({windowed:true,
+        button:document.getElementById('more'),loadPage:page=>new Promise(resolve=>pending.push({page,resolve}))});
+      controller.setState(1,10);scrollTo(0,document.body.scrollHeight);
+    }''')
+    browser_page.wait_for_function('pending.length === 1')
+    browser_page.evaluate('pending[0].resolve(null)')
+    browser_page.wait_for_function('!document.getElementById("more").disabled')
+    browser_page.evaluate('() => new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
+    assert browser_page.evaluate('pending.length') == 1
+    # Actual retry loader updates controller state, then invokes resumeAuto.
+    position = browser_page.evaluate('scrollY')
+    browser_page.evaluate('controller.setState(2,10);controller.resumeAuto()')
+    browser_page.wait_for_function('pending.length === 2')
+    assert browser_page.evaluate('pending[1].page') == 3
+    assert browser_page.evaluate('scrollY') == position
+    browser_page.evaluate('pending[1].resolve({page:3,total_pages:3})')
+    browser_page.wait_for_function('controller.currentPage === 3')
+    assert browser_page.evaluate('pending.length') == 2
+    browser_page.evaluate('controller.destroy()')

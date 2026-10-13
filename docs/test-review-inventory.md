@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified bounded-loading review snapshot based on main 175cb1fd, 2026-10-13: 152 Python test files; 1,096 definitions; 133 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified bounded-loading review snapshot based on main 175cb1fd, 2026-10-13: 152 Python test files; 1,097 definitions; 134 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1257,12 +1257,16 @@ DATA-01b review correction, 2026-10-13, Codex, P2: actual shipped attendance upd
 
 ## tests/test_public_windowed_loading.py
 
+- [x] `test_successful_retry_resumes_automatic_loading_without_another_scroll`
+
+Approved #928 review correction, 2026-10-13: this shared-controller runtime regression uses deferred page callbacks, fails an automatic request, proves no retry loop, then simulates the retry loader's successful state/resume callback without a scroll event. The next nearby page must load automatically with unchanged scroll position; final-page state prevents further requests. It fails without scheduleAuto in resumeAuto. Explicit state/frame waits, no arbitrary sleep. Synthetic loader data isolates scheduling; not a live API retry test. Keep.
+
 - [x] `test_automatic_public_lists_bound_dom_and_restore_discarded_pages`
 - [x] `test_delayed_append_preserves_new_focus_and_cannot_restore_old_filter_pages`
 - [x] `test_window_does_not_discard_keyboard_focus_and_preserves_scroll_anchor`
 - [x] `test_automatic_requests_are_single_flight_and_failure_never_loops`
 
-DATA-01b / QA-02 / QA-04, P2; reviewed 2026-10-13 by Codex. Nine parameterized cases; 75 focused cases passed with existing request/history/listing/inline-style/CSS and server-resource-limit checks. API responses are isolated for browser behavior; this does not prove live database performance or a numerical heap ceiling. Five retained pages are a constant bound on mounted cards and page references, not a claim that the entire browser uses constant RAM. Final PR records revision/run evidence.
+DATA-01b / QA-02 / QA-04, P2; reviewed 2026-10-13 by Codex. Ten parameterized cases; final combined review-correction run passed 77 focused cases with attendance, request/history/listing/inline-style/CSS and server-resource-limit checks. API responses are isolated for browser behavior; this does not prove live database performance or a numerical heap ceiling. Five retained pages are a constant bound on mounted cards and page references, not a claim that the entire browser uses constant RAM. Final PR records revision/run evidence.
 
 | Definition | Requirement / assertions | Fixtures, mocks, reliability and limits | Disposition |
 |---|---|---|---|

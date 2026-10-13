@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Public list retry controls now use compiled English and Swedish translations; stylesheet version checks accept subsequent valid cache bumps instead of pinning an obsolete version.
+
 - Public demonstration lists now ignore stale search responses, keep cumulative result counts, prevent overlapping page appends, and offer localized retry feedback. Shared load-more controls disappear correctly at the last page in both themes; the main list's date-picker locale safely defaults for first-time visitors.
 
 - Both public demonstration list APIs now order by date, start time and ID before pagination, report matching totals and exact page ranges, and safely normalize invalid numeric page arguments. Existing filters and response fields are preserved.

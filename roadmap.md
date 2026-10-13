@@ -1,6 +1,6 @@
 # Repository roadmap
 
-Last planned: 2026-10-12. Evidence baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`.
+Last reconciled: 2026-10-15. Evidence baseline: `main` at `9098c02affc1244d92911d3e2afae9842db284e5`.
 
 This is the delivery plan for the **whole repository**: security, public and admin workflows, backend correctness, operations, privacy, localization, tests, and maintenance. Issue [#833](https://github.com/botsarefuture/mielenosoitukset_fi/issues/833) is one workstream within it. Existing issue trackers retain their detailed acceptance criteria; this document sets the order and dependencies.
 
@@ -8,9 +8,9 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** Review DATA-01a/#927 and DATA-01b bounded automatic loading, then resume UI-01 cropper accessibility and city-autocomplete keyboard behavior. Open PRs are not deployed fixes.
+- **Next:** Finish UI-01 cropper accessibility on `codex/public-cropper-dialog-current`, then city-autocomplete keyboard behavior. Open PRs are not deployed fixes.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
-- **Current merge gate:** #928 targets main and integrates authorized #926/#927, including the admin orphan-member route fix and resolved-language cache correction. Mounted-page attendance and successful-retry scheduling have delayed-request regressions. Combined focused validation passed 88 cases; await required CI and current review before normal stack merge. No release claim.
+- **Verified merge checkpoint:** #926 is merged; #928 integrated #927 and the remaining organization/retry/attendance review corrections into main `9098c02a`. Required CI passed on its final integration head. No separate deployment or production verification is claimed. The next cropper PR has no merge authorization.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
 - **Tracking:** stable task IDs below; detailed implementation lives in linked issues/PRs. Tests have their own [review inventory](docs/test-review-inventory.md).
@@ -75,16 +75,16 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 ### Security and permissions
 
 - [ ] **SEC-01 · P1:** #901 MFA challenge implementation is merged; preserve the shared legacy/no-JS behavior and obtain required release acceptance evidence.
-- [ ] **SEC-02 · P1:** Inactive/banned-account enforcement (#763): password/MFA/passkey and Flask-Login session-loading changes implemented on `codex/account-access-enforcement`, with fourteen account/passkey test reviews. Admin status visibility and permission-protected activate/deactivate workflow remain pending; retain #763 until those requirements are proved.
-- [ ] **SEC-03 · P0/P1:** #918 target-organization/input validation and #917 case scope are merged; #919 user-action hierarchy/delegation, global clearance scope and audit searchability are in the final account-management integration. Broader role lifecycle, concurrency, destructive-action and canonical audit requirements remain tracked.
+- [ ] **SEC-02 · P1:** Inactive/banned-account enforcement and admin status workflows are merged through #915/#916/#919, including shared target checks and atomic duplicate-submit coverage. Retain #763 until integration/release acceptance is proved.
+- [ ] **SEC-03 · P0/P1:** #918 target-organization/input validation and #917 case scope are merged; #919 user-action hierarchy/delegation, global clearance scope and audit searchability are merged through the account-management integration. Broader role lifecycle, concurrency, destructive-action and canonical audit requirements remain tracked.
 - [ ] **SEC-04 · P1:** Reconcile token/approval lifecycle requirements and prior completed trackers against current routes; prove revocation, expiry, replay behavior, idempotent decisions, case closure, audit and notification effects for every entrypoint.
 - [ ] **SEC-05 · P1:** Review incident #912/#913 protections and credential/session lifecycle regressions before touching related code. Keep secrets out of documentation and audit data.
 
 ### Backend, data, jobs and integrations
 
 - [ ] **DATA-01 · P1:** Finish public pagination and totals; verify the API and browser controller together.
-  - **DATA-01a · P1 · In review · Codex · M2 · #927:** Clamp public tag/demo/organization page sizes to 1–100; skip out-of-range database offsets; isolate old oversized cache entries. Seven individually reviewed test definitions, 92 focused cases passed locally on 2026-10-13. No production load test, deployment or broader denial-of-service-resistance claim.
-  - **DATA-01b · P2 · In review · Codex · M2 · codex/public-windowed-loading · depends on #927:** Automatic near-viewport loading, one list request at a time, five retained DOM pages (60 cards by default), no detached-page data cache. Backscroll re-fetches discarded pages; scroll anchor and focused cards are protected, including focus changes during slow requests. Filter/history cancellation and manual/retry/data-saving fallback remain. Four definitions individually assessed; nine new browser cases and 75 combined focused cases passed. Representative light desktop/dark mobile screenshots inspected. Live API performance, numerical heap profiling and broader assistive-technology acceptance remain unverified.
+  - **DATA-01a · P1 · Merged · Codex · M2 · #927:** Clamp public tag/demo/organization page sizes to 1–100; skip out-of-range database offsets; isolate old oversized cache entries. Seven individually reviewed test definitions, 92 focused cases passed locally on 2026-10-13. No production load test, deployment or broader denial-of-service-resistance claim.
+  - **DATA-01b · P2 · Merged · Codex · M2 · #928 · includes #927:** Automatic near-viewport loading, one list request at a time, five retained DOM pages (60 cards by default), no detached-page data cache. Backscroll re-fetches discarded pages; scroll anchor and focused cards are protected, including focus changes during slow requests. Filter/history cancellation and manual/retry/data-saving fallback remain. Four definitions individually assessed; nine new browser cases and 75 combined focused cases passed. Representative light desktop/dark mobile screenshots inspected. Live API performance, numerical heap profiling and broader assistive-technology acceptance remain unverified.
 - [ ] **DATA-02 · P1:** Resolve worker fencing/rebuild pruning (#908) with multi-worker, retry, crash and rebuild overlap evidence. Verify rather than assume historical analytics repair has run in production.
 - [ ] **DATA-03 · P2:** Review analytics accuracy/access/pagination (#551), large admin overview queries, and demonstration slow-query evidence from TODO.md. Establish measurement before index changes.
 - [ ] **DATA-04 · P1:** Verify email queue retries/idempotency, outgoing case reply history (#771), background job leadership and external service failure handling (#176). Define redacted audit metadata separately from user message retention.
@@ -134,7 +134,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Organization member-loading snapshot based on main 175cb1fd: **1,091 definitions across 150 files**, with 128 assessed definitions. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Cropper branch based on main 9098c02a: **1,109 definitions across 154 files**, with 146 assessed definitions. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 
@@ -176,13 +176,13 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 |---|---|---|---|---|---|
 | SEC-01 | P1 | Merged | Codex | M1 | #901 in inspected main `3c2c8d3c`; release acceptance not established here. |
 | QA-01 | P1 | In progress | Codex | M1, then ongoing | Thirty-seven MFA/account/passkey/organization-action definitions reviewed in the combined inventory; remaining authentication/permission tests pending. |
-| SEC-02 | P1 | In review | Codex | M1 | #915 merged; #916 integrated into #919 with shared status-action visibility and synchronized duplicate-submit coverage. #763 integration/release acceptance remains pending. |
-| SEC-03 | P0/P1 | In review | Codex | M1 | #918/#917 merged; #919 combines user hierarchy/delegation, global clearance gates and searchable redacted audits with #916. Remaining role/audit acceptance is pending. |
+| SEC-02 | P1 | Merged | Codex | M1 | #915/#916/#919 are in main; shared status-action visibility and synchronized duplicate-submit coverage are included. #763 integration/release acceptance remains pending. |
+| SEC-03 | P0/P1 | In progress | Codex | M1 | #918/#917/#919 are merged, including user hierarchy/delegation, global clearance gates and searchable redacted audits. Broader role/audit acceptance remains pending. |
 | QA-02 | P1 | In progress | Codex | M2–M3 | Five API, five request-state, five listing-contract and three URL/history definitions reviewed on this stack. Remaining data/workflow tests pending. |
 | QA-03, QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI and operations/remaining tests. |
 | QA-04 | P2 | In progress | Codex | M2, then M4–M6 | Two field, four existing accessibility and four real-picker definitions assessed; broader browser/assistive-technology evidence remains pending. |
 | DATA-01 | P1 | In progress | Codex | M2 | #920–#924 public API/request/history/search/picker code is in main 60992b19. Bounds/legacy times, broader integration and release acceptance remain pending. |
-| UI-01 | P1 | In progress | Codex | M2 | Shared search labels and real picker are merged through #924, including review fixes. Cropper, autocomplete keyboard and broader acceptance remain pending. |
+| UI-01 | P1 | In progress | Codex | M2 | Shared search labels and real picker are merged through #924. Cropper on codex/public-cropper-dialog-current uses a native dialog, shared tokens and the locally pinned existing engine; 20 focused cases pass, including actual-engine Chromium checks. Five definitions individually reviewed. Full wizard, autocomplete keyboard, broader browser/assistive-technology and release acceptance remain pending. |
 | DATA-02 / OPS-01 | P1 | Backlog | Unassigned | M3 | Verify #908 and load the existing continuity plan. |
 | ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |
 | All other IDs | As assigned above | Backlog | Unassigned | Assign before starting | Verify requirement, dependencies and acceptance before promoting to Ready. |

@@ -13487,3 +13487,27 @@ msgstr "Activation allows sign-in and removes any account ban. The role and perm
 
 msgid "Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta."
 msgstr "Disabling blocks sign-in and access to protected pages through existing sessions. User data is not deleted."
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Rajaa kuva"
+msgstr "Crop image"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Käytä rajausta"
+msgstr "Use crop"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Rajausalue"
+msgstr "Crop area"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Ladataan kuvaa…"
+msgstr "Loading image…"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Siirrä tai muuta rajausalueen kokoa. Voit siirtää aluetta nuolinäppäimillä."
+msgstr "Move or resize the crop area. Use the arrow keys to move it."
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+msgstr "Could not crop the image. Try again or choose another image."

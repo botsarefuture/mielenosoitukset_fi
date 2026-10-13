@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Image cropping now uses a shared theme-safe native dialog with keyboard dismissal/focus return, safe image DOM, visible load/error states and cancellation-safe async apply. Upload names, 16:9 crop behavior and existing hooks are preserved.
+
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.

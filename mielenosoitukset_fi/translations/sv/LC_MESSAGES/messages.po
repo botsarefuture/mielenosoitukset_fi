@@ -13664,3 +13664,27 @@ msgstr "Aktivering tillåter inloggning och tar bort eventuell kontoblockering. 
 
 msgid "Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta."
 msgstr "Inaktivering blockerar inloggning och åtkomst till skyddade sidor via befintliga sessioner. Användarens uppgifter raderas inte."
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Rajaa kuva"
+msgstr "Beskär bilden"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Käytä rajausta"
+msgstr "Använd beskärningen"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Rajausalue"
+msgstr "Beskärningsområde"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Ladataan kuvaa…"
+msgstr "Bilden laddas…"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Siirrä tai muuta rajausalueen kokoa. Voit siirtää aluetta nuolinäppäimillä."
+msgstr "Flytta eller ändra beskärningsområdets storlek. Flytta området med piltangenterna."
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+msgstr "Det gick inte att beskära bilden. Försök igen eller välj en annan bild."

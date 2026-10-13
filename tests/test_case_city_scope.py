@@ -29,6 +29,41 @@ def test_ordinary_user_cannot_read_cases(user_client, seeded_data):
     assert user_client.get(f"/admin/case/{seeded_data['case_id']}/").status_code == 403
 
 
+def test_every_case_route_declares_its_permission(app):
+    from mielenosoitukset_fi.utils.case_access import CASE_PERMISSIONS
+    for rule in app.url_map.iter_rules():
+        if rule.endpoint.startswith('admin_case.'):
+            declaration = getattr(app.view_functions[rule.endpoint], 'case_permissions', None)
+            assert declaration, rule.endpoint
+            assert set(declaration.values() if isinstance(declaration, dict) else [declaration]) <= CASE_PERMISSIONS
+
+
+def test_undeclared_case_route_fails_closed(app, admin_client):
+    app.add_url_rule('/admin/case/undeclared-check/', endpoint='admin_case.undeclared_check', view_func=lambda: 'not allowed')
+    assert admin_client.get('/admin/case/undeclared-check/').status_code == 403
+
+
+def test_case_list_reuses_edit_scope_and_preserves_autoclose(app, db, seeded_data, monkeypatch):
+    from inspect import unwrap
+    route_globals = unwrap(app.view_functions['admin_case.cases']).__globals__
+    client, _actor, own, foreign, _demo = _city_cases(app, db, seeded_data)
+    original = db.cases.find_one({'_id': own})
+    additional = [dict(deepcopy(original), _id=ObjectId(), running_num=900000 + index) for index in range(6)]
+    db.cases.insert_many(additional)
+    db.demonstrations.update_one({'_id': seeded_data['pending_demo_id']}, {'$set': {'approved': True}})
+    calls = []
+    scope_query = route_globals['case_scope_query']
+    def counted(user, permission):
+        calls.append(permission)
+        return scope_query(user, permission)
+    monkeypatch.setitem(route_globals, 'case_scope_query', counted)
+    assert client.get('/admin/case/').status_code == 200
+    assert calls.count('EDIT_CASE') == 1
+    for case_id in [own, *[case['_id'] for case in additional]]:
+        assert db.cases.find_one({'_id': case_id})['meta']['closed'] is True
+    assert not (db.cases.find_one({'_id': foreign}).get('meta') or {}).get('closed')
+
+
 def test_city_case_list_and_detail_use_same_scope(app, db, seeded_data):
     client, actor, own, foreign, _demo = _city_cases(app, db, seeded_data)
     assert User.from_db(db.users.find_one({"_id": actor})).has_permission("LIST_CASES")

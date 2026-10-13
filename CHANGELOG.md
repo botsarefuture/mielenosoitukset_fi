@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Every case route now declares its exact permission and city-scope policy, with undeclared routes rejected; case lists reuse one edit scope for automatic closure instead of querying permissions per row.
+
 - Case lists, details and actions now enforce explicit case permissions and inherit city scope from linked demonstrations; ordinary accounts and out-of-city direct requests are rejected. City admins can receive case list/view/edit grants without gaining global blocklist or organization controls.
 
 - Disabled and banned accounts can no longer sign in with a password, MFA or passkey; protected requests also reject their existing sessions after the account status changes.

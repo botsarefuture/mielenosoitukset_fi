@@ -1,5 +1,6 @@
 import re
 import sys
+from functools import wraps
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 import logging
@@ -33,38 +34,37 @@ email_sender = EmailSender()
 
 admin_case_bp = Blueprint("admin_case", __name__, url_prefix="/admin/case")
 
-# --- logging every admin action ---
 @admin_case_bp.before_request
 def log_request_info():
-    """Enforce case capability/scope before audit logging and route work."""
-    if not current_user.is_authenticated:
-        return
-    endpoint = request.endpoint.rsplit(".", 1)[-1]
-    permission = (
-        "LIST_CASES" if endpoint == "cases"
-        else "VIEW_CASE" if request.method == "GET"
-        else "DELETE_CASE" if endpoint == "delete_action"
-        else "EDIT_CASE"
-    )
-    scope = case_scope_query(current_user, permission)
-    if scope is None:
+    """Fail closed if a new protected route omits its authorization contract."""
+    view = current_app.view_functions.get(request.endpoint)
+    if not getattr(view, "case_permissions", None):
         abort(403)
-    case_id = (request.view_args or {}).get("case_id")
-    if case_id:
-        oid = _safe_objectid(case_id)
-        if not oid:
-            abort(404)
-        if not can_access_case(current_user, permission, oid):
-            abort(403)
-    # Global blocklists, organization edits and unlinking do not have a city
-    # boundary. Keep those operations global rather than guessing a scope.
-    city_actions = {
-        "cases", "single_case", "add_action", "link_demo", "reply_to_ticket",
-        "close_case", "reopen_case",
-    }
-    if scope and endpoint not in city_actions:
-        abort(403)
-    log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
+
+
+def case_permission(permission, *, allow_city=False):
+    """Declare capability, city boundary and target checks on the route itself."""
+    def decorate(function):
+        @wraps(function)
+        def authorized(*args, **kwargs):
+            required = permission.get(request.method) if isinstance(permission, dict) else permission
+            if not required:
+                abort(403)
+            scope = case_scope_query(current_user, required)
+            if scope is None or (scope and not allow_city):
+                abort(403)
+            case_id = kwargs.get('case_id')
+            if case_id:
+                oid = _safe_objectid(case_id)
+                if not oid:
+                    abort(404)
+                if mongo.cases.find_one({'$and': [scope, {'_id': oid}]}, {'_id': 1}) is None:
+                    abort(403)
+            log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
+            return function(*args, **kwargs)
+        authorized.case_permissions = permission
+        return authorized
+    return decorate
 
 
 from mielenosoitukset_fi.utils.classes import Case
@@ -241,6 +241,7 @@ def _build_case_row(case_obj, demo_doc=None, org_doc=None):
 
 @admin_case_bp.route("/")
 @login_required
+@case_permission("LIST_CASES", allow_city=True)
 def cases():
     """List all cases, newest first."""
     case_rows = []
@@ -249,6 +250,10 @@ def cases():
     escalated_count = 0
     auto_closed = 0
     actor = getattr(current_user, "username", "system")
+
+    edit_scope = case_scope_query(current_user, "EDIT_CASE")
+    edit_ids = ({doc['_id'] for doc in mongo.cases.find(edit_scope, {'_id': 1})}
+                if edit_scope else None)
 
     for doc in mongo.cases.find(case_scope_query(current_user, "LIST_CASES"), sort=[("created_at", -1), ("_id", -1)]):
         case = Case.from_dict(doc)
@@ -263,7 +268,8 @@ def cases():
         if case.case_type == "organization_edit_suggestion" and case.organization_id:
             org_doc = mongo.organizations.find_one({"_id": _safe_objectid(case.organization_id)}, {"name": 1, "updated_at": 1})
 
-        if not bool((case.meta or {}).get("closed")) and can_access_case(current_user, "EDIT_CASE", case._id):
+        can_edit = edit_scope is not None and (edit_ids is None or case._id in edit_ids)
+        if not bool((case.meta or {}).get("closed")) and can_edit:
             reason = _case_resolution_reason(case, demo_doc=demo_doc, org_doc=org_doc)
             if reason:
                 _auto_close_case(case, reason, actor)
@@ -293,6 +299,7 @@ def cases():
 @admin_case_bp.route("/demo_search/", methods=["GET"])
 @login_required
 @admin_required
+@case_permission("VIEW_CASE")
 def demo_search():
     """Simple AJAX lookup for linking a support ticket to an existing demo."""
     q = (request.args.get("q", "") or "").strip()
@@ -318,6 +325,7 @@ def demo_search():
 @admin_case_bp.route("/org_search/", methods=["GET"])
 @login_required
 @admin_required
+@case_permission("VIEW_CASE")
 def org_search():
     """Simple AJAX lookup for linking a support ticket to an organization."""
     q = (request.args.get("q", "") or "").strip()
@@ -338,6 +346,7 @@ def org_search():
 @admin_case_bp.route("/blocklist/", methods=["GET", "POST"])
 @login_required
 @admin_required
+@case_permission({"GET": "VIEW_CASE", "HEAD": "VIEW_CASE", "POST": "EDIT_CASE"})
 def blocklist():
     """Manage the support-ticket sender blocklist.
 
@@ -380,6 +389,7 @@ def blocklist():
 @admin_case_bp.route("/blocklist/<block_id>/remove", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE")
 def blocklist_remove(block_id):
     if not ObjectId.is_valid(block_id):
         abort(404)
@@ -396,6 +406,7 @@ def blocklist_remove(block_id):
 
 @admin_case_bp.route("/<case_id>/")
 @login_required
+@case_permission("VIEW_CASE", allow_city=True)
 def single_case(case_id):
     case = Case.get(case_id)
     if not case:
@@ -492,6 +503,7 @@ def single_case(case_id):
 @admin_case_bp.route("/<case_id>/add_action/", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE", allow_city=True)
 def add_action(case_id):
     case = Case.get(case_id)
     if not case:
@@ -526,6 +538,7 @@ def add_action(case_id):
 @admin_case_bp.route("/<case_id>/link_demo/", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE", allow_city=True)
 def link_demo(case_id):
     case = Case.get(case_id)
     if not case:
@@ -566,6 +579,7 @@ def link_demo(case_id):
 @admin_case_bp.route("/<case_id>/unlink_demo/", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE")
 def unlink_demo(case_id):
     case = Case.get(case_id)
     if not case:
@@ -591,6 +605,7 @@ def unlink_demo(case_id):
 @admin_case_bp.route("/<case_id>/link_org/", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE")
 def link_org(case_id):
     case = Case.get(case_id)
     if not case:
@@ -626,6 +641,7 @@ def link_org(case_id):
 @admin_case_bp.route("/<case_id>/unlink_org/", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE")
 def unlink_org(case_id):
     case = Case.get(case_id)
     if not case:
@@ -656,6 +672,7 @@ from datetime import datetime
 @admin_case_bp.route("/<case_id>/reply/", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE", allow_city=True)
 def reply_to_ticket(case_id):
     """Send an admin reply to a support ticket's submitter via email."""
     case = Case.get(case_id)
@@ -738,6 +755,7 @@ def reply_to_ticket(case_id):
 @admin_case_bp.route("/<case_id>/close/", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE", allow_city=True)
 def close_case(case_id):
     case = Case.get(case_id)
     if not case:
@@ -774,6 +792,7 @@ def close_case(case_id):
 @admin_case_bp.route("/<case_id>/reopen/", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE", allow_city=True)
 def reopen_case(case_id):
     case = Case.get(case_id)
     if not case:
@@ -812,6 +831,7 @@ def reopen_case(case_id):
 @admin_case_bp.route("/<case_id>/update_demo/", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE")
 def update_demo(case_id):
     case = Case.get(case_id)
     if not case or case.case_type != "new_demo" or not case.demo_id:
@@ -840,6 +860,7 @@ def update_demo(case_id):
 @admin_case_bp.route("/<case_id>/update_org_suggestion/", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE")
 def update_org_suggestion(case_id):
     case = Case.get(case_id)
     if not case or case.case_type != "organization_edit_suggestion" or not case.organization_id:
@@ -864,6 +885,7 @@ def update_org_suggestion(case_id):
 @admin_case_bp.route("/<case_id>/delete_action/<action_idx>/", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("DELETE_CASE")
 def delete_action(case_id, action_idx):
     case = Case.get(case_id)
     if not case or not case.action_logs:
@@ -888,6 +910,7 @@ def delete_action(case_id, action_idx):
 @admin_case_bp.route("/<case_id>/demo_action", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE")
 def demo_action(case_id):
     from mielenosoitukset_fi.admin.admin_demo_bp import approve_demo, reject_demo
     
@@ -941,6 +964,7 @@ def demo_action(case_id):
 @admin_case_bp.route("/<case_id>/approve_cancellation", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE")
 def approve_cancellation(case_id):
     case = Case.get(case_id)
     if not case or case.case_type != "demo_cancellation_request" or not case.demo_id:
@@ -1005,6 +1029,7 @@ def approve_cancellation(case_id):
 @admin_case_bp.route("/<case_id>/demo_escalate", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE")
 def demo_escalate(case_id):
     case = Case.get(case_id)
     if not case or case.case_type != "new_demo" or not case.demo_id:
@@ -1049,6 +1074,7 @@ def demo_escalate(case_id):
 @admin_case_bp.route("/<case_id>/deescalate", methods=["POST"])
 @login_required
 @admin_required
+@case_permission("EDIT_CASE")
 def deescalate_case(case_id):
     """De-escalate a case back to normal processing with proper action log."""
 

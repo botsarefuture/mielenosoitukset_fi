@@ -8,6 +8,8 @@ import pytest
 @pytest.mark.integration
 @pytest.mark.parametrize('path,fixed', [('/demonstrations', {}), ('/city/Helsinki', {'city': 'Helsinki'}), ('/tag/test-tag', {'tag': 'test-tag'})])
 def test_public_filter_url_restores_page_and_back_forward(live_server, browser_page, path, fixed):
+    # Explicit manual fallback keeps each URL/history transition observable.
+    browser_page.add_init_script("Object.defineProperty(navigator, 'connection', {value: {saveData: true}})")
     requests = []
     attempts = {}
 

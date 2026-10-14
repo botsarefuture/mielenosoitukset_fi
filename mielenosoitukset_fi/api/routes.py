@@ -145,13 +145,15 @@ import hashlib
 import json
 from flask import request
 
-def make_cache_key():
+def make_cache_key(requested_language=None):
     params = request.args.to_dict(flat=True)
+    page, per_page = public_page_args(request.args)
+    params.update(page=str(page), per_page=str(per_page))
+    params['_resolved_language'] = requested_language or ''
     # sort keys to make order irrelevant
     params_str = json.dumps(params, sort_keys=True)
-    # Version the ordering/metadata contract; old cached pages must not survive
-    # deployment with date-only order or missing result ranges.
-    return "demonstrations:page-v2:" + hashlib.md5(params_str.encode("utf-8")).hexdigest()
+    # Old unbounded cached payloads must not bypass the new server limit.
+    return "demonstrations:page-v3:" + hashlib.md5(params_str.encode("utf-8")).hexdigest()
 
 
 def _case_insensitive_contains(value):
@@ -282,7 +284,7 @@ def list_demonstrations():
     include_translations = (
         request.args.get("include_translations", "").strip().lower() == "true"
     )
-    cache_key = make_cache_key()
+    cache_key = make_cache_key(requested_language)
     use_cache = bool(cache) and not should_skip_cache(public_only=False)
 
     cached_response = cache.get(cache_key) if use_cache else None
@@ -428,7 +430,7 @@ def list_demonstrations():
             .skip((page - 1) * per_page)
             .limit(per_page)
         )
-    ]
+    ] if total and page <= total_pages else []
 
     # --- Navigation URLs ---
     from urllib.parse import urlencode

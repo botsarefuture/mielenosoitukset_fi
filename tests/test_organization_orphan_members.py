@@ -128,11 +128,25 @@ def test_members_batch_loading_cache_and_serialization(db, seeded_data, monkeypa
         assert "password_hash" not in repr(serialized)
     org.init_members()
     assert len(calls) == 2
+    assert org.members is members
+    org.update_member(seeded_data['user_id'], role='member', permissions=['EDIT_ORGANIZATION'])
+    assert org.members is members
+    updated = next(member for member in members if member._id == seeded_data['user_id'])
+    assert updated.role == 'member'
+    persisted = db.memberships.find_one({'user_id': seeded_data['user_id'], 'organization_id': org_id})
+    assert updated.permissions == persisted['permissions']
+    assert len(calls) == 3
+    added_id = ObjectId()
+    db.users.insert_one({'_id': added_id, 'username': 'added-after-cache', 'password_hash': 'unused'})
+    org.add_member(added_id)
+    assert org.members is members
+    assert added_id in {member._id for member in members}
+    assert len(calls) == 4
     org.save()
     stored = db.organizations.find_one({"_id": org_id})
     assert "_members" not in stored
     assert "members" not in stored
-    assert len(calls) == 2
+    assert len(calls) == 4
 
 
 def test_admin_organization_view_uses_safe_batched_members(admin_client, db, seeded_data):

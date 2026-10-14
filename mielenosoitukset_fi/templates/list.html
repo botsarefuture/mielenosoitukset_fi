@@ -22,7 +22,7 @@
 
 {% block content %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261013-date-range-1') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261013-windowed-list-2') }}" defer></script>
 
 {% include "_modals/_demo-card-template.html" %}
 
@@ -66,12 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let extraParams = {}; // holds search/filter params
 
-  async function loadDemosWrapper(page = 1, append = false) {
+  async function loadDemosWrapper(page = 1, append = false, previous = false, manual = false) {
     if (!append) {
       grid.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>${window.demoCardI18n.loading}</p></div>`;
     }
 
-    const result = await loadDemos(page, append, extraParams);
+    const result = await loadDemos(page, append, extraParams, previous, manual);
     if (result) {
       window.userPaginationController?.setState(result.page, result.total_pages);
     }
@@ -91,7 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.userPaginationController = UserPagination.createLoadMoreController({
     button: loadMoreBtn,
-    loadPage: (page, options = {}) => loadDemosWrapper(page, options.append ?? true),
+    windowed: true,
+    loadPage: (page, options = {}) => loadDemosWrapper(page, options.append ?? true, options.previous, options.manual),
     initialLabel: '{{ _('Näytä lisää') }}',
     loadingLabel: '{{ _('Ladataan...') }}',
   });
@@ -113,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261013-date-range-3') }}"></script>
+<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261013-windowed-list-2') }}"></script>
 {{ public_search_scripts() }}
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 <script>

@@ -1,5 +1,6 @@
 {# Shared controls for user-facing demonstration listings. #}
 {% macro load_more_button(button_id='load-more-btn', label='') %}
+  <button id="load-previous-btn" type="button" class="button button-secondary load-more" hidden>{{ _('Edellinen') }}</button>
   <p id="listing-result-summary" class="public-listing-summary" role="status" aria-live="polite" aria-atomic="true" hidden
      data-format="{{ _('Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta', start='__START__', end='__END__', count='__COUNT__') }}"></p>
   <div id="listing-load-error" class="public-listing-summary" hidden>

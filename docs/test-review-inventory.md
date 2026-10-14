@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Organization member-loading snapshot based on main 175cb1fd, 2026-10-13: 150 Python test files; 1,091 definitions; 128 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified organization/pagination/loading integration based on main 175cb1fd, 2026-10-13: 153 Python test files; 1,104 definitions; 141 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -983,7 +983,7 @@ Member-loading follow-up: 69 focused cases passed, including 2/27-member query-c
 | `test_organization_with_only_orphan_members_renders_empty_members` | No valid members is a supported empty state and still renders 200. | Separate synthetic organization, two missing users; both stored memberships remain. | Keep. |
 | `test_organization_does_not_suppress_other_user_loading_errors` | Unrelated user-deserialization errors still propagate rather than disappearing as missing users. | One injected ValueError, narrowly scoped to the loader. Does not prove every upstream exception type. | Keep. |
 | `test_public_organization_does_not_load_member_users` | Anonymous public GET renders without invoking the member loader. | Real Flask GET; loader raises immediately if used. Authenticated permission lookups are intentionally outside this query-free contract. | Keep. |
-| `test_members_batch_loading_cache_and_serialization` | Construction/serialization are lazy, one user query hydrates members, repeated access is cached, explicit refresh re-queries, and saving excludes cached users. | Real database with 2/27 valid users plus a string orphan; collection-level find instrumentation and forbidden per-user loader. Checks actual IDs, unchanged input and persisted fields. Counts application queries, not cursor getMore/network packets. | Keep. |
+| `test_members_batch_loading_cache_and_serialization` | Construction/serialization are lazy, one user query hydrates members, repeated access is cached, explicit refresh re-queries, and saving excludes cached users. Approved review follow-up retains the same list object through refresh, update_member and add_member; retained aliases observe changed roles/persisted permissions and the new member. | Real database with 2/27 valid users plus a string orphan; collection-level find instrumentation and forbidden per-user loader. Checks actual IDs, unchanged input and persisted fields. Existing permission-merge policy is preserved, not redefined. Counts application queries, not cursor getMore/network packets. | Keep. |
 | `test_admin_organization_view_uses_safe_batched_members` | Admin view renders despite a missing user and preserves membership IDs required by row actions. | Real authenticated route and persisted membership identities; separate action tests cover authorization. | Keep. |
 
 ## tests/test_organization_fill_page.py
@@ -1130,6 +1130,28 @@ UI-01 / QA-04 supporting review, 2026-10-12, Codex, P1. Anonymous real Flask res
 - [ ] `test_public_header_mobile_menu_and_theme_contract`
 - [ ] `test_public_navigation_remains_available_without_javascript`
 
+## tests/test_public_pagination_limits.py
+
+- [x] `test_public_page_size_is_bounded_and_existing_defaults_survive`
+- [x] `test_demo_apis_cap_the_real_query_and_return_bounded_metadata`
+- [x] `test_tag_page_materializes_only_the_bounded_page`
+- [x] `test_public_organization_api_cannot_bypass_page_size_limit`
+- [x] `test_enormous_out_of_range_pages_never_reach_database_skip`
+- [x] `test_public_cache_normalizes_page_sizes_and_excludes_old_unbounded_namespace`
+- [x] `test_old_oversized_cached_response_cannot_bypass_the_new_limit`
+
+DATA-01a / QA-02, P1; reviewed 2026-10-13 by Codex. Disposable local database and real Flask queries only; no production stress request. Together with existing public API/history/analytics coverage, 92 focused cases passed. These tests establish response/query bounds, not rate limiting or bounded browser memory.
+
+| Definition | Requirement / assertions | Fixtures, variants and limitations | Disposition |
+|---|---|---|---|
+| `test_public_page_size_is_bounded_and_existing_defaults_survive` | Maximum 100, minimum 1, malformed/default handling preserved. | Nine raw variants; direct shared parser, tag default 10. | Keep; fails without the cap. |
+| `test_demo_apis_cap_the_real_query_and_return_bounded_metadata` | Both APIs return 100 then 5 records with exact counts/ranges and no overlap. | 105 uniquely tagged real records; modern next URL carries bounded size. No production query-plan measurement. | Keep. |
+| `test_tag_page_materializes_only_the_bounded_page` | HTML tag context contains only 100 records and two pages. | Actual render signal, disconnected in finally; does not assess visual layout. | Keep. |
+| `test_public_organization_api_cannot_bypass_page_size_limit` | Organization endpoint applies the same bound, including last page. | 105 uniquely searchable local records; real database query. | Keep. |
+| `test_enormous_out_of_range_pages_never_reach_database_skip` | Four endpoint variants return empty results without huge Mongo offsets. | Cursor skip wrapper raises rather than mocking returned records; 100-digit page. Count cost remains outside this guarantee. | Keep. |
+| `test_public_cache_normalizes_page_sizes_and_excludes_old_unbounded_namespace` | Excessive and bounded query sizes share the new cache key; different resolved languages do not. | Real request contexts, no explicit URL language; exact new namespace. Strengthened for approved #927 review correction on 2026-10-13. | Keep. |
+| `test_old_oversized_cached_response_cannot_bypass_the_new_limit` | Pre-fix cache cannot bypass handler bounds; new stored payload is bounded. A session-language change reaches a distinct route cache key without changing the URL. | Synthetic legacy cache marker, real database, handler and session locale selector. Does not prove a live Redis deployment. | Keep. |
+
 ## tests/test_public_date_range.py
 
 - [ ] `test_restored_historical_range_can_select_an_earlier_start`
@@ -1213,6 +1235,8 @@ Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-requ
 
 ## tests/test_public_list_filter_history.py
 
+2026-10-13 follow-up: the existing explicit page/history lifecycle test now selects the supported data-saving manual fallback. Its page/filter/back/forward/retry assertions remain intact; automatic windowing is independently exercised below. A passing manual test is not automatic-loading evidence.
+
 - [x] `test_public_filter_url_restores_page_and_back_forward`
 - [x] `test_restored_city_chip_is_text_safe_and_removal_resets_url`
 - [x] `test_tag_page_invalid_pagination_does_not_raise_500`
@@ -1228,6 +1252,8 @@ DATA-01 / QA-02, 2026-10-12, Codex, P1, stacked on #921. Actual routes/templates
 Deep links/history restore the latest requested page as a new window; subsequent Load more extends that window. They do not replay every previously accumulated page. Remaining acceptance includes production integration, API pagination bounds/legacy times and broader discovery/no-JS behavior.
 
 ## tests/test_public_list_request_state.py
+
+2026-10-13 follow-up: keyboard-control geometry tests explicitly use the data-saving manual fallback so each intermediate range remains observable. Actual automatic loading, bounded DOM, focus and delayed-response behavior have separate runtime coverage below.
 
 - [x] `test_public_retry_uses_compiled_locale_catalog`
 - [x] `test_public_loader_ignores_stale_search_and_counts_appended_results`
@@ -1246,6 +1272,32 @@ DATA-01 / QA-02, 2026-10-12, Codex, P1; stacked on #920. Browser harnesses use a
 | `test_public_listing_summary_is_shared_responsive_and_keyboard_operable` | Three list families share live summary, keyboard load-more, final hidden control and viewport-fitting summary in both themes/sizes. | Twelve cases: list/city/tag × light/dark × 1440/390px. Actual UI, synthetic API and actual pinned date picker; page errors asserted, summary geometry checked. Does not prove whole-page overflow, all date-picker behavior or live data. | Keep. |
 
 Screenshots of representative list states are inspected separately. Existing page/footer overflow and full URL/history behavior remain explicit follow-up work; this review does not silently declare broad UI acceptance.
+
+## tests/test_public_attendance_window.py
+
+- [x] `test_slow_attendance_survives_append_and_cancels_only_eviction_or_search`
+
+DATA-01b review correction, 2026-10-13, Codex, P2: actual shipped attendance updater, loader and bounded window with controlled delayed fetch responses and lightweight card rendering. Six pages leave at most five pending page requests; the removed page is aborted while all retained-page requests survive. Completing a retained request clears its actual loading element. Replacement search aborts remaining old requests and leaves one new active request/page. No live friends API, real-user graph, or delivery-timing guarantee. Keep: catches the former unconditional append cancellation; final combined focused run passed 76 cases.
+
+## tests/test_public_windowed_loading.py
+
+- [x] `test_successful_retry_resumes_automatic_loading_without_another_scroll`
+
+Approved #928 review correction, 2026-10-13: this shared-controller runtime regression uses deferred page callbacks, fails an automatic request, proves no retry loop, then simulates the retry loader's successful state/resume callback without a scroll event. The next nearby page must load automatically with unchanged scroll position; final-page state prevents further requests. It fails without scheduleAuto in resumeAuto. Explicit state/frame waits, no arbitrary sleep. Synthetic loader data isolates scheduling; not a live API retry test. Keep.
+
+- [x] `test_automatic_public_lists_bound_dom_and_restore_discarded_pages`
+- [x] `test_delayed_append_preserves_new_focus_and_cannot_restore_old_filter_pages`
+- [x] `test_window_does_not_discard_keyboard_focus_and_preserves_scroll_anchor`
+- [x] `test_automatic_requests_are_single_flight_and_failure_never_loops`
+
+DATA-01b / QA-02 / QA-04, P2; reviewed 2026-10-13 by Codex. Ten parameterized cases; final combined review-correction run passed 77 focused cases with attendance, request/history/listing/inline-style/CSS and server-resource-limit checks. API responses are isolated for browser behavior; this does not prove live database performance or a numerical heap ceiling. Five retained pages are a constant bound on mounted cards and page references, not a claim that the entire browser uses constant RAM. Final PR records revision/run evidence.
+
+| Definition | Requirement / assertions | Fixtures, mocks, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_automatic_public_lists_bound_dom_and_restore_discarded_pages` | Scroll through ten pages without clicking Load more; at most five mounted pages / 60 default-size cards; discarded prior page re-fetched, contiguous range restored. | Six actual list/city/tag × light desktop/dark mobile cases with real renderer/controller/CSS. Synthetic 30-page API isolates UI; exact bounds, captured requests and page errors. Representative screenshots inspected. No real-API load benchmark or screen-reader claim. | Keep. |
+| `test_delayed_append_preserves_new_focus_and_cannot_restore_old_filter_pages` | Focus gained during an in-flight request prevents eviction; replacement search aborts old request and stale response cannot repopulate old pages. | Shipped loader/window with deferred responses deliberately ignoring abort; lightweight render/friends stubs isolate state. Exact focus/connectivity, single new page, text and aria-busy assertions. | Keep. |
+| `test_window_does_not_discard_keyboard_focus_and_preserves_scroll_anchor` | Offscreen focused page cannot be pruned, even manually; removing it after blur retains surviving page position within one pixel. Explicit manual advance can replace a visible unfocused edge to avoid a small-page/large-viewport dead end. | Real shared window and browser geometry; fixed 600px fixture pages isolate anchor correction. Does not prove every image/font layout-shift case. | Keep. |
+| `test_automatic_requests_are_single_flight_and_failure_never_loops` | Repeated scroll/manual events cannot overlap page requests; failure stops automatic retries; explicit manual retry works; destroyed controller ignores late state. | Real shared controller, deferred load callback, explicit frame/state waits; no arbitrary sleep. Does not prove server cancellation after an aborted HTTP request. | Keep. |
 
 ## tests/test_public_listing_contract.py
 

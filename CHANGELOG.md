@@ -4,6 +4,18 @@
 
 ## UNRELEASED
 
+- Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
+
+- Successful public-list retries resume nearby automatic loading without requiring another scroll.
+
+- Automatically loaded lists preserve pending friends-attendance requests for mounted pages; only evicted pages or replaced searches cancel them.
+
+- Public demonstration, city and tag lists now load automatically near the viewport, retain at most five pages of cards, and restore earlier pages when scrolling back. Manual controls remain available for keyboard use, retries and data-saving clients.
+
+- Public demonstration caches now distinguish the resolved request language, including session-selected languages, while keeping page-size limits normalized.
+
+- Public tag pages and demonstration/organization APIs now cap page size at 100. Out-of-range pages avoid unbounded database skips, and normalized cache keys cannot reuse older oversized result payloads.
+
 - Organization models now load members only when needed and batch related user reads, eliminating unnecessary public-page membership queries. The admin member view shares the missing-user-safe loader, and cached users are excluded from organization serialization.
 
 - Organization pages now tolerate memberships referencing missing users instead of returning HTTP 500, while retaining valid members and permissions without deleting stored membership records.

@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified moderation-decision review branch based on main 9098c02a, 2026-10-15: 153 Python test files; 1,104 definitions; 147 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open #929–#937 are excluded. This is not completed suite review.
+Verified moderation-ordering branch based on open #938 / main 9098c02a, 2026-10-15: 154 Python test files; 1,108 definitions; 151 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open #929–#937 are excluded. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -658,6 +658,24 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 - [ ] `test_demo_card_renderer_has_no_finnish_runtime_fallbacks`
 - [ ] `test_demo_card_labels_have_english_and_swedish_translations`
 - [ ] `test_demo_list_renders_shared_card_contract_for_active_locale`
+
+## tests/test_demo_decision_ordering.py
+
+- [x] `test_later_opposite_decision_preserves_case_and_history_consistency`
+- [x] `test_current_decision_retries_case_compare_and_set_after_an_older_writer`
+- [x] `test_overlapping_same_decision_keeps_one_history_and_notification`
+- [x] `test_unchanged_request_retries_the_actual_newer_decision_notification`
+
+SEC-04a / QA-01, P1; individually assessed 2026-10-15 by Codex, stacked on #938. Real domain service, local MongoDB and separate thread-local Flask app contexts; no mocked transition or case write outcomes. Collection/service wrappers add Event synchronization only, with ten-second failure guards and finally release; no sleep-based ordering. Captured enqueue is the external boundary. These tests bypass route permissions/CSRF and do not establish live multi-process operation, notification delivery order or provider acceptance/crash safety.
+
+| Definition | Requirement / assertions | Cases, coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_later_opposite_decision_preserves_case_and_history_consistency` | Later persisted decision owns final demo/case identity/outcome. Each changed result and exactly one persisted history retain their own state/identity, not a later read. | Six cases: both decision directions paused after real atomic transition, before case projection or immediately before actual conditional case write. First four baseline cases fail with contradictory case outcome. Does not enumerate every interleaving, all cases or later unrelated edits/deletions. | New real regression; keep. Removing only case CAS in a test process makes both narrow-window cases fail at final outcome. |
+| `test_current_decision_retries_case_compare_and_set_after_an_older_writer` | Newer decision loses first case CAS, re-reads and succeeds on second write; final case matches newer demo and both case history entries appear once in actual write order. | Two directions; both writers pause at their real update boundary, older writer released first. Exact two newer update attempts proves retry branch exercised. No forced perpetual-contention or database interruption coverage. | New retry-path regression; keep. |
+| `test_overlapping_same_decision_keeps_one_history_and_notification` | One changed/one unchanged result share decision ID, one captured email/notification record/history/decision audit, one case decision entry and canonical outcome. | Two decisions; first paused after transition while second reconciles. Real Mongo unique notification claim. Does not prove crash recovery between transition/notify flag or enqueue/provider acceptance. | New overlapping idempotency regression; keep alongside sequential #938 tests. |
+| `test_unchanged_request_retries_the_actual_newer_decision_notification` | A no-op request paused before rereading a newer opposite decision retries the newer failed notification type, not its own superseded requested status; result and case share actual persisted identity/state. | Two directions with a real conditional no-op, intervening transition and deterministic pre-enqueue failure. Real registry claim removal/unique insert; captured email boundary. Does not certify provider failure-after-acceptance handling. | New mixed-status retry regression; removing current-status adoption makes both cases fail on notification type. |
+
+Combined focused decision/edit-link/anonymous run passes 24 cases, including twelve new interleaving cases; test-only mutations dropping the case write precondition and current-status adoption detect stale overwrite/wrong notification type in both directions. Subsequent normal 24-case run passes, Python compilation/diff checks pass, and final five-file CodeRabbit review completed with zero findings (later status/evidence text updates excluded). Black is unavailable; no formatter-run claim. No transaction, lock service, new persisted fields or clock-based ordering is introduced. Case compare-and-set retries are bounded at eight; exhaustion raises a retriable failure rather than claiming successful reconciliation. Exhaustion/DB-crash recovery, external email ordering, same-demo ordinary edit/rollback metadata preservation and route-level conflict messaging remain separate SEC-04 evidence gaps, not completed acceptance.
 
 ## tests/test_demo_decision_service.py
 

@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified organization/pagination/loading integration based on main 175cb1fd, 2026-10-13: 153 Python test files; 1,104 definitions; 141 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified edit-link review branch based on main 9098c02a, 2026-10-15: 153 Python test files; 1,108 definitions; 151 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open PRs #929–#934 are excluded. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -400,7 +400,9 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Real admin client, disposable Mong
 
 ## tests/test_anonymous_edit_token.py
 
-- [ ] `test_anonymous_edit_token_renders_without_city_admin_navigation`
+- [x] `test_anonymous_edit_token_renders_without_city_admin_navigation`
+
+QA-01d / P1, reviewed 2026-10-15 by Codex. Actual anonymous GET renders the demo form in FI/EN/SV without creating an authenticated session. Safe selected template flags prove approval, link generation and access-panel authority are false; the CSRF field exists and any preserved approved input is hidden, not an editable checkbox. Hidden fields remain part of the existing payload contract, not an authorization boundary; forged POST behavior is assessed separately below. The original label-absence check is retained but cannot alone prove navigation or permissions across locales. This is rendering/state evidence, not full light/dark/mobile or screen-reader acceptance. Real local app and seeded bearer link; no anonymous-user permission mock. Keep, strengthened.
 
 ## tests/test_api_contract.py
 
@@ -670,11 +672,29 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 
 ## tests/test_demo_edit_link_lifecycle.py
 
-- [ ] `test_edit_link_duration_is_allowlisted_and_registry_expiry_matches`
-- [ ] `test_each_edit_link_is_unique_and_revocation_blocks_anonymous_access`
-- [ ] `test_anonymous_edit_token_can_save_with_session_csrf`
-- [ ] `test_send_edit_link_ignores_client_url_and_does_not_use_persistent_queue`
-- [ ] `test_recurring_editor_does_not_offer_regular_demo_edit_links`
+- [x] `test_edit_link_duration_is_allowlisted_and_registry_expiry_matches`
+- [x] `test_each_edit_link_is_unique_and_revocation_blocks_anonymous_access`
+- [x] `test_anonymous_edit_token_can_save_with_session_csrf`
+- [x] `test_send_edit_link_ignores_client_url_and_does_not_use_persistent_queue`
+- [x] `test_edit_link_lifetime_applies_to_anonymous_get_and_post`
+- [x] `test_edit_link_management_rejects_missing_or_wrong_csrf`
+- [x] `test_revoke_all_edit_links_is_demo_scoped_and_blocks_existing_sessions`
+- [x] `test_edit_link_requires_matching_signature_and_registry_before_get_or_post`
+- [x] `test_recurring_editor_does_not_offer_regular_demo_edit_links`
+
+QA-01d / SEC-04, P1, individually reviewed 2026-10-15 by Codex, based on main 9098c02a. Nine lifecycle definitions / 28 cases plus three anonymous-shell cases; combined with unchanged decision-service regressions, 37 cases pass. CodeRabbit CLI completed both changed test files with zero findings; diff and exact inventory checks pass. Real local Flask/MongoDB and itsdangerous signing/validation; requests/email/uploads/jobs are isolated by shared fixtures. Admin/anonymous actors are real session identities, not permission mocks. The lifetime matrix changes only the registered demo-link serializer's timestamp source and its domain UTC clock, leaving session-cookie clocks/signatures intact. #672 is already closed; this verifies/enhances coverage of existing implementation, not a new lifecycle-policy feature or release claim.
+
+| Definition | Requirement / meaningful assertions | Setup, coverage and limits | Disposition |
+|---|---|---|---|
+| `test_edit_link_duration_is_allowlisted_and_registry_expiry_matches` | 1h/24h/7d map to exact registry durations/expiry and returned metadata; raw token absent from record; unsupported 30d creates no link. | Three real creation variants. Not every malformed JSON/type/duration input or entropy analysis. | Strengthened all allowed durations and no-op rejection; keep. |
+| `test_each_edit_link_is_unique_and_revocation_blocks_anonymous_access` | Two links differ; revoking first blocks GET and POST from previously valid CSRF session without mutation, while second remains usable. | Real generated signatures/registry and revocation endpoint. Uniqueness sample is not a collision-probability proof or concurrent revoke/save guarantee. | Strengthened POST and sibling control; keep. |
+| `test_anonymous_edit_token_can_save_with_session_csrf` | Missing/wrong CSRF cannot change title; valid session CSRF saves, but forged approval cannot flip either initial approval state; raw token absent from super-audit records. | Two initial approval states, actual form handler. The audit assertion covers this sink and token, not all logs/providers/URLs. | Strengthened CSRF negatives and server authority; keep. |
+| `test_send_edit_link_ignores_client_url_and_does_not_use_persistent_queue` | Email sink receives expected recipient and server-origin edit route; generated link actually opens anonymously; queue path raises if called. | Actual server creation with captured direct-send boundary, both historical module aliases patched. Does not prove SMTP delivery or provider retention. | Strengthened exact origin/path and real resolution instead of startswith(http); keep. |
+| `test_edit_link_lifetime_applies_to_anonymous_get_and_post` | Correct 1h/24h/7d behavior before/at expiry, including valid links beyond the former one-hour limit; expired GET/POST return 410 without mutation and show friendly expired state. | Seven real signed/registry age variants; initial GET supplies valid CSRF so denial is not masked by missing CSRF. Only local domain/signer clocks changed. Not every corrupted legacy timestamp or concurrent revocation interleaving. | New signature/registry lifetime integration; keep. |
+| `test_edit_link_management_rejects_missing_or_wrong_csrf` | Generate/send/revoke/revoke-all each return 403 without CSRF or with mismatch; registry count/revoked flag and mail sink unchanged. | Eight authorized-admin requests so CSRF denial is meaningful. Does not establish every role/city/org scope or every audit side effect. | New management CSRF matrix; keep. |
+| `test_revoke_all_edit_links_is_demo_scoped_and_blocks_existing_sessions` | Two target-demo links and existing edit session become unusable; another demo's link remains valid; non-edit registry actions retain revoked state; denied POST leaves title unchanged. | Real registry/generation/revoke-all endpoints and separate anonymous clients. Not a distributed revoke-vs-save race or case/notification decision-policy audit. | New scoped bulk regression; keep. |
+| `test_edit_link_requires_matching_signature_and_registry_before_get_or_post` | Tampering, missing registry, wrong registry action or demo each reject GET and valid-CSRF POST before changing original target. | Four scenarios with initially valid bearer/session; registry mutations prepare corrupt state, not mocked resolver results. Does not cover every itsdangerous serialization/version/corrupt-payload case. | New binding negatives; keep. |
+| `test_recurring_editor_does_not_offer_regular_demo_edit_links` | Recurring form omits regular edit-link controls while duplicate action remains. | Real rendered admin route, existing UI IDs. This is visibility evidence, not backend permission denial for every recurring payload. | Keep with narrow claim. |
 
 ## tests/test_demo_suggestion_public.py
 

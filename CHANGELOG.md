@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Edit-link regression coverage now verifies allowed lifetimes across GET/POST, revocation scope, CSRF rejection, registry/signature binding and anonymous approval immutability; production token policy is unchanged.
+
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.

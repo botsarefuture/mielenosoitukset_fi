@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Concurrent moderation decisions no longer let an older request overwrite a newer case outcome; returned decision data and audit history retain each transition's own state.
+
 - Strengthened moderation regression coverage for linked-case closure, token replay, bulk retries and notification failure recovery; approval policy and production behavior are unchanged.
 
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.

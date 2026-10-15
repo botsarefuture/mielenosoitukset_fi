@@ -57,6 +57,12 @@ def _actor_label(actor: dict) -> str:
 
 
 def _close_related_cases(db, demo_id, demo, decision, decision_meta) -> int:
+    """Project the authoritative decision without clobbering a newer writer.
+
+    The case snapshot is read before the demo authority check, and its observed
+    decision id is the write precondition. A lost compare-and-set must re-read
+    both records. No wall-clock ordering or multi-document transaction is assumed.
+    """
     action = DECISION_ACTIONS[decision]
     label = DECISION_LABELS[decision]
     reason = DECISION_REASONS[decision]
@@ -65,50 +71,71 @@ def _close_related_cases(db, demo_id, demo, decision, decision_meta) -> int:
     timestamp = decision_meta["at"]
     updated = 0
 
+    case_update = {
+        "$set": {
+            "status": label,
+            "outcome": decision,
+            "resolution": decision,
+            "updated_at": timestamp,
+            "meta.closed": True,
+            "meta.closed_at": timestamp,
+            "meta.closed_reason": reason,
+            "meta.outcome": decision,
+            "meta.resolution": decision,
+            "meta.decision_id": decision_id,
+        },
+        "$push": {
+            "action_logs": {
+                "timestamp": timestamp,
+                "admin": actor_name,
+                "action_type": action,
+                "note": (
+                    f"Mielenosoitus {demo.get('title') or 'tuntematon'} "
+                    f"({demo_id}) sai päätöksen: {label.lower()}."
+                ),
+            },
+            "case_history": {
+                "timestamp": timestamp,
+                "action": label,
+                "user": actor_name,
+                "metadata": {
+                    "decision": decision,
+                    "decision_id": decision_id,
+                    "source": decision_meta.get("source"),
+                },
+            },
+        },
+    }
     cases = db.cases.find({"demo_id": {"$in": [demo_id, str(demo_id)]}})
     for case_doc in cases:
-        result = db.cases.update_one(
-            {
-                "_id": case_doc["_id"],
-                "meta.decision_id": {"$ne": decision_id},
-            },
-            {
-                "$set": {
-                    "status": label,
-                    "outcome": decision,
-                    "resolution": decision,
-                    "updated_at": timestamp,
-                    "meta.closed": True,
-                    "meta.closed_at": timestamp,
-                    "meta.closed_reason": reason,
-                    "meta.outcome": decision,
-                    "meta.resolution": decision,
-                    "meta.decision_id": decision_id,
-                },
-                "$push": {
-                    "action_logs": {
-                        "timestamp": timestamp,
-                        "admin": actor_name,
-                        "action_type": action,
-                        "note": (
-                            f"Mielenosoitus {demo.get('title') or 'tuntematon'} "
-                            f"({demo_id}) sai päätöksen: {label.lower()}."
-                        ),
-                    },
-                    "case_history": {
-                        "timestamp": timestamp,
-                        "action": label,
-                        "user": actor_name,
-                        "metadata": {
-                            "decision": decision,
-                            "decision_id": decision_id,
-                            "source": decision_meta.get("source"),
-                        },
-                    },
-                },
-            },
-        )
-        updated += result.modified_count
+        # Read the case before checking the authoritative demo decision. A
+        # concurrent writer changing the case after this snapshot makes the
+        # compare-and-set fail; never overwrite a newer decision blindly.
+        for _ in range(8):
+            previous_id = (case_doc.get("meta") or {}).get("decision_id")
+            if previous_id == decision_id:
+                break
+            current = db.demonstrations.find_one(
+                {"_id": demo_id}, {"moderation_decision.id": 1}
+            )
+            if not current or (
+                current.get("moderation_decision") or {}
+            ).get("id") != decision_id:
+                break
+            result = db.cases.update_one(
+                {"_id": case_doc["_id"], "meta.decision_id": previous_id},
+                case_update,
+            )
+            if result.matched_count:
+                updated += result.modified_count
+                break
+            case_doc = db.cases.find_one({"_id": case_doc["_id"]})
+            if not case_doc:
+                break
+        else:
+            # Keep contention bounded. A retry reuses the existing decision id
+            # and reconciles effects without duplicating history/notifications.
+            raise RuntimeError("Case changed repeatedly during decision; retry")
     return updated
 
 
@@ -230,6 +257,11 @@ def apply_demo_decision(
 
     Repeating the same decision reuses its stable decision id, so notification,
     case-history and audit side effects are not duplicated.
+
+    Opposite decisions retain the existing last-transition-wins behavior. A
+    changed result/history uses this transition's own snapshot, which may have
+    been superseded by the time the caller receives it. Case projection checks
+    the currently persisted decision and conditionally retries conflicting writes.
     """
     if decision not in DECISION_STATES:
         raise ValueError("Unsupported demonstration decision")
@@ -268,6 +300,10 @@ def apply_demo_decision(
         if not current:
             raise LookupError("Demonstration not found")
         decision_meta = current.get("moderation_decision") or decision_meta
+        # A different decision can commit between the conditional transition
+        # and this read. Reconcile the snapshot we actually read, not a mixture
+        # of the requested state and another decision's identity.
+        decision = decision_meta["status"]
         status_changed = False
     else:
         status_changed = (
@@ -282,9 +318,15 @@ def apply_demo_decision(
             },
             {"$set": {"moderation_decision.notify_submitter": status_changed}},
         )
-        current = db.demonstrations.find_one({"_id": demo_oid})
-        if not current:
-            raise LookupError("Demonstration not found")
+        # The atomic transition's before-image defines this decision's own
+        # after-image. A fresh read could already belong to an opposite decision
+        # and corrupt the returned result and the immutable audit/history entry.
+        current = {
+            **before,
+            **target,
+            "last_modified": now,
+            "moderation_decision": decision_meta,
+        }
 
     decision_id = decision_meta["id"]
 

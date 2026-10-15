@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified organization/pagination/loading integration based on main 175cb1fd, 2026-10-13: 153 Python test files; 1,104 definitions; 141 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified account-status catalog branch based on main 9098c02a, 2026-10-15: 153 Python test files; 1,106 definitions; 143 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open UI PRs #929/#930 are excluded from these totals. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -50,6 +50,16 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 | `test_legacy_account_without_active_field_remains_enabled` | Missing legacy active flag defaults enabled. | Real model and successful password session; ensures no forced migration requirement. | Keep. |
 
 ## tests/test_admin_account_status.py
+
+- [x] `test_compiled_account_status_copy_is_present_and_translated`
+- [x] `test_account_status_confirmation_and_success_follow_session_locale`
+
+I18N-01 / QA-04 follow-up, P1, reviewed 2026-10-15 by Codex. These two definitions cover nine cases and reproduced seven failures before the runtime catalogs were repaired (FI fallback masked two rendered cases). All 31 focused account-status cases pass after repair. Existing context-specific status-label coverage alone did not protect the uncontextualized confirmation copy.
+
+| Definition | Requirement / assertions | Setup, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_compiled_account_status_copy_is_present_and_translated` | All eight confirmation/action/help/success messages exist in the shipped MO and equal explicit FI/EN/SV expectations, not just PO source or fallback. | Direct GNUTranslations of tracked runtime artifacts, three locales; no translation mock. Does not prove all catalog strings are translated. | Keep; fails against pre-fix artifacts, including FI. |
+| `test_account_status_confirmation_and_success_follow_session_locale` | Real GET renders heading/breadcrumb/action/explanation in the selected language without Finnish fallback; protected POST changes actual state and flashes localized success. | Authenticated admin with real disposable Mongo state and signed form proof, three locales × activate/disable. No permission/translation mocks or time sleeps. No visual/layout or deployment claim. | Keep; four EN/SV variants failed before repair, while FI rendering alone hid missing compiled keys. |
 
 - [x] `test_same_status_token_has_one_winner_under_concurrent_submit`
 - [x] `test_status_action_visibility_uses_shared_hierarchy`

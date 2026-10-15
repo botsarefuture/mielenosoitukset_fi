@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified organization/pagination/loading integration based on main 175cb1fd, 2026-10-13: 153 Python test files; 1,104 definitions; 141 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified public-width branch based on main 9098c02a, 2026-10-15: 153 Python test files; 1,105 definitions; 144 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open PRs #929–#935 are excluded. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1335,8 +1335,17 @@ DATA-01 / QA-02 supporting review, 2026-10-12, Codex, P1. Source-only assertions
 
 ## tests/test_public_mobile_overflow.py
 
-- [ ] `test_shared_information_cards_have_mobile_shrink_contract`
-- [ ] `test_information_cards_fit_portrait_viewport`
+- [x] `test_shared_information_cards_have_mobile_shrink_contract`
+- [x] `test_information_cards_fit_portrait_viewport`
+- [x] `test_public_collection_page_fits_viewport_without_clipping`
+
+UI-02 / QA-03/QA-04, P2, reviewed 2026-10-15 by Codex, based on main 9098c02a. The shared footer used 100% content-box width plus 32px horizontal padding: actual 390px list page had 422px body width. Empty-state geometry alone then missed a long title clipped inside its card. Component-scoped box sizing, shrinkable footer grid and card text wrapping fix these independent causes without adding global overflow suppression or a new palette. All 93 combined width/search/listing/CSS/inline cases pass. CodeRabbit's two Minor test findings (overwritten screenshot artifacts and first-locator-only count) were corrected; final changed-test-file review completed with zero findings. Representative light/dark 390px footer screenshots inspected; whole-body screenshot capture is not relied on for body-scroll-host content outside the viewport.
+
+| Definition | Requirement / meaningful assertions | Setup, coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_shared_information_cards_have_mobile_shrink_contract` | Border-box belongs to the container selector, grid children explicitly shrink and information text can wrap. | Source regex now scopes declarations instead of accepting an unrelated global reset. No runtime or visual proof by itself; benign selector regrouping may require maintenance. | Strengthened source guard; keep with runtime cases. |
+| `test_information_cards_fit_portrait_viewport` | Actual information page root width and every section-card bound/content width fit at 320/360/390px. | Real route with fixture-isolated external assets; default theme only, no all-page/localization claim. Card presence prevents vacuous empty selection. | Keep existing three runtime cases. |
+| `test_public_collection_page_fits_viewport_without_clipping` | List/city/tag root and body fit, exact card count/full long title/address/tag text is present and fits its own box, footer links stay inside viewport with visible keyboard focus; footer content is not hidden by overflow clipping and requested theme is actually applied. | 48 actual-route cases: light/dark × 320/360/390/1440px × empty/populated API. API is deterministic synthetic data, renderer/chrome are real. Diagnostic widths identify culprits; real focus/Shift+Tab and case-specific tmp_path screenshots. Not live API data, browser/locale exhaustive testing, production widget interaction, image/media/table or zoom acceptance. | New whole-page and component clipping regression; keep. |
 
 ## tests/test_public_native_dialog_contract.py
 

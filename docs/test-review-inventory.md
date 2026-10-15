@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified organization/pagination/loading integration based on main 175cb1fd, 2026-10-13: 153 Python test files; 1,104 definitions; 141 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified step-up test-review branch based on main 9098c02a, 2026-10-15: 153 Python test files; 1,104 definitions; 152 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open PRs #929–#931 are excluded. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1632,17 +1632,33 @@ UI-01 / QA-04, 2026-10-12, Codex, P1, stacked on #922. Actual shared macro and c
 
 ## tests/test_step_up_authentication.py
 
-- [ ] `test_step_up_password_grants_elevation`
-- [ ] `test_step_up_rejects_wrong_password`
-- [ ] `test_step_up_requires_totp_when_mfa_enabled`
-- [ ] `test_step_up_password_without_mfa_and_without_totp_works`
-- [ ] `test_step_up_options_reflect_methods`
-- [ ] `test_step_up_webauthn_flow`
-- [ ] `test_elevation_times_out`
-- [ ] `test_elevation_does_not_leak_across_sessions`
-- [ ] `test_sudo_required_redirects_anonymous_to_login`
-- [ ] `test_logout_clears_elevation`
-- [ ] `test_change_password_requires_step_up`
+- [x] `test_step_up_password_grants_elevation`
+- [x] `test_step_up_rejects_wrong_password`
+- [x] `test_step_up_requires_totp_when_mfa_enabled`
+- [x] `test_step_up_password_without_mfa_and_without_totp_works`
+- [x] `test_step_up_options_reflect_methods`
+- [x] `test_step_up_webauthn_flow`
+- [x] `test_elevation_times_out`
+- [x] `test_elevation_does_not_leak_across_sessions`
+- [x] `test_sudo_required_redirects_anonymous_to_login`
+- [x] `test_logout_clears_elevation`
+- [x] `test_change_password_requires_step_up`
+
+QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. Eleven definitions / thirteen cases pass; combined with unchanged fresh-deletion regression coverage, 30 cases pass. The latter file was run for compatibility, not individually assessed in this batch. `wapp` uses the real application with explicit localhost RP/origin and cleanup; `_client_for_user` prepares authenticated sessions, so these are elevation tests, not primary-login coverage. Disposable MongoDB and actual password hashing/TOTP/WebAuthn verification are exercised. External HTTP/email/uploads/screenshots/background jobs are isolated by shared fixtures; the simulated authenticator creates real signed assertions but is not hardware-attestation/browser evidence. Shared fixture/configuration audit remains separately pending; this review does not certify the entire conftest lifecycle or parallel-process cleanup.
+
+| Definition | Requirement / assertions | Setup, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_step_up_password_grants_elevation` | Registration options denied before correct password, allowed afterward. | Actual guard and password check, not mocked elevation. Does not prove fresh single-action deletion authorization. | Keep as protected-route integration. |
+| `test_step_up_rejects_wrong_password` | Wrong password denied; status false, sudo key absent and protected registration still denied. | Real hash; negative state checked beyond response alone. Existing elevation before a failed retry is outside this case. | Strengthened; keep. |
+| `test_step_up_requires_totp_when_mfa_enabled` | Password alone gives totp_required; malformed TOTP denied without opening guard; real current TOTP grants elevation. | Actual MFA secret/device in DB and pyotp, no verifier mock. Numeric incorrect codes, replay, TOTP drift/window policy and multiple-device behavior remain outside this definition. | Strengthened; keep with explicit limits. |
+| `test_step_up_password_without_mfa_and_without_totp_works` | No-MFA fallback returns success, records correct actor/method and reports elevated. | Real no-device account. Overlaps first test but explicitly protects method/session payload; not a reason to remove route-level guard case. | Strengthened; keep. |
+| `test_step_up_options_reflect_methods` | Password-only method initially; real registered key makes WebAuthn preferred. | Signed simulated registration, explicit option response statuses; no hardware/browser claim. | Keep; status assertions strengthened. |
+| `test_step_up_webauthn_flow` | Fresh session initially denied; real signed step-up grants actor-bound WebAuthn elevation and unlocks guard; password fallback remains. | Real registration/assertion verification through API using generated key. Challenge replay/origin/counter negative matrices are assessed in separate WebAuthn tests, not proved here. | Strengthened recorded method/actor; keep. |
+| `test_elevation_times_out` | Configured 10/900-second windows allow exact boundary, reject just after, clear sudo while retaining login. | Only step-up module clock replaced, not cookie/signing/TOTP clocks; no sleep and no production clock change. Invalid configuration and future timestamps remain follow-up cases. | Strengthened deterministic boundary integration; keep. |
+| `test_elevation_does_not_leak_across_sessions` | Separate client for same/different account starts denied; copied sudo bound to a different actor is rejected/cleared; original session stays elevated. | Distinct cookie jars and real guard. Deliberate wrong-actor state is fixture preparation, not a claim that stolen same-actor session cookies are safe. | Strengthened same-account and ownership boundaries; keep. |
+| `test_sudo_required_redirects_anonymous_to_login` | Anonymous registration attempt redirects to login. | Actual outer login_required decorator returns 302; this does not test direct sudo_required's standalone 401 branch. | Keep with narrowed claim. |
+| `test_logout_clears_elevation` | Original session loses sudo/login, protected route redirects, and real re-login on same cookie jar remains unelevated. | Replaces vacuous fresh-client-only assertion. An isolated runtime mutation making logout clear_elevation a no-op is detected by this test; no production file was mutated. Does not prove copied-cookie invalidation. | Strengthened; mutation confirmed. |
+| `test_change_password_requires_step_up` | No elevation and weak password leave stored hash unchanged; successful strong update verifies new password and rejects old one. | Real DB/hash and policy route; no success-status-only claim. Broader existing-session revocation/MFA-reset lifecycle remains separate. | Strengthened; keep. |
 
 ## tests/test_submit_draft_reliability.py
 

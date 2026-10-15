@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Strengthened moderation regression coverage for linked-case closure, token replay, bulk retries and notification failure recovery; approval policy and production behavior are unchanged.
+
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.

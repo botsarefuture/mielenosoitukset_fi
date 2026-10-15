@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified organization/pagination/loading integration based on main 175cb1fd, 2026-10-13: 153 Python test files; 1,104 definitions; 141 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified moderation-decision review branch based on main 9098c02a, 2026-10-15: 153 Python test files; 1,104 definitions; 147 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open #929–#937 are excluded. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -661,12 +661,24 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 
 ## tests/test_demo_decision_service.py
 
-- [ ] `test_legacy_approval_is_idempotent_and_reconciles_all_side_effects`
-- [ ] `test_token_rejection_consumes_used_token_and_revokes_siblings`
-- [ ] `test_form_approval_uses_canonical_decision_service`
-- [ ] `test_admin_api_rejection_is_idempotent`
-- [ ] `test_notification_delivery_can_retry_without_repeating_decision_effects`
-- [ ] `test_bulk_decision_uses_same_service_and_reports_each_result`
+- [x] `test_legacy_approval_is_idempotent_and_reconciles_all_side_effects`
+- [x] `test_token_rejection_consumes_used_token_and_revokes_siblings`
+- [x] `test_form_approval_uses_canonical_decision_service`
+- [x] `test_admin_api_rejection_is_idempotent`
+- [x] `test_notification_delivery_can_retry_without_repeating_decision_effects`
+- [x] `test_bulk_decision_uses_same_service_and_reports_each_result`
+
+QA-01e / SEC-04, P1; six definitions individually assessed 2026-10-15 by Codex on main 9098c02a. Real local Flask clients, signed seeded tokens, actual Mongo conditional writes and persisted cases/history/audit. Only email enqueue is captured or made to raise; this is not SMTP/worker delivery evidence. Existing dual-import email aliases are patched explicitly. Fixture-admin sessions bypass primary login; role/CSRF negatives, token expiry/IP/concurrency and privacy redaction are not established by these tests. All 12 combined decision/edit-link/anonymous cases pass; diff check and exact AST membership pass. CodeRabbit completed the four changed-file review with zero findings (later roadmap/status reconciliation excluded from that snapshot). #674 is already closed; this review does not reopen its old route-duplication report or certify crash/concurrent-decision acceptance.
+
+| Definition | Requirement / meaningful assertions | Fixture, coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_legacy_approval_is_idempotent_and_reconciles_all_side_effects` | Legacy approve then API approve preserve decision identity/source, one notification/history/decision audit, canonical booleans, exact public URL, all four token families revoked. Two linked cases with ObjectId/string IDs close once with matching actor/source/time; unrelated case remains byte-for-field equal. | Actual DB and route adapters; inserted control cases prevent one-case/vacuous isolation coverage. No opposite-decision race, missing submitter or partial crash. | Strengthened; keep. Test-process mutation removing string-ID lookup fails the new closed assertion. |
+| `test_token_rejection_consumes_used_token_and_revokes_siblings` | Rejection sets canonical state, consumes chosen token, revokes nonempty preview/approve sibling set, sends one email and writes one history/audit. Replay renders existing friendly used-link page, preserves used timestamp/decision and sends nothing again. | Real signature/registry/route; HTTP 200 is intentional friendly replay policy, not fresh success. Seed has no edit sibling; four-family terminal revocation is checked in legacy-approval test. Not token race/IP/expiry proof. | Strengthened replay and non-vacuous policy assertions; keep. |
+| `test_form_approval_uses_canonical_decision_service` | Form sets canonical booleans/source and linked case outcome/closed decision identity, one email/history/audit. | Real authenticated save with minimal valid data; not field/UI/browser or forged approval authority proof (separate tests). Only approval, not all form transitions. | Strengthened side-effect assertions; keep. |
+| `test_admin_api_rejection_is_idempotent` | Two API denials yield changed then unchanged, stable decision metadata, canonical rejected state, closed rejected case, single email/history/decision audit. | Same sequential client, real DB, captured enqueue; does not establish simultaneous requests or opposite decisions. | Strengthened identity/state/audit assertions; keep. |
+| `test_notification_delivery_can_retry_without_repeating_decision_effects` | Enqueue failure returns 500 after canonical approval, removes delivery claim; alternate-entrypoint retry keeps decision ID and queues identical content once with queued_at. Third call does not enqueue or alter case/history/audit. | Deterministic queue exception before enqueue succeeds, no timing sleep. Cannot prove crash after external acceptance/before queued_at, or actual provider exactly-once delivery. | Strengthened intermediate and final state assertions; keep; delivery crash window remains explicit. |
+| `test_bulk_decision_uses_same_service_and_reports_each_result` | Duplicate selected ID collapses to one changed result, malformed ID has own exact status, retry reports unchanged with zero changes and one total email/history/audit. | Real bulk route and seeded session CSRF; authorized happy path only, no forbidden/not-found/limit/CSRF negative matrix. | Strengthened deduplication/retry assertions; keep with remaining boundary coverage tracked. |
+
 
 ## tests/test_demo_edit_link_lifecycle.py
 

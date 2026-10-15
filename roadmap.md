@@ -1,6 +1,6 @@
 # Repository roadmap
 
-Last planned: 2026-10-12. Evidence baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`.
+Last reconciled: 2026-10-15. Evidence baseline: `main` at `9098c02affc1244d92911d3e2afae9842db284e5`.
 
 This is the delivery plan for the **whole repository**: security, public and admin workflows, backend correctness, operations, privacy, localization, tests, and maintenance. Issue [#833](https://github.com/botsarefuture/mielenosoitukset_fi/issues/833) is one workstream within it. Existing issue trackers retain their detailed acceptance criteria; this document sets the order and dependencies.
 
@@ -8,9 +8,9 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** Review DATA-01a/#927 and DATA-01b bounded automatic loading, then resume UI-01 cropper accessibility and city-autocomplete keyboard behavior. Open PRs are not deployed fixes.
+- **Next:** Finish QA-01e moderation-decision test review, then reproduce remaining opposite-decision/concurrent-side-effect gaps before declaring SEC-04 acceptance. UI-01 cropper and autocomplete implementations are in open #929/#930; UI-02 width/hero corrections are open #936/#937. Do not redo them. #929 committed-image rollback awaits separate per-change approval. Continue broader UI-01 integration alongside remaining security/data review.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
-- **Current merge gate:** #928 targets main and integrates authorized #926/#927, including the admin orphan-member route fix and resolved-language cache correction. Mounted-page attendance and successful-retry scheduling have delayed-request regressions. Combined focused validation passed 88 cases; await required CI and current review before normal stack merge. No release claim.
+- **Verified merge checkpoint:** #926–#928 are merged into inspected main 9098c02a. Open #929–#937 are not merged or production fixes; no further merge/deploy authorization is implied. Preserve their independent test-review records and compile the union of #929/#931 translation additions when integration is authorized.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
 - **Tracking:** stable task IDs below; detailed implementation lives in linked issues/PRs. Tests have their own [review inventory](docs/test-review-inventory.md).
@@ -74,8 +74,10 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 
 ### Security and permissions
 
+- **QA-01e · P1 · In review · Codex · M1/M6 · codex/moderation-decision-test-review:** All six canonical decision-service tests assessed on main 9098c02a. Strengthened multiple ObjectId/string-linked case closure, unrelated-case isolation, stable decision/audit/history identity, token replay, failed-email reconciliation and bulk retry/deduplication. Twelve focused Flask/Mongo cases pass; test-only string-case lookup mutation is detected. No production policy or #887 changes. Broader concurrency, delivery-crash, permission and all-entrypoint symmetry acceptance remains open.
+
 - [ ] **SEC-01 · P1:** #901 MFA challenge implementation is merged; preserve the shared legacy/no-JS behavior and obtain required release acceptance evidence.
-- [ ] **SEC-02 · P1:** Inactive/banned-account enforcement (#763): password/MFA/passkey and Flask-Login session-loading changes implemented on `codex/account-access-enforcement`, with fourteen account/passkey test reviews. Admin status visibility and permission-protected activate/deactivate workflow remain pending; retain #763 until those requirements are proved.
+- [ ] **SEC-02 · P1:** Inactive/banned-account enforcement and admin status workflows are merged through #915/#916/#919; #763 is closed. Preserve shared hierarchy checks and duplicate-submit protection. Runtime translation follow-up #931 and broader release acceptance remain open, not a reopened authorization defect.
 - [ ] **SEC-03 · P0/P1:** #918 target-organization/input validation and #917 case scope are merged; #919 user-action hierarchy/delegation, global clearance scope and audit searchability are in the final account-management integration. Broader role lifecycle, concurrency, destructive-action and canonical audit requirements remain tracked.
 - [ ] **SEC-04 · P1:** Reconcile token/approval lifecycle requirements and prior completed trackers against current routes; prove revocation, expiry, replay behavior, idempotent decisions, case closure, audit and notification effects for every entrypoint.
 - [ ] **SEC-05 · P1:** Review incident #912/#913 protections and credential/session lifecycle regressions before touching related code. Keep secrets out of documentation and audit data.
@@ -134,7 +136,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Organization member-loading snapshot based on main 175cb1fd: **1,091 definitions across 150 files**, with 128 assessed definitions. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Moderation-decision branch based on main 9098c02a: **1,104 definitions across 153 files**, with 147 assessed definitions. Independent open #929–#937 are excluded. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 
@@ -176,6 +178,7 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 |---|---|---|---|---|---|
 | SEC-01 | P1 | Merged | Codex | M1 | #901 in inspected main `3c2c8d3c`; release acceptance not established here. |
 | QA-01 | P1 | In progress | Codex | M1, then ongoing | Thirty-seven MFA/account/passkey/organization-action definitions reviewed in the combined inventory; remaining authentication/permission tests pending. |
+| QA-01e | P1 | In review | Codex | M1/M6 | Six decision-service definitions assessed; 12 decision/edit-link/anonymous cases pass and test-process string-case lookup mutation is detected. Parallel/opposite decisions and provider acceptance/crash windows remain open acceptance gaps. |
 | SEC-02 | P1 | In review | Codex | M1 | #915 merged; #916 integrated into #919 with shared status-action visibility and synchronized duplicate-submit coverage. #763 integration/release acceptance remains pending. |
 | SEC-03 | P0/P1 | In review | Codex | M1 | #918/#917 merged; #919 combines user hierarchy/delegation, global clearance gates and searchable redacted audits with #916. Remaining role/audit acceptance is pending. |
 | QA-02 | P1 | In progress | Codex | M2–M3 | Five API, five request-state, five listing-contract and three URL/history definitions reviewed on this stack. Remaining data/workflow tests pending. |

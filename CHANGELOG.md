@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Public footers now include padding inside their page width, and long demonstration-card titles, addresses and tags wrap without clipping on narrow screens.
+
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.

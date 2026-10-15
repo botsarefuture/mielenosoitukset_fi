@@ -5,28 +5,32 @@ a fresh WebAuthn/passkey/sudo authentication ceremony, even if the
 administrator already has a valid recent authenticated/sudo session.
 """
 
-import time
+import hashlib
+from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
 from pathlib import Path
 import re
 import shutil
 import subprocess
+from threading import Barrier
 
 import pytest
 from bson import ObjectId
 
 from mielenosoitukset_fi.users.models import User
-from mielenosoitukset_fi.utils.step_up import (
-    create_fresh_step_up_token,
-    consume_fresh_step_up_token,
-    grant_elevation,
-    is_elevated,
-)
+from mielenosoitukset_fi.utils import step_up
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from tests import _webauthn_sim as sim
 from tests.conftest import _cleanup_app_resources, _client_for_user
 
 ORIGIN = "http://localhost"
 RP_ID = "localhost"
+
+
+def _token_record(db, token):
+    return db.fresh_step_up_tokens.find_one({
+        "token_hash": hashlib.sha256(token.encode()).hexdigest(),
+    })
 
 
 @pytest.fixture
@@ -256,6 +260,15 @@ def test_delete_user_fresh_token_cannot_be_reused(wapp, db, seeded_data):
     assert r.status_code == 200
     assert db.users.find_one({"_id": target_id}) is None
 
+    # Same target: this must fail because the token is used, not target binding.
+    replay = client.post(
+        "/admin/user/delete_user",
+        json={"user_id": str(target_id), "fresh_step_up_token": fresh_token},
+    )
+    assert replay.status_code == 403
+    assert replay.get_json()["error"] == "fresh_step_up_required"
+    assert _token_record(db, fresh_token)["used"] is True
+
     # Try to reuse the SAME token for second deletion
     r = client.post(
         "/admin/user/delete_user",
@@ -268,7 +281,8 @@ def test_delete_user_fresh_token_cannot_be_reused(wapp, db, seeded_data):
     assert db.users.find_one({"_id": target2_id}) is not None
 
 
-def test_delete_user_direct_endpoint_without_token_rejected(wapp, db, seeded_data):
+@pytest.mark.parametrize('json_mode', [True, False])
+def test_delete_user_direct_endpoint_without_token_rejected(wapp, db, seeded_data, json_mode):
     """Test 7: Direct endpoint access without fresh token is rejected."""
     admin_id = seeded_data["admin_id"]
     target_id = seeded_data["user_id"]
@@ -277,7 +291,8 @@ def test_delete_user_direct_endpoint_without_token_rejected(wapp, db, seeded_dat
     # Direct POST without fresh_step_up_token
     r = client.post(
         "/admin/user/delete_user",
-        json={"user_id": str(target_id)}
+        **({'json': {"user_id": str(target_id)}} if json_mode else
+           {'data': {"user_id": str(target_id)}})
     )
     assert r.status_code == 403
     assert r.get_json()["error"] == "fresh_step_up_required"
@@ -317,35 +332,37 @@ def test_delete_user_without_admin_permission_rejected(wapp, db, seeded_data):
     assert r.status_code == 403, f"Expected 403, got {r.status_code}: {r.get_data(as_text=True)}"
     # The response might be HTML (abort(403)) or JSON depending on error handlers
     # The key assertion is that access is denied
+    assert db.users.find_one({"_id": seeded_data["user_id"]}) is not None
+    assert _token_record(db, fresh_token)["used"] is False
 
 
-def test_fresh_step_up_token_expires(wapp, db, seeded_data):
-    """Fresh step-up token expires after TTL."""
+@pytest.mark.parametrize('age,allowed', [(59.999, True), (60, False), (60.001, False)])
+def test_fresh_step_up_token_expires(wapp, db, seeded_data, monkeypatch, age, allowed):
+    """An unused token expires at its TTL, independently of replay/target checks."""
     admin_id = seeded_data["admin_id"]
     target_id = seeded_data["user_id"]
     client = _client_for_user(wapp, admin_id)
 
-    # Get a fresh token via the normal flow
+    clock = [utcnow().replace(microsecond=0)]
+    monkeypatch.setattr(step_up, 'utcnow', lambda: clock[0])
     fresh_token = _get_fresh_step_up_token_via_webauthn(wapp, admin_id, target_id)
-
-    # Verify token works initially
+    record = _token_record(db, fresh_token)
+    assert record['used'] is False
+    assert record['expires_at'] - record['created_at'] == timedelta(seconds=60)
+    assert fresh_token not in repr(record)
+    clock[0] += timedelta(seconds=age)
     r = client.post(
         "/admin/user/delete_user",
         json={"user_id": str(target_id), "fresh_step_up_token": fresh_token}
     )
-    # Need a fresh target since first one might be deleted
-    target2_id = _create_user(db, "target2", "Passw0rd1!")
-
-    # Token should be consumed after first use
-    r = client.post(
-        "/admin/user/delete_user",
-        json={"user_id": str(target2_id), "fresh_step_up_token": fresh_token}
-    )
-    assert r.status_code == 403
-    assert r.get_json()["error"] == "fresh_step_up_required"
-
-    # User should still exist
-    assert db.users.find_one({"_id": target2_id}) is not None
+    assert r.status_code == (200 if allowed else 403)
+    if allowed:
+        assert r.get_json()['status'] == 'OK'
+        assert db.users.find_one({'_id': target_id}) is None
+    else:
+        assert r.get_json()['error'] == 'fresh_step_up_required'
+        assert db.users.find_one({'_id': target_id}) is not None
+    assert _token_record(db, fresh_token)['used'] is allowed
 
 
 def test_fresh_step_up_token_bound_to_action_and_target(wapp, db, seeded_data):
@@ -368,6 +385,13 @@ def test_fresh_step_up_token_bound_to_action_and_target(wapp, db, seeded_data):
 
     # Target2 should still exist
     assert db.users.find_one({"_id": target2_id}) is not None
+    assert _token_record(db, fresh_token)['used'] is False
+    intended = client.post(
+        '/admin/user/delete_user',
+        json={'user_id': str(target_id), 'fresh_step_up_token': fresh_token},
+    )
+    assert intended.status_code == 200 and intended.get_json()['status'] == 'OK'
+    assert db.users.find_one({'_id': target_id}) is None
 
 
 def test_fresh_step_up_token_not_valid_for_other_actions(wapp, db, seeded_data):
@@ -395,6 +419,8 @@ def test_fresh_step_up_token_not_valid_for_other_actions(wapp, db, seeded_data):
     )
     assert r.status_code == 403
     assert r.get_json()["error"] == "fresh_step_up_required"
+    assert db.users.find_one({'_id': target_id}) is not None
+    assert _token_record(db, token)['used'] is False
 
 
 def test_existing_admin_actions_still_use_regular_sudo(wapp, db, seeded_data):
@@ -407,7 +433,8 @@ def test_existing_admin_actions_still_use_regular_sudo(wapp, db, seeded_data):
     r = client.post("/users/auth/api/v2/passkeys/register/options")
     assert r.status_code == 200
 
-    # Regular sudo should still work for MFA device rename (if that endpoint exists)
+    # The status endpoint reports the same ordinary elevation. Device rename
+    # itself is covered separately; this case does not exercise it.
     r = client.get("/users/auth/api/v2/step-up/status")
     assert r.get_json()["elevated"] is True
 
@@ -433,6 +460,7 @@ def test_fresh_step_up_password_requires_totp_when_mfa_enabled(wapp, db):
     )
     assert r.status_code == 400
     assert r.get_json()["error"] == "totp_required"
+    assert db.fresh_step_up_tokens.count_documents({'user_id': user_id}) == 0
 
     # With correct TOTP - should succeed
     r = client.post(
@@ -442,6 +470,9 @@ def test_fresh_step_up_password_requires_totp_when_mfa_enabled(wapp, db):
     assert r.status_code == 200
     assert r.get_json()["status"] == "success"
     assert "fresh_step_up_token" in r.get_json()
+    record = _token_record(db, r.get_json()['fresh_step_up_token'])
+    assert record['user_id'] == user_id and record['action'] == 'delete_user'
+    assert record['used'] is False
 
 
 def test_fresh_step_up_options_requires_action(wapp, db, seeded_data):
@@ -457,21 +488,74 @@ def test_fresh_step_up_options_requires_action(wapp, db, seeded_data):
     assert r.get_json()["error"] == "invalid_action"
 
 
-def test_fresh_step_up_verify_without_options_fails(wapp, db, seeded_data):
+@pytest.mark.parametrize('method', ['webauthn/verify', 'password'])
+def test_fresh_step_up_verify_without_options_fails(wapp, db, seeded_data, method):
     """Fresh step-up verify fails if options not called first (no session binding)."""
     admin_id = seeded_data["admin_id"]
     client = _client_for_user(wapp, admin_id)
 
     # Try to verify without calling options first
-    key = sim.generate_key()
-    # Need a credential - but we can't create one without options
-    # Just verify the endpoint returns error for missing session
+    # Verify the endpoint rejects a missing ceremony before parsing credentials.
     r = client.post(
-        "/users/auth/api/v2/step-up/fresh/webauthn/verify",
-        json={"credential": {}}
+        f"/users/auth/api/v2/step-up/fresh/{method}",
+        json={"credential": {}} if method == 'webauthn/verify' else {'password': 'AdminPass1!'}
     )
     assert r.status_code == 400
     assert r.get_json()["error"] == "fresh_step_up_not_started"
+
+
+def test_fresh_deletion_token_rejects_another_authorized_actor(wapp, db, seeded_data):
+    target_id = seeded_data['user_id']
+    token = _get_fresh_step_up_token_via_webauthn(wapp, seeded_data['admin_id'], target_id)
+    actor_id = _create_user(db, 'other-admin', role='admin', global_admin=True)
+    other = _client_for_user(wapp, actor_id)
+    denied = other.post('/admin/user/delete_user', json={
+        'user_id': str(target_id), 'fresh_step_up_token': token,
+    })
+    assert denied.status_code == 403
+    # This exact JSON guard error proves the actor passed earlier admin gates.
+    assert denied.get_json()['error'] == 'fresh_step_up_required'
+    assert db.users.find_one({'_id': target_id}) is not None
+    assert _token_record(db, token)['used'] is False
+    owner = _client_for_user(wapp, seeded_data['admin_id'])
+    accepted = owner.post('/admin/user/delete_user', json={
+        'user_id': str(target_id), 'fresh_step_up_token': token,
+    })
+    assert accepted.status_code == 200 and accepted.get_json()['status'] == 'OK'
+    assert db.users.find_one({'_id': target_id}) is None
+
+
+def test_parallel_fresh_deletion_token_has_one_winner(wapp, db, seeded_data, monkeypatch):
+    target_id = seeded_data['user_id']
+    token = _get_fresh_step_up_token_via_webauthn(wapp, seeded_data['admin_id'], target_id)
+    clients = [_client_for_user(wapp, seeded_data['admin_id']) for _ in range(2)]
+    collection = db.fresh_step_up_tokens
+    collection_type = type(collection)
+    original = collection_type.find_one_and_update
+    barrier = Barrier(2)
+
+    def synchronized_consume(self, *args, **kwargs):
+        if self.full_name == collection.full_name:
+            barrier.wait(timeout=5)
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(collection_type, 'find_one_and_update', synchronized_consume)
+
+    def submit(client):
+        response = client.post('/admin/user/delete_user', json={
+            'user_id': str(target_id), 'fresh_step_up_token': token,
+        })
+        return response.status_code, response.get_json()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        pending = [executor.submit(submit, client) for client in clients]
+        results = [future.result(timeout=10) for future in pending]
+    assert sorted(status for status, _ in results) == [200, 403]
+    assert next(body for status, body in results if status == 200)['status'] == 'OK'
+    assert next(body for status, body in results if status == 403)['error'] == 'fresh_step_up_required'
+    assert db.users.find_one({'_id': target_id}) is None
+    record = _token_record(db, token)
+    assert record['used'] is True and record['used_at'] is not None
 
 
 def test_fresh_step_up_options_rejects_unknown_action_and_invalid_target(
@@ -492,6 +576,9 @@ def test_fresh_step_up_options_rejects_unknown_action_and_invalid_target(
     )
     assert malformed.status_code == 400
     assert malformed.get_json()["error"] == "invalid_target"
+    with client.session_transaction() as session:
+        assert 'fresh_step_up_action' not in session
+        assert 'fresh_step_up_target_id' not in session
 
 
 def test_user_delete_modal_supports_real_webauthn_and_password_fallback():

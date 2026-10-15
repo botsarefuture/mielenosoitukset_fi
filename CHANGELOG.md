@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Fresh-deletion regression tests now isolate expiry from replay/target binding and verify same-target reuse, actor binding and concurrent single-use consumption without changing production authorization.
+
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.

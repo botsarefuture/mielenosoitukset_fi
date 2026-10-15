@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified organization/pagination/loading integration based on main 175cb1fd, 2026-10-13: 153 Python test files; 1,104 definitions; 141 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified fresh-deletion review branch based on main 9098c02a, 2026-10-15: 153 Python test files; 1,106 definitions; 160 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open PRs #929–#932 are excluded. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -808,23 +808,49 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 
 ## tests/test_fresh_step_up_user_deletion.py
 
-- [ ] `test_delete_user_without_fresh_step_up_rejected`
-- [ ] `test_delete_user_with_recent_sudo_session_still_requires_fresh`
-- [ ] `test_delete_user_with_fresh_webauthn_step_up_succeeds`
-- [ ] `test_delete_user_with_fresh_password_step_up_succeeds`
-- [ ] `test_delete_user_fresh_token_cannot_be_reused`
-- [ ] `test_delete_user_direct_endpoint_without_token_rejected`
-- [ ] `test_delete_user_without_admin_permission_rejected`
-- [ ] `test_fresh_step_up_token_expires`
-- [ ] `test_fresh_step_up_token_bound_to_action_and_target`
-- [ ] `test_fresh_step_up_token_not_valid_for_other_actions`
-- [ ] `test_existing_admin_actions_still_use_regular_sudo`
-- [ ] `test_fresh_step_up_password_requires_totp_when_mfa_enabled`
-- [ ] `test_fresh_step_up_options_requires_action`
-- [ ] `test_fresh_step_up_verify_without_options_fails`
-- [ ] `test_fresh_step_up_options_rejects_unknown_action_and_invalid_target`
-- [ ] `test_user_delete_modal_supports_real_webauthn_and_password_fallback`
-- [ ] `test_rendered_user_delete_javascript_parses`
+- [x] `test_delete_user_without_fresh_step_up_rejected`
+- [x] `test_delete_user_with_recent_sudo_session_still_requires_fresh`
+- [x] `test_delete_user_with_fresh_webauthn_step_up_succeeds`
+- [x] `test_delete_user_with_fresh_password_step_up_succeeds`
+- [x] `test_delete_user_fresh_token_cannot_be_reused`
+- [x] `test_delete_user_direct_endpoint_without_token_rejected`
+- [x] `test_delete_user_without_admin_permission_rejected`
+- [x] `test_fresh_step_up_token_expires`
+- [x] `test_fresh_step_up_token_bound_to_action_and_target`
+- [x] `test_fresh_step_up_token_not_valid_for_other_actions`
+- [x] `test_existing_admin_actions_still_use_regular_sudo`
+- [x] `test_fresh_step_up_password_requires_totp_when_mfa_enabled`
+- [x] `test_fresh_step_up_options_requires_action`
+- [x] `test_fresh_step_up_verify_without_options_fails`
+- [x] `test_fresh_step_up_options_rejects_unknown_action_and_invalid_target`
+- [x] `test_fresh_deletion_token_rejects_another_authorized_actor`
+- [x] `test_parallel_fresh_deletion_token_has_one_winner`
+- [x] `test_user_delete_modal_supports_real_webauthn_and_password_fallback`
+- [x] `test_rendered_user_delete_javascript_parses`
+
+QA-01b / P1, individually reviewed 2026-10-15 by Codex, based on main 9098c02a. Nineteen definitions / 23 parameterized cases; combined with unchanged ordinary step-up tests, 34 cases pass. Isolated test-process mutations dropping expires_at and used predicates each fail the intended expiry/replay HTTP assertions; the subsequent normal 23-case run passes. CodeRabbit CLI completed review of the changed test file with zero findings (not a whole-repository security audit). Real Flask routes, disposable MongoDB, password/TOTP verification and cryptographically signed simulated WebAuthn assertions; external HTTP/mail/upload/screenshot/jobs are isolated by fixtures. Authenticated clients are prepared by `_client_for_user`, not primary-login ceremonies. Simulated authenticator signatures are not physical-device, browser UX or attestation evidence. Production code and #887 policy remain unchanged. Shared fixture/configuration and privacy/erasure semantics remain separate reviews.
+
+| Definition | Requirement / meaningful assertions | Coverage, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_delete_user_without_fresh_step_up_rejected` | Missing proof gives exact guard error and target remains. | Actual authenticated admin POST, not a mocked guard. Overlaps direct JSON case but remains readable core invariant. | Keep. |
+| `test_delete_user_with_recent_sudo_session_still_requires_fresh` | Real recent elevation is true yet deletion without fresh proof is denied and target remains. | Real password step-up; differentiates ordinary sudo from per-deletion ceremony. | Keep; preserves #887. |
+| `test_delete_user_with_fresh_webauthn_step_up_succeeds` | Signed fresh ceremony followed by real deletion returns OK and removes the target. | Actual registration/verification; helper creates another same-actor client/key, not browser session-binding evidence. Extra registration setup is redundant but not a verifier mock. | Keep; simplification can be separate. |
+| `test_delete_user_with_fresh_password_step_up_succeeds` | Password ceremony mints scoped token and permitted deletion actually removes user. | Real password validation, seeded admin without MFA; does not prove wrong-password or expired ceremony rejection. | Keep positive fallback integration. |
+| `test_delete_user_fresh_token_cannot_be_reused` | First use deletes target; same-target replay must hit fresh-proof guard; different-target attempt also denied and second user survives; record is used. | Previously only changed target, allowing target binding to mask broken replay enforcement. Sequential replay, not concurrency proof. | Strengthened same-target assertion; keep. |
+| `test_delete_user_direct_endpoint_without_token_rejected` | JSON and form transports both reject missing proof and preserve target. | Two actual POST encodings; JSON overlaps core missing-proof test, form protects separate parsing branch. | Strengthened transport coverage; keep. |
+| `test_delete_user_without_admin_permission_rejected` | Regular user with genuine fresh proof is forbidden; target remains and proof is not consumed. | Real account/key; proves lack-of-privilege boundary, not which of multiple admin/permission decorators denied it. | Strengthened state assertions; keep. |
+| `test_fresh_step_up_token_expires` | Unused actor/action/target-correct proof works at 59.999s, fails at/after 60s, and records correct consumption/remaining target state; registry stores hash, not raw proof. | Only step-up UTC clock controlled; Mongo millisecond boundary explicit, no sleeps. Old test consumed proof and changed target, never testing time. No DB TTL-index cleanup claim. | Replaced vacuous scenario with three independent boundary cases; keep. |
+| `test_fresh_step_up_token_bound_to_action_and_target` | Wrong target denied without consuming proof; intended target then succeeds, ruling out unrelated invalid-proof failure. | Separate existing users, same unexpired proof. Action isolation belongs to next test. | Strengthened positive control; keep. |
+| `test_fresh_step_up_token_not_valid_for_other_actions` | Domain-created proof for another action cannot delete; target survives and proof remains unused. | Helper creates unsupported action under authenticated request context to test consume policy, not public issuance allowlist. | Strengthened state assertions; keep. |
+| `test_existing_admin_actions_still_use_regular_sudo` | Ordinary elevation still unlocks passkey registration and is reported elevated. | Does not invoke MFA rename despite previous comment; comment narrowed. | Keep narrow compatibility case. |
+| `test_fresh_step_up_password_requires_totp_when_mfa_enabled` | Missing TOTP issues no proof; valid real TOTP mints unused actor/action-bound proof. | Real device secret/pyotp; no replay/drift/incorrect-numeric matrix or permission-to-delete claim. | Strengthened registry outcome; keep. |
+| `test_fresh_step_up_options_requires_action` | Missing action rejected with invalid_action. | Actual options endpoint; broader malformed JSON/types are not covered here. | Keep. |
+| `test_fresh_step_up_verify_without_options_fails` | WebAuthn and correct-password fallback both reject absent ceremony with exact error. | Two endpoints; WebAuthn empty credential is rejected at ceremony prerequisite, not a cryptographic-negative case. | Strengthened password branch; keep. |
+| `test_fresh_step_up_options_rejects_unknown_action_and_invalid_target` | Unsupported action and malformed target rejected; invalid options leave no ceremony binding. | New authenticated session, actual parser and request state; does not assess every previously valid-binding replacement scenario. | Strengthened session check; keep. |
+| `test_fresh_deletion_token_rejects_another_authorized_actor` | Different admin reaches proof guard but cannot use owner's token; token stays unused and owner subsequently deletes successfully. | Exact guard JSON rules out earlier permission denial; real DB/proof, no actor-verifier mocks. Not stolen-cookie protection. | New actor-binding regression; keep. |
+| `test_parallel_fresh_deletion_token_has_one_winner` | Two clients with same actor/proof/target yield exactly one OK deletion and one proof rejection; used timestamp persists. | Barrier before actual Mongo find_one_and_update, two threads, bounded waits, no mocked write result. One controlled local race, not distributed load testing. | New atomic-consumption regression; keep. |
+| `test_user_delete_modal_supports_real_webauthn_and_password_fallback` | Shared template wires decode/assertion functions and password/TOTP controls. | Source-string guard only; function name does not establish real browser interaction. | Keep alongside backend and parse tests; browser ceremony remains pending. |
+| `test_rendered_user_delete_javascript_parses` | Actual rendered inline deletion script passes Node syntax check. | Rendering is real; Node absence explicitly skips. Syntax is not focus, visual or interaction proof. | Keep with narrow claim. |
 
 ## tests/test_geocode.py
 

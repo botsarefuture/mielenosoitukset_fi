@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified organization/pagination/loading integration based on main 175cb1fd, 2026-10-13: 153 Python test files; 1,104 definitions; 141 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified city-autocomplete branch based on main 9098c02a, 2026-10-15: 154 Python test files; 1,106 definitions; 143 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. The independent cropper PR #929 is not included in these branch totals. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1151,6 +1151,18 @@ DATA-01a / QA-02, P1; reviewed 2026-10-13 by Codex. Disposable local database an
 | `test_enormous_out_of_range_pages_never_reach_database_skip` | Four endpoint variants return empty results without huge Mongo offsets. | Cursor skip wrapper raises rather than mocking returned records; 100-digit page. Count cost remains outside this guarantee. | Keep. |
 | `test_public_cache_normalizes_page_sizes_and_excludes_old_unbounded_namespace` | Excessive and bounded query sizes share the new cache key; different resolved languages do not. | Real request contexts, no explicit URL language; exact new namespace. Strengthened for approved #927 review correction on 2026-10-13. | Keep. |
 | `test_old_oversized_cached_response_cannot_bypass_the_new_limit` | Pre-fix cache cannot bypass handler bounds; new stored payload is bounded. A session-language change reaches a distinct route cache key without changing the URL. | Synthetic legacy cache marker, real database, handler and session locale selector. Does not prove a live Redis deployment. | Keep. |
+
+## tests/test_public_city_autocomplete.py
+
+- [x] `test_city_combobox_keyboard_selection_preserves_route_contract`
+- [x] `test_city_combobox_treats_html_and_regex_as_plain_text_and_bounds_options`
+
+UI-01 / QA-04, P1; reviewed 2026-10-15 by Codex. Two definitions / nine cases; 64 combined focused cases passed with search-field, URL/history, listing-contract, CSS-integrity and inline-style checks. Light mobile/dark desktop active-option screenshots inspected; explicit settled action-background/foreground assertions avoid mistaking intermediate CSS-transition colors for final states. No real API/load-performance or screen-reader certification claim.
+
+| Definition | Requirement / meaningful assertions | Setup, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_city_combobox_keyboard_selection_preserves_route_contract` | Active descendant/selected state, ArrowDown/Home/End/Escape/Enter/Tab; focus remains on input; selection updates hidden value and single chip; selected option excluded; search/page/fixed tag retained, tag automatically submits while general list waits. Options have 44px height and fit viewport. | Actual list/tag routes and shared controller, two themes × two widths, isolated API with deterministic empty response. Condition waits, no sleeps. Does not prove live database filtering, all browsers or audible assistive-technology output. | Keep; old pointer-only implementation fails keyboard and ARIA assertions. |
+| `test_city_combobox_treats_html_and_regex_as_plain_text_and_bounds_options` | HTML/regex-looking text is rendered and selected literally, no injected image executes; pointer selection calls chip rendering; options capped at 20 and blur clears them. | Small DOM harness executes shipped controller with synthetic city data and a narrow history callback spy. Not whole-route or database evidence; bounded option DOM is not a whole-process memory guarantee. | Keep; old regex/HTML construction would fail literal-render and injection assertions. |
 
 ## tests/test_public_date_range.py
 

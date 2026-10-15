@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified public-width branch based on main 9098c02a, 2026-10-15: 153 Python test files; 1,105 definitions; 144 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open PRs #929–#935 are excluded. This is not completed suite review.
+Verified home/organization hero branch based on open #936 at 546bd487 (main 9098c02a), 2026-10-15: 153 Python test files; 1,106 definitions; 148 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open PRs #929–#935 are excluded. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1229,9 +1229,17 @@ Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-requ
 
 ## tests/test_public_inline_style_contract.py
 
-- [ ] `test_public_inline_style_debt_matches_reviewed_baseline`
-- [ ] `test_public_inline_style_baseline_scope_is_documented`
-- [ ] `test_style_attribute_scanner_covers_all_valid_static_forms`
+- [x] `test_public_inline_style_debt_matches_reviewed_baseline`
+- [x] `test_public_inline_style_baseline_scope_is_documented`
+- [x] `test_style_attribute_scanner_covers_all_valid_static_forms`
+
+UI-02b / QA-03, P2; individually reviewed 2026-10-15 by Codex. Pure repository source/JSON checks with no app, network or permission mocks. The migration removed 23 inline bytes from index and 59 from organization details; only those two residual-block hashes are updated, with unchanged block counts and no new inline declarations/attributes. This is a reviewed reduction, not a full baseline regeneration or expanded exception.
+
+| Definition | Requirement / assertions | Coverage, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_public_inline_style_debt_matches_reviewed_baseline` | Every in-scope style block/attribute matches its reviewed content hash/multiplicity; unexplained additions, removals or changes fail with exact path differences. | Actual tracked template source and JSON; regex-based structural scanning, not a full HTML/CSS parser or visual/security audit. Human-reviewed baseline changes remain a trust boundary. | Keep exact debt ratchet; deliberate two-block reductions reviewed here. |
+| `test_public_inline_style_baseline_scope_is_documented` | Excluded directories and exact-hash policy stay explicit rather than silently widening exceptions. | Fixed metadata assertions; cannot by itself prove collector implementation or prevent a coordinated malicious test/baseline change. | Keep supporting scope guard. |
+| `test_style_attribute_scanner_covers_all_valid_static_forms` | Double/single/unquoted styles and script-generated markup are counted; data-style and JS-created style elements are not misclassified as attributes. | Synthetic scanner fixture, not runtime DOM; name overstates universality—these representative forms do not prove every malformed/Jinja/escaped HTML combination. | Keep with narrowed coverage claim; further parser edge cases remain separate. |
 
 ## tests/test_public_list_filter_history.py
 
@@ -1338,6 +1346,7 @@ DATA-01 / QA-02 supporting review, 2026-10-12, Codex, P1. Source-only assertions
 - [x] `test_shared_information_cards_have_mobile_shrink_contract`
 - [x] `test_information_cards_fit_portrait_viewport`
 - [x] `test_public_collection_page_fits_viewport_without_clipping`
+- [x] `test_home_and_organization_layout_preserves_content`
 
 UI-02 / QA-03/QA-04, P2, reviewed 2026-10-15 by Codex, based on main 9098c02a. The shared footer used 100% content-box width plus 32px horizontal padding: actual 390px list page had 422px body width. Empty-state geometry alone then missed a long title clipped inside its card. Component-scoped box sizing, shrinkable footer grid and card text wrapping fix these independent causes without adding global overflow suppression or a new palette. All 93 combined width/search/listing/CSS/inline cases pass. CodeRabbit's two Minor test findings (overwritten screenshot artifacts and first-locator-only count) were corrected; final changed-test-file review completed with zero findings. Representative light/dark 390px footer screenshots inspected; whole-body screenshot capture is not relied on for body-scroll-host content outside the viewport.
 
@@ -1346,6 +1355,9 @@ UI-02 / QA-03/QA-04, P2, reviewed 2026-10-15 by Codex, based on main 9098c02a. T
 | `test_shared_information_cards_have_mobile_shrink_contract` | Border-box belongs to the container selector, grid children explicitly shrink and information text can wrap. | Source regex now scopes declarations instead of accepting an unrelated global reset. No runtime or visual proof by itself; benign selector regrouping may require maintenance. | Strengthened source guard; keep with runtime cases. |
 | `test_information_cards_fit_portrait_viewport` | Actual information page root width and every section-card bound/content width fit at 320/360/390px. | Real route with fixture-isolated external assets; default theme only, no all-page/localization claim. Card presence prevents vacuous empty selection. | Keep existing three runtime cases. |
 | `test_public_collection_page_fits_viewport_without_clipping` | List/city/tag root and body fit, exact card count/full long title/address/tag text is present and fits its own box, footer links stay inside viewport with visible keyboard focus; footer content is not hidden by overflow clipping and requested theme is actually applied. | 48 actual-route cases: light/dark × 320/360/390/1440px × empty/populated API. API is deterministic synthetic data, renderer/chrome are real. Diagnostic widths identify culprits; real focus/Shift+Tab and case-specific tmp_path screenshots. Not live API data, browser/locale exhaustive testing, production widget interaction, image/media/table or zoom acceptance. | New whole-page and component clipping regression; keep. |
+| `test_home_and_organization_layout_preserves_content` | Home/normal-org/long-org root and complete hero/title/action boxes fit and center; exact long name/description remain, home retains three actions, heading stays white and requested theme is applied. Computed mobile font size must follow the shared responsive scale, not a legacy container reset. | 24 real SSR route cases: two themes × 320/360/390/1440px × three views. Real synthetic seeded organization, isolated API/external assets; no CSS/image-engine mocks. Unique 320/390px tmp_path captures with finite animations fast-forwarded. Explicit 16px-root design-scale assertion needs maintenance if typography changes. Does not prove every locale/font/provider, media variant, dynamic widget, animation state or full keyboard/screen-reader interaction. | New UI-02b regression; original home title and later nowrap action clipping reproduced separately; keep. |
+
+UI-02b follow-up is stacked on #936's shared shell/width-test foundation, not a duplicate footer fix. Public hero content/action shrink and mobile title sizing live in the existing shared stylesheet. The two page-local organization flex/min-width and home nowrap rules were removed; no new inline palette or broad override added. Visual inspection exposed a legacy mobile container `font-size: revert !important` despite passing overflow guards; removing it restores the shared scale (24px rather than 32px at 320px) and an explicit computed-size assertion guards this regression. Both the imported container URL and parent stylesheet URL are cache-versioned. All 117 combined width/listing/search/CSS/inline cases pass; three changed templates parse with Jinja and diff check passes. CodeRabbit completed review of the ten implementation/inventory files with zero findings (roadmap status edits excluded). Screenshot collection additionally includes 1440px desktop. Broader page-owned style migration and non-geometry UI acceptance remain open.
 
 ## tests/test_public_native_dialog_contract.py
 

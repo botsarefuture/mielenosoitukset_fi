@@ -152,7 +152,6 @@
   .container-main-content h4,
   .container-main-content h5 {
     text-align: center;
-    font-size: revert !important;
   }
 }
 

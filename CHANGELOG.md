@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Shared public heroes keep small-screen headings and actions within their content area; organization identity layouts now shrink and wrap without fixed-width clipping. Removed a legacy mobile heading reset that defeated component typography.
+
 - Public footers now include padding inside their page width, and long demonstration-card titles, addresses and tags wrap without clipping on narrow screens.
 
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.

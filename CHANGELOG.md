@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Public list and tag city suggestions share keyboard navigation, announced active options and text-safe rendering; selection retains existing filters and tag auto-search behavior.
+
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.

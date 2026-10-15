@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified organization/pagination/loading integration based on main 175cb1fd, 2026-10-13: 153 Python test files; 1,104 definitions; 141 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified login-target safety branch based on main 9098c02a, 2026-10-15: 153 Python test files; 1,107 definitions; 146 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open PRs #929–#933 are excluded. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -409,8 +409,21 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Real admin client, disposable Mong
 
 ## tests/test_auth_login_redirects.py
 
-- [ ] `test_login_does_not_redirect_back_to_notifications_api`
-- [ ] `test_login_keeps_normal_internal_page_redirect`
+- [x] `test_login_does_not_redirect_back_to_notifications_api`
+- [x] `test_login_keeps_normal_internal_page_redirect`
+- [x] `test_login_rejects_unsafe_or_non_page_return_targets`
+- [x] `test_popup_login_return_target_is_data_not_executable_script`
+- [x] `test_popup_login_still_reloads_opener_and_closes`
+
+QA-01c / SEC-05, P1, reviewed 2026-10-15 by Codex, main 9098c02a. Five definitions / 45 cases pass after correction; combined with MFA, account-access, auth-page and inline-style checks, 97 pass. CodeRabbit CLI completed review of all six changed files with zero findings. Initial 21-case baseline exposed ten failures; separate browser runs confirmed execution of a harmless injected console marker in both string-breakout and script-ending scenarios before repair. Tests use actual Flask password login and session state with disposable seeded users; HTTP/email/uploads/jobs are isolated by shared fixtures. Browser tests fulfill every request locally, including any escaped destination, with the actual login-generated HTML. No production probe, live exploitation or whole-authentication audit is claimed.
+
+| Definition | Requirement / meaningful assertions | Fixtures, coverage and limitations | Disposition |
+|---|---|---|---|
+| `test_login_does_not_redirect_back_to_notifications_api` | Login returns exactly the internal root, not notifications API. | Actual successful password POST; exact Location replaces weak suffix assertion. Does not prove all API routes itself. | Strengthened; keep. |
+| `test_login_keeps_normal_internal_page_redirect` | Profile and city targets retain path/query/fragment; authenticated session belongs to expected user. | Three valid root-relative URLs, real hash/session. Not every public route or primary-MFA branch. | Strengthened; keep valid-URL compatibility control. |
+| `test_login_rejects_unsafe_or_non_page_return_targets` | Absolute/network/ambiguous slash/control/relative/self-loop/API spellings fall back to root in both HTTP and popup completion, without losing successful authentication. | Nineteen adversarial inputs × two modes; parsed/decoded/dot-normalized path guards are exercised, not only raw string prefixes. Does not establish safety of arbitrary later redirects implemented by destination routes. | New negative matrix; keep. |
+| `test_popup_login_return_target_is_data_not_executable_script` | Actual Chromium executes completion HTML without injected console marker or errors, navigates once to same origin and preserves the target as literal URL data. | Two string/script-ending payloads, actual application response, all browser network fulfilled locally. Both executed the marker before repair. Not all browsers or all Unicode/malformed-HTML cases. | New runtime security regression; keep. |
+| `test_popup_login_still_reloads_opener_and_closes` | Real browser popup reloads opener exactly once and closes rather than navigating elsewhere. | Actual window.open and reload over intercepted same-origin requests; no opener/close function mocks. No cross-origin opener or production CSP certification. | New preserved-behavior control; keep. |
 
 ## tests/test_auth_page_contract.py
 

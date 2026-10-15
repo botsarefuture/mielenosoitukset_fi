@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Login completion now safely serializes popup return targets and rejects ambiguous, control-character, API and login-loop destinations while preserving valid internal URLs.
+
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.

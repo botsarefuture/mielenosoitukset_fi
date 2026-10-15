@@ -1,4 +1,5 @@
 import json
+import posixpath
 import re
 import hashlib
 import secrets
@@ -844,23 +845,30 @@ def mfa_check():
     except Exception as e:
         return jsonify({"enabled": False, "valid": False})
 
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 
 def _normalize_post_login_target(target: str | None) -> str:
-    candidate = (target or "").replace("\\", "")
-    if not candidate:
+    # Require an unambiguous origin-relative URL. Do not repair backslashes or
+    # controls: browsers and URL parsers can interpret those differently.
+    if (not isinstance(target, str) or not target.startswith("/")
+            or target.startswith("//") or "\\" in target
+            or re.search(r"[\x00-\x1f\x7f]", target)):
         return url_for("index")
 
+    candidate = target
     parsed = urlparse(candidate)
     if parsed.netloc or parsed.scheme:
         return url_for("index")
 
-    if candidate == url_for("users.auth.login"):
+    # Compare effective paths, not queries/fragments or encoded dot/slash
+    # spelling, while retaining the original valid URL for the redirect.
+    path = posixpath.normpath(unquote(parsed.path))
+    if path == url_for("users.auth.login").rstrip("/"):
         return url_for("index")
 
     # Post-login redirects should land on human-facing pages, not raw APIs.
-    if candidate.startswith("/api/") or candidate.startswith("/users/auth/api/"):
+    if path in {"/api", "/users/auth/api"} or path.startswith(("/api/", "/users/auth/api/")):
         return url_for("index")
 
     return candidate
@@ -870,17 +878,8 @@ def _check(safe_next_page, request):
     
     # Check if this is a popup login request
     if request.args.get("popup") == "1":
-        # Return HTML that closes the popup and reloads opener
-        return f"""
-        <script>
-            if (window.opener) {{
-                window.opener.location.reload();
-                window.close();
-            }} else {{
-                window.location = "{safe_next_page}";
-            }}
-        </script>
-        """, True
+        # Jinja tojson escapes both JavaScript strings and HTML script endings.
+        return render_template("users/auth/_popup_complete.html", next_url=safe_next_page), True
     
     else:
         return None, False

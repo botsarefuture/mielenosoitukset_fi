@@ -20,7 +20,7 @@ def test_cropper_uses_shared_dialog_and_pinned_existing_engine():
     assert hashlib.sha256(vendor.read_bytes()).hexdigest() == '1873abfe6048bea0867c18116fd7705789ff6abb4dd6281ef5767307dcfd4d64'
 
 
-def _open_harness(app, live_server, page, theme='light', width=1440, locale='fi'):
+def _open_harness(app, live_server, page, theme='light', width=1440, locale='fi', source_width=800):
     app.config.update(BABEL_SUPPORTED_LOCALES=['fi', 'en', 'sv'], BABEL_PUBLIC_LOCALES=['fi', 'en', 'sv'])
     def view():
         return render_template_string("""<!doctype html><html><head>
@@ -35,13 +35,13 @@ def _open_harness(app, live_server, page, theme='light', width=1440, locale='fi'
     page.goto(f'{live_server}/set_language/{locale}')
     page.goto(f'{live_server}/cropper-test/')
     page.evaluate('(scheme) => document.documentElement.style.colorScheme = scheme', theme)
-    return base64.b64decode(page.evaluate("""() => {
+    return base64.b64decode(page.evaluate("""(sourceWidth) => {
       const canvas = document.createElement('canvas');
-      canvas.width = 800; canvas.height = 450;
+      canvas.width = sourceWidth; canvas.height = sourceWidth * 9 / 16;
       const context = canvas.getContext('2d');
-      context.fillStyle = '#2463b7'; context.fillRect(0, 0, 800, 450);
+      context.fillStyle = '#2463b7'; context.fillRect(0, 0, canvas.width, canvas.height);
       return canvas.toDataURL('image/png').split(',')[1];
-    }"""))
+    }""", source_width))
 
 
 def _select(page, image):
@@ -88,6 +88,27 @@ def test_actual_cropper_has_modal_focus_keyboard_geometry_and_real_upload(app, l
     assert result['width'] > 0 and abs(result['width'] / result['height'] - 16 / 9) < 0.02
     assert result['visible'] and result['focus'] == 'image'
     assert not errors
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize('width', [1440, 390])
+@pytest.mark.parametrize('zoom,minimum,maximum', [(1, 1200, 1600), (2, 600, 800), (0.1, 1200, 1600)])
+def test_cropper_export_uses_source_resolution_and_bounded_zoom(app, live_server, browser_page, width, zoom, minimum, maximum):
+    image = _open_harness(app, live_server, browser_page, width=width, source_width=1600)
+    _select(browser_page, image)
+    if zoom != 1:
+        browser_page.evaluate('(zoom) => window.cropperModal.getCropper().getCropperImage().$scale(zoom)', zoom)
+    browser_page.locator('#applyCrop').click()
+    browser_page.wait_for_function("!document.getElementById('cropperModal').open")
+    dimensions = browser_page.evaluate("""async () => {
+      const file = document.getElementById('image').files[0];
+      const bitmap = await createImageBitmap(file);
+      return {width: bitmap.width, height: bitmap.height};
+    }""")
+    assert minimum <= dimensions['width'] <= maximum
+    assert 0 < dimensions['height'] <= 900
+    assert abs(dimensions['width'] / dimensions['height'] - 16 / 9) < 0.02
 
 
 @pytest.mark.e2e

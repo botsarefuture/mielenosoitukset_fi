@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified cropper branch based on main 9098c02a, 2026-10-15: 154 Python test files; 1,109 definitions; 146 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Verified cropper resolution follow-up based on main 9098c02a, 2026-10-15: 154 Python test files; 1,110 definitions; 147 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open PRs #930–#934 are excluded. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1156,6 +1156,7 @@ DATA-01a / QA-02, P1; reviewed 2026-10-13 by Codex. Disposable local database an
 
 - [x] `test_cropper_uses_shared_dialog_and_pinned_existing_engine`
 - [x] `test_actual_cropper_has_modal_focus_keyboard_geometry_and_real_upload`
+- [x] `test_cropper_export_uses_source_resolution_and_bounded_zoom`
 - [x] `test_cropper_locales_reopen_and_cancel_are_consistent`
 - [x] `test_cropper_cancel_during_async_apply_cannot_commit_stale_file`
 - [x] `test_cropper_decode_and_apply_failures_are_visible_and_recoverable`
@@ -1166,11 +1167,12 @@ UI-01 / QA-04 review, 2026-10-13, Codex, P1. Real browser, actual shared Jinja i
 |---|---|---|---|
 | `test_cropper_uses_shared_dialog_and_pinned_existing_engine` | Named native dialog/help/keyboard contract, no inline palette or image-data innerHTML, preserved global hooks and exact vendor hash. | Source/provenance guard only, not runtime/security proof of every vendor method. | Keep alongside runtime cases. |
 | `test_actual_cropper_has_modal_focus_keyboard_geometry_and_real_upload` | Inert background, internal Tab loop, ArrowRight movement, theme-safe modal/action colors and bounded geometry; actual exported file has original name/type, positive dimensions and 16:9 ratio; preview commits and focus returns. | Four light/dark × desktop/390px cases, real engine and image bytes, no page errors; screenshots inspected. Not full wizard, all browsers, pointer/touch-drag or complete contrast audit. | Keep. |
+| `test_cropper_export_uses_source_resolution_and_bounded_zoom` | A 1600×900 source exports at least 1200px wide at initial crop in both viewport sizes; uniform zoom-in reduces sampled source area; zoom-out cannot exceed native width/height; aspect remains 16:9. | Six actual-engine desktop/390px × normal/in/out zoom cases; generated real PNG and decoded exported file, not mocked canvas. Five cases failed before correction (mobile initial output only 260px wide). Does not assert arbitrary rotation/skew or every source format/pixel-color mapping. | New P1 source-resolution regression; keep. |
 | `test_cropper_locales_reopen_and_cancel_are_consistent` | FI/EN/SV titles/actions, three clean reopens and Escape/button/backdrop cancellation, file clearing, engine/container cleanup and focus return. | Three locale cases with actual catalogs/engine; no sleeps. Label checks do not assert every translated help/error string visually. | Keep. |
 | `test_cropper_cancel_during_async_apply_cannot_commit_stale_file` | Cancelling a pending canvas promise cannot replace file/preview; next image opens normally. | Deterministic promise injection into real selection; no timer race used for ordering. Does not cover every file decode/import/blob-stage interleaving. | Keep. |
 | `test_cropper_decode_and_apply_failures_are_visible_and_recoverable` | Corrupt image gives live error/disabled apply; after cancel valid image works; a failed crop leaves original bytes/preview untouched and allows retry. | Actual failed decode plus one synthetic canvas rejection; import/network/browser-unsupported matrices remain follow-up. | Keep. |
 
-Revalidated 2026-10-15 on the cropper branch based on main 9098c02a: 20 cases passed across cropper, inline-style, CSS-integrity and product-token checks. The five definitions above account for ten cropper cases. This slice does not close UI-01's broader assistive-technology, touch/all-browser or submission integration requirements.
+Revalidated 2026-10-15 after #929 resolution review: 26 cases passed across cropper, inline-style, CSS-integrity and product-token checks; six definitions account for sixteen cropper cases. JS syntax/diff checks passed. Separate CodeRabbit Minor committed-file/preview rollback report is verified but awaits per-change approval; current cancellation/error assertions do not yet establish that transaction invariant. This slice does not close UI-01's broader assistive-technology, touch/all-browser or submission integration requirements.
 
 ## tests/test_public_date_range.py
 

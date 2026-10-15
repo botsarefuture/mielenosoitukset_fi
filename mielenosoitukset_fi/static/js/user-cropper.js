@@ -92,7 +92,23 @@
       error.hidden = true;
       modal.setAttribute('aria-busy', 'true');
       try {
-        const canvas = await selection.$toCanvas();
+        const image = cropper.getCropperImage();
+        const source = await image.$ready();
+        if (!isCurrent(ticket)) return;
+        const [a, b] = image.$getTransform();
+        const scale = Math.hypot(a, b);
+        const aspect = selection.width / selection.height;
+        if (![scale, aspect].every(value => Number.isFinite(value) && value > 0)) {
+          throw new Error('Invalid crop transform');
+        }
+        // Export source pixels, not responsive dialog pixels. Zooming out must
+        // not allocate a canvas larger than the original image's dimensions.
+        const width = Math.round(Math.min(
+          selection.width / scale, source.naturalWidth, source.naturalHeight * aspect
+        ));
+        const height = Math.round(width / aspect);
+        if (width < 1 || height < 1) throw new Error('Empty crop');
+        const canvas = await selection.$toCanvas({width, height});
         if (!isCurrent(ticket)) return;
         const blob = await new Promise((resolve, reject) => canvas.toBlob(
           result => result ? resolve(result) : reject(new Error('Empty crop')),

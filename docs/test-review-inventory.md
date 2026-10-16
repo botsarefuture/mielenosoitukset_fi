@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified moderation-ordering branch based on open #938 / main 9098c02a, 2026-10-15: 154 Python test files; 1,108 definitions; 151 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open #929–#937 are excluded. This is not completed suite review.
+Verified moderation-edit preservation branch based on open #939 / main 9098c02a, 2026-10-16: 155 Python test files; 1,111 definitions; 155 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open #929–#937 are excluded. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -597,7 +597,7 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 - [ ] `test_city_scoped_admin_dashboard_only_lists_assigned_cities`
 - [ ] `test_city_scoped_admin_suggestions_hide_other_city_rows_and_counts`
 - [ ] `test_city_scoped_admin_audit_timeline_hides_other_city_rows_and_counts`
-- [ ] `test_explicit_object_id_editor_can_open_scoped_audit_views`
+- [x] `test_explicit_object_id_editor_can_open_scoped_audit_views`
 - [ ] `test_string_organization_id_is_included_in_scoped_audit_query`
 - [ ] `test_city_scoped_admin_suggestions_show_empty_state_outside_scope`
 - [ ] `test_city_scoped_admin_dashboard_shows_accept_action_for_scoped_demo`
@@ -613,6 +613,12 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 - [ ] `test_city_admin_can_invite_to_unverified_organization`
 - [ ] `test_city_admin_dashboard_redirects_to_scoped_demo_view`
 - [ ] `test_edit_user_revokes_object_id_backed_city_scope_grant`
+
+SEC-04b / QA-01 supporting review, 2026-10-16, Codex, P1; only `test_explicit_object_id_editor_can_open_scoped_audit_views` is assessed in this file. Its prior final 403 assertion relied on earlier GET normalization replacing the document and erasing the explicit editor grant. Existing `has_demo_permission` explicitly grants editors access; no production permission rule is changed to make this test pass.
+
+| Definition | Requirement / assertions | Setup, coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_explicit_object_id_editor_can_open_scoped_audit_views` | ObjectId-backed explicit editor can read its scoped audit timeline/detail/command center and still open the editor afterward; persisted editor ID survives those reads. The positive command-center link is a wiring observation, not proof of complete action visibility parity. | Real local user/membership/demo records and authenticated Flask session; no authorization mocks. One explicit-editor/VIEW_DEMO membership scenario, not a full role matrix or proof that all fields remain unchanged. Observed template/server edit-action parity remains a separate UI-affordance gap. | Corrected 403 to 200 based on existing server contract and added persisted-grant assertion. Removed the old negative edit-link assertion rather than making the UI's missing authorized action a required contract; keep. |
 
 ## tests/test_config.py
 
@@ -705,6 +711,22 @@ QA-01e / SEC-04, P1; six definitions individually assessed 2026-10-15 by Codex o
 - [ ] `test_anonymous_edit_token_can_save_with_session_csrf`
 - [ ] `test_send_edit_link_ignores_client_url_and_does_not_use_persistent_queue`
 - [ ] `test_recurring_editor_does_not_offer_regular_demo_edit_links`
+
+## tests/test_demo_moderation_preservation.py
+
+- [x] `test_model_content_save_preserves_moderation_state`
+- [x] `test_model_creation_still_inserts_complete_content`
+- [x] `test_form_content_edit_keeps_approval_identity_and_case_history`
+
+SEC-04b / QA-01, P1; individually assessed 2026-10-16 by Codex, stacked on #939. Real Flask/Mongo/model normalization and canonical approval API; only enqueue is captured through the established dual-alias helper from #938. Three initial cases reproduced erased decision metadata and a new decision identity after an ordinary form edit. Existing-document save now sets modeled fields instead of replacing the document; unknown server-owned fields remain the owning workflow's responsibility and must be explicitly unset when retired. New-document insertion is unchanged.
+
+| Definition | Requirement / assertions | Cases, setup and reliability limits | Disposition |
+|---|---|---|---|
+| `test_model_content_save_preserves_moderation_state` | After canonical approve/deny, normalization plus title edit/explicit description clearing keeps exact decision metadata and canonical booleans. Repeating the same decision reports unchanged and leaves one captured email. | Two status variants, actual constructor/save (including normalization-triggered saves), real stored decision/notification. Captured enqueue is not external delivery evidence. No concurrent stale-content/approval edit claim. | New regression; keep. |
+| `test_model_creation_still_inserts_complete_content` | A new content model still persists its ID/title/city/pending approval without invented moderation metadata. | Explicit app/database fixtures; constructor may auto-save normalized time before explicit save, so this checks ordinary creation lifecycle rather than isolating one call/insert count. | New insertion-path regression; keep. |
+| `test_form_content_edit_keeps_approval_identity_and_case_history` | Real approved-demo form save changes the title while retaining exact decision metadata and complete linked case document; no second notification. | Authenticated fixture admin with valid minimal form data; not browser rendering, primary login, unauthorized checkbox/CSRF or rejection-form transition coverage. | New route regression; keep alongside existing scoped negatives. |
+
+The combined moderation/translation/organizer/city-scope run passes 57 cases after correcting the separately assessed destructive-read-dependent editor assertion. Creation also passes alone with explicit app/database fixtures. Python compilation, diff and exact AST membership checks pass. CodeRabbit completed the four implementation/test/initial-plan file review with zero findings; a follow-up covering both finalized test files also completed with zero findings. Later inventory/status text is not part of those review snapshots. Broad replacement behavior previously removed fields the model never serialized, including rejected/moderation/editor data. This correction does not change permission predicates, #887, payloads or CSS. Historical rollback authorization, ordinary stale-content writes racing a newer decision, and full server-owned-field lifecycle/retention audits remain explicit SEC-04 gaps.
 
 ## tests/test_demo_suggestion_public.py
 

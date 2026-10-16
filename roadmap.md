@@ -1,6 +1,6 @@
 # Repository roadmap
 
-Last reconciled: 2026-10-15. Evidence baseline: `main` at `9098c02affc1244d92911d3e2afae9842db284e5`.
+Last reconciled: 2026-10-16. Evidence baseline: `main` at `9098c02affc1244d92911d3e2afae9842db284e5`.
 
 This is the delivery plan for the **whole repository**: security, public and admin workflows, backend correctness, operations, privacy, localization, tests, and maintenance. Issue [#833](https://github.com/botsarefuture/mielenosoitukset_fi/issues/833) is one workstream within it. Existing issue trackers retain their detailed acceptance criteria; this document sets the order and dependencies.
 
@@ -8,7 +8,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** Investigate ordinary edit/rollback metadata preservation and remaining SEC-04 delivery/crash gaps. SEC-04a opposite-decision ordering correction is ready for review on top of open QA-01e/#938. UI-01 cropper and autocomplete implementations are in open #929/#930; UI-02 width/hero corrections are open #936/#937. Do not redo them. #929 committed-image rollback awaits separate per-change approval. Continue broader UI-01 integration alongside remaining security/data review.
+- **Next:** Verify rollback authorization/state preservation in its own small batch and investigate stale-content/decision races. SEC-04b normal content-save preservation is ready for review on top of #939; SEC-04a ordering is open in #939 on top of #938. #929 crop rollback and documentation corrections are approved/pushed at d2913757; #930 autocomplete and #936/#937 width/heroes are already open. Do not redo them or wait for checks. Routine fixes/validation/pushes may proceed without further approval questions; merge/deploy still requires separate authority. Continue broader UI-01 integration alongside remaining security/data review.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Verified merge checkpoint:** #926–#928 are merged into inspected main 9098c02a. Open #929–#937 are not merged or production fixes; no further merge/deploy authorization is implied. Preserve their independent test-review records and compile the union of #929/#931 translation additions when integration is authorized.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
@@ -74,6 +74,8 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 
 ### Security and permissions
 
+- **SEC-04b · P1 · In review · Codex · M1/M6 · codex/moderation-edit-preservation · depends on #939:** Three initial model/form cases reproduced erased moderation/rejection state and reissued decision identity. Model saves now set modeled fields instead of replacing server-owned fields. Four definitions assessed (three new plus a corrected destructive-read-dependent explicit-editor test); 57 focused cases pass. New insertion and explicit field clearing remain supported. No permission predicate, payload or #887 change. Rollback, stale-content/decision races, broader unknown-field retention and template/server explicit-editor action parity remain separate acceptance gaps.
+
 - **SEC-04a · P1 · In review · Codex · M1/M6 · codex/moderation-decision-ordering · depends on #938:** Four initial controlled opposite-decision cases reproduced contradictory demo/case state. Conditional case projection now checks authoritative decision identity and compare-and-sets observed case identity with eight bounded retries; accepted result/history use their own transition snapshot. A no-op retry adopts the actual newer decision type, including failed-enqueue recovery. Twenty-four focused cases pass, twelve new interleavings across both directions; four new definitions assessed, two mutation checks detect removed safeguards. No transaction, schema/version field, distributed lock or clock-order policy introduced. External delivery ordering/crash safety, contention exhaustion, route conflict messaging and ordinary edit/rollback preservation remain separate acceptance items.
 
 - **QA-01e · P1 · In review · Codex · M1/M6 · codex/moderation-decision-test-review:** All six canonical decision-service tests assessed on main 9098c02a. Strengthened multiple ObjectId/string-linked case closure, unrelated-case isolation, stable decision/audit/history identity, token replay, failed-email reconciliation and bulk retry/deduplication. Twelve focused Flask/Mongo cases pass; test-only string-case lookup mutation is detected. No production policy or #887 changes. Broader concurrency, delivery-crash, permission and all-entrypoint symmetry acceptance remains open.
@@ -138,7 +140,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Moderation-ordering branch based on #938 / main 9098c02a: **1,108 definitions across 154 files**, with 151 assessed definitions. Independent open #929–#937 are excluded. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Moderation-edit preservation branch based on #939 / main 9098c02a: **1,111 definitions across 155 files**, with 155 assessed definitions. Independent open #929–#937 are excluded. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 
@@ -182,6 +184,7 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | QA-01 | P1 | In progress | Codex | M1, then ongoing | Thirty-seven MFA/account/passkey/organization-action definitions reviewed in the combined inventory; remaining authentication/permission tests pending. |
 | QA-01e | P1 | In review | Codex | M1/M6 | Six decision-service definitions assessed; 12 decision/edit-link/anonymous cases pass and test-process string-case lookup mutation is detected. Parallel/opposite decisions and provider acceptance/crash windows remain open acceptance gaps. |
 | SEC-04a | P1 | In review | Codex | M1/M6 | Depends on #938; contradictory case state reproduced and corrected with bounded conditional projection and transition-owned snapshots. 24 focused cases pass; delivery/crash and edit/rollback acceptance remain open. |
+| SEC-04b | P1 | In review | Codex | M1/M6 | Depends on #939; modeled-field updates retain unmodeled decision/rejected/editor fields, with 57 focused cases passing. Full rollback and stale-edit consistency remain pending. |
 | SEC-02 | P1 | In review | Codex | M1 | #915 merged; #916 integrated into #919 with shared status-action visibility and synchronized duplicate-submit coverage. #763 integration/release acceptance remains pending. |
 | SEC-03 | P0/P1 | In review | Codex | M1 | #918/#917 merged; #919 combines user hierarchy/delegation, global clearance gates and searchable redacted audits with #916. Remaining role/audit acceptance is pending. |
 | QA-02 | P1 | In progress | Codex | M2–M3 | Five API, five request-state, five listing-contract and three URL/history definitions reviewed on this stack. Remaining data/workflow tests pending. |

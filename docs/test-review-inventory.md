@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified organization/pagination/loading integration based on main 175cb1fd, 2026-10-13: 153 Python test files; 1,104 definitions; 141 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Organization/pagination/loading and origin-health integration based on main `9098c02a`, 2026-10-16: 153 Python test files; 1,110 definitions; 153 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -729,12 +729,38 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 
 ## tests/test_deploy_build_sha.py
 
-- [ ] `test_build_sha_is_captured_from_environment`
-- [ ] `test_build_sha_file_rejects_partial_or_invalid_values`
-- [ ] `test_health_endpoint_publishes_uncached_worker_build`
-- [ ] `test_verifier_waits_past_old_worker_for_replacement`
-- [ ] `test_verifier_rejects_plain_200_without_matching_metadata`
-- [ ] `test_production_deploy_contract_is_sha_bound`
+- [x] `test_build_sha_is_captured_from_environment`
+- [x] `test_build_sha_file_rejects_partial_or_invalid_values`
+- [x] `test_health_endpoint_publishes_uncached_worker_build`
+- [x] `test_verifier_waits_past_old_worker_for_replacement`
+- [x] `test_verifier_rejects_plain_200_without_matching_metadata`
+- [x] `test_production_deploy_contract_is_sha_bound`
+- [x] `test_verifier_reads_origin_socket_without_proxy`
+- [x] `test_verifier_reports_cloudflare_challenge_without_body_or_url`
+- [x] `test_verifier_reports_missing_origin_socket`
+- [x] `test_verifier_passes_socket_while_waiting_for_new_worker`
+- [x] `test_verifier_rejects_unsupported_or_credentialed_socket_urls`
+- [x] `test_verifier_distinguishes_empty_from_omitted_socket`
+
+OPS / QA-01 review, 2026-10-16, Codex, P1. Base `9098c02a`; passed focused validation:
+`pytest -o addopts='' -q tests/test_deploy_build_sha.py` (24 cases),
+plus Bash syntax and `git diff --check`. No production reload or end-to-end
+deployment performed.
+
+| Definition | Purpose / setup / assertions | Reliability / coverage / disposition |
+|---|---|---|
+| `test_build_sha_is_captured_from_environment` | Monkeypatched environment; exact valid SHA resolution. | Deterministic; environment precedence only. Keep. |
+| `test_build_sha_file_rejects_partial_or_invalid_values` | Temporary file, unset environment; rejects partial SHA and accepts full SHA. | Real file reads; not a concurrent atomic-write test. Keep. |
+| `test_health_endpoint_publishes_uncached_worker_build` | Real Flask fixture; config SHA, 200 JSON, no-store and build header. | Tests endpoint contract, not real Gunicorn reload. Keep. |
+| `test_verifier_waits_past_old_worker_for_replacement` | Mocked SHA sequence/sleep; two old responses followed by expected SHA. | Deterministic retry logic; transport covered separately. Keep. |
+| `test_verifier_rejects_plain_200_without_matching_metadata` | Mocked absent SHA/sleep; bounded retries cannot succeed. | Transport payload validation covered by origin tests. Keep. |
+| `test_production_deploy_contract_is_sha_bound` | Reads real shell/workflow/docs; SHA verifier, socket argument, independent public HTTPS and restricted SSH contract. | Static guard, not shell execution or actual key permissions. Keep. |
+| `test_verifier_reads_origin_socket_without_proxy` | Real temporary Unix HTTP server; five HTTP/body variants for both HTTP and HTTPS logical URLs; broken proxies, public transport forbidden; exact Host/path, direct fetch and CLI result. | Ten cases catch HTTPS override rejection in either validation layer; proves local transport, not production process setup. Keep. |
+| `test_verifier_reports_cloudflare_challenge_without_body_or_url` | Mock urllib HTTP 403/challenge containing private URL/body; captured stderr names challenge without leaking data. | Reproduces known Cloudflare response contract; no live WAF dependency. Keep. |
+| `test_verifier_reports_missing_origin_socket` | Real nonexistent short socket path; None result and safe exception class diagnostic. | Deterministic filesystem failure; no remote request. Keep. |
+| `test_verifier_passes_socket_while_waiting_for_new_worker` | Mocked transport old/new sequence; exact socket passed on both probes. | Socket transport tested separately; keeps retry wiring covered. Keep. |
+| `test_verifier_rejects_unsupported_or_credentialed_socket_urls` | Three CLI argument variants; argparse exit 2 for FTP or embedded HTTP/HTTPS credentials. | No real connection; local socket support does not permit unsupported schemes or URL credentials. Keep. |
+| `test_verifier_distinguishes_empty_from_omitted_socket` | Two CLI variants with mocked probe; empty socket exits 2 before probing, omitted option passes None and preserves public transport selection. | Empty-path case failed before the fix; no real transport, covered separately above. Keep. |
 
 ## tests/test_detail_metadata_localization.py
 

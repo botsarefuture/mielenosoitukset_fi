@@ -103,7 +103,8 @@ def test_production_deploy_contract_is_sha_bound():
     (200, '{"status":"unhealthy","build_sha":"' + SHA + '"}', None),
     (200, '{"status":"ok","build_sha":"abc123"}', None),
 ])
-def test_verifier_reads_origin_socket_without_proxy(monkeypatch, status, body, expected):
+@pytest.mark.parametrize("scheme", ["http", "https"])
+def test_verifier_reads_origin_socket_without_proxy(monkeypatch, status, body, expected, scheme):
     requests = []
 
     class Handler(BaseHTTPRequestHandler):
@@ -123,15 +124,20 @@ def test_verifier_reads_origin_socket_without_proxy(monkeypatch, status, body, e
             thread = Thread(target=server.serve_forever, daemon=True)
             thread.start()
             monkeypatch.setenv("http_proxy", "http://127.0.0.1:1")
+            monkeypatch.setenv("https_proxy", "http://127.0.0.1:1")
             monkeypatch.setattr(verify_health_sha, "urlopen", lambda *_a, **_k: pytest.fail("Origin probe used public transport"))
             try:
                 assert verify_health_sha.fetch_build_sha(
-                    "http://mielenosoitukset.fi/health", 1, unix_socket=socket_path,
+                    f"{scheme}://mielenosoitukset.fi/health", 1, unix_socket=socket_path,
                 ) == expected
+                monkeypatch.setattr("sys.argv", ["verify", SHA,
+                    f"{scheme}://mielenosoitukset.fi/health", "--unix-socket", socket_path,
+                    "--attempts", "1", "--timeout", "1"])
+                assert verify_health_sha.main() == (0 if expected == SHA else 1)
             finally:
                 server.shutdown()
                 thread.join(timeout=2)
-    assert requests == [("/health", "mielenosoitukset.fi")]
+    assert requests == [("/health", "mielenosoitukset.fi")] * 2
 
 
 def test_verifier_reports_cloudflare_challenge_without_body_or_url(monkeypatch, capsys):
@@ -174,8 +180,8 @@ def test_verifier_passes_socket_while_waiting_for_new_worker(monkeypatch):
     assert sockets == ["/example/app.sock", "/example/app.sock"]
 
 
-@pytest.mark.parametrize("url", ["https://example.test/health", "http://user:password@example.test/health"])
-def test_verifier_rejects_misleading_tls_or_credentials_for_socket(monkeypatch, url):
+@pytest.mark.parametrize("url", ["ftp://example.test/health", "http://user:password@example.test/health", "https://user:password@example.test/health"])
+def test_verifier_rejects_unsupported_or_credentialed_socket_urls(monkeypatch, url):
     monkeypatch.setattr("sys.argv", ["verify", SHA, url, "--unix-socket", "/example/app.sock"])
     with pytest.raises(SystemExit) as exc:
         verify_health_sha.main()

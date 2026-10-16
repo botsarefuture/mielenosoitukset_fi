@@ -38,7 +38,7 @@ function normalizeDemoCardData(demo) {
 
 // 1️⃣ Render all demo cards
 function renderDemoCards(demoData, options = {}) {
-  const container = document.getElementById(options.containerId || 'demos-grid');
+  const container = options.container || document.getElementById(options.containerId || 'demos-grid');
   const template = document.getElementById('demo-card-template');
   if (!container || !template) return [];
 
@@ -187,10 +187,42 @@ function setup_grid_navigation(cards) {
 let currentPage = 1;
 let totalPages = 1;
 const perPage = 12; // default per-page
+let listRequestGeneration = 0;
+let listRequestAbort = null;
+let displayedResults = 0;
+let displayedStart = 0;
+let appendGeneration = null;
+const friendsRequests = new Map();
 
-async function loadDemos(page = 1, append = false, extraParams = {}) {
+async function loadDemos(page = 1, append = false, extraParams = {}, previous = false, manual = false) {
+  const pageWindow = window.publicListWindow;
+  if (append && pageWindow && !pageWindow.canExtend(previous, manual)) return null;
+  // A replacement search invalidates every earlier response, even if abort
+  // arrives after its response headers or the browser ignores cancellation.
+  if (!append) {
+    listRequestGeneration += 1;
+    listRequestAbort?.abort();
+    friendsRequests.forEach(controller => controller.abort());
+    friendsRequests.clear();
+    listRequestAbort = new AbortController();
+    appendGeneration = null;
+  }
+  const requestGeneration = listRequestGeneration;
+  if (append && appendGeneration === requestGeneration) return null;
+  if (append) appendGeneration = requestGeneration;
+  const signal = listRequestAbort?.signal;
   const loadMoreBtn = document.getElementById("load-more-btn");
   const demosGrid = document.getElementById("demos-grid");
+  demosGrid?.setAttribute('aria-busy', 'true');
+  const errorState = document.getElementById("listing-load-error");
+  if (errorState) errorState.hidden = true;
+  const summary = document.getElementById("listing-result-summary");
+  if (!append && summary) summary.hidden = true;
+  if (!append) {
+    const emptyState = document.getElementById("no-results");
+    if (emptyState) emptyState.style.display = "none";
+    if (demosGrid) demosGrid.style.display = "";
+  }
   try {
     // The shared controller owns button state when a page opts into it.
     const paginationController = window.userPaginationController;
@@ -210,13 +242,44 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
       params.set("lang", currentLocale);
     }
 
-    const res = await fetch(`/api/demonstrations?${params.toString()}`);
+    const res = await fetch(`/api/demonstrations?${params.toString()}`, { signal });
+    if (!res.ok) throw new Error(`Demonstration list HTTP ${res.status}`);
     const data = await res.json();
+    if (requestGeneration !== listRequestGeneration || signal?.aborted) return null;
+    if (!Array.isArray(data.results)) throw new Error("Invalid demonstration list response");
+    // Focus or viewport may have changed while the request was in flight.
+    if (append && pageWindow && !pageWindow.canExtend(previous, manual)) {
+      // This is a viewport/focus deferral, not a network failure. Let later
+      // scrolling resume automatically without evicting the user's focus.
+      return { page: pageWindow.last, total_pages: data.total_pages, deferred: true };
+    }
 
     const grid = document.getElementById("demos-grid");
-    if (!append) grid.innerHTML = ""; // clear on first load
+    if (!append) {
+      if (pageWindow) pageWindow.reset();
+      else grid.innerHTML = "";
+    }
+    // Only five pages of cards remain mounted. No detached-page data cache.
+    const newCards = pageWindow
+      ? pageWindow.mount({ ...data, per_page: data.per_page || Number(params.get('per_page')) },
+          container => renderDemoCards(data.results, { container }))
+      : renderDemoCards(data.results);
+    displayedResults = (append ? displayedResults : 0) + data.results.length;
+    if (!append) displayedStart = data.result_start || (data.results.length ? (data.page - 1) * Number(params.get('per_page')) + 1 : 0);
+    if (pageWindow) {
+      displayedResults = pageWindow.range.count;
+      displayedStart = pageWindow.range.start;
+    }
+    if (summary) {
+      const number = new Intl.NumberFormat(currentLocale);
+      summary.textContent = summary.dataset.format
+        .replace("__START__", number.format(displayedResults ? displayedStart : 0))
+        .replace("__END__", number.format(displayedResults ? displayedStart + displayedResults - 1 : 0))
+        .replace("__COUNT__", number.format(data.total));
+      summary.hidden = false;
+    }
 
-    if (data.results.length === 0) {
+    if (displayedResults === 0) {
       const noResultsDiv = document.getElementById("no-results");
       noResultsDiv.style.display = ""; // ✅ just set the property
       demosGrid.style.display = "none";
@@ -229,17 +292,29 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
     }
 
 
-    // Render demo cards
-    const newCards = renderDemoCards(data.results);
-
-    // Fetch friends attending in one batch
-    getFriendsAttending(newCards);
+    // Retain pending attendance for every mounted page. Cancel only evicted
+    // pages; slow earlier requests must not leave visible cards loading forever.
+    for (const [node, controller] of friendsRequests) {
+      if (node instanceof Element && !node.isConnected) {
+        controller.abort();
+        friendsRequests.delete(node);
+      }
+    }
+    if (newCards.length) {
+      const node = newCards[0].closest('.public-list-page') || newCards[0];
+      const controller = new AbortController();
+      friendsRequests.set(node, controller);
+      Promise.resolve(getFriendsAttending(newCards, controller.signal)).finally(() => {
+        if (friendsRequests.get(node) === controller) friendsRequests.delete(node);
+      });
+    }
 
     setup_grid_navigation(newCards);
 
     // update pagination state
     currentPage = data.page;
     totalPages = data.total_pages;
+    window.publicListHistory?.pageLoaded(data);
 
     // handle "Load more" button
     if (currentPage < totalPages) {
@@ -261,10 +336,22 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
       page: currentPage,
       total_pages: totalPages,
       result_count: data.results.length,
+      total: data.total,
+      displayed_count: displayedResults,
     };
 
   } catch (err) {
+    if (requestGeneration !== listRequestGeneration || err.name === "AbortError") return null;
     console.error("Failed to load demos:", err);
+    if (errorState) {
+      errorState.hidden = false;
+      const retry = errorState.querySelector("button");
+      if (retry) retry.onclick = async () => {
+        const result = await loadDemos(page, append, { ...extraParams }, previous, true);
+        if (result) window.userPaginationController?.resumeAuto?.();
+      };
+      if (!append) demosGrid.replaceChildren();
+    }
     if (loadMoreBtn && !window.userPaginationController) {
       loadMoreBtn.disabled = false;
       loadMoreBtn.textContent = t('loadMore');
@@ -272,7 +359,9 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
   }
 
   finally {
-    if (loadMoreBtn && !window.userPaginationController) {
+    if (requestGeneration === listRequestGeneration) demosGrid?.setAttribute('aria-busy', 'false');
+    if (append && requestGeneration === listRequestGeneration) appendGeneration = null;
+    if (requestGeneration === listRequestGeneration && loadMoreBtn && !window.userPaginationController) {
       loadMoreBtn.classList.remove("loading");
     }
   }
@@ -317,7 +406,7 @@ function updateDemoCardAttending(cardElement, friends) {
 //   .then(res => res.json())
 //   .then(data => updateDemoCardAttending(card, data.friends));
 // 3️⃣ Fetch friends attending in one batch
-function getFriendsAttending(demoCards) {
+function getFriendsAttending(demoCards, signal) {
   const demoIds = demoCards.map(card => card.dataset.demoId);
   if (demoIds.length === 0) return; // Don't query API if empty :3
 
@@ -338,19 +427,21 @@ function getFriendsAttending(demoCards) {
     return;
   }
 
-  fetch('/api/friends-attending', {
+  return fetch('/api/friends-attending', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ demo_ids: demoIds }),
+    signal,
 
   })
     .then(res => res.json())
     .then(data => {
       demoCards.forEach(card => {
+        if (!card.isConnected || signal?.aborted) return;
         const id = card.dataset.demoId;
         const friends = data[id] || [];
         updateDemoCardAttending(card, friends);
       });
     })
-    .catch(err => console.error('Failed to fetch friends attending:', err));
+    .catch(err => { if (err.name !== 'AbortError') console.error('Failed to fetch friends attending:', err); });
 }

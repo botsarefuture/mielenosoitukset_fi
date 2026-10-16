@@ -21,7 +21,9 @@ Cloudflare. The default socket is `${PRODUCTION_REPO_DIR}/mielenosoitus.sock`
 `PRODUCTION_HEALTH_SOCKET` if Gunicorn uses a different path. The default
 `PRODUCTION_HEALTH_URL` is `http://mielenosoitukset.fi/health`: its hostname is
 sent as the HTTP Host header, but the connection stays on the local socket.
-Use plain HTTP for this socket transport; it is not an insecure public request.
+Existing HTTPS URL overrides are also accepted: only their Host/path/query are
+used, and transport still stays on the local plain-HTTP Unix socket. This does
+not downgrade the independent public HTTPS check or disable its TLS verification.
 No TCP listener, TLS bypass, authentication bypass or firewall exception is added.
 
 GitHub Actions retains the independent public HTTPS/build-SHA check. A

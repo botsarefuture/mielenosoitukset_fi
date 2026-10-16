@@ -1082,7 +1082,7 @@ def add_api_routes(app):
         # searches). City/tag filtering is intentionally not recorded here:
         # city pages load the API with city params on every view, so those
         # are already covered by the pageview counters.
-        if page == 1:
+        if page == 1 and request.args.get("history_restore") != "1":
             search_term = str(args.get("search_query") or "").strip()
             if len(search_term) >= 2:
                 record_event_for_request(
@@ -1091,12 +1091,13 @@ def add_api_routes(app):
                 )
 
         total = demonstrations_collection.count_documents(query)
+        total_pages = max((total + per_page - 1) // per_page, 1)
         demos_cursor = (
             demonstrations_collection.find(query)
             .sort(PUBLIC_DEMONSTRATION_ORDER)
             .skip((page - 1) * per_page)
             .limit(per_page)
-        )
+        ) if total and page <= total_pages else []
         result = [format_demo_for_api(demo, requested_language) for demo in demos_cursor]
         return jsonify(
             demonstrations=result,
@@ -1898,14 +1899,7 @@ def init_routes(app):
         Returns JSON: { organizations: [ { id, name, email, website,
         description, verified, logo } ... ], total_pages }
         """
-        try:
-            page = max(int(request.args.get("page", 1)), 1)
-        except (TypeError, ValueError):
-            page = 1
-        try:
-            per_page = max(int(request.args.get("per_page", 20) or 20), 1)
-        except (TypeError, ValueError):
-            per_page = 20
+        page, per_page = public_page_args(request.args)
         search = (request.args.get("search") or "").strip()
 
         query = {}
@@ -1927,7 +1921,7 @@ def init_routes(app):
             .sort("name", 1)
             .skip((page - 1) * per_page)
             .limit(per_page)
-        )
+        ) if total and page <= total_pages else []
         organizations = [
             {
                 "id": str(org["_id"]),
@@ -4165,14 +4159,13 @@ def init_routes(app):
     def tag_detail(tag_name):
         tag_regex = re.compile(f"^{re.escape(tag_name)}$", re.IGNORECASE)
         demonstrations_query = {"tags": tag_regex, **DEMO_FILTER}
-        page = int(request.args.get("page", 1))
-        per_page = int(request.args.get("per_page", 10) or 10)
+        page, per_page = public_page_args(request.args, default_per_page=10)
         total_demos = mongo.demonstrations.count_documents(demonstrations_query)
         total_pages = (total_demos + per_page - 1) // per_page
         demonstrations_cursor = mongo.demonstrations.find(demonstrations_query)
         paginated_demos = demonstrations_cursor.skip((page - 1) * per_page).limit(
             per_page
-        )
+        ) if total_demos and page <= total_pages else []
         paginated_demos_list = list(paginated_demos)
         return render_template(
             "tag_list.html",

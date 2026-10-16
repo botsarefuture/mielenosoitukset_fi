@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify, redirect, session, url_for
 from flask_login import current_user, login_required
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.utils.time_utils import utcnow
-from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
+from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required, global_permission_required
 
 from .utils import mongo
 from .board_audit import log_board_action
@@ -73,6 +73,7 @@ def clearance_rows():
 @login_required
 @admin_required
 @permission_required("MANAGE_CLEARANCE")
+@global_permission_required("MANAGE_CLEARANCE")
 def get_clearance(user_id):
     """
     Get the board clearance status for a user.
@@ -85,6 +86,7 @@ def get_clearance(user_id):
 @login_required
 @admin_required
 @permission_required("MANAGE_CLEARANCE")
+@global_permission_required("MANAGE_CLEARANCE")
 def set_clearance(user_id):
     """
     Grant or revoke board clearance for global_admin role.
@@ -139,6 +141,7 @@ def set_clearance(user_id):
 @login_required
 @admin_required
 @permission_required("MANAGE_CLEARANCE")
+@global_permission_required("MANAGE_CLEARANCE")
 def list_clearances():
     """
     List all users with board clearance info.
@@ -172,6 +175,7 @@ def has_board_clearance(user_id):
 @login_required
 @admin_required
 @permission_required("MANAGE_CLEARANCE")
+@global_permission_required("MANAGE_CLEARANCE")
 def clearance_ui():
     """Redirect the legacy board UI into the unified admin panel."""
     return redirect(url_for("admin_governance.clearances"))

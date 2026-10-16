@@ -50,8 +50,11 @@ def fetch_build_sha(url: str, timeout: float, *, unix_socket: str | None = None)
     try:
         if unix_socket:
             target = urlsplit(url)
-            if target.scheme != "http" or not target.netloc or target.username or target.password:
-                raise ValueError("Unix-socket health URL must be plain HTTP without credentials")
+            if target.scheme not in ("http", "https") or not target.netloc or target.username or target.password:
+                raise ValueError("Unix-socket health URL must be HTTP(S) without credentials")
+            # The URL supplies only Host/path in socket mode. Accept existing
+            # HTTPS overrides without making a public request or disabling TLS
+            # on the separate public HTTPS verification path.
             connection = UnixHTTPConnection(unix_socket, timeout)
             path = target.path or "/"
             if target.query:
@@ -137,8 +140,8 @@ def main() -> int:
         parser.error("attempts and timeout must be positive; delay cannot be negative")
     if args.unix_socket:
         target = urlsplit(args.url)
-        if target.scheme != "http" or not target.netloc or target.username or target.password:
-            parser.error("--unix-socket requires a plain HTTP URL without credentials")
+        if target.scheme not in ("http", "https") or not target.netloc or target.username or target.password:
+            parser.error("--unix-socket requires an HTTP(S) URL without credentials")
 
     if wait_for_build(
         args.expected_sha,

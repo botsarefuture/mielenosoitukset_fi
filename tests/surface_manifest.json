@@ -198,11 +198,12 @@
       ]
     },
     "mielenosoitukset_fi/admin/admin_user_bp.py": {
-      "count": 8,
-      "sha256": "df393544e63f55eebd24b19860edc017182a07831612299decd842d54b59954e",
+      "count": 9,
+      "sha256": "8f0fd9c024893eabadd5ea4cdcc302bd7cbf97e671380fe1ad9f65ca64921541",
       "coverage": [
         "integration",
-        "e2e-admin"
+        "e2e-admin",
+        "tests/test_admin_account_status.py"
       ]
     },
     "mielenosoitukset_fi/admin/board_audit.py": {

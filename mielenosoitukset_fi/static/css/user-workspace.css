@@ -14,6 +14,84 @@ html.light {
   color-scheme: light;
 }
 
+.public-listing-summary {
+  margin-block: 1rem;
+  color: var(--product-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.public-listing-summary[hidden] {
+  display: none;
+}
+
+#load-more-btn[hidden] {
+  display: none;
+}
+
+.public-date-calendar {
+  background: var(--product-surface); color: var(--product-text);
+  border: 1px solid var(--product-border); box-shadow: var(--product-shadow);
+}
+.public-date-calendar.arrowTop:after { border-bottom-color: var(--product-surface); }
+.public-date-calendar.arrowTop:before { border-bottom-color: var(--product-border); }
+.public-date-calendar.arrowBottom:after { border-top-color: var(--product-surface); }
+.public-date-calendar.arrowBottom:before { border-top-color: var(--product-border); }
+.public-date-calendar .numInputWrapper span.arrowUp:after { border-bottom-color: var(--product-text); }
+.public-date-calendar .numInputWrapper span.arrowDown:after { border-top-color: var(--product-text); }
+.public-date-calendar .flatpickr-month, .public-date-calendar .flatpickr-weekday,
+.public-date-calendar .flatpickr-current-month .flatpickr-monthDropdown-months,
+.public-date-calendar .flatpickr-day, .public-date-calendar input.cur-year {
+  color: var(--product-text); background: transparent;
+}
+.public-date-calendar .flatpickr-day:hover, .public-date-calendar .flatpickr-day:focus {
+  background: var(--product-surface-muted); border-color: var(--product-border);
+}
+.public-date-calendar .flatpickr-day.selected,
+.public-date-calendar .flatpickr-day.selected:hover, .public-date-calendar .flatpickr-day.selected:focus {
+  background: var(--product-action-bg); border-color: var(--product-action-bg); color: var(--product-on-action);
+}
+.public-date-calendar .flatpickr-day.flatpickr-disabled, .public-date-calendar .flatpickr-day.flatpickr-disabled:hover,
+.public-date-calendar .flatpickr-day.prevMonthDay, .public-date-calendar .flatpickr-day.nextMonthDay {
+  color: var(--product-text-muted);
+}
+.public-date-calendar .flatpickr-prev-month svg, .public-date-calendar .flatpickr-next-month svg { fill: var(--product-text); }
+.public-date-calendar :focus-visible { outline: 2px solid var(--product-primary); outline-offset: -2px; }
+
+.search-form #filters { display: flex; flex-wrap: wrap; gap: .5rem; }
+.search-form.public-search-form {
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: end; gap: 1rem;
+}
+.public-search-field { position: relative; flex: 1 1 12rem; min-width: 0; }
+.public-search-field .suggestions {
+  box-sizing: border-box; inset-inline-start: 0; top: 100%; margin-top: .25rem;
+}
+.public-search-field label {
+  display: block; margin-bottom: .5rem; font-weight: 600; color: var(--product-text);
+}
+.public-search-form .public-search-field input[type="text"] {
+  box-sizing: border-box; width: 100%; min-height: 44px; margin: 0;
+}
+.public-search-form .public-search-dates { display: flex; flex: 2 1 25rem; flex-wrap: wrap; gap: 1rem; min-width: 0; align-items: end; }
+.public-search-form #date-error, .public-search-form #filters { flex-basis: 100%; }
+.public-search-submit { min-height: 44px; }
+@media (max-width: 600px) {
+  .public-search-form .public-search-field, .public-search-dates, .public-search-submit { flex-basis: 100%; }
+}
+.public-filter-chip {
+  display: inline-flex; align-items: center; gap: .5rem; max-width: 100%;
+  padding-inline: .75rem 0; border: 1px solid var(--product-border);
+  border-radius: var(--user-radius-small); color: var(--product-text);
+  background: var(--product-surface-muted); overflow-wrap: anywhere;
+}
+.public-filter-chip__remove {
+  min-width: 44px; min-height: 44px; border: 0; border-radius: inherit;
+  background: transparent; color: inherit; cursor: pointer; font-size: 1.25rem;
+}
+.public-filter-chip span { min-width: 0; }
+.public-filter-chip__remove:focus-visible {
+  outline: 2px solid var(--product-primary); outline-offset: 2px;
+}
+
 html.dark {
   color-scheme: dark;
 }
@@ -812,6 +890,20 @@ h1 {
   display: grid;
   gap: 2rem;
   margin-bottom: 3rem;
+}
+
+/* Windowed public lists keep the existing responsive grid inside each page.
+   Page removal/prepending uses one explicit scroll-anchor correction. */
+.public-list-window {
+  display: block;
+  overflow-anchor: none;
+}
+.public-list-page {
+  overflow-anchor: none;
+  margin-bottom: 2rem;
+}
+.public-list-page:last-child {
+  margin-bottom: 0;
 }
 
 @media (min-width: 1200px) {

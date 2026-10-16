@@ -4,6 +4,7 @@
 # ties, including legacy documents without a start time, before skip/limit.
 PUBLIC_DEMONSTRATION_ORDER = [("date", 1), ("start_time", 1), ("_id", 1)]
 PUBLIC_DEMONSTRATION_INDEX = "public_demo_chronological"
+PUBLIC_MAX_PER_PAGE = 100
 
 
 def ensure_public_demo_pagination_index(database):
@@ -20,15 +21,15 @@ def ensure_public_demo_pagination_index(database):
     )
 
 
-def public_page_args(args):
-    """Normalize each numeric argument independently without changing filters."""
+def public_page_args(args, default_per_page=20):
+    """Normalize arguments and bound database/materialization work per page."""
     def positive_int(name, default):
         try:
             return max(int(args.get(name) or default), 1)
         except (TypeError, ValueError):
             return default
 
-    return positive_int("page", 1), positive_int("per_page", 20)
+    return positive_int("page", 1), min(positive_int("per_page", default_per_page), PUBLIC_MAX_PER_PAGE)
 
 
 def public_page_metadata(page, per_page, total, result_count):

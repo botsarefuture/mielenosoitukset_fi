@@ -510,6 +510,16 @@ def test_demo_search_pagination_does_not_record(app, db):
     assert docs[0]["count"] == 1
 
 
+def test_demo_search_history_restoration_does_not_count_as_new_search(app, db):
+    _clear(db)
+    client = app.test_client()
+    assert client.get('/api/v1/demonstrations?search=climate&page=1').status_code == 200
+    for _ in range(2):
+        assert client.get('/api/v1/demonstrations?search=climate&page=1&history_restore=1').status_code == 200
+    docs = [doc for doc in _counts(db) if doc.get('event') == 'demo_search']
+    assert len(docs) == 1 and docs[0]['count'] == 1
+
+
 def test_plain_list_loads_do_not_record_search(app, db):
     _clear(db)
     client = app.test_client()

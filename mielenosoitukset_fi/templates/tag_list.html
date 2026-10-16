@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% from '_macros/_hero.html' import hero_section %}
 {% from '_macros/_pagination.html' import load_more_button %}
+{% from '_macros/_public_search.html' import public_demo_search, public_search_styles, public_search_scripts with context %}
 
 {% block title %} #{{ tag_name }} {{ _('Mielenosoitukset') }} {% endblock %}
 
@@ -14,6 +15,7 @@
 {% endblock %}
 
 {% block styles %}
+{{ public_search_styles() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
 {% endblock %}
 
@@ -21,7 +23,7 @@
 
 <script>
   /* Pass tag filter to JS globally */
-  window.TAG_FILTER = "{{ tag_name }}";
+  window.TAG_FILTER = {{ tag_name | tojson }};
 </script>
 
 <!-- Shared rendering partial -->
@@ -40,31 +42,7 @@
   ) }}
 
   <!-- Search Form (same as list.html) -->
-  <form method="GET" action="#" class="search-form" id="search-form">
-    <input type="text" name="search" placeholder="{{ _('Hae mielenosoituksia...') }}">
-    <input type="text" placeholder="{{ _('Kaupunki') }}" id="city_input">
-    <input type="hidden" name="city" id="city">
-    <div class="suggestions" id="city_suggestions"></div>
-
-    <input type="text" name="location" placeholder="{{ _('Sijainti') }}">
-
-    <div class="date-range">
-      <input type="text" name="display_date_start" id="date_start" placeholder="{{ _('Alkupäivä (pp.mm.vvvv)') }}">
-      <span>-</span>
-      <input type="text" name="display_date_end" id="date_end" placeholder="{{ _('Loppupäivä (pp.mm.vvvv)') }}">
-    </div>
-
-    <div class="date-error" id="date-error">
-      {{ _('Valitse kelvollinen päivämääräväli tulevaisuudesta') }}
-    </div>
-
-    <input type="hidden" name="date_start" id="iso_date_start">
-    <input type="hidden" name="date_end" id="iso_date_end">
-
-    <div class="filters" id="filters"></div>
-
-    <button type="submit" class="button">{{ _('Hae') }}</button>
-  </form>
+  {{ public_demo_search() }}
 
   <section class="section-card">
     <h2 class="section-title">
@@ -98,18 +76,17 @@
 
 {% endblock %}
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/user-pagination.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261013-windowed-list-2') }}"></script>
+{{ public_search_scripts() }}
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 
 <!-- Shared v2 JS -->
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261013-windowed-list-2') }}" defer></script>
 
 <script>
   const cityList = {{ city_list | tojson }};
-  window.TAG_FILTER = "{{ tag_name }}";
+  window.TAG_FILTER = {{ tag_name | tojson }};
 </script>
 
 <script>
@@ -129,14 +106,6 @@
     });
 
     let extraParams = {};
-    let currentPage = 1;
-
-    // Always apply tag filter
-    if (window.TAG_FILTER) extraParams.tag = window.TAG_FILTER;
-
-    // Load existing city filter from server-side hidden input
-    const initialCities = searchForm.querySelector('input[name="city"]').value.trim();
-    if (initialCities) extraParams.city = initialCities;
 
     /* -------------------------------------------------------------
      * Helper: Show No Results Modal
@@ -165,22 +134,19 @@
       searchForm.location.value = "";
       searchForm.date_start.value = "";
       searchForm.date_end.value = "";
+      searchForm.display_date_start.value = "";
+      searchForm.display_date_end.value = "";
+      delete searchForm.display_date_start.dataset.invalidDateEntry;
+      delete searchForm.display_date_end.dataset.invalidDateEntry;
       filters.empty();
 
-      extraParams = {};
-      if (window.TAG_FILTER) extraParams.tag = window.TAG_FILTER;
-
-      if (window.userPaginationController) {
-        window.userPaginationController.reload({ append: false });
-      } else {
-        loadDemosWrapper(1, false);
-      }
+      listHistory.submit();
     });
 
     /* -------------------------------------------------------------
      * Helper: Load Demos
      * -----------------------------------------------------------*/
-    async function loadDemosWrapper(page = 1, append = false) {
+    async function loadDemosWrapper(page = 1, append = false, previous = false, manual = false) {
       if (!append) {
         noResults.style.display = "none";
         grid.innerHTML = `
@@ -190,7 +156,7 @@
         </div>`;
       }
 
-      const result = await loadDemos(page, append, extraParams);
+      const result = await loadDemos(page, append, extraParams, previous, manual);
       if (result) {
         window.userPaginationController?.setState(result.page, result.total_pages);
         if (!append && result.result_count === 0) {
@@ -203,41 +169,33 @@
     /* -------------------------------------------------------------
      * Initial Load
      * -----------------------------------------------------------*/
+    const listHistory = UserPagination.createFilterHistory({
+      form: searchForm, fixed: { tag: window.TAG_FILTER },
+      cityLabel: {{ _('Kaupunki') | tojson }}, removeLabel: {{ _('Poista suodatin') | tojson }},
+      onChange: (params, page) => {
+        extraParams = params;
+        return window.userPaginationController.reload({ page, append: false });
+      },
+    });
+    window.publicListHistory = listHistory;
+    extraParams = listHistory.params;
+
     window.userPaginationController = UserPagination.createLoadMoreController({
       button: loadMoreBtn,
-      loadPage: (page, options = {}) => loadDemosWrapper(page, options.append ?? true),
+      windowed: true,
+      loadPage: (page, options = {}) => loadDemosWrapper(page, options.append ?? true, options.previous, options.manual),
       initialLabel: '{{ _('Näytä lisää') }}',
       loadingLabel: '{{ _('Ladataan...') }}',
     });
 
-    loadDemosWrapper();
+    window.userPaginationController.reload({ page: listHistory.page, append: false });
 
     /* -------------------------------------------------------------
      * Search Form
      * -----------------------------------------------------------*/
-    searchForm.addEventListener("submit", e => {
-      e.preventDefault();
-
-      const searchValue = searchForm.search.value.trim();
-      const cityValue = searchForm.city.value.trim();
-      const locationValue = searchForm.location.value.trim();
-      const dateStart = searchForm.date_start.value;
-      const dateEnd = searchForm.date_end.value;
-
-      extraParams = {};
-      if (window.TAG_FILTER) extraParams.tag = window.TAG_FILTER;
-
-      if (searchValue) extraParams.search = searchValue;
-      if (cityValue) extraParams.city = cityValue;
-      if (locationValue) extraParams.location = locationValue;
-      if (dateStart) extraParams.date_start = dateStart;
-      if (dateEnd) extraParams.date_end = dateEnd;
-
-      if (window.userPaginationController) {
-        window.userPaginationController.reload({ append: false });
-      } else {
-        loadDemosWrapper(1, false);
-      }
+    searchForm.addEventListener("submit", event => {
+      event.preventDefault();
+      listHistory.submit();
     });
 
     /* ==================================================================
@@ -251,51 +209,8 @@
     /* -------------------------------------------------------------
      * Helper: Add pill
      * -----------------------------------------------------------*/
-    function addCityPill(city) {
-      const pill = $(`
-      <div class="filter-pill" data-city="${city}">
-        <span class="pill-label">
-          <i class="fa-solid fa-city"></i> ${city}
-        </span>
-        <button class="pill-remove" data-city="${city}">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-    `);
+    function addCityPill() { listHistory.renderCities(); }
 
-      filters.append(pill);
-
-      pill.find(".pill-remove").on("click", e => {
-        e.preventDefault();
-        const cityToRemove = $(e.currentTarget).data("city");
-
-        const current = selectedCitiesInput.val()
-          ? selectedCitiesInput.val().split(",")
-          : [];
-
-        const updated = current.filter(c => c !== cityToRemove);
-        selectedCitiesInput.val(updated.join(","));
-        pill.remove();
-
-        extraParams.city = updated.join(",");
-        if (window.userPaginationController) {
-          window.userPaginationController.reload({ append: false });
-        } else {
-          loadDemosWrapper(1, false);
-        }
-      });
-    }
-
-    /* -------------------------------------------------------------
-     * Render pills from server-side value
-     * -----------------------------------------------------------*/
-    if (initialCities) {
-      initialCities.split(",").forEach(c => c.trim() && addCityPill(c.trim()));
-    }
-
-    /* -------------------------------------------------------------
-     * Autocomplete (debounced)
-     * -----------------------------------------------------------*/
     let debounceTimer = null;
 
     cityInput.on("input", function () {
@@ -335,11 +250,7 @@
             citySuggestions.empty().removeClass("show");
             cityInput.val("");
 
-            if (window.userPaginationController) {
-          window.userPaginationController.reload({ append: false });
-        } else {
-          loadDemosWrapper(1, false);
-        }
+            listHistory.submit();
           });
 
           citySuggestions.append(markup);

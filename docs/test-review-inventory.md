@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Snapshot after merging main `4cb8eefe`, 2026-10-13: 143 Python test files; 1,042 definitions (1,037 in 142 files under `tests/`, plus five standalone recurrence tests). The origin-health deployment slice adds five definitions and reviews all eleven definitions in `test_deploy_build_sha.py`; it also records main's previously omitted index-provisioning test as pending. Other open PRs are excluded. This tracked-Python AST inventory excludes fixtures and parameter expansion and does not claim completed suite review. Individual review records follow; see [the repository roadmap](../roadmap.md#test-by-test-review-programme) for required evidence and priorities.
+Organization/pagination/loading and origin-health integration based on main `9098c02a`, 2026-10-16: 153 Python test files; 1,109 definitions; 152 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -48,6 +48,47 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 | `test_password_and_mfa_login_reject_disabled_account` | Correct first/second factors cannot establish session for disabled user; preflight returns invalid. | Four status × MFA combinations; real DB update, exact redirect and absent user ID. TOTP time is real; no expiry boundary claim. | Keep. |
 | `test_existing_session_loses_access_after_account_disabled` | Protected access succeeds before status update and fails afterward. | Inactive and banned independently; same client retains existing cookie; verifies loader enforcement, not permanent revocation after future reactivation or WebSocket events. | Keep. |
 | `test_legacy_account_without_active_field_remains_enabled` | Missing legacy active flag defaults enabled. | Real model and successful password session; ensures no forced migration requirement. | Keep. |
+
+## tests/test_admin_account_status.py
+
+- [x] `test_same_status_token_has_one_winner_under_concurrent_submit`
+- [x] `test_status_action_visibility_uses_shared_hierarchy`
+
+Approved review follow-up, 2026-10-13: the synchronized race uses two independent clients with the same cookie/proof and a barrier immediately before the real conditional Mongo update, after both requests have read their snapshots. Exactly one 302, one 409, one persisted version increment and one action audit must result. The collection method wrapper adds synchronization only; it does not mock the write outcome. The visibility test covers lower/self/peer/higher targets, exact template link presence/absence and a membership-only permission denied by the shared predicate. No sleeps or production requests. Both definitions are retained; sequential disable/enable/replay coverage is not replaced. Final combined run and revision are recorded in the integration PR.
+Review follow-up, 2026-10-13: real Flask/MongoDB confirmation tests prove independent target tabs survive each other's consumption, the eight-nonce bound rejects evicted forms, and a supported superuser can list/change ordinary accounts. Runtime GNUTranslations tests prove FI/EN/SV account-status contexts do not replace uncontextualized case labels. Focused result: 17 parameterized cases passed; no claim of a full-suite or production run.
+
+- [x] `test_independent_confirmation_tabs_keep_their_nonces`
+- [x] `test_confirmation_nonce_collection_is_bounded`
+- [x] `test_superuser_can_list_and_change_ordinary_account_status`
+- [x] `test_compiled_status_labels_have_distinct_gettext_context`
+
+- [x] `test_admin_can_disable_and_reenable_with_audited_confirmation`
+- [x] `test_admin_cannot_change_self_or_peer_or_higher_status`
+- [x] `test_viewer_without_edit_permission_cannot_change_status`
+- [x] `test_status_confirmation_rejects_missing_tampered_or_wrong_target_proof`
+- [x] `test_saved_status_form_cannot_replay_after_disable_enable_cycle`
+- [x] `test_user_list_and_editor_show_account_status`
+- [x] `test_status_confirmation_expires`
+- [x] `test_confirmation_is_bound_to_the_authenticated_actor`
+- [x] `test_confirmation_layout_and_keyboard_actions_in_both_themes`
+
+The original nine definitions are supplemented by six reviewed follow-up definitions. Parameter expansion is reported separately from definition counts.
+
+SEC-02 / QA-01 review, 2026-10-12, Codex, P1; real Flask sessions, signed forms and MongoDB. No mocked permission or write path. The shared seeded identities are isolated by the test fixtures. The expiry case uses a dedicated old-timestamp signer solely for its confirmation token; the session signer and application clock remain unchanged.
+
+| Definition | Requirement / assertion | Cases, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_admin_can_disable_and_reenable_with_audited_confirmation` | DB state changes, activation removes ban, audit records state and excludes proof. | Actual signed confirmation and audit writes; email notification not part of this action. | Keep. |
+| `test_admin_cannot_change_self_or_peer_or_higher_status` | GET and POST denied for unauthorized hierarchy. | Self, equal-level and higher-level parameter cases; preserves existing hierarchy policy. | Keep. |
+| `test_viewer_without_edit_permission_cannot_change_status` | A scoped admin lacking EDIT_USER cannot read confirmation or mutate. | Explicit lower-privilege fixture, exact 403; broader scope semantics remain SEC-03. | Keep. |
+| `test_status_confirmation_rejects_missing_tampered_or_wrong_target_proof` | Missing/modified proof or different target rejected. | Real signer; no cryptographic stub. | Keep. |
+| `test_saved_status_form_cannot_replay_after_disable_enable_cycle` | Original cookie/proof rejected despite matching active state later. | Real saved cookie, two accepted actions, exact conflict response verifies versioning. | Keep. |
+| `test_user_list_and_editor_show_account_status` | List and editor expose disabled state and status heading. | Actual rendered routes; semantic text checks, not pixel/theme validation. | Keep. |
+| `test_status_confirmation_expires` | Expired signed proof rejected. | Controlled signer timestamp; no sleep or altered application clock. | Keep. |
+| `test_confirmation_is_bound_to_the_authenticated_actor` | Another privileged actor cannot use leaked proof, even with copied nonce. | Distinct allowed admin, exact 400 and unchanged target state. | Keep. |
+| `test_confirmation_layout_and_keyboard_actions_in_both_themes` | Hero/action visible, no horizontal body overflow, keyboard reaches submit from cancel. | Real authenticated route at 390/1440px in light/dark with local resources; verifies geometry/focus, not a full contrast or pixel-quality audit. | Keep. |
+
+Evidence: 37 focused admin-status/user/fresh-deletion backend cases passed, followed by the focused Chromium layout/keyboard case across both widths/themes. Final commit is recorded in the delivery PR. New template uses the existing hero, form-section, buttons and sticky actions; broader contrast/visual acceptance remains QA-04.
 
 ## tests/test_admin_audit_indexes.py
 
@@ -311,16 +352,31 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Disposable MongoDB, seeded real de
 
 ## tests/test_admin_user_bp.py
 
-- [ ] `test_user_control_paginates_results`
-- [ ] `test_user_control_searches_display_names`
-- [ ] `test_user_control_filters_by_city_admin_scope`
-- [ ] `test_edit_user_exposes_translator_role_and_auto_assigns_permission`
-- [ ] `test_create_user_can_assign_translator_role`
-- [ ] `test_create_user_can_assign_city_admin_scope`
-- [ ] `test_create_city_admin_requires_city_selection`
-- [ ] `test_create_user_rejects_reserved_admin_identity`
-- [ ] `test_create_user_persists_active_true`
-- [ ] `test_user_from_db_defaults_active_true`
+- [x] `test_user_control_paginates_results`
+- [x] `test_user_control_searches_display_names`
+- [x] `test_user_control_filters_by_city_admin_scope`
+- [x] `test_edit_user_exposes_translator_role_and_auto_assigns_permission`
+- [x] `test_create_user_can_assign_translator_role`
+- [x] `test_create_user_can_assign_city_admin_scope`
+- [x] `test_create_city_admin_requires_city_selection`
+- [x] `test_create_user_rejects_reserved_admin_identity`
+- [x] `test_create_user_persists_active_true`
+- [x] `test_user_from_db_defaults_active_true`
+
+SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Real admin client, disposable MongoDB and stored grant data; external delivery isolated by fixtures. None of these positive tests alone proves forbidden actions are blocked; the privileged-action tests below supply negative paths. Final run/commit evidence recorded in PR.
+
+| Definition | Requirement / assertions | Coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_user_control_paginates_results` | Expected records/pages split with per_page two. | Fixed unique usernames; not equal-sort-key or concurrent insertion proof. | Keep; deterministic tie-breaker remains data-view work. |
+| `test_user_control_searches_display_names` | Display-name search returns matching identity. | Positive substring case only; no permission claim. | Keep. |
+| `test_user_control_filters_by_city_admin_scope` | Grant city filter includes/excludes expected users. | Three grant cases; role/grant labeling verified via real list. | Keep. |
+| `test_edit_user_exposes_translator_role_and_auto_assigns_permission` | Edit/save preserve translator role and canonical name; implied translation rights persist. | Global admin positive path; delegation refusal covered separately. | Keep. |
+| `test_create_user_can_assign_translator_role` | Creation UI options and persisted implied translator capabilities. | Real POST/database; email delivery not verified. | Keep. |
+| `test_create_user_can_assign_city_admin_scope` | New city grant has exactly expected cities/default capabilities. | Prevents unrequested permission expansion; #917's explicit new case choices remain separate integration. | Keep. |
+| `test_create_city_admin_requires_city_selection` | Missing city prevents account creation. | Redirect plus absent DB identity; no malformed-city matrix. | Keep. |
+| `test_create_user_rejects_reserved_admin_identity` | Reserved display identity rejected without persistence. | One reserved variant; validator suite covers broader names. | Keep. |
+| `test_create_user_persists_active_true` | New user explicitly enabled/unbanned. | Normal creation contract. | Keep. |
+| `test_user_from_db_defaults_active_true` | Legacy missing-active field defaults enabled. | Model compatibility only; runtime access checks covered by account-access tests. | Keep. |
 
 ## tests/test_analytics_rollup.py
 
@@ -456,6 +512,9 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Disposable MongoDB, seeded real de
 
 ## tests/test_case_city_scope.py
 
+- [ ] `test_case_list_reuses_edit_scope_and_preserves_autoclose`
+- [ ] `test_every_case_route_declares_its_permission`
+- [ ] `test_undeclared_case_route_fails_closed`
 - [x] `test_ordinary_user_cannot_read_cases`
 - [x] `test_city_case_list_and_detail_use_same_scope`
 - [x] `test_city_case_mutations_reject_foreign_targets`
@@ -680,11 +739,12 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 - [x] `test_verifier_reports_cloudflare_challenge_without_body_or_url`
 - [x] `test_verifier_reports_missing_origin_socket`
 - [x] `test_verifier_passes_socket_while_waiting_for_new_worker`
-- [x] `test_verifier_rejects_misleading_tls_or_credentials_for_socket`
+- [x] `test_verifier_rejects_unsupported_or_credentialed_socket_urls`
 
-OPS / QA-01 review, 2026-10-13, Codex, P1. Base `fb663b51`; validation:
-`pytest -o addopts='' -q tests/test_deploy_build_sha.py` (16 cases), Bash syntax
-and `git diff --check`. No production reload or end-to-end deployment performed.
+OPS / QA-01 review, 2026-10-16, Codex, P1. Base `9098c02a`; passed focused validation:
+`pytest -o addopts='' -q tests/test_deploy_build_sha.py` (22 cases),
+plus Bash syntax and `git diff --check`. No production reload or end-to-end
+deployment performed.
 
 | Definition | Purpose / setup / assertions | Reliability / coverage / disposition |
 |---|---|---|
@@ -694,11 +754,11 @@ and `git diff --check`. No production reload or end-to-end deployment performed.
 | `test_verifier_waits_past_old_worker_for_replacement` | Mocked SHA sequence/sleep; two old responses followed by expected SHA. | Deterministic retry logic; transport covered separately. Keep. |
 | `test_verifier_rejects_plain_200_without_matching_metadata` | Mocked absent SHA/sleep; bounded retries cannot succeed. | Transport payload validation covered by origin tests. Keep. |
 | `test_production_deploy_contract_is_sha_bound` | Reads real shell/workflow/docs; SHA verifier, socket argument, independent public HTTPS and restricted SSH contract. | Static guard, not shell execution or actual key permissions. Keep. |
-| `test_verifier_reads_origin_socket_without_proxy` | Real temporary Unix HTTP server; five HTTP/body variants, broken proxy, public transport forbidden; exact Host/path and result. | Short socket path is portable to macOS/Linux; proves local transport, not production process setup. Keep. |
+| `test_verifier_reads_origin_socket_without_proxy` | Real temporary Unix HTTP server; five HTTP/body variants for both HTTP and HTTPS logical URLs; broken proxies, public transport forbidden; exact Host/path, direct fetch and CLI result. | Ten cases catch HTTPS override rejection in either validation layer; proves local transport, not production process setup. Keep. |
 | `test_verifier_reports_cloudflare_challenge_without_body_or_url` | Mock urllib HTTP 403/challenge containing private URL/body; captured stderr names challenge without leaking data. | Reproduces known Cloudflare response contract; no live WAF dependency. Keep. |
 | `test_verifier_reports_missing_origin_socket` | Real nonexistent short socket path; None result and safe exception class diagnostic. | Deterministic filesystem failure; no remote request. Keep. |
 | `test_verifier_passes_socket_while_waiting_for_new_worker` | Mocked transport old/new sequence; exact socket passed on both probes. | Socket transport tested separately; keeps retry wiring covered. Keep. |
-| `test_verifier_rejects_misleading_tls_or_credentials_for_socket` | Two CLI argument variants; argparse exit 2 for HTTPS or embedded credentials. | No real connection; prevents silently downgrading TLS semantics. Keep. |
+| `test_verifier_rejects_unsupported_or_credentialed_socket_urls` | Three CLI argument variants; argparse exit 2 for FTP or embedded HTTP/HTTPS credentials. | No real connection; local socket support does not permit unsupported schemes or URL credentials. Keep. |
 
 ## tests/test_detail_metadata_localization.py
 
@@ -926,6 +986,30 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1; actual Flask endpoints, roles, mem
 
 Final focused run/revision evidence is recorded in the delivery PR. Review completion marks these definitions assessed; organization role lifecycle, destructive confirmations and audit architecture remain open.
 
+## tests/test_organization_orphan_members.py
+
+- [x] `test_organization_detail_renders_with_missing_member`
+- [x] `test_organization_preserves_valid_members_and_permissions`
+- [x] `test_organization_with_only_orphan_members_renders_empty_members`
+- [x] `test_organization_does_not_suppress_other_user_loading_errors`
+- [x] `test_public_organization_does_not_load_member_users`
+- [x] `test_members_batch_loading_cache_and_serialization`
+- [x] `test_admin_organization_view_uses_safe_batched_members`
+
+Organization HTTP 500 regression review, 2026-10-13. Disposable database and real Flask/model lookups; no production records are changed. Four request variants reproduced the same missing-user exception before the fix. Seven new cases and 51 existing organization/deletion cases passed afterward (58 total); final commit and PR identify the delivery revision.
+
+Member-loading follow-up: 69 focused cases passed, including 2/27-member query-count variants, public/admin rendering, organization mutations and fresh-step-up deletion tests. Full suite not run. The originally injected loader failure is now injected at batch deserialization and asserted on first member access.
+
+| Definition | Requirement / assertions | Fixtures, coverage and limits | Disposition |
+|---|---|---|---|
+| `test_organization_detail_renders_with_missing_member` | Real detail GET returns 200 with organization content; no missing user invented or stored membership deleted. | ObjectId/string references × anonymous/authenticated clients; four real database/render cases. Not a production or all-browser check. | Keep. |
+| `test_organization_preserves_valid_members_and_permissions` | Valid members retain roles/permissions, missing member gets no membership/access, refresh is idempotent and user records remain unchanged. | Real seeded users plus one orphan; exact member IDs and stored-user equality. Does not audit every permission policy. | Keep. |
+| `test_organization_with_only_orphan_members_renders_empty_members` | No valid members is a supported empty state and still renders 200. | Separate synthetic organization, two missing users; both stored memberships remain. | Keep. |
+| `test_organization_does_not_suppress_other_user_loading_errors` | Unrelated user-deserialization errors still propagate rather than disappearing as missing users. | One injected ValueError, narrowly scoped to the loader. Does not prove every upstream exception type. | Keep. |
+| `test_public_organization_does_not_load_member_users` | Anonymous public GET renders without invoking the member loader. | Real Flask GET; loader raises immediately if used. Authenticated permission lookups are intentionally outside this query-free contract. | Keep. |
+| `test_members_batch_loading_cache_and_serialization` | Construction/serialization are lazy, one user query hydrates members, repeated access is cached, explicit refresh re-queries, and saving excludes cached users. Approved review follow-up retains the same list object through refresh, update_member and add_member; retained aliases observe changed roles/persisted permissions and the new member. | Real database with 2/27 valid users plus a string orphan; collection-level find instrumentation and forbidden per-user loader. Checks actual IDs, unchanged input and persisted fields. Existing permission-merge policy is preserved, not redefined. Counts application queries, not cursor getMore/network packets. | Keep. |
+| `test_admin_organization_view_uses_safe_batched_members` | Admin view renders despite a missing user and preserves membership IDs required by row actions. | Real authenticated route and persisted membership identities; separate action tests cover authorization. | Keep. |
+
 ## tests/test_organization_fill_page.py
 
 - [ ] `test_organization_fill_page_uses_public_org_visual_shell`
@@ -966,6 +1050,46 @@ Shared setup: simulated hardware authenticator signs real registration/assertion
 
 Focused run evidence is linked in the delivery PR; checked entries mean assessed definitions, not closure of all WebAuthn security requirements. Crypto-origin/RP tampering, consumed assertion replay and cross-user mutations need coverage verification in the remaining QA-01 inventory.
 
+## tests/test_privileged_user_actions.py
+
+- [x] `test_full_permission_actor_can_assign_global_role_with_legacy_base_role`
+- [x] `test_clearance_check_enforces_target_hierarchy`
+- [x] `test_clearance_routes_require_global_not_membership_permission`
+- [x] `test_clearance_write_requires_global_permission_even_with_valid_csrf`
+- [x] `test_direct_user_edit_cannot_change_higher_role_target`
+- [x] `test_admin_cannot_self_promote_through_either_entrypoint`
+- [x] `test_restricted_editor_cannot_delegate_unowned_global_permission`
+- [x] `test_restricted_editor_cannot_edit_globally_privileged_legacy_user`
+- [x] `test_organization_admin_role_does_not_grant_global_user_management`
+- [x] `test_force_password_change_respects_target_hierarchy`
+- [x] `test_ordinary_target_profile_edit_still_works`
+- [x] `test_admin_can_edit_own_basic_profile_without_changing_authority`
+- [x] `test_hard_coded_identity_has_no_hierarchy_exception`
+- [x] `test_admin_user_audit_excludes_credentials_and_request_payload`
+- [x] `test_create_user_cannot_bypass_superuser_promotion_process`
+
+SEC-03 / QA-01 review, 2026-10-12, Codex, P1 review batch; corrected privilege-escalation paths are P0 code defects. Real Flask/DB/roles/grants with no authorization mocks. Synthetic payload marker is not a real credential; assertions inspect scoped audit events, not the whole service logging system. Final run and revision recorded in PR.
+
+| Definition | Requirement / assertions | Variants and remaining limits | Disposition |
+|---|---|---|---|
+| `test_full_permission_actor_can_assign_global_role_with_legacy_base_role` | Full-authority legacy base role accepts a valid global-role assignment. | Direct helper with explicit SimpleNamespace capabilities; clearance and persisted promotion covered separately. | Keep; reviewed 2026-10-13. |
+| `test_clearance_check_enforces_target_hierarchy` | Legacy clearance GET allows a lower target; denies self, peer and higher; missing/invalid IDs return 404. | Six real Flask/DB cases, no authorization mocks. Does not cover concurrent role changes. | Keep; reviewed 2026-10-13, #919 focused run. |
+| `test_clearance_routes_require_global_not_membership_permission` | Board read/list/legacy UI and governance clearance page require global authority, not an organization grant. | Eight real membership-vs-global cases, exact 403/200/redirect outcomes; same base role isolates permission scope. | Keep; reviewed 2026-10-13, #919 focused run. |
+| `test_clearance_write_requires_global_permission_even_with_valid_csrf` | A valid CSRF token cannot turn an organization permission into global write authority. | Two real POST cases; exact status and persisted approval presence/absence. Existing governance tests retain missing-CSRF coverage. | Keep; reviewed 2026-10-13, #919 focused run. |
+| `test_direct_user_edit_cannot_change_higher_role_target` | Both edit and save deny higher-level target with no DB change. | Two entrypoints, exact 403 and full stored-document equality. | Keep. |
+| `test_admin_cannot_self_promote_through_either_entrypoint` | Direct own-role God promotion rejected. | Both routes; real ObjectId/string distinction; stored state unchanged. | Keep. |
+| `test_restricted_editor_cannot_delegate_unowned_global_permission` | Explicit EDIT_USER does not authorize granting DELETE_USER. | Real restricted actor and target, exact denial/state equality. | Keep. |
+| `test_restricted_editor_cannot_edit_globally_privileged_legacy_user` | Low base-role user with global_admin flag still protected. | Real flag/role mismatch; separate from named God-role test. | Keep. |
+| `test_organization_admin_role_does_not_grant_global_user_management` | Organization rights do not grant list/save/forced-reset/clearance global authority. | Four route checks; actual org membership and no global capability. | Keep. |
+| `test_force_password_change_respects_target_hierarchy` | Self, peer and higher target forcing denied. | Three cases with unchanged DB flag. Lower target success exercised by audit test. | Keep. |
+| `test_ordinary_target_profile_edit_still_works` | Authorized ordinary profile update persists. | Positive save POST/display name; full-field round-trip remains form tests. | Keep. |
+| `test_admin_can_edit_own_basic_profile_without_changing_authority` | Own basic profile may change without a role/rights change. | Valid public username isolates authority checks from reserved-name validation; exact role/permission preservation. | Keep. |
+| `test_hard_coded_identity_has_no_hierarchy_exception` | Former exception ID gains no authority and target role is not mutated. | Direct helper test, not a production identity query. | Keep. |
+| `test_admin_user_audit_excludes_credentials_and_request_payload` | Actual forced reset works; synthetic secrets excluded in both audit layers; admin actor filter retrieves request events. | Real DB writes and actual `_build_logs_query` actor predicate; does not prove all audit sources/retention/redaction. | Keep; strengthened 2026-10-13. |
+| `test_create_user_cannot_bypass_superuser_promotion_process` | Hidden God role/early global-admin creation rejected without persistence. | Two roles with exact expected status, existing UI notice and clearance promotion flow preserved. | Keep. |
+
+Known remaining acceptance: dedicated full-role alias cases, concurrent authorization changes, invalid-ID matrices for every legacy form route and cross-source audit completeness. Those are not silently declared covered.
+
 ## tests/test_privacy_policy.py
 
 - [ ] `test_privacy_policy_discloses_current_personal_data_processing`
@@ -996,10 +1120,19 @@ Focused run evidence is linked in the delivery PR; checked entries mean assessed
 
 ## tests/test_public_accessibility_contracts.py
 
-- [ ] `test_public_shell_has_language_and_semantic_footer_lists`
-- [ ] `test_city_today_page_has_a_document_language`
-- [ ] `test_public_chat_feedback_uses_safe_shared_toast`
-- [ ] `test_api_documentation_code_blocks_are_focusable_and_links_are_distinct`
+- [x] `test_public_shell_has_language_and_semantic_footer_lists`
+- [x] `test_city_today_page_has_a_document_language`
+- [x] `test_public_chat_feedback_uses_safe_shared_toast`
+- [x] `test_api_documentation_code_blocks_are_focusable_and_links_are_distinct`
+
+UI-01 / QA-04 supporting review, 2026-10-12, Codex, P1. Anonymous real Flask responses and source-string checks are wiring evidence, not complete accessibility/security acceptance. Existing external-service isolation remains in the common fixture; no mocked UI rendering or permission result.
+
+| Definition | Purpose / assertions | Fixtures / coverage / reliability | Disposition |
+|---|---|---|---|
+| `test_public_shell_has_language_and_semantic_footer_lists` | Nonempty HTML language and intended footer/nav/list wiring; obsolete separator/inline auth markup absent. | Real submit GET, exact strings/regex. Does not prove complete DOM validity or footer viewport fit. | Keep with narrow claim. |
+| `test_city_today_page_has_a_document_language` | Empty stored locale still renders Finnish document language. | Explicit test-session locale, real city/today response, exact lang attribute. Other locale fallback variants remain locale tests. | Keep. |
+| `test_public_chat_feedback_uses_safe_shared_toast` | Chat uses shared toast; text assignment, no innerHTML/native alert, status/live hooks remain. | Static JS/template reads only, not execution of stored chat data or actual screen-reader behavior. | Keep as guard; runtime sink coverage separate. |
+| `test_api_documentation_code_blocks_are_focusable_and_links_are_distinct` | Code pre blocks are tabbable; scoped focus/link tokens remain. | Real docs GET plus CSS strings. Does not prove computed contrast, keyboard behavior or every link. | Keep; broaden behavior in later QA-04. |
 
 ## tests/test_public_calendar_theme_contract.py
 
@@ -1021,6 +1154,47 @@ Focused run evidence is linked in the delivery PR; checked entries mean assessed
 - [ ] `test_public_header_mobile_menu_and_theme_contract`
 - [ ] `test_public_navigation_remains_available_without_javascript`
 
+## tests/test_public_pagination_limits.py
+
+- [x] `test_public_page_size_is_bounded_and_existing_defaults_survive`
+- [x] `test_demo_apis_cap_the_real_query_and_return_bounded_metadata`
+- [x] `test_tag_page_materializes_only_the_bounded_page`
+- [x] `test_public_organization_api_cannot_bypass_page_size_limit`
+- [x] `test_enormous_out_of_range_pages_never_reach_database_skip`
+- [x] `test_public_cache_normalizes_page_sizes_and_excludes_old_unbounded_namespace`
+- [x] `test_old_oversized_cached_response_cannot_bypass_the_new_limit`
+
+DATA-01a / QA-02, P1; reviewed 2026-10-13 by Codex. Disposable local database and real Flask queries only; no production stress request. Together with existing public API/history/analytics coverage, 92 focused cases passed. These tests establish response/query bounds, not rate limiting or bounded browser memory.
+
+| Definition | Requirement / assertions | Fixtures, variants and limitations | Disposition |
+|---|---|---|---|
+| `test_public_page_size_is_bounded_and_existing_defaults_survive` | Maximum 100, minimum 1, malformed/default handling preserved. | Nine raw variants; direct shared parser, tag default 10. | Keep; fails without the cap. |
+| `test_demo_apis_cap_the_real_query_and_return_bounded_metadata` | Both APIs return 100 then 5 records with exact counts/ranges and no overlap. | 105 uniquely tagged real records; modern next URL carries bounded size. No production query-plan measurement. | Keep. |
+| `test_tag_page_materializes_only_the_bounded_page` | HTML tag context contains only 100 records and two pages. | Actual render signal, disconnected in finally; does not assess visual layout. | Keep. |
+| `test_public_organization_api_cannot_bypass_page_size_limit` | Organization endpoint applies the same bound, including last page. | 105 uniquely searchable local records; real database query. | Keep. |
+| `test_enormous_out_of_range_pages_never_reach_database_skip` | Four endpoint variants return empty results without huge Mongo offsets. | Cursor skip wrapper raises rather than mocking returned records; 100-digit page. Count cost remains outside this guarantee. | Keep. |
+| `test_public_cache_normalizes_page_sizes_and_excludes_old_unbounded_namespace` | Excessive and bounded query sizes share the new cache key; different resolved languages do not. | Real request contexts, no explicit URL language; exact new namespace. Strengthened for approved #927 review correction on 2026-10-13. | Keep. |
+| `test_old_oversized_cached_response_cannot_bypass_the_new_limit` | Pre-fix cache cannot bypass handler bounds; new stored payload is bounded. A session-language change reaches a distinct route cache key without changing the URL. | Synthetic legacy cache marker, real database, handler and session locale selector. Does not prove a live Redis deployment. | Keep. |
+
+## tests/test_public_date_range.py
+
+- [ ] `test_restored_historical_range_can_select_an_earlier_start`
+- [x] `test_public_date_vendor_files_match_reviewed_release_hashes`
+- [x] `test_actual_date_picker_locale_bounds_history_and_clear`
+- [x] `test_actual_calendar_is_theme_safe_and_keyboard_reachable`
+- [x] `test_public_dates_remain_manually_usable_if_picker_asset_fails`
+
+UI-01 / QA-04, 2026-10-13, Codex, P1, stacked on #923. Tests execute the same pinned local Flatpickr JS/CSS as the product, not a stub. API results are isolated because these definitions assess widget state/URL integration rather than database search. Upstream npm tarball SHA-512 integrity and normalized JS/CSS/license members were independently checked; final revision/run/PR evidence linked at delivery.
+
+| Definition | Purpose / assertions | Setup / coverage / reliability | Disposition |
+|---|---|---|---|
+| `test_public_date_vendor_files_match_reviewed_release_hashes` | Shipped JS/CSS/MIT license match reviewed version bytes. | Local SHA-256 against independently integrity-checked npm release, terminal newline normalization documented. Hash match does not prove absence of all upstream defects. | Keep. |
+| `test_actual_date_picker_locale_bounds_history_and_clear` | Real picker shows FI/EN/SV names; changed range submits, Back restores coupled bounds, clear removes selections/max bound and restores current-year floor; explicit 2020 ranges survive restoration. | Three routes × three locales (nine cases), actual selectedDates/config plus DOM/URL waits. Synthetic API only; not live-data/count proof. Does not cover every unusual year/time-zone boundary. | Keep. |
+| `test_actual_calendar_is_theme_safe_and_keyboard_reachable` | ArrowDown enters actual day grid, selected hover uses contrast-safe semantic colors, viewport fit/light-dark surface, Escape closes and restores field focus. | Two themes × 1440/390px (four cases), actual JS/CSS and DOM focus; selected screenshots inspected. Not a full assistive-technology or all-browser audit. | Keep. |
+| `test_public_dates_remain_manually_usable_if_picker_asset_fails` | Date fields still submit ISO URL filters without picker JS and no page exception. | Three actual routes, one specific asset aborted deliberately, normal adapter/history scripts run. Dependency-failure fallback, not whole no-JavaScript listing acceptance. | Keep. |
+
+Earlier filter/history regressions now also execute the real bundled picker and still cover invalid typed dates: the adapter retains the invalid raw entry instead of allowing vendor close/blur parsing to silently erase it. Cropper/autocomplete/full accessibility and broader DATA-01 acceptance remain separate.
+
 ## tests/test_public_demo_localization.py
 
 - [ ] `test_demo_detail_renders_translated_fields_and_language_switcher`
@@ -1040,7 +1214,6 @@ Focused run evidence is linked in the delivery PR; checked entries mean assessed
 ## tests/test_public_demonstrations_api.py
 
 - [ ] `test_public_index_provisioning_is_not_part_of_route_import`
-
 - [x] `test_public_demonstrations_list_uses_summary_payload`
 - [x] `test_public_pages_have_chronological_tie_breaks_and_filtered_counts`
 - [x] `test_public_page_metadata_handles_empty_and_out_of_range`
@@ -1084,13 +1257,89 @@ Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-requ
 - [ ] `test_public_inline_style_baseline_scope_is_documented`
 - [ ] `test_style_attribute_scanner_covers_all_valid_static_forms`
 
+## tests/test_public_list_filter_history.py
+
+2026-10-13 follow-up: the existing explicit page/history lifecycle test now selects the supported data-saving manual fallback. Its page/filter/back/forward/retry assertions remain intact; automatic windowing is independently exercised below. A passing manual test is not automatic-loading evidence.
+
+- [x] `test_public_filter_url_restores_page_and_back_forward`
+- [x] `test_restored_city_chip_is_text_safe_and_removal_resets_url`
+- [x] `test_tag_page_invalid_pagination_does_not_raise_500`
+
+DATA-01 / QA-02, 2026-10-12, Codex, P1, stacked on #921. Actual routes/templates/form/history/loader/CSS; synthetic API responses isolate browser contracts; the pinned local picker now executes. Backend ordering/query plans remain #920's real-DB evidence. The tag numeric regression uses real Flask GETs. Final revision/run/PR evidence recorded at delivery.
+
+| Definition | Purpose / assertions | Setup / coverage / reliability | Disposition |
+|---|---|---|---|
+| `test_public_filter_url_restores_page_and_back_forward` | URL restores page 3/size/date/search; search resets page 1, load-more updates URL, Back/Forward restore form and accurate deep-page ranges, retry updates page after 503. | Three route variants; actual browser history; API captures prove fixed city/tag overrides and preserved location/date/size. Explicit waits for state transitions; not a live-data or snapshot-pagination test. | Keep. |
+| `test_restored_city_chip_is_text_safe_and_removal_resets_url` | Markup-shaped city stays text, keyboard removal clears city/reset page without dropping date; invalid calendar day shows error without mutating URL. | List/tag × light/dark × 1440/390px (eight cases), exact DOM fields/URL, chip geometry and 44px target; selected chip screenshots inspected. Does not claim whole-page overflow is fixed or complete autocomplete accessibility. | Keep. |
+| `test_tag_page_invalid_pagination_does_not_raise_500` | Tag GET rejects neither malformed numeric strings nor zero/negative values with server error. | Three real route cases, exact 200; shared parser retains original tag default size. Huge integer bounds remain explicit server-pagination follow-up. | Keep. |
+
+Deep links/history restore the latest requested page as a new window; subsequent Load more extends that window. They do not replay every previously accumulated page. Remaining acceptance includes production integration, API pagination bounds/legacy times and broader discovery/no-JS behavior.
+
+## tests/test_public_list_request_state.py
+
+2026-10-13 follow-up: keyboard-control geometry tests explicitly use the data-saving manual fallback so each intermediate range remains observable. Actual automatic loading, bounded DOM, focus and delayed-response behavior have separate runtime coverage below.
+
+- [x] `test_public_retry_uses_compiled_locale_catalog`
+- [x] `test_public_loader_ignores_stale_search_and_counts_appended_results`
+- [x] `test_public_controller_old_finally_cannot_unlock_new_search`
+- [x] `test_public_loader_http_failure_offers_retry_without_erasing_append`
+- [x] `test_public_listing_summary_is_shared_responsive_and_keyboard_operable`
+
+DATA-01 / QA-02, 2026-10-12, Codex, P1; stacked on #920. Browser harnesses use actual shipped JS with controlled deferred fetch responses (deliberately ignoring abort), safe lightweight card-render stubs and no server ordering mock claim. The template/browser matrix uses actual routes, cards, CSS and keyboard with isolated API data and actual pinned date-picker runtime; server order/count evidence belongs to #920. Final revision/run evidence linked in PR.
+
+| Definition | Purpose / assertions | Fixtures / coverage / reliability | Disposition |
+|---|---|---|---|
+| `test_public_retry_uses_compiled_locale_catalog` | Runtime MO files translate the retry label in English and Swedish. | Two cases read actual compiled GNU catalogs, without Babel mocks; catches PO-only fixes that fail to ship runtime translations. Does not claim full catalog completeness. | Keep; reviewed 2026-10-13; focused run linked in #921. |
+| `test_public_loader_ignores_stale_search_and_counts_appended_results` | New search wins; aborted older response cannot repaint; append counts accumulate and empty append does not erase cards. | Actual loader, deferred response order, exact DOM/count/abort state. Card/friend/navigation rendering isolated; not a backend snapshot test. | Keep. |
+| `test_public_controller_old_finally_cannot_unlock_new_search` | Old load-next completion cannot unlock or alter newer reset state. | Actual controller, exact lock/page/page-count/request assertions with manual resolvers; no timing sleeps. | Keep. |
+| `test_public_loader_http_failure_offers_retry_without_erasing_append` | HTTP failure preserves prior cards and offers successful retry; overlapping retry/append is suppressed. | Actual loader and 503 mock, exact DOM/count/request count; replacement-failure and malformed payload matrices remain follow-up. | Keep. |
+| `test_public_listing_summary_is_shared_responsive_and_keyboard_operable` | Three list families share live summary, keyboard load-more, final hidden control and viewport-fitting summary in both themes/sizes. | Twelve cases: list/city/tag × light/dark × 1440/390px. Actual UI, synthetic API and actual pinned date picker; page errors asserted, summary geometry checked. Does not prove whole-page overflow, all date-picker behavior or live data. | Keep. |
+
+Screenshots of representative list states are inspected separately. Existing page/footer overflow and full URL/history behavior remain explicit follow-up work; this review does not silently declare broad UI acceptance.
+
+## tests/test_public_attendance_window.py
+
+- [x] `test_slow_attendance_survives_append_and_cancels_only_eviction_or_search`
+
+DATA-01b review correction, 2026-10-13, Codex, P2: actual shipped attendance updater, loader and bounded window with controlled delayed fetch responses and lightweight card rendering. Six pages leave at most five pending page requests; the removed page is aborted while all retained-page requests survive. Completing a retained request clears its actual loading element. Replacement search aborts remaining old requests and leaves one new active request/page. No live friends API, real-user graph, or delivery-timing guarantee. Keep: catches the former unconditional append cancellation; final combined focused run passed 76 cases.
+
+## tests/test_public_windowed_loading.py
+
+- [x] `test_successful_retry_resumes_automatic_loading_without_another_scroll`
+
+Approved #928 review correction, 2026-10-13: this shared-controller runtime regression uses deferred page callbacks, fails an automatic request, proves no retry loop, then simulates the retry loader's successful state/resume callback without a scroll event. The next nearby page must load automatically with unchanged scroll position; final-page state prevents further requests. It fails without scheduleAuto in resumeAuto. Explicit state/frame waits, no arbitrary sleep. Synthetic loader data isolates scheduling; not a live API retry test. Keep.
+
+- [x] `test_automatic_public_lists_bound_dom_and_restore_discarded_pages`
+- [x] `test_delayed_append_preserves_new_focus_and_cannot_restore_old_filter_pages`
+- [x] `test_window_does_not_discard_keyboard_focus_and_preserves_scroll_anchor`
+- [x] `test_automatic_requests_are_single_flight_and_failure_never_loops`
+
+DATA-01b / QA-02 / QA-04, P2; reviewed 2026-10-13 by Codex. Ten parameterized cases; final combined review-correction run passed 77 focused cases with attendance, request/history/listing/inline-style/CSS and server-resource-limit checks. API responses are isolated for browser behavior; this does not prove live database performance or a numerical heap ceiling. Five retained pages are a constant bound on mounted cards and page references, not a claim that the entire browser uses constant RAM. Final PR records revision/run evidence.
+
+| Definition | Requirement / assertions | Fixtures, mocks, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_automatic_public_lists_bound_dom_and_restore_discarded_pages` | Scroll through ten pages without clicking Load more; at most five mounted pages / 60 default-size cards; discarded prior page re-fetched, contiguous range restored. | Six actual list/city/tag × light desktop/dark mobile cases with real renderer/controller/CSS. Synthetic 30-page API isolates UI; exact bounds, captured requests and page errors. Representative screenshots inspected. No real-API load benchmark or screen-reader claim. | Keep. |
+| `test_delayed_append_preserves_new_focus_and_cannot_restore_old_filter_pages` | Focus gained during an in-flight request prevents eviction; replacement search aborts old request and stale response cannot repopulate old pages. | Shipped loader/window with deferred responses deliberately ignoring abort; lightweight render/friends stubs isolate state. Exact focus/connectivity, single new page, text and aria-busy assertions. | Keep. |
+| `test_window_does_not_discard_keyboard_focus_and_preserves_scroll_anchor` | Offscreen focused page cannot be pruned, even manually; removing it after blur retains surviving page position within one pixel. Explicit manual advance can replace a visible unfocused edge to avoid a small-page/large-viewport dead end. | Real shared window and browser geometry; fixed 600px fixture pages isolate anchor correction. Does not prove every image/font layout-shift case. | Keep. |
+| `test_automatic_requests_are_single_flight_and_failure_never_loops` | Repeated scroll/manual events cannot overlap page requests; failure stops automatic retries; explicit manual retry works; destroyed controller ignores late state. | Real shared controller, deferred load callback, explicit frame/state waits; no arbitrary sleep. Does not prove server cancellation after an aborted HTTP request. | Keep. |
+
 ## tests/test_public_listing_contract.py
 
-- [ ] `test_public_listing_family_uses_shared_hero_and_pagination_markup`
-- [ ] `test_public_listing_pagination_controller_supports_buttons_and_sentinels`
-- [ ] `test_public_workspace_styles_cover_listing_end_message`
-- [ ] `test_public_list_runtime_uses_defined_localized_browser_contracts`
-- [ ] `test_public_list_filters_and_date_picker_follow_active_locale`
+- [x] `test_public_listing_family_uses_shared_hero_and_pagination_markup`
+- [x] `test_public_listing_pagination_controller_supports_buttons_and_sentinels`
+- [x] `test_public_workspace_styles_cover_listing_end_message`
+- [x] `test_public_list_runtime_uses_defined_localized_browser_contracts`
+- [x] `test_public_list_filters_and_date_picker_follow_active_locale`
+
+DATA-01 / QA-02 supporting review, 2026-10-12, Codex, P1. Source-only assertions retained as wiring guards, not treated as runtime or visual proof; meaningful browser behavior is covered in request-state regressions above.
+
+| Definition | Purpose and assertion review | Fixtures / coverage / reliability | Disposition |
+|---|---|---|---|
+| `test_public_listing_family_uses_shared_hero_and_pagination_markup` | Three templates import shared hero and render load-more macro. | Exact source strings only; does not prove runtime geometry or semantics. | Keep as wiring guard alongside browser matrix. |
+| `test_public_listing_pagination_controller_supports_buttons_and_sentinels` | Controller retains button/sentinel/reload hooks. | Source strings cannot prove concurrency; new deferred-controller regression supplies behavioral evidence. Intersection-observer triggering remains unreviewed runtime gap. | Keep. |
+| `test_public_workspace_styles_cover_listing_end_message` | End-message selectors remain in shared CSS. | String presence, not light/dark/hidden computed-style proof. | Keep with narrow claim. |
+| `test_public_list_runtime_uses_defined_localized_browser_contracts` | Removed undefined view/translation/jQuery contracts stay removed; locale-derived picker wiring remains. | Exact obsolete/required strings; cannot prove translation completeness or runtime. | Keep alongside locale/browser tests. |
+| `test_public_list_filters_and_date_picker_follow_active_locale` | FI/EN/SV city chip labels, January names, summary formats and retry text follow selected locale without page errors. | Actual page/autocomplete, compiled catalogs, Intl formatter and pinned picker locale config; three parameter cases. Does not test date-picker library internals, chip URL reset or complete keyboard selection. | Keep; strengthened localization evidence; remaining gaps tracked. |
 
 ## tests/test_public_locales.py
 
@@ -1141,6 +1390,19 @@ Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-requ
 - [ ] `test_saved_bio_is_safely_rendered_on_public_profile`
 - [ ] `test_profile_api_returns_safe_localized_validation_errors`
 - [ ] `test_profile_editor_uses_safe_dom_and_shared_css`
+
+## tests/test_public_search_fields.py
+
+- [ ] `test_city_suggestions_stay_within_their_search_field`
+- [x] `test_public_search_labels_are_explicit_and_unique`
+- [x] `test_public_search_fields_are_visible_aligned_and_focusable`
+
+UI-01 / QA-04, 2026-10-12, Codex, P1, stacked on #922. Actual shared macro and compiled catalogs; browser uses actual product styles, with synthetic API and actual pinned date picker. Final run/revision/PR evidence linked at delivery.
+
+| Definition | Purpose / assertions | Fixtures / coverage / reliability | Disposition |
+|---|---|---|---|
+| `test_public_search_labels_are_explicit_and_unique` | Every text field has a unique explicit label/target; exact FI/EN/SV search/start/end copy; hidden backend names and fixed city preserved; error linkage present. | Three routes × three locales (nine cases), real Flask/Jinja/catalog rendering. Regex limited to controlled form structure; full DOM/accessibility audits remain separate. | Keep. |
+| `test_public_search_fields_are_visible_aligned_and_focusable` | Label click focuses correct input; label/input left edges align; 44px controls fit viewport; logical first Tab target. | Three routes × two themes × 1440/390px (twelve cases). Actual DOM/style/focus, actual pinned picker/synthetic API; representative form screenshots inspected. Does not verify actual picker popup, autocomplete keyboard behavior or whole-page overflow. | Keep; remaining UI-01/UI-02 items explicit. |
 
 ## tests/test_public_token_manager.py
 
@@ -1279,6 +1541,7 @@ Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-requ
 
 ## tests/test_site_analytics.py
 
+- [ ] `test_demo_search_history_restoration_does_not_count_as_new_search`
 - [ ] `test_static_assets_are_not_counted`
 - [ ] `test_admin_and_account_pages_are_not_counted`
 - [ ] `test_health_checks_and_status_are_not_counted`

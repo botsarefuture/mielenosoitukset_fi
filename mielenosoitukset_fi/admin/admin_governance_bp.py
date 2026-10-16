@@ -2,7 +2,9 @@ from flask import Blueprint, abort, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from mielenosoitukset_fi.utils.city_settings import enabled_city_keys
-from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
+from mielenosoitukset_fi.utils.wrappers import (
+    admin_required, permission_required, global_permission_required, has_global_permission,
+)
 
 from .board_audit import audit_rows
 from .board_compliance import clearance_rows, governance_csrf_token
@@ -28,7 +30,7 @@ def _can(permission):
 @admin_required
 def dashboard():
     permissions = {
-        "clearances": _can("MANAGE_CLEARANCE"),
+        "clearances": has_global_permission(current_user, "MANAGE_CLEARANCE"),
         "audit": _can("VIEW_CLEARANCE_AUDIT"),
         "cities": _can("MANAGE_CITIES"),
     }
@@ -49,6 +51,7 @@ def dashboard():
 @login_required
 @admin_required
 @permission_required("MANAGE_CLEARANCE")
+@global_permission_required("MANAGE_CLEARANCE")
 def clearances():
     all_users = clearance_rows()
     total_count = len(all_users)

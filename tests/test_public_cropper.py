@@ -44,8 +44,8 @@ def _open_harness(app, live_server, page, theme='light', width=1440, locale='fi'
     }""", source_width))
 
 
-def _select(page, image):
-    page.locator('#image').set_input_files({'name': 'test-image.png', 'mimeType': 'image/png', 'buffer': image})
+def _select(page, image, name='test-image.png'):
+    page.locator('#image').set_input_files({'name': name, 'mimeType': 'image/png', 'buffer': image})
     page.wait_for_function("window.cropperModal?.getCropper() && !document.getElementById('applyCrop').disabled")
 
 
@@ -165,5 +165,68 @@ def test_cropper_decode_and_apply_failures_are_visible_and_recoverable(app, live
     browser_page.locator('#applyCrop').click()
     browser_page.locator('#cropperError').wait_for(state='visible')
     assert browser_page.locator('#applyCrop').is_enabled()
-    assert browser_page.locator('#image').evaluate('element => element.files[0].size') == len(image)
+    assert browser_page.locator('#image').evaluate('element => element.files.length') == 0
     assert browser_page.locator('#image-preview').is_hidden()
+
+
+async_state = """async () => {
+  const input = document.getElementById('image');
+  const preview = document.getElementById('image-preview');
+  const digest = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)))
+    .map(byte => byte.toString(16).padStart(2, '0')).join('');
+  const file = input.files[0];
+  const src = preview.getAttribute('src');
+  return {
+    file: file ? {name: file.name, type: file.type, size: file.size,
+      hash: await digest(await file.arrayBuffer())} : null,
+    preview: {hash: src ? await digest(new TextEncoder().encode(src)) : null,
+      hidden: preview.hidden, visible: preview.getClientRects().length > 0 && getComputedStyle(preview).display !== 'none'}
+  };
+}"""
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize('width', [1440, 390])
+@pytest.mark.parametrize('committed', [False, True])
+@pytest.mark.parametrize('exit_path', ['button', 'escape', 'backdrop', 'decode', 'canvas', 'pending-cancel'])
+def test_cropper_restores_committed_file_and_preview_together(
+    app, live_server, browser_page, width, committed, exit_path
+):
+    image = _open_harness(app, live_server, browser_page, width=width)
+    if committed:
+        _select(browser_page, image, name='committed.png')
+        browser_page.locator('#applyCrop').click()
+        browser_page.wait_for_function("!document.getElementById('cropperModal').open")
+    expected = browser_page.evaluate(async_state)
+    if exit_path == 'decode':
+        browser_page.locator('#image').set_input_files({
+            'name': 'broken.png', 'mimeType': 'image/png', 'buffer': b'not an image',
+        })
+        browser_page.locator('#cropperError').wait_for(state='visible')
+    else:
+        _select(browser_page, image, name='replacement.png')
+        if exit_path == 'canvas':
+            browser_page.evaluate("() => { window.cropperModal.getCropper().getCropperSelection().$toCanvas = async () => { throw new Error('Synthetic crop failure'); }; }")
+            browser_page.locator('#applyCrop').click()
+            browser_page.locator('#cropperError').wait_for(state='visible')
+        elif exit_path == 'pending-cancel':
+            browser_page.evaluate("""() => {
+              window.cropperModal.getCropper().getCropperSelection().$toCanvas = () =>
+                new Promise(resolve => window.finishCrop = () => resolve(document.createElement('canvas')));
+            }""")
+            browser_page.locator('#applyCrop').click()
+            browser_page.wait_for_function('typeof window.finishCrop === "function"')
+            browser_page.keyboard.press('Escape')
+            browser_page.evaluate('async () => { window.finishCrop(); await new Promise(resolve => setTimeout(resolve, 0)); }')
+        elif exit_path == 'button':
+            browser_page.locator('#cancelCrop').click()
+        elif exit_path == 'escape':
+            browser_page.keyboard.press('Escape')
+        else:
+            browser_page.mouse.click(2, 2)
+    assert browser_page.evaluate(async_state) == expected
+    if exit_path in ['decode', 'canvas']:
+        browser_page.locator('#cancelCrop').click()
+        assert browser_page.evaluate(async_state) == expected
+    assert browser_page.evaluate('document.activeElement.id') == 'image'

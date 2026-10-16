@@ -1,6 +1,6 @@
 # Repository roadmap
 
-Last reconciled: 2026-10-15. Evidence baseline: `main` at `9098c02affc1244d92911d3e2afae9842db284e5`.
+Last reconciled: 2026-10-16. Evidence baseline: `main` at `9098c02affc1244d92911d3e2afae9842db284e5`.
 
 This is the delivery plan for the **whole repository**: security, public and admin workflows, backend correctness, operations, privacy, localization, tests, and maintenance. Issue [#833](https://github.com/botsarefuture/mielenosoitukset_fi/issues/833) is one workstream within it. Existing issue trackers retain their detailed acceptance criteria; this document sets the order and dependencies.
 
@@ -8,7 +8,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** Finish UI-01 cropper accessibility on `codex/public-cropper-dialog-current`, then city-autocomplete keyboard behavior. Open PRs are not deployed fixes.
+- **Next:** Continue remaining roadmap integration and acceptance. #929 rollback and coverage-clarification follow-up is approved for push: file/preview restoration and 24 new regression cases are implemented; 50 checks and local review pass. City autocomplete (#930), security/test review (#931–#935/#938–#939) and width/hero work (#936–#937) are already open; do not redo them. Routine fixes/validation/pushes may proceed without further approval questions; merge/deploy still requires action-specific authority. Open PRs are not deployed fixes.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Verified merge checkpoint:** #926 is merged; #928 integrated #927 and the remaining organization/retry/attendance review corrections into main `9098c02a`. Required CI passed on its final integration head. No separate deployment or production verification is claimed. The next cropper PR has no merge authorization.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
@@ -134,7 +134,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Cropper branch based on main 9098c02a: **1,110 definitions across 154 files**, with 147 assessed definitions. Independent open PRs #930–#934 are excluded. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Cropper follow-up based on #929 / main 9098c02a: **1,111 definitions across 154 files**, with 148 assessed definitions. Independent open PRs #930–#939 are excluded. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
 
 For each test, record:
 
@@ -182,7 +182,7 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | QA-03, QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI and operations/remaining tests. |
 | QA-04 | P2 | In progress | Codex | M2, then M4–M6 | Two field, four existing accessibility and four real-picker definitions assessed; broader browser/assistive-technology evidence remains pending. |
 | DATA-01 | P1 | In progress | Codex | M2 | #920–#924 public API/request/history/search/picker code is in main 60992b19. Bounds/legacy times, broader integration and release acceptance remain pending. |
-| UI-01 | P1 | In progress | Codex | M2 | Shared search labels and real picker are merged through #924. Cropper on codex/public-cropper-dialog-current uses a native dialog, shared tokens and the locally pinned existing engine; 26 focused cases pass, including actual-engine Chromium checks. Six definitions individually reviewed; source-resolution/zoom bounds are covered, while committed-file/preview rollback awaits per-change approval. Full wizard, autocomplete keyboard, broader browser/assistive-technology and release acceptance remain pending. |
+| UI-01 | P1 | In progress | Codex | M2 | Shared search labels and picker merged through #924. #929 approved rollback/coverage follow-up restores file and preview together; 50 focused cases pass including 24 new exit paths, seven definitions reviewed. Source-resolution bounds retained. #930 autocomplete is already open. Full wizard, broader browser/assistive-technology and release acceptance remain pending. |
 | DATA-02 / OPS-01 | P1 | Backlog | Unassigned | M3 | Verify #908 and load the existing continuity plan. |
 | ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |
 | All other IDs | As assigned above | Backlog | Unassigned | Assign before starting | Verify requirement, dependencies and acceptance before promoting to Ready. |

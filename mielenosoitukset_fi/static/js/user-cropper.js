@@ -18,6 +18,23 @@
     let imageURL = null;
     let engine = null;
     let backdropStart = false;
+    let committedImage = null;
+
+    function restoreCommittedImage() {
+      if (committedImage) {
+        const transfer = new DataTransfer();
+        transfer.items.add(committedImage.file);
+        fileInput.files = transfer.files;
+        preview.src = committedImage.preview;
+        preview.hidden = false;
+        preview.style.display = 'block';
+      } else {
+        fileInput.value = '';
+        preview.removeAttribute('src');
+        preview.hidden = true;
+        preview.style.display = 'none';
+      }
+    }
 
     function cleanup() {
       generation += 1;
@@ -31,11 +48,12 @@
     }
     function close(cancelled) {
       cleanup();
-      if (cancelled) fileInput.value = '';
+      if (cancelled) restoreCommittedImage();
       if (modal.open) modal.close();
       fileInput.focus();
     }
     function showError() {
+      restoreCommittedImage();
       status.textContent = '';
       error.textContent = modal.dataset.error;
       error.hidden = false;
@@ -124,6 +142,7 @@
         preview.src = dataURL;
         preview.hidden = false;
         preview.style.display = 'block';
+        committedImage = {file: cropped, preview: dataURL};
         close(false);
       } catch (_failure) {
         if (isCurrent(ticket)) {

@@ -4,6 +4,12 @@
 
 ## UNRELEASED
 
+- Cancelling or failing a replacement crop restores the last accepted upload and preview together; without an accepted crop, both are cleared instead of submitting an uncommitted original.
+
+- Image crop exports retain source-image resolution across desktop/mobile dialog sizes; zoom-aware output is bounded by the original image dimensions instead of the small on-screen crop area.
+
+- Image cropping now uses a shared theme-safe native dialog with keyboard dismissal/focus return, safe image DOM, visible load/error states and cancellation-safe async apply. Upload names, 16:9 crop behavior and existing hooks are preserved.
+
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.

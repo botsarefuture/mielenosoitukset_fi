@@ -138,7 +138,9 @@ def main() -> int:
         parser.error("expected_sha must be a full lowercase 40-character commit SHA")
     if args.attempts < 1 or args.delay < 0 or args.timeout <= 0:
         parser.error("attempts and timeout must be positive; delay cannot be negative")
-    if args.unix_socket:
+    if args.unix_socket is not None:
+        if not args.unix_socket:
+            parser.error("--unix-socket requires a nonempty path")
         target = urlsplit(args.url)
         if target.scheme not in ("http", "https") or not target.netloc or target.username or target.password:
             parser.error("--unix-socket requires an HTTP(S) URL without credentials")

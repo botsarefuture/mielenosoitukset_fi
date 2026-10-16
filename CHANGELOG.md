@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Deployment health verification rejects an explicitly empty Unix-socket path instead of silently falling back to a public request.
+
 - Production deployment now verifies replacement workers directly through Gunicorn's local Unix socket, avoiding Cloudflare challenges on the server-side health check while preserving existing HTTPS health URL overrides. The separate public HTTPS check remains required and reports HTTP failures, including Cloudflare challenges, explicitly.
 
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.

@@ -186,3 +186,24 @@ def test_verifier_rejects_unsupported_or_credentialed_socket_urls(monkeypatch, u
     with pytest.raises(SystemExit) as exc:
         verify_health_sha.main()
     assert exc.value.code == 2
+
+
+@pytest.mark.parametrize("socket_args", [[], ["--unix-socket", ""]])
+def test_verifier_distinguishes_empty_from_omitted_socket(monkeypatch, capsys, socket_args):
+    probes = []
+
+    def probe(*args, **kwargs):
+        probes.append(kwargs["unix_socket"])
+        return True
+
+    monkeypatch.setattr(verify_health_sha, "wait_for_build", probe)
+    monkeypatch.setattr("sys.argv", ["verify", SHA, "https://example.test/health", *socket_args])
+    if socket_args:
+        with pytest.raises(SystemExit) as exc:
+            verify_health_sha.main()
+        assert exc.value.code == 2
+        assert "--unix-socket requires a nonempty path" in capsys.readouterr().err
+        assert probes == []
+    else:
+        assert verify_health_sha.main() == 0
+        assert probes == [None]

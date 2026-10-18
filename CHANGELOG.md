@@ -21,6 +21,8 @@
 
 - Fresh-deletion regression tests now isolate expiry from replay/target binding and verify same-target reuse, actor binding and concurrent single-use consumption without changing production authorization.
 
+- Login completion now safely serializes popup return targets and rejects ambiguous, control-character, API and login-loop destinations, including encoded leading slashes, while preserving valid internal URLs.
+
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.

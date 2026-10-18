@@ -1209,6 +1209,18 @@ Historical checkpoint, 2026-10-15 at 92b4bb54: 26 cases passed across cropper, i
 
 Current approved behavior also changes the existing failure-test assertion: an uncommitted original is cleared rather than retained. Existing recovery control/enabled/error assertions remain; older checkpoint descriptions above are not a claim that uncommitted bytes are retained by this follow-up. All 40 cropper cases pass, including the prior six-definition/source-resolution matrix; combined with inline/CSS/product-token checks, 50 pass. JS/Jinja syntax, diff and exact AST membership pass. A local CodeRabbit Minor about contradictory roadmap approval status was corrected; final six-file review completed with zero findings before this evidence-text addition. The controller keeps only the latest committed file/preview pair; async generation guards still reject stale completions. JS cache version is bumped; CSS, routes, field names and vendor bytes are unchanged.
 
+## tests/test_public_city_autocomplete.py
+
+- [x] `test_city_combobox_keyboard_selection_preserves_route_contract`
+- [x] `test_city_combobox_treats_html_and_regex_as_plain_text_and_bounds_options`
+
+UI-01 / QA-04, P1; reviewed 2026-10-15 by Codex. Two definitions / nine cases; 64 combined focused cases passed with search-field, URL/history, listing-contract, CSS-integrity and inline-style checks. Light mobile/dark desktop active-option screenshots inspected; explicit settled action-background/foreground assertions avoid mistaking intermediate CSS-transition colors for final states. No real API/load-performance or screen-reader certification claim.
+
+| Definition | Requirement / meaningful assertions | Setup, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_city_combobox_keyboard_selection_preserves_route_contract` | Active descendant/selected state, ArrowDown/Home/End/Escape/Enter/Tab; focus remains on input; selection updates hidden value and single chip; selected option excluded; search/page/fixed tag retained, tag automatically submits while general list waits. Options have 44px height and fit viewport. | Actual list/tag routes and shared controller, two themes × two widths, isolated API with deterministic empty response. Condition waits, no sleeps. Does not prove live database filtering, all browsers or audible assistive-technology output. | Keep; old pointer-only implementation fails keyboard and ARIA assertions. |
+| `test_city_combobox_treats_html_and_regex_as_plain_text_and_bounds_options` | HTML/regex-looking text is rendered and selected literally, no injected image executes; pointer selection calls chip rendering; options capped at 20 and blur clears them. | Small DOM harness executes shipped controller with synthetic city data and a narrow history callback spy. Not whole-route or database evidence; bounded option DOM is not a whole-process memory guarantee. | Keep; old regex/HTML construction would fail literal-render and injection assertions. |
+
 ## tests/test_public_date_range.py
 
 - [ ] `test_restored_historical_range_can_select_an_earlier_start`

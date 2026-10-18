@@ -198,74 +198,7 @@
       listHistory.submit();
     });
 
-    /* ==================================================================
-     *  CITY AUTOCOMPLETE + PILL SYSTEM
-     * ==================================================================*/
-
-    const cityInput = $("#city_input");
-    const citySuggestions = $("#city_suggestions");
-    const selectedCitiesInput = $("#city");
-
-    /* -------------------------------------------------------------
-     * Helper: Add pill
-     * -----------------------------------------------------------*/
-    function addCityPill() { listHistory.renderCities(); }
-
-    let debounceTimer = null;
-
-    cityInput.on("input", function () {
-      clearTimeout(debounceTimer);
-
-      debounceTimer = setTimeout(() => {
-        const query = cityInput.val().trim().toLowerCase();
-        if (query.length < 2) {
-          citySuggestions.empty().removeClass("show");
-          return;
-        }
-
-        const results = cityList
-          .filter(c => c.toLowerCase().includes(query))
-          .sort((a, b) => a.localeCompare(b));
-
-        citySuggestions.empty();
-
-        results.forEach(city => {
-          const markup = $("<div>")
-            .addClass("suggestion-item")
-            .html(city.replace(new RegExp(query, "i"), match => `<strong>${match}</strong>`));
-
-          markup.on("click", () => {
-            const cleanCity = city.trim();
-            const current = selectedCitiesInput.val()
-              ? selectedCitiesInput.val().split(",")
-              : [];
-
-            if (!current.includes(cleanCity)) {
-              current.push(cleanCity);
-              selectedCitiesInput.val(current.join(","));
-              addCityPill(cleanCity);
-            }
-
-            extraParams.city = current.join(",");
-            citySuggestions.empty().removeClass("show");
-            cityInput.val("");
-
-            listHistory.submit();
-          });
-
-          citySuggestions.append(markup);
-        });
-
-        citySuggestions.addClass("show");
-      }, 120); // debounce
-    });
-
-    /* Close suggestions on outside click */
-    $(document).on("click", e => {
-      if (!citySuggestions.is(e.target) && citySuggestions.has(e.target).length === 0) {
-        citySuggestions.empty().removeClass("show");
-      }
-    });
+    window.publicCityAutocomplete({cities: cityList, onSelect: () => listHistory.submit()});
 
   });
 

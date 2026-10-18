@@ -64,6 +64,12 @@ html.light {
 .public-search-field { position: relative; flex: 1 1 12rem; min-width: 0; }
 .public-search-field .suggestions {
   box-sizing: border-box; inset-inline-start: 0; top: 100%; margin-top: .25rem;
+  max-height: 16rem; overflow-y: auto; color: var(--product-text);
+}
+.public-search-field [role="option"] { box-sizing: border-box; min-height: 44px; }
+.public-search-field [role="option"][aria-selected="true"] {
+  background: var(--product-action-bg); color: var(--product-on-action);
+  outline: 2px solid var(--product-on-action); outline-offset: -4px;
 }
 .public-search-field label {
   display: block; margin-bottom: .5rem; font-weight: 600; color: var(--product-text);

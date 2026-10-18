@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Integration candidate `20bbcfd4` for PRs #929–#940, based on main `739612b2`, 2026-10-18: 157 Python test files; 1,143 definitions; 235 assessed definitions. These are integration-tree counts, not counts for the main baseline. All individual review records are retained and exact AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/user-status-history`, based on merged main `6ef40610`, 2026-10-18: 158 Python test files; 1,153 definitions; 247 assessed definitions. These are branch-tree counts, not counts for the main baseline. All individual review records are retained and exact AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -102,7 +102,9 @@ Evidence: 37 focused admin-status/user/fresh-deletion backend cases passed, foll
 
 ## tests/test_admin_audit_indexes.py
 
-- [ ] `test_audit_collections_index_the_deterministic_pagination_order`
+- [x] `test_audit_collections_index_the_deterministic_pagination_order`
+
+USER-01 / QA-02 review, 2026-10-18, Codex, P2: real disposable MongoDB index metadata proves both audit stores retain timestamp/_id order and admin logs additionally support entity_type/entity_id/timestamp/_id history queries. No mocked create_index; this does not establish production index creation, explain plans or large-dataset latency. Keep; focused run passes.
 
 ## tests/test_admin_case_bp.py
 
@@ -339,7 +341,7 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Disposable MongoDB, seeded real de
 - [ ] `test_specialist_admin_pages_use_canonical_hero_navigation`
 - [ ] `test_super_audit_uses_shared_collection_contract`
 - [ ] `test_campaign_collection_uses_shared_admin_components`
-- [ ] `test_every_full_admin_v2_page_uses_canonical_hero_macro`
+- [x] `test_every_full_admin_v2_page_uses_canonical_hero_macro`
 - [ ] `test_full_admin_pages_use_breadcrumbs_and_standard_back_actions`
 - [ ] `test_dead_admin_template_copies_and_legacy_sync_actions_are_absent`
 - [ ] `test_retired_media_workspace_is_absent`
@@ -359,6 +361,38 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Disposable MongoDB, seeded real de
 - [ ] `test_shipping_admin_styles_use_only_semantic_or_bootstrap_tokens`
 - [ ] `test_admin_v2_does_not_restore_retired_layout_aliases`
 - [ ] `test_demo_suggestion_workflow_uses_shared_admin_components`
+
+USER-01 / QA-03 review follow-up, 2026-10-18, Codex, P2: `test_every_full_admin_v2_page_uses_canonical_hero_macro` is individually assessed. It inventories full admin templates, requires the canonical macro, explicitly includes account confirmation and scoped history, and preserves the structural/localized-confirmation checks. The reviewed count increases from 52 to 53 only for the new full history page; no prior page or assertion is removed. This is source-contract evidence, not visual proof; actual status/history render checks accompany it. Keep; focused run passes.
+
+## tests/test_admin_user_history.py
+
+- [x] `test_admin_bootstrap_is_pinned_and_served_locally`
+- [x] `test_profile_history_records_only_actual_changes_and_no_secrets`
+- [x] `test_user_history_includes_city_grants_and_revocation`
+- [x] `test_creation_and_reset_requirement_have_safe_history`
+- [x] `test_history_adapts_status_logs_and_escapes_values`
+- [x] `test_history_rejects_missing_capability_and_higher_targets`
+- [x] `test_history_pagination_is_scoped_bounded_and_stable`
+- [x] `test_invalid_profile_save_does_not_invent_history`
+- [x] `test_user_history_and_transition_copy_follow_locale`
+- [x] `test_status_and_history_share_readable_responsive_layout`
+
+USER-01 / QA-01–QA-04, P2; individually reviewed 2026-10-18 by Codex. Real local Flask/MongoDB requests and the shipped templates/styles; shared email/network isolation is retained. No permission, persistence or status-token result mocks. Ten definitions cover 20 parameterized cases. The first complete focused run passes 215 cases across history/status/user administration, hierarchy/fresh deletion, city scope, CSS/token/inline and admin contracts. The subsequent password-reset review correction preserves action audits even without a field difference; focused follow-up evidence belongs in the PR. These are branch results, not production or full-suite review.
+
+| Definition | Requirement / assertions | Setup, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_admin_bootstrap_is_pinned_and_served_locally` | Admin shell loads the local existing 5.3.3 stylesheet with exact SHA-256 and MIT notice, not the external CSS URL. | Static provenance guard; hash also independently compared with upstream release. Runtime checks below load it while external requests are blocked. No Bootstrap upgrade or JS-hosting claim. | Keep. |
+| `test_profile_history_records_only_actual_changes_and_no_secrets` | Both edit POST paths record old/new identity, translator role and exact resulting permissions, actor/time, no password/MFA fields; identical repeat writes no profile event. | Two route cases; legacy direct editor retains existing permissions while save_user uses submitted selection. Exact distinct behavior remains protected. Synthetic secret marker is not a real credential. Does not prove concurrent-edit attribution or transactional audit delivery. | Keep. |
+| `test_user_history_includes_city_grants_and_revocation` | Grant records selected city, implied scope permissions and city_admin role; revocation records empty scope and user role. | Actual existing grant synchronization with real MongoDB; does not prove every multi-grant/organization-membership path or cross-collection transaction. | Keep. |
+| `test_creation_and_reset_requirement_have_safe_history` | Creation history omits generated password/hash; reset action records false→true and repeated request still records an unchanged action. | Real create/reset endpoints with isolated mail sink; does not prove SMTP delivery, full credential lifecycle or privacy erasure. | Keep. |
+| `test_history_adapts_status_logs_and_escapes_values` | Existing status audit plus detail diff render together; old/new emails visible, actor HTML escaped, secret fields/request payload/token absent; response is private/no-store. | Real status confirmation and allowlisted legacy-shaped fixture. Explicitly excludes arbitrary audit payloads, not all historical log schemas or external log sinks. | Keep. |
+| `test_history_rejects_missing_capability_and_higher_targets` | Ordinary user and VIEW_USER-only actor denied; EDIT_USER actor cannot inspect higher account; authorized self history works; malformed/missing users 404. | Separate real sessions/roles; server checks apply before history count/query. Not a complete organization-grant/delegation matrix. | Keep with existing privileged-action suite. |
+| `test_history_pagination_is_scoped_bounded_and_stable` | 41 equal-timestamp records produce exact reverse-ID pages of 20/20/1 without duplicates or unrelated target data; excessive page/page-size cannot request extra rows. | Real database sort/count and rendered content. No current-page client filtering, DB offset mock or production load claim. | Keep. |
+| `test_invalid_profile_save_does_not_invent_history` | Invalid email retains old email and creates no change event. | Actual validation route; paired with unchanged-repeat and hierarchy negatives. Not every form validation combination. | Keep. |
+| `test_user_history_and_transition_copy_follow_locale` | FI/EN/SV history title and current/after labels render from shipped catalogs; exact edit-user/cancel runtime labels prevent stale or incorrect navigation copy. | Three real localized session cases and actual GNU catalogs; unrelated runtime entries preserved during targeted compilation. Not complete site localization. | Keep. |
+| `test_status_and_history_share_readable_responsive_layout` | Activation/ban removal and closure use readable states/actions; long identity fields fit, keyboard reaches submit/disclosure, targets ≥44px, action text contrast ≥4.5, no document overflow. | Eight real Chromium cases: two actions × light320/dark390/light1440/dark1440. Actual pinned local Bootstrap and local icon fonts; CSS transition settlement is awaited before measuring/capturing, not a fixed delay. Full-page screenshots inspected. Not every locale/browser, screen reader or all admin surface acceptance. | Keep. |
+
+This history uses the existing audit store and its delivery/retention behavior. It is not an atomic user-state/audit transaction, immutable archive, historical backfill or full cross-source audit/GDPR implementation. Unknown legacy secret fields are filtered at presentation; new snapshots are allowlisted before logging.
 
 ## tests/test_admin_user_bp.py
 

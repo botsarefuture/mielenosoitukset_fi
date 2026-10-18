@@ -32,6 +32,7 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 
 from .utils import get_org_name, mongo, _ADMIN_TEMPLATE_FOLDER
 from .board_compliance import has_board_clearance
+from .user_history import changed_states, history_query, present_history, user_snapshot
 from flask_babel import _
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
@@ -49,7 +50,7 @@ def log_request_info():
     """Check explicit global capability and audit metadata without payloads."""
     permissions = {
         "user_control": "LIST_USERS", "edit_user": "EDIT_USER",
-        "save_user": "EDIT_USER", "account_status": "EDIT_USER",
+        "save_user": "EDIT_USER", "account_status": "EDIT_USER", "user_history": "EDIT_USER",
         "create_user": "CREATE_USER", "delete_user": "DELETE_USER",
         "api_force_password_change": "FORCE_PASSWORD_CHANGE",
         "api_user_login_history": "VIEW_USER",
@@ -73,6 +74,14 @@ def log_request_info():
 
 
 # User control panel with pagination
+@admin_user_bp.after_request
+def protect_user_history_response(response):
+    if request.endpoint in {"admin_user.user_history", "admin_user.account_status"}:
+        response.cache_control.private = True
+        response.cache_control.no_store = True
+    return response
+
+
 @admin_user_bp.route("/")
 @login_required
 @admin_required
@@ -368,6 +377,49 @@ def can_change_account_status(actor, target):
             and compare_user_levels(actor, target))
 
 
+def _history_snapshot(document):
+    return user_snapshot(document, _city_scope_grant_for_user(document["_id"]))
+
+
+def _record_user_change(user_id, before, event="user_details_changed", *, always_record=False):
+    document = mongo.users.find_one({"_id": user_id})
+    if not document:
+        return
+    old_state, new_state = changed_states(before, _history_snapshot(document))
+    if not new_state and not always_record:
+        return
+    log_admin_action_V2({
+        "event": event, "entity_type": "user", "entity_id": str(user_id),
+        "actor_id": str(current_user._id), "old_state": old_state, "new_state": new_state,
+        "state_changed": bool(new_state),
+    }, related_id=user_id)
+
+
+@admin_user_bp.route("/history/<user_id>")
+@login_required
+@admin_required
+@permission_required("EDIT_USER")
+def user_history(user_id):
+    if not ObjectId.is_valid(user_id):
+        abort(404)
+    document = mongo.users.find_one({"_id": ObjectId(user_id)})
+    if not document:
+        abort(404)
+    target = User.from_db(document)
+    _check_user_target(current_user, target, allow_self=True)
+    query = history_query(target._id)
+    total = mongo.admin_logs.count_documents(query)
+    pages = max(1, math.ceil(total / 20))
+    page = min(max(request.args.get("page", 1, type=int) or 1, 1), pages)
+    entries = mongo.admin_logs.find(query).sort([("timestamp", -1), ("_id", -1)]).skip((page - 1) * 20).limit(20)
+    return render_template(
+        "admin_V2/user/history.html", user=target, history=[present_history(entry) for entry in entries],
+        total=total, current_page=page, total_pages=pages,
+        visible_pages=[{"number": number, "url": url_for("admin_user.user_history", user_id=user_id, page=number)}
+                       for number in range(max(1, page - 2), min(pages, page + 2) + 1)],
+    )
+
+
 @admin_user_bp.route("/account_status/<user_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -422,7 +474,7 @@ def account_status(user_id):
         ]
         log_admin_action_V2({
             "event": "user_account_status_changed",
-            "actor_id": str(current_user._id), "entity_type": "user", "entity_id": user_id,
+            "actor_id": str(current_user._id), "entity_type": "user", "entity_id": str(target_id),
             "old_state": snapshot,
             "new_state": {"active": enabled, "banned": False if enabled else snapshot["banned"]},
         }, related_id=target_id)
@@ -439,6 +491,8 @@ def account_status(user_id):
     })
     return render_template(
         "admin_V2/user/account_status.html", user=target, enable=enable, status_token=token,
+        history=[present_history(entry) for entry in mongo.admin_logs.find(history_query(target_id))
+                 .sort([("timestamp", -1), ("_id", -1)]).limit(3)],
     )
 
 
@@ -461,6 +515,7 @@ def edit_user(user_id):
 
     if request.method == "POST":
         # 1️⃣ Nykytila
+        before_snapshot = _history_snapshot(user_doc)
         current = {
             "username":           user.username,
             "displayname":        user.displayname or "",
@@ -571,6 +626,7 @@ def edit_user(user_id):
             city_scope_permissions = request.form.getlist("admin_scope_permissions[city][]")
             _sync_city_scope_grant(user._id, city_scope_keys, city_scope_permissions)
 
+        _record_user_change(user._id, before_snapshot)
         return safe_redirect(request.referrer or url_for("admin_user.user_control"))
 
     # ─── GET → lomake ──────────────────────────────────────────────────────────
@@ -654,6 +710,7 @@ def save_user(user_id):
 
     user = User.from_db(user)
     _check_user_target(current_user, user, allow_self=True)
+    before_snapshot = _history_snapshot(mongo.users.find_one({"_id": user._id}))
 
     # Get form data
     username = normalize_username(request.form.get("username"))
@@ -746,6 +803,13 @@ def save_user(user_id):
         flash_message("Käyttäjänimi tai sähköpostiosoite on jo käytössä.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
+    if _can_manage_scope_grants(current_user):
+        _sync_city_scope_grant(
+            user._id, request.form.getlist("admin_scope_cities[]"),
+            request.form.getlist("admin_scope_permissions[city][]"),
+        )
+    _record_user_change(user._id, before_snapshot)
+
     if forced_identity_change and not identity_change_was_forced:
         email_sender.queue_email(
             template_name="auth/identity_change_required.html",
@@ -758,11 +822,6 @@ def save_user(user_id):
             },
             extra_headers={"reply-to": "tuki@mielenosoitukset.fi"},
         )
-
-    if _can_manage_scope_grants(current_user):
-        city_scope_keys = request.form.getlist("admin_scope_cities[]")
-        city_scope_permissions = request.form.getlist("admin_scope_permissions[city][]")
-        _sync_city_scope_grant(user._id, city_scope_keys, city_scope_permissions)
 
     # Build email summary
     permission_summary_html = "<p>Sinulla on seuraavat oikeudet:</p>"
@@ -1035,6 +1094,8 @@ def create_user():
     if role == "city_admin":
         _sync_city_scope_grant(user._id, city_scope_keys, CITY_ADMIN_PERMISSIONS)
 
+    _record_user_change(user._id, {}, event="user_created")
+
     # Send credentials via email
     email_sender.queue_email(
         template_name="new_user_credentials.html",
@@ -1091,13 +1152,11 @@ def api_force_password_change():
 
     user_ = User.from_db(user)
     _check_user_target(current_user, user_)
+    before_snapshot = _history_snapshot(user)
     
     user_.forced_pwd_reset = True
     user_.save()
-    log_admin_action_V2({
-        "event": "user_password_reset_required", "actor_id": str(current_user.id),
-        "entity_type": "user", "entity_id": str(user_._id),
-    }, related_id=user_._id)
+    _record_user_change(user_._id, before_snapshot, event="user_password_reset_required", always_record=True)
     
     return jsonify({"status": "OK", "message": "Salasanan vaihto pakotettu onnistuneesti."})
 

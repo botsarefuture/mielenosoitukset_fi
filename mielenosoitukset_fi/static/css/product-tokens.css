@@ -19,6 +19,7 @@
   --product-surface: light-dark(#ffffff, #20252d);
   --product-surface-muted: light-dark(#f6f8fb, #292f39);
   --product-border: light-dark(#dce3ec, #424b59);
+  --product-overlay: rgba(0, 0, 0, 0.65);
   --product-text: light-dark(#172033, #f2f5fa);
   --product-text-muted: light-dark(#647083, #b7c0ce);
   --product-success: light-dark(#18794e, #6ee7a8);

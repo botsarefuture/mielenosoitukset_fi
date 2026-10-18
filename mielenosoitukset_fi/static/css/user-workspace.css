@@ -672,6 +672,19 @@ h1 {
   background: var(--product-accent-strong);
 }
 
+.button-neutral {
+  border: 1px solid var(--product-border);
+  background: var(--product-surface);
+  color: var(--product-text);
+  box-shadow: none;
+}
+
+.button-neutral:hover {
+  border-color: var(--product-primary);
+  background: var(--product-surface-muted);
+  color: var(--product-text);
+}
+
 .button:focus {
   outline: 2px solid var(--product-primary);
   outline-offset: 2px;
@@ -2188,6 +2201,68 @@ textarea.user-field__control {
   background: var(--product-surface);
   color: var(--product-text);
   box-shadow: var(--product-shadow);
+}
+
+.user-cropper-modal {
+  box-sizing: border-box;
+  width: min(52rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 0;
+  border-radius: 1.1rem;
+  background: var(--product-surface);
+  color: var(--product-text);
+}
+
+.user-cropper-modal::backdrop {
+  background: var(--product-overlay);
+  backdrop-filter: blur(4px);
+}
+
+.user-cropper-modal .modal-header,
+.user-cropper-modal .modal-body,
+.user-cropper-modal .modal-footer {
+  padding: 1rem;
+}
+
+.user-cropper-modal .modal-title {
+  margin: 0;
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
+}
+
+.user-cropper-modal .modal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.user-cropper-modal .modal-footer .button {
+  min-height: 44px;
+}
+
+.user-cropper-modal #cropperHelp,
+.user-cropper-modal #cropperStatus {
+  color: var(--product-text-muted);
+}
+
+.user-cropper-modal #cropperContainer > img {
+  max-width: 100%;
+}
+
+.user-cropper-modal cropper-canvas {
+  display: block;
+  width: 100%;
+  height: clamp(15rem, 52vw, 28rem);
+  max-height: 48dvh;
+}
+
+.user-cropper-modal cropper-selection:focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: 3px;
 }
 
 .user-modal .modal-header,

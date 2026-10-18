@@ -7,6 +7,11 @@
 - Deployment health verification rejects an explicitly empty Unix-socket path instead of silently falling back to a public request.
 
 - Production deployment now verifies replacement workers directly through Gunicorn's local Unix socket, avoiding Cloudflare challenges on the server-side health check while preserving existing HTTPS health URL overrides. The separate public HTTPS check remains required and reports HTTP failures, including Cloudflare challenges, explicitly.
+- Cancelling or failing a replacement crop restores the last accepted upload and preview together; without an accepted crop, both are cleared instead of submitting an uncommitted original.
+
+- Image crop exports retain source-image resolution across desktop/mobile dialog sizes; zoom-aware output is bounded by the original image dimensions instead of the small on-screen crop area.
+
+- Image cropping now uses a shared theme-safe native dialog with keyboard dismissal/focus return, safe image DOM, visible load/error states and cancellation-safe async apply. Upload names, 16:9 crop behavior and existing hooks are preserved.
 
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 

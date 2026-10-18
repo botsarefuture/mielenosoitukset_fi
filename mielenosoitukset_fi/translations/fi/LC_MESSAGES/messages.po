@@ -13681,3 +13681,11 @@ msgstr "Käyttäjän tiedot"
 # User account status and change history
 msgid "Ei kenttämuutoksia."
 msgstr "Ei kenttämuutoksia."
+
+# User deletion history-delivery feedback
+msgid "Muutoshistorian välitys on kesken. Tämä poistoyritys ei onnistunut. Yritä myöhemmin uudelleen ja vahvista henkilöllisyytesi."
+msgstr "Muutoshistorian välitys on kesken. Tämä poistoyritys ei onnistunut. Yritä myöhemmin uudelleen ja vahvista henkilöllisyytesi."
+
+# User deletion history-delivery feedback
+msgid "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."
+msgstr "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."

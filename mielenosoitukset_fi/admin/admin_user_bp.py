@@ -997,11 +997,15 @@ def delete_user():
     # Never delete the only durable copy of an undelivered history event.
     # The existing fresh per-target step-up guard above remains authoritative.
     if not flush_user_history(mongo, target_user._id):
+        if json_mode:
+            return jsonify({"status": "ERROR", "message": _("Muutoshistorian välitys on kesken. Tämä poistoyritys ei onnistunut. Yritä myöhemmin uudelleen ja vahvista henkilöllisyytesi.")}), 503
         abort(503)
     deleted = mongo.users.delete_one({
         "_id": target_user._id, f"{PENDING_HISTORY}.0": {"$exists": False},
     })
     if deleted.deleted_count != 1:
+        if json_mode:
+            return jsonify({"status": "ERROR", "message": _("Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä.")}), 409
         abort(409)
 
     success_message = "Käyttäjä poistettu onnistuneesti."

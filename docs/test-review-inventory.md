@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/user-status-history`, based on merged main `6ef40610`, 2026-10-18: 159 Python test files; 1,161 definitions; 256 assessed definitions. Independent #942 rollback additions are excluded until integration. These are branch-tree counts, not counts for the main baseline. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/user-status-history`, based on merged main `6ef40610`, 2026-10-18: 159 Python test files; 1,162 definitions; 257 assessed definitions. Independent #942 rollback additions are excluded until integration. These are branch-tree counts, not counts for the main baseline. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -374,8 +374,9 @@ USER-01 / QA-03 review follow-up, 2026-10-18, Codex, P2: `test_every_full_admin_
 - [x] `test_scope_outbox_survives_projection_failure`
 - [x] `test_creation_and_reset_outbox_survive_projection_failure`
 - [x] `test_deletion_cannot_drop_pending_history_or_reuse_fresh_auth`
+- [x] `test_delete_conflict_returns_matching_response_format`
 
-USER-01 review corrections, Codex, P1 data-integrity gate, 2026-10-18. Sixteen cases use real Flask/Mongo persistence; wrappers inject timing or explicit delivery/write failures, not fabricated success. No replica-set transactions or live provider delivery are assumed. Existing #887 tests remain intact.
+USER-01 review corrections, Codex, P1 data-integrity gate, 2026-10-18. Twenty-four cases use real Flask/Mongo persistence; wrappers inject timing or explicit delivery/write failures, not fabricated success. No replica-set transactions or live provider delivery are assumed. Existing #887 tests remain intact. The first complete CI gate passed 1,362 cases /325 skips before the final Minor JSON-envelope fix; its expanded deletion/fresh-auth batch passes 47 cases locally, with the final required CI recorded in the PR.
 
 | Definition | Requirement / assertions | Setup, variants, reliability and limits | Disposition |
 |---|---|---|---|
@@ -386,7 +387,8 @@ USER-01 review corrections, Codex, P1 data-integrity gate, 2026-10-18. Sixteen c
 | `test_full_pending_outbox_rejects_an_unrecordable_change` | Saturated 100-event queue blocks further recorded mutation without dropping events. | Delivery disabled at actual route namespace; real bounded CAS, 409 and unchanged name/queue length. Does not prove document-size limits. | Keep. |
 | `test_scope_outbox_survives_projection_failure` | Grant/revocation retain their exact durable event on the source grant and recover with one ID. | Two real scope transitions; admin projection failure only, then actual authorized recovery. Role changes are independently audited user writes. | Keep. |
 | `test_creation_and_reset_outbox_survive_projection_failure` | Inserted/reset user contains required-reset state and its own safe event despite audit outage. | Create/reset ×2; real request/source write, unavailable projection, then history read and exact event count. Never stores/generated-password proof in history. | Keep. |
-| `test_deletion_cannot_drop_pending_history_or_reuse_fresh_auth` | Failed delivery blocks deletion with pending event intact; consumed proof cannot be reused; fresh reauth allows deletion only after recovery, retaining projected history. | Real password step-up/options/nonce and Mongo, temporary delivery failure, exact 503/403/200 sequence. Existing WebAuthn/concurrency/expiry tests retained; this is not a new deletion policy. | Keep. |
+| `test_deletion_cannot_drop_pending_history_or_reuse_fresh_auth` | Failed delivery blocks deletion with pending event intact; consumed proof cannot be reused; fresh reauth allows deletion only after recovery, retaining projected history. JSON contains ERROR and translated retry/reauth guidance. | Three FI/EN/SV cases, real compiled catalogs/password step-up/options/nonce/Mongo; temporary delivery failure, exact 503/403/200 sequence. Existing WebAuthn/concurrency/expiry tests retained. | Keep. |
+| `test_delete_conflict_returns_matching_response_format` | Competing recorded write blocks actual conditional delete; JSON gets ERROR plus localized reason/reauth guidance while form requests retain HTML409; consumed proof stays unusable. | Six cases: JSON/form × FI/EN/SV; real fresh proof and real Mongo interleaving before the actual conditional delete, not a fabricated deleted_count. Exact surviving name/event ID, 409 format and replay403 asserted. | Keep; covers the independently valid Minor response-format finding. |
 
 ## tests/test_admin_user_history.py
 

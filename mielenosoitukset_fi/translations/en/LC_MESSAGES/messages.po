@@ -13585,3 +13585,11 @@ msgstr "User details"
 # User account status and change history
 msgid "Ei kenttämuutoksia."
 msgstr "No field changes."
+
+# User deletion history-delivery feedback
+msgid "Muutoshistorian välitys on kesken. Tämä poistoyritys ei onnistunut. Yritä myöhemmin uudelleen ja vahvista henkilöllisyytesi."
+msgstr "Change history delivery is pending. This deletion attempt did not succeed. Try again later and verify your identity again."
+
+# User deletion history-delivery feedback
+msgid "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."
+msgstr "The user was changed concurrently. This deletion attempt did not succeed. Verify your identity before trying again."

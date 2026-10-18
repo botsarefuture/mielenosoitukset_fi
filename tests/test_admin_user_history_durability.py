@@ -3,8 +3,10 @@
 from concurrent.futures import ThreadPoolExecutor
 import inspect
 from threading import Barrier
+from datetime import datetime, timezone
 
 import pytest
+from bson import ObjectId
 from pymongo.errors import AutoReconnect, OperationFailure
 
 from tests.conftest import _client_for_user
@@ -216,7 +218,15 @@ def test_creation_and_reset_outbox_survive_projection_failure(admin_client, db, 
     assert db.admin_logs.count_documents({"_id": entry["_id"]}) == 1
 
 
-def test_deletion_cannot_drop_pending_history_or_reuse_fresh_auth(admin_client, db, seeded_data, monkeypatch):
+@pytest.mark.parametrize("locale,expected", [
+    ("fi", "Muutoshistorian välitys on kesken."),
+    ("en", "Change history delivery is pending."),
+    ("sv", "Leveransen av ändringshistoriken väntar."),
+])
+def test_deletion_cannot_drop_pending_history_or_reuse_fresh_auth(app, admin_client, db, seeded_data, monkeypatch, locale, expected):
+    app.config.update(BABEL_PUBLIC_LOCALES=["fi", "en", "sv"])
+    with admin_client.session_transaction() as session:
+        session["locale"] = locale
     target = seeded_data["user_id"]
     original = type(db.users).update_one
 
@@ -242,9 +252,12 @@ def test_deletion_cannot_drop_pending_history_or_reuse_fresh_auth(admin_client, 
         )).status_code == 302
         event = db.users.find_one({"_id": target})["_admin_history_pending"][0]
         token = fresh_proof()
-        assert admin_client.post("/admin/user/delete_user", json={
+        failed = admin_client.post("/admin/user/delete_user", json={
             "user_id": str(target), "fresh_step_up_token": token,
-        }).status_code == 503
+        })
+        assert failed.status_code == 503
+        assert failed.is_json and failed.get_json()["status"] == "ERROR"
+        assert failed.get_json()["message"].startswith(expected)
         assert db.users.find_one({"_id": target})["_admin_history_pending"][0]["_id"] == event["_id"]
     assert admin_client.get(f"/admin/user/history/{target}").status_code == 200
     assert admin_client.post("/admin/user/delete_user", json={
@@ -255,3 +268,50 @@ def test_deletion_cannot_drop_pending_history_or_reuse_fresh_auth(admin_client, 
     }).status_code == 200
     assert db.users.find_one({"_id": target}) is None
     assert db.admin_logs.count_documents({"_id": event["_id"]}) == 1
+
+
+@pytest.mark.parametrize("json_mode", [False, True])
+@pytest.mark.parametrize("locale,expected", [
+    ("fi", "Käyttäjää muutettiin samanaikaisesti."),
+    ("en", "The user was changed concurrently."),
+    ("sv", "Användaren ändrades samtidigt."),
+])
+def test_delete_conflict_returns_matching_response_format(app, admin_client, db, seeded_data, monkeypatch, json_mode, locale, expected):
+    app.config.update(BABEL_PUBLIC_LOCALES=["fi", "en", "sv"])
+    with admin_client.session_transaction() as session:
+        session["locale"] = locale
+    target = seeded_data["user_id"]
+    assert admin_client.post("/users/auth/api/v2/step-up/fresh/options", json={
+        "action": "delete_user", "target_id": str(target),
+    }).status_code == 200
+    proof = admin_client.post("/users/auth/api/v2/step-up/fresh/password", json={
+        "password": "AdminPass1!",
+    })
+    assert proof.status_code == 200
+    token = proof.get_json()["fresh_step_up_token"]
+    original = type(db.users).delete_one
+    event = {"_id": ObjectId(), "event": "user_details_changed", "entity_type": "user",
+             "entity_id": str(target), "actor_id": str(seeded_data["admin_id"]),
+             "actor": {"username": "admin"}, "timestamp": datetime.now(timezone.utc),
+             "old_state": {}, "new_state": {"displayname": "Concurrent change"}}
+
+    def interleave(self, query, *args, **kwargs):
+        if self.name == "users" and query.get("_id") == target:
+            self.update_one({"_id": target}, {"$set": {"displayname": "Concurrent change"},
+                                             "$push": {"_admin_history_pending": event}})
+        return original(self, query, *args, **kwargs)
+
+    monkeypatch.setattr(type(db.users), "delete_one", interleave)
+    payload = {"user_id": str(target), "fresh_step_up_token": token}
+    failed = admin_client.post("/admin/user/delete_user", **({"json": payload} if json_mode else {"data": payload}))
+    assert failed.status_code == 409
+    if json_mode:
+        assert failed.is_json and failed.get_json()["status"] == "ERROR"
+        assert failed.get_json()["message"].startswith(expected)
+    else:
+        assert not failed.is_json
+        assert "text/html" in failed.content_type
+    saved = db.users.find_one({"_id": target})
+    assert saved["displayname"] == "Concurrent change"
+    assert saved["_admin_history_pending"][0]["_id"] == event["_id"]
+    assert admin_client.post("/admin/user/delete_user", json=payload).status_code == 403

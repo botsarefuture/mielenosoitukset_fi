@@ -4,7 +4,7 @@
 
 ## UNRELEASED
 
-- User changes now persist a bounded, credential-free history event atomically with each profile, status or city-grant write; idempotent audit delivery retries preserve original attribution. Stale writes fail safely, and deletion cannot discard pending history or bypass fresh reauthentication.
+- User changes now persist a bounded, credential-free history event atomically with each profile, status or city-grant write; idempotent audit delivery retries preserve original attribution. Stale writes fail safely, and deletion cannot discard pending history or bypass fresh reauthentication. JSON deletion failures retain their status/message envelope with localized retry and reauthentication guidance.
 
 - User account-status confirmation now shows the affected account, current and proposed states, consequences and recent changes in the shared responsive light/dark admin layout. Permission-checked, paginated user history shows recorded status changes and new admin profile, role, permission and city-access changes without retaining credentials or tokens.
 

@@ -13765,3 +13765,11 @@ msgstr "Användaruppgifter"
 # User account status and change history
 msgid "Ei kenttämuutoksia."
 msgstr "Inga fältändringar."
+
+# User deletion history-delivery feedback
+msgid "Muutoshistorian välitys on kesken. Tämä poistoyritys ei onnistunut. Yritä myöhemmin uudelleen ja vahvista henkilöllisyytesi."
+msgstr "Leveransen av ändringshistoriken väntar. Detta raderingsförsök lyckades inte. Försök igen senare och verifiera din identitet på nytt."
+
+# User deletion history-delivery feedback
+msgid "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."
+msgstr "Användaren ändrades samtidigt. Detta raderingsförsök lyckades inte. Verifiera din identitet innan du försöker igen."

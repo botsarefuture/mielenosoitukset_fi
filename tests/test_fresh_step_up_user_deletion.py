@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
-from threading import Barrier
+from threading import Barrier, BrokenBarrierError
 
 import pytest
 from bson import ObjectId
@@ -549,7 +549,17 @@ def test_parallel_fresh_deletion_token_has_one_winner(wapp, db, seeded_data, mon
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         pending = [executor.submit(submit, client) for client in clients]
-        results = [future.result(timeout=10) for future in pending]
+        results = []
+        errors = []
+        for future in pending:
+            try:
+                results.append(future.result(timeout=10))
+            except Exception as error:
+                errors.append(error)
+    if errors:
+        # A peer timing out at the barrier must not hide the original failure.
+        original_errors = [error for error in errors if not isinstance(error, BrokenBarrierError)]
+        raise (original_errors or errors)[0]
     assert sorted(status for status, _ in results) == [200, 403]
     assert next(body for status, body in results if status == 200)['status'] == 'OK'
     assert next(body for status, body in results if status == 403)['error'] == 'fresh_step_up_required'

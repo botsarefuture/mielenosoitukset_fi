@@ -44,6 +44,7 @@ def test_login_keeps_normal_internal_page_redirect(client, seeded_data, target):
     '/api/notifications/?page=1', '/users/auth/api/v2/step-up/status',
     '/users/auth/./login', '/ignored/../users/auth/login?popup=1',
     '/users/auth/%2e/login', '/ignored/../api/notifications/', '/api%2fnotifications/',
+    '/%2fapi/notifications/', '/%2fusers/auth/login', '/%2f%2fapi/notifications/',
 ])
 @pytest.mark.parametrize('popup', [False, True])
 def test_login_rejects_unsafe_or_non_page_return_targets(client, seeded_data, target, popup):

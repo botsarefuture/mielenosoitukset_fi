@@ -4,7 +4,7 @@
 
 ## UNRELEASED
 
-- Login completion now safely serializes popup return targets and rejects ambiguous, control-character, API and login-loop destinations while preserving valid internal URLs.
+- Login completion now safely serializes popup return targets and rejects ambiguous, control-character, API and login-loop destinations, including encoded leading slashes, while preserving valid internal URLs.
 
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 

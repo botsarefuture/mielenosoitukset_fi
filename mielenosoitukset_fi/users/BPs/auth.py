@@ -863,7 +863,10 @@ def _normalize_post_login_target(target: str | None) -> str:
 
     # Compare effective paths, not queries/fragments or encoded dot/slash
     # spelling, while retaining the original valid URL for the redirect.
-    path = posixpath.normpath(unquote(parsed.path))
+    decoded_path = unquote(parsed.path)
+    if decoded_path.startswith("//"):
+        return url_for("index")
+    path = posixpath.normpath(decoded_path)
     if path == url_for("users.auth.login").rstrip("/"):
         return url_for("index")
 

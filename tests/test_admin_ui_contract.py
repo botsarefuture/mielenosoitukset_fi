@@ -1077,10 +1077,11 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
         assert "import admin_page_hero" in source, str(template)
         assert "admin_page_hero(" in source, str(template)
 
-    # The reviewed account-status confirmation adds one full-page template
+    # Account-status confirmation and scoped user history add two full pages
     # to the 51-page baseline after the media workspace was retired.
     assert Path('mielenosoitukset_fi/templates/admin_V2/user/account_status.html') in pages
-    assert len(pages) == 52
+    assert Path('mielenosoitukset_fi/templates/admin_V2/user/history.html') in pages
+    assert len(pages) == 53
     for locale in ("en", "fi", "sv"):
         catalog = Path(
             f"mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.po"

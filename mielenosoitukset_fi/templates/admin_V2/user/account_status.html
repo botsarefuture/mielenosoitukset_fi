@@ -1,26 +1,57 @@
 {% extends 'admin_base.html' %}
 {% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/user/_history.html' import user_identity, change_history %}
 {% block main_content %}
-<div class="admin-page">
-  {{ admin_page_hero(
+<div class="admin-page admin-stack">
+  {% call admin_page_hero(
     _('Käyttäjän käyttötila'), _('Vahvista kirjautumisoikeuden muutos.'), _('Käyttäjähallinta'),
-    [(_('Käyttäjät'), url_for('admin_user.user_control')), (_('Käyttötila'), none)],
-    back_url=url_for('admin_user.user_control'), back_label=_('Käyttäjät')
-  ) }}
-  <form method="post" class="admin-form">
-    <input type="hidden" name="status_token" value="{{ status_token }}">
-    <section class="admin-form-section">
-      <div class="admin-form-section__header"><h2>{{ user.displayname or user.username }}</h2><p>@{{ user.username }}</p></div>
-      {% if enable %}
-        <p>{{ _('Aktivointi sallii kirjautumisen ja poistaa mahdollisen käyttöeston. Rooli ja käyttöoikeudet säilyvät ennallaan.') }}</p>
-      {% else %}
-        <p>{{ _('Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta.') }}</p>
-      {% endif %}
-    </section>
-    <div class="admin-sticky-actions">
-      <a class="btn btn-outline-secondary" href="{{ url_for('admin_user.user_control') }}">{{ _('Peruuta') }}</a>
-      <button class="btn {{ 'btn-primary' if enable else 'btn-danger' }}" type="submit">{{ _('Aktivoi käyttäjä') if enable else _('Sulje käyttäjätili') }}</button>
-    </div>
-  </form>
+    [(_('Käyttäjät'), url_for('admin_user.user_control')), (user.displayname or user.username, url_for('admin_user.edit_user', user_id=user.id)), (_('Käyttötila'), none)],
+    back_url=url_for('admin_user.edit_user', user_id=user.id), back_label=_('Muokkaa käyttäjää')
+  ) %}
+    <a class="admin-page-hero__action" href="{{ url_for('admin_user.user_history', user_id=user.id) }}"><i class="fas fa-history" aria-hidden="true"></i>{{ _('Muutoshistoria') }}</a>
+  {% endcall %}
+
+  {{ user_identity(user) }}
+  <div class="admin-detail-layout">
+    <form method="post" class="admin-form">
+      <input type="hidden" name="status_token" value="{{ status_token }}">
+      <section class="admin-form-section" aria-labelledby="status-action-title">
+        <header class="admin-form-section__header">
+          <span class="admin-form-section__icon"><i class="fas {{ 'fa-unlock' if enable else 'fa-user-lock' }}" aria-hidden="true"></i></span>
+          <div><h2 id="status-action-title">{{ _('Aktivoi käyttäjä') if enable else _('Sulje käyttäjätili') }}</h2><p>{{ _('Tarkista muutos ennen vahvistamista.') }}</p></div>
+        </header>
+        <div class="admin-form-section__body">
+          <div class="admin-state-transition" aria-label="{{ _('Käyttötilan muutos') }}">
+            <div><p class="admin-state-transition__label">{{ _('Nykyinen tila') }}</p>
+              <span class="admin-status-badge {{ 'admin-status-badge--danger' if user.banned else ('admin-status-badge--success' if user.active else 'admin-status-badge--warning') }}">{{ pgettext('account-status', 'Estetty') if user.banned else (pgettext('account-status', 'Aktiivinen') if user.active else pgettext('account-status', 'Suljettu')) }}</span>
+            </div>
+            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            <div><p class="admin-state-transition__label">{{ _('Muutoksen jälkeen') }}</p>
+              <span class="admin-status-badge {{ 'admin-status-badge--success' if enable else 'admin-status-badge--warning' }}">{{ pgettext('account-status', 'Aktiivinen') if enable else pgettext('account-status', 'Suljettu') }}</span>
+            </div>
+          </div>
+          <div class="admin-action-explanation">
+            <h3>{{ _('Mitä muuttuu?') }}</h3>
+            <p>{% if enable %}{{ _('Aktivointi sallii kirjautumisen ja poistaa mahdollisen käyttöeston. Rooli ja käyttöoikeudet säilyvät ennallaan.') }}{% else %}{{ _('Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta.') }}{% endif %}</p>
+            <p class="admin-profile-copy--muted">{{ _('Muutos kirjataan käyttäjän historiaan tekijän ja ajankohdan kanssa.') }}</p>
+          </div>
+        </div>
+      </section>
+      <div class="admin-sticky-actions">
+        <div class="admin-sticky-actions__copy"><span>{{ _('Kohde') }}</span><strong>@{{ user.username }}</strong></div>
+        <a class="btn btn-outline-secondary" href="{{ url_for('admin_user.edit_user', user_id=user.id) }}">{{ _('Peruuta') }}</a>
+        <button class="btn {{ 'btn-primary' if enable else 'btn-danger' }}" type="submit">{{ _('Aktivoi käyttäjä') if enable else _('Sulje käyttäjätili') }}</button>
+      </div>
+    </form>
+    <aside class="admin-stack" aria-label="{{ _('Käyttäjän tiedot') }}">
+      <section class="admin-section-card" aria-labelledby="recent-changes-title">
+        <header class="admin-section-card__header"><div class="admin-section-card__title"><h2 id="recent-changes-title">{{ _('Viimeisimmät muutokset') }}</h2></div></header>
+        <div class="admin-section-card__body">
+          {{ change_history(history, compact=true) }}
+          <a class="btn btn-outline-secondary" href="{{ url_for('admin_user.user_history', user_id=user.id) }}">{{ _('Näytä koko muutoshistoria') }}</a>
+        </div>
+      </section>
+    </aside>
+  </div>
 </div>
 {% endblock %}

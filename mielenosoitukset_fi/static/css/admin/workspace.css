@@ -810,6 +810,59 @@ body {
   gap: 1rem;
 }
 
+/* Shared identity, state-transition and change-history primitives. */
+.admin-identity {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  overflow-wrap: anywhere;
+}
+.admin-identity__avatar {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  background: var(--admin-workspace-blue-soft);
+  color: var(--admin-workspace-blue-dark);
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+.admin-identity h2 { margin: 0 0 .2rem; font-size: 1.05rem; }
+.admin-identity p { margin: .15rem 0; color: var(--admin-workspace-muted); font-size: .85rem; }
+.admin-state-transition {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 1.1rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .85rem;
+  background: var(--admin-workspace-surface-muted);
+}
+.admin-state-transition__label { margin: 0 0 .6rem; color: var(--admin-workspace-muted); font-size: .8rem; font-weight: 650; }
+.admin-state-transition .admin-status-badge { font-size: .85rem; padding: .45rem .7rem; }
+.admin-action-explanation h3 { margin: .4rem 0 .75rem; font-size: 1rem; }
+.admin-action-explanation p { line-height: 1.65; }
+.admin-change-history { list-style: none; margin: 0 0 1rem; padding: 0; }
+.admin-change-history__entry { min-width: 0; padding: 1rem 0 1rem 1rem; border-inline-start: 2px solid var(--admin-workspace-border); overflow-wrap: anywhere; }
+.admin-change-history__entry + .admin-change-history__entry { border-top: 1px solid var(--admin-workspace-border); }
+.admin-change-history__meta { display: flex; flex-wrap: wrap; gap: .35rem 1rem; margin-bottom: .5rem; color: var(--admin-workspace-muted); font-size: .8rem; }
+.admin-change-history__entry h3 { margin: 0; font-size: .9rem; }
+.admin-change-history summary { padding-block: .5rem; font-weight: 750; cursor: pointer; }
+.admin-change-history summary:focus-visible { outline: 3px solid var(--admin-workspace-blue); outline-offset: 3px; border-radius: .25rem; }
+.admin-change-diff { margin: .6rem 0 0; }
+.admin-change-diff > div { padding: .8rem; border: 1px solid var(--admin-workspace-border); border-radius: .7rem; margin-top: .5rem; }
+.admin-change-diff dt { font-size: .85rem; margin-bottom: .6rem; }
+.admin-change-diff dd { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 0; white-space: pre-wrap; }
+.admin-change-diff small { display: block; color: var(--admin-workspace-muted); margin-bottom: .3rem; }
+@media (max-width: 575px) {
+  .admin-state-transition { gap: .6rem; padding: .8rem; }
+  .admin-state-transition .admin-status-badge { font-size: .75rem; padding: .35rem .5rem; }
+  .admin-change-diff dd { grid-template-columns: minmax(0, 1fr); }
+}
+
 .admin-section-card {
   min-width: 0;
   border: 1px solid var(--admin-workspace-border);
@@ -1812,9 +1865,14 @@ main.flex-grow-1 :is(.alert, .badge) {
 }
 
 .admin-sticky-actions :is(button, .btn) {
-  min-height: 2.7rem;
+  min-height: 2.75rem;
   border-radius: .7rem;
   font-weight: 750;
+}
+
+.admin-sticky-actions__copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .admin-sticky-actions__copy :is(strong, span) {
@@ -2973,6 +3031,25 @@ a.admin-workspace-summary-card[aria-current="page"] {
 .admin-workspace :is(.form-control, .form-select):focus {
   border-color: var(--admin-workspace-blue);
   box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .12));
+}
+
+main.flex-grow-1 .btn-outline-secondary,
+.modal .btn-outline-secondary {
+  --bs-btn-color: var(--admin-workspace-text);
+  --bs-btn-border-color: var(--admin-workspace-border);
+  --bs-btn-hover-color: var(--admin-workspace-text);
+  --bs-btn-hover-bg: var(--admin-workspace-surface-muted);
+  --bs-btn-hover-border-color: var(--admin-workspace-muted);
+  --bs-btn-active-color: var(--admin-workspace-text);
+  --bs-btn-active-bg: var(--admin-workspace-surface-muted);
+  --bs-btn-active-border-color: var(--admin-workspace-muted);
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+}
+main.flex-grow-1 .btn-outline-secondary:focus-visible,
+.modal .btn-outline-secondary:focus-visible {
+  outline: 3px solid var(--admin-workspace-blue);
+  outline-offset: 3px;
 }
 
 main.flex-grow-1 .btn-primary,

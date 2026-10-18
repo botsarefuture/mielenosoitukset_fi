@@ -23,7 +23,7 @@
 
 - Login completion now safely serializes popup return targets and rejects ambiguous, control-character, API and login-loop destinations, including encoded leading slashes, while preserving valid internal URLs.
 
-- Edit-link regression coverage now verifies allowed lifetimes across GET/POST, revocation scope, CSRF rejection, registry/signature binding and anonymous approval immutability; production token policy is unchanged.
+- Edit-link regression coverage now verifies allowed durations and registry expiry metadata, expiry enforcement on GET/POST, revocation scope, CSRF rejection, registry/signature binding and anonymous approval immutability; production token policy is unchanged.
 
 - Shared public heroes keep small-screen headings and actions within their content area; organization identity layouts now shrink and wrap without fixed-width clipping. Removed a legacy mobile heading reset that defeated component typography.
 

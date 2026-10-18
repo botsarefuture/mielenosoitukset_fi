@@ -179,7 +179,7 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | SEC-01 | P1 | Merged | Codex | M1 | #901 in inspected main `3c2c8d3c`; release acceptance not established here. |
 | QA-01 | P1 | In progress | Codex | M1, then ongoing | Thirty-seven MFA/account/passkey/organization-action definitions reviewed in the combined inventory; remaining authentication/permission tests pending. |
 | QA-01e | P1 | In review | Codex | M1/M6 | Six decision-service definitions assessed; 12 decision/edit-link/anonymous cases pass and test-process string-case lookup mutation is detected. Parallel/opposite decisions and provider acceptance/crash windows remain open acceptance gaps. |
-| SEC-02 | P1 | In review | Codex | M1 | #915 merged; #916 integrated into #919 with shared status-action visibility and synchronized duplicate-submit coverage. #763 integration/release acceptance remains pending. |
+| SEC-02 | P1 | Merged | Codex | M1 | #915/#916/#919 are merged; #763 is closed. Shared status-action visibility, hierarchy checks and duplicate-submit protection are integrated. Runtime translation follow-up #931 and broader release acceptance remain open; merge and issue closure do not establish production acceptance. |
 | SEC-03 | P0/P1 | In review | Codex | M1 | #918/#917 merged; #919 combines user hierarchy/delegation, global clearance gates and searchable redacted audits with #916. Remaining role/audit acceptance is pending. |
 | QA-02 | P1 | In progress | Codex | M2–M3 | Five API, five request-state, five listing-contract and three URL/history definitions reviewed on this stack. Remaining data/workflow tests pending. |
 | QA-03, QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI and operations/remaining tests. |

@@ -29,6 +29,14 @@
 
 - Public footers now include padding inside their page width, and long demonstration-card titles, addresses and tags wrap without clipping on narrow screens.
 
+- Reject approval changes through generic MCP content patches; moderation stays in its canonical permission-checked workflow without partially applying mixed patches.
+
+- Content edits and model normalization retain server-owned moderation metadata, rejection state and explicit editor grants instead of erasing them with a full-document replacement.
+
+- Concurrent moderation decisions no longer let an older request overwrite a newer case outcome; returned decision data and audit history retain each transition's own state.
+
+- Strengthened moderation regression coverage for linked-case closure, token replay, bulk retries and notification failure recovery; approval policy and production behavior are unchanged.
+
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.

@@ -622,7 +622,7 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 - [ ] `test_city_scoped_admin_dashboard_only_lists_assigned_cities`
 - [ ] `test_city_scoped_admin_suggestions_hide_other_city_rows_and_counts`
 - [ ] `test_city_scoped_admin_audit_timeline_hides_other_city_rows_and_counts`
-- [ ] `test_explicit_object_id_editor_can_open_scoped_audit_views`
+- [x] `test_explicit_object_id_editor_can_open_scoped_audit_views`
 - [ ] `test_string_organization_id_is_included_in_scoped_audit_query`
 - [ ] `test_city_scoped_admin_suggestions_show_empty_state_outside_scope`
 - [ ] `test_city_scoped_admin_dashboard_shows_accept_action_for_scoped_demo`
@@ -638,6 +638,12 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 - [ ] `test_city_admin_can_invite_to_unverified_organization`
 - [ ] `test_city_admin_dashboard_redirects_to_scoped_demo_view`
 - [ ] `test_edit_user_revokes_object_id_backed_city_scope_grant`
+
+SEC-04b / QA-01 supporting review, 2026-10-16, Codex, P1; only `test_explicit_object_id_editor_can_open_scoped_audit_views` is assessed in this file. Its prior final 403 assertion relied on earlier GET normalization replacing the document and erasing the explicit editor grant. Existing `has_demo_permission` explicitly grants editors access; no production permission rule is changed to make this test pass.
+
+| Definition | Requirement / assertions | Setup, coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_explicit_object_id_editor_can_open_scoped_audit_views` | ObjectId-backed explicit editor can read its scoped audit timeline/detail/command center and still open the editor afterward; persisted editor ID survives those reads. The positive command-center link is a wiring observation, not proof of complete action visibility parity. | Real local user/membership/demo records and authenticated Flask session; no authorization mocks. One explicit-editor/VIEW_DEMO membership scenario, not a full role matrix or proof that all fields remain unchanged. Observed template/server edit-action parity remains a separate UI-affordance gap. | Corrected 403 to 200 based on existing server contract and added persisted-grant assertion. Removed the old negative edit-link assertion rather than making the UI's missing authorized action a required contract; keep. |
 
 ## tests/test_config.py
 
@@ -684,14 +690,44 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 - [ ] `test_demo_card_labels_have_english_and_swedish_translations`
 - [ ] `test_demo_list_renders_shared_card_contract_for_active_locale`
 
+## tests/test_demo_decision_ordering.py
+
+- [x] `test_later_opposite_decision_preserves_case_and_history_consistency`
+- [x] `test_current_decision_retries_case_compare_and_set_after_an_older_writer`
+- [x] `test_overlapping_same_decision_keeps_one_history_and_notification`
+- [x] `test_unchanged_request_retries_the_actual_newer_decision_notification`
+
+SEC-04a / QA-01, P1; individually assessed 2026-10-15 by Codex, stacked on #938. Real domain service, local MongoDB and separate thread-local Flask app contexts; no mocked transition or case write outcomes. Collection/service wrappers add Event synchronization only, with ten-second failure guards and finally release; no sleep-based ordering. Captured enqueue is the external boundary. These tests bypass route permissions/CSRF and do not establish live multi-process operation, notification delivery order or provider acceptance/crash safety.
+
+| Definition | Requirement / assertions | Cases, coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_later_opposite_decision_preserves_case_and_history_consistency` | Later persisted decision owns final demo/case identity/outcome. Each changed result and exactly one persisted history retain their own state/identity, not a later read. | Six cases: both decision directions paused after real atomic transition, before case projection or immediately before actual conditional case write. First four baseline cases fail with contradictory case outcome. Does not enumerate every interleaving, all cases or later unrelated edits/deletions. | New real regression; keep. Removing only case CAS in a test process makes both narrow-window cases fail at final outcome. |
+| `test_current_decision_retries_case_compare_and_set_after_an_older_writer` | Newer decision loses first case CAS, re-reads and succeeds on second write; final case matches newer demo and both case history entries appear once in actual write order. | Two directions; both writers pause at their real update boundary, older writer released first. Exact two newer update attempts proves retry branch exercised. No forced perpetual-contention or database interruption coverage. | New retry-path regression; keep. |
+| `test_overlapping_same_decision_keeps_one_history_and_notification` | One changed/one unchanged result share decision ID, one captured email/notification record/history/decision audit, one case decision entry and canonical outcome. | Two decisions; first paused after transition while second reconciles. Real Mongo unique notification claim. Does not prove crash recovery between transition/notify flag or enqueue/provider acceptance. | New overlapping idempotency regression; keep alongside sequential #938 tests. |
+| `test_unchanged_request_retries_the_actual_newer_decision_notification` | A no-op request paused before rereading a newer opposite decision retries the newer failed notification type, not its own superseded requested status; result and case share actual persisted identity/state. | Two directions with a real conditional no-op, intervening transition and deterministic pre-enqueue failure. Real registry claim removal/unique insert; captured email boundary. Does not certify provider failure-after-acceptance handling. | New mixed-status retry regression; removing current-status adoption makes both cases fail on notification type. |
+
+Combined focused decision/edit-link/anonymous run passes 24 cases, including twelve new interleaving cases; test-only mutations dropping the case write precondition and current-status adoption detect stale overwrite/wrong notification type in both directions. Subsequent normal 24-case run passes, Python compilation/diff checks pass, and final five-file CodeRabbit review completed with zero findings (later status/evidence text updates excluded). Black is unavailable; no formatter-run claim. No transaction, lock service, new persisted fields or clock-based ordering is introduced. Case compare-and-set retries are bounded at eight; exhaustion raises a retriable failure rather than claiming successful reconciliation. Exhaustion/DB-crash recovery, external email ordering, same-demo ordinary edit/rollback metadata preservation and route-level conflict messaging remain separate SEC-04 evidence gaps, not completed acceptance.
+
 ## tests/test_demo_decision_service.py
 
-- [ ] `test_legacy_approval_is_idempotent_and_reconciles_all_side_effects`
-- [ ] `test_token_rejection_consumes_used_token_and_revokes_siblings`
-- [ ] `test_form_approval_uses_canonical_decision_service`
-- [ ] `test_admin_api_rejection_is_idempotent`
-- [ ] `test_notification_delivery_can_retry_without_repeating_decision_effects`
-- [ ] `test_bulk_decision_uses_same_service_and_reports_each_result`
+- [x] `test_legacy_approval_is_idempotent_and_reconciles_all_side_effects`
+- [x] `test_token_rejection_consumes_used_token_and_revokes_siblings`
+- [x] `test_form_approval_uses_canonical_decision_service`
+- [x] `test_admin_api_rejection_is_idempotent`
+- [x] `test_notification_delivery_can_retry_without_repeating_decision_effects`
+- [x] `test_bulk_decision_uses_same_service_and_reports_each_result`
+
+QA-01e / SEC-04, P1; six definitions individually assessed 2026-10-15 by Codex on main 9098c02a. Real local Flask clients, signed seeded tokens, actual Mongo conditional writes and persisted cases/history/audit. Only email enqueue is captured or made to raise; this is not SMTP/worker delivery evidence. Existing dual-import email aliases are patched explicitly. Fixture-admin sessions bypass primary login; role/CSRF negatives, token expiry/IP/concurrency and privacy redaction are not established by these tests. All 12 combined decision/edit-link/anonymous cases pass; diff check and exact AST membership pass. CodeRabbit completed the four changed-file review with zero findings (later roadmap/status reconciliation excluded from that snapshot). #674 is already closed; this review does not reopen its old route-duplication report or certify crash/concurrent-decision acceptance.
+
+| Definition | Requirement / meaningful assertions | Fixture, coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_legacy_approval_is_idempotent_and_reconciles_all_side_effects` | Legacy approve then API approve preserve decision identity/source, one notification/history/decision audit, canonical booleans, exact public URL, all four token families revoked. Two linked cases with ObjectId/string IDs close once with matching actor/source/time; unrelated case remains byte-for-field equal. | Actual DB and route adapters; inserted control cases prevent one-case/vacuous isolation coverage. No opposite-decision race, missing submitter or partial crash. | Strengthened; keep. Test-process mutation removing string-ID lookup fails the new closed assertion. |
+| `test_token_rejection_consumes_used_token_and_revokes_siblings` | Rejection sets canonical state, consumes chosen token, revokes nonempty preview/approve sibling set, sends one email and writes one history/audit. Replay renders existing friendly used-link page, preserves used timestamp/decision and sends nothing again. | Real signature/registry/route; HTTP 200 is intentional friendly replay policy, not fresh success. Seed has no edit sibling; four-family terminal revocation is checked in legacy-approval test. Not token race/IP/expiry proof. | Strengthened replay and non-vacuous policy assertions; keep. |
+| `test_form_approval_uses_canonical_decision_service` | Form sets canonical booleans/source and linked case outcome/closed decision identity, one email/history/audit. | Real authenticated save with minimal valid data; not field/UI/browser or forged approval authority proof (separate tests). Only approval, not all form transitions. | Strengthened side-effect assertions; keep. |
+| `test_admin_api_rejection_is_idempotent` | Two API denials yield changed then unchanged, stable decision metadata, canonical rejected state, closed rejected case, single email/history/decision audit. | Same sequential client, real DB, captured enqueue; does not establish simultaneous requests or opposite decisions. | Strengthened identity/state/audit assertions; keep. |
+| `test_notification_delivery_can_retry_without_repeating_decision_effects` | Enqueue failure returns 500 after canonical approval, removes delivery claim; alternate-entrypoint retry keeps decision ID and queues identical content once with queued_at. Third call does not enqueue or alter case/history/audit. | Deterministic queue exception before enqueue succeeds, no timing sleep. Cannot prove crash after external acceptance/before queued_at, or actual provider exactly-once delivery. | Strengthened intermediate and final state assertions; keep; delivery crash window remains explicit. |
+| `test_bulk_decision_uses_same_service_and_reports_each_result` | Duplicate selected ID collapses to one changed result, malformed ID has own exact status, retry reports unchanged with zero changes and one total email/history/audit. | Real bulk route and seeded session CSRF; authorized happy path only, no forbidden/not-found/limit/CSRF negative matrix. | Strengthened deduplication/retry assertions; keep with remaining boundary coverage tracked. |
+
 
 ## tests/test_demo_edit_link_lifecycle.py
 
@@ -718,6 +754,24 @@ QA-01d / SEC-04, P1, individually reviewed 2026-10-15 by Codex, based on main 90
 | `test_revoke_all_edit_links_is_demo_scoped_and_blocks_existing_sessions` | Two target-demo links and existing edit session become unusable; another demo's link remains valid; non-edit registry actions retain revoked state; denied POST leaves title unchanged. | Real registry/generation/revoke-all endpoints and separate anonymous clients. Not a distributed revoke-vs-save race or case/notification decision-policy audit. | New scoped bulk regression; keep. |
 | `test_edit_link_requires_matching_signature_and_registry_before_get_or_post` | Tampering, missing registry, wrong registry action or demo each reject GET and valid-CSRF POST before changing original target. | Four scenarios with initially valid bearer/session; registry mutations prepare corrupt state, not mocked resolver results. Does not cover every itsdangerous serialization/version/corrupt-payload case. | New binding negatives; keep. |
 | `test_recurring_editor_does_not_offer_regular_demo_edit_links` | Recurring form omits regular edit-link controls while duplicate action remains. | Real rendered admin route, existing UI IDs. This is visibility evidence, not backend permission denial for every recurring payload. | Keep with narrow claim. |
+
+## tests/test_demo_moderation_preservation.py
+
+- [x] `test_mcp_content_patch_cannot_change_moderation`
+- [x] `test_model_content_save_preserves_moderation_state`
+- [x] `test_model_creation_still_inserts_complete_content`
+- [x] `test_form_content_edit_keeps_approval_identity_and_case_history`
+
+SEC-04b / QA-01, P1; individually assessed 2026-10-16 by Codex, stacked on #939. Real Flask/Mongo/model normalization and canonical approval API; only enqueue is captured through the established dual-alias helper from #938. Three initial cases reproduced erased decision metadata and a new decision identity after an ordinary form edit. Existing-document save now sets modeled fields instead of replacing the document; unknown server-owned fields remain the owning workflow's responsibility and must be explicitly unset when retired. New-document insertion is unchanged.
+
+| Definition | Requirement / assertions | Cases, setup and reliability limits | Disposition |
+|---|---|---|---|
+| `test_mcp_content_patch_cannot_change_moderation` | Generic MCP approval patches fail before content writes; exact demo/case snapshots and one notification remain unchanged. | Four real HTTP cases: approved/rejected initial decisions × true/false patch, including a title change to detect partial application. Snapshot follows MCP app initialization so migrations are not confused with request writes. Enqueue captured, not SMTP delivery. | Reviewed 2026-10-18; keep. |
+| `test_model_content_save_preserves_moderation_state` | After canonical approve/deny, normalization plus title edit/explicit description clearing keeps exact decision metadata and canonical booleans. Repeating the same decision reports unchanged and leaves one captured email. | Two status variants, actual constructor/save (including normalization-triggered saves), real stored decision/notification. Captured enqueue is not external delivery evidence. No concurrent stale-content/approval edit claim. | New regression; keep. |
+| `test_model_creation_still_inserts_complete_content` | A new content model still persists its ID/title/city/pending approval without invented moderation metadata. | Explicit app/database fixtures; constructor may auto-save normalized time before explicit save, so this checks ordinary creation lifecycle rather than isolating one call/insert count. | New insertion-path regression; keep. |
+| `test_form_content_edit_keeps_approval_identity_and_case_history` | Real approved-demo form save changes the title while retaining exact decision metadata and complete linked case document; no second notification. | Authenticated fixture admin with valid minimal form data; not browser rendering, primary login, unauthorized checkbox/CSRF or rejection-form transition coverage. | New route regression; keep alongside existing scoped negatives. |
+
+The combined moderation/translation/organizer/city-scope run passes 57 cases after correcting the separately assessed destructive-read-dependent editor assertion. Creation also passes alone with explicit app/database fixtures. Python compilation, diff and exact AST membership checks pass. CodeRabbit completed the four implementation/test/initial-plan file review with zero findings; a follow-up covering both finalized test files also completed with zero findings. Later inventory/status text is not part of those review snapshots. Broad replacement behavior previously removed fields the model never serialized, including rejected/moderation/editor data. This correction does not change permission predicates, #887, payloads or CSS. Historical rollback authorization, ordinary stale-content writes racing a newer decision, and full server-owned-field lifecycle/retention audits remain explicit SEC-04 gaps.
 
 ## tests/test_demo_suggestion_public.py
 
@@ -1562,9 +1616,12 @@ UI-01 / QA-04, 2026-10-12, Codex, P1, stacked on #922. Actual shared macro and c
 - [ ] `test_toolbar_renders_organization_management_links`
 - [ ] `test_toolbar_is_omitted_when_role_has_no_contextual_actions`
 - [ ] `test_organization_admin_with_regular_user_role_gets_scoped_toolbox`
-- [ ] `test_organization_scope_does_not_leak_to_unrelated_demonstration`
+- [x] `test_organization_scope_does_not_leak_to_unrelated_demonstration`
+- [x] `test_explicit_editor_keeps_contextual_toolbox_after_content_normalization`
 - [ ] `test_toolbar_is_omitted_without_demo_or_organization_context`
 - [ ] `test_toolbar_fits_public_detail_in_both_themes`
+
+Review follow-up, 2026-10-18: the unrelated-organization negative explicitly clears the fixture's separate editor grant before a real public GET; absence of the toolbox proves membership alone does not leak actions. The new positive keeps the explicit editor grant and asserts both toolbox presence and exact persisted editors after GET normalization. These are authorization-context regressions, not browser layout or primary authentication evidence. Permission predicates and reauthentication are unchanged. All 33 focused moderation-preservation, MCP and non-browser toolbar cases pass locally; full CI remains the integration gate.
 
 ## tests/test_recurrence_dates.py
 

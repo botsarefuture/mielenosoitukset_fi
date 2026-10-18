@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Integration of PRs #929–#940 onto main `739612b2`, 2026-10-18: 157 Python test files; 1,141 definitions; 233 assessed definitions. All individual review records are retained and exact AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review or release evidence.
+Integration candidate `20bbcfd4` for PRs #929–#940, based on main `739612b2`, 2026-10-18: 157 Python test files; 1,143 definitions; 235 assessed definitions. These are integration-tree counts, not counts for the main baseline. All individual review records are retained and exact AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 

@@ -15,6 +15,8 @@
 
 - Public list and tag city suggestions share keyboard navigation, announced active options and text-safe rendering; selection retains existing filters and tag auto-search behavior.
 
+- Compiled FI/EN/SV account-status translations now include confirmation headings, action labels, explanations and success feedback, avoiding mixed-language admin controls.
+
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.

@@ -51,6 +51,16 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 
 ## tests/test_admin_account_status.py
 
+- [x] `test_compiled_account_status_copy_is_present_and_translated`
+- [x] `test_account_status_confirmation_and_success_follow_session_locale`
+
+I18N-01 / QA-04 follow-up, P1, reviewed 2026-10-15 by Codex. These two definitions cover nine cases and reproduced seven failures before the runtime catalogs were repaired (FI fallback masked two rendered cases). All 31 focused account-status cases pass after repair. Existing context-specific status-label coverage alone did not protect the uncontextualized confirmation copy.
+
+| Definition | Requirement / assertions | Setup, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_compiled_account_status_copy_is_present_and_translated` | All eight confirmation/action/help/success messages exist in the shipped MO and equal explicit FI/EN/SV expectations, not just PO source or fallback. | Direct GNUTranslations of tracked runtime artifacts, three locales; no translation mock. Does not prove all catalog strings are translated. | Keep; fails against pre-fix artifacts, including FI. |
+| `test_account_status_confirmation_and_success_follow_session_locale` | Real GET renders heading/breadcrumb/action/explanation in the selected language without Finnish fallback; protected POST changes actual state and flashes localized success. | Authenticated admin with real disposable Mongo state and signed form proof, three locales × activate/disable. No permission/translation mocks or time sleeps. No visual/layout or deployment claim. | Keep; four EN/SV variants failed before repair, while FI rendering alone hid missing compiled keys. |
+
 - [x] `test_same_status_token_has_one_winner_under_concurrent_submit`
 - [x] `test_status_action_visibility_uses_shared_hierarchy`
 

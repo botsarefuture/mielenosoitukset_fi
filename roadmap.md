@@ -104,6 +104,7 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 ### Localization and documentation
 
 - [ ] **I18N-01:** Inventory active untranslated strings and catalog gaps; deliver by route family with real FI/EN/SV render checks.
+  - **I18N-01a · P1 · In review · Codex · M1/M5 · codex/account-status-runtime-translations:** Eight account-status source messages are absent from runtime catalogs on main 9098c02a. Compile only this verified set while preserving unrelated runtime entries and existing contextual status labels. Acceptance: exact shipped FI/EN/SV catalog values and actual localized activate/disable confirmation plus protected POST success; nine cases across two individually assessed definitions; all 31 focused account-status cases pass. Independent UI work remains in open #929/#930; no merge/release claim.
 - [ ] **I18N-02:** Standardize backend/API/moderation/email messages (#582/#553), avoiding double translation in `flash_message()` and unsafe dynamic string interpolation.
 - [ ] **DOC-01 · P2:** Update user/moderator guides (#563) and maintained setup/API/design docs against working code. Decide and document any intentionally Finnish-only surfaces.
 - [ ] **DOC-02 · P2:** Keep this roadmap, detailed issues, release evidence and PMC aligned. Fix historical status conflicts through explicit updates, never by treating old notes as current implementation.

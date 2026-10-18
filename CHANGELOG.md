@@ -23,6 +23,8 @@
 
 - Login completion now safely serializes popup return targets and rejects ambiguous, control-character, API and login-loop destinations, including encoded leading slashes, while preserving valid internal URLs.
 
+- Edit-link regression coverage now verifies allowed lifetimes across GET/POST, revocation scope, CSRF rejection, registry/signature binding and anonymous approval immutability; production token policy is unchanged.
+
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 
 - Successful public-list retries resume nearby automatic loading without requiring another scroll.

@@ -799,6 +799,10 @@ class Demonstration(BaseModel):
         already exists in the database. If it does, the existing entry is updated.
         Otherwise, a new entry is inserted.
 
+        Existing entries retain fields not represented by this content model.
+        Server-owned moderation metadata must not disappear during normalization
+        or content editing. Owning workflows must explicitly unset retired fields.
+
         Parameters
         ----------
 
@@ -827,8 +831,13 @@ class Demonstration(BaseModel):
         # Check if the demonstration already exists in the database
         db = _get_db()
         if db["demonstrations"].find_one({"_id": self._id}):
-            # Update existing entry
-            result = db["demonstrations"].replace_one({"_id": self._id}, data)
+            # Persist modeled fields without deleting server-owned fields that
+            # this model does not serialize (moderation identity, rejected, etc.).
+            # Approval decisions and their side effects belong to the domain
+            # service, not to replacement of a content-edit snapshot.
+            result = db["demonstrations"].update_one(
+                {"_id": self._id}, {"$set": data}
+            )
             if result.modified_count:
                 print(
                     "Demonstration updated successfully."

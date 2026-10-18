@@ -5,6 +5,7 @@
 {% macro public_search_scripts() %}
 <script src="{{ url_for('static', filename='vendor/flatpickr/4.6.13/flatpickr.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/public-date-range.js', v='20261013-date-range-2') }}"></script>
+<script src="{{ url_for('static', filename='js/public-city-autocomplete.js', v='20261018-city-autocomplete-2') }}"></script>
 {% endmacro %}
 {% macro public_demo_search(fixed_city=none) %}
 <form method="GET" action="#" class="search-form public-search-form" id="search-form"
@@ -17,9 +18,10 @@
   {% if fixed_city is none %}
   <div class="public-search-field">
     <label for="city_input">{{ _('Kaupunki') }}</label>
-    <input type="text" id="city_input" placeholder="{{ _('Kaupunki') }}" autocomplete="off">
+    <input type="text" id="city_input" placeholder="{{ _('Kaupunki') }}" autocomplete="off"
+           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="city_suggestions">
     <input type="hidden" name="city" id="city" value="{{ request.args.get('city', '') }}">
-    <div class="suggestions" id="city_suggestions"></div>
+    <div class="suggestions" id="city_suggestions" role="listbox" aria-label="{{ _('Kaupunki') }}"></div>
   </div>
   {% else %}
   <input type="hidden" name="city" value="{{ fixed_city }}">

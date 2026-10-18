@@ -191,14 +191,31 @@ def test_organization_admin_with_regular_user_role_gets_scoped_toolbox(
 
 
 def test_organization_scope_does_not_leak_to_unrelated_demonstration(
-    user_client, seeded_data
+    user_client, seeded_data, db
 ):
+    # The shared demonstration fixture explicitly grants this user edit access.
+    # Remove that separate grant to isolate unrelated organization membership.
+    db.demonstrations.update_one(
+        {"_id": seeded_data["demo_id"]}, {"$set": {"editors": []}}
+    )
     response = user_client.get(
         f"/demonstration/{seeded_data['demo_id']}?force_reload=1"
     )
 
     assert response.status_code == 200
     assert 'id="toolbox-sidebar"' not in response.get_data(as_text=True)
+
+
+def test_explicit_editor_keeps_contextual_toolbox_after_content_normalization(
+    user_client, seeded_data, db
+):
+    response = user_client.get(
+        f"/demonstration/{seeded_data['demo_id']}?force_reload=1"
+    )
+    assert response.status_code == 200
+    assert 'id="toolbox-sidebar"' in response.get_data(as_text=True)
+    stored = db.demonstrations.find_one({"_id": seeded_data["demo_id"]})
+    assert stored["editors"] == [seeded_data["user_id"]]
 
 
 def test_toolbar_is_omitted_without_demo_or_organization_context(admin_client):

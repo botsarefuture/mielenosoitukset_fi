@@ -8,6 +8,64 @@ from itsdangerous import TimestampSigner, URLSafeTimedSerializer
 from tests.conftest import _client_for_user
 
 
+STATUS_COPY = {
+    'fi': [
+        'Käyttäjän käyttötila', 'Käyttötila', 'Aktivoi käyttäjä', 'Sulje käyttäjätili',
+        'Vahvista kirjautumisoikeuden muutos.', 'Käyttäjän käyttötila päivitetty.',
+        'Aktivointi sallii kirjautumisen ja poistaa mahdollisen käyttöeston. Rooli ja käyttöoikeudet säilyvät ennallaan.',
+        'Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta.',
+    ],
+    'en': [
+        'User account status', 'Account status', 'Activate user', 'Disable account',
+        'Confirm the change to sign-in access.', 'User account status updated.',
+        'Activation allows sign-in and removes any account ban. The role and permissions stay unchanged.',
+        'Disabling blocks sign-in and access to protected pages through existing sessions. User data is not deleted.',
+    ],
+    'sv': [
+        'Användarkontots status', 'Kontostatus', 'Aktivera användare', 'Inaktivera konto',
+        'Bekräfta ändringen av inloggningsåtkomsten.', 'Användarkontots status har uppdaterats.',
+        'Aktivering tillåter inloggning och tar bort eventuell kontoblockering. Rollen och behörigheterna ändras inte.',
+        'Inaktivering blockerar inloggning och åtkomst till skyddade sidor via befintliga sessioner. Användarens uppgifter raderas inte.',
+    ],
+}
+
+
+@pytest.mark.parametrize('locale', ['fi', 'en', 'sv'])
+def test_compiled_account_status_copy_is_present_and_translated(locale):
+    import gettext
+    from pathlib import Path
+
+    with Path(f'mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.mo').open('rb') as stream:
+        catalog = gettext.GNUTranslations(stream)
+    # FI must be compiled too, not merely appear correct through gettext fallback.
+    assert all(key in catalog._catalog for key in STATUS_COPY['fi'])
+    assert [catalog.gettext(key) for key in STATUS_COPY['fi']] == STATUS_COPY[locale]
+
+
+@pytest.mark.parametrize('locale', ['fi', 'en', 'sv'])
+@pytest.mark.parametrize('enable', [False, True])
+def test_account_status_confirmation_and_success_follow_session_locale(app, admin_client, db, seeded_data, locale, enable):
+    app.config.update(BABEL_PUBLIC_LOCALES=['fi', 'en', 'sv'])
+    with admin_client.session_transaction() as session:
+        session['locale'] = locale
+    target = seeded_data['user_id']
+    db.users.update_one({'_id': target}, {'$set': {'active': not enable, 'banned': False}})
+    response = admin_client.get(f'/admin/user/account_status/{target}')
+    assert response.status_code == 200
+    source = html.unescape(response.get_data(as_text=True))
+    copy = STATUS_COPY[locale]
+    for index in [0, 1, 4, 2 if enable else 3, 6 if enable else 7]:
+        assert copy[index] in source
+        if locale != 'fi':
+            assert STATUS_COPY['fi'][index] not in source
+    token = re.search(r'name="status_token" value="([^"]+)"', source).group(1)
+    result = admin_client.post(f'/admin/user/account_status/{target}', data={'status_token': token})
+    assert result.status_code == 302
+    assert db.users.find_one({'_id': target})['active'] is enable
+    with admin_client.session_transaction() as session:
+        assert any(copy[5] in str(message) for _, message in session['_flashes'])
+
+
 def _confirmation(client, user_id):
     response = client.get(f"/admin/user/account_status/{user_id}")
     assert response.status_code == 200

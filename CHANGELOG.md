@@ -4,9 +4,42 @@
 
 ## UNRELEASED
 
+- MCP-created demonstrations always start pending; generic write credentials cannot pre-approve them outside the moderation workflow.
+
+- Unsupported cropper file-transfer capabilities leave the native file input usable instead of clearing a selected upload.
+
 - Deployment health verification rejects an explicitly empty Unix-socket path instead of silently falling back to a public request.
 
 - Production deployment now verifies replacement workers directly through Gunicorn's local Unix socket, avoiding Cloudflare challenges on the server-side health check while preserving existing HTTPS health URL overrides. The separate public HTTPS check remains required and reports HTTP failures, including Cloudflare challenges, explicitly.
+- Cancelling or failing a replacement crop restores the last accepted upload and preview together; without an accepted crop, both are cleared instead of submitting an uncommitted original.
+
+- Image crop exports retain source-image resolution across desktop/mobile dialog sizes; zoom-aware output is bounded by the original image dimensions instead of the small on-screen crop area.
+
+- Image cropping now uses a shared theme-safe native dialog with keyboard dismissal/focus return, safe image DOM, visible load/error states and cancellation-safe async apply. Upload names, 16:9 crop behavior and existing hooks are preserved.
+
+- Public list and tag city suggestions share keyboard navigation, announced active options and text-safe rendering; locale-aware ordering is applied before the suggestion limit, and selection retains existing filters and tag auto-search behavior.
+
+- Compiled FI/EN/SV account-status translations now include confirmation headings, action labels, explanations and success feedback, avoiding mixed-language admin controls.
+
+- Security regression coverage now checks elevation cleanup in the original logout session, timeout boundaries, session/account isolation and persisted password changes; production authentication behavior is unchanged.
+
+- Fresh-deletion regression tests now isolate expiry from replay/target binding and verify same-target reuse, actor binding and concurrent single-use consumption without changing production authorization.
+
+- Login completion now safely serializes popup return targets and rejects ambiguous, control-character, API and login-loop destinations, including encoded leading slashes, while preserving valid internal URLs.
+
+- Edit-link regression coverage now verifies allowed durations and registry expiry metadata, expiry enforcement on GET/POST, revocation scope, CSRF rejection, registry/signature binding and anonymous approval immutability; production token policy is unchanged.
+
+- Shared public heroes keep small-screen headings and actions within their content area; organization identity layouts now shrink and wrap without fixed-width clipping. Removed a legacy mobile heading reset that defeated component typography.
+
+- Public footers now include padding inside their page width, and long demonstration-card titles, addresses and tags wrap without clipping on narrow screens.
+
+- Reject approval changes through generic MCP content patches; moderation stays in its canonical permission-checked workflow without partially applying mixed patches.
+
+- Content edits and model normalization retain server-owned moderation metadata, rejection state and explicit editor grants instead of erasing them with a full-document replacement.
+
+- Concurrent moderation decisions no longer let an older request overwrite a newer case outcome; returned decision data and audit history retain each transition's own state.
+
+- Strengthened moderation regression coverage for linked-case closure, token replay, bulk retries and notification failure recovery; approval policy and production behavior are unchanged.
 
 - Refreshing organization members preserves existing list references after membership updates while retaining missing-user-safe batch loading.
 

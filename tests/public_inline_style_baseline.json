@@ -24,9 +24,6 @@
     "contact.html": [
       "25d8fe68e9e7a0cd"
     ],
-    "cropper-modal.html": [
-      "1e5e9517eda7d54d"
-    ],
     "detail.html": [
       "101100cba172bfbd",
       "5612e9af9d7f427f",
@@ -57,7 +54,7 @@
       "ff0c428cadb71597"
     ],
     "index.html": [
-      "37dc13eea8b30a4b"
+      "1768c8b1c1741385"
     ],
     "info.html": [
       "fe00148d8b421b03"
@@ -87,7 +84,7 @@
     "organizations/details.html": [
       "24136874b88a5813",
       "796a3dcc712d6290",
-      "a6d1ad412ea888c6",
+      "843ae4fbdfe7ca47",
       "e334e55e40cec6fd"
     ],
     "organizations/fill_info.html": [
@@ -150,16 +147,6 @@
     "contact.html": [
       "4f8dbc76c79461a7",
       "8c6874961e1d0717"
-    ],
-    "cropper-modal.html": [
-      "21dbca0c08716779",
-      "45286e50c6246783",
-      "98fea27bf8f06950",
-      "9ca3585307933be1",
-      "9f97649eb6e5065b",
-      "af1048ecd45e0870",
-      "bc26c0e30f26238d",
-      "c548e179169161a1"
     ],
     "detail.html": [
       "0f6ba93d4aac2331",

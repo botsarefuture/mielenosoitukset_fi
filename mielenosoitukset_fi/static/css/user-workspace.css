@@ -64,6 +64,12 @@ html.light {
 .public-search-field { position: relative; flex: 1 1 12rem; min-width: 0; }
 .public-search-field .suggestions {
   box-sizing: border-box; inset-inline-start: 0; top: 100%; margin-top: .25rem;
+  max-height: 16rem; overflow-y: auto; color: var(--product-text);
+}
+.public-search-field [role="option"] { box-sizing: border-box; min-height: 44px; }
+.public-search-field [role="option"][aria-selected="true"] {
+  background: var(--product-action-bg); color: var(--product-on-action);
+  outline: 2px solid var(--product-on-action); outline-offset: -4px;
 }
 .public-search-field label {
   display: block; margin-bottom: .5rem; font-weight: 600; color: var(--product-text);
@@ -498,6 +504,7 @@ h1 {
 /* The legacy footer rules remain for untouched shells; this namespaced
    contract owns the public base footer without broad overrides. */
 .public-site-footer {
+  box-sizing: border-box;
   width: 100%;
   padding: 2rem 1rem;
   color: var(--product-text) !important;
@@ -506,17 +513,25 @@ h1 {
 }
 
 .public-site-footer__inner {
+  box-sizing: border-box;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   justify-items: center;
   gap: 1rem;
   width: min(100%, 75rem);
   margin-inline: auto;
 }
 
+.public-site-footer__inner > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .public-site-footer__brand {
   margin: 0;
   color: var(--product-text-muted);
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .public-site-footer .public-site-footer__links,
@@ -670,6 +685,19 @@ h1 {
 
 .button-secondary:hover {
   background: var(--product-accent-strong);
+}
+
+.button-neutral {
+  border: 1px solid var(--product-border);
+  background: var(--product-surface);
+  color: var(--product-text);
+  box-shadow: none;
+}
+
+.button-neutral:hover {
+  border-color: var(--product-primary);
+  background: var(--product-surface-muted);
+  color: var(--product-text);
 }
 
 .button:focus {
@@ -1170,6 +1198,18 @@ h1 {
   gap: 0.5em;
   width: 100%;
   text-align: center;
+}
+
+.demo-card-title > span,
+.demo-card-location-row > span,
+.demo-card-tag {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.demo-card-tag {
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .demo-card-details {
@@ -2188,6 +2228,68 @@ textarea.user-field__control {
   background: var(--product-surface);
   color: var(--product-text);
   box-shadow: var(--product-shadow);
+}
+
+.user-cropper-modal {
+  box-sizing: border-box;
+  width: min(52rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 0;
+  border-radius: 1.1rem;
+  background: var(--product-surface);
+  color: var(--product-text);
+}
+
+.user-cropper-modal::backdrop {
+  background: var(--product-overlay);
+  backdrop-filter: blur(4px);
+}
+
+.user-cropper-modal .modal-header,
+.user-cropper-modal .modal-body,
+.user-cropper-modal .modal-footer {
+  padding: 1rem;
+}
+
+.user-cropper-modal .modal-title {
+  margin: 0;
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
+}
+
+.user-cropper-modal .modal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.user-cropper-modal .modal-footer .button {
+  min-height: 44px;
+}
+
+.user-cropper-modal #cropperHelp,
+.user-cropper-modal #cropperStatus {
+  color: var(--product-text-muted);
+}
+
+.user-cropper-modal #cropperContainer > img {
+  max-width: 100%;
+}
+
+.user-cropper-modal cropper-canvas {
+  display: block;
+  width: 100%;
+  height: clamp(15rem, 52vw, 28rem);
+  max-height: 48dvh;
+}
+
+.user-cropper-modal cropper-selection:focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: 3px;
 }
 
 .user-modal .modal-header,

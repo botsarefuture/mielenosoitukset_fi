@@ -13580,3 +13580,27 @@ msgstr "Aktivointi sallii kirjautumisen ja poistaa mahdollisen käyttöeston. Ro
 
 msgid "Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta."
 msgstr "Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta."
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Rajaa kuva"
+msgstr "Rajaa kuva"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Käytä rajausta"
+msgstr "Käytä rajausta"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Rajausalue"
+msgstr "Rajausalue"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Ladataan kuvaa…"
+msgstr "Ladataan kuvaa…"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Siirrä tai muuta rajausalueen kokoa. Voit siirtää aluetta nuolinäppäimillä."
+msgstr "Siirrä tai muuta rajausalueen kokoa. Voit siirtää aluetta nuolinäppäimillä."
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+msgstr "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."

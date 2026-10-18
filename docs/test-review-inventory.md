@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Organization/pagination/loading and origin-health integration based on main `9098c02a`, 2026-10-16: 153 Python test files; 1,110 definitions; 153 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. This is not completed suite review.
+Integration candidate `20bbcfd4` for PRs #929–#940, based on main `739612b2`, 2026-10-18: 157 Python test files; 1,143 definitions; 235 assessed definitions. These are integration-tree counts, not counts for the main baseline. All individual review records are retained and exact AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -50,6 +50,16 @@ SEC-02 / QA-01 review, 2026-10-12, Codex, P1. Real Flask clients and disposable 
 | `test_legacy_account_without_active_field_remains_enabled` | Missing legacy active flag defaults enabled. | Real model and successful password session; ensures no forced migration requirement. | Keep. |
 
 ## tests/test_admin_account_status.py
+
+- [x] `test_compiled_account_status_copy_is_present_and_translated`
+- [x] `test_account_status_confirmation_and_success_follow_session_locale`
+
+I18N-01 / QA-04 follow-up, P1, reviewed 2026-10-15 by Codex. These two definitions cover nine cases and reproduced seven failures before the runtime catalogs were repaired (FI fallback masked two rendered cases). All 31 focused account-status cases pass after repair. Existing context-specific status-label coverage alone did not protect the uncontextualized confirmation copy.
+
+| Definition | Requirement / assertions | Setup, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_compiled_account_status_copy_is_present_and_translated` | All eight confirmation/action/help/success messages exist in the shipped MO and equal explicit FI/EN/SV expectations, not just PO source or fallback. | Direct GNUTranslations of tracked runtime artifacts, three locales; no translation mock. Does not prove all catalog strings are translated. | Keep; fails against pre-fix artifacts, including FI. |
+| `test_account_status_confirmation_and_success_follow_session_locale` | Real GET renders heading/breadcrumb/action/explanation in the selected language without Finnish fallback; protected POST changes actual state and flashes localized success. | Authenticated admin with real disposable Mongo state and signed form proof, three locales × activate/disable. No permission/translation mocks or time sleeps. No visual/layout or deployment claim. | Keep; four EN/SV variants failed before repair, while FI rendering alone hid missing compiled keys. |
 
 - [x] `test_same_status_token_has_one_winner_under_concurrent_submit`
 - [x] `test_status_action_visibility_uses_shared_hierarchy`
@@ -400,7 +410,9 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Real admin client, disposable Mong
 
 ## tests/test_anonymous_edit_token.py
 
-- [ ] `test_anonymous_edit_token_renders_without_city_admin_navigation`
+- [x] `test_anonymous_edit_token_renders_without_city_admin_navigation`
+
+QA-01d / P1, reviewed 2026-10-15 by Codex. Actual anonymous GET renders the demo form in FI/EN/SV without creating an authenticated session. Safe selected template flags prove approval, link generation and access-panel authority are false; the CSRF field exists and any preserved approved input is hidden, not an editable checkbox. Hidden fields remain part of the existing payload contract, not an authorization boundary; forged POST behavior is assessed separately below. The original label-absence check is retained but cannot alone prove navigation or permissions across locales. This is rendering/state evidence, not full light/dark/mobile or screen-reader acceptance. Real local app and seeded bearer link; no anonymous-user permission mock. Keep, strengthened.
 
 ## tests/test_api_contract.py
 
@@ -409,8 +421,21 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Real admin client, disposable Mong
 
 ## tests/test_auth_login_redirects.py
 
-- [ ] `test_login_does_not_redirect_back_to_notifications_api`
-- [ ] `test_login_keeps_normal_internal_page_redirect`
+- [x] `test_login_does_not_redirect_back_to_notifications_api`
+- [x] `test_login_keeps_normal_internal_page_redirect`
+- [x] `test_login_rejects_unsafe_or_non_page_return_targets`
+- [x] `test_popup_login_return_target_is_data_not_executable_script`
+- [x] `test_popup_login_still_reloads_opener_and_closes`
+
+QA-01c / SEC-05, P1, reviewed 2026-10-15 by Codex, main 9098c02a. Initially five definitions / 45 cases passed after correction; combined with MFA, account-access, auth-page and inline-style checks, 97 passed. CodeRabbit CLI completed review of all six changed files with zero findings. On 2026-10-18, the redirect matrix added six cases for decoded double/triple-leading slashes in normal and popup completion; all five definitions / 51 cases passed. Initial 21-case baseline exposed ten failures; separate browser runs confirmed execution of a harmless injected console marker in both string-breakout and script-ending scenarios before repair. Tests use actual Flask password login and session state with disposable seeded users; HTTP/email/uploads/jobs are isolated by shared fixtures. Browser tests fulfill every request locally, including any escaped destination, with the actual login-generated HTML. No production probe, live exploitation or whole-authentication audit is claimed.
+
+| Definition | Requirement / meaningful assertions | Fixtures, coverage and limitations | Disposition |
+|---|---|---|---|
+| `test_login_does_not_redirect_back_to_notifications_api` | Login returns exactly the internal root, not notifications API. | Actual successful password POST; exact Location replaces weak suffix assertion. Does not prove all API routes itself. | Strengthened; keep. |
+| `test_login_keeps_normal_internal_page_redirect` | Profile and city targets retain path/query/fragment; authenticated session belongs to expected user. | Three valid root-relative URLs, real hash/session. Not every public route or primary-MFA branch. | Strengthened; keep valid-URL compatibility control. |
+| `test_login_rejects_unsafe_or_non_page_return_targets` | Absolute/network/ambiguous slash/control/relative/self-loop/API spellings fall back to root in both HTTP and popup completion, without losing successful authentication. | Twenty-two adversarial inputs × two modes, including encoded double/triple-leading slashes; parsed/decoded/dot-normalized path guards are exercised, not only raw string prefixes. Does not establish safety of arbitrary later redirects implemented by destination routes. | New negative matrix; keep. |
+| `test_popup_login_return_target_is_data_not_executable_script` | Actual Chromium executes completion HTML without injected console marker or errors, navigates once to same origin and preserves the target as literal URL data. | Two string/script-ending payloads, actual application response, all browser network fulfilled locally. Both executed the marker before repair. Not all browsers or all Unicode/malformed-HTML cases. | New runtime security regression; keep. |
+| `test_popup_login_still_reloads_opener_and_closes` | Real browser popup reloads opener exactly once and closes rather than navigating elsewhere. | Actual window.open and reload over intercepted same-origin requests; no opener/close function mocks. No cross-origin opener or production CSP certification. | New preserved-behavior control; keep. |
 
 ## tests/test_auth_page_contract.py
 
@@ -597,7 +622,7 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 - [ ] `test_city_scoped_admin_dashboard_only_lists_assigned_cities`
 - [ ] `test_city_scoped_admin_suggestions_hide_other_city_rows_and_counts`
 - [ ] `test_city_scoped_admin_audit_timeline_hides_other_city_rows_and_counts`
-- [ ] `test_explicit_object_id_editor_can_open_scoped_audit_views`
+- [x] `test_explicit_object_id_editor_can_open_scoped_audit_views`
 - [ ] `test_string_organization_id_is_included_in_scoped_audit_query`
 - [ ] `test_city_scoped_admin_suggestions_show_empty_state_outside_scope`
 - [ ] `test_city_scoped_admin_dashboard_shows_accept_action_for_scoped_demo`
@@ -613,6 +638,12 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 - [ ] `test_city_admin_can_invite_to_unverified_organization`
 - [ ] `test_city_admin_dashboard_redirects_to_scoped_demo_view`
 - [ ] `test_edit_user_revokes_object_id_backed_city_scope_grant`
+
+SEC-04b / QA-01 supporting review, 2026-10-16, Codex, P1; only `test_explicit_object_id_editor_can_open_scoped_audit_views` is assessed in this file. Its prior final 403 assertion relied on earlier GET normalization replacing the document and erasing the explicit editor grant. Existing `has_demo_permission` explicitly grants editors access; no production permission rule is changed to make this test pass.
+
+| Definition | Requirement / assertions | Setup, coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_explicit_object_id_editor_can_open_scoped_audit_views` | ObjectId-backed explicit editor can read its scoped audit timeline/detail/command center and still open the editor afterward; persisted editor ID survives those reads. The positive command-center link is a wiring observation, not proof of complete action visibility parity. | Real local user/membership/demo records and authenticated Flask session; no authorization mocks. One explicit-editor/VIEW_DEMO membership scenario, not a full role matrix or proof that all fields remain unchanged. Observed template/server edit-action parity remains a separate UI-affordance gap. | Corrected 403 to 200 based on existing server contract and added persisted-grant assertion. Removed the old negative edit-link assertion rather than making the UI's missing authorized action a required contract; keep. |
 
 ## tests/test_config.py
 
@@ -659,22 +690,90 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 - [ ] `test_demo_card_labels_have_english_and_swedish_translations`
 - [ ] `test_demo_list_renders_shared_card_contract_for_active_locale`
 
+## tests/test_demo_decision_ordering.py
+
+- [x] `test_later_opposite_decision_preserves_case_and_history_consistency`
+- [x] `test_current_decision_retries_case_compare_and_set_after_an_older_writer`
+- [x] `test_overlapping_same_decision_keeps_one_history_and_notification`
+- [x] `test_unchanged_request_retries_the_actual_newer_decision_notification`
+
+SEC-04a / QA-01, P1; individually assessed 2026-10-15 by Codex, stacked on #938. Real domain service, local MongoDB and separate thread-local Flask app contexts; no mocked transition or case write outcomes. Collection/service wrappers add Event synchronization only, with ten-second failure guards and finally release; no sleep-based ordering. Captured enqueue is the external boundary. These tests bypass route permissions/CSRF and do not establish live multi-process operation, notification delivery order or provider acceptance/crash safety.
+
+| Definition | Requirement / assertions | Cases, coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_later_opposite_decision_preserves_case_and_history_consistency` | Later persisted decision owns final demo/case identity/outcome. Each changed result and exactly one persisted history retain their own state/identity, not a later read. | Six cases: both decision directions paused after real atomic transition, before case projection or immediately before actual conditional case write. First four baseline cases fail with contradictory case outcome. Does not enumerate every interleaving, all cases or later unrelated edits/deletions. | New real regression; keep. Removing only case CAS in a test process makes both narrow-window cases fail at final outcome. |
+| `test_current_decision_retries_case_compare_and_set_after_an_older_writer` | Newer decision loses first case CAS, re-reads and succeeds on second write; final case matches newer demo and both case history entries appear once in actual write order. | Two directions; both writers pause at their real update boundary, older writer released first. Exact two newer update attempts proves retry branch exercised. No forced perpetual-contention or database interruption coverage. | New retry-path regression; keep. |
+| `test_overlapping_same_decision_keeps_one_history_and_notification` | One changed/one unchanged result share decision ID, one captured email/notification record/history/decision audit, one case decision entry and canonical outcome. | Two decisions; first paused after transition while second reconciles. Real Mongo unique notification claim. Does not prove crash recovery between transition/notify flag or enqueue/provider acceptance. | New overlapping idempotency regression; keep alongside sequential #938 tests. |
+| `test_unchanged_request_retries_the_actual_newer_decision_notification` | A no-op request paused before rereading a newer opposite decision retries the newer failed notification type, not its own superseded requested status; result and case share actual persisted identity/state. | Two directions with a real conditional no-op, intervening transition and deterministic pre-enqueue failure. Real registry claim removal/unique insert; captured email boundary. Does not certify provider failure-after-acceptance handling. | New mixed-status retry regression; removing current-status adoption makes both cases fail on notification type. |
+
+Combined focused decision/edit-link/anonymous run passes 24 cases, including twelve new interleaving cases; test-only mutations dropping the case write precondition and current-status adoption detect stale overwrite/wrong notification type in both directions. Subsequent normal 24-case run passes, Python compilation/diff checks pass, and final five-file CodeRabbit review completed with zero findings (later status/evidence text updates excluded). Black is unavailable; no formatter-run claim. No transaction, lock service, new persisted fields or clock-based ordering is introduced. Case compare-and-set retries are bounded at eight; exhaustion raises a retriable failure rather than claiming successful reconciliation. Exhaustion/DB-crash recovery, external email ordering, same-demo ordinary edit/rollback metadata preservation and route-level conflict messaging remain separate SEC-04 evidence gaps, not completed acceptance.
+
 ## tests/test_demo_decision_service.py
 
-- [ ] `test_legacy_approval_is_idempotent_and_reconciles_all_side_effects`
-- [ ] `test_token_rejection_consumes_used_token_and_revokes_siblings`
-- [ ] `test_form_approval_uses_canonical_decision_service`
-- [ ] `test_admin_api_rejection_is_idempotent`
-- [ ] `test_notification_delivery_can_retry_without_repeating_decision_effects`
-- [ ] `test_bulk_decision_uses_same_service_and_reports_each_result`
+- [x] `test_legacy_approval_is_idempotent_and_reconciles_all_side_effects`
+- [x] `test_token_rejection_consumes_used_token_and_revokes_siblings`
+- [x] `test_form_approval_uses_canonical_decision_service`
+- [x] `test_admin_api_rejection_is_idempotent`
+- [x] `test_notification_delivery_can_retry_without_repeating_decision_effects`
+- [x] `test_bulk_decision_uses_same_service_and_reports_each_result`
+
+QA-01e / SEC-04, P1; six definitions individually assessed 2026-10-15 by Codex on main 9098c02a. Real local Flask clients, signed seeded tokens, actual Mongo conditional writes and persisted cases/history/audit. Only email enqueue is captured or made to raise; this is not SMTP/worker delivery evidence. Existing dual-import email aliases are patched explicitly. Fixture-admin sessions bypass primary login; role/CSRF negatives, token expiry/IP/concurrency and privacy redaction are not established by these tests. All 12 combined decision/edit-link/anonymous cases pass; diff check and exact AST membership pass. CodeRabbit completed the four changed-file review with zero findings (later roadmap/status reconciliation excluded from that snapshot). #674 is already closed; this review does not reopen its old route-duplication report or certify crash/concurrent-decision acceptance.
+
+| Definition | Requirement / meaningful assertions | Fixture, coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_legacy_approval_is_idempotent_and_reconciles_all_side_effects` | Legacy approve then API approve preserve decision identity/source, one notification/history/decision audit, canonical booleans, exact public URL, all four token families revoked. Two linked cases with ObjectId/string IDs close once with matching actor/source/time; unrelated case remains byte-for-field equal. | Actual DB and route adapters; inserted control cases prevent one-case/vacuous isolation coverage. No opposite-decision race, missing submitter or partial crash. | Strengthened; keep. Test-process mutation removing string-ID lookup fails the new closed assertion. |
+| `test_token_rejection_consumes_used_token_and_revokes_siblings` | Rejection sets canonical state, consumes chosen token, revokes nonempty preview/approve sibling set, sends one email and writes one history/audit. Replay renders existing friendly used-link page, preserves used timestamp/decision and sends nothing again. | Real signature/registry/route; HTTP 200 is intentional friendly replay policy, not fresh success. Seed has no edit sibling; four-family terminal revocation is checked in legacy-approval test. Not token race/IP/expiry proof. | Strengthened replay and non-vacuous policy assertions; keep. |
+| `test_form_approval_uses_canonical_decision_service` | Form sets canonical booleans/source and linked case outcome/closed decision identity, one email/history/audit. | Real authenticated save with minimal valid data; not field/UI/browser or forged approval authority proof (separate tests). Only approval, not all form transitions. | Strengthened side-effect assertions; keep. |
+| `test_admin_api_rejection_is_idempotent` | Two API denials yield changed then unchanged, stable decision metadata, canonical rejected state, closed rejected case, single email/history/decision audit. | Same sequential client, real DB, captured enqueue; does not establish simultaneous requests or opposite decisions. | Strengthened identity/state/audit assertions; keep. |
+| `test_notification_delivery_can_retry_without_repeating_decision_effects` | Enqueue failure returns 500 after canonical approval, removes delivery claim; alternate-entrypoint retry keeps decision ID and queues identical content once with queued_at. Third call does not enqueue or alter case/history/audit. | Deterministic queue exception before enqueue succeeds, no timing sleep. Cannot prove crash after external acceptance/before queued_at, or actual provider exactly-once delivery. | Strengthened intermediate and final state assertions; keep; delivery crash window remains explicit. |
+| `test_bulk_decision_uses_same_service_and_reports_each_result` | Duplicate selected ID collapses to one changed result, malformed ID has own exact status, retry reports unchanged with zero changes and one total email/history/audit. | Real bulk route and seeded session CSRF; authorized happy path only, no forbidden/not-found/limit/CSRF negative matrix. | Strengthened deduplication/retry assertions; keep with remaining boundary coverage tracked. |
+
 
 ## tests/test_demo_edit_link_lifecycle.py
 
-- [ ] `test_edit_link_duration_is_allowlisted_and_registry_expiry_matches`
-- [ ] `test_each_edit_link_is_unique_and_revocation_blocks_anonymous_access`
-- [ ] `test_anonymous_edit_token_can_save_with_session_csrf`
-- [ ] `test_send_edit_link_ignores_client_url_and_does_not_use_persistent_queue`
-- [ ] `test_recurring_editor_does_not_offer_regular_demo_edit_links`
+- [x] `test_edit_link_duration_is_allowlisted_and_registry_expiry_matches`
+- [x] `test_each_edit_link_is_unique_and_revocation_blocks_anonymous_access`
+- [x] `test_anonymous_edit_token_can_save_with_session_csrf`
+- [x] `test_send_edit_link_ignores_client_url_and_does_not_use_persistent_queue`
+- [x] `test_edit_link_lifetime_applies_to_anonymous_get_and_post`
+- [x] `test_edit_link_management_rejects_missing_or_wrong_csrf`
+- [x] `test_revoke_all_edit_links_is_demo_scoped_and_blocks_existing_sessions`
+- [x] `test_edit_link_requires_matching_signature_and_registry_before_get_or_post`
+- [x] `test_recurring_editor_does_not_offer_regular_demo_edit_links`
+
+QA-01d / SEC-04, P1, individually reviewed 2026-10-15 by Codex, based on main 9098c02a. Nine lifecycle definitions / 28 cases plus three anonymous-shell cases; combined with unchanged decision-service regressions, 37 cases pass. CodeRabbit CLI completed both changed test files with zero findings; diff and exact inventory checks pass. Real local Flask/MongoDB and itsdangerous signing/validation; requests/email/uploads/jobs are isolated by shared fixtures. Admin/anonymous actors are real session identities, not permission mocks. The lifetime matrix changes only the registered demo-link serializer's timestamp source and its domain UTC clock, leaving session-cookie clocks/signatures intact. #672 is already closed; this verifies/enhances coverage of existing implementation, not a new lifecycle-policy feature or release claim.
+
+| Definition | Requirement / meaningful assertions | Setup, coverage and limits | Disposition |
+|---|---|---|---|
+| `test_edit_link_duration_is_allowlisted_and_registry_expiry_matches` | 1h/24h/7d map to exact registry durations/expiry and returned metadata; raw token absent from record; unsupported 30d creates no link. | Three real creation variants. Not every malformed JSON/type/duration input or entropy analysis. | Strengthened all allowed durations and no-op rejection; keep. |
+| `test_each_edit_link_is_unique_and_revocation_blocks_anonymous_access` | Two links differ; revoking first blocks GET and POST from previously valid CSRF session without mutation, while second remains usable. | Real generated signatures/registry and revocation endpoint. Uniqueness sample is not a collision-probability proof or concurrent revoke/save guarantee. | Strengthened POST and sibling control; keep. |
+| `test_anonymous_edit_token_can_save_with_session_csrf` | Missing/wrong CSRF cannot change title; valid session CSRF saves, but forged approval cannot flip either initial approval state; raw token absent from super-audit records. | Two initial approval states, actual form handler. The audit assertion covers this sink and token, not all logs/providers/URLs. | Strengthened CSRF negatives and server authority; keep. |
+| `test_send_edit_link_ignores_client_url_and_does_not_use_persistent_queue` | Email sink receives expected recipient and server-origin edit route; generated link actually opens anonymously; queue path raises if called. | Actual server creation with captured direct-send boundary, both historical module aliases patched. Does not prove SMTP delivery or provider retention. | Strengthened exact origin/path and real resolution instead of startswith(http); keep. |
+| `test_edit_link_lifetime_applies_to_anonymous_get_and_post` | Correct 1h/24h/7d behavior before/at expiry, including valid links beyond the former one-hour limit; expired GET/POST return 410 without mutation and show friendly expired state. | Seven real signed/registry age variants; initial GET supplies valid CSRF so denial is not masked by missing CSRF. Only local domain/signer clocks changed. Not every corrupted legacy timestamp or concurrent revocation interleaving. | New signature/registry lifetime integration; keep. |
+| `test_edit_link_management_rejects_missing_or_wrong_csrf` | Generate/send/revoke/revoke-all each return 403 without CSRF or with mismatch; registry count/revoked flag and mail sink unchanged. | Eight authorized-admin requests so CSRF denial is meaningful. Does not establish every role/city/org scope or every audit side effect. | New management CSRF matrix; keep. |
+| `test_revoke_all_edit_links_is_demo_scoped_and_blocks_existing_sessions` | Two target-demo links and existing edit session become unusable; another demo's link remains valid; non-edit registry actions retain revoked state; denied POST leaves title unchanged. | Real registry/generation/revoke-all endpoints and separate anonymous clients. Not a distributed revoke-vs-save race or case/notification decision-policy audit. | New scoped bulk regression; keep. |
+| `test_edit_link_requires_matching_signature_and_registry_before_get_or_post` | Tampering, missing registry, wrong registry action or demo each reject GET and valid-CSRF POST before changing original target. | Four scenarios with initially valid bearer/session; registry mutations prepare corrupt state, not mocked resolver results. Does not cover every itsdangerous serialization/version/corrupt-payload case. | New binding negatives; keep. |
+| `test_recurring_editor_does_not_offer_regular_demo_edit_links` | Recurring form omits regular edit-link controls while duplicate action remains. | Real rendered admin route, existing UI IDs. This is visibility evidence, not backend permission denial for every recurring payload. | Keep with narrow claim. |
+
+## tests/test_demo_moderation_preservation.py
+
+- [x] `test_mcp_creation_always_starts_pending`
+- [x] `test_mcp_content_patch_cannot_change_moderation`
+- [x] `test_model_content_save_preserves_moderation_state`
+- [x] `test_model_creation_still_inserts_complete_content`
+- [x] `test_form_content_edit_keeps_approval_identity_and_case_history`
+
+SEC-04b / QA-01, P1; individually assessed 2026-10-16 by Codex, stacked on #939. Real Flask/Mongo/model normalization and canonical approval API; only enqueue is captured through the established dual-alias helper from #938. Three initial cases reproduced erased decision metadata and a new decision identity after an ordinary form edit. Existing-document save now sets modeled fields instead of replacing the document; unknown server-owned fields remain the owning workflow's responsibility and must be explicitly unset when retired. New-document insertion is unchanged.
+
+| Definition | Requirement / assertions | Cases, setup and reliability limits | Disposition |
+|---|---|---|---|
+| `test_mcp_creation_always_starts_pending` | MCP creation does not advertise approval and persists pending state even if an approval boolean is supplied; no decision identity or notification is invented. | Two actual HTTP tools/list and tools/call cases using write-scoped credentials and MongoDB; both true and false inputs. Captured enqueue is not SMTP evidence. Unknown approval input is ignored consistently with other unknown creation fields. | Reviewed 2026-10-18; keep. |
+| `test_mcp_content_patch_cannot_change_moderation` | Generic MCP approval patches fail before content writes; exact demo/case snapshots and one notification remain unchanged. | Four real HTTP cases: approved/rejected initial decisions × true/false patch, including a title change to detect partial application. Snapshot follows MCP app initialization so migrations are not confused with request writes. Enqueue captured, not SMTP delivery. | Reviewed 2026-10-18; keep. |
+| `test_model_content_save_preserves_moderation_state` | After canonical approve/deny, normalization plus title edit/explicit description clearing keeps exact decision metadata and canonical booleans. Repeating the same decision reports unchanged and leaves one captured email. | Two status variants, actual constructor/save (including normalization-triggered saves), real stored decision/notification. Captured enqueue is not external delivery evidence. No concurrent stale-content/approval edit claim. | New regression; keep. |
+| `test_model_creation_still_inserts_complete_content` | A new content model still persists its ID/title/city/pending approval without invented moderation metadata. | Explicit app/database fixtures; constructor may auto-save normalized time before explicit save, so this checks ordinary creation lifecycle rather than isolating one call/insert count. | New insertion-path regression; keep. |
+| `test_form_content_edit_keeps_approval_identity_and_case_history` | Real approved-demo form save changes the title while retaining exact decision metadata and complete linked case document; no second notification. | Authenticated fixture admin with valid minimal form data; not browser rendering, primary login, unauthorized checkbox/CSRF or rejection-form transition coverage. | New route regression; keep alongside existing scoped negatives. |
+
+The combined moderation/translation/organizer/city-scope run passes 57 cases after correcting the separately assessed destructive-read-dependent editor assertion. Creation also passes alone with explicit app/database fixtures. Python compilation, diff and exact AST membership checks pass. CodeRabbit completed the four implementation/test/initial-plan file review with zero findings; a follow-up covering both finalized test files also completed with zero findings. Later inventory/status text is not part of those review snapshots. Broad replacement behavior previously removed fields the model never serialized, including rejected/moderation/editor data. This correction does not change permission predicates, #887, payloads or CSS. Historical rollback authorization, ordinary stale-content writes racing a newer decision, and full server-owned-field lifecycle/retention audits remain explicit SEC-04 gaps.
 
 ## tests/test_demo_suggestion_public.py
 
@@ -834,23 +933,49 @@ deployment performed.
 
 ## tests/test_fresh_step_up_user_deletion.py
 
-- [ ] `test_delete_user_without_fresh_step_up_rejected`
-- [ ] `test_delete_user_with_recent_sudo_session_still_requires_fresh`
-- [ ] `test_delete_user_with_fresh_webauthn_step_up_succeeds`
-- [ ] `test_delete_user_with_fresh_password_step_up_succeeds`
-- [ ] `test_delete_user_fresh_token_cannot_be_reused`
-- [ ] `test_delete_user_direct_endpoint_without_token_rejected`
-- [ ] `test_delete_user_without_admin_permission_rejected`
-- [ ] `test_fresh_step_up_token_expires`
-- [ ] `test_fresh_step_up_token_bound_to_action_and_target`
-- [ ] `test_fresh_step_up_token_not_valid_for_other_actions`
-- [ ] `test_existing_admin_actions_still_use_regular_sudo`
-- [ ] `test_fresh_step_up_password_requires_totp_when_mfa_enabled`
-- [ ] `test_fresh_step_up_options_requires_action`
-- [ ] `test_fresh_step_up_verify_without_options_fails`
-- [ ] `test_fresh_step_up_options_rejects_unknown_action_and_invalid_target`
-- [ ] `test_user_delete_modal_supports_real_webauthn_and_password_fallback`
-- [ ] `test_rendered_user_delete_javascript_parses`
+- [x] `test_delete_user_without_fresh_step_up_rejected`
+- [x] `test_delete_user_with_recent_sudo_session_still_requires_fresh`
+- [x] `test_delete_user_with_fresh_webauthn_step_up_succeeds`
+- [x] `test_delete_user_with_fresh_password_step_up_succeeds`
+- [x] `test_delete_user_fresh_token_cannot_be_reused`
+- [x] `test_delete_user_direct_endpoint_without_token_rejected`
+- [x] `test_delete_user_without_admin_permission_rejected`
+- [x] `test_fresh_step_up_token_expires`
+- [x] `test_fresh_step_up_token_bound_to_action_and_target`
+- [x] `test_fresh_step_up_token_not_valid_for_other_actions`
+- [x] `test_existing_admin_actions_still_use_regular_sudo`
+- [x] `test_fresh_step_up_password_requires_totp_when_mfa_enabled`
+- [x] `test_fresh_step_up_options_requires_action`
+- [x] `test_fresh_step_up_verify_without_options_fails`
+- [x] `test_fresh_step_up_options_rejects_unknown_action_and_invalid_target`
+- [x] `test_fresh_deletion_token_rejects_another_authorized_actor`
+- [x] `test_parallel_fresh_deletion_token_has_one_winner`
+- [x] `test_user_delete_modal_supports_real_webauthn_and_password_fallback`
+- [x] `test_rendered_user_delete_javascript_parses`
+
+QA-01b / P1, individually reviewed 2026-10-15 by Codex, based on main 9098c02a. Nineteen definitions / 23 parameterized cases; combined with unchanged ordinary step-up tests, 34 cases pass. Isolated test-process mutations dropping expires_at and used predicates each fail the intended expiry/replay HTTP assertions; the subsequent normal 23-case run passes. CodeRabbit CLI completed review of the changed test file with zero findings (not a whole-repository security audit). Real Flask routes, disposable MongoDB, password/TOTP verification and cryptographically signed simulated WebAuthn assertions; external HTTP/mail/upload/screenshot/jobs are isolated by fixtures. Authenticated clients are prepared by `_client_for_user`, not primary-login ceremonies. Simulated authenticator signatures are not physical-device, browser UX or attestation evidence. Production code and #887 policy remain unchanged. Shared fixture/configuration and privacy/erasure semantics remain separate reviews.
+
+| Definition | Requirement / meaningful assertions | Coverage, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_delete_user_without_fresh_step_up_rejected` | Missing proof gives exact guard error and target remains. | Actual authenticated admin POST, not a mocked guard. Overlaps direct JSON case but remains readable core invariant. | Keep. |
+| `test_delete_user_with_recent_sudo_session_still_requires_fresh` | Real recent elevation is true yet deletion without fresh proof is denied and target remains. | Real password step-up; differentiates ordinary sudo from per-deletion ceremony. | Keep; preserves #887. |
+| `test_delete_user_with_fresh_webauthn_step_up_succeeds` | Signed fresh ceremony followed by real deletion returns OK and removes the target. | Actual registration/verification; helper creates another same-actor client/key, not browser session-binding evidence. Extra registration setup is redundant but not a verifier mock. | Keep; simplification can be separate. |
+| `test_delete_user_with_fresh_password_step_up_succeeds` | Password ceremony mints scoped token and permitted deletion actually removes user. | Real password validation, seeded admin without MFA; does not prove wrong-password or expired ceremony rejection. | Keep positive fallback integration. |
+| `test_delete_user_fresh_token_cannot_be_reused` | First use deletes target; same-target replay must hit fresh-proof guard; different-target attempt also denied and second user survives; record is used. | Previously only changed target, allowing target binding to mask broken replay enforcement. Sequential replay, not concurrency proof. | Strengthened same-target assertion; keep. |
+| `test_delete_user_direct_endpoint_without_token_rejected` | JSON and form transports both reject missing proof and preserve target. | Two actual POST encodings; JSON overlaps core missing-proof test, form protects separate parsing branch. | Strengthened transport coverage; keep. |
+| `test_delete_user_without_admin_permission_rejected` | Regular user with genuine fresh proof is forbidden; target remains and proof is not consumed. | Real account/key; proves lack-of-privilege boundary, not which of multiple admin/permission decorators denied it. | Strengthened state assertions; keep. |
+| `test_fresh_step_up_token_expires` | Unused actor/action/target-correct proof works at 59.999s, fails at/after 60s, and records correct consumption/remaining target state; registry stores hash, not raw proof. | Only step-up UTC clock controlled; Mongo millisecond boundary explicit, no sleeps. Old test consumed proof and changed target, never testing time. No DB TTL-index cleanup claim. | Replaced vacuous scenario with three independent boundary cases; keep. |
+| `test_fresh_step_up_token_bound_to_action_and_target` | Wrong target denied without consuming proof; intended target then succeeds, ruling out unrelated invalid-proof failure. | Separate existing users, same unexpired proof. Action isolation belongs to next test. | Strengthened positive control; keep. |
+| `test_fresh_step_up_token_not_valid_for_other_actions` | Domain-created proof for another action cannot delete; target survives and proof remains unused. | Helper creates unsupported action under authenticated request context to test consume policy, not public issuance allowlist. | Strengthened state assertions; keep. |
+| `test_existing_admin_actions_still_use_regular_sudo` | Ordinary elevation still unlocks passkey registration and is reported elevated. | Does not invoke MFA rename despite previous comment; comment narrowed. | Keep narrow compatibility case. |
+| `test_fresh_step_up_password_requires_totp_when_mfa_enabled` | Missing TOTP issues no proof; valid real TOTP mints unused actor/action-bound proof. | Real device secret/pyotp; no replay/drift/incorrect-numeric matrix or permission-to-delete claim. | Strengthened registry outcome; keep. |
+| `test_fresh_step_up_options_requires_action` | Missing action rejected with invalid_action. | Actual options endpoint; broader malformed JSON/types are not covered here. | Keep. |
+| `test_fresh_step_up_verify_without_options_fails` | WebAuthn and correct-password fallback both reject absent ceremony with exact error. | Two endpoints; WebAuthn empty credential is rejected at ceremony prerequisite, not a cryptographic-negative case. | Strengthened password branch; keep. |
+| `test_fresh_step_up_options_rejects_unknown_action_and_invalid_target` | Unsupported action and malformed target rejected; invalid options leave no ceremony binding. | New authenticated session, actual parser and request state; does not assess every previously valid-binding replacement scenario. | Strengthened session check; keep. |
+| `test_fresh_deletion_token_rejects_another_authorized_actor` | Different admin reaches proof guard but cannot use owner's token; token stays unused and owner subsequently deletes successfully. | Exact guard JSON rules out earlier permission denial; real DB/proof, no actor-verifier mocks. Not stolen-cookie protection. | New actor-binding regression; keep. |
+| `test_parallel_fresh_deletion_token_has_one_winner` | Two clients with same actor/proof/target yield exactly one OK deletion and one proof rejection; used timestamp persists. | Barrier before actual Mongo find_one_and_update, two threads, bounded waits, no mocked write result. Both worker outcomes are collected; original request errors take precedence over a peer's broken barrier. One controlled local race, not distributed load testing. | New atomic-consumption regression; keep. |
+| `test_user_delete_modal_supports_real_webauthn_and_password_fallback` | Shared template wires decode/assertion functions and password/TOTP controls. | Source-string guard only; function name does not establish real browser interaction. | Keep alongside backend and parse tests; browser ceremony remains pending. |
+| `test_rendered_user_delete_javascript_parses` | Actual rendered inline deletion script passes Node syntax check. | Rendering is real; Node absence explicitly skips. Syntax is not focus, visual or interaction proof. | Keep with narrow claim. |
 
 ## tests/test_geocode.py
 
@@ -1178,6 +1303,54 @@ DATA-01a / QA-02, P1; reviewed 2026-10-13 by Codex. Disposable local database an
 | `test_public_cache_normalizes_page_sizes_and_excludes_old_unbounded_namespace` | Excessive and bounded query sizes share the new cache key; different resolved languages do not. | Real request contexts, no explicit URL language; exact new namespace. Strengthened for approved #927 review correction on 2026-10-13. | Keep. |
 | `test_old_oversized_cached_response_cannot_bypass_the_new_limit` | Pre-fix cache cannot bypass handler bounds; new stored payload is bounded. A session-language change reaches a distinct route cache key without changing the URL. | Synthetic legacy cache marker, real database, handler and session locale selector. Does not prove a live Redis deployment. | Keep. |
 
+## tests/test_public_cropper.py
+
+- [x] `test_cropper_uses_shared_dialog_and_pinned_existing_engine`
+- [x] `test_cropper_preserves_native_upload_without_file_transfer_support`
+- [x] `test_actual_cropper_has_modal_focus_keyboard_geometry_and_real_upload`
+- [x] `test_cropper_export_uses_source_resolution_and_bounded_zoom`
+- [x] `test_cropper_locales_reopen_and_cancel_are_consistent`
+- [x] `test_cropper_cancel_during_async_apply_cannot_commit_stale_file`
+- [x] `test_cropper_decode_and_apply_failures_are_visible_and_recoverable`
+- [x] `test_cropper_restores_committed_file_and_preview_together`
+
+UI-01 / QA-04 review, 2026-10-13, Codex, P1. Real browser, actual shared Jinja include/CSS/controller, local pinned existing Cropper 2.1.0 runtime and synthetic 800×450 PNG. Harness isolates the dialog from unrelated wizard integrations; no whole-submission acceptance claim. No authorization or image-engine mocks in positive crop cases. Error/race tests replace only the selection canvas promise to create deterministic adverse conditions.
+
+Integration review follow-up, 2026-10-18: `test_cropper_preserves_native_upload_without_file_transfer_support` is individually assessed across missing DataTransfer, missing File, throwing files setter and ignored files assignment. A real browser uploads image bytes through the native input and FormData; exact name/type/size/SHA-256 survive, the enhancement stays inactive, and no page errors occur. These four feature-injection cases do not certify every legacy browser. The two pending-crop cancellation tests now instrument and await settlement of the actual registered async apply handler, rather than assuming one zero-delay timer proves no stale commit; no production test hook or arbitrary delay is added.
+
+| Definition | Requirement / assertions | Coverage, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_cropper_uses_shared_dialog_and_pinned_existing_engine` | Named native dialog/help/keyboard contract, no inline palette or image-data innerHTML, preserved global hooks and exact vendor hash. | Source/provenance guard only, not runtime/security proof of every vendor method. | Keep alongside runtime cases. |
+| `test_actual_cropper_has_modal_focus_keyboard_geometry_and_real_upload` | Inert background, internal Tab loop, ArrowRight movement, theme-safe modal/action colors and bounded geometry; actual exported file has original name/type, positive dimensions and 16:9 ratio; preview commits and focus returns. | Four light/dark × desktop/390px cases, real engine and image bytes, no page errors; screenshots inspected. Not full wizard, all browsers, pointer/touch-drag or complete contrast audit. | Keep. |
+| `test_cropper_export_uses_source_resolution_and_bounded_zoom` | A 1600×900 source exports at least 1200px wide at initial crop in both viewport sizes; uniform zoom-in reduces sampled source area; zoom-out cannot exceed native width/height; aspect remains 16:9. | Six actual-engine desktop/390px × normal/in/out zoom cases; generated real PNG and decoded exported file, not mocked canvas. Five cases failed before correction (mobile initial output only 260px wide). Does not assert arbitrary rotation/skew or every source format/pixel-color mapping. | New P1 source-resolution regression; keep. |
+| `test_cropper_locales_reopen_and_cancel_are_consistent` | FI/EN/SV titles/actions, three clean reopens and Escape/button/backdrop cancellation, file clearing, engine/container cleanup and focus return. | Three locale cases with actual catalogs/engine; no sleeps. Label checks do not assert every translated help/error string visually. | Keep. |
+| `test_cropper_cancel_during_async_apply_cannot_commit_stale_file` | Cancelling a pending canvas promise cannot replace file/preview; next image opens normally. | Deterministic promise injection into real selection; no timer race used for ordering. Does not cover every file decode/import/blob-stage interleaving. | Keep. |
+| `test_cropper_decode_and_apply_failures_are_visible_and_recoverable` | Corrupt image gives live error/disabled apply; after cancel valid image works; canvas failure shows an error, enables retry, clears the uncommitted file and leaves the preview hidden. | Actual failed decode plus one synthetic canvas rejection with no prior accepted crop. This test does not establish restoration of a previously accepted pair; the 24-case replacement test below does. Import/network/browser-unsupported matrices remain follow-up. | Keep with explicit scope. |
+
+Historical checkpoint, 2026-10-15 at 92b4bb54: 26 cases passed across cropper, inline-style, CSS-integrity and product-token checks; six definitions accounted for sixteen cropper cases. JS syntax/diff checks passed. Those cancellation/error tests had no prior accepted crop and did not prove restoration of a previously accepted file/preview pair. That specific gap is covered by the approved 2026-10-16 follow-up below. This slice does not close UI-01's broader assistive-technology, touch/all-browser or submission integration requirements.
+
+2026-10-16 approved replacement-crop follow-up: the user approved the file/preview restoration fix, the coverage clarification and the validated push to #929. The current failure-test row and historical checkpoint above now distinguish empty-state failures from accepted-pair restoration. Its new definition is individually assessed below.
+
+| Definition | Requirement / assertions | Coverage, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_cropper_restores_committed_file_and_preview_together` | Replacement cancel/error restores the exact accepted file name/type/size/SHA-256 and preview-source SHA-256/visibility together; no accepted crop leaves both empty. Button, Escape, backdrop, real decode failure, canvas rejection and cancellation during pending canvas all preserve the expected pair and focus return. | 24 cases: committed/empty × desktop/390px × six exit paths. Actual pinned engine and valid image bytes; only adverse canvas promises are injected. Corrupt bytes exercise actual decode. Per-page immutable state snapshots, no timer-based race order. Does not establish whole-wizard draft/import/removal/reset behavior, every async import/blob stage, Safari/Firefox or physical touch interaction. | Two committed/button cases fail on current #929 head before fix, then all 24 pass; keep. |
+
+Current approved behavior also changes the existing failure-test assertion: an uncommitted original is cleared rather than retained. Existing recovery control/enabled/error assertions remain; older checkpoint descriptions above are not a claim that uncommitted bytes are retained by this follow-up. All 40 cropper cases pass, including the prior six-definition/source-resolution matrix; combined with inline/CSS/product-token checks, 50 pass. JS/Jinja syntax, diff and exact AST membership pass. A local CodeRabbit Minor about contradictory roadmap approval status was corrected; final six-file review completed with zero findings before this evidence-text addition. The controller keeps only the latest committed file/preview pair; async generation guards still reject stale completions. JS cache version is bumped; CSS, routes, field names and vendor bytes are unchanged.
+
+## tests/test_public_city_autocomplete.py
+
+- [x] `test_city_combobox_keyboard_selection_preserves_route_contract`
+- [x] `test_city_combobox_treats_html_and_regex_as_plain_text_and_bounds_options`
+
+UI-01 / QA-04, P1; reviewed 2026-10-15 by Codex. Two definitions / nine cases; 64 combined focused cases passed with search-field, URL/history, listing-contract, CSS-integrity and inline-style checks. Light mobile/dark desktop active-option screenshots inspected; explicit settled action-background/foreground assertions avoid mistaking intermediate CSS-transition colors for final states. No real API/load-performance or screen-reader certification claim.
+
+Integration follow-up, 2026-10-18: both existing definitions are reassessed. Reversed 100-city input proves sorting happens before the 20-option cap; accented city names are compared with the browser's locale-aware collation. Active-descendant failures now identify the missing attribute immediately, and screenshot paths use per-case tmp_path to avoid overwriting diagnostics. Nine cases pass. No network debounce is added to local filtering; the harmless empty string in the selected-value set is not an observable selection defect.
+
+| Definition | Requirement / meaningful assertions | Setup, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_city_combobox_keyboard_selection_preserves_route_contract` | Active descendant/selected state, ArrowDown/Home/End/Escape/Enter/Tab; focus remains on input; selection updates hidden value and single chip; selected option excluded; search/page/fixed tag retained, tag automatically submits while general list waits. Options have 44px height and fit viewport. | Actual list/tag routes and shared controller, two themes × two widths, isolated API with deterministic empty response. Condition waits, no sleeps. Does not prove live database filtering, all browsers or audible assistive-technology output. | Keep; old pointer-only implementation fails keyboard and ARIA assertions. |
+| `test_city_combobox_treats_html_and_regex_as_plain_text_and_bounds_options` | HTML/regex-looking text is rendered and selected literally, no injected image executes; pointer selection calls chip rendering; options capped at 20 and blur clears them. | Small DOM harness executes shipped controller with synthetic city data and a narrow history callback spy. Not whole-route or database evidence; bounded option DOM is not a whole-process memory guarantee. | Keep; old regex/HTML construction would fail literal-render and injection assertions. |
+
 ## tests/test_public_date_range.py
 
 - [ ] `test_restored_historical_range_can_select_an_earlier_start`
@@ -1255,9 +1428,17 @@ Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-requ
 
 ## tests/test_public_inline_style_contract.py
 
-- [ ] `test_public_inline_style_debt_matches_reviewed_baseline`
-- [ ] `test_public_inline_style_baseline_scope_is_documented`
-- [ ] `test_style_attribute_scanner_covers_all_valid_static_forms`
+- [x] `test_public_inline_style_debt_matches_reviewed_baseline`
+- [x] `test_public_inline_style_baseline_scope_is_documented`
+- [x] `test_style_attribute_scanner_covers_all_valid_static_forms`
+
+UI-02b / QA-03, P2; individually reviewed 2026-10-15 by Codex. Pure repository source/JSON checks with no app, network or permission mocks. The migration removed 23 inline bytes from index and 59 from organization details; only those two residual-block hashes are updated, with unchanged block counts and no new inline declarations/attributes. This is a reviewed reduction, not a full baseline regeneration or expanded exception.
+
+| Definition | Requirement / assertions | Coverage, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_public_inline_style_debt_matches_reviewed_baseline` | Every in-scope style block/attribute matches its reviewed content hash/multiplicity; unexplained additions, removals or changes fail with exact path differences. | Actual tracked template source and JSON; regex-based structural scanning, not a full HTML/CSS parser or visual/security audit. Human-reviewed baseline changes remain a trust boundary. | Keep exact debt ratchet; deliberate two-block reductions reviewed here. |
+| `test_public_inline_style_baseline_scope_is_documented` | Excluded directories and exact-hash policy stay explicit rather than silently widening exceptions. | Fixed metadata assertions; cannot by itself prove collector implementation or prevent a coordinated malicious test/baseline change. | Keep supporting scope guard. |
+| `test_style_attribute_scanner_covers_all_valid_static_forms` | Double/single/unquoted styles and script-generated markup are counted; data-style and JS-created style elements are not misclassified as attributes. | Synthetic scanner fixture, not runtime DOM; name overstates universality—these representative forms do not prove every malformed/Jinja/escaped HTML combination. | Keep with narrowed coverage claim; further parser edge cases remain separate. |
 
 ## tests/test_public_list_filter_history.py
 
@@ -1361,8 +1542,21 @@ DATA-01 / QA-02 supporting review, 2026-10-12, Codex, P1. Source-only assertions
 
 ## tests/test_public_mobile_overflow.py
 
-- [ ] `test_shared_information_cards_have_mobile_shrink_contract`
-- [ ] `test_information_cards_fit_portrait_viewport`
+- [x] `test_shared_information_cards_have_mobile_shrink_contract`
+- [x] `test_information_cards_fit_portrait_viewport`
+- [x] `test_public_collection_page_fits_viewport_without_clipping`
+- [x] `test_home_and_organization_layout_preserves_content`
+
+UI-02 / QA-03/QA-04, P2, reviewed 2026-10-15 by Codex, based on main 9098c02a. The shared footer used 100% content-box width plus 32px horizontal padding: actual 390px list page had 422px body width. Empty-state geometry alone then missed a long title clipped inside its card. Component-scoped box sizing, shrinkable footer grid and card text wrapping fix these independent causes without adding global overflow suppression or a new palette. All 93 combined width/search/listing/CSS/inline cases pass. CodeRabbit's two Minor test findings (overwritten screenshot artifacts and first-locator-only count) were corrected; final changed-test-file review completed with zero findings. Representative light/dark 390px footer screenshots inspected; whole-body screenshot capture is not relied on for body-scroll-host content outside the viewport.
+
+| Definition | Requirement / meaningful assertions | Setup, coverage and reliability limits | Disposition |
+|---|---|---|---|
+| `test_shared_information_cards_have_mobile_shrink_contract` | Border-box belongs to the container selector, grid children explicitly shrink and information text can wrap. | Source regex now scopes declarations instead of accepting an unrelated global reset. No runtime or visual proof by itself; benign selector regrouping may require maintenance. | Strengthened source guard; keep with runtime cases. |
+| `test_information_cards_fit_portrait_viewport` | Actual information page root width and every section-card bound/content width fit at 320/360/390px. | Real route with fixture-isolated external assets; default theme only, no all-page/localization claim. Card presence prevents vacuous empty selection. | Keep existing three runtime cases. |
+| `test_public_collection_page_fits_viewport_without_clipping` | List/city/tag root and body fit, exact card count/full long title/address/tag text is present and fits its own box, footer links stay inside viewport with visible keyboard focus; footer content is not hidden by overflow clipping and requested theme is actually applied. | 48 actual-route cases: light/dark × 320/360/390/1440px × empty/populated API. API is deterministic synthetic data, renderer/chrome are real. Diagnostic widths identify culprits; real focus/Shift+Tab and case-specific tmp_path screenshots. Not live API data, browser/locale exhaustive testing, production widget interaction, image/media/table or zoom acceptance. | New whole-page and component clipping regression; keep. |
+| `test_home_and_organization_layout_preserves_content` | Home/normal-org/long-org root and complete hero/title/action boxes fit and center; exact long name/description remain, home retains three actions, heading stays white and requested theme is applied. Computed mobile font size must follow the shared responsive scale, not a legacy container reset. | 24 real SSR route cases: two themes × 320/360/390/1440px × three views. Real synthetic seeded organization, isolated API/external assets; no CSS/image-engine mocks. Unique 320/390px tmp_path captures with finite animations fast-forwarded. Explicit 16px-root design-scale assertion needs maintenance if typography changes. Does not prove every locale/font/provider, media variant, dynamic widget, animation state or full keyboard/screen-reader interaction. | New UI-02b regression; original home title and later nowrap action clipping reproduced separately; keep. |
+
+UI-02b follow-up is stacked on #936's shared shell/width-test foundation, not a duplicate footer fix. Public hero content/action shrink and mobile title sizing live in the existing shared stylesheet. The two page-local organization flex/min-width and home nowrap rules were removed; no new inline palette or broad override added. Visual inspection exposed a legacy mobile container `font-size: revert !important` despite passing overflow guards; removing it restores the shared scale (24px rather than 32px at 320px) and an explicit computed-size assertion guards this regression. Both the imported container URL and parent stylesheet URL are cache-versioned. All 117 combined width/listing/search/CSS/inline cases pass; three changed templates parse with Jinja and diff check passes. CodeRabbit completed review of the ten implementation/inventory files with zero findings (roadmap status edits excluded). Screenshot collection additionally includes 1440px desktop. Broader page-owned style migration and non-geometry UI acceptance remain open.
 
 ## tests/test_public_native_dialog_contract.py
 
@@ -1429,9 +1623,12 @@ UI-01 / QA-04, 2026-10-12, Codex, P1, stacked on #922. Actual shared macro and c
 - [ ] `test_toolbar_renders_organization_management_links`
 - [ ] `test_toolbar_is_omitted_when_role_has_no_contextual_actions`
 - [ ] `test_organization_admin_with_regular_user_role_gets_scoped_toolbox`
-- [ ] `test_organization_scope_does_not_leak_to_unrelated_demonstration`
+- [x] `test_organization_scope_does_not_leak_to_unrelated_demonstration`
+- [x] `test_explicit_editor_keeps_contextual_toolbox_after_content_normalization`
 - [ ] `test_toolbar_is_omitted_without_demo_or_organization_context`
 - [ ] `test_toolbar_fits_public_detail_in_both_themes`
+
+Review follow-up, 2026-10-18: the unrelated-organization negative explicitly clears the fixture's separate editor grant before a real public GET; absence of the toolbox proves membership alone does not leak actions. The new positive keeps the explicit editor grant and asserts both toolbox presence and exact persisted editors after GET normalization. These are authorization-context regressions, not browser layout or primary authentication evidence. Permission predicates and reauthentication are unchanged. All 33 focused moderation-preservation, MCP and non-browser toolbar cases pass locally; full CI remains the integration gate.
 
 ## tests/test_recurrence_dates.py
 
@@ -1658,17 +1855,33 @@ UI-01 / QA-04, 2026-10-12, Codex, P1, stacked on #922. Actual shared macro and c
 
 ## tests/test_step_up_authentication.py
 
-- [ ] `test_step_up_password_grants_elevation`
-- [ ] `test_step_up_rejects_wrong_password`
-- [ ] `test_step_up_requires_totp_when_mfa_enabled`
-- [ ] `test_step_up_password_without_mfa_and_without_totp_works`
-- [ ] `test_step_up_options_reflect_methods`
-- [ ] `test_step_up_webauthn_flow`
-- [ ] `test_elevation_times_out`
-- [ ] `test_elevation_does_not_leak_across_sessions`
-- [ ] `test_sudo_required_redirects_anonymous_to_login`
-- [ ] `test_logout_clears_elevation`
-- [ ] `test_change_password_requires_step_up`
+- [x] `test_step_up_password_grants_elevation`
+- [x] `test_step_up_rejects_wrong_password`
+- [x] `test_step_up_requires_totp_when_mfa_enabled`
+- [x] `test_step_up_password_without_mfa_and_without_totp_works`
+- [x] `test_step_up_options_reflect_methods`
+- [x] `test_step_up_webauthn_flow`
+- [x] `test_elevation_times_out`
+- [x] `test_elevation_does_not_leak_across_sessions`
+- [x] `test_sudo_required_redirects_anonymous_to_login`
+- [x] `test_logout_clears_elevation`
+- [x] `test_change_password_requires_step_up`
+
+QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. Eleven definitions / thirteen cases pass; combined with unchanged fresh-deletion regression coverage, 30 cases pass. The latter file was run for compatibility, not individually assessed in this batch. `wapp` uses the real application with explicit localhost RP/origin and cleanup; `_client_for_user` prepares authenticated sessions, so these are elevation tests, not primary-login coverage. Disposable MongoDB and actual password hashing/TOTP/WebAuthn verification are exercised. External HTTP/email/uploads/screenshots/background jobs are isolated by shared fixtures; the simulated authenticator creates real signed assertions but is not hardware-attestation/browser evidence. Shared fixture/configuration audit remains separately pending; this review does not certify the entire conftest lifecycle or parallel-process cleanup.
+
+| Definition | Requirement / assertions | Setup, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_step_up_password_grants_elevation` | Registration options denied before correct password, allowed afterward. | Actual guard and password check, not mocked elevation. Does not prove fresh single-action deletion authorization. | Keep as protected-route integration. |
+| `test_step_up_rejects_wrong_password` | Wrong password denied; status false, sudo key absent and protected registration still denied. | Real hash; negative state checked beyond response alone. Existing elevation before a failed retry is outside this case. | Strengthened; keep. |
+| `test_step_up_requires_totp_when_mfa_enabled` | Password alone gives totp_required; malformed TOTP denied without opening guard; real current TOTP grants elevation. | Actual MFA secret/device in DB and pyotp, no verifier mock. Numeric incorrect codes, replay, TOTP drift/window policy and multiple-device behavior remain outside this definition. | Strengthened; keep with explicit limits. |
+| `test_step_up_password_without_mfa_and_without_totp_works` | No-MFA fallback returns success, records correct actor/method and reports elevated. | Real no-device account. Overlaps first test but explicitly protects method/session payload; not a reason to remove route-level guard case. | Strengthened; keep. |
+| `test_step_up_options_reflect_methods` | Password-only method initially; real registered key makes WebAuthn preferred. | Signed simulated registration, explicit option response statuses; no hardware/browser claim. | Keep; status assertions strengthened. |
+| `test_step_up_webauthn_flow` | Fresh session initially denied; real signed step-up grants actor-bound WebAuthn elevation and unlocks guard; password fallback remains. | Real registration/assertion verification through API using generated key. Challenge replay/origin/counter negative matrices are assessed in separate WebAuthn tests, not proved here. | Strengthened recorded method/actor; keep. |
+| `test_elevation_times_out` | Configured 10/900-second windows allow exact boundary, reject just after, clear sudo while retaining login. | Only step-up module clock replaced, not cookie/signing/TOTP clocks; no sleep and no production clock change. Invalid configuration and future timestamps remain follow-up cases. | Strengthened deterministic boundary integration; keep. |
+| `test_elevation_does_not_leak_across_sessions` | Separate client for same/different account starts denied; copied sudo bound to a different actor is rejected/cleared; original session stays elevated. | Distinct cookie jars and real guard. Deliberate wrong-actor state is fixture preparation, not a claim that stolen same-actor session cookies are safe. | Strengthened same-account and ownership boundaries; keep. |
+| `test_sudo_required_redirects_anonymous_to_login` | Anonymous registration attempt redirects to login. | Actual outer login_required decorator returns 302; this does not test direct sudo_required's standalone 401 branch. | Keep with narrowed claim. |
+| `test_logout_clears_elevation` | Original session loses sudo/login, protected route redirects, and real re-login on same cookie jar remains unelevated. | Replaces vacuous fresh-client-only assertion. An isolated runtime mutation making logout clear_elevation a no-op is detected by this test; no production file was mutated. Does not prove copied-cookie invalidation. | Strengthened; mutation confirmed. |
+| `test_change_password_requires_step_up` | No elevation and weak password leave stored hash unchanged; successful strong update verifies new password and rejects old one. | Real DB/hash and policy route; no success-status-only claim. Broader existing-session revocation/MFA-reset lifecycle remains separate. | Strengthened; keep. |
 
 ## tests/test_submit_draft_reliability.py
 

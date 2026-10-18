@@ -130,48 +130,7 @@ const publicListI18n = Object.freeze({
  * Handles pagination, search, and filters.
  */
 document.addEventListener("DOMContentLoaded", function () {
-  // City autocomplete
-  const cityInput = $("#city_input");
-  const selectedCitiesInput = $("#city");
-  const filters = $("#filters");
-  const citySuggestions = $("#city_suggestions");
-
-  cityInput.on("input", function () {
-    const query = cityInput.val();
-    if (query.length > 2) {
-      const matchingCities = cityList.filter(city =>
-        city.toLowerCase().includes(query.toLowerCase())
-      );
-      citySuggestions.empty();
-      matchingCities.forEach(city => {
-        $("<div>").addClass("suggestion-item").text(city)
-          .appendTo(citySuggestions)
-          .on("click", function (event) {
-            event.stopPropagation();
-            const selectedCity = city;
-            citySuggestions.empty().removeClass("show");
-            cityInput.val("");
-            const currentCities = selectedCitiesInput.val()
-              ? selectedCitiesInput.val().split(",")
-              : [];
-            if (!currentCities.includes(selectedCity)) {
-              currentCities.push(selectedCity);
-              selectedCitiesInput.val(currentCities.join(","));
-              window.publicListHistory.renderCities();
-            }
-          });
-      });
-      citySuggestions.addClass("show");
-    } else {
-      citySuggestions.empty().removeClass("show");
-    }
-  });
-
-  $(document).on("click", function (event) {
-    if (!citySuggestions.is(event.target) && citySuggestions.has(event.target).length === 0) {
-      citySuggestions.empty().removeClass("show");
-    }
-  });
+  window.publicCityAutocomplete({cities: cityList});
 
 
 });

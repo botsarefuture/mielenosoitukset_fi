@@ -584,7 +584,8 @@ def _create_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
         event_type=arguments.get("event_type") or arguments.get("type") or "other",
         tags=_normalize_tags(arguments.get("tags")),
         organizers=_normalize_organizers(arguments.get("organizers")),
-        approved=bool(arguments.get("approved", False)),
+        # Content-write scope does not grant moderation authority.
+        approved=False,
         hide=bool(arguments.get("hide", False)),
         created_datetime=datetime.now(timezone.utc),
         last_modified=datetime.now(timezone.utc),
@@ -601,6 +602,10 @@ def _update_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
         raise ValueError("demo_id is required")
     if not isinstance(patch, dict) or not patch:
         raise ValueError("patch must be a non-empty object")
+    if "approved" in patch:
+        # A generic write token is not a moderation decision. In particular,
+        # False must not silently invent a pending/rejected transition.
+        raise ValueError("Use the moderation workflow to change approval")
 
     db = _mongo()
     doc = db.demonstrations.find_one({"_id": ObjectId(demo_id)})
@@ -620,7 +625,6 @@ def _update_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
         "route",
         "tags",
         "organizers",
-        "approved",
         "hide",
         "cancelled",
         "event_type",
@@ -953,7 +957,6 @@ TOOLS: dict[str, dict[str, Any]] = {
                 "event_type": {"type": "string"},
                 "tags": {},
                 "organizers": {"type": "array"},
-                "approved": {"type": "boolean"},
                 "hide": {"type": "boolean"},
             },
         },
@@ -980,7 +983,6 @@ TOOLS: dict[str, dict[str, Any]] = {
                         "route": {"type": "array"},
                         "tags": {"type": "array"},
                         "organizers": {"type": "array"},
-                        "approved": {"type": "boolean"},
                         "hide": {"type": "boolean"},
                         "cancelled": {"type": "boolean"},
                         "event_type": {"type": "string"},

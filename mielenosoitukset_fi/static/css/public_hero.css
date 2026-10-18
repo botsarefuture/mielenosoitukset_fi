@@ -50,6 +50,7 @@
 .site-hero.site-hero .demo-hero-content,
 .site-hero.site-hero .org-hero-content,
 .site-hero.site-hero .org-fill-hero-content {
+  min-width: 0;
   width: 100%;
   max-width: 780px;
   margin: 0 auto;
@@ -68,6 +69,7 @@
   letter-spacing: -0.035em;
   text-align: center;
   text-shadow: none;
+  overflow-wrap: anywhere;
 }
 
 .site-hero.site-hero p,
@@ -120,6 +122,10 @@
 .site-hero.site-hero .today-button,
 .site-hero.site-hero .cities-button,
 .site-hero.site-hero .hero-help-link {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
   min-height: 46px;
   padding: 0.72rem 1.05rem;
   border: 1px solid rgba(255, 255, 255, 0.34);
@@ -154,6 +160,8 @@
 }
 
 .site-hero.site-hero .org-hero-info {
+  flex: 1 1 15rem;
+  min-width: 0;
   align-items: center;
   text-align: center;
 }
@@ -211,7 +219,7 @@
   .site-hero.site-hero h1,
   .site-hero.site-hero h2,
   .site-hero.site-hero .demo-title {
-    font-size: clamp(1.85rem, 9vw, 2.45rem);
+    font-size: clamp(1.5rem, 7vw, 2.45rem);
   }
 
   .site-hero.site-hero .buttons-div,

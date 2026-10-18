@@ -504,6 +504,7 @@ h1 {
 /* The legacy footer rules remain for untouched shells; this namespaced
    contract owns the public base footer without broad overrides. */
 .public-site-footer {
+  box-sizing: border-box;
   width: 100%;
   padding: 2rem 1rem;
   color: var(--product-text) !important;
@@ -512,17 +513,25 @@ h1 {
 }
 
 .public-site-footer__inner {
+  box-sizing: border-box;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   justify-items: center;
   gap: 1rem;
   width: min(100%, 75rem);
   margin-inline: auto;
 }
 
+.public-site-footer__inner > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .public-site-footer__brand {
   margin: 0;
   color: var(--product-text-muted);
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .public-site-footer .public-site-footer__links,
@@ -1189,6 +1198,18 @@ h1 {
   gap: 0.5em;
   width: 100%;
   text-align: center;
+}
+
+.demo-card-title > span,
+.demo-card-location-row > span,
+.demo-card-tag {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.demo-card-tag {
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .demo-card-details {

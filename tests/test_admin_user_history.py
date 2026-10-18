@@ -69,17 +69,21 @@ def test_user_history_includes_city_grants_and_revocation(admin_client, db, seed
     })
     endpoint = f"/admin/user/edit_user/{target}"
     assert admin_client.post(endpoint, data=payload).status_code == 302
-    first = db.admin_logs.find_one({"event": "user_details_changed", "entity_id": str(target)})
+    first = db.admin_logs.find_one({"event": "user_details_changed", "entity_id": str(target),
+                                   "new_state.city_scope_keys": {"$exists": True}})
     assert first["new_state"]["city_scope_keys"] == ["helsinki"]
     assert set(first["new_state"]["city_scope_permissions"]) == {"EDIT_DEMO", "LIST_DEMOS", "VIEW_DEMO"}
-    assert first["new_state"]["role"] == "city_admin"
+    # Scope and role are separate writes and therefore separate atomic events.
+    role_event = db.admin_logs.find_one({"entity_id": str(target), "new_state.role": "city_admin"})
+    assert role_event["old_state"]["role"] == "user"
     payload = _profile(db.users.find_one({"_id": target}))
     assert admin_client.post(endpoint, data=payload).status_code == 302
     events = list(db.admin_logs.find({"event": "user_details_changed", "entity_id": str(target)}).sort("_id", 1))
-    assert len(events) == 2
-    assert events[1]["old_state"]["city_scope_keys"] == ["helsinki"]
-    assert events[1]["new_state"]["city_scope_keys"] == []
-    assert events[1]["new_state"]["role"] == "user"
+    assert len(events) == 4
+    revocation = next(event for event in events if event["new_state"].get("city_scope_keys") == [])
+    assert revocation["old_state"]["city_scope_keys"] == ["helsinki"]
+    assert revocation["new_state"]["city_scope_permissions"] == []
+    assert events[-1]["new_state"]["role"] == "user"
 
 
 def test_creation_and_reset_requirement_have_safe_history(admin_client, db, seeded_data):

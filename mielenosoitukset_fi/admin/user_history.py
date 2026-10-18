@@ -1,6 +1,11 @@
 """Allowlisted user-management history; never snapshot credentials or sessions."""
 
 from datetime import datetime, timezone
+from copy import deepcopy
+
+from bson import ObjectId
+from pymongo import ReturnDocument
+from pymongo.errors import PyMongoError
 
 from flask_babel import _, format_datetime, lazy_gettext as N_
 
@@ -22,6 +27,78 @@ EVENTS = {
     "user_created": N_("Käyttäjä luotu"),
     "user_password_reset_required": N_("Salasanan vaihto vaaditaan"),
 }
+
+PENDING_HISTORY = "_admin_history_pending"
+MAX_PENDING_HISTORY = 100
+
+
+def history_event(user_id, before, after, actor, event="user_details_changed", *, always_record=False):
+    """Build a credential-free event from this mutation's explicit states."""
+    old, new = changed_states(before, after)
+    if not new and not always_record:
+        return None
+    from .utils import capture_request_context, capture_process_context
+
+    return {
+        "_id": ObjectId(), "timestamp": datetime.now(timezone.utc),
+        "event": event, "entity_type": "user", "entity_id": str(user_id),
+        "related_id": str(user_id), "actor_id": str(actor["id"]),
+        "actor": deepcopy(actor), "old_state": old, "new_state": new,
+        "state_changed": bool(new),
+        "request": capture_request_context(), "process": capture_process_context(),
+    }
+
+
+def commit_history_change(collection, document, updates, event, guard_fields):
+    """Atomically store a state change and its bounded durable audit outbox.
+
+    No replica-set transaction is required. An event is never inferred from a
+    later document reload. Returning None means a stale or saturated write.
+    """
+    guard = [
+        {key: {"$eq": document[key]}} if key in document else {key: {"$exists": False}}
+        for key in guard_fields
+    ]
+    mutation = {"$set": updates}
+    if event is not None:
+        guard.append({f"{PENDING_HISTORY}.{MAX_PENDING_HISTORY - 1}": {"$exists": False}})
+        mutation["$push"] = {PENDING_HISTORY: event}
+    return collection.find_one_and_update(
+        {"_id": document["_id"], "$and": guard}, mutation,
+        return_document=ReturnDocument.AFTER,
+    )
+
+
+def flush_user_history(db, user_id):
+    """Idempotently project pending events, retaining them on delivery failure.
+
+    Authorized history reads and subsequent changes retry projection. Each
+    source mutation already persisted its event in the same document write.
+    """
+    sources = (
+        (db.users, {"_id": user_id}),
+        (db.admin_scope_grants, {"user_id": {"$in": [user_id, str(user_id)]}}),
+    )
+    for collection, query in sources:
+        for document in collection.find({**query, f"{PENDING_HISTORY}.0": {"$exists": True}}).limit(MAX_PENDING_HISTORY):
+            for event in document.get(PENDING_HISTORY, [])[:MAX_PENDING_HISTORY]:
+                try:
+                    db.admin_logs.update_one({"_id": event["_id"]}, {"$setOnInsert": event}, upsert=True)
+                    db.super_audit_logs.update_one({"_id": event["_id"]}, {"$setOnInsert": {
+                        "event": f"admin:{event['event']}", "payload": event,
+                        "timestamp": event["timestamp"], "actor": event["actor"],
+                        "request": event.get("request"), "process": event.get("process"),
+                        "entity": {"type": "user", "id": event["entity_id"]},
+                        "tags": ["admin", "audit"],
+                    }}, upsert=True)
+                    collection.update_one({"_id": document["_id"]}, {
+                        "$pull": {PENDING_HISTORY: {"_id": event["_id"]}},
+                    })
+                except PyMongoError:
+                    # Delivery is best-effort, durability is not: retry the
+                    # original event (same id, actor, states and timestamp).
+                    return False
+    return True
 
 
 def user_snapshot(document, grant):

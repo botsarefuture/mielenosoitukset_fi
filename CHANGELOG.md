@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Reject approval changes through generic MCP content patches; moderation stays in its canonical permission-checked workflow without partially applying mixed patches.
+
 - Content edits and model normalization retain server-owned moderation metadata, rejection state and explicit editor grants instead of erasing them with a full-document replacement.
 
 - Concurrent moderation decisions no longer let an older request overwrite a newer case outcome; returned decision data and audit history retain each transition's own state.

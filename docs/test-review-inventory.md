@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Verified moderation-edit preservation branch based on open #939 / main 9098c02a, 2026-10-16: 155 Python test files; 1,111 definitions; 155 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open #929–#937 are excluded. This is not completed suite review.
+Verified moderation-edit preservation branch based on open #939 / main 9098c02a, 2026-10-18: 155 Python test files; 1,113 definitions; 158 assessed definitions. AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Independent open #929–#937 are excluded. This is not completed suite review.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -714,6 +714,7 @@ QA-01e / SEC-04, P1; six definitions individually assessed 2026-10-15 by Codex o
 
 ## tests/test_demo_moderation_preservation.py
 
+- [x] `test_mcp_content_patch_cannot_change_moderation`
 - [x] `test_model_content_save_preserves_moderation_state`
 - [x] `test_model_creation_still_inserts_complete_content`
 - [x] `test_form_content_edit_keeps_approval_identity_and_case_history`
@@ -722,6 +723,7 @@ SEC-04b / QA-01, P1; individually assessed 2026-10-16 by Codex, stacked on #939.
 
 | Definition | Requirement / assertions | Cases, setup and reliability limits | Disposition |
 |---|---|---|---|
+| `test_mcp_content_patch_cannot_change_moderation` | Generic MCP approval patches fail before content writes; exact demo/case snapshots and one notification remain unchanged. | Four real HTTP cases: approved/rejected initial decisions × true/false patch, including a title change to detect partial application. Snapshot follows MCP app initialization so migrations are not confused with request writes. Enqueue captured, not SMTP delivery. | Reviewed 2026-10-18; keep. |
 | `test_model_content_save_preserves_moderation_state` | After canonical approve/deny, normalization plus title edit/explicit description clearing keeps exact decision metadata and canonical booleans. Repeating the same decision reports unchanged and leaves one captured email. | Two status variants, actual constructor/save (including normalization-triggered saves), real stored decision/notification. Captured enqueue is not external delivery evidence. No concurrent stale-content/approval edit claim. | New regression; keep. |
 | `test_model_creation_still_inserts_complete_content` | A new content model still persists its ID/title/city/pending approval without invented moderation metadata. | Explicit app/database fixtures; constructor may auto-save normalized time before explicit save, so this checks ordinary creation lifecycle rather than isolating one call/insert count. | New insertion-path regression; keep. |
 | `test_form_content_edit_keeps_approval_identity_and_case_history` | Real approved-demo form save changes the title while retaining exact decision metadata and complete linked case document; no second notification. | Authenticated fixture admin with valid minimal form data; not browser rendering, primary login, unauthorized checkbox/CSRF or rejection-form transition coverage. | New route regression; keep alongside existing scoped negatives. |
@@ -1455,9 +1457,12 @@ UI-01 / QA-04, 2026-10-12, Codex, P1, stacked on #922. Actual shared macro and c
 - [ ] `test_toolbar_renders_organization_management_links`
 - [ ] `test_toolbar_is_omitted_when_role_has_no_contextual_actions`
 - [ ] `test_organization_admin_with_regular_user_role_gets_scoped_toolbox`
-- [ ] `test_organization_scope_does_not_leak_to_unrelated_demonstration`
+- [x] `test_organization_scope_does_not_leak_to_unrelated_demonstration`
+- [x] `test_explicit_editor_keeps_contextual_toolbox_after_content_normalization`
 - [ ] `test_toolbar_is_omitted_without_demo_or_organization_context`
 - [ ] `test_toolbar_fits_public_detail_in_both_themes`
+
+Review follow-up, 2026-10-18: the unrelated-organization negative explicitly clears the fixture's separate editor grant before a real public GET; absence of the toolbox proves membership alone does not leak actions. The new positive keeps the explicit editor grant and asserts both toolbox presence and exact persisted editors after GET normalization. These are authorization-context regressions, not browser layout or primary authentication evidence. Permission predicates and reauthentication are unchanged. All 33 focused moderation-preservation, MCP and non-browser toolbar cases pass locally; full CI remains the integration gate.
 
 ## tests/test_recurrence_dates.py
 

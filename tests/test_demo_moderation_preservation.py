@@ -3,6 +3,32 @@
 import pytest
 
 from tests.test_demo_decision_service import _capture_decision_email
+from tests.test_admin_mcp import _mcp_client, _mcp_headers, _rpc
+
+
+@pytest.mark.parametrize("status", ["approved", "rejected"])
+@pytest.mark.parametrize("approved", [True, False])
+def test_mcp_content_patch_cannot_change_moderation(
+    app_factory, admin_client, db, seeded_data, monkeypatch, status, approved
+):
+    queued = _capture_decision_email(monkeypatch)
+    demo_id = seeded_data["pending_demo_id"]
+    endpoint = "approve" if status == "approved" else "deny"
+    assert admin_client.post(f"/api/admin/demo/{demo_id}/{endpoint}").status_code == 200
+    client, token, _ = _mcp_client(app_factory, seeded_data)
+    before = db.demonstrations.find_one({"_id": demo_id})
+    before_case = db.cases.find_one({"_id": seeded_data["case_id"]})
+    response = client.post("/api/admin/mcp", headers=_mcp_headers(token), json=_rpc(
+        "tools/call", {"name": "update_demo", "arguments": {
+            "demo_id": str(demo_id),
+            "patch": {"title": "Must not partially apply", "approved": approved},
+        }}
+    ))
+    assert response.status_code == 200
+    assert "moderation workflow" in response.get_json()["error"]["message"]
+    assert db.demonstrations.find_one({"_id": demo_id}) == before
+    assert db.cases.find_one({"_id": seeded_data["case_id"]}) == before_case
+    assert len(queued) == 1
 
 
 @pytest.mark.parametrize("status", ["approved", "rejected"])

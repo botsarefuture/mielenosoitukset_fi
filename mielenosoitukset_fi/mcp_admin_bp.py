@@ -601,6 +601,10 @@ def _update_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
         raise ValueError("demo_id is required")
     if not isinstance(patch, dict) or not patch:
         raise ValueError("patch must be a non-empty object")
+    if "approved" in patch:
+        # A generic write token is not a moderation decision. In particular,
+        # False must not silently invent a pending/rejected transition.
+        raise ValueError("Use the moderation workflow to change approval")
 
     db = _mongo()
     doc = db.demonstrations.find_one({"_id": ObjectId(demo_id)})
@@ -620,7 +624,6 @@ def _update_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
         "route",
         "tags",
         "organizers",
-        "approved",
         "hide",
         "cancelled",
         "event_type",
@@ -980,7 +983,6 @@ TOOLS: dict[str, dict[str, Any]] = {
                         "route": {"type": "array"},
                         "tags": {"type": "array"},
                         "organizers": {"type": "array"},
-                        "approved": {"type": "boolean"},
                         "hide": {"type": "boolean"},
                         "cancelled": {"type": "boolean"},
                         "event_type": {"type": "string"},

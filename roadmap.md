@@ -1,6 +1,6 @@
 # Repository roadmap
 
-Last reconciled: 2026-10-16. Evidence baseline: `main` at `9098c02affc1244d92911d3e2afae9842db284e5`.
+Last reconciled: 2026-10-18. Integration baseline: `main` at `739612b2`; PRs #929–#940 are combined without rewriting their histories.
 
 This is the delivery plan for the **whole repository**: security, public and admin workflows, backend correctness, operations, privacy, localization, tests, and maintenance. Issue [#833](https://github.com/botsarefuture/mielenosoitukset_fi/issues/833) is one workstream within it. Existing issue trackers retain their detailed acceptance criteria; this document sets the order and dependencies.
 
@@ -8,9 +8,9 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** Continue remaining roadmap integration and acceptance. #929 rollback and coverage-clarification follow-up is approved for push: file/preview restoration and 24 new regression cases are implemented; 50 checks and local review pass. City autocomplete (#930), security/test review (#931–#935/#938–#939) and width/hero work (#936–#937) are already open; do not redo them. Routine fixes/validation/pushes may proceed without further approval questions; merge/deploy still requires action-specific authority. Open PRs are not deployed fixes.
+- **Next:** Finish the explicitly authorized #929–#940 merge batch before any new roadmap implementation. #940 is the combined integration gate: preserve all twelve PR heads, review corrections, current-main deployment fixes, catalog entries and individual test reviews. Resume the first unblocked roadmap task only after main ancestry and PR states are verified. Deployment is not authorized by this merge batch.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
-- **Verified merge checkpoint:** #926 is merged; #928 integrated #927 and the remaining organization/retry/attendance review corrections into main `9098c02a`. Required CI passed on its final integration head. No separate deployment or production verification is claimed. The next cropper PR has no merge authorization.
+- **Verified merge checkpoint:** Main `739612b2` contains #925–#928. The #929–#940 integration is not a release claim: verify its final CI, review resolution and main ancestry before recording merge completion.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
 - **Tracking:** stable task IDs below; detailed implementation lives in linked issues/PRs. Tests have their own [review inventory](docs/test-review-inventory.md).
@@ -77,9 +77,10 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 - **QA-01a · P1 · In review · Codex · M1/M6 · codex/step-up-test-review:** Individually assess all eleven step-up test definitions; repair vacuous original-session logout coverage and strengthen configured time boundaries, actor/session isolation, invalid credential rejection and stored password outcomes. Acceptance: focused step-up and fresh-deletion regressions pass (30 cases), mutation confirms logout cleanup regression detection, fixture/mock limits and remaining cases recorded. No production authentication or #887 policy changes.
 
 - [ ] **SEC-01 · P1:** #901 MFA challenge implementation is merged; preserve the shared legacy/no-JS behavior and obtain required release acceptance evidence.
-- [ ] **SEC-02 · P1:** Inactive/banned-account enforcement and admin status workflows are merged through #915/#916/#919, including shared target checks and atomic duplicate-submit coverage. Retain #763 until integration/release acceptance is proved.
+- [ ] **SEC-02 · P1:** Inactive/banned-account enforcement and admin status workflows are merged through #915/#916/#919, including shared target checks and atomic duplicate-submit coverage; #763 is closed. #931 supplies runtime translation coverage; broader release acceptance remains separate from issue closure.
 - [ ] **SEC-03 · P0/P1:** #918 target-organization/input validation and #917 case scope are merged; #919 user-action hierarchy/delegation, global clearance scope and audit searchability are merged through the account-management integration. Broader role lifecycle, concurrency, destructive-action and canonical audit requirements remain tracked.
 - [ ] **SEC-04 · P1:** Reconcile token/approval lifecycle requirements and prior completed trackers against current routes; prove revocation, expiry, replay behavior, idempotent decisions, case closure, audit and notification effects for every entrypoint.
+  - **SEC-04a/b · P1 · In review · Codex · M1/M6 · #935/#938–#940:** Individual lifecycle and decision tests, bounded conditional case reconciliation, and content-save preservation are included in the #940 integration. Generic MCP patches reject approval changes before any write; they do not invent a new moderation transition. Rollback authorization/state restoration, stale content edits racing decisions, provider-acceptance crash windows, and unknown-field retention remain open.
 - [ ] **SEC-05 · P1:** Review incident #912/#913 protections and credential/session lifecycle regressions before touching related code. Keep secrets out of documentation and audit data.
 
 ### Backend, data, jobs and integrations
@@ -95,7 +96,7 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 
 ### Product and shared UI
 
-- [ ] **UI-01 · P1:** Shared labels and real pinned picker locale/min-max/selected-state/history/clear/keyboard/theme behavior are implemented and verified on this stack. Cropper, autocomplete keyboard, broader assistive-technology/browser and integration/release acceptance remain pending.
+- [ ] **UI-01 · P1:** Shared labels/picker are merged through #924. #929 supplies native cropper focus, source-resolution and accepted-image rollback; #930 supplies safe keyboard city suggestions. Both are in the #940 integration gate. Whole-wizard, broader assistive-technology/browser and release acceptance remain pending.
 - [ ] **UI-02 · P2:** Consolidate homepage/city discovery using the existing shared design language; verify icon centering, content widths, restrained hero hierarchy, themes and mobile. Current main reproduced a 390px list body at 422px due to footer content-box padding; long card text was also internally clipped. UI-02a fixes these shared component causes on codex/public-mobile-width; broader homepage/organization, media/table, zoom/widget and release acceptance remain pending.
   - **UI-02a · P2 · In review · Codex · M2/M4 · codex/public-mobile-width:** Own footer box sizing, shrinkable single-column grid and long card text wrapping at component level, without new global overflow suppression. Validate list/city/tag in both themes at 320/360/390/1440px with empty and populated responses, complete text and keyboard footer link bounds. All three width-test definitions reviewed; 93 combined cases pass and final test-file review has zero findings. Retain wider UI-02 scope.
   - **UI-02b · P2 · In review · Codex · M2/M4 · codex/public-page-width · depends on #936:** Shared hero content/actions shrink and wrap; remove legacy forced mobile heading sizing and page-local organization min-width/home nowrap conflicts. Acceptance: actual home/normal/long-organization SSR in both themes at 320/360/390/1440px preserves complete text, centered bounds, shared mobile typography and visible actions. All 117 combined focused cases pass, including 24 new browser cases; broader UI-02, localization, widget and release acceptance remain pending.
@@ -139,7 +140,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Cropper follow-up based on #929 / main 9098c02a: **1,111 definitions across 154 files**, with 148 assessed definitions. Independent open PRs #930–#939 are excluded. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. It is a repository-wide tracked-Python AST inventory, not pytest collection and not a completed test review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit `conftest.py`, shared fixtures, pytest configuration, CI, standalone test scripts and browser harnesses as dependencies too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. The combined #929–#940 integration on main `739612b2` has **1,141 definitions across 157 files**, with **233 assessed definitions**. All independent PR review records are retained and exact AST membership is reconciled. The two test-named fixtures in `conftest.py` have separate supporting-audit entries and do not count as tests. This is a tracked-Python AST inventory, not pytest collection or completed suite review. Parameter expansion, generated cases, integration dependencies and skips are verified during collection. Audit shared fixtures, pytest configuration, CI, standalone scripts and browser harnesses too.
 
 For each test, record:
 
@@ -180,14 +181,14 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | ID | Priority | Status | Owner | Milestone | Evidence / next action |
 |---|---|---|---|---|---|
 | SEC-01 | P1 | Merged | Codex | M1 | #901 in inspected main `3c2c8d3c`; release acceptance not established here. |
-| QA-01 | P1 | In progress | Codex | M1, then ongoing | Thirty-seven MFA/account/passkey/organization-action definitions reviewed in the combined inventory; remaining authentication/permission tests pending. |
-| QA-01e | P1 | In review | Codex | M1/M6 | Six decision-service definitions assessed; 12 decision/edit-link/anonymous cases pass and test-process string-case lookup mutation is detected. Parallel/opposite decisions and provider acceptance/crash windows remain open acceptance gaps. |
+| QA-01 | P1 | In progress | Codex | M1, then ongoing | #932–#935/#938–#940 add individually reviewed step-up, deletion, redirect, token and moderation protection to the combined inventory. Remaining authentication/permission tests are still unchecked. |
+| QA-01e / SEC-04a/b | P1 | In review | Codex | M1/M6 | #938–#940 supply decision side-effect tests, deterministic opposite-decision/CAS retry cases and content/MCP preservation regressions. Provider acceptance/crash, rollback and stale-content races remain open. |
 | SEC-02 | P1 | Merged | Codex | M1 | #915/#916/#919 are merged; #763 is closed. Shared status-action visibility, hierarchy checks and duplicate-submit protection are integrated. Runtime translation follow-up #931 and broader release acceptance remain open; merge and issue closure do not establish production acceptance. |
 | SEC-03 | P0/P1 | In progress | Codex | M1 | #918/#917/#919 are merged, including user hierarchy/delegation, global clearance gates and searchable redacted audits. Broader role/audit acceptance remains pending. |
 | QA-02 | P1 | In progress | Codex | M2–M3 | Five API, five request-state, five listing-contract and three URL/history definitions reviewed on this stack. Remaining data/workflow tests pending. |
 | QA-03, QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI and operations/remaining tests. |
 | QA-04 | P2 | In progress | Codex | M2, then M4–M6 | Two field, four existing accessibility and four real-picker definitions assessed; broader browser/assistive-technology evidence remains pending. |
-| DATA-01 | P1 | In progress | Codex | M2 | #920–#924 public API/request/history/search/picker code is in main 60992b19. Bounds/legacy times, broader integration and release acceptance remain pending. |
+| DATA-01 | P1 | In progress | Codex | M2 | #920–#924 and bounded pagination/automatic loading #927–#928 are merged. Broader integration, legacy data and release acceptance remain pending. |
 | UI-01 | P1 | In progress | Codex | M2 | Shared search labels and picker merged through #924. #929 approved rollback/coverage follow-up restores file and preview together; 50 focused cases pass including 24 new exit paths, seven definitions reviewed. Source-resolution bounds retained. #930 autocomplete is already open. Full wizard, broader browser/assistive-technology and release acceptance remain pending. |
 | DATA-02 / OPS-01 | P1 | Backlog | Unassigned | M3 | Verify #908 and load the existing continuity plan. |
 | ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |

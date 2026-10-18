@@ -13511,3 +13511,7 @@ msgstr "Move or resize the crop area. Use the arrow keys to move it."
 #: mielenosoitukset_fi/templates/cropper-modal.html
 msgid "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
 msgstr "Could not crop the image. Try again or choose another image."
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/demo_diff.html
+msgid "Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan."
+msgstr "Only event content recorded in this version is restored. Approval, cancellation, visibility, city, organizers and permissions remain unchanged. The applied change is recorded in history."

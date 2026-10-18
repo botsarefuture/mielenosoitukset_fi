@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Integration candidate `20bbcfd4` for PRs #929–#940, based on main `739612b2`, 2026-10-18: 157 Python test files; 1,143 definitions; 235 assessed definitions. These are integration-tree counts, not counts for the main baseline. All individual review records are retained and exact AST membership is reconciled, including standalone tests but excluding fixtures/parameter expansion. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/demo-rollback-preservation`, based on merged main `6ef40610`, 2026-10-18: 158 Python test files; 1,151 definitions; 243 assessed definitions. Independent open #941 adds its own user-history definitions/reviews and must be reconciled at integration, not overwritten. These are branch-tree counts, not counts for the main baseline. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -689,6 +689,30 @@ SEC-04b / QA-01 supporting review, 2026-10-16, Codex, P1; only `test_explicit_ob
 - [ ] `test_demo_card_renderer_has_no_finnish_runtime_fallbacks`
 - [ ] `test_demo_card_labels_have_english_and_swedish_translations`
 - [ ] `test_demo_list_renders_shared_card_contract_for_active_locale`
+
+## tests/test_demo_rollback.py
+
+- [x] `test_rollback_preserves_current_decision_scope_and_metadata`
+- [x] `test_rollback_sparse_history_and_undo_use_actual_content`
+- [x] `test_rollback_checks_current_city_scope`
+- [x] `test_rollback_conflict_does_not_write_or_record_success`
+- [x] `test_rollback_invalid_identifiers_are_not_server_errors`
+- [x] `test_rollback_keeps_concurrent_unrelated_metadata`
+- [x] `test_rollback_requires_edit_permission_and_csrf`
+- [x] `test_rollback_explanation_uses_compiled_locale`
+
+SEC-04c / QA-01, P1, Codex, 2026-10-18. Real Flask requests and disposable MongoDB; no authorization/write-result mocks. Sixteen parameter-expanded cases. Focused run/PR evidence is recorded in the delivery PR. Existing fixture isolates external mail/network side effects; this is not production verification or transactional audit durability.
+
+| Definition | Requirement and assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_rollback_preserves_current_decision_scope_and_metadata` | Actual content/explicit clearing restored, every other stored field preserved; exact actual before/after and actor recorded; repeated restore adds no event. | Real approve/deny API ×2, captured mail boundary, exact unchanged case/link rows and one notification; historical foreign identity/scope/moderation/cancellation injected. Does not prove provider delivery or history-write crash recovery. | Keep. |
+| `test_rollback_sparse_history_and_undo_use_actual_content` | Sparse snapshots cannot erase missing fields; the newly recorded previous content can itself be restored. | Real two POSTs and DB state; no broad unknown-field retention policy claim. | Keep. |
+| `test_rollback_checks_current_city_scope` | Current own-city edit allowed; old in-scope snapshot cannot authorize foreign current target, with no content/history write. | Real scoped admin/grant, own/foreign ×2; no mocked permission predicate. Grant revocation between check and write is not proven. | Keep. |
+| `test_rollback_conflict_does_not_write_or_record_success` | Interleaved content or authoritative city-key changes yield 409, preserve competing write and create no success record. | Two variants; wrapper introduces a real Mongo update immediately before real conditional update, does not fabricate result. Also exercises initially absent city_key. No sleeps; not an all-entrypoint concurrency proof. | Keep. |
+| `test_rollback_invalid_identifiers_are_not_server_errors` | Malformed/missing history and malformed/missing target return 404. | Four real routes; no stacktrace/500 acceptance. | Keep. |
+| `test_rollback_keeps_concurrent_unrelated_metadata` | Background metadata update does not cause a false conflict; actual atomic pre-image and restored state include the fresh value. | Real Mongo interleaving via method wrapper, no fabricated result; exact before/after assertions. Added after independently validating the review's Minor false-conflict finding. | Keep. |
+| `test_rollback_requires_edit_permission_and_csrf` | Non-admin denied; absent/wrong token rejected without mutation; actual rendered session-bound proof succeeds. | Real session/form and BeautifulSoup extraction; project uses route-specific CSRF, not a global extension. No CSRF mock/config-only assertion. | Keep. |
+| `test_rollback_explanation_uses_compiled_locale` | Actual confirmation explains content-only restoration in FI/EN/SV rather than source fallback. | Three real session-locale GETs, actual shipped MO; public locales enabled in fixture. No visual/all-copy claim. | Keep. |
 
 ## tests/test_demo_decision_ordering.py
 

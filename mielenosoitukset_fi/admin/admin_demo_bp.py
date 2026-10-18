@@ -1112,8 +1112,13 @@ def view_demo_diff(history_id):
     )
     changed_count = sum(1 for diff in diffs.values() if diff["changed"])
 
+    rollback_csrf_token = session.get("demo_rollback_csrf_token")
+    if not rollback_csrf_token:
+        rollback_csrf_token = secrets.token_urlsafe(32)
+        session["demo_rollback_csrf_token"] = rollback_csrf_token
     return render_template(
         "admin/demonstrations/demo_diff.html",
+        rollback_csrf_token=rollback_csrf_token,
         diffs=diffs,
         changed_count=changed_count,
         unchanged_count=len(diffs) - changed_count,
@@ -1129,46 +1134,79 @@ def view_demo_diff(history_id):
 @admin_required
 @permission_required("EDIT_DEMO")
 def rollback_demo(history_id):
-    """
-    Roll back a demonstration to a previous state from edit history.
-    Tracks the rollback for easy future undo.
-    """
-   
-
-    hist = mongo.demo_edit_history.find_one({"_id": BsonObjectId(history_id)})
+    """Restore recorded content, never permissions or moderation decisions."""
+    history_oid = _normalize_objectid(history_id)
+    if history_oid is None:
+        abort(404)
+    hist = mongo.demo_edit_history.find_one({"_id": history_oid})
     if not hist:
         abort(404)
 
-    _abort_if_demo_forbidden(hist.get("demo_id"), "EDIT_DEMO")
-
-    demo_id = hist.get("demo_id")
+    demo_id = _normalize_objectid(hist.get("demo_id"))
+    if demo_id is None:
+        abort(404)
+    current_demo = mongo.demonstrations.find_one({"_id": demo_id})
+    if current_demo is None:
+        abort(404)
+    _abort_if_demo_forbidden(demo_id, "EDIT_DEMO")
+    expected = session.get("demo_rollback_csrf_token", "")
+    provided = request.form.get("csrf_token", "")
+    if not expected or not provided or not hmac.compare_digest(
+        expected.encode("utf-8"), provided.encode("utf-8")
+    ):
+        abort(400)
     old_data = hist.get("old_demo")
-    if not demo_id or not old_data:
+    if not isinstance(old_data, dict) or not old_data:
         flash_message("Rollback epäonnistui: historia ei sisällä tietoja.", "error")
         return redirect(url_for("admin_demo.demo_edit_history", demo_id=demo_id))
 
-    # Fetch current demo
-    current_demo = mongo.demonstrations.find_one({"_id": BsonObjectId(demo_id)})
-    if not current_demo:
-        abort(404)
+    # Histories can be sparse or predate newer server-owned fields. Only restore
+    # represented content; city/organizer/editor scope, slugs, series linkage,
+    # visibility/cancellation and approval require their own validated workflows.
+    content_fields = {
+        "title", "description", "date", "start_time", "end_time", "address",
+        "route", "type", "tags", "facebook", "cover_picture", "preview_image",
+        "gallery_images", "translations", "default_language",
+    }
+    changes = {
+        key: deepcopy(old_data[key]) for key in content_fields
+        if key in old_data and (
+            key not in current_demo or current_demo[key] != old_data[key]
+        )
+    }
+    if not changes:
+        return redirect(url_for("admin_demo.demo_edit_history", demo_id=demo_id))
 
-    # Merge old data into current to avoid losing fields
-#    restored_data = _deep_merge(current_demo, old_data)
-
-
-    # Save rollback in history with rollback origin
+    # Fail closed if content or authorization scope changes before the write.
+    # Unrelated metadata can advance independently; the returned pre-image
+    # captures it accurately without overwriting it with the earlier read.
+    guarded_fields = content_fields | {
+        "city", "city_key", "organizers", "editors", "last_modified",
+    }
+    guard = [
+        {key: {"$eq": current_demo[key]}}
+        for key in guarded_fields if key in current_demo
+    ]
+    guard.extend({key: {"$exists": False}} for key in guarded_fields - current_demo.keys())
+    changes["last_modified"] = utcnow()
+    previous = mongo.demonstrations.find_one_and_update(
+        {"_id": demo_id, "$and": guard}, {"$set": changes},
+        return_document=ReturnDocument.BEFORE,
+    )
+    if previous is None:
+        abort(409)
+    restored = {**previous, **changes}
+    # Record the actual persisted transition, not the unfiltered historical
+    # snapshot. Existing history storage is not transactional with the write.
     mongo.demo_edit_history.insert_one({
-        "demo_id": demo_id,
+        "demo_id": str(demo_id),
         "edited_by": str(getattr(current_user, "_id", "unknown")),
         "edited_at": utcnow(),
-        "old_demo": current_demo,
-        "new_demo": old_data,
-        "diff": None,  # can compute later
-        "rollbacked_from": BsonObjectId(history_id),  # track origin
+        "old_demo": previous,
+        "new_demo": restored,
+        "diff": None,
+        "rollbacked_from": history_oid,
     })
-
-    # Replace current demo
-    mongo.demonstrations.replace_one({"_id": BsonObjectId(demo_id)}, old_data)
 
     flash_message("Mielenosoitus palautettu valittuun versioon.", "success")
     return redirect(url_for("admin_demo.demo_edit_history", demo_id=demo_id))

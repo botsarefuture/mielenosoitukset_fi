@@ -1,6 +1,6 @@
 # Repository roadmap
 
-Last reconciled: 2026-10-18. Integration baseline: `main` at `739612b2`; PRs #929–#940 are combined without rewriting their histories.
+Last reconciled: 2026-10-18. Verified merge baseline: `main` at `6ef40610`; all PRs #929–#940 are merged with their head commits retained.
 
 This is the delivery plan for the **whole repository**: security, public and admin workflows, backend correctness, operations, privacy, localization, tests, and maintenance. Issue [#833](https://github.com/botsarefuture/mielenosoitukset_fi/issues/833) is one workstream within it. Existing issue trackers retain their detailed acceptance criteria; this document sets the order and dependencies.
 
@@ -8,9 +8,9 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** Finish the explicitly authorized #929–#940 merge batch before any new roadmap implementation. #940 is the combined integration gate: preserve all twelve PR heads, review corrections, current-main deployment fixes, catalog entries and individual test reviews. Resume the first unblocked roadmap task only after main ancestry and PR states are verified. Deployment is not authorized by this merge batch.
+- **Next:** SEC-04c is in progress on `codex/demo-rollback-preservation`: content-only rollback, explicit CSRF, current-target authorization and conditional writes; retain moderation/scope/server state and record actual history. Independent user-requested account-status UX/history is implemented in open #941; do not duplicate it.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
-- **Verified merge checkpoint:** Main `739612b2` contains #925–#928. The #929–#940 integration is not a release claim: verify its final CI, review resolution and main ancestry before recording merge completion.
+- **Verified merge checkpoint:** #929–#940 are MERGED in main `6ef40610`; final required CI passed 1,334 tests with 317 skips. Its automatic deployment failed health verification with Cloudflare HTTP403; production release remains unverified. No manual deployment/configuration change was performed.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
 - **Tracking:** stable task IDs below; detailed implementation lives in linked issues/PRs. Tests have their own [review inventory](docs/test-review-inventory.md).
@@ -80,6 +80,7 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 - [ ] **SEC-02 · P1:** Inactive/banned-account enforcement and admin status workflows are merged through #915/#916/#919, including shared target checks and atomic duplicate-submit coverage; #763 is closed. #931 supplies runtime translation coverage; broader release acceptance remains separate from issue closure.
 - [ ] **SEC-03 · P0/P1:** #918 target-organization/input validation and #917 case scope are merged; #919 user-action hierarchy/delegation, global clearance scope and audit searchability are merged through the account-management integration. Broader role lifecycle, concurrency, destructive-action and canonical audit requirements remain tracked.
 - [ ] **SEC-04 · P1:** Reconcile token/approval lifecycle requirements and prior completed trackers against current routes; prove revocation, expiry, replay behavior, idempotent decisions, case closure, audit and notification effects for every entrypoint.
+  - **SEC-04c · P1 · In progress · Codex · M1/M6 · codex/demo-rollback-preservation:** Verified rollback replaces the full document from history, reverting moderation/authority and removing newer fields. Restore only represented content, preserve city/organizers/editors/series/slug/visibility/cancellation/moderation metadata, retain current target guards, add route-specific session CSRF, reject content/scope conflicts while preserving concurrent unrelated metadata and record actual before/after only on success. Sixteen focused rollback cases plus existing decision/scope suites; eight definitions individually reviewed. Audit-write atomicity and grant-revocation races remain separate requirements. Based directly on main, independent of #941.
   - **SEC-04a/b · P1 · In review · Codex · M1/M6 · #935/#938–#940:** Individual lifecycle and decision tests, bounded conditional case reconciliation, and content-save preservation are included in the #940 integration. Generic MCP patches reject approval changes before any write; they do not invent a new moderation transition. Rollback authorization/state restoration, stale content edits racing decisions, provider-acceptance crash windows, and unknown-field retention remain open.
 - [ ] **SEC-05 · P1:** Review incident #912/#913 protections and credential/session lifecycle regressions before touching related code. Keep secrets out of documentation and audit data.
 

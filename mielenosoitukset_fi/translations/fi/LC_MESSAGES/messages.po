@@ -13604,3 +13604,7 @@ msgstr "Siirrä tai muuta rajausalueen kokoa. Voit siirtää aluetta nuolinäpp�
 #: mielenosoitukset_fi/templates/cropper-modal.html
 msgid "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
 msgstr "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/demo_diff.html
+msgid "Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan."
+msgstr "Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan."

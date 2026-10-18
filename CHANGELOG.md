@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Demonstration history rollback restores recorded event content without overwriting current moderation, cancellation, access scopes or server metadata; stale writes fail safely and confirmation includes CSRF protection.
+
 - MCP-created demonstrations always start pending; generic write credentials cannot pre-approve them outside the moderation workflow.
 
 - Unsupported cropper file-transfer capabilities leave the native file input usable instead of clearing a selected upload.

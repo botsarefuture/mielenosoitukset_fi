@@ -6,6 +6,37 @@ from tests.test_demo_decision_service import _capture_decision_email
 from tests.test_admin_mcp import _mcp_client, _mcp_headers, _rpc
 
 
+@pytest.mark.parametrize("approved", [True, False])
+def test_mcp_creation_always_starts_pending(
+    app_factory, db, seeded_data, monkeypatch, approved
+):
+    from bson import ObjectId
+
+    queued = _capture_decision_email(monkeypatch)
+    client, token, _ = _mcp_client(app_factory, seeded_data)
+    tools = client.post(
+        "/api/admin/mcp", headers=_mcp_headers(token), json=_rpc("tools/list")
+    ).get_json()["result"]["tools"]
+    schema = next(tool for tool in tools if tool["name"] == "create_demo")
+    assert "approved" not in schema["inputSchema"]["properties"]
+    response = client.post("/api/admin/mcp", headers=_mcp_headers(token), json=_rpc(
+        "tools/call", {"name": "create_demo", "arguments": {
+            "title": "Pending MCP submission", "date": "2099-01-01",
+            "start_time": "12:00", "end_time": "14:00", "city": "Helsinki",
+            "address": "Testikatu 1", "approved": approved,
+        }}
+    ))
+    assert response.status_code == 200
+    result = response.get_json()["result"]["structuredContent"]
+    assert result["created"] is True
+    stored = db.demonstrations.find_one({"_id": ObjectId(result["demo_id"])})
+    assert stored["title"] == "Pending MCP submission"
+    assert stored["approved"] is False
+    assert not stored.get("rejected")
+    assert "moderation_decision" not in stored
+    assert not queued
+
+
 @pytest.mark.parametrize("status", ["approved", "rejected"])
 @pytest.mark.parametrize("approved", [True, False])
 def test_mcp_content_patch_cannot_change_moderation(

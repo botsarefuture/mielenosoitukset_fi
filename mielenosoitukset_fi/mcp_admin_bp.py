@@ -584,7 +584,8 @@ def _create_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
         event_type=arguments.get("event_type") or arguments.get("type") or "other",
         tags=_normalize_tags(arguments.get("tags")),
         organizers=_normalize_organizers(arguments.get("organizers")),
-        approved=bool(arguments.get("approved", False)),
+        # Content-write scope does not grant moderation authority.
+        approved=False,
         hide=bool(arguments.get("hide", False)),
         created_datetime=datetime.now(timezone.utc),
         last_modified=datetime.now(timezone.utc),
@@ -956,7 +957,6 @@ TOOLS: dict[str, dict[str, Any]] = {
                 "event_type": {"type": "string"},
                 "tags": {},
                 "organizers": {"type": "array"},
-                "approved": {"type": "boolean"},
                 "hide": {"type": "boolean"},
             },
         },

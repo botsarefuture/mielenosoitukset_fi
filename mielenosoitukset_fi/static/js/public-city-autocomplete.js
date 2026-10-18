@@ -41,7 +41,8 @@ window.publicCityAutocomplete = function ({cities, onSelect}) {
     if (query.length < 2) return;
     const current = new Set(selected.value.split(','));
     matches = cities.filter(city => typeof city === 'string' && !current.has(city) &&
-      city.toLocaleLowerCase().includes(query)).slice(0, 20);
+      city.toLocaleLowerCase().includes(query))
+      .sort((a, b) => a.localeCompare(b)).slice(0, 20);
     matches.forEach((city, index) => {
       const option = document.createElement('div');
       option.className = 'suggestion-item';

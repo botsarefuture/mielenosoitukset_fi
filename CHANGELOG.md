@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+- MCP-created demonstrations always start pending; generic write credentials cannot pre-approve them outside the moderation workflow.
+
+- Unsupported cropper file-transfer capabilities leave the native file input usable instead of clearing a selected upload.
+
 - Deployment health verification rejects an explicitly empty Unix-socket path instead of silently falling back to a public request.
 
 - Production deployment now verifies replacement workers directly through Gunicorn's local Unix socket, avoiding Cloudflare challenges on the server-side health check while preserving existing HTTPS health URL overrides. The separate public HTTPS check remains required and reports HTTP failures, including Cloudflare challenges, explicitly.
@@ -13,7 +17,7 @@
 
 - Image cropping now uses a shared theme-safe native dialog with keyboard dismissal/focus return, safe image DOM, visible load/error states and cancellation-safe async apply. Upload names, 16:9 crop behavior and existing hooks are preserved.
 
-- Public list and tag city suggestions share keyboard navigation, announced active options and text-safe rendering; selection retains existing filters and tag auto-search behavior.
+- Public list and tag city suggestions share keyboard navigation, announced active options and text-safe rendering; locale-aware ordering is applied before the suggestion limit, and selection retains existing filters and tag auto-search behavior.
 
 - Compiled FI/EN/SV account-status translations now include confirmation headings, action labels, explanations and success feedback, avoiding mixed-language admin controls.
 

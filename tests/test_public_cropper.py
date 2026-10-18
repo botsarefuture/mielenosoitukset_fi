@@ -49,6 +49,59 @@ def _select(page, image, name='test-image.png'):
     page.wait_for_function("window.cropperModal?.getCropper() && !document.getElementById('applyCrop').disabled")
 
 
+def _track_crop_apply_settlement(page):
+    page.add_init_script("""(() => {
+      const original = EventTarget.prototype.addEventListener;
+      EventTarget.prototype.addEventListener = function(type, listener, options) {
+        if (this.id === 'applyCrop' && type === 'click' && typeof listener === 'function') {
+          const handler = listener;
+          listener = async function(event) {
+            window.cropApplySettled = false;
+            try { return await handler.call(this, event); }
+            finally { window.cropApplySettled = true; }
+          };
+        }
+        return original.call(this, type, listener, options);
+      };
+    })();""")
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize('capability', ['no-transfer', 'no-file', 'setter-throws', 'setter-ignores'])
+def test_cropper_preserves_native_upload_without_file_transfer_support(
+    app, live_server, browser_page, capability
+):
+    patches = {
+        'no-transfer': 'window.DataTransfer = undefined;',
+        'no-file': 'window.File = undefined;',
+        'setter-throws': "Object.defineProperty(HTMLInputElement.prototype, 'files', {get: descriptor.get, set() { throw new Error('Unsupported'); }});",
+        'setter-ignores': "Object.defineProperty(HTMLInputElement.prototype, 'files', {get: descriptor.get, set() {}});",
+    }
+    browser_page.add_init_script("const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'files');" + patches[capability])
+    errors = []
+    browser_page.on('pageerror', lambda error: errors.append(error.stack))
+    image = _open_harness(app, live_server, browser_page)
+    assert browser_page.evaluate('typeof window.cropperModal?.getCropper') == 'undefined'
+    browser_page.locator('#image').set_input_files({
+        'name': 'native-upload.png', 'mimeType': 'image/png', 'buffer': image,
+    })
+    result = browser_page.evaluate("""async () => {
+      const input = document.getElementById('image');
+      const form = document.createElement('form');
+      input.before(form); form.append(input);
+      const file = new FormData(form).get('image');
+      const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await file.arrayBuffer())))
+        .map(byte => byte.toString(16).padStart(2, '0')).join('');
+      return {name: file.name, size: file.size, type: file.type, hash};
+    }""")
+    assert result == {'name': 'native-upload.png', 'size': len(image),
+                      'type': 'image/png', 'hash': hashlib.sha256(image).hexdigest()}
+    assert not browser_page.locator('#cropperModal').evaluate('element => element.open')
+    assert browser_page.locator('#image-preview').is_hidden()
+    assert not errors
+
+
 @pytest.mark.e2e
 @pytest.mark.integration
 @pytest.mark.parametrize('theme,width', [('light', 1440), ('dark', 1440), ('light', 390), ('dark', 390)])
@@ -136,6 +189,7 @@ def test_cropper_locales_reopen_and_cancel_are_consistent(app, live_server, brow
 @pytest.mark.e2e
 @pytest.mark.integration
 def test_cropper_cancel_during_async_apply_cannot_commit_stale_file(app, live_server, browser_page):
+    _track_crop_apply_settlement(browser_page)
     image = _open_harness(app, live_server, browser_page)
     _select(browser_page, image)
     browser_page.evaluate("""() => {
@@ -145,7 +199,8 @@ def test_cropper_cancel_during_async_apply_cannot_commit_stale_file(app, live_se
     browser_page.locator('#applyCrop').click()
     browser_page.wait_for_function('typeof window.finishCrop === "function"')
     browser_page.keyboard.press('Escape')
-    browser_page.evaluate('async () => { window.finishCrop(); await new Promise(resolve => setTimeout(resolve, 0)); }')
+    browser_page.evaluate('window.finishCrop()')
+    browser_page.wait_for_function('window.cropApplySettled === true')
     assert browser_page.locator('#image').input_value() == ''
     assert browser_page.locator('#image-preview').is_hidden()
     _select(browser_page, image)
@@ -193,6 +248,7 @@ async_state = """async () => {
 def test_cropper_restores_committed_file_and_preview_together(
     app, live_server, browser_page, width, committed, exit_path
 ):
+    _track_crop_apply_settlement(browser_page)
     image = _open_harness(app, live_server, browser_page, width=width)
     if committed:
         _select(browser_page, image, name='committed.png')
@@ -218,7 +274,8 @@ def test_cropper_restores_committed_file_and_preview_together(
             browser_page.locator('#applyCrop').click()
             browser_page.wait_for_function('typeof window.finishCrop === "function"')
             browser_page.keyboard.press('Escape')
-            browser_page.evaluate('async () => { window.finishCrop(); await new Promise(resolve => setTimeout(resolve, 0)); }')
+            browser_page.evaluate('window.finishCrop()')
+            browser_page.wait_for_function('window.cropApplySettled === true')
         elif exit_path == 'button':
             browser_page.locator('#cancelCrop').click()
         elif exit_path == 'escape':

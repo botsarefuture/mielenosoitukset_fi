@@ -10,7 +10,7 @@ import pytest
 @pytest.mark.integration
 @pytest.mark.parametrize('path', ['/demonstrations', '/tag/test-tag'])
 @pytest.mark.parametrize('theme,width', [('light', 1440), ('dark', 1440), ('light', 390), ('dark', 390)])
-def test_city_combobox_keyboard_selection_preserves_route_contract(live_server, browser_page, path, theme, width):
+def test_city_combobox_keyboard_selection_preserves_route_contract(live_server, browser_page, tmp_path, path, theme, width):
     from playwright.sync_api import expect
 
     browser_page.set_viewport_size({'width': width, 'height': 1000})
@@ -37,12 +37,14 @@ def test_city_combobox_keyboard_selection_preserves_route_contract(live_server, 
     assert rect['height'] >= 44 and rect['x'] + rect['width'] <= width + 1
     browser_page.keyboard.press('ArrowDown')
     assert browser_page.evaluate('document.activeElement.id') == 'city_input'
-    assert browser_page.locator('#' + field.get_attribute('aria-activedescendant')).get_attribute('aria-selected') == 'true'
-    active_option = browser_page.locator('#' + field.get_attribute('aria-activedescendant'))
+    active_id = field.get_attribute('aria-activedescendant')
+    assert active_id
+    active_option = browser_page.locator('#' + active_id)
+    assert active_option.get_attribute('aria-selected') == 'true'
     expect(active_option).to_have_css('background-color', 'rgb(0, 51, 160)' if theme == 'light' else 'rgb(49, 94, 168)')
     expect(active_option).to_have_css('color', 'rgb(255, 255, 255)')
     if (theme, width) in [('light', 390), ('dark', 1440)]:
-        browser_page.locator('#search-form').screenshot(path=f'/tmp/moso-city-combobox-{theme}-{width}.png')
+        browser_page.locator('#search-form').screenshot(path=str(tmp_path / f'city-combobox-{theme}-{width}.png'))
     browser_page.keyboard.press('End')
     browser_page.keyboard.press('Home')
     browser_page.keyboard.press('Escape')
@@ -52,7 +54,9 @@ def test_city_combobox_keyboard_selection_preserves_route_contract(live_server, 
     browser_page.keyboard.press('ArrowDown')
     # Choose a known option using the same active-descendant selection contract.
     for _ in range(20):
-        active = browser_page.locator('#' + field.get_attribute('aria-activedescendant'))
+        active_id = field.get_attribute('aria-activedescendant')
+        assert active_id
+        active = browser_page.locator('#' + active_id)
         if active.inner_text() == 'Helsinki':
             break
         browser_page.keyboard.press('ArrowDown')
@@ -85,7 +89,8 @@ def test_city_combobox_treats_html_and_regex_as_plain_text_and_bounds_options(br
     browser_page.evaluate('''() => {
       window.publicListHistory = {renderCities: () => { window.rendered = true; }};
       publicCityAutocomplete({cities: ['<img src=x onerror="window.injected=true">[town]',
-        ...Array.from({length: 100}, (_, index) => 'Town ' + index)]});
+        'Locale ä', 'Locale z', 'Locale å', 'Locale a',
+        ...Array.from({length: 100}, (_, index) => 'Town ' + String(99 - index).padStart(3, '0'))]});
     }''')
     field = browser_page.locator('#city_input')
     field.fill('[town]')
@@ -97,6 +102,12 @@ def test_city_combobox_treats_html_and_regex_as_plain_text_and_bounds_options(br
     assert browser_page.evaluate('Boolean(window.injected)') is False
     assert browser_page.evaluate('window.rendered') is True
     field.fill('town')
-    assert browser_page.get_by_role('option').count() == 20
+    assert browser_page.get_by_role('option').all_text_contents() == [
+        f'Town {index:03d}' for index in range(20)
+    ]
+    field.fill('locale')
+    expected = browser_page.evaluate('''() => ['Locale ä', 'Locale z', 'Locale å', 'Locale a']
+      .sort(new Intl.Collator().compare)''')
+    assert browser_page.get_by_role('option').all_text_contents() == expected
     field.blur()
     assert browser_page.get_by_role('option').count() == 0

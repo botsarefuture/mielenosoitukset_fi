@@ -757,6 +757,7 @@ QA-01d / SEC-04, P1, individually reviewed 2026-10-15 by Codex, based on main 90
 
 ## tests/test_demo_moderation_preservation.py
 
+- [x] `test_mcp_creation_always_starts_pending`
 - [x] `test_mcp_content_patch_cannot_change_moderation`
 - [x] `test_model_content_save_preserves_moderation_state`
 - [x] `test_model_creation_still_inserts_complete_content`
@@ -766,6 +767,7 @@ SEC-04b / QA-01, P1; individually assessed 2026-10-16 by Codex, stacked on #939.
 
 | Definition | Requirement / assertions | Cases, setup and reliability limits | Disposition |
 |---|---|---|---|
+| `test_mcp_creation_always_starts_pending` | MCP creation does not advertise approval and persists pending state even if an approval boolean is supplied; no decision identity or notification is invented. | Two actual HTTP tools/list and tools/call cases using write-scoped credentials and MongoDB; both true and false inputs. Captured enqueue is not SMTP evidence. Unknown approval input is ignored consistently with other unknown creation fields. | Reviewed 2026-10-18; keep. |
 | `test_mcp_content_patch_cannot_change_moderation` | Generic MCP approval patches fail before content writes; exact demo/case snapshots and one notification remain unchanged. | Four real HTTP cases: approved/rejected initial decisions × true/false patch, including a title change to detect partial application. Snapshot follows MCP app initialization so migrations are not confused with request writes. Enqueue captured, not SMTP delivery. | Reviewed 2026-10-18; keep. |
 | `test_model_content_save_preserves_moderation_state` | After canonical approve/deny, normalization plus title edit/explicit description clearing keeps exact decision metadata and canonical booleans. Repeating the same decision reports unchanged and leaves one captured email. | Two status variants, actual constructor/save (including normalization-triggered saves), real stored decision/notification. Captured enqueue is not external delivery evidence. No concurrent stale-content/approval edit claim. | New regression; keep. |
 | `test_model_creation_still_inserts_complete_content` | A new content model still persists its ID/title/city/pending approval without invented moderation metadata. | Explicit app/database fixtures; constructor may auto-save normalized time before explicit save, so this checks ordinary creation lifecycle rather than isolating one call/insert count. | New insertion-path regression; keep. |
@@ -1304,6 +1306,7 @@ DATA-01a / QA-02, P1; reviewed 2026-10-13 by Codex. Disposable local database an
 ## tests/test_public_cropper.py
 
 - [x] `test_cropper_uses_shared_dialog_and_pinned_existing_engine`
+- [x] `test_cropper_preserves_native_upload_without_file_transfer_support`
 - [x] `test_actual_cropper_has_modal_focus_keyboard_geometry_and_real_upload`
 - [x] `test_cropper_export_uses_source_resolution_and_bounded_zoom`
 - [x] `test_cropper_locales_reopen_and_cancel_are_consistent`
@@ -1312,6 +1315,8 @@ DATA-01a / QA-02, P1; reviewed 2026-10-13 by Codex. Disposable local database an
 - [x] `test_cropper_restores_committed_file_and_preview_together`
 
 UI-01 / QA-04 review, 2026-10-13, Codex, P1. Real browser, actual shared Jinja include/CSS/controller, local pinned existing Cropper 2.1.0 runtime and synthetic 800×450 PNG. Harness isolates the dialog from unrelated wizard integrations; no whole-submission acceptance claim. No authorization or image-engine mocks in positive crop cases. Error/race tests replace only the selection canvas promise to create deterministic adverse conditions.
+
+Integration review follow-up, 2026-10-18: `test_cropper_preserves_native_upload_without_file_transfer_support` is individually assessed across missing DataTransfer, missing File, throwing files setter and ignored files assignment. A real browser uploads image bytes through the native input and FormData; exact name/type/size/SHA-256 survive, the enhancement stays inactive, and no page errors occur. These four feature-injection cases do not certify every legacy browser. The two pending-crop cancellation tests now instrument and await settlement of the actual registered async apply handler, rather than assuming one zero-delay timer proves no stale commit; no production test hook or arbitrary delay is added.
 
 | Definition | Requirement / assertions | Coverage, reliability and limits | Disposition |
 |---|---|---|---|
@@ -1338,6 +1343,8 @@ Current approved behavior also changes the existing failure-test assertion: an u
 - [x] `test_city_combobox_treats_html_and_regex_as_plain_text_and_bounds_options`
 
 UI-01 / QA-04, P1; reviewed 2026-10-15 by Codex. Two definitions / nine cases; 64 combined focused cases passed with search-field, URL/history, listing-contract, CSS-integrity and inline-style checks. Light mobile/dark desktop active-option screenshots inspected; explicit settled action-background/foreground assertions avoid mistaking intermediate CSS-transition colors for final states. No real API/load-performance or screen-reader certification claim.
+
+Integration follow-up, 2026-10-18: both existing definitions are reassessed. Reversed 100-city input proves sorting happens before the 20-option cap; accented city names are compared with the browser's locale-aware collation. Active-descendant failures now identify the missing attribute immediately, and screenshot paths use per-case tmp_path to avoid overwriting diagnostics. Nine cases pass. No network debounce is added to local filtering; the harmless empty string in the selected-value set is not an observable selection defect.
 
 | Definition | Requirement / meaningful assertions | Setup, reliability and limits | Disposition |
 |---|---|---|---|

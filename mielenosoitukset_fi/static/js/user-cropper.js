@@ -7,6 +7,18 @@
     const container = document.getElementById('cropperContainer');
     const preview = document.getElementById('image-preview');
     if (!fileInput || !modal || !container || !preview || !modal.showModal) return;
+    // Leave native uploads untouched unless cropped files can be committed.
+    try {
+      if (typeof DataTransfer !== 'function' || typeof File !== 'function') return;
+      const probe = document.createElement('input');
+      probe.type = 'file';
+      const transfer = new DataTransfer();
+      transfer.items.add(new File([''], 'cropper-capability-test'));
+      probe.files = transfer.files;
+      if (probe.files.length !== 1 || probe.files[0].name !== 'cropper-capability-test') return;
+    } catch (_unsupported) {
+      return;
+    }
     const apply = document.getElementById('applyCrop');
     const cancel = document.getElementById('cancelCrop');
     const status = document.getElementById('cropperStatus');

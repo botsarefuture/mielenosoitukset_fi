@@ -74,6 +74,8 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 
 ### Security and permissions
 
+- **QA-01a · P1 · In review · Codex · M1/M6 · codex/step-up-test-review:** Individually assess all eleven step-up test definitions; repair vacuous original-session logout coverage and strengthen configured time boundaries, actor/session isolation, invalid credential rejection and stored password outcomes. Acceptance: focused step-up and fresh-deletion regressions pass (30 cases), mutation confirms logout cleanup regression detection, fixture/mock limits and remaining cases recorded. No production authentication or #887 policy changes.
+
 - [ ] **SEC-01 · P1:** #901 MFA challenge implementation is merged; preserve the shared legacy/no-JS behavior and obtain required release acceptance evidence.
 - [ ] **SEC-02 · P1:** Inactive/banned-account enforcement and admin status workflows are merged through #915/#916/#919, including shared target checks and atomic duplicate-submit coverage. Retain #763 until integration/release acceptance is proved.
 - [ ] **SEC-03 · P0/P1:** #918 target-organization/input validation and #917 case scope are merged; #919 user-action hierarchy/delegation, global clearance scope and audit searchability are merged through the account-management integration. Broader role lifecycle, concurrency, destructive-action and canonical audit requirements remain tracked.

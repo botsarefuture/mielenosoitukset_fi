@@ -15,6 +15,33 @@ from mielenosoitukset_fi.utils.logger import logger
 PENDING_ROLLBACK_HISTORY = "_pending_rollback_history"
 
 
+def restore_merge_conflict(db, primary_before, primary_merged, removed):
+    """Compensate this merge's writes without overwriting later concurrent data.
+
+    Insert-only restoration protects recreated secondary IDs. The primary is
+    restored only while its complete document still equals this merge's result.
+    False means the retained backup still needs operator recovery.
+    """
+    restored = True
+    try:
+        for document in removed:
+            db.demonstrations.update_one(
+                {"_id": document["_id"]}, {"$setOnInsert": document}, upsert=True,
+            )
+            if db.demonstrations.find_one({"_id": document["_id"]}) != document:
+                restored = False
+        result = db.demonstrations.replace_one({
+            "_id": primary_before["_id"],
+            "$expr": {"$eq": ["$$ROOT", {"$literal": primary_merged}]},
+        }, primary_before)
+        if not result.matched_count and db.demonstrations.find_one({"_id": primary_before["_id"]}) != primary_before:
+            restored = False
+    except Exception as error:
+        logger.warning("Merge recovery pending (%s)", type(error).__name__)
+        return False
+    return restored
+
+
 def flush_rollback_history(db, demo_id):
     """Project a committed receipt once, retaining it on either delivery failure."""
     document = db.demonstrations.find_one(

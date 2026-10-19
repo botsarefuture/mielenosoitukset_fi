@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+- Deletion keeps an exact recovery pre-image until history is acknowledged; merge failures retain confirmed progress instead of claiming completion after failed follow-up/history writes. Unresolved recovery remains explicit rather than silently losing deleted content.
+
+- Conflicting demo deletions no longer record false success. Merge operations persist recovery backups before destructive writes and compensate failed source removal where safe, preserving newer concurrent edits and explicitly retaining unresolved recovery state.
+
 - Rollback now commits its exact history receipt atomically with content and retries idempotent history delivery after failures. Pending receipts block deletion/merge/recurring cleanup and stay out of demo-read API responses; history outages return 503 without discarding the recorded event.
 
 - Content rollback now includes canonical coordinates, original image, cover source and event type, and detects concurrent changes to those fields instead of silently ignoring them.

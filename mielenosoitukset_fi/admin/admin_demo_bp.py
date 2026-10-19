@@ -82,7 +82,7 @@ from mielenosoitukset_fi.demonstrations.audit import (
 )
 from mielenosoitukset_fi.demonstrations.decisions import apply_demo_decision
 from mielenosoitukset_fi.demonstrations.rollback import (
-    PENDING_ROLLBACK_HISTORY, commit_rollback, flush_rollback_history,
+    PENDING_ROLLBACK_HISTORY, commit_rollback, flush_rollback_history, restore_merge_conflict,
 )
 from .pagination import build_admin_pagination, parse_admin_pagination
 
@@ -2749,40 +2749,102 @@ def merge_demos():
     merged_doc["merged_into"] = None
     merged_doc["last_modified"] = utcnow()
 
-    merged = mongo.demonstrations.replace_one({
-        "_id": primary_doc["_id"], PENDING_ROLLBACK_HISTORY: {"$exists": False},
-        "last_modified": primary_doc.get("last_modified"),
-    }, merged_doc)
-    if not merged.matched_count:
-        abort(409)
-
-    if secondary_ids:
-        deleted = mongo.demonstrations.delete_many({
-            "_id": {"$in": [ObjectId(d) for d in secondary_ids]},
-            PENDING_ROLLBACK_HISTORY: {"$exists": False},
-        })
-        if deleted.deleted_count != len(secondary_ids):
-            abort(409)
-
+    # Persist recovery data before any destructive write. Cross-document
+    # merge remains non-transactional; failures retain an incomplete backup.
     backup_payload = {
         "primary_demo_id": primary_id,
         "secondary_demo_ids": secondary_ids,
         "selected_demo_ids": selected_ids,
         "created_at": utcnow(),
+        "state": "incomplete",
+        # Until a later milestone is confirmed, writes may have started.
+        "phase": "operation_pending",
         "actor": {
             "user_id": str(getattr(current_user, "id", "")),
             "username": getattr(current_user, "username", None),
             "email": getattr(current_user, "email", None),
         },
-        "demos": {demo_id: deepcopy(doc_map.get(demo_id)) for demo_id in selected_ids if demo_id in doc_map},
+        "demos": {demo_id: deepcopy(doc_map[demo_id]) for demo_id in selected_ids},
     }
-    backup_result = mongo.demo_merge_backups.insert_one(backup_payload)
-    backup_id = str(backup_result.inserted_id) if backup_result.inserted_id else None
+    try:
+        backup_result = mongo.demo_merge_backups.insert_one(backup_payload)
+    except Exception as error:
+        logger.warning("Merge backup unavailable (%s)", type(error).__name__)
+        abort(503)
+    backup_id = str(backup_result.inserted_id)
+
+    removed = []
+
+    def set_merge_phase(phase, **values):
+        try:
+            result = mongo.demo_merge_backups.update_one(
+                {"_id": backup_result.inserted_id}, {"$set": {"phase": phase, **values}},
+            )
+            return result.matched_count == 1
+        except Exception as error:
+            logger.warning("Merge backup phase pending (%s)", type(error).__name__)
+            return False
+
+    def recover_merge(phase, status):
+        restored = restore_merge_conflict(mongo, original_primary, merged_doc, removed)
+        # A timed-out delete may have committed without returning its pre-image.
+        # Do not claim full recovery when any selected source is still missing.
+        try:
+            restored = restored and mongo.demonstrations.count_documents({
+                "_id": {"$in": [ObjectId(value) for value in selected_ids]},
+            }) == len(selected_ids)
+        except Exception:
+            restored = False
+        if not set_merge_phase(
+            phase if restored else "recovery_pending",
+            state="restored" if restored else "incomplete",
+            deleted_count=len(removed),
+            removed_ids=[str(document["_id"]) for document in removed],
+        ):
+            abort(503)
+        abort(status if restored else 503)
+
+    try:
+        merged = mongo.demonstrations.replace_one({
+            "_id": primary_doc["_id"], PENDING_ROLLBACK_HISTORY: {"$exists": False},
+            "last_modified": primary_doc.get("last_modified"),
+        }, merged_doc)
+    except Exception:
+        recover_merge("primary_error", 503)
+    if not merged.matched_count:
+        set_merge_phase("primary_conflict", state="not_applied")
+        abort(409)
+
+    conflict = False
+    try:
+        for secondary_id in secondary_ids:
+            previous = mongo.demonstrations.find_one_and_delete({
+                "_id": ObjectId(secondary_id),
+                PENDING_ROLLBACK_HISTORY: {"$exists": False},
+                "$expr": {"$eq": ["$$ROOT", {"$literal": doc_map[secondary_id]}]},
+            })
+            if previous is None:
+                conflict = True
+                break
+            removed.append(previous)
+    except Exception:
+        recover_merge("secondary_error", 503)
+    if conflict:
+        recover_merge("secondary_conflict", 409)
+    if not set_merge_phase(
+        "sources_removed", deleted_count=len(removed),
+        removed_ids=[str(document["_id"]) for document in removed],
+    ):
+        recover_merge("phase_write_failed", 503)
 
     recommendation_source = request.form.get("recommendation_source")
-    _apply_recommendation_choice(primary_id, secondary_ids, recommendation_source)
-    _repoint_related_demo_data(primary_id, secondary_ids)
-    _handle_cases_after_merge(primary_id, secondary_ids, doc_map)
+    try:
+        _apply_recommendation_choice(primary_id, secondary_ids, recommendation_source)
+        _repoint_related_demo_data(primary_id, secondary_ids)
+        _handle_cases_after_merge(primary_id, secondary_ids, doc_map)
+    except Exception as error:
+        set_merge_phase("followup_failed", error_type=type(error).__name__)
+        abort(503)
 
     merge_links = [
         {
@@ -2795,14 +2857,22 @@ def merge_demos():
         for demo_id in secondary_ids
     ]
 
-    record_demo_change(
-        primary_id,
-        original_primary,
-        merged_doc,
-        action="merge_demo",
-        message=_("%(user)s yhdisti mielenosoituksia") % {"user": _get_actor_label()},
-        extra_details={"merged_from": merge_links, "backup_id": backup_id},
-    )
+    try:
+        history_id = record_demo_change(
+            primary_id,
+            original_primary,
+            merged_doc,
+            action="merge_demo",
+            message=_("%(user)s yhdisti mielenosoituksia") % {"user": _get_actor_label()},
+            extra_details={"merged_from": merge_links, "backup_id": backup_id},
+        )
+    except Exception:
+        history_id = None
+    if history_id is None:
+        set_merge_phase("history_pending")
+        abort(503)
+    if not set_merge_phase("completed", state="completed", history_id=history_id):
+        abort(503)
 
     flash_message(_("Mielenosoitukset yhdistettiin onnistuneesti."), "success")
     return redirect(url_for("admin_demo.edit_demo", demo_id=primary_id))
@@ -4601,20 +4671,61 @@ def delete_demo():
         abort(503)
     demo_data.pop(PENDING_ROLLBACK_HISTORY, None)
 
-    record_demo_change(
-        demo_id,
-        demo_data,
-        {},
-        action="delete_demo",
-        message=_("%(user)s poisti mielenosoituksen") % {"user": _get_actor_label()},
-    )
+    # Preserve a recovery copy before deletion. The complete-snapshot guard
+    # ensures this is also the actual pre-image if the delete is applied.
+    try:
+        backup_id = mongo.demo_delete_backups.insert_one({
+            "demo_id": str(demo_id), "created_at": utcnow(),
+            "actor_id": str(getattr(current_user, "_id", "unknown")),
+            "state": "incomplete", "phase": "outcome_unknown",
+            "preimage": deepcopy(demo_data),
+        }).inserted_id
+    except Exception as error:
+        logger.warning("Deletion backup unavailable (%s)", type(error).__name__)
+        abort(503)
 
-    # Perform deletion
-    deleted = mongo.demonstrations.delete_one({
-        "_id": ObjectId(demo_id), PENDING_ROLLBACK_HISTORY: {"$exists": False},
-    })
-    if not deleted.deleted_count:
+    def set_delete_phase(phase, **values):
+        update = {"$set": {"phase": phase, **values}}
+        if phase in {"completed", "conflict"}:
+            # History acknowledges the pre-image, or deletion did not apply.
+            # Confirm that outcome and minimize its redundant copy together.
+            update["$unset"] = {"preimage": ""}
+        try:
+            result = mongo.demo_delete_backups.update_one(
+                {"_id": backup_id}, update,
+            )
+            return result.matched_count == 1
+        except Exception as error:
+            logger.warning("Deletion recovery status pending (%s)", type(error).__name__)
+            return False
+
+    try:
+        deleted = mongo.demonstrations.find_one_and_delete({
+            "_id": ObjectId(demo_id), PENDING_ROLLBACK_HISTORY: {"$exists": False},
+            "$expr": {"$eq": ["$$ROOT", {"$literal": demo_data}]},
+        })
+    except Exception:
+        # The server may have applied the write before an acknowledgement was
+        # lost. Retain the pre-write copy and leave the outcome explicitly unknown.
+        abort(503)
+    if deleted is None:
+        set_delete_phase("conflict", state="not_applied")
         abort(409)
+    try:
+        history_id = record_demo_change(
+            demo_id,
+            deleted,
+            {},
+            action="delete_demo",
+            message=_("%(user)s poisti mielenosoituksen") % {"user": _get_actor_label()},
+        )
+    except Exception:
+        history_id = None
+    if history_id is None:
+        set_delete_phase("history_pending")
+        abort(503)
+    if not set_delete_phase("completed", state="completed", history_id=history_id):
+        abort(503)
 
     success_message = "Mielenosoitus poistettu onnistuneesti."
     if json_mode:

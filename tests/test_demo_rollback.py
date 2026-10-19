@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from html.parser import HTMLParser
+from inspect import unwrap
 
 import pytest
 from bson import ObjectId
@@ -17,6 +18,14 @@ def _rollback(client, history_id):
     return client.post(f"/admin/demo/rollback_demo/{history_id}", data={
         "csrf_token": "synthetic-rollback-csrf",
     })
+
+
+def _patch_demo_handler(monkeypatch, client, endpoint, name, replacement):
+    # The app also supports historical import aliases. Patch the globals of
+    # the function actually registered in this app, not a second module copy.
+    handler = unwrap(client.application.view_functions[endpoint])
+    assert name in handler.__globals__
+    monkeypatch.setitem(handler.__globals__, name, replacement)
 
 
 def _history_outage(monkeypatch, db, stage):
@@ -175,11 +184,277 @@ def test_recurring_cleanup_retains_pending_rollback_until_delivery(
     monkeypatch.setattr(repeat_v2, "runtime_actions", [])
     repeat_v2.remove_invalid_child_demonstrations(parent, [], None)
     assert db.demonstrations.find_one({"_id": demo_id}) == before
+    assert repeat_v2.runtime_actions == []
     outage["active"] = False
     repeat_v2.remove_invalid_child_demonstrations(parent, [], None)
     assert db.demonstrations.find_one({"_id": demo_id}) is None
     receipt = before["_pending_rollback_history"]
     assert db.demo_edit_history.find_one({"_id": receipt["_id"]}) == receipt
+    assert [action["action"] for action in repeat_v2.runtime_actions] == ["delete"]
+
+
+def test_delete_conflict_does_not_record_successful_deletion(
+    admin_client, db, seeded_data, monkeypatch
+):
+    demo_id = seeded_data["demo_id"]
+    before = db.demonstrations.find_one({"_id": demo_id})
+    history_count = db.demo_edit_history.count_documents({})
+    collection_type = type(db.demonstrations)
+    original = collection_type.find_one_and_delete
+    receipt = {"_id": ObjectId(), "demo_id": str(demo_id)}
+
+    def interleave(collection, query, *args, **kwargs):
+        if collection.name == "demonstrations" and query.get("_id") == demo_id:
+            collection.update_one({"_id": demo_id}, {"$set": {"_pending_rollback_history": receipt}})
+        return original(collection, query, *args, **kwargs)
+
+    monkeypatch.setattr(collection_type, "find_one_and_delete", interleave)
+    response = admin_client.post("/admin/demo/delete_demo", data={"demo_id": str(demo_id)})
+    assert response.status_code == 409
+    assert db.demonstrations.find_one({"_id": demo_id}) == {**before, "_pending_rollback_history": receipt}
+    assert db.demo_edit_history.count_documents({}) == history_count
+    assert db.demo_audit_logs.count_documents({"action": "delete_demo"}) == 0
+
+
+@pytest.mark.parametrize("failure", ["none", "raise", "database"])
+def test_delete_history_failure_retains_exact_durable_recovery_copy(
+    admin_client, db, seeded_data, monkeypatch, failure
+):
+    demo_id = seeded_data["demo_id"]
+    before = db.demonstrations.find_one({"_id": demo_id})
+    if failure == "database":
+        collection_type = type(db.demo_edit_history)
+        original = collection_type.insert_one
+
+        def fail_insert(collection, *args, **kwargs):
+            if collection.name == "demo_edit_history":
+                raise RuntimeError("synthetic history insert outage")
+            return original(collection, *args, **kwargs)
+
+        monkeypatch.setattr(collection_type, "insert_one", fail_insert)
+    else:
+        def fail(*args, **kwargs):
+            if failure == "raise":
+                raise RuntimeError("synthetic history adapter outage")
+            return None
+
+        _patch_demo_handler(monkeypatch, admin_client, "admin_demo.delete_demo", "record_demo_change", fail)
+    response = admin_client.post("/admin/demo/delete_demo", data={"demo_id": str(demo_id)})
+    assert response.status_code == 503
+    assert db.demonstrations.find_one({"_id": demo_id}) is None
+    backup = db.demo_delete_backups.find_one({"demo_id": str(demo_id)})
+    assert backup["preimage"] == before
+    assert backup["actor_id"] == str(seeded_data["admin_id"])
+    assert backup["phase"] == "history_pending" and backup["state"] == "incomplete"
+
+
+def test_delete_snapshot_conflict_and_retry_record_actual_latest_document(
+    admin_client, db, seeded_data, monkeypatch
+):
+    demo_id = seeded_data["demo_id"]
+    collection_type = type(db.demonstrations)
+    original = collection_type.find_one_and_delete
+    raced = {"done": False}
+
+    def interleave(collection, query, *args, **kwargs):
+        if collection.name == "demonstrations" and not raced["done"]:
+            raced["done"] = True
+            collection.update_one({"_id": demo_id}, {"$set": {"title": "Latest concurrent title"}})
+        return original(collection, query, *args, **kwargs)
+
+    monkeypatch.setattr(collection_type, "find_one_and_delete", interleave)
+    assert admin_client.post("/admin/demo/delete_demo", data={"demo_id": str(demo_id)}).status_code == 409
+    actual = db.demonstrations.find_one({"_id": demo_id})
+    assert actual["title"] == "Latest concurrent title"
+    assert db.demo_delete_backups.find_one({})["state"] == "not_applied"
+    assert "preimage" not in db.demo_delete_backups.find_one({})
+    previous_ids = {row["_id"] for row in db.demo_edit_history.find({})}
+    assert admin_client.post("/admin/demo/delete_demo", data={"demo_id": str(demo_id)}).status_code == 302
+    assert db.demonstrations.find_one({"_id": demo_id}) is None
+    new_history = list(db.demo_edit_history.find({"_id": {"$nin": list(previous_ids)}}))
+    assert len(new_history) == 1 and new_history[0]["old_demo"] == actual
+    backup = db.demo_delete_backups.find_one({"state": "completed"})
+    assert backup["history_id"] == new_history[0]["_id"]
+    assert "preimage" not in backup
+
+
+def test_delete_backup_failure_preserves_source_and_history(
+    admin_client, db, seeded_data, monkeypatch
+):
+    demo_id = seeded_data["demo_id"]
+    before = db.demonstrations.find_one({"_id": demo_id})
+    count = db.demo_edit_history.count_documents({})
+    collection_type = type(db.demo_delete_backups)
+    original = collection_type.insert_one
+
+    def fail(collection, *args, **kwargs):
+        if collection.name == "demo_delete_backups":
+            raise RuntimeError("synthetic deletion backup outage")
+        return original(collection, *args, **kwargs)
+
+    monkeypatch.setattr(collection_type, "insert_one", fail)
+    assert admin_client.post("/admin/demo/delete_demo", data={"demo_id": str(demo_id)}).status_code == 503
+    assert db.demonstrations.find_one({"_id": demo_id}) == before
+    assert db.demo_edit_history.count_documents({}) == count
+
+
+@pytest.mark.parametrize("newer_primary", [False, True])
+def test_partial_merge_conflict_retains_prewrite_backup(
+    admin_client, db, seeded_data, monkeypatch, newer_primary
+):
+    primary_id, blocked_id = seeded_data["demo_id"], seeded_data["pending_demo_id"]
+    deleted_id = db.demonstrations.insert_one({
+        "title": "Third merge source", "date": "2099-01-01", "city": "Helsinki",
+        "aliases": [],
+    }).inserted_id
+    selected = [primary_id, deleted_id, blocked_id]
+    before = {str(row["_id"]): row for row in db.demonstrations.find({"_id": {"$in": selected}})}
+    collection_type = type(db.demonstrations)
+    original = collection_type.find_one_and_delete
+    receipt = {"_id": ObjectId(), "demo_id": str(blocked_id)}
+
+    def interleave(collection, query, *args, **kwargs):
+        if collection.name == "demonstrations" and query.get("_id") == blocked_id:
+            backup = db.demo_merge_backups.find_one({"primary_demo_id": str(primary_id)})
+            assert backup and backup["demos"] == before
+            assert backup["state"] == "incomplete"
+            assert db.demonstrations.find_one({"_id": deleted_id}) is None
+            collection.update_one({"_id": blocked_id}, {"$set": {"_pending_rollback_history": receipt}})
+            if newer_primary:
+                collection.update_one({"_id": primary_id}, {"$set": {"title": "Newer primary edit"}})
+        return original(collection, query, *args, **kwargs)
+
+    monkeypatch.setattr(collection_type, "find_one_and_delete", interleave)
+    response = admin_client.post("/admin/demo/merge", data={
+        "demo_ids": [str(oid) for oid in selected], "primary_demo_id": str(primary_id),
+    })
+    assert response.status_code == (503 if newer_primary else 409)
+    backup = db.demo_merge_backups.find_one({"primary_demo_id": str(primary_id)})
+    assert backup["state"] == ("incomplete" if newer_primary else "restored")
+    assert backup["phase"] == ("recovery_pending" if newer_primary else "secondary_conflict")
+    assert backup["deleted_count"] == 1
+    assert backup["demos"] == before
+    assert db.demonstrations.find_one({"_id": deleted_id}) == before[str(deleted_id)]
+    assert db.demonstrations.find_one({"_id": blocked_id})["_pending_rollback_history"] == receipt
+    primary = db.demonstrations.find_one({"_id": primary_id})
+    if newer_primary:
+        assert primary["title"] == "Newer primary edit"
+    else:
+        assert primary == before[str(primary_id)]
+
+
+@pytest.mark.parametrize("step", [
+    "_apply_recommendation_choice", "_repoint_related_demo_data", "_handle_cases_after_merge", "record_demo_change", "history_none",
+])
+def test_merge_followup_failure_retains_confirmed_removed_source_phase(
+    admin_client, db, seeded_data, monkeypatch, step
+):
+    selected = [seeded_data["demo_id"], seeded_data["pending_demo_id"]]
+    before = {str(row["_id"]): row for row in db.demonstrations.find({"_id": {"$in": selected}})}
+
+    def fail(*args, **kwargs):
+        backup = db.demo_merge_backups.find_one({"primary_demo_id": str(selected[0])})
+        assert backup["phase"] == "sources_removed"
+        assert backup["deleted_count"] == 1
+        if step == "history_none":
+            return None
+        raise RuntimeError("synthetic followup outage")
+
+    target = "record_demo_change" if step == "history_none" else step
+    _patch_demo_handler(monkeypatch, admin_client, "admin_demo.merge_demos", target, fail)
+    response = admin_client.post("/admin/demo/merge", data={
+        "demo_ids": [str(oid) for oid in selected], "primary_demo_id": str(selected[0]),
+    })
+    assert response.status_code == 503
+    backup = db.demo_merge_backups.find_one({"primary_demo_id": str(selected[0])})
+    assert backup["state"] == "incomplete"
+    assert backup["phase"] == ("history_pending" if step in {"record_demo_change", "history_none"} else "followup_failed")
+    assert backup["demos"] == before
+    assert backup["removed_ids"] == [str(selected[1])]
+    assert db.demonstrations.find_one({"_id": selected[1]}) is None
+
+
+def test_primary_merge_conflict_survives_backup_status_failure(
+    admin_client, db, seeded_data, monkeypatch
+):
+    from datetime import datetime
+
+    selected = [seeded_data["demo_id"], seeded_data["pending_demo_id"]]
+    collection_type = type(db.demonstrations)
+    original_replace, original_update = collection_type.replace_one, collection_type.update_one
+
+    def interleave(collection, query, *args, **kwargs):
+        if collection.name == "demonstrations":
+            original_update(collection, {"_id": selected[0]}, {"$set": {
+                "last_modified": datetime(2099, 1, 1), "title": "Newer source",
+            }})
+        return original_replace(collection, query, *args, **kwargs)
+
+    def fail_status(collection, *args, **kwargs):
+        if collection.name == "demo_merge_backups":
+            raise RuntimeError("synthetic status outage")
+        return original_update(collection, *args, **kwargs)
+
+    monkeypatch.setattr(collection_type, "replace_one", interleave)
+    monkeypatch.setattr(collection_type, "update_one", fail_status)
+    response = admin_client.post("/admin/demo/merge", data={
+        "demo_ids": [str(oid) for oid in selected], "primary_demo_id": str(selected[0]),
+    })
+    assert response.status_code == 409
+    assert db.demonstrations.find_one({"_id": selected[0]})["title"] == "Newer source"
+    assert db.demonstrations.find_one({"_id": selected[1]}) is not None
+    assert db.demo_merge_backups.find_one({})["phase"] == "operation_pending"
+
+
+@pytest.mark.parametrize("failed_phase", ["sources_removed", "completed"])
+def test_merge_phase_failure_does_not_claim_completed_operation(
+    admin_client, db, seeded_data, monkeypatch, failed_phase
+):
+    selected = [seeded_data["demo_id"], seeded_data["pending_demo_id"]]
+    before = {str(row["_id"]): row for row in db.demonstrations.find({"_id": {"$in": selected}})}
+    collection_type = type(db.demo_merge_backups)
+    original = collection_type.update_one
+
+    def fail_status(collection, query, update, *args, **kwargs):
+        if collection.name == "demo_merge_backups" and update.get("$set", {}).get("phase") == failed_phase:
+            raise RuntimeError("synthetic phase outage")
+        return original(collection, query, update, *args, **kwargs)
+
+    monkeypatch.setattr(collection_type, "update_one", fail_status)
+    response = admin_client.post("/admin/demo/merge", data={
+        "demo_ids": [str(oid) for oid in selected], "primary_demo_id": str(selected[0]),
+    })
+    assert response.status_code == 503
+    backup = db.demo_merge_backups.find_one({})
+    assert backup["demos"] == before
+    if failed_phase == "sources_removed":
+        assert backup["state"] == "restored" and backup["phase"] == "phase_write_failed"
+        assert {str(row["_id"]): row for row in db.demonstrations.find({"_id": {"$in": selected}})} == before
+    else:
+        assert backup["state"] == "incomplete" and backup["phase"] == "sources_removed"
+        assert db.demonstrations.find_one({"_id": selected[1]}) is None
+
+
+def test_merge_backup_failure_prevents_all_content_writes(
+    admin_client, db, seeded_data, monkeypatch
+):
+    selected = [seeded_data["demo_id"], seeded_data["pending_demo_id"]]
+    before = list(db.demonstrations.find({}).sort("_id", 1))
+    collection_type = type(db.demo_merge_backups)
+    original = collection_type.insert_one
+
+    def fail(collection, *args, **kwargs):
+        if collection.name == "demo_merge_backups":
+            raise RuntimeError("synthetic backup outage")
+        return original(collection, *args, **kwargs)
+
+    monkeypatch.setattr(collection_type, "insert_one", fail)
+    response = admin_client.post("/admin/demo/merge", data={
+        "demo_ids": [str(oid) for oid in selected], "primary_demo_id": str(selected[0]),
+    })
+    assert response.status_code == 503
+    assert list(db.demonstrations.find({}).sort("_id", 1)) == before
+    assert db.demo_merge_backups.count_documents({}) == 0
 
 
 @pytest.mark.parametrize("decision", ["approve", "deny"])

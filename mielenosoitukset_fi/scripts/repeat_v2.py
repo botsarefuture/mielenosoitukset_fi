@@ -276,14 +276,15 @@ def remove_invalid_child_demonstrations(parent_demo: dict, valid_dates: list[dat
         created_until_date = _created_until.date() if isinstance(_created_until, datetime) else _created_until
 
         if demo["date"] not in valid_date_strings and (not created_until_date or demo_date_dt > created_until_date):
-            runtime_actions.append({
+            action = {
                 "action": "delete",
                 "document": demo,
                 "reason": "invalid",
                 "timestamp": datetime.now(),
                 "executed_by": "system"
-            })
+            }
             if DRY_RUN:
+                runtime_actions.append(action)
                 logger.info(f"DRY RUN: would delete invalid child demo {demo['_id']}")
             else:
                 if not flush_rollback_history(db, demo["_id"]):
@@ -292,6 +293,7 @@ def remove_invalid_child_demonstrations(parent_demo: dict, valid_dates: list[dat
                     "_id": demo["_id"], PENDING_ROLLBACK_HISTORY: {"$exists": False},
                 })
                 if result.deleted_count:
+                    runtime_actions.append(action)
                     logger.info(f"Deleted invalid child demo {demo['_id']}")
 
 def get(obj: dict, key: str, default=None):

@@ -16,6 +16,7 @@
 
 - Demonstration history rollback restores recorded event content without overwriting current moderation, cancellation, access scopes or server metadata; stale writes fail safely and confirmation includes CSRF protection.
 - Profile and follower-list avatars try their fallback image only once; a failed fallback no longer triggers a repeated request loop.
+- Passkey verification now checks that the credential and its observed counter still exist unchanged before authenticating, preventing overlapping challenges from rolling the counter back or completing with a deleted credential. Counterless authenticators remain supported.
 
 - Roadmap now specifies multi-day demonstration support, city-admin notifications/review countdowns and urgent Telegram alerts that update after processing, including explicit timing, escalation, privacy and acceptance tests. These are planned, not shipped features.
 

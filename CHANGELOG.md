@@ -4,11 +4,22 @@
 
 ## UNRELEASED
 
-- Rollback now commits its exact history receipt atomically with content and retries idempotent history delivery after failures. Pending receipts block deletion/merge/recurring cleanup and stay out of demo-read API responses; history outages return503 without discarding the recorded event.
+- Rollback now commits its exact history receipt atomically with content and retries idempotent history delivery after failures. Pending receipts block deletion/merge/recurring cleanup and stay out of demo-read API responses; history outages return 503 without discarding the recorded event.
 
 - Content rollback now includes canonical coordinates, original image, cover source and event type, and detects concurrent changes to those fields instead of silently ignoring them.
 
 - Demonstration history rollback restores recorded event content without overwriting current moderation, cancellation, access scopes or server metadata; stale writes fail safely and confirmation includes CSRF protection.
+- Roadmap now specifies multi-day demonstration support, city-admin notifications/review countdowns and urgent Telegram alerts that update after processing, including explicit timing, escalation, privacy and acceptance tests. These are planned, not shipped features.
+
+- Passkey challenge regression tests now isolate exact expiry, purpose binding and simultaneous single-use consumption with real signed assertions and database writes; authentication policy is unchanged.
+
+- Passkey security regression coverage now verifies elevated cross-user rename/delete rejection, signed origin/RP mismatches, browser-session binding and single-use counterless assertions; authentication policy is unchanged.
+
+- User changes now persist a bounded, credential-free history event atomically with each profile, status or city-grant write; idempotent audit delivery retries preserve original attribution. Stale writes fail safely, and deletion cannot discard pending history or bypass fresh reauthentication. JSON deletion failures retain their status/message envelope with localized retry and reauthentication guidance.
+
+- User account-status confirmation now shows the affected account, current and proposed states, consequences and recent changes in the shared responsive light/dark admin layout. Permission-checked, paginated user history shows recorded status changes and new admin profile, role, permission and city-access changes without retaining credentials or tokens.
+
+- Admin pages load their existing pinned Bootstrap 5.3.3 stylesheet locally so external CDN failures cannot leave their controls and layout unstyled.
 
 - MCP-created demonstrations always start pending; generic write credentials cannot pre-approve them outside the moderation workflow.
 

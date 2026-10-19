@@ -161,6 +161,10 @@ mongo["super_audit_logs"].create_index("timestamp", background=True)
 
 def ensure_audit_pagination_indexes(database):
     """Create the indexes used by deterministic audit-log pagination."""
+    database.admin_logs.create_index(
+        [("entity_type", ASCENDING), ("entity_id", ASCENDING), ("timestamp", DESCENDING), ("_id", DESCENDING)],
+        name="entity_history_order", background=True,
+    )
     for collection_name in ("admin_logs", "super_audit_logs"):
         database[collection_name].create_index(
             [("timestamp", DESCENDING), ("_id", DESCENDING)],

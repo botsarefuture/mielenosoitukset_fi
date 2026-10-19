@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/demo-rollback-preservation`, based on merged main `6ef40610`, review follow-up 2026-10-19: 158 Python test files; 1,159 definitions; 251 assessed definitions. Newer merged #941/#943/#944/#945 inventory records must be reconciled before integration, not overwritten. This is a local branch checkpoint, not current-main state or completed review/release acceptance. Older per-branch/run counts below are historical evidence only.
+Integration of `codex/demo-rollback-preservation` with main `3c8665ab`, 2026-10-19: 161 Python test files; 1,185 definitions; 280 assessed definitions. All merged #941/#943/#944/#945 reviews and sixteen #942 definitions are retained. These are local integration-tree counts, not completed review/release acceptance; #942 is not yet pushed with these corrections or merged. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -102,7 +102,9 @@ Evidence: 37 focused admin-status/user/fresh-deletion backend cases passed, foll
 
 ## tests/test_admin_audit_indexes.py
 
-- [ ] `test_audit_collections_index_the_deterministic_pagination_order`
+- [x] `test_audit_collections_index_the_deterministic_pagination_order`
+
+USER-01 / QA-02 review, 2026-10-18, Codex, P2: real disposable MongoDB index metadata proves both audit stores retain timestamp/_id order and admin logs additionally support entity_type/entity_id/timestamp/_id history queries. No mocked create_index; this does not establish production index creation, explain plans or large-dataset latency. Keep; focused run passes.
 
 ## tests/test_admin_case_bp.py
 
@@ -339,7 +341,7 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Disposable MongoDB, seeded real de
 - [ ] `test_specialist_admin_pages_use_canonical_hero_navigation`
 - [ ] `test_super_audit_uses_shared_collection_contract`
 - [ ] `test_campaign_collection_uses_shared_admin_components`
-- [ ] `test_every_full_admin_v2_page_uses_canonical_hero_macro`
+- [x] `test_every_full_admin_v2_page_uses_canonical_hero_macro`
 - [ ] `test_full_admin_pages_use_breadcrumbs_and_standard_back_actions`
 - [ ] `test_dead_admin_template_copies_and_legacy_sync_actions_are_absent`
 - [ ] `test_retired_media_workspace_is_absent`
@@ -359,6 +361,64 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Disposable MongoDB, seeded real de
 - [ ] `test_shipping_admin_styles_use_only_semantic_or_bootstrap_tokens`
 - [ ] `test_admin_v2_does_not_restore_retired_layout_aliases`
 - [ ] `test_demo_suggestion_workflow_uses_shared_admin_components`
+
+USER-01 / QA-03 review follow-up, 2026-10-18, Codex, P2: `test_every_full_admin_v2_page_uses_canonical_hero_macro` is individually assessed. It inventories full admin templates, requires the canonical macro, explicitly includes account confirmation and scoped history, and preserves the structural/localized-confirmation checks. The reviewed count increases from 52 to 53 only for the new full history page; no prior page or assertion is removed. This is source-contract evidence, not visual proof; actual status/history render checks accompany it. Keep; focused run passes.
+
+## tests/test_admin_user_history_durability.py
+
+- [x] `test_concurrent_profile_writes_have_one_attributed_winner`
+- [x] `test_event_does_not_reload_a_later_writers_profile`
+- [x] `test_failed_projection_keeps_event_and_retry_is_idempotent`
+- [x] `test_source_write_failure_cannot_lose_its_event`
+- [x] `test_full_pending_outbox_rejects_an_unrecordable_change`
+- [x] `test_scope_outbox_survives_projection_failure`
+- [x] `test_creation_and_reset_outbox_survive_projection_failure`
+- [x] `test_deletion_cannot_drop_pending_history_or_reuse_fresh_auth`
+- [x] `test_delete_conflict_returns_matching_response_format`
+
+USER-01 review corrections, Codex, P1 data-integrity gate, 2026-10-18. Twenty-four cases use real Flask/Mongo persistence; wrappers inject timing or explicit delivery/write failures, not fabricated success. No replica-set transactions or live provider delivery are assumed. Existing #887 tests remain intact. The first complete CI gate passed 1,362 cases /325 skips before the final Minor JSON-envelope fix; its expanded deletion/fresh-auth batch passes 47 cases locally, with the final required CI recorded in the PR.
+
+| Definition | Requirement / assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_concurrent_profile_writes_have_one_attributed_winner` | Two distinct authorized actors read the same user; one 302/one 409, one event with winner's actor/old/new and exact persisted name. | Two edit entrypoints, two clients/thread-local contexts, Barrier before actual conditional Mongo write, ten-second failure bound; no sleeps/write-result mocks. Does not prove cross-document request atomicity. | Keep. |
+| `test_event_does_not_reload_a_later_writers_profile` | An intervening later stored value cannot be attributed to the earlier request. | Actual Mongo write immediately before projection; wraps the actual registered route namespace to survive fixture module reloads. Exact original-event vs later-account-state assertions. | Keep. |
+| `test_failed_projection_keeps_event_and_retry_is_idempotent` | State and original actor/before/after remain durable; authorized read recovers one admin/super-audit event and clears pending queue. | Admin-store failure, super-store failure, real successful insert followed by lost acknowledgement; retries twice, exact event ID and actor preserved. Credential omission asserted. No hard power-loss/storage-durability claim. | Keep. |
+| `test_source_write_failure_cannot_lose_its_event` | Rejected source mutation cannot persist state without its event. | Profile/create/reset/grant ×4; injected atomic Mongo exception before real write; exact unchanged account/no created user/no grant/no success event. Not a transaction spanning multiple separately successful writes. | Keep. |
+| `test_full_pending_outbox_rejects_an_unrecordable_change` | Saturated 100-event queue blocks further recorded mutation without dropping events. | Delivery disabled at actual route namespace; real bounded CAS, 409 and unchanged name/queue length. Does not prove document-size limits. | Keep. |
+| `test_scope_outbox_survives_projection_failure` | Grant/revocation retain their exact durable event on the source grant and recover with one ID. | Two real scope transitions; admin projection failure only, then actual authorized recovery. Role changes are independently audited user writes. | Keep. |
+| `test_creation_and_reset_outbox_survive_projection_failure` | Inserted/reset user contains required-reset state and its own safe event despite audit outage. | Create/reset ×2; real request/source write, unavailable projection, then history read and exact event count. Never stores/generated-password proof in history. | Keep. |
+| `test_deletion_cannot_drop_pending_history_or_reuse_fresh_auth` | Failed delivery blocks deletion with pending event intact; consumed proof cannot be reused; fresh reauth allows deletion only after recovery, retaining projected history. JSON contains ERROR and translated retry/reauth guidance. | Three FI/EN/SV cases, real compiled catalogs/password step-up/options/nonce/Mongo; temporary delivery failure, exact 503/403/200 sequence. Existing WebAuthn/concurrency/expiry tests retained. | Keep. |
+| `test_delete_conflict_returns_matching_response_format` | Competing recorded write blocks actual conditional delete; JSON gets ERROR plus localized reason/reauth guidance while form requests retain HTML409; consumed proof stays unusable. | Six cases: JSON/form × FI/EN/SV; real fresh proof and real Mongo interleaving before the actual conditional delete, not a fabricated deleted_count. Exact surviving name/event ID, 409 format and replay403 asserted. | Keep; covers the independently valid Minor response-format finding. |
+
+## tests/test_admin_user_history.py
+
+- [x] `test_admin_bootstrap_is_pinned_and_served_locally`
+- [x] `test_profile_history_records_only_actual_changes_and_no_secrets`
+- [x] `test_user_history_includes_city_grants_and_revocation`
+- [x] `test_creation_and_reset_requirement_have_safe_history`
+- [x] `test_history_adapts_status_logs_and_escapes_values`
+- [x] `test_history_rejects_missing_capability_and_higher_targets`
+- [x] `test_history_pagination_is_scoped_bounded_and_stable`
+- [x] `test_invalid_profile_save_does_not_invent_history`
+- [x] `test_user_history_and_transition_copy_follow_locale`
+- [x] `test_status_and_history_share_readable_responsive_layout`
+
+USER-01 / QA-01–QA-04, P2; individually reviewed 2026-10-18 by Codex. Real local Flask/MongoDB requests and the shipped templates/styles; shared email/network isolation is retained. No permission, persistence or status-token result mocks. Ten definitions cover 20 parameterized cases. The first complete focused run passes 215 cases across history/status/user administration, hierarchy/fresh deletion, city scope, CSS/token/inline and admin contracts. The subsequent password-reset review correction preserves action audits even without a field difference; focused follow-up evidence belongs in the PR. These are branch results, not production or full-suite review.
+
+| Definition | Requirement / assertions | Setup, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_admin_bootstrap_is_pinned_and_served_locally` | Admin shell loads the local existing 5.3.3 stylesheet with exact SHA-256 and MIT notice, not the external CSS URL. | Static provenance guard; hash also independently compared with upstream release. Runtime checks below load it while external requests are blocked. No Bootstrap upgrade or JS-hosting claim. | Keep. |
+| `test_profile_history_records_only_actual_changes_and_no_secrets` | Both edit POST paths record old/new identity, translator role and exact resulting permissions, actor/time, no password/MFA fields; identical repeat writes no profile event. | Two route cases; legacy direct editor retains existing permissions while save_user uses submitted selection. Exact distinct behavior remains protected. Synthetic secret marker is not a real credential. Does not prove concurrent-edit attribution or transactional audit delivery. | Keep. |
+| `test_user_history_includes_city_grants_and_revocation` | Grant records selected city/implied scope permissions; its separate role write records city_admin. Revocation and role restoration likewise have separate exact events. | Actual grant synchronization with real MongoDB; four events reflect four atomic source writes rather than falsely presenting two cross-document transactions. Does not prove all multi-grant/membership paths. | Keep; updated for durable per-write attribution. |
+| `test_creation_and_reset_requirement_have_safe_history` | Creation history omits generated password/hash; reset action records false→true and repeated request still records an unchanged action. | Real create/reset endpoints with isolated mail sink; does not prove SMTP delivery, full credential lifecycle or privacy erasure. | Keep. |
+| `test_history_adapts_status_logs_and_escapes_values` | Existing status audit plus detail diff render together; old/new emails visible, actor HTML escaped, secret fields/request payload/token absent; response is private/no-store. | Real status confirmation and allowlisted legacy-shaped fixture. Explicitly excludes arbitrary audit payloads, not all historical log schemas or external log sinks. | Keep. |
+| `test_history_rejects_missing_capability_and_higher_targets` | Ordinary user and VIEW_USER-only actor denied; EDIT_USER actor cannot inspect higher account; authorized self history works; malformed/missing users 404. | Separate real sessions/roles; server checks apply before history count/query. Not a complete organization-grant/delegation matrix. | Keep with existing privileged-action suite. |
+| `test_history_pagination_is_scoped_bounded_and_stable` | 41 equal-timestamp records produce exact reverse-ID pages of 20/20/1 without duplicates or unrelated target data; excessive page/page-size cannot request extra rows. | Real database sort/count and rendered content. No current-page client filtering, DB offset mock or production load claim. | Keep. |
+| `test_invalid_profile_save_does_not_invent_history` | Invalid email retains old email and creates no change event. | Actual validation route; paired with unchanged-repeat and hierarchy negatives. Not every form validation combination. | Keep. |
+| `test_user_history_and_transition_copy_follow_locale` | FI/EN/SV history title and current/after labels render from shipped catalogs; exact edit-user/cancel runtime labels prevent stale or incorrect navigation copy. | Three real localized session cases and actual GNU catalogs; unrelated runtime entries preserved during targeted compilation. Not complete site localization. | Keep. |
+| `test_status_and_history_share_readable_responsive_layout` | Activation/ban removal and closure use readable states/actions; long identity fields fit, keyboard reaches submit/disclosure, targets ≥44px, action text contrast ≥4.5, no document overflow. | Eight real Chromium cases: two actions × light320/dark390/light1440/dark1440. Actual pinned local Bootstrap and local icon fonts; CSS transition settlement is awaited before measuring/capturing, not a fixed delay. Full-page screenshots inspected. Not every locale/browser, screen reader or all admin surface acceptance. | Keep. |
+
+This history uses the existing audit store and its delivery/retention behavior. It is not an atomic user-state/audit transaction, immutable archive, historical backfill or full cross-source audit/GDPR implementation. Unknown legacy secret fields are filtered at presentation; new snapshots are allowlisted before logging.
 
 ## tests/test_admin_user_bp.py
 
@@ -1193,6 +1253,22 @@ Member-loading follow-up: 69 focused cases passed, including 2/27-member query-c
 - [ ] `test_organization_fill_submission_stores_logo_suggestion`
 - [ ] `test_admin_can_apply_logo_suggestion`
 
+## tests/test_passkey_challenge_lifecycle.py
+
+- [x] `test_login_challenge_expires_at_exact_server_deadline`
+- [x] `test_challenge_purpose_is_independent_of_user_binding`
+- [x] `test_simultaneous_counterless_login_has_one_challenge_winner`
+
+QA-01g · P1 · Codex · 2026-10-19 · base #943 (`635247c9`) on main `e6383141`. Three definitions /ten cases. Imported `wapp` provides the existing localhost RP/origin app with cleanup. The `registered_key` fixture uses actual password step-up, registration options, ES256 signing and registration verification; no crypto/authorization outcomes are mocked. Real disposable MongoDB is used. Collection wrappers synchronize or fault-inject only the specific challenged write; normal assertions inspect actual records/sessions. Individual initial focused run: ten passed; final run/review evidence belongs in the delivery PR. No production authentication or #887 policy changes.
+
+| Definition | Requirement / assertions | Cases, setup, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_login_challenge_expires_at_exact_server_deadline` | Generated expiry is exactly300s after issuance. Signed counterless HTTP assertion succeeds at299s, fails at300s and301s; exact authenticated identity or absent identity, consumed state and unchanged credential after denial. | Three cases change only webauthn helper clock. Future2099 timestamps keep the real Mongo TTL monitor from asynchronously removing the row while simulated expiry is tested. Does not test TTL cleanup, clock-skewed hosts, registration or step-up HTTP expiry. | Keep; isolates strict server expiry independently of signature/counter/replay failures. |
+| `test_challenge_purpose_is_independent_of_user_binding` | Both wrong purpose values fail without changing the complete stored challenge; original purpose succeeds afterward. | Three purposes × bound/unbound user, same request session and valid expiry. Direct helper contract rather than endpoint end-to-end: deliberately holds user/session binding fixed, including combinations not issued by current routes, so another predicate cannot mask missing purpose filtering. No sleeps or remote calls. | Keep; isolates purpose predicate, with an exact valid control. |
+| `test_simultaneous_counterless_login_has_one_challenge_winner` | Same valid signed assertion produces exactly one200 with expected owner identity and one403 with no identity; stored challenge is used and counter remains0. | Two independent Flask clients share the initial challenge-session cookie, synchronized at the actual Mongo find-and-update boundary with a bounded barrier/future wait. Counter0 prevents anti-clone counter handling from masking double consumption. Real crypto/write outcomes; no response mocks or sleep-based timing. Does not prove concurrent distinct-challenge sign-counter monotonicity or replica-set failover. | Keep; verifies one-winner atomic consume, complementary to #943's sequential replay and foreign-session tests. |
+
+Validation: all71 combined lifecycle/passkey/step-up/fresh-deletion/account-access cases pass. Isolated in-process mutations removed only expiry, purpose or used-state filtering from the real database write: both expired HTTP cases authenticated incorrectly, all six wrong-purpose cases consumed incorrectly, and both concurrent clients authenticated. All nine targeted assertions failed as intended; the299s valid control still passed. No tracked source edits were made for mutations. Exact AST/checklist set comparison reports no missing/extra entries: 1,169 definitions /160 files /264 assessed. These results are not whole-suite, browser/hardware or production acceptance.
+
 ## tests/test_passkeys_webauthn.py
 
 - [x] `test_passkey_register_and_login_end_to_end`
@@ -1225,7 +1301,23 @@ Shared setup: simulated hardware authenticator signs real registration/assertion
 | `test_passkeys_are_isolated_between_users` | Another user's list is empty; anonymous step-up leads to login. | Does not prove forged cross-user rename/delete denial; record as remaining QA-01 ownership gap. | Keep; schedule scoped mutation tests. |
 | `test_passkey_rejects_disabled_accounts` | Valid assertion denied after account disabled, no user session created. | Active=false and banned=true separately; registers while enabled, then DB status update; unique identities prevent fixture collisions. | Keep; strengthened old weak test. |
 
-Focused run evidence is linked in the delivery PR; checked entries mean assessed definitions, not closure of all WebAuthn security requirements. Crypto-origin/RP tampering, consumed assertion replay and cross-user mutations need coverage verification in the remaining QA-01 inventory.
+Focused run evidence is linked in the delivery PR; checked entries mean assessed definitions, not closure of all WebAuthn security requirements. The following QA-01f batch closes the named cross-user mutation, signed origin/RP mismatch and sequential consumed-assertion gaps; concurrent counter updates and physical authenticator/browser acceptance remain separate requirements.
+
+- [x] `test_elevated_passkey_mutations_are_owner_scoped`
+- [x] `test_signed_passkey_assertion_rejects_wrong_relying_party`
+- [x] `test_passkey_login_challenge_cannot_cross_browser_sessions`
+- [x] `test_consumed_passkey_assertion_cannot_authenticate_again`
+
+QA-01f · P1 · Codex · 2026-10-19 · base `e6383141`. These four definitions add six real HTTP/MongoDB/cryptographic cases, without mocking permission or verifier outcomes. The existing simulated ES256 authenticator signs the complete assertion, including the deliberately mismatched origin or RP hash. All eighteen passkey cases pass; final combined run/review evidence is recorded in the delivery PR. A separate test process replaced only the two ownership-scoped helpers with unscoped real database writes: both cases then failed specifically at expected404 versus actual200, demonstrating detection of the intended regression. No tracked production source was modified for that experiment. No production authentication policy or #887 changes.
+
+| Definition | Requirement / assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_elevated_passkey_mutations_are_owner_scoped` | An elevated foreign account gets404/error for both rename and delete; the entire target credential stays byte-for-value unchanged. The same elevated owner operation then succeeds with exact changed name or deleted document. | Registers a real credential; both clients pass actual password step-up, so missing elevation cannot mask missing ownership enforcement. Existing list isolation remains. Mutation of only the ownership predicates is checked separately; no production requests. | Keep; closes the earlier review's forged cross-user mutation gap. |
+| `test_signed_passkey_assertion_rejects_wrong_relying_party` | Wrong origin and wrong RP hash independently produce403 with the crypto-verification error, no user session or credential changes; attempted challenge is consumed. Fresh correct assertion with the same key/counter then authenticates the exact owner. | Two variants signed with the real private key; not invalid-signature/missing-challenge failures. Fresh valid control avoids an always-denying verifier passing the negative cases. Does not cover registration origin policy or every supported origin configuration. | Keep; verifies actual py-webauthn RP/origin boundaries. |
+| `test_passkey_login_challenge_cannot_cross_browser_sessions` | A valid assertion used from another browser session fails without consuming the original challenge or updating the credential. The originating client can still authenticate with that exact assertion. | Independent Flask clients, same signed body; asserts no foreign login session. No mocked challenge storage, time or authorization. Not a concurrent race test. | Keep; isolates browser-session binding from signature/counter validity. |
+| `test_consumed_passkey_assertion_cannot_authenticate_again` | First assertion succeeds as the exact owner; identical replay fails with challenge error, absent login identity and exact unchanged credential. | Zero counter intentionally permits counterless authenticators, so counter enforcement cannot hide missing single-use consumption. Removes only authenticated user ID from the signed test session while preserving challenge binding: a test-only isolation step, not proof of real logout cleanup (covered separately). Sequential replay, not atomic two-client concurrency. | Keep; proves used-challenge enforcement independently of session rotation and sign count. |
+
+Additional in-process mutations separately relaxed only expected origin/RP, challenge session binding or used-state filtering. All four corresponding cases failed specifically at expected403 versus actual200. These experiments retained real signatures and Mongo writes and left no tracked source changes. Normal combined passkey/step-up/fresh-deletion/account-access validation passed61 cases. Exact AST-to-checklist comparison has no missing/extra entries (1,166 definitions /159 files /261 checked). This is not a full-suite, all-authentication, production or browser/hardware acceptance claim.
 
 ## tests/test_privileged_user_actions.py
 
@@ -2003,9 +2095,11 @@ QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. El
 
 ## tests/test_surface_manifest.py
 
-- [ ] `SurfaceManifestTests::test_route_surface_manifest_matches_source`
+- [x] `SurfaceManifestTests::test_route_surface_manifest_matches_source`
 - [ ] `SurfaceManifestTests::test_background_job_surface_manifest_matches_source`
 - [ ] `SurfaceManifestTests::test_socketio_surface_manifest_matches_source`
+
+QA-01 / USER-01, Codex, 2026-10-18: route-surface definition individually reviewed. AST-derived route/decorator signatures are compared to a checked-in inventory with explicit coverage anchors for every route module. Adding the user-history route produced the CI count mismatch (10 vs 9); only that module's count/hash/coverage was updated, not the test or other surfaces. Keep: detects route drift, not runtime authorization or coverage quality by itself; real new-route tests remain required. Background/socket definitions remain unassessed.
 
 ## tests/test_tag_list_localization_contract.py
 

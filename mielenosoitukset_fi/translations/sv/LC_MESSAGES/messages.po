@@ -204,7 +204,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/settings.html:392
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:216
 msgid "Peruuta"
-msgstr ""
+msgstr "Avbryt"
 
 #: mielenosoitukset_fi/templates/admin_base.html:345
 msgid "Kirjaudu ulos nyt"
@@ -229,7 +229,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_base.html:364
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:229
 msgid "Kyllä"
-msgstr ""
+msgstr "Ja"
 
 #: mielenosoitukset_fi/templates/base.html:233
 msgid "Tietoa sivustosta"
@@ -1430,12 +1430,12 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/login.html:12
 #: mielenosoitukset_fi/users/templates/login.html:10
 msgid "Käyttäjänimi"
-msgstr ""
+msgstr "Användarnamn"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:187
 #: mielenosoitukset_fi/templates/users/auth/settings.html:93
 msgid "Näyttönimi"
-msgstr ""
+msgstr "Visningsnamn"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:191
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:492
@@ -1506,7 +1506,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:31
 msgid "Aktiivinen"
-msgstr ""
+msgstr "Aktiv"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:33
 msgid "Ei aktiivinen"
@@ -1527,7 +1527,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:64
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:136
 msgid "Muokkaa käyttäjää"
-msgstr ""
+msgstr "Redigera användare"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:74
 msgid "Pakota käyttäjä vaihtamaan salasanan seuraavan kirjautumisen yhteydessä"
@@ -1633,7 +1633,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/organizations/view.html:299
 #: mielenosoitukset_fi/templates/admin_V2/user/list.html:54
 msgid "Käyttäjät"
-msgstr ""
+msgstr "Användare"
 
 #: mielenosoitukset_fi/templates/admin_V2/dashboard.html:135
 msgid "Hallitse käyttäjiä ja heidän tietojaan."
@@ -1916,7 +1916,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:158
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:230
 msgid "Ei"
-msgstr ""
+msgstr "Nej"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:177
 msgid "Näytä menneet mielenosoitukset:"
@@ -2756,7 +2756,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:185
 msgid "Globaalit oikeudet"
-msgstr ""
+msgstr "Globala behörigheter"
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:186
 msgid "Globaalit oikeudet ovat vain superkäyttäjille."
@@ -5620,7 +5620,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/header.html:883
 #: mielenosoitukset_fi/templates/header.html:885
 msgid "Kaupungit"
-msgstr ""
+msgstr "Städer"
 
 #: mielenosoitukset_fi/templates/cities.html:421
 msgid "Paikalliset mielenosoitukset"
@@ -7091,7 +7091,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:54
 #: mielenosoitukset_fi/templates/admin_V2/user/list.html:11
 msgid "Käyttäjähallinta"
-msgstr ""
+msgstr "Användarhantering"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:186
 msgid "Superkäyttäjäroolia ei voi myöntää tästä lomakkeesta."
@@ -7830,7 +7830,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/governance/dashboard.html:49
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:31
 msgid "Tekijä"
-msgstr ""
+msgstr "Aktör"
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:32
 #: mielenosoitukset_fi/templates/admin_V2/user/list.html:26
@@ -7953,7 +7953,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:100
 msgid "Kohde"
-msgstr ""
+msgstr "Mål"
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:104
 msgid "Näytä liittyvät tapahtumat"
@@ -8405,7 +8405,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/blocklist.html:33
 msgid "Estetty"
-msgstr ""
+msgstr "Blockerad"
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/blocklist.html:35
 msgid "Verkkotunnus"
@@ -11687,7 +11687,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:82
 msgid "Sähköpostiosoite on vahvistettu"
-msgstr ""
+msgstr "E-postadressen är verifierad"
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:83
 msgid "Vaikuttaa siihen, pidetäänkö tiliä käyttövalmiina."
@@ -11695,7 +11695,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:90
 msgid "Pakota käyttäjänimen ja näyttönimen vaihto"
-msgstr ""
+msgstr "Kräv byte av användarnamn och visningsnamn"
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:98
 msgid "Rooli antaa oletusoikeudet. Erilliset oikeudet määritellään alempana."
@@ -13692,3 +13692,88 @@ msgstr "Det gick inte att beskära bilden. Försök igen eller välj en annan bi
 #: mielenosoitukset_fi/templates/admin/demonstrations/demo_diff.html
 msgid "Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan."
 msgstr "Endast evenemangsinnehåll som sparats i versionen återställs. Godkännande, inställning, synlighet, stad, arrangörer och behörigheter förblir oförändrade. Den genomförda ändringen sparas i historiken."
+
+# User account status and change history
+msgid "Muutoshistoria"
+msgstr "Ändringshistorik"
+
+msgid "Käyttäjän kirjatut ylläpitomuutokset, tekijät ja ajankohdat."
+msgstr "Registrerade administratörsändringar, vem som gjorde dem och när."
+
+msgid "Historia näyttää kirjatut ylläpitomuutokset. Vanhoista muutoksista ei välttämättä ole kenttäkohtaista tietoa."
+msgstr "Historiken visar registrerade administratörsändringar. Äldre ändringar kan sakna detaljer per fält."
+
+msgid "Muutoshistorian sivutus"
+msgstr "Sidindelning av ändringshistorik"
+
+msgid "Tarkista muutos ennen vahvistamista."
+msgstr "Granska ändringen innan du bekräftar."
+
+msgid "Käyttötilan muutos"
+msgstr "Ändring av kontostatus"
+
+msgid "Nykyinen tila"
+msgstr "Nuvarande status"
+
+msgid "Muutoksen jälkeen"
+msgstr "Efter ändringen"
+
+msgid "Mitä muuttuu?"
+msgstr "Vad ändras?"
+
+msgid "Muutos kirjataan käyttäjän historiaan tekijän ja ajankohdan kanssa."
+msgstr "Ändringen registreras i användarhistoriken med vem som gjorde den och när."
+
+msgid "Viimeisimmät muutokset"
+msgstr "Senaste ändringar"
+
+msgid "Näytä koko muutoshistoria"
+msgstr "Visa hela ändringshistoriken"
+
+msgid "Muutoksia ei vielä ole kirjattu."
+msgstr "Inga ändringar har registrerats ännu."
+
+msgid "Kenttäkohtaista erittelyä ei ole saatavilla."
+msgstr "Detaljer per fält saknas."
+
+msgid "Ennen"
+msgstr "Före"
+
+msgid "Jälkeen"
+msgstr "Efter"
+
+msgid "Tuntematon tekijä"
+msgstr "Okänd aktör"
+
+msgid "Aika ei saatavilla"
+msgstr "Tid saknas"
+
+msgid "Käyttäjän tiedot päivitetty"
+msgstr "Användaruppgifter uppdaterade"
+
+msgid "Käyttötila muutettu"
+msgstr "Kontostatus ändrad"
+
+msgid "Käyttäjä luotu"
+msgstr "Användare skapad"
+
+msgid "Salasanan vaihto vaaditaan"
+msgstr "Lösenordsbyte krävs"
+
+msgid "Kaupunkiadminin oikeudet"
+msgstr "Stadsadministratörens behörigheter"
+
+msgid "Käyttäjän tiedot"
+msgstr "Användaruppgifter"
+
+# User account status and change history
+msgid "Ei kenttämuutoksia."
+msgstr "Inga fältändringar."
+
+# User deletion history-delivery feedback
+msgid "Muutoshistorian välitys on kesken. Tämä poistoyritys ei onnistunut. Yritä myöhemmin uudelleen ja vahvista henkilöllisyytesi."
+msgstr "Leveransen av ändringshistoriken väntar. Detta raderingsförsök lyckades inte. Försök igen senare och verifiera din identitet på nytt."
+
+# User deletion history-delivery feedback
+msgid "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."
+msgstr "Användaren ändrades samtidigt. Detta raderingsförsök lyckades inte. Verifiera din identitet innan du försöker igen."

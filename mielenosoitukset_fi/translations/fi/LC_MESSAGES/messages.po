@@ -204,7 +204,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/settings.html:392
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:216
 msgid "Peruuta"
-msgstr ""
+msgstr "Peruuta"
 
 #: mielenosoitukset_fi/templates/admin_base.html:345
 msgid "Kirjaudu ulos nyt"
@@ -229,7 +229,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_base.html:364
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:229
 msgid "Kyllä"
-msgstr ""
+msgstr "Kyllä"
 
 #: mielenosoitukset_fi/templates/base.html:233
 msgid "Tietoa sivustosta"
@@ -1430,12 +1430,12 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/login.html:12
 #: mielenosoitukset_fi/users/templates/login.html:10
 msgid "Käyttäjänimi"
-msgstr ""
+msgstr "Käyttäjänimi"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:187
 #: mielenosoitukset_fi/templates/users/auth/settings.html:93
 msgid "Näyttönimi"
-msgstr ""
+msgstr "Näyttönimi"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:191
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:492
@@ -1456,7 +1456,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/organizations/view.html:351
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:164
 msgid "Rooli"
-msgstr ""
+msgstr "Rooli"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:197
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:25
@@ -1506,7 +1506,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:31
 msgid "Aktiivinen"
-msgstr ""
+msgstr "Aktiivinen"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:33
 msgid "Ei aktiivinen"
@@ -1527,7 +1527,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:64
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:136
 msgid "Muokkaa käyttäjää"
-msgstr ""
+msgstr "Muokkaa käyttäjää"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:74
 msgid "Pakota käyttäjä vaihtamaan salasanan seuraavan kirjautumisen yhteydessä"
@@ -1633,7 +1633,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/organizations/view.html:299
 #: mielenosoitukset_fi/templates/admin_V2/user/list.html:54
 msgid "Käyttäjät"
-msgstr ""
+msgstr "Käyttäjät"
 
 #: mielenosoitukset_fi/templates/admin_V2/dashboard.html:135
 msgid "Hallitse käyttäjiä ja heidän tietojaan."
@@ -1916,7 +1916,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:158
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:230
 msgid "Ei"
-msgstr ""
+msgstr "Ei"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:177
 msgid "Näytä menneet mielenosoitukset:"
@@ -2756,7 +2756,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:185
 msgid "Globaalit oikeudet"
-msgstr ""
+msgstr "Globaalit oikeudet"
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:186
 msgid "Globaalit oikeudet ovat vain superkäyttäjille."
@@ -5617,7 +5617,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/header.html:883
 #: mielenosoitukset_fi/templates/header.html:885
 msgid "Kaupungit"
-msgstr ""
+msgstr "Kaupungit"
 
 #: mielenosoitukset_fi/templates/cities.html:421
 msgid "Paikalliset mielenosoitukset"
@@ -7088,7 +7088,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:54
 #: mielenosoitukset_fi/templates/admin_V2/user/list.html:11
 msgid "Käyttäjähallinta"
-msgstr ""
+msgstr "Käyttäjähallinta"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:186
 msgid "Superkäyttäjäroolia ei voi myöntää tästä lomakkeesta."
@@ -7827,7 +7827,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/governance/dashboard.html:49
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:31
 msgid "Tekijä"
-msgstr ""
+msgstr "Tekijä"
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:32
 #: mielenosoitukset_fi/templates/admin_V2/user/list.html:26
@@ -7950,7 +7950,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:100
 msgid "Kohde"
-msgstr ""
+msgstr "Kohde"
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:104
 msgid "Näytä liittyvät tapahtumat"
@@ -8402,7 +8402,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/blocklist.html:33
 msgid "Estetty"
-msgstr ""
+msgstr "Estetty"
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/blocklist.html:35
 msgid "Verkkotunnus"
@@ -11684,7 +11684,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:82
 msgid "Sähköpostiosoite on vahvistettu"
-msgstr ""
+msgstr "Sähköpostiosoite on vahvistettu"
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:83
 msgid "Vaikuttaa siihen, pidetäänkö tiliä käyttövalmiina."
@@ -11692,7 +11692,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:90
 msgid "Pakota käyttäjänimen ja näyttönimen vaihto"
-msgstr ""
+msgstr "Pakota käyttäjänimen ja näyttönimen vaihto"
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:98
 msgid "Rooli antaa oletusoikeudet. Erilliset oikeudet määritellään alempana."
@@ -13608,3 +13608,88 @@ msgstr "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva.
 #: mielenosoitukset_fi/templates/admin/demonstrations/demo_diff.html
 msgid "Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan."
 msgstr "Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan."
+
+# User account status and change history
+msgid "Muutoshistoria"
+msgstr "Muutoshistoria"
+
+msgid "Käyttäjän kirjatut ylläpitomuutokset, tekijät ja ajankohdat."
+msgstr "Käyttäjän kirjatut ylläpitomuutokset, tekijät ja ajankohdat."
+
+msgid "Historia näyttää kirjatut ylläpitomuutokset. Vanhoista muutoksista ei välttämättä ole kenttäkohtaista tietoa."
+msgstr "Historia näyttää kirjatut ylläpitomuutokset. Vanhoista muutoksista ei välttämättä ole kenttäkohtaista tietoa."
+
+msgid "Muutoshistorian sivutus"
+msgstr "Muutoshistorian sivutus"
+
+msgid "Tarkista muutos ennen vahvistamista."
+msgstr "Tarkista muutos ennen vahvistamista."
+
+msgid "Käyttötilan muutos"
+msgstr "Käyttötilan muutos"
+
+msgid "Nykyinen tila"
+msgstr "Nykyinen tila"
+
+msgid "Muutoksen jälkeen"
+msgstr "Muutoksen jälkeen"
+
+msgid "Mitä muuttuu?"
+msgstr "Mitä muuttuu?"
+
+msgid "Muutos kirjataan käyttäjän historiaan tekijän ja ajankohdan kanssa."
+msgstr "Muutos kirjataan käyttäjän historiaan tekijän ja ajankohdan kanssa."
+
+msgid "Viimeisimmät muutokset"
+msgstr "Viimeisimmät muutokset"
+
+msgid "Näytä koko muutoshistoria"
+msgstr "Näytä koko muutoshistoria"
+
+msgid "Muutoksia ei vielä ole kirjattu."
+msgstr "Muutoksia ei vielä ole kirjattu."
+
+msgid "Kenttäkohtaista erittelyä ei ole saatavilla."
+msgstr "Kenttäkohtaista erittelyä ei ole saatavilla."
+
+msgid "Ennen"
+msgstr "Ennen"
+
+msgid "Jälkeen"
+msgstr "Jälkeen"
+
+msgid "Tuntematon tekijä"
+msgstr "Tuntematon tekijä"
+
+msgid "Aika ei saatavilla"
+msgstr "Aika ei saatavilla"
+
+msgid "Käyttäjän tiedot päivitetty"
+msgstr "Käyttäjän tiedot päivitetty"
+
+msgid "Käyttötila muutettu"
+msgstr "Käyttötila muutettu"
+
+msgid "Käyttäjä luotu"
+msgstr "Käyttäjä luotu"
+
+msgid "Salasanan vaihto vaaditaan"
+msgstr "Salasanan vaihto vaaditaan"
+
+msgid "Kaupunkiadminin oikeudet"
+msgstr "Kaupunkiadminin oikeudet"
+
+msgid "Käyttäjän tiedot"
+msgstr "Käyttäjän tiedot"
+
+# User account status and change history
+msgid "Ei kenttämuutoksia."
+msgstr "Ei kenttämuutoksia."
+
+# User deletion history-delivery feedback
+msgid "Muutoshistorian välitys on kesken. Tämä poistoyritys ei onnistunut. Yritä myöhemmin uudelleen ja vahvista henkilöllisyytesi."
+msgstr "Muutoshistorian välitys on kesken. Tämä poistoyritys ei onnistunut. Yritä myöhemmin uudelleen ja vahvista henkilöllisyytesi."
+
+# User deletion history-delivery feedback
+msgid "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."
+msgstr "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."

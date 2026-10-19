@@ -332,6 +332,122 @@ def test_passkeys_are_isolated_between_users(wapp, db, seeded_data):
     assert b"Mielenosoitukset" in r.data  # no elevation API JSON leaked
 
 
+@pytest.mark.parametrize("action", ["rename", "delete"])
+def test_elevated_passkey_mutations_are_owner_scoped(wapp, db, seeded_data, action):
+    owner = _client_for_user(wapp, seeded_data["user_id"])
+    _elevate(owner, "UserPass1!")
+    options = owner.post("/users/auth/api/v2/passkeys/register/options").get_json()["options"]
+    response, credential = _register_passkey(owner, options, sim.generate_key())
+    assert response.status_code == 200
+    before = db.user_passkeys.find_one({"credential_id": credential["id"]})
+
+    other = _client_for_user(wapp, seeded_data["friend_id"])
+    _elevate(other, "FriendPass1!")
+    payload = {"id": str(before["_id"]), "name": "Foreign rename"}
+    response = other.post(f"/users/auth/api/v2/passkeys/{action}", json=payload)
+    assert response.status_code == 404
+    assert response.get_json()["status"] == "error"
+    assert db.user_passkeys.find_one({"_id": before["_id"]}) == before
+
+    # The same valid operation works for the elevated owner, not just nobody.
+    response = owner.post(f"/users/auth/api/v2/passkeys/{action}", json=payload)
+    assert response.status_code == 200
+    after = db.user_passkeys.find_one({"_id": before["_id"]})
+    if action == "delete":
+        assert after is None
+    else:
+        assert after == {**before, "name": payload["name"]}
+
+
+@pytest.mark.parametrize("mismatch", ["origin", "rp_id"])
+def test_signed_passkey_assertion_rejects_wrong_relying_party(
+    wapp, db, seeded_data, mismatch
+):
+    owner = _client_for_user(wapp, seeded_data["user_id"])
+    _elevate(owner, "UserPass1!")
+    key = sim.generate_key()
+    options = owner.post("/users/auth/api/v2/passkeys/register/options").get_json()["options"]
+    response, credential = _register_passkey(owner, options, key)
+    assert response.status_code == 200
+    before = db.user_passkeys.find_one({"credential_id": credential["id"]})
+
+    anon = wapp.test_client()
+    options = anon.post("/users/auth/api/v2/passkeys/login/options", json={}).get_json()["options"]
+    if mismatch == "rp_id":
+        options = {**options, "rpId": "other.example.test"}
+    assertion = sim.assertion_credential_json(
+        options, key, origin="https://other.example.test" if mismatch == "origin" else ORIGIN,
+        credential_id=credential["id"], counter=1,
+    )
+    response = anon.post("/users/auth/api/v2/passkeys/login/verify", json={"credential": assertion})
+    assert response.status_code == 403
+    assert response.get_json()["message"] == "Virheellinen vahvistusvastaus."
+    with anon.session_transaction() as login_session:
+        assert "_user_id" not in login_session
+    assert db.user_passkeys.find_one({"_id": before["_id"]}) == before
+    assert db.passkey_challenges.find_one({"challenge": options["challenge"]})["used"] is True
+
+    # Rejection must be about RP/origin: the same key with fresh valid options works.
+    options = anon.post("/users/auth/api/v2/passkeys/login/options", json={}).get_json()["options"]
+    assertion = sim.assertion_credential_json(
+        options, key, origin=ORIGIN, credential_id=credential["id"], counter=1,
+    )
+    assert anon.post("/users/auth/api/v2/passkeys/login/verify", json={"credential": assertion}).status_code == 200
+    with anon.session_transaction() as login_session:
+        assert login_session["_user_id"] == str(seeded_data["user_id"])
+
+
+def test_passkey_login_challenge_cannot_cross_browser_sessions(wapp, db, seeded_data):
+    owner = _client_for_user(wapp, seeded_data["user_id"])
+    _elevate(owner, "UserPass1!")
+    key = sim.generate_key()
+    options = owner.post("/users/auth/api/v2/passkeys/register/options").get_json()["options"]
+    response, credential = _register_passkey(owner, options, key)
+    assert response.status_code == 200
+    before = db.user_passkeys.find_one({"credential_id": credential["id"]})
+    original, foreign = wapp.test_client(), wapp.test_client()
+    options = original.post("/users/auth/api/v2/passkeys/login/options", json={}).get_json()["options"]
+    assertion = sim.assertion_credential_json(
+        options, key, origin=ORIGIN, credential_id=credential["id"], counter=1,
+    )
+    response = foreign.post("/users/auth/api/v2/passkeys/login/verify", json={"credential": assertion})
+    assert response.status_code == 403
+    with foreign.session_transaction() as login_session:
+        assert "_user_id" not in login_session
+    assert db.passkey_challenges.find_one({"challenge": options["challenge"]})["used"] is False
+    assert db.user_passkeys.find_one({"_id": before["_id"]}) == before
+    assert original.post("/users/auth/api/v2/passkeys/login/verify", json={"credential": assertion}).status_code == 200
+    with original.session_transaction() as login_session:
+        assert login_session["_user_id"] == str(seeded_data["user_id"])
+
+
+def test_consumed_passkey_assertion_cannot_authenticate_again(wapp, db, seeded_data):
+    owner = _client_for_user(wapp, seeded_data["user_id"])
+    _elevate(owner, "UserPass1!")
+    key = sim.generate_key()
+    options = owner.post("/users/auth/api/v2/passkeys/register/options").get_json()["options"]
+    response, credential = _register_passkey(owner, options, key)
+    assert response.status_code == 200
+    anon = wapp.test_client()
+    options = anon.post("/users/auth/api/v2/passkeys/login/options", json={}).get_json()["options"]
+    assertion = sim.assertion_credential_json(
+        options, key, origin=ORIGIN, credential_id=credential["id"], counter=0,
+    )
+    # Counterless authenticators are valid; counter rejection must not mask replay.
+    assert anon.post("/users/auth/api/v2/passkeys/login/verify", json={"credential": assertion}).status_code == 200
+    with anon.session_transaction() as login_session:
+        assert login_session["_user_id"] == str(seeded_data["user_id"])
+        # Preserve the challenge-session binding to isolate single-use enforcement.
+        login_session.pop("_user_id")
+    before = db.user_passkeys.find_one({"credential_id": credential["id"]})
+    response = anon.post("/users/auth/api/v2/passkeys/login/verify", json={"credential": assertion})
+    assert response.status_code == 403
+    assert "Challenge" in response.get_json()["message"]
+    with anon.session_transaction() as login_session:
+        assert "_user_id" not in login_session
+    assert db.user_passkeys.find_one({"_id": before["_id"]}) == before
+
+
 @pytest.mark.parametrize("status", [{"active": False}, {"banned": True}])
 def test_passkey_rejects_disabled_accounts(wapp, db, status):
     """A valid cryptographic assertion cannot bypass disabled account status."""

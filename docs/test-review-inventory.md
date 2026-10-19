@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/passkey-boundary-test-review`, based on merged main `e6383141`, 2026-10-19: 159 Python test files; 1,166 definitions; 261 assessed definitions. Independent #942 rollback additions are excluded until integration. These are branch-tree counts, not counts for the main baseline. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/passkey-challenge-lifecycle`, stacked on #943 / main `e6383141`, 2026-10-19: 160 Python test files; 1,169 definitions; 264 assessed definitions. Independent #942 rollback additions are excluded until integration. These are branch-tree counts, not counts for the main baseline. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1202,6 +1202,22 @@ Member-loading follow-up: 69 focused cases passed, including 2/27-member query-c
 - [ ] `test_organization_fill_page_uses_public_org_visual_shell`
 - [ ] `test_organization_fill_submission_stores_logo_suggestion`
 - [ ] `test_admin_can_apply_logo_suggestion`
+
+## tests/test_passkey_challenge_lifecycle.py
+
+- [x] `test_login_challenge_expires_at_exact_server_deadline`
+- [x] `test_challenge_purpose_is_independent_of_user_binding`
+- [x] `test_simultaneous_counterless_login_has_one_challenge_winner`
+
+QA-01g · P1 · Codex · 2026-10-19 · base #943 (`635247c9`) on main `e6383141`. Three definitions /ten cases. Imported `wapp` provides the existing localhost RP/origin app with cleanup. The `registered_key` fixture uses actual password step-up, registration options, ES256 signing and registration verification; no crypto/authorization outcomes are mocked. Real disposable MongoDB is used. Collection wrappers synchronize or fault-inject only the specific challenged write; normal assertions inspect actual records/sessions. Individual initial focused run: ten passed; final run/review evidence belongs in the delivery PR. No production authentication or #887 policy changes.
+
+| Definition | Requirement / assertions | Cases, setup, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_login_challenge_expires_at_exact_server_deadline` | Generated expiry is exactly300s after issuance. Signed counterless HTTP assertion succeeds at299s, fails at300s and301s; exact authenticated identity or absent identity, consumed state and unchanged credential after denial. | Three cases change only webauthn helper clock. Future2099 timestamps keep the real Mongo TTL monitor from asynchronously removing the row while simulated expiry is tested. Does not test TTL cleanup, clock-skewed hosts, registration or step-up HTTP expiry. | Keep; isolates strict server expiry independently of signature/counter/replay failures. |
+| `test_challenge_purpose_is_independent_of_user_binding` | Both wrong purpose values fail without changing the complete stored challenge; original purpose succeeds afterward. | Three purposes × bound/unbound user, same request session and valid expiry. Direct helper contract rather than endpoint end-to-end: deliberately holds user/session binding fixed, including combinations not issued by current routes, so another predicate cannot mask missing purpose filtering. No sleeps or remote calls. | Keep; isolates purpose predicate, with an exact valid control. |
+| `test_simultaneous_counterless_login_has_one_challenge_winner` | Same valid signed assertion produces exactly one200 with expected owner identity and one403 with no identity; stored challenge is used and counter remains0. | Two independent Flask clients share the initial challenge-session cookie, synchronized at the actual Mongo find-and-update boundary with a bounded barrier/future wait. Counter0 prevents anti-clone counter handling from masking double consumption. Real crypto/write outcomes; no response mocks or sleep-based timing. Does not prove concurrent distinct-challenge sign-counter monotonicity or replica-set failover. | Keep; verifies one-winner atomic consume, complementary to #943's sequential replay and foreign-session tests. |
+
+Validation: all71 combined lifecycle/passkey/step-up/fresh-deletion/account-access cases pass. Isolated in-process mutations removed only expiry, purpose or used-state filtering from the real database write: both expired HTTP cases authenticated incorrectly, all six wrong-purpose cases consumed incorrectly, and both concurrent clients authenticated. All nine targeted assertions failed as intended; the299s valid control still passed. No tracked source edits were made for mutations. Exact AST/checklist set comparison reports no missing/extra entries: 1,169 definitions /160 files /264 assessed. These results are not whole-suite, browser/hardware or production acceptance.
 
 ## tests/test_passkeys_webauthn.py
 

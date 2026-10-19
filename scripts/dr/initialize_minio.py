@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create only the sandbox bucket and local read policy behind nginx auth."""
+"""Create only the sandbox bucket and local read policy behind the nginx media proxy."""
 import json
 from pathlib import Path
 import socket
@@ -22,4 +22,4 @@ if __name__ == "__main__":
         "Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Principal": {"AWS": ["*"]},
         "Action": ["s3:GetObject"], "Resource": ["arn:aws:s3:::" + bucket + "/*"]}],
     }))
-    print("Local bucket ready; MinIO listens only on loopback and nginx media access requires authentication")
+    print("Local bucket ready; MinIO listens only on loopback and nginx proxies read-only media access")

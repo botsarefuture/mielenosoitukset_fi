@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Made the pentest frontend publicly accessible at the owner’s request while preserving application login, admin permissions, noindex and integration isolation.
+
 - Added an isolated pentest/DR recovery toolkit with an offline app-and-MongoDB bundle rehearsal, captured SMTP delivery, local MinIO storage, and a read-only static fallback. The runbook distinguishes measured prepared-host recovery from unproven full-VM and bare-host recovery.
 - Removed follow controls from the recurring-series empty page to keep the discovery update focused on occurrence selection and SEO.
 - Public API cards and today-page links now fall back to the standalone demonstration URL when a child's parent series is missing, hidden, or unapproved, matching the sitemap's standalone grouping instead of advertising a series URL that public visitors cannot open.

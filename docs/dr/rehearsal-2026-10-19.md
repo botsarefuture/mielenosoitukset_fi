@@ -6,7 +6,7 @@ nginx, TLS certificate, SSH key, firewall and noindex policy were reused.
 
 ## Working environment
 
-- App: `https://pentest.mielenosoitukset.fi/` (HTTP Basic authentication).
+- App: `https://pentest.mielenosoitukset.fi/` (public access; normal application login protects account/admin actions).
 - Snapshot: `https://pentest.mielenosoitukset.fi/mirror/` (public, read-only).
 - Mailpit: loopback port 8025, accessed through an SSH tunnel; no SMTP relay.
 - MongoDB 7.0.37, Redis, an isolated real MinIO instance and app listen locally.
@@ -23,8 +23,9 @@ Credentials, dumps, media, wheels, source bundles and raw test outputs stay in
 private storage outside Git and web roots. Generated configuration uses mode
 0600, owned by the service account. Release archives omit environment files.
 
-The full copy contains restored private data and requires the separate access
-password. A synthetic sandbox-only administrator exists; restored accounts,
+At the owner’s subsequent request, the nginx HTTP Basic gate was removed.
+The public frontend now uses the normal application authentication and admin
+permissions. A synthetic sandbox-only administrator exists; restored accounts,
 permissions and audit history remain present. Never publish its access file.
 
 ## Results measured so far
@@ -118,7 +119,11 @@ Schedulers, panic polling, IMAP ingress and external integrations remain disable
 The response adapter rewrites production app/CDN links to the sandbox; CSP blocks
 browser connections to external services. The separate MinIO instance binds only
 to loopback, uses fresh local credentials, and is reached through the app's
-authenticated media proxy. Production IAM and external integrations are not copied.
+read-only media proxy. Production IAM and external integrations are not copied.
+
+The earlier authenticated HTTP checks describe the initial private deployment.
+After the owner requested public access, anonymous app, API, media and login
+checks pass without HTTP Basic; anonymous admin access still requires app login.
 
 ## S3 failure-domain discovery
 

@@ -229,3 +229,13 @@ def test_rehearsal_cleanup_continues_when_database_drop_fails(tmp_path, monkeypa
     errors = module.cleanup_rehearsal(client, "dr_verify_test", stage, "dr-verify-test", log)
     assert errors == {"drop_database": "RuntimeError"}
     assert not stage.exists() and log.closed and closed == [True]
+
+
+def test_public_pentest_keeps_indexing_and_file_exposure_guards():
+    config = (ROOT / "scripts/dr/nginx.conf").read_text()
+    assert 'auth_basic off;' in config
+    assert 'auth_basic_user_file' not in config
+    assert 'add_header X-Robots-Tag "noindex, nofollow" always;' in config
+    assert 'Disallow: /' in config
+    assert 'location ~ /\\. { deny all; }' in config
+    assert 'limit_except GET HEAD { deny all; }' in config

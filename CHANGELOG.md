@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Profile and follower-list avatars try their fallback image only once; a failed fallback no longer triggers a repeated request loop.
+
 - Roadmap now specifies multi-day demonstration support, city-admin notifications/review countdowns and urgent Telegram alerts that update after processing, including explicit timing, escalation, privacy and acceptance tests. These are planned, not shipped features.
 
 - Passkey challenge regression tests now isolate exact expiry, purpose binding and simultaneous single-use consumption with real signed assertions and database writes; authentication policy is unchanged.

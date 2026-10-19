@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/passkey-challenge-lifecycle`, stacked on #943 / main `e6383141`, 2026-10-19: 160 Python test files; 1,169 definitions; 264 assessed definitions. Independent #942 rollback additions are excluded until integration. These are branch-tree counts, not counts for the main baseline. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/passkey-counter-concurrency` on main `3c8665ab`, 2026-10-19: 161 Python test files; 1,171 definitions; 266 assessed definitions. Independent #942 rollback additions are excluded until integration. These are branch-tree counts, not counts for a later integrated main. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1202,6 +1202,18 @@ Member-loading follow-up: 69 focused cases passed, including 2/27-member query-c
 - [ ] `test_organization_fill_page_uses_public_org_visual_shell`
 - [ ] `test_organization_fill_submission_stores_logo_suggestion`
 - [ ] `test_admin_can_apply_logo_suggestion`
+
+## tests/test_passkey_counter_concurrency.py
+
+- [x] `test_distinct_challenges_cannot_overwrite_newer_credential_counter`
+- [x] `test_deleted_passkey_cannot_complete_previously_verified_login`
+
+QA-01h / SEC-05 · P1 · Codex · 2026-10-19 · main3c8665ab. Two individually assessed definitions /five cases. Real Flask sessions, independent challenges, ES256 signatures and disposable MongoDB. Imported registration/app fixtures exercise actual password step-up and credential registration. Four failures reproduced before the conditional-write fix; the counterless positive control passed. Combined passkey/lifecycle/fresh-deletion validation passed56 cases. Local five-file review completed with two overlapping Minor reports of the same empty duplicate inventory heading, corrected afterward. No code findings reported; not a zero-finding review claim. No physical authenticator, browser ceremony or process-crash acceptance claim.
+
+| Definition | Requirement and assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_distinct_challenges_cannot_overwrite_newer_credential_counter` | With distinct consumed challenges, stale positive-counter state cannot authenticate or replace newer counter; both genuine counterless logins remain valid. Checks each HTTP outcome, session identity, challenge consumption and final counter. | Four ordered real-write variants:2→1,1→1,1→2 and0→0. Barrier delegates actual crypto verification against observed0; Event orders actual DB updates, no sleeps/fabricated results. Conservative CAS rejects the stale higher-counter request too; retry needs fresh challenge. Not same-challenge replay or arbitrary multi-process/device coverage. | Keep; three stale-state failures reproduced on old code, counterless control passed. |
+| `test_deleted_passkey_cannot_complete_previously_verified_login` | Removing credential before final write yields403, no authenticated session, no revived credential; challenge remains consumed. | Actual route/crypto/DB deletion at update boundary, not mocked verifier success. Does not prove deletion after successful commit invalidates an already authenticated session. | Keep; pre-fix route returned200 with missing credential. |
 
 ## tests/test_passkey_challenge_lifecycle.py
 

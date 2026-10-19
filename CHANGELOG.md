@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Added an isolated pentest/DR recovery toolkit with an offline app-and-MongoDB bundle rehearsal, captured SMTP delivery, local MinIO storage, and a read-only static fallback. The runbook distinguishes measured prepared-host recovery from unproven full-VM and bare-host recovery.
 - Removed follow controls from the recurring-series empty page to keep the discovery update focused on occurrence selection and SEO.
 - Public API cards and today-page links now fall back to the standalone demonstration URL when a child's parent series is missing, hidden, or unapproved, matching the sitemap's standalone grouping instead of advertising a series URL that public visitors cannot open.
 - Series pages are now indexed at the series level: the clean series URL stays indexable whenever any occurrence sits in the sitemap discovery window, even when the selector renders an occurrence beyond the future horizon, so the sitemap no longer lists series URLs that the page marks `noindex`.

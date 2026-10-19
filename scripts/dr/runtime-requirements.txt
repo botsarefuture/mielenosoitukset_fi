@@ -1,0 +1,7 @@
+# Production uses distro-patched Gunicorn 20.1.0 with Eventlet 0.35.2. Its
+# unpatched PyPI counterpart cannot import ALREADY_HANDLED with that Eventlet.
+# Version 23 is the tested venv equivalent; version 26 removed this worker.
+gunicorn==23.0.0
+eventlet==0.35.2
+redis==7.2.1
+setuptools==80.9.0

@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/user-status-history`, based on merged main `6ef40610`, 2026-10-18: 159 Python test files; 1,162 definitions; 257 assessed definitions. Independent #942 rollback additions are excluded until integration. These are branch-tree counts, not counts for the main baseline. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/passkey-boundary-test-review`, based on merged main `e6383141`, 2026-10-19: 159 Python test files; 1,166 definitions; 261 assessed definitions. Independent #942 rollback additions are excluded until integration. These are branch-tree counts, not counts for the main baseline. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1235,7 +1235,23 @@ Shared setup: simulated hardware authenticator signs real registration/assertion
 | `test_passkeys_are_isolated_between_users` | Another user's list is empty; anonymous step-up leads to login. | Does not prove forged cross-user rename/delete denial; record as remaining QA-01 ownership gap. | Keep; schedule scoped mutation tests. |
 | `test_passkey_rejects_disabled_accounts` | Valid assertion denied after account disabled, no user session created. | Active=false and banned=true separately; registers while enabled, then DB status update; unique identities prevent fixture collisions. | Keep; strengthened old weak test. |
 
-Focused run evidence is linked in the delivery PR; checked entries mean assessed definitions, not closure of all WebAuthn security requirements. Crypto-origin/RP tampering, consumed assertion replay and cross-user mutations need coverage verification in the remaining QA-01 inventory.
+Focused run evidence is linked in the delivery PR; checked entries mean assessed definitions, not closure of all WebAuthn security requirements. The following QA-01f batch closes the named cross-user mutation, signed origin/RP mismatch and sequential consumed-assertion gaps; concurrent counter updates and physical authenticator/browser acceptance remain separate requirements.
+
+- [x] `test_elevated_passkey_mutations_are_owner_scoped`
+- [x] `test_signed_passkey_assertion_rejects_wrong_relying_party`
+- [x] `test_passkey_login_challenge_cannot_cross_browser_sessions`
+- [x] `test_consumed_passkey_assertion_cannot_authenticate_again`
+
+QA-01f · P1 · Codex · 2026-10-19 · base `e6383141`. These four definitions add six real HTTP/MongoDB/cryptographic cases, without mocking permission or verifier outcomes. The existing simulated ES256 authenticator signs the complete assertion, including the deliberately mismatched origin or RP hash. All eighteen passkey cases pass; final combined run/review evidence is recorded in the delivery PR. A separate test process replaced only the two ownership-scoped helpers with unscoped real database writes: both cases then failed specifically at expected404 versus actual200, demonstrating detection of the intended regression. No tracked production source was modified for that experiment. No production authentication policy or #887 changes.
+
+| Definition | Requirement / assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_elevated_passkey_mutations_are_owner_scoped` | An elevated foreign account gets404/error for both rename and delete; the entire target credential stays byte-for-value unchanged. The same elevated owner operation then succeeds with exact changed name or deleted document. | Registers a real credential; both clients pass actual password step-up, so missing elevation cannot mask missing ownership enforcement. Existing list isolation remains. Mutation of only the ownership predicates is checked separately; no production requests. | Keep; closes the earlier review's forged cross-user mutation gap. |
+| `test_signed_passkey_assertion_rejects_wrong_relying_party` | Wrong origin and wrong RP hash independently produce403 with the crypto-verification error, no user session or credential changes; attempted challenge is consumed. Fresh correct assertion with the same key/counter then authenticates the exact owner. | Two variants signed with the real private key; not invalid-signature/missing-challenge failures. Fresh valid control avoids an always-denying verifier passing the negative cases. Does not cover registration origin policy or every supported origin configuration. | Keep; verifies actual py-webauthn RP/origin boundaries. |
+| `test_passkey_login_challenge_cannot_cross_browser_sessions` | A valid assertion used from another browser session fails without consuming the original challenge or updating the credential. The originating client can still authenticate with that exact assertion. | Independent Flask clients, same signed body; asserts no foreign login session. No mocked challenge storage, time or authorization. Not a concurrent race test. | Keep; isolates browser-session binding from signature/counter validity. |
+| `test_consumed_passkey_assertion_cannot_authenticate_again` | First assertion succeeds as the exact owner; identical replay fails with challenge error, absent login identity and exact unchanged credential. | Zero counter intentionally permits counterless authenticators, so counter enforcement cannot hide missing single-use consumption. Removes only authenticated user ID from the signed test session while preserving challenge binding: a test-only isolation step, not proof of real logout cleanup (covered separately). Sequential replay, not atomic two-client concurrency. | Keep; proves used-challenge enforcement independently of session rotation and sign count. |
+
+Additional in-process mutations separately relaxed only expected origin/RP, challenge session binding or used-state filtering. All four corresponding cases failed specifically at expected403 versus actual200. These experiments retained real signatures and Mongo writes and left no tracked source changes. Normal combined passkey/step-up/fresh-deletion/account-access validation passed61 cases. Exact AST-to-checklist comparison has no missing/extra entries (1,166 definitions /159 files /261 checked). This is not a full-suite, all-authentication, production or browser/hardware acceptance claim.
 
 ## tests/test_privileged_user_actions.py
 

@@ -34,4 +34,4 @@ def install(root):
 if __name__ == "__main__":
     if socket.gethostname() != "mielenosoitukset-pentest":
         raise RuntimeError("Run on the sandbox only")
-    install(Path("/srv/mielenosoitukset-dr/app/static/dr-vendor"))
+    install(Path("/srv/mielenosoitukset-dr/app/mielenosoitukset_fi/static/dr-vendor"))

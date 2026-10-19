@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Demo merge now checks the complete primary snapshot before replacement, preserving concurrent cancellation or editor-access changes even when their timestamp did not change. Swedish rollback guidance now explicitly names the event's cancellation status.
+
 - Deletion keeps an exact recovery pre-image until history is acknowledged; merge failures retain confirmed progress instead of claiming completion after failed follow-up/history writes. Unresolved recovery remains explicit rather than silently losing deleted content.
 
 - Conflicting demo deletions no longer record false success. Merge operations persist recovery backups before destructive writes and compensate failed source removal where safe, preserving newer concurrent edits and explicitly retaining unresolved recovery state.

@@ -13691,7 +13691,7 @@ msgstr "Det gick inte att beskära bilden. Försök igen eller välj en annan bi
 
 #: mielenosoitukset_fi/templates/admin/demonstrations/demo_diff.html
 msgid "Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan."
-msgstr "Endast evenemangsinnehåll som sparats i versionen återställs. Godkännande, inställning, synlighet, stad, arrangörer och behörigheter förblir oförändrade. Den genomförda ändringen sparas i historiken."
+msgstr "Endast evenemangsinnehåll som sparats i versionen återställs. Godkännande, status som inställt, synlighet, stad, arrangörer och behörigheter förblir oförändrade. Den genomförda ändringen sparas i historiken."
 
 # User account status and change history
 msgid "Muutoshistoria"

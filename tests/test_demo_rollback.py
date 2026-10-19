@@ -374,20 +374,26 @@ def test_merge_followup_failure_retains_confirmed_removed_source_phase(
     assert db.demonstrations.find_one({"_id": selected[1]}) is None
 
 
+@pytest.mark.parametrize("concurrent_change", [
+    {"last_modified": "newer", "title": "Newer source"},
+    {"cancelled": True},
+    {"editors": ["concurrently-authorized-editor"]},
+])
 def test_primary_merge_conflict_survives_backup_status_failure(
-    admin_client, db, seeded_data, monkeypatch
+    admin_client, db, seeded_data, monkeypatch, concurrent_change
 ):
     from datetime import datetime
 
     selected = [seeded_data["demo_id"], seeded_data["pending_demo_id"]]
+    change = deepcopy(concurrent_change)
+    if "last_modified" in change:
+        change["last_modified"] = datetime(2099, 1, 1)
     collection_type = type(db.demonstrations)
     original_replace, original_update = collection_type.replace_one, collection_type.update_one
 
     def interleave(collection, query, *args, **kwargs):
         if collection.name == "demonstrations":
-            original_update(collection, {"_id": selected[0]}, {"$set": {
-                "last_modified": datetime(2099, 1, 1), "title": "Newer source",
-            }})
+            original_update(collection, {"_id": selected[0]}, {"$set": change})
         return original_replace(collection, query, *args, **kwargs)
 
     def fail_status(collection, *args, **kwargs):
@@ -401,7 +407,8 @@ def test_primary_merge_conflict_survives_backup_status_failure(
         "demo_ids": [str(oid) for oid in selected], "primary_demo_id": str(selected[0]),
     })
     assert response.status_code == 409
-    assert db.demonstrations.find_one({"_id": selected[0]})["title"] == "Newer source"
+    actual = db.demonstrations.find_one({"_id": selected[0]})
+    assert all(actual[key] == value for key, value in change.items())
     assert db.demonstrations.find_one({"_id": selected[1]}) is not None
     assert db.demo_merge_backups.find_one({})["phase"] == "operation_pending"
 
@@ -711,3 +718,5 @@ def test_rollback_explanation_uses_compiled_locale(app, admin_client, seeded_dat
     response = admin_client.get(f"/admin/demo/view_demo_diff/{seeded_data['history_id']}")
     assert response.status_code == 200
     assert expected in response.get_data(as_text=True)
+    if locale == "sv":
+        assert "Godkännande, status som inställt, synlighet" in response.get_data(as_text=True)

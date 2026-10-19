@@ -2807,7 +2807,7 @@ def merge_demos():
     try:
         merged = mongo.demonstrations.replace_one({
             "_id": primary_doc["_id"], PENDING_ROLLBACK_HISTORY: {"$exists": False},
-            "last_modified": primary_doc.get("last_modified"),
+            "$expr": {"$eq": ["$$ROOT", {"$literal": original_primary}]},
         }, merged_doc)
     except Exception:
         recover_merge("primary_error", 503)

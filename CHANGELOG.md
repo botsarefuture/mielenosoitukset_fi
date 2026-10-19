@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Roadmap now specifies multi-day demonstration support and completion of city-admin notifications/review countdowns, including the existing configurable 24-hour default, escalation, accessibility and focused acceptance tests. These are planned, not shipped features.
+
 - Passkey security regression coverage now verifies elevated cross-user rename/delete rejection, signed origin/RP mismatches, browser-session binding and single-use counterless assertions; authentication policy is unchanged.
 
 - User changes now persist a bounded, credential-free history event atomically with each profile, status or city-grant write; idempotent audit delivery retries preserve original attribution. Stale writes fail safely, and deletion cannot discard pending history or bypass fresh reauthentication. JSON deletion failures retain their status/message envelope with localized retry and reauthentication guidance.

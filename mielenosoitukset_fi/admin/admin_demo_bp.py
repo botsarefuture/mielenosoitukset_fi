@@ -1165,6 +1165,7 @@ def rollback_demo(history_id):
     # visibility/cancellation and approval require their own validated workflows.
     content_fields = {
         "title", "description", "date", "start_time", "end_time", "address",
+        "latitude", "longitude", "img", "cover_source", "event_type",
         "route", "type", "tags", "facebook", "cover_picture", "preview_image",
         "gallery_images", "translations", "default_language",
     }

@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/demo-rollback-preservation`, based on merged main `6ef40610`, 2026-10-18: 158 Python test files; 1,151 definitions; 243 assessed definitions. Independent open #941 adds its own user-history definitions/reviews and must be reconciled at integration, not overwritten. These are branch-tree counts, not counts for the main baseline. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/demo-rollback-preservation`, based on merged main `6ef40610`, review follow-up 2026-10-19: 158 Python test files; 1,153 definitions; 245 assessed definitions. Newer merged #941/#943 and pending #944/#945 inventory records must be reconciled before integration, not overwritten. This is a local branch checkpoint, not current-main state or completed review/release acceptance. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -700,6 +700,15 @@ SEC-04b / QA-01 supporting review, 2026-10-16, Codex, P1; only `test_explicit_ob
 - [x] `test_rollback_keeps_concurrent_unrelated_metadata`
 - [x] `test_rollback_requires_edit_permission_and_csrf`
 - [x] `test_rollback_explanation_uses_compiled_locale`
+- [x] `test_rollback_restores_canonical_location_and_media_content`
+- [x] `test_rollback_guards_canonical_location_and_media_changes`
+
+Review follow-up, 2026-10-19: both new definitions add five cases each for latitude, longitude, img, cover_source and canonical event_type. All ten fail against the previous942 head at the intended missing-restore or missing409 assertions, then pass after including those fields in the shared update/guard set. Combined rollback/moderation/decision run:42 passed. The existing CSRF test now extracts the actual target form token with stdlib HTMLParser instead of undeclared bs4; real negative/positive authorization and persistence assertions are retained. Source, test and inventory changes remain local until the outstanding history-durability finding and current-main integration are complete; no merge/release claim.
+
+| Definition | Requirement and assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_rollback_restores_canonical_location_and_media_content` | Field-only historical restore changes the exact canonical value, preserves every other field except timestamp, records exact before/after, and supports undo back to the value before restore. | Five fields, sparse history and actual HTTP/MongoDB. No constructor/rendering or media/network mocks; test values are stored fixture data, not remote downloads. Does not prove history-write durability (still open). | Keep; all five reproduced the omitted-field regression. |
+| `test_rollback_guards_canonical_location_and_media_changes` | A concurrently added canonical field causes409, leaves precisely the competing write and creates no success history. | Five initially absent fields; a wrapper inserts a real write just before the real conditional Mongo update. No timing sleeps or fabricated write results. Covers missing→present guard boundaries, not every transition or grant revocation. | Keep; all five reproduced the missing guard. |
 
 SEC-04c / QA-01, P1, Codex, 2026-10-18. Real Flask requests and disposable MongoDB; no authorization/write-result mocks. Sixteen parameter-expanded cases. Focused run/PR evidence is recorded in the delivery PR. Existing fixture isolates external mail/network side effects; this is not production verification or transactional audit durability.
 

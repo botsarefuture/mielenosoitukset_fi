@@ -74,6 +74,8 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 
 ### Security and permissions
 
+- **SEC-04c review follow-up · P1 · In progress · Codex · M1/M6 · #942:** Canonical latitude/longitude/img/cover_source/event_type now participate in content restore and concurrency guard in a local checkpoint. Ten real regressions fail before and pass after;42 rollback/moderation/decision cases pass. CSRF test no longer requires undeclared bs4. History-write failure recovery remains a current unresolved P2 review finding, not accepted final behavior. Before pushing/merging, finish that correction and integrate then-current main while retaining newer user-history/passkey/roadmap test records. Local tree:1,153 definitions /158 files /245 assessed; not current-main totals or merge/release evidence.
+
 - **QA-01a · P1 · In review · Codex · M1/M6 · codex/step-up-test-review:** Individually assess all eleven step-up test definitions; repair vacuous original-session logout coverage and strengthen configured time boundaries, actor/session isolation, invalid credential rejection and stored password outcomes. Acceptance: focused step-up and fresh-deletion regressions pass (30 cases), mutation confirms logout cleanup regression detection, fixture/mock limits and remaining cases recorded. No production authentication or #887 policy changes.
 
 - [ ] **SEC-01 · P1:** #901 MFA challenge implementation is merged; preserve the shared legacy/no-JS behavior and obtain required release acceptance evidence.

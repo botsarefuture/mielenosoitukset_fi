@@ -1,6 +1,7 @@
 """Content rollback must not replay authority or moderation from history."""
 
 from copy import deepcopy
+from html.parser import HTMLParser
 
 import pytest
 from bson import ObjectId
@@ -81,6 +82,62 @@ def test_rollback_sparse_history_and_undo_use_actual_content(admin_client, db, s
     entry = db.demo_edit_history.find_one({"rollbacked_from": history_id})
     assert _rollback(admin_client, entry['_id']).status_code == 302
     assert db.demonstrations.find_one({"_id": demo_id})["title"] == before["title"]
+
+
+@pytest.mark.parametrize("field,old_value,new_value", [
+    ("latitude", "60.1699", "61.4978"),
+    ("longitude", "24.9384", "23.7610"),
+    ("img", "old-image.png", "new-image.png"),
+    ("cover_source", "user", "automatic"),
+    ("event_type", "MARCH", "STAY_STILL"),
+])
+def test_rollback_restores_canonical_location_and_media_content(
+    admin_client, db, seeded_data, field, old_value, new_value
+):
+    demo_id = seeded_data["demo_id"]
+    db.demonstrations.update_one({"_id": demo_id}, {"$set": {field: new_value}})
+    before = db.demonstrations.find_one({"_id": demo_id})
+    history_id = db.demo_edit_history.insert_one({
+        "demo_id": str(demo_id), "old_demo": {field: old_value},
+    }).inserted_id
+    assert _rollback(admin_client, history_id).status_code == 302
+    after = db.demonstrations.find_one({"_id": demo_id})
+    assert after[field] == old_value
+    assert {key: value for key, value in after.items() if key not in {field, "last_modified"}} == {
+        key: value for key, value in before.items() if key not in {field, "last_modified"}
+    }
+    entry = db.demo_edit_history.find_one({"rollbacked_from": history_id})
+    assert entry["old_demo"] == before
+    assert entry["new_demo"] == after
+    assert _rollback(admin_client, entry["_id"]).status_code == 302
+    assert db.demonstrations.find_one({"_id": demo_id})[field] == new_value
+
+
+@pytest.mark.parametrize("field,value", [
+    ("latitude", "61.4978"), ("longitude", "23.7610"),
+    ("img", "concurrent.png"), ("cover_source", "automatic"), ("event_type", "MARCH"),
+])
+def test_rollback_guards_canonical_location_and_media_changes(
+    admin_client, db, seeded_data, monkeypatch, field, value
+):
+    demo_id = seeded_data["demo_id"]
+    db.demonstrations.update_one({"_id": demo_id}, {"$unset": {field: ""}})
+    before = db.demonstrations.find_one({"_id": demo_id})
+    history_id = db.demo_edit_history.insert_one({
+        "demo_id": str(demo_id), "old_demo": {"title": "Must not cross content versions"},
+    }).inserted_id
+    collection_type = type(db.demonstrations)
+    original = collection_type.find_one_and_update
+
+    def interleave(collection, query, *args, **kwargs):
+        if collection.name == "demonstrations" and query.get("_id") == demo_id:
+            collection.update_one({"_id": demo_id}, {"$set": {field: value}})
+        return original(collection, query, *args, **kwargs)
+
+    monkeypatch.setattr(collection_type, "find_one_and_update", interleave)
+    assert _rollback(admin_client, history_id).status_code == 409
+    assert db.demonstrations.find_one({"_id": demo_id}) == {**before, field: value}
+    assert db.demo_edit_history.count_documents({"rollbacked_from": history_id}) == 0
 
 
 @pytest.mark.parametrize("foreign", [False, True])
@@ -181,10 +238,25 @@ def test_rollback_requires_edit_permission_and_csrf(app, admin_client, user_clie
             "csrf_token": invalid_token,
         }).status_code == 400
     page = admin_client.get(f"/admin/demo/view_demo_diff/{history_id}").get_data(as_text=True)
-    from bs4 import BeautifulSoup
+    class RollbackForm(HTMLParser):
+        in_form = False
+        token = None
 
-    form = BeautifulSoup(page, "html.parser").select_one("#rollbackModal form")
-    token = form.select_one('input[name="csrf_token"]')["value"]
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if tag == "form":
+                self.in_form = attrs.get("action") == f"/admin/demo/rollback_demo/{history_id}"
+            elif self.in_form and tag == "input" and attrs.get("name") == "csrf_token":
+                self.token = attrs.get("value")
+
+        def handle_endtag(self, tag):
+            if tag == "form":
+                self.in_form = False
+
+    form = RollbackForm()
+    form.feed(page)
+    token = form.token
+    assert token
     assert db.demonstrations.find_one({"_id": seeded_data["demo_id"]}) == before
     assert admin_client.post(f"/admin/demo/rollback_demo/{history_id}", data={"csrf_token": token}).status_code == 302
 

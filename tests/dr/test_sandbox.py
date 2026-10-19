@@ -239,3 +239,25 @@ def test_public_pentest_keeps_indexing_and_file_exposure_guards():
     assert 'Disallow: /' in config
     assert 'location ~ /\\. { deny all; }' in config
     assert 'limit_except GET HEAD { deny all; }' in config
+
+
+def test_admin_dependencies_stay_local_without_weakening_csp():
+    urls = load("copy_urls")
+    installer = load("vendor_assets")
+    for name, (url, digest) in installer.ASSETS.items():
+        rendered = urls.rewrite('<script src="' + url + '"></script>')
+        assert url not in rendered
+        assert '/static/dr-vendor/' + name in rendered
+        assert len(digest) == 64
+    policy = (ROOT / "scripts/dr/nginx-app.conf").read_text()
+    assert "script-src 'self' 'unsafe-inline';" in policy
+
+
+def test_vendor_installer_rejects_corruption_before_replacing_asset(tmp_path, monkeypatch):
+    import io
+    module = load("vendor_assets")
+    module.ASSETS = {"asset.js": ("https://example.invalid/asset.js", "0" * 64)}
+    monkeypatch.setattr(module, "urlopen", lambda *args, **kwargs: io.BytesIO(b"wrong"))
+    with pytest.raises(ValueError, match="checksum mismatch"):
+        module.install(tmp_path)
+    assert not (tmp_path / "asset.js").exists()

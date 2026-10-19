@@ -173,3 +173,11 @@ The deployed application templates compiled successfully. The wider application
 test run on the operator’s Python 3.14 reached 68% with five failures, then hung
 and was stopped; the full suite is not green and those failures were not
 attributed to a baseline. Production uses a different runtime.
+
+## Admin browser dependencies
+
+The recovered admin page referenced CDN-hosted Bootstrap 5.3.3 and jQuery 3.7.0.
+The sandbox CSP correctly blocked them, leaving modal buttons inert. Run
+`vendor_assets.py` to install the pinned, SHA-256 checked files locally; the
+response adapter redirects these exact script URLs to the local static handler.
+The CSP remains self-only. This changes the sandbox adapter, not production.

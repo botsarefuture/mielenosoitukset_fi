@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Fixed the pentest create-user dialog by serving pinned Bootstrap and jQuery locally under the existing browser isolation policy.
+
 - Made the pentest frontend publicly accessible at the owner’s request while preserving application login, admin permissions, noindex and integration isolation.
 
 - Added an isolated pentest/DR recovery toolkit with an offline app-and-MongoDB bundle rehearsal, captured SMTP delivery, local MinIO storage, and a read-only static fallback. The runbook distinguishes measured prepared-host recovery from unproven full-VM and bare-host recovery.

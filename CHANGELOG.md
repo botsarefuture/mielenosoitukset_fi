@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Passkey challenge regression tests now isolate exact expiry, purpose binding and simultaneous single-use consumption with real signed assertions and database writes; authentication policy is unchanged.
+
 - Passkey security regression coverage now verifies elevated cross-user rename/delete rejection, signed origin/RP mismatches, browser-session binding and single-use counterless assertions; authentication policy is unchanged.
 
 - User changes now persist a bounded, credential-free history event atomically with each profile, status or city-grant write; idempotent audit delivery retries preserve original attribution. Stale writes fail safely, and deletion cannot discard pending history or bypass fresh reauthentication. JSON deletion failures retain their status/message envelope with localized retry and reauthentication guidance.

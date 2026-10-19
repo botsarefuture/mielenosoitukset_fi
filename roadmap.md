@@ -8,7 +8,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** QA-01f — close verified passkey test gaps for elevated cross-user mutations, signed wrong-origin/RP assertions and challenge replay/session binding, without changing authentication policy. Independent content-rollback #942 is open; do not duplicate or merge it under #941's authorization.
+- **Next:** QA-01g — validate passkey exact expiry, independent purpose binding and simultaneous counterless challenge consumption; QA-01f is delivered in open #943. Independent content-rollback #942 and owner-requested multi-day/city/Telegram roadmap additions in #944 remain open; do not duplicate them or discard either sibling branch's tracker changes during integration. None has new merge/deploy authorization.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Verified release checkpoint:** #941 merged as `e6383141`; final required CI passed 1,370 tests with 325 skips. Public HTTPS and direct Gunicorn health probes both verify that exact running build; pre-existing tracked server overlays are byte-preserved. Automatic deploy run39149112591 remains failed because its public probe hit Cloudflare403; independent runtime verification is not a green-workflow claim. Authenticated production visual acceptance is not claimed.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
@@ -73,6 +73,8 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 ## Workstreams and remaining backlog
 
 ### Security and permissions
+
+- **QA-01g · P1 · In review · Codex · M1/M6 · codex/passkey-challenge-lifecycle · depends on #943:** Three individually reviewed definitions /ten cases verify server expiry at299/300/301 seconds, purpose binding independently of user/session binding, and two real concurrent counterless assertions against the same challenge. All71 combined cases pass; targeted predicate mutations cause nine intended failures while retaining the valid299s control. Authentication/#887 policy unchanged; clock and synchronization wrappers delegate actual crypto verification and Mongo writes. Inventory exact; no hardware, replica-set or distinct-challenge counter-concurrency claim.
 
 - **QA-01f · P1 · In review · Codex · M1/M6 · codex/passkey-boundary-test-review:** Four individually reviewed definitions add six cases for forged elevated cross-user rename/delete, signed origin/RP mismatch and consumed assertion/session binding. Actual crypto verification and disposable MongoDB, positive controls and exact credential/session assertions; all61 combined focused cases pass. Six targeted in-process boundary mutations each produce the intended HTTP200-versus-denial failure. Authentication policy and #887 are unchanged. Broader physical-device/browser acceptance and concurrent counter updates remain separate; this batch does not close QA-01.
 
@@ -143,7 +145,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Branch **`codex/passkey-boundary-test-review`**, based on merged main `e6383141`, has **1,166 definitions across 159 files**, with **261 assessed definitions**. Independent #942 is excluded until integration; retain both sets of reviews. These are tracked-Python AST branch counts, not collected cases, completed suite review or release evidence. Older per-branch counts remain historical. The two test-named fixtures are excluded and assessed separately. Audit fixtures, CI, standalone scripts and browser harnesses too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Branch **`codex/passkey-challenge-lifecycle`**, stacked on #943 / main `e6383141`, has **1,169 definitions across 160 files**, with **264 assessed definitions**. Independent #942 is excluded until integration; retain both sets of reviews. These are tracked-Python AST branch counts, not collected cases, completed suite review or release evidence. Older per-branch counts remain historical. The two test-named fixtures are excluded and assessed separately. Audit fixtures, CI, standalone scripts and browser harnesses too.
 
 For each test, record:
 

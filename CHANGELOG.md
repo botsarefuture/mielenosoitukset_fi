@@ -4,7 +4,7 @@
 
 ## UNRELEASED
 
-- Roadmap now specifies multi-day demonstration support and completion of city-admin notifications/review countdowns, including the existing configurable 24-hour default, escalation, accessibility and focused acceptance tests. These are planned, not shipped features.
+- Roadmap now specifies multi-day demonstration support, city-admin notifications/review countdowns and urgent Telegram alerts that update after processing, including explicit timing, escalation, privacy and acceptance tests. These are planned, not shipped features.
 
 - Passkey security regression coverage now verifies elevated cross-user rename/delete rejection, signed origin/RP mismatches, browser-session binding and single-use counterless assertions; authentication policy is unchanged.
 

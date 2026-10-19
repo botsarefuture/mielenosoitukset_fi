@@ -2,11 +2,17 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Integration of `codex/demo-rollback-preservation` with main `3c8665ab`, 2026-10-19: 161 Python test files; 1,194 definitions; 289 assessed definitions. All merged #941/#943/#944/#945 reviews and twenty-five #942 definitions are retained. These are local integration-tree counts, not completed review/release acceptance; #942 is not yet merged. Older per-branch/run counts below are historical evidence only.
+Integration of `codex/demo-rollback-preservation` with main `63c85eae` (#947 included), 2026-10-19: 162 Python test files; 1,195 definitions; 290 assessed definitions. All merged reviews and twenty-five #942 definitions are retained; independent #946 is not yet included. These are integration-tree counts, not completed review/release acceptance; #942 is not yet merged. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
 Use the roadmap's P0–P3 policy and status vocabulary. Initial review status for every entry is Backlog; assign an owner and justified priority when triaging it. A discovered security/core-workflow defect can escalate immediately, regardless of its review batch.
+
+## tests/test_profile_image_fallback.py
+
+- [x] `test_profile_image_failure_uses_fallback_once`
+
+DATA-05 · P1 · #581 · Codex · 2026-10-19. One definition /two browser cases. Actual public profile GET renders the main avatar and both follower-list macro instances from real seeded Mongo data. Chromium executes those handlers; controlled HTTP404 image responses exercise original failure, with successful or failed fallback. Assertions cover all three images, handler removal, completed fallback and decoded success/failure, and bounded source/fallback requests (coalescing permitted). Both cases failed before the fix; all9 combined fallback/profile-editor cases pass afterward. Local five-file review completed with one Major test-fixture finding: scrolling a closed-modal avatar may fail when modal CSS loads. Removed scrolling and use eager loading independently of visibility. App template/DOM/handlers are real, external image delivery is simulated; no production Cloudflare, network recovery/backoff, visual design or general image-surface acceptance claim. Keep; targets the current confirmed loop without retry-framework expansion.
 
 ## Supporting audit — tests/conftest.py
 

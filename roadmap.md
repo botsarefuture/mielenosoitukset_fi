@@ -1,6 +1,6 @@
 # Repository roadmap
 
-Last reconciled: 2026-10-19. Verified merge baseline: `main` at `3c8665ab`; PRs #929–#941 and #943–#945 are merged. #942 remains under local review/main integration; merge and production evidence are recorded separately.
+Last reconciled: 2026-10-19. Verified merge baseline: `main` at `63c85eae`; PRs #929–#941, #943–#945 and #947 are merged. #941's production evidence remains separately recorded below. Open #942/#946 are not part of this baseline.
 
 This is the delivery plan for the **whole repository**: security, public and admin workflows, backend correctness, operations, privacy, localization, tests, and maintenance. Issue [#833](https://github.com/botsarefuture/mielenosoitukset_fi/issues/833) is one workstream within it. Existing issue trackers retain their detailed acceptance criteria; this document sets the order and dependencies.
 
@@ -8,7 +8,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** #942 canonical-content/history corrections and main integration are pushed; GitHub CI passed on 478cf7c1, and its completed review identified five Minor findings now being corrected before renewed checks/merge. Earlier #944/#945 integration GitHub CI passed 1,386 tests /325 skipped; that is not #942's local test count or new production evidence. #946 handles passkey counter ordering and #947 fixes the functional profile-avatar request loop independently. Continue functional/user-visible roadmap work before speculative edge cases; preserve existing security safeguards and do not repeat merged #943–#945.
+- **Next:** #947's profile-avatar loop fix is merged as63c85eae after current-head CI. Finish authorized #942/#946 merges after final integrated checks; #942's five Minor findings are corrected. Earlier #942 GitHub CI passed1,438 /325 skipped; that is not new-head or production evidence. Continue functional/user-visible roadmap work before speculative edge cases; preserve security safeguards and do not repeat merged #943–#945/#947.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Verified release checkpoint:** #941 merged as `e6383141`; final required CI passed 1,370 tests with 325 skips. Public HTTPS and direct Gunicorn health probes both verify that exact running build; pre-existing tracked server overlays are byte-preserved. Automatic deploy run39149112591 remains failed because its public probe hit Cloudflare403; independent runtime verification is not a green-workflow claim. Authenticated production visual acceptance is not claimed.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
@@ -27,6 +27,8 @@ P0–P3 are common engineering conventions. The definitions below are this repos
 | **P3 — Low** | Optional enhancement or low-risk cleanup without immediate user harm. | Pull when higher-priority dependencies are clear. | Verified orphan assets, optional new product features. |
 
 Priorities below are planning assignments. Revalidate reported defects before implementation; promote a confirmed urgent defect to P0 and record the evidence. SEC-03 confirmed P0 code defects in case reads (#917), cross-organization authorization (merged #918) and direct user-role saving (#919). Neither live exploitation nor fresh production verification is claimed.
+
+Owner direction, 2026-10-19: prioritize ordinary functional workflows and concrete user-visible failures before speculative/hard-to-reach edge cases. Preserve critical security safeguards and focused regressions; defer broader concurrency/crash matrices until the core workflow works. Do not expand a narrow fix into an unnecessary framework or an unbounded review loop.
 
 ## Status and ownership
 
@@ -119,6 +121,7 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 - [ ] **DATA-03 · P2:** Review analytics accuracy/access/pagination (#551), large admin overview queries, and demonstration slow-query evidence from TODO.md. Establish measurement before index changes.
 - [ ] **DATA-04 · P1:** Verify email queue retries/idempotency, outgoing case reply history (#771), background job leadership and external service failure handling (#176). Define redacted audit metadata separately from user message retention.
 - [ ] **DATA-05 · P1:** Investigate image failure/retry/rate-limit reports (#579/#580/#581) and Socket.IO reconnect behavior (#640). Bound retries and prove failure recovery without request storms.
+  - **DATA-05a · P1 · In progress · Codex · #581 / codex/profile-image-fallback:** Active profile and follower-list image handlers reassign the same CDN fallback on every error. Disable the handler before the one fallback attempt; no retry framework or backoff needed for this permanent-failure path. One individually assessed real-render/Chromium definition covers fallback success and failure across all three avatar instances. Broader preview/Cloudflare/Socket.IO diagnosis remains separate; no production rate-limit claim.
 - [ ] **DATA-06 · P2:** Reconcile module TODO issues (#391/#392/#393/#394), user settings/configuration requests (#196/#226), invitation user creation (#387), and other open backend PRs. Inspect their current diff and dependencies before scheduling implementation.
 
 ### Product and shared UI
@@ -168,7 +171,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. The **#942 integration with main `3c8665ab`** has **1,194 definitions across 161 files**, with **289 assessed definitions**. All merged user-history/passkey reviews and twenty-five rollback definitions are retained. These are tracked-Python AST integration-tree counts, not collected cases, completed suite review or release evidence; #942 remains unmerged. Older per-branch counts remain historical. The two test-named fixtures are excluded and assessed separately. Audit fixtures, CI, standalone scripts and browser harnesses too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. The **#942 integration with main `63c85eae`** has **1,195 definitions across 162 files**, with **290 assessed definitions**. Merged #947 and all twenty-five rollback reviews are retained; independent #946 is not yet included. These are tracked-Python AST integration-tree counts, not collected cases, completed suite review or release evidence; #942 remains unmerged. Older per-branch counts remain historical. The two test-named fixtures are excluded and assessed separately. Audit fixtures, CI, standalone scripts and browser harnesses too.
 
 For each test, record:
 

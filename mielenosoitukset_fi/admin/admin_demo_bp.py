@@ -81,6 +81,9 @@ from mielenosoitukset_fi.demonstrations.audit import (
     log_super_audit,
 )
 from mielenosoitukset_fi.demonstrations.decisions import apply_demo_decision
+from mielenosoitukset_fi.demonstrations.rollback import (
+    PENDING_ROLLBACK_HISTORY, commit_rollback, flush_rollback_history,
+)
 from .pagination import build_admin_pagination, parse_admin_pagination
 
 
@@ -712,6 +715,8 @@ def demo_edit_history(demo_id):
         return redirect(url_for("admin_demo.demo_control"))
     _abort_if_demo_forbidden(demo_data["_id"], "EDIT_DEMO")
 
+    if not flush_rollback_history(mongo, demo_data["_id"]):
+        abort(503)
     history_query = {"demo_id": str(demo_data["_id"])}
     page, per_page = parse_admin_pagination(request.args)
     total_count = mongo.demo_edit_history.count_documents(history_query)
@@ -1155,6 +1160,9 @@ def rollback_demo(history_id):
         expected.encode("utf-8"), provided.encode("utf-8")
     ):
         abort(400)
+    if not flush_rollback_history(mongo, demo_id):
+        abort(503)
+    current_demo.pop(PENDING_ROLLBACK_HISTORY, None)
     old_data = hist.get("old_demo")
     if not isinstance(old_data, dict) or not old_data:
         flash_message("Rollback epäonnistui: historia ei sisällä tietoja.", "error")
@@ -1190,24 +1198,18 @@ def rollback_demo(history_id):
     ]
     guard.extend({key: {"$exists": False}} for key in guarded_fields - current_demo.keys())
     changes["last_modified"] = utcnow()
-    previous = mongo.demonstrations.find_one_and_update(
-        {"_id": demo_id, "$and": guard}, {"$set": changes},
-        return_document=ReturnDocument.BEFORE,
-    )
-    if previous is None:
-        abort(409)
-    restored = {**previous, **changes}
-    # Record the actual persisted transition, not the unfiltered historical
-    # snapshot. Existing history storage is not transactional with the write.
-    mongo.demo_edit_history.insert_one({
+    metadata = {
         "demo_id": str(demo_id),
         "edited_by": str(getattr(current_user, "_id", "unknown")),
         "edited_at": utcnow(),
-        "old_demo": previous,
-        "new_demo": restored,
         "diff": None,
         "rollbacked_from": history_oid,
-    })
+    }
+    previous = commit_rollback(mongo, {"_id": demo_id, "$and": guard}, changes, metadata)
+    if previous is None:
+        abort(409)
+    if not flush_rollback_history(mongo, demo_id):
+        abort(503)
 
     flash_message("Mielenosoitus palautettu valittuun versioon.", "success")
     return redirect(url_for("admin_demo.demo_edit_history", demo_id=demo_id))
@@ -2721,6 +2723,12 @@ def merge_demos():
         flash_message(_("Valitse ainakin yksi yhdistettävä mielenosoitus."), "error")
         return redirect(url_for("admin_demo.demo_control"))
 
+    for document in docs:
+        _abort_if_demo_forbidden(document["_id"], "EDIT_DEMO")
+        if not flush_rollback_history(mongo, document["_id"]):
+            abort(503)
+        document.pop(PENDING_ROLLBACK_HISTORY, None)
+
     primary_doc = doc_map[primary_id]
     merged_doc = deepcopy(primary_doc)
     original_primary = deepcopy(primary_doc)
@@ -2741,10 +2749,20 @@ def merge_demos():
     merged_doc["merged_into"] = None
     merged_doc["last_modified"] = utcnow()
 
-    mongo.demonstrations.replace_one({"_id": primary_doc["_id"]}, merged_doc)
+    merged = mongo.demonstrations.replace_one({
+        "_id": primary_doc["_id"], PENDING_ROLLBACK_HISTORY: {"$exists": False},
+        "last_modified": primary_doc.get("last_modified"),
+    }, merged_doc)
+    if not merged.matched_count:
+        abort(409)
 
     if secondary_ids:
-        mongo.demonstrations.delete_many({"_id": {"$in": [ObjectId(d) for d in secondary_ids]}})
+        deleted = mongo.demonstrations.delete_many({
+            "_id": {"$in": [ObjectId(d) for d in secondary_ids]},
+            PENDING_ROLLBACK_HISTORY: {"$exists": False},
+        })
+        if deleted.deleted_count != len(secondary_ids):
+            abort(409)
 
     backup_payload = {
         "primary_demo_id": primary_id,
@@ -4579,6 +4597,10 @@ def delete_demo():
             return redirect(url_for("admin_demo.demo_control"))
     _abort_if_demo_forbidden(demo_data["_id"], "DELETE_DEMO")
 
+    if not flush_rollback_history(mongo, demo_data["_id"]):
+        abort(503)
+    demo_data.pop(PENDING_ROLLBACK_HISTORY, None)
+
     record_demo_change(
         demo_id,
         demo_data,
@@ -4588,7 +4610,11 @@ def delete_demo():
     )
 
     # Perform deletion
-    mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
+    deleted = mongo.demonstrations.delete_one({
+        "_id": ObjectId(demo_id), PENDING_ROLLBACK_HISTORY: {"$exists": False},
+    })
+    if not deleted.deleted_count:
+        abort(409)
 
     success_message = "Mielenosoitus poistettu onnistuneesti."
     if json_mode:

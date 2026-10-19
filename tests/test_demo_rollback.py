@@ -19,6 +19,169 @@ def _rollback(client, history_id):
     })
 
 
+def _history_outage(monkeypatch, db, stage):
+    control = {"active": True}
+    collection_type = type(db.demo_edit_history)
+    original_update = collection_type.update_one
+    original_insert = collection_type.insert_one
+
+    def update(collection, query, changes, *args, **kwargs):
+        if control["active"]:
+            if stage == "projection" and collection.name == "demo_edit_history" and kwargs.get("upsert"):
+                raise RuntimeError("synthetic history outage")
+            if stage == "cleanup" and collection.name == "demonstrations" and "_pending_rollback_history" in changes.get("$unset", {}):
+                raise RuntimeError("synthetic cleanup outage")
+        return original_update(collection, query, changes, *args, **kwargs)
+
+    def insert(collection, *args, **kwargs):
+        if control["active"] and stage == "projection" and collection.name == "demo_edit_history":
+            raise RuntimeError("synthetic history outage")
+        return original_insert(collection, *args, **kwargs)
+
+    monkeypatch.setattr(collection_type, "update_one", update)
+    monkeypatch.setattr(collection_type, "insert_one", insert)
+    return control
+
+
+@pytest.mark.parametrize("stage", ["projection", "cleanup"])
+def test_rollback_history_failure_retains_exact_event_and_retry_is_idempotent(
+    admin_client, db, seeded_data, monkeypatch, stage
+):
+    demo_id, history_id = seeded_data["demo_id"], seeded_data["history_id"]
+    db.demo_edit_history.update_one({"_id": history_id}, {"$set": {
+        "old_demo": {"title": "Durably restored title"},
+    }})
+    before = db.demonstrations.find_one({"_id": demo_id})
+    outage = _history_outage(monkeypatch, db, stage)
+    assert _rollback(admin_client, history_id).status_code == 503
+    committed = db.demonstrations.find_one({"_id": demo_id})
+    receipt = committed.pop("_pending_rollback_history")
+    assert committed["title"] == "Durably restored title"
+    assert receipt["old_demo"] == before
+    assert receipt["new_demo"] == committed
+    assert receipt["edited_by"] == str(seeded_data["admin_id"])
+    assert receipt["rollbacked_from"] == history_id
+    assert "_pending_rollback_history" not in receipt["old_demo"]
+    assert "_pending_rollback_history" not in receipt["new_demo"]
+    assert _rollback(admin_client, history_id).status_code == 503
+    assert db.demonstrations.find_one({"_id": demo_id})["_pending_rollback_history"] == receipt
+    outage["active"] = False
+    for _ in range(2):
+        assert _rollback(admin_client, history_id).status_code == 302
+    assert db.demonstrations.find_one({"_id": demo_id}) == committed
+    assert db.demo_edit_history.find_one({"_id": receipt["_id"]}) == receipt
+    assert db.demo_edit_history.count_documents({"rollbacked_from": history_id}) == 1
+
+
+def test_authorized_history_read_recovers_pending_rollback_only_after_scope_check(
+    admin_client, user_client, db, seeded_data, monkeypatch
+):
+    demo_id, history_id = seeded_data["demo_id"], seeded_data["history_id"]
+    db.demo_edit_history.update_one({"_id": history_id}, {"$set": {
+        "old_demo": {"title": "Read-recovered rollback"},
+    }})
+    outage = _history_outage(monkeypatch, db, "projection")
+    assert _rollback(admin_client, history_id).status_code == 503
+    pending = db.demonstrations.find_one({"_id": demo_id})
+    outage["active"] = False
+    assert user_client.get(f"/admin/demo/edit_history/{demo_id}").status_code == 403
+    assert db.demonstrations.find_one({"_id": demo_id}) == pending
+    assert admin_client.get(f"/admin/demo/edit_history/{demo_id}").status_code == 200
+    assert "_pending_rollback_history" not in db.demonstrations.find_one({"_id": demo_id})
+    assert db.demo_edit_history.find_one({"_id": pending["_pending_rollback_history"]["_id"]}) == pending["_pending_rollback_history"]
+
+
+def test_rollback_pipeline_preserves_literal_dollar_prefixed_content(admin_client, db, seeded_data):
+    demo_id, history_id = seeded_data["demo_id"], seeded_data["history_id"]
+    content = {"title": "$title", "tags": ["$tag"], "translations": {"fi": {"title": "$translated"}}}
+    db.demo_edit_history.update_one({"_id": history_id}, {"$set": {"old_demo": content}})
+    assert _rollback(admin_client, history_id).status_code == 302
+    after = db.demonstrations.find_one({"_id": demo_id})
+    assert all(after[key] == value for key, value in content.items())
+    entry = db.demo_edit_history.find_one({"rollbacked_from": history_id})
+    assert entry["new_demo"] == after
+
+
+def test_demo_read_apis_do_not_expose_pending_rollback_receipts(
+    app_factory, admin_client, db, seeded_data
+):
+    from tests.test_admin_mcp import _mcp_client, _mcp_headers, _rpc
+
+    demo_id = seeded_data["demo_id"]
+    db.demonstrations.update_one({"_id": demo_id}, {"$set": {
+        "_pending_rollback_history": {"old_demo": {"title": "PRIVATE RECEIPT"}},
+    }})
+    response = admin_client.get(f"/api/admin/demonstrations/{demo_id}")
+    assert response.status_code == 200
+    assert response.get_json()["title"]
+    assert "_pending_rollback_history" not in response.get_json()
+    client, token, _ = _mcp_client(app_factory, seeded_data)
+    response = client.post("/api/admin/mcp", headers=_mcp_headers(token), json=_rpc(
+        "tools/call", {"name": "get_demo", "arguments": {"demo_id": str(demo_id)}}
+    ))
+    assert response.status_code == 200
+    payload = response.get_json()["result"]["structuredContent"]
+    assert payload["title"]
+    assert "_pending_rollback_history" not in payload
+    assert "PRIVATE RECEIPT" not in response.get_data(as_text=True)
+
+
+@pytest.mark.parametrize("action", ["delete", "merge-primary", "merge-secondary"])
+def test_destructive_admin_actions_cannot_drop_pending_rollback(
+    admin_client, db, seeded_data, monkeypatch, action
+):
+    demo_id, history_id = seeded_data["demo_id"], seeded_data["history_id"]
+    db.demo_edit_history.update_one({"_id": history_id}, {"$set": {
+        "old_demo": {"title": "Protected pending restore"},
+    }})
+    outage = _history_outage(monkeypatch, db, "projection")
+    assert _rollback(admin_client, history_id).status_code == 503
+    before = list(db.demonstrations.find({}).sort("_id", 1))
+    if action == "delete":
+        response = admin_client.post("/admin/demo/delete_demo", data={"demo_id": str(demo_id)})
+    else:
+        other_id = seeded_data["pending_demo_id"]
+        response = admin_client.post("/admin/demo/merge", data={
+            "demo_ids": [str(demo_id), str(other_id)],
+            "primary_demo_id": str(demo_id if action == "merge-primary" else other_id),
+        })
+    assert response.status_code == 503
+    assert list(db.demonstrations.find({}).sort("_id", 1)) == before
+    outage["active"] = False
+    from mielenosoitukset_fi.demonstrations.rollback import flush_rollback_history
+
+    assert flush_rollback_history(db, demo_id) is True
+    receipt = next(row for row in before if row["_id"] == demo_id)["_pending_rollback_history"]
+    assert db.demo_edit_history.find_one({"_id": receipt["_id"]}) == receipt
+
+
+def test_recurring_cleanup_retains_pending_rollback_until_delivery(
+    admin_client, db, seeded_data, monkeypatch
+):
+    from mielenosoitukset_fi.scripts import repeat_v2
+
+    demo_id, history_id = seeded_data["demo_id"], seeded_data["history_id"]
+    parent = {"_id": ObjectId()}
+    db.demonstrations.update_one({"_id": demo_id}, {"$set": {"parent": parent["_id"]}})
+    db.demo_edit_history.update_one({"_id": history_id}, {"$set": {
+        "old_demo": {"title": "Pending invalid recurring child"},
+    }})
+    outage = _history_outage(monkeypatch, db, "projection")
+    assert _rollback(admin_client, history_id).status_code == 503
+    before = db.demonstrations.find_one({"_id": demo_id})
+    monkeypatch.setattr(repeat_v2, "db", db)
+    monkeypatch.setattr(repeat_v2, "demonstrations_collection", db.demonstrations)
+    monkeypatch.setattr(repeat_v2, "DRY_RUN", False)
+    monkeypatch.setattr(repeat_v2, "runtime_actions", [])
+    repeat_v2.remove_invalid_child_demonstrations(parent, [], None)
+    assert db.demonstrations.find_one({"_id": demo_id}) == before
+    outage["active"] = False
+    repeat_v2.remove_invalid_child_demonstrations(parent, [], None)
+    assert db.demonstrations.find_one({"_id": demo_id}) is None
+    receipt = before["_pending_rollback_history"]
+    assert db.demo_edit_history.find_one({"_id": receipt["_id"]}) == receipt
+
+
 @pytest.mark.parametrize("decision", ["approve", "deny"])
 def test_rollback_preserves_current_decision_scope_and_metadata(
     admin_client, db, seeded_data, monkeypatch, decision

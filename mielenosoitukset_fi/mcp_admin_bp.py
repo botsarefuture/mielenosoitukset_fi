@@ -558,7 +558,9 @@ def _get_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict[st
     demo_id = arguments.get("demo_id")
     if not demo_id:
         raise ValueError("demo_id is required")
-    doc = _mongo().demonstrations.find_one({"_id": ObjectId(demo_id)})
+    doc = _mongo().demonstrations.find_one(
+        {"_id": ObjectId(demo_id)}, {"_pending_rollback_history": 0},
+    )
     if not doc:
         raise LookupError("Demonstration not found")
     return _serialize_result(doc)

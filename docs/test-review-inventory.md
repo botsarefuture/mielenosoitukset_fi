@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/demo-rollback-preservation`, based on merged main `6ef40610`, review follow-up 2026-10-19: 158 Python test files; 1,153 definitions; 245 assessed definitions. Newer merged #941/#943 and pending #944/#945 inventory records must be reconciled before integration, not overwritten. This is a local branch checkpoint, not current-main state or completed review/release acceptance. Older per-branch/run counts below are historical evidence only.
+Branch `codex/demo-rollback-preservation`, based on merged main `6ef40610`, review follow-up 2026-10-19: 158 Python test files; 1,159 definitions; 251 assessed definitions. Newer merged #941/#943/#944/#945 inventory records must be reconciled before integration, not overwritten. This is a local branch checkpoint, not current-main state or completed review/release acceptance. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -702,6 +702,23 @@ SEC-04b / QA-01 supporting review, 2026-10-16, Codex, P1; only `test_explicit_ob
 - [x] `test_rollback_explanation_uses_compiled_locale`
 - [x] `test_rollback_restores_canonical_location_and_media_content`
 - [x] `test_rollback_guards_canonical_location_and_media_changes`
+- [x] `test_rollback_history_failure_retains_exact_event_and_retry_is_idempotent`
+- [x] `test_authorized_history_read_recovers_pending_rollback_only_after_scope_check`
+- [x] `test_rollback_pipeline_preserves_literal_dollar_prefixed_content`
+- [x] `test_demo_read_apis_do_not_expose_pending_rollback_receipts`
+- [x] `test_destructive_admin_actions_cannot_drop_pending_rollback`
+- [x] `test_recurring_cleanup_retains_pending_rollback_until_delivery`
+
+Durability follow-up, 2026-10-19: six definitions /nine cases use actual source-document update pipelines and history upserts against standalone disposable MongoDB. Tests inject only projection/receipt-cleanup failures, not mutation success. Exact snapshots, actor, stable event ID and one canonical history row survive failure/retry; receipt payload is never nested inside its own snapshots. Existing concurrency and metadata-preservation cases continue to exercise real conditional writes. All69 combined rollback/merge-editor/moderation/decision/MCP/recurrence cases pass; no full-suite, production, deletion/merge cross-document atomicity, power-loss or full audit-retention claim. Requires MongoDB4.2+ update pipelines, not replica-set transactions. Main integration and completed local review are required before push/delivery.
+
+| Definition | Requirement and assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_rollback_history_failure_retains_exact_event_and_retry_is_idempotent` | History projection or source cleanup failure returns503 but retains exact original before/after/actor/event ID. Repeated failure cannot overwrite receipt; recovery and repeated no-op produce one history row and remove only delivered receipt. | Two real Mongo paths with targeted write-boundary exceptions. Covers ambiguous cleanup completion after history already persisted. Not a process-kill/storage durability test. | Keep. |
+| `test_authorized_history_read_recovers_pending_rollback_only_after_scope_check` | Unauthorized history request cannot deliver/clear pending data; authorized GET projects original event and clears receipt. | Real route permissions/session and standalone Mongo; recovery comes from actual read, not explicit helper mocking. Original actor retained. | Keep. |
+| `test_rollback_pipeline_preserves_literal_dollar_prefixed_content` | Dollar-prefixed title, tag and nested translated title persist as literal data; history equals actual result. | Real aggregation update, no Mongo evaluator mock; guards against treating content as pipeline expressions. Not a full BSON-size/type/legacy-document audit. | Keep. |
+| `test_demo_read_apis_do_not_expose_pending_rollback_receipts` | Raw admin demo API and MCP get_demo retain normal title but omit internal receipt and its private fixture text. | Actual authenticated/scoped transports; existing public listing uses an allowlisted projection and detail serializer. No policy change or all-future-sink assertion. | Keep. |
+| `test_destructive_admin_actions_cannot_drop_pending_rollback` | Delete and primary/secondary merge attempts fail503 with all demo documents unchanged while delivery fails; successful later flush yields exact original event. | Three actual admin POSTs. Does not claim concurrent multi-document merge atomicity or retention protection against direct DB administrators. | Keep. |
+| `test_recurring_cleanup_retains_pending_rollback_until_delivery` | Invalid recurring child survives pending delivery failure, then normal cleanup deletes it only after exact history projection. | Real processor with disposable DB globals and dry-run disabled via fixture monkeypatch; runtime_actions reset. No production scheduler/leader or SMTP evidence. | Keep. |
 
 Review follow-up, 2026-10-19: both new definitions add five cases each for latitude, longitude, img, cover_source and canonical event_type. All ten fail against the previous942 head at the intended missing-restore or missing409 assertions, then pass after including those fields in the shared update/guard set. Combined rollback/moderation/decision run:42 passed. The existing CSRF test now extracts the actual target form token with stdlib HTMLParser instead of undeclared bs4; real negative/positive authorization and persistence assertions are retained. Source, test and inventory changes remain local until the outstanding history-durability finding and current-main integration are complete; no merge/release claim.
 

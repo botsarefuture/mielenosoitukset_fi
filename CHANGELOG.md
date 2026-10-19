@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Rollback now commits its exact history receipt atomically with content and retries idempotent history delivery after failures. Pending receipts block deletion/merge/recurring cleanup and stay out of demo-read API responses; history outages return503 without discarding the recorded event.
+
 - Content rollback now includes canonical coordinates, original image, cover source and event type, and detects concurrent changes to those fields instead of silently ignoring them.
 
 - Demonstration history rollback restores recorded event content without overwriting current moderation, cancellation, access scopes or server metadata; stale writes fail safely and confirmation includes CSRF protection.

@@ -51,6 +51,9 @@ from mielenosoitukset_fi.utils import VERSION
 from mielenosoitukset_fi.utils.classes.RepeatSchedule import RepeatSchedule
 from mielenosoitukset_fi.utils.demo_slugs import recurring_child_slug
 from mielenosoitukset_fi.utils.time_utils import utcnow
+from mielenosoitukset_fi.demonstrations.rollback import (
+    PENDING_ROLLBACK_HISTORY, flush_rollback_history,
+)
 from mielenosoitukset_fi.utils.recurrence import (
     WEEKDAY_MAP,
     calculate_recurrence_dates,
@@ -283,8 +286,13 @@ def remove_invalid_child_demonstrations(parent_demo: dict, valid_dates: list[dat
             if DRY_RUN:
                 logger.info(f"DRY RUN: would delete invalid child demo {demo['_id']}")
             else:
-                demonstrations_collection.delete_one({"_id": demo["_id"]})
-                logger.info(f"Deleted invalid child demo {demo['_id']}")
+                if not flush_rollback_history(db, demo["_id"]):
+                    continue
+                result = demonstrations_collection.delete_one({
+                    "_id": demo["_id"], PENDING_ROLLBACK_HISTORY: {"$exists": False},
+                })
+                if result.deleted_count:
+                    logger.info(f"Deleted invalid child demo {demo['_id']}")
 
 def get(obj: dict, key: str, default=None):
     """

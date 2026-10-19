@@ -261,3 +261,58 @@ def test_vendor_installer_rejects_corruption_before_replacing_asset(tmp_path, mo
     with pytest.raises(ValueError, match="checksum mismatch"):
         module.install(tmp_path)
     assert not (tmp_path / "asset.js").exists()
+
+
+def test_snapshot_polish_finishes_redirects_lists_contact_and_mobile_navigation(tmp_path, monkeypatch):
+    module = load("polish_snapshot")
+    for rel, content in {
+        "index.html": '<main><h1>Etusivu</h1><div id="featured-demos-grid"></div></main>',
+        "demonstrations/index.html": '<main><h1>Tapahtumat</h1><section><div id="demos-grid"></div>Edellinen Näytä lisää</section></main>',
+        "contact/index.html": '<main><h1>Yhteystiedot</h1><section id="contact-form-section"><p>Täytä lomake</p></section></main>',
+        "redirect/index.html": '<title>Redirecting...</title><a href="/mirror/contact/">continue</a>',
+        "cities/index.html": '<main><h1>Kaupungit</h1><a href="/mirror/missing/">Missing</a></main>',
+        "ohjeet/index.html": '<main><h1>Ohjeet</h1></main>',
+        "info/index.html": '<main><h1>Tietoa</h1></main>',
+        "privacy/index.html": '<main><h1>Tietosuoja</h1></main>',
+    }.items():
+        path = tmp_path / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+    event = {"_id": "abc123", "title": "Public event", "description": '<script>bad()</script><p>Event text</p>',
+             "formatted_date": "19.10.2026", "start_time": "12:00", "city": "Helsinki", "address": "Square"}
+    report = module.polish(tmp_path, {"results": [event], "snapshot_captured_at": "2026-10-19T15:00:00+00:00"}, ROOT / "scripts/dr/snapshot.css")
+    assert report["events"] == 1 and report["redirect_stubs_replaced"] == 1
+    for p in tmp_path.rglob('*.html'):
+        page = module.soup(p.read_text())
+        assert not page.select('script, form, iframe')
+        assert page.select_one('nav[aria-label="Päävalikko"]')
+        assert page.select_one('meta[name="robots"]')['content'] == 'noindex, nofollow'
+        assert 'Redirecting...' not in page.get_text()
+        for a in page.find_all('a', href=True):
+            if a['href'].startswith('/mirror/'):
+                assert module.local_target(tmp_path, a['href']).is_file(), a['href']
+    assert 'Public event' in (tmp_path / 'index.html').read_text()
+    assert 'Viestien lähetys on tauolla' in (tmp_path / 'contact/index.html').read_text()
+    assert 'Näytä lisää' not in (tmp_path / 'demonstrations/index.html').read_text()
+    assert '19.10.2026 18.00' in (tmp_path / 'index.html').read_text()
+    module.polish(tmp_path, {"results": [event], "snapshot_captured_at": "2026-10-19T15:00:00+00:00"}, ROOT / "scripts/dr/snapshot.css")
+    page = module.soup((tmp_path / 'index.html').read_text())
+    assert len(page.select('.dr-banner')) == 1
+    assert len(page.select('link[href="/mirror/dr-snapshot.css"]')) == 1
+    assert len(page.select('nav[aria-label="Päävalikko"]')) == 1
+    monkeypatch.syspath_prepend(str(ROOT / 'scripts/dr'))
+    verifier = load('verify_snapshot')
+    assert verifier.verify(tmp_path)['broken_resources'] == 0
+    (tmp_path / 'dr-snapshot.css').unlink()
+    with pytest.raises(ValueError, match='Missing'):
+        verifier.verify(tmp_path)
+
+
+
+def test_snapshot_url_resolution_prevents_traversal_and_handles_encoded_names(tmp_path):
+    module = load("polish_snapshot")
+    (tmp_path / 'city name').mkdir()
+    (tmp_path / 'city name/index.html').write_text('Public')
+    assert module.local_target(tmp_path, '/mirror/city%20name/') == tmp_path / 'city name/index.html'
+    assert module.local_target(tmp_path, '/mirror/%2e%2e/private') is None
+    assert module.local_target(tmp_path, 'https://elsewhere.invalid/mirror/page') is None

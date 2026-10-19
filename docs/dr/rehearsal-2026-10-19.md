@@ -181,3 +181,20 @@ The sandbox CSP correctly blocked them, leaving modal buttons inert. Run
 `vendor_assets.py` to install the pinned, SHA-256 checked files locally; the
 response adapter redirects these exact script URLs to the local static handler.
 The CSP remains self-only. This changes the sandbox adapter, not production.
+
+## Finished snapshot and readiness follow-up
+
+`polish_snapshot.py` finishes a COPY of the prepared public crawl using an
+anonymous event API capture. It creates responsive navigation and event details,
+fills empty event grids, replaces redirect stubs, explains missing features,
+normalizes URL-encoded filenames and removes active content. It needs the
+separate `snapshot-requirements.txt`, not new production application dependencies.
+Run `verify_snapshot.py ROOT --write-manifest` before publishing. The current
+release contains 492 pages and 60 saved public events, with local links and
+HTML-referenced assets checked. A bounded event sample still does not cover the
+whole event archive. Desktop and phone-sized views were inspected.
+
+The owner requested one-action functional recovery with a readiness deadline of
+15 November 2026. See [the acceptance matrix](readiness-2026-11-15.md). A proposed
+15-minute high-risk snapshot schedule and independent distribution locations
+are documented there; neither scheduling nor new paid hosts is enabled yet.

@@ -1,6 +1,6 @@
 # Repository roadmap
 
-Last reconciled: 2026-10-19. Verified merge baseline: `main` at `e6383141`; PRs #929–#941 are merged.
+Last reconciled: 2026-10-19. Verified merge baseline: `main` at `9a86b4ce`; PRs #929–#941 and #943 are merged. #943 adds tests/documentation only; #941's production evidence remains separately recorded below.
 
 This is the delivery plan for the **whole repository**: security, public and admin workflows, backend correctness, operations, privacy, localization, tests, and maintenance. Issue [#833](https://github.com/botsarefuture/mielenosoitukset_fi/issues/833) is one workstream within it. Existing issue trackers retain their detailed acceptance criteria; this document sets the order and dependencies.
 
@@ -8,7 +8,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** QA-01f — close verified passkey test gaps for elevated cross-user mutations, signed wrong-origin/RP assertions and challenge replay/session binding, without changing authentication policy. Independent content-rollback #942 is open; do not duplicate or merge it under #941's authorization.
+- **Next:** Finish the authorized incremental integration of roadmap additions #944 and lifecycle-test #945 after required checks. QA-01f / #943 is merged as `9a86b4ce`; do not repeat it. Continue the next unblocked roadmap P1 afterward. Independent content-rollback #942 remains open and is not part of this first merge batch.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Verified release checkpoint:** #941 merged as `e6383141`; final required CI passed 1,370 tests with 325 skips. Public HTTPS and direct Gunicorn health probes both verify that exact running build; pre-existing tracked server overlays are byte-preserved. Automatic deploy run39149112591 remains failed because its public probe hit Cloudflare403; independent runtime verification is not a green-workflow claim. Authenticated production visual acceptance is not claimed.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
@@ -74,7 +74,7 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 
 ### Security and permissions
 
-- **QA-01f · P1 · In review · Codex · M1/M6 · codex/passkey-boundary-test-review:** Four individually reviewed definitions add six cases for forged elevated cross-user rename/delete, signed origin/RP mismatch and consumed assertion/session binding. Actual crypto verification and disposable MongoDB, positive controls and exact credential/session assertions; all61 combined focused cases pass. Six targeted in-process boundary mutations each produce the intended HTTP200-versus-denial failure. Authentication policy and #887 are unchanged. Broader physical-device/browser acceptance and concurrent counter updates remain separate; this batch does not close QA-01.
+- **QA-01f · P1 · Merged · Codex · M1/M6 · #943 / codex/passkey-boundary-test-review:** Four individually reviewed definitions add six cases for forged elevated cross-user rename/delete, signed origin/RP mismatch and consumed assertion/session binding. Actual crypto verification and disposable MongoDB, positive controls and exact credential/session assertions; all61 combined focused cases pass. Six targeted in-process boundary mutations each produce the intended HTTP200-versus-denial failure. Required CI and exact-head review passed before normal merge `9a86b4ce`. Authentication policy and #887 are unchanged. Broader physical-device/browser acceptance and concurrent counter updates remain separate; this batch does not close QA-01.
 
 - **QA-01a · P1 · Merged · Codex · M1/M6 · codex/step-up-test-review:** Individually assess all eleven step-up test definitions; repair vacuous original-session logout coverage and strengthen configured time boundaries, actor/session isolation, invalid credential rejection and stored password outcomes. Acceptance: focused step-up and fresh-deletion regressions pass (30 cases), mutation confirms logout cleanup regression detection, fixture/mock limits and remaining cases recorded. No production authentication or #887 policy changes.
 

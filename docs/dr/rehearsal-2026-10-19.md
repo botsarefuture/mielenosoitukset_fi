@@ -168,7 +168,7 @@ tab “Palautusharjoitus 19.10.2026”.
 
 ## Validation limits
 
-The 27 focused DR tests pass. Python compilation and shell syntax checks pass.
+The 30 focused DR tests pass. Python compilation and shell syntax checks pass.
 The deployed application templates compiled successfully. The wider application
 test run on the operator’s Python 3.14 reached 68% with five failures, then hung
 and was stopped; the full suite is not green and those failures were not
@@ -240,3 +240,11 @@ The security review follow-up returned zero findings after fixing path
 containment, capture-time validation, local asset rules, CI dependencies and
 timeout diagnostics. A timeout is reported as unknown remote state, not proof
 that the remote process stopped; the remote lock prevents overlapping restores.
+
+Browser recovery now includes the public submission editor (Quill), date picker
+(Flatpickr), legacy jQuery and Socket.IO client as pinned local assets. Unversioned
+page references are mapped to explicit saved versions. `vendor_assets.py --pack`
+writes `browser-assets.tar.gz`; include its SHA-256 in the bundle manifest.
+The rehearsal requires this archive, restores it into the Flask static root and
+checks every restored browser asset through the new worker’s HTTP handler.
+This removes these CDN dependencies without relaxing CSP or integration isolation.

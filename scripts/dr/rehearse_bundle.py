@@ -21,6 +21,7 @@ from urllib.request import urlopen
 import uuid
 
 from write_config import configuration
+from vendor_assets import ASSETS
 
 
 def validate_member(member):
@@ -29,6 +30,15 @@ def validate_member(member):
         raise ValueError("Unsafe application archive member")
     if path.name in {"config.yaml", ".env"} or path.name.startswith(".env."):
         raise ValueError("Application release must not contain environment secrets")
+
+
+def validate_browser_members(members):
+    if len(members) != len(ASSETS) or {member.name for member in members} != set(ASSETS):
+        raise ValueError('Browser archive must contain the complete pinned asset set')
+    for member in members:
+        validate_member(member)
+        if not member.isfile() or len(PurePosixPath(member.name).parts) != 1:
+            raise ValueError('Unsafe browser asset member')
 
 
 def digest(path):
@@ -41,7 +51,7 @@ def digest(path):
 
 def verify_bundle(bundle):
     checksums = json.loads((bundle / "SHA256SUMS.json").read_text())
-    required = {"app.tar.gz", "mongo.archive.gz", "requirements.lock", "build_sha"}
+    required = {"app.tar.gz", "mongo.archive.gz", "requirements.lock", "build_sha", "browser-assets.tar.gz"}
     wheels = list((bundle / "wheels").glob("*.whl"))
     if not wheels:
         raise ValueError("Offline wheelhouse is empty")
@@ -100,6 +110,17 @@ def rehearse(bundle):
             for member in members:
                 validate_member(member)
             archive.extractall(app, members=members, filter="data")
+        browser_root = app / 'mielenosoitukset_fi/static/dr-vendor'
+        browser_root.mkdir(parents=True, exist_ok=True)
+        with tarfile.open(bundle / 'browser-assets.tar.gz', 'r:gz') as assets:
+            members = assets.getmembers()
+            if sum(member.size for member in members) > 32 * 1024**2:
+                raise ValueError('Browser assets exceed size limit')
+            validate_browser_members(members)
+            assets.extractall(browser_root, members=members, filter='data')
+        for name, (_, expected) in ASSETS.items():
+            if digest(browser_root / name) != expected:
+                raise ValueError('Restored browser asset checksum mismatch')
         (app / ".deploy-build-sha").write_text(report["build_sha"] + "\n")
         config = configuration()
         config["MONGO_DBNAME"] = database
@@ -146,6 +167,11 @@ def rehearse(bundle):
         with urlopen("http://127.0.0.1:5004/api/demonstrations?per_page=3", timeout=15) as response:
             events = json.load(response)
         assert len(events.get("results", [])) == 3
+        for path in browser_root.iterdir():
+            with urlopen('http://127.0.0.1:5004/static/dr-vendor/' + path.name, timeout=5) as response:
+                if hashlib.sha256(response.read()).hexdigest() != digest(path):
+                    raise ValueError('Restored browser asset HTTP integrity failure')
+        report['browser_assets_verified'] = len(list(browser_root.iterdir()))
         report.update(result="passed", api_events=3, total_seconds=round(time.monotonic() - started, 2),
                       offline_install=True, production_connections=False)
     except BaseException as error:

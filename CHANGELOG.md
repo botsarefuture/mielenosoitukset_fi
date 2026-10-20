@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Included pinned submission editor, date picker and Socket.IO assets in offline recovery, with HTTP integrity checks after restoration.
+
 - Added an independent localhost recovery control for prepared-host app/DB rehearsal, using private SSH profiles instead of deployment addresses in public code.
 
 - Finished the static DR snapshot with responsive navigation, saved event cards/detail pages, explained unavailable actions and a local-link/asset publication gate. Recorded the 15 November recovery-readiness deadline and remaining functional parity checks.

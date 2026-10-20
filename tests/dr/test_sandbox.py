@@ -185,7 +185,7 @@ def test_bundle_verification_requires_every_artifact_and_detects_tampering(tmp_p
     monkeypatch.syspath_prepend(str(ROOT / "scripts/dr"))
     module = load("rehearse_bundle")
     (tmp_path / "wheels").mkdir()
-    names = ["app.tar.gz", "mongo.archive.gz", "requirements.lock", "build_sha", "wheels/example.whl"]
+    names = ["app.tar.gz", "mongo.archive.gz", "requirements.lock", "build_sha", "browser-assets.tar.gz", "wheels/example.whl"]
     for name in names:
         (tmp_path / name).write_bytes(b"fixture")
     hashes = {name: hashlib.sha256(b"fixture").hexdigest() for name in names}
@@ -471,3 +471,43 @@ def test_recovery_reports_audit_failure_instead_of_silent_success(tmp_path, monk
     recovery.run('status')
     assert recovery.snapshot()['status'] == 'audit_failed'
     assert recovery.snapshot()['audit_error'] == 'PermissionError'
+
+
+def test_specific_browser_css_alias_is_rewritten_before_generic_package_url():
+    module = load('copy_urls')
+    value = module.rewrite('<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"><script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>')
+    assert '/static/dr-vendor/flatpickr-4.6.13.min.css' in value
+    assert '/static/dr-vendor/flatpickr-4.6.13.min.js' in value
+    assert '.min.js/dist' not in value
+    unknown_locale = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fi.js'
+    assert module.rewrite(unknown_locale) == unknown_locale
+
+
+def test_browser_assets_pack_only_hash_verified_named_files(tmp_path):
+    import hashlib,tarfile
+    module = load('vendor_assets')
+    root = tmp_path / 'assets'
+    root.mkdir()
+    data = b'fixture browser asset'
+    (root / 'asset.js').write_bytes(data)
+    module.ASSETS = {'asset.js': ('https://example.invalid/asset.js', hashlib.sha256(data).hexdigest())}
+    archive = tmp_path / 'browser-assets.tar.gz'
+    module.pack_assets(root, archive)
+    with tarfile.open(archive, 'r:gz') as files:
+        assert files.getnames() == ['asset.js']
+        assert files.extractfile('asset.js').read() == data
+    (root / 'asset.js').write_bytes(b'corrupt')
+    with pytest.raises(ValueError, match='checksum mismatch'):
+        module.pack_assets(root, archive)
+
+
+def test_browser_archive_rejects_empty_incomplete_and_duplicate_assets(monkeypatch):
+    import tarfile
+    monkeypatch.syspath_prepend(str(ROOT / 'scripts/dr'))
+    module = load('rehearse_bundle')
+    monkeypatch.setattr(module, 'ASSETS', {'asset.js': ('https://example.invalid/asset.js', 'fixture')})
+    good = tarfile.TarInfo('asset.js')
+    module.validate_browser_members([good])
+    for members in [[], [tarfile.TarInfo('unexpected.js')], [good, good]]:
+        with pytest.raises(ValueError, match='complete pinned asset set'):
+            module.validate_browser_members(members)

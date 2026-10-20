@@ -266,7 +266,7 @@ def test_vendor_installer_rejects_corruption_before_replacing_asset(tmp_path, mo
 def test_snapshot_polish_finishes_redirects_lists_contact_and_mobile_navigation(tmp_path, monkeypatch):
     module = load("polish_snapshot")
     for rel, content in {
-        "index.html": '<main><h1>Etusivu</h1><img src="https://external.invalid/tracker.png"><img src="relative-missing.png"><div id="featured-demos-grid"></div></main>',
+        "index.html": '<main><h1>Etusivu</h1><img src="https://external.invalid/tracker.png"><img src="relative-missing.png"><a href="#dr-unavailable">Ilmoita mielenosoituksesta</a><div id="featured-demos-grid"></div></main>',
         "demonstrations/index.html": '<main><h1>Tapahtumat</h1><section><div id="demos-grid"></div>Edellinen Näytä lisää</section></main>',
         "contact/index.html": '<main><h1>Yhteystiedot</h1><section id="contact-form-section"><p>Täytä lomake</p></section></main>',
         "redirect/index.html": '<title>Redirecting...</title><a href="/mirror/contact/">continue</a>',
@@ -293,6 +293,7 @@ def test_snapshot_polish_finishes_redirects_lists_contact_and_mobile_navigation(
                 assert module.local_target(tmp_path, a['href']).is_file(), a['href']
     assert 'Public event' in (tmp_path / 'index.html').read_text()
     assert 'external.invalid' not in (tmp_path / 'index.html').read_text()
+    assert 'Ilmoittaminen tauolla' in (tmp_path / 'index.html').read_text()
     assert 'relative-missing.png' not in (tmp_path / 'index.html').read_text()
     assert 'Viestien lähetys on tauolla' in (tmp_path / 'contact/index.html').read_text()
     assert 'Näytä lisää' not in (tmp_path / 'demonstrations/index.html').read_text()

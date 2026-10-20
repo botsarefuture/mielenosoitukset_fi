@@ -237,6 +237,16 @@ def polish(root, response, stylesheet):
                 a['href'] = PREFIX + quote(target.parent.relative_to(root).as_posix(), safe='/') + '/'
                 if a['href'] == '/mirror/./':
                     a['href'] = PREFIX
+            if a.get('href') == UNAVAILABLE:
+                label = a.get_text(' ', strip=True).casefold()
+                for word, replacement in [('ilmoita', 'Ilmoittaminen tauolla'),
+                                          ('kirjaudu', 'Kirjautuminen tauolla'),
+                                          ('rekisteröidy', 'Rekisteröinti tauolla')]:
+                    if word in label:
+                        a.clear()
+                        a.string = replacement
+                        a['aria-label'] = replacement + ' — lue tallennetun sivuston toiminnasta'
+                        break
         for link in list(page.select('link[rel="stylesheet"]')):
             if not local_target(root, link.get('href', '')) or not local_target(root, link['href']).is_file():
                 link.decompose()

@@ -1,13 +1,12 @@
 # Recovery readiness deadline: 15 November 2026
 
-The owner set this deadline on 19 October and expects hostile activity from
-1 December or earlier. This is the owner's threat-planning assumption, not an
-independently confirmed incident or attribution. Complete rehearsal before the
-deadline and keep the remaining time for fixes and retesting.
+The owner set this delivery deadline on 19 October. Complete the rehearsal before
+the deadline and keep time for fixes and retesting. Threat intelligence and
+operational planning assumptions belong in the private continuity documentation.
 
 ## Required outcome
 
-One authenticated recovery action must create a working replacement from trusted
+One authenticated recovery action, independent of lc-main, must create a working replacement from trusted
 release, DB and media artifacts, run functional checks, and show progress and
 evidence. Public traffic cutover is a separate explicit action. Rehearsals capture
 email locally and cannot contact production services or process historical jobs.
@@ -29,7 +28,7 @@ worker count is smaller, and several background integrations are disabled.
 | Dependencies | Local MongoDB, Redis, MinIO and SMTP capture running | Consistent, versioned DB/media/release artifacts and offline browser dependencies |
 | Fresh-host provisioning | Not yet proven | Automated OS/runtime/services/TLS setup and a measured empty-host rehearsal |
 | Production parity | Differences recorded above | Capture and review production service/package/config inventory; test parity rather than claim image identity |
-| Recovery control | Prepared-host app+DB rehearsal command exists | Authenticated background job, progress, durable audit, concurrency lock and clear failure/cleanup behavior |
+| Recovery control | Independent laptop panel with prepared-host app+DB restore button; private SSH profile | Authenticated background job, progress, durable audit, concurrency lock and clear failure/cleanup behavior |
 | Traffic cutover | Sandbox snapshot switch measured | Staged production routing plan, health gates, rollback and explicit operator promotion |
 | Independent copies | Existing pentest box and private artifacts | At least two independent provider/account locations with tested restore access |
 

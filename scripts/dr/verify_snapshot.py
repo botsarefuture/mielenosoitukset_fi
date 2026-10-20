@@ -18,7 +18,7 @@ def verify(root):
         if path.suffix != '.html':
             continue
         pages += 1
-        page = soup(path.read_text())
+        page = soup(path.read_text(encoding='utf-8'))
         if page.select('script, form, iframe, object'):
             errors.append('Active content in ' + str(path.relative_to(root)))
         if len(page.select('nav[aria-label="Päävalikko"]')) != 1:

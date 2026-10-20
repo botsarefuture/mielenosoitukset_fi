@@ -266,7 +266,7 @@ def test_vendor_installer_rejects_corruption_before_replacing_asset(tmp_path, mo
 def test_snapshot_polish_finishes_redirects_lists_contact_and_mobile_navigation(tmp_path, monkeypatch):
     module = load("polish_snapshot")
     for rel, content in {
-        "index.html": '<main><h1>Etusivu</h1><div id="featured-demos-grid"></div></main>',
+        "index.html": '<main><h1>Etusivu</h1><img src="https://external.invalid/tracker.png"><img src="relative-missing.png"><div id="featured-demos-grid"></div></main>',
         "demonstrations/index.html": '<main><h1>Tapahtumat</h1><section><div id="demos-grid"></div>Edellinen Näytä lisää</section></main>',
         "contact/index.html": '<main><h1>Yhteystiedot</h1><section id="contact-form-section"><p>Täytä lomake</p></section></main>',
         "redirect/index.html": '<title>Redirecting...</title><a href="/mirror/contact/">continue</a>',
@@ -292,6 +292,8 @@ def test_snapshot_polish_finishes_redirects_lists_contact_and_mobile_navigation(
             if a['href'].startswith('/mirror/'):
                 assert module.local_target(tmp_path, a['href']).is_file(), a['href']
     assert 'Public event' in (tmp_path / 'index.html').read_text()
+    assert 'external.invalid' not in (tmp_path / 'index.html').read_text()
+    assert 'relative-missing.png' not in (tmp_path / 'index.html').read_text()
     assert 'Viestien lähetys on tauolla' in (tmp_path / 'contact/index.html').read_text()
     assert 'Näytä lisää' not in (tmp_path / 'demonstrations/index.html').read_text()
     assert '19.10.2026 18.00' in (tmp_path / 'index.html').read_text()
@@ -316,3 +318,155 @@ def test_snapshot_url_resolution_prevents_traversal_and_handles_encoded_names(tm
     assert module.local_target(tmp_path, '/mirror/city%20name/') == tmp_path / 'city name/index.html'
     assert module.local_target(tmp_path, '/mirror/%2e%2e/private') is None
     assert module.local_target(tmp_path, 'https://elsewhere.invalid/mirror/page') is None
+
+
+def control_profile():
+    return {'ssh_destination': 'recovery-test-alias', 'expected_hostname': 'test-recovery-host',
+            'python_path': '/opt/test-venv/bin/python', 'toolkit_path': '/opt/test-toolkit',
+            'bundle_path': '/private/test-bundle'}
+
+
+def test_independent_control_rejects_arbitrary_commands_and_production_targets():
+    module = load('recovery_control')
+    with pytest.raises(ValueError):
+        module.command_for('rehearse; rm -rf /', control_profile())
+    command = module.command_for('rehearse', control_profile())
+    assert 'recovery-test-alias' in command
+    assert 'StrictHostKeyChecking=yes' in command
+    assert 'flock -n' in command[-1]
+    assert 'lc-main' not in command[-1]
+    assert 'test-recovery-host' in command[-1]
+
+
+def test_independent_panel_checks_host_origin_csrf_and_action(tmp_path):
+    import http.client
+    import threading
+    from http.server import ThreadingHTTPServer
+    from urllib.parse import urlencode
+    module = load('recovery_control')
+    recovery = module.Recovery(tmp_path / 'private', control_profile())
+    started = []
+    recovery.start = lambda action: started.append(action) or True if action in module.COMMANDS else (_ for _ in ()).throw(ValueError())
+    server = ThreadingHTTPServer(('127.0.0.1', 0), module.handler_for(recovery))
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    origin = 'http://127.0.0.1:' + str(server.server_port)
+    def request(path, body=None, headers=None):
+        conn = http.client.HTTPConnection('127.0.0.1', server.server_port)
+        conn.request('POST' if body is not None else 'GET', path, body=body, headers=headers or {})
+        response = conn.getresponse()
+        code = response.status
+        response.read()
+        conn.close()
+        return code
+    try:
+        assert request('/') == 200
+        body = urlencode({'action': 'rehearse', 'csrf': recovery.token})
+        assert request('/run', body, {'Origin': 'https://evil.invalid'}) == 403
+        assert request('/run', body, {'Host': 'evil.invalid', 'Origin': origin}) == 403
+        assert request('/run', urlencode({'action': 'rehearse', 'csrf': 'wrong'}), {'Origin': origin}) == 403
+        assert request('/run', urlencode({'action': 'unknown', 'csrf': recovery.token}), {'Origin': origin}) == 400
+        assert not started
+        assert request('/run', body, {'Origin': origin}) == 202
+        assert started == ['rehearse']
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_independent_panel_blocks_overlapping_jobs(tmp_path, monkeypatch):
+    import threading
+    module = load('recovery_control')
+    recovery = module.Recovery(tmp_path / 'private', control_profile())
+    entered = threading.Event()
+    release = threading.Event()
+    def run(action):
+        entered.set()
+        release.wait(timeout=3)
+    monkeypatch.setattr(recovery, 'run', run)
+    try:
+        assert recovery.start('rehearse')
+        assert entered.wait(timeout=1)
+        assert not recovery.start('rehearse')
+    finally:
+        release.set()
+
+
+def test_recovery_profile_is_private_and_rejects_unsafe_connection_settings(tmp_path):
+    import json
+    module = load('recovery_control')
+    path = tmp_path / 'private.json'
+    profile = control_profile()
+    path.write_text(json.dumps(profile))
+    path.chmod(0o644)
+    with pytest.raises(ValueError, match='mode 600'):
+        module.load_profile(path)
+    path.chmod(0o600)
+    assert module.load_profile(path)['ssh_destination'] == 'recovery-test-alias'
+    profile['ssh_destination'] = '-oProxyCommand=bad'
+    path.write_text(json.dumps(profile))
+    with pytest.raises(ValueError, match='ssh_destination'):
+        module.load_profile(path)
+    profile = control_profile()
+    profile['bundle_path'] = '/private/test\ninvalid'
+    path.write_text(json.dumps(profile))
+    with pytest.raises(ValueError, match='bundle_path'):
+        module.load_profile(path)
+
+
+def test_snapshot_resolution_rejects_absolute_paths_and_symlink_escape(tmp_path):
+    module = load('polish_snapshot')
+    root = tmp_path / 'public'
+    root.mkdir()
+    outside = tmp_path / 'private.html'
+    outside.write_text('<main>PRIVATE</main>')
+    (root / 'escape.html').symlink_to(outside)
+    for url in ['/mirror//etc/passwd', '/mirror/%2Fetc/passwd', '/mirror/%5cprivate', '/mirror/escape.html']:
+        assert module.local_target(root, url) is None
+
+
+def test_snapshot_requires_honest_timezone_aware_capture_time(tmp_path):
+    module = load('polish_snapshot')
+    for stamp in [None, '', '2026-10-19T12:00:00']:
+        with pytest.raises(ValueError, match='snapshot_captured_at'):
+            module.polish(tmp_path, {'results': [], 'snapshot_captured_at': stamp}, ROOT / 'scripts/dr/snapshot.css')
+
+
+def test_recovery_timeout_keeps_partial_diagnostics_and_unknown_remote_state(tmp_path, monkeypatch):
+    import subprocess
+    module = load('recovery_control')
+    recovery = module.Recovery(tmp_path / 'private', control_profile())
+    def timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired('ssh', 600, output=b'restore started', stderr=b'connection lost')
+    monkeypatch.setattr(module.subprocess, 'run', timeout)
+    recovery.run('rehearse')
+    result = recovery.snapshot()
+    assert result['status'] == 'failed'
+    assert result['remote_state'] == 'unknown'
+    assert 'restore started' in result['output'] and 'connection lost' in result['output']
+
+
+def test_snapshot_filters_saved_events_by_city_tag_and_capture_day():
+    from datetime import datetime
+    module = load('polish_snapshot')
+    events = [{'title': 'Today', 'city': 'Hämeenlinna', 'tags': ['Ilmasto'], 'date': '2026-10-19'},
+              {'title': 'Later', 'city': 'Helsinki', 'tags': ['Muu'], 'date': '2026-10-23'}]
+    captured = datetime.fromisoformat('2026-10-19T12:00:00+00:00')
+    assert module.selected_events(events, 'city/hameenlinna/index.html', captured) == [events[0]]
+    assert module.selected_events(events, 'tag/ilmasto/index.html', captured) == [events[0]]
+    assert module.selected_events(events, 'mielenosoitukset-tanaan/index.html', captured) == [events[0]]
+    assert module.selected_events(events, 'city/helsinki/tanaan/index.html', captured) == []
+
+
+def test_recovery_reports_audit_failure_instead_of_silent_success(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    module = load('recovery_control')
+    recovery = module.Recovery(tmp_path / 'private', control_profile())
+    monkeypatch.setattr(module.subprocess, 'run', lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout='ok', stderr=''))
+    def denied(*args, **kwargs):
+        raise PermissionError('audit unavailable')
+    monkeypatch.setattr(module.os, 'open', denied)
+    recovery.run('status')
+    assert recovery.snapshot()['status'] == 'audit_failed'
+    assert recovery.snapshot()['audit_error'] == 'PermissionError'

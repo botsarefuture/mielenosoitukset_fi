@@ -168,7 +168,7 @@ tab “Palautusharjoitus 19.10.2026”.
 
 ## Validation limits
 
-The 13 focused DR tests pass. Python compilation and shell syntax checks pass.
+The 27 focused DR tests pass. Python compilation and shell syntax checks pass.
 The deployed application templates compiled successfully. The wider application
 test run on the operator’s Python 3.14 reached 68% with five failures, then hung
 and was stopped; the full suite is not green and those failures were not
@@ -198,3 +198,45 @@ The owner requested one-action functional recovery with a readiness deadline of
 15 November 2026. See [the acceptance matrix](readiness-2026-11-15.md). A proposed
 15-minute high-risk snapshot schedule and independent distribution locations
 are documented there; neither scheduling nor new paid hosts is enabled yet.
+
+## Independent laptop recovery control
+
+The production security console remains on lc-main, so it cannot be the sole
+control during an lc-main outage. `recovery_control.py` runs separately on the
+operator’s laptop with only Python’s standard library. It binds to loopback,
+checks Host/Origin/CSRF, permits only two fixed operations, refuses concurrent
+jobs and keeps private local audit records. SSH host-key checking remains on.
+
+Start it with `python3 scripts/dr/recovery_control.py`, or double-click
+`scripts/dr/start-recovery.command` on macOS. Its private profile is
+`~/.config/mielenosoitukset-dr/control.json` (owned by the operator, mode 600):
+
+```json
+{
+  "ssh_destination": "recovery-alias",
+  "ssh_config": "/private/operator/ssh_config",
+  "expected_hostname": "isolated-recovery-host",
+  "python_path": "/srv/mielenosoitukset-dr/venv/bin/python",
+  "toolkit_path": "/opt/mielenosoitukset-dr-toolkit",
+  "bundle_path": "/private/recovery-bundle"
+}
+```
+
+Keep SSH addresses, keys and credentials in the private SSH config/profile,
+not this public repository. The checked-in controller uses a configurable SSH
+alias. Local loopback addresses identify local-only services, not deployment IPs.
+
+The UI at `http://127.0.0.1:18850/` checks health or runs the existing isolated
+app+DB backup rehearsal. It does not yet provision a new host, restore full media
+into a separate new environment, or promote production traffic. Those remaining
+acceptance gates are explicit in the readiness matrix. Keep an independent,
+securely stored copy of the toolkit/profile and backup access; recovery must not
+require an available production console or source repository.
+
+The independent button completed an app+DB rehearsal on 20 October: 102.28
+seconds including an 81.12-second DB phase; approximately 105 seconds from
+button press to result. The temporary database and service were cleaned up.
+The security review follow-up returned zero findings after fixing path
+containment, capture-time validation, local asset rules, CI dependencies and
+timeout diagnostics. A timeout is reported as unknown remote state, not proof
+that the remote process stopped; the remote lock prevents overlapping restores.

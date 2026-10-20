@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Added an independent localhost recovery control for prepared-host app/DB rehearsal, using private SSH profiles instead of deployment addresses in public code.
+
 - Finished the static DR snapshot with responsive navigation, saved event cards/detail pages, explained unavailable actions and a local-link/asset publication gate. Recorded the 15 November recovery-readiness deadline and remaining functional parity checks.
 
 - Fixed the pentest create-user dialog by serving pinned Bootstrap and jQuery locally under the existing browser isolation policy.

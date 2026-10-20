@@ -5,12 +5,13 @@ Requires beautifulsoup4. Run on a COPY of the prepared crawl; input is the publi
 event API only. No account exports or authenticated pages belong in a snapshot.
 """
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime
 from zoneinfo import ZoneInfo
 from html import escape
 import json
 from pathlib import Path
 import re
+import unicodedata
 from urllib.parse import quote, unquote, urlsplit
 
 from bs4 import BeautifulSoup
@@ -29,10 +30,14 @@ def local_target(root, href):
     if parsed.netloc or not parsed.path.startswith(PREFIX):
         return None
     rel = unquote(parsed.path[len(PREFIX):])
-    if ".." in Path(rel).parts:
+    if Path(rel).is_absolute() or ".." in Path(rel).parts or "\\" in rel:
         return None
-    target = root / rel
-    return target / "index.html" if target.is_dir() else target
+    base = Path(root).resolve()
+    target = (base / rel).resolve()
+    if not target.is_relative_to(base):
+        return None
+    target = target / "index.html" if target.is_dir() else target
+    return target if target.resolve().is_relative_to(base) else None
 
 
 def event_path(event):
@@ -71,6 +76,25 @@ def cards(events, root):
     return '<div class="dr-events">' + "".join(result) + '</div>'
 
 
+def city_key(value):
+    return ''.join(c for c in unicodedata.normalize('NFKD', value.lower())
+                   if not unicodedata.combining(c)).replace(' ', '-')
+
+
+def selected_events(events, relative_path, captured):
+    result = events
+    parts = relative_path.split('/')
+    if parts[0] == 'city' and len(parts) > 1:
+        result = [e for e in result if city_key(str(e.get('city', ''))) == parts[1]]
+    if parts[0] == 'tag' and len(parts) > 1:
+        tag = unquote(parts[1]).casefold()
+        result = [e for e in result if tag in [str(t).casefold() for t in (e.get('tags') or [])]]
+    if 'tanaan' in parts or parts[0] == 'mielenosoitukset-tanaan':
+        date = captured.astimezone(ZoneInfo('Europe/Helsinki')).date().isoformat()
+        result = [e for e in result if str(e.get('date'))[:10] == date]
+    return result
+
+
 def shell(title, content):
     return soup('<!doctype html><html lang="fi"><head><meta charset="utf-8">'
                 '<meta name="viewport" content="width=device-width, initial-scale=1">'
@@ -78,7 +102,13 @@ def shell(title, content):
 
 
 def polish(root, response, stylesheet):
-    root = Path(root)
+    root = Path(root).resolve()
+    raw_captured = response.get("snapshot_captured_at")
+    if not raw_captured:
+        raise ValueError("public response must include snapshot_captured_at")
+    captured = datetime.fromisoformat(raw_captured)
+    if captured.tzinfo is None:
+        raise ValueError("snapshot_captured_at must include a timezone")
     # nginx decodes URL paths. Store encoded crawl names in their decoded form.
     for path in sorted(root.rglob("*"), key=lambda p: len(p.parts), reverse=True):
         decoded = unquote(path.name)
@@ -89,7 +119,6 @@ def polish(root, response, stylesheet):
             if destination.exists():
                 raise ValueError("Decoded crawl path collision")
             path.rename(destination)
-    captured = datetime.fromisoformat(response.get("snapshot_captured_at") or datetime.now(timezone.utc).isoformat())
     snapshot_date = captured.astimezone(ZoneInfo("Europe/Helsinki")).strftime("%d.%m.%Y %H.%M")
     events = response["results"][:100]
     for event in events:
@@ -117,20 +146,20 @@ def polish(root, response, stylesheet):
     pages = list(root.rglob("*.html"))
     repaired = redirects = 0
     for path in pages:
-        page = soup(path.read_text())
+        page = soup(path.read_text(encoding='utf-8'))
         # Replace server redirect stubs with the saved destination's content.
         if page.title and "Redirecting" in page.title.get_text():
             link = page.find("a", href=True)
             target = local_target(root, link["href"]) if link else None
             if target and target.is_file() and target != path:
-                candidate = soup(target.read_text())
-                page = candidate if candidate.find("main") else soup(status.read_text())
+                candidate = soup(target.read_text(encoding='utf-8'))
+                page = candidate if candidate.find("main") else soup(status.read_text(encoding='utf-8'))
             else:
-                page = soup(status.read_text())
+                page = soup(status.read_text(encoding='utf-8'))
             redirects += 1
         if not page.find("main"):
             # Avoid publishing empty crawl/error documents as unfinished pages.
-            page = soup(status.read_text())
+            page = soup(status.read_text(encoding='utf-8'))
         if not page.html:
             page = shell("Mielenosoitukset.fi", str(page))
         if not page.head:
@@ -151,19 +180,13 @@ def polish(root, response, stylesheet):
                 aside.decompose()
         for node in list(page.select('a[href="#dr-unavailable"]')):
             node["href"] = UNAVAILABLE
-        for node in page.select('[id="map"]'):
+        for node in page.select('[id="map"], [id="pride-map"]'):
             node.clear()
             node.append(soup('<p class="dr-note">Sijainnin osoite näkyy tapahtuman tiedoissa. Interaktiivinen kartta ei ole käytössä tallennetussa näkymässä.</p>'))
             node.attrs.pop("style", None)
         for grid in page.select('#featured-demos-grid, #demos-grid'):
-            selected = events
             rel = path.relative_to(root).as_posix()
-            if rel.startswith("city/"):
-                city = rel.split("/")[1]
-                import unicodedata
-                def key(value):
-                    return "".join(c for c in unicodedata.normalize("NFKD", value.lower()) if not unicodedata.combining(c))
-                selected = [e for e in events if key(str(e.get("city", ""))).replace(" ", "-") == city]
+            selected = selected_events(events, rel, captured)
             if grid.get("id") == "featured-demos-grid":
                 selected = selected[:6]
             grid.clear()
@@ -171,6 +194,20 @@ def polish(root, response, stylesheet):
             for text in list(grid.parent.find_all(string=True, recursive=False)):
                 if re.fullmatch(r"(?:(?:Edellinen|Näytä lisää|Yritä uudelleen)\s*)+", text.strip()):
                     text.extract()
+        for info in page.select('#info-grid'):
+            if not info.get_text(strip=True):
+                info.append(soup('<p class="dr-note">Tämän sivun täydet tiedot tarvitsevat varsinaisen palvelun. '
+                                 '<a href="/mirror/demonstrations/">Selaa tallennettua tapahtumaotosta →</a></p>'))
+        if path.relative_to(root).as_posix() == 'cities/index.html':
+            stats = page.select('.cities-stat')
+            if len(stats) >= 2:
+                stats[1].find('strong').string = str(len(events))
+                stats[1].find('span').string = 'tapahtumaa tallennetussa otoksessa'
+            for card in page.select('.city-card[data-city-key]'):
+                saved = [e for e in events if city_key(str(e.get('city', ''))) == card['data-city-key']]
+                description = card.find('p')
+                if description:
+                    description.string = 'Tallennettu otos: ' + str(len(saved)) + ' tapahtumaa.'
         contact = page.select_one('#contact-form-section')
         if contact:
             contact.clear()
@@ -207,7 +244,7 @@ def polish(root, response, stylesheet):
             img.attrs.pop("srcset", None)
             src = img.get('src', '')
             target = local_target(root, src)
-            if not src or (src.startswith(PREFIX) and (not target or not target.is_file())):
+            if not target or not target.is_file():
                 img.decompose()
         for meta in page.select('meta[name="robots"]'):
             meta.decompose()
@@ -224,10 +261,10 @@ def polish(root, response, stylesheet):
           <nav aria-label="Alavalikko"><a href="/mirror/info/">Tietoa sivustosta</a><a href="/mirror/privacy/">Tietosuoja</a>
           <a href="/mirror/palvelun-tila/">Tallennetun sivuston toiminta</a></nav></footer>'''.replace('SNAPSHOT_DATE', snapshot_date)))
         path.write_text(str(page))
-    (root / 'dr-snapshot.css').write_text(Path(stylesheet).read_text())
+    (root / 'dr-snapshot.css').write_text(Path(stylesheet).read_text(encoding='utf-8'))
     # Remove invalid placeholder imports left by the original crawler.
     for css in root.rglob('*.css'):
-        css.write_text(re.sub(r'@import\s+url\(["\x27]?#dr-unavailable["\x27]?\);?', '', css.read_text(errors='replace')))
+        css.write_text(re.sub(r'@import\s+url\(["\x27]?#dr-unavailable["\x27]?\);?', '', css.read_text(encoding='utf-8', errors='replace')))
     report = {"pages_finished": len(pages), "events": len(events), "redirect_stubs_replaced": redirects,
               "unavailable_links_explained": repaired, "requires_backend": False, "snapshot_captured_at": captured.isoformat()}
     (root / 'dr-polish-report.json').write_text(json.dumps(report, indent=2) + '\n')
@@ -239,4 +276,4 @@ if __name__ == '__main__':
     parser.add_argument('root', type=Path)
     parser.add_argument('public_response', type=Path)
     args = parser.parse_args()
-    print(json.dumps(polish(args.root, json.loads(args.public_response.read_text()), Path(__file__).with_name('snapshot.css'))))
+    print(json.dumps(polish(args.root, json.loads(args.public_response.read_text(encoding='utf-8')), Path(__file__).with_name('snapshot.css'))))

@@ -49,14 +49,19 @@ jobs:
           chmod 0600 ~/.ssh/known_hosts
 
       - name: Gracefully deploy merged main
+        id: deploy_origin
         run: |
           set -euo pipefail
           ssh $SSH_OPTIONS "$PRODUCTION_SSH_USER@$PRODUCTION_SSH_HOST" \
             "deploy $GITHUB_SHA"
+          # The SSH command verifies the active service and exact worker SHA
+          # through its local socket before returning success.
+          echo "verified_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Verify public health endpoint
         run: |
           set -euo pipefail
           python3 deploy/verify_health_sha.py \
             "$GITHUB_SHA" "https://mielenosoitukset.fi/health" \
+            --origin-verified-sha "${{ steps.deploy_origin.outputs.verified_sha }}" \
             --attempts 15 --delay 2 --timeout 10

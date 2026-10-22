@@ -91,6 +91,10 @@ def test_production_deploy_contract_is_sha_bound():
     assert "PRODUCTION_HEALTH_SOCKET" in deploy_script
     assert "https://mielenosoitukset.fi/health" in workflow
     assert "--unix-socket" not in workflow
+    assert "id: deploy_origin" in workflow
+    assert 'echo "verified_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"' in workflow
+    assert '--origin-verified-sha "${{ steps.deploy_origin.outputs.verified_sha }}"' in workflow
+    assert workflow.index('"deploy $GITHUB_SHA"') < workflow.index('echo "verified_sha=')
     assert "?deploy=" not in workflow
     assert 'restrict,command="' in documentation
     assert "no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty" in documentation
@@ -207,3 +211,81 @@ def test_verifier_distinguishes_empty_from_omitted_socket(monkeypatch, capsys, s
     else:
         assert verify_health_sha.main() == 0
         assert probes == [None]
+
+
+@pytest.mark.parametrize("status,challenge,body,origin_proof,expected", [
+    (403, True, "private challenge body", True, 0),
+    (403, True, "private challenge body", False, 1),
+    (403, False, "private denied body", True, 1),
+    (503, True, "private unavailable body", True, 1),
+    (200, False, '{"status":"ok","build_sha":"' + SHA + '"}', True, 0),
+    (200, False, '{"status":"ok","build_sha":"' + OLD_SHA + '"}', True, 1),
+    (200, False, '{"status":"unhealthy","build_sha":"' + SHA + '"}', True, 1),
+    (200, False, 'not JSON', True, 1),
+    (None, False, '', True, 1),
+])
+def test_public_challenge_warning_requires_verified_origin(
+    monkeypatch, capsys, status, challenge, body, origin_proof, expected
+):
+    from urllib.error import URLError
+
+    def response(*_args, **_kwargs):
+        if status is None:
+            raise URLError("private network failure")
+        if status != 200:
+            raise HTTPError("https://private.invalid/?secret=redact", status, "Error", {
+                "cf-mitigated": "challenge" if challenge else "other",
+            }, io.BytesIO(body.encode()))
+        return io.BytesIO(body.encode())
+
+    monkeypatch.setattr(verify_health_sha, "urlopen", response)
+    args = ["verify", SHA, "https://example.test/health", "--attempts", "1"]
+    if origin_proof:
+        args.extend(["--origin-verified-sha", SHA])
+    monkeypatch.setattr("sys.argv", args)
+    assert verify_health_sha.main() == expected
+    captured = capsys.readouterr()
+    warning = status == 403 and challenge and origin_proof
+    assert ("::warning::" in captured.out) == warning
+    if warning:
+        assert "public reachability is NOT verified" in captured.out
+        assert "serving expected build" not in captured.out
+    assert "private" not in captured.out + captured.err
+    assert "secret" not in captured.out + captured.err
+
+
+@pytest.mark.parametrize("proof,url,extra", [
+    (OLD_SHA, "https://example.test/health", []),
+    ("", "https://example.test/health", []),
+    (SHA, "http://example.test/health", []),
+    (SHA, "https://user:password@example.test/health", []),
+    (SHA, "https://example.test/health", ["--unix-socket", "/example/app.sock"]),
+])
+def test_public_origin_receipt_must_match_expected_https_build(monkeypatch, proof, url, extra):
+    monkeypatch.setattr(verify_health_sha, "wait_for_build", lambda *_a, **_k: pytest.fail("Invalid receipt probed"))
+    monkeypatch.setattr("sys.argv", ["verify", SHA, url, "--origin-verified-sha", proof, *extra])
+    with pytest.raises(SystemExit) as error:
+        verify_health_sha.main()
+    assert error.value.code == 2
+
+
+@pytest.mark.parametrize("first_body", [
+    '{"status":"ok","build_sha":"' + OLD_SHA + '"}',
+    '{"status":"unhealthy","build_sha":"' + SHA + '"}',
+])
+def test_later_challenge_cannot_hide_previous_bad_public_health(monkeypatch, capsys, first_body):
+    responses = iter([io.BytesIO(first_body.encode()), None])
+
+    def response(*_args, **_kwargs):
+        payload = next(responses)
+        if payload is not None:
+            return payload
+        raise HTTPError("https://example.test/health", 403, "Forbidden", {
+            "cf-mitigated": "challenge",
+        }, io.BytesIO(b"challenge"))
+
+    monkeypatch.setattr(verify_health_sha, "urlopen", response)
+    monkeypatch.setattr("sys.argv", ["verify", SHA, "https://example.test/health",
+        "--origin-verified-sha", SHA, "--attempts", "2", "--delay", "0"])
+    assert verify_health_sha.main() == 1
+    assert "::warning::" not in capsys.readouterr().out

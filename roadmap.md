@@ -1,6 +1,6 @@
 # Repository roadmap
 
-Last reconciled: 2026-10-19. Verified merge baseline: `main` at `3c8665ab`; PRs #929–#941 and #943–#945 are merged. #941's production evidence remains separately recorded below. Open #942/#946 are not part of this baseline.
+Last reconciled: 2026-10-22. Verified merge baseline: `main` at `63c85eae`; PRs #929–#941, #943–#945 and #947 are merged. #941's production evidence remains separately recorded below. Open #942/#946 are not part of this baseline.
 
 This is the delivery plan for the **whole repository**: security, public and admin workflows, backend correctness, operations, privacy, localization, tests, and maintenance. Issue [#833](https://github.com/botsarefuture/mielenosoitukset_fi/issues/833) is one workstream within it. Existing issue trackers retain their detailed acceptance criteria; this document sets the order and dependencies.
 
@@ -8,7 +8,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
-- **Next:** Finish functional/user-visible reliability work, including the verified profile-avatar request loop (#581 / DATA-05a). #944/#945 are merged via3c8665ab; do not repeat them. #942 awaits current-head review after passing CI; #946 is a separate bounded passkey-state fix awaiting checks. Continue incremental authorized merges at validated boundaries.
+- **Next:** Deliver owner-requested OPS-04a health-probe fix: verified origin remains mandatory; explicit Cloudflare challenge becomes a warning, not a false deploy failure. Final #942 integration includes #946 and has passing current-head CI; review/normal merge remains pending. #947 is already merged. Continue ordinary functional/user-visible work after these bounded delivery tasks, not speculative edge-case expansion.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Verified release checkpoint:** #941 merged as `e6383141`; final required CI passed 1,370 tests with 325 skips. Public HTTPS and direct Gunicorn health probes both verify that exact running build; pre-existing tracked server overlays are byte-preserved. Automatic deploy run39149112591 remains failed because its public probe hit Cloudflare403; independent runtime verification is not a green-workflow claim. Authenticated production visual acceptance is not claimed.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
@@ -120,7 +120,7 @@ Test review runs alongside each milestone. Operations and privacy planning may p
 - [ ] **DATA-03 · P2:** Review analytics accuracy/access/pagination (#551), large admin overview queries, and demonstration slow-query evidence from TODO.md. Establish measurement before index changes.
 - [ ] **DATA-04 · P1:** Verify email queue retries/idempotency, outgoing case reply history (#771), background job leadership and external service failure handling (#176). Define redacted audit metadata separately from user message retention.
 - [ ] **DATA-05 · P1:** Investigate image failure/retry/rate-limit reports (#579/#580/#581) and Socket.IO reconnect behavior (#640). Bound retries and prove failure recovery without request storms.
-  - **DATA-05a · P1 · In progress · Codex · #581 / codex/profile-image-fallback:** Active profile and follower-list image handlers reassign the same CDN fallback on every error. Disable the handler before the one fallback attempt; no retry framework or backoff needed for this permanent-failure path. One individually assessed real-render/Chromium definition covers fallback success and failure across all three avatar instances. Broader preview/Cloudflare/Socket.IO diagnosis remains separate; no production rate-limit claim.
+  - **DATA-05a · P1 · Merged · Codex · #947 / #581 / codex/profile-image-fallback:** Handler is disabled before the one fallback attempt, stopping repeated CDN requests. Exact-head required CI passed before normal merge63c85eae; both new browser cases executed locally, not proven by CI skips. One individually assessed definition covers fallback success/failure across all three avatar instances. Broader preview/Cloudflare/Socket.IO diagnosis remains separate; no production rate-limit claim.
 - [ ] **DATA-06 · P2:** Reconcile module TODO issues (#391/#392/#393/#394), user settings/configuration requests (#196/#226), invitation user creation (#387), and other open backend PRs. Inspect their current diff and dependencies before scheduling implementation.
 
 ### Product and shared UI
@@ -152,6 +152,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 - [ ] **OPS-02 · P1:** Conduct authorized isolated application/mail/full-service recovery exercises; record RPO/RTO, dependency order, rollback and reproducible server construction.
 - [ ] **OPS-03 · P2:** Review released Web Vitals only after minimum sample thresholds; correlate route/device percentiles with controlled measurements. Verify alert routing and job/email latency coverage.
 - [ ] **OPS-04 · P1:** Maintain exact-build deployment/rollback and CDN dependency contracts. Production, provider, credential, backup-policy, DNS and database mutations follow their established approval scope.
+  - **OPS-04a · P1 · In progress · Codex · codex/deploy-cloudflare-health:** Owner requested fixing false deploy failures from Cloudflare. Trusted SSH/socket verification must succeed before its exact-SHA receipt permits an initial explicit403 challenge to become a warning. Public reachability remains unverified in that case; ordinary errors, wrong SHA, missing/mismatched origin receipt and later challenges masking prior bad responses still fail. No WAF/TLS/auth weakening or server configuration edits. Focused CLI/workflow tests and deployment documentation define the changed gate.
 
 ### Privacy and audit architecture
 
@@ -170,7 +171,7 @@ The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–
 
 **Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
 
-The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Branch **`codex/profile-image-fallback`** on main `3c8665ab` has **1,170 definitions across 161 files**, with **265 assessed definitions**. Independent #942/#946 are excluded until integration; retain all reviews. These are tracked-Python AST branch counts, not collected cases, completed suite review or release evidence. Older per-branch counts remain historical. The two test-named fixtures are excluded and assessed separately. Audit fixtures, CI, standalone scripts and browser harnesses too.
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**: 992 under `tests/` and five in the standalone recurrence script. Branch **`codex/deploy-cloudflare-health`** on main `63c85eae` has **1,173 definitions across 161 files**, with **268 assessed definitions**. Independent #942/#946 are excluded until integration; retain all reviews. These are tracked-Python AST branch counts, not collected cases, completed suite review or release evidence. Older per-branch counts remain historical. The two test-named fixtures are excluded and assessed separately. Audit fixtures, CI, standalone scripts and browser harnesses too.
 
 For each test, record:
 

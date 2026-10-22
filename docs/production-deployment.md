@@ -26,14 +26,23 @@ used, and transport still stays on the local plain-HTTP Unix socket. This does
 not downgrade the independent public HTTPS check or disable its TLS verification.
 No TCP listener, TLS bypass, authentication bypass or firewall exception is added.
 
-GitHub Actions retains the independent public HTTPS/build-SHA check. A
-Cloudflare challenge makes that check fail with an explicit `HTTP 403
-(Cloudflare challenge)` diagnostic rather than being confused with a stale
-worker. If bot protection blocks it, operators must configure a narrowly scoped
-Cloudflare exception for the health probe (GET `/health` on the production
-hostname, limited to the necessary challenge rule), not disable site-wide WAF
-or bot protection. No exception is installed by this code change. The public
-probe remains a release gate until it can return the expected SHA.
+GitHub Actions retains the independent public HTTPS/build-SHA check. Only after
+the trusted SSH deployment command succeeds does the origin step publish its
+verified SHA as a step output. The public verifier receives that receipt through
+`--origin-verified-sha`; it must exactly match the requested build and cannot be
+used for socket, plain-HTTP or credentialed URL probes.
+
+With that receipt, an initial HTTP 403 response bearing `cf-mitigated: challenge`
+produces a GitHub warning rather than failing a verified origin deployment.
+The warning explicitly says that public reachability is **not verified**; it is
+not evidence of a successful public health response. A challenge after an earlier
+bad/stale response still fails. Normal 403/5xx, network/TLS errors, invalid health
+metadata and a wrong SHA remain failures. Without the origin receipt, challenges
+remain failures too. The default server/socket verification stays strict.
+
+No Cloudflare exception, site-wide WAF change, TLS bypass, extra credential or
+public authentication bypass is installed. Public/browser release acceptance
+remains separate when the CDN prevents the automated probe.
 
 Index provisioning runs as `python3 -m
 mielenosoitukset_fi.scripts.provision_public_indexes` before the reload, not

@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/profile-image-fallback` on main `3c8665ab`, 2026-10-19: 161 Python test files; 1,170 definitions; 265 assessed definitions. Independent #942/#946 additions are excluded until integration. These are branch-tree counts, not counts for a later integrated main. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/deploy-cloudflare-health` on main `63c85eae`, 2026-10-22: 161 Python test files; 1,173 definitions; 268 assessed definitions. Independent #942/#946 additions are excluded until integration. These are branch-tree counts, not counts for a later integrated main. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -906,6 +906,17 @@ The combined moderation/translation/organizer/city-scope run passes 57 cases aft
 - [x] `test_verifier_passes_socket_while_waiting_for_new_worker`
 - [x] `test_verifier_rejects_unsupported_or_credentialed_socket_urls`
 - [x] `test_verifier_distinguishes_empty_from_omitted_socket`
+- [x] `test_public_challenge_warning_requires_verified_origin`
+- [x] `test_public_origin_receipt_must_match_expected_https_build`
+- [x] `test_later_challenge_cannot_hide_previous_bad_public_health`
+
+OPS-04a · P1 · Codex · 2026-10-22, main63c85eae. Three new individually assessed definitions /sixteen cases. All40 focused deploy cases pass; YAML/every workflow run-step Bash syntax, deploy Bash syntax and diff checks pass. Seven-file local CodeRabbit review completed with zero findings (subsequent tracker/evidence text excluded). Existing SHA-bound deployment contract also verifies the output receipt is emitted after SSH succeeds and passed into the public verifier, not an unconditional success override. Transport responses are controlled urllib outcomes; these tests do not prove an actual GitHub SSH command or live Cloudflare policy. Origin socket tests continue to use a real local HTTP socket server. No deployment/browser release acceptance claim.
+
+| Definition | Purpose / setup / assertions | Reliability / coverage / disposition |
+|---|---|---|
+| `test_public_challenge_warning_requires_verified_origin` | Nine CLI cases: explicit403 challenge with/without matching origin, normal403,503 with challenge header, correct/stale/unhealthy/invalid200 payload and network failure. Only proven-origin challenge warns; no URL/body leakage or false public-SHA success message. | Real CLI/parsing/retry/response handling with mocked urllib transport; no live CDN. Keep. |
+| `test_public_origin_receipt_must_match_expected_https_build` | Five malformed/unsafe receipt combinations reject before probing: different/empty SHA, HTTP, URL credentials and socket mode. | Sentinel probe would fail if validation accidentally continued. Not an authentication proof: receipt comes from trusted workflow step output. Keep. |
+| `test_later_challenge_cannot_hide_previous_bad_public_health` | Stale or unhealthy200 followed by explicit challenge remains failure without warning. | Two ordered transport sequences, actual parser/CLI and no sleeps. Ensures exemption cannot erase observed app failures; no general CDN diagnosis. Keep. |
 
 OPS / QA-01 review, 2026-10-16, Codex, P1. Base `9098c02a`; passed focused validation:
 `pytest -o addopts='' -q tests/test_deploy_build_sha.py` (24 cases),

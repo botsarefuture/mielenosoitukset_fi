@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Production deploys no longer fail solely on an explicit Cloudflare health-probe challenge after the exact origin build was verified. The public check reports a warning; application errors, stale builds and unverified origins still fail.
+
 - Profile and follower-list avatars try their fallback image only once; a failed fallback no longer triggers a repeated request loop.
 
 - Roadmap now specifies multi-day demonstration support, city-admin notifications/review countdowns and urgent Telegram alerts that update after processing, including explicit timing, escalation, privacy and acceptance tests. These are planned, not shipped features.

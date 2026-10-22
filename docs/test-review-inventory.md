@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Integration of `codex/demo-rollback-preservation` with main `fcb6a295` (#950 included) and exact #946 head `e7490ab7`, 2026-10-22: 163 Python test files; 1,201 definitions; 296 assessed definitions. All merged reviews, twenty-six #942 definitions and both #946 definitions are retained. These are integration-tree counts, not completed review/release acceptance; #942/#946 are not yet merged. Older per-branch/run counts below are historical evidence only.
+Integration of `codex/demo-rollback-preservation` with main `fcb6a295` (#950 included) and exact #946 head `e7490ab7`, 2026-10-22: 164 Python test files; 1,202 definitions; 297 assessed definitions. All merged reviews, twenty-six #942 definitions, both #946 definitions and the CI compatibility guard are retained. These are integration-tree counts, not completed review/release acceptance; #942/#946 are not yet merged. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -13,6 +13,12 @@ Use the roadmap's P0–P3 policy and status vocabulary. Initial review status fo
 - [x] `test_profile_image_failure_uses_fallback_once`
 
 DATA-05 · P1 · #581 · Codex · 2026-10-19. One definition /two browser cases. Actual public profile GET renders the main avatar and both follower-list macro instances from real seeded Mongo data. Chromium executes those handlers; controlled HTTP404 image responses exercise original failure, with successful or failed fallback. Assertions cover all three images, handler removal, completed fallback and decoded success/failure, and bounded source/fallback requests (coalescing permitted). Both cases failed before the fix; all9 combined fallback/profile-editor cases pass afterward. Local five-file review completed with one Major test-fixture finding: scrolling a closed-modal avatar may fail when modal CSS loads. Removed scrolling and use eager loading independently of visibility. App template/DOM/handlers are real, external image delivery is simulated; no production Cloudflare, network recovery/backoff, visual design or general image-surface acceptance claim. Keep; targets the current confirmed loop without retry-framework expansion.
+
+## tests/test_ci_runtime_contract.py
+
+- [x] `test_mongo_compatible_runner_keeps_database_and_required_suite`
+
+OPS-04b / QA-05 · P1 · Codex · 2026-10-22. The real YAML job remains python-tests on explicit Ubuntu 22, MongoDB 8 and Python 3.12; static assertions retain all four services, Chromium, unconditional pytest and failing health/test gates. No fixtures or mocked responses. One focused case, YAML/every Bash-step syntax and diff checks pass. Six-file local review completed with zero findings (later prose formatting/evidence excluded). This cannot prove hosted kernel/service availability or successful integration tests; real CI is required. Keep as a narrow migration guard; update it only with documented compatible-runner evidence before 2027-04-17, not to erase a failed suite. No test definitions removed/skipped and no production DB/OS changes.
 
 ## Supporting audit — tests/conftest.py
 

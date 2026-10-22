@@ -13777,3 +13777,10 @@ msgstr "Leveransen av ändringshistoriken väntar. Detta raderingsförsök lycka
 # User deletion history-delivery feedback
 msgid "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."
 msgstr "Användaren ändrades samtidigt. Detta raderingsförsök lyckades inte. Verifiera din identitet innan du försöker igen."
+
+# Demo deletion conflict and uncertain-outcome feedback
+msgid "Mielenosoitusta muutettiin samanaikaisesti. Päivitä sivu ja yritä uudelleen."
+msgstr "Demonstrationen ändrades samtidigt. Uppdatera sidan och försök igen."
+
+msgid "Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä."
+msgstr "Resultatet av raderingen kunde inte bekräftas. Kontrollera demonstrationens status innan du försöker igen."

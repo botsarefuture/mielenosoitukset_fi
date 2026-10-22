@@ -193,6 +193,67 @@ def test_recurring_cleanup_retains_pending_rollback_until_delivery(
     assert [action["action"] for action in repeat_v2.runtime_actions] == ["delete"]
 
 
+@pytest.mark.parametrize("mode,locale", [("json", "fi"), ("form", "fi"), ("json", "en"), ("json", "sv")])
+@pytest.mark.parametrize("stage", ["receipt", "backup", "delete", "conflict", "history", "phase"])
+def test_demo_delete_failures_preserve_response_format_and_localized_guidance(
+    app, admin_client, db, seeded_data, monkeypatch, mode, locale, stage
+):
+    app.config.update(BABEL_PUBLIC_LOCALES=["fi", "en", "sv"])
+    with admin_client.session_transaction() as session:
+        session["locale"] = locale
+    demo_id = seeded_data["demo_id"]
+    before = db.demonstrations.find_one({"_id": demo_id})
+    collection_type = type(db.demonstrations)
+    original_insert = collection_type.insert_one
+    original_update = collection_type.update_one
+    original_delete = collection_type.find_one_and_delete
+
+    def insert(collection, *args, **kwargs):
+        if (stage == "backup" and collection.name == "demo_delete_backups") or (stage == "history" and collection.name == "demo_edit_history"):
+            raise RuntimeError("synthetic write outage")
+        return original_insert(collection, *args, **kwargs)
+
+    def update(collection, *args, **kwargs):
+        if stage == "phase" and collection.name == "demo_delete_backups":
+            raise RuntimeError("synthetic phase outage")
+        return original_update(collection, *args, **kwargs)
+
+    def delete(collection, query, *args, **kwargs):
+        if collection.name == "demonstrations":
+            if stage == "delete":
+                raise RuntimeError("synthetic delete acknowledgement outage")
+            if stage == "conflict":
+                original_update(collection, {"_id": demo_id}, {"$set": {"title": "Newer content"}})
+        return original_delete(collection, query, *args, **kwargs)
+
+    if stage == "receipt":
+        _patch_demo_handler(monkeypatch, admin_client, "admin_demo.delete_demo", "flush_rollback_history", lambda *_args: False)
+    monkeypatch.setattr(collection_type, "insert_one", insert)
+    monkeypatch.setattr(collection_type, "update_one", update)
+    monkeypatch.setattr(collection_type, "find_one_and_delete", delete)
+    kwargs = {"json" if mode == "json" else "data": {"demo_id": str(demo_id)}}
+    response = admin_client.post("/admin/demo/delete_demo", **kwargs)
+    conflict = stage == "conflict"
+    assert response.status_code == (409 if conflict else 503)
+    assert response.is_json == (mode == "json")
+    if mode == "json":
+        messages = {
+            "fi": ("Mielenosoitusta muutettiin samanaikaisesti. Päivitä sivu ja yritä uudelleen.",
+                   "Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä."),
+            "en": ("The demonstration changed concurrently. Refresh the page and try again.",
+                   "The deletion outcome could not be confirmed. Check the demonstration's status before trying again."),
+            "sv": ("Demonstrationen ändrades samtidigt. Uppdatera sidan och försök igen.",
+                   "Resultatet av raderingen kunde inte bekräftas. Kontrollera demonstrationens status innan du försöker igen."),
+        }
+        assert response.get_json() == {"status": "ERROR", "message": messages[locale][0 if conflict else 1]}
+    after = db.demonstrations.find_one({"_id": demo_id})
+    if stage in {"history", "phase"}:
+        assert after is None
+        assert db.demo_delete_backups.find_one({})["preimage"] == before
+    else:
+        assert after == ({**before, "title": "Newer content"} if conflict else before)
+
+
 def test_delete_conflict_does_not_record_successful_deletion(
     admin_client, db, seeded_data, monkeypatch
 ):

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Demonstration deletion now returns localized JSON for conflict and uncertain/pending outcomes to JSON callers, preserving real HTTP409/503 codes and advising users to check state before retrying an unconfirmed deletion.
+
 - Demo merge now checks the complete primary snapshot before replacement, preserving concurrent cancellation or editor-access changes even when their timestamp did not change. Swedish rollback guidance now explicitly names the event's cancellation status.
 
 - Deletion keeps an exact recovery pre-image until history is acknowledged; merge failures retain confirmed progress instead of claiming completion after failed follow-up/history writes. Unresolved recovery remains explicit rather than silently losing deleted content.

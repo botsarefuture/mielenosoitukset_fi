@@ -13597,3 +13597,10 @@ msgstr "Change history delivery is pending. This deletion attempt did not succee
 # User deletion history-delivery feedback
 msgid "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."
 msgstr "The user was changed concurrently. This deletion attempt did not succeed. Verify your identity before trying again."
+
+# Demo deletion conflict and uncertain-outcome feedback
+msgid "Mielenosoitusta muutettiin samanaikaisesti. Päivitä sivu ja yritä uudelleen."
+msgstr "The demonstration changed concurrently. Refresh the page and try again."
+
+msgid "Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä."
+msgstr "The deletion outcome could not be confirmed. Check the demonstration's status before trying again."

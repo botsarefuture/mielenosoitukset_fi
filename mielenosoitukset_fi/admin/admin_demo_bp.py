@@ -4642,6 +4642,17 @@ def delete_demo():
     """Delete a demonstration from the database."""
     json_mode = request.headers.get("Content-Type") == "application/json"
 
+    def fail_deletion(status):
+        """Keep the caller's response contract without claiming a safe retry."""
+        if json_mode:
+            message = (
+                _("Mielenosoitusta muutettiin samanaikaisesti. Päivitä sivu ja yritä uudelleen.")
+                if status == 409 else
+                _("Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä.")
+            )
+            return jsonify({"status": "ERROR", "message": message}), status
+        abort(status)
+
     # Extract demo_id from either form data or JSON body
     demo_id = request.form.get("demo_id")
     if not demo_id and json_mode and request.json:
@@ -4668,7 +4679,7 @@ def delete_demo():
     _abort_if_demo_forbidden(demo_data["_id"], "DELETE_DEMO")
 
     if not flush_rollback_history(mongo, demo_data["_id"]):
-        abort(503)
+        return fail_deletion(503)
     demo_data.pop(PENDING_ROLLBACK_HISTORY, None)
 
     # Preserve a recovery copy before deletion. The complete-snapshot guard
@@ -4682,7 +4693,7 @@ def delete_demo():
         }).inserted_id
     except Exception as error:
         logger.warning("Deletion backup unavailable (%s)", type(error).__name__)
-        abort(503)
+        return fail_deletion(503)
 
     def set_delete_phase(phase, **values):
         update = {"$set": {"phase": phase, **values}}
@@ -4707,10 +4718,10 @@ def delete_demo():
     except Exception:
         # The server may have applied the write before an acknowledgement was
         # lost. Retain the pre-write copy and leave the outcome explicitly unknown.
-        abort(503)
+        return fail_deletion(503)
     if deleted is None:
         set_delete_phase("conflict", state="not_applied")
-        abort(409)
+        return fail_deletion(409)
     try:
         history_id = record_demo_change(
             demo_id,
@@ -4723,9 +4734,9 @@ def delete_demo():
         history_id = None
     if history_id is None:
         set_delete_phase("history_pending")
-        abort(503)
+        return fail_deletion(503)
     if not set_delete_phase("completed", state="completed", history_id=history_id):
-        abort(503)
+        return fail_deletion(503)
 
     success_message = "Mielenosoitus poistettu onnistuneesti."
     if json_mode:

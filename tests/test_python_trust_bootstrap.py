@@ -1,8 +1,11 @@
 """Offline bootstrap contract tests; no claim about real certificate-chain validation."""
 import os
+import hashlib
 from pathlib import Path
+import ssl
 import subprocess
 
+import certifi
 import pytest
 import yaml
 
@@ -14,6 +17,14 @@ PIP_REQUIREMENT = (
     "pip-26.2.2-py3-none-any.whl#sha256="
     "fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70"
 )
+
+
+def test_installed_certifi_distrusts_compromised_emsign_root():
+    # Public root fingerprint confirmed from the pre-update certifi bundle.
+    compromised_sha256 = "86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b"
+    roots = ssl.create_default_context(cafile=certifi.where()).get_ca_certs(binary_form=True)
+    assert roots, "An empty or invalid trust store is not a successful remediation"
+    assert compromised_sha256 not in {hashlib.sha256(root).hexdigest() for root in roots}
 
 
 @pytest.mark.parametrize("exit_code", [0, 17])

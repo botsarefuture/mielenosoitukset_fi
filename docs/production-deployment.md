@@ -95,17 +95,30 @@ updates if present (minimums 0.13.4, 4.5.1 and 0.82.1 respectively).
 
 Production inspection on 2026-10-22 found `/usr/bin/python3`, distro-owned pip
 24.0 using `/etc/ssl/certs/ca-certificates.crt`, and separately installed certifi
-2026.2.25 under `/usr/local`. PEP668 rejected the direct pip upgrade without
-changing packages. Do not silently use `--break-system-packages` or overwrite
-distro pip: update the OS certificate package through apt and explicitly plan
-the app's externally managed dependency installation/virtual-environment migration.
-The version check alone does not establish whether a distro-patched pip trusts
-affected roots. Production certificate remediation and worker reload remain
-unverified; this PR must not be merged for automatic deployment until that
-environment is prepared. It is not evidence of live remediation.
+2026.2.25 under `/usr/local`. PEP668 rejected the initial direct pip upgrade
+without changing packages. Subsequent verification against
+[Canonical's notice](https://ubuntu.com/blog/emudhra-ca-compromise-fixes-available)
+confirmed installed ca-certificates20260816ubuntu0.24.04.1 is already fixed;
+the actual system/pip bundle excludes the affected roots. This distro-patched
+pip is not equivalent to an upstream pip24 bundle and was not overwritten.
+
+The separately installed certifi did contain the affected emSign root. After
+checking the exact package location, lack of dpkg ownership, and patched pip CA,
+its package and metadata were backed up under root-only `/var/backups`, then
+only certifi was upgraded with `--no-deps --break-system-packages` to2026.10.19.
+This was an explicit, bounded operational exception for a known pip-owned
+`/usr/local` package, not a generic PEP668 bypass policy. Reinspection confirmed
+the affected root absent, followed by graceful reload and active/status:ok at
+the unchanged fcb6a295 build. This verifies this application/system trust-store
+scope, not every host/container/virtual environment or possible TLS override.
 
 The production deploy installer is deliberately unchanged in this draft, rather
 than introducing a known-failing bootstrap on distro-owned pip. Its existing
 checkout-diff installation gate also needs a focused retry test: after an install
 failure, retrying the same SHA must not skip the failed dependency installation.
 Resolve this with the environment preparation before release, not a PEP668 bypass.
+Track the supported install contract, runtime drift and same-SHA retry in #952.
+Do not merge this dependency-pin change for automatic deployment until that path
+is prepared: installed boto3/botocore, Flask, Flask-Cors, flask-socketio and pymongo
+also differ from repository pins. A broad reinstall could overwrite unrelated
+runtime changes; this emergency remediation deliberately did not do that.

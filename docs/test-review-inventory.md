@@ -2,13 +2,17 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/python-ca-security` on main `fcb6a295`, 2026-10-22: 162 Python test files; 1,175 definitions; 270 assessed definitions. Independent #942/#946 additions are excluded until integration. These are branch-tree counts, not counts for a later integrated main. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/python-ca-security` on main `fcb6a295`, 2026-10-22: 162 Python test files; 1,176 definitions; 271 assessed definitions. Independent #942/#946 additions are excluded until integration. These are branch-tree counts, not counts for a later integrated main. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
 Use the roadmap's P0–P3 policy and status vocabulary. Initial review status for every entry is Backlog; assign an owner and justified priority when triaging it. A discovered security/core-workflow defect can escalate immediately, regardless of its review batch.
 
 ## tests/test_python_trust_bootstrap.py
+
+- [x] `test_installed_certifi_distrusts_compromised_emsign_root`
+
+P1 trust-store advisory · Codex · 2026-10-22. Real installed certifi bundle is parsed by OpenSSL through the stdlib SSL context; nonempty trusted roots must exclude the exact SHA256 of the affected emSign ECC G3 root. Fingerprint independently extracted from the backed-up production pre-update certifi2026.2.25 bundle; old live bundle had the root, updated bundle does not. No network/mocks or version-only success assertion. Keep as a concrete trust-store regression; does not prove adversarial TLS handshakes, intermediate/cross-sign revocation or arbitrary client CA overrides.
 
 - [x] `test_bootstrap_uses_hashed_wheel_and_propagates_failure`
 

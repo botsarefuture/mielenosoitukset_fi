@@ -7,6 +7,7 @@ from uuid import uuid4
 import smtplib
 
 from bson import ObjectId
+from bson.errors import InvalidId
 from pymongo import ASCENDING, ReturnDocument
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
@@ -95,7 +96,13 @@ def _eligible_messages(db, job):
         "initial_submission", "admin_pending_reminder", "city_assignment",
     }:
         return messages
-    demo = db.demonstrations.find_one({"_id": job.get("demo_id")})
+    demo_id = job.get("demo_id")
+    if isinstance(demo_id, str):
+        try:
+            demo_id = ObjectId(demo_id)
+        except InvalidId:
+            return None
+    demo = db.demonstrations.find_one({"_id": demo_id})
     if not demo or any(demo.get(key) for key in ("approved", "rejected", "cancelled", "in_past")):
         return None
     if job.get("notification_type") == "city_assignment":
@@ -171,7 +178,7 @@ def _pending_admin_job_exists(queue, demo_id: ObjectId, cutoff: datetime) -> boo
     return bool(
         queue.find_one(
             {
-                "demo_id": demo_id,
+                "demo_id": {"$in": [demo_id, str(demo_id)]},
                 "marks_admin_contact": True,
                 "$or": [
                     {"status": {"$in": ["pending", "processing", "delivery_unknown"]}},

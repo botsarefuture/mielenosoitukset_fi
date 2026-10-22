@@ -29,8 +29,11 @@ def worker(db, monkeypatch):
     return script, clock, sent, job_id, demo_id
 
 
-def test_retry_resumes_after_recorded_delivery_and_observes_cooldown(db, monkeypatch, worker):
+@pytest.mark.parametrize("string_id", [False, True])
+def test_retry_resumes_after_recorded_delivery_and_observes_cooldown(db, monkeypatch, worker, string_id):
     script, clock, sent, job_id, demo_id = worker
+    if string_id:
+        db.demo_notifications_queue.update_one({"_id": job_id}, {"$set": {"demo_id": str(demo_id)}})
 
     def deliver(job, **kwargs):
         sent.append(job.subject)
@@ -44,6 +47,7 @@ def test_retry_resumes_after_recorded_delivery_and_observes_cooldown(db, monkeyp
     assert job["status"] == "error"
     assert job["attempts"] == 1
     assert job["delivered_indices"] == [0]
+    assert script._pending_admin_job_exists(db.demo_notifications_queue, demo_id, clock[0])
     assert db.demonstrations.find_one({"_id": demo_id}).get("admin_notification_last_sent_at") is None
     clock[0] += timedelta(seconds=59)
     script.run()
@@ -136,11 +140,13 @@ def test_lost_owner_cannot_acknowledge_or_send_the_next_message(db, monkeypatch,
     assert db.demonstrations.find_one({"_id": demo_id}).get("admin_notification_last_sent_at") is None
 
 
-@pytest.mark.parametrize("state", ["approved", "rejected", "cancelled", "in_past", "deleted"])
+@pytest.mark.parametrize("state", ["approved", "rejected", "cancelled", "in_past", "deleted", "invalid_id"])
 def test_resolved_moderation_is_not_replayed(db, worker, state):
     script, clock, sent, job_id, demo_id = worker
     if state == "deleted":
         db.demonstrations.delete_one({"_id": demo_id})
+    elif state == "invalid_id":
+        db.demo_notifications_queue.update_one({"_id": job_id}, {"$set": {"demo_id": "invalid"}})
     else:
         db.demonstrations.update_one({"_id": demo_id}, {"$set": {state: True}})
     script.run()

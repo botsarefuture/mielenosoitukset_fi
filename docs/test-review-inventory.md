@@ -605,7 +605,7 @@ DATA-04a/P1/#954 · Codex · 2026-10-22. Shared `worker` fixture uses the existi
 
 - [x] `test_retry_resumes_after_recorded_delivery_and_observes_cooldown`
 
-First mail succeeds, second gets SMTP DATA refusal, then succeeds. Asserts first receipt survives, no contact on partial failure, no retry at59 seconds, retry at60, exact send sequence/attempts/completed cumulative count/contact and cleared failure/claim fields. Keep; old worker cannot recover error or retain per-message progress.
+Two cases: BSON and string demo identifiers. First mail succeeds, second gets SMTP DATA refusal, then succeeds. Asserts first receipt survives, reminder blocker/no contact on partial failure, no retry at59 seconds, retry at60, exact send sequence/attempts/completed cumulative count/contact and cleared failure/claim fields. Keep; old worker cannot recover error or retain per-message progress. String case protects the existing contact helper's compatibility contract even though current producers use BSON identifiers.
 
 - [x] `test_retries_are_bounded_and_reminders_do_not_bypass_cooldown`
 
@@ -625,7 +625,7 @@ SMTP double changes actual Mongo ownership during first send. Asserts replacemen
 
 - [x] `test_resolved_moderation_is_not_replayed`
 
-Five cases: approved, rejected, cancelled, in_past, deleted. Actual demo writes precede dispatch; asserts no sends and cancelled job. Keep; not an atomic decision-vs-SMTP race test.
+Six cases: approved, rejected, cancelled, in_past, deleted and invalid queued identifier. Actual demo/job writes precede dispatch; asserts no sends and cancelled job. Keep; not an atomic decision-vs-SMTP race test.
 
 - [x] `test_city_retry_intersects_current_grants_and_original_recipients`
 

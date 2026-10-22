@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/merge-editor-test-assessment` integrated with main `a5f256b7`, 2026-10-22: 164 Python test files; 1,202 definitions; 300 assessed definitions. Three local merge-editor assessments and every merged review are retained. Unmerged #951/#953 additions are excluded until integration. Documentation-only assessment adds no test definitions or runtime behavior; these are branch-tree counts, not completed suite review or release evidence. Older per-branch/run counts remain historical evidence only.
+Branch `codex/merge-editor-test-assessment` integrated with main `a5f256b7`, 2026-10-22: 164 Python test files; 1,202 definitions; 304 assessed definitions. Three local merge-editor and four public-detail assessments plus every merged review are retained. Unmerged #951/#953 additions are excluded until integration. Documentation-only assessment adds no test definitions or runtime behavior; these are branch-tree counts, not completed suite review or release evidence. Older per-branch/run counts remain historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1629,13 +1629,23 @@ Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-requ
 
 ## tests/test_public_detail_invite_contract.py
 
-- [ ] `test_detail_invite_dialog_uses_safe_dom_rendering_and_app_feedback`
-- [ ] `test_detail_invite_dialog_has_translated_visible_copy`
+- [x] `test_detail_invite_dialog_uses_safe_dom_rendering_and_app_feedback`
+
+QA-03/UI-01/#833 · P2 · Codex · 2026-10-22. Reads actual template source, no mocks/browser. Positive ratchets cover live status, safe name text nodes, avatar append, cleared results, disabled sending, guarded JSON/error parsing and shared success feedback; targeted negative checks reject the old native alert and one exact innerHTML interpolation form in the invite function. Manual inspection confirms these calls are on the current handler path. Keep as a cheap source contract, not demonstrated XSS resistance or end-to-end invitation behavior: equivalent formatting, dead code or a different unsafe sink could evade/falsely fail it. Actual DOM/injection, stale loading/reopen, network failure, authorization/CSRF, focus and invite delivery are not exercised; schedule focused behavioral coverage rather than claiming those from this pass.
+
+- [x] `test_detail_invite_dialog_has_translated_visible_copy`
+
+QA-03/I18N-01/#833 · P2 · Codex · 2026-10-22. Four literal gettext-wrapped labels checked in actual source. Keep as extraction/wrapping ratchet; no FI/EN/SV catalog, locale selection, rendered translation, disabled state or full-copy inventory evidence. No fixture and no translation mock; exact whitespace/quote sensitivity is an explicit limitation. Complements but cannot replace locale-render tests.
 
 ## tests/test_public_detail_like_guard.py
 
-- [ ] `test_optional_like_controls_are_guarded_in_every_entrypoint`
-- [ ] `test_cancelled_detail_omits_like_controls_without_page_errors`
+- [x] `test_optional_like_controls_are_guarded_in_every_entrypoint`
+
+QA-03/UI-01/#833 · P2 · Codex · 2026-10-22. Actual source contains guards for handler, anonymous hover setup, toggle/get callbacks (exact count2) and count animation. Manual current-code inspection confirms guards precede dereferences. Keep only as a small structural ratchet paired with the executed canceled-detail case: source existence/count alone does not prove order, reachability or every future entrypoint, and equivalent refactoring may require updating the test.
+
+- [x] `test_cancelled_detail_omits_like_controls_without_page_errors`
+
+QA-03/UI-01/#833 · P1 regression · Codex · 2026-10-22. Real seeded Mongo/Flask live HTTP and Chromium, anonymous desktop Finnish viewport with external requests blocked by the fixture. Marks the actual demo canceled, asserts omitted like controls and visible cancellation explanation, then explicitly invokes all four current callbacks (awaiting async ones). Page-evaluate exceptions fail the test; pageerror assertion targets the reported null-dereference text, not all possible browser errors. Executed locally (not skipped), all4 file cases pass. Keep: meaningful missing-control regression, not authenticated behavior, successful like mutation, full browser error absence, mobile/theme visuals or backend cancellation-policy proof. Fixed250ms wait and narrow error text are robustness follow-ups; explicit callback execution provides the principal deterministic assertion. Browser fixture may skip when unavailable, so CI skips cannot establish this executed coverage.
 
 ## tests/test_public_follow_feedback_contract.py
 

@@ -18,6 +18,10 @@ from urllib.request import Request, urlopen
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 
 
+class CloudflareChallenge(RuntimeError):
+    """The public probe is challenged, not an application health response."""
+
+
 class UnixHTTPConnection(http.client.HTTPConnection):
     """Connect directly to Gunicorn without proxies, DNS or a CDN."""
 
@@ -40,7 +44,10 @@ def _report_http_failure(status: int, headers) -> None:
     print(f"Health probe returned HTTP {status}{challenge}.", file=sys.stderr)
 
 
-def fetch_build_sha(url: str, timeout: float, *, unix_socket: str | None = None) -> str | None:
+def fetch_build_sha(
+    url: str, timeout: float, *, unix_socket: str | None = None,
+    detect_challenge: bool = False,
+) -> str | None:
     """Read a healthy worker's build SHA, or return ``None`` on failure."""
     request = Request(
         url,
@@ -76,6 +83,8 @@ def fetch_build_sha(url: str, timeout: float, *, unix_socket: str | None = None)
                 payload = json.load(response)
     except HTTPError as exc:
         _report_http_failure(exc.code, exc.headers)
+        if detect_challenge and exc.code == 403 and (exc.headers or {}).get("cf-mitigated") == "challenge":
+            raise CloudflareChallenge() from None
         return None
     except (
         URLError, TimeoutError, json.JSONDecodeError, UnicodeDecodeError,
@@ -101,11 +110,21 @@ def wait_for_build(
     delay: float,
     timeout: float,
     unix_socket: str | None = None,
+    detect_challenge: bool = False,
 ) -> bool:
     """Return true once at least one worker reports ``expected_sha``."""
     for attempt in range(1, attempts + 1):
         options = {"unix_socket": unix_socket} if unix_socket else {}
-        observed_sha = fetch_build_sha(url, timeout, **options)
+        if detect_challenge:
+            options["detect_challenge"] = True
+        try:
+            observed_sha = fetch_build_sha(url, timeout, **options)
+        except CloudflareChallenge:
+            # A later challenge must not erase an earlier unhealthy/stale or
+            # failed public response. Only a challenged first probe is exempt.
+            if attempt > 1:
+                return False
+            raise
         if observed_sha == expected_sha:
             print(f"Health endpoint is serving expected build {expected_sha}.")
             return True
@@ -129,6 +148,10 @@ def main() -> int:
     parser.add_argument("expected_sha")
     parser.add_argument("url")
     parser.add_argument("--unix-socket", help="Probe Gunicorn directly over this origin socket")
+    parser.add_argument(
+        "--origin-verified-sha",
+        help="SHA already verified over the trusted origin transport; only an explicit public Cloudflare challenge becomes a warning",
+    )
     parser.add_argument("--attempts", type=int, default=30)
     parser.add_argument("--delay", type=float, default=2)
     parser.add_argument("--timeout", type=float, default=5)
@@ -144,15 +167,31 @@ def main() -> int:
         target = urlsplit(args.url)
         if target.scheme not in ("http", "https") or not target.netloc or target.username or target.password:
             parser.error("--unix-socket requires an HTTP(S) URL without credentials")
+    if args.origin_verified_sha is not None:
+        target = urlsplit(args.url)
+        if args.origin_verified_sha != args.expected_sha:
+            parser.error("--origin-verified-sha must match expected_sha")
+        if args.unix_socket is not None or target.scheme != "https" or not target.netloc or target.username or target.password:
+            parser.error("--origin-verified-sha requires a public HTTPS URL without credentials, not a socket probe")
 
-    if wait_for_build(
-        args.expected_sha,
-        args.url,
-        attempts=args.attempts,
-        delay=args.delay,
-        timeout=args.timeout,
-        unix_socket=args.unix_socket,
-    ):
+    options = {"detect_challenge": True} if args.origin_verified_sha is not None else {}
+    try:
+        if wait_for_build(
+            args.expected_sha,
+            args.url,
+            attempts=args.attempts,
+            delay=args.delay,
+            timeout=args.timeout,
+            unix_socket=args.unix_socket,
+            **options,
+        ):
+            return 0
+    except CloudflareChallenge:
+        print(
+            "::warning::Cloudflare challenged the public health probe. "
+            f"Origin already verified build {args.origin_verified_sha}; "
+            "public reachability is NOT verified by this run."
+        )
         return 0
     print(
         f"Health endpoint never served expected build {args.expected_sha}.",

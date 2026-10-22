@@ -2,11 +2,47 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/python-ca-security` on main `fcb6a295`, 2026-10-22: 162 Python test files; 1,176 definitions; 271 assessed definitions. Independent #942/#946 additions are excluded until integration. These are branch-tree counts, not counts for a later integrated main. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/deploy-dependency-receipt` on #951 at4c535735, 2026-10-22: 163 Python test files; 1,184 definitions; 279 assessed definitions. Now-merged #942/#946 additions are excluded from this branch until main integration. These are branch-tree counts, not counts for a later integrated main. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
 Use the roadmap's P0–P3 policy and status vocabulary. Initial review status for every entry is Backlog; assign an owner and justified priority when triaging it. A discovered security/core-workflow defect can escalate immediately, regardless of its review batch.
+
+## tests/test_deploy_dependencies.py
+
+Supporting fixture `deployment`: real isolated Git repository with serving-baseline and already-advanced target commits, real build-marker/receipt files. Installed package metadata and venv classification are simulated explicitly; no service, production interpreter, network or package mutation is implied.
+
+- [x] `test_readonly_legacy_adopts_verified_delta_without_downgrading_drift`
+
+OPS-04c/P1/#952 · 2026-10-22 · Codex. Actual Git lookup and0600 receipt I/O, fake metadata for newer unchanged Flask and already-correct certifi. Installer is a failing sentinel. Verifies exact manifest/managed-pin distinction, diagnostic drift, idempotent recheck and rejection when certifi regresses despite matching receipt. Keep; not approval of legacy drift or live deployment proof.
+
+- [x] `test_failed_same_checkout_retry_requires_install_until_success`
+
+OPS-04c/P1/#952. Actual target checkout already advanced, fake owned-venv install fails once then updates simulated metadata. No receipt after failure; same target retries all required initial pins, acknowledges only success, then skips package writes. Keep; actual pip/venv mutation is simulated and companion command test covers sequencing.
+
+- [x] `test_failed_delta_keeps_previous_receipt_until_same_sha_retry_succeeds`
+
+OPS-04c/P1/#952. Existing acknowledgement, next manifest delta, one injected installer failure. Asserts byte-preserved previous receipt, exact repeated changed-pin request, then accumulated managed-pin acknowledgement. Keep; complements missing-receipt retry and distinguishes checkout state from installation success. No actual subprocess failure or power-loss durability claim.
+
+- [x] `test_dependency_gate_fails_closed`
+
+OPS-04c/P1/#952. Seven cases: system mutation refusal, missing serving baseline, runtime mismatch, truncated JSON, unsupported manifest, successful-but-ineffective installer, and atomic replace failure. Actual Git/receipt I/O plus targeted metadata/installer/replace doubles. Asserts prior receipt unchanged/absent, no unauthorized package-write call and temporary-file cleanup. Keep; not exhaustive filesystem fault, permissions/ownership or concurrency acceptance.
+
+- [x] `test_production_manifest_requires_unambiguous_exact_pins`
+
+OPS-04c/P1/#952. Five pure-parser cases reject empty, range, canonical duplicate, wildcard and direct URL syntax. Keep as explicit manifest contract; this is deliberately not a general PEP508 parser or dependency resolver.
+
+- [x] `test_production_dependency_gate_precedes_index_reload_and_health`
+
+OPS-04c/P1/#952. Actual script source contract asserts removal of checkout-diff skip, helper before index/reload and consistent interpreter for helper/index/health. Keep as cheap ordering ratchet; no executed systemd, shell control-flow or successful worker-reload claim.
+
+- [x] `test_repository_requirements_follow_deployment_pin_contract`
+
+OPS-04c/P1/#952. Parses the actual checked-in runtime requirements rather than a synthetic fixture, requiring the core Flask/certifi entries to survive normalization. Keep to catch unsupported syntax before deploy. Independent manual parse of exact serving baselinea5f256b7 confirmed all26 baseline pins supported; target has27. No claim that arbitrary historical manifests or general pip syntax are supported.
+
+- [x] `test_owned_install_bootstraps_then_installs_and_checks_without_system_bypass`
+
+OPS-04c/P1/#952. Three command-recorder cases cover success and failures at bootstrap/install. Exact argv/check=True and ordered-prefix assertions ensure failure halts subsequent work, hash-bootstrap precedes index install and no automatic system-bypass flag is used. Keep; subprocess execution is mocked, not network/TLS/pip-check acceptance. Actual bootstrap subprocess/hash-wheel contract remains separately assessed.
 
 ## tests/test_python_trust_bootstrap.py
 

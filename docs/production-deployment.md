@@ -5,8 +5,8 @@ The workflow connects with a dedicated SSH credential and invokes
 `deploy/production_deploy.sh` on the server with the exact merged commit SHA.
 
 The server script serializes deployments, refuses stale SHAs, fast-forwards the
-production checkout, installs dependencies only when `requirements.txt`
-changed, provisions the public pagination index before worker startup,
+production checkout, verifies dependency deltas against an installation receipt,
+provisions the public pagination index before worker startup,
 atomically records the deployed commit in `.deploy-build-sha`, and asks
 systemd/Gunicorn for a graceful reload. Existing workers keep serving while
 replacements start. Each worker captures that commit when its Flask app starts,
@@ -112,13 +112,50 @@ the affected root absent, followed by graceful reload and active/status:ok at
 the unchanged fcb6a295 build. This verifies this application/system trust-store
 scope, not every host/container/virtual environment or possible TLS override.
 
-The production deploy installer is deliberately unchanged in this draft, rather
-than introducing a known-failing bootstrap on distro-owned pip. Its existing
-checkout-diff installation gate also needs a focused retry test: after an install
-failure, retrying the same SHA must not skip the failed dependency installation.
-Resolve this with the environment preparation before release, not a PEP668 bypass.
-Track the supported install contract, runtime drift and same-SHA retry in #952.
-Do not merge this dependency-pin change for automatic deployment until that path
-is prepared: installed boto3/botocore, Flask, Flask-Cors, flask-socketio and pymongo
-also differ from repository pins. A broad reinstall could overwrite unrelated
-runtime changes; this emergency remediation deliberately did not do that.
+## Dependency installation contract (#952)
+
+`deploy/install_dependencies.py` replaces the checkout-diff skip gate. Deploy
+invokes it on every attempt, before index provisioning, build marker and reload.
+Its atomically replaced 0600 receipt defaults to
+`/var/lib/mielenosoitukset-fi-deploy/dependencies.json` in a 0700 parent, outside
+the application-owned checkout. Keep this state directory root-owned.
+`PRODUCTION_DEPENDENCY_RECEIPT` can select an equally protected location.
+
+- Existing distro/system Python is **read-only**: on first adoption, the previous
+  `.deploy-build-sha` manifest establishes the serving dependency baseline, never
+  the already-advanced checkout. Missing/invalid baseline fails closed. Changed
+  pins are checked against actual installed metadata. Already-correct certifi
+  can therefore be acknowledged without replacing distro pip or reinstalling
+  unrelated boto3/Flask/pymongo drift. Unchanged legacy drift is printed and
+  preserved, not claimed to satisfy repository pins.
+- Subsequent attempts compare the target manifest with the last acknowledged
+  manifest. All previously managed pins are rechecked too, including when the
+  manifest itself is unchanged. A failed install, validation or receipt write
+  does not advance acknowledgement; the same SHA must retry that work.
+- Needed package writes require an application-owned virtual environment. A
+  fresh venv verifies/installs the full manifest; later updates install only the
+  changed/missing managed pins. Hash-verified pip bootstrapping, pip install and
+  pip check must succeed, followed by exact installed-version verification,
+  before acknowledgement. Only plain exact package pins are supported; unknown
+  requirement syntax fails before pip rather than being guessed.
+- `PRODUCTION_PYTHON` selects the interpreter (default `python3`) consistently
+  for dependency verification, index provisioning and health verification. When
+  migrating, configure Gunicorn to use that **same application environment**
+  before claiming runtime acceptance; selecting a deploy interpreter alone
+  does not move the serving workers. A receipt from another runtime is rejected;
+  provision a separate receipt path with the new environment.
+- Removed requirements are not automatically uninstalled; neither are unknown
+  server packages. Resolve historical drift individually before a full venv
+  migration. This contract is not a reproducible environment lockfile or a
+  claim that all inherited package versions are approved/current.
+
+Before first production adoption, inspect the exact helper/target manifest,
+previous verified build marker, interpreter, and reported drift under the deploy
+lock. Preserve the existing service and server overlays. Verify changed pins
+and receipt, then normal graceful reload/exact-SHA health. Do not automatically
+retry through PEP668 or turn a failed install into a successful deployment.
+Operational rollback keeps the old environment and receipt available; select
+its matching interpreter/receipt and verified application revision. Do not point
+an old code revision at unverified newly installed dependencies. This helper is
+implemented/tested on the branch; actual production receipt adoption and venv
+migration remain unverified until performed and recorded separately.

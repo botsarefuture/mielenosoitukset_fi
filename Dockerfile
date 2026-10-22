@@ -11,6 +11,7 @@ WORKDIR /app
 # Install runtime dependencies for wkhtmltopdf
 RUN apt-get -o Acquire::ForceIPv4=true update \
     && apt-get -o Acquire::ForceIPv4=true install -y --no-install-recommends \
+    ca-certificates \
     git \
     libfontconfig1 \
     libfreetype6 \
@@ -27,9 +28,11 @@ RUN apt-get -o Acquire::ForceIPv4=true update \
 
 # Copy requirements first for better caching
 COPY requirements.txt .
+COPY deploy/bootstrap_python_trust.sh deploy/bootstrap_python_trust.sh
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN bash deploy/bootstrap_python_trust.sh python \
+    && python -m pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .

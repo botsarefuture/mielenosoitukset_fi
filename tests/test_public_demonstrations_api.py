@@ -181,4 +181,4 @@ def test_public_index_provisioning_is_not_part_of_route_import(monkeypatch):
     provision_public_indexes.main()
     assert calls == [database]
     script = Path('deploy/production_deploy.sh').read_text()
-    assert script.index('python3 -m mielenosoitukset_fi.scripts.provision_public_indexes') < script.index('systemctl reload')
+    assert script.index('"$production_python" -m mielenosoitukset_fi.scripts.provision_public_indexes') < script.index('systemctl reload')

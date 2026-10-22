@@ -7,6 +7,8 @@ service_name="${PRODUCTION_SERVICE_NAME:-mielenosoitukset_fi}"
 health_url="${PRODUCTION_HEALTH_URL:-http://mielenosoitukset.fi/health}"
 health_socket="${PRODUCTION_HEALTH_SOCKET:-${repo_dir}/mielenosoitus.sock}"
 build_sha_file="${PRODUCTION_BUILD_SHA_FILE:-${repo_dir}/.deploy-build-sha}"
+production_python="${PRODUCTION_PYTHON:-python3}"
+dependency_receipt="${PRODUCTION_DEPENDENCY_RECEIPT:-/var/lib/mielenosoitukset-fi-deploy/dependencies.json}"
 expected_sha="${1:-}"
 
 if [[ ! "$expected_sha" =~ ^[0-9a-f]{40}$ ]]; then
@@ -23,7 +25,6 @@ flock -w 300 9 || {
 cd "$repo_dir"
 git config --global --add safe.directory "$repo_dir" >/dev/null 2>&1 || true
 
-old_sha="$(git rev-parse HEAD)"
 stash_ref=""
 
 restore_local_changes() {
@@ -51,9 +52,8 @@ fi
 git switch main
 git merge --ff-only "$expected_sha"
 
-if ! git diff --quiet "$old_sha" "$expected_sha" -- requirements.txt; then
-  python3 -m pip install --disable-pip-version-check --requirement requirements.txt
-fi
+"$production_python" "$repo_dir/deploy/install_dependencies.py" \
+  --repo "$repo_dir" --receipt "$dependency_receipt" --baseline-sha-file "$build_sha_file"
 
 if ! restore_local_changes; then
   trap - EXIT
@@ -65,7 +65,7 @@ chown -R www-data:www-data "$repo_dir"
 
 # Index builds are synchronous even with background=True. Finish the
 # idempotent provisioning step while old workers still serve traffic.
-python3 -m mielenosoitukset_fi.scripts.provision_public_indexes
+"$production_python" -m mielenosoitukset_fi.scripts.provision_public_indexes
 
 # New workers capture this value while creating their Flask application. Write
 # it atomically so an existing worker can never observe a partial SHA. Existing
@@ -80,7 +80,7 @@ mv -f "$build_sha_tmp" "$build_sha_file"
 systemctl reload "$service_name"
 
 if systemctl is-active --quiet "$service_name" && \
-   python3 "$repo_dir/deploy/verify_health_sha.py" \
+   "$production_python" "$repo_dir/deploy/verify_health_sha.py" \
      "$expected_sha" "$health_url" --unix-socket "$health_socket" \
      --attempts 30 --delay 2 --timeout 5; then
   echo "Deployed ${expected_sha} with a verified graceful worker reload."

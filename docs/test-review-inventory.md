@@ -2,11 +2,61 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/merge-editor-test-assessment` integrated with main `a5f256b7`, 2026-10-22: 164 Python test files; 1,202 definitions; 304 assessed definitions. Three local merge-editor and four public-detail assessments plus every merged review are retained. Unmerged #951/#953 additions are excluded until integration. Documentation-only assessment adds no test definitions or runtime behavior; these are branch-tree counts, not completed suite review or release evidence. Older per-branch/run counts remain historical evidence only.
+Branch `codex/merge-editor-test-assessment` integrated with main `8e6f0e2b`, 2026-10-22: 166 Python test files; 1,213 definitions; 316 assessed definitions. Three merge-editor and four public-detail assessments plus every merged review, including #951/#953, are retained. Open #955 recovery additions are excluded until integration. Documentation-only assessment adds no test definitions or runtime behavior; these are branch-tree counts, not completed suite review or release evidence. Older per-branch/run counts remain historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
 Use the roadmap's P0–P3 policy and status vocabulary. Initial review status for every entry is Backlog; assign an owner and justified priority when triaging it. A discovered security/core-workflow defect can escalate immediately, regardless of its review batch.
+
+## tests/test_deploy_dependencies.py
+
+Supporting fixture `deployment`: real isolated Git repository with serving-baseline and already-advanced target commits, real build-marker/receipt files. Installed package metadata and venv classification are simulated explicitly; no service, production interpreter, network or package mutation is implied.
+
+- [x] `test_readonly_legacy_adopts_verified_delta_without_downgrading_drift`
+
+OPS-04c/P1/#952 · 2026-10-22 · Codex. Actual Git lookup and0600 receipt I/O, fake metadata for newer unchanged Flask and already-correct certifi. Installer is a failing sentinel. Verifies exact manifest/managed-pin distinction, diagnostic drift, idempotent recheck and rejection when certifi regresses despite matching receipt. Keep; not approval of legacy drift or live deployment proof.
+
+- [x] `test_failed_same_checkout_retry_requires_install_until_success`
+
+OPS-04c/P1/#952. Actual target checkout already advanced, fake owned-venv install fails once then updates simulated metadata. No receipt after failure; same target retries all required initial pins, acknowledges only success, then skips package writes. Keep; actual pip/venv mutation is simulated and companion command test covers sequencing.
+
+- [x] `test_failed_delta_keeps_previous_receipt_until_same_sha_retry_succeeds`
+
+OPS-04c/P1/#952. Existing acknowledgement, next manifest delta, one injected installer failure. Asserts byte-preserved previous receipt, exact repeated changed-pin request, then accumulated managed-pin acknowledgement. Keep; complements missing-receipt retry and distinguishes checkout state from installation success. No actual subprocess failure or power-loss durability claim.
+
+- [x] `test_dependency_gate_fails_closed`
+
+OPS-04c/P1/#952. Seven cases: system mutation refusal, missing serving baseline, runtime mismatch, truncated JSON, unsupported manifest, successful-but-ineffective installer, and atomic replace failure. Actual Git/receipt I/O plus targeted metadata/installer/replace doubles. Asserts prior receipt unchanged/absent, no unauthorized package-write call and temporary-file cleanup. Keep; not exhaustive filesystem fault, permissions/ownership or concurrency acceptance.
+
+- [x] `test_production_manifest_requires_unambiguous_exact_pins`
+
+OPS-04c/P1/#952. Five pure-parser cases reject empty, range, canonical duplicate, wildcard and direct URL syntax. Keep as explicit manifest contract; this is deliberately not a general PEP508 parser or dependency resolver.
+
+- [x] `test_production_dependency_gate_precedes_index_reload_and_health`
+
+OPS-04c/P1/#952. Actual script source contract asserts removal of checkout-diff skip, helper before index/reload and consistent interpreter for helper/index/health. Keep as cheap ordering ratchet; no executed systemd, shell control-flow or successful worker-reload claim.
+
+- [x] `test_repository_requirements_follow_deployment_pin_contract`
+
+OPS-04c/P1/#952. Parses the actual checked-in runtime requirements rather than a synthetic fixture, requiring the core Flask/certifi entries to survive normalization. Keep to catch unsupported syntax before deploy. Independent manual parse of exact serving baselinea5f256b7 confirmed all26 baseline pins supported; target has27. No claim that arbitrary historical manifests or general pip syntax are supported.
+
+- [x] `test_owned_install_bootstraps_then_installs_and_checks_without_system_bypass`
+
+OPS-04c/P1/#952. Three command-recorder cases cover success and failures at bootstrap/install. Exact argv/check=True and ordered-prefix assertions ensure failure halts subsequent work, hash-bootstrap precedes index install and no automatic system-bypass flag is used. Keep; subprocess execution is mocked, not network/TLS/pip-check acceptance. Actual bootstrap subprocess/hash-wheel contract remains separately assessed.
+
+## tests/test_python_trust_bootstrap.py
+
+- [x] `test_installed_certifi_distrusts_compromised_emsign_root`
+
+P1 trust-store advisory · Codex · 2026-10-22. Real installed certifi bundle is parsed by OpenSSL through the stdlib SSL context; nonempty trusted roots must exclude the exact SHA256 of the affected emSign ECC G3 root. Fingerprint independently extracted from the backed-up production pre-update certifi2026.2.25 bundle; old live bundle had the root, updated bundle does not. No network/mocks or version-only success assertion. Keep as a concrete trust-store regression; does not prove adversarial TLS handshakes, intermediate/cross-sign revocation or arbitrary client CA overrides.
+
+- [x] `test_bootstrap_uses_hashed_wheel_and_propagates_failure`
+
+P1 trust-store advisory · Codex · 2026-10-22. Two subprocess cases execute the actual Bash bootstrap with a fake interpreter whose path contains spaces. Exact argv proves the upstream wheel/version/SHA256, no-cache upgrade and preserved argument boundaries; exit17 proves installation failure is propagated. No network or pip mock internals; does not establish the remote wheel's authenticity or exercise pip's hash verifier. Separate actual local installation succeeded at pip26.2.2/certifi2026.10.19. Keep as an offline command contract, not TLS-chain or production remediation proof.
+
+- [x] `test_dependency_entrypoints_bootstrap_before_index_install`
+
+P1 trust-store advisory · Codex · 2026-10-22. Parses actual CI YAML and reads Docker/requirements sources. Checks bootstrap ordering before index installs, Docker copy/dependency chaining/OS CA package and exact certifi pin. No Docker, SSH, apt or live workflow execution; source-string assertions are deliberately a small ratchet, not integration evidence. Keep; pair with runtime version checks and real image rebuild/deployment acceptance.
 
 ## tests/test_profile_image_fallback.py
 
@@ -148,7 +198,7 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Disposable MongoDB, seeded real de
 - [x] `test_restricted_admin_cannot_open_merge_editor`
 - [x] `test_merge_editor_has_no_legacy_page_specific_ui_layer`
 
-QA-03a / SEC-04c support · P2 · Codex · 2026-10-22 · main fcb6a295. Each existing definition reviewed against its source, actual route guards and fixtures. All three focused cases pass; documentation diff checks pass. No tests or product behavior changed; these are narrow structural/access guards, not complete merge acceptance. New #942 rollback/recovery assessments remain on that separate branch until integration. Existing admin fixture injects an authenticated session and disposable Mongo data; primary-login/reauth flows are not exercised here.
+QA-03a / SEC-04c support · P2 · Codex · 2026-10-22 · main8e6f0e2b. Each existing definition reviewed against its source, actual route guards and fixtures. All three focused cases pass; documentation diff checks pass. No tests or product behavior changed; these are narrow structural/access guards, not complete merge acceptance. Merged #942/#946 rollback/recovery assessments are retained separately in this inventory. Existing admin fixture injects an authenticated session and disposable Mongo data; primary-login/reauth flows are not exercised here.
 
 | Definition | Requirement, setup and assertions | Reliability, limits and needed follow-up | Disposition |
 |---|---|---|---|
@@ -1608,7 +1658,9 @@ Earlier filter/history regressions now also execute the real bundled picker and 
 
 ## tests/test_public_demonstrations_api.py
 
-- [ ] `test_public_index_provisioning_is_not_part_of_route_import`
+- [x] `test_public_index_provisioning_is_not_part_of_route_import`
+
+OPS-04c/P1/#953 review correction · Codex · 2026-10-22. Existing definition: parses real route AST to forbid direct named index-helper calls, invokes the real provisioning entrypoint with fake DatabaseManager/database and a recorded ensure callback, then checks actual deployment source ordering before reload. Verified failure before change: hardcoded python3 literal raised ValueError after configurable interpreter was introduced. Updated only that literal; job callback/order assertions remain. Keep as lightweight structural/entrypoint coverage; no actual index creation, module-import side-effect absence through every alias, executed systemd or production order proof. No added definition or runtime change.
 - [x] `test_public_demonstrations_list_uses_summary_payload`
 - [x] `test_public_pages_have_chronological_tie_breaks_and_filtered_counts`
 - [x] `test_public_page_metadata_handles_empty_and_out_of_range`

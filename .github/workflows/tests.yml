@@ -25,7 +25,9 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        run: |
+          bash deploy/bootstrap_python_trust.sh python
+          python -m pip install -r requirements-dev.txt
 
       - name: Install Chromium for Playwright
         run: python -m playwright install --with-deps chromium

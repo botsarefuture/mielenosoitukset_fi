@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/deploy-dependency-receipt` on #951 at505b5eaa, including main `a5f256b7` (#942/#946 merged), 2026-10-22: 166 Python test files; 1,213 definitions; 308 assessed definitions. All merged reviews and three #951/eight #952 definitions are retained. These are branch-tree counts, not completed review or release acceptance for the pending dependency work. Older per-branch/run counts below are historical evidence only.
+Branch `codex/deploy-dependency-receipt` on #951 at505b5eaa, including main `a5f256b7` (#942/#946 merged), 2026-10-22: 166 Python test files; 1,213 definitions; 309 assessed definitions. All merged reviews, three #951/eight #952 definitions and the existing index-provisioning contract are retained. These are branch-tree counts, not completed review or release acceptance for the pending dependency work. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -1650,7 +1650,9 @@ Earlier filter/history regressions now also execute the real bundled picker and 
 
 ## tests/test_public_demonstrations_api.py
 
-- [ ] `test_public_index_provisioning_is_not_part_of_route_import`
+- [x] `test_public_index_provisioning_is_not_part_of_route_import`
+
+OPS-04c/P1/#953 review correction · Codex · 2026-10-22. Existing definition: parses real route AST to forbid direct named index-helper calls, invokes the real provisioning entrypoint with fake DatabaseManager/database and a recorded ensure callback, then checks actual deployment source ordering before reload. Verified failure before change: hardcoded python3 literal raised ValueError after configurable interpreter was introduced. Updated only that literal; job callback/order assertions remain. Keep as lightweight structural/entrypoint coverage; no actual index creation, module-import side-effect absence through every alias, executed systemd or production order proof. No added definition or runtime change.
 - [x] `test_public_demonstrations_list_uses_summary_payload`
 - [x] `test_public_pages_have_chronological_tie_breaks_and_filtered_counts`
 - [x] `test_public_page_metadata_handles_empty_and_out_of_range`

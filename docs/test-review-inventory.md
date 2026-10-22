@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/deploy-dependency-receipt` on #951 at505b5eaa, including main `a5f256b7` (#942/#946 merged), 2026-10-22: 166 Python test files; 1,213 definitions; 309 assessed definitions. All merged reviews, three #951/eight #952 definitions and the existing index-provisioning contract are retained. These are branch-tree counts, not completed review or release acceptance for the pending dependency work. Older per-branch/run counts below are historical evidence only.
+Branch `codex/submission-notification-retries` on main `8e6f0e2b`, 2026-10-22: 167 Python test files; 1,222 definitions; 322 assessed definitions. Retains all merged #951/#953 assessments; adds nine recovery definitions and four existing notification/reminder assessments. Local-only assessments on `codex/merge-editor-test-assessment` remain preserved there, not counted here. These are branch-tree counts, not full roadmap review or release acceptance. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -583,10 +583,61 @@ QA-01c / SEC-05, P1, reviewed 2026-10-15 by Codex, main 9098c02a. Initially five
 - [ ] `test_submit_duplicate_conflict_can_match_existing_translation_title`
 - [ ] `test_conflict_api_can_match_existing_translation_title`
 - [ ] `test_merge_duplicate_submissions_repoints_references_and_audits`
-- [ ] `test_process_submit_notifications_sends_admin_notifications_immediately`
-- [ ] `test_process_submit_notifications_marks_job_error_when_delivery_fails`
-- [ ] `test_admin_pending_reminder_ignores_old_completed_notifications`
-- [ ] `test_admin_pending_reminder_keeps_recent_completed_notifications_as_blockers`
+- [x] `test_process_submit_notifications_sends_admin_notifications_immediately`
+
+DATA-04a/P1/#954 · Codex · 2026-10-22. Real Mongo queued job and demo; SMTP double records the actual EmailJob, reminder/merge jobs disabled. Asserts completed receipt, one message, original recipient, raise-on-error and persisted admin contact. Keep as compatibility check; not live SMTP or scheduler execution.
+
+- [x] `test_process_submit_notifications_marks_job_error_when_delivery_fails`
+
+DATA-04a/#954. Real Mongo, known pre-acceptance SMTPConnectError double containing private-looking text. Asserts retryable error, class-only error metadata, attempt/cooldown, no sending marker and no admin contact. Replaced unsafe raw-error expectation, not error detection. Keep; ambiguous post-acceptance errors have separate coverage.
+
+- [x] `test_admin_pending_reminder_ignores_old_completed_notifications`
+
+DATA-04a/#954. Isolated actual queue/demo/submitter documents; 25-hour-old completed initial job and future date, bearer generators doubled. Asserts a pending reminder with exact subject. Keep; detects old-completion suppression, not exact 24-hour boundary, valid token generation or simultaneous enqueue uniqueness.
+
+- [x] `test_admin_pending_reminder_keeps_recent_completed_notifications_as_blockers`
+
+DATA-04a/#954. Real Mongo, stale demo contact but two-hour-old completed reminder; link generators doubled. Asserts queue remains one reminder. Keep as complement to old-completion case; not a concurrent enqueuer or exact-cutoff test.
+
+## tests/test_submission_notification_recovery.py
+
+DATA-04a/P1/#954 · Codex · 2026-10-22. Shared `worker` fixture uses the existing isolated real Mongo test database, clears only its notification queue, controls UTC and disables unrelated merge/reminder jobs. Actual Jinja rendering; SMTP is always mocked. No live delivery, production scheduler or exactly-once guarantee. Each definition below is individually assessed; parameter groups include every case.
+
+- [x] `test_retry_resumes_after_recorded_delivery_and_observes_cooldown`
+
+First mail succeeds, second gets SMTP DATA refusal, then succeeds. Asserts first receipt survives, no contact on partial failure, no retry at59 seconds, retry at60, exact send sequence/attempts/completed cumulative count/contact and cleared failure/claim fields. Keep; old worker cannot recover error or retain per-message progress.
+
+- [x] `test_retries_are_bounded_and_reminders_do_not_bypass_cooldown`
+
+Known connect refusal with private-looking text on every attempt; advances controlled clock to stored due time. Checks each attempt, class-only metadata, reminder blocker, exact five-attempt ceiling even when due, and reminder eligibility after25h. Keep; no SMTP server behavior or exact daily cutoff claim.
+
+- [x] `test_stale_claim_recovery_distinguishes_smtp_ambiguity`
+
+Three cases: fresh599-second claim unchanged,600-second pre-send claim recovers,600-second in-send claim quarantined. Asserts actual send list/status and unknown blocker/claim removal. Keep; tests lease boundary without sleeps, not real process killing.
+
+- [x] `test_ambiguous_smtp_failure_is_not_automatically_replayed`
+
+SMTP disconnect double includes private-looking text. Runs again two days later, asserting one attempted send, unknown state, class-only error and no delivered index. Keep; protects against accidental blanket-error retries, does not establish whether SMTP accepted the message.
+
+- [x] `test_lost_owner_cannot_acknowledge_or_send_the_next_message`
+
+SMTP double changes actual Mongo ownership during first send. Asserts replacement claim/status retained, no receipt, no second send or admin-contact write. Keep; deterministic ownership interleaving, not a genuine multiprocess test or prevention of already-started SMTP.
+
+- [x] `test_resolved_moderation_is_not_replayed`
+
+Five cases: approved, rejected, cancelled, in_past, deleted. Actual demo writes precede dispatch; asserts no sends and cancelled job. Keep; not an atomic decision-vs-SMTP race test.
+
+- [x] `test_city_retry_intersects_current_grants_and_original_recipients`
+
+Four cases: active, revoked, escalated and cleared assignment. Actual job/assignment, permission lookup doubled with original/new users; records exact SMTP recipients. Only still-assigned active queued address receives mail; others cancel. Keep; actual grant query integration is in existing city-assignment tests, not proven by this lookup double.
+
+- [x] `test_failed_database_acknowledgement_quarantines_possible_delivery`
+
+Injects failure only at delivery-receipt write after successful SMTP double. Two runs assert one send, unknown status and retained sending index. Keep; actual other Mongo writes, simulated receipt outage, not full DB/power-loss fault tolerance.
+
+- [x] `test_legacy_unreceipted_failures_need_reconciliation`
+
+Two cases: old error and stale processing without protocol version. Asserts no sends and unknown state. Keep; prevents unsafe assumptions about historical partial delivery, not an automated migration/reconciliation test.
 
 ## tests/test_browser_e2e.py
 

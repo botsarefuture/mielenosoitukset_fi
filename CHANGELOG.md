@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Submission notifications retry confirmed delivery failures with bounded backoff and retain per-message progress. Interrupted or ambiguous deliveries remain visible for reconciliation instead of blind replay; resolved moderation and revoked city-admin recipients are excluded on recovery.
+
 - Production deploys verify changed dependency pins and acknowledge them atomically only after success, so same-commit retries cannot skip failed installs. Existing system Python stays read-only and unrelated runtime drift is reported rather than silently downgraded; application-owned virtual environments use the hash-verified pip bootstrap.
 
 - Pin certifi 2026.10.19 and hash-verified pip 26.2.2 bootstrapping before CI and Docker dependency installation following the emSign CA incident. Existing production environments and container images still require separate remediation/rebuilding.

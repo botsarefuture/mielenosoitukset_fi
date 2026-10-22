@@ -1,5 +1,6 @@
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, timedelta
+import smtplib
 
 from bson import ObjectId
 from pymongo import DeleteMany, DeleteOne, InsertOne, ReplaceOne, UpdateMany, UpdateOne
@@ -480,7 +481,7 @@ def test_process_submit_notifications_marks_job_error_when_delivery_fails(db, mo
     )
 
     def fake_send_email(email_job, raise_on_error=False):
-        raise RuntimeError("smtp down")
+        raise smtplib.SMTPConnectError(421, "smtp down: private@example.test /token/secret")
 
     monkeypatch.setattr(script.email_sender, "send_email", fake_send_email)
     monkeypatch.setattr(script, "merge_duplicate_submissions", lambda db, max_groups=25: 0)
@@ -490,7 +491,10 @@ def test_process_submit_notifications_marks_job_error_when_delivery_fails(db, mo
 
     queue_job = db.demo_notifications_queue.find_one({"_id": job_id})
     assert queue_job["status"] == "error"
-    assert "smtp down" in queue_job["error"]
+    assert queue_job["error"] == "SMTPConnectError"
+    assert queue_job["attempts"] == 1
+    assert queue_job["next_attempt_at"] > queue_job["updated_at"]
+    assert "sending_index" not in queue_job
 
     demo = db.demonstrations.find_one({"_id": demo_id})
     assert demo.get("admin_notification_last_sent_at") is None

@@ -13689,6 +13689,10 @@ msgstr "Flytta eller ändra beskärningsområdets storlek. Flytta området med p
 msgid "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
 msgstr "Det gick inte att beskära bilden. Försök igen eller välj en annan bild."
 
+#: mielenosoitukset_fi/templates/admin/demonstrations/demo_diff.html
+msgid "Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan."
+msgstr "Endast evenemangsinnehåll som sparats i versionen återställs. Godkännande, status som inställt, synlighet, stad, arrangörer och behörigheter förblir oförändrade. Den genomförda ändringen sparas i historiken."
+
 # User account status and change history
 msgid "Muutoshistoria"
 msgstr "Ändringshistorik"
@@ -13773,3 +13777,10 @@ msgstr "Leveransen av ändringshistoriken väntar. Detta raderingsförsök lycka
 # User deletion history-delivery feedback
 msgid "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."
 msgstr "Användaren ändrades samtidigt. Detta raderingsförsök lyckades inte. Verifiera din identitet innan du försöker igen."
+
+# Demo deletion conflict and uncertain-outcome feedback
+msgid "Mielenosoitusta muutettiin samanaikaisesti. Päivitä sivu ja yritä uudelleen."
+msgstr "Demonstrationen ändrades samtidigt. Uppdatera sidan och försök igen."
+
+msgid "Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä."
+msgstr "Resultatet av raderingen kunde inte bekräftas. Kontrollera demonstrationens status innan du försöker igen."

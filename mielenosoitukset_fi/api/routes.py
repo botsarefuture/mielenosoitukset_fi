@@ -645,7 +645,9 @@ def get_unapproved_demonstrations():
 @api_bp.route("/admin/demonstrations/<demo_id>", methods=["GET"])
 @_token_or_session_required(required_scopes=["admin"], required_perms=["VIEW_DEMO"])
 def admin_get_demo_info(demo_id):
-    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    demo = mongo.demonstrations.find_one(
+        {"_id": ObjectId(demo_id)}, {"_pending_rollback_history": 0},
+    )
     if not demo:
         raise ApiException(Message("Demonstration not found", "demo_not_found"), 404)
     return jsonify(stringify_object_ids(demo)), 200

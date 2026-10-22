@@ -8,7 +8,10 @@ on:
 
 jobs:
   python-tests:
-    runs-on: ubuntu-latest
+    # MongoDB 8 rejects Linux 6.19–7.0.13 (SERVER-121912). The latest
+    # Ubuntu 24 runner rolled onto kernel 7.0.0 and cannot start the test DB.
+    # Keep the same DB/tests; revisit before Ubuntu 22 retires 2027-04-17.
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
 
     steps:

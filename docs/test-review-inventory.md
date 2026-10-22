@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/deploy-dependency-receipt` on #951 at4c535735, 2026-10-22: 163 Python test files; 1,184 definitions; 279 assessed definitions. Now-merged #942/#946 additions are excluded from this branch until main integration. These are branch-tree counts, not counts for a later integrated main. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/deploy-dependency-receipt` on #951 at505b5eaa, including main `a5f256b7` (#942/#946 merged), 2026-10-22: 166 Python test files; 1,213 definitions; 308 assessed definitions. All merged reviews and three #951/eight #952 definitions are retained. These are branch-tree counts, not completed review or release acceptance for the pending dependency work. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -63,6 +63,12 @@ P1 trust-store advisory · Codex · 2026-10-22. Parses actual CI YAML and reads 
 - [x] `test_profile_image_failure_uses_fallback_once`
 
 DATA-05 · P1 · #581 · Codex · 2026-10-19. One definition /two browser cases. Actual public profile GET renders the main avatar and both follower-list macro instances from real seeded Mongo data. Chromium executes those handlers; controlled HTTP404 image responses exercise original failure, with successful or failed fallback. Assertions cover all three images, handler removal, completed fallback and decoded success/failure, and bounded source/fallback requests (coalescing permitted). Both cases failed before the fix; all9 combined fallback/profile-editor cases pass afterward. Local five-file review completed with one Major test-fixture finding: scrolling a closed-modal avatar may fail when modal CSS loads. Removed scrolling and use eager loading independently of visibility. App template/DOM/handlers are real, external image delivery is simulated; no production Cloudflare, network recovery/backoff, visual design or general image-surface acceptance claim. Keep; targets the current confirmed loop without retry-framework expansion.
+
+## tests/test_ci_runtime_contract.py
+
+- [x] `test_mongo_compatible_runner_keeps_database_and_required_suite`
+
+OPS-04b / QA-05 · P1 · Codex · 2026-10-22. The real YAML job remains python-tests on explicit Ubuntu 22, MongoDB 8 and Python 3.12; static assertions retain all four services, Chromium, unconditional pytest and failing health/test gates. No fixtures or mocked responses. One focused case, YAML/every Bash-step syntax and diff checks pass. Six-file local review completed with zero findings (later prose formatting/evidence excluded). This cannot prove hosted kernel/service availability or successful integration tests; real CI is required. Keep as a narrow migration guard; update it only with documented compatible-runner evidence before 2027-04-17, not to erase a failed suite. No test definitions removed/skipped and no production DB/OS changes.
 
 ## Supporting audit — tests/conftest.py
 
@@ -806,6 +812,91 @@ SEC-04b / QA-01 supporting review, 2026-10-16, Codex, P1; only `test_explicit_ob
 - [ ] `test_demo_card_labels_have_english_and_swedish_translations`
 - [ ] `test_demo_list_renders_shared_card_contract_for_active_locale`
 
+## tests/test_demo_rollback.py
+
+- [x] `test_rollback_preserves_current_decision_scope_and_metadata`
+- [x] `test_rollback_sparse_history_and_undo_use_actual_content`
+- [x] `test_rollback_checks_current_city_scope`
+- [x] `test_rollback_conflict_does_not_write_or_record_success`
+- [x] `test_rollback_invalid_identifiers_are_not_server_errors`
+- [x] `test_rollback_keeps_concurrent_unrelated_metadata`
+- [x] `test_rollback_requires_edit_permission_and_csrf`
+- [x] `test_rollback_explanation_uses_compiled_locale`
+- [x] `test_rollback_restores_canonical_location_and_media_content`
+- [x] `test_rollback_guards_canonical_location_and_media_changes`
+- [x] `test_rollback_history_failure_retains_exact_event_and_retry_is_idempotent`
+- [x] `test_authorized_history_read_recovers_pending_rollback_only_after_scope_check`
+- [x] `test_rollback_pipeline_preserves_literal_dollar_prefixed_content`
+- [x] `test_demo_read_apis_do_not_expose_pending_rollback_receipts`
+- [x] `test_destructive_admin_actions_cannot_drop_pending_rollback`
+- [x] `test_recurring_cleanup_retains_pending_rollback_until_delivery`
+- [x] `test_delete_conflict_does_not_record_successful_deletion`
+- [x] `test_partial_merge_conflict_retains_prewrite_backup`
+- [x] `test_merge_backup_failure_prevents_all_content_writes`
+- [x] `test_merge_followup_failure_retains_confirmed_removed_source_phase`
+- [x] `test_primary_merge_conflict_survives_backup_status_failure`
+- [x] `test_merge_phase_failure_does_not_claim_completed_operation`
+- [x] `test_delete_history_failure_retains_exact_durable_recovery_copy`
+- [x] `test_delete_snapshot_conflict_and_retry_record_actual_latest_document`
+- [x] `test_delete_backup_failure_preserves_source_and_history`
+- [x] `test_demo_delete_failures_preserve_response_format_and_localized_guidance`
+
+Current e1a003d0 GitHub review's Minor "Return JSON for the new 409 and 503 outcomes when the request is in json_mode" is independently valid: six abort sites returned HTML to dashboard JSON requests. One added definition expands to 24 cases (six failure boundaries × JSON FI/EN/SV or HTML FI). All 18 JSON cases failed before the helper fix; six HTML controls passed. After format handling plus targeted runtime translations, all 24 pass. Final combined integration passed 202 cases (rollback/merge/moderation/decisions, passkeys/fresh deletion, profile and deploy verifier). Fifteen-file bounded local review against e1a003d0 completed with zero findings across 12 source files, excluding three binary MOs; later tracker wording is not part of that review. Exactly two new messages per FI/EN/SV MO, every prior runtime value retained. Historical PO duplicates prevented direct msggrep selection; msguniq is used only in the compiler pipeline before selecting the exact two new IDs, not to rewrite source catalogs or broadly rebuild runtime translations.
+
+| Definition | Requirement and assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_demo_delete_failures_preserve_response_format_and_localized_guidance` | Six pre/post-delete failure paths preserve409/503, JSON status/message envelope and exact localized guidance; HTML remains HTML. Before-delete source/concurrent content and post-delete recovery pre-image are checked independently of response format. | Real scoped admin HTTP/DB and three shipped runtime locales; receipt-flush boundary returnsFalse, specific backup/delete/history/phase DB calls fault-injected, actual conflict write. No auth result mocked; no SMTP/process-kill/all-sink claim. | Keep;18 intended pre-fix format failures and six unchanged HTML controls. |
+
+Bounded follow-up review identified missing post-delete phase tracking and overlapping deletion-history failure findings. Both exception and swallowed-error/None paths are now covered. Twenty-six rollback definitions now expand to 78 cases after the complete-primary-snapshot regression additions. Earlier combined rollback/merge/moderation/decision/MCP/recurrence/user-history/fresh-reauth/passkey/status validation passed 174 cases; GitHub CI on 478cf7c1 passed 1,438 /325 skipped. Current review correction validation passed 73 rollback/merge/moderation/decision cases; diff checks pass. Swedish runtime guidance changes exactly one catalog value, with an explicit rendered cancellation-status assertion. No final zero-finding local-review claim: completed reviews produced findings corrected afterward and manually checked with focused regressions. Recovery backups are not a general automatic recovery worker or a cross-document transaction; failed related-data repointing and unknown acknowledgements still require explicit recovery. Completed/conflicting deletion backups drop their redundant pre-image, while unresolved copies require a separately defined retention/recovery policy.
+
+| Definition | Requirement and assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_merge_followup_failure_retains_confirmed_removed_source_phase` | Recommendation, repointing, case and history failures return 503, retain exact original backup and removed-source evidence, and never mark completed. | Five real route/DB cases; exact registered-handler callback injection includes history returning None, not only raising. No external-provider or crash recovery proof. | Keep. |
+| `test_primary_merge_conflict_survives_backup_status_failure` | Primary CAS conflict returns 409 even if recording its recovery phase fails; no secondary is deleted. | Three real-write variants: timestamp/title, cancellation-only and editor-access-only changes. The latter two do not update last_modified and fail before the complete-snapshot guard. Targeted backup-status failure; no fabricated mutation success. | Keep; protects ordinary reachable cancellation/access writes too. |
+| `test_merge_phase_failure_does_not_claim_completed_operation` | Failure recording source removal compensates safe writes; failure recording completion preserves confirmed source-removal state and returns 503. | Two phase-boundary exceptions with actual sources/history. Does not prove transactional related-data updates. | Keep. |
+| `test_delete_history_failure_retains_exact_durable_recovery_copy` | Missing history acknowledgement returns 503 after deletion while exact pre-image remains in history-pending backup. | None, raised error and real history-insert failure; three cases against disposable Mongo. No automatic replay worker or provider delivery claim. | Keep. |
+| `test_delete_snapshot_conflict_and_retry_record_actual_latest_document` | Concurrent edit prevents deletion/false history; explicit retry deletes the latest snapshot and canonical history matches it. | Real interleaved write and route retry; confirmed conflict/completion removes redundant backup pre-image. Not a simultaneous-process test. | Keep. |
+| `test_delete_backup_failure_preserves_source_and_history` | Backup-write failure prevents deletion and success history. | Actual admin POST; injected backup boundary only. Does not simulate uncertain acknowledgement. | Keep. |
+
+Integrated follow-up review, 2026-10-19: the initial nine-file CodeRabbit review completed with two Minor and two overlapping Major findings. The missing changelog space is corrected. A real guarded-delete conflict now creates no false delete history/audit. Merge backup is persisted before the first write; each secondary delete returns its actual pre-image, enabling insert-only compensation. The primary is compensated only while its complete document still equals this merge's result; newer changes are preserved and failed/ambiguous recovery remains explicitly incomplete with 503, not an unqualified 409 or successful merge. Three newly assessed definitions cover four cases. Existing recurring-cleanup coverage additionally asserts no false delete runtime action on a retained child. This is compensation plus retained recovery data, not replica-set transaction/automatic recovery-worker acceptance.
+
+| Definition | Requirement and assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_delete_conflict_does_not_record_successful_deletion` | Real delete guard loses to a newly inserted receipt marker: 409, complete source unchanged except marker, no added edit-history or deletion audit. | Mongo wrapper inserts a marker immediately before actual conditional delete, not a fake delete result or full concurrent rollback HTTP request. Existing normal deletion tests remain separate. | Keep; verifies the independently valid Minor false-success finding. |
+| `test_partial_merge_conflict_retains_prewrite_backup` | Backup already exists before first/second secondary writes. A source with new receipt survives; an earlier deleted source is recreated exactly. Without newer primary, exact primary is restored and409/backup-restored; with newer primary, preserve it and503/recovery-pending backup. | Three real source docs; one real deletion before a controlled receipt/newer-title interleaving. Actual pre-images, guarded replacement and insert-only restoration. Does not prove every database interruption, source recreation race, or compensation after partial related-data repointing. | Keep; two real compensation cases for the overlapping Major findings, not just availability of an unused backup. |
+| `test_merge_backup_failure_prevents_all_content_writes` | Backup insert fails: 503, complete demo collection unchanged and no backup/successful merge. | Actual admin POST; exception injected only at backup-write boundary. Does not simulate driver acknowledgement loss or disk failure. | Keep; fail closed before destructive writes. |
+
+Durability follow-up, 2026-10-19: six definitions /nine cases use actual source-document update pipelines and history upserts against standalone disposable MongoDB. Tests inject only projection/receipt-cleanup failures, not mutation success. Exact snapshots, actor, stable event ID and one canonical history row survive failure/retry; receipt payload is never nested inside its own snapshots. Existing concurrency and metadata-preservation cases continue to exercise real conditional writes. All 69 combined rollback/merge-editor/moderation/decision/MCP/recurrence cases pass; no full-suite, production, deletion/merge cross-document atomicity, power-loss or full audit-retention claim. Requires MongoDB 4.2+ update pipelines, not replica-set transactions. Main integration and completed local review are required before push/delivery.
+
+| Definition | Requirement and assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_rollback_history_failure_retains_exact_event_and_retry_is_idempotent` | History projection or source cleanup failure returns 503 but retains exact original before/after/actor/event ID. Repeated failure cannot overwrite receipt; recovery and repeated no-op produce one history row and remove only delivered receipt. | Two real Mongo paths with targeted write-boundary exceptions. Covers ambiguous cleanup completion after history already persisted. Not a process-kill/storage durability test. | Keep. |
+| `test_authorized_history_read_recovers_pending_rollback_only_after_scope_check` | Unauthorized history request cannot deliver/clear pending data; authorized GET projects original event and clears receipt. | Real route permissions/session and standalone Mongo; recovery comes from actual read, not explicit helper mocking. Original actor retained. | Keep. |
+| `test_rollback_pipeline_preserves_literal_dollar_prefixed_content` | Dollar-prefixed title, tag and nested translated title persist as literal data; history equals actual result. | Real aggregation update, no Mongo evaluator mock; guards against treating content as pipeline expressions. Not a full BSON-size/type/legacy-document audit. | Keep. |
+| `test_demo_read_apis_do_not_expose_pending_rollback_receipts` | Raw admin demo API and MCP get_demo retain normal title but omit internal receipt and its private fixture text. | Actual authenticated/scoped transports; existing public listing uses an allowlisted projection and detail serializer. No policy change or all-future-sink assertion. | Keep. |
+| `test_destructive_admin_actions_cannot_drop_pending_rollback` | Delete and primary/secondary merge attempts fail 503 with all demo documents unchanged while delivery fails; successful later flush yields exact original event. | Three actual admin POSTs. Does not claim concurrent multi-document merge atomicity or retention protection against direct DB administrators. | Keep. |
+| `test_recurring_cleanup_retains_pending_rollback_until_delivery` | Invalid recurring child survives pending delivery failure, then normal cleanup deletes it only after exact history projection. | Real processor with disposable DB globals and dry-run disabled via fixture monkeypatch; runtime_actions reset. No production scheduler/leader or SMTP evidence. | Keep. |
+
+Review follow-up, 2026-10-19: both new definitions add five cases each for latitude, longitude, img, cover_source and canonical event_type. All ten fail against the previous 942 head at the intended missing-restore or missing 409 assertions, then pass after including those fields in the shared update/guard set. Combined rollback/moderation/decision run:42 passed. The existing CSRF test now extracts the actual target form token with stdlib HTMLParser instead of undeclared bs4; real negative/positive authorization and persistence assertions are retained. Source, test and inventory changes remain local until the outstanding history-durability finding and current-main integration are complete; no merge/release claim.
+
+| Definition | Requirement and assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_rollback_restores_canonical_location_and_media_content` | Field-only historical restore changes the exact canonical value, preserves every other field except timestamp, records exact before/after, and supports undo back to the value before restore. | Five fields, sparse history and actual HTTP/MongoDB. No constructor/rendering or media/network mocks; test values are stored fixture data, not remote downloads. Does not prove history-write durability (still open). | Keep; all five reproduced the omitted-field regression. |
+| `test_rollback_guards_canonical_location_and_media_changes` | A concurrently added canonical field causes409, leaves precisely the competing write and creates no success history. | Five initially absent fields; a wrapper inserts a real write just before the real conditional Mongo update. No timing sleeps or fabricated write results. Covers missing→present guard boundaries, not every transition or grant revocation. | Keep; all five reproduced the missing guard. |
+
+SEC-04c / QA-01, P1, Codex, 2026-10-18. Real Flask requests and disposable MongoDB; no authorization/write-result mocks. Sixteen parameter-expanded cases. Focused run/PR evidence is recorded in the delivery PR. Existing fixture isolates external mail/network side effects; this is not production verification or transactional audit durability.
+
+| Definition | Requirement and assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_rollback_preserves_current_decision_scope_and_metadata` | Actual content/explicit clearing restored, every other stored field preserved; exact actual before/after and actor recorded; repeated restore adds no event. | Real approve/deny API ×2, captured mail boundary, exact unchanged case/link rows and one notification; historical foreign identity/scope/moderation/cancellation injected. Does not prove provider delivery or history-write crash recovery. | Keep. |
+| `test_rollback_sparse_history_and_undo_use_actual_content` | Sparse snapshots cannot erase missing fields; the newly recorded previous content can itself be restored. | Real two POSTs and DB state; no broad unknown-field retention policy claim. | Keep. |
+| `test_rollback_checks_current_city_scope` | Current own-city edit allowed; old in-scope snapshot cannot authorize foreign current target, with no content/history write. | Real scoped admin/grant, own/foreign ×2; no mocked permission predicate. Grant revocation between check and write is not proven. | Keep. |
+| `test_rollback_conflict_does_not_write_or_record_success` | Interleaved content or authoritative city-key changes yield 409, preserve competing write and create no success record. | Two variants; wrapper introduces a real Mongo update immediately before real conditional update, does not fabricate result. Also exercises initially absent city_key. No sleeps; not an all-entrypoint concurrency proof. | Keep. |
+| `test_rollback_invalid_identifiers_are_not_server_errors` | Malformed/missing history and malformed/missing target return 404. | Four real routes; no stacktrace/500 acceptance. | Keep. |
+| `test_rollback_keeps_concurrent_unrelated_metadata` | Background metadata update does not cause a false conflict; actual atomic pre-image and restored state include the fresh value. | Real Mongo interleaving via method wrapper, no fabricated result; exact before/after assertions. Added after independently validating the review's Minor false-conflict finding. | Keep. |
+| `test_rollback_requires_edit_permission_and_csrf` | Non-admin denied; absent/wrong token rejected without mutation; actual rendered session-bound proof succeeds. | Real session/form and standard-library HTMLParser extraction; project uses route-specific CSRF, not a global extension. No CSRF mock/config-only assertion. | Keep. |
+| `test_rollback_explanation_uses_compiled_locale` | Actual confirmation explains content-only restoration in FI/EN/SV rather than source fallback. | Three real session-locale GETs, actual shipped MO; public locales enabled in fixture. No visual/all-copy claim. | Keep. |
+
 ## tests/test_demo_decision_ordering.py
 
 - [x] `test_later_opposite_decision_preserves_case_and_history_consistency`
@@ -1270,6 +1361,18 @@ Member-loading follow-up: 69 focused cases passed, including 2/27-member query-c
 - [ ] `test_organization_fill_submission_stores_logo_suggestion`
 - [ ] `test_admin_can_apply_logo_suggestion`
 
+## tests/test_passkey_counter_concurrency.py
+
+- [x] `test_distinct_challenges_cannot_overwrite_newer_credential_counter`
+- [x] `test_deleted_passkey_cannot_complete_previously_verified_login`
+
+QA-01h / SEC-05 · P1 · Codex · 2026-10-19 · main3c8665ab. Two individually assessed definitions /five cases. Real Flask sessions, independent challenges, ES256 signatures and disposable MongoDB. Imported registration/app fixtures exercise actual password step-up and credential registration. Four failures reproduced before the conditional-write fix; the counterless positive control passed. Combined passkey/lifecycle/fresh-deletion validation passed56 cases. Local five-file review completed with two overlapping Minor reports of the same empty duplicate inventory heading, corrected afterward. No code findings reported; not a zero-finding review claim. No physical authenticator, browser ceremony or process-crash acceptance claim.
+
+| Definition | Requirement and assertions | Setup, variants, reliability and limits | Disposition |
+|---|---|---|---|
+| `test_distinct_challenges_cannot_overwrite_newer_credential_counter` | With distinct consumed challenges, stale positive-counter state cannot authenticate or replace newer counter; both genuine counterless logins remain valid. Checks each HTTP outcome, session identity, challenge consumption and final counter. | Four ordered real-write variants:2→1,1→1,1→2 and0→0. Barrier delegates actual crypto verification against observed0; Event orders actual DB updates, no sleeps/fabricated results. Conservative CAS rejects the stale higher-counter request too; retry needs fresh challenge. Not same-challenge replay or arbitrary multi-process/device coverage. | Keep; three stale-state failures reproduced on old code, counterless control passed. |
+| `test_deleted_passkey_cannot_complete_previously_verified_login` | Removing credential before final write yields403, no authenticated session, no revived credential; challenge remains consumed. | Actual route/crypto/DB deletion at update boundary, not mocked verifier success. Does not prove deletion after successful commit invalidates an already authenticated session. | Keep; pre-fix route returned200 with missing credential. |
+
 ## tests/test_passkey_challenge_lifecycle.py
 
 - [x] `test_login_challenge_expires_at_exact_server_deadline`
@@ -1334,7 +1437,7 @@ QA-01f · P1 · Codex · 2026-10-19 · base `e6383141`. These four definitions a
 | `test_passkey_login_challenge_cannot_cross_browser_sessions` | A valid assertion used from another browser session fails without consuming the original challenge or updating the credential. The originating client can still authenticate with that exact assertion. | Independent Flask clients, same signed body; asserts no foreign login session. No mocked challenge storage, time or authorization. Not a concurrent race test. | Keep; isolates browser-session binding from signature/counter validity. |
 | `test_consumed_passkey_assertion_cannot_authenticate_again` | First assertion succeeds as the exact owner; identical replay fails with challenge error, absent login identity and exact unchanged credential. | Zero counter intentionally permits counterless authenticators, so counter enforcement cannot hide missing single-use consumption. Removes only authenticated user ID from the signed test session while preserving challenge binding: a test-only isolation step, not proof of real logout cleanup (covered separately). Sequential replay, not atomic two-client concurrency. | Keep; proves used-challenge enforcement independently of session rotation and sign count. |
 
-Additional in-process mutations separately relaxed only expected origin/RP, challenge session binding or used-state filtering. All four corresponding cases failed specifically at expected403 versus actual200. These experiments retained real signatures and Mongo writes and left no tracked source changes. Normal combined passkey/step-up/fresh-deletion/account-access validation passed61 cases. Exact AST-to-checklist comparison has no missing/extra entries (1,166 definitions /159 files /261 checked). This is not a full-suite, all-authentication, production or browser/hardware acceptance claim.
+Additional in-process mutations separately relaxed only expected origin/RP, challenge session binding or used-state filtering. All four corresponding cases failed specifically at expected403 versus actual200. These experiments retained real signatures and Mongo writes and left no tracked source changes. Normal combined passkey/step-up/fresh-deletion/account-access validation passed 61 cases. Exact AST-to-checklist comparison has no missing/extra entries (1,166 definitions /159 files /261 checked). This is not a full-suite, all-authentication, production or browser/hardware acceptance claim.
 
 ## tests/test_privileged_user_actions.py
 

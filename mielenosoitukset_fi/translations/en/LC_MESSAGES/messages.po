@@ -13509,6 +13509,10 @@ msgstr "Move or resize the crop area. Use the arrow keys to move it."
 msgid "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
 msgstr "Could not crop the image. Try again or choose another image."
 
+#: mielenosoitukset_fi/templates/admin/demonstrations/demo_diff.html
+msgid "Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan."
+msgstr "Only event content recorded in this version is restored. Approval, cancellation, visibility, city, organizers and permissions remain unchanged. The applied change is recorded in history."
+
 # User account status and change history
 msgid "Muutoshistoria"
 msgstr "Change history"
@@ -13593,3 +13597,10 @@ msgstr "Change history delivery is pending. This deletion attempt did not succee
 # User deletion history-delivery feedback
 msgid "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."
 msgstr "The user was changed concurrently. This deletion attempt did not succeed. Verify your identity before trying again."
+
+# Demo deletion conflict and uncertain-outcome feedback
+msgid "Mielenosoitusta muutettiin samanaikaisesti. Päivitä sivu ja yritä uudelleen."
+msgstr "The demonstration changed concurrently. Refresh the page and try again."
+
+msgid "Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä."
+msgstr "The deletion outcome could not be confirmed. Check the demonstration's status before trying again."

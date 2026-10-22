@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Pin certifi 2026.10.19 and hash-verified pip 26.2.2 bootstrapping before CI and Docker dependency installation following the emSign CA incident. Existing production environments and container images still require separate remediation/rebuilding.
+
 - Production deploys no longer fail solely on an explicit Cloudflare health-probe challenge after the exact origin build was verified. The public check reports a warning; application errors, stale builds and unverified origins still fail.
 
 - Profile and follower-list avatars try their fallback image only once; a failed fallback no longer triggers a repeated request loop.

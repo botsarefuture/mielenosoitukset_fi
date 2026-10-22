@@ -8,6 +8,8 @@ An open issue is a candidate for investigation, not proof that its original repo
 
 ## At a glance
 
+- **Security interruption — P1, in progress (2026-10-22):** address the confirmed emSign CA trust-store advisory: certifi 2026.10.19 and hash-verified pip bootstrap in project dependency entrypoints. Local project environment updated. Production has distro-managed pip/system CA plus a separate old certifi; direct upgrade was safely rejected by PEP668. OS CA remediation, an explicitly managed app install and live-worker verification remain pending. No exploitation is claimed.
+
 - **Next:** Deliver owner-requested OPS-04a health-probe fix: verified origin remains mandatory; explicit Cloudflare challenge becomes a warning, not a false deploy failure. Final #942 integration includes #946 and has passing current-head CI; review/normal merge remains pending. #947 is already merged. Continue ordinary functional/user-visible work after these bounded delivery tasks, not speculative edge-case expansion.
 - **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
 - **Verified release checkpoint:** #941 merged as `e6383141`; final required CI passed 1,370 tests with 325 skips. Public HTTPS and direct Gunicorn health probes both verify that exact running build; pre-existing tracked server overlays are byte-preserved. Automatic deploy run39149112591 remains failed because its public probe hit Cloudflare403; independent runtime verification is not a green-workflow claim. Authenticated production visual acceptance is not claimed.

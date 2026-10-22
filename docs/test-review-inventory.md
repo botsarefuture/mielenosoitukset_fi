@@ -2,11 +2,21 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/deploy-cloudflare-health` on main `63c85eae`, 2026-10-22: 161 Python test files; 1,173 definitions; 268 assessed definitions. Independent #942/#946 additions are excluded until integration. These are branch-tree counts, not counts for a later integrated main. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/python-ca-security` on main `fcb6a295`, 2026-10-22: 162 Python test files; 1,175 definitions; 270 assessed definitions. Independent #942/#946 additions are excluded until integration. These are branch-tree counts, not counts for a later integrated main. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
 Use the roadmap's P0–P3 policy and status vocabulary. Initial review status for every entry is Backlog; assign an owner and justified priority when triaging it. A discovered security/core-workflow defect can escalate immediately, regardless of its review batch.
+
+## tests/test_python_trust_bootstrap.py
+
+- [x] `test_bootstrap_uses_hashed_wheel_and_propagates_failure`
+
+P1 trust-store advisory · Codex · 2026-10-22. Two subprocess cases execute the actual Bash bootstrap with a fake interpreter whose path contains spaces. Exact argv proves the upstream wheel/version/SHA256, no-cache upgrade and preserved argument boundaries; exit17 proves installation failure is propagated. No network or pip mock internals; does not establish the remote wheel's authenticity or exercise pip's hash verifier. Separate actual local installation succeeded at pip26.2.2/certifi2026.10.19. Keep as an offline command contract, not TLS-chain or production remediation proof.
+
+- [x] `test_dependency_entrypoints_bootstrap_before_index_install`
+
+P1 trust-store advisory · Codex · 2026-10-22. Parses actual CI YAML and reads Docker/requirements sources. Checks bootstrap ordering before index installs, Docker copy/dependency chaining/OS CA package and exact certifi pin. No Docker, SSH, apt or live workflow execution; source-string assertions are deliberately a small ratchet, not integration evidence. Keep; pair with runtime version checks and real image rebuild/deployment acceptance.
 
 ## tests/test_profile_image_fallback.py
 

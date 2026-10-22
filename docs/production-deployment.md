@@ -74,3 +74,38 @@ The forced command accepts only `deploy <full 40-character SHA>` and then calls
 `/root/update-moso.sh`. The installed update script should be kept byte-for-byte
 in sync with `deploy/production_deploy.sh`; the private key remains only in the
 GitHub production environment secret.
+
+## Python trust-store security update (2026-10-22)
+
+The [Python security announcement](https://discuss.python.org/t/information-for-python-users-regarding-emudhra-emsign-ca-certificate-security-incident/109576)
+requires certifi >=2026.10.19 and upstream pip >=26.2.2. This repository pins
+those versions and uses `deploy/bootstrap_python_trust.sh <python-executable>`
+before dependency installation in CI and Docker. The pip wheel URL
+includes the announcement's SHA256; a modified download fails verification even
+when the previous pip trust store is affected. TLS verification remains enabled.
+The bootstrap intentionally pins pip 26.2.2, including on a newer environment;
+update this reviewed URL/hash together when advancing that pin.
+
+For existing project virtual environments, run the bootstrap with their Python,
+then install `certifi==2026.10.19`. Rebuild containers with `--pull --no-cache`
+to refresh both the base image and OS `ca-certificates`; already-running images
+do not change when a dependency file is updated. uv, sigstore and pixi are not
+declared repository tools; independently managed installations need their own
+updates if present (minimums 0.13.4, 4.5.1 and 0.82.1 respectively).
+
+Production inspection on 2026-10-22 found `/usr/bin/python3`, distro-owned pip
+24.0 using `/etc/ssl/certs/ca-certificates.crt`, and separately installed certifi
+2026.2.25 under `/usr/local`. PEP668 rejected the direct pip upgrade without
+changing packages. Do not silently use `--break-system-packages` or overwrite
+distro pip: update the OS certificate package through apt and explicitly plan
+the app's externally managed dependency installation/virtual-environment migration.
+The version check alone does not establish whether a distro-patched pip trusts
+affected roots. Production certificate remediation and worker reload remain
+unverified; this PR must not be merged for automatic deployment until that
+environment is prepared. It is not evidence of live remediation.
+
+The production deploy installer is deliberately unchanged in this draft, rather
+than introducing a known-failing bootstrap on distro-owned pip. Its existing
+checkout-diff installation gate also needs a focused retry test: after an install
+failure, retrying the same SHA must not skip the failed dependency installation.
+Resolve this with the environment preparation before release, not a PEP668 bypass.

@@ -89,10 +89,10 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header"><h2 class="modal-title" id="rollbackModalLabel">{{ _('Palauta tallennettu versio') }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div>
-        <div class="modal-body"><p id="rollbackModalDescription">{{ _('Nykyinen mielenosoitus korvataan tämän historiaversion tiedoilla. Nykytila tallennetaan historiaan, joten palautuksen voi tarvittaessa perua myöhemmin.') }}</p></div>
+        <div class="modal-body"><p id="rollbackModalDescription">{{ _('Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan.') }}</p></div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
-          <form method="POST" action="{{ url_for('admin_demo.rollback_demo', history_id=history_id) }}"><button type="submit" class="btn btn-danger"><i class="fas fa-rotate-left" aria-hidden="true"></i>{{ _('Palauta tähän versioon') }}</button></form>
+          <form method="POST" action="{{ url_for('admin_demo.rollback_demo', history_id=history_id) }}"><input type="hidden" name="csrf_token" value="{{ rollback_csrf_token }}"><button type="submit" class="btn btn-danger"><i class="fas fa-rotate-left" aria-hidden="true"></i>{{ _('Palauta tähän versioon') }}</button></form>
         </div>
       </div>
     </div>

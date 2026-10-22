@@ -354,10 +354,21 @@ def verify_authentication(
     except Exception:
         return None, "Virheellinen vahvistusvastaus."
 
-    _get_mongo()[PASSKEY_COLLECTION].update_one(
-        {"_id": record["_id"]},
+    # Verification used this exact credential state. A different challenge may
+    # have advanced its counter, or the owner may have removed it meanwhile.
+    # Do not authenticate from a stale snapshot or overwrite the newer count.
+    query = {
+        "_id": record["_id"],
+        "user_id": record["user_id"],
+        "public_key": record["public_key"],
+        "sign_count": record["sign_count"] if "sign_count" in record else {"$exists": False},
+    }
+    updated = _get_mongo()[PASSKEY_COLLECTION].update_one(
+        query,
         {"$set": {"sign_count": verified.new_sign_count, "last_used_at": utcnow()}},
     )
+    if updated.matched_count != 1:
+        return None, "Virheellinen vahvistusvastaus."
     return record, None
 
 

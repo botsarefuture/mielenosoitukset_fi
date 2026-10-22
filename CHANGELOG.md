@@ -4,9 +4,25 @@
 
 ## UNRELEASED
 
+- CI keeps its MongoDB 8 integration suite on a compatible Ubuntu 22.04 host after newer hosted kernels prevented Mongo startup; database version, health gates and required tests are not downgraded or skipped.
+
+- Demonstration deletion now returns localized JSON for conflict and uncertain/pending outcomes to JSON callers, preserving real HTTP 409/503 codes and advising users to check state before retrying an unconfirmed deletion.
+
+- Demo merge now checks the complete primary snapshot before replacement, preserving concurrent cancellation or editor-access changes even when their timestamp did not change. Swedish rollback guidance now explicitly names the event's cancellation status.
+
+- Deletion keeps an exact recovery pre-image until history is acknowledged; merge failures retain confirmed progress instead of claiming completion after failed follow-up/history writes. Unresolved recovery remains explicit rather than silently losing deleted content.
+
+- Conflicting demo deletions no longer record false success. Merge operations persist recovery backups before destructive writes and compensate failed source removal where safe, preserving newer concurrent edits and explicitly retaining unresolved recovery state.
+
+- Rollback now commits its exact history receipt atomically with content and retries idempotent history delivery after failures. Pending receipts block deletion/merge/recurring cleanup and stay out of demo-read API responses; history outages return 503 without discarding the recorded event.
+
+- Content rollback now includes canonical coordinates, original image, cover source and event type, and detects concurrent changes to those fields instead of silently ignoring them.
+
+- Demonstration history rollback restores recorded event content without overwriting current moderation, cancellation, access scopes or server metadata; stale writes fail safely and confirmation includes CSRF protection.
 - Production deploys no longer fail solely on an explicit Cloudflare health-probe challenge after the exact origin build was verified. The public check reports a warning; application errors, stale builds and unverified origins still fail.
 
 - Profile and follower-list avatars try their fallback image only once; a failed fallback no longer triggers a repeated request loop.
+- Passkey verification now checks that the credential and its observed counter still exist unchanged before authenticating, preventing overlapping challenges from rolling the counter back or completing with a deleted credential. Counterless authenticators remain supported.
 
 - Roadmap now specifies multi-day demonstration support, city-admin notifications/review countdowns and urgent Telegram alerts that update after processing, including explicit timing, escalation, privacy and acceptance tests. These are planned, not shipped features.
 

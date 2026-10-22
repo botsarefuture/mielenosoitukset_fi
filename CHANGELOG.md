@@ -17,6 +17,8 @@
 - Content rollback now includes canonical coordinates, original image, cover source and event type, and detects concurrent changes to those fields instead of silently ignoring them.
 
 - Demonstration history rollback restores recorded event content without overwriting current moderation, cancellation, access scopes or server metadata; stale writes fail safely and confirmation includes CSRF protection.
+- Production deploys no longer fail solely on an explicit Cloudflare health-probe challenge after the exact origin build was verified. The public check reports a warning; application errors, stale builds and unverified origins still fail.
+
 - Profile and follower-list avatars try their fallback image only once; a failed fallback no longer triggers a repeated request loop.
 - Passkey verification now checks that the credential and its observed counter still exist unchanged before authenticating, preventing overlapping challenges from rolling the counter back or completing with a deleted credential. Counterless authenticators remain supported.
 

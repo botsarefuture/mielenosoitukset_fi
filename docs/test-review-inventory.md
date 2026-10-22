@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/deploy-cloudflare-health` on main `63c85eae`, 2026-10-22: 161 Python test files; 1,173 definitions; 268 assessed definitions. Independent #942/#946 additions are excluded until integration. These are branch-tree counts, not counts for a later integrated main. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
+Branch `codex/merge-editor-test-assessment` on main `fcb6a295`, 2026-10-22: 161 Python test files; 1,173 definitions; 271 assessed definitions. This documentation-only review adds no test definitions or application changes. Independent #942/#946 additions are excluded until integration; retain their separate assessments later. Older per-branch/run counts below are historical evidence only. This is not completed suite review or release evidence.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -138,9 +138,17 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Disposable MongoDB, seeded real de
 
 ## tests/test_admin_demo_merge_editor.py
 
-- [ ] `test_global_admin_merge_editor_uses_shared_form_contract`
-- [ ] `test_restricted_admin_cannot_open_merge_editor`
-- [ ] `test_merge_editor_has_no_legacy_page_specific_ui_layer`
+- [x] `test_global_admin_merge_editor_uses_shared_form_contract`
+- [x] `test_restricted_admin_cannot_open_merge_editor`
+- [x] `test_merge_editor_has_no_legacy_page_specific_ui_layer`
+
+QA-03a / SEC-04c support · P2 · Codex · 2026-10-22 · main fcb6a295. Each existing definition reviewed against its source, actual route guards and fixtures. All three focused cases pass; documentation diff checks pass. No tests or product behavior changed; these are narrow structural/access guards, not complete merge acceptance. New #942 rollback/recovery assessments remain on that separate branch until integration. Existing admin fixture injects an authenticated session and disposable Mongo data; primary-login/reauth flows are not exercised here.
+
+| Definition | Requirement, setup and assertions | Reliability, limits and needed follow-up | Disposition |
+|---|---|---|---|
+| `test_global_admin_merge_editor_uses_shared_form_contract` | Real global-admin GET with two existing IDs must render200 and shared shell/section/choice/disclosure/sticky-action classes plus primary/recommendation/title-source field names. | Actual Flask/Jinja/Mongo, no mocked render or permission decision. String presence can establish server-rendered hooks but not placement, values, visual uniformity or working JavaScript. Interactive manual-mode/keyboard/theme acceptance remains QA-03/UI-04 work. | Keep as render/structure smoke test; do not cite as visual or merge-POST proof. |
+| `test_restricted_admin_cannot_open_merge_editor` | Real non-global admin with EDIT_DEMO and valid source IDs gets302 to the demo dashboard rather than a merge editor. Global positive control exists in the first definition. | Role/grant loaded from actual DB; fixture session does not bypass route authorization. Valid IDs avoid an unrelated invalid-input redirect masking this guard. Only GET/non-global role is covered, not forged POST, city/org variants or live grant revocation. | Keep; narrow global-admin-only access regression. Broader POST/scope tests remain separate. |
+| `test_merge_editor_has_no_legacy_page_specific_ui_layer` | Reads actual template/workspace CSS; checks shared form stack, hidden-property manual-mode hook and absence of legacy inline layout/classes/selectors. | Repository-root CWD is assumed by established test invocation. Exact source substrings can fail harmless refactors and do not execute CSS/JS or verify every inline style. Retain only as a migration ratchet; replace implementation-spelling hooks with browser behavior when that interaction is next changed. | Keep with explicit static-contract limits; not accessibility/theme/success evidence. |
 
 ## tests/test_admin_demo_views.py
 

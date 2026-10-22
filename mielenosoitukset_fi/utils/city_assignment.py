@@ -13,6 +13,8 @@ The assignment is stored on the demonstration document under the
 
     {
         "assigned_at": <naive UTC datetime>,      # set at assignment; reset on city action
+        "review_hours": 24,                       # configured duration at assignment
+        "review_deadline_at": <naive UTC datetime>,
         "city_key": "helsinki",
         "city_admin_ids": [ObjectId, ...],        # snapshot of the assigned admins
         "escalated": False,
@@ -25,10 +27,11 @@ The field is removed once the demonstration is approved or rejected.
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from bson import ObjectId
+from flask import current_app, has_app_context
 
 from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.logger import logger
@@ -37,6 +40,37 @@ from mielenosoitukset_fi.utils.time_utils import utcnow
 CITY_ASSIGNMENT_FIELD = "city_assignment"
 ESCALATION_PERMISSION = "ACCEPT_DEMO"
 DEFAULT_ESCALATION_HOURS = 24
+
+
+def city_review_hours(value=None) -> int:
+    """Resolve one positive configured duration for requests and job runners."""
+    if value is None:
+        from config import Config
+
+        value = (
+            current_app.config.get("CITY_ASSIGNMENT_ESCALATION_HOURS")
+            if has_app_context() else None
+        )
+        if value is None:
+            value = getattr(Config, "CITY_ASSIGNMENT_ESCALATION_HOURS", DEFAULT_ESCALATION_HOURS)
+    if isinstance(value, bool) or not isinstance(value, (int, str)):
+        raise ValueError("City review duration must be a positive integer")
+    hours = int(value)
+    if hours <= 0:
+        raise ValueError("City review duration must be a positive integer")
+    return hours
+
+
+def city_review_deadline(demo: Dict[str, Any], *, escalate_after_hours=None) -> Optional[datetime]:
+    """Stored deadline wins; legacy assignments use the current configured window."""
+    assignment = demo.get(CITY_ASSIGNMENT_FIELD) or {}
+    if "review_deadline_at" in assignment:
+        deadline = assignment["review_deadline_at"]
+        return deadline if isinstance(deadline, datetime) else None
+    assigned_at = assignment.get("assigned_at")
+    if not isinstance(assigned_at, datetime):
+        return None
+    return assigned_at + timedelta(hours=city_review_hours(escalate_after_hours))
 
 # Mongo filter clause that matches demonstrations NOT currently owned by city admins.
 # Used by the national pending views and the national reminder job: assigned but
@@ -139,6 +173,7 @@ def assign_demo_to_city(
     template_name: str,
     subject: str,
     context: Dict[str, Any],
+    escalate_after_hours: Optional[int] = None,
 ) -> Optional[Dict[str, Any]]:
     """Assign ``demo_id`` to ``city_admins`` and return the email message.
 
@@ -152,12 +187,16 @@ def assign_demo_to_city(
         return None
 
     now = utcnow()
+    review_hours = city_review_hours(escalate_after_hours)
+    review_deadline_at = now + timedelta(hours=review_hours)
     db.demonstrations.update_one(
         {"_id": demo_oid},
         {
             "$set": {
                 CITY_ASSIGNMENT_FIELD: {
                     "assigned_at": now,
+                    "review_hours": review_hours,
+                    "review_deadline_at": review_deadline_at,
                     "city_key": normalize_city_key(city_key),
                     "city_admin_ids": [admin["user_id"] for admin in city_admins],
                     "escalated": False,
@@ -178,22 +217,41 @@ def assign_demo_to_city(
         "template_name": template_name,
         "subject": subject,
         "recipients": [admin["email"] for admin in city_admins if admin.get("email")],
-        "context": context,
+        "context": {
+            **context,
+            "escalate_after_hours": review_hours,
+            "review_deadline_at": review_deadline_at,
+        },
     }
 
 
 def touch_city_assignment(db, demo_id) -> bool:
-    """Reset the 24 h escalation window for a demo with a live assignment."""
+    """Explicit meaningful city action resets the snapshotted review window.
+
+    Ordinary reads/content saves must not call this helper. Legacy assignments
+    snapshot the current configured duration on their first explicit reset.
+    """
     demo_oid = _as_object_id(demo_id)
     if demo_oid is None:
         return False
+    demo = db.demonstrations.find_one({"_id": demo_oid}) or {}
+    assignment = demo.get(CITY_ASSIGNMENT_FIELD)
+    if not assignment or assignment.get("escalated"):
+        return False
+    hours = city_review_hours(assignment.get("review_hours"))
+    now = utcnow()
     result = db.demonstrations.update_one(
         {
             "_id": demo_oid,
             CITY_ASSIGNMENT_FIELD: {"$exists": True},
             "city_assignment.escalated": {"$ne": True},
+            "city_assignment.assigned_at": assignment.get("assigned_at"),
         },
-        {"$set": {"city_assignment.assigned_at": utcnow()}},
+        {"$set": {
+            "city_assignment.assigned_at": now,
+            "city_assignment.review_hours": hours,
+            "city_assignment.review_deadline_at": now + timedelta(hours=hours),
+        }},
     )
     return result.modified_count > 0
 
@@ -220,7 +278,7 @@ def has_live_assignment(demo_doc: Dict[str, Any]) -> bool:
 def escalate_overdue(
     db,
     *,
-    escalate_after_hours: int = DEFAULT_ESCALATION_HOURS,
+    escalate_after_hours: Optional[int] = None,
     max_to_process: int = 50,
 ) -> List[Dict[str, Any]]:
     """Return assigned demos whose 24 h window has elapsed and await escalation.
@@ -228,11 +286,18 @@ def escalate_overdue(
     This is read-only; the caller is responsible for emailing the national team
     and flipping ``city_assignment.escalated`` (see the escalation script).
     """
-    cutoff = utcnow() - timedelta(hours=escalate_after_hours)
+    now = utcnow()
+    cutoff = now - timedelta(hours=city_review_hours(escalate_after_hours))
     query = {
         CITY_ASSIGNMENT_FIELD: {"$exists": True},
         "city_assignment.escalated": {"$ne": True},
-        "city_assignment.assigned_at": {"$lte": cutoff},
+        "$and": [{"$or": [
+            {"city_assignment.review_deadline_at": {"$lte": now}},
+            {
+                "city_assignment.review_deadline_at": {"$exists": False},
+                "city_assignment.assigned_at": {"$lte": cutoff},
+            },
+        ]}],
         "approved": {"$ne": True},
         "$or": [{"rejected": {"$exists": False}}, {"rejected": False}],
         "cancelled": {"$ne": True},

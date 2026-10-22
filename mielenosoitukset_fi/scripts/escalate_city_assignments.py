@@ -20,9 +20,10 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailJob import EmailJob
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.city_assignment import (
-    DEFAULT_ESCALATION_HOURS,
     escalate_overdue,
     mark_escalated,
+    city_review_hours,
+    city_review_deadline,
 )
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.time_utils import utcnow
@@ -65,7 +66,10 @@ def _queue_escalation_email(
         "date": demo.get("date"),
         "city": demo.get("city"),
         "address": demo.get("address"),
-        "escalate_after_hours": escalate_after_hours,
+        "escalate_after_hours": city_review_hours(
+            (demo.get("city_assignment") or {}).get("review_hours", escalate_after_hours)
+        ),
+        "review_deadline_at": city_review_deadline(demo, escalate_after_hours=escalate_after_hours),
         "approve_link": approve_link,
         "preview_link": preview_link,
         "reject_link": reject_link,
@@ -101,16 +105,7 @@ def escalate_once(
     max_to_process: int = 50,
 ) -> int:
     """Escalate overdue city-assigned demos to the national team."""
-    try:
-        from config import Config
-    except Exception:  # pragma: no cover - defensive fallback
-        Config = None
-
-    if escalate_after_hours is None:
-        escalate_after_hours = int(
-            getattr(Config, "CITY_ASSIGNMENT_ESCALATION_HOURS", DEFAULT_ESCALATION_HOURS)
-            or DEFAULT_ESCALATION_HOURS
-        )
+    escalate_after_hours = city_review_hours(escalate_after_hours)
     db = db if db is not None else DatabaseManager().get_instance().get_db()
     email_sender = email_sender if email_sender is not None else EmailSender()
 

@@ -71,6 +71,9 @@
         Mielenosoitusta ei käsitellä kansallisessa tiimissä automaattisesti.
         Mikäli moderointipäätöstä ei ole tehty {{ escalate_after_hours }} tunnin kuluessa,
         ilmoitus siirtyy kansallisen tiimin käsiteltäväksi.
+        {% if review_deadline_at %}
+        Käsittelyn määräaika: {{ review_deadline_at.strftime('%Y-%m-%d %H:%M UTC') }}.
+        {% endif %}
     </p>
 </div>
 {% endblock %}

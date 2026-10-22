@@ -2345,6 +2345,9 @@ def init_routes(app):
                         city_admins,
                         template_name="admin_demo_city_assignment.html",
                         subject=f"Uusi mielenosoitus odottaa hyväksyntää: {city}",
+                        escalate_after_hours=current_app.config.get(
+                            "CITY_ASSIGNMENT_ESCALATION_HOURS", 24
+                        ),
                         context={
                             "title": title,
                             "date": date,

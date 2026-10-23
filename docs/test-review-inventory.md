@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/city-review-deadline` on main `cb4421da` (#955/#956 merged), 2026-10-23: 168 Python test files; 1,229 definitions; 337 assessed definitions. Retains all 329 merged assessments and adds seven deadline definitions plus one existing submission-route assessment. These are branch-tree counts, not full roadmap review, merged status for #958 or release acceptance. Older per-branch/run counts below are historical evidence only.
+Branch `codex/urgent-review-alert-policy` on #958 at8ae83f85 and main `cb4421da`, 2026-10-23: 169 Python test files; 1,240 definitions; 348 assessed definitions. Retains all329 merged and eight #958 assessments; adds eleven urgent-policy definitions. These are branch-tree counts, not full roadmap review, merged status for open PRs or delivery acceptance. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -2443,6 +2443,54 @@ QA-01 / USER-01, Codex, 2026-10-18: route-surface definition individually review
 ## tests/test_websocket_smoke.py
 
 - [ ] `test_chat_socketio_events_cover_friend_listing_history_send_and_read`
+
+## tests/test_urgent_review_alert_policy.py
+
+CITY-02a/P1/#961 · Codex · 2026-10-23. Pure actual policy code, fixed UTC reference and real ZoneInfo/BSON/shared deadline helper, no time mocks, DB, network or delivery doubles. 47 parameter cases across11 individually assessed definitions. Imported project configuration follows the normal test harness; no transport/poller runs. Not evidence for a scheduler, outbox, bot acceptance or live send/edit.
+
+- [x] `test_urgency_thresholds_are_strict_and_use_the_start_instant`
+
+Nine remaining-second cases around48h/24h/start: exact bounds, adjacent seconds and already-started. Asserts no new alert or exact pending severity/threshold. Keep; detects accidental <= boundaries, date-only comparison and missing past guard.
+
+- [x] `test_existing_messages_get_explicit_state_updates_without_new_announcements`
+
+Seven terminal/non-urgent variants. Same actual document returnsNone for a new announcement but an explicit state, no urgency/threshold and preserved demo identity for an existing message. Includes approved cancellation precedence. Keep; payload policy only, not actual provider ID reuse/edit or lifecycle claim fencing.
+
+- [x] `test_handled_time_comes_only_from_matching_persisted_state`
+
+Six cases: approved/rejected metadata, cancellation timestamp, mismatched decision, missing timestamp and stale metadata on a still-pending record. Exact timestamp/copy inclusion and pending-state control prevent fabricated processing time. Keep; not tests of the moderation service's writes or decision-vs-send race.
+
+- [x] `test_helsinki_start_parsing_never_guesses_missing_or_dst_instants`
+
+Nine summer/winter/seconds, spring-gap/autumn-fold, post-fold, malformed date/clock and missing-field cases. Exact UTC instants orNone with real zone database. Keep; no invented midnight/fold, not all historical timezone transitions or overnight/multi-day parsing.
+
+- [x] `test_reference_clock_accepts_storage_utc_and_aware_instants_consistently`
+
+Compares full snapshots for the same UTC instant as naive storage, UTC-aware and offset-aware clocks, and rejects missing now. Keep; no wall-clock sleep or machine-timezone dependency.
+
+- [x] `test_city_responsibility_and_review_deadline_do_not_control_event_urgency`
+
+Two city/escalated cases with a five-day-overdue review deadline and72h review window. Asserts unchanged pending event urgency plus correct responsibility/deadline copy. Keep; prevents city escalation duration replacing the independent event threshold. No assignment query, permission or escalation write is mocked/proven.
+
+- [x] `test_message_is_bounded_escaped_and_has_only_an_authenticated_canonical_link`
+
+Long malicious title/city, private contact/description/actor/token/link sentinels and nested non-string title. Exact output-key allowlist, escaped text, bounded message, one fixed admin URL, no arbitrary URL/private sentinel. Keep; allowlist/formatter regression, not end-to-end Telegram parsing, channel membership or route authorization. Existing protected route remains the link target.
+
+- [x] `test_same_state_has_stable_content_hash_until_an_actual_change`
+
+Two times within one tier produce the same fingerprint; crossing24h and changing title change it. Keep; avoids tick-driven edits. Initial test setup incorrectly crossed the boundary and was corrected; this is not claimed as an application regression. Not provider deduplication or persistence evidence.
+
+- [x] `test_invalid_identity_never_builds_a_link_or_alert`
+
+Four null/invalid/integer/arbitrary-URL IDs must returnNone. Keep; no generated random ObjectId or untrusted-link interpolation. Valid BSON-ID control exists across all other definitions.
+
+- [x] `test_invalid_threshold_configuration_is_rejected`
+
+Six equal/reversed/nonpositive/bool/fractional configurations requireValueError. Keep; ordinary valid threshold controls are separate. Not a deployed configuration/secret validator.
+
+- [x] `test_configured_thresholds_change_the_displayed_limit_and_severity_together`
+
+Configured20h/10h with9h remaining yields critical/10h and matching visible copy. Keep; prevents fixed24/48 labels from contradicting a configured policy. Deployment still uses unenabled defaults until worker/configuration acceptance.
 
 ## tests/test_wrappers.py
 

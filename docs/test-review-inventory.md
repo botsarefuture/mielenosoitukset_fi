@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/deploy-dependency-receipt` on #951 at505b5eaa, including main `a5f256b7` (#942/#946 merged), 2026-10-22: 166 Python test files; 1,213 definitions; 309 assessed definitions. All merged reviews, three #951/eight #952 definitions and the existing index-provisioning contract are retained. These are branch-tree counts, not completed review or release acceptance for the pending dependency work. Older per-branch/run counts below are historical evidence only.
+Branch `codex/merge-editor-test-assessment` stacked on PR #955 at0cb99bb3 and main `8e6f0e2b`, 2026-10-22: 167 Python test files; 1,222 definitions; 329 assessed definitions. Retains all merged reviews and the thirteen #955 assessments; adds three merge-editor and four public-detail assessments. This documentation-only delta adds no test definitions or runtime behavior. These are branch-tree counts, not completed suite review, merged status or release evidence. Older per-branch/run counts remain historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -194,9 +194,17 @@ SEC-03 / QA-01 review, 2026-10-12, Codex, P1. Disposable MongoDB, seeded real de
 
 ## tests/test_admin_demo_merge_editor.py
 
-- [ ] `test_global_admin_merge_editor_uses_shared_form_contract`
-- [ ] `test_restricted_admin_cannot_open_merge_editor`
-- [ ] `test_merge_editor_has_no_legacy_page_specific_ui_layer`
+- [x] `test_global_admin_merge_editor_uses_shared_form_contract`
+- [x] `test_restricted_admin_cannot_open_merge_editor`
+- [x] `test_merge_editor_has_no_legacy_page_specific_ui_layer`
+
+QA-03a / SEC-04c support · P2 · Codex · 2026-10-22 · main8e6f0e2b. Each existing definition reviewed against its source, actual route guards and fixtures. All three focused cases pass; documentation diff checks pass. No tests or product behavior changed; these are narrow structural/access guards, not complete merge acceptance. Merged #942/#946 rollback/recovery assessments are retained separately in this inventory. Existing admin fixture injects an authenticated session and disposable Mongo data; primary-login/reauth flows are not exercised here.
+
+| Definition | Requirement, setup and assertions | Reliability, limits and needed follow-up | Disposition |
+|---|---|---|---|
+| `test_global_admin_merge_editor_uses_shared_form_contract` | Real global-admin GET with two existing IDs must render200 and shared shell/section/choice/disclosure/sticky-action classes plus primary/recommendation/title-source field names. | Actual Flask/Jinja/Mongo, no mocked render or permission decision. String presence can establish server-rendered hooks but not placement, values, visual uniformity or working JavaScript. Interactive manual-mode/keyboard/theme acceptance remains QA-03/UI-04 work. | Keep as render/structure smoke test; do not cite as visual or merge-POST proof. |
+| `test_restricted_admin_cannot_open_merge_editor` | Real non-global admin with EDIT_DEMO and valid source IDs gets302 to the demo dashboard rather than a merge editor. Global positive control exists in the first definition. | Role/grant loaded from actual DB; fixture session does not bypass route authorization. Valid IDs avoid an unrelated invalid-input redirect masking this guard. Only GET/non-global role is covered, not forged POST, city/org variants or live grant revocation. | Keep; narrow global-admin-only access regression. Broader POST/scope tests remain separate. |
+| `test_merge_editor_has_no_legacy_page_specific_ui_layer` | Reads actual template/workspace CSS; checks shared form stack, hidden-property manual-mode hook and absence of legacy inline layout/classes/selectors. | Repository-root CWD is assumed by established test invocation. Exact source substrings can fail harmless refactors and do not execute CSS/JS or verify every inline style. Retain only as a migration ratchet; replace implementation-spelling hooks with browser behavior when that interaction is next changed. | Keep with explicit static-contract limits; not accessibility/theme/success evidence. |
 
 ## tests/test_admin_demo_views.py
 
@@ -583,10 +591,61 @@ QA-01c / SEC-05, P1, reviewed 2026-10-15 by Codex, main 9098c02a. Initially five
 - [ ] `test_submit_duplicate_conflict_can_match_existing_translation_title`
 - [ ] `test_conflict_api_can_match_existing_translation_title`
 - [ ] `test_merge_duplicate_submissions_repoints_references_and_audits`
-- [ ] `test_process_submit_notifications_sends_admin_notifications_immediately`
-- [ ] `test_process_submit_notifications_marks_job_error_when_delivery_fails`
-- [ ] `test_admin_pending_reminder_ignores_old_completed_notifications`
-- [ ] `test_admin_pending_reminder_keeps_recent_completed_notifications_as_blockers`
+- [x] `test_process_submit_notifications_sends_admin_notifications_immediately`
+
+DATA-04a/P1/#954 · Codex · 2026-10-22. Real Mongo queued job and demo; SMTP double records the actual EmailJob, reminder/merge jobs disabled. Asserts completed receipt, one message, original recipient, raise-on-error and persisted admin contact. Keep as compatibility check; not live SMTP or scheduler execution.
+
+- [x] `test_process_submit_notifications_marks_job_error_when_delivery_fails`
+
+DATA-04a/#954. Real Mongo, known pre-acceptance SMTPConnectError double containing private-looking text. Asserts retryable error, class-only error metadata, attempt/cooldown, no sending marker and no admin contact. Replaced unsafe raw-error expectation, not error detection. Keep; ambiguous post-acceptance errors have separate coverage.
+
+- [x] `test_admin_pending_reminder_ignores_old_completed_notifications`
+
+DATA-04a/#954. Isolated actual queue/demo/submitter documents; 25-hour-old completed initial job and future date, bearer generators doubled. Asserts a pending reminder with exact subject. Keep; detects old-completion suppression, not exact 24-hour boundary, valid token generation or simultaneous enqueue uniqueness.
+
+- [x] `test_admin_pending_reminder_keeps_recent_completed_notifications_as_blockers`
+
+DATA-04a/#954. Real Mongo, stale demo contact but two-hour-old completed reminder; link generators doubled. Asserts queue remains one reminder. Keep as complement to old-completion case; not a concurrent enqueuer or exact-cutoff test.
+
+## tests/test_submission_notification_recovery.py
+
+DATA-04a/P1/#954 · Codex · 2026-10-22. Shared `worker` fixture uses the existing isolated real Mongo test database, clears only its notification queue, controls UTC and disables unrelated merge/reminder jobs. Actual Jinja rendering; SMTP is always mocked. No live delivery, production scheduler or exactly-once guarantee. Each definition below is individually assessed; parameter groups include every case.
+
+- [x] `test_retry_resumes_after_recorded_delivery_and_observes_cooldown`
+
+Two cases: BSON and string demo identifiers. First mail succeeds, second gets SMTP DATA refusal, then succeeds. Asserts first receipt survives, reminder blocker/no contact on partial failure, no retry at59 seconds, retry at60, exact send sequence/attempts/completed cumulative count/contact and cleared failure/claim fields. Keep; old worker cannot recover error or retain per-message progress. String case protects the existing contact helper's compatibility contract even though current producers use BSON identifiers.
+
+- [x] `test_retries_are_bounded_and_reminders_do_not_bypass_cooldown`
+
+Known connect refusal with private-looking text on every attempt; advances controlled clock to stored due time. Checks each attempt, class-only metadata, reminder blocker, exact five-attempt ceiling even when due, and reminder eligibility after25h. Keep; no SMTP server behavior or exact daily cutoff claim.
+
+- [x] `test_stale_claim_recovery_distinguishes_smtp_ambiguity`
+
+Three cases: fresh599-second claim unchanged,600-second pre-send claim recovers,600-second in-send claim quarantined. Asserts actual send list/status and unknown blocker/claim removal. Keep; tests lease boundary without sleeps, not real process killing.
+
+- [x] `test_ambiguous_smtp_failure_is_not_automatically_replayed`
+
+SMTP disconnect double includes private-looking text. Runs again two days later, asserting one attempted send, unknown state, class-only error and no delivered index. Keep; protects against accidental blanket-error retries, does not establish whether SMTP accepted the message.
+
+- [x] `test_lost_owner_cannot_acknowledge_or_send_the_next_message`
+
+SMTP double changes actual Mongo ownership during first send. Asserts replacement claim/status retained, no receipt, no second send or admin-contact write. Keep; deterministic ownership interleaving, not a genuine multiprocess test or prevention of already-started SMTP.
+
+- [x] `test_resolved_moderation_is_not_replayed`
+
+Six cases: approved, rejected, cancelled, in_past, deleted and invalid queued identifier. Actual demo/job writes precede dispatch; asserts no sends and cancelled job. Keep; not an atomic decision-vs-SMTP race test.
+
+- [x] `test_city_retry_intersects_current_grants_and_original_recipients`
+
+Four cases: active, revoked, escalated and cleared assignment. Actual job/assignment, permission lookup doubled with original/new users; records exact SMTP recipients. Only still-assigned active queued address receives mail; others cancel. Keep; actual grant query integration is in existing city-assignment tests, not proven by this lookup double.
+
+- [x] `test_failed_database_acknowledgement_quarantines_possible_delivery`
+
+Injects failure only at delivery-receipt write after successful SMTP double. Two runs assert one send, unknown status and retained sending index. Keep; actual other Mongo writes, simulated receipt outage, not full DB/power-loss fault tolerance.
+
+- [x] `test_legacy_unreceipted_failures_need_reconciliation`
+
+Two cases: old error and stale processing without protocol version. Asserts no sends and unknown state. Keep; prevents unsafe assumptions about historical partial delivery, not an automated migration/reconciliation test.
 
 ## tests/test_browser_e2e.py
 
@@ -1673,13 +1732,23 @@ Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-requ
 
 ## tests/test_public_detail_invite_contract.py
 
-- [ ] `test_detail_invite_dialog_uses_safe_dom_rendering_and_app_feedback`
-- [ ] `test_detail_invite_dialog_has_translated_visible_copy`
+- [x] `test_detail_invite_dialog_uses_safe_dom_rendering_and_app_feedback`
+
+QA-03/UI-01/#833 · P2 · Codex · 2026-10-22. Reads actual template source, no mocks/browser. Positive ratchets cover live status, safe name text nodes, avatar append, cleared results, disabled sending, guarded JSON/error parsing and shared success feedback; targeted negative checks reject the old native alert and one exact innerHTML interpolation form in the invite function. Manual inspection confirms these calls are on the current handler path. Keep as a cheap source contract, not demonstrated XSS resistance or end-to-end invitation behavior: equivalent formatting, dead code or a different unsafe sink could evade/falsely fail it. Actual DOM/injection, stale loading/reopen, network failure, authorization/CSRF, focus and invite delivery are not exercised; schedule focused behavioral coverage rather than claiming those from this pass.
+
+- [x] `test_detail_invite_dialog_has_translated_visible_copy`
+
+QA-03/I18N-01/#833 · P2 · Codex · 2026-10-22. Four literal gettext-wrapped labels checked in actual source. Keep as extraction/wrapping ratchet; no FI/EN/SV catalog, locale selection, rendered translation, disabled state or full-copy inventory evidence. No fixture and no translation mock; exact whitespace/quote sensitivity is an explicit limitation. Complements but cannot replace locale-render tests.
 
 ## tests/test_public_detail_like_guard.py
 
-- [ ] `test_optional_like_controls_are_guarded_in_every_entrypoint`
-- [ ] `test_cancelled_detail_omits_like_controls_without_page_errors`
+- [x] `test_optional_like_controls_are_guarded_in_every_entrypoint`
+
+QA-03/UI-01/#833 · P2 · Codex · 2026-10-22. Actual source contains guards for handler, anonymous hover setup, toggle/get callbacks (exact count2) and count animation. Manual current-code inspection confirms guards precede dereferences. Keep only as a small structural ratchet paired with the executed canceled-detail case: source existence/count alone does not prove order, reachability or every future entrypoint, and equivalent refactoring may require updating the test.
+
+- [x] `test_cancelled_detail_omits_like_controls_without_page_errors`
+
+QA-03/UI-01/#833 · P1 regression · Codex · 2026-10-22. Real seeded Mongo/Flask live HTTP and Chromium, anonymous desktop Finnish viewport with external requests blocked by the fixture. Marks the actual demo canceled, asserts omitted like controls and visible cancellation explanation, then explicitly invokes all four current callbacks (awaiting async ones). Page-evaluate exceptions fail the test; pageerror assertion targets the reported null-dereference text, not all possible browser errors. Executed locally (not skipped), all4 file cases pass. Keep: meaningful missing-control regression, not authenticated behavior, successful like mutation, full browser error absence, mobile/theme visuals or backend cancellation-policy proof. Fixed250ms wait and narrow error text are robustness follow-ups; explicit callback execution provides the principal deterministic assertion. Browser fixture may skip when unavailable, so CI skips cannot establish this executed coverage.
 
 ## tests/test_public_follow_feedback_contract.py
 

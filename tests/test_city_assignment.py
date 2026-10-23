@@ -211,9 +211,11 @@ class TestNotEscalatedAssignmentClause:
 
 @pytest.mark.integration
 class TestSubmitIntegration:
+    @pytest.mark.parametrize("review_hours", [24, 48])
     def test_city_with_admins_gets_assignment_and_skips_national_queue(
-        self, app, db, seeded_data, external_side_effects, monkeypatch
+        self, app, db, seeded_data, external_side_effects, monkeypatch, review_hours
     ):
+        monkeypatch.setitem(app.config, "CITY_ASSIGNMENT_ESCALATION_HOURS", review_hours)
         helsinki_key = normalize_city_key("Helsinki")
         _create_city_admin(db, [helsinki_key], ["ACCEPT_DEMO"])
         demo_id = seeded_data["pending_demo_id"]
@@ -242,6 +244,12 @@ class TestSubmitIntegration:
         national_msgs = [j for j in submitted if j.get("notification_type") == "initial_submission"]
         assert len(assignment_msgs) == 1
         assert len(national_msgs) == 0
+        assignment = db.demonstrations.find_one({"_id": assignment_msgs[0]["demo_id"]})[CITY_ASSIGNMENT_FIELD]
+        context = assignment_msgs[0]["messages"][0]["context"]
+        assert assignment["review_hours"] == review_hours
+        assert assignment["review_deadline_at"] == assignment["assigned_at"] + timedelta(hours=review_hours)
+        assert context["review_deadline_at"] == assignment["review_deadline_at"]
+        assert context["escalate_after_hours"] == review_hours
 
     def test_city_without_admins_falls_back_to_national_queue(
         self, app, db, seeded_data, external_side_effects, monkeypatch

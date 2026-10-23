@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/merge-editor-test-assessment` stacked on PR #955 at0cb99bb3 and main `8e6f0e2b`, 2026-10-22: 167 Python test files; 1,222 definitions; 329 assessed definitions. Retains all merged reviews and the thirteen #955 assessments; adds three merge-editor and four public-detail assessments. This documentation-only delta adds no test definitions or runtime behavior. These are branch-tree counts, not completed suite review, merged status or release evidence. Older per-branch/run counts remain historical evidence only.
+Branch `codex/city-review-deadline` on main `cb4421da` (#955/#956 merged), 2026-10-23: 168 Python test files; 1,229 definitions; 337 assessed definitions. Retains all 329 merged assessments and adds seven deadline definitions plus one existing submission-route assessment. These are branch-tree counts, not full roadmap review, merged status for #958 or release acceptance. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -647,6 +647,38 @@ Injects failure only at delivery-receipt write after successful SMTP double. Two
 
 Two cases: old error and stale processing without protocol version. Asserts no sends and unknown state. Keep; prevents unsafe assumptions about historical partial delivery, not an automated migration/reconciliation test.
 
+## tests/test_city_review_deadline.py
+
+CITY-01a/P2/#957 · Codex · 2026-10-22. Real isolated Mongo/Flask, UTC clock controlled without sleeps. Existing seeded users/events and EmailSender Jinja environment; SMTP and token generation doubled only where explicitly stated. These do not prove dashboard, in-app notification, live SMTP or full CITY-01 delivery.
+
+- [x] `test_stored_deadline_matches_email_and_escalation_despite_config_change`
+
+Six cases: configured24h/48h × just-before/exact/after deadline. Actual assignment writes, exact queued-context equality, real email template render and actual escalation query despite changed72h configuration. Keep; protects persisted deadline over current config, no SMTP or scheduler execution. Assigned admin ID is a valid BSON stand-in; eligibility is covered by separate route tests, not this fixture.
+
+- [x] `test_legacy_deadline_uses_explicit_configured_window`
+
+Six cases:24h/48h × -1/0/+1 seconds. Legacy document has assigned_at but no deadline. Asserts helper/query agreement and no read-time migration. Keep; explicit compatibility policy, not evidence of historical production configuration or a bulk backfill.
+
+- [x] `test_explicit_reset_keeps_stored_duration_and_snapshots_legacy_config`
+
+Two cases: snapshotted24h versus legacy. Changes current config to48h, advances2h, calls the real reset helper and checks all three stored timing fields. Keep; tests reset semantics, not authorization or actual link-send success. Existing protected link-send endpoint remains the caller.
+
+- [x] `test_ordinary_edit_does_not_extend_city_review_deadline`
+
+Real authenticated global-admin form POST with valid changed content and existing live assignment. Asserts302, actual title persistence and byte-equivalent assignment fields after save. Keep; successful content change prevents a vacuous rejected-request pass. Fixture inserts a fresh session directly; no primary login, city/org actor matrix or interactive browser assertion.
+
+- [x] `test_invalid_review_duration_fails_before_assignment`
+
+Six cases: zero, negative, bool, fractional number, malformed string and string zero. Actual helper/assign path raisesValueError and leaves assignment absent. Keep; no permissive truncation or invalid configuration writes. Not a broad config-schema or submission fallback test.
+
+- [x] `test_missing_legacy_timestamp_does_not_invent_a_deadline`
+
+Three cases: missing assigned_at, null stored deadline, malformed stored deadline. Actual persisted documents; helper returnsNone and escalation query excludes the target. Keep; explicit fail-closed timing evidence rather than invented deadlines. Not an automated damaged-record repair policy.
+
+- [x] `test_escalation_email_uses_stored_window_and_deadline`
+
+Actual48h assignment and exact-deadline query/marking while caller supplies24h fallback. Real escalation script/EmailJob/Jinja, SMTP capture and token generators doubled. Asserts one mail,48h not24h copy, exact deadline and persisted escalation. Keep; verifies job-to-message consistency, not provider acceptance, decision races or replay-safe escalation delivery.
+
 ## tests/test_browser_e2e.py
 
 - [ ] `test_public_pages_render_in_real_browser`
@@ -776,7 +808,9 @@ Validation: 51 focused city/case/component/user-management cases passed, includi
 - [ ] `TestNotEscalatedAssignmentClause::test_matches_demos_without_assignment`
 - [ ] `TestNotEscalatedAssignmentClause::test_matches_escalated_assignments`
 - [ ] `TestNotEscalatedAssignmentClause::test_excludes_non_escalated_assignments`
-- [ ] `TestSubmitIntegration::test_city_with_admins_gets_assignment_and_skips_national_queue`
+- [x] `TestSubmitIntegration::test_city_with_admins_gets_assignment_and_skips_national_queue`
+
+CITY-01a/P2/#957 · Codex · 2026-10-22. Actual anonymous Flask submission and Mongo grant/assignment/queue writes, existing external-side-effect doubles. Two configured24h/48h cases check exactly one city notification, no national job, stored duration/deadline arithmetic and exact email-context equality. Added deadline assertions to the existing integration, not a mocked assign call. Keep; response alone is permissive200/302 but exact persisted queue proves successful submission. Not SMTP, notification read permissions, dashboard or no-admin fallback acceptance; the latter has its separate definition.
 - [ ] `TestSubmitIntegration::test_city_without_admins_falls_back_to_national_queue`
 - [ ] `TestDecisionClearsAssignment::test_approve_clears_assignment`
 - [ ] `TestDecisionClearsAssignment::test_reject_clears_assignment`

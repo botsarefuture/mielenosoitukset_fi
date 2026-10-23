@@ -4076,7 +4076,6 @@ def handle_demo_form(
                 merged_data = _deep_merge(prev_demo, demonstration_data)
                 demo = Demonstration.from_dict(merged_data)
                 demo.save()
-                touch_city_assignment(mongo, demo_id)
                 hist_id = record_demo_change(
                     demo_id,
                     prev_demo,

@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-CITY-02b/#963 on #962 at `6e0d3b10`, 2026-10-24: 171 Python test files; 1,265 definitions; 373 assessed definitions. Preserves all355 previous assessments and adds eighteen delivery/adapter assessments. These are branch-tree counts, not full roadmap review, merged status for open PRs or delivery acceptance. Older per-branch/run counts below are historical evidence only.
+CITY-02b/#963 on #962, 2026-10-24: 171 Python test files; 1,265 definitions; 374 assessed definitions. Preserves all355 previous assessments and adds eighteen delivery/adapter assessments plus one existing background-surface assessment. These are branch-tree counts, not full roadmap review, merged status for open PRs or delivery acceptance. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -2323,12 +2323,14 @@ QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. El
 ## tests/test_surface_manifest.py
 
 - [x] `SurfaceManifestTests::test_route_surface_manifest_matches_source`
-- [ ] `SurfaceManifestTests::test_background_job_surface_manifest_matches_source`
+- [x] `SurfaceManifestTests::test_background_job_surface_manifest_matches_source`
 - [ ] `SurfaceManifestTests::test_socketio_surface_manifest_matches_source`
 
 QA-01 / USER-01, Codex, 2026-10-18: route-surface definition individually reviewed. AST-derived route/decorator signatures are compared to a checked-in inventory with explicit coverage anchors for every route module. Adding the user-history route produced the CI count mismatch (10 vs 9); only that module's count/hash/coverage was updated, not the test or other surfaces. Keep: detects route drift, not runtime authorization or coverage quality by itself; real new-route tests remain required. Background/socket definitions remain unassessed.
 
 CITY-02a/#962, 2026-10-24: independently reproduced the new admin review route's49→50 manifest mismatch. Updated only admin_demo_bp's actual AST-derived count/hash and linked its real scoped-route tests. No assertion removed or other route surface refreshed blindly. CI also timed out later, so fixing this known failure is not proof that the entire CI run completes.
+
+CITY-02b/#964, 2026-10-24: background-surface definition individually assessed. Actual AST-derived job registration count/hash must match the checked-in inventory and retain nonempty coverage anchors. Reproduced15vs14 after adding the opt-in worker; updated only this surface's count/hash and added the real delivery-test anchor. Keep; detects registration drift, not scheduler liveness, actual transport or comprehensive job coverage. Socket definition remains unassessed. Both observed CI failures are now locally explained; later timeout remains a separate unproven gate.
 
 ## tests/test_tag_list_localization_contract.py
 

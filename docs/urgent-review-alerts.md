@@ -108,6 +108,14 @@ credential reuse is involved.
 
 ## Remaining release gates and limits
 
+Read-only production preflight,2026-10-24: the exact four-date discovery filter
+with `_id` sort/100 limit used the existing
+`approved_1_date_1_cancelled_1_hide_1_rejected_1` index (IXSCAN, bounded SORT),
+examined5 keys/0 documents and completed in1ms, with0 matching candidates in an
+estimated59,265-document collection. No indexes/config/data changed or Telegram
+messages sent. This verifies an empty-date query plan, not peak-volume sweep
+latency, nonempty-batch performance or deployment of this worker.
+
 Focused real-Mongo tests use a fake provider and do not prove Telegram acceptance.
 Staging send→edit, monitored sweep latency/index selection and verified production
 secret/configuration deployment remain required before enablement. The read-only

@@ -6,6 +6,8 @@
 
 - Add an opt-in, bounded urgent-review Telegram worker: discover upcoming pending events, retain one message receipt per demo/channel, edit canonical state changes, honor rate-limit delays and quarantine unconfirmed first sends instead of duplicating them. Blocked deliveries remain visible in background-job status. Production sending remains disabled pending verified configuration and live acceptance.
 
+- City admins now get a permission-scoped review dashboard with stable pagination, exact review deadlines and a display-only minute countdown. Approval-only reviewers can open the protected review form; overdue, escalated and unknown deadlines are explicit. Global operational data stays restricted; FI/EN/SV, shared themes and no-JS deadline links are supported.
+
 - Bound test-session Mongo connections across singleton resets while preserving legacy database handles; retain the full CI gate with individual test progress and stalled-run diagnostics.
 
 - Urgent-review snapshots honor rescheduled start times despite stale archive flags and no longer invent national ownership after a decision clears the city assignment. Their authenticated review link now works for approval-only city admins through a scoped, CSRF-protected shared admin page without granting editor or analytics access.

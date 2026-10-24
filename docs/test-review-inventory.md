@@ -2,9 +2,15 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+PR #964 integration with merged #962/#968/#970, 2026-10-24: **1,275 definitions /173 files /388 individually assessed definitions**. Retains every worker and dashboard review record with duplicate definitions counted once. Repository-wide totals include standalone test scripts, not just `tests/`. Historical checkpoints below are provenance, not additive totals. Hosted CI remains required on this integration head.
+
 PR #964 integration with #962/#970 (2026-10-24): **1,270 definitions /172 files /382 assessed**. Retains all374 worker-branch assessments plus eight lifecycle/config reviews. All125 focused worker/policy/review/lifecycle/config/deadline/surface cases pass. Prerequisite head55933f8b passed its full hosted suite; the combined worker head still requires its own current-head CI. Historical checkpoints below are provenance, not additive totals.
 
 CITY-02b/#963 on #962, 2026-10-24: 171 Python test files; 1,265 definitions; 374 assessed definitions. Preserves all355 previous assessments and adds eighteen delivery/adapter assessments plus one existing background-surface assessment. These are branch-tree counts, not full roadmap review, merged status for open PRs or delivery acceptance. Older per-branch/run counts below are historical evidence only.
+
+PR #968 integration with #962/#970 (2026-10-24): **1,257 definitions /172 files /369 assessed**. Retains all361 dashboard-branch assessments plus eight lifecycle/config reviews. All77 focused dashboard/deadline/city-scope/review/lifecycle/config/CI/surface cases pass, including actual Chromium cases. No dashboard, translation catalog or shared CSS/JS implementation changed in this integration. Prerequisite head55933f8b passed its full hosted suite; the combined dashboard head still requires its own current-head CI. Historical checkpoints below are provenance, not additive totals.
+
+CITY-01b/#967 on #962 at `b39a46d8`, 2026-10-24: 171 Python test files; 1,252 definitions; 361 assessed definitions. Preserves all355 predecessor assessments and adds five new queue definitions plus one updated existing city-dashboard definition. Independent #964 delivery and #966 helper-audit records are not included in these branch-tree counts; preserve/recount all on integration. Not full roadmap review or release acceptance. Older per-branch/run counts below are historical evidence only.
 
 PR #962 integration with #970 (2026-10-24): retain all 355 existing assessments and eight non-overlapping lifecycle/config reviews, for **1,252 definitions /171 files /363 assessed**. Main-based prerequisite head55933f8b full CI40104202951 succeeded with1,562 passed /327 skipped; this does not prove this combined feature head or incorporate independent #964/#968/#966/#973 reviews. Historical per-branch checkpoints below remain provenance, not additive totals.
 
@@ -468,6 +474,8 @@ USER-01 / QA-03 review follow-up, 2026-10-18, Codex, P2: `test_every_full_admin_
 
 CITY-02a/#962 follow-up, 2026-10-24: the same inventory now explicitly requires the approval-only demonstration review page, increasing53→54. Every discovered page still must import/use the canonical hero; no prior page/localization assertion removed. Initial combined run correctly failed on the unadjusted page count. Keep; new route rendering and real permissions are independently covered, not inferred from this static macro ratchet.
 
+CITY-01b/#967 follow-up: explicitly include the new scoped-city queue page,54→55. Every page still uses the same macro and all localization checks remain; actual localized/browser queue rendering is tested independently below.
+
 ## tests/test_admin_user_history_durability.py
 
 - [x] `test_concurrent_profile_writes_have_one_attributed_winner`
@@ -885,14 +893,40 @@ CITY-01a/P2/#957 · Codex · 2026-10-22. Actual anonymous Flask submission and M
 - [ ] `test_city_admin_cannot_edit_verified_organization`
 - [ ] `test_city_admin_cannot_invite_to_verified_organization`
 - [ ] `test_city_admin_can_invite_to_unverified_organization`
-- [ ] `test_city_admin_dashboard_redirects_to_scoped_demo_view`
+- [x] `test_city_admin_dashboard_uses_scoped_review_queue`
 - [ ] `test_edit_user_revokes_object_id_backed_city_scope_grant`
 
 SEC-04b / QA-01 supporting review, 2026-10-16, Codex, P1; only `test_explicit_object_id_editor_can_open_scoped_audit_views` is assessed in this file. Its prior final 403 assertion relied on earlier GET normalization replacing the document and erasing the explicit editor grant. Existing `has_demo_permission` explicitly grants editors access; no production permission rule is changed to make this test pass.
 
+CITY-01b/#967, 2026-10-24: `test_city_admin_dashboard_uses_scoped_review_queue` explicitly replaces the old redirect-named definition because the requested dashboard is now a real200 scoped queue. Uses actual scoped grants/session/Mongo, asserts the new page and retains all existing403 assertions for global metrics/login/panic APIs. Keep; no production policy weakening, no deletion of an unchecked test without a replacement assessment. Shared side effects are stubbed; runtime queue/permission detail is covered in the new file below.
+
 | Definition | Requirement / assertions | Setup, coverage and reliability limits | Disposition |
 |---|---|---|---|
 | `test_explicit_object_id_editor_can_open_scoped_audit_views` | ObjectId-backed explicit editor can read its scoped audit timeline/detail/command center and still open the editor afterward; persisted editor ID survives those reads. The positive command-center link is a wiring observation, not proof of complete action visibility parity. | Real local user/membership/demo records and authenticated Flask session; no authorization mocks. One explicit-editor/VIEW_DEMO membership scenario, not a full role matrix or proof that all fields remain unchanged. Observed template/server edit-action parity remains a separate UI-affordance gap. | Corrected 403 to 200 based on existing server contract and added persisted-grant assertion. Removed the old negative edit-link assertion rather than making the UI's missing authorized action a required contract; keep. |
+
+## tests/test_city_review_dashboard.py
+
+CITY-01b/P2/#967 · Codex · 2026-10-24. Five definitions/eight cases, actual Flask/Jinja/Mongo grants and shared deadline reader; clock controlled only where asserted. Existing fixtures suppress real delivery/background tasks and inject authenticated sessions.115 combined focused cases pass; compatibility suites are not all newly assessed. No real login/SMTP/production acceptance.
+
+- [x] `test_approval_only_city_dashboard_is_scoped_and_has_usable_review_links`
+
+Three FI/EN/SV cases explicitly enable those supported test locales (no production locale publication change). ACCEPT-only grant gets200 and an actually usable review link; localized heading and reused awaiting-review/actions labels are asserted. Other city, contradictory authoritative city_key and resolved demo absent; no global stat markup and global dataAPI403. Keep; actual route/scope/compiled-catalog acceptance, not template-only permission hiding.
+
+- [x] `test_queue_orders_authoritative_deadlines_and_preserves_unknowns`
+
+Stored1h/48h, legacy assigned_at with current72h config, explicitnull despite valid assigned_at. Actual aggregation sorts exact expected IDs, shared reader yields60/2880/4320 minutes, unknown last with no timestamp, legacy document remains unmigrated. Keep; tests query/reader agreement and frozen stored values rather than duplicating assertions from the Mongo expression. Not every malformed timestamp shape.
+
+- [x] `test_queue_pagination_is_bounded_stable_and_permission_specific`
+
+22 identical-deadline docs with real LIST-only grant: pages1/2 combine to exactly the insertion/ObjectId order, total22/ranges1–20,21–22, excessivepage clamps to2. Neither review nor view buttons authorized. Keep; exact deterministic tie-breaker/count/offset bound, not a concurrent snapshot while records change.
+
+- [x] `test_dashboard_states_are_explicit_and_get_never_resets_assignment`
+
+Fixed server clock and overdue/escalated/invalid stored deadline records; exact state copy and full before/after assigned documents equal. Keep; proves a GET doesn't backfill/reset/escalate. Server-side escalation behavior is independently tested elsewhere; reading overdue copy is not proof a job ran.
+
+- [x] `test_city_queue_has_nojs_deadline_and_accessible_minute_clock`
+
+Two real Chromium cases390/light and1440/dark. Signed test session, real local assets, no external traffic; wrong Date.now2099 cannot expire the server-relative clock. Exact visible Helsinki time, aria-hidden dynamic label, computed theme and no page overflow. Screenshot inspection caught clipped deadline/action despite is_visible; now their bounding boxes must fit the viewport, with the shared stacked table variant. Separate JavaScript-disabled contexts retain visible absolute time/review link. Changing test DOM server reference to2099 and invoking the actual shared script exercises expiry copy without waiting. Temporary screenshots support spot inspection. Keep; no screen-reader certification, all-theme/viewport matrix or OS-sleep clock guarantee. Added locales are tested via the separate real GET cases.
 
 ## tests/test_config.py
 

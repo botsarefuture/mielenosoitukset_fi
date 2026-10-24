@@ -983,7 +983,16 @@ def load_user(user_id):
 def admin_dashboard():
     """Render the admin dashboard (role-filtered for all authenticated users)."""
     if _is_limited_city_admin(current_user):
-        return redirect(url_for("admin_demo.demo_control"))
+        from datetime import timezone
+        from mielenosoitukset_fi.utils.city_review_dashboard import city_review_queue
+
+        now = utcnow().replace(tzinfo=timezone.utc)
+        queue = city_review_queue(mongo, current_user, request.args.get("page", 1), now)
+        return render_template(
+            f"{_ADMIN_TEMPLATE_FOLDER}cities/review_dashboard.html",
+            queue=queue, server_now=now.isoformat(),
+            can_list_demos=bool(current_user.scoped_city_keys_for("LIST_DEMOS")),
+        )
     # Load current panic mode
     panic = mongo.panic.find_one({"name": "global"})
     panic_mode = panic.get("panic", False) if panic else False

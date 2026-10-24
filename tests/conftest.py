@@ -92,6 +92,16 @@ os.environ["CONFIG_YAML_PATH"] = str(_CONFIG_PATH)
 
 from config import Config  # noqa: E402
 from mielenosoitukset_fi.database_manager import DatabaseManager  # noqa: E402
+from tests._mongo_clients import SessionMongoClients  # noqa: E402
+
+
+# Install before test-module collection: several legacy modules capture a DB
+# handle at import. Singleton resets still create fresh managers/config snapshots,
+# but their real connections are session-owned instead of growing per test.
+_database_manager_module = importlib.import_module("mielenosoitukset_fi.database_manager")
+_original_manager_client_factory = _database_manager_module.MongoClient
+_test_mongo_clients = SessionMongoClients(TEST_MONGO_URI)
+_database_manager_module.MongoClient = _test_mongo_clients
 
 
 Config.reload()
@@ -802,8 +812,14 @@ def cleanup_test_resources():
             pass
         DatabaseManager._instance = None
 
-    DatabaseManager.close_retired_test_connections()
-    shutil.rmtree(_CONFIG_DIR, ignore_errors=True)
+    try:
+        DatabaseManager.close_retired_test_connections()
+    finally:
+        try:
+            _test_mongo_clients.close()
+        finally:
+            _database_manager_module.MongoClient = _original_manager_client_factory
+            shutil.rmtree(_CONFIG_DIR, ignore_errors=True)
 
 
 @pytest.fixture

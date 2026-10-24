@@ -56,24 +56,36 @@ class HasDemoPermissionTests(unittest.TestCase):
 
     def test_denies_for_unauthenticated_user(self):
         user = FakeUser(is_authenticated=False)
-        self.assertFalse(
-            wrappers.has_demo_permission(user, ObjectId(), "EDIT_DEMO"),
-            "Unauthenticated users should not be authorized.",
-        )
+        with patch.object(
+            wrappers, "_get_mongo", side_effect=AssertionError("Unexpected DB lookup")
+        ) as lookup:
+            self.assertFalse(
+                wrappers.has_demo_permission(user, ObjectId(), "EDIT_DEMO"),
+                "Unauthenticated users should not be authorized.",
+            )
+            lookup.assert_not_called()
 
     def test_allows_global_admin_without_db_lookup(self):
         user = FakeUser(global_admin=True)
-        self.assertTrue(
-            wrappers.has_demo_permission(user, ObjectId(), "EDIT_DEMO"),
-            "Global admins should bypass demonstration-specific checks.",
-        )
+        with patch.object(
+            wrappers, "_get_mongo", side_effect=AssertionError("Unexpected DB lookup")
+        ) as lookup:
+            self.assertTrue(
+                wrappers.has_demo_permission(user, ObjectId(), "EDIT_DEMO"),
+                "Global admins should bypass demonstration-specific checks.",
+            )
+            lookup.assert_not_called()
 
     def test_denies_for_invalid_demo_id(self):
         user = FakeUser()
-        self.assertFalse(
-            wrappers.has_demo_permission(user, "not-a-valid-id", "EDIT_DEMO"),
-            "Invalid IDs should be rejected early.",
-        )
+        with patch.object(
+            wrappers, "_get_mongo", side_effect=AssertionError("Unexpected DB lookup")
+        ) as lookup:
+            self.assertFalse(
+                wrappers.has_demo_permission(user, "not-a-valid-id", "EDIT_DEMO"),
+                "Invalid IDs should be rejected early.",
+            )
+            lookup.assert_not_called()
 
     def test_denies_when_demo_missing(self):
         user = FakeUser()
@@ -154,22 +166,31 @@ class HasDemoPermissionTests(unittest.TestCase):
 
     def test_denies_without_matching_permissions(self):
         org_id = ObjectId()
-        user = FakeUser()
+        other_org_id = ObjectId()
         demo_id = ObjectId()
         demo_doc = {
             demo_id: {
                 "_id": demo_id,
                 "organizers": [{"organization_id": org_id}],
+                "editors": [str(ObjectId())],
             }
         }
         with patch(
             "mielenosoitukset_fi.utils.wrappers._get_mongo",
             return_value=FakeMongo(demo_doc),
         ):
-            self.assertFalse(
-                wrappers.has_demo_permission(user, demo_id, "EDIT_DEMO"),
-                "Users without relevant permissions should be denied.",
-            )
+            for permissions in (
+                {},
+                {("EDIT_DEMO", str(other_org_id)): True},
+                {("VIEW_DEMO", str(org_id)): True},
+            ):
+                with self.subTest(permissions=permissions):
+                    self.assertFalse(
+                        wrappers.has_demo_permission(
+                            FakeUser(permissions=permissions), demo_id, "EDIT_DEMO"
+                        ),
+                        "Neither another editor, another organization nor another permission grants this action.",
+                    )
 
     def test_allows_permission_via_city_scope(self):
         user = FakeUser(city_permissions={("ACCEPT_DEMO", "city", "jyvaskyla"): True})

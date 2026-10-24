@@ -8,6 +8,10 @@ PR #964 integration with #962/#970 (2026-10-24): **1,270 definitions /172 files 
 
 CITY-02b/#963 on #962, 2026-10-24: 171 Python test files; 1,265 definitions; 374 assessed definitions. Preserves all355 previous assessments and adds eighteen delivery/adapter assessments plus one existing background-surface assessment. These are branch-tree counts, not full roadmap review, merged status for open PRs or delivery acceptance. Older per-branch/run counts below are historical evidence only.
 
+PR #966 integration with merged #962/#968/#970, 2026-10-24: **1,257 repository-wide definitions /172 files /382 individually assessed definitions**. Preserves all369 main and thirteen non-overlapping permission-helper assessments. Historical checkpoints below are provenance, not additive totals. No production permission behavior changed.
+
+QA-01j on main `d87c1e57`, 2026-10-24: 168 Python test files; 1,229 definitions; 350 assessed definitions. Preserves all337 main assessments and adds thirteen existing demonstration-permission unit-test assessments. Open Telegram-stack additions are not in this independent branch/count. These are branch-tree counts, not full roadmap review or release acceptance. Older per-branch/run counts below are historical evidence only.
+
 PR #968 integration with #962/#970 (2026-10-24): **1,257 definitions /172 files /369 assessed**. Retains all361 dashboard-branch assessments plus eight lifecycle/config reviews. All77 focused dashboard/deadline/city-scope/review/lifecycle/config/CI/surface cases pass, including actual Chromium cases. No dashboard, translation catalog or shared CSS/JS implementation changed in this integration. Prerequisite head55933f8b passed its full hosted suite; the combined dashboard head still requires its own current-head CI. Historical checkpoints below are provenance, not additive totals.
 
 CITY-01b/#967 on #962 at `b39a46d8`, 2026-10-24: 171 Python test files; 1,252 definitions; 361 assessed definitions. Preserves all355 predecessor assessments and adds five new queue definitions plus one updated existing city-dashboard definition. Independent #964 delivery and #966 helper-audit records are not included in these branch-tree counts; preserve/recount all on integration. Not full roadmap review or release acceptance. Older per-branch/run counts below are historical evidence only.
@@ -2682,19 +2686,61 @@ Known unchanged edit returns existing ID; boolean receipt on first-send success 
 
 ## tests/test_wrappers.py
 
-- [ ] `HasDemoPermissionTests::test_normalize_object_id_accepts_object_id_dict`
-- [ ] `HasDemoPermissionTests::test_normalize_object_id_returns_none_for_unsupported_value`
-- [ ] `HasDemoPermissionTests::test_denies_for_unauthenticated_user`
-- [ ] `HasDemoPermissionTests::test_allows_global_admin_without_db_lookup`
-- [ ] `HasDemoPermissionTests::test_denies_for_invalid_demo_id`
-- [ ] `HasDemoPermissionTests::test_denies_when_demo_missing`
-- [ ] `HasDemoPermissionTests::test_allows_user_listed_as_editor`
-- [ ] `HasDemoPermissionTests::test_allows_user_listed_as_editor_with_oid_dict`
-- [ ] `HasDemoPermissionTests::test_allows_permission_via_organizer_membership`
-- [ ] `HasDemoPermissionTests::test_allows_permission_via_organizer_oid_dict`
-- [ ] `HasDemoPermissionTests::test_denies_without_matching_permissions`
-- [ ] `HasDemoPermissionTests::test_allows_permission_via_city_scope`
-- [ ] `HasDemoPermissionTests::test_denies_city_scope_for_other_city`
+QA-01j/P1 · Codex · 2026-10-24 · maind87c1e57. Thirteen unittest definitions/collected cases; the unmatched-permission case now exercises three explicit subtests. Actual helper/normalizer, real BSON IDs; FakeMongo/FakeCollection replace only document lookup and FakeUser supplies exact grant answers. No Flask request context, real membership/grant resolution, database outage or HTTP/session/cache acceptance is implied.35 combined permission/city-route cases pass; the real city integration suite is a compatibility cross-check, not newly individually assessed here. No production authorization change.
+
+Targeted detection experiment: the inspected helper's AST was altered only in one throwaway Python process to call `_get_mongo()` before early guards. All three strengthened short-circuit tests then failed/errored as intended; the original function was restored by patch context and no tracked source changed. This proves early-lookup detection, not arbitrary mutation coverage or real database behavior. Normal35-case run passes separately.
+
+- [x] `HasDemoPermissionTests::test_normalize_object_id_accepts_object_id_dict`
+
+Actual BSON object with Extended-JSON `$oid` string must normalize to that same value. Keep; protects legacy identifier representation, not every invalid string/type or database decoding behavior.
+
+- [x] `HasDemoPermissionTests::test_normalize_object_id_returns_none_for_unsupported_value`
+
+Integer123 must returnNone rather than generating/coercing an ID. Keep; one unsupported-type regression, not exhaustive malformed-input coverage. Valid dictionary control is separate.
+
+- [x] `HasDemoPermissionTests::test_denies_for_unauthenticated_user`
+
+Ordinary unauthenticated FakeUser denied. Added failing DB sentinel and assert_not_called, proving denial occurs before lookup instead of incidentally denying after missing data. Keep; real login/account disablement and an artificially unauthenticated global-admin object are not exercised.
+
+- [x] `HasDemoPermissionTests::test_allows_global_admin_without_db_lookup`
+
+Authenticated global-admin FakeUser returnsTrue for a valid ID. Previous name promised no lookup without checking it; now a failing DB sentinel plus assert_not_called verifies that short circuit. Keep; not proof every HTTP route accepts invalid/missing IDs or ignores its own required auth/validation.
+
+- [x] `HasDemoPermissionTests::test_denies_for_invalid_demo_id`
+
+Malformed string must deny and never obtain DB, now explicitly asserted with the sentinel. Keep; tests the ordinary non-global path and early validation, not global-route validation.
+
+- [x] `HasDemoPermissionTests::test_denies_when_demo_missing`
+
+Valid ID, actual helper plus empty FakeMongo lookup returnsFalse. Keep; record absence denial, not a real Mongo connection failure. `_get_mongo()` returningNone and per-request caching remain distinct uncovered unit scenarios.
+
+- [x] `HasDemoPermissionTests::test_allows_user_listed_as_editor`
+
+String user ID in fake document editor list grants EDIT_DEMO. Keep; ID normalization and explicit-editor path, not a test granting arbitrary actions or editor assignment/revocation APIs. Unrelated-editor denial now included below.
+
+- [x] `HasDemoPermissionTests::test_allows_user_listed_as_editor_with_oid_dict`
+
+Extended-JSON editor ID matches the same FakeUser's BSON ID. Keep; stored-shape compatibility, not all malformed editor collections or organization access.
+
+- [x] `HasDemoPermissionTests::test_allows_permission_via_organizer_membership`
+
+Actual helper forwards requested EDIT_DEMO and target organizer ObjectId to exact FakeUser grant lookup. Keep; organizer normalization/action forwarding, not actual membership role/clearance evaluation. Negative organization/action controls now included below.
+
+- [x] `HasDemoPermissionTests::test_allows_permission_via_organizer_oid_dict`
+
+Same scoped positive control with Extended-JSON organizer ID. Keep; representation compatibility and exact permission forwarding, not DB membership decoding or multiple-organizer precedence.
+
+- [x] `HasDemoPermissionTests::test_denies_without_matching_permissions`
+
+Strengthened from one empty-grant denial to three subtests: no grant, EDIT_DEMO granted only for another org, VIEW_DEMO granted for this org but EDIT_DEMO requested. Another user's editor ID is present throughout; none permits access. Keep; detects wrong-org/action or any-editor shortcuts while positive same-org editor/grant tests remain. Fake grant methods do not establish backend role policy.
+
+- [x] `HasDemoPermissionTests::test_allows_permission_via_city_scope`
+
+Jyväskylä document without city_key normalizes to jyvaskyla; exact ACCEPT_DEMO/city/key FakeUser grant succeeds. Keep; actual city normalization and forwarded scope shape, not live grant/revocation lookup.
+
+- [x] `HasDemoPermissionTests::test_denies_city_scope_for_other_city`
+
+Tampere-only ACCEPT_DEMO grant cannot authorize Jyväskylä. Keep; municipality boundary negative control paired with the positive case. Other-city real HTTP403 behavior remains covered independently in `test_city_scoped_admin.py`; no user-supplied city_key trust claim.
 
 ## tests/test_wrappers_decorators.py
 

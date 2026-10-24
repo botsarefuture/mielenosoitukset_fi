@@ -56,7 +56,7 @@ def _city_review_recipients(db, demo_id):
     from mielenosoitukset_fi.utils.cities import normalize_city_key
 
     demo = db.demonstrations.find_one({"_id": demo_id})
-    if not demo or any(demo.get(key) for key in ("approved", "rejected", "cancelled", "in_past")):
+    if not demo or any(demo.get(key) for key in ("approved", "rejected", "cancelled", "in_past", "merged_into")):
         return demo, set()
     if not has_live_assignment(demo):
         return demo, set()

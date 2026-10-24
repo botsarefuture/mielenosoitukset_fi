@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-CITY-01c on main `35fd6def`, 2026-10-24: **1,284 repository-wide definitions /174 test files /417 individually assessed definitions**. Retains all411 merged assessments; adds six inbox/worker definitions (23 parametrized cases). All88 combined inbox/submission-recovery/assignment/dashboard/public-notification cases pass locally; syntax/diff checks pass. Final six-file local review completed with0findings after correcting visible quota and changed-address delivery. Real Flask/Mongo, isolated SMTP/queue-failure doubles; no live email, historical backfill, all-browser or production acceptance claim. Branch-scoped implementation pending hosted CI/merge.
+CITY-01c on main `35fd6def`, 2026-10-24: **1,284 repository-wide definitions /174 test files /417 individually assessed definitions**. Retains all411 merged assessments; adds six inbox/worker definitions (24 parametrized cases after merged-source review correction). All89 combined inbox/submission-recovery/assignment/dashboard/public-notification cases pass locally; syntax/diff checks pass. Initial six-file local review completed with0findings after correcting visible quota and changed-address delivery; merged-source correction reviewed manually and regression-tested, but final tiny local re-review hit a rate limit and did not analyze code. Real Flask/Mongo, isolated SMTP/queue-failure doubles; no live email, historical backfill, all-browser or production acceptance claim. Branch-scoped implementation pending hosted CI/merge.
 
 ## tests/test_city_review_notifications.py
 
@@ -14,7 +14,7 @@ CITY-01c/P2 · Codex · 2026-10-24. Two actual upserts with string/ObjectId inpu
 
 - [x] `test_inbox_rechecks_scope_and_resolution`
 
-CITY-01c/P2. Sixteen independent actual Mongo transitions: revoked grant, disabled/banned/deleted account, wrong permission, wrong city, conflicting authoritative city key, removed assignee, approval/rejection/cancellation/escalation, deleted demo, cleared assignment, archived demo and missing email. A visible positive control precedes every transition; both read filtering and fresh delivery are denied afterward. Revocation also checks the real API returns an empty list, not private title data. Keep; deterministic transitions, not an atomic permission-revocation/response race or HTTP account-status enforcement test.
+CITY-01c/P2. Seventeen independent actual Mongo transitions: revoked grant, disabled/banned/deleted account, wrong permission, wrong city, conflicting authoritative city key, removed assignee, approval/rejection/cancellation/escalation, deleted demo, cleared assignment, archived demo, missing email and merged-away source retaining its assignment. A visible positive control precedes every transition; both read filtering and fresh delivery are denied afterward. The merged source points to an approved canonical record using the persisted merge shape; it does not invoke the merge workflow itself. Revocation also checks the real API returns an empty list, not private title data. Keep; deterministic transitions, not an atomic permission-revocation/response race or HTTP account-status enforcement test.
 
 - [x] `test_notice_does_not_change_other_notification_types`
 

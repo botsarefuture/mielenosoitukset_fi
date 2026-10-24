@@ -46,7 +46,7 @@ def test_delivery_deduplicates_and_preserves_read_notice(app, db, assignment):
 @pytest.mark.parametrize("change", [
     "revoked", "disabled", "banned", "missing_user", "wrong_permission",
     "wrong_city", "removed_assignee", "approved", "rejected", "cancelled", "escalated",
-    "deleted_demo", "cleared_assignment", "in_past", "missing_email", "conflicting_city_key",
+    "deleted_demo", "cleared_assignment", "in_past", "missing_email", "conflicting_city_key", "merged",
 ])
 def test_inbox_rechecks_scope_and_resolution(app, db, assignment, change):
     user_id, demo_id = assignment
@@ -64,6 +64,10 @@ def test_inbox_rechecks_scope_and_resolution(app, db, assignment, change):
         db.demonstrations.delete_one({"_id": demo_id})
     elif change == "cleared_assignment":
         db.demonstrations.update_one({"_id": demo_id}, {"$unset": {"city_assignment": ""}})
+    elif change == "merged":
+        canonical_id = db.demonstrations.insert_one({"title": "Canonical", "approved": True}).inserted_id
+        # Actual merge persistence shape: obsolete source retains assignment.
+        db.demonstrations.update_one({"_id": demo_id}, {"$set": {"merged_into": canonical_id, "hide": True}})
     elif change == "wrong_permission":
         db.admin_scope_grants.update_many({"user_id": user_id}, {"$set": {"permissions": ["LIST_DEMOS"]}})
     else:

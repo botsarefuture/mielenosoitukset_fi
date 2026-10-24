@@ -4,7 +4,7 @@
 
 ## UNRELEASED
 
-- Add city-review inbox notifications through the existing submission worker, with retry deduplication and authenticated review links. Notices disappear from the inbox after resolution, escalation or loss of the current city-review permission; no submitter details or bearer links are stored in them.
+- Add city-review inbox notifications through the existing submission worker, with retry deduplication and authenticated review links. Notices disappear from the inbox after resolution, escalation, merging into another demonstration or loss of the current city-review permission; no submitter details or bearer links are stored in them.
 
 - Add an opt-in, bounded urgent-review Telegram worker: discover upcoming pending events, retain one message receipt per demo/channel, edit canonical state changes, honor rate-limit delays and quarantine unconfirmed first sends instead of duplicating them. Blocked deliveries remain visible in background-job status. Production sending remains disabled pending verified configuration and live acceptance.
 

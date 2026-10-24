@@ -8,6 +8,8 @@
 
 - Roadmap: add separate P2 plans for an opt-in newsletter and optional notification-email digests, including existing subscription reconciliation, user controls, bounded delivery and acceptance tests. No mailing is enabled by this planning change.
 
+- Reconcile roadmap merge evidence and the current CI-reliability/open-PR queue so completed work is not scheduled again or mistaken for released functionality.
+
 - City admins now get a permission-scoped review dashboard with stable pagination, exact review deadlines and a display-only minute countdown. Approval-only reviewers can open the protected review form; overdue, escalated and unknown deadlines are explicit. Global operational data stays restricted; FI/EN/SV, shared themes and no-JS deadline links are supported.
 
 - Bound test-session Mongo connections across singleton resets while preserving legacy database handles; retain the full CI gate with individual test progress and stalled-run diagnostics.

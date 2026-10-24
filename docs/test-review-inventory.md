@@ -2328,6 +2328,8 @@ QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. El
 
 QA-01 / USER-01, Codex, 2026-10-18: route-surface definition individually reviewed. AST-derived route/decorator signatures are compared to a checked-in inventory with explicit coverage anchors for every route module. Adding the user-history route produced the CI count mismatch (10 vs 9); only that module's count/hash/coverage was updated, not the test or other surfaces. Keep: detects route drift, not runtime authorization or coverage quality by itself; real new-route tests remain required. Background/socket definitions remain unassessed.
 
+CITY-02a/#962, 2026-10-24: independently reproduced the new admin review route's49→50 manifest mismatch. Updated only admin_demo_bp's actual AST-derived count/hash and linked its real scoped-route tests. No assertion removed or other route surface refreshed blindly. CI also timed out later, so fixing this known failure is not proof that the entire CI run completes.
+
 ## tests/test_tag_list_localization_contract.py
 
 - [ ] `test_tag_list_uses_localized_stable_empty_state_markup`

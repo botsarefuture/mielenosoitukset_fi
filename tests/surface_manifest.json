@@ -150,11 +150,12 @@
       ]
     },
     "mielenosoitukset_fi/admin/admin_demo_bp.py": {
-      "count": 49,
-      "sha256": "148dcce50c0ceb79797f382975667b0c220413b38db73e27fb1ba5e7a887a826",
+      "count": 50,
+      "sha256": "91a77bb6d223a1f96b61cc07e3997ec5d84c797867f3245470bfd76f01bdfa5e",
       "coverage": [
         "integration",
-        "e2e-admin"
+        "e2e-admin",
+        "tests/test_urgent_review_route.py"
       ]
     },
     "mielenosoitukset_fi/admin/admin_dev_bp.py": {

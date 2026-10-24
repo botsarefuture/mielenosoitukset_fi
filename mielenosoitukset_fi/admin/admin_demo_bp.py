@@ -3248,6 +3248,40 @@ def edit_demo(demo_id):
         default_demo_language=demonstration.default_language or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
     )
 
+@admin_demo_bp.route("/review/<demo_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+@permission_required("ACCEPT_DEMO", _type="DEMONSTRATION")
+def review_demo(demo_id):
+    """Review submitted content without granting editor/analytics access."""
+    if not ObjectId.is_valid(demo_id):
+        abort(400)
+    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_data:
+        abort(404)
+    _abort_if_demo_forbidden(demo_data["_id"], "ACCEPT_DEMO")
+    if request.method == "POST":
+        if not _valid_edit_link_csrf():
+            abort(403)
+        decision = request.form.get("decision")
+        if decision not in {"approved", "rejected"}:
+            abort(400)
+        if demo_data.get("cancelled"):
+            abort(409)
+        _apply_demo_decision(str(demo_data["_id"]), decision, source="admin_review")
+        return redirect(url_for("admin_demo.review_demo", demo_id=str(demo_data["_id"])))
+    # Explicit content projection: no submitter, analytics, tokens or raw HTML.
+    content = {key: demo_data.get(key) or "" for key in (
+        "title", "city", "date", "start_time", "end_time", "address", "description",
+    )}
+    state = next((state for state in ("cancelled", "approved", "rejected")
+                  if demo_data.get(state)), "pending")
+    return render_template(
+        "admin_V2/demonstrations/review.html", demo=content, state=state,
+        review_csrf_token=_edit_link_csrf_token(),
+    )
+
+
 @admin_demo_bp.route("/command-center/<demo_id>")
 @login_required
 @admin_required

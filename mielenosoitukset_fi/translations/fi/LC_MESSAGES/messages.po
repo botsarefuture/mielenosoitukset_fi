@@ -13700,3 +13700,49 @@ msgstr "Mielenosoitusta muutettiin samanaikaisesti. Päivitä sivu ja yritä uud
 
 msgid "Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä."
 msgstr "Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä."
+
+# Scoped city review dashboard
+msgid "Kaupunkiadminin käsittelyjono"
+msgstr "Kaupunkiadminin käsittelyjono"
+
+msgid "Sinulle näkyvien kaupunkien odottavat ilmoitukset. Määräaika perustuu palvelimelle tallennettuun käsittelyaikaan."
+msgstr "Sinulle näkyvien kaupunkien odottavat ilmoitukset. Määräaika perustuu palvelimelle tallennettuun käsittelyaikaan."
+
+msgid "Käsittelyjono"
+msgstr "Käsittelyjono"
+
+msgid "Määräaika päättynyt – odottaa siirtoa kansalliselle tiimille"
+msgstr "Määräaika päättynyt – odottaa siirtoa kansalliselle tiimille"
+
+msgid "Käsittelyaikaa jäljellä"
+msgstr "Käsittelyaikaa jäljellä"
+
+msgid "Näytetään %(first)s–%(last)s / %(total)s"
+msgstr "Näytetään %(first)s–%(last)s / %(total)s"
+
+msgid "Kaupunkiesi ilmoitukset aikaisimman käsittelymääräajan mukaan"
+msgstr "Kaupunkiesi ilmoitukset aikaisimman käsittelymääräajan mukaan"
+
+msgid "Käsittelyn määräaika"
+msgstr "Käsittelyn määräaika"
+
+msgid "Siirretty kansalliselle tiimille"
+msgstr "Siirretty kansalliselle tiimille"
+
+msgid "Määräaika vaatii tarkistuksen"
+msgstr "Määräaika vaatii tarkistuksen"
+
+msgid "Käsittele"
+msgstr "Käsittele"
+
+msgid "Ei käsittelyä odottavia ilmoituksia"
+msgstr "Ei käsittelyä odottavia ilmoituksia"
+
+msgid "Jono sisältää vain ilmoitukset, joihin sinulla on käyttöoikeus."
+msgstr "Jono sisältää vain ilmoitukset, joihin sinulla on käyttöoikeus."
+
+msgid "Sivu %(page)s / %(pages)s"
+msgstr "Sivu %(page)s / %(pages)s"
+
+msgid "Sivutus"
+msgstr "Sivutus"

@@ -1442,7 +1442,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/organizations/view.html:352
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:120
 msgid "Toiminnot"
-msgstr ""
+msgstr "Actions"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:23
 #, fuzzy
@@ -3187,9 +3187,8 @@ msgid "Ei aktiivisia tokeneita."
 msgstr "No active tokens."
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:215
-#, fuzzy
 msgid "Näytä"
-msgstr "Users"
+msgstr "View"
 
 #: mielenosoitukset_fi/templates/users/auth/verify_mfa.html:12
 msgid "MFA-koodi"
@@ -3951,7 +3950,7 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_case_bp.py:65
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:45
 msgid "Odottaa käsittelyä"
-msgstr ""
+msgstr "Awaiting review"
 
 #: mielenosoitukset_fi/admin/admin_case_bp.py:71 mielenosoitukset_fi/admin/admin_case_bp.py:179
 msgid "Virheilmoitus"
@@ -4947,7 +4946,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/dashboard.html:10
 #: mielenosoitukset_fi/templates/admin_V2/governance/dashboard.html:12 mielenosoitukset_fi/templates/admin_base.html:176
 msgid "Admin-paneeli"
-msgstr ""
+msgstr "Admin panel"
 
 #: mielenosoitukset_fi/templates/admin_base.html:177
 msgid "Avaa admin-valikko"
@@ -5568,7 +5567,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:51 mielenosoitukset_fi/templates/detail.html:1971
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:68
 msgid "Kaikki mielenosoitukset"
-msgstr ""
+msgstr "All demonstrations"
 
 #: mielenosoitukset_fi/templates/header.html:21 mielenosoitukset_fi/templates/header.html:30
 #: mielenosoitukset_fi/templates/notifications/all.html:2 mielenosoitukset_fi/templates/notifications/all.html:9
@@ -13604,3 +13603,49 @@ msgstr "The demonstration changed concurrently. Refresh the page and try again."
 
 msgid "Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä."
 msgstr "The deletion outcome could not be confirmed. Check the demonstration's status before trying again."
+
+# Scoped city review dashboard
+msgid "Kaupunkiadminin käsittelyjono"
+msgstr "City review queue"
+
+msgid "Sinulle näkyvien kaupunkien odottavat ilmoitukset. Määräaika perustuu palvelimelle tallennettuun käsittelyaikaan."
+msgstr "Pending submissions for your cities. The deadline follows the review period stored on the server."
+
+msgid "Käsittelyjono"
+msgstr "Review queue"
+
+msgid "Määräaika päättynyt – odottaa siirtoa kansalliselle tiimille"
+msgstr "Deadline passed – awaiting escalation to the national team"
+
+msgid "Käsittelyaikaa jäljellä"
+msgstr "Review time remaining"
+
+msgid "Näytetään %(first)s–%(last)s / %(total)s"
+msgstr "Showing %(first)s–%(last)s of %(total)s"
+
+msgid "Kaupunkiesi ilmoitukset aikaisimman käsittelymääräajan mukaan"
+msgstr "Submissions for your cities, earliest review deadline first"
+
+msgid "Käsittelyn määräaika"
+msgstr "Review deadline"
+
+msgid "Siirretty kansalliselle tiimille"
+msgstr "Escalated to the national team"
+
+msgid "Määräaika vaatii tarkistuksen"
+msgstr "Review deadline needs checking"
+
+msgid "Käsittele"
+msgstr "Review"
+
+msgid "Ei käsittelyä odottavia ilmoituksia"
+msgstr "No submissions awaiting review"
+
+msgid "Jono sisältää vain ilmoitukset, joihin sinulla on käyttöoikeus."
+msgstr "The queue only includes submissions you are allowed to access."
+
+msgid "Sivu %(page)s / %(pages)s"
+msgstr "Page %(page)s of %(pages)s"
+
+msgid "Sivutus"
+msgstr "Pagination"

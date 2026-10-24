@@ -1,11 +1,12 @@
 # Urgent review alerts (CITY-02)
 
-## Current slice: state/message policy, not delivery
+## Implementation and release status
 
 `utils/urgent_review_alerts.py` builds an allowlisted message snapshot. It does
 not access Telegram, store credentials, enqueue jobs or send messages. The existing
-subscription bot/poller remains unchanged. A later scheduled outbox/transport must
-use this policy and retain one provider message ID per review lifecycle.
+subscription bot/poller remains unchanged. The opt-in scheduled outbox uses this
+policy and retains one provider message ID per demo/channel, including reopened
+reviews. This implementation is not live-delivery acceptance.
 
 Read-only operational discovery confirmed an existing active Telegram bot service,
 the expected bot identity and post/edit administrator rights in the owner-selected
@@ -59,14 +60,62 @@ GET never approves or rejects. Existing editor/command-center guards are unchang
 worker tick. This supports bounded edits without per-second Telegram traffic.
 It is not an idempotency token, a concurrency fence or a delivery receipt.
 
-## Remaining delivery requirements
+## Opt-in scheduled delivery
 
-Scheduled bounded discovery and reconciliation, durable provider IDs, single-send
-claims, per-lifecycle deduplication, retries/429 handling, ambiguous acceptance
-reconciliation, same-message edit/terminal-state safety and visible failure
-handling are not implemented by this slice. Do not substitute a second incoming
-poller or reuse public-read API credentials to expose pending private submissions.
-Staging send→edit and verified production routing/configuration remain release
-gates. The live bot permission check proves rights, not message delivery.
+`process_urgent_review_alerts` is registered with the existing scheduler every
+two minutes; `URGENT_REVIEW_TELEGRAM_ENABLED` defaults to false and only boolean
+true enables work. The service environment supplies `URGENT_REVIEW_TELEGRAM_TOKEN`
+and numeric `URGENT_REVIEW_TELEGRAM_CHAT_ID`; neither is serialized into jobs or
+review payloads. The target is pinned per record and workers do not claim another
+channel's records. No incoming polling, bearer-link generation or public API
+credential reuse is involved.
+
+- Discovery reads at most100 projected candidate documents per run, cycling a
+  persisted `_id` keyset across the current/following three Helsinki calendar
+  dates. Canonical ISO date strings and BSON dates are supported; the shared
+  instant policy rejects out-of-window/missing/ambiguous starts. Latency depends on candidate count and
+  scheduler health, so verify the sweep duration before release. Database reads
+  have a five-second execution bound; inspect date-query index/explain and real
+  volume before enabling, rather than claiming a production performance result.
+- A unique `_id` per demo/channel makes repeated discovery idempotent. The worker
+  atomically claims at most10 due records and reloads canonical content before
+  sending/editing. No new alert if approval/reschedule makes it ineligible before
+  this read. A valid receipt persists `message_id` and acknowledged text hash;
+  unchanged confirmed text does not trigger another request. Deletes replace an
+  existing alert with a content-free deleted state, never a new announcement.
+- Confirmed receipts become `settled`, outside the send-claim query. A separate
+  bounded100-record observation pass detects changed active receipts, so unchanged
+  historical messages cannot consume the ten delivery slots. Observe through one
+  day after the known start (two days from now if the time is invalid), then keep
+  the receipt as non-polling `done`; deleted messages become done immediately.
+  Future pending reschedules/reopens discovered in the urgent window can re-arm
+  that same retained receipt. Changes to old settled records after the observation
+  window are not continuously polled; this is not indefinite historical syncing.
+- Rate limits honor `retry_after` plus bounded exponential backoff; at most five
+  attempts before `blocked`. Retries re-read current content, not a stale saved
+  payload. Confirmed refusal is blocked; unconfirmed first-send acceptance is
+  `delivery_unknown`, never blind automatic replay. A ten-minute stale sending
+  claim without a receipt is also quarantined. Known-message edits can retry;
+  uncertain edits force reconciliation even if current text returns to the last
+  acknowledged hash. No transport exception, raw provider body or credential URL
+  is stored. Terminal/failed records are not TTL-deleted.
+- Unresolved `blocked`/`delivery_unknown` rows keep the existing background job
+  visibly in error each enabled run. Operators inspect status, demo/message ID,
+  attempt count and fixed error code. They must verify the actual channel before
+  adopting a missing receipt or authorizing a new send; clearing an unknown state
+  blindly can duplicate a real accepted message. Do not retry a missing/deleted
+  provider message by automatically creating a replacement.
+
+## Remaining release gates and limits
+
+Focused real-Mongo tests use a fake provider and do not prove Telegram acceptance.
+Staging send→edit, monitored sweep latency/index selection and verified production
+secret/configuration deployment remain required before enablement. The read-only
+live bot permission check proves rights, not delivery. Do not claim absolute
+cross-system exactly-once behavior: Telegram has no first-send idempotency key,
+and the worker quarantines ambiguous acceptance rather than hiding that limit.
+Canonical state can change while an HTTP request is in flight; subsequent
+scheduled reconciliation corrects the same message. Arbitrary suspended-worker
+or provider reordering is not a fenced distributed transaction.
 
 Protocol reference: [Telegram Bot API](https://core.telegram.org/bots/api).

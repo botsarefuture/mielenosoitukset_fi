@@ -298,6 +298,7 @@ class Config:
         cls.CITY_ASSIGNMENT_ESCALATION_HOURS = config.get(
             "CITY_ASSIGNMENT_ESCALATION_HOURS", 24
         )
+        cls.URGENT_REVIEW_TELEGRAM_ENABLED = config.get("URGENT_REVIEW_TELEGRAM_ENABLED", False)
         cls.ENABLE_PANIC_THREAD = config.get("ENABLE_PANIC_THREAD", True)
         cls.ENABLE_BACKGROUND_JOBS = config.get("ENABLE_BACKGROUND_JOBS", True)
         cls.DISABLE_BACKGROUND_JOBS = config.get(

@@ -1082,7 +1082,8 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
     assert Path('mielenosoitukset_fi/templates/admin_V2/user/account_status.html') in pages
     assert Path('mielenosoitukset_fi/templates/admin_V2/user/history.html') in pages
     assert Path('mielenosoitukset_fi/templates/admin_V2/demonstrations/review.html') in pages
-    assert len(pages) == 54
+    assert Path('mielenosoitukset_fi/templates/admin_V2/cities/review_dashboard.html') in pages
+    assert len(pages) == 55
     for locale in ("en", "fi", "sv"):
         catalog = Path(
             f"mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.po"

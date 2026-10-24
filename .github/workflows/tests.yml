@@ -97,7 +97,9 @@ jobs:
           TEST_MAIL_HOST: 127.0.0.1
           TEST_MAIL_PORT: "1025"
           TEST_S3_ENDPOINT: http://127.0.0.1:4566
-        run: python -m pytest
+        # Override pytest.ini's quiet flag so stalled runs retain each test ID.
+        # Keep the complete test set and the existing 30-minute job limit.
+        run: python -m pytest -o addopts='' -v --tb=short -o faulthandler_timeout=120
 
       - name: Dump test service logs on test failure
         if: failure()

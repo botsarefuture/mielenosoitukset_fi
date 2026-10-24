@@ -6,6 +6,8 @@ Branch `codex/city-review-deadline` on main `cb4421da` (#955/#956 merged), 2026-
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
+Branch `codex/translation-join-test-audit` on main `d87c1e57`, 2026-10-24: all seven existing translation-join definitions individually assessed and strengthened; no new/removed definitions. Branch counts: **1,229 definitions /168 files /344 assessed**. Separate open-branch assessments (#966/#970/#968/#964) are not silently incorporated or summed. All seven real Flask/Mongo cases pass; mail enqueue is a recorder, not actual queue/provider delivery. Session-fixture login bypasses credential entry; this is not authentication, CSRF or browser acceptance.
+
 Use the roadmap's P0–P3 policy and status vocabulary. Initial review status for every entry is Backlog; assign an owner and justified priority when triaging it. A discovered security/core-workflow defect can escalate immediately, regardless of its review batch.
 
 ## tests/test_deploy_dependencies.py
@@ -2353,13 +2355,35 @@ QA-01 / USER-01, Codex, 2026-10-18: route-surface definition individually review
 
 ## tests/test_translations_join.py
 
-- [ ] `test_guest_cannot_join`
-- [ ] `test_logged_in_user_gains_translation_permissions`
-- [ ] `test_join_is_idempotent`
-- [ ] `test_join_grants_no_review_permission`
-- [ ] `test_translator_page_shows_joined_state`
-- [ ] `test_guest_page_shows_login_cta`
-- [ ] `test_unjoined_user_page_shows_join_form`
+- [x] `test_guest_cannot_join`
+
+QA-01k/P1 · Codex · 2026-10-24. Actual guest Flask POST with seeded disposable Mongo. Login redirect plus full before/after user-document equality and zero recorded welcome enqueues; detects writes before redirect, not just response shape. Keep. Does not prove credential validation, browser SameSite behavior or authenticated request intent.
+
+- [x] `test_logged_in_user_gains_translation_permissions`
+
+QA-01k/P1. Real authenticated-session POST and Mongo update. Requires successful join redirect, exact union of pre-existing permissions and the two translation capabilities, one welcome enqueue with the actor's email/name and translation destination. Replaces weak membership-only assertions that allowed unrelated extra grants or lost existing rights. A targeted in-process mutation adding EDIT_USER to the route's grant tuple caused the intended exact-set assertion failure; the tuple was restored at teardown and no tracked production source changed. Keep; enqueue transport is explicitly mocked and URL suffix is not an external-origin security test.
+
+- [x] `test_join_is_idempotent`
+
+QA-01k/P1. Two sequential real requests, both checked for the correct successful redirect; exact one occurrence of each capability and one welcome call. Detects duplicate append/enqueue and the formerly unasserted failed-request path. Keep; no concurrency/crash/SMTP exactly-once claim. Existing route checks TRANSLATE_DEMO before enqueue, not an atomic delivery receipt.
+
+- [x] `test_join_grants_no_review_permission`
+
+QA-01k/P1. Actor POST includes forged target, admin role/flag and elevated permission fields. Asserts HTTP302, exact actor permission union, unchanged user role/non-global-admin state, no review grants and byte-equivalent BSON documents for every other seeded user. Keep; this proves ignored client-selected authority on this route, not a general admin permission audit. Missing request-intent protection is tracked separately in #972.
+
+- [x] `test_translator_page_shows_joined_state`
+
+QA-01k/P1. Actual Jinja GET for a seeded TRANSLATE_DEMO holder; joined copy present, join copy and POST action absent. Keep as a server-rendered branch contract; does not prove browser layout, screen-reader behavior, TRANSLATE_UI-only state or locale coverage.
+
+- [x] `test_guest_page_shows_login_cta`
+
+QA-01k/P1. Actual guest Jinja GET; FI login call-to-action and auth URL present, join POST action absent. Keep; text/URL checks are not a parsed-DOM link-target, responsive, keyboard or all-language test.
+
+- [x] `test_unjoined_user_page_shows_join_form`
+
+QA-01k/P1. Actual unjoined-session Jinja GET; join copy, exact POST/form action and absence of joined-state copy required. Keep as a server form-branch contract, not rendered browser usability or CSRF acceptance. Current form has no CSRF token and the route accepts bare authenticated POSTs; #972 owns the narrow fix and proper negative/valid-token tests. Default SameSite=Lax reduces ordinary cross-site POST exposure but is not an explicit request-intent check; no browser exploit is claimed.
+
+Supporting fixture `welcome_calls`: depends on the actual app setup, then patches only the route email_sender instance's queue_email; records full named enqueue arguments while the existing harness still stubs external delivery. No network/mail is sent. The new tests preserve the seven original definitions and run against actual routes/models/templates and disposable Mongo, not a replacement route double. No production code changed by this audit.
 
 ## tests/test_ui_translation_workflow.py
 

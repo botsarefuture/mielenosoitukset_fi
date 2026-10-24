@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Reconcile roadmap merge evidence and the current CI-reliability/open-PR queue so completed work is not scheduled again or mistaken for released functionality.
+
 - City-admin assignments retain their configured review duration and exact UTC deadline across configuration changes. Escalation and notification copy use that deadline; ordinary content edits no longer postpone review, while explicit edit-link actions retain their reset behavior.
 
 - Submission notifications retry confirmed delivery failures with bounded backoff and retain per-message progress. Interrupted or ambiguous deliveries remain visible for reconciliation instead of blind replay; resolved moderation and revoked city-admin recipients are excluded on recovery.

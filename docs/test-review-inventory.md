@@ -2,6 +2,22 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+Combined #964/#965/#966/#971/#973/#974 normal-merge stack on main `b71f48cd`, 2026-10-24: **1,278 repository-wide definitions /173 test files /411 individually assessed definitions**. All original branch heads and review records retained; overlapping baseline records counted once. Totals include tracked standalone test scripts and exclude similarly named fixtures. Final combined-head hosted CI/review remain gates; no Telegram sending, production configuration or live provider acceptance is implied.
+
+PR #964 integration with merged #962/#968/#970, 2026-10-24: **1,275 definitions /173 files /388 individually assessed definitions**. Retains every worker and dashboard review record with duplicate definitions counted once. Repository-wide totals include standalone test scripts, not just `tests/`. Historical checkpoints below are provenance, not additive totals. Hosted CI remains required on this integration head.
+
+PR #964 integration with #962/#970 (2026-10-24): **1,270 definitions /172 files /382 assessed**. Retains all374 worker-branch assessments plus eight lifecycle/config reviews. All125 focused worker/policy/review/lifecycle/config/deadline/surface cases pass. Prerequisite head55933f8b passed its full hosted suite; the combined worker head still requires its own current-head CI. Historical checkpoints below are provenance, not additive totals.
+
+CITY-02b/#963 on #962, 2026-10-24: 171 Python test files; 1,265 definitions; 374 assessed definitions. Preserves all355 previous assessments and adds eighteen delivery/adapter assessments plus one existing background-surface assessment. These are branch-tree counts, not full roadmap review, merged status for open PRs or delivery acceptance. Older per-branch/run counts below are historical evidence only.
+
+PR #966 integration with merged #962/#968/#970, 2026-10-24: **1,257 repository-wide definitions /172 files /382 individually assessed definitions**. Preserves all369 main and thirteen non-overlapping permission-helper assessments. Historical checkpoints below are provenance, not additive totals. No production permission behavior changed.
+
+QA-01j on main `d87c1e57`, 2026-10-24: 168 Python test files; 1,229 definitions; 350 assessed definitions. Preserves all337 main assessments and adds thirteen existing demonstration-permission unit-test assessments. Open Telegram-stack additions are not in this independent branch/count. These are branch-tree counts, not full roadmap review or release acceptance. Older per-branch/run counts below are historical evidence only.
+
+Branch `codex/translation-join-csrf` rebased onto audited #973 (`103a8fab`) and merged main `b71f48cd`, 2026-10-24: **1,260 definitions /172 files /379 assessed**, preserving all376 predecessor records and adding three individually assessed CSRF/browser definitions (eight parametrized cases). All26 combined join/inline-style/surface/Mongo lifecycle cases pass after main integration. The join file contributes15 cases including two actual no-JS Chromium cases. Existing seven definitions obtain tokens from real rendered forms, keeping their authority/mail assertions intact. Initial seven-file local CodeRabbit review completed without findings; rebase resolved inventory text only and the integrated focused gate passed. This is not credentials, SMTP delivery, browser cross-site exploitation, all-locale/visual-design or concurrent-email acceptance. Independent open-branch reviews remain separate.
+
+PR #973 integration with merged #962/#968/#970, 2026-10-24: **1,257 test definitions /172 test files /376 individually assessed definitions**. Recounted repository-wide using tracked Python files whose names begin `test_`; this includes five standalone definitions in `mielenosoitukset_fi/scripts/test_repeat_v2.py`, not just the `tests/` directory. Fixture functions in `conftest.py` are excluded. Retains all369 main assessments and seven non-overlapping translator-join records. Historical branch checkpoints below are provenance, not additive totals. All12 focused translator-join/Mongo lifecycle cases pass; the combined head still requires hosted CI.
+
 PR #968 integration with #962/#970 (2026-10-24): **1,257 definitions /172 files /369 assessed**. Retains all361 dashboard-branch assessments plus eight lifecycle/config reviews. All77 focused dashboard/deadline/city-scope/review/lifecycle/config/CI/surface cases pass, including actual Chromium cases. No dashboard, translation catalog or shared CSS/JS implementation changed in this integration. Prerequisite head55933f8b passed its full hosted suite; the combined dashboard head still requires its own current-head CI. Historical checkpoints below are provenance, not additive totals.
 
 CITY-01b/#967 on #962 at `b39a46d8`, 2026-10-24: 171 Python test files; 1,252 definitions; 361 assessed definitions. Preserves all355 predecessor assessments and adds five new queue definitions plus one updated existing city-dashboard definition. Independent #964 delivery and #966 helper-audit records are not included in these branch-tree counts; preserve/recount all on integration. Not full roadmap review or release acceptance. Older per-branch/run counts below are historical evidence only.
@@ -33,8 +49,11 @@ QA-02a/P1/#969. Four real Python threads, barrier and deliberately slow fake con
 - [x] `test_owner_closes_once_and_cannot_reopen_after_session_end`
 
 QA-02a/P1/#969. Isolated close-counter double, two owner closes, one actual close and subsequent creation denied. Keep; lifecycle state is checked directly, not real network socket release or teardown exception-path execution.
+Branch `codex/city-review-deadline` on main `cb4421da` (#955/#956 merged), 2026-10-23: 168 Python test files; 1,229 definitions; 337 assessed definitions. Retains all 329 merged assessments and adds seven deadline definitions plus one existing submission-route assessment. These are branch-tree counts, not full roadmap review, merged status for #958 or release acceptance. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
+
+Branch `codex/translation-join-test-audit` on main `d87c1e57`, 2026-10-24: all seven existing translation-join definitions individually assessed and strengthened; no new/removed definitions. Branch counts: **1,229 definitions /168 files /344 assessed**. Separate open-branch assessments (#966/#970/#968/#964) are not silently incorporated or summed. All seven real Flask/Mongo cases pass; mail enqueue is a recorder, not actual queue/provider delivery. Session-fixture login bypasses credential entry; this is not authentication, CSRF or browser acceptance.
 
 Use the roadmap's P0–P3 policy and status vocabulary. Initial review status for every entry is Backlog; assign an owner and justified priority when triaging it. A discovered security/core-workflow defect can escalate immediately, regardless of its review batch.
 
@@ -2391,12 +2410,14 @@ QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. El
 ## tests/test_surface_manifest.py
 
 - [x] `SurfaceManifestTests::test_route_surface_manifest_matches_source`
-- [ ] `SurfaceManifestTests::test_background_job_surface_manifest_matches_source`
+- [x] `SurfaceManifestTests::test_background_job_surface_manifest_matches_source`
 - [ ] `SurfaceManifestTests::test_socketio_surface_manifest_matches_source`
 
 QA-01 / USER-01, Codex, 2026-10-18: route-surface definition individually reviewed. AST-derived route/decorator signatures are compared to a checked-in inventory with explicit coverage anchors for every route module. Adding the user-history route produced the CI count mismatch (10 vs 9); only that module's count/hash/coverage was updated, not the test or other surfaces. Keep: detects route drift, not runtime authorization or coverage quality by itself; real new-route tests remain required. Background/socket definitions remain unassessed.
 
 CITY-02a/#962, 2026-10-24: independently reproduced the new admin review route's49→50 manifest mismatch. Updated only admin_demo_bp's actual AST-derived count/hash and linked its real scoped-route tests. No assertion removed or other route surface refreshed blindly. CI also timed out later, so fixing this known failure is not proof that the entire CI run completes.
+
+CITY-02b/#964, 2026-10-24: background-surface definition individually assessed. Actual AST-derived job registration count/hash must match the checked-in inventory and retain nonempty coverage anchors. Reproduced15vs14 after adding the opt-in worker; updated only this surface's count/hash and added the real delivery-test anchor. Keep; detects registration drift, not scheduler liveness, actual transport or comprehensive job coverage. Socket definition remains unassessed. Both observed CI failures are now locally explained; later timeout remains a separate unproven gate.
 
 ## tests/test_tag_list_localization_contract.py
 
@@ -2425,13 +2446,49 @@ CITY-02a/#962, 2026-10-24: independently reproduced the new admin review route's
 
 ## tests/test_translations_join.py
 
-- [ ] `test_guest_cannot_join`
-- [ ] `test_logged_in_user_gains_translation_permissions`
-- [ ] `test_join_is_idempotent`
-- [ ] `test_join_grants_no_review_permission`
-- [ ] `test_translator_page_shows_joined_state`
-- [ ] `test_guest_page_shows_login_cta`
-- [ ] `test_unjoined_user_page_shows_join_form`
+- [x] `test_guest_cannot_join`
+
+QA-01k/P1 · Codex · 2026-10-24. Actual guest Flask POST with seeded disposable Mongo. Login redirect plus full before/after user-document equality and zero recorded welcome enqueues; detects writes before redirect, not just response shape. Keep. Does not prove credential validation, browser SameSite behavior or authenticated request intent.
+
+- [x] `test_logged_in_user_gains_translation_permissions`
+
+QA-01k/P1. Real authenticated-session POST and Mongo update. Requires successful join redirect, exact union of pre-existing permissions and the two translation capabilities, one welcome enqueue with the actor's email/name and translation destination. Replaces weak membership-only assertions that allowed unrelated extra grants or lost existing rights. A targeted in-process mutation adding EDIT_USER to the route's grant tuple caused the intended exact-set assertion failure; the tuple was restored at teardown and no tracked production source changed. Keep; enqueue transport is explicitly mocked and URL suffix is not an external-origin security test.
+
+- [x] `test_join_is_idempotent`
+
+QA-01k/P1. Two sequential real requests, both checked for the correct successful redirect; exact one occurrence of each capability and one welcome call. Detects duplicate append/enqueue and the formerly unasserted failed-request path. Keep; no concurrency/crash/SMTP exactly-once claim. Existing route checks TRANSLATE_DEMO before enqueue, not an atomic delivery receipt.
+
+- [x] `test_join_grants_no_review_permission`
+
+QA-01k/P1. Actor POST includes forged target, admin role/flag and elevated permission fields. Asserts HTTP302, exact actor permission union, unchanged user role/non-global-admin state, no review grants and byte-equivalent BSON documents for every other seeded user. Keep; this proves ignored client-selected authority on this route, not a general admin permission audit. #972 follow-up now supplies a real rendered token while retaining every original boundary assertion.
+
+- [x] `test_translator_page_shows_joined_state`
+
+QA-01k/P1. Actual Jinja GET for a seeded TRANSLATE_DEMO holder; joined copy present, join copy and POST action absent. Keep as a server-rendered branch contract; does not prove browser layout, screen-reader behavior, TRANSLATE_UI-only state or locale coverage.
+
+- [x] `test_guest_page_shows_login_cta`
+
+QA-01k/P1. Actual guest Jinja GET; FI login call-to-action and auth URL present, join POST action absent. Keep; text/URL checks are not a parsed-DOM link-target, responsive, keyboard or all-language test.
+
+- [x] `test_unjoined_user_page_shows_join_form`
+
+QA-01k/P1. Actual unjoined-session Jinja GET; join copy, exact POST/form action and absence of joined-state copy required. Keep as a server form-branch contract, not rendered browser usability. At the #973 baseline the form had no token and the route accepted bare authenticated POSTs. #972 now also extracts a nonempty43-character token from every real join form and requires all copies to agree; the new behavioral negatives below prove server enforcement. Default SameSite=Lax is not the request-intent check and no browser exploit is claimed.
+
+Supporting fixture `welcome_calls`: depends on the actual app setup, then patches only the route email_sender instance's queue_email; records full named enqueue arguments while the existing harness still stubs external delivery. No network/mail is sent. The new tests preserve the seven original definitions and run against actual routes/models/templates and disposable Mongo, not a replacement route double. No production code changed by this audit.
+
+- [x] `test_join_rejects_missing_or_invalid_intent_without_side_effects`
+
+SEC-05a/QA-01l/P1/#972 · Codex · 2026-10-24. Five actual Flask/Mongo cases: omitted, empty, same-length wrong, same-length Unicode and unissued nonce. Real page GET supplies the control token except unissued, which intentionally skips token issuance. Every rejection must be400, all user BSON documents unchanged and no welcome recorded; each case then proves a valid real form still succeeds and queues exactly one welcome. Pre-fix run failed all five: four at missing real form-token extraction, the unissued request directly at302 versus400. Keep; no browser SameSite/cross-site-origin proof or SMTP delivery claim.
+
+- [x] `test_join_token_cannot_cross_sessions_even_for_the_same_user`
+
+SEC-05a/QA-01l/P1/#972. Two independent authenticated Flask sessions for the same actor, each obtaining a nonce from actual Jinja output. Distinct tokens, cross-session rejection with unchanged users/no welcome, then valid second-session success/one welcome. Detects actor-global/static nonce designs as well as missing comparison. Keep; fixture session injection bypasses credentials and no cookie theft/replay-after-logout/concurrent-delivery claim is made.
+
+- [x] `test_join_form_submits_with_keyboard_without_javascript`
+
+SEC-05a/QA-01l/P1/#972. Two real Chromium contexts with page JavaScript disabled,390px/light and1440px/dark. Cookie copied from the fixture-authenticated actor; external requests blocked, actual app served over local HTTP. Real hidden input, visible submit button and Enter-triggered native navigation must yield200 joined state, no remaining join form, actual persisted translation permissions and one recorded welcome. Context always closes. Keep; programmatic button focus checks keyboard activation, not full tab-order, screen-reader, contrast, screenshot or all-language acceptance. This change adds only a hidden field, not styling/geometry.
+
+Supporting helper `_join_token` extracts tokens from actual rendered join forms rather than installing an expected value into the session or calling the production generator. Multiple CTA forms must share the same nonce so normal reloads/multiple open forms remain usable. All seven prior permission/guest/idempotency/CTA assertions remain; only authenticated POST setup gained the form token. Request tokens use the existing session, not bearer permission tokens or a new registry.
 
 ## tests/test_ui_translation_workflow.py
 
@@ -2596,21 +2653,139 @@ Scoped caller gets403 for invalid/nonexistent IDs (existing permission wrapper);
 
 Four actual Chromium cases:390/1440px × light/dark. Signed test session, real local Flask server/assets; remote requests blocked by shared fixture. Saved theme goes through actual admin initialization, computed color-scheme must match, hero/select visible, root has no horizontal overflow and select receives focus. Temporary full-page captures support manual spot checks. Keep; no production auth, real transport or exhaustive accessibility/contrast claim. Corrected an initial test-only selector that set an unused theme attribute; explicit computed theme now prevents false light-mode evidence.
 
+## tests/test_urgent_review_delivery.py
+
+CITY-02b/P1/#963 · Codex · 2026-10-24. Eighteen definitions/26 cases. Real isolated Mongo and actual discovery/claim/recovery/policy; fixed UTC clock. Provider fake records calls/fails deterministically and allocates distinct receipts. Adapter tests replace only requests.post. Shared seed fixture stubs email/uploads and disables actual jobs/network. No real bot send/edit, production routing, SMTP or performance acceptance.
+
+- [x] `test_discovery_crosses_threshold_without_edits_and_deduplicates`
+
+Future49h record with stale archive flag; first no outbox, two hours later one durable record despite repeated discovery. Asserts ready state and absence of copied content/contact/text. Keep; discovers a threshold crossing without a form hook and catches duplicate enqueue. Not a scheduler-live-time test.
+
+- [x] `test_discovery_keyset_is_bounded_and_eventually_reaches_every_candidate`
+
+Five real documents, batch lowered to2: progressive2/4/5 unique identities, exhausted cursor reset. Keep; catches first-page starvation/unbounded materialization at this small deterministic volume. Not query-plan/load proof.
+
+- [x] `test_provider_receipt_is_reused_for_critical_and_resolved_edits`
+
+Send, unchanged tick,24h crossing, approval: one fresh call and two edits to receipt123, persisted approved state. Keep; real outbox timing/receipt behavior, canonical flags updated directly rather than mocking query results. Actual decision service separately tested by review route.
+
+- [x] `test_latest_canonical_state_suppresses_stale_new_send_and_reopens_watch`
+
+Approve after discovery/before claim produces no post and a watching record. Reopening re-arms the same unique identity, then one send. Keep; closes the ordinary queued-stale-state gap, not every in-flight decision race.
+
+- [x] `test_deleted_demo_updates_existing_message_without_exposing_retained_content`
+
+Send followed by actual document deletion edits the same receipt to fixed content-free deleted copy. Next unchanged tick does not repeat. Keep; provider-message deletion differs and is blocked by adapter error handling, not recreated automatically.
+
+- [x] `test_rate_limit_waits_for_provider_deadline_then_retries_once`
+
+Fake429 delay300: persisted retry deadline, no early call, exact-deadline retry with title changed during wait and eventual receipt. Keep; catches ignored retry-after and stale cached payload; not real provider throttling.
+
+- [x] `test_uncertain_edit_forces_current_text_even_if_hash_reverts_to_last_receipt`
+
+Known-message edit may have been accepted before its acknowledgement failed. Canonical title reverts to original; retry must force original text on the same ID despite matching old confirmed hash, then clears reconciliation flag. Keep; catches false unchanged-cache acceptance after an ambiguous edit.
+
+- [x] `test_unconfirmed_or_rejected_first_send_is_visible_and_never_blindly_replayed`
+
+Two uncertain/permanent-refusal cases. Later discovery/drain does not repost; exact delivery_unknown/blocked plus fixed error code retained. Keep; visible durable quarantine, not proof of actual Telegram acceptance or human reconciliation.
+
+- [x] `test_stale_claim_recovery_distinguishes_unknown_send_from_safe_edit`
+
+Three real persisted abandoned-claim states: pre-send safely retried, first-send without receipt quarantined, known-message edit safely retried. Exact calls/ID/status. Keep; crash state is injected, not a killed process or power-loss durability claim.
+
+- [x] `test_concurrent_workers_share_one_atomic_send_claim`
+
+Two actual threads drain the same real Mongo record; both complete and fake provider receives exactly one call. Keep; no scope/query mock. It covers the ordinary concurrent claim, not arbitrary process suspension beyond lease expiry.
+
+- [x] `test_delivery_batch_and_channel_scope_are_bounded`
+
+Three demos queued for two fictional channels, lowered delivery cap2. Exactly two calls and zero foreign-channel receipts. Keep; per-run effects/target isolation, not global fleet throughput/heap measurement.
+
+- [x] `test_settled_history_cannot_consume_delivery_slots_and_future_reschedule_rearms`
+
+Real delivered receipt with expired observation window becomes non-polling done. A single delivery slot still serves the new demo with distinct ID124; changing the old future record re-arms its retained ID123. Keep; addresses local Major review finding without dropping receipts or creating replacement messages. Synthetic expired-window setup is not a production age/volume benchmark.
+
+- [x] `test_settled_future_decision_is_still_updated_if_later_cancelled`
+
+Delivered pending→approved→cancelled while the event remains upcoming: final copy Peruttu on the same ID. Keep; prevents naive terminal retirement from hiding a later cancellation, a hole a static done-status assertion would miss. Does not promise indefinite historical synchronization beyond the documented observation window.
+
+- [x] `test_job_is_opt_in_and_registered_without_an_incoming_poller`
+
+Actual scheduler definition is two minutes; disabled app config never constructs transport. Explicit opt-in reads fixture-only service env; persisted unknown state raises a fixed operator-reconciliation error on the job entrypoint. Database handle/provider constructor are controlled; not actual environment provisioning or scheduler ownership acceptance.
+
+- [x] `test_telegram_adapter_returns_receipt_and_uses_only_expected_payload`
+
+Two send/edit cases inspect exact POST method payload, HTML mode, disabled link preview, timeout, no redirects and valid returned message ID. Keep; HTTP mocked and token is deliberately fake. Not network TLS/channel permission proof.
+
+- [x] `test_telegram_failures_have_sanitized_classification`
+
+Four429/403/500 send/edit cases assert fixed error without private provider-body sentinel, exact unknown-acceptance classification and retry delay. Keep; error model not a full provider compatibility suite.
+
+- [x] `test_telegram_timeout_never_exposes_secret_url_or_blindly_retries_send`
+
+Two timeout send/edit cases with fake secret-bearing exception: public exception text sanitized, only first send unknown, known edit retryable. Keep; actual socket timeout is simulated and chained exception suppression is code-reviewed, not asserted as a production logging audit.
+
+- [x] `test_telegram_unchanged_edit_and_invalid_receipt_are_not_new_sends`
+
+Known unchanged edit returns existing ID; boolean receipt on first-send success is rejected as unknown rather than mistaken for integer1. Keep; no blind new send from either response. Not all malformed response shapes.
+
 ## tests/test_wrappers.py
 
-- [ ] `HasDemoPermissionTests::test_normalize_object_id_accepts_object_id_dict`
-- [ ] `HasDemoPermissionTests::test_normalize_object_id_returns_none_for_unsupported_value`
-- [ ] `HasDemoPermissionTests::test_denies_for_unauthenticated_user`
-- [ ] `HasDemoPermissionTests::test_allows_global_admin_without_db_lookup`
-- [ ] `HasDemoPermissionTests::test_denies_for_invalid_demo_id`
-- [ ] `HasDemoPermissionTests::test_denies_when_demo_missing`
-- [ ] `HasDemoPermissionTests::test_allows_user_listed_as_editor`
-- [ ] `HasDemoPermissionTests::test_allows_user_listed_as_editor_with_oid_dict`
-- [ ] `HasDemoPermissionTests::test_allows_permission_via_organizer_membership`
-- [ ] `HasDemoPermissionTests::test_allows_permission_via_organizer_oid_dict`
-- [ ] `HasDemoPermissionTests::test_denies_without_matching_permissions`
-- [ ] `HasDemoPermissionTests::test_allows_permission_via_city_scope`
-- [ ] `HasDemoPermissionTests::test_denies_city_scope_for_other_city`
+QA-01j/P1 · Codex · 2026-10-24 · maind87c1e57. Thirteen unittest definitions/collected cases; the unmatched-permission case now exercises three explicit subtests. Actual helper/normalizer, real BSON IDs; FakeMongo/FakeCollection replace only document lookup and FakeUser supplies exact grant answers. No Flask request context, real membership/grant resolution, database outage or HTTP/session/cache acceptance is implied.35 combined permission/city-route cases pass; the real city integration suite is a compatibility cross-check, not newly individually assessed here. No production authorization change.
+
+Targeted detection experiment: the inspected helper's AST was altered only in one throwaway Python process to call `_get_mongo()` before early guards. All three strengthened short-circuit tests then failed/errored as intended; the original function was restored by patch context and no tracked source changed. This proves early-lookup detection, not arbitrary mutation coverage or real database behavior. Normal35-case run passes separately.
+
+- [x] `HasDemoPermissionTests::test_normalize_object_id_accepts_object_id_dict`
+
+Actual BSON object with Extended-JSON `$oid` string must normalize to that same value. Keep; protects legacy identifier representation, not every invalid string/type or database decoding behavior.
+
+- [x] `HasDemoPermissionTests::test_normalize_object_id_returns_none_for_unsupported_value`
+
+Integer123 must returnNone rather than generating/coercing an ID. Keep; one unsupported-type regression, not exhaustive malformed-input coverage. Valid dictionary control is separate.
+
+- [x] `HasDemoPermissionTests::test_denies_for_unauthenticated_user`
+
+Ordinary unauthenticated FakeUser denied. Added failing DB sentinel and assert_not_called, proving denial occurs before lookup instead of incidentally denying after missing data. Keep; real login/account disablement and an artificially unauthenticated global-admin object are not exercised.
+
+- [x] `HasDemoPermissionTests::test_allows_global_admin_without_db_lookup`
+
+Authenticated global-admin FakeUser returnsTrue for a valid ID. Previous name promised no lookup without checking it; now a failing DB sentinel plus assert_not_called verifies that short circuit. Keep; not proof every HTTP route accepts invalid/missing IDs or ignores its own required auth/validation.
+
+- [x] `HasDemoPermissionTests::test_denies_for_invalid_demo_id`
+
+Malformed string must deny and never obtain DB, now explicitly asserted with the sentinel. Keep; tests the ordinary non-global path and early validation, not global-route validation.
+
+- [x] `HasDemoPermissionTests::test_denies_when_demo_missing`
+
+Valid ID, actual helper plus empty FakeMongo lookup returnsFalse. Keep; record absence denial, not a real Mongo connection failure. `_get_mongo()` returningNone and per-request caching remain distinct uncovered unit scenarios.
+
+- [x] `HasDemoPermissionTests::test_allows_user_listed_as_editor`
+
+String user ID in fake document editor list grants EDIT_DEMO. Keep; ID normalization and explicit-editor path, not a test granting arbitrary actions or editor assignment/revocation APIs. Unrelated-editor denial now included below.
+
+- [x] `HasDemoPermissionTests::test_allows_user_listed_as_editor_with_oid_dict`
+
+Extended-JSON editor ID matches the same FakeUser's BSON ID. Keep; stored-shape compatibility, not all malformed editor collections or organization access.
+
+- [x] `HasDemoPermissionTests::test_allows_permission_via_organizer_membership`
+
+Actual helper forwards requested EDIT_DEMO and target organizer ObjectId to exact FakeUser grant lookup. Keep; organizer normalization/action forwarding, not actual membership role/clearance evaluation. Negative organization/action controls now included below.
+
+- [x] `HasDemoPermissionTests::test_allows_permission_via_organizer_oid_dict`
+
+Same scoped positive control with Extended-JSON organizer ID. Keep; representation compatibility and exact permission forwarding, not DB membership decoding or multiple-organizer precedence.
+
+- [x] `HasDemoPermissionTests::test_denies_without_matching_permissions`
+
+Strengthened from one empty-grant denial to three subtests: no grant, EDIT_DEMO granted only for another org, VIEW_DEMO granted for this org but EDIT_DEMO requested. Another user's editor ID is present throughout; none permits access. Keep; detects wrong-org/action or any-editor shortcuts while positive same-org editor/grant tests remain. Fake grant methods do not establish backend role policy.
+
+- [x] `HasDemoPermissionTests::test_allows_permission_via_city_scope`
+
+Jyväskylä document without city_key normalizes to jyvaskyla; exact ACCEPT_DEMO/city/key FakeUser grant succeeds. Keep; actual city normalization and forwarded scope shape, not live grant/revocation lookup.
+
+- [x] `HasDemoPermissionTests::test_denies_city_scope_for_other_city`
+
+Tampere-only ACCEPT_DEMO grant cannot authorize Jyväskylä. Keep; municipality boundary negative control paired with the positive case. Other-city real HTTP403 behavior remains covered independently in `test_city_scoped_admin.py`; no user-supplied city_key trust claim.
 
 ## tests/test_wrappers_decorators.py
 

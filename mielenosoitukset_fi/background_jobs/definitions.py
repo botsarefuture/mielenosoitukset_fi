@@ -25,6 +25,7 @@ from mielenosoitukset_fi.scripts.auto_close_cases import main as auto_close_case
 from mielenosoitukset_fi.scripts.process_support_tickets import main as process_support_tickets
 from mielenosoitukset_fi.scripts.process_email_queue import run as process_email_queue
 from mielenosoitukset_fi.scripts.escalate_city_assignments import main as escalate_city_assignments
+from mielenosoitukset_fi.scripts.process_urgent_review_alerts import run as process_urgent_review_alerts
 
 
 @dataclass(frozen=True)
@@ -58,6 +59,13 @@ def _interval(hours: int = 0, minutes: int = 0, days: int = 0) -> Dict[str, Any]
 
 
 JOB_DEFINITIONS: List[JobDefinition] = [
+    JobDefinition(
+        key="process_urgent_review_alerts",
+        name="Urgent demonstration review alerts",
+        description="Reconciles urgent review Telegram messages when explicitly enabled.",
+        func=process_urgent_review_alerts,
+        default_trigger=_interval(minutes=2),
+    ),
     JobDefinition(
         key="repeat_main",
         name="Recurring demonstrations refresher",

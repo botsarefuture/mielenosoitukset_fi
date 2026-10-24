@@ -6,7 +6,10 @@ Logged-in users can grant themselves the translation capabilities
 needing to email the project team. Review and admin rights are intentionally
 NOT granted here.
 """
-from flask import Blueprint, redirect, url_for
+import hmac
+import secrets
+
+from flask import Blueprint, abort, redirect, request, session, url_for
 from flask_login import current_user, login_required
 
 from mielenosoitukset_fi.utils.flashing import flash_message
@@ -28,12 +31,34 @@ def _get_mongo():
 
 
 TRANSLATE_DEMO_PERMS = ("TRANSLATE_DEMO", "TRANSLATE_UI")
+JOIN_CSRF_SESSION_KEY = "translation_join_csrf_token"
+
+
+def translation_join_csrf_token():
+    """Reuse a session-bound form nonce so multiple open forms still work."""
+    token = session.get(JOIN_CSRF_SESSION_KEY)
+    if not isinstance(token, str) or len(token) != 43 or not token.isascii():
+        token = secrets.token_urlsafe(32)
+        session[JOIN_CSRF_SESSION_KEY] = token
+    return token
+
+
+def _valid_join_csrf():
+    expected = session.get(JOIN_CSRF_SESSION_KEY)
+    provided = request.form.get("csrf_token", "")
+    return bool(
+        isinstance(expected, str) and len(expected) == 43 and expected.isascii()
+        and len(provided) == 43 and provided.isascii()
+        and hmac.compare_digest(expected, provided)
+    )
 
 
 @translations_join_bp.route("/join", methods=["POST"])
 @login_required
 def join():
     """Grant the current user translation capabilities (idempotent)."""
+    if not _valid_join_csrf():
+        abort(400)
     user_id = current_user._id
     mongo_db = _get_mongo()
 

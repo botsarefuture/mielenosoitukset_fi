@@ -10,6 +10,10 @@
 
 - Reconcile roadmap merge evidence and the current CI-reliability/open-PR queue so completed work is not scheduled again or mistaken for released functionality.
 
+- Require a session-bound form token before granting self-service translator permissions or queuing welcome mail; ordinary keyboard and no-JavaScript joining remains supported.
+
+- Strengthen translator self-service regression coverage for preserved rights, ignored forged admin/target fields, guest no-write behavior and one sequential welcome enqueue; record the separate request-intent hardening follow-up.
+
 - City admins now get a permission-scoped review dashboard with stable pagination, exact review deadlines and a display-only minute countdown. Approval-only reviewers can open the protected review form; overdue, escalated and unknown deadlines are explicit. Global operational data stays restricted; FI/EN/SV, shared themes and no-JS deadline links are supported.
 
 - Bound test-session Mongo connections across singleton resets while preserving legacy database handles; retain the full CI gate with individual test progress and stalled-run diagnostics.

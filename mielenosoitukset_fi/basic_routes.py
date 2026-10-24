@@ -4738,7 +4738,14 @@ def init_routes(app):
     
     @app.route("/upcoming/translations/")
     def upcoming_translations():
-        return render_template("upcoming/translations.html")
+        from mielenosoitukset_fi.translations_join_bp import translation_join_csrf_token
+
+        token = (
+            translation_join_csrf_token()
+            if current_user.is_authenticated and not current_user.has_permission("TRANSLATE_DEMO")
+            else None
+        )
+        return render_template("upcoming/translations.html", translation_join_csrf_token=token)
     
     @app.before_request
     def _check_panic_mode():

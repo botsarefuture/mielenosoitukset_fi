@@ -2,6 +2,8 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+Combined #964/#965/#966/#971/#973/#974 normal-merge stack on main `b71f48cd`, 2026-10-24: **1,278 repository-wide definitions /173 test files /411 individually assessed definitions**. All original branch heads and review records retained; overlapping baseline records counted once. Totals include tracked standalone test scripts and exclude similarly named fixtures. Final combined-head hosted CI/review remain gates; no Telegram sending, production configuration or live provider acceptance is implied.
+
 PR #964 integration with merged #962/#968/#970, 2026-10-24: **1,275 definitions /173 files /388 individually assessed definitions**. Retains every worker and dashboard review record with duplicate definitions counted once. Repository-wide totals include standalone test scripts, not just `tests/`. Historical checkpoints below are provenance, not additive totals. Hosted CI remains required on this integration head.
 
 PR #964 integration with #962/#970 (2026-10-24): **1,270 definitions /172 files /382 assessed**. Retains all374 worker-branch assessments plus eight lifecycle/config reviews. All125 focused worker/policy/review/lifecycle/config/deadline/surface cases pass. Prerequisite head55933f8b passed its full hosted suite; the combined worker head still requires its own current-head CI. Historical checkpoints below are provenance, not additive totals.
@@ -11,6 +13,10 @@ CITY-02b/#963 on #962, 2026-10-24: 171 Python test files; 1,265 definitions; 374
 PR #966 integration with merged #962/#968/#970, 2026-10-24: **1,257 repository-wide definitions /172 files /382 individually assessed definitions**. Preserves all369 main and thirteen non-overlapping permission-helper assessments. Historical checkpoints below are provenance, not additive totals. No production permission behavior changed.
 
 QA-01j on main `d87c1e57`, 2026-10-24: 168 Python test files; 1,229 definitions; 350 assessed definitions. Preserves all337 main assessments and adds thirteen existing demonstration-permission unit-test assessments. Open Telegram-stack additions are not in this independent branch/count. These are branch-tree counts, not full roadmap review or release acceptance. Older per-branch/run counts below are historical evidence only.
+
+Branch `codex/translation-join-csrf` rebased onto audited #973 (`103a8fab`) and merged main `b71f48cd`, 2026-10-24: **1,260 definitions /172 files /379 assessed**, preserving all376 predecessor records and adding three individually assessed CSRF/browser definitions (eight parametrized cases). All26 combined join/inline-style/surface/Mongo lifecycle cases pass after main integration. The join file contributes15 cases including two actual no-JS Chromium cases. Existing seven definitions obtain tokens from real rendered forms, keeping their authority/mail assertions intact. Initial seven-file local CodeRabbit review completed without findings; rebase resolved inventory text only and the integrated focused gate passed. This is not credentials, SMTP delivery, browser cross-site exploitation, all-locale/visual-design or concurrent-email acceptance. Independent open-branch reviews remain separate.
+
+PR #973 integration with merged #962/#968/#970, 2026-10-24: **1,257 test definitions /172 test files /376 individually assessed definitions**. Recounted repository-wide using tracked Python files whose names begin `test_`; this includes five standalone definitions in `mielenosoitukset_fi/scripts/test_repeat_v2.py`, not just the `tests/` directory. Fixture functions in `conftest.py` are excluded. Retains all369 main assessments and seven non-overlapping translator-join records. Historical branch checkpoints below are provenance, not additive totals. All12 focused translator-join/Mongo lifecycle cases pass; the combined head still requires hosted CI.
 
 PR #968 integration with #962/#970 (2026-10-24): **1,257 definitions /172 files /369 assessed**. Retains all361 dashboard-branch assessments plus eight lifecycle/config reviews. All77 focused dashboard/deadline/city-scope/review/lifecycle/config/CI/surface cases pass, including actual Chromium cases. No dashboard, translation catalog or shared CSS/JS implementation changed in this integration. Prerequisite head55933f8b passed its full hosted suite; the combined dashboard head still requires its own current-head CI. Historical checkpoints below are provenance, not additive totals.
 
@@ -43,8 +49,11 @@ QA-02a/P1/#969. Four real Python threads, barrier and deliberately slow fake con
 - [x] `test_owner_closes_once_and_cannot_reopen_after_session_end`
 
 QA-02a/P1/#969. Isolated close-counter double, two owner closes, one actual close and subsequent creation denied. Keep; lifecycle state is checked directly, not real network socket release or teardown exception-path execution.
+Branch `codex/city-review-deadline` on main `cb4421da` (#955/#956 merged), 2026-10-23: 168 Python test files; 1,229 definitions; 337 assessed definitions. Retains all 329 merged assessments and adds seven deadline definitions plus one existing submission-route assessment. These are branch-tree counts, not full roadmap review, merged status for #958 or release acceptance. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
+
+Branch `codex/translation-join-test-audit` on main `d87c1e57`, 2026-10-24: all seven existing translation-join definitions individually assessed and strengthened; no new/removed definitions. Branch counts: **1,229 definitions /168 files /344 assessed**. Separate open-branch assessments (#966/#970/#968/#964) are not silently incorporated or summed. All seven real Flask/Mongo cases pass; mail enqueue is a recorder, not actual queue/provider delivery. Session-fixture login bypasses credential entry; this is not authentication, CSRF or browser acceptance.
 
 Use the roadmap's P0–P3 policy and status vocabulary. Initial review status for every entry is Backlog; assign an owner and justified priority when triaging it. A discovered security/core-workflow defect can escalate immediately, regardless of its review batch.
 
@@ -2437,13 +2446,49 @@ CITY-02b/#964, 2026-10-24: background-surface definition individually assessed. 
 
 ## tests/test_translations_join.py
 
-- [ ] `test_guest_cannot_join`
-- [ ] `test_logged_in_user_gains_translation_permissions`
-- [ ] `test_join_is_idempotent`
-- [ ] `test_join_grants_no_review_permission`
-- [ ] `test_translator_page_shows_joined_state`
-- [ ] `test_guest_page_shows_login_cta`
-- [ ] `test_unjoined_user_page_shows_join_form`
+- [x] `test_guest_cannot_join`
+
+QA-01k/P1 · Codex · 2026-10-24. Actual guest Flask POST with seeded disposable Mongo. Login redirect plus full before/after user-document equality and zero recorded welcome enqueues; detects writes before redirect, not just response shape. Keep. Does not prove credential validation, browser SameSite behavior or authenticated request intent.
+
+- [x] `test_logged_in_user_gains_translation_permissions`
+
+QA-01k/P1. Real authenticated-session POST and Mongo update. Requires successful join redirect, exact union of pre-existing permissions and the two translation capabilities, one welcome enqueue with the actor's email/name and translation destination. Replaces weak membership-only assertions that allowed unrelated extra grants or lost existing rights. A targeted in-process mutation adding EDIT_USER to the route's grant tuple caused the intended exact-set assertion failure; the tuple was restored at teardown and no tracked production source changed. Keep; enqueue transport is explicitly mocked and URL suffix is not an external-origin security test.
+
+- [x] `test_join_is_idempotent`
+
+QA-01k/P1. Two sequential real requests, both checked for the correct successful redirect; exact one occurrence of each capability and one welcome call. Detects duplicate append/enqueue and the formerly unasserted failed-request path. Keep; no concurrency/crash/SMTP exactly-once claim. Existing route checks TRANSLATE_DEMO before enqueue, not an atomic delivery receipt.
+
+- [x] `test_join_grants_no_review_permission`
+
+QA-01k/P1. Actor POST includes forged target, admin role/flag and elevated permission fields. Asserts HTTP302, exact actor permission union, unchanged user role/non-global-admin state, no review grants and byte-equivalent BSON documents for every other seeded user. Keep; this proves ignored client-selected authority on this route, not a general admin permission audit. #972 follow-up now supplies a real rendered token while retaining every original boundary assertion.
+
+- [x] `test_translator_page_shows_joined_state`
+
+QA-01k/P1. Actual Jinja GET for a seeded TRANSLATE_DEMO holder; joined copy present, join copy and POST action absent. Keep as a server-rendered branch contract; does not prove browser layout, screen-reader behavior, TRANSLATE_UI-only state or locale coverage.
+
+- [x] `test_guest_page_shows_login_cta`
+
+QA-01k/P1. Actual guest Jinja GET; FI login call-to-action and auth URL present, join POST action absent. Keep; text/URL checks are not a parsed-DOM link-target, responsive, keyboard or all-language test.
+
+- [x] `test_unjoined_user_page_shows_join_form`
+
+QA-01k/P1. Actual unjoined-session Jinja GET; join copy, exact POST/form action and absence of joined-state copy required. Keep as a server form-branch contract, not rendered browser usability. At the #973 baseline the form had no token and the route accepted bare authenticated POSTs. #972 now also extracts a nonempty43-character token from every real join form and requires all copies to agree; the new behavioral negatives below prove server enforcement. Default SameSite=Lax is not the request-intent check and no browser exploit is claimed.
+
+Supporting fixture `welcome_calls`: depends on the actual app setup, then patches only the route email_sender instance's queue_email; records full named enqueue arguments while the existing harness still stubs external delivery. No network/mail is sent. The new tests preserve the seven original definitions and run against actual routes/models/templates and disposable Mongo, not a replacement route double. No production code changed by this audit.
+
+- [x] `test_join_rejects_missing_or_invalid_intent_without_side_effects`
+
+SEC-05a/QA-01l/P1/#972 · Codex · 2026-10-24. Five actual Flask/Mongo cases: omitted, empty, same-length wrong, same-length Unicode and unissued nonce. Real page GET supplies the control token except unissued, which intentionally skips token issuance. Every rejection must be400, all user BSON documents unchanged and no welcome recorded; each case then proves a valid real form still succeeds and queues exactly one welcome. Pre-fix run failed all five: four at missing real form-token extraction, the unissued request directly at302 versus400. Keep; no browser SameSite/cross-site-origin proof or SMTP delivery claim.
+
+- [x] `test_join_token_cannot_cross_sessions_even_for_the_same_user`
+
+SEC-05a/QA-01l/P1/#972. Two independent authenticated Flask sessions for the same actor, each obtaining a nonce from actual Jinja output. Distinct tokens, cross-session rejection with unchanged users/no welcome, then valid second-session success/one welcome. Detects actor-global/static nonce designs as well as missing comparison. Keep; fixture session injection bypasses credentials and no cookie theft/replay-after-logout/concurrent-delivery claim is made.
+
+- [x] `test_join_form_submits_with_keyboard_without_javascript`
+
+SEC-05a/QA-01l/P1/#972. Two real Chromium contexts with page JavaScript disabled,390px/light and1440px/dark. Cookie copied from the fixture-authenticated actor; external requests blocked, actual app served over local HTTP. Real hidden input, visible submit button and Enter-triggered native navigation must yield200 joined state, no remaining join form, actual persisted translation permissions and one recorded welcome. Context always closes. Keep; programmatic button focus checks keyboard activation, not full tab-order, screen-reader, contrast, screenshot or all-language acceptance. This change adds only a hidden field, not styling/geometry.
+
+Supporting helper `_join_token` extracts tokens from actual rendered join forms rather than installing an expected value into the session or calling the production generator. Multiple CTA forms must share the same nonce so normal reloads/multiple open forms remain usable. All seven prior permission/guest/idempotency/CTA assertions remain; only authenticated POST setup gained the form token. Request tokens use the existing session, not bearer permission tokens or a new registry.
 
 ## tests/test_ui_translation_workflow.py
 

@@ -2,6 +2,10 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+PR #964 integration with #962/#970 (2026-10-24): **1,270 definitions /172 files /382 assessed**. Retains all374 worker-branch assessments plus eight lifecycle/config reviews. All125 focused worker/policy/review/lifecycle/config/deadline/surface cases pass. Prerequisite head55933f8b passed its full hosted suite; the combined worker head still requires its own current-head CI. Historical checkpoints below are provenance, not additive totals.
+
+CITY-02b/#963 on #962, 2026-10-24: 171 Python test files; 1,265 definitions; 374 assessed definitions. Preserves all355 previous assessments and adds eighteen delivery/adapter assessments plus one existing background-surface assessment. These are branch-tree counts, not full roadmap review, merged status for open PRs or delivery acceptance. Older per-branch/run counts below are historical evidence only.
+
 PR #962 integration with #970 (2026-10-24): retain all 355 existing assessments and eight non-overlapping lifecycle/config reviews, for **1,252 definitions /171 files /363 assessed**. Main-based prerequisite head55933f8b full CI40104202951 succeeded with1,562 passed /327 skipped; this does not prove this combined feature head or incorporate independent #964/#968/#966/#973 reviews. Historical per-branch checkpoints below remain provenance, not additive totals.
 
 PR #962 review correction on main `d87c1e57`, 2026-10-24: 170 Python test files; 1,247 definitions; 355 assessed definitions. Preserves all348 previous assessments and adds two policy/five scoped-review-route assessments. These are branch-tree counts, not full roadmap review, merged status for open PRs or delivery acceptance. Older per-branch/run counts below are historical evidence only.
@@ -2359,12 +2363,14 @@ QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. El
 ## tests/test_surface_manifest.py
 
 - [x] `SurfaceManifestTests::test_route_surface_manifest_matches_source`
-- [ ] `SurfaceManifestTests::test_background_job_surface_manifest_matches_source`
+- [x] `SurfaceManifestTests::test_background_job_surface_manifest_matches_source`
 - [ ] `SurfaceManifestTests::test_socketio_surface_manifest_matches_source`
 
 QA-01 / USER-01, Codex, 2026-10-18: route-surface definition individually reviewed. AST-derived route/decorator signatures are compared to a checked-in inventory with explicit coverage anchors for every route module. Adding the user-history route produced the CI count mismatch (10 vs 9); only that module's count/hash/coverage was updated, not the test or other surfaces. Keep: detects route drift, not runtime authorization or coverage quality by itself; real new-route tests remain required. Background/socket definitions remain unassessed.
 
 CITY-02a/#962, 2026-10-24: independently reproduced the new admin review route's49→50 manifest mismatch. Updated only admin_demo_bp's actual AST-derived count/hash and linked its real scoped-route tests. No assertion removed or other route surface refreshed blindly. CI also timed out later, so fixing this known failure is not proof that the entire CI run completes.
+
+CITY-02b/#964, 2026-10-24: background-surface definition individually assessed. Actual AST-derived job registration count/hash must match the checked-in inventory and retain nonempty coverage anchors. Reproduced15vs14 after adding the opt-in worker; updated only this surface's count/hash and added the real delivery-test anchor. Keep; detects registration drift, not scheduler liveness, actual transport or comprehensive job coverage. Socket definition remains unassessed. Both observed CI failures are now locally explained; later timeout remains a separate unproven gate.
 
 ## tests/test_tag_list_localization_contract.py
 
@@ -2563,6 +2569,82 @@ Scoped caller gets403 for invalid/nonexistent IDs (existing permission wrapper);
 - [x] `test_review_uses_shared_responsive_theme_in_browser`
 
 Four actual Chromium cases:390/1440px × light/dark. Signed test session, real local Flask server/assets; remote requests blocked by shared fixture. Saved theme goes through actual admin initialization, computed color-scheme must match, hero/select visible, root has no horizontal overflow and select receives focus. Temporary full-page captures support manual spot checks. Keep; no production auth, real transport or exhaustive accessibility/contrast claim. Corrected an initial test-only selector that set an unused theme attribute; explicit computed theme now prevents false light-mode evidence.
+
+## tests/test_urgent_review_delivery.py
+
+CITY-02b/P1/#963 · Codex · 2026-10-24. Eighteen definitions/26 cases. Real isolated Mongo and actual discovery/claim/recovery/policy; fixed UTC clock. Provider fake records calls/fails deterministically and allocates distinct receipts. Adapter tests replace only requests.post. Shared seed fixture stubs email/uploads and disables actual jobs/network. No real bot send/edit, production routing, SMTP or performance acceptance.
+
+- [x] `test_discovery_crosses_threshold_without_edits_and_deduplicates`
+
+Future49h record with stale archive flag; first no outbox, two hours later one durable record despite repeated discovery. Asserts ready state and absence of copied content/contact/text. Keep; discovers a threshold crossing without a form hook and catches duplicate enqueue. Not a scheduler-live-time test.
+
+- [x] `test_discovery_keyset_is_bounded_and_eventually_reaches_every_candidate`
+
+Five real documents, batch lowered to2: progressive2/4/5 unique identities, exhausted cursor reset. Keep; catches first-page starvation/unbounded materialization at this small deterministic volume. Not query-plan/load proof.
+
+- [x] `test_provider_receipt_is_reused_for_critical_and_resolved_edits`
+
+Send, unchanged tick,24h crossing, approval: one fresh call and two edits to receipt123, persisted approved state. Keep; real outbox timing/receipt behavior, canonical flags updated directly rather than mocking query results. Actual decision service separately tested by review route.
+
+- [x] `test_latest_canonical_state_suppresses_stale_new_send_and_reopens_watch`
+
+Approve after discovery/before claim produces no post and a watching record. Reopening re-arms the same unique identity, then one send. Keep; closes the ordinary queued-stale-state gap, not every in-flight decision race.
+
+- [x] `test_deleted_demo_updates_existing_message_without_exposing_retained_content`
+
+Send followed by actual document deletion edits the same receipt to fixed content-free deleted copy. Next unchanged tick does not repeat. Keep; provider-message deletion differs and is blocked by adapter error handling, not recreated automatically.
+
+- [x] `test_rate_limit_waits_for_provider_deadline_then_retries_once`
+
+Fake429 delay300: persisted retry deadline, no early call, exact-deadline retry with title changed during wait and eventual receipt. Keep; catches ignored retry-after and stale cached payload; not real provider throttling.
+
+- [x] `test_uncertain_edit_forces_current_text_even_if_hash_reverts_to_last_receipt`
+
+Known-message edit may have been accepted before its acknowledgement failed. Canonical title reverts to original; retry must force original text on the same ID despite matching old confirmed hash, then clears reconciliation flag. Keep; catches false unchanged-cache acceptance after an ambiguous edit.
+
+- [x] `test_unconfirmed_or_rejected_first_send_is_visible_and_never_blindly_replayed`
+
+Two uncertain/permanent-refusal cases. Later discovery/drain does not repost; exact delivery_unknown/blocked plus fixed error code retained. Keep; visible durable quarantine, not proof of actual Telegram acceptance or human reconciliation.
+
+- [x] `test_stale_claim_recovery_distinguishes_unknown_send_from_safe_edit`
+
+Three real persisted abandoned-claim states: pre-send safely retried, first-send without receipt quarantined, known-message edit safely retried. Exact calls/ID/status. Keep; crash state is injected, not a killed process or power-loss durability claim.
+
+- [x] `test_concurrent_workers_share_one_atomic_send_claim`
+
+Two actual threads drain the same real Mongo record; both complete and fake provider receives exactly one call. Keep; no scope/query mock. It covers the ordinary concurrent claim, not arbitrary process suspension beyond lease expiry.
+
+- [x] `test_delivery_batch_and_channel_scope_are_bounded`
+
+Three demos queued for two fictional channels, lowered delivery cap2. Exactly two calls and zero foreign-channel receipts. Keep; per-run effects/target isolation, not global fleet throughput/heap measurement.
+
+- [x] `test_settled_history_cannot_consume_delivery_slots_and_future_reschedule_rearms`
+
+Real delivered receipt with expired observation window becomes non-polling done. A single delivery slot still serves the new demo with distinct ID124; changing the old future record re-arms its retained ID123. Keep; addresses local Major review finding without dropping receipts or creating replacement messages. Synthetic expired-window setup is not a production age/volume benchmark.
+
+- [x] `test_settled_future_decision_is_still_updated_if_later_cancelled`
+
+Delivered pending→approved→cancelled while the event remains upcoming: final copy Peruttu on the same ID. Keep; prevents naive terminal retirement from hiding a later cancellation, a hole a static done-status assertion would miss. Does not promise indefinite historical synchronization beyond the documented observation window.
+
+- [x] `test_job_is_opt_in_and_registered_without_an_incoming_poller`
+
+Actual scheduler definition is two minutes; disabled app config never constructs transport. Explicit opt-in reads fixture-only service env; persisted unknown state raises a fixed operator-reconciliation error on the job entrypoint. Database handle/provider constructor are controlled; not actual environment provisioning or scheduler ownership acceptance.
+
+- [x] `test_telegram_adapter_returns_receipt_and_uses_only_expected_payload`
+
+Two send/edit cases inspect exact POST method payload, HTML mode, disabled link preview, timeout, no redirects and valid returned message ID. Keep; HTTP mocked and token is deliberately fake. Not network TLS/channel permission proof.
+
+- [x] `test_telegram_failures_have_sanitized_classification`
+
+Four429/403/500 send/edit cases assert fixed error without private provider-body sentinel, exact unknown-acceptance classification and retry delay. Keep; error model not a full provider compatibility suite.
+
+- [x] `test_telegram_timeout_never_exposes_secret_url_or_blindly_retries_send`
+
+Two timeout send/edit cases with fake secret-bearing exception: public exception text sanitized, only first send unknown, known edit retryable. Keep; actual socket timeout is simulated and chained exception suppression is code-reviewed, not asserted as a production logging audit.
+
+- [x] `test_telegram_unchanged_edit_and_invalid_receipt_are_not_new_sends`
+
+Known unchanged edit returns existing ID; boolean receipt on first-send success is rejected as unknown rather than mistaken for integer1. Keep; no blind new send from either response. Not all malformed response shapes.
 
 ## tests/test_wrappers.py
 

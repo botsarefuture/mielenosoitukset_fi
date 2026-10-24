@@ -118,10 +118,11 @@
     ]
   },
   "background_jobs": {
-    "count": 14,
-    "sha256": "b3fb7dd55e88d58e4e6b04851f7706c35f333d88f9755d5a600af14a343fb2dc",
+    "count": 15,
+    "sha256": "8de743382af2283084fd57d190e36378db004baef86b4f218f3b2fd3e291f02c",
     "coverage": [
       "jobs",
+      "tests/test_urgent_review_delivery.py",
       "integration"
     ]
   },

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Bound test-session Mongo connections across singleton resets while preserving legacy database handles; retain the full CI gate with individual test progress and stalled-run diagnostics.
+
 - City-admin assignments retain their configured review duration and exact UTC deadline across configuration changes. Escalation and notification copy use that deadline; ordinary content edits no longer postpone review, while explicit edit-link actions retain their reset behavior.
 
 - Submission notifications retry confirmed delivery failures with bounded backoff and retain per-message progress. Interrupted or ambiguous deliveries remain visible for reconciliation instead of blind replay; resolved moderation and revoked city-admin recipients are excluded on recovery.

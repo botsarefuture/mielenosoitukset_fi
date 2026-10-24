@@ -2,7 +2,39 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/city-review-deadline` on main `cb4421da` (#955/#956 merged), 2026-10-23: 168 Python test files; 1,229 definitions; 337 assessed definitions. Retains all 329 merged assessments and adds seven deadline definitions plus one existing submission-route assessment. These are branch-tree counts, not full roadmap review, merged status for #958 or release acceptance. Older per-branch/run counts below are historical evidence only.
+PR #973 integration with merged #962/#968/#970, 2026-10-24: **1,252 test definitions /171 test files /376 individually assessed definitions**. Recounted using AST function definitions beginning `test_` in `tests/**/test_*.py`; two similarly named fixture functions in `conftest.py` are excluded. This corrects the inherited headline total without removing tests or assessments. Retains all369 main assessments and seven non-overlapping translator-join records. Historical branch checkpoints below are provenance, not additive totals. All12 focused translator-join/Mongo lifecycle cases pass; the combined head still requires hosted CI.
+
+PR #968 integration with #962/#970 (2026-10-24): **1,257 definitions /172 files /369 assessed**. Retains all361 dashboard-branch assessments plus eight lifecycle/config reviews. All77 focused dashboard/deadline/city-scope/review/lifecycle/config/CI/surface cases pass, including actual Chromium cases. No dashboard, translation catalog or shared CSS/JS implementation changed in this integration. Prerequisite head55933f8b passed its full hosted suite; the combined dashboard head still requires its own current-head CI. Historical checkpoints below are provenance, not additive totals.
+
+CITY-01b/#967 on #962 at `b39a46d8`, 2026-10-24: 171 Python test files; 1,252 definitions; 361 assessed definitions. Preserves all355 predecessor assessments and adds five new queue definitions plus one updated existing city-dashboard definition. Independent #964 delivery and #966 helper-audit records are not included in these branch-tree counts; preserve/recount all on integration. Not full roadmap review or release acceptance. Older per-branch/run counts below are historical evidence only.
+
+PR #962 integration with #970 (2026-10-24): retain all 355 existing assessments and eight non-overlapping lifecycle/config reviews, for **1,252 definitions /171 files /363 assessed**. Main-based prerequisite head55933f8b full CI40104202951 succeeded with1,562 passed /327 skipped; this does not prove this combined feature head or incorporate independent #964/#968/#966/#973 reviews. Historical per-branch checkpoints below remain provenance, not additive totals.
+
+PR #962 review correction on main `d87c1e57`, 2026-10-24: 170 Python test files; 1,247 definitions; 355 assessed definitions. Preserves all348 previous assessments and adds two policy/five scoped-review-route assessments. These are branch-tree counts, not full roadmap review, merged status for open PRs or delivery acceptance. Older per-branch/run counts below are historical evidence only.
+
+Branch `codex/bounded-test-mongo-clients` on main `d87c1e57`, 2026-10-24: five new lifecycle definitions and three existing config definitions individually assessed; 1,234 definitions /169 files /345 assessed. Preserves all337 merged assessments; does not include separate open branches' reviews. All56 focused config/lifecycle/status/UI-translation/translation-join/CI-contract cases pass locally; five-code-file local review completed without findings. Hosted CI completion remains pending. CI contract assessment updated below, not counted twice.
+
+## tests/test_mongo_client_lifecycle.py
+
+- [x] `test_repeated_real_manager_resets_keep_one_client_and_legacy_handles_alive`
+
+QA-02a/P1/#969 · Codex · 2026-10-24. Actual disposable Mongo and actual autouse config-reset fixture, no client mock. Requires test-mode/name,100 pings/resets, one real client identity, all old handles still ping and bounded PyMongo thread growth. Catches per-reset client creation rather than just successful resets. Uses pytest's settings fixture, not a direct conftest import (which can execute setup twice under alternate import names). Keep; not hosted resource-limit, memory-plateau or production lifecycle proof.
+
+- [x] `test_reset_still_refreshes_database_config_without_invalidating_old_handle`
+
+QA-02a/P1/#969. Real Mongo handles and monkeypatched Config database name. New manager/name, same client, both handles ping. Test does not write documents to the alternate name. Keep to distinguish bounded transport ownership from incorrectly reusing stale manager configuration; not arbitrary endpoint switching or data-isolation acceptance.
+
+- [x] `test_owner_is_lazy_and_rejects_foreign_endpoint_or_changed_options`
+
+QA-02a/P1/#969. Isolated recorder factory; asserts no early construction/foreign-endpoint call, same options reuse and rejection of changed pool options. Exact one-call assertion catches silent reconstruction. Keep; real connection behavior covered separately, not URI credential/security scanner acceptance.
+
+- [x] `test_owner_constructs_one_client_under_concurrent_requests`
+
+QA-02a/P1/#969. Four real Python threads, barrier and deliberately slow fake constructor. Asserts single construction and same returned identity; bounded waits avoid indefinite deadlock. Keep; scheduler-dependent stress can expose missing lock, not a proof of every possible interleaving or cross-process sharing.
+
+- [x] `test_owner_closes_once_and_cannot_reopen_after_session_end`
+
+QA-02a/P1/#969. Isolated close-counter double, two owner closes, one actual close and subsequent creation denied. Keep; lifecycle state is checked directly, not real network socket release or teardown exception-path execution.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -71,6 +103,8 @@ DATA-05 · P1 · #581 · Codex · 2026-10-19. One definition /two browser cases.
 - [x] `test_mongo_compatible_runner_keeps_database_and_required_suite`
 
 OPS-04b / QA-05 · P1 · Codex · 2026-10-22. The real YAML job remains python-tests on explicit Ubuntu 22, MongoDB 8 and Python 3.12; static assertions retain all four services, Chromium, unconditional pytest and failing health/test gates. No fixtures or mocked responses. One focused case, YAML/every Bash-step syntax and diff checks pass. Six-file local review completed with zero findings (later prose formatting/evidence excluded). This cannot prove hosted kernel/service availability or successful integration tests; real CI is required. Keep as a narrow migration guard; update it only with documented compatible-runner evidence before 2027-04-17, not to erase a failed suite. No test definitions removed/skipped and no production DB/OS changes.
+
+QA-02a/#969 update · 2026-10-24: also assert the unchanged30-minute limit and shlex-parsed full pytest command, including empty addopts override, verbose identities and120-second faulthandler. No test selectors/skips/retries are added. This source contract does not execute CI or prove the timeout cause resolved; real hosted completion remains required.
 
 ## Supporting audit — tests/conftest.py
 
@@ -435,6 +469,10 @@ QA-03a / SEC-04c support · P2 · Codex · 2026-10-22 · main8e6f0e2b. Each exis
 - [ ] `test_demo_suggestion_workflow_uses_shared_admin_components`
 
 USER-01 / QA-03 review follow-up, 2026-10-18, Codex, P2: `test_every_full_admin_v2_page_uses_canonical_hero_macro` is individually assessed. It inventories full admin templates, requires the canonical macro, explicitly includes account confirmation and scoped history, and preserves the structural/localized-confirmation checks. The reviewed count increases from 52 to 53 only for the new full history page; no prior page or assertion is removed. This is source-contract evidence, not visual proof; actual status/history render checks accompany it. Keep; focused run passes.
+
+CITY-02a/#962 follow-up, 2026-10-24: the same inventory now explicitly requires the approval-only demonstration review page, increasing53→54. Every discovered page still must import/use the canonical hero; no prior page/localization assertion removed. Initial combined run correctly failed on the unadjusted page count. Keep; new route rendering and real permissions are independently covered, not inferred from this static macro ratchet.
+
+CITY-01b/#967 follow-up: explicitly include the new scoped-city queue page,54→55. Every page still uses the same macro and all localization checks remain; actual localized/browser queue rendering is tested independently below.
 
 ## tests/test_admin_user_history_durability.py
 
@@ -853,20 +891,54 @@ CITY-01a/P2/#957 · Codex · 2026-10-22. Actual anonymous Flask submission and M
 - [ ] `test_city_admin_cannot_edit_verified_organization`
 - [ ] `test_city_admin_cannot_invite_to_verified_organization`
 - [ ] `test_city_admin_can_invite_to_unverified_organization`
-- [ ] `test_city_admin_dashboard_redirects_to_scoped_demo_view`
+- [x] `test_city_admin_dashboard_uses_scoped_review_queue`
 - [ ] `test_edit_user_revokes_object_id_backed_city_scope_grant`
 
 SEC-04b / QA-01 supporting review, 2026-10-16, Codex, P1; only `test_explicit_object_id_editor_can_open_scoped_audit_views` is assessed in this file. Its prior final 403 assertion relied on earlier GET normalization replacing the document and erasing the explicit editor grant. Existing `has_demo_permission` explicitly grants editors access; no production permission rule is changed to make this test pass.
+
+CITY-01b/#967, 2026-10-24: `test_city_admin_dashboard_uses_scoped_review_queue` explicitly replaces the old redirect-named definition because the requested dashboard is now a real200 scoped queue. Uses actual scoped grants/session/Mongo, asserts the new page and retains all existing403 assertions for global metrics/login/panic APIs. Keep; no production policy weakening, no deletion of an unchecked test without a replacement assessment. Shared side effects are stubbed; runtime queue/permission detail is covered in the new file below.
 
 | Definition | Requirement / assertions | Setup, coverage and reliability limits | Disposition |
 |---|---|---|---|
 | `test_explicit_object_id_editor_can_open_scoped_audit_views` | ObjectId-backed explicit editor can read its scoped audit timeline/detail/command center and still open the editor afterward; persisted editor ID survives those reads. The positive command-center link is a wiring observation, not proof of complete action visibility parity. | Real local user/membership/demo records and authenticated Flask session; no authorization mocks. One explicit-editor/VIEW_DEMO membership scenario, not a full role matrix or proof that all fields remain unchanged. Observed template/server edit-action parity remains a separate UI-affordance gap. | Corrected 403 to 200 based on existing server contract and added persisted-grant assertion. Removed the old negative edit-link assertion rather than making the UI's missing authorized action a required contract; keep. |
 
+## tests/test_city_review_dashboard.py
+
+CITY-01b/P2/#967 · Codex · 2026-10-24. Five definitions/eight cases, actual Flask/Jinja/Mongo grants and shared deadline reader; clock controlled only where asserted. Existing fixtures suppress real delivery/background tasks and inject authenticated sessions.115 combined focused cases pass; compatibility suites are not all newly assessed. No real login/SMTP/production acceptance.
+
+- [x] `test_approval_only_city_dashboard_is_scoped_and_has_usable_review_links`
+
+Three FI/EN/SV cases explicitly enable those supported test locales (no production locale publication change). ACCEPT-only grant gets200 and an actually usable review link; localized heading and reused awaiting-review/actions labels are asserted. Other city, contradictory authoritative city_key and resolved demo absent; no global stat markup and global dataAPI403. Keep; actual route/scope/compiled-catalog acceptance, not template-only permission hiding.
+
+- [x] `test_queue_orders_authoritative_deadlines_and_preserves_unknowns`
+
+Stored1h/48h, legacy assigned_at with current72h config, explicitnull despite valid assigned_at. Actual aggregation sorts exact expected IDs, shared reader yields60/2880/4320 minutes, unknown last with no timestamp, legacy document remains unmigrated. Keep; tests query/reader agreement and frozen stored values rather than duplicating assertions from the Mongo expression. Not every malformed timestamp shape.
+
+- [x] `test_queue_pagination_is_bounded_stable_and_permission_specific`
+
+22 identical-deadline docs with real LIST-only grant: pages1/2 combine to exactly the insertion/ObjectId order, total22/ranges1–20,21–22, excessivepage clamps to2. Neither review nor view buttons authorized. Keep; exact deterministic tie-breaker/count/offset bound, not a concurrent snapshot while records change.
+
+- [x] `test_dashboard_states_are_explicit_and_get_never_resets_assignment`
+
+Fixed server clock and overdue/escalated/invalid stored deadline records; exact state copy and full before/after assigned documents equal. Keep; proves a GET doesn't backfill/reset/escalate. Server-side escalation behavior is independently tested elsewhere; reading overdue copy is not proof a job ran.
+
+- [x] `test_city_queue_has_nojs_deadline_and_accessible_minute_clock`
+
+Two real Chromium cases390/light and1440/dark. Signed test session, real local assets, no external traffic; wrong Date.now2099 cannot expire the server-relative clock. Exact visible Helsinki time, aria-hidden dynamic label, computed theme and no page overflow. Screenshot inspection caught clipped deadline/action despite is_visible; now their bounding boxes must fit the viewport, with the shared stacked table variant. Separate JavaScript-disabled contexts retain visible absolute time/review link. Changing test DOM server reference to2099 and invoking the actual shared script exercises expiry copy without waiting. Temporary screenshots support spot inspection. Keep; no screen-reader certification, all-theme/viewport matrix or OS-sleep clock guarantee. Added locales are tested via the separate real GET cases.
+
 ## tests/test_config.py
 
-- [ ] `ConfigReloadTests::test_reload_reads_config_from_env_selected_path`
-- [ ] `ConfigReloadTests::test_database_manager_reset_clears_singleton`
-- [ ] `ConfigReloadTests::test_reload_supports_translation_catalogs_but_publishes_finnish_only`
+- [x] `ConfigReloadTests::test_reload_reads_config_from_env_selected_path`
+
+QA-02a/P1/#969 · 2026-10-24. Real temporary YAML plus patched environment; asserts URI, database, secret, port, timezone, S3 and missing optional-service defaults. No actual external connection to its example.test URI. Keep as configuration refresh compatibility; it does not prove transport reconfiguration.
+
+- [x] `ConfigReloadTests::test_database_manager_reset_clears_singleton`
+
+QA-02a/P1/#969. Fake singleton close counter with original singleton restored in finally; asserts cleared singleton and explicit fake close. Protects deliberate mocked-manager reset behavior independently of real TESTING clients' deferred lifecycle. Keep; not socket-release proof.
+
+- [x] `ConfigReloadTests::test_reload_supports_translation_catalogs_but_publishes_finnish_only`
+
+QA-02a/P1/#969. Empty real temporary YAML and environment-selected reload. Checks FI default/public locale, FI/EN supported mapping and disabled ticket auto-reply. Keep as deterministic defaults compatibility; not translated rendering/provider acceptance. All three existing definitions passed unchanged with session ownership installed.
 
 ## tests/test_contact_security.py
 
@@ -2328,6 +2400,8 @@ QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. El
 
 QA-01 / USER-01, Codex, 2026-10-18: route-surface definition individually reviewed. AST-derived route/decorator signatures are compared to a checked-in inventory with explicit coverage anchors for every route module. Adding the user-history route produced the CI count mismatch (10 vs 9); only that module's count/hash/coverage was updated, not the test or other surfaces. Keep: detects route drift, not runtime authorization or coverage quality by itself; real new-route tests remain required. Background/socket definitions remain unassessed.
 
+CITY-02a/#962, 2026-10-24: independently reproduced the new admin review route's49→50 manifest mismatch. Updated only admin_demo_bp's actual AST-derived count/hash and linked its real scoped-route tests. No assertion removed or other route surface refreshed blindly. CI also timed out later, so fixing this known failure is not proof that the entire CI run completes.
+
 ## tests/test_tag_list_localization_contract.py
 
 - [ ] `test_tag_list_uses_localized_stable_empty_state_markup`
@@ -2467,6 +2541,86 @@ Supporting fixture `welcome_calls`: depends on the actual app setup, then patche
 ## tests/test_websocket_smoke.py
 
 - [ ] `test_chat_socketio_events_cover_friend_listing_history_send_and_read`
+
+## tests/test_urgent_review_alert_policy.py
+
+CITY-02a/P1/#961/#962 · Codex · 2026-10-24. Pure actual policy code, fixed UTC reference and real ZoneInfo/BSON/shared deadline helper, no time mocks, DB, network or delivery doubles. 52 parameter cases across13 individually assessed definitions. Imported project configuration follows the normal test harness; no transport/poller runs. Not evidence for a scheduler, outbox, bot acceptance or live send/edit.
+
+- [x] `test_urgency_thresholds_are_strict_and_use_the_start_instant`
+
+Nine remaining-second cases around48h/24h/start: exact bounds, adjacent seconds and already-started. Asserts no new alert or exact pending severity/threshold. Keep; detects accidental <= boundaries, date-only comparison and missing past guard.
+
+- [x] `test_existing_messages_get_explicit_state_updates_without_new_announcements`
+
+Seven terminal/non-urgent variants. Same actual document returnsNone for a new announcement but an explicit state, no urgency/threshold and preserved demo identity for an existing message. Includes approved cancellation precedence. Keep; payload policy only, not actual provider ID reuse/edit or lifecycle claim fencing.
+
+- [x] `test_handled_time_comes_only_from_matching_persisted_state`
+
+Six cases: approved/rejected metadata, cancellation timestamp, mismatched decision, missing timestamp and stale metadata on a still-pending record. Exact timestamp/copy inclusion and pending-state control prevent fabricated processing time. Keep; not tests of the moderation service's writes or decision-vs-send race.
+
+- [x] `test_helsinki_start_parsing_never_guesses_missing_or_dst_instants`
+
+Nine summer/winter/seconds, spring-gap/autumn-fold, post-fold, malformed date/clock and missing-field cases. Exact UTC instants orNone with real zone database. Keep; no invented midnight/fold, not all historical timezone transitions or overnight/multi-day parsing.
+
+- [x] `test_reference_clock_accepts_storage_utc_and_aware_instants_consistently`
+
+Compares full snapshots for the same UTC instant as naive storage, UTC-aware and offset-aware clocks, and rejects missing now. Keep; no wall-clock sleep or machine-timezone dependency.
+
+- [x] `test_city_responsibility_and_review_deadline_do_not_control_event_urgency`
+
+Two city/escalated cases with a five-day-overdue review deadline and72h review window. Asserts unchanged pending event urgency plus correct responsibility/deadline copy. Keep; prevents city escalation duration replacing the independent event threshold. No assignment query, permission or escalation write is mocked/proven.
+
+- [x] `test_message_is_bounded_escaped_and_has_only_an_authenticated_canonical_link`
+
+Long malicious title/city, private contact/description/actor/token/link sentinels and nested non-string title. Exact output-key allowlist, escaped text, bounded message, one fixed admin review URL, no arbitrary URL/private sentinel. Keep; formatter regression, not end-to-end Telegram parsing/channel membership. Scoped review-route access is tested separately below.
+
+- [x] `test_same_state_has_stable_content_hash_until_an_actual_change`
+
+Two times within one tier produce the same fingerprint; crossing24h and changing title change it. Keep; avoids tick-driven edits. Initial test setup incorrectly crossed the boundary and was corrected; this is not claimed as an application regression. Not provider deduplication or persistence evidence.
+
+- [x] `test_invalid_identity_never_builds_a_link_or_alert`
+
+Four null/invalid/integer/arbitrary-URL IDs must returnNone. Keep; no generated random ObjectId or untrusted-link interpolation. Valid BSON-ID control exists across all other definitions.
+
+- [x] `test_invalid_threshold_configuration_is_rejected`
+
+Six equal/reversed/nonpositive/bool/fractional configurations requireValueError. Keep; ordinary valid threshold controls are separate. Not a deployed configuration/secret validator.
+
+- [x] `test_configured_thresholds_change_the_displayed_limit_and_severity_together`
+
+Configured20h/10h with9h remaining yields critical/10h and matching visible copy. Keep; prevents fixed24/48 labels from contradicting a configured policy. Deployment still uses unenabled defaults until worker/configuration acceptance.
+
+- [x] `test_rescheduling_overrides_stale_archive_flag`
+
+Two fresh/existing-message cases with a future valid start and stale `in_past=True`. Requires pending/urgent rather than suppression/archive. Keep; fails under the former archive guard. Actual form persistence is not exercised; the former archived-state case separately retains a genuinely past date.
+
+- [x] `test_terminal_snapshot_does_not_invent_national_responsibility`
+
+Three resolved-state cases without assignment require responsibilityNone and no responsibility copy; pending national control still emits national ownership. Keep; catches missing-assignment fallback. Real approve/reject service cleanup is covered by the route integration below.
+
+## tests/test_urgent_review_route.py
+
+CITY-02a/P1/#962 · Codex · 2026-10-24. Five definitions/ten cases. Actual Flask/Jinja, Mongo permission grants, CSRF, canonical decision service and Chromium. Shared fixtures inject an authenticated session and stub email/upload/screenshot-service side effects; not actual login, SMTP or Telegram.
+
+- [x] `test_alert_link_is_usable_with_only_scoped_approval_permission`
+
+Extracts the URL from the actual message, opens with only ACCEPT_DEMO in Helsinki; asserts shared hero/form, escaped submitted description and absent private sentinel. Existing edit/command-center remain403 and anonymous review redirects. Keep; catches the inaccessible editor link without weakening existing guards. HTML checks are not browser visual/keyboard acceptance.
+
+- [x] `test_review_rejects_other_city_and_non_approvers`
+
+Two explicit other-city/VIEW-only grants; GET and forgedPOST both403, complete demo document unchanged. Keep; real permission-scope boundaries, not mocked authorization. No unbounded permission-matrix claim.
+
+- [x] `test_review_decision_uses_canonical_service_and_cleared_assignment_snapshot`
+
+Approve/reject cases use the rendered session token. MissingCSRF403 and invalid decision400 precede valid302; canonical flags/source and cleared city assignment verified. Resulting real persisted snapshot omits invented ownership; resolved UI removes form; repeated identicalPOST retains decision identity. Keep; bridges service cleanup to policy and exercises the same guarded normal form. Email network/provider acceptance remains stubbed.
+
+- [x] `test_review_handles_missing_identity_and_cancelled_posts`
+
+Scoped caller gets403 for invalid/nonexistent IDs (existing permission wrapper); global admin gets400/404 instead of500. Cancelled known demoGET200 but valid-CSRF approvalPOST409 with approved unchanged. Keep; no mutation from viewing/cancelled form submission. Not a cancellation-versus-decision concurrency test.
+
+- [x] `test_review_uses_shared_responsive_theme_in_browser`
+
+Four actual Chromium cases:390/1440px × light/dark. Signed test session, real local Flask server/assets; remote requests blocked by shared fixture. Saved theme goes through actual admin initialization, computed color-scheme must match, hero/select visible, root has no horizontal overflow and select receives focus. Temporary full-page captures support manual spot checks. Keep; no production auth, real transport or exhaustive accessibility/contrast claim. Corrected an initial test-only selector that set an unused theme attribute; explicit computed theme now prevents false light-mode evidence.
 
 ## tests/test_wrappers.py
 

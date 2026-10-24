@@ -588,6 +588,52 @@ body {
   background: var(--admin-workspace-blue-soft);
 }
 
+/* Opt-in compact queues: keep actions/deadlines on screen on narrow devices. */
+.admin-data-view__table--stacked tbody th[scope="row"] {
+  font-size: 1rem;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.admin-data-view__table--stacked .admin-table-cell-label {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .admin-data-view__table--stacked {
+    min-width: 0;
+  }
+
+  .admin-data-view__table--stacked thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .admin-data-view__table--stacked tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--admin-workspace-border);
+  }
+
+  .admin-data-view__table--stacked tbody :is(th, td) {
+    display: block;
+    padding: .4rem 0;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-data-view__table--stacked .admin-table-cell-label {
+    display: block;
+    color: var(--admin-workspace-muted);
+    font-size: .75rem;
+    font-weight: 700;
+  }
+}
+
 .admin-data-view__table tbody tr[aria-selected="true"] {
   background: var(--admin-workspace-blue-soft);
   box-shadow: inset .25rem 0 0 var(--admin-workspace-blue);

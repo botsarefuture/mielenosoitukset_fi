@@ -88,7 +88,6 @@ _CONFIG_PATH.write_text(
     ),
     encoding="utf-8",
 )
-os.environ["CONFIG_YAML_PATH"] = str(_CONFIG_PATH)
 
 from config import Config  # noqa: E402
 from mielenosoitukset_fi.database_manager import DatabaseManager  # noqa: E402
@@ -104,7 +103,7 @@ _test_mongo_clients = SessionMongoClients(TEST_MONGO_URI)
 _database_manager_module.MongoClient = _test_mongo_clients
 
 
-Config.reload()
+Config.reload(str(_CONFIG_PATH))
 DatabaseManager.reset_instance()
 
 
@@ -760,12 +759,10 @@ def test_config_path():
 
 @pytest.fixture(autouse=True)
 def ensure_test_config(test_config_path):
-    os.environ["CONFIG_YAML_PATH"] = test_config_path
-    Config.reload()
+    Config.reload(test_config_path)
     DatabaseManager.reset_instance()
     yield
-    os.environ["CONFIG_YAML_PATH"] = test_config_path
-    Config.reload()
+    Config.reload(test_config_path)
     DatabaseManager.reset_instance()
 
 

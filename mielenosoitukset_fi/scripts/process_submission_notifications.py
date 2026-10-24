@@ -14,6 +14,7 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailJob import EmailJob
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.notifications import notify_city_reviewers
 from mielenosoitukset_fi.utils.city_assignment import (
     NOT_ESCALATED_ASSIGNMENT_CLAUSE,
     active_city_admins_for_city,
@@ -362,6 +363,11 @@ def run(max_jobs: int = 25):
         job_id = job["_id"]
         owner = {"_id": job_id, "status": "processing", "claim_token": job["claim_token"]}
         try:
+            if job.get("notification_type") == "city_assignment":
+                # Inbox eligibility uses the live assignment, independently of
+                # whether the queued SMTP address is still current/eligible.
+                _owned_update(queue, owner, {"$set": {"updated_at": utcnow()}})
+                notify_city_reviewers(db, job["demo_id"])
             messages = _eligible_messages(db, job)
             if messages is None:
                 _owned_update(queue, owner, {"$set": {

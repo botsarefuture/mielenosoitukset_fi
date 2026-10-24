@@ -45,3 +45,8 @@ Focused success is not proof that the full hosted suite finishes. Require an
 actual terminal result on the PR head before treating the CI incident as fixed.
 Do not increase the timeout, skip tests or repeatedly rerun an unchanged failed
 head instead of investigating its current per-test output.
+
+The main-based prerequisite head55933f8b subsequently passed full hosted
+Tests40104202951:1,562 passed /327 skipped in857.15 seconds on Python3.12,
+including both real manager regressions. This is not the combined #962 feature
+head: after integrating the prerequisite, require that head's own complete CI.

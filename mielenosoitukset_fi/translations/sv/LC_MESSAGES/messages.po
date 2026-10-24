@@ -1498,7 +1498,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/organizations/view.html:352
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:120
 msgid "Toiminnot"
-msgstr ""
+msgstr "Åtgärder"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:23
 msgid "Superkäyttäjä"
@@ -3169,7 +3169,7 @@ msgstr "Inga aktiva token."
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:215
 msgid "Näytä"
-msgstr ""
+msgstr "Visa"
 
 #: mielenosoitukset_fi/templates/users/auth/verify_mfa.html:12
 msgid "MFA-koodi"
@@ -4277,7 +4277,7 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_case_bp.py:65
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:45
 msgid "Odottaa käsittelyä"
-msgstr ""
+msgstr "Väntar på granskning"
 
 #: mielenosoitukset_fi/admin/admin_case_bp.py:71
 #: mielenosoitukset_fi/admin/admin_case_bp.py:179
@@ -5310,7 +5310,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/governance/dashboard.html:12
 #: mielenosoitukset_fi/templates/admin_base.html:176
 msgid "Admin-paneeli"
-msgstr ""
+msgstr "Adminpanel"
 
 #: mielenosoitukset_fi/templates/admin_base.html:177
 msgid "Avaa admin-valikko"
@@ -5969,7 +5969,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/detail.html:1971
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:68
 msgid "Kaikki mielenosoitukset"
-msgstr ""
+msgstr "Alla demonstrationer"
 
 #: mielenosoitukset_fi/templates/header.html:21
 #: mielenosoitukset_fi/templates/header.html:30
@@ -13784,3 +13784,49 @@ msgstr "Demonstrationen ändrades samtidigt. Uppdatera sidan och försök igen."
 
 msgid "Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä."
 msgstr "Resultatet av raderingen kunde inte bekräftas. Kontrollera demonstrationens status innan du försöker igen."
+
+# Scoped city review dashboard
+msgid "Kaupunkiadminin käsittelyjono"
+msgstr "Städernas granskningskö"
+
+msgid "Sinulle näkyvien kaupunkien odottavat ilmoitukset. Määräaika perustuu palvelimelle tallennettuun käsittelyaikaan."
+msgstr "Väntande anmälningar för dina städer. Tidsfristen följer granskningstiden som sparats på servern."
+
+msgid "Käsittelyjono"
+msgstr "Granskningskö"
+
+msgid "Määräaika päättynyt – odottaa siirtoa kansalliselle tiimille"
+msgstr "Tidsfristen har löpt ut – väntar på överföring till det nationella teamet"
+
+msgid "Käsittelyaikaa jäljellä"
+msgstr "Granskningstid kvar"
+
+msgid "Näytetään %(first)s–%(last)s / %(total)s"
+msgstr "Visar %(first)s–%(last)s av %(total)s"
+
+msgid "Kaupunkiesi ilmoitukset aikaisimman käsittelymääräajan mukaan"
+msgstr "Anmälningar för dina städer med tidigaste granskningsfrist först"
+
+msgid "Käsittelyn määräaika"
+msgstr "Tidsfrist för granskning"
+
+msgid "Siirretty kansalliselle tiimille"
+msgstr "Överförd till det nationella teamet"
+
+msgid "Määräaika vaatii tarkistuksen"
+msgstr "Tidsfristen behöver kontrolleras"
+
+msgid "Käsittele"
+msgstr "Granska"
+
+msgid "Ei käsittelyä odottavia ilmoituksia"
+msgstr "Inga anmälningar väntar på granskning"
+
+msgid "Jono sisältää vain ilmoitukset, joihin sinulla on käyttöoikeus."
+msgstr "Kön innehåller bara anmälningar som du har åtkomst till."
+
+msgid "Sivu %(page)s / %(pages)s"
+msgstr "Sida %(page)s av %(pages)s"
+
+msgid "Sivutus"
+msgstr "Sidindelning"

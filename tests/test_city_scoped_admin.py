@@ -650,7 +650,7 @@ def test_city_admin_can_invite_to_unverified_organization(
     assert "allowed-invite@example.test" in refreshed.get("invitations", [])
 
 
-def test_city_admin_dashboard_redirects_to_scoped_demo_view(app, db):
+def test_city_admin_dashboard_uses_scoped_review_queue(app, db):
     scoped_user_id = _create_scoped_admin(
         db,
         ["helsinki"],
@@ -660,8 +660,8 @@ def test_city_admin_dashboard_redirects_to_scoped_demo_view(app, db):
 
     response = client.get("/admin/dashboard")
 
-    assert response.status_code == 302
-    assert response.headers["Location"].endswith("/admin/demo/")
+    assert response.status_code == 200
+    assert "Kaupunkiadminin käsittelyjono" in response.get_data(as_text=True)
 
     assert client.get("/admin/dashboard/data").status_code == 403
     assert client.get("/admin/dashboard/login-feed").status_code == 403

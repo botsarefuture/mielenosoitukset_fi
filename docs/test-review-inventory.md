@@ -2,7 +2,33 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+PR #962 integration with #970 (2026-10-24): retain all 355 existing assessments and eight non-overlapping lifecycle/config reviews, for **1,252 definitions /171 files /363 assessed**. Main-based prerequisite head55933f8b full CI40104202951 succeeded with1,562 passed /327 skipped; this does not prove this combined feature head or incorporate independent #964/#968/#966/#973 reviews. Historical per-branch checkpoints below remain provenance, not additive totals.
+
 PR #962 review correction on main `d87c1e57`, 2026-10-24: 170 Python test files; 1,247 definitions; 355 assessed definitions. Preserves all348 previous assessments and adds two policy/five scoped-review-route assessments. These are branch-tree counts, not full roadmap review, merged status for open PRs or delivery acceptance. Older per-branch/run counts below are historical evidence only.
+
+Branch `codex/bounded-test-mongo-clients` on main `d87c1e57`, 2026-10-24: five new lifecycle definitions and three existing config definitions individually assessed; 1,234 definitions /169 files /345 assessed. Preserves all337 merged assessments; does not include separate open branches' reviews. All56 focused config/lifecycle/status/UI-translation/translation-join/CI-contract cases pass locally; five-code-file local review completed without findings. Hosted CI completion remains pending. CI contract assessment updated below, not counted twice.
+
+## tests/test_mongo_client_lifecycle.py
+
+- [x] `test_repeated_real_manager_resets_keep_one_client_and_legacy_handles_alive`
+
+QA-02a/P1/#969 · Codex · 2026-10-24. Actual disposable Mongo and actual autouse config-reset fixture, no client mock. Requires test-mode/name,100 pings/resets, one real client identity, all old handles still ping and bounded PyMongo thread growth. Catches per-reset client creation rather than just successful resets. Uses pytest's settings fixture, not a direct conftest import (which can execute setup twice under alternate import names). Keep; not hosted resource-limit, memory-plateau or production lifecycle proof.
+
+- [x] `test_reset_still_refreshes_database_config_without_invalidating_old_handle`
+
+QA-02a/P1/#969. Real Mongo handles and monkeypatched Config database name. New manager/name, same client, both handles ping. Test does not write documents to the alternate name. Keep to distinguish bounded transport ownership from incorrectly reusing stale manager configuration; not arbitrary endpoint switching or data-isolation acceptance.
+
+- [x] `test_owner_is_lazy_and_rejects_foreign_endpoint_or_changed_options`
+
+QA-02a/P1/#969. Isolated recorder factory; asserts no early construction/foreign-endpoint call, same options reuse and rejection of changed pool options. Exact one-call assertion catches silent reconstruction. Keep; real connection behavior covered separately, not URI credential/security scanner acceptance.
+
+- [x] `test_owner_constructs_one_client_under_concurrent_requests`
+
+QA-02a/P1/#969. Four real Python threads, barrier and deliberately slow fake constructor. Asserts single construction and same returned identity; bounded waits avoid indefinite deadlock. Keep; scheduler-dependent stress can expose missing lock, not a proof of every possible interleaving or cross-process sharing.
+
+- [x] `test_owner_closes_once_and_cannot_reopen_after_session_end`
+
+QA-02a/P1/#969. Isolated close-counter double, two owner closes, one actual close and subsequent creation denied. Keep; lifecycle state is checked directly, not real network socket release or teardown exception-path execution.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -69,6 +95,8 @@ DATA-05 · P1 · #581 · Codex · 2026-10-19. One definition /two browser cases.
 - [x] `test_mongo_compatible_runner_keeps_database_and_required_suite`
 
 OPS-04b / QA-05 · P1 · Codex · 2026-10-22. The real YAML job remains python-tests on explicit Ubuntu 22, MongoDB 8 and Python 3.12; static assertions retain all four services, Chromium, unconditional pytest and failing health/test gates. No fixtures or mocked responses. One focused case, YAML/every Bash-step syntax and diff checks pass. Six-file local review completed with zero findings (later prose formatting/evidence excluded). This cannot prove hosted kernel/service availability or successful integration tests; real CI is required. Keep as a narrow migration guard; update it only with documented compatible-runner evidence before 2027-04-17, not to erase a failed suite. No test definitions removed/skipped and no production DB/OS changes.
+
+QA-02a/#969 update · 2026-10-24: also assert the unchanged30-minute limit and shlex-parsed full pytest command, including empty addopts override, verbose identities and120-second faulthandler. No test selectors/skips/retries are added. This source contract does not execute CI or prove the timeout cause resolved; real hosted completion remains required.
 
 ## Supporting audit — tests/conftest.py
 
@@ -864,9 +892,17 @@ SEC-04b / QA-01 supporting review, 2026-10-16, Codex, P1; only `test_explicit_ob
 
 ## tests/test_config.py
 
-- [ ] `ConfigReloadTests::test_reload_reads_config_from_env_selected_path`
-- [ ] `ConfigReloadTests::test_database_manager_reset_clears_singleton`
-- [ ] `ConfigReloadTests::test_reload_supports_translation_catalogs_but_publishes_finnish_only`
+- [x] `ConfigReloadTests::test_reload_reads_config_from_env_selected_path`
+
+QA-02a/P1/#969 · 2026-10-24. Real temporary YAML plus patched environment; asserts URI, database, secret, port, timezone, S3 and missing optional-service defaults. No actual external connection to its example.test URI. Keep as configuration refresh compatibility; it does not prove transport reconfiguration.
+
+- [x] `ConfigReloadTests::test_database_manager_reset_clears_singleton`
+
+QA-02a/P1/#969. Fake singleton close counter with original singleton restored in finally; asserts cleared singleton and explicit fake close. Protects deliberate mocked-manager reset behavior independently of real TESTING clients' deferred lifecycle. Keep; not socket-release proof.
+
+- [x] `ConfigReloadTests::test_reload_supports_translation_catalogs_but_publishes_finnish_only`
+
+QA-02a/P1/#969. Empty real temporary YAML and environment-selected reload. Checks FI default/public locale, FI/EN supported mapping and disabled ticket auto-reply. Keep as deterministic defaults compatibility; not translated rendering/provider acceptance. All three existing definitions passed unchanged with session ownership installed.
 
 ## tests/test_contact_security.py
 

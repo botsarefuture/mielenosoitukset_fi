@@ -4,7 +4,7 @@
 
 ## UNRELEASED
 
-- CI reports individual test results and Python stacks during prolonged stalls, so a job timeout no longer hides earlier failures; the test set and execution limit are unchanged.
+- Bound test-session Mongo connections across singleton resets while preserving legacy database handles; retain the full CI gate with individual test progress and stalled-run diagnostics.
 
 - Urgent-review snapshots honor rescheduled start times despite stale archive flags and no longer invent national ownership after a decision clears the city assignment. Their authenticated review link now works for approval-only city admins through a scoped, CSRF-protected shared admin page without granting editor or analytics access.
 

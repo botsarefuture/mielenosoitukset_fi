@@ -1,0 +1,43 @@
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% block title %}{{ _('Mielenosoituksen käsittely') }}{% endblock %}
+{% block main_content %}
+<section class="admin-page admin-workspace admin-stack">
+  {{ admin_page_hero(
+    _('Mielenosoituksen käsittely'),
+    _('Tarkista ilmoituksen sisältö ja vahvista hyväksymis- tai hylkäyspäätös.'),
+    _('Mielenosoitukset'),
+    [(_('Etusivu'), url_for('index')), (_('Mielenosoituksen käsittely'), none)],
+    back_url=url_for('index'), back_label=_('Etusivu')
+  ) }}
+  <section class="admin-section-card" aria-labelledby="review-content-heading">
+    <header class="admin-section-card__header"><h2 id="review-content-heading">{{ demo.title }}</h2></header>
+    <div class="admin-section-card__body admin-stack">
+      <dl>
+        <dt>{{ _('Kaupunki') }}</dt><dd>{{ demo.city }}</dd>
+        <dt>{{ _('Ajankohta') }}</dt><dd>{{ demo.date }} {{ demo.start_time }}{% if demo.end_time %} – {{ demo.end_time }}{% endif %}</dd>
+        <dt>{{ _('Osoite') }}</dt><dd>{{ demo.address }}</dd>
+      </dl>
+      <h3>{{ _('Kuvaus') }}</h3>
+      <div class="text-break">{% for line in demo.description.splitlines() %}{{ line }}<br>{% endfor %}</div>
+      {% if state == 'pending' %}
+      <form method="post" class="admin-form">
+        <input type="hidden" name="csrf_token" value="{{ review_csrf_token }}">
+        <div class="admin-field">
+          <label for="review-decision">{{ _('Päätös') }}</label>
+          <select id="review-decision" name="decision" required class="form-select" aria-describedby="review-decision-help">
+            <option value="">{{ _('Valitse päätös') }}</option>
+            <option value="approved">{{ _('Hyväksy') }}</option>
+            <option value="rejected">{{ _('Hylkää') }}</option>
+          </select>
+          <p id="review-decision-help" class="admin-field__help">{{ _('Päätös tallentuu muutoshistoriaan ja ilmoittajalle lähetetään tieto käsittelystä.') }}</p>
+        </div>
+        <div class="admin-sticky-actions"><button type="submit" class="btn btn-primary">{{ _('Vahvista päätös') }}</button></div>
+      </form>
+      {% else %}
+      <p role="status" class="admin-status-badge">{{ _('Peruttu') if state == 'cancelled' else (_('Hyväksytty') if state == 'approved' else _('Hylätty')) }}</p>
+      {% endif %}
+    </div>
+  </section>
+</section>
+{% endblock %}

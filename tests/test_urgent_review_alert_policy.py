@@ -40,7 +40,8 @@ def test_urgency_thresholds_are_strict_and_use_the_start_instant(remaining, expe
 @pytest.mark.parametrize("changes,state", [
     ({"approved": True}, "approved"), ({"rejected": True}, "rejected"),
     ({"cancelled": True, "approved": True}, "cancelled"),
-    ({"start_time": "invalid"}, "invalid_time"), ({"in_past": True}, "archived"),
+    ({"start_time": "invalid"}, "invalid_time"),
+    ({"in_past": True, "date": "2026-10-20"}, "archived"),
     ({"date": "2026-10-20"}, "started"), ({"date": "2026-11-01"}, "rescheduled"),
 ])
 def test_existing_messages_get_explicit_state_updates_without_new_announcements(changes, state):
@@ -120,7 +121,7 @@ def test_message_is_bounded_escaped_and_has_only_an_authenticated_canonical_link
     assert "&lt;b&gt;Helsinki&lt;/b&gt;" in snapshot["text"]
     assert len(snapshot["text"]) < 2000
     assert snapshot["text"].count('<a href="') == 1
-    assert f'https://mielenosoitukset.fi/admin/demo/edit_demo/{DEMO_ID}' in snapshot["text"]
+    assert f'https://mielenosoitukset.fi/admin/demo/review/{DEMO_ID}' in snapshot["text"]
     assert "evil.test" not in snapshot["text"]
     assert set(snapshot) == {
         "demo_id", "state", "urgency", "threshold_hours", "responsibility",
@@ -159,3 +160,20 @@ def test_configured_thresholds_change_the_displayed_limit_and_severity_together(
     assert snapshot["urgency"] == "critical"
     assert snapshot["threshold_hours"] == 10
     assert "alle 10 h" in snapshot["text"]
+
+
+@pytest.mark.parametrize("has_message", [False, True])
+def test_rescheduling_overrides_stale_archive_flag(has_message):
+    snapshot = build_urgent_review_alert(_demo(in_past=True), NOW, has_message=has_message)
+    assert snapshot["state"] == "pending"
+    assert snapshot["urgency"] == "urgent"
+
+
+@pytest.mark.parametrize("state", ["approved", "rejected", "cancelled"])
+def test_terminal_snapshot_does_not_invent_national_responsibility(state):
+    snapshot = build_urgent_review_alert(_demo(**{state: True}), NOW, has_message=True)
+    assert snapshot["responsibility"] is None
+    assert "Vastuu:" not in snapshot["text"]
+    pending = build_urgent_review_alert(_demo(), NOW)
+    assert pending["responsibility"] == "national"
+    assert "Vastuu: kansallinen tiimi" in pending["text"]

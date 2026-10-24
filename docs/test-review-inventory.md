@@ -2,7 +2,7 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
-Branch `codex/urgent-review-alert-policy` on #958 at8ae83f85 and main `cb4421da`, 2026-10-23: 169 Python test files; 1,240 definitions; 348 assessed definitions. Retains all329 merged and eight #958 assessments; adds eleven urgent-policy definitions. These are branch-tree counts, not full roadmap review, merged status for open PRs or delivery acceptance. Older per-branch/run counts below are historical evidence only.
+PR #962 review correction on main `d87c1e57`, 2026-10-24: 170 Python test files; 1,247 definitions; 355 assessed definitions. Preserves all348 previous assessments and adds two policy/five scoped-review-route assessments. These are branch-tree counts, not full roadmap review, merged status for open PRs or delivery acceptance. Older per-branch/run counts below are historical evidence only.
 
 For each checked definition, add its review record under the file heading (requirement, setup/mocks, assertions, variants, reliability, disposition, revision/run/PR evidence). Parameter groups must account for every collected case. Refresh additions/removals at milestones. Include shared fixtures/configuration and standalone test scripts in the supporting audit.
 
@@ -433,6 +433,8 @@ QA-03a / SEC-04c support · P2 · Codex · 2026-10-22 · main8e6f0e2b. Each exis
 - [ ] `test_demo_suggestion_workflow_uses_shared_admin_components`
 
 USER-01 / QA-03 review follow-up, 2026-10-18, Codex, P2: `test_every_full_admin_v2_page_uses_canonical_hero_macro` is individually assessed. It inventories full admin templates, requires the canonical macro, explicitly includes account confirmation and scoped history, and preserves the structural/localized-confirmation checks. The reviewed count increases from 52 to 53 only for the new full history page; no prior page or assertion is removed. This is source-contract evidence, not visual proof; actual status/history render checks accompany it. Keep; focused run passes.
+
+CITY-02a/#962 follow-up, 2026-10-24: the same inventory now explicitly requires the approval-only demonstration review page, increasing53→54. Every discovered page still must import/use the canonical hero; no prior page/localization assertion removed. Initial combined run correctly failed on the unadjusted page count. Keep; new route rendering and real permissions are independently covered, not inferred from this static macro ratchet.
 
 ## tests/test_admin_user_history_durability.py
 
@@ -2446,7 +2448,7 @@ QA-01 / USER-01, Codex, 2026-10-18: route-surface definition individually review
 
 ## tests/test_urgent_review_alert_policy.py
 
-CITY-02a/P1/#961 · Codex · 2026-10-23. Pure actual policy code, fixed UTC reference and real ZoneInfo/BSON/shared deadline helper, no time mocks, DB, network or delivery doubles. 47 parameter cases across11 individually assessed definitions. Imported project configuration follows the normal test harness; no transport/poller runs. Not evidence for a scheduler, outbox, bot acceptance or live send/edit.
+CITY-02a/P1/#961/#962 · Codex · 2026-10-24. Pure actual policy code, fixed UTC reference and real ZoneInfo/BSON/shared deadline helper, no time mocks, DB, network or delivery doubles. 52 parameter cases across13 individually assessed definitions. Imported project configuration follows the normal test harness; no transport/poller runs. Not evidence for a scheduler, outbox, bot acceptance or live send/edit.
 
 - [x] `test_urgency_thresholds_are_strict_and_use_the_start_instant`
 
@@ -2474,7 +2476,7 @@ Two city/escalated cases with a five-day-overdue review deadline and72h review w
 
 - [x] `test_message_is_bounded_escaped_and_has_only_an_authenticated_canonical_link`
 
-Long malicious title/city, private contact/description/actor/token/link sentinels and nested non-string title. Exact output-key allowlist, escaped text, bounded message, one fixed admin URL, no arbitrary URL/private sentinel. Keep; allowlist/formatter regression, not end-to-end Telegram parsing, channel membership or route authorization. Existing protected route remains the link target.
+Long malicious title/city, private contact/description/actor/token/link sentinels and nested non-string title. Exact output-key allowlist, escaped text, bounded message, one fixed admin review URL, no arbitrary URL/private sentinel. Keep; formatter regression, not end-to-end Telegram parsing/channel membership. Scoped review-route access is tested separately below.
 
 - [x] `test_same_state_has_stable_content_hash_until_an_actual_change`
 
@@ -2491,6 +2493,38 @@ Six equal/reversed/nonpositive/bool/fractional configurations requireValueError.
 - [x] `test_configured_thresholds_change_the_displayed_limit_and_severity_together`
 
 Configured20h/10h with9h remaining yields critical/10h and matching visible copy. Keep; prevents fixed24/48 labels from contradicting a configured policy. Deployment still uses unenabled defaults until worker/configuration acceptance.
+
+- [x] `test_rescheduling_overrides_stale_archive_flag`
+
+Two fresh/existing-message cases with a future valid start and stale `in_past=True`. Requires pending/urgent rather than suppression/archive. Keep; fails under the former archive guard. Actual form persistence is not exercised; the former archived-state case separately retains a genuinely past date.
+
+- [x] `test_terminal_snapshot_does_not_invent_national_responsibility`
+
+Three resolved-state cases without assignment require responsibilityNone and no responsibility copy; pending national control still emits national ownership. Keep; catches missing-assignment fallback. Real approve/reject service cleanup is covered by the route integration below.
+
+## tests/test_urgent_review_route.py
+
+CITY-02a/P1/#962 · Codex · 2026-10-24. Five definitions/ten cases. Actual Flask/Jinja, Mongo permission grants, CSRF, canonical decision service and Chromium. Shared fixtures inject an authenticated session and stub email/upload/screenshot-service side effects; not actual login, SMTP or Telegram.
+
+- [x] `test_alert_link_is_usable_with_only_scoped_approval_permission`
+
+Extracts the URL from the actual message, opens with only ACCEPT_DEMO in Helsinki; asserts shared hero/form, escaped submitted description and absent private sentinel. Existing edit/command-center remain403 and anonymous review redirects. Keep; catches the inaccessible editor link without weakening existing guards. HTML checks are not browser visual/keyboard acceptance.
+
+- [x] `test_review_rejects_other_city_and_non_approvers`
+
+Two explicit other-city/VIEW-only grants; GET and forgedPOST both403, complete demo document unchanged. Keep; real permission-scope boundaries, not mocked authorization. No unbounded permission-matrix claim.
+
+- [x] `test_review_decision_uses_canonical_service_and_cleared_assignment_snapshot`
+
+Approve/reject cases use the rendered session token. MissingCSRF403 and invalid decision400 precede valid302; canonical flags/source and cleared city assignment verified. Resulting real persisted snapshot omits invented ownership; resolved UI removes form; repeated identicalPOST retains decision identity. Keep; bridges service cleanup to policy and exercises the same guarded normal form. Email network/provider acceptance remains stubbed.
+
+- [x] `test_review_handles_missing_identity_and_cancelled_posts`
+
+Scoped caller gets403 for invalid/nonexistent IDs (existing permission wrapper); global admin gets400/404 instead of500. Cancelled known demoGET200 but valid-CSRF approvalPOST409 with approved unchanged. Keep; no mutation from viewing/cancelled form submission. Not a cancellation-versus-decision concurrency test.
+
+- [x] `test_review_uses_shared_responsive_theme_in_browser`
+
+Four actual Chromium cases:390/1440px × light/dark. Signed test session, real local Flask server/assets; remote requests blocked by shared fixture. Saved theme goes through actual admin initialization, computed color-scheme must match, hero/select visible, root has no horizontal overflow and select receives focus. Temporary full-page captures support manual spot checks. Keep; no production auth, real transport or exhaustive accessibility/contrast claim. Corrected an initial test-only selector that set an unused theme attribute; explicit computed theme now prevents false light-mode evidence.
 
 ## tests/test_wrappers.py
 

@@ -36,6 +36,9 @@ deployment configuration; neither belongs in this module or a public issue.
   present. The flags/current canonical state determine the snapshot. A future
   outbox must define review-lifecycle identity and reconcile stale/out-of-order
   edits against the latest persisted state before delivery.
+- A valid future start overrides a stale `in_past` flag after rescheduling.
+  Terminal snapshots omit responsibility when the decision has cleared its
+  assignment: missing historical assignment does not establish national ownership.
 
 ## Message privacy and update stability
 
@@ -45,6 +48,12 @@ login-protected admin link. They contain no submitter details, description, acto
 metadata, edit/approve/reject bearer links or arbitrary document fields. Invalid
 IDs cannot produce links. Use Telegram HTML parse mode; do not interpolate raw
 fields in another transport formatter.
+
+The link targets `/admin/demo/review/<id>`, requiring authenticated admin access
+and `ACCEPT_DEMO` for that specific demonstration. Its content-only review page
+does not grant `EDIT_DEMO`, command-center/analytics or submitter access. Decisions
+require a session CSRF token and use the existing canonical decision service;
+GET never approves or rejects. Existing editor/command-center guards are unchanged.
 
 `text_sha256` changes with actual displayed state/content, not each minute or
 worker tick. This supports bounded edits without per-second Telegram traffic.

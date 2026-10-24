@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Urgent-review snapshots honor rescheduled start times despite stale archive flags and no longer invent national ownership after a decision clears the city assignment. Their authenticated review link now works for approval-only city admins through a scoped, CSRF-protected shared admin page without granting editor or analytics access.
+
 - Add the tested timing and safe-message policy for upcoming urgent Telegram moderation alerts: strict 48h/24h thresholds, explicit existing-message states and authenticated review links. Sending, scheduling and production enablement are not active yet.
 
 - City-admin assignments retain their configured review duration and exact UTC deadline across configuration changes. Escalation and notification copy use that deadline; ordinary content edits no longer postpone review, while explicit edit-link actions retain their reset behavior.

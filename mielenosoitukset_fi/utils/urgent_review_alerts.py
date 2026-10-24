@@ -97,7 +97,7 @@ def build_urgent_review_alert(
             handled_at = _utc(demo.get("cancelled_at"))
         elif decision.get("status") == state:
             handled_at = _utc(decision.get("at"))
-    elif demo.get("in_past"):
+    elif demo.get("in_past") and (start is None or start <= now):
         state, heading = "archived", "Arkistoitu – tarkista käsittelytilanne"
     elif start is None:
         state, heading = "invalid_time", "Aloitusaika vaatii tarkistuksen"
@@ -115,20 +115,26 @@ def build_urgent_review_alert(
         return None
 
     assignment = demo.get("city_assignment") or {}
-    responsibility = "city" if assignment and not assignment.get("escalated") else "national"
+    # Decisions clear assignments. Their absence then says nothing about who
+    # owned the review; do not relabel a resolved city review as national.
+    responsibility = (
+        None if terminal and not assignment else
+        "city" if assignment and not assignment.get("escalated") else "national"
+    )
     deadline = _utc(city_review_deadline(demo))
     lines = [
         f"<b>{heading}</b>",
         _label(demo.get("title"), 200, "Mielenosoitus"),
         f"Kaupunki: {_label(demo.get('city'), 100, 'Ei tiedossa')}",
         f"Alkaa: {_local_time(start)}" if start else "Alkaa: aikaa ei voitu varmistaa",
-        "Vastuu: kaupunkiadminit" if responsibility == "city" else "Vastuu: kansallinen tiimi",
     ]
+    if responsibility:
+        lines.append("Vastuu: kaupunkiadminit" if responsibility == "city" else "Vastuu: kansallinen tiimi")
     if deadline:
         lines.append(f"Käsittelyn määräaika: {_local_time(deadline)}")
     if handled_at:
         lines.append(f"Käsitelty: {_local_time(handled_at)}")
-    lines.append(f'<a href="https://mielenosoitukset.fi/admin/demo/edit_demo/{demo_id}">Avaa adminissa</a>')
+    lines.append(f'<a href="https://mielenosoitukset.fi/admin/demo/review/{demo_id}">Avaa adminissa</a>')
     text = "\n".join(lines)
     return {
         "demo_id": demo_id, "state": state, "urgency": urgency, "threshold_hours": threshold,

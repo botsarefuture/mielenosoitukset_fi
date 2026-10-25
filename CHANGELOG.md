@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Strengthen identity regression tests for wrong-password rejection, normalized and legacy MFA preflights, canonical uniqueness and duplicate-email registration; individually assess the existing identity tests. Authentication behavior is unchanged.
+
 - Show support-ticket outgoing replies in a dedicated, permission-scoped history with sender, recorded recipient, queued/sent times, full escaped message and explicit queue/failure status. New replies retain their actual recipient; older records show unknown rather than guessing from the current contact address. Shared message styling preserves line breaks in both themes.
 
 - Plan demonstration-case requests for additional information and a private submitter reply/progress link as a separate roadmap workflow, including scope, expiry/revocation, rate limits and separation from internal case notes. No public case access or new mail is enabled by this plan.

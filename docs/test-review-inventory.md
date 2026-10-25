@@ -2,6 +2,36 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+CITY-01c on main `35fd6def`, 2026-10-24: **1,284 repository-wide definitions /174 test files /417 individually assessed definitions**. Retains all411 merged assessments; adds six inbox/worker definitions (24 parametrized cases after merged-source review correction). All89 combined inbox/submission-recovery/assignment/dashboard/public-notification cases pass locally; syntax/diff checks pass. Initial six-file local review completed with0findings after correcting visible quota and changed-address delivery; merged-source correction reviewed manually and regression-tested, but final tiny local re-review hit a rate limit and did not analyze code. Real Flask/Mongo, isolated SMTP/queue-failure doubles; no live email, historical backfill, all-browser or production acceptance claim. Branch-scoped implementation pending hosted CI/merge.
+
+## tests/test_city_review_notifications.py
+
+Supporting fixture `assignment`: existing disposable Mongo/application fixtures and a real approval-only city account/grant, existing pending demo with stored live assignment. Login helper bypasses credential entry. Transport is never live; worker scheduler/reminder/duplicate-merge side effects are isolated to this job.
+
+- [x] `test_delivery_deduplicates_and_preserves_read_notice`
+
+CITY-01c/P2 · Codex · 2026-10-24. Two actual upserts with string/ObjectId inputs, an additional eligible but unassigned reviewer, intervening read-state update. Exact payload/link and byte-equivalent remaining document prove no submitter data, duplicate, timestamp refresh or unread reset. Real notifications API renders the localized message and the approval-only account opens its protected review URL HTTP200. Keep; not password login, concurrent upsert or live delivery evidence.
+
+- [x] `test_inbox_rechecks_scope_and_resolution`
+
+CITY-01c/P2. Seventeen independent actual Mongo transitions: revoked grant, disabled/banned/deleted account, wrong permission, wrong city, conflicting authoritative city key, removed assignee, approval/rejection/cancellation/escalation, deleted demo, cleared assignment, archived demo, missing email and merged-away source retaining its assignment. A visible positive control precedes every transition; both read filtering and fresh delivery are denied afterward. The merged source points to an approved canonical record using the persisted merge shape; it does not invoke the merge workflow itself. Revocation also checks the real API returns an empty list, not private title data. Keep; deterministic transitions, not an atomic permission-revocation/response race or HTTP account-status enforcement test.
+
+- [x] `test_notice_does_not_change_other_notification_types`
+
+CITY-01c/P2. Existing friend-request creation/fetch/serialization against real Mongo and Babel context retains message suffix, type and link. Keep as compatibility control; does not inventory every historical notification type or prove browser layout.
+
+- [x] `test_submission_worker_retries_without_duplicate_inbox_delivery`
+
+CITY-01c/P2. Three variants inject a confirmed SMTP connection failure, an inbox-persistence exception before mail, or an address change after enqueue; actual queue owner/status/backoff and notifications persist in Mongo. Explicitly advances retry eligibility, verifies completed recovery, exact send attempts, single notice and preservation of read state when the first notice existed. Changed address still gets the inbox notice while the stale-address email is cancelled without a send. Keep; mock transport and exception injection prove retry ordering, not SMTP/provider acceptance, ambiguous-send reconciliation, cross-worker crash safety or scheduler execution.
+
+- [x] `test_multiple_assigned_reviewers_and_duplicate_legacy_grants`
+
+CITY-01c/P2. Real plural/singular legacy grants, duplicate membership and an assigned wrong-city user; asserts exactly two intended recipients/records. Removes the plural grant and proves the singular legacy grant independently preserves inbox access. Keep; not a full grant-schema migration or recipients without email (explicitly excluded by existing assignment contract).
+
+- [x] `test_hidden_newer_notices_do_not_consume_visible_limit`
+
+CITY-01c/P2. Real Mongo notices with ordered creation: a newer private assignment initially wins a one-item inbox quota; approving the demo makes the older ordinary notice surface instead of an empty inbox. Keep; proves limit-after-visibility behavior, not production scan latency over large histories. Cursor streaming limits materialization and uses a database execution timeout; this is not a strict total-request wall-clock bound.
+
 Combined #964/#965/#966/#971/#973/#974 normal-merge stack on main `b71f48cd`, 2026-10-24: **1,278 repository-wide definitions /173 test files /411 individually assessed definitions**. All original branch heads and review records retained; overlapping baseline records counted once. Totals include tracked standalone test scripts and exclude similarly named fixtures. Final combined-head hosted CI/review remain gates; no Telegram sending, production configuration or live provider acceptance is implied.
 
 PR #964 integration with merged #962/#968/#970, 2026-10-24: **1,275 definitions /173 files /388 individually assessed definitions**. Retains every worker and dashboard review record with duplicate definitions counted once. Repository-wide totals include standalone test scripts, not just `tests/`. Historical checkpoints below are provenance, not additive totals. Hosted CI remains required on this integration head.

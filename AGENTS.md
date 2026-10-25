@@ -23,4 +23,18 @@ This repository often gets help from external agents (human or AI). Follow these
    - If you’re unsure about requirements, ask.  
    - If you had to make assumptions, list them in your summary so humans can double-check.
 
+## Mandatory visual acceptance
+
+For changes that can affect rendered UI (including template data, CSS, JS,
+translations and shared components), read and use
+`.agents/skills/moso-visual-qa/SKILL.md`. Run the review here in the conversation,
+not as an extra GitHub test suite. The existing product/admin design standard
+wins over generic redesign defaults. Capture the real application and obtain a
+separate reviewer agent's **SHIP** for the final source/capture snapshot before
+declaring the UI ready. The implementer cannot approve their own output. Every
+subsequent UI-affecting fix invalidates SHIP: recapture affected states and get
+another independent review. Missing browser/screenshots/reviewer means
+**BLOCKED**, never an implied pass. Keep existing relevant tests; do not add a
+second CI suite or run the full suite just to perform this visual review.
+
 Sticking to these steps keeps the project history readable and prevents surprises for maintainers. Thanks! 🚀

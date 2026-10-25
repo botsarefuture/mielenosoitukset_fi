@@ -2,6 +2,15 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+Regression integration Group 3, 2026-10-25, on main `16ade1ec`:
+**1,312 definitions /175 files /464 individually assessed**. Preserve all458
+main assessments. Mongo/parser/pagination follow-ups update prior evidence
+without recounting dispositions; five existing decorator definitions and one
+new ordinary-denial definition add six assessed entries. Focused control78
+passed; local CodeRabbit review completed with zero findings. Final
+documentation reconciliation restored newer main provenance; hosted Group3
+CI remains pending publication.
+
 OAuth/MCP integration Group 2, 2026-10-25, on main `d524fe0b`:
 **1,311 definitions /175 files /458 individually assessed**. Preserve all440
 main assessments; transfer eighteen non-overlapping Batch08–11 dispositions.
@@ -118,6 +127,8 @@ QA-02a/P1/#969. Real Mongo handles and monkeypatched Config database name. New m
 - [x] `test_owner_is_lazy_and_rejects_foreign_endpoint_or_changed_options`
 
 QA-02a/P1/#969. Isolated recorder factory; asserts no early construction/foreign-endpoint call, same options reuse and rejection of changed pool options. Exact one-call assertion catches silent reconstruction. Keep; real connection behavior covered separately, not URI credential/security scanner acceptance.
+
+Mutation batch01, 2026-10-24: mutmut3.8.0 with the three unchanged isolated owner tests initially killed21/32 mutants. Three genuine survivors passed None instead of the configured URI, omitted the URI, or discarded constructor options. Added one exact recorder-argument assertion; a fresh run killed24/32, including all three forwarding bugs. Remaining eight survivors are six non-contractual error-message edits and two equivalent initial values, not reasons to assert private representation or exact prose. Keep this test; [batch evidence and keep/drop policy](mutation-test-review.md). No test definitions added/removed and no new assessment counted.
 
 - [x] `test_owner_constructs_one_client_under_concurrent_requests`
 
@@ -1969,10 +1980,34 @@ UI-01 / QA-04 supporting review, 2026-10-12, Codex, P1. Anonymous real Flask res
 
 DATA-01a / QA-02, P1; reviewed 2026-10-13 by Codex. Disposable local database and real Flask queries only; no production stress request. Together with existing public API/history/analytics coverage, 92 focused cases passed. These tests establish response/query bounds, not rate limiting or bounded browser memory.
 
+Mutation follow-up, 2026-10-24: the parser definition alone passed all nine
+existing cases in an isolated harness and killed all 26 selected
+`public_page_args` mutants. Source bytes and test AST were verified against
+this branch. Keep unchanged: cheap, distinct application-level bounds/default
+coverage; no additional test justified by this run. The other six definitions
+were not rerun, and 46 module mutants outside the parser were not selected.
+See [Batch02](mutation-test-review.md#batch02--public-page-size-argument-bounds)
+for scope and maintenance-cost reasoning. No assessment-count change.
+
+Mutation batch03 follow-up, 2026-10-24: four existing definitions/ten cases
+across this file and `test_public_demonstrations_api.py` passed against an
+exclusively owned temporary Mongo instance. Original assertions detected 35/36
+mutmut-generated metadata variants; the sole rounding survivor reports one
+page for 101 records at 100 per page. Improved the existing API bounds definition
+with that first-overflow fixture and exact final-page metadata. Retained the
+empty-range, chronological traversal and enormous-offset definitions for their
+distinct risks. See [Batch03](mutation-test-review.md#batch03--pagination-metadata-and-boundary-behavior)
+for individual reliability/runtime/mock/coupling and consolidation decisions.
+Fresh final sweep detected all 36 selected metadata variants with no harness
+errors/timeouts. Both whole pagination files passed 32 cases (13 definitions),
+including the unchanged seed-helper callers. Compatibility controls outside the
+four-definition batch are not new assessments. No new assessment, definition
+or parametrized case is counted.
+
 | Definition | Requirement / assertions | Fixtures, variants and limitations | Disposition |
 |---|---|---|---|
 | `test_public_page_size_is_bounded_and_existing_defaults_survive` | Maximum 100, minimum 1, malformed/default handling preserved. | Nine raw variants; direct shared parser, tag default 10. | Keep; fails without the cap. |
-| `test_demo_apis_cap_the_real_query_and_return_bounded_metadata` | Both APIs return 100 then 5 records with exact counts/ranges and no overlap. | 105 uniquely tagged real records; modern next URL carries bounded size. No production query-plan measurement. | Keep. |
+| `test_demo_apis_cap_the_real_query_and_return_bounded_metadata` | Both APIs return 100 records then one record with exact counts/ranges and no overlap. | 101 uniquely tagged real records; first overflow detects page-count rounding down, modern next URL carries bounded size. No production query-plan measurement. | Improve (Batch03); no added definition/case. |
 | `test_tag_page_materializes_only_the_bounded_page` | HTML tag context contains only 100 records and two pages. | Actual render signal, disconnected in finally; does not assess visual layout. | Keep. |
 | `test_public_organization_api_cannot_bypass_page_size_limit` | Organization endpoint applies the same bound, including last page. | 105 uniquely searchable local records; real database query. | Keep. |
 | `test_enormous_out_of_range_pages_never_reach_database_skip` | Four endpoint variants return empty results without huge Mongo offsets. | Cursor skip wrapper raises rather than mocking returned records; 100-digit page. Count cost remains outside this guarantee. | Keep. |
@@ -2082,6 +2117,14 @@ DATA-01 / QA-02, 2026-10-12, Codex, P1. Real Flask/public routes and MongoDB fix
 | `test_public_page_metadata_handles_empty_and_out_of_range` | Empty pages have 0–0 range and correct filtered total/page count. | Both endpoints, no matches versus beyond-last page; exact empty arrays. UI handling remains next slice. | Keep. |
 | `test_public_pagination_normalizes_invalid_numeric_args` | Malformed/negative args do not crash and independent valid arg survives. | Six parameter cases: two endpoints × three input variants. Huge page-size/offset bounds and legacy time normalization remain follow-up evidence. | Keep. |
 | `test_public_chronological_sort_has_index_backed_plan` | Approved/date/start-time/ID index registers idempotently without removing old indexes; actual broad public query has IXSCAN and no blocking SORT, returns 12 rows. | Real disposable MongoDB, 200 synthetic future records plus seed, unhinted winning plan. Reproduced SORT before the fix; no mocked planner. Does not claim production timings, arbitrary filter plans or live index presence. | Keep; review-driven regression. |
+
+Batch03 pagination follow-up, 2026-10-24: the chronological traversal and
+empty/out-of-range definitions were individually re-reviewed and rerun (two
+cases each), alongside the two resource-bound definitions. Both are keep: their
+distinct ordering/filter and empty-range contracts are not duplicates of the
+capped partial-page test. See [Batch03](mutation-test-review.md#batch03--pagination-metadata-and-boundary-behavior)
+for focused mutation evidence, maintenance reasoning and validation limits.
+No additional assessment is counted.
 
 Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-request protection across list/city/tag; representative light/dark/mobile checks. API pagination does not claim snapshot stability during concurrent insert/delete, nor canonicalization of non-normalized historical times.
 
@@ -3148,8 +3191,53 @@ Tampere-only ACCEPT_DEMO grant cannot authorize Jyväskylä. Keep; municipality 
 
 ## tests/test_wrappers_decorators.py
 
-- [ ] `WrapperDecoratorTests::test_permission_required_redirects_unauthenticated_users`
-- [ ] `WrapperDecoratorTests::test_permission_required_allows_users_with_permission`
-- [ ] `WrapperDecoratorTests::test_permission_required_aborts_when_demo_permission_is_missing`
-- [ ] `WrapperDecoratorTests::test_permission_required_allows_demonstration_access_when_granted`
-- [ ] `WrapperDecoratorTests::test_deprecated_endpoint_aborts_with_gone`
+QA-01 / Batch04 · Codex · 2026-10-25 · starting `a875f50a`. Five existing
+unittest definitions improved and one distinct ordinary-denial definition added;
+six collected cases, eight subtest leaf scenarios. Tiny real Flask request
+contexts, FakeCurrentUser and targeted boundary patches; no membership/session
+or database-policy proof. Isolated original/revised controls both 0.09s. Twelve
+explicit fault controls detected 4 before and 12 after, all individually inspected;
+mutmut skipped the nested decorated code, so this is not a mutation score.
+Actual repository/permission/city compatibility run: 41 passed in 12.46s against
+private Mongo; other 35 cases not newly assessed. [Full evidence and individual
+maintenance review](mutation-test-review.md#batch04--permission-decorators-and-denial-dispatch).
+
+- [x] `WrapperDecoratorTests::test_permission_required_redirects_unauthenticated_users`
+
+Improve: ordinary/admin-flag unauthenticated subtests both require 302 to login,
+exact endpoint passed to URL builder and one flash. Detects bypass-before-auth
+and wrong-target navigation. Fake current user/URL builder, real redirect;
+not actual login or disabled-account loading. No exact message prose.
+
+- [x] `WrapperDecoratorTests::test_permission_required_allows_users_with_permission`
+
+Improve: successful return plus exact EDIT_DEMO/None permission-method call.
+Cheap spy catches wrong action/scope that constant True previously hid. Public
+integration contract, not real backend permission calculation.
+
+- [x] `WrapperDecoratorTests::test_permission_required_denies_users_without_permission`
+
+New/keep: real Forbidden, one notification and protected Mock never called for
+authenticated ordinary user lacking grants. Distinct final denial branch was
+uncovered; separate definition justified over mixing negative behavior into an
+allow test. No real role/membership resolution.
+
+- [x] `WrapperDecoratorTests::test_permission_required_aborts_when_demo_permission_is_missing`
+
+Improve: retain Forbidden/notification, require exact user/demo-id/EDIT_DEMO
+helper call. Distinct demo denial; actual helper answer mocked, not permission
+scope/cache acceptance.
+
+- [x] `WrapperDecoratorTests::test_permission_required_allows_demonstration_access_when_granted`
+
+Improve: fixed-ID and dynamic demo_id subtests assert exact user/target/action;
+dynamic route keyword reaches handler once and successful result survives.
+Extends same existing grant/forwarding behavior; inexpensive Mock and request
+contexts. Other ID aliases/global grants/city fallbacks not established here.
+
+- [x] `WrapperDecoratorTests::test_deprecated_endpoint_aborts_with_gone`
+
+Improve maintenance: keep Gone and one flash, relax exact English sentence.
+Status/notification protection remains while editorial copy changes no longer
+cause irrelevant failures. Distinct endpoint retirement behavior; no translated
+message/rendered response claim. No consolidation or removal justified.

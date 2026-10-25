@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Strengthen regression protection for Mongo client argument forwarding, first-overflow pagination metadata and permission-decorator dispatch; retain parser tests where no additional coverage is justified.
+
 - Require full global authority and session-bound CSRF proof for OAuth MCP consent; prevent simultaneous reuse of authorization codes.
 
 - Keep MCP credential fragments out of debug logs and return structured scope-denial errors; strengthen existing read-only, filtering, history and client-authentication regression checks.

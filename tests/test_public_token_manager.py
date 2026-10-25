@@ -4,8 +4,12 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+from urllib.parse import urlsplit
 
 import pytest
+
+from mielenosoitukset_fi.api.exceptions import ApiException
+from mielenosoitukset_fi.utils.tokens import check_token, create_token
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -13,11 +17,23 @@ TOKEN_TEMPLATE = ROOT / "mielenosoitukset_fi/templates/users/auth/token_ui.html"
 WORKSPACE_CSS = ROOT / "mielenosoitukset_fi/static/css/user-workspace.css"
 
 
-def test_token_manager_requires_authentication(client):
-    response = client.get("/users/auth/ui/tokens")
-
+@pytest.mark.parametrize("method,path", [
+    ("GET", "/users/auth/ui/tokens"),
+    ("GET", "/users/auth/api_tokens/list"),
+    ("POST", "/users/auth/api_token"),
+    ("POST", "/users/auth/api_tokens/revoke"),
+])
+def test_token_manager_requires_authentication(client, db, seeded_data, method, path):
+    before = list(db.api_tokens.find().sort("_id", 1))
+    own_token = db.api_tokens.find_one({"user_id": seeded_data["user_id"]})
+    response = client.open(path, method=method, json={
+        "token_id": str(own_token["_id"]), "type": "short", "scopes": ["read"],
+    })
     assert response.status_code == 302
-    assert "/users/auth/login" in response.headers["Location"]
+    location = urlsplit(response.headers["Location"])
+    assert location.path == "/users/auth/login"
+    assert not location.netloc
+    assert list(db.api_tokens.find().sort("_id", 1)) == before
 
 
 def test_token_manager_renders_shared_accessible_contract(user_client):
@@ -78,7 +94,8 @@ def test_token_manager_rendered_javascript_parses(user_client):
     assert result.returncode == 0, result.stderr
 
 
-def test_token_creation_rejects_malformed_scopes_with_localized_error(user_client):
+def test_token_creation_rejects_malformed_scopes_with_localized_error(user_client, db):
+    before = list(db.api_tokens.find().sort("_id", 1))
     response = user_client.post(
         "/users/auth/api_token",
         json={"type": "short", "scopes": "read"},
@@ -88,11 +105,13 @@ def test_token_creation_rejects_malformed_scopes_with_localized_error(user_clien
     assert response.get_json()["error"] == (
         "Tokenin käyttöoikeuksien pitää olla merkkijonolista."
     )
+    assert list(db.api_tokens.find().sort("_id", 1)) == before
 
 
 def test_token_revoke_rejects_invalid_and_foreign_ids(
     user_client, db, seeded_data
 ):
+    before = list(db.api_tokens.find().sort("_id", 1))
     invalid = user_client.post(
         "/users/auth/api_tokens/revoke",
         json={"token_id": "not-an-object-id"},
@@ -107,13 +126,18 @@ def test_token_revoke_rejects_invalid_and_foreign_ids(
     assert invalid.get_json()["message"] == "Tokenin tunniste on virheellinen."
     assert foreign.status_code == 404
     assert foreign.get_json()["message"] == "Tokenia ei löytynyt."
-    assert db.api_tokens.find_one({"_id": foreign_token["_id"]}) is not None
+    assert list(db.api_tokens.find().sort("_id", 1)) == before
 
 
 def test_token_revoke_deletes_only_the_current_users_token(
     user_client, db, seeded_data
 ):
-    own_token = db.api_tokens.find_one({"user_id": seeded_data["user_id"]})
+    # Start with usable credentials, including a second token owned by this user.
+    raw_token, _ = create_token(user_id=seeded_data["user_id"], scopes=["read"])
+    spare_token, _ = create_token(user_id=seeded_data["user_id"], scopes=["read"])
+    own_token = check_token(raw_token)
+    spare_record = check_token(spare_token)
+    before = list(db.api_tokens.find().sort("_id", 1))
 
     response = user_client.post(
         "/users/auth/api_tokens/revoke",
@@ -121,8 +145,12 @@ def test_token_revoke_deletes_only_the_current_users_token(
     )
 
     assert response.status_code == 200
-    assert response.get_json() == {
-        "status": "success",
-        "message": "Token peruttu.",
-    }
-    assert db.api_tokens.find_one({"_id": own_token["_id"]}) is None
+    assert response.get_json()["status"] == "success"
+    assert list(db.api_tokens.find().sort("_id", 1)) == [
+        token for token in before if token["_id"] != own_token["_id"]
+    ]
+    with pytest.raises(ApiException) as revoked:
+        check_token(raw_token)
+    assert revoked.value.status_code == 401
+    assert revoked.value.message.code == "token_invalid"
+    assert check_token(spare_token) == spare_record

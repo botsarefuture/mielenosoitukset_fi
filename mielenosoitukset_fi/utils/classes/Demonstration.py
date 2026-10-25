@@ -912,7 +912,7 @@ class Demonstration(BaseModel):
         raise ValueError(f"Demonstration with id/slug/number '{demo_id}' not found.")
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data, *, save_on_normalize=True):
         """
         Create a Demonstration instance from a dictionary.
 
@@ -920,6 +920,9 @@ class Demonstration(BaseModel):
         ----------
         data : dict
             Dictionary containing demonstration data.
+        save_on_normalize : bool, optional
+            Preserve the normal automatic normalization writes by default.
+            Set to False when a caller must validate the whole object before saving.
 
         Returns
         -------
@@ -992,6 +995,7 @@ class Demonstration(BaseModel):
             cancelled=get("cancelled", False),
             cancelled_at=get("cancelled_at"),
             cancelled_by=get("cancelled_by"),
+            _dont_override=not save_on_normalize,
         )
 
 

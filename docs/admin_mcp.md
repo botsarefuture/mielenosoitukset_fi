@@ -97,6 +97,7 @@ The consent screen requires a logged-in admin-capable account (`global_admin`, `
 - `get_demo`
 - `create_demo`
 - `update_demo`
+- `upload_image`
 - `list_organizations`
 - `get_organization`
 - `create_organization`
@@ -123,6 +124,86 @@ The consent screen requires a logged-in admin-capable account (`global_admin`, `
   }
 }
 ```
+
+## Demonstration fields and organizers
+
+`create_demo` requires title, date, start time, city and address, matching the
+demonstration model. End time is optional and may be omitted or set to `null`.
+`update_demo` also accepts `null` to clear an unknown end time. Both operations
+normalize dates and times through the demonstration model. Event types are
+`MARCH`, `STAY_STILL`, `ROAD_BLOCK`, and `OTHER` (the default).
+
+Organizers use the dashboard's shared organizer parser. Link an existing
+organization profile by ID, or use a freeform name with optional contact details:
+
+```json
+{
+  "organizers": [
+    {"organization_id": "66c257cd1704d4c3c19e1a57"},
+    {"name": "Local action group"},
+    {"name": "Another group", "email": "contact@example.test", "website": "https://example.test"}
+  ]
+}
+```
+
+An organization profile is **not required** to list a group as an event organizer.
+Profile creation requires a name and email; its description is optional, matching
+the normal admin create handler. Freeform event organizers only require a name.
+
+For compatibility, an organizer string is interpreted as a profile ID when it is
+a valid ObjectId, otherwise as a freeform name. Profile details are resolved on
+the server and stored as populated organizer records, never bare strings.
+Missing profiles and duplicate organizers are rejected before saving. On edits,
+return the organizer's `_id` to retain its record metadata; linked profiles are
+also matched by `organization_id`. The privacy fields `is_private`,
+`show_name_public`, and `show_email_public` behave as in the dashboard.
+An empty organizers array removes all rows.
+
+Both create and update accept `cover_picture`, `img`, `preview_image`, and
+`gallery_images` URLs. Supplied or uploaded cover replacements are marked as
+user-provided so a previous automatic-cover marker cannot hide the image. Image uploads do not require an externally hosted URL.
+
+## Uploading attached images
+
+`upload_image` requires `filename` and `data_base64` containing image bytes encoded
+as base64, or an image data URL (`data:image/png;base64,...`). A remote client must
+read its own attachment and send its bytes: server-local paths are not supported.
+The file is checked as an image and passed to the same S3/JPEG conversion helper
+used by the dashboard.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "upload_image",
+    "arguments": {
+      "filename": "poster.png",
+      "data_base64": "<base64-encoded image bytes>",
+      "demo_id": "<event ObjectId>",
+      "field": "cover_picture"
+    }
+  }
+}
+```
+
+- With `demo_id`, the default field is `cover_picture`; `img`, `preview_image`,
+  and `gallery_images` are also supported. Gallery uploads append to existing images.
+- With `organization_id`, the image sets the profile's `logo`.
+- With neither target, the tool returns the public URL for later use. Do not set
+  `field` without a target. Supply at most one target.
+
+Uploads require the existing `write` scope and validate image contents rather
+than imposing extra filename-extension rules on top of the admin uploader. They
+reject corrupt images before contacting storage. A
+failed upload leaves existing image fields unchanged. The default maximum decoded
+size is 16 MiB, configurable with `ADMIN_MCP.MAX_IMAGE_BYTES`; deployment HTTP/proxy
+request limits must also accommodate the base64 overhead (approximately 4/3).
+The tool returns `uploaded`, `url`, and, when attached, the target ID and field.
+
+After deploying these changes, refresh the remote client's MCP tool list so it
+receives the new upload tool and organizer schemas.
 
 ## Scope of this foundation
 

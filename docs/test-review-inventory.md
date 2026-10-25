@@ -2,6 +2,8 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+QA-01m on main `e3aba1f8`, 2026-10-25: **1,290 repository-wide definitions /175 test files /442 individually assessed definitions**. Preserves all424 merged assessments and individually reviews18 existing identity definitions (42 cases after three boundary/MFA parameter additions). Production/templates/styles/translations unchanged. Existing MFA lifecycle assessments are not counted again. Real Flask/Mongo plus pure validators, isolated mail; no provider/browser acceptance. In-memory password-check bypass is detected by all six strengthened route-negative cases. Focused identity/MFA run:59 passed; broader identity/MFA/login-redirect/step-up run:123 passed. Hosted CI/review remain gates.
+
 DATA-04b/#771 on main `54b02c58`, 2026-10-25: **1,290 repository-wide definitions /175 test files /424 individually assessed definitions**. Preserves all417 merged assessments and adds six reply-history definitions/13 cases plus one existing case-component contract assessment. All107 focused cases pass, including actual Chromium mobile/light and desktop/dark; Jinja/Python syntax and diff checks pass. Disposable Mongo, real permission-scoped routes/Jinja; email enqueue is isolated, not provider delivery. Full audit/retention policy and CASE-01/CASE-02 remain separate roadmap work. Local CodeRabbit review was rate-limited before analysis, not a clean review.
 
 ## tests/test_case_reply_history.py
@@ -2599,24 +2601,47 @@ Supporting helper `_join_token` extracts tokens from actual rendered join forms 
 
 ## tests/test_username_validation.py
 
-- [ ] `test_reserved_admin_identity_is_case_and_prefix_insensitive`
-- [ ] `test_non_reserved_identity_names_are_allowed`
-- [ ] `test_normalize_username`
-- [ ] `test_normalize_username_rejects_non_string_values`
-- [ ] `test_normalize_email_is_case_and_whitespace_insensitive`
-- [ ] `test_validate_username_accepts_supported_usernames`
-- [ ] `test_validate_username_rejects_unsupported_usernames`
-- [ ] `test_valid_username_provides_boolean_validator_api`
-- [ ] `test_username_availability_rejects_invalid_username`
-- [ ] `test_username_availability_is_case_insensitive_for_existing_users`
-- [ ] `test_registration_normalizes_username`
-- [ ] `test_registration_normalizes_email`
-- [ ] `test_registration_rejects_email_with_different_casing`
-- [ ] `test_database_enforces_canonical_identity_uniqueness`
-- [ ] `test_login_normalizes_username`
-- [ ] `test_mfa_check_normalizes_username`
-- [ ] `test_login_supports_legacy_mixed_case_username`
-- [ ] `test_mfa_check_supports_legacy_mixed_case_username`
+- [x] `test_reserved_admin_identity_is_case_and_prefix_insensitive`
+- [x] `test_non_reserved_identity_names_are_allowed`
+- [x] `test_normalize_username`
+- [x] `test_normalize_username_rejects_non_string_values`
+- [x] `test_normalize_email_is_case_and_whitespace_insensitive`
+- [x] `test_validate_username_accepts_supported_usernames`
+- [x] `test_validate_username_rejects_unsupported_usernames`
+- [x] `test_valid_username_provides_boolean_validator_api`
+- [x] `test_username_availability_rejects_invalid_username`
+- [x] `test_username_availability_is_case_insensitive_for_existing_users`
+- [x] `test_registration_normalizes_username`
+- [x] `test_registration_normalizes_email`
+- [x] `test_registration_rejects_email_with_different_casing`
+- [x] `test_database_enforces_canonical_identity_uniqueness`
+- [x] `test_login_normalizes_username`
+- [x] `test_mfa_check_normalizes_username`
+- [x] `test_login_supports_legacy_mixed_case_username`
+- [x] `test_mfa_check_supports_legacy_mixed_case_username`
+
+QA-01m/P1 · Codex · 2026-10-25. Actual validators, real Flask/password hashing and disposable indexed Mongo; seeded confirmed alice identity. Shared email/storage doubles prevent external effects. MFA-on setup adds a real stored device/flag, not a mocked challenge service. The session helper verifies guest state plus actor-bound hashed server proof. Keep every definition with the individual scope/limits below. All42 identity cases and17 existing MFA lifecycle cases pass; no UI/browser/provider claim.
+
+| Definition | Purpose, fixtures and assertions | Cases, reliability and limitations / disposition |
+|---|---|---|
+| `test_reserved_admin_identity_is_case_and_prefix_insensitive` | Pure exact True for Admin casing/space and one @ prefix/administrator alias. | Four cases; narrow display impersonation guard, not full reserved username/Unicode policy. Keep. |
+| `test_non_reserved_identity_names_are_allowed` | Pure exact False for nearby admin wording, ordinary user and None. | Four controls; not-reserved does not mean valid login username. Keep. |
+| `test_normalize_username` | Pure exact trim/case normalization while preserving hyphen/underscore. | Three ASCII examples; not Unicode casefold/confusable or DB lookup acceptance. Keep. |
+| `test_normalize_username_rejects_non_string_values` | None/integer normalize empty instead of being coerced. | Two values inside one definition; not every Python/request encoding. Keep. |
+| `test_normalize_email_is_case_and_whitespace_insensitive` | Pure exact canonical email from mixed case/space. | One example; not syntax, IDN, deliverability or provider ownership semantics. Keep. |
+| `test_validate_username_accepts_supported_usernames` | Exact (True, empty error) for letters, hyphen, underscore, digits and newly added30-character maximum. | Five cases including three-character minimum; not exhaustive character combinations. Keep, boundary strengthened. |
+| `test_validate_username_rejects_unsupported_usernames` | False/nonempty error for empty/2/31 length, reserved admin, edge separators, space, non-ASCII and doubled/mixed separators. | Ten cases; does not assert localized copy or every reserved name. Keep. |
+| `test_valid_username_provides_boolean_validator_api` | Strict bool for accepted, space-containing and None inputs. | Wrapper compatibility, underlying policy separately tested. Keep. |
+| `test_username_availability_rejects_invalid_username` | Actual query returns400 and available False. | No no-DB-call assertion or malformed argument matrix. Keep. |
+| `test_username_availability_is_case_insensitive_for_existing_users` | Real canonical account uppercase alias unavailable; added unclaimed-name200/True positive control. | Catches always-unavailable implementations; not legacy availability or concurrent registration. Keep, strengthened. |
+| `test_registration_normalizes_username` | Actual POST stores canonical trimmed/lowercase username and no raw spaced alias. | Stored state supplements302; mail isolated, no confirmation-delivery/browser/CSRF claim. Keep. |
+| `test_registration_normalizes_email` | Actual POST stores exact canonical email/email_canonical. | Document assertions enforce successful creation; no provider/ownership or concurrent-request claim. Keep. |
+| `test_registration_rejects_email_with_different_casing` | Duplicate email leaves exact existing user/count unchanged and creates no new username; same remaining form with different email succeeds. | Added control rejects always-deny/otherwise-invalid-form false confidence; real DB, isolated mail, no concurrency claim. Keep, strengthened. |
+| `test_database_enforces_canonical_identity_uniqueness` | Real unique-index DuplicateKeyError for username/email plus exactly one surviving original record. | Two cases; direct canonical writes, not automatic DB normalization, production indexes or replica-set race proof. Keep, strengthened. |
+| `test_login_normalizes_username` | Actual mixed-case/space password route first denies wrong password/guest session, then binds exact seeded actor with correct password. | In-memory password-bypass mutation fails the new negative; no browser/account-status matrix claim. Keep, strengthened. |
+| `test_mfa_check_normalizes_username` | Actual MFA off/on preflights reject wrong password/no challenge, then exact status; never authenticate, MFA-on proof hashes to exact actor without password/hash fields. | Two variants; bypass mutation fails both negatives. TOTP/expiry/replay separately reviewed, not proven by preflight. Keep, strengthened. |
+| `test_login_supports_legacy_mixed_case_username` | Actual account renamed mixed-case with canonical field removed: wrong password denied, valid credentials bind original actor. | Bypass mutation fails negative; no ambiguous legacy duplicate/migration/deployment claim. Keep, strengthened. |
+| `test_mfa_check_supports_legacy_mixed_case_username` | Legacy identity with MFA off/on: no wrong-password challenge, exact valid status, guest session and correct actor-bound server proof. | Two variants; bypass mutation fails both negatives. No TOTP completion, legacy identity-conflict or full authentication acceptance claim. Keep, strengthened. |
 
 ## tests/test_web_vitals.py
 

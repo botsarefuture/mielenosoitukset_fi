@@ -57,6 +57,7 @@ def test_owner_is_lazy_and_rejects_foreign_endpoint_or_changed_options():
     with pytest.raises(RuntimeError, match="options changed"):
         owner("mongodb://fixture.test", maxPoolSize=1)
     assert len(calls) == 1
+    assert calls == [(("mongodb://fixture.test",), {"maxPoolSize": 50})]
 
 
 def test_owner_constructs_one_client_under_concurrent_requests():

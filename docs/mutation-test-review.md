@@ -8,7 +8,8 @@ additional diagnostic, not a replacement for integration tests or human review.
 
 Accepted by the maintainer on 2026-10-24. This is the agreed review policy,
 not a claim that the existing suite has already been audited. Recorded on the
-isolated test-review branch; not yet merged into main.
+isolated test-review branch and introduced into main with Group1/PR#981.
+The earlier batch records retain their original scope and measurements.
 
 Optimize for meaningful regression protection relative to maintenance cost,
 not test count, coverage percentage or mutation score.
@@ -794,3 +795,352 @@ than expand the OAuth matrix without a demonstrated need.
 Evidence: chat `work/mcp_client_auth_fault.py`, `work/batch11-before-fault.log`,
 `work/batch11-after-fault.log`, `work/batch11-validation.log`. Owned Mongo:
 `/var/folders/h2/kxdl0cpx4tv3956j2s1k0pb40000gn/T/moso-mcp-batch11-5n2ps_lc`.
+
+## Integration Group 3 — Forwarding, bounds and denial regressions
+
+Prepared locally on main `16ade1ecdc57a0b4f8989d3208a1286b765a2132` after
+Groups1/2 merged. Select only test changes from `cd83b8d2`, `a875f50a`,
+`f901ee99`, plus Batch02 keep-unchanged evidence from `b051f64f`. The policy
+already arrived with Group1, so retain it once and correct its stale unmerged
+provenance. Preserve every unrelated main inventory section/assessment.
+
+No production implementation, dependency, template, style or browser behavior
+changes. Existing owner/parser/metadata/decorator implementations match the
+reviewed source bytes. All three changed test files match their completed audit
+snapshots. The new checks catch lost Mongo constructor arguments, first-overflow
+page-count rounding and incorrect permission/action/resource forwarding; exact
+deprecation English prose is no longer a unit-test requirement. Existing parser
+cases remain unchanged; no gap was found that justified adding another test.
+
+The only new definition is ordinary authenticated denial with a protected
+handler that must never run. It protects a distinct final branch missed by the
+old tests. Fixed/dynamic demo forwarding and anonymous admin-flag scenarios
+extend existing definitions using inexpensive spies/subtests. No test removed.
+Six unittest cases contain eight subtest leaf scenarios; those are not eight
+definitions. This group adds no fresh mutation score or coverage target.
+
+Prior bounded mutation evidence is preserved below: owner24/32 killed with
+eight individually equivalent/diagnostic survivors; parser26 selected killed,
+46 other module mutants unselected; metadata36 selected detected after the
+boundary improvement. Nested decorator code was not selected by mutmut; twelve
+explicit hand-seeded faults detected after improvements are not a mutmut score.
+Relevant source/test identity was checked, so no repeated mutation sweep was
+needed solely to move the same completed work onto main.
+
+Current focused integration: **78 cases passed in16.25s** across complete Mongo
+lifecycle, both public-pagination files, decorator, wrapper-helper and city-scope
+files. This includes unchanged real-Mongo lifecycle/index/cache and actual
+city-route compatibility checks, not newly counted assessments. Private Mongo
+50323 only; local Python3.11 is not hosted Python3.12/full-suite evidence.
+`git diff --check` passed. CodeRabbit review completed across all six changed
+files with zero findings. The final documentation comparison restored two newer
+main provenance paragraphs and recorded the result; no test or implementation
+changed afterward. Included capacity only, no paid credit or credential change.
+Group3 hosted CI remains pending publication. No visual gate is asserted for
+this tests/docs-only change.
+
+Counts:1,312definitions/175files/464assessed. Six decorator dispositions are new
+to the merged inventory, including one added definition; other prior assessments
+are carried forward without duplication. Remaining848 tests plus two supporting
+fixtures need individual review. This integration does not complete the suite.
+Group3 publication/merge/automatic deployment still needs explicit authorization.
+After it is integrated, resume bounded audits from then-current main, retaining
+completed dispositions unless meaningful source/contract changes invalidate them.
+
+Evidence: chat `work/regression-integration-validation.log`; private directory
+`/var/folders/h2/kxdl0cpx4tv3956j2s1k0pb40000gn/T/moso-regression-integration-k8k3f4c1`.
+The following Batch01–04 records retain original dates, base revisions, tool
+versions and branch counts; those counts are historical, not current totals.
+
+## Batch01 — test-session Mongo client owner
+
+Reviewed baseline: main `b71f48cd`, 2026-10-24. Source:
+`tests/_mongo_clients.py`. Only the three no-fixture unit definitions in
+`tests/test_mongo_client_lifecycle.py` were executed in this mutation pilot.
+The two real-Mongo definitions and the rest of the repository were **not**
+mutation-tested. No actual database, shared application fixture or production
+connection was used.
+
+### Isolation and tool
+
+- `mutmut3.8.0`, Python3.11, pytest9.1.1 and PyMongo4.19.0 in a temporary virtual
+  environment, not added to application dependencies or CI.
+- The copied owner source was byte-identical. The three existing test function
+  ASTs were verified identical before strengthening; only the module import path
+  changed. Repository `conftest.py` was deliberately not loaded: its teardown can
+  clean disposable databases used by another active test process.
+- Temporary `pyproject.toml` used `source_paths=["src/"]`,
+  `pytest_add_cli_args_test_selection=["tests/"]` under `[tool.mutmut]`, with
+  pytest `pythonpath=["src"]`. Command: `mutmut run --max-children 2`.
+- After changing the assertion, the original result directory was retained
+  separately and a fresh run generated all32 mutants again. No exclusions,
+  ignored lines or reused green mutant results were introduced.
+
+### Results
+
+| Run | Existing unit tests | Mutants | Detected | Survived | Timeouts/errors |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Original assertions | 3 passing | 32 | 21 | 11 | 0 |
+| Exact constructor-argument assertion added | 3 passing | 32 | 24 | 8 | 0 |
+
+Three substantive survivors changed `factory(uri, **options)` to
+`factory(None, **options)`, `factory(**options)` or `factory(uri)`.
+The recorder previously checked only how often it was called, not its arguments.
+One assertion requiring the exact URI and `maxPoolSize` catches all three.
+
+The remaining eight are reviewed as follows:
+
+- Six add surrounding text or change capitalization in the three exception
+  messages. Exception type/relevant reason and fail-closed behavior remain
+  checked; exact full wording is not the contract.
+- `_options=None` becoming an empty string is overwritten before options are
+  consulted on the public call path.
+- `_closed=False` becoming None preserves the falsey initial state and later
+  True transition. Requiring a private initial representation adds no protection.
+
+These are not eight confirmed production bugs, nor a claim that no other defect
+can exist. The tool's raw detection rate is75%; that figure alone is not a test
+quality grade or a reason to force brittle assertions.
+
+### Test decisions
+
+| Definition | Decision | Distinct protection |
+| --- | --- | --- |
+| `test_owner_is_lazy_and_rejects_foreign_endpoint_or_changed_options` | Keep + strengthen | No early/foreign-endpoint creation, exact constructor forwarding, reuse and option rejection |
+| `test_owner_constructs_one_client_under_concurrent_requests` | Keep | One constructed client across concurrent callers |
+| `test_owner_closes_once_and_cannot_reopen_after_session_end` | Keep | Close ownership and rejection after shutdown |
+
+No test was removed or merged merely to reduce the count. The other two
+real-Mongo tests still protect integration behavior these fake factories cannot.
+
+
+## Batch02 — public page-size argument bounds
+
+Reviewed on 2026-10-24 against the same `b71f48cd` baseline, on the isolated
+test-review branch. Source: `mielenosoitukset_fi/utils/public_pagination.py`.
+Only `test_public_page_size_is_bounded_and_existing_defaults_survive` from
+`tests/test_public_pagination_limits.py` was executed: one definition, nine
+parametrized cases, all passing in the isolated control.
+
+The copied source was byte-identical and the test AST, including its decorator,
+matched the repository definition. Imports alone were adapted to avoid loading
+the application's database fixtures. The same temporary `mutmut 3.8.0`
+environment as Batch01 ran `mutmut run '*public_page_args*' --max-children 2`.
+
+All 26 selected parser mutants were killed; none survived or timed out, and
+there were no errors. The tool generated 72 mutants across the copied module,
+but the other 46, in index creation and metadata helpers, were outside this
+selection and were not tested. This is not a whole-module mutation score.
+Module-level constants are not mutated by this run. Results remain in the
+isolated scratch directory, not production or a shared test database.
+
+Decision: **keep unchanged**. The nine input cases exercise our own resource
+bound and default contract without a database, network or complicated mocks.
+They are inexpensive and do not re-test dependency internals. The focused run
+found no assertion gap warranting another test. It does not establish complete
+input coverage, page-number handling or query-level enforcement.
+
+The six other definitions in this test file protect actual endpoint queries,
+pagination, render context or cache behavior. They are not duplicates of this
+parser test and were not executed or mutation-tested in this batch. No tests,
+assertions or production code were added or removed.
+
+
+## Batch03 — pagination metadata and boundary behavior
+
+Reviewed on 2026-10-24, starting at `b051f64f` (the policy/Batch02 record
+commit after `cd83b8d2`). Local `main` was `86466e54`; a read-only remote
+lookup confirmed main at `35fd6def`, matching cached `origin/main`. The
+pagination helper and both reviewed test files were identical between this
+branch and remote main. No rebase, merge, reset or shared-service cleanup ran.
+
+### Control and mutation scope
+
+Four existing definitions / ten collected cases:
+
+- `tests/test_public_demonstrations_api.py::test_public_pages_have_chronological_tie_breaks_and_filtered_counts`
+  — two endpoint cases.
+- `tests/test_public_demonstrations_api.py::test_public_page_metadata_handles_empty_and_out_of_range`
+  — two endpoint cases (each checks both zero matches and beyond-last).
+- `tests/test_public_pagination_limits.py::test_demo_apis_cap_the_real_query_and_return_bounded_metadata`
+  — two endpoint cases.
+- `tests/test_public_pagination_limits.py::test_enormous_out_of_range_pages_never_reach_database_skip`
+  — four endpoint cases.
+
+The unmodified control passed all ten cases in 5.44s with Python 3.11.15,
+pytest 8.4.1 and PyMongo 4.6.3 from the existing application environment. A
+private loopback-only `mongod` with a new temporary data directory was used;
+`TEST_MONGO_URI` selected that instance before importing repository conftest.
+Its broad test-database teardown therefore touched only this audit's instance.
+No shared Mongo service, production data or application dependencies changed.
+This local Python 3.11 evidence does not replace the supported Python 3.12 CI gate.
+
+The existing `mutmut 3.8.0` artifacts still existed. Original source bytes
+matched this branch and the recorded Batch01/02 test ASTs/results were verified.
+Batch03 used the 36 previously generated, unexecuted `public_page_metadata`
+variants from Batch02's 72 module mutants. Each variant function was extracted
+with Python AST, renamed to the public helper name and loaded in a scratch
+module. A scratch pytest plugin rebound only `public_page_metadata` on loaded
+project modules immediately before each test call, requiring both actual route
+modules to be present. The repository tests, Flask routes, filtering, database
+queries and fixtures ran unchanged against private Mongo. No application source
+was mutated in the checkout. A byte-identical source control through the same
+bridge also passed all ten cases.
+
+This is a custom sequential execution of **mutmut-generated mutations**, not a
+new `mutmut run` score. Every variant used a fresh pytest subprocess, private
+Mongo and new result logs, with a 60s timeout; no cached mutant outcomes were
+reused. Test selection was the four node IDs above, with `-x --tb=short` and
+`-p metadata_bridge`. Parser 26/index 10 mutations were not selected in this batch.
+
+### Results and individual survivor inspection
+
+| Run | Definitions / cases | Selected mutants | Detected | Survived | Harness errors/timeouts |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Original repository assertions | 4 / 10 | 36 | 35 | 1 | 0 |
+| Strengthened existing API bounds definition | 4 / 10 | 36 | 36 | 0 | 0 |
+
+The sole survivor, `x_public_page_metadata__mutmut_25`, changed
+`(total + per_page - 1) // per_page` to
+`(total + per_page - 2) // per_page`. Individually inspected: **real gap**.
+The six-record/two-per-page scenario and 105-record/100-per-page scenario both
+retain the same rounded count under this mutation. At 101 records / 100 per page,
+the mutant falsely reports one page, hiding the one-record final page from a
+client relying on metadata. This is our response contract, not dependency
+internals or an equivalent implementation.
+
+Improved the existing API bounds definition: seed 101 instead of 105 records,
+retain the 100-record cap and disjoint-page assertions, and check the final
+page's status, page/size/total/page-count and exact 101–101 range. Other users of
+the shared seed helper keep its 105-record default. No definition or parametrized
+case was added or removed; production behavior did not change.
+
+### Validation
+
+The fresh after-change sweep detected all 36 selected variants, with no
+survivors, timeouts or setup/collection errors. Each nonzero result was checked
+to be a test-call failure. The formerly surviving rounding change now fails the
+existing API test at its literal two-page assertion (`1 != 2`). Original and
+final sweeps took 115.23s and 118.77s respectively, including their bridge
+controls; mutation cost is bounded diagnostic work, not a proposed CI gate.
+
+Both complete pagination test files then passed without the mutation bridge:
+**13 definitions / 32 collected cases in 8.40s**. This also checks the seed helper's
+unchanged default callers, parser, cache, invalid-argument, index provision and
+actual Mongo query-plan cases; the additional nine definitions were compatibility
+controls, not newly individually dispositioned by this batch. CodeRabbit's
+uncommitted test-file review completed with zero findings. `git diff --check`
+passed. No full-suite, hosted Python 3.12 or production performance claim follows.
+
+### Individual dispositions and maintenance cost
+
+| Definition | Decision and regression value | Reliability, cost and coupling |
+| --- | --- | --- |
+| `test_public_pages_have_chronological_tie_breaks_and_filtered_counts` | Keep: complete page traversal, date/time/ID tie breaks, hidden-row exclusion and filter-preserving next URLs. | Two real endpoints, six reverse-inserted records plus hidden match; exact public ordering is contractual. No network/authorization doubles for these checks; relative future dates avoid stale fixtures. Does not prove concurrent-insert stability. |
+| `test_public_page_metadata_handles_empty_and_out_of_range` | Keep: empty arrays, 0–0 range, filtered total and minimum-one page for zero matches. | Two endpoints and two distinct empty reasons per case. Small real fixtures; expected page-count formula is paired with literal expectations in the other retained tests. Not redundant with nonempty traversal. |
+| `test_demo_apis_cap_the_real_query_and_return_bounded_metadata` | Improve: resource bound plus first overflow and single-record final-page metadata; kills rounding survivor. | Two endpoints; 101 inserts instead of 105, no extra requests/parametrized cases, only cheap response assertions and one seed-count argument. Real Flask/Mongo integration contract. Page disjointness remains; ordering is covered by the retained traversal test. |
+| `test_enormous_out_of_range_pages_never_reach_database_skip` | Keep: four routes must avoid a huge database offset and return empty output. | Deliberate cursor `skip` sentinel protects a resource-operation contract; real counts/route handling remain. Small 105-row fixture and 100-digit page. Coupling to PyMongo cursor API is justified by the explicit no-scan risk; not proof of bounded count cost. |
+
+Consolidation considered: nonempty ordering, empty metadata, capped partial
+pages and forbidden huge offsets protect distinct failures. Combining them
+would increase branching and obscure failures. Keep the four definitions;
+no removal or separate unit arithmetic test is justified.
+
+Scratch evidence: project-chat `work/run_metadata_mutations.py` and
+`work/batch03-control.log`; private directory
+`/var/folders/h2/kxdl0cpx4tv3956j2s1k0pb40000gn/T/moso-pagination-batch03-dicev1rn`
+contains the bridge, all 36 variants and per-run JSON/logs. These are local
+scratch artifacts, not permanent CI tooling or deployable application code.
+
+
+## Batch04 — permission decorators and denial dispatch
+
+Reviewed 2026-10-25 from `a875f50a`. Clean starting worktree; a read-only
+remote lookup still found main at `35fd6def`. Source `utils/wrappers.py` and
+`tests/test_wrappers_decorators.py` matched main. Main's thirteen individually
+reviewed `test_wrappers.py` definitions and their newer assertions were read as
+prior work, not repeated or imported over this branch's older tests.
+
+The five existing unittest definitions initially passed in 0.09s. A scratch
+module copied the AST-identical `permission_required` and `depracated_endpoint`
+functions. Flask/Flask-Login and functools remained real; logger used standard
+logging, and patched flash/demo-permission boundaries had failing sentinels for
+unexpected calls. Only the test import changed. Repository conftest and any
+database were excluded from this diagnostic harness. Baseline test-class ASTs
+were checked against the original committed file.
+
+### Tool limitation and bounded fault controls
+
+`mutmut 3.8.0` was attempted with selection `*permission_required*` and
+`*depracated_endpoint*`. It skipped the nested decorated dispatch functions and
+reported no covered mutants. Its six generated mutants belonged to the harness
+sentinel functions and were not selected. This is a tool/harness limitation,
+not six survivors or evidence of good assertion quality. No mutation score is
+reported for these decorators, and mutation tooling was not added to dependencies.
+
+Twelve explicit AST fault injections then exercised security/forwarding risks
+in the copied functions, one fresh subprocess per fault. The source was restored
+in a finally block; scratch bytecode was removed before every subprocess and
+bytecode writing disabled to prevent stale-code reuse. The table records every
+fault; these are deliberate controls, not mutmut-generated mutants.
+
+| Injected fault | Existing five tests | Revised six tests | Individual interpretation |
+| --- | --- | --- | --- |
+| Demo helper gets VIEW_DEMO instead of requested EDIT_DEMO | Missed | Detected | Real permission-forwarding gap; constant answer hid wrong action. |
+| Demo helper gets no resource ID | Missed | Detected | Real target-forwarding gap, not equivalent. |
+| Demo helper gets no user | Missed | Detected | Real identity-forwarding gap, not equivalent. |
+| Role check gets VIEW_DEMO | Missed | Detected | Real action-forwarding gap. |
+| Role check gets foreign organization instead of configured scope | Missed | Detected | Real scope-forwarding gap; expected None is an intentional unscoped call. |
+| Authentication guard skipped | Detected | Detected | Retained redirect scenario protects authentication. |
+| Demo permission result inverted | Detected | Detected | Distinct positive and negative demo controls already detect it. |
+| URL builder receives wrong login endpoint | Missed | Detected | Real navigation integration gap masked by stubbed URL result. |
+| Global-admin bypass runs before authentication | Missed | Detected | Auth guard must precede privilege bypass, including objects retaining an admin flag. |
+| Demo denial calls protected handler | Detected | Detected | Existing Forbidden expectation detects access fail-open. |
+| Ordinary denial calls protected handler | Missed | Detected | Separate untested denial branch; meaningful new negative scenario. |
+| Deprecated endpoint aborts 403 instead of 410 | Detected | Detected | Retained Gone expectation protects public endpoint status. |
+
+All original/revised controls passed without faults. Results: four of twelve
+faults detected before, all twelve after, with no setup/collection errors or
+timeouts. This limited risk selection is not exhaustive authorization, dependency
+integration, whole-module mutation coverage or proof against all bypasses.
+
+### Individual dispositions
+
+Supporting setup: each unittest creates a tiny Flask app/request context; fake
+user answers and targeted patches isolate dispatch from membership/session/DB
+policy. No network, scheduling, random data or time dependency. Both isolated
+controls took 0.09s, so added maintenance is assertion/setup complexity rather
+than material execution time.
+
+| Definition | Decision, uniqueness and maintenance reasoning |
+| --- | --- |
+| `test_permission_required_redirects_unauthenticated_users` | Improve existing: two subtests retain ordinary anonymous redirect and require auth before an admin flag. Require the correct login endpoint, response location/status and one notification; no exact translated copy assertion. Real request context, mocked URL builder/current user; not actual login/session loading. |
+| `test_permission_required_allows_users_with_permission` | Improve existing: require exact EDIT_DEMO/None call plus successful return. A single method spy tests our dependency contract, not permission-backend internals. The fake still does not prove actual membership lookup. |
+| `test_permission_required_aborts_when_demo_permission_is_missing` | Improve existing: retain Forbidden/notification and require exact user/resource/action on the helper. Distinct deny branch from ordinary dispatch; cheap patch, no database. |
+| `test_permission_required_allows_demonstration_access_when_granted` | Improve existing: fixed-ID and dynamic demo_id subtests require exact helper arguments; dynamic handler receives its route keyword. Actual decorator/Flask context, helper patched; the same public dispatch contract, so extend this definition instead of adding another forwarding test. Other keyword aliases/global-grant/city fallback combinations remain outside this batch. |
+| `test_deprecated_endpoint_aborts_with_gone` | Improve maintenance: retain actual Gone/one notification, relax exact English text. HTTP 410 and notification are the behavior; editorial copy changes need not break this unit. Not localization or response-rendering acceptance. |
+| `test_permission_required_denies_users_without_permission` (new) | Add/keep: authenticated ordinary user with no grant must raise Forbidden and never invoke the protected Mock handler; notify once. Separate final denial branch warranted a distinct failure scenario rather than branching an allow test or a demo-specific test. |
+
+Five definitions became six collected unittest cases. The two subtest groups
+are two scenarios each, for eight leaf scenarios across the six definitions;
+subtests are not separately collected pytest cases. No parametrization was
+added, and no test was removed. Consolidation considered: anonymous redirect,
+ordinary grant/denial, demo grant/denial and endpoint retirement protect distinct
+branches/outcomes; merging would add conditionals and obscure failures.
+
+### Real-import validation
+
+The actual repository `test_wrappers_decorators.py`, `test_wrappers.py` and
+`test_city_scoped_admin.py` passed **41 collected cases in 12.46s**, with real
+project imports. A new exclusively owned loopback Mongo instance was selected
+before repository conftest; broad teardown could only affect this audit's data.
+The additional 35 cases are compatibility controls, not new individual reviews
+or the newer main-only helper assertions. No production auth code changed.
+CodeRabbit completed the uncommitted test-file review with zero findings, and
+`git diff --check` passed. Local Python 3.11 does not replace supported Python
+3.12 hosted CI; no full-suite or production acceptance is claimed.
+
+Evidence: chat `work/run_decorator_faults.py`, `work/batch04-before-mutmut.log`
+and `work/batch04-validation.log`; scratch
+`/var/folders/h2/kxdl0cpx4tv3956j2s1k0pb40000gn/T/moso-decorators-batch04-gkmy6igs`
+contains original/revised per-fault logs, JSON results and source variants.

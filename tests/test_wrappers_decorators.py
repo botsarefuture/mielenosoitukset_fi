@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from flask import Flask
 from werkzeug.exceptions import Forbidden, Gone
@@ -54,28 +54,48 @@ class WrapperDecoratorTests(unittest.TestCase):
         self.deprecated_view = deprecated_view
 
     def test_permission_required_redirects_unauthenticated_users(self):
-        user = FakeCurrentUser(is_authenticated=False)
+        for global_admin in (False, True):
+            with self.subTest(global_admin=global_admin):
+                user = FakeCurrentUser(is_authenticated=False, global_admin=global_admin)
+                with self.app.test_request_context("/protected"):
+                    with patch.object(wrappers, "current_user", user), patch.object(
+                        wrappers,
+                        "url_for",
+                        return_value="/users/auth/login",
+                    ) as login_url, patch.object(wrappers, "flash_message") as flash_message:
+                        response = self.protected_view()
 
-        with self.app.test_request_context("/protected"):
-            with patch.object(wrappers, "current_user", user), patch.object(
-                wrappers,
-                "url_for",
-                return_value="/users/auth/login",
-            ), patch.object(wrappers, "flash_message") as flash_message:
-                response = self.protected_view()
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.location, "/users/auth/login")
-        flash_message.assert_called_once()
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(response.location, "/users/auth/login")
+                login_url.assert_called_once_with("users.auth.login")
+                flash_message.assert_called_once()
 
     def test_permission_required_allows_users_with_permission(self):
         user = FakeCurrentUser(has_permission=True)
 
         with self.app.test_request_context("/protected"):
-            with patch.object(wrappers, "current_user", user):
+            with patch.object(wrappers, "current_user", user), patch.object(
+                user, "has_permission", return_value=True
+            ) as permission_check:
                 response = self.protected_view()
 
         self.assertEqual(response, "ok")
+        permission_check.assert_called_once_with("EDIT_DEMO", None)
+
+    def test_permission_required_denies_users_without_permission(self):
+        user = FakeCurrentUser()
+        handler = Mock(return_value="should-not-run")
+        protected = wrappers.permission_required("EDIT_DEMO")(handler)
+
+        with self.app.test_request_context("/protected"):
+            with patch.object(wrappers, "current_user", user), patch.object(
+                wrappers, "flash_message"
+            ) as flash_message:
+                with self.assertRaises(Forbidden):
+                    protected()
+
+        handler.assert_not_called()
+        flash_message.assert_called_once()
 
     def test_permission_required_aborts_when_demo_permission_is_missing(self):
         user = FakeCurrentUser()
@@ -85,24 +105,33 @@ class WrapperDecoratorTests(unittest.TestCase):
                 wrappers,
                 "has_demo_permission",
                 return_value=False,
-            ), patch.object(wrappers, "flash_message") as flash_message:
+            ) as permission_check, patch.object(wrappers, "flash_message") as flash_message:
                 with self.assertRaises(Forbidden):
                     self.protected_demo_view()
 
         flash_message.assert_called_once()
+        permission_check.assert_called_once_with(user, "demo-id", "EDIT_DEMO")
 
     def test_permission_required_allows_demonstration_access_when_granted(self):
         user = FakeCurrentUser()
+        handler = Mock(return_value="demo-ok")
+        dynamic_view = wrappers.permission_required("EDIT_DEMO", _type="DEMONSTRATION")(handler)
+        for view, kwargs, demo_id in [
+            (self.protected_demo_view, {}, "demo-id"),
+            (dynamic_view, {"demo_id": "route-demo"}, "route-demo"),
+        ]:
+            with self.subTest(demo_id=demo_id):
+                with self.app.test_request_context("/demo-protected"):
+                    with patch.object(wrappers, "current_user", user), patch.object(
+                        wrappers,
+                        "has_demo_permission",
+                        return_value=True,
+                    ) as permission_check:
+                        response = view(**kwargs)
 
-        with self.app.test_request_context("/demo-protected"):
-            with patch.object(wrappers, "current_user", user), patch.object(
-                wrappers,
-                "has_demo_permission",
-                return_value=True,
-            ):
-                response = self.protected_demo_view()
-
-        self.assertEqual(response, "demo-ok")
+                self.assertEqual(response, "demo-ok")
+                permission_check.assert_called_once_with(user, demo_id, "EDIT_DEMO")
+        handler.assert_called_once_with(demo_id="route-demo")
 
     def test_deprecated_endpoint_aborts_with_gone(self):
         with self.app.test_request_context("/deprecated"):
@@ -110,9 +139,7 @@ class WrapperDecoratorTests(unittest.TestCase):
                 with self.assertRaises(Gone):
                     self.deprecated_view()
 
-        flash_message.assert_called_once_with(
-            "This endpoint is deprecated and no longer available."
-        )
+        flash_message.assert_called_once()
 
 
 if __name__ == "__main__":

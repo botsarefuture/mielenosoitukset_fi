@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import hashlib
 import hmac
+import io
 import json
 import logging
 import secrets
+import warnings
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urlencode
@@ -14,7 +17,10 @@ from bson import ObjectId
 from flask import Blueprint, current_app, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user
 import jwt
+from PIL import Image, UnidentifiedImageError
+from werkzeug.utils import secure_filename
 
+from mielenosoitukset_fi.utils.admin.organizers import collect_admin_organizers
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.api.exceptions import ApiException
 from mielenosoitukset_fi.utils.classes.Case import Case
@@ -22,6 +28,7 @@ from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
 from mielenosoitukset_fi.utils.classes.Organization import Organization
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 from mielenosoitukset_fi.utils.tokens import check_token
+from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 
 
 mcp_admin_bp = Blueprint("admin_mcp", __name__)
@@ -42,12 +49,57 @@ def _normalize_tags(value: Any) -> list[str]:
     return []
 
 
-def _normalize_organizers(value: Any) -> list[Any]:
+def _normalize_organizers(value: Any, existing_organizers=None) -> list[dict[str, Any]]:
+    """Use the dashboard's organizer parser, including profile hydration.
+
+    Strings are accepted for compatibility: ObjectIds link profiles and other
+    strings are freeform names. Never persist bare ids as organizer rows.
+    """
     if value is None:
         return []
-    if isinstance(value, list):
-        return value
-    return []
+    if not isinstance(value, list):
+        raise ValueError("organizers must be an array of organizer objects or strings")
+
+    form = {}
+    for index, organizer in enumerate(value):
+        if isinstance(organizer, str):
+            organizer = organizer.strip()
+            organizer = (
+                {"organization_id": organizer}
+                if ObjectId.is_valid(organizer)
+                else {"name": organizer}
+            )
+        if not isinstance(organizer, dict):
+            raise ValueError("Each organizer must be an object or string")
+        organization_id = organizer.get("organization_id")
+        if organization_id:
+            if not ObjectId.is_valid(str(organization_id)):
+                raise ValueError("Invalid organizer organization_id")
+            if not _mongo().organizations.find_one({"_id": ObjectId(str(organization_id))}):
+                raise ValueError(f"Organizer organization not found: {organization_id}")
+        elif not str(organizer.get("name") or "").strip():
+            raise ValueError("Freeform organizers require a name; email and website are optional")
+
+        for field, form_field in (
+            ("name", "name"), ("email", "email"), ("website", "website"),
+            ("organization_id", "id"), ("_id", "record_id"),
+        ):
+            field_value = organizer.get(field)
+            if field_value is not None:
+                if not isinstance(field_value, (str, ObjectId)):
+                    raise ValueError(f"Organizer {field} must be a string")
+                form[f"organizer_{form_field}_{index}"] = str(field_value)
+        for field, form_field, default in (
+            ("is_private", "is_private", False),
+            ("show_name_public", "show_name", True),
+            ("show_email_public", "show_email", True),
+        ):
+            flag = organizer.get(field, default)
+            if not isinstance(flag, bool):
+                raise ValueError(f"Organizer {field} must be a boolean")
+            form[f"organizer_{form_field}_{index}"] = "on" if flag else "off"
+
+    return collect_admin_organizers(form, existing_organizers=existing_organizers)
 
 
 def _normalize_gallery_images(value: Any) -> list[str]:
@@ -568,7 +620,7 @@ def _get_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict[st
 
 def _create_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict[str, Any]:
     _require_scope(token_entry, "write")
-    required = ["title", "date", "start_time", "end_time", "city", "address"]
+    required = ["title", "date", "start_time", "city", "address"]
     missing = [field for field in required if not arguments.get(field)]
     if missing:
         raise ValueError(f"Missing required fields: {', '.join(missing)}")
@@ -577,18 +629,23 @@ def _create_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
         title=arguments["title"],
         date=arguments["date"],
         start_time=arguments["start_time"],
-        end_time=arguments["end_time"],
+        end_time=arguments.get("end_time"),
         city=arguments["city"],
         address=arguments["address"],
         description=arguments.get("description"),
         facebook=arguments.get("facebook"),
         route=arguments.get("route"),
-        event_type=arguments.get("event_type") or arguments.get("type") or "other",
+        event_type=arguments.get("event_type") or arguments.get("type") or "OTHER",
         tags=_normalize_tags(arguments.get("tags")),
         organizers=_normalize_organizers(arguments.get("organizers")),
         # Content-write scope does not grant moderation authority.
         approved=False,
         hide=bool(arguments.get("hide", False)),
+        cover_picture=arguments.get("cover_picture"),
+        img=arguments.get("img"),
+        preview_image=arguments.get("preview_image"),
+        gallery_images=_normalize_gallery_images(arguments.get("gallery_images")),
+        _dont_override=True,
         created_datetime=datetime.now(timezone.utc),
         last_modified=datetime.now(timezone.utc),
     )
@@ -614,7 +671,6 @@ def _update_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
     if not doc:
         raise LookupError("Demonstration not found")
 
-    demo = Demonstration.from_dict(doc)
     allowed_fields = {
         "title",
         "date",
@@ -642,18 +698,109 @@ def _update_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
         if key == "tags":
             value = _normalize_tags(value)
         elif key == "organizers":
-            value = _normalize_organizers(value)
+            value = _normalize_organizers(value, existing_organizers=doc.get("organizers"))
         elif key == "gallery_images":
             value = _normalize_gallery_images(value)
-        setattr(demo, key, value)
         applied[key] = value
 
     if not applied:
         raise ValueError("No supported fields in patch")
 
+    # Reconstruct after merging so dates, times and organizers use the same
+    # model normalization as create and the dashboard, rather than raw setattr.
+    demo = Demonstration.from_dict({**doc, **applied}, save_on_normalize=False)
     demo.last_modified = datetime.now(timezone.utc)
     demo.save()
-    return _serialize_result({"updated": True, "demo_id": demo._id, "applied": applied})
+    stored = demo.to_dict()
+    return _serialize_result({
+        "updated": True, "demo_id": demo._id,
+        "applied": {key: stored[key] for key in applied},
+    })
+
+
+def _upload_image(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict[str, Any]:
+    """Upload client-supplied bytes using the same S3 pipeline as the forms.
+
+    Remote MCP clients cannot pass local server paths. Base64 allows an attached
+    image to be uploaded without first hosting it on another public service.
+    """
+    _require_scope(token_entry, "write")
+    filename = secure_filename(arguments.get("filename") or "")
+    encoded = arguments.get("data_base64")
+    if not filename or not isinstance(encoded, str) or not encoded:
+        raise ValueError("filename and data_base64 are required")
+    if encoded.startswith("data:"):
+        header, separator, encoded = encoded.partition(",")
+        if not separator or not header.startswith("data:image/") or not header.endswith(";base64"):
+            raise ValueError("Expected an image base64 data URL")
+    # Bound memory use before decoding. HTTP/proxy request limits still apply.
+    max_bytes = int(_get_mcp_config().get("MAX_IMAGE_BYTES", 16 * 1024 * 1024))
+    if len(encoded) > 4 * ((max_bytes + 2) // 3):
+        raise ValueError(f"Image exceeds the {max_bytes}-byte upload limit")
+    try:
+        image_bytes = base64.b64decode(encoded, validate=True)
+    except (ValueError, binascii.Error) as exc:
+        raise ValueError("data_base64 must contain valid base64 image bytes") from exc
+    if not image_bytes or len(image_bytes) > max_bytes:
+        raise ValueError(f"Image must contain between 1 and {max_bytes} bytes")
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            with Image.open(io.BytesIO(image_bytes)) as image:
+                image.verify()
+    except (UnidentifiedImageError, OSError, SyntaxError, ValueError,
+            Image.DecompressionBombError, Image.DecompressionBombWarning) as exc:
+        raise ValueError("The uploaded file is not a supported, valid image") from exc
+
+    demo_id = arguments.get("demo_id")
+    organization_id = arguments.get("organization_id")
+    if demo_id and organization_id:
+        raise ValueError("Specify either demo_id or organization_id, not both")
+    field = arguments.get("field")
+    collection = None
+    target_id = None
+    image_type = "demo_pics"
+    if demo_id:
+        field = field or "cover_picture"
+        if field not in {"cover_picture", "img", "preview_image", "gallery_images"}:
+            raise ValueError("Unsupported demonstration image field")
+        if not ObjectId.is_valid(demo_id):
+            raise ValueError("Invalid demo_id")
+        collection = _mongo().demonstrations
+        target_id = ObjectId(demo_id)
+    elif organization_id:
+        field = field or "logo"
+        if field != "logo":
+            raise ValueError("Organization images must use the logo field")
+        if not ObjectId.is_valid(organization_id):
+            raise ValueError("Invalid organization_id")
+        image_type = "organization_logos"
+        collection = _mongo().organizations
+        target_id = ObjectId(organization_id)
+    elif field:
+        raise ValueError("field requires demo_id or organization_id")
+    if collection is not None and not collection.find_one({"_id": target_id}):
+        raise LookupError("Image target not found")
+
+    url = upload_image_fileobj(
+        current_app.config.get("S3_BUCKET"), io.BytesIO(image_bytes), filename, image_type,
+    )
+    if not url:
+        raise RuntimeError("Image storage upload failed; no image fields were changed")
+
+    result = {"uploaded": True, "url": url}
+    if collection is not None:
+        update = {"$set": {field: url}}
+        if demo_id:
+            update["$set"]["last_modified"] = datetime.now(timezone.utc)
+            if field == "gallery_images":
+                update["$set"].pop(field)
+                update["$addToSet"] = {field: url}
+        saved = collection.update_one({"_id": target_id}, update)
+        if not saved.matched_count:
+            raise LookupError("Image target no longer exists; uploaded URL: " + url)
+        result.update({"demo_id" if demo_id else "organization_id": str(target_id), "field": field})
+    return _serialize_result(result)
 
 
 def _list_organizations(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict[str, Any]:
@@ -703,14 +850,14 @@ def _get_organization(arguments: dict[str, Any], token_entry: dict[str, Any]) ->
 
 def _create_organization(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict[str, Any]:
     _require_scope(token_entry, "write")
-    required = ["name", "email", "description"]
+    required = ["name", "email"]
     missing = [field for field in required if not arguments.get(field)]
     if missing:
         raise ValueError(f"Missing required fields: {', '.join(missing)}")
 
     organization = Organization(
         name=arguments["name"],
-        description=arguments["description"],
+        description=arguments.get("description", ""),
         email=arguments["email"],
         website=arguments.get("website", ""),
         logo=arguments.get("logo"),
@@ -915,6 +1062,44 @@ def _unauthorized_mcp_response(request_id: Any):
     return response, status
 
 
+ORGANIZERS_SCHEMA = {
+    "type": "array",
+    "description": (
+        "Event organizers, as in the admin form. Link an existing profile with "
+        "organization_id, or provide a freeform name with optional email/website. "
+        "You do not need to create an organization profile for a freeform organizer. "
+        "An empty array removes all organizers. Existing organization IDs and "
+        "freeform names are also accepted as strings."
+    ),
+    "items": {
+        "anyOf": [
+            {
+                "type": "object",
+                "anyOf": [{"required": ["name"]}, {"required": ["organization_id"]}],
+                "properties": {
+                    "organization_id": {"type": "string", "description": "Existing profile ID; contact details come from the profile."},
+                    "name": {"type": "string", "description": "Required for freeform organizers."},
+                    "email": {"type": "string", "description": "Optional for freeform organizers."},
+                    "website": {"type": "string"},
+                    "_id": {"type": "string", "description": "Preserve the existing organizer record ID when editing."},
+                    "is_private": {"type": "boolean", "default": False},
+                    "show_name_public": {"type": "boolean", "default": True},
+                    "show_email_public": {"type": "boolean", "default": True},
+                },
+            },
+            {"type": "string", "minLength": 1},
+        ],
+    },
+}
+
+IMAGE_FIELDS_SCHEMA = {
+    "cover_picture": {"type": ["string", "null"], "description": "Cover image URL. Use upload_image for a local attachment."},
+    "img": {"type": ["string", "null"], "description": "Main image URL."},
+    "preview_image": {"type": ["string", "null"], "description": "Listing preview image URL."},
+    "gallery_images": {"type": "array", "items": {"type": "string"}},
+}
+
+
 TOOLS: dict[str, dict[str, Any]] = {
     "list_demos": {
         "description": "List and search demonstrations from the admin dashboard dataset.",
@@ -942,24 +1127,25 @@ TOOLS: dict[str, dict[str, Any]] = {
         "handler": _get_demo,
     },
     "create_demo": {
-        "description": "Create a new demonstration.",
+        "description": "Create a demonstration with the same organizer and image fields as the admin form. End time is optional.",
         "inputSchema": {
             "type": "object",
-            "required": ["title", "date", "start_time", "end_time", "city", "address"],
+            "required": ["title", "date", "start_time", "city", "address"],
             "properties": {
                 "title": {"type": "string"},
                 "date": {"type": "string"},
                 "start_time": {"type": "string"},
-                "end_time": {"type": "string"},
+                "end_time": {"type": ["string", "null"], "description": "Optional; omit if unknown."},
                 "city": {"type": "string"},
                 "address": {"type": "string"},
                 "description": {"type": "string"},
                 "facebook": {"type": "string"},
-                "route": {},
-                "event_type": {"type": "string"},
-                "tags": {},
-                "organizers": {"type": "array"},
+                "route": {"anyOf": [{"type": "array", "items": {"type": "string"}}, {"type": "string"}]},
+                "event_type": {"type": "string", "description": "MARCH, STAY_STILL, ROAD_BLOCK, or OTHER (default)."},
+                "tags": {"anyOf": [{"type": "array", "items": {"type": "string"}}, {"type": "string"}]},
+                "organizers": ORGANIZERS_SCHEMA,
                 "hide": {"type": "boolean"},
+                **IMAGE_FIELDS_SCHEMA,
             },
         },
         "handler": _create_demo,
@@ -977,26 +1163,43 @@ TOOLS: dict[str, dict[str, Any]] = {
                         "title": {"type": "string"},
                         "date": {"type": "string"},
                         "start_time": {"type": "string"},
-                        "end_time": {"type": "string"},
+                        "end_time": {"type": ["string", "null"]},
                         "city": {"type": "string"},
                         "address": {"type": "string"},
                         "description": {"type": "string"},
                         "facebook": {"type": "string"},
-                        "route": {"type": "array"},
-                        "tags": {"type": "array"},
-                        "organizers": {"type": "array"},
+                        "route": {"type": "array", "items": {"type": "string"}},
+                        "tags": {"type": "array", "items": {"type": "string"}},
+                        "organizers": ORGANIZERS_SCHEMA,
                         "hide": {"type": "boolean"},
                         "cancelled": {"type": "boolean"},
                         "event_type": {"type": "string"},
-                        "cover_picture": {"type": "string"},
-                        "img": {"type": "string"},
-                        "gallery_images": {"type": "array"},
-                        "preview_image": {"type": "string"},
+                        **IMAGE_FIELDS_SCHEMA,
                     },
                 },
             },
         },
         "handler": _update_demo,
+    },
+    "upload_image": {
+        "description": (
+            "Upload an attached image as base64 bytes (or an image data URL) through "
+            "the site's normal image storage pipeline. Returns a public URL. Optionally "
+            "set demo_id to attach it to an event (cover_picture by default; gallery_images "
+            "appends), or organization_id to set its logo. No public source URL is needed."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["filename", "data_base64"],
+            "properties": {
+                "filename": {"type": "string", "description": "Original filename. Image contents are validated and converted as in the admin uploader."},
+                "data_base64": {"type": "string", "description": "Base64-encoded image bytes or data:image/...;base64,...; never a local filesystem path."},
+                "demo_id": {"type": "string"},
+                "organization_id": {"type": "string"},
+                "field": {"type": "string", "enum": ["cover_picture", "img", "preview_image", "gallery_images", "logo"]},
+            },
+        },
+        "handler": _upload_image,
     },
     "list_organizations": {
         "description": "List and search organizations.",
@@ -1023,11 +1226,11 @@ TOOLS: dict[str, dict[str, Any]] = {
         "description": "Create a new organization.",
         "inputSchema": {
             "type": "object",
-            "required": ["name", "email", "description"],
+            "required": ["name", "email"],
             "properties": {
                 "name": {"type": "string"},
                 "email": {"type": "string"},
-                "description": {"type": "string"},
+                "description": {"type": "string", "description": "Optional organization description."},
                 "website": {"type": "string"},
                 "logo": {"type": "string"},
                 "social_media_links": {"type": "object"},

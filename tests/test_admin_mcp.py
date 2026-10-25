@@ -1,12 +1,19 @@
-import hashlib
 import base64
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
+from threading import Barrier
+import hashlib
 import io
+import logging
+import re
 from urllib.parse import parse_qs, urlparse
+
 import jwt
 import pytest
-
+from pymongo.collection import Collection
 from bson import ObjectId
 from PIL import Image
+
 from mielenosoitukset_fi.utils.tokens import create_token
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj as real_upload_image_fileobj
 
@@ -24,7 +31,7 @@ def _pkce_s256(verifier: str) -> str:
     return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
 
 
-def _mcp_client(app_factory, seeded_data):
+def _mcp_client(app_factory, seeded_data, *, scopes=None):
     token = "super-secret-mcp-token"
     app = app_factory(
         ADMIN_MCP={
@@ -33,7 +40,7 @@ def _mcp_client(app_factory, seeded_data):
                 {
                     "name": "pytest",
                     "sha256": hashlib.sha256(token.encode("utf-8")).hexdigest(),
-                    "scopes": ["read", "write"],
+                    "scopes": ["read", "write"] if scopes is None else scopes,
                 }
             ],
         }
@@ -42,7 +49,7 @@ def _mcp_client(app_factory, seeded_data):
     return client, token, seeded_data
 
 
-def _oauth_mcp_client(app_factory, seeded_data):
+def _oauth_mcp_client(app_factory, seeded_data, *, claims=None, signing_secret=None):
     secret = "oauth-mcp-secret"
     token = jwt.encode(
         {
@@ -50,8 +57,9 @@ def _oauth_mcp_client(app_factory, seeded_data):
             "iss": "https://auth.example.test",
             "aud": "mielenosoitukset-admin-mcp",
             "scope": "mcp.admin write read",
+            **(claims or {}),
         },
-        secret,
+        signing_secret or secret,
         algorithm="HS256",
     )
     app = app_factory(
@@ -71,29 +79,43 @@ def _oauth_mcp_client(app_factory, seeded_data):
     return client, token, seeded_data
 
 
-def test_admin_mcp_requires_bearer_token(app_factory, seeded_data):
-    client, _, _ = _mcp_client(app_factory, seeded_data)
+@pytest.mark.parametrize("credential", ["missing", "unknown", "basic"])
+def test_admin_mcp_requires_bearer_token(app_factory, seeded_data, credential):
+    client, token, _ = _mcp_client(app_factory, seeded_data)
+    headers = {}
+    if credential == "unknown":
+        headers = _mcp_headers("unrecognized-token")
+    elif credential == "basic":
+        headers = {"Authorization": f"Basic {token}"}
 
-    response = client.post("/api/admin/mcp", json=_rpc("initialize"))
+    response = client.post("/api/admin/mcp", json=_rpc("initialize", request_id="denied"), headers=headers)
 
     assert response.status_code == 401
-    assert response.get_json()["error"]["message"] == "Unauthorized MCP token"
+    assert response.get_json()["error"]["code"] == -32001
+    assert response.get_json()["id"] == "denied"
+    assert response.headers["WWW-Authenticate"].startswith("Bearer ")
 
 
-def test_admin_mcp_lists_tools(app_factory, seeded_data):
+def test_admin_mcp_lists_tools(app_factory, seeded_data, caplog):
     client, token, _ = _mcp_client(app_factory, seeded_data)
+    caplog.set_level(logging.DEBUG)
 
-    init_response = client.post("/api/admin/mcp", json=_rpc("initialize"), headers=_mcp_headers(token))
+    init_response = client.post("/api/admin/mcp", json=_rpc("initialize", request_id="initialize"), headers=_mcp_headers(token))
     assert init_response.status_code == 200
+    assert init_response.get_json()["id"] == "initialize"
     assert init_response.get_json()["result"]["serverInfo"]["name"] == "mielenosoitukset-admin-mcp"
 
-    tools_response = client.post("/api/admin/mcp", json=_rpc("tools/list"), headers=_mcp_headers(token))
+    tools_response = client.post("/api/admin/mcp", json=_rpc("tools/list", request_id="catalog"), headers=_mcp_headers(token))
+    assert tools_response.status_code == 200
+    assert tools_response.get_json()["id"] == "catalog"
     tools = tools_response.get_json()["result"]["tools"]
     tool_names = {tool["name"] for tool in tools}
     assert {"list_demos", "update_demo", "list_cases", "update_organization"} <= tool_names
+    assert token not in caplog.text
+    assert token[:20] not in caplog.text
 
 
-def test_admin_mcp_oauth_metadata_advertises_registration_and_pkce(app_factory, seeded_data):
+def test_admin_mcp_oauth_metadata_advertises_registration_and_pkce(app_factory):
     app = app_factory(ADMIN_MCP={"ENABLED": True})
     client = app.test_client()
 
@@ -113,7 +135,7 @@ def test_admin_mcp_oauth_metadata_advertises_registration_and_pkce(app_factory, 
     assert resource_metadata["authorization_servers"]
 
 
-def test_admin_mcp_dynamic_client_registration_and_oauth_code_flow(app_factory, seeded_data):
+def _registered_oauth_client(app_factory, *, auth_method="none"):
     app = app_factory(ADMIN_MCP={"ENABLED": True})
     client = app.test_client()
 
@@ -122,12 +144,17 @@ def test_admin_mcp_dynamic_client_registration_and_oauth_code_flow(app_factory, 
         json={
             "client_name": "Pytest ChatGPT",
             "redirect_uris": ["https://chatgpt.com/connector/oauth/test-callback"],
-            "token_endpoint_auth_method": "none",
+            "token_endpoint_auth_method": auth_method,
             "scope": "mcp.admin read write",
         },
     )
     assert register_response.status_code == 201
     registered = register_response.get_json()
+
+    return app, client, registered
+
+
+def _approved_oauth_code(client, registered, seeded_data):
     client_id = registered["client_id"]
     redirect_uri = registered["redirect_uris"][0]
 
@@ -149,8 +176,8 @@ def test_admin_mcp_dynamic_client_registration_and_oauth_code_flow(app_factory, 
         },
     )
     assert auth_page.status_code == 200
-    assert "Salli MCP-yhteys?" in auth_page.get_data(as_text=True)
     assert "Pytest ChatGPT" in auth_page.get_data(as_text=True)
+    csrf_token = re.search(r'name="csrf_token" value="([^"]+)"', auth_page.get_data(as_text=True))[1]
 
     approve_response = client.post(
         "/api/admin/mcp/oauth/authorize",
@@ -162,6 +189,7 @@ def test_admin_mcp_dynamic_client_registration_and_oauth_code_flow(app_factory, 
             "code_challenge": _pkce_s256(code_verifier),
             "code_challenge_method": "S256",
             "decision": "approve",
+            "csrf_token": csrf_token,
         },
         follow_redirects=False,
     )
@@ -172,16 +200,33 @@ def test_admin_mcp_dynamic_client_registration_and_oauth_code_flow(app_factory, 
     code = redirect_params["code"][0]
     assert redirect_params["state"][0] == "pytest-state"
 
-    token_response = client.post(
-        "/api/admin/mcp/oauth/token",
-        data={
-            "grant_type": "authorization_code",
-            "client_id": client_id,
-            "code": code,
-            "redirect_uri": redirect_uri,
-            "code_verifier": code_verifier,
-        },
-    )
+    return {
+        "grant_type": "authorization_code",
+        "client_id": client_id,
+        "code": code,
+        "redirect_uri": redirect_uri,
+        "code_verifier": code_verifier,
+    }
+
+
+def _exchange_oauth_code(client, registered, exchange, secret):
+    data = dict(exchange)
+    headers = {}
+    method = registered["token_endpoint_auth_method"]
+    if method == "client_secret_post" and secret is not None:
+        data["client_secret"] = secret
+    elif method == "client_secret_basic" and secret is not None:
+        credentials = base64.b64encode(f"{registered['client_id']}:{secret}".encode()).decode("ascii")
+        headers["Authorization"] = f"Basic {credentials}"
+        data.pop("client_id")
+    return client.post("/api/admin/mcp/oauth/token", data=data, headers=headers)
+
+
+@pytest.mark.parametrize("auth_method", ["none", "client_secret_post", "client_secret_basic"])
+def test_admin_mcp_dynamic_client_registration_and_oauth_code_flow(app_factory, seeded_data, auth_method):
+    _, client, registered = _registered_oauth_client(app_factory, auth_method=auth_method)
+    exchange = _approved_oauth_code(client, registered, seeded_data)
+    token_response = _exchange_oauth_code(client, registered, exchange, registered.get("client_secret"))
     assert token_response.status_code == 200
     token_payload = token_response.get_json()
     assert token_payload["token_type"] == "Bearer"
@@ -196,6 +241,159 @@ def test_admin_mcp_dynamic_client_registration_and_oauth_code_flow(app_factory, 
     tool_names = {tool["name"] for tool in mcp_response.get_json()["result"]["tools"]}
     assert "list_demos" in tool_names
 
+    replay = _exchange_oauth_code(client, registered, exchange, registered.get("client_secret"))
+    assert replay.status_code == 400
+    assert replay.get_json()["error"] == "invalid_grant"
+    assert "access_token" not in replay.get_json()
+
+
+@pytest.mark.parametrize("auth_method", ["client_secret_post", "client_secret_basic"])
+def test_admin_mcp_oauth_confidential_client_requires_secret(app_factory, seeded_data, db, auth_method):
+    _, client, registered = _registered_oauth_client(app_factory, auth_method=auth_method)
+    exchange = _approved_oauth_code(client, registered, seeded_data)
+    for secret in (None, "wrong-client-secret"):
+        denied = _exchange_oauth_code(client, registered, exchange, secret)
+        assert denied.status_code == 401
+        payload = denied.get_json()
+        assert payload["error"] == "invalid_client"
+        assert "access_token" not in payload
+        assert db.oauth_authorization_codes.find_one({"code": exchange["code"]})["used_at"] is None
+    allowed = _exchange_oauth_code(client, registered, exchange, registered["client_secret"])
+    assert allowed.status_code == 200
+    assert allowed.get_json()["access_token"]
+
+
+@pytest.mark.parametrize("fault", ["verifier", "missing_verifier", "redirect", "client", "expired", "unknown"])
+def test_admin_mcp_oauth_code_rejects_invalid_exchange(app_factory, seeded_data, db, fault):
+    _, client, registered = _registered_oauth_client(app_factory)
+    exchange = _approved_oauth_code(client, registered, seeded_data)
+    invalid = dict(exchange)
+    if fault == "verifier":
+        invalid["code_verifier"] = "wrong-verifier"
+    elif fault == "missing_verifier":
+        invalid.pop("code_verifier")
+    elif fault == "redirect":
+        invalid["redirect_uri"] += "/other"
+    elif fault == "client":
+        other = client.post("/api/admin/mcp/oauth/register", json={
+            "redirect_uris": registered["redirect_uris"],
+            "token_endpoint_auth_method": "none",
+        })
+        assert other.status_code == 201
+        invalid["client_id"] = other.get_json()["client_id"]
+    elif fault == "expired":
+        db.oauth_authorization_codes.update_one({"code": exchange["code"]}, {
+            "$set": {"expires_at": datetime(2000, 1, 1, tzinfo=timezone.utc)},
+        })
+    elif fault == "unknown":
+        invalid["code"] = "unknown-authorization-code"
+
+    response = client.post("/api/admin/mcp/oauth/token", data=invalid)
+    assert response.status_code == 400
+    payload = response.get_json()
+    assert payload["error"] == ("invalid_request" if fault == "missing_verifier" else "invalid_grant")
+    assert "access_token" not in payload
+    assert db.oauth_authorization_codes.find_one({"code": exchange["code"]})["used_at"] is None
+    if fault != "expired":
+        # Rejected attempts must not consume the legitimate client's code.
+        assert client.post("/api/admin/mcp/oauth/token", data=exchange).status_code == 200
+
+
+def test_admin_mcp_oauth_code_consumption_is_atomic(app_factory, seeded_data, monkeypatch):
+    app, client, registered = _registered_oauth_client(app_factory)
+    exchange = _approved_oauth_code(client, registered, seeded_data)
+    barrier = Barrier(2)
+    original_find_one = Collection.find_one
+
+    def synchronized_lookup(collection, query=None, *args, **kwargs):
+        document = original_find_one(collection, query, *args, **kwargs)
+        if collection.name == "oauth_authorization_codes" and query == {"code": exchange["code"]}:
+            # Both requests read the same real unused record before either writes.
+            barrier.wait(timeout=10)
+        return document
+
+    monkeypatch.setattr(Collection, "find_one", synchronized_lookup)
+
+    def exchange_code():
+        with app.test_client() as independent_client:
+            response = independent_client.post("/api/admin/mcp/oauth/token", data=exchange)
+            return response.status_code, response.get_json()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        responses = list(executor.map(lambda _: exchange_code(), range(2)))
+    assert sorted(status for status, _ in responses) == [200, 400]
+    success = next(payload for status, payload in responses if status == 200)
+    failure = next(payload for status, payload in responses if status == 400)
+    assert success["access_token"]
+    assert failure["error"] == "invalid_grant"
+    assert "access_token" not in failure
+
+
+@pytest.mark.parametrize("role", ["user", "admin"])
+def test_admin_mcp_oauth_consent_rechecks_global_authority(app_factory, seeded_data, db, role):
+    _, client, registered = _registered_oauth_client(app_factory)
+    with client.session_transaction() as state:
+        state["_user_id"] = str(seeded_data["admin_id"])
+        state["_fresh"] = True
+    data = {
+        "client_id": registered["client_id"],
+        "redirect_uri": registered["redirect_uris"][0],
+        "response_type": "code",
+        "scope": "mcp.admin read write",
+        "decision": "approve",
+    }
+    page = client.get("/api/admin/mcp/oauth/authorize", query_string=data)
+    assert page.status_code == 200
+    csrf_token = re.search(r'name="csrf_token" value="([^"]+)"', page.get_data(as_text=True))[1]
+    db.users.update_one({"_id": seeded_data["admin_id"]}, {"$set": {"role": role, "global_admin": False}})
+    before = db.oauth_authorization_codes.count_documents({})
+
+    assert client.get("/api/admin/mcp/oauth/authorize", query_string=data).status_code == 403
+    denied = client.post("/api/admin/mcp/oauth/authorize", data={**data, "csrf_token": csrf_token})
+    assert denied.status_code == 403
+    assert db.oauth_authorization_codes.count_documents({}) == before
+
+
+def test_admin_mcp_oauth_consent_requires_csrf(app_factory, seeded_data, db):
+    app, client, registered = _registered_oauth_client(app_factory)
+    with client.session_transaction() as state:
+        state["_user_id"] = str(seeded_data["admin_id"])
+        state["_fresh"] = True
+    data = {
+        "client_id": registered["client_id"],
+        "redirect_uri": registered["redirect_uris"][0],
+        "scope": "mcp.admin read write",
+        "decision": "approve",
+    }
+    before = db.oauth_authorization_codes.count_documents({})
+    missing = client.post("/api/admin/mcp/oauth/authorize", data=data)
+    assert missing.status_code == 403
+    assert db.oauth_authorization_codes.count_documents({}) == before
+
+    page = client.get("/api/admin/mcp/oauth/authorize", query_string={**data, "response_type": "code"})
+    assert page.status_code == 200
+    token = re.search(r'name="csrf_token" value="([^"]+)"', page.get_data(as_text=True))[1]
+    other = app.test_client()
+    with other.session_transaction() as state:
+        state["_user_id"] = str(seeded_data["admin_id"])
+        state["_fresh"] = True
+    other_page = other.get("/api/admin/mcp/oauth/authorize", query_string={**data, "response_type": "code"})
+    assert other_page.status_code == 200
+    other_token = re.search(r'name="csrf_token" value="([^"]+)"', other_page.get_data(as_text=True))[1]
+    for invalid in ("incorrect", "väärä", other_token):
+        denied = client.post("/api/admin/mcp/oauth/authorize", data={**data, "csrf_token": invalid})
+        assert denied.status_code == 403
+        assert db.oauth_authorization_codes.count_documents({}) == before
+
+    declined = client.post("/api/admin/mcp/oauth/authorize", data={**data, "decision": "deny", "csrf_token": token})
+    assert declined.status_code == 302
+    assert parse_qs(urlparse(declined.headers["Location"]).query)["error"] == ["access_denied"]
+    assert db.oauth_authorization_codes.count_documents({}) == before
+
+    allowed = client.post("/api/admin/mcp/oauth/authorize", data={**data, "csrf_token": token})
+    assert allowed.status_code == 302
+    assert db.oauth_authorization_codes.count_documents({}) == before + 1
+
 
 def test_admin_mcp_accepts_oauth_bearer_tokens(app_factory, seeded_data):
     client, token, _ = _oauth_mcp_client(app_factory, seeded_data)
@@ -205,6 +403,51 @@ def test_admin_mcp_accepts_oauth_bearer_tokens(app_factory, seeded_data):
     assert response.status_code == 200
     tool_names = {tool["name"] for tool in response.get_json()["result"]["tools"]}
     assert "list_demos" in tool_names
+
+
+@pytest.mark.parametrize("fault,status", [
+    ("signature", 401), ("issuer", 401), ("audience", 401),
+    ("expiry", 401), ("required_scope", 403),
+])
+def test_admin_mcp_rejects_invalid_oauth_bearer(app_factory, seeded_data, fault, status):
+    changes = {
+        "issuer": {"iss": "https://untrusted.example.test"},
+        "audience": {"aud": "unrelated-resource"},
+        "expiry": {"exp": 1},
+        "required_scope": {"scope": "read write"},
+    }
+    client, token, _ = _oauth_mcp_client(
+        app_factory, seeded_data, claims=changes.get(fault),
+        signing_secret="wrong-secret" if fault == "signature" else None,
+    )
+    response = client.post("/api/admin/mcp", json=_rpc("tools/list", request_id="invalid-oauth"), headers=_mcp_headers(token))
+    assert response.status_code == status
+    payload = response.get_json()
+    assert "result" not in payload
+    assert payload["error"]["code"] == (-32003 if status == 403 else -32001)
+    assert payload["id"] == "invalid-oauth"
+
+
+@pytest.mark.parametrize("tool", ["add_case_note", "update_organization", "create_demo"])
+def test_admin_mcp_read_only_token_cannot_mutate(app_factory, seeded_data, db, tool):
+    client, token, seeded = _mcp_client(app_factory, seeded_data, scopes=["read"])
+    listing = client.post("/api/admin/mcp", json=_rpc("tools/call", {"name": "list_demos"}), headers=_mcp_headers(token))
+    assert listing.status_code == 200
+    assert listing.get_json()["result"]["structuredContent"]["items"]
+    arguments = {
+        "add_case_note": {"case_id": str(seeded["case_id"]), "note": "Blocked note"},
+        "update_organization": {"organization_id": str(seeded["org_id"]), "patch": {"website": "https://example.test/blocked"}},
+        "create_demo": {"title": "Blocked creation", "date": "2026-09-01", "start_time": "16:00", "end_time": "18:00", "city": "Helsinki", "address": "MCP Street 1"},
+    }
+    original_case = db.cases.find_one({"_id": seeded["case_id"]})
+    original_org = db.organizations.find_one({"_id": seeded["org_id"]})
+    demo_count = db.demonstrations.count_documents({})
+    response = client.post("/api/admin/mcp", json=_rpc("tools/call", {"name": tool, "arguments": arguments[tool]}), headers=_mcp_headers(token))
+    assert response.status_code == 403
+    assert response.get_json()["error"]["code"] == -32003
+    assert db.cases.find_one({"_id": seeded["case_id"]}) == original_case
+    assert db.organizations.find_one({"_id": seeded["org_id"]}) == original_org
+    assert db.demonstrations.count_documents({}) == demo_count
 
 
 def test_admin_mcp_accepts_existing_api_tokens(app_factory, seeded_data):
@@ -228,11 +471,12 @@ def test_admin_mcp_accepts_existing_api_tokens(app_factory, seeded_data):
     assert "list_cases" in tool_names
 
 
-def test_admin_mcp_rejects_ordinary_api_token(app_factory, seeded_data):
+@pytest.mark.parametrize("scopes", [["read", "write"], ["admin"]])
+def test_admin_mcp_rejects_api_token_without_mcp_scope(app_factory, seeded_data, scopes):
     token, _ = create_token(
         user_id=seeded_data["user_id"],
         token_type="short",
-        scopes=["read", "write"],
+        scopes=scopes,
         category="user",
     )
     app = app_factory(ADMIN_MCP={"ENABLED": True})
@@ -245,7 +489,7 @@ def test_admin_mcp_rejects_ordinary_api_token(app_factory, seeded_data):
     )
 
     assert response.status_code == 403
-    assert response.get_json()["error"]["message"] == "API token missing required scope: mcp.admin"
+    assert response.get_json()["error"]["code"] == -32003
 
 
 def test_admin_mcp_can_search_demos(app_factory, seeded_data):
@@ -261,10 +505,13 @@ def test_admin_mcp_can_search_demos(app_factory, seeded_data):
     payload = response.get_json()["result"]["structuredContent"]
     assert payload["items"]
     assert any(item["_id"] == str(seeded["demo_id"]) for item in payload["items"])
+    assert str(seeded["pending_demo_id"]) not in {item["_id"] for item in payload["items"]}
+    assert payload["total"] == 1
 
 
 def test_admin_mcp_can_add_case_note(app_factory, seeded_data, db):
     client, token, seeded = _mcp_client(app_factory, seeded_data)
+    original_notes = db.cases.find_one({"_id": seeded["case_id"]})["action_logs"]
 
     response = client.post(
         "/api/admin/mcp",
@@ -286,6 +533,8 @@ def test_admin_mcp_can_add_case_note(app_factory, seeded_data, db):
     case_doc = db.cases.find_one({"_id": seeded["case_id"]})
     assert case_doc["action_logs"][-1]["note"] == "Reviewed from MCP"
     assert case_doc["action_logs"][-1]["admin"] == "pytest-mcp"
+    assert case_doc["action_logs"][-1]["action_type"] == "internal_note"
+    assert case_doc["action_logs"][:-1] == original_notes
 
 
 def test_admin_mcp_can_update_organization(app_factory, seeded_data, db):

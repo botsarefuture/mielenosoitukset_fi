@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+- Require full global authority and session-bound CSRF proof for OAuth MCP consent; prevent simultaneous reuse of authorization codes.
+
+- Keep MCP credential fragments out of debug logs and return structured scope-denial errors; strengthen existing read-only, filtering, history and client-authentication regression checks.
+
 - Restrict privileged `admin` and `mcp.admin` API-token issuance to full global authority, including after password step-up; preserve ordinary and limited-admin denial.
 
 - Strengthen existing regression checks for session-proof time bounds and token revocation without deleting other usable credentials.

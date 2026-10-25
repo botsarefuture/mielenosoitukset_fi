@@ -82,7 +82,7 @@ For the easiest ChatGPT setup:
 4. Leave static client credentials empty and let ChatGPT use dynamic client registration.
 5. ChatGPT will register a public OAuth client, send the user to `/api/admin/mcp/oauth/authorize`, and exchange the resulting authorization code at `/api/admin/mcp/oauth/token`.
 
-The consent screen requires a logged-in admin-capable account (`global_admin`, `admin`, `superuser`, or `god`), so regular users cannot grant MCP admin access.
+The consent screen and approval POST require a logged-in account with full global authority (the global-admin flag or a `global_admin`, `superuser`, or `god` role). A limited `admin` role is insufficient. Authority is checked again when the form is submitted. The form includes a session-bound CSRF token; approval and denial POSTs must return that token from the same browser session.
 
 ## Supported MCP methods
 

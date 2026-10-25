@@ -435,6 +435,34 @@ body {
   background: var(--admin-workspace-surface-muted);
 }
 
+.admin-message-body {
+  min-width: 0;
+  margin: 0;
+  color: var(--admin-workspace-text);
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.admin-message-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem 1rem;
+  margin: 0;
+}
+
+.admin-message-meta > div { min-width: 0; }
+.admin-message-meta dt {
+  color: var(--admin-workspace-muted);
+  font-size: .82rem;
+  font-weight: 600;
+}
+.admin-message-meta dd { margin: .15rem 0 0; overflow-wrap: anywhere; }
+
+@media (max-width: 575.98px) {
+  .admin-message-meta { grid-template-columns: minmax(0, 1fr); }
+}
+
 .admin-recurrence-preview {
   display: grid;
   gap: .85rem;

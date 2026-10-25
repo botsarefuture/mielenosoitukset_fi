@@ -4362,7 +4362,7 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_case_bp.py:204
 #: mielenosoitukset_fi/admin/admin_case_bp.py:378
 msgid "Ei tiedossa"
-msgstr ""
+msgstr "Ei tiedossa"
 
 #: mielenosoitukset_fi/admin/admin_case_bp.py:208
 #: mielenosoitukset_fi/templates/admin_V2/cases/all.html:63
@@ -6899,7 +6899,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:213
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/editor.html:83
 msgid "Lähettäjä"
-msgstr ""
+msgstr "Lähettäjä"
 
 #: mielenosoitukset_fi/templates/admin/suggestion_view.html:412
 msgid "Luontiaika"
@@ -7190,7 +7190,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:85
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:39
 msgid "Epäonnistui"
-msgstr ""
+msgstr "Epäonnistui"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:339
 msgid "Ei lisätietoa"
@@ -8489,7 +8489,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:86
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:39
 msgid "Jonossa"
-msgstr ""
+msgstr "Jonossa"
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:99
 msgid "Vastaa lähettäjälle"
@@ -9333,7 +9333,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:264
 #: mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html:8
 msgid "Lähetetty"
-msgstr ""
+msgstr "Lähetetty"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:267
 msgid "Ei ilmoittajatietoja."
@@ -13746,3 +13746,15 @@ msgstr "Sivu %(page)s / %(pages)s"
 
 msgid "Sivutus"
 msgstr "Sivutus"
+
+msgid "Lähetetyt vastaukset"
+msgstr "Lähetetyt vastaukset"
+
+msgid "Vastaanottaja"
+msgstr "Vastaanottaja"
+
+msgid "Lisätty jonoon"
+msgstr "Lisätty jonoon"
+
+msgid "Ei vielä vastauksia."
+msgstr "Ei vielä vastauksia."

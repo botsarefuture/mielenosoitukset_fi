@@ -78,17 +78,11 @@
               {% for followup in support_ticket.followups %}
               <div class="note-box">
                 <div><strong>
-                  {%- if followup.direction == 'out' %}<span class="admin-status-badge admin-status-badge--info">→ {{ _('Lähtevä') }}</span>{% else %}<span class="admin-status-badge admin-status-badge--secondary">← {{ _('Saapuva') }}</span>{% endif %}
+                  <span class="admin-status-badge admin-status-badge--secondary">← {{ _('Saapuva') }}</span>
                   {{ followup.from_name or followup.from_email }}</strong> <span class="muted">{{ followup.timestamp|datetimeformat("%d.%m.%Y %H:%M") if followup.timestamp else '' }}</span>
-                  {%- if followup.direction == 'out' and followup.status %}
-                    {%- if followup.status == 'sent' %}<span class="admin-status-badge admin-status-badge--success" title="{{ _('Sähköposti on toimitettu vastaanottajalle') }}">✓ {{ _('Toimitettu') }}</span>
-                    {%- elif followup.status == 'failed' %}<span class="admin-status-badge admin-status-badge--danger" title="{{ _('Sähköpostin toimitus epäonnistui') }}{% if followup.error %}: {{ followup.error }}{% endif %}">✗ {{ _('Epäonnistui') }}</span>
-                    {%- else %}<span class="admin-status-badge admin-status-badge--warning">{{ _('Jonossa') }}</span>
-                    {%- endif %}
-                  {%- endif %}
                 </div>
                 {% if followup.subject %}<div class="muted">{{ followup.subject }}</div>{% endif %}
-                <div>{{ followup.message }}</div>
+                <div class="admin-message-body">{{ followup.message }}</div>
               </div>
               {% endfor %}
             </div>
@@ -313,6 +307,42 @@
           {% endif %}
         </div>
       </section>
+
+      {% if case.case_type == "support_ticket" %}
+      <section class="admin-section-card" id="outgoing-replies" aria-labelledby="outgoing-replies-heading">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2 id="outgoing-replies-heading">{{ _('Lähetetyt vastaukset') }}</h2></div>
+          <span class="admin-status-badge">{{ case_data.support_ticket.outgoing_replies|length }}</span>
+        </div>
+        <div class="admin-section-card__body admin-stack">
+          {% for reply in case_data.support_ticket.outgoing_replies %}
+          <article class="note-box admin-stack">
+            <div class="admin-row-actions">
+              {% if reply.status == 'sent' %}
+              <span class="admin-status-badge admin-status-badge--success">{{ _('Lähetetty') }}</span>
+              {% elif reply.status == 'failed' %}
+              <span class="admin-status-badge admin-status-badge--danger">{{ _('Epäonnistui') }}</span>
+              {% elif reply.status == 'queued' %}
+              <span class="admin-status-badge admin-status-badge--warning">{{ _('Jonossa') }}</span>
+              {% else %}
+              <span class="admin-status-badge">{{ _('Ei tiedossa') }}</span>
+              {% endif %}
+            </div>
+            <dl class="admin-message-meta">
+              <div><dt>{{ _('Lähettäjä') }}</dt><dd>{{ reply.from_name or reply.from_email or _('Ei tiedossa') }}</dd></div>
+              <div><dt>{{ _('Vastaanottaja') }}</dt><dd>{{ reply.to_email or _('Ei tiedossa') }}</dd></div>
+              <div><dt>{{ _('Lisätty jonoon') }}</dt><dd>{{ reply.timestamp|datetimeformat("%d.%m.%Y %H:%M") if reply.timestamp else _('Ei tiedossa') }}</dd></div>
+              {% if reply.sent_at %}<div><dt>{{ _('Lähetetty') }}</dt><dd>{{ reply.sent_at|datetimeformat("%d.%m.%Y %H:%M") }}</dd></div>{% endif %}
+            </dl>
+            {% if reply.subject %}<p class="fw-semibold mb-0">{{ reply.subject }}</p>{% endif %}
+            <div class="admin-message-body">{{ reply.message or '' }}</div>
+          </article>
+          {% else %}
+          <div class="admin-empty-state">{{ _('Ei vielä vastauksia.') }}</div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
 
       <section class="admin-section-card">
         <div class="admin-section-card__header">

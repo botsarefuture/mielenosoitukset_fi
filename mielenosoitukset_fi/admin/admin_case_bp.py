@@ -469,6 +469,7 @@ def single_case(case_id):
     elif case.case_type == "support_ticket":
         suggestion = case.suggestion or {}
         ticket_meta = (case.meta or {}).get("ticket", {})
+        messages = suggestion.get("messages") or []
         case_data["support_ticket"] = {
             "subject": ticket_meta.get("subject") or suggestion.get("subject") or _("(ei aihetta)"),
             "message": suggestion.get("message") or _("(ei viestiä)"),
@@ -478,7 +479,8 @@ def single_case(case_id):
             "message_id": ticket_meta.get("message_id"),
             "from_wrapper": ticket_meta.get("from_wrapper", False),
             "submitter_email": (case.submitter or {}).get("submitter_email"),
-            "followups": suggestion.get("messages", []),
+            "followups": [message for message in messages if message.get("direction") != "out"],
+            "outgoing_replies": [message for message in reversed(messages) if message.get("direction") == "out"],
         }
         case_data["urgent"] = bool((case.meta or {}).get("urgent"))
         # Linked objects: when an admin acts on the request (e.g. creates a

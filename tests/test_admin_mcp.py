@@ -1,10 +1,14 @@
 import hashlib
 import base64
+import io
 from urllib.parse import parse_qs, urlparse
 import jwt
+import pytest
 
 from bson import ObjectId
+from PIL import Image
 from mielenosoitukset_fi.utils.tokens import create_token
+from mielenosoitukset_fi.utils.s3 import upload_image_fileobj as real_upload_image_fileobj
 
 
 def _mcp_headers(token: str) -> dict[str, str]:
@@ -336,3 +340,277 @@ def test_admin_mcp_can_create_demo(app_factory, seeded_data, db):
     created_demo = db.demonstrations.find_one({"_id": ObjectId(created_payload["demo_id"])})
     assert created_demo["title"] == "MCP Created Demo"
     assert created_demo["city"] == "Helsinki"
+
+
+def _call_tool(client, token, name, arguments):
+    return client.post(
+        "/api/admin/mcp",
+        json=_rpc("tools/call", {"name": name, "arguments": arguments}),
+        headers=_mcp_headers(token),
+    )
+
+
+def _image_base64():
+    stream = io.BytesIO()
+    Image.new("RGB", (12, 12), "red").save(stream, format="PNG")
+    return base64.b64encode(stream.getvalue()).decode("ascii")
+
+
+def test_mcp_schema_describes_freeform_organizers_optional_fields_and_uploads(app_factory, seeded_data):
+    client, token, _ = _mcp_client(app_factory, seeded_data)
+    response = client.post("/api/admin/mcp", json=_rpc("tools/list"), headers=_mcp_headers(token))
+    tools = {tool["name"]: tool for tool in response.get_json()["result"]["tools"]}
+    schema = tools["create_demo"]["inputSchema"]
+    assert "end_time" not in schema["required"]
+    organizer_schema = schema["properties"]["organizers"]
+    record_schema = next(item for item in organizer_schema["items"]["anyOf"] if item["type"] == "object")
+    assert {"name", "organization_id", "email", "website"} <= record_schema["properties"].keys()
+    assert record_schema["anyOf"] == [{"required": ["name"]}, {"required": ["organization_id"]}]
+    assert "description" not in tools["create_organization"]["inputSchema"]["required"]
+    assert "upload_image" in tools
+    assert {"cover_picture", "img", "preview_image", "gallery_images"} <= schema["properties"].keys()
+
+
+def test_mcp_creates_demo_without_end_time_or_organizer_contact(app_factory, seeded_data, db):
+    client, token, seeded = _mcp_client(app_factory, seeded_data)
+    org = db.organizations.find_one({"_id": seeded["org_id"]})
+    response = _call_tool(client, token, "create_demo", {
+        "title": "Optional details", "date": "2026-11-07", "start_time": "13:00",
+        "city": "Helsinki", "address": "Rautatientori",
+        "organizers": [{"name": "Unregistered group"}, str(seeded["org_id"])],
+        "cover_picture": "https://example.test/poster.jpg",
+    })
+    payload = response.get_json()["result"]["structuredContent"]
+    demo = db.demonstrations.find_one({"_id": ObjectId(payload["demo_id"])})
+    assert demo["end_time"] is None
+    assert demo["event_type"] == "OTHER"
+    assert demo["cover_picture"] == "https://example.test/poster.jpg"
+    assert demo["organizers"][0]["name"] == "Unregistered group"
+    assert demo["organizers"][0]["email"] == ""
+    linked = demo["organizers"][1]
+    assert linked["organization_id"] == seeded["org_id"]
+    assert linked["name"] == org["name"]
+    assert linked["email"] == org["email"]
+    # The dashboard must show populated rows rather than blank cards.
+    with client.session_transaction() as session:
+        session["_user_id"] = str(seeded["admin_id"])
+        session["_fresh"] = True
+    page = client.get(f"/admin/demo/edit_demo/{payload['demo_id']}")
+    assert page.status_code == 200
+    assert "Unregistered group" in page.get_data(as_text=True)
+    assert org["name"] in page.get_data(as_text=True)
+
+
+def test_mcp_organizer_update_preserves_metadata_and_privacy(app_factory, seeded_data, db):
+    client, token, seeded = _mcp_client(app_factory, seeded_data)
+    record_id = ObjectId()
+    db.demonstrations.update_one({"_id": seeded["demo_id"]}, {"$set": {"organizers": [{
+        "_id": record_id, "name": "Old name", "email": "", "website": "",
+        "logo": "https://example.test/group-logo.jpg",
+    }]}})
+    response = _call_tool(client, token, "update_demo", {
+        "demo_id": str(seeded["demo_id"]), "patch": {
+            "start_time": "14:15", "end_time": None,
+            "organizers": [{"_id": str(record_id), "name": "New name", "is_private": True,
+                            "show_name_public": False, "show_email_public": False}],
+        },
+    })
+    assert "error" not in response.get_json()
+    demo = db.demonstrations.find_one({"_id": seeded["demo_id"]})
+    assert demo["start_time"] == "14:15:00"
+    assert demo["end_time"] is None
+    organizer = demo["organizers"][0]
+    assert organizer["_id"] == record_id
+    assert organizer["logo"] == "https://example.test/group-logo.jpg"
+    assert organizer["name"] == "New name"
+    assert organizer["is_private"] is True
+    assert organizer["show_name_public"] is False
+    assert organizer["show_email_public"] is False
+
+
+@pytest.mark.parametrize("organizers", [
+    "not-an-array", [1], [{}], [{"email": "contact@example.test"}],
+    [{"organization_id": "not-an-id"}], [{"organization_id": str(ObjectId())}],
+    [{"name": "Group"}, {"name": "Group"}],
+])
+def test_mcp_rejects_invalid_organizers_without_changing_demo(app_factory, seeded_data, db, organizers):
+    client, token, seeded = _mcp_client(app_factory, seeded_data)
+    before = db.demonstrations.find_one({"_id": seeded["demo_id"]})
+    response = _call_tool(client, token, "update_demo", {
+        "demo_id": str(seeded["demo_id"]), "patch": {"title": "Should not save", "organizers": organizers},
+    })
+    assert response.get_json()["error"]["code"] == -32602
+    assert db.demonstrations.find_one({"_id": seeded["demo_id"]}) == before
+
+
+def test_mcp_creates_organization_without_description(app_factory, seeded_data, db):
+    client, token, _ = _mcp_client(app_factory, seeded_data)
+    response = _call_tool(client, token, "create_organization", {
+        "name": "Optional description", "email": "group@example.test",
+    })
+    payload = response.get_json()["result"]["structuredContent"]
+    assert db.organizations.find_one({"_id": ObjectId(payload["organization_id"])})["description"] == ""
+
+
+@pytest.mark.parametrize("field", ["cover_picture", "img", "preview_image", "gallery_images"])
+def test_mcp_upload_attaches_image_using_shared_storage(app_factory, seeded_data, db, monkeypatch, field):
+    from mielenosoitukset_fi import mcp_admin_bp
+
+    client, token, seeded = _mcp_client(app_factory, seeded_data)
+    url = "https://cdn.example.test/DEM/upload.jpg"
+    uploaded = []
+
+    def upload(bucket, stream, filename, image_type):
+        with Image.open(stream) as image:
+            assert image.size == (12, 12)
+        uploaded.append((bucket, filename, image_type))
+        return url
+
+    monkeypatch.setattr(mcp_admin_bp, "upload_image_fileobj", upload)
+    if field == "gallery_images":
+        db.demonstrations.update_one({"_id": seeded["demo_id"]}, {"$set": {field: ["https://example.test/existing.jpg"]}})
+    response = _call_tool(client, token, "upload_image", {
+        "filename": "poster.png", "data_base64": "data:image/png;base64," + _image_base64(),
+        "demo_id": str(seeded["demo_id"]), "field": field,
+    })
+    assert response.status_code == 200
+    assert response.get_json()["result"]["structuredContent"]["url"] == url
+    assert uploaded == [("mielenosoitukset-test", "poster.png", "demo_pics")]
+    saved = db.demonstrations.find_one({"_id": seeded["demo_id"]})[field]
+    assert saved == (["https://example.test/existing.jpg", url] if field == "gallery_images" else url)
+
+
+def test_mcp_upload_sets_organization_logo(app_factory, seeded_data, db, monkeypatch):
+    from mielenosoitukset_fi import mcp_admin_bp
+
+    client, token, seeded = _mcp_client(app_factory, seeded_data)
+    monkeypatch.setattr(mcp_admin_bp, "upload_image_fileobj", lambda *args: "https://cdn.example.test/logo.jpg")
+    response = _call_tool(client, token, "upload_image", {
+        "filename": "logo.png", "data_base64": _image_base64(),
+        "organization_id": str(seeded["org_id"]),
+    })
+    assert "error" not in response.get_json()
+    assert db.organizations.find_one({"_id": seeded["org_id"]})["logo"] == "https://cdn.example.test/logo.jpg"
+
+
+@pytest.mark.parametrize("source", ["auto", "automatic"])
+@pytest.mark.parametrize("operation", ["upload_image", "update_demo"])
+def test_mcp_user_cover_replaces_automatic_source(app_factory, seeded_data, db, monkeypatch, source, operation):
+    from mielenosoitukset_fi import mcp_admin_bp
+
+    client, token, seeded = _mcp_client(app_factory, seeded_data)
+    url = "https://cdn.example.test/user-poster.jpg"
+    db.demonstrations.update_one({"_id": seeded["demo_id"]}, {"$set": {
+        "cover_source": source, "img": None, "gallery_images": [], "cover_picture": "https://example.test/generated.jpg",
+    }})
+    monkeypatch.setattr(mcp_admin_bp, "upload_image_fileobj", lambda *args: url)
+    arguments = {"demo_id": str(seeded["demo_id"])}
+    if operation == "upload_image":
+        arguments.update({"filename": "poster.png", "data_base64": _image_base64()})
+    else:
+        arguments["patch"] = {"cover_picture": url}
+    response = _call_tool(client, token, operation, arguments)
+    assert "error" not in response.get_json()
+    demo = db.demonstrations.find_one({"_id": seeded["demo_id"]})
+    assert demo["cover_source"] == "user"
+    assert demo["cover_picture"] == url
+    page = client.get(f"/demonstration/{seeded['demo_id']}")
+    assert page.status_code == 200
+    html = page.get_data(as_text=True)
+    assert '<section class="demo-gallery' in html
+    assert f'<img src="{url}"' in html
+
+
+@pytest.mark.parametrize("arguments", [
+    {"filename": "poster.png", "data_base64": "not base64"},
+    {"filename": "poster.png", "data_base64": base64.b64encode(b"not an image").decode()},
+    {"filename": "poster.png", "data_base64": _image_base64(), "field": "logo"},
+    {"filename": "poster.png", "data_base64": _image_base64(), "demo_id": str(ObjectId())},
+    {"filename": "poster.png", "data_base64": _image_base64(), "demo_id": "invalid"},
+])
+def test_mcp_invalid_upload_does_not_reach_storage(app_factory, seeded_data, monkeypatch, arguments):
+    from mielenosoitukset_fi import mcp_admin_bp
+
+    client, token, _ = _mcp_client(app_factory, seeded_data)
+    monkeypatch.setattr(mcp_admin_bp, "upload_image_fileobj", lambda *args: pytest.fail("Should not upload"))
+    response = _call_tool(client, token, "upload_image", arguments)
+    assert response.get_json()["error"]["code"] in {-32602, -32004}
+
+
+def test_mcp_failed_storage_keeps_existing_image(app_factory, seeded_data, db, monkeypatch):
+    from mielenosoitukset_fi import mcp_admin_bp
+
+    client, token, seeded = _mcp_client(app_factory, seeded_data)
+    before = db.demonstrations.find_one({"_id": seeded["demo_id"]})
+    monkeypatch.setattr(mcp_admin_bp, "upload_image_fileobj", lambda *args: None)
+    response = _call_tool(client, token, "upload_image", {
+        "filename": "poster.png", "data_base64": _image_base64(), "demo_id": str(seeded["demo_id"]),
+    })
+    assert response.status_code == 500
+    assert db.demonstrations.find_one({"_id": seeded["demo_id"]}) == before
+
+
+def test_mcp_upload_runs_real_image_conversion(app_factory, seeded_data, monkeypatch):
+    from mielenosoitukset_fi import mcp_admin_bp
+    from mielenosoitukset_fi.utils import s3
+
+    client, token, _ = _mcp_client(app_factory, seeded_data)
+    objects = []
+
+    class StorageClient:
+        def put_object(self, **kwargs):
+            objects.append(kwargs)
+
+    monkeypatch.setattr(s3, "_s3_client", StorageClient())
+    monkeypatch.setattr(mcp_admin_bp, "upload_image_fileobj", real_upload_image_fileobj)
+    response = _call_tool(client, token, "upload_image", {
+        "filename": "poster-without-extension", "data_base64": _image_base64(),
+    })
+    assert response.status_code == 200
+    payload = response.get_json()["result"]["structuredContent"]
+    assert payload["uploaded"] is True
+    assert payload["url"].startswith("https://cdn.example.test/DEM/demo_pics-")
+    assert len(objects) == 1
+    assert objects[0]["ContentType"] == "image/jpeg"
+    with Image.open(io.BytesIO(objects[0]["Body"])) as image:
+        assert image.format == "JPEG"
+        assert image.size == (12, 12)
+
+
+def test_mcp_upload_requires_write_scope(app_factory, seeded_data, monkeypatch):
+    from mielenosoitukset_fi import mcp_admin_bp
+
+    client, token, _ = _mcp_client(app_factory, seeded_data)
+    client.application.config["ADMIN_MCP"]["TOKENS"][0]["scopes"] = ["read"]
+    monkeypatch.setattr(mcp_admin_bp, "upload_image_fileobj", lambda *args: pytest.fail("Should not upload"))
+    response = _call_tool(client, token, "upload_image", {
+        "filename": "poster.png", "data_base64": _image_base64(),
+    })
+    assert response.status_code == 403
+
+
+def test_mcp_upload_checks_size_before_contacting_storage(app_factory, seeded_data, monkeypatch):
+    from mielenosoitukset_fi import mcp_admin_bp
+
+    client, token, _ = _mcp_client(app_factory, seeded_data)
+    client.application.config["ADMIN_MCP"]["MAX_IMAGE_BYTES"] = 16
+    monkeypatch.setattr(mcp_admin_bp, "upload_image_fileobj", lambda *args: pytest.fail("Should not upload"))
+    response = _call_tool(client, token, "upload_image", {
+        "filename": "poster.png", "data_base64": _image_base64(),
+    })
+    assert response.get_json()["error"]["code"] == -32602
+
+
+@pytest.mark.parametrize("patch", [
+    {"title": "Should not save", "start_time": "25:99"},
+    {"title": "", "start_time": "14:15"},
+    {"address": "", "start_time": "14:15"},
+])
+def test_mcp_invalid_update_is_atomic(app_factory, seeded_data, db, patch):
+    client, token, seeded = _mcp_client(app_factory, seeded_data)
+    before = db.demonstrations.find_one({"_id": seeded["demo_id"]})
+    response = _call_tool(client, token, "update_demo", {
+        "demo_id": str(seeded["demo_id"]), "patch": patch,
+    })
+    assert response.get_json()["error"]["code"] == -32602
+    assert db.demonstrations.find_one({"_id": seeded["demo_id"]}) == before

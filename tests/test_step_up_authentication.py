@@ -197,6 +197,8 @@ def test_elevation_times_out(wapp, db, seeded_data, monkeypatch, timeout):
     wapp.config['SUDO_DEFAULT_TIMEOUT'] = timeout
     client = _client_for_user(wapp, seeded_data["user_id"])
     _elevate_with_password(client, password="UserPass1!")
+    # A just-created proof is valid even when both clock reads are identical.
+    assert client.post("/users/auth/api/v2/passkeys/register/options").status_code == 200
     clock[0] += timeout
     assert client.post("/users/auth/api/v2/passkeys/register/options").status_code == 200
     clock[0] += .001
@@ -206,6 +208,14 @@ def test_elevation_times_out(wapp, db, seeded_data, monkeypatch, timeout):
 
     r = client.get("/users/auth/api/v2/step-up/status")
     assert r.get_json()["elevated"] is False
+    with client.session_transaction() as session:
+        assert "sudo" not in session
+        assert session["_user_id"] == str(seeded_data["user_id"])
+
+    # A backwards clock adjustment must fail closed without ending login.
+    _elevate_with_password(client, password="UserPass1!")
+    clock[0] -= .001
+    assert client.post("/users/auth/api/v2/passkeys/register/options").status_code == 403
     with client.session_transaction() as session:
         assert "sudo" not in session
         assert session["_user_id"] == str(seeded_data["user_id"])

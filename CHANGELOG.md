@@ -4,6 +4,9 @@
 
 ## UNRELEASED
 
+- Restrict privileged `admin` and `mcp.admin` API-token issuance to full global authority, including after password step-up; preserve ordinary and limited-admin denial.
+
+- Strengthen existing regression checks for session-proof time bounds and token revocation without deleting other usable credentials.
 - Admin MCP now accepts populated profile links and name-only freeform event organizers using the dashboard's shared parser, prevents blank organizer cards, makes unknown end times and organization descriptions optional, and supports image-byte uploads to event covers, previews, galleries and organization logos through the existing storage pipeline. Replacing an automatic cover marks the new image as user-provided so it remains visible on the event page.
 
 - Show support-ticket outgoing replies in a dedicated, permission-scoped history with sender, recorded recipient, queued/sent times, full escaped message and explicit queue/failure status. New replies retain their actual recipient; older records show unknown rather than guessing from the current contact address. Shared message styling preserves line breaks in both themes.

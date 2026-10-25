@@ -507,10 +507,7 @@ def generate_api_token():
         }), 400
 
     requested_privileged_scopes = set(scopes) & PRIVILEGED_SCOPES
-    can_issue_privileged_scopes = bool(
-        current_user.global_admin
-        or current_user.role in ["global_admin", "admin", "superuser", "god"]
-    )
+    can_issue_privileged_scopes = current_user.has_full_permissions()
     if requested_privileged_scopes and not can_issue_privileged_scopes:
         token_usage_logs_collection().insert_one({
             "user_id": current_user._id,

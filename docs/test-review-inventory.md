@@ -2,6 +2,14 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+Token review integration group1, 2026-10-25, based on main `e3aba1f8`:
+**1,290 repository-wide definitions /175 files /440 individually assessed**.
+Preserves all424 main assessments and transfers sixteen non-overlapping
+Batch05/07/12 dispositions; Batch06 updates existing expiry evidence without
+counting it twice. Focused validation39 passed; no hosted/current-PR result yet.
+Only this group's changes are included, not the other local audit batches.
+See [integration evidence](mutation-test-review.md#integration-group1--api-token-authority-and-revocation).
+
 DATA-04b/#771 on main `54b02c58`, 2026-10-25: **1,290 repository-wide definitions /175 test files /424 individually assessed definitions**. Preserves all417 merged assessments and adds six reply-history definitions/13 cases plus one existing case-component contract assessment. All107 focused cases pass, including actual Chromium mobile/light and desktop/dark; Jinja/Python syntax and diff checks pass. Disposable Mongo, real permission-scoped routes/Jinja; email enqueue is isolated, not provider delivery. Full audit/retention policy and CASE-01/CASE-02 remain separate roadmap work. Local CodeRabbit review was rate-limited before analysis, not a clean review.
 
 ## tests/test_case_reply_history.py
@@ -2120,13 +2128,33 @@ UI-01 / QA-04, 2026-10-12, Codex, P1, stacked on #922. Actual shared macro and c
 
 ## tests/test_public_token_manager.py
 
-- [ ] `test_token_manager_requires_authentication`
+- [x] `test_token_manager_requires_authentication`
 - [ ] `test_token_manager_renders_shared_accessible_contract`
 - [ ] `test_token_manager_uses_safe_dom_and_shared_styles`
 - [ ] `test_token_manager_rendered_javascript_parses`
-- [ ] `test_token_creation_rejects_malformed_scopes_with_localized_error`
-- [ ] `test_token_revoke_rejects_invalid_and_foreign_ids`
-- [ ] `test_token_revoke_deletes_only_the_current_users_token`
+- [x] `test_token_creation_rejects_malformed_scopes_with_localized_error`
+- [x] `test_token_revoke_rejects_invalid_and_foreign_ids`
+- [x] `test_token_revoke_deletes_only_the_current_users_token`
+
+Batch12 · Codex · 2026-10-25 · starting `e3ed9d94`. Four existing security
+checks individually **improve/keep**; no new definitions. The three UI/static/JS
+checks remain pending despite passing compatibility runs. Public-token file:
+seven definitions /10 cases; combined MCP validation46 cases passed in18.91s.
+[Detailed controls and cost](mutation-test-review.md#batch12--public-token-authentication-and-revocation-isolation).
+
+| Definition | Unique regression and disposition | Cost / reliability / limits |
+| --- | --- | --- |
+| `test_token_manager_requires_authentication` | Four actual UI/list/create/revoke routes deny anonymous callers through internal login with unchanged credential records; improve/keep. | Shared definition, real valid payloads and Flask-Login, parsed destination instead of substring. Added seeded setup justified for independently registered routes; not all auth paths. |
+| `test_token_creation_rejects_malformed_scopes_with_localized_error` | Malformed string scope400 plus actual localized error and no token write; improve/keep. | Existing exact Finnish assertion intentionally guards localization, distinct from broader Batch05 shape/authority matrix. No duplicate new matrix. Copy-edit maintenance acknowledged. |
+| `test_token_revoke_rejects_invalid_and_foreign_ids` | Existing malformed/foreign400/404 checks now require all tokens unchanged, not only foreign target retained; improve/keep. | Reuses two requests and small sorted snapshot; existing localized errors retained. Over-deletion fault now caught; not every ID shape or CSRF policy. |
+| `test_token_revoke_deletes_only_the_current_users_token` | Usable actual target becomes401/token_invalid; same-owner spare remains usable and all other records unchanged; improve/keep. | Two actual helper-created credentials, real hash lookup/revoke/check. Replaces dummy seeded target and success-prose coupling. No entropy or arbitrary concurrent-token guarantee. |
+
+Deliberately deleting the caller's other credentials passed all four original
+cases; now both revocation definitions fail at preservation checks, not harness
+errors. No production fix needed. Snapshots protect forbidden mutation, not
+incidental success formatting. No consolidation: each of the four protects a
+different authentication/shape/ownership/success boundary.
+
 
 ## tests/test_public_toolbar_contract.py
 
@@ -2221,14 +2249,70 @@ Review follow-up, 2026-10-18: the unrelated-organization negative explicitly cle
 
 ## tests/test_security_regressions.py
 
-- [ ] `test_legacy_settings_rejects_privilege_fields`
-- [ ] `test_legacy_settings_still_updates_allowed_fields`
-- [ ] `test_ordinary_user_cannot_issue_mcp_admin_token`
-- [ ] `test_api_token_rejects_unknown_scopes`
-- [ ] `test_api_token_rejects_malformed_scope_payload`
-- [ ] `test_global_admin_can_issue_mcp_admin_token`
-- [ ] `test_privileged_token_without_step_up_is_rejected`
-- [ ] `test_auth_security_routes_ignore_stale_module_database_handle`
+QA-01 / Batch05 · Codex · 2026-10-25 · starting `f901ee99`. Eight existing
+definitions individually assessed, twelve collected cases after extending two
+existing definitions. Real Flask/session/Mongo; seeded authentication and
+stubbed external notification/upload effects, not actual login or CSRF proof.
+Control 8 passed in 4.36s. Two explicit handler faults escaped all original cases
+and are detected after improvements. A new elevated limited-admin scenario
+reproduced real privileged-token issuance before the one-line shared-policy
+fix. Final security/global-authority/MCP controls 27 passed in 9.27s; other 15
+cases not newly assessed. [Batch05 evidence and maintenance rationale](mutation-test-review.md#batch05--settings-privilege-fields-and-api-token-authority).
+No new definitions; renamed the existing ordinary-user denial definition.
+
+- [x] `test_legacy_settings_rejects_privilege_fields`
+
+Keep: exact forbidden role/admin/grant field names, unchanged persisted privilege
+values and no partial language update on mixed input. Small real request; no
+whole-document or message-prose coupling. Not arbitrary mass-assignment fuzzing.
+
+- [x] `test_legacy_settings_still_updates_allowed_fields`
+
+Keep: all three allowed fields persist after a valid request; prevents a blanket
+settings rejection from satisfying only negative security tests. Real route,
+notification transport stubbed; not a message delivery proof.
+
+- [x] `test_non_global_user_cannot_issue_privileged_token`
+
+Improve/rename from `test_ordinary_user_cannot_issue_mcp_admin_token`: two roles
+(user and limited admin) × two privileged scopes (admin/mcp.admin), after real
+password step-up plus elevated-status control. Require 403 for authority rather
+than step-up and unchanged token count. Previously ordinary denial could be
+masked by freshness; limited admin actually issued both scopes. Route now uses
+User.has_full_permissions(). Four-case/password cost justified by security risk;
+no historical-token revocation or full role matrix claim.
+
+- [x] `test_api_token_rejects_unknown_scopes`
+
+Keep: supported+unknown scope rejected 400 with no insert. Token helper may also
+enforce this, so do not couple test to which application layer rejects it.
+No exact translated error message or unsupported-name quota.
+
+- [x] `test_api_token_rejects_malformed_scope_payload`
+
+Improve existing: two cases cover string outer shape and list with an integer
+member; require 400 and no insert. The mixed list detects TypeError/500 when the
+early shape/item guard is removed. Modest extra fixture, no separate definition
+or exhaustive speculative JSON-type matrix.
+
+- [x] `test_global_admin_can_issue_mcp_admin_token`
+
+Keep: actual admin password step-up, exact returned scopes and a persisted token
+owned by that admin. Distinct positive authority/freshness control, not token
+entropy/hash/expiry, OAuth transport or role-backend unit coverage.
+
+- [x] `test_privileged_token_without_step_up_is_rejected`
+
+Keep: authorized admin without elevation must get step_up_required and preserve
+token count. Separates freshness from authority; timing/session binding reviewed
+separately. No exact prose assertion.
+
+- [x] `test_auth_security_routes_ignore_stale_module_database_handle`
+
+Keep: controlled obsolete module DB cannot disable token validation or swallow
+allowed settings writes; real current DB determines results/persistence. Distinct
+legacy state justifies overlapping allowed-field assertions. No real database
+outage or concurrent reconfiguration proof. No consolidation/removal justified.
 
 ## tests/test_service_integrations.py
 
@@ -2395,11 +2479,29 @@ QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. El
 | `test_step_up_password_without_mfa_and_without_totp_works` | No-MFA fallback returns success, records correct actor/method and reports elevated. | Real no-device account. Overlaps first test but explicitly protects method/session payload; not a reason to remove route-level guard case. | Strengthened; keep. |
 | `test_step_up_options_reflect_methods` | Password-only method initially; real registered key makes WebAuthn preferred. | Signed simulated registration, explicit option response statuses; no hardware/browser claim. | Keep; status assertions strengthened. |
 | `test_step_up_webauthn_flow` | Fresh session initially denied; real signed step-up grants actor-bound WebAuthn elevation and unlocks guard; password fallback remains. | Real registration/assertion verification through API using generated key. Challenge replay/origin/counter negative matrices are assessed in separate WebAuthn tests, not proved here. | Strengthened recorded method/actor; keep. |
-| `test_elevation_times_out` | Configured 10/900-second windows allow exact boundary, reject just after, clear sudo while retaining login. | Only step-up module clock replaced, not cookie/signing/TOTP clocks; no sleep and no production clock change. Invalid configuration and future timestamps remain follow-up cases. | Strengthened deterministic boundary integration; keep. |
+| `test_elevation_times_out` | Configured 10/900-second windows allow age zero and exact upper boundary; expired and future-dated proofs deny/clear sudo while retaining login. | Only step-up module clock replaced, not cookie/signing/TOTP clocks; no sleep or production clock change. Batch06 extends this same definition; invalid configuration/malformed internal proof remain outside scope. | Improve existing; deterministic temporal-bound integration. |
 | `test_elevation_does_not_leak_across_sessions` | Separate client for same/different account starts denied; copied sudo bound to a different actor is rejected/cleared; original session stays elevated. | Distinct cookie jars and real guard. Deliberate wrong-actor state is fixture preparation, not a claim that stolen same-actor session cookies are safe. | Strengthened same-account and ownership boundaries; keep. |
 | `test_sudo_required_redirects_anonymous_to_login` | Anonymous registration attempt redirects to login. | Actual outer login_required decorator returns 302; this does not test direct sudo_required's standalone 401 branch. | Keep with narrowed claim. |
 | `test_logout_clears_elevation` | Original session loses sudo/login, protected route redirects, and real re-login on same cookie jar remains unelevated. | Replaces vacuous fresh-client-only assertion. An isolated runtime mutation making logout clear_elevation a no-op is detected by this test; no production file was mutated. Does not prove copied-cookie invalidation. | Strengthened; mutation confirmed. |
 | `test_change_password_requires_step_up` | No elevation and weak password leave stored hash unchanged; successful strong update verifies new password and rejects old one. | Real DB/hash and policy route; no success-status-only claim. Broader existing-session revocation/MFA-reset lifecycle remains separate. | Strengthened; keep. |
+
+
+Batch06 follow-up, 2026-10-25, starting `451e049d`: only the expiry and
+session/account-isolation definitions were revisited (four collected cases).
+Existing prior assessments for all eleven definitions remain intact and are
+not counted again. Original assertions detected 26/34 mutmut-generated
+has_elevation variants; the age <= 0 survivor exposed a missing exact-zero
+assertion. Extended the existing expiry test with immediate validity and
+backwards-clock fail-closed/session-preservation checks, retaining its two
+configured-window cases. Each survivor has an individual maintenance decision
+in [Batch06](mutation-test-review.md#batch06--session-elevation-time-and-actor-bounds-follow-up).
+Optional unused timeout override and unsupported missing-timestamp schema are
+explicitly deferred, not misreported as generally equivalent or tested.
+Fresh final run detects 27/34 generated variants; seven have explicit equivalent
+or deferred-contract rationales, and the separate future-guard-removal control
+now fails the intended negative-age assertion. Real-import step-up/global-model
+validation passed 17 cases in 6.07s. Four model controls are separate from this
+follow-up. No test definition or parametrized case was added or removed.
 
 ## tests/test_submit_draft_reliability.py
 
@@ -2435,10 +2537,43 @@ QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. El
 
 ## tests/test_super_admin_permissions.py
 
-- [ ] `test_global_admin_flag_grants_every_permission_scope`
-- [ ] `test_super_admin_roles_grant_every_permission`
-- [ ] `test_god_role_also_enables_legacy_global_admin_checks_when_loaded`
-- [ ] `test_regular_user_still_needs_an_explicit_permission`
+QA-01 / Batch07 · Codex · 2026-10-25 · after `93fb40cd`. Four definitions/cases
+individually reviewed; all keep unchanged. Models/tests match main snapshot
+`54b02c58`. Actual User constructors/loading/permission methods, empty grants,
+unique BSON IDs; ordinary negative can query empty private membership data.
+No permission mock, password/login, HTTP authorization, real grant assignment
+or dependency-internals claim. Four cases pass in current-head 17-case validation
+(6.07s combined). A scoped fault adding limited admin to full-authority roles
+passes these four cases but fails both limited-admin variants in retained
+Batch05 token tests (two failures/six passes in 3.40s). This distributed evidence
+is explicit, not claimed as full model deny-role or mutation coverage.
+[Batch07 rationale and controls](mutation-test-review.md#batch07--global-authority-model-contracts).
+
+- [x] `test_global_admin_flag_grants_every_permission_scope`
+
+Keep: explicit full flag with ordinary base role grants arbitrary future,
+organization and city permissions; scope helper returns global. Four meaningful
+application-contract assertions, tiny setup; no HTTP or grant-write proof.
+
+- [x] `test_super_admin_roles_grant_every_permission`
+
+Keep: three named full-authority roles without explicit flag grant arbitrary
+permission. Three loop inputs within one collected case, not three test
+definitions. Cheap, distinct role path; no exhaustive restricted-role claim.
+
+- [x] `test_god_role_also_enables_legacy_global_admin_checks_when_loaded`
+
+Keep: persisted god role must expose the legacy global flag as well as modern
+permission success. Real loader catches compatibility break the direct role
+method alone would miss; no DB persistence/migration or other legacy-role proof.
+
+- [x] `test_regular_user_still_needs_an_explicit_permission`
+
+Keep: ordinary account with no grants must deny arbitrary permission. Real
+model/empty-membership lookup, complementary negative control. Explicit grant
+success and limited-admin negatives remain separate tests, including the retained
+Batch05 real route. No extra duplicate scenario, consolidation or removal
+justified; four distinct regression signals remain at low maintenance cost.
 
 ## tests/test_super_audit_collection.py
 

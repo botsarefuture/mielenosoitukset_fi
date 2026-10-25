@@ -160,7 +160,8 @@ also matched by `organization_id`. The privacy fields `is_private`,
 An empty organizers array removes all rows.
 
 Both create and update accept `cover_picture`, `img`, `preview_image`, and
-`gallery_images` URLs. Image uploads do not require an externally hosted URL.
+`gallery_images` URLs. Supplied or uploaded cover replacements are marked as
+user-provided so a previous automatic-cover marker cannot hide the image. Image uploads do not require an externally hosted URL.
 
 ## Uploading attached images
 

@@ -706,6 +706,11 @@ def _update_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
     if not applied:
         raise ValueError("No supported fields in patch")
 
+    if applied.get("cover_picture"):
+        # A supplied cover replaces any generated cover, including its source
+        # marker; automatic covers are suppressed by the public gallery.
+        applied["cover_source"] = "user"
+
     # Reconstruct after merging so dates, times and organizers use the same
     # model normalization as create and the dashboard, rather than raw setattr.
     demo = Demonstration.from_dict({**doc, **applied}, save_on_normalize=False)
@@ -793,6 +798,8 @@ def _upload_image(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dic
         update = {"$set": {field: url}}
         if demo_id:
             update["$set"]["last_modified"] = datetime.now(timezone.utc)
+            if field == "cover_picture":
+                update["$set"]["cover_source"] = "user"
             if field == "gallery_images":
                 update["$set"].pop(field)
                 update["$addToSet"] = {field: url}

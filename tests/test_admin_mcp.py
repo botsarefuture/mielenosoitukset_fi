@@ -493,6 +493,34 @@ def test_mcp_upload_sets_organization_logo(app_factory, seeded_data, db, monkeyp
     assert db.organizations.find_one({"_id": seeded["org_id"]})["logo"] == "https://cdn.example.test/logo.jpg"
 
 
+@pytest.mark.parametrize("source", ["auto", "automatic"])
+@pytest.mark.parametrize("operation", ["upload_image", "update_demo"])
+def test_mcp_user_cover_replaces_automatic_source(app_factory, seeded_data, db, monkeypatch, source, operation):
+    from mielenosoitukset_fi import mcp_admin_bp
+
+    client, token, seeded = _mcp_client(app_factory, seeded_data)
+    url = "https://cdn.example.test/user-poster.jpg"
+    db.demonstrations.update_one({"_id": seeded["demo_id"]}, {"$set": {
+        "cover_source": source, "img": None, "gallery_images": [], "cover_picture": "https://example.test/generated.jpg",
+    }})
+    monkeypatch.setattr(mcp_admin_bp, "upload_image_fileobj", lambda *args: url)
+    arguments = {"demo_id": str(seeded["demo_id"])}
+    if operation == "upload_image":
+        arguments.update({"filename": "poster.png", "data_base64": _image_base64()})
+    else:
+        arguments["patch"] = {"cover_picture": url}
+    response = _call_tool(client, token, operation, arguments)
+    assert "error" not in response.get_json()
+    demo = db.demonstrations.find_one({"_id": seeded["demo_id"]})
+    assert demo["cover_source"] == "user"
+    assert demo["cover_picture"] == url
+    page = client.get(f"/demonstration/{seeded['demo_id']}")
+    assert page.status_code == 200
+    html = page.get_data(as_text=True)
+    assert '<section class="demo-gallery' in html
+    assert f'<img src="{url}"' in html
+
+
 @pytest.mark.parametrize("arguments", [
     {"filename": "poster.png", "data_base64": "not base64"},
     {"filename": "poster.png", "data_base64": base64.b64encode(b"not an image").decode()},

@@ -18,6 +18,7 @@ volume/
 config.compose.dev.yaml
 .playwright-cli
 .codex
+.artifacts/visual-qa/
 **/.DS_Store
 .backup_pre_perf
 .deploy-build-sha

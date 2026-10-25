@@ -2,6 +2,15 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+OAuth/MCP integration Group 2, 2026-10-25, on main `d524fe0b`:
+**1,311 definitions /175 files /458 individually assessed**. Preserve all440
+main assessments; transfer eighteen non-overlapping Batch08–11 dispositions.
+Add fourteen previously unlisted main MCP definitions as pending, not assessed
+merely because their compatibility cases pass. Current focused validation74
+passed; local CodeRabbit review completed with zero findings and independent
+visual review returned SHIP for the captured consent/permission states. Hosted
+Group2 CI remains pending publication.
+
 Token review integration group1, 2026-10-25, based on main `e3aba1f8`:
 **1,290 repository-wide definitions /175 files /440 individually assessed**.
 Preserves all424 main assessments and transfers sixteen non-overlapping
@@ -392,17 +401,170 @@ QA-03a / SEC-04c support · P2 · Codex · 2026-10-22 · main8e6f0e2b. Each exis
 
 ## tests/test_admin_mcp.py
 
-- [ ] `test_admin_mcp_requires_bearer_token`
-- [ ] `test_admin_mcp_lists_tools`
-- [ ] `test_admin_mcp_oauth_metadata_advertises_registration_and_pkce`
-- [ ] `test_admin_mcp_dynamic_client_registration_and_oauth_code_flow`
-- [ ] `test_admin_mcp_accepts_oauth_bearer_tokens`
-- [ ] `test_admin_mcp_accepts_existing_api_tokens`
-- [ ] `test_admin_mcp_rejects_ordinary_api_token`
-- [ ] `test_admin_mcp_can_search_demos`
-- [ ] `test_admin_mcp_can_add_case_note`
-- [ ] `test_admin_mcp_can_update_organization`
-- [ ] `test_admin_mcp_can_create_demo`
+Current checkpoint for integration Group 2: **32 definitions /68 collected
+cases: 18 individually assessed, 14 newer main definitions still pending**.
+Focused integration run:74 passed (68 MCP plus six moderation compatibility
+cases). Historical Batch08–11 numbers below describe their original audit
+snapshots and are not current totals.
+
+- [x] `test_admin_mcp_requires_bearer_token`
+- [x] `test_admin_mcp_lists_tools`
+- [x] `test_admin_mcp_oauth_metadata_advertises_registration_and_pkce`
+- [x] `test_admin_mcp_dynamic_client_registration_and_oauth_code_flow`
+- [x] `test_admin_mcp_accepts_oauth_bearer_tokens`
+- [x] `test_admin_mcp_accepts_existing_api_tokens`
+- [x] `test_admin_mcp_rejects_api_token_without_mcp_scope`
+- [x] `test_admin_mcp_can_search_demos`
+- [x] `test_admin_mcp_can_add_case_note`
+- [x] `test_admin_mcp_can_update_organization`
+- [x] `test_admin_mcp_can_create_demo`
+
+Batch08 · Codex · 2026-10-25 · starting `c27604dc`; MCP source/tests matched
+main 54b02c58. The two checked existing definitions and two new definitions below
+were individually assessed at that checkpoint; the nine then-pending entries
+above are assessed in Batch09 below.
+Original 11 cases passed in 5.51s; complete revised 14 cases pass against private
+Mongo. Actual fixtures/session/routes/database, no permission/JWT answers mocked.
+CodeRabbit review was rejected for exhausted capacity/seat assignment; no
+external review result claimed. [Batch08 evidence and cost review](mutation-test-review.md#batch08--oauth-mcp-discovery-and-consent).
+
+`test_admin_mcp_oauth_metadata_advertises_registration_and_pkce`: improve fixture
+cost by removing unused full seeding. Retain discovery endpoint paths, S256
+advertisement and resource metadata; real config/routes. Metadata advertisement
+is not PKCE verification or external-server reachability evidence.
+
+`test_admin_mcp_dynamic_client_registration_and_oauth_code_flow`: improve existing
+flow for rendered session CSRF proof and shared actual registration helper.
+Retain state echo, exchange, requested scope and working MCP bearer. Remove
+editorial heading coupling; client identity/form remain checked. No negative
+PKCE/binding/replay or concurrent-consumption claim from this positive flow.
+
+- [x] `test_admin_mcp_oauth_consent_requires_csrf`
+
+New/keep: missing, wrong, Unicode wrong and other-session proof all deny without
+a code write; valid proof from the rendered form supports both denial without
+a code and approval. Distinct CSRF risk,
+real registered client and two authenticated cookie jars. Previous no-proof
+POST issued a code. No token-entropy or general cookie-theft assertion.
+
+- [x] `test_admin_mcp_oauth_consent_rechecks_global_authority`
+
+New/keep: user/admin downgrade cases reject GET and POST with no code after
+actual current authority loss; POST carries valid proof from the earlier
+allowed form. Prevents another guard from masking authorization failure. The
+maintainer explicitly chose full global authority over the documented legacy
+admin exception on 2026-10-25; shared model policy and docs now agree. Existing
+codes/tokens are not revoked. No consolidation/removal justified. At Batch08,
+the file had 13 definitions/14 cases; Batch09 below records the current totals.
+
+Batch09 · Codex · 2026-10-25 · starting `c96cebac`. The nine previously
+unchecked definitions above are now assessed, plus two new negative definitions
+below. Complete file: 15 definitions/25 cases; combined current-head run 31 passed
+in 12.73s including six unchanged moderation compatibility cases, not new reviews.
+Real auth/config/Flask/private Mongo, existing external-effect isolation. Four
+explicit fault controls escaped original assertions and are now detected; no
+mutmut score claimed. Two real failures (credential-prefix logging and uncaught
+required-scope error) were reproduced before their small source fixes.
+[Batch09 detailed controls/cost/limitations](mutation-test-review.md#batch09--mcp-bearer-failures-and-readwrite-workflow-contracts).
+
+| Existing definition | Individual disposition |
+| --- | --- |
+| `test_admin_mcp_requires_bearer_token` | Improve: three absent/unknown/unsupported-scheme cases, machine error/ID/challenge; no exact prose. Real adapters, not full header/config fuzzing. |
+| `test_admin_mcp_lists_tools` | Improve: initialize/catalog IDs and credential/prefix absence in debug logs with same two requests; core tool subset retained. No exact log/catalog formatting or full production-log audit. |
+| `test_admin_mcp_accepts_oauth_bearer_tokens` | Keep: locally signed external-issuer JWT accepted using real configured validation; no provider/TLS/mandatory-claims policy claim. |
+| `test_admin_mcp_accepts_existing_api_tokens` | Keep: real stored API token carrying mcp.admin reaches catalog; not issuer/entropy/revocation proof. |
+| `test_admin_mcp_rejects_api_token_without_mcp_scope` | Improve/rename ordinary-token denial: read/write and admin-only API cases independently require mcp.admin; RPC -32003/403, no diagnostic prose. Records are deliberately constructed by internal helper, not public-user issuance. |
+| `test_admin_mcp_can_search_demos` | Improve: exclude existing nonmatching ID and require filtered total 1 alongside positive match. No new fixture rows; resource bounds/other fields remain separate. |
+| `test_admin_mcp_can_add_case_note` | Improve: preserve prior nonempty audit prefix and default action type alongside note/actor. Real persistence; no caller-identity trust or concurrency claim. |
+| `test_admin_mcp_can_update_organization` | Keep: actual target website persists; distinct success workflow, paired with new scope denial. Not all fields/invalid patches. |
+| `test_admin_mcp_can_create_demo` | Keep: returned ID points to actual new title/city; moderation invariants remain separate retained tests. No redundant new positive. |
+
+- [x] `test_admin_mcp_rejects_invalid_oauth_bearer`
+
+New/keep: five wrong-key/issuer/audience/expired/missing-scope cases exercise our
+verification configuration and error response contract. Actual signed tokens,
+no decoder mock or cryptographic-internals test; epoch expiry avoids sleeps.
+Missing scope previously raised uncaught PermissionError/500; now 403 with the
+correlated machine error, other invalid credentials remain 401.
+
+- [x] `test_admin_mcp_read_only_token_cannot_mutate`
+
+New/keep: three valid case/org/demo write requests using a read-only key must
+deny 403 and preserve targets/count. Successful real read first prevents bad
+authentication from masking missing write checks. No write-result mock, generic
+all-tool claim or extra positive definition; whole forbidden targets are checked
+intentionally. Four distinct fault controls and consolidation choices recorded
+in Batch09; all current fifteen definitions now assessed. Code-exchange binding,
+expiry/replay/atomic consumption still require follow-up, not implied by the
+positive consent flow.
+
+Batch10 · Codex · 2026-10-25 · starting `3089fac2`. Reassessed the existing
+registration/code flow and added two distinct security definitions. Full MCP:
+32 cases passed in 14.52s; atomic exchange also passed two fresh-process repeats.
+[Detailed regression, cost and limits](mutation-test-review.md#batch10--oauth-authorization-code-binding-and-single-consumption).
+
+Existing `test_admin_mcp_dynamic_client_registration_and_oauth_code_flow`:
+**improve/keep**. Extend successful real registration/consent/CSRF/exchange/bearer
+use with sequential replay denial and no token leakage. One extra request,
+shared approval helper, stable protocol error instead of prose. Not all OAuth
+failures or issuer delivery/crash recovery.
+
+- [x] `test_admin_mcp_oauth_code_rejects_invalid_exchange`
+
+**Add/keep**, six cases: wrong/missing S256 verifier, redirect mismatch, another
+actually registered client, expired and unknown code. Each denies without token
+or consumption; legitimate retry works except deliberately expired code. Actual
+Flask/JWT/Mongo, fixed past expiry, shared approval helper; distinct security
+failures justify setup cost. Not confidential clients, plain/must-use-PKCE policy
+or exhaustive input shapes.
+
+- [x] `test_admin_mcp_oauth_code_consumption_is_atomic`
+
+**Add/keep**. Two independent HTTP clients overlap real reads of one unused
+code through a bounded barrier; actual writes must yield one200 and one400
+invalid_grant. Before fix both200, after fix one winner; no write-result stub.
+Narrow Collection.find_one scheduling patch is intentional coupling justified
+by a reproduced replay failure. Future lookup redesign requires adapting it;
+not multi-region, revocation or crash-safe token delivery evidence.
+
+
+Batch11 · Codex · 2026-10-25 · `ff20f09b`. Existing code flow **improve/keep**:
+three public/POST-secret/Basic-secret cases share all success/replay assertions.
+Basic sends client identity only through its actual header, guarding resolution.
+No separate positive definition. Complete MCP36 cases passed in16.33s.
+
+- [x] `test_admin_mcp_oauth_confidential_client_requires_secret`
+
+**Add/keep**, two methods: missing and wrong secret deny401/invalid_client, no
+access token or code consumption; real correct secret then succeeds. Shared
+real registration/approval/code fixture reduces duplication; no auth stub in
+normal controls, no dependency hash-internal assertions. Deliberate secret-check
+bypass passed all32 prior cases; now these two fail while34 pass. Higher setup
+cost justified by a distinct authentication boundary. Does not establish TLS,
+rotation, exact auth-method mismatch or all registration input policy.
+[Batch11 evidence and costs](mutation-test-review.md#batch11--oauth-confidential-client-secret-contract).
+
+
+The following fourteen definitions came from independent main MCP editing/image
+work and retain identical ASTs. Their32 cases passed as compatibility checks;
+that does not supply individual dispositions. Preserve them and review when
+that behavior group is selected, without repeating the eighteen assessments.
+
+- [ ] `test_mcp_creates_demo_without_end_time_or_organizer_contact`
+- [ ] `test_mcp_creates_organization_without_description`
+- [ ] `test_mcp_failed_storage_keeps_existing_image`
+- [ ] `test_mcp_invalid_update_is_atomic`
+- [ ] `test_mcp_invalid_upload_does_not_reach_storage`
+- [ ] `test_mcp_organizer_update_preserves_metadata_and_privacy`
+- [ ] `test_mcp_rejects_invalid_organizers_without_changing_demo`
+- [ ] `test_mcp_schema_describes_freeform_organizers_optional_fields_and_uploads`
+- [ ] `test_mcp_upload_attaches_image_using_shared_storage`
+- [ ] `test_mcp_upload_checks_size_before_contacting_storage`
+- [ ] `test_mcp_upload_requires_write_scope`
+- [ ] `test_mcp_upload_runs_real_image_conversion`
+- [ ] `test_mcp_upload_sets_organization_logo`
+- [ ] `test_mcp_user_cover_replaces_automatic_source`
+
 
 ## tests/test_admin_media_retirement.py
 

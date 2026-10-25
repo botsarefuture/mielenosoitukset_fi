@@ -14,7 +14,7 @@ from typing import Any
 from urllib.parse import urlencode
 
 from bson import ObjectId
-from flask import Blueprint, current_app, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user
 import jwt
 from PIL import Image, UnidentifiedImageError
@@ -33,6 +33,15 @@ from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 
 mcp_admin_bp = Blueprint("admin_mcp", __name__)
 logger = logging.getLogger(__name__)
+MCP_CONSENT_CSRF_SESSION_KEY = "admin_mcp_consent_csrf"
+
+
+def _consent_csrf_token() -> str:
+    token = session.get(MCP_CONSENT_CSRF_SESSION_KEY)
+    if not token:
+        token = secrets.token_urlsafe(32)
+        session[MCP_CONSENT_CSRF_SESSION_KEY] = token
+    return token
 
 
 def _mongo():
@@ -291,9 +300,7 @@ def _hash_client_secret(secret: str) -> str:
 def _is_mcp_admin_user(user: Any) -> bool:
     if not getattr(user, "is_authenticated", False):
         return False
-    if getattr(user, "global_admin", False):
-        return True
-    return getattr(user, "role", None) in {"god", "global_admin", "admin", "superuser"}
+    return bool(user.has_full_permissions())
 
 
 def _lookup_client(client_id: str) -> dict[str, Any] | None:
@@ -481,7 +488,7 @@ def _authenticate() -> dict[str, Any] | None:
         logger.debug("Empty Bearer token")
         return None
 
-    logger.debug(f"Attempting MCP authentication with token (first 20 chars): {supplied_token[:20]}...")
+    logger.debug("Attempting MCP bearer authentication")
 
     try:
         token_record = check_token(supplied_token)
@@ -1363,7 +1370,7 @@ def oauth_authorize():
         if not getattr(current_user, "is_authenticated", False):
             return redirect(url_for("users.auth.login", next=request.url))
         if not _is_mcp_admin_user(current_user):
-            return "Admin MCP access requires an admin-capable account.", 403
+            return "Admin MCP access requires full global authority.", 403
 
         client_id = (request.args.get("client_id") or "").strip()
         redirect_uri = (request.args.get("redirect_uri") or "").strip()
@@ -1398,12 +1405,21 @@ def oauth_authorize():
             scopes=requested_scopes,
             code_challenge=code_challenge,
             code_challenge_method=code_challenge_method,
+            csrf_token=_consent_csrf_token(),
         )
 
     if not getattr(current_user, "is_authenticated", False):
         return redirect(url_for("users.auth.login", next=request.url))
     if not _is_mcp_admin_user(current_user):
-        return "Admin MCP access requires an admin-capable account.", 403
+        return "Admin MCP access requires full global authority.", 403
+
+    expected_csrf = session.get(MCP_CONSENT_CSRF_SESSION_KEY, "")
+    provided_csrf = request.form.get("csrf_token", "")
+    if not (
+        expected_csrf and provided_csrf
+        and hmac.compare_digest(expected_csrf.encode("utf-8"), provided_csrf.encode("utf-8"))
+    ):
+        return _oauth_json_error("invalid_request", "Invalid consent CSRF token", status=403)
 
     client_id = (request.form.get("client_id") or "").strip()
     redirect_uri = (request.form.get("redirect_uri") or "").strip()
@@ -1505,10 +1521,17 @@ def oauth_token():
         if not hmac.compare_digest(code_challenge, derived_challenge):
             return _oauth_json_error("invalid_grant", "code_verifier did not match the original code challenge", status=400)
 
-    _authorization_code_collection().update_one(
-        {"_id": code_doc["_id"]},
-        {"$set": {"used_at": datetime.now(timezone.utc)}},
+    now = datetime.now(timezone.utc)
+    consumed = _authorization_code_collection().update_one(
+        {
+            "_id": code_doc["_id"],
+            "used_at": None,
+            "$or": [{"expires_at": None}, {"expires_at": {"$gte": now}}],
+        },
+        {"$set": {"used_at": now}},
     )
+    if consumed.matched_count != 1:
+        return _oauth_json_error("invalid_grant", "Authorization code is expired or already used", status=400)
     access_token = _issue_oauth_access_token(
         client_id=client["client_id"],
         user_id=code_doc["user_id"],
@@ -1539,11 +1562,11 @@ def handle_admin_mcp():
     request_id = request_json.get("id")
     logger.debug(f"MCP request received - ID: {request_id}, Method: {request_json.get('method')}, Params: {list(request_json.get('params', {}).keys())}")
 
-    token_entry = _authenticate()
-    if not token_entry:
-        logger.warning(f"MCP request unauthorized - ID: {request_id}")
-        return _unauthorized_mcp_response(request_id)
     try:
+        token_entry = _authenticate()
+        if not token_entry:
+            logger.warning(f"MCP request unauthorized - ID: {request_id}")
+            return _unauthorized_mcp_response(request_id)
         _require_scope(token_entry, "read")
     except PermissionError as exc:
         logger.warning(

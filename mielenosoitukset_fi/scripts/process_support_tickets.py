@@ -608,6 +608,7 @@ def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, a
                         _config_value(config, "TICKET_IMAP_USERNAME", ""),
                     ),
                     "from_name": admin_label,
+                    "to_email": reply_to,
                     "direction": "out",
                     "subject": subject,
                     "message": message,

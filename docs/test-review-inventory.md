@@ -2,6 +2,36 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+DATA-04b/#771 on main `54b02c58`, 2026-10-25: **1,290 repository-wide definitions /175 test files /424 individually assessed definitions**. Preserves all417 merged assessments and adds six reply-history definitions/13 cases plus one existing case-component contract assessment. All107 focused cases pass, including actual Chromium mobile/light and desktop/dark; Jinja/Python syntax and diff checks pass. Disposable Mongo, real permission-scoped routes/Jinja; email enqueue is isolated, not provider delivery. Full audit/retention policy and CASE-01/CASE-02 remain separate roadmap work. Local CodeRabbit review was rate-limited before analysis, not a clean review.
+
+## tests/test_case_reply_history.py
+
+Supporting fixture `support_case`: explicitly converts the baseline new-demo case to a support ticket with a contact address; original linked-demo/city grants are preserved. `_messages` writes synthetic inbound/queued/sent/legacy message shapes to actual Mongo, including an escaped script and unbroken long text. `_Page` uses Python's HTMLParser to collect a small assertion DOM; live Chromium checks independently cover actual browser parsing/rendering. Session login bypasses credentials; shared external-side-effect fixtures disable live mail/storage.
+
+- [x] `test_history_is_separate_localized_and_escaped`
+
+DATA-04b/P1/#771 · Codex · 2026-10-25. Three actual FI/EN/SV route renders require the dedicated heading and recipient label from shipped catalogs, newest-first two-reply history, inbound separation, complete multiline text, recorded recipient, no executable script and no duplicate outgoing body elsewhere. Keep; source/DOM assertions alone do not prove visuals or delivery. New runtime entries were also checked against exact original MO payloads, preserving all unrelated entries.
+
+- [x] `test_legacy_empty_history_does_not_invent_recipients`
+
+DATA-04b/P1. Null and empty legacy message lists both render a real HTTP200 empty state without fabricated replies. Keep; prevents a new None iteration regression and false correspondence, not an exhaustive malformed-schema migration.
+
+- [x] `test_reply_records_actual_recipient_and_retains_source_message`
+
+DATA-04b/P1. Actual protected reply POST invokes the existing queue helper; external enqueue is a no-send fixture. Asserts exact original Markdown, recipient snapshot, queued state, sender and message-ID threading metadata in Mongo; changing the contact later cannot rewrite displayed recipient history. Keep; does not prove SMTP, exactly-once behavior, audit-write atomicity or queue-persist/history-write crash recovery.
+
+- [x] `test_reply_status_is_explicit_without_guessing_delivery`
+
+DATA-04b/P1. Four actual route variants require exact queued/sent/failed/unknown copy and semantic badge tone, reject a confirmed-delivery claim and require unknown legacy recipients rather than current-contact inference. Keep; status values are seeded, not a transport-provider integration test.
+
+- [x] `test_read_only_city_history_does_not_widen_case_scope`
+
+DATA-04b/P1. Real VIEW_CASE-only city grant reads its own message history without a reply form; foreign-city GET and forged own-case POST return403. Exact unchanged case document proves rejected POST made no correspondence/audit writes. Keep; shared authentication fixture bypasses credential entry, and concurrent grant revocation is not simulated.
+
+- [x] `test_reply_history_shared_layout_fits_and_preserves_lines`
+
+DATA-04b/P1. Actual Chromium at390px/light and1440px/dark with signed real city-admin session loads local shared CSS, scrolls to two reply cards, checks viewport width, computed theme/pre-wrap and script nonexecution. Both screenshots inspected. Keep; limited representative sizes/themes, not all-browser, assistive-technology, full keyboard journey or mathematical contrast acceptance. Synthetic long text stresses wrapping; external assets are blocked by the standard browser fixture.
+
 CITY-01c on main `35fd6def`, 2026-10-24: **1,284 repository-wide definitions /174 test files /417 individually assessed definitions**. Retains all411 merged assessments; adds six inbox/worker definitions (24 parametrized cases after merged-source review correction). All89 combined inbox/submission-recovery/assignment/dashboard/public-notification cases pass locally; syntax/diff checks pass. Initial six-file local review completed with0findings after correcting visible quota and changed-address delivery; merged-source correction reviewed manually and regression-tested, but final tiny local re-review hit a rate limit and did not analyze code. Real Flask/Mongo, isolated SMTP/queue-failure doubles; no live email, historical backfill, all-browser or production acceptance claim. Branch-scoped implementation pending hosted CI/merge.
 
 ## tests/test_city_review_notifications.py
@@ -486,7 +516,9 @@ QA-03a / SEC-04c support · P2 · Codex · 2026-10-22 · main8e6f0e2b. Each exis
 - [ ] `test_analytics_pages_use_shared_hero_metric_slot`
 - [ ] `test_analytics_pages_use_shared_theme_aware_components`
 - [ ] `test_case_and_merge_pages_use_canonical_hero_navigation`
-- [ ] `test_case_views_use_shared_workspace_components_without_inline_css`
+- [x] `test_case_views_use_shared_workspace_components_without_inline_css`
+
+DATA-04b/P1/#771 · Codex · 2026-10-25. Static reads of real case list/detail templates require no inline style layer, shared summary/filter/action/detail primitives, explicit links and a titled shared card for each section including outgoing replies. Replaces the obsolete hardcoded five-title count with actual section/title equality (at least six) so adding a correctly titled card is not falsely rejected while an untitled card still fails. Keep; no route, rendered DOM, permission, contrast or runtime filtering proof—those have separate focused tests. No source fixtures or mocked parser.
 - [ ] `test_demo_command_center_separates_hero_copy_from_operational_context`
 - [ ] `test_destructive_confirmations_use_canonical_hero_navigation`
 - [ ] `test_specialist_admin_pages_use_canonical_hero_navigation`

@@ -4030,7 +4030,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/admin/admin_case_bp.py:204 mielenosoitukset_fi/admin/admin_case_bp.py:378
 msgid "Ei tiedossa"
-msgstr ""
+msgstr "Unknown"
 
 #: mielenosoitukset_fi/admin/admin_case_bp.py:208 mielenosoitukset_fi/templates/admin_V2/cases/all.html:63
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:28 mielenosoitukset_fi/templates/admin_V2/cases/case.html:334
@@ -6481,7 +6481,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:213
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/editor.html:83
 msgid "Lähettäjä"
-msgstr ""
+msgstr "Sender"
 
 #: mielenosoitukset_fi/templates/admin/suggestion_view.html:412
 msgid "Luontiaika"
@@ -6764,7 +6764,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:338 mielenosoitukset_fi/templates/admin_V2/cases/case.html:85
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:39
 msgid "Epäonnistui"
-msgstr ""
+msgstr "Failed"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:339
 msgid "Ei lisätietoa"
@@ -8038,7 +8038,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:86
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:39
 msgid "Jonossa"
-msgstr ""
+msgstr "Queued"
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:99
 msgid "Vastaa lähettäjälle"
@@ -8866,7 +8866,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:264
 #: mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html:8
 msgid "Lähetetty"
-msgstr ""
+msgstr "Sent"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:267
 msgid "Ei ilmoittajatietoja."
@@ -13649,3 +13649,15 @@ msgstr "Page %(page)s of %(pages)s"
 
 msgid "Sivutus"
 msgstr "Pagination"
+
+msgid "Lähetetyt vastaukset"
+msgstr "Sent replies"
+
+msgid "Vastaanottaja"
+msgstr "Recipient"
+
+msgid "Lisätty jonoon"
+msgstr "Queued at"
+
+msgid "Ei vielä vastauksia."
+msgstr "No replies yet."

@@ -4,6 +4,9 @@
 
 ## UNRELEASED
 
+- Show support-ticket outgoing replies in a dedicated, permission-scoped history with sender, recorded recipient, queued/sent times, full escaped message and explicit queue/failure status. New replies retain their actual recipient; older records show unknown rather than guessing from the current contact address. Shared message styling preserves line breaks in both themes.
+
+- Plan demonstration-case requests for additional information and a private submitter reply/progress link as a separate roadmap workflow, including scope, expiry/revocation, rate limits and separation from internal case notes. No public case access or new mail is enabled by this plan.
 - Add an in-conversation visual-QA skill: UI changes require real mobile/desktop screenshots in both themes and a separate reviewer agent's SHIP for the final source snapshot. Every UI-affecting fix requires fresh review; no additional GitHub test suite is introduced.
 
 - Add city-review inbox notifications through the existing submission worker, with retry deduplication and authenticated review links. Notices disappear from the inbox after resolution, escalation, merging into another demonstration or loss of the current city-review permission; no submitter details or bearer links are stored in them.

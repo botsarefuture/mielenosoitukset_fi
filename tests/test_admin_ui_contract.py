@@ -934,7 +934,10 @@ def test_case_views_use_shared_workspace_components_without_inline_css():
     assert "card.hidden = !visible" in case_list
     assert "admin-detail-layout" in case_detail
     assert case_detail.count("admin-section-card") >= 5
-    assert case_detail.count('class="admin-section-card__title"') == 5
+    card_count = case_detail.count('<section class="admin-section-card"')
+    assert card_count >= 6
+    assert case_detail.count('class="admin-section-card__title"') == card_count
+    assert 'id="outgoing-replies"' in case_detail
     assert "admin-row-actions" in case_detail
 
 

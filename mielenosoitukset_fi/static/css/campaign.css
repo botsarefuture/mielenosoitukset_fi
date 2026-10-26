@@ -79,3 +79,13 @@ fieldset:disabled button { cursor: not-allowed; }
   color: var(--product-text-muted);
   opacity: 1;
 }
+.stat-number {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--product-primary);
+}
+.volunteer-signup .btn:disabled {
+  background: var(--product-action-bg);
+  color: var(--product-on-action);
+  opacity: .85;
+}

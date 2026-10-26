@@ -1,10 +1,7 @@
 import json
-from pathlib import Path
 
 import pytest
 
-
-TEMPLATE_PATH = Path("mielenosoitukset_fi/templates/kampanja/index.html")
 
 
 def _set_locale(client, locale):
@@ -12,31 +9,19 @@ def _set_locale(client, locale):
         session["locale"] = locale
 
 
-def test_campaign_volunteer_feedback_contract_uses_accessible_in_page_status():
-    source = TEMPLATE_PATH.read_text(encoding="utf-8")
-    volunteer_script = source.split("// Volunteer form (async POST)", 1)[1].split(
-        "// Newsletter subscribe function", 1
-    )[0]
+def test_campaign_loads_only_its_react_entry_with_translated_json_props(client):
+    import re
 
-    assert 'id="vol-msg" class="flash-message flash-message--inline" role="status"' in source
-    assert 'aria-live="polite"' in source
-    assert 'aria-atomic="true"' in source
-    assert 'id="vol-submit"' in source
-    assert "alert(" not in volunteer_script
-    assert "volunteerMsgText.textContent = message" in volunteer_script
-    assert "volunteerForm.querySelectorAll(':invalid')" in volunteer_script
-    assert ").filter((field) => !field.value.trim())" in volunteer_script
-    assert "...missingRequiredFields" in volunteer_script
-    assert "field.setAttribute('aria-invalid', 'true')" in volunteer_script
-    assert "firstInvalidField.focus()" in volunteer_script
-    assert "if (volunteerForm.dataset.requestPending === 'true') return" in volunteer_script
-    assert "volunteerForm.dataset.requestPending = 'true'" in volunteer_script
-    assert "volunteerSubmit.disabled = true" in volunteer_script
-    assert "volunteerSubmit.setAttribute('aria-busy', 'true')" in volunteer_script
-    assert "} finally {" in volunteer_script
-    assert "delete volunteerForm.dataset.requestPending" in volunteer_script
-    assert "volunteerSubmit.disabled = false" in volunteer_script
-    assert "volunteerSubmit.removeAttribute('aria-busy')" in volunteer_script
+    page = client.get("/kampanja/").get_data(as_text=True)
+    props = json.loads(re.search(r'<script id="volunteer-form-props" type="application/json">(.*?)</script>', page, re.S).group(1))
+    assert props["endpoint"] == "/kampanja/api/volunteers"
+    assert "Nimi ja sähköpostiosoite" in props["messages"]["required"]
+    assert 'data-react-island="volunteer-form"' in page
+    assert '<fieldset disabled id="vol-fields">' in page
+    scripts = re.findall(r'<script type="module" src="([^"]+)"', page)
+    assert len(scripts) == 1
+    assert scripts[0].startswith("/static/frontend/assets/volunteer-")
+    assert client.get(scripts[0]).status_code == 200
 
 
 @pytest.mark.parametrize(
@@ -131,6 +116,7 @@ def test_campaign_page_embeds_localized_volunteer_feedback(
     [
         (201, '{"success": true}', "application/json", False, "Kiitos ilmoittautumisestasi!"),
         (400, '{"success": false, "error": "Tarkista tiedot."}', "application/json", False, "Tarkista tiedot."),
+        (401, '{"success": false, "error": "Kirjaudu sisään."}', "application/json", False, "Kirjaudu sisään."),
         (429, '{"success": false, "error": "Yritä hetken kuluttua."}', "application/json", False, "Yritä hetken kuluttua."),
         (500, '{"success": false}', "application/json", False, "Ilmoittautuminen epäonnistui."),
         (200, "not-json", "text/plain", False, "Ilmoittautuminen epäonnistui."),
@@ -281,3 +267,90 @@ def test_campaign_newsletter_preserves_signup_integration(live_server, browser_p
     browser_page.locator("#newsletter-msg.show").wait_for()
     assert requests == [{"email": "newsletter@example.test", "list_id": "68d26ca27f8e9dee7c846a22"}]
     assert "Tilauksesi onnistui" in browser_page.locator("#newsletter-msg").inner_text()
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_react_volunteer_signup_preserves_payload_and_confirmation_flow(
+    live_server, browser_page, db, monkeypatch
+):
+    from mielenosoitukset_fi.kampanja.routes import email_sender
+
+    queued = []
+    monkeypatch.setattr(email_sender, "queue_email", lambda **kwargs: queued.append(kwargs))
+    browser_page.goto(f"{live_server}/kampanja/", wait_until="domcontentloaded")
+    values = {
+        "name": "  Test Volunteer  ", "email": "react-volunteer@example.test",
+        "phone": " 040 123 4567 ", "city": " Turku ", "notes": " Tarrojen jakaminen ",
+    }
+    for name, value in values.items():
+        browser_page.locator(f"#vol-{name}").fill(value)
+    browser_page.locator("#vol-submit").click()
+    browser_page.wait_for_function("document.querySelector('#vol-msg').textContent.includes('Kiitos')")
+
+    volunteer = db.volunteers.find_one({"email": values["email"]})
+    assert volunteer is not None
+    for name, value in values.items():
+        assert volunteer[name] == value.strip()
+    assert volunteer["confirmed"] is False
+    assert len(queued) == 1
+    assert queued[0]["recipients"] == [values["email"]]
+    token = volunteer["confirmation_token"]
+    assert queued[0]["context"]["confirm_link"].endswith(f"/kampanja/confirm/{token}")
+    assert browser_page.locator("#vol-name").input_value() == ""
+    browser_page.goto(f"{live_server}/kampanja/confirm/{token}")
+    confirmed = db.volunteers.find_one({"_id": volunteer["_id"]})
+    assert confirmed["confirmed"] is True
+    assert "confirmation_token" not in confirmed
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_react_volunteer_pending_error_and_retry_keep_user_values(live_server, browser_page):
+    requests = []
+    browser_page.route("**/kampanja/api/volunteers", lambda route: requests.append(route))
+    browser_page.goto(f"{live_server}/kampanja/", wait_until="domcontentloaded")
+    browser_page.locator("#vol-name").fill("Test Volunteer")
+    browser_page.locator("#vol-email").fill("volunteer@example.test")
+    browser_page.locator("#vol-submit").click()
+    browser_page.wait_for_function("document.querySelector('#vol-submit').getAttribute('aria-busy') === 'true'")
+    assert browser_page.locator("#vol-name").is_disabled()
+    assert "Lähetetään" in browser_page.locator("#vol-submit").inner_text()
+    assert len(requests) == 1
+    requests.pop().fulfill(status=429, content_type="application/json", body=json.dumps({
+        "success": False, "error": '<img src=x onerror="alert(1)"> Odota hetki.',
+    }))
+    browser_page.locator("#vol-msg").wait_for(state="visible")
+    assert browser_page.locator("#vol-msg").get_attribute("role") == "alert"
+    assert "<img" in browser_page.locator("#vol-msg").inner_text()
+    assert browser_page.locator("#vol-msg img").count() == 0
+    assert browser_page.locator("#vol-name").input_value() == "Test Volunteer"
+    assert browser_page.locator("#vol-email").input_value() == "volunteer@example.test"
+    browser_page.locator("#vol-submit").click()
+    browser_page.wait_for_function("document.querySelector('#vol-submit').disabled")
+    assert len(requests) == 1
+    requests.pop().fulfill(status=201, content_type="application/json", body='{"success":true}')
+    browser_page.wait_for_function("document.querySelector('#vol-msg').textContent.includes('Kiitos')")
+    assert browser_page.locator("#vol-msg").get_attribute("role") == "status"
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_missing_react_bundle_keeps_fallback_disabled_and_newsletter_working(live_server, browser_page):
+    browser_page.route("**/static/frontend/**", lambda route: route.abort())
+    browser_page.goto(f"{live_server}/kampanja/", wait_until="networkidle")
+    assert browser_page.locator("#vol-name").is_disabled()
+    assert browser_page.locator("#vol-submit").is_disabled()
+    assert "Lomaketta ladataan" in browser_page.locator('[data-react-island]').inner_text()
+    assert browser_page.locator('[data-react-island] a[href^="mailto:"]').is_visible()
+    assert not browser_page.locator("#newsletter-form button").is_disabled()
+
+
+def test_other_public_pages_and_admin_do_not_load_react(client, admin_client):
+    for url in ("/", "/info", "/keräys", "/users/auth/login"):
+        response = client.get(url)
+        assert response.status_code == 200
+        assert "/static/frontend/" not in response.get_data(as_text=True)
+    response = admin_client.get("/admin/dashboard")
+    assert response.status_code == 200
+    assert "/static/frontend/" not in response.get_data(as_text=True)

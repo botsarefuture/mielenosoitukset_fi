@@ -8,19 +8,37 @@
         <!-- Header -->
         {{ admin_page_hero(
             _('Kampanjan hallinta'),
-            _('Vapaaehtoisrekisteri – Kampanja 2026'),
+            _('Sivujen julkaisu ja vapaaehtoisrekisteri'),
             _('Kampanjat'),
             [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Kampanjan hallinta'), none)]
         ) }}
-        <div class="admin-row-actions timeline-tags" aria-label="{{ _('Kampanjan aikataulu') }}">
-            <span class="admin-status-badge admin-status-badge--warning">
-                <i class="fa-solid fa-clock"></i> {{ _('Valmistelut 15.9.2025–29.2.2026') }}
-            </span>
-            <span class="admin-status-badge admin-status-badge--success">
-                <i class="fa-solid fa-calendar"></i> {{ _('Kampanja 1.3.2026–1.6.2026') }}
-            </span>
-        </div>
-
+        <section class="admin-section-card" aria-labelledby="campaignPublicationTitle">
+            <header class="admin-section-card__header"><div class="admin-section-card__title">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                <h2 id="campaignPublicationTitle">{{ _('Kampanja- ja keräyssivujen näkyvyys') }}</h2>
+            </div></header>
+            <div class="admin-section-card__body">
+                <p><strong>{{ _('Julkinen kaikille') if pages_public else _('Vain kirjautuneille') }}</strong></p>
+                <p>{{ _('Julkaisu avaa kampanjasivun, vapaaehtoiseksi liittymisen ja keräyksen tietosivun kaikille. Ennen julkaisua niitä voi esikatsella kirjautuneena.') }}</p>
+                <p>{{ _('Tämä painike ei avaa lahjoittamista. Keräyksen vahvistetut tiedot, erillinen aktivointi ja voimassa oleva keräysaika vaaditaan edelleen.') }}</p>
+                <div class="admin-row-actions">
+                    <a class="btn btn-outline-secondary" href="{{ url_for('campaign.index') }}">{{ _('Esikatsele kampanjaa') }}</a>
+                    <a class="btn btn-outline-secondary" href="{{ url_for('fundraising') }}">{{ _('Esikatsele keräyssivua') }}</a>
+                    {% if can_publish %}
+                    <form method="post" action="{{ url_for('admin_kampanja.update_publication') }}">
+                        <input type="hidden" name="csrf_token" value="{{ publication_csrf }}">
+                        {% if pages_public %}
+                        <button class="btn btn-outline-secondary" type="submit" name="publication" value="private">{{ _('Palauta kirjautumisen taakse') }}</button>
+                        {% else %}
+                        <button class="btn btn-primary" type="submit" name="publication" value="publish">{{ _('Julkaise sivut kaikille') }}</button>
+                        {% endif %}
+                    </form>
+                    {% else %}
+                    <p>{{ _('Julkaiseminen edellyttää ylläpitäjän oikeuksia ja globaalia KAMPANJA-oikeutta.') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
 
         <!-- Stats -->
         <div class="admin-workspace-summary campaign-summary">

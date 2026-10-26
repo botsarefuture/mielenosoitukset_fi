@@ -3,7 +3,7 @@
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
 Fundraising preview checkpoint, 2026-10-26, based on main `b43276cc`:
-**1,321 definitions /176 files /479 individually assessed**. Preserve the 471
+**1,331 definitions /177 files /489 individually assessed**. Preserve the 471
 main assessments and add only the new feature's focused regression below.
 The separate test-audit chat owns systematic suite review; this feature batch
 does not repeat that audit. Broad pending scope remains 842 definitions and two
@@ -3380,3 +3380,44 @@ Improve maintenance: keep Gone and one flash, relax exact English sentence.
 Status/notification protection remains while editorial copy changes no longer
 cause irrelevant failures. Distinct endpoint retirement behavior; no translated
 message/rendered response claim. No consolidation or removal justified.
+
+
+## tests/test_campaign_publication.py
+
+Feature-only publication follow-up, 2026-10-26; no unrelated audit dispositions
+are changed. Existing public-content tests now explicitly seed published state
+after their isolated database seed, rather than bypassing the production gate.
+
+- [x] `test_unpublished_pages_require_login_and_allow_any_logged_in_preview`:
+  both pages redirect anonymous users with a return target, allow ordinary logged-in
+  preview, and emit no-store/noindex/Vary Cookie headers.
+- [x] `test_signup_cannot_bypass_unpublished_page_gate`: anonymous private API
+  returns JSON 401 and makes no write; logged-in preview can use the existing flow.
+- [x] `test_admin_can_publish_and_withdraw_without_opening_donations`: authorized
+  POST persists state/actor/time, opens pages/API, preserves closed payments,
+  records both audit actions and restores private access.
+- [x] `test_publication_requires_session_bound_csrf`: missing, forged and Unicode
+  invalid CSRF proofs fail without a settings write.
+- [x] `test_publication_rejects_foreign_session_token_and_get`: a token from a
+  different authenticated session and GET cannot change publication.
+- [x] `test_ordinary_and_scoped_users_cannot_publish`: user and scope-limited
+  admin without the global grant cannot change this global state.
+- [x] `test_publication_fails_closed_on_non_boolean_state_and_database_failure`:
+  string booleans and synthetic DB read errors never open anonymous access.
+- [x] `test_private_discovery_and_public_sitemap_follow_publication`: anonymous
+  promotion/sitemap links track publish/withdraw, while logged-in preview promotion
+  remains available. Header opt-in and payment configuration stay separate.
+- [x] `test_existing_confirmation_tokens_keep_working_while_private`: the original
+  expiring token confirmation still works after an authenticated preview signup.
+- [x] `test_publication_write_error_does_not_report_success`: a synthetic write
+  failure shows uncertainty/error rather than a false publication success.
+
+Only admin_kampanja's new publication route count/hash/coverage is updated in the
+existing surface manifest. No application styling or other route baseline is
+changed by this manifest maintenance.
+
+Publication follow-up validation: 63 targeted cases pass (45 existing feature
+cases, 13 publication cases and five relevant existing admin/UI/route contracts).
+Actual Flask browser captures separately exercise native admin publish/withdraw,
+write-error feedback, ordinary authenticated preview, restricted publisher rights,
+public anonymous browsing and JavaScript-disabled admin submission.

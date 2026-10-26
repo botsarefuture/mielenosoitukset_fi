@@ -7,6 +7,17 @@ import pytest
 from mielenosoitukset_fi.utils.fundraising import fundraising_details
 
 
+@pytest.fixture(autouse=True)
+def published_campaign(db, seeded_data):
+    """Existing public-content checks exercise the explicitly published state."""
+    db.campaign_settings.update_one(
+        {"_id": "public_pages"}, {"$set": {"published": True}}, upsert=True
+    )
+    yield
+    db.campaign_settings.delete_one({"_id": "public_pages"})
+
+
+
 def _confirmed_plan():
     return {
         "publication_state": "active", "details_confirmed": True,
@@ -62,7 +73,7 @@ def test_confirmed_donation_details_render_escaped_and_close_after_end(client, m
             {"label": "MobilePay 2", "url": "https://qr.mobilepay.fi/box/example-two/pay-in"},
         ],
     }
-    route_globals = client.application.view_functions["fundraising"].__globals__
+    route_globals = client.application.view_functions["fundraising"].__wrapped__.__globals__
     monkeypatch.setitem(route_globals, "fundraising_details", lambda: fundraising_details(plan, today=date(2026, 12, 1)))
     page = client.get("/keräys").get_data(as_text=True)
     assert "Näin lahjoitat" in page and 'href="https://example.test/donate"' in page
@@ -84,7 +95,7 @@ def test_confirmed_donation_details_render_escaped_and_close_after_end(client, m
 
 def test_header_promotion_is_opt_in_and_campaign_preserves_signup_hooks(client, monkeypatch):
     assert 'class="fundraising-header-link"' not in client.get("/info").get_data(as_text=True)
-    route_globals = client.application.view_functions["fundraising"].__globals__
+    route_globals = client.application.view_functions["fundraising"].__wrapped__.__globals__
     monkeypatch.setitem(route_globals, "fundraising_details", lambda: fundraising_details({"show_header_link": True}))
     page = client.get("/info").get_data(as_text=True)
     assert 'class="fundraising-header-link"' in page

@@ -1,6 +1,6 @@
 # Fill in the fundraising page
 
-The default is a Finnish **preparation page** at `/keräys`. Empty official
+The default is a Finnish **preparation page behind login** at `/keräys`. Empty official
 fields have explicit public placeholders. No invented organizer, collection
 number, payment details, amount raised or endorsements are published. The
 €2,500 amount is a target. The supplied 15.11.2026–15.2.2027 period remains
@@ -25,6 +25,7 @@ Edit `mielenosoitukset_fi/utils/data/fundraising.json`:
 | `show_header_link` | Set to `true` to display “Tutustu pienkeräykseen” in the public header |
 
 The header link points to the information page, not directly to payment.
+Before public release it is visible only to authenticated users.
 `/kampanja/` links to the page and has updated preparation copy. Existing
 volunteer/newsletter fields and handlers remain. No event/supporter commitments
 are invented. Service copy follows the existing `/info` page.
@@ -65,7 +66,9 @@ The inspected implementation is in the separate recovery toolkit:
 `mielenosoitukset-fi/recovery`, using the security console's `snapshot_site.py`.
 It was inspected locally, not changed or deployed by this feature.
 
-- `/keräys` is in the public sitemap, discoverable with header promotion off.
+- After publication, `/keräys` is in the public sitemap even with header promotion off.
+  Before publication, campaign/fundraising pages are omitted and anonymous access
+  requires login. Never use an authenticated session to generate a public snapshot.
 - All copy/bank instructions are server-rendered HTML; no donation widget, API,
   login, database write, JavaScript or QR generator is required. Payment uses an
   ordinary external HTTPS link.
@@ -141,3 +144,34 @@ Real Flask screenshot evidence is retained locally in
 The review packet identifies the exact source/image digests, roles, locales,
 viewports, states and excluded analytics requests. Independent visual acceptance
 is recorded in the conversation and PR after reviewing this final snapshot.
+
+## Admin-controlled publication
+
+Both `/keräys` and `/kampanja/` (including the volunteer section) start behind
+login. Any authenticated user can preview them. Missing, malformed or unreadable
+publication state defaults to private. No deployment/migration automatically
+publishes these pages. Existing volunteer email-confirmation tokens keep their
+original validation/expiry behavior even while pages are private.
+
+In **Hallintapaneeli → Kampanjan hallinta**, an administrator with global
+`KAMPANJA` permission can press **Julkaise sivut kaikille**. This is a native POST
+form with session-bound CSRF proof; no JavaScript is needed. The shared state is
+persisted in MongoDB `campaign_settings`, `_id: public_pages`, with the boolean
+`published`, actor and UTC timestamp. Request/session/CSRF material is excluded
+from this action's audit entry. A scope-limited grant cannot publish globally.
+The action reports write uncertainty without claiming success.
+
+**Palauta kirjautumisen taakse** withdraws anonymous page/API access. Page and
+admin responses use `private, no-store`, and preview responses are `noindex`.
+The volunteer JSON endpoint returns 401 without writing a signup when a private
+campaign is accessed anonymously. Publication also controls sitemap discovery
+and anonymous header promotion, independently of the configured header flag.
+
+This button controls visibility only. `fundraising.json` confirmation, explicit
+payment activation and date checks remain necessary before any payment method is
+shown. Republishing never fills official details or opens donations by itself.
+
+A static copy already exported while public cannot re-check this database state.
+Withdrawing pages must also withdraw/replace existing public snapshots and any
+previously cached copies through the separately authorized recovery workflow.
+The login gate does not establish authentication for an already exported mirror.

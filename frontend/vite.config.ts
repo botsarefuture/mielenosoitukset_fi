@@ -12,7 +12,7 @@ export default defineConfig({
       const notices = ['react', 'react-dom', 'scheduler', 'vite'].map((name) => {
         const filename = name === 'vite' ? 'LICENSE.md' : 'LICENSE';
         const license = readFileSync(new URL(`../node_modules/${name}/${filename}`, import.meta.url), 'utf8');
-        return `${name}\n${license}`;
+        return `${name}\n${license.replace(/[ \t]+$/gm, '')}`;
       });
       this.emitFile({ type: 'asset', fileName: 'THIRD_PARTY_LICENSES.txt', source: notices.join('\n\n') });
     },

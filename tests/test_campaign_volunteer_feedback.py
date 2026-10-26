@@ -4,6 +4,16 @@ from pathlib import Path
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def published_campaign(db, seeded_data):
+    """Existing public-content checks exercise the explicitly published state."""
+    db.campaign_settings.update_one(
+        {"_id": "public_pages"}, {"$set": {"published": True}}, upsert=True
+    )
+    yield
+    db.campaign_settings.delete_one({"_id": "public_pages"})
+
+
 TEMPLATE_PATH = Path("mielenosoitukset_fi/templates/kampanja/index.html")
 
 
@@ -167,17 +177,25 @@ def test_campaign_volunteer_feedback_handles_request_outcomes(
 
 @pytest.mark.e2e
 @pytest.mark.integration
+@pytest.mark.parametrize(
+    "name,email,expected_field,expected_message",
+    [
+        ("", "", "vol-name", "Nimi ja sähköpostiosoite ovat pakollisia."),
+        ("Test User", "not-an-email", "vol-email", "Tarkista korostetut tiedot"),
+    ],
+)
 def test_campaign_volunteer_validation_focuses_first_invalid_field(
-    live_server, browser_page
+    live_server, browser_page, name, email, expected_field, expected_message
 ):
     browser_page.goto(f"{live_server}/kampanja/", wait_until="domcontentloaded")
-
+    browser_page.locator("#vol-name").fill(name)
+    browser_page.locator("#vol-email").fill(email)
     browser_page.locator("#vol-submit").click()
 
-    assert browser_page.evaluate("document.activeElement.id") == "vol-name"
-    assert "Nimi ja sähköpostiosoite ovat pakollisia." in browser_page.locator(
-        "#vol-msg"
-    ).inner_text()
+    assert browser_page.evaluate("document.activeElement.id") == expected_field
+    assert browser_page.locator(f"#{expected_field}").get_attribute("aria-invalid") == "true"
+    assert browser_page.locator("#vol-fields").get_attribute("aria-invalid") is None
+    assert expected_message in browser_page.locator("#vol-msg").inner_text()
 
 
 @pytest.mark.e2e
@@ -234,3 +252,42 @@ def test_campaign_volunteer_double_submit_starts_one_request(live_server, browse
 
     browser_page.locator("#vol-msg").wait_for(state="visible")
     assert request_count == 1
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_campaign_without_javascript_disables_both_signups(live_server, playwright_browser):
+    context = playwright_browser.new_context(java_script_enabled=False)
+    context.route("**/*", lambda route: route.continue_() if route.request.url.startswith(live_server) else route.abort())
+    try:
+        page = context.new_page()
+        page.goto(f"{live_server}/kampanja/", wait_until="domcontentloaded")
+        assert page.locator("#vol-submit").is_disabled()
+        assert page.locator('#newsletter-form button').is_disabled()
+        assert page.locator("#vol-name").is_disabled()
+        assert not page.locator("#vol-msg").is_visible()
+        assert not page.locator("#newsletter-msg").is_visible()
+        assert "Tietojasi ei ole lähetetty" in page.locator("#vapaaehtoiseksi").inner_text()
+        assert page.locator('#vapaaehtoiseksi a[href="mailto:tuki@mielenosoitukset.fi"]').count() >= 1
+        assert not page.url.split("/kampanja/", 1)[1]
+    finally:
+        context.close()
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_campaign_newsletter_preserves_signup_integration(live_server, browser_page):
+    import json
+    requests = []
+
+    def signup(route):
+        requests.append(route.request.post_data_json)
+        route.fulfill(status=200, content_type="application/json", body=json.dumps({"message": "ok"}))
+
+    browser_page.route("https://mailist.luova.club/signup", signup)
+    browser_page.goto(f"{live_server}/kampanja/", wait_until="domcontentloaded")
+    browser_page.locator("#email").fill("newsletter@example.test")
+    browser_page.locator('#newsletter-form button').click()
+    browser_page.locator("#newsletter-msg.show").wait_for()
+    assert requests == [{"email": "newsletter@example.test", "list_id": "68d26ca27f8e9dee7c846a22"}]
+    assert "Tilauksesi onnistui" in browser_page.locator("#newsletter-msg").inner_text()

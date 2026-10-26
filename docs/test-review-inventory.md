@@ -2,6 +2,77 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+Fundraising preview checkpoint, 2026-10-26, based on main `b43276cc`:
+**1,331 definitions /177 files /489 individually assessed**. Preserve the 471
+main assessments and add only the new feature's focused regression below.
+The separate test-audit chat owns systematic suite review; this feature batch
+does not repeat that audit. Broad pending scope remains 842 definitions and two
+supporting fixtures.
+
+## tests/test_fundraising_page.py
+
+- [x] `test_fundraising_preview_is_public_and_has_no_payment_instructions`
+
+Keep: actual anonymous Flask GET with existing isolated app/Mongo fixtures
+asserts200, preparation/closed-donation copy, target, proposed date markup,
+secondary purpose, contact route and explicit Finnish content language. The
+negative payment-control assertions are a narrow preview guard, not complete
+financial-content validation. One focused case passes. Actual browser captures
+separately exercise mobile/desktop, both themes and focused links; the HTTP test
+alone does not establish visual quality or validate a future donation flow.
+
+- [x] `test_donations_require_complete_confirmed_active_details_within_dates`
+
+Keep:13 deterministic cases for explicit activation/confirmation, required
+organizer/number, start/end inclusive boundaries, invalid/reversed dates and
+payment-method alternatives (bank, HTTPS and MobilePay-only). Uses pure helper
+with fixed Helsinki-calendar dates; no payment provider or ownership validation.
+
+- [x] `test_confirmed_donation_details_render_escaped_and_close_after_end`
+
+Keep: actual Flask/Jinja rendering with synthetic confirmed configuration,
+escaped organizer, bank/reference, generic HTTPS and two MobilePay anchors.
+Advances the fixed date beyond end and checks instructions/links disappear;
+confirmed preparation still retains preparation copy. No real money or network
+requests; not a concurrent date rollover or static-snapshot closure guarantee.
+
+- [x] `test_header_promotion_is_opt_in_and_campaign_preserves_signup_hooks`
+
+Keep: actual public responses prove promotion absent by default and injected on
+ordinary `/info` after opt-in, resolves encoded fundraiser path, and campaign
+section links while original signup form hooks remain. This does not establish
+provider signup success; existing volunteer feedback tests are the compatibility
+control. No systematic unrelated test review performed.
+
+Additional feature-only checks (2026-10-26):
+
+- [x] `test_unsafe_payment_urls_never_enable_donations`: unsafe schemes,
+  credentials, invalid ports, backslashes and embedded whitespace must not open
+  either configured payment-link alternative (six deterministic cases).
+- [x] `test_planned_dates_do_not_replace_confirmed_dates_or_explicit_opening`:
+  planned dates alone never activate payments; explicit closure wins inside the period.
+- [x] `test_campaign_without_javascript_disables_both_signups`: actual browser
+  with JavaScript off checks disabled volunteer/newsletter fields and submit
+  buttons, explicit unsent notice and direct support email, hidden success states.
+- [x] `test_campaign_newsletter_preserves_signup_integration`: browser intercepts
+  the existing external signup endpoint and checks the unchanged list ID/email
+  payload and displayed success response; no actual subscription or mail is sent.
+
+The existing first-invalid-field browser check now covers both empty required
+fields and a nonempty malformed email; the fieldset must not capture error focus.
+
+Feature-only CI compatibility follow-up: update the shared-header assertion for
+its new cache key/conditional promotion class, reconcile only the reviewed
+campaign inline-style hashes (six attributes removed, no new inline attributes),
+and add the new public fundraising route to basic_routes' surface count/hash and
+coverage anchor. All unrelated baseline/manifest entries are preserved. This is
+compatibility maintenance, not a new systematic test-audit disposition. The
+45 feature cases plus these three CI contracts pass together (48 passed).
+
+Focused feature validation: 45 cases passed, including the existing volunteer
+validation, localization, request-outcome and duplicate-submit protections. No
+broad suite audit or provider transaction validation is implied.
+
 Batch14 local checkpoint, 2026-10-26, based on merged main `ccc2eb0f`:
 **1,313 definitions /175 files /471 individually assessed**. Two existing
 organization-search definitions improved (two cases become12); no definitions
@@ -3309,3 +3380,44 @@ Improve maintenance: keep Gone and one flash, relax exact English sentence.
 Status/notification protection remains while editorial copy changes no longer
 cause irrelevant failures. Distinct endpoint retirement behavior; no translated
 message/rendered response claim. No consolidation or removal justified.
+
+
+## tests/test_campaign_publication.py
+
+Feature-only publication follow-up, 2026-10-26; no unrelated audit dispositions
+are changed. Existing public-content tests now explicitly seed published state
+after their isolated database seed, rather than bypassing the production gate.
+
+- [x] `test_unpublished_pages_require_login_and_allow_any_logged_in_preview`:
+  both pages redirect anonymous users with a return target, allow ordinary logged-in
+  preview, and emit no-store/noindex/Vary Cookie headers.
+- [x] `test_signup_cannot_bypass_unpublished_page_gate`: anonymous private API
+  returns JSON 401 and makes no write; logged-in preview can use the existing flow.
+- [x] `test_admin_can_publish_and_withdraw_without_opening_donations`: authorized
+  POST persists state/actor/time, opens pages/API, preserves closed payments,
+  records both audit actions and restores private access.
+- [x] `test_publication_requires_session_bound_csrf`: missing, forged and Unicode
+  invalid CSRF proofs fail without a settings write.
+- [x] `test_publication_rejects_foreign_session_token_and_get`: a token from a
+  different authenticated session and GET cannot change publication.
+- [x] `test_ordinary_and_scoped_users_cannot_publish`: user and scope-limited
+  admin without the global grant cannot change this global state.
+- [x] `test_publication_fails_closed_on_non_boolean_state_and_database_failure`:
+  string booleans and synthetic DB read errors never open anonymous access.
+- [x] `test_private_discovery_and_public_sitemap_follow_publication`: anonymous
+  promotion/sitemap links track publish/withdraw, while logged-in preview promotion
+  remains available. Header opt-in and payment configuration stay separate.
+- [x] `test_existing_confirmation_tokens_keep_working_while_private`: the original
+  expiring token confirmation still works after an authenticated preview signup.
+- [x] `test_publication_write_error_does_not_report_success`: a synthetic write
+  failure shows uncertainty/error rather than a false publication success.
+
+Only admin_kampanja's new publication route count/hash/coverage is updated in the
+existing surface manifest. No application styling or other route baseline is
+changed by this manifest maintenance.
+
+Publication follow-up validation: 63 targeted cases pass (45 existing feature
+cases, 13 publication cases and five relevant existing admin/UI/route contracts).
+Actual Flask browser captures separately exercise native admin publish/withdraw,
+write-error feedback, ordinary authenticated preview, restricted publisher rights,
+public anonymous browsing and JavaScript-disabled admin submission.

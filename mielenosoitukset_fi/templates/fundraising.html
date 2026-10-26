@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Pienkeräys – Mielenosoitukset.fi{% endblock %}
+{% block og_title %}Mielenosoitukset.fi:n pienkeräys{% endblock %}
+{% block og_description %}Suunnittelemme 2 500 euron pienkeräystä, jotta yhä useampi löytäisi mielenosoitukset.fi-palvelun. Tutustu suunnitelmaan.{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/public-content.css', v='20261026-fundraising-2') }}">
+{% endblock %}
+
+{% block content %}
+<article class="public-content" lang="fi">
+  <section class="site-hero" aria-labelledby="fundraising-title">
+    <div class="hero-content">
+      <p class="site-hero__eyebrow">{{ 'Suunnitteilla oleva pienkeräys' if fundraising.is_preparation else 'Pienkeräys' }}</p>
+      <h1 id="fundraising-title">Jotta mielenosoitukset löytyvät</h1>
+      <p>Haluamme tuoda mielenosoitukset.fi-palvelun yhä useamman ihmisen tietoon. {{ 'Suunnittelemme pienkeräystä yhteisen markkinointikampanjan toteuttamiseen.' if fundraising.is_preparation else 'Pienkeräyksellä rahoitetaan yhteinen markkinointikampanja.' }}</p>
+    </div>
+  </section>
+
+  <div class="public-content__grid">
+    <div class="public-content__sections">
+      <section class="public-content__card" aria-labelledby="purpose-title">
+        <h2 id="purpose-title">Mihin varat käytetään?</h2>
+        <p>Kerätyt varat käytetään mielenosoitukset.fi-palvelun tunnettuuden lisäämiseen tähtäävän markkinointikampanjan toteuttamiseen.</p>
+        <ul>
+          <li>Markkinointimateriaalien, kuten tarrojen, julisteiden ja banderollien, suunnittelu, valmistus ja hankinta.</li>
+          <li>Kampanjan toteuttamisesta aiheutuvat muut kulut, kuten matkakulut.</li>
+        </ul>
+        <h3>Jos varoja jää yli</h3>
+        <p>Mikäli varoja jää ensisijaisen käyttötarkoituksen toteuttamisen jälkeen, ne käytetään mielenosoitukset.fi-palvelun ylläpitoon ja jatkuvuuden turvaamiseen.</p>
+      </section>
+
+      <section class="public-content__card" aria-labelledby="service-title">
+        <h2 id="service-title">Mikä on Mielenosoitukset.fi?</h2>
+        <p>Mielenosoitukset.fi kokoaa Suomessa järjestettäviä mielenosoituksia yhteen paikkaan. Palvelusta voit etsiä tulevia tapahtumia ja ilmoittaa mielenosoituksesta muiden löydettäväksi.</p>
+        <p>Palvelua ylläpidetään riippumattomana, voittoa tavoittelemattomana vapaaehtoisprojektina. Tavoitteena on helpottaa tapahtumien löytämistä ja osallistumista.</p>
+        <a class="public-content__link" href="{{ url_for('info') }}">Lue lisää palvelusta <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+      </section>
+    </div>
+
+    <aside class="public-content__card public-content__summary" aria-labelledby="summary-title">
+      <h2 id="summary-title">{{ 'Keräyksen suunnitelma' if fundraising.is_preparation else 'Keräyksen tiedot' }}</h2>
+      {% if fundraising.is_preparation %}<p>Ilmoitus on tarkoitus jättää 10.11.2026. Ilmoituksen jättämistä tai keräyksen aloitusta ei ole vahvistettu.</p>{% endif %}
+      <dl class="public-content__facts">
+        <div><dt>Keräystavoite</dt><dd class="public-content__amount">2 500 €</dd></div>
+        <div><dt>{{ 'Keräysaika' if fundraising.confirmed else 'Suunniteltu keräysaika' }}</dt><dd>{% if fundraising.display_start_date and fundraising.display_end_date %}<time datetime="{{ fundraising.display_start_date.isoformat() }}">{{ fundraising.display_start_date.strftime('%d.%m.%Y') }}</time>–<time datetime="{{ fundraising.display_end_date.isoformat() }}">{{ fundraising.display_end_date.strftime('%d.%m.%Y') }}</time>{% else %}Vahvistetaan myöhemmin{% endif %}</dd></div>
+        <div><dt>Tilanne</dt><dd>{{ 'Valmistelussa' if fundraising.is_preparation else 'Keräys avoinna' if fundraising.can_donate else 'Lahjoittaminen suljettu' }}</dd></div>
+        <div><dt>Keräyksen järjestäjä</dt><dd>{{ fundraising.organizer if fundraising.confirmed else 'Vahvistetaan myöhemmin' }}</dd></div>
+        <div><dt>Keräysnumero</dt><dd>{{ fundraising.collection_number if fundraising.confirmed else 'Lisätään ilmoituksen vahvistamisen jälkeen' }}</dd></div>
+      </dl>
+      {% if fundraising.can_donate %}
+      <section class="public-content__notice" aria-labelledby="donate-title">
+        <h3 id="donate-title">Näin lahjoitat</h3>
+        <p>Lahjoita vain keräysaikana {{ fundraising.start_date.strftime('%d.%m.%Y') }}–{{ fundraising.end_date.strftime('%d.%m.%Y') }}. Älä tee lahjoitusta keräysajan päätyttyä.</p>
+        {% for link in fundraising.mobilepay_links if link.url %}
+        <p><a class="public-content__link" href="{{ link.url }}" rel="noopener noreferrer">{{ link.label }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a></p>
+        {% endfor %}
+        {% if fundraising.iban and fundraising.recipient %}
+        <dl class="public-content__facts">
+          <div><dt>Saaja</dt><dd>{{ fundraising.recipient }}</dd></div>
+          <div><dt>Tilinumero (IBAN)</dt><dd>{{ fundraising.iban }}</dd></div>
+          {% if fundraising.reference %}<div><dt>Viite</dt><dd>{{ fundraising.reference }}</dd></div>{% endif %}
+        </dl>
+        {% endif %}
+        {% if fundraising.payment_url %}<a class="public-content__link" href="{{ fundraising.payment_url }}" rel="noopener noreferrer">Siirry lahjoittamaan <i class="fas fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+      </section>
+      {% else %}
+      <div class="public-content__notice">
+        <h3>{{ 'Lahjoittaminen ei ole vielä avoinna' if fundraising.is_preparation else 'Lahjoittaminen on suljettu' }}</h3>
+        <p>{{ 'Lahjoituksia voi tehdä vain vahvistettuna keräysaikana ja keräyksen ollessa avoinna.' if fundraising.confirmed else 'Keräyksen järjestäjä, keräysnumero ja lahjoitusohjeet julkaistaan, kun tiedot ja aloitus on vahvistettu. Myös keräysaika on vielä suunniteltu.' }}</p>
+      </div>
+      {% endif %}
+      {% if fundraising.is_preparation and fundraising.mobilepay_links %}
+      <section class="public-content__notice" aria-labelledby="mobilepay-title">
+        <h3 id="mobilepay-title">MobilePay</h3>
+        {% for link in fundraising.mobilepay_links %}
+        <p><strong>{{ link.label }}</strong><br>Linkki lisätään ennen keräyksen avaamista.</p>
+        {% endfor %}
+      </section>
+      {% endif %}
+      <p>Onko sinulla kysyttävää keräyksestä?</p>
+      <a class="public-content__link" href="{{ url_for('contact') }}">Ota yhteyttä <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+      <p><a class="public-content__link" href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a></p>
+    </aside>
+  </div>
+</article>
+{% endblock %}

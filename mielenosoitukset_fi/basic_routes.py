@@ -10,6 +10,8 @@ import time
 import uuid
 import hashlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
+from mielenosoitukset_fi.utils.fundraising import fundraising_details
+from mielenosoitukset_fi.utils.campaign_publication import campaign_pages_public, campaign_preview_required
 from datetime import datetime, date, timedelta, timezone
 from urllib.parse import parse_qs, urlencode, urlsplit
 from flask_babel import _, refresh, format_date, get_locale
@@ -1420,8 +1422,10 @@ def init_routes(app):
                 {"loc": "contact"},
                 {"loc": "api_docs"},
                 {"loc": "pride_nakyvaksi"},
-                {"loc": "campaign.index"},
             ]
+
+            if campaign_pages_public():
+                static_routes.extend([{"loc": "campaign.index"}, {"loc": "fundraising"}])
 
             # Helper to add url + optional alternate links
             def _add_url_with_alternates(parent, endpoint, lastmod=None, **values):
@@ -1696,6 +1700,7 @@ def init_routes(app):
             xml_bytes = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
             resp = Response(xml_bytes, mimetype="application/xml")
             resp.headers["Content-Type"] = "application/xml; charset=utf-8"
+            resp.headers["Cache-Control"] = "no-store"
             return resp
 
         except Exception:
@@ -3804,6 +3809,19 @@ def init_routes(app):
     @app.route("/info")
     def info():
         return render_template("info.html")
+
+    @app.route("/keräys")
+    @campaign_preview_required
+    def fundraising():
+        return render_template("fundraising.html", fundraising=fundraising_details())
+
+    @app.context_processor
+    def inject_fundraising_campaign():
+        details = fundraising_details()
+        details["show_header_link"] = details["show_header_link"] and (
+            campaign_pages_public() or current_user.is_authenticated
+        )
+        return {"fundraising_campaign": details}
 
     @app.route("/privacy")
     def privacy():

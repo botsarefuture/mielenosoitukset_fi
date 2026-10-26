@@ -3,6 +3,31 @@
    Bootstrap and page-level dropdowns are not affected. */
 
 /* Skip to Content Link */
+.public-site-header--fundraising .container {
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+.public-site-header .fundraising-header-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  min-height: 44px;
+  margin-left: auto;
+  padding: .5rem .85rem;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+  color: var(--product-on-action);
+  text-decoration: none;
+  font-size: .9rem;
+  font-weight: 650;
+}
+.public-site-header .fundraising-header-link:hover { text-decoration: underline; }
+.public-site-header .fundraising-header-link:focus-visible { outline: 3px solid var(--product-on-action); outline-offset: 4px; }
+@media (max-width: 720px) {
+  .public-site-header .fundraising-header-link { margin-left: 0; }
+}
+
   .skip-link {
     position: absolute;
     top: 0;

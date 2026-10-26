@@ -234,3 +234,42 @@ def test_campaign_volunteer_double_submit_starts_one_request(live_server, browse
 
     browser_page.locator("#vol-msg").wait_for(state="visible")
     assert request_count == 1
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_campaign_without_javascript_disables_both_signups(live_server, playwright_browser):
+    context = playwright_browser.new_context(java_script_enabled=False)
+    context.route("**/*", lambda route: route.continue_() if route.request.url.startswith(live_server) else route.abort())
+    try:
+        page = context.new_page()
+        page.goto(f"{live_server}/kampanja/", wait_until="domcontentloaded")
+        assert page.locator("#vol-submit").is_disabled()
+        assert page.locator('#newsletter-form button').is_disabled()
+        assert page.locator("#vol-name").is_disabled()
+        assert not page.locator("#vol-msg").is_visible()
+        assert not page.locator("#newsletter-msg").is_visible()
+        assert "Tietojasi ei ole lähetetty" in page.locator("#vapaaehtoiseksi").inner_text()
+        assert page.locator('#vapaaehtoiseksi a[href="mailto:tuki@mielenosoitukset.fi"]').count() >= 1
+        assert not page.url.split("/kampanja/", 1)[1]
+    finally:
+        context.close()
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_campaign_newsletter_preserves_signup_integration(live_server, browser_page):
+    import json
+    requests = []
+
+    def signup(route):
+        requests.append(route.request.post_data_json)
+        route.fulfill(status=200, content_type="application/json", body=json.dumps({"message": "ok"}))
+
+    browser_page.route("https://mailist.luova.club/signup", signup)
+    browser_page.goto(f"{live_server}/kampanja/", wait_until="domcontentloaded")
+    browser_page.locator("#email").fill("newsletter@example.test")
+    browser_page.locator('#newsletter-form button').click()
+    browser_page.locator("#newsletter-msg.show").wait_for()
+    assert requests == [{"email": "newsletter@example.test", "list_id": "68d26ca27f8e9dee7c846a22"}]
+    assert "Tilauksesi onnistui" in browser_page.locator("#newsletter-msg").inner_text()

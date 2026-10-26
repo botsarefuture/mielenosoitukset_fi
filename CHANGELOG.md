@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+- Clarify volunteer roles and email confirmation on the existing campaign page, with theme-aware mobile forms, visible submission progress and safe JavaScript-disabled guidance for both signups.
+
+- Add a mobile-friendly `/keräys` page with clearly marked pending details and one fill-in configuration file for the planned €2,500 collection. Confirmed bank/payment-link instructions require explicit activation and valid collection dates. Add an opt-in site-header link and refresh campaign fundraising information while preserving existing signups.
+
 - Require session-bound CSRF proof before single or bulk revocation of admin magic links.
 
 - Strengthen regression protection for Mongo client argument forwarding, first-overflow pagination metadata and permission-decorator dispatch; retain parser tests where no additional coverage is justified.

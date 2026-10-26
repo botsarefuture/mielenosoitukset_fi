@@ -66,7 +66,7 @@ time (datetime) | iso string, read (bool)
 <a href="#main-content" class="skip-link">{{ _('Siirry sisältöön') }}</a>
 
 <!-- Top Header -->
-<header class="top-header public-site-header" role="banner">
+<header class="top-header public-site-header{% if fundraising_campaign and fundraising_campaign.show_header_link %} public-site-header--fundraising{% endif %}" role="banner">
   <div class="container">
     <div class="branding">
       <a href="{{ url_for('index') }}" class="logo" aria-label="{{ _('Mielenosoitukset.fi - Etusivu') }}">
@@ -74,6 +74,11 @@ time (datetime) | iso string, read (bool)
       </a>
     </div>
 
+    {% if fundraising_campaign and fundraising_campaign.show_header_link %}
+    <a class="fundraising-header-link" href="{{ url_for('fundraising') }}" lang="fi">
+      <i class="fas fa-heart" aria-hidden="true"></i> Tutustu pienkeräykseen
+    </a>
+    {% endif %}
     {% set public_locales = get_supported_locales() %}
     {% if public_locales|length > 1 %}
     <nav class="language-buttons" aria-label="{{ _('Kielivalinta') }}">

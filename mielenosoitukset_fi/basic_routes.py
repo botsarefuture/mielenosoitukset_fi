@@ -10,6 +10,7 @@ import time
 import uuid
 import hashlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
+from mielenosoitukset_fi.utils.fundraising import fundraising_details
 from datetime import datetime, date, timedelta, timezone
 from urllib.parse import parse_qs, urlencode, urlsplit
 from flask_babel import _, refresh, format_date, get_locale
@@ -1421,6 +1422,7 @@ def init_routes(app):
                 {"loc": "api_docs"},
                 {"loc": "pride_nakyvaksi"},
                 {"loc": "campaign.index"},
+                {"loc": "fundraising"},
             ]
 
             # Helper to add url + optional alternate links
@@ -3804,6 +3806,14 @@ def init_routes(app):
     @app.route("/info")
     def info():
         return render_template("info.html")
+
+    @app.route("/keräys")
+    def fundraising():
+        return render_template("fundraising.html", fundraising=fundraising_details())
+
+    @app.context_processor
+    def inject_fundraising_campaign():
+        return {"fundraising_campaign": fundraising_details()}
 
     @app.route("/privacy")
     def privacy():

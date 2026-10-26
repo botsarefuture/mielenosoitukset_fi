@@ -24,6 +24,19 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
+      - name: Set up frontend build tools
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Verify frontend types and committed build
+        run: |
+          npm ci
+          npm run build
+          git diff --exit-code -- mielenosoitukset_fi/static/frontend
+          test -z "$(git ls-files --others --exclude-standard -- mielenosoitukset_fi/static/frontend)"
+
       - name: Install dependencies
         run: |
           bash deploy/bootstrap_python_trust.sh python

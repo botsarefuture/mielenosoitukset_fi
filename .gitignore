@@ -27,3 +27,6 @@ data/mailpit.db
 data/mailpit.db-shm
 data/mailpit.db-wal
 **/mailpit*
+
+# Frontend dependencies (compiled static/frontend assets are intentionally tracked)
+node_modules/

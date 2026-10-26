@@ -1,0 +1,6 @@
+{# Load only the React entry used by this page; never attach bundles globally. #}
+{% macro frontend_entry(entry) -%}
+  {% set assets = frontend_assets(entry) %}
+  {% for href in assets.styles %}<link rel="stylesheet" href="{{ href }}">{% endfor %}
+  <script type="module" src="{{ assets.script }}"></script>
+{%- endmacro %}

@@ -3,6 +3,17 @@ import json
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def published_campaign(db, seeded_data):
+    """Existing public-content checks exercise the explicitly published state."""
+    db.campaign_settings.update_one(
+        {"_id": "public_pages"}, {"$set": {"published": True}}, upsert=True
+    )
+    yield
+    db.campaign_settings.delete_one({"_id": "public_pages"})
+
+
+
 
 def _set_locale(client, locale):
     with client.session_transaction() as session:

@@ -9,6 +9,7 @@ from flask_babel import _
 
 # Local imports
 from . import campaign_bp
+from mielenosoitukset_fi.utils.campaign_publication import campaign_preview_required
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 
@@ -19,12 +20,14 @@ mongo = db_manager.get_db()
 
 
 @campaign_bp.route("/")
+@campaign_preview_required
 def index():
     """Serve the main campaign page."""
     return render_template("kampanja/index.html")
 
 
 @campaign_bp.route("/api/volunteers", methods=["POST"])
+@campaign_preview_required(api=True)
 def add_volunteer():
     """Handle volunteer signups."""
     data = request.get_json()

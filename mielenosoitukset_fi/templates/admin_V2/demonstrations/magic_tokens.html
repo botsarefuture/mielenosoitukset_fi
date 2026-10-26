@@ -112,6 +112,7 @@
   <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
     <div class="modal-header"><div><p class="admin-modal-kicker">{{ _('Kertakäyttölinkit') }}</p><h2 class="modal-title" id="revokeTokenModalTitle">{{ _('Mitätöi linkki') }}</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div>
     <form method="post" action="{{ url_for('admin_demo.manage_magic_tokens') }}" id="revokeTokenForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="modal-body"><p id="revokeTokenModalDescription">{{ _('Mitätöinti estää linkin myöhemmän käytön. Toimintoa ei voi perua.') }}</p><strong data-token-confirmation-label></strong></div>
       <input type="hidden" name="token_id" value=""><input type="hidden" name="revoke_all" value="">
       <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button><button type="submit" class="btn btn-danger"><i class="fa-solid fa-ban" aria-hidden="true"></i>{{ _('Mitätöi') }}</button></div>

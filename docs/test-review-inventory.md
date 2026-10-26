@@ -2,6 +2,16 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+Batch13 local checkpoint, 2026-10-26, based on merged main `7cadeedf`:
+**1,313 definitions /175 files /469 individually assessed**. Preserve all464
+merged dispositions; assess four existing magic-token definitions and one new
+CSRF definition. **844 test definitions plus two supporting fixtures remain
+pending**. All definitions map uniquely to inventory entries; fixtures are
+tracked separately. Focused compatibility control38 passed; final local review
+completed with zero findings. No publication/merge/deployment for this batch yet.
+Groups1–3 have merged with successful hosted checks and production deployment;
+the pending-publication statements below preserve their historical checkpoints.
+
 Regression integration Group 3, 2026-10-25, on main `16ade1ec`:
 **1,312 definitions /175 files /464 individually assessed**. Preserve all458
 main assessments. Mongo/parser/pagination follow-ups update prior evidence
@@ -211,7 +221,7 @@ QA-02a/#969 update · 2026-10-24: also assert the unchanged30-minute limit and s
 
 ## Supporting audit — tests/conftest.py
 
-These two functions are `@pytest.fixture` definitions despite their names. They require supporting review and are excluded from the 997-test total.
+These two functions are `@pytest.fixture` definitions despite their names. They require supporting review and are excluded from test-definition totals.
 
 - [ ] `test_settings`
 - [ ] `test_config_path`
@@ -405,10 +415,43 @@ QA-03a / SEC-04c support · P2 · Codex · 2026-10-22 · main8e6f0e2b. Each exis
 
 ## tests/test_admin_magic_tokens.py
 
-- [ ] `test_magic_token_collection_uses_stable_server_pagination`
-- [ ] `test_magic_token_filters_preserve_truthful_counts_and_page_size`
-- [ ] `test_magic_token_revocation_and_global_admin_boundary`
-- [ ] `test_magic_token_template_uses_shared_collection_and_modal_contracts`
+Batch13, 2026-10-26, based on merged main `7cadeedf`: four existing definitions
+improved and one distinct CSRF definition added; **five definitions /10 cases**.
+Real Flask/session/Mongo integration on an exclusively owned loopback database.
+See the Batch13 report for controls, fault evidence and limitations.
+
+- [x] `test_magic_token_collection_uses_stable_server_pagination`
+
+Improve: separate timestamp order from ID tie-breaking; exact ordered rows on
+both pages detect duplication, omission and reversed primary sorting. Two cases,
+one definition; scrambled insertion avoids accidental agreement with ordering.
+
+- [x] `test_magic_token_filters_preserve_truthful_counts_and_page_size`
+
+Improve: action, active, used and revoked cases assert actual rows, both counts
+and retained filters/page size. An expired unused row distinguishes active from
+merely unused. Existing definition extended rather than four new definitions.
+
+- [x] `test_magic_token_revocation_and_global_admin_boundary`
+
+Improve: exact target/neighbour persistence and real audit attribution; same
+actor loses global authority after obtaining a valid proof. GET and both POST
+branches deny without writes. Higher fixture cost is justified for destructive
+privileged actions; CSRF cannot accidentally mask the authority assertion.
+
+- [x] `test_magic_token_template_uses_shared_collection_and_modal_contracts`
+
+Improve maintenance: path relative to the test file and unordered class-token
+sets preserve shared-component contracts without class-order/extra-class
+coupling. Retain forbidden legacy hooks. Cheap architecture guard complements
+browser rendering; it does not certify visual quality.
+
+- [x] `test_magic_token_revocation_requires_session_csrf`
+
+Add/keep: distinct request-authenticity boundary for single and bulk actions.
+Missing, wrong, Unicode and other-session proof must deny without token/audit
+changes; legitimate proof permits the intended action and preserves used rows.
+Two parametrized cases. Red on the original handler, green after protection.
 
 ## tests/test_admin_mcp.py
 

@@ -89,3 +89,9 @@ fieldset:disabled button { cursor: not-allowed; }
   color: var(--product-on-action);
   opacity: .85;
 }
+.form-control:focus {
+  background: var(--product-surface);
+  color: var(--product-text);
+}
+.form-control:focus::placeholder { color: var(--product-text-muted); }
+footer p { color: var(--product-on-action); }

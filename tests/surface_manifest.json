@@ -249,11 +249,12 @@
       ]
     },
     "mielenosoitukset_fi/basic_routes.py": {
-      "count": 55,
-      "sha256": "2a3606a1dc56433257f9244dad8eef75717b83e7b83a45572c03acb5d7541a82",
+      "count": 56,
+      "sha256": "933897acb290bbd157d7b16bf7289bc1e80f9ff4c68b38623467930178471ad8",
       "coverage": [
         "integration",
-        "e2e-public"
+        "e2e-public",
+        "tests/test_fundraising_page.py"
       ]
     },
     "mielenosoitukset_fi/developer_bp.py": {

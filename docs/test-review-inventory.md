@@ -61,6 +61,14 @@ Additional feature-only checks (2026-10-26):
 The existing first-invalid-field browser check now covers both empty required
 fields and a nonempty malformed email; the fieldset must not capture error focus.
 
+Feature-only CI compatibility follow-up: update the shared-header assertion for
+its new cache key/conditional promotion class, reconcile only the reviewed
+campaign inline-style hashes (six attributes removed, no new inline attributes),
+and add the new public fundraising route to basic_routes' surface count/hash and
+coverage anchor. All unrelated baseline/manifest entries are preserved. This is
+compatibility maintenance, not a new systematic test-audit disposition. The
+45 feature cases plus these three CI contracts pass together (48 passed).
+
 Focused feature validation: 45 cases passed, including the existing volunteer
 validation, localization, request-outcome and duplicate-submit protections. No
 broad suite audit or provider transaction validation is implied.

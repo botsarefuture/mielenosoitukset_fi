@@ -167,17 +167,25 @@ def test_campaign_volunteer_feedback_handles_request_outcomes(
 
 @pytest.mark.e2e
 @pytest.mark.integration
+@pytest.mark.parametrize(
+    "name,email,expected_field,expected_message",
+    [
+        ("", "", "vol-name", "Nimi ja sähköpostiosoite ovat pakollisia."),
+        ("Test User", "not-an-email", "vol-email", "Tarkista korostetut tiedot"),
+    ],
+)
 def test_campaign_volunteer_validation_focuses_first_invalid_field(
-    live_server, browser_page
+    live_server, browser_page, name, email, expected_field, expected_message
 ):
     browser_page.goto(f"{live_server}/kampanja/", wait_until="domcontentloaded")
-
+    browser_page.locator("#vol-name").fill(name)
+    browser_page.locator("#vol-email").fill(email)
     browser_page.locator("#vol-submit").click()
 
-    assert browser_page.evaluate("document.activeElement.id") == "vol-name"
-    assert "Nimi ja sähköpostiosoite ovat pakollisia." in browser_page.locator(
-        "#vol-msg"
-    ).inner_text()
+    assert browser_page.evaluate("document.activeElement.id") == expected_field
+    assert browser_page.locator(f"#{expected_field}").get_attribute("aria-invalid") == "true"
+    assert browser_page.locator("#vol-fields").get_attribute("aria-invalid") is None
+    assert expected_message in browser_page.locator("#vol-msg").inner_text()
 
 
 @pytest.mark.e2e

@@ -58,7 +58,10 @@ Additional feature-only checks (2026-10-26):
   the existing external signup endpoint and checks the unchanged list ID/email
   payload and displayed success response; no actual subscription or mail is sent.
 
-Focused feature validation: 44 cases passed, including the existing volunteer
+The existing first-invalid-field browser check now covers both empty required
+fields and a nonempty malformed email; the fieldset must not capture error focus.
+
+Focused feature validation: 45 cases passed, including the existing volunteer
 validation, localization, request-outcome and duplicate-submit protections. No
 broad suite audit or provider transaction validation is implied.
 

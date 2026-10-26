@@ -114,7 +114,7 @@ The DR pipeline removes forms; supporting copy/email stays available.
 
 ## Local verification on 26 October 2026
 
-The focused fundraising/volunteer set passes 44 cases, including browser feedback,
+The focused fundraising/volunteer set passes 45 cases, including browser feedback,
 validation, duplicate submission, no-JavaScript behavior and the unchanged
 newsletter request contract. No real signup, mail or donation was sent.
 

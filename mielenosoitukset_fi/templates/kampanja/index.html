@@ -1218,7 +1218,8 @@
         const missingRequiredFields = Array.from(
           volunteerForm.querySelectorAll('[required]')
         ).filter((field) => !field.value.trim());
-        const browserInvalidFields = Array.from(volunteerForm.querySelectorAll(':invalid'));
+        const browserInvalidFields = Array.from(volunteerForm.querySelectorAll(':invalid'))
+          .filter((field) => field.matches('input, textarea, select'));
         const invalidFields = Array.from(new Set([
           ...missingRequiredFields,
           ...browserInvalidFields,

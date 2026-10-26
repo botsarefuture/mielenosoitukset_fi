@@ -1154,7 +1154,18 @@ Actual48h assignment and exact-deadline query/marking while caller supplies24h f
 
 ## tests/test_campaign_volunteer_feedback.py
 
-- [ ] `test_campaign_volunteer_feedback_contract_uses_accessible_in_page_status`
+- [x] `test_campaign_loads_only_its_react_entry_with_translated_json_props`
+
+React migration, 2026-10-26: replaces retired inline-JavaScript source assertions
+with a real Flask response/JSON-props/asset check. Existing browser cases retain
+validation focus, whitespace rejection, feedback and simultaneous-submit coverage.
+Added real Flask signup-to-confirmation coverage (mail queue captured, no delivery),
+pending/error/retry value retention and escaped server errors, missing-module
+disabled fallback, and absence of React on other public/admin pages.
+`tests/test_frontend_assets.py` checks prefixed asset URLs, dependency CSS deduplication,
+watch-build reloading and incomplete/escaping manifest entries. No additional
+CI suite or broad test audit was introduced. Visual evidence is a separate
+in-conversation review; these tests do not establish visual acceptance.
 - [ ] `test_campaign_volunteer_api_localizes_required_fields_error`
 - [ ] `test_campaign_volunteer_api_rejects_blank_normalized_required_values`
 - [ ] `test_campaign_page_embeds_localized_volunteer_feedback`

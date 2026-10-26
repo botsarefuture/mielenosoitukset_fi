@@ -974,6 +974,21 @@
           <ol class="volunteer-steps"><li>Lähetä kiinnostuksesi.</li><li>Vahvista ilmoittautuminen sähköpostiisi saapuvasta linkistä.</li></ol>
           <p class="volunteer-privacy">Tietoja käytetään vapaaehtoistoiminnan yhteydenpitoon. <a href="{{ url_for('privacy') }}">Lue tietosuojaseloste</a>.</p>
           <noscript><p class="public-content__notice">Ilmoittautumislomake tarvitsee JavaScriptin. Tietojasi ei ole lähetetty. Voit kysyä mukaan tulemisesta sähköpostitse: <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>.</p></noscript>
+          {% set volunteer_props = {
+            'endpoint': url_for('campaign.add_volunteer'),
+            'messages': {
+              'required': _('Nimi ja sähköpostiosoite ovat pakollisia.'),
+              'invalid': _('Tarkista korostetut tiedot ja yritä uudelleen.'),
+              'success': _('Kiitos ilmoittautumisestasi! Tarkista sähköpostisi vahvistaaksesi ilmoittautumisen.'),
+              'failed': _('Ilmoittautuminen epäonnistui. Yritä uudelleen.'),
+              'network': _('Yhteys palveluun epäonnistui. Yritä myöhemmin uudelleen.'),
+              'sending': _('Lähetetään…')
+            }
+          } %}
+          <script id="volunteer-form-props" type="application/json">{{ volunteer_props | tojson }}</script>
+          <div data-react-island="volunteer-form" data-props-id="volunteer-form-props">
+          <p class="public-content__notice">Lomaketta ladataan. Jos lomake ei avaudu, voit ottaa yhteyttä: <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>.</p>
+          {# Disabled fallback: React replaces this region, it does not hydrate Jinja markup. #}
           <form id="volunteer-form" method="post" action="{{ url_for('campaign.add_volunteer') }}" novalidate aria-describedby="vol-help vol-msg">
             <fieldset disabled id="vol-fields"><legend class="visually-hidden">Ilmoittautumistiedot</legend>
             <div class="form-row">
@@ -1016,6 +1031,7 @@
               <span class="flash-content"><span id="vol-msg-text" class="flash-text"></span></span>
             </div>
           </form>
+          </div>
         </div>
       </div>
     </div>
@@ -1143,7 +1159,11 @@
   </div>
 </footer>
 
+{% endblock %}
+
 {% block scripts %}
+{% from '_macros/frontend.html' import frontend_entry %}
+{{ frontend_entry('src/entries/volunteer.tsx') }}
 <script>
   // Navbar scroll effect
   (function () {
@@ -1166,117 +1186,6 @@
         }
       });
     });
-
-    // Volunteer form (async POST)
-    (function () {
-      const volunteerForm = document.getElementById('volunteer-form');
-      const volunteerMsg = document.getElementById('vol-msg');
-      const volunteerMsgText = document.getElementById('vol-msg-text');
-      const volunteerMsgIcon = volunteerMsg?.querySelector('.flash-icon i');
-      const volunteerSubmit = document.getElementById('vol-submit');
-      if (!volunteerForm || !volunteerMsg || !volunteerMsgText || !volunteerMsgIcon || !volunteerSubmit) return;
-
-      const volunteerMessages = {
-        required: {{ _('Nimi ja sähköpostiosoite ovat pakollisia.') | tojson }},
-        invalid: {{ _('Tarkista korostetut tiedot ja yritä uudelleen.') | tojson }},
-        success: {{ _('Kiitos ilmoittautumisestasi! Tarkista sähköpostisi vahvistaaksesi ilmoittautumisen.') | tojson }},
-        failed: {{ _('Ilmoittautuminen epäonnistui. Yritä uudelleen.') | tojson }},
-        network: {{ _('Yhteys palveluun epäonnistui. Yritä myöhemmin uudelleen.') | tojson }},
-      };
-
-      function showVolunteerFeedback(kind, message) {
-        volunteerMsgText.textContent = message;
-        volunteerMsg.classList.remove('flash-success', 'flash-error');
-        volunteerMsg.classList.add(kind === 'success' ? 'flash-success' : 'flash-error');
-        volunteerMsgIcon.classList.toggle('fa-circle-check', kind === 'success');
-        volunteerMsgIcon.classList.toggle('fa-circle-exclamation', kind !== 'success');
-        volunteerMsg.setAttribute('role', kind === 'success' ? 'status' : 'alert');
-        volunteerMsg.hidden = false;
-      }
-
-      function hideVolunteerFeedback() {
-        volunteerMsg.hidden = true;
-        volunteerMsgText.textContent = '';
-        volunteerMsg.classList.remove('flash-success', 'flash-error');
-        volunteerMsg.setAttribute('role', 'status');
-      }
-
-      volunteerForm.querySelectorAll('input, textarea').forEach((field) => {
-        field.addEventListener('input', () => field.removeAttribute('aria-invalid'));
-      });
-
-      const submitLabel = document.getElementById('vol-submit-label');
-      const submitText = submitLabel.textContent;
-
-      volunteerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        if (volunteerForm.dataset.requestPending === 'true') return;
-
-        hideVolunteerFeedback();
-
-        const missingRequiredFields = Array.from(
-          volunteerForm.querySelectorAll('[required]')
-        ).filter((field) => !field.value.trim());
-        const browserInvalidFields = Array.from(volunteerForm.querySelectorAll(':invalid'))
-          .filter((field) => field.matches('input, textarea, select'));
-        const invalidFields = Array.from(new Set([
-          ...missingRequiredFields,
-          ...browserInvalidFields,
-        ]));
-        const firstInvalidField = invalidFields[0];
-        if (firstInvalidField) {
-          showVolunteerFeedback(
-            'error',
-            missingRequiredFields.length ? volunteerMessages.required : volunteerMessages.invalid
-          );
-          invalidFields.forEach((field) => field.setAttribute('aria-invalid', 'true'));
-          firstInvalidField.focus();
-          return;
-        }
-
-        const formData = {
-          name: document.getElementById('vol-name').value.trim(),
-          email: document.getElementById('vol-email').value.trim(),
-          phone: document.getElementById('vol-phone').value.trim(),
-          city: document.getElementById('vol-city').value.trim(),
-          notes: document.getElementById('vol-notes').value.trim(),
-        };
-
-        volunteerForm.dataset.requestPending = 'true';
-        volunteerSubmit.disabled = true;
-        volunteerSubmit.setAttribute('aria-busy', 'true');
-        submitLabel.textContent = {{ _('Lähetetään…') | tojson }};
-        volunteerForm.setAttribute('aria-busy', 'true');
-        try {
-          const response = await fetch('/kampanja/api/volunteers', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData)
-          });
-          let result = null;
-          try {
-            result = await response.json();
-          } catch (parseError) {
-            console.error(parseError);
-          }
-          if (response.ok && result?.success) {
-            showVolunteerFeedback('success', volunteerMessages.success);
-            volunteerForm.reset();
-          } else {
-            showVolunteerFeedback('error', result?.error || volunteerMessages.failed);
-          }
-        } catch (err) {
-          console.error(err);
-          showVolunteerFeedback('error', volunteerMessages.network);
-        } finally {
-          delete volunteerForm.dataset.requestPending;
-          volunteerSubmit.disabled = false;
-          volunteerSubmit.removeAttribute('aria-busy');
-          volunteerForm.removeAttribute('aria-busy');
-          submitLabel.textContent = submitText;
-        }
-      });
-      document.getElementById('vol-fields').disabled = false;
-    })();
 
     // Newsletter subscribe function (kept for compatibility with inline onsubmit)
     window.subscribe = function (event) {
@@ -1307,5 +1216,4 @@
     });
   })();
 </script>
-{% endblock %}
 {% endblock %}

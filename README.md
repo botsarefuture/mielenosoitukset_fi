@@ -103,6 +103,15 @@ To run this project locally you'll typically need:
 
 ---
 
+## Public React components
+
+The volunteer form uses React inside the existing Flask/Jinja campaign page.
+Built assets are included in the repository; Python-only runs need no Node.
+For frontend work, use Node 22.12+, run `npm ci` and `npm run dev`, and refresh
+the Flask page after changes. Run `npm run build` before committing.
+See [the React migration guide](docs/react-frontend.md) for entry points,
+translations, fallback behavior and deployment.
+
 ## Testing
 
 Run the regression suite with:

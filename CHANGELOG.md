@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Roadmap: adopt migration to React whenever public pages are changed, with an eventual entirely React public frontend; retain Flask backend and current admin, and track staged delivery and compatibility requirements under UI-06.
+
 - Move the campaign volunteer form to an isolated React component while preserving signup, confirmation and translations. Add a reusable TypeScript/Vite build and Flask asset integration for gradual public-frontend migration, without loading React in the admin or other public pages.
 - Keep campaign and fundraising pages behind login until an authorized administrator publishes them from campaign management. Protect the volunteer API, hide unpublished discovery links, and support returning pages to private; publication never enables donations.
 

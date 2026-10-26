@@ -1240,6 +1240,7 @@ EDIT_LINK_DURATION_SECONDS = {
 }
 EDIT_LINK_MAX_AGE_SECONDS = max(EDIT_LINK_DURATION_SECONDS.values())
 EDIT_LINK_CSRF_SESSION_KEY = "demo_edit_link_csrf_token"
+MAGIC_TOKEN_CSRF_SESSION_KEY = "admin_magic_token_csrf"
 
 # Recommended: create TTL index (run once on startup/migration)
 # mongo[MAGIC_COLLECTION].create_index("expires_at", expireAfterSeconds=0)
@@ -5008,6 +5009,12 @@ def manage_magic_tokens():
         abort(403)
 
     if request.method == "POST":
+        expected = session.get(MAGIC_TOKEN_CSRF_SESSION_KEY, "")
+        provided = request.form.get("csrf_token", "")
+        if not (expected and provided and hmac.compare_digest(
+            expected.encode("utf-8"), provided.encode("utf-8")
+        )):
+            abort(403)
         if request.form.get("revoke_all") == "1":
             revoke_filter = {
                 "revoked": {"$ne": True},
@@ -5156,8 +5163,14 @@ def manage_magic_tokens():
             }
         )
 
+    csrf_token = session.get(MAGIC_TOKEN_CSRF_SESSION_KEY)
+    if not csrf_token:
+        csrf_token = secrets.token_urlsafe(32)
+        session[MAGIC_TOKEN_CSRF_SESSION_KEY] = csrf_token
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/magic_tokens.html",
+        csrf_token=csrf_token,
         tokens=tokens,
         filters=filters,
         actions=distinct_actions,

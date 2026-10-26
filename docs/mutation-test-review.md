@@ -1144,3 +1144,87 @@ Evidence: chat `work/run_decorator_faults.py`, `work/batch04-before-mutmut.log`
 and `work/batch04-validation.log`; scratch
 `/var/folders/h2/kxdl0cpx4tv3956j2s1k0pb40000gn/T/moso-decorators-batch04-gkmy6igs`
 contains original/revised per-fault logs, JSON results and source variants.
+
+
+## Batch13 — admin magic-token collection and revocation
+
+2026-10-26; based on merged main `7cadeedf`. Four existing definitions/four
+collected cases became five definitions/10 cases. No tests removed. The four
+individual improvements and new CSRF disposition are in the inventory. These
+are distinct sorting, filtering, authority/audit, architecture and request-
+authenticity contracts; consolidation would obscure meaningful failure modes.
+
+### Evidence and changes
+
+The unchanged focused control passed four cases (2.76s). Five scoped hand-seeded
+faults then passed all original assertions: replacing primary timestamp order
+with ID order; bypassing the route authority guard only for POST; dropping our
+audit call; additionally revoking neighbours; dropping the active expiry
+predicate. All five were detected after assertion improvements, each at the
+intended test call (one failure/seven passes). These are selected diagnostic
+faults, not generated mutmut mutants or a module mutation score. Real Mongo
+query/write behavior was retained; only the selected contract was changed.
+
+Scratch harness errors were excluded: premature app import caused collection
+failure in the capture plugin, and an earlier fault fixture initialized app
+before config/seed restoration, producing an unrelated first-request redirect.
+Moving the plugin import into fixture execution and explicitly ordering
+ensure_test_config/seeded_data/app restored neutral controls. No speculative
+repository conftest rewrite was made.
+
+The audit also found that both destructive POST branches accepted no CSRF
+proof. Two new negative cases failed with302 instead of403 on the unchanged
+handler. The fix renders a session-bound hidden proof and validates it before
+any single/bulk write, after authority checking. Byte comparison rejects Unicode
+input safely. Focused green: **10 passed in4.83s**. Tests verify missing, wrong,
+Unicode and foreign-session rejection with no token/audit writes, plus valid
+single/bulk behavior. This proves server validation, not cross-site browser
+cookie delivery or a production exploit. The existing session SameSite policy
+is not treated as a substitute for a request proof.
+
+Static architecture checks retain legacy-hook prohibitions but accept harmless
+class reordering/additions. Running that check from outside the repository
+previously failed to locate its template; anchoring to __file__ fixes that cost.
+Real route/Mongo checks cost seconds and use common fixtures; added assertions
+justify their cost for stable paging and privileged destructive actions. No
+external package internals, exact translated editorial messages, clock sleeps
+or new production dependencies were introduced. Related browser checks remain
+individually pending; compatibility passing does not assess them.
+
+Evidence is stored in the chat workspace under work/batch13-* and
+outputs/magic-token-visual/. Final review and validation checkpoint follows.
+
+
+### Final local validation
+
+Final selected-fault sweep on the protected handler detects all five at the
+intended assertions: primary_sort, post_authority, audit and active_expiry each
+one failure/nine passes; overbroad_revoke two failures/eight passes (the new
+positive CSRF case also detects unintended neighbouring revocation). No harness
+errors or timeouts count as detections. Original/revised controls are separate
+from these deliberately failing diagnostics.
+
+The complete magic-token file plus existing edit-link lifecycle compatibility
+checks passed **38 cases in14.73s**. Compatibility cases are not new individual
+dispositions. The static architecture check also passed from scratch cwd. Local
+CodeRabbit review completed with zero findings across all six changed files;
+this is local review, not hosted CI. `git diff --check` passed. Private Mongo
+was used throughout; no shared database was cleaned. Supported Python3.12
+hosted CI remains outstanding; local Python3.11 evidence is bounded.
+
+Canonical inventory: **1,313 definitions /175 files /469 assessed /844 pending**,
+plus two separately pending supporting fixtures. Prior464 assessments are
+preserved; four existing plus one new magic-token definition are assessed.
+The full goal remains unfinished.
+
+
+Independent visual acceptance: **SHIP**, separate read-only reviewer
+`/root/visual_magic_tokens`; all28 unique before/final screenshots opened and
+compared at390/1440 in both themes, FI, page/single/bulk/actual403 states.
+Source hashes and captures matched packet SHA256
+`359843fa3a0d2a96566013d9802a1eafb5dc4ae798f072c15573257d062f4cdd`.
+No new visual regression. Existing translucent/dim confirmation rendering and
+null addEventListener error occur before and after and remain separate defects;
+no failed resources. This does not certify uncaptured states or the whole UI.
+Exact source/image hashes and review are in the chat artifact
+`outputs/magic-token-visual/visual-review.md`.

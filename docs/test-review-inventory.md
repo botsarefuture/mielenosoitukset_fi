@@ -2,6 +2,14 @@
 
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
+Batch14 local checkpoint, 2026-10-26, based on merged main `ccc2eb0f`:
+**1,313 definitions /175 files /471 individually assessed**. Two existing
+organization-search definitions improved (two cases become12); no definitions
+added/removed. **842 test definitions plus two supporting fixtures remain
+pending**. Batch13/PR#985 is merged and deployed; its PR and post-merge CI both
+passed (1,764 passed/337 skipped). Historical local checkpoints below retain
+the evidence available when written. This batch has no publication approval.
+
 Batch13 local checkpoint, 2026-10-26, based on merged main `7cadeedf`:
 **1,313 definitions /175 files /469 individually assessed**. Preserve all464
 merged dispositions; assess four existing magic-token definitions and one new
@@ -2776,8 +2784,25 @@ follow-up. No test definition or parametrized case was added or removed.
 
 ## tests/test_submit_organization_search_security.py
 
-- [ ] `test_organization_search_treats_query_as_bounded_literal_text`
-- [ ] `test_organization_search_normalizes_public_result_fields`
+- [x] `test_organization_search_treats_query_as_bounded_literal_text`
+
+Batch14 · improve existing: eight cases exercise absent/blank/short queries,
+exact two- and100-character acceptance,101-character rejection, trimmed
+case-insensitive literal brackets and ten-result cap over eleven matches.
+Real Flask/Mongo, no result-order assumption or exact translated error prose.
+This protects bounded literal-search behavior; not query-plan/index timing or
+an arbitrary-regex stress benchmark. Added parametrization makes failures local
+and costs existing fixture setup per case, justified for a public endpoint.
+- [x] `test_organization_search_normalizes_public_result_fields`
+
+Batch14 · improve existing: four cases retain malformed fields and add missing,
+exact-limit and over-limit data. Exact public mapping includes string ID and
+excludes a private field; name/email/website/description limits and ellipsis
+boundary are asserted. Useful valid values catch accidental field loss that
+blank-only assertions missed. Common fixtures, fixed strings, no sleeps or
+clock dependency. Exact keys intentionally protect the public whitelist, not
+Mongo projection syntax. Browser selection and stale-response behavior remain
+separate, pending definitions below.
 - [ ] `test_submit_autocomplete_uses_shared_safe_native_controls`
 - [ ] `test_submit_autocomplete_feedback_is_localized_in_english_and_swedish`
 - [ ] `test_submit_autocomplete_renders_and_selects_untrusted_values_safely`

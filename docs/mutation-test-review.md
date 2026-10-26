@@ -1228,3 +1228,105 @@ null addEventListener error occur before and after and remain separate defects;
 no failed resources. This does not certify uncaptured states or the whole UI.
 Exact source/image hashes and review are in the chat artifact
 `outputs/magic-token-visual/visual-review.md`.
+
+
+## Batch14 — organization-search query bounds and public fields
+
+2026-10-26, new clean branch from merged main `ccc2eb0f`. Batch13 has been
+published asPR#985, merged, deployed with exact SHA verified through trusted
+origin and a separate public HTTPS probe. Its post-merge CI also passed.
+
+Scope is two existing backend definitions in
+`tests/test_submit_organization_search_security.py`, both previously pending.
+Read the actual nested search handler, published API contract and all six tests
+in that file for overlap. The four frontend definitions remain pending; no
+browser/visual disposition is inferred from backend evidence. No production,
+template, style, translation, dependency or changelog change is justified here.
+
+### Controls and mutation harness
+
+Unchanged real-project control: **two passed/four deselected in2.53s**, against
+an exclusively owned loopback Mongo60141. Improved actual-route control:
+**12 passed/four deselected in5.85s**. Two definitions remain two; eight query
+cases and four normalization cases replace the original two collected cases.
+
+Reused verified temporary mutmut3.8.0 environment; no production dependency
+added. Since the route is nested inside the large route-registration function,
+the mutation harness extracts its exact dedented body without decorators into
+one scratch module. Function-body/source hashes and line range are preserved
+in projection.json. The fixture binds real Flask/Babel and private Mongo;
+DatabaseManager is replaced only by a provider of that actual database. This
+isolates handler assertions and does not prove the application's singleton or
+registration integration. Separate unchanged/improved full-project route
+controls use the actual manager/registration. Mutation-harness neutral controls
+passed two cases in0.08s and12 in0.32s. One mutation worker prevents shared
+scratch DB interference. Original cache/logs were preserved; the improved sweep
+started with a fresh generated directory and identical source body.
+
+All **112 selected generated mutants** ran in each sweep: initially72 killed,
+40 survived; after improvement98 killed,14 survived. No timeout, suspicious,
+untested or harness error was counted as a detection. Every original and final
+survivor diff was inspected. Twenty-nine old survivors now fail; three editorial
+message variants intentionally survive after removing exact-copy coupling.
+These are projection results, not a whole-module or whole-suite score.
+
+### Survivor decisions (all14 final survivors)
+
+| Mutmut suffix | Individual inspected change and decision |
+| --- | --- |
+|19|Adds XX around the error text. Ignore diagnostic-copy sensitivity; status/error envelope remain checked.|
+|20|Lowercases the error text. Same editorial decision.|
+|21|Uppercases the error text. Same editorial decision.|
+|27|Replaces query projection withNone. Public serialization remains an explicit whitelist; result contract unchanged. Database fetch cost could differ; no claim of operational equivalence or extra mock assertion merely to kill it.|
+|29|Omits projection argument. Same public-output result and consciously untested fetch-cost concern as27.|
+|42|Renames projection _id key toXX_idXX. Mongo still includes _id; explicit public serialization ignores the extra key. No package-internals test warranted.|
+|43|Renames projection _id key to_ID. Same default-ID inclusion reasoning.|
+|44|Changes _id inclusion1 to2. Both are truthy inclusion values on real Mongo; equivalent result.|
+|47|Changes name inclusion1 to2. Equivalent inclusion/result.|
+|50|Changes email inclusion1 to2. Equivalent inclusion/result.|
+|53|Changes website inclusion1 to2. Equivalent inclusion/result.|
+|56|Changes description inclusion1 to2. Equivalent inclusion/result.|
+|63|UsesNone instead of101 for initial description slice. Final100-character trim/ellipsis still yields the same string output, including malformed/missing paths. No internal intermediate-length assertion.|
+|69|Uses102 instead of101 for initial description slice. Same final output; one extra intermediate character is not a meaningful protected contract.|
+
+Detected meaningful old gaps include minimum/maximum acceptance, ten-result
+cap, valid email/website forwarding, public ID and length/ellipsis boundaries.
+The original invalid-value scenario was retained; valid values distinguish a
+correct normalizer from silently dropping legitimate data. Query assertions
+require membership/distinct results but not Mongo's unspecified result order.
+Exact translated error prose was relaxed to a nonempty error string with400.
+
+Mutmut does not mutate the nested normalized_text helper body. A separate
+single scoped helper-guard fault and neutral control are checked on the actual
+project route; that diagnostic is not included in the112 generated mutants.
+
+### Individual value and cost
+
+Keep/improve both existing definitions; no new/removal/consolidation justified.
+Query validation/bounded literal search and public serialization have distinct
+risks, inputs and useful failure diagnoses. Their cases belong within their
+existing behavior definitions. The added fixture runtime (about3.3s here) buys
+observable acceptance/rejection and output safety rather than package behavior.
+Common real DB/session setup, fixed text, no network dependencies, sleeps,
+random ordering or time-sensitive assertions. Exact output keys are deliberate
+public-whitelist protection; harmless ordering and editorial copy are flexible.
+Published limits and existing implementation bound this selection; no new
+speculative URL validation, field formats, regex stress cases or frontend tests.
+Full test-suite quality and production resource consumption remain unproven.
+
+Evidence: chat work/batch14-*.log, survivor diffs and setup_search_mutation.py;
+owned scratch moso-search-batch14-x8aep_th/mutation contains source/test projection,
+original/fresh generated caches and projection.json. Final review follows.
+
+
+Final local checkpoint: the actual-route helper neutral control passed12 cases
+in5.67s; removing only its non-string guard produces six intended request-call
+failures/six passes (6.35s), with None/dict slicing TypeErrors from the handler.
+These are not setup/collection failures, and are not added to mutmut totals.
+CodeRabbit completed review of the three changed files with zero findings.
+`git diff --check` passed. Canonical inventory reconciliation found no missing,
+stale or duplicate test entries after excluding the two named supporting
+fixtures:1,313 definitions/175 files/471 assessed/842 pending, plus two fixtures.
+No full-suite or hosted CI has run for this new branch, and Python3.11 local
+controls do not replace supported Python3.12 CI. No source/UI change means no
+new visual acceptance gate for this tests/docs-only batch.

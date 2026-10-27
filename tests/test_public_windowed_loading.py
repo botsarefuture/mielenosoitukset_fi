@@ -32,7 +32,7 @@ def test_automatic_public_lists_bound_dom_and_restore_discarded_pages(live_serve
     browser_page.on('pageerror', lambda error: errors.append(str(error)))
     browser_page.route('**/api/demonstrations?*', serve)
     browser_page.goto(f'{live_server}{path}', wait_until='domcontentloaded')
-    browser_page.wait_for_function('window.publicListWindow?.last === 1')
+    browser_page.wait_for_function('window.publicListWindow?.last >= 1')
     for target in range(2, 11):
         browser_page.evaluate("""() => { const host=publicListWindow.scrollHost;
           host.scrollTo({top:document.getElementById('load-more-btn').getBoundingClientRect().top

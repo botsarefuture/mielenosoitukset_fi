@@ -160,3 +160,65 @@ series with shared event metadata, organizer and occurrence components. Before
 moving indexable bodies, verify initial HTML, canonical URLs, metadata, locale
 behavior and the existing occurrence query contract. Design any API changes from
 those real needs in a separate reviewed proposal.
+
+
+## Public listing components (27 October 2026)
+
+The stacked branch `codex/react-demonstration-listings` follows
+`codex/react-site-header` (PR #990). Main, city and tag listings compose
+`DemonstrationListingPage`, `ListingTools`, `SearchFilters` and
+`DemonstrationCards`/`DemonstrationCard`. The same components serve all three
+routes. Their scoped city/tag values and translated labels come from escaped
+Flask JSON; routes, data queries and authorization rules are unchanged.
+
+The reusable `public-layout-wide` shell uses the available viewport width with
+small responsive margins. The tools panel follows the supplied brand book:
+Montserrat headings, Roboto form text, semantic blue heading/secondary action
+and orange search action with dark text. `--product-on-accent` defines the
+accessible dark foreground for the existing orange accent. Cards keep their
+existing shared presentation and inherited Inter font. The grid can show more
+columns on larger screens. Only these listing routes opt into the wide shell.
+No decorative eyebrow labels or large marketing hero remain on these pages.
+New context headings use colons; do not add em dashes to UI copy.
+
+### DOM ownership and existing widgets
+
+Flask renders initial titles, navigation and a disabled search fallback.
+React replaces that fallback, rather than hydrating it. The fallback explains
+loading/JavaScript requirements in Finnish, English and Swedish and never
+pretends to perform a successful search. Existing listings already fetched
+cards through JavaScript; this slice retains that rendering model and the
+server's document title/metadata shell. It does not claim server-rendered event
+cards or solve discovery SEO. Choose initial-content rendering before migrating
+the currently server-rendered event-detail bodies.
+
+The tested `UserPagination` window/history controller, pinned Flatpickr date
+widget and city autocomplete remain deliberate adapters. React owns the page
+composition; native uncontrolled inputs and empty suggestion/chip targets are
+owned by those widgets. The window controller owns pagination controls and
+page wrapper nodes inside the results grid. Each wrapper contains a React root
+for its cards. No legacy card renderer or legacy card navigation listener is
+loaded on these three routes. Other consumers of the legacy renderer are
+unchanged and remain separate migration tasks.
+
+The typed listing adapter checks response metadata, cancels replaced searches,
+ignores stale responses and leaves failed requests available for explicit retry.
+It keeps a maximum of five mounted pages, respects focus/viewport eviction
+rules and disposes React roots when a page leaves the window. Each mounted page
+owns one authenticated attendance batch; eviction and replacement abort the
+corresponding request. React renders event/friend text as text and accepts only
+same-origin event URLs. Invitation URLs retain existing queries before adding
+the invitation action. Existing card classes, hover behavior, guest messaging,
+badges, images and layout remain in use.
+
+### Existing API contracts used by the components
+
+| Operation | Actual consumer and request | Response and data ownership |
+| --- | --- | --- |
+| GET `/api/demonstrations` | Listing adapter; existing search/city/location/date/tag, page/per_page, locale and history-restore parameters | Existing localized results, canonical detail URL, counts and page metadata. Existing Mongo filters, visibility rules and resource caps stay in Flask. |
+| POST `/api/friends-attending` | Authenticated mounted card page; existing JSON `demo_ids` array with same-origin session cookies | Existing mapping from demo ID to friend name/avatar records. Flask determines friend membership and attendance; the client adds no permission or write authority. |
+
+These are existing APIs, not a proposal for a new backend. No database schema,
+new endpoint, subdomain, router, session mechanism or deployment topology is
+introduced. Event/series detail bodies, organization pages, homepage card
+consumers, footer and final routing/rendering consolidation remain open.

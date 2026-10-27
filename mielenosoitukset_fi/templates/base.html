@@ -122,8 +122,8 @@
   </style>
 
   {% block styles %}{% endblock %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/product-tokens.css', v='20261015-product-tokens-1') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20261015-user-workspace-3') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/product-tokens.css', v='20261027-product-tokens-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20261027-user-workspace-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/public-header.css', v='20261027-react-header-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css', v='20260928-campaign-feedback-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/public_hero.css', v='20261015-hero-width-1') }}">
@@ -574,7 +574,7 @@ body.banner-closed {
   <!--{% include "update_notice.html" %}-->
 
   <!-- Main Content Area -->
-  <main class="container-main-content" id="main-content">
+  <main class="container-main-content {% block main_class %}{% endblock %}" id="main-content">
     {% block content %}
     <!-- The content from child templates will be injected here -->
     {% endblock %}

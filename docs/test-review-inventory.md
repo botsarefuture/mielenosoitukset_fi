@@ -3472,3 +3472,21 @@ notification text/links, network-error retry, shared theme synchronization and a
 failed module's native mobile/account navigation. Mark-read failure is checked
 at both widths, including dismissal without an obscured trigger. Visual
 acceptance remains the independent in-conversation gate; no extra CI suite.
+
+
+## Shared React listings: 27 October 2026
+
+Preserve existing bounded-window, attendance lifetime, history/back-forward,
+filter/date, locale, search-label, resource-cap and API contracts. Template-source
+assertions now point to the shared layout and React owner. Calendar checks wait
+for its asynchronous React mount and close the previous transient calendar
+before testing another label. The window test permits an initial automatic
+prefetch when a shorter listing layout brings the next control into view.
+
+`tests/test_react_listing.py` adds actual-page checks for available width,
+heading/search grouping, styled navigation, brand action contrast/typography,
+safe event/friend text and URLs, query-preserving series links, per-page request
+cancellation, stale append suppression and localized tag-empty/reset behavior.
+Only the three removed inline-style debt entries are deleted from the baseline.
+The in-conversation visual gate covers the final source and captures; no new CI
+suite is introduced.

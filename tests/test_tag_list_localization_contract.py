@@ -16,17 +16,14 @@ TAG_LABELS = {
 
 
 def test_tag_list_uses_localized_stable_empty_state_markup():
-    source = TAG_TEMPLATE.read_text(encoding="utf-8")
-
-    assert 'id="clear-filters-btn"' in source
-    assert 'clearFiltersButton.addEventListener("click"' in source
-    assert "clearFiltersButton.hidden = !hasFilters" in source
-    assert "window.demoCardI18n.loading" in source
-    assert "result.result_count === 0" in source
-    assert "showNoResults();" in source
-    assert 'container.innerHTML = `' not in source
-    assert "<p>Ladataan mielenosoituksia...</p>" not in source
-
+    source = Path('mielenosoitukset_fi/templates/_layouts/demonstration-list.html').read_text()
+    page = Path('frontend/src/pages/DemonstrationListingPage.tsx').read_text()
+    controller = Path('frontend/src/components/listings/controller.tsx').read_text()
+    assert 'id="clear-filters-btn"' in page
+    assert 'clear.hidden = !filtered' in controller
+    assert 'range.count > 0' in controller
+    assert 'clearFilters' in controller
+    assert 'innerHTML' not in controller
     for label in TAG_LABELS:
         assert f"_('{label}')" in source
 
@@ -80,8 +77,11 @@ def test_tag_route_renders_localized_empty_state_contract(
     response = client.get("/tag/climate")
 
     assert response.status_code == 200
+    import re
     body = response.get_data(as_text=True)
-    assert f"filteredEmpty: {json.dumps(filtered_empty)}" in body
-    assert f"tagEmpty: {json.dumps(tag_empty)}" in body
-    assert clear_filters in body
-    assert submit_label in body
+    match = re.search(r'<script id="demonstration-listing-props" type="application/json">(.*?)</script>', body, re.S)
+    messages = json.loads(match.group(1))['messages']
+    assert messages['filteredEmpty'] == filtered_empty
+    assert messages['empty'] == tag_empty
+    assert messages['clearFilters'] == clear_filters
+    assert messages['submitEvent'] == submit_label

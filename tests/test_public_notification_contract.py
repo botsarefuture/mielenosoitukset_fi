@@ -2,20 +2,20 @@ from pathlib import Path
 
 
 TEMPLATE_PATH = Path("mielenosoitukset_fi/templates/header.html")
-SCRIPT_PATH = Path("mielenosoitukset_fi/static/js/public-notifications.js")
+SCRIPT_PATH = Path("frontend/src/components/header/NotificationMenu.tsx")
 STYLESHEET_PATH = Path("mielenosoitukset_fi/static/css/user-workspace.css")
 
 
 def test_notification_popover_uses_accessible_shared_markup():
-    template = TEMPLATE_PATH.read_text(encoding="utf-8")
+    template = SCRIPT_PATH.read_text(encoding="utf-8")
 
     assert 'aria-controls="notif-panel"' in template
     assert 'role="dialog"' in template
     assert 'aria-labelledby="notif-panel-title"' in template
     assert 'aria-live="polite"' in template
-    assert 'aria-busy="true"' in template
+    assert "aria-busy={state === 'loading'}" in template
     assert 'style="max-height:360px;overflow-y:auto;"' not in template
-    assert "public-notifications.js" in template
+    assert "public-notifications.js" not in TEMPLATE_PATH.read_text(encoding="utf-8")
 
 
 def test_notification_payload_is_rendered_without_html_interpolation():
@@ -23,10 +23,11 @@ def test_notification_payload_is_rendered_without_html_interpolation():
 
     assert "innerHTML" not in script
     assert "insertAdjacentHTML" not in script
-    assert "message.textContent" in script
-    assert "timestamp.textContent" in script
+    assert "{notice.message}" in script
+    assert "{timestamp(notice.time)}" in script
+    assert "dangerouslySetInnerHTML" not in script
     assert "safeNotificationHref" in script
-    assert 'url.origin !== window.location.origin' in script
+    assert 'url.origin === window.location.origin' in script
     assert 'new URL(value, window.location.origin)' in script
     assert 'value.startsWith("/")' not in script
 

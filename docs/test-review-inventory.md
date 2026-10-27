@@ -3459,3 +3459,16 @@ Public inline-style debt is reduced: both campaign/confirmation style blocks
 are removed; only the two required-marker attributes emitted by the unchanged
 approved form remain in the generated campaign fallback. No unrelated baseline
 or route inventory entries are refreshed.
+
+
+## Shared React header — 27 October 2026
+
+Existing public chrome/mobile/no-JavaScript, notification safety/token, frontend
+asset, inline-style and campaign behavior checks are retained and adapted to the
+new DOM owner. Additional checks in `tests/test_react_header.py` cover server
+permission-derived links, escaped props, preserved locale-return queries,
+keyboard/focus and sticky behavior, real notification read/mark calls, unsafe
+notification text/links, network-error retry, shared theme synchronization and a
+failed module's native mobile/account navigation. Mark-read failure is checked
+at both widths, including dismissal without an obscured trigger. Visual
+acceptance remains the independent in-conversation gate; no extra CI suite.

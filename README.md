@@ -231,3 +231,11 @@ We appreciate your input and support!
 ## Changelog
 
 See the [CHANGELOG.md](CHANGELOG.md) file for details on the latest updates and changes to the project.
+
+## Modernization direction
+
+Follow the [maintainer's context](docs/modernization-context.txt) and the
+[assessment and migration order](docs/modernization-assessment.md). Reuse the
+[existing React integration](docs/react-frontend.md): shared header first,
+then demonstration listings and event/recurring-series pages. Backend technology
+and infrastructure changes remain separate decisions.

@@ -57,27 +57,27 @@ def test_public_chrome_css_uses_product_tokens_and_namespaced_components():
 def test_public_header_uses_shared_scoped_component_css():
     base = BASE.read_text(encoding="utf-8")
     header = HEADER.read_text(encoding="utf-8")
+    component = Path("frontend/src/components/header/SiteHeader.tsx").read_text(encoding="utf-8")
     css = HEADER_CSS.read_text(encoding="utf-8")
 
     assert "css/public-header.css" in base
-    assert "20261026-fundraising-link-1" in base
+    assert "20261027-react-header-1" in base
     assert "root.classList.add('js')" in base
     assert '<header class="top-header public-site-header' in header
     assert '<nav class="main-nav public-main-nav"' in header
     assert "<style" not in header
     assert "style=" not in header
 
+    component += Path("frontend/src/components/header/UserMenu.tsx").read_text(encoding="utf-8")
+    component += Path("frontend/src/components/header/ThemeToggle.tsx").read_text(encoding="utf-8")
     for hook in (
         'class="mobile-menu-toggle"',
-        'class="nav-list"',
         'class="mobile-nav-header"',
         'class="mobile-only"',
         'class="theme-toggle theme-toggle-mobile"',
         'class="user-dropdown"',
-        'id="notif-btn"',
-        'id="notif-panel"',
     ):
-        assert hook in header
+        assert hook.replace("class=", "className=") in component or hook in header
 
     assert "var(--product-" in css
     assert "--color-" not in css
@@ -101,8 +101,8 @@ def test_public_header_uses_shared_scoped_component_css():
         not in css
     )
     assert ".user-dropdown:hover .public-main-nav .dropdown-menu" not in css
-    assert "html.js .public-main-nav .mobile-menu-toggle" in css
-    assert "html.js .public-main-nav .nav-list.active" in css
+    assert ".public-header-ready .public-main-nav .mobile-menu-toggle" in css
+    assert ".public-header-ready .public-main-nav .nav-list.active" in css
     assert "body.public-nav-open" in css
     assert "env(safe-area-inset-bottom)" in css
     assert not re.search(
@@ -114,16 +114,15 @@ def test_public_header_uses_shared_scoped_component_css():
 def test_mobile_navigation_owns_accessibility_state_without_inline_handlers():
     header = HEADER.read_text(encoding="utf-8")
 
-    assert 'id="mobile-menu-toggle"' in header
-    assert 'id="mobile-menu-close"' in header
+    component = Path("frontend/src/components/header/SiteHeader.tsx").read_text(encoding="utf-8")
+    assert 'id="mobile-menu-toggle"' in component
+    assert 'id="mobile-menu-close"' in component
     assert "onclick=\"toggleMobileMenu()\"" not in header
-    assert "setMobileMenuOpen" in header
-    assert "navList.setAttribute('aria-hidden', 'true')" in header
-    assert "navList.setAttribute('inert', '')" in header
-    assert "navList.removeAttribute('inert')" in header
-    assert "document.body.classList.add('public-nav-open')" in header
-    assert "mobileMenuReturnFocus.focus()" in header
-    assert "mobileNavigationQuery.addEventListener('change'" in header
+    assert 'data-react-island="site-header"' in header
+    assert "header_props|tojson" in header
+    assert "src/entries/header.tsx" in header
+    assert "setMobileMenuOpen" not in header
+    assert "public-notifications.js" not in header
 
 
 @pytest.mark.parametrize(
@@ -279,7 +278,8 @@ def test_public_navigation_remains_available_without_javascript(
     page = context.new_page()
     try:
         page.goto(f"{live_server}/", wait_until="domcontentloaded")
-        navigation = page.locator("#main-nav-list")
+        page.locator('.header-fallback-toggle').click()
+        navigation = page.locator('.header-fallback-mobile .nav-list')
         assert page.locator(".mobile-menu-toggle").is_hidden()
         assert page.locator(".theme-toggle-item").is_hidden()
         assert navigation.is_visible()

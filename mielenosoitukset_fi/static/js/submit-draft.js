@@ -344,7 +344,10 @@
         }
         return;
       }
-      field.value = value;
+      // Date/time pickers own required visible alternate inputs as well as the
+      // submitted hidden field. Restore both through the widget's public API.
+      if (field._flatpickr) field._flatpickr.setDate(value, false);
+      else field.value = value;
     });
 
     const city = fields.city;

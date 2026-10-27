@@ -200,3 +200,58 @@ def test_force_retry_requires_confirmed_json_before_clearing_draft(live_server, 
     page.locator("#submit-form").click()
     assert_delivered(page)
     assert len(posts) == 3
+
+
+def test_restored_draft_synchronizes_date_picker_alternate_inputs(live_server, browser_page):
+    """Restoration must use the picker API so visible required inputs stay valid."""
+    page = browser_page
+    draft = {
+        "version": 2, "step": 3,
+        "fields": {"title": "A scheduled draft", "date": "2099-11-02", "start_time": "12:30"},
+        "organizers": [],
+    }
+    page.add_init_script(
+        f"localStorage.setItem({json.dumps(DRAFT_KEY)}, JSON.stringify({{...{json.dumps(draft)}, savedAt: Date.now()}}))"
+    )
+    # Model Flatpickr's documented altInput boundary. Changing the original
+    # field's value alone intentionally does not update its visible control.
+    page.add_init_script(
+        """window.flatpickr = (selector, config) => {
+          return [...document.querySelectorAll(selector)].map(original => {
+            const alternate = document.createElement('input');
+            alternate.type = 'text';
+            alternate.required = original.required;
+            alternate.dataset.pickerFor = original.id;
+            original.type = 'hidden';
+            original.insertAdjacentElement('afterend', alternate);
+            const picker = {
+              altInput: alternate,
+              calendarContainer: document.createElement('div'),
+              setDate(value) {
+                original.value = value;
+                alternate.value = config.altFormat === 'd.m.Y' && value
+                  ? value.split('-').reverse().join('.') : value;
+              }
+            };
+            original._flatpickr = picker;
+            return picker;
+          });
+        };"""
+    )
+    open_form(page, live_server)
+    expect(page.locator("#cacheNotice")).to_be_visible()
+    expect(page.locator("#page-3")).to_be_visible()
+    expect(page.locator("#date")).to_have_value("2099-11-02")
+    expect(page.locator("#start_time")).to_have_value("12:30")
+    expect(page.locator('[data-picker-for="date"]')).to_have_value("02.11.2099")
+    expect(page.locator('[data-picker-for="start_time"]')).to_have_value("12:30")
+    assert page.evaluate(
+        """() => collectInvalidFields(document.getElementById('page-3'))
+          .filter(field => ['date', 'start_time'].includes(field.dataset.pickerFor)).length"""
+    ) == 0
+    assert page.evaluate(
+        """() => {
+          const data = new FormData(document.getElementById('myForm'));
+          return [data.get('date'), data.get('start_time')];
+        }"""
+    ) == ["2099-11-02", "12:30"]

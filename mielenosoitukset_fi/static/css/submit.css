@@ -11,6 +11,8 @@
   --color-primary: var(--product-primary);
   --color-secondary: var(--product-accent-strong);
   --color-border: var(--product-border);
+  --color-success: var(--product-success);
+  --color-shadow: var(--product-shadow);
   --border-radius: .75rem;
   display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 1.5rem 2rem;
   color: var(--product-text); font-family: Roboto, sans-serif; line-height: 1.6;

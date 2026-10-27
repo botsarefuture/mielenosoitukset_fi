@@ -316,7 +316,8 @@ in a later slice together with their integration initialization.
 
 Only a non-redirected JSON response with `success: true` confirms delivery, for
 both the first attempt and a confirmed duplicate retry. Other responses retain
-the form/draft. Navigation validates before advancing and focuses the new panel
+the form/draft. Date/time draft restoration uses the existing picker API to
+restore both submitted values and required alternate inputs. Navigation validates before advancing and focuses the new panel
 heading. Failed validation still focuses its first invalid field.
 
 The form's styles are scoped under `.submit-page` and consume product tokens.

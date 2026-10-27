@@ -56,7 +56,7 @@ def test_submit_draft_contract_is_scoped_versioned_and_exactly_cleared():
     script = DRAFT_SCRIPT.read_text(encoding="utf-8")
     city_partial = CITY_PARTIAL.read_text(encoding="utf-8")
 
-    assert "20261004-submit-draft-1" in template
+    assert "20261028-submit-draft-2" in template
     assert DRAFT_KEY in script
     assert "DRAFT_TTL_MS = 24 * 60 * 60 * 1000" in script
     assert 'const form = document.getElementById("myForm")' in script

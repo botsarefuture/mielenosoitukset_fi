@@ -184,6 +184,8 @@ def capture(item) -> None:
                         }))
 
                     page.route("**/submit", submission)
+                    invalid = page.evaluate("() => collectInvalidFields(document.querySelector('#myForm')).map(e => ({id:e.id,name:e.name,type:e.type,value:e.value,placeholder:e.placeholder}))")
+                    assert not invalid, f"Restored form invalid: {invalid}"
                     page.locator("#submit-form").click()
                     page.locator("#submitConflictModal").wait_for(state="visible")
                     shot(page, f"conflict-{width}-{theme}")

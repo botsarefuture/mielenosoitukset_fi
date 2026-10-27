@@ -30,7 +30,7 @@ Before public release it is visible only to authenticated users.
 volunteer/newsletter fields and handlers remain. No event/supporter commitments
 are invented. Service copy follows the existing `/info` page.
 
-Campaign material goals: 25,000 stickers, 8 Pride and 4 other banners, posters
+Internal campaign planning goals (not public campaign-page copy): 25,000 stickers, 8 Pride and 4 other banners, posters
 without an invented count. The supplied sticker/banner estimate is €1,889.94,
 not a final whole-campaign budget or proof of purchase. The source city's
 distribution list and total disagree (the 100-sticker list names 11 cities while
@@ -175,3 +175,10 @@ A static copy already exported while public cannot re-check this database state.
 Withdrawing pages must also withdraw/replace existing public snapshots and any
 previously cached copies through the separately authorized recovery workflow.
 The login gate does not establish authentication for an already exported mirror.
+
+
+The campaign refresh deliberately removes public procurement quantities and cost
+breakdowns from `/kampanja/`. The above planning figures are maintainer context,
+not content to reinsert into that page. The fundraising information page keeps
+its separate official details and target. The publication and donation gates
+are unchanged by the React/page presentation work.

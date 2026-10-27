@@ -51,3 +51,6 @@ example.config.yaml
 # Misc
 .DS_Store
 *.bak
+
+# Frontend dependencies (compiled static/frontend assets are intentionally tracked)
+node_modules/

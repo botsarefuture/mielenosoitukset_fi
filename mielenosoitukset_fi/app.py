@@ -66,6 +66,9 @@ def create_app(config_overrides=None) -> Flask:
     """Create and configure the Flask application."""
 
     app = Flask(__name__)
+    from mielenosoitukset_fi.utils.frontend import frontend_assets
+
+    app.jinja_env.globals["frontend_assets"] = frontend_assets
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
     if config_overrides:
         app.config.update(config_overrides)

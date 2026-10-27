@@ -1,97 +1,119 @@
-/* Campaign refinements share the public product palette and form semantics. */
-.navbar { position: sticky; background: var(--product-surface); backdrop-filter: none; }
-.logo { background: none; -webkit-text-fill-color: currentColor; color: var(--product-primary); }
-.nav-btn, .btn-primary { background: var(--product-action-bg); color: var(--product-on-action); }
-.nav-btn:hover, .btn-primary:hover { background: var(--product-action-hover); color: var(--product-on-action); }
-main { max-width: 1200px; width: 100%; }
-.hero { min-height: auto; padding-block: 5rem; }
-.hero-content { animation: none; }
-.hero::before, .hero::after { animation: none; }
-.hero-buttons { justify-content: flex-start; }
-.hero h1 { overflow-wrap: anywhere; }
-.card { box-shadow: var(--product-shadow); }
-.card:hover { transform: none; }
-.card h2 { background: none; -webkit-text-fill-color: currentColor; color: var(--product-text); font-size: 1.65rem; }
-.section { scroll-margin-top: 8rem; }
-#vapaaehtoiseksi { padding-block: 4rem; }
-.volunteer-intro { margin-bottom: 2rem; }
-.volunteer-eyebrow { color: var(--product-primary); font-size: .85rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .6rem; }
-.volunteer-intro h2 { color: var(--product-text); font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.2; margin-bottom: 1rem; max-width: 24ch; }
-.volunteer-intro > p:last-child { color: var(--product-text-muted); max-width: 65ch; }
-#vapaaehtoiseksi .grid-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 2.5rem; }
-.volunteer-options, .volunteer-signup { min-width: 0; }
-.volunteer-options h3 { font-size: 1.2rem; margin-bottom: 1.25rem; }
-.volunteer-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-.volunteer-roles > div { padding: 1.25rem; border: 1px solid var(--product-border); border-radius: 16px; background: var(--product-surface); }
-.volunteer-roles i { color: var(--product-primary); margin-bottom: .8rem; font-size: 1.3rem; }
-.volunteer-roles h4 { font-size: 1rem; line-height: 1.4; margin-bottom: .5rem; color: var(--product-text); }
-.volunteer-roles p, .volunteer-note { font-size: .95rem; line-height: 1.65; color: var(--product-text-muted); }
-.volunteer-note { margin-top: 1.25rem; }
-.volunteer-signup { padding: 2rem; }
-.volunteer-signup .form-row { gap: 1rem; }
-.volunteer-signup .form-group { margin-bottom: 1.25rem; }
-.volunteer-signup .form-label { margin-bottom: .4rem; }
-.volunteer-signup .form-control { padding: .8rem 1rem; }
-.volunteer-signup .btn { width: 100%; justify-content: center; padding: 1rem; }
-.volunteer-signup .volunteer-steps { margin: 0 0 1rem; padding-left: 1.25rem; }
-.volunteer-signup .volunteer-steps li { font-size: .95rem; margin-bottom: .25rem; }
-.volunteer-signup .volunteer-privacy { font-size: .85rem; }
-.volunteer-privacy a { color: var(--product-primary); text-decoration: underline; }
-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
-.form-control[aria-invalid="true"] { border-color: var(--product-danger); }
-button:disabled { cursor: wait; opacity: .7; }
-fieldset:disabled button { cursor: not-allowed; }
-.form-control:focus-visible, a:focus-visible, button:focus-visible { outline: 3px solid var(--product-primary); outline-offset: 4px; }
-.volunteer-signup .flash-message { margin-top: 1rem; }
-.volunteer-signup .flash-message[hidden] { display: none; }
-@media (max-width: 968px) {
-  #vapaaehtoiseksi .grid-2 { grid-template-columns: minmax(0, 1fr); }
-}
-@media (max-width: 768px) {
-  .logo { font-size: 1.4rem; }
-  .hero { padding-block: 3rem; }
-  .hero h1 { font-size: 2.2rem; }
-  .hero-buttons { gap: .75rem; }
-  .navbar .nav-right:empty { display: none; }
-  .public-content__container { padding-inline: 1.25rem; }
-  .stats-grid { gap: 1rem; margin-block: 2rem; }
-  .section { padding-block: 1.5rem; }
-  .volunteer-signup { padding: 1.25rem; }
-  .volunteer-roles { gap: .75rem; }
-  .volunteer-roles > div { padding: 1rem; }
-}
-@media (max-width: 420px) {
-  .volunteer-roles { grid-template-columns: minmax(0, 1fr); }
-}
-/* The legacy campaign resets .container with all:unset; restore block geometry. */
-.container { display: block; width: 100%; box-sizing: border-box; }
-.section h2, .section h3, .section h4 { text-align: left; }
-.hero h1 .highlight {
-  display: block;
-  font-size: clamp(1.5rem, 5.5vw, 3.5rem);
-  overflow-wrap: normal;
-  background: none;
-  -webkit-text-fill-color: currentColor;
-  color: var(--product-on-action);
-}
-.form-control:disabled {
-  background: var(--product-surface-muted);
-  color: var(--product-text-muted);
-  opacity: 1;
-}
-.stat-number {
-  background: none;
-  -webkit-text-fill-color: currentColor;
-  color: var(--product-primary);
-}
-.volunteer-signup .btn:disabled {
-  background: var(--product-action-bg);
-  color: var(--product-on-action);
-  opacity: .85;
-}
-.form-control:focus {
-  background: var(--product-surface);
+/* Campaign and fundraising content only; base.html owns the shared site shell. */
+.campaign-page {
+  --secondary-orange: var(--product-accent);
+  font-family: Roboto, sans-serif;
   color: var(--product-text);
+  line-height: 1.6;
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: 1rem;
 }
-.form-control:focus::placeholder { color: var(--product-text-muted); }
-footer p { color: var(--product-on-action); }
+.campaign-page *, .campaign-page *::before, .campaign-page *::after { box-sizing: border-box; }
+.campaign-page h1, .campaign-page h2, .campaign-page h3, .campaign-page h4 {
+  font-family: Montserrat, sans-serif; font-weight: 700; color: var(--product-primary);
+  text-align: left; letter-spacing: normal; line-height: 1.2;
+}
+.campaign-page p { margin: 0 0 1rem; }
+.campaign-page a { text-underline-offset: .2em; }
+.campaign-shell { width: 100%; margin-inline: auto; }
+.campaign-intro { padding-block: 2rem; }
+.campaign-page .campaign-intro h1 { font-size: 2rem; margin: 0 0 1rem; }
+.campaign-intro__lead { font-size: 1rem; max-width: 65ch; color: var(--product-text-muted); }
+.campaign-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem 1.5rem; margin-top: 2rem; }
+.campaign-page .campaign-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: .9rem;
+  min-height: 46px; padding: .8rem 1.15rem; border-radius: 7px;
+  border: 1px solid transparent; font: inherit; font-size: .95rem; font-weight: 600;
+  text-decoration: none; cursor: pointer; white-space: normal;
+}
+.campaign-page .campaign-button--primary { background: var(--product-action-bg); color: var(--product-on-action); }
+.campaign-page .campaign-button--primary:hover { background: var(--product-action-hover); color: var(--product-on-action); }
+.campaign-page .campaign-text-link { color: var(--product-primary); display: inline-flex; align-items: center; gap: .75rem; min-height: 44px; font-size: .95rem; font-weight: 550; }
+.campaign-content > section { scroll-margin-top: 1.5rem; }
+.campaign-overview { display: grid; grid-template-columns: 1fr 1.1fr; gap: 2rem; padding-block: 2rem; border-top: 1px solid var(--product-border); }
+.campaign-overview h2 { font-size: 1.5rem; margin: 0; }
+.campaign-overview > div:last-child { color: var(--product-text-muted); }
+.campaign-overview p:last-child { margin-bottom: 0; }
+.campaign-fundraising { display: flex; justify-content: space-between; gap: 2rem; align-items: center; padding: 1.5rem 1.75rem; border: 1px solid var(--product-border); border-radius: 10px; background: var(--product-surface); }
+.campaign-fundraising h2 { font-size: 1.1rem; margin: 0 0 .5rem; }
+.campaign-fundraising p { color: var(--product-text-muted); max-width: 60ch; font-size: .95rem; margin-bottom: 0; }
+.campaign-fundraising > a { flex-shrink: 0; }
+.campaign-volunteer { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 2.5rem; padding-block: 2.5rem; align-items: start; }
+.campaign-volunteer__intro h2 { font-size: 1.5rem; margin: 0 0 1.25rem; }
+.campaign-volunteer__intro > p { color: var(--product-text-muted); max-width: 42ch; }
+.campaign-help { margin: 2rem 0 1.25rem; }
+.campaign-help > div { padding-block: 1rem; border-top: 1px solid var(--product-border); }
+.campaign-help dt { font-weight: 600; margin-bottom: .3rem; }
+.campaign-help dd { color: var(--product-text-muted); font-size: .95rem; margin: 0; max-width: 40ch; }
+.campaign-signup { border: 1px solid var(--product-border); border-radius: 18px; padding: 2rem; background: var(--product-surface); min-width: 0; }
+.campaign-signup > h2 { font-size: 1.5rem; margin: 0 0 .75rem; }
+.campaign-signup > p { font-size: .95rem; color: var(--product-text-muted); }
+.campaign-signup .volunteer-privacy { font-size: .8rem; margin-bottom: 1.75rem; }
+.volunteer-privacy a { color: var(--product-primary); }
+/* Preserve the existing volunteer form's fields, geometry and feedback hooks. */
+.campaign-page fieldset { min-width: 0; padding: 0; margin: 0; border: 0; }
+.campaign-page .form-group { margin-bottom: 1.25rem; }
+.campaign-page .form-label { display: block; color: var(--product-text); font-size: 1rem; font-weight: 600; margin-bottom: .4rem; }
+.campaign-page .form-control { width: 100%; padding: .8rem 1rem; border: 2px solid var(--product-border); border-radius: 16px; font: inherit; font-size: 1rem; color: var(--product-text); background: var(--product-surface); }
+.campaign-page .form-control::placeholder { color: var(--product-text-muted); }
+.campaign-page .form-control:focus { background: var(--product-surface); color: var(--product-text); border-color: var(--product-primary); box-shadow: none; }
+.campaign-page .form-control:disabled { background: var(--product-surface-muted); color: var(--product-text-muted); opacity: 1; }
+.campaign-page textarea.form-control { min-height: 120px; resize: vertical; }
+.campaign-page .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.campaign-page .form-control[aria-invalid="true"] { border-color: var(--product-danger); }
+.campaign-signup .btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: .75rem; width: 100%; padding: 1rem; border: 0; border-radius: 50px; font: inherit; font-size: 1rem; font-weight: 700; background: var(--product-action-bg); color: var(--product-on-action); }
+.campaign-signup .btn-primary:hover { background: var(--product-action-hover); color: var(--product-on-action); }
+.campaign-signup .btn-primary:disabled { background: var(--product-action-bg); color: var(--product-on-action); opacity: .85; }
+.campaign-page button:disabled { cursor: not-allowed; }
+.campaign-page [aria-busy="true"] button { cursor: wait; }
+.campaign-signup .flash-message { margin-top: 1rem; }
+.campaign-page [hidden] { display: none !important; }
+.campaign-page :focus-visible { outline: 3px solid var(--product-primary); outline-offset: 4px; }
+.campaign-newsletter { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; padding-block: 2rem; border-top: 1px solid var(--product-border); }
+.campaign-newsletter h2 { margin: 0 0 1rem; max-width: 20ch; font-size: 1.5rem; }
+.campaign-newsletter > div > p:last-child { color: var(--product-text-muted); }
+.campaign-newsletter__controls { display: flex; gap: .75rem; align-items: stretch; }
+.campaign-newsletter__controls .form-control { min-width: 0; border-radius: 7px; }
+.campaign-newsletter__controls button { flex-shrink: 0; }
+.campaign-feedback { padding: .9rem 1rem; border: 1px solid var(--product-success); color: var(--product-success); background: var(--product-success-soft); border-radius: 7px; margin-top: 1rem !important; font-size: .95rem; }
+.campaign-feedback--error { border-color: var(--product-danger); color: var(--product-danger); background: var(--product-danger-soft); }
+.campaign-loading-note { color: var(--product-text-muted); font-size: .85rem; margin-top: 1rem !important; }
+.confirmation-page { padding-bottom: 3rem; }
+.campaign-confirmation { width: min(100%, 640px); margin: 2rem auto; padding: 1.5rem; }
+.campaign-confirmation__symbol { width: 44px; height: 44px; margin-bottom: 1.75rem; border-radius: 50%; display: grid; place-items: center; background: var(--product-success-soft); color: var(--product-success); font-size: 1.3rem; font-weight: 650; }
+.campaign-confirmation__symbol--error { background: var(--product-danger-soft); color: var(--product-danger); }
+.campaign-page .campaign-confirmation h1 { font-size: 2rem; margin: 0 0 1.25rem; line-height: 1.2; }
+.campaign-confirmation > p { color: var(--product-text-muted); }
+.campaign-confirmation .campaign-confirmation__lead { color: var(--product-text); font-size: 1.05rem; }
+.campaign-confirmation__contact { display: inline-flex; margin-top: 1.5rem; color: var(--product-primary); overflow-wrap: anywhere; }
+@media (max-width: 900px) {
+  .campaign-volunteer, .campaign-newsletter { gap: 2.5rem; }
+  .campaign-overview { gap: 2rem; }
+  .campaign-newsletter__controls { flex-direction: column; }
+}
+@media (max-width: 680px) {
+  .campaign-shell { width: 100%; }
+  .campaign-intro { padding-block: 2rem; }
+  .campaign-page .campaign-intro h1 { font-size: 2rem; }
+  .campaign-actions { gap: .75rem 1.25rem; margin-top: 1.5rem; }
+  .campaign-overview, .campaign-volunteer, .campaign-newsletter { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; padding-block: 2.5rem; }
+  .campaign-overview h2 { font-size: 1.5rem; }
+  .campaign-fundraising { flex-direction: column; align-items: flex-start; gap: .75rem; padding: 1.25rem; }
+  .campaign-signup { padding: 1.25rem; }
+  .campaign-page .form-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .campaign-volunteer__intro h2 { font-size: 1.5rem; }
+  .campaign-help { margin-block: 1.5rem .75rem; }
+  .campaign-confirmation { width: 100%; padding: 1.5rem; margin-top: 2rem; }
+  .campaign-page .campaign-confirmation h1 { font-size: 1.65rem; }
+  .campaign-confirmation .campaign-actions { align-items: stretch; flex-direction: column; }
+  .campaign-confirmation .campaign-text-link { align-self: flex-start; }
+}
+
+/* The campaign and fundraising content use the existing site shell and brand type. */
+.campaign-page.public-content { font-family: Roboto, sans-serif; line-height: 1.6; }
+.campaign-page .public-content__card { box-shadow: none; }
+.campaign-page .public-content__card h2 { font-size: 1.5rem; }
+.campaign-page .public-content__card h3 { font-size: 1.125rem; }
+.campaign-fundraising-intro { padding-block: 2rem; }
+.campaign-page .campaign-fundraising-intro h1 { font-size: 2rem; margin: 0 0 1rem; }
+.campaign-fundraising-intro p { max-width: 72ch; }

@@ -19,6 +19,7 @@ An open issue is a candidate for investigation, not proof that its original repo
 - **Verified release checkpoint:** #941 merged as `e6383141`; final required CI passed 1,370 tests with 325 skips. Public HTTPS and direct Gunicorn health probes both verify that exact running build; pre-existing tracked server overlays are byte-preserved. Automatic deploy run39149112591 remains failed because its public probe hit Cloudflare 403; independent runtime verification is not a green-workflow claim. Authenticated production visual acceptance is not claimed.
 - **Then:** reliable public listings, accessible forms/modals, and shared UI.
 - **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
+- **Public React migration — owner direction, 2026-10-26:** Move the entire public frontend to React incrementally as pages are changed. Flask can remain the backend and the existing admin can remain Flask/Jinja; neither needs a rewrite. See UI-06 and the migration policy below.
 - **Tracking:** stable task IDs below; detailed implementation lives in linked issues/PRs. Tests have their own [review inventory](docs/test-review-inventory.md).
 
 ## Priority policy
@@ -58,10 +59,69 @@ Use one task record: **ID · priority · status · owner · milestone · issue/P
 1. Fetch current main, inspect the relevant PR and issue, and read the applicable PMC notes. Preserve unrelated local changes using a clean isolated checkout.
 2. Select the first unblocked item in the next queue below. Record its ID, intended result, dependencies, focused validation, and current status here before starting.
 3. Finish one reviewable batch before opening another in the same workstream. Independent work may proceed while a PR awaits human review; record that explicitly.
-4. Use shared product components and existing Flask/Jinja/Bootstrap contracts. Preserve permission enforcement, payloads, routes, token scope, and fresh per-deletion reauthentication from #887. Preserve the incident containment/hardening merged in #912/#913.
+4. Use shared product components and preserve existing backend/Bootstrap contracts. For public-page changes, apply the React migration policy below; admin can retain Flask/Jinja. Preserve permission enforcement, payloads, routes, token scope, and fresh per-deletion reauthentication from #887. Preserve the incident containment/hardening merged in #912/#913.
 5. Every behavioral or visual batch includes CHANGELOG, applicable CSS cache version changes, focused validation, and PR evidence. Documentation-only batches need document validation, not a full application suite.
 6. After creating a PR, continue the next unblocked item. Merge/deploy requires authorization for that action. Mark implementation merged only after verifying main contains it; mark released only with deployment evidence.
 7. Change the order for a confirmed incident or higher-impact defect, documenting the reason. Do not start speculative rewrites or infrastructure changes merely because a task is blocked.
+
+## Public frontend React migration policy
+
+Owner direction, 2026-10-26: **the destination is an entirely React-based public
+frontend**, including discovery, event and organization pages, submission,
+accounts/settings, and supporting information pages. Flask can continue to own
+APIs, sessions, permissions and business logic. The current admin is outside this
+migration and may remain Flask/Jinja. Backend replacement is not a prerequisite
+or a deliverable of this workstream.
+
+**When changing a public page, migrate that page to React in the same delivery
+batch.** Apply this to new public pages too. The migration follows actual product
+work rather than a separate all-at-once rewrite. Reuse the TypeScript/Vite build,
+React components and Flask integration introduced by the volunteer form; see
+[the implementation guide](docs/react-frontend.md). During transition, Jinja
+pages and React pages/components coexist, with a clear owner for each DOM region
+and no duplicate legacy event handlers.
+
+If an existing page needs multiple reviewable slices, an island is an
+intermediate step: record the remaining page regions and their next migration
+tasks under UI-06 before closing the slice. Do not treat one converted widget as
+a completed page. An urgent production/security fix can ship before conversion;
+record the reason and the page's explicit migration follow-up. This exception
+must not become the default for ordinary page changes.
+
+Stages and completion criteria:
+
+1. **Foundation and first island:** volunteer signup, typed components,
+   page-specific entries, locked builds, Flask asset resolution and safe loading
+   fallbacks. This is implemented on `codex/react-volunteer-form`, not yet claimed
+   merged or released. Evidence: 77 focused checks, deterministic Node 22 build
+   and independent visual SHIP covering 48 captures at implementation snapshot
+   `63071baf`. Preserve the campaign publication gate and confirmation API.
+2. **Whole pages through ongoing work:** convert each touched public page and
+   extract reusable forms, cards and feedback components. Maintain a route/page
+   inventory under UI-06 identifying Jinja, mixed and fully React pages, remaining
+   regions, owner and the next delivery slice. Before moving indexable discovery
+   or event pages, choose and document how React renders their initial content
+   and metadata on the server or at build time. A client-only SPA is not an
+   assumed requirement.
+3. **Shared public application:** unify the public shell/navigation, route
+   handling, session state and translations as whole React pages accumulate.
+   Decide the React routing/rendering architecture in a scoped task using the
+   existing Flask APIs; retain reusable components from the island stage.
+4. **Finish the public migration:** explicitly schedule remaining untouched
+   routes instead of waiting indefinitely for unrelated edits. Close UI-06 only
+   when every public UI route is React-based, shared navigation/authentication
+   flows work, and obsolete public Jinja views, duplicate handlers and transitional
+   mounting code have been removed where superseded. Flask-rendered API/feed/
+   sitemap responses, email templates and the existing admin may remain.
+
+Each slice preserves existing URLs/redirects, session and permission checks,
+API payloads, translations, drafts and error/retry behavior, accessibility,
+themes and mobile layout. Preserve canonical/hreflang tags, social previews,
+event structured data and static recovery content where applicable. Keep useful
+no-JavaScript content and explicit safe fallbacks for interactive flows. Record
+focused regression and performance checks plus the required independent visual
+acceptance; migration is not permission for an unrelated redesign or an assumed
+DDoS mitigation. Existing urgent security/reliability priorities still apply.
 
 ## Next delivery queue
 
@@ -70,7 +130,7 @@ Use one task record: **ID · priority · status · owner · milestone · issue/P
 | **M1 — Secure core workflows** | P1 | SEC-01, QA-01 | Repair MFA lifecycle; review authentication/permission evidence. | Server-held opaque proof, atomic consume, reset revocation, expiry and bounded attempts; meaningful replay/concurrency/negative-path tests; #887/#912/#913 protections retained. Verify #763/#778 before scheduling fixes. |
 | **M2 — Reliable discovery and accessible actions** | P1 | DATA-01, UI-01 | Stable list pagination/result counts; accessible search/cropper. | Date/time/ID ordering, no page-boundary duplicates/gaps, correct ranges/totals, filter reset/URL state across list/city/tag; safe DOM, labels, keyboard/focus/Escape, both themes and mobile. |
 | **M3 — Operational correctness** | P1 | DATA-02, OPS-01 | Verify worker coordination and backup/alert gaps. | #908 investigated against merged code; overlap/retry/crash evidence; current recovery/alert evidence and explicit next actions in the continuity plan. Live changes follow its dependencies. |
-| **M4 — Consistent product UI** | P2 | UI-02, FORM-01, UI-03 | Shared homepage/city, organization/submission, detail/error/status components. | Preserved requests/permissions/drafts/imports/SEO/preferences; shared geometry/tokens/states, localized copy, keyboard/mobile/light-dark acceptance and relevant performance checks. |
+| **M4 — Consistent product UI** | P2 | UI-02, FORM-01, UI-03, UI-06 | Shared homepage/city, organization/submission, detail/error/status components. | Preserved requests/permissions/drafts/imports/SEO/preferences; shared geometry/tokens/states, localized copy, keyboard/mobile/light-dark acceptance and relevant performance checks. |
 | **M5 — Localization and maintainability** | P2/P3 | I18N-01, CLEAN-01, CLEAN-02 | Complete route-family translations and remove verified styling/dead-code debt. | Actual FI/EN/SV translations; reference audit before deletion; legacy calendar decision; smaller inline baseline and valid shipping variables/cache keys. |
 | **M6 — Acceptance** | P1 gate | ACCEPT-01, QA-01–QA-05 | Reconcile all delivered work with original requirements and test reviews. | Individual reviews complete, required CI and representative browser checks pass, trackers reflect actual merge/release evidence. Outstanding repository work remains visible. |
 
@@ -154,6 +214,8 @@ Test review runs alongside each milestone. Operations and privacy planning may p
   - Show only user-visible correspondence and clear public handling status; never expose internal notes, third-party contact details or admin-only links. Support keyboard/mobile/light/dark and FI/EN/SV. Test owner/foreign/anonymous boundaries, valid/expired/revoked links, forged case IDs, safe rendering, replies and status changes, retry/duplicate-submit behavior and existing edit/approval/#887 protections. No public case endpoint, bulk mail or production migration is authorized by this planning entry.
 
 ### Product and shared UI
+
+- [ ] **UI-06 · P2 · In progress · Codex (foundation); later page owners unassigned · M4 · codex/react-volunteer-form:** Entire public frontend to React through the migration-on-page-change policy above. Foundation/volunteer slice implemented. Campaign-page/confirmation refresh now composes the unchanged volunteer component and uses build-time HTML fallbacks; the shared site header/footer stay in Flask/Jinja for a later React shell migration. Fundraising receives scoped brand/layout cleanup in Jinja; other public routes remain. Merge/release pending. Dependencies: existing Flask API/session contracts and per-page product work; select the public rendering/routing architecture before migrating indexable routes. Acceptance: tracked route inventory reaches fully React for every public page, shared shell/routing/translations and account flows work, superseded public Jinja/legacy handlers are retired, and focused functional, SEO, accessibility, performance and independent visual checks pass. Flask backend and current admin may remain. Each later page slice records its own owner, scope, milestone and evidence; foundation completion does not close the migration.
 
 - **QA-03a · P2 · Closed · Codex · M1/M6 · #956 via merged #955:** Seven individual assessments: three merge-editor render/access/legacy-layer guards and four public-detail invite/cancelled-control guards. Maincb4421da retains every record; no runtime/test changes. All seven cases passed, including actual Chromium cancellation callback execution; two-file local review0findings. String guards are not visual/interactive/security acceptance, and GET restriction is not forged-POST or all-role coverage. Broader QA-03/UI-01 remain open.
 
@@ -280,6 +342,7 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |
 | UI-02a | P2 | Merged | Codex | M2/M4 | Footer padding is inside width; card title/address/tag text can wrap. Empty/populated route/theme/viewport and keyboard controls validate this slice; 93 combined cases pass; broader UI-02 acceptance remains open. |
 | UI-02b | P2 | Merged | Codex | M2/M4 | Depends on #936. Shared hero geometry/mobile typography with no fixed-min-width or nowrap conflict; 117 focused cases pass, including 24 actual SSR cases. Wider product acceptance remains open. |
+| UI-06 | P2 | In progress | Codex (foundation); later owners unassigned | M4 | Convert public pages to React when changed; finish remaining routes explicitly. Volunteer foundation implemented on codex/react-volunteer-form (77 focused checks, Node 22 build, independent SHIP), not yet merged/released. Flask backend and current admin may remain; see migration policy and per-page inventory requirement. |
 | USER-01 | P2 | Released | Codex | M4 | #941 merge build e6383141 verified through public HTTPS and direct origin health probes; service active, existing tracked server overlays preserved. Final CI: 1,370 passed /325 skipped. GitHub deploy public-probe403 failure remains explicitly recorded; no authenticated production visual QA claim. |
 | CITY-01 | P2 | Backlog | Unassigned | M2/M4 | Extend existing city assignment/email/escalation with in-app notification and a shared authoritative dashboard deadline/countdown. Code default24h; deployed setting unverified. Define reset/config-change policy before implementation. |
 | CITY-02 | P1 | Backlog | Unassigned | M2 | Urgent pending-event Telegram alert (<48h, higher urgency <24h proposed) via @mielenosoituksetbot to the owner-named channel; edit the same message after canonical processing. Verify numeric chat ID, permissions, existing external bot, retry/state policy and staging send/edit before release. |

@@ -5,13 +5,13 @@
 {% block og_description %}Suunnittelemme 2 500 euron pienkeräystä, jotta yhä useampi löytäisi mielenosoitukset.fi-palvelun. Tutustu suunnitelmaan.{% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/public-content.css', v='20261026-fundraising-2') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/campaign.css', v='20261027-campaign-refresh-2') }}">
 {% endblock %}
 
 {% block content %}
-<article class="public-content" lang="fi">
-  <section class="site-hero" aria-labelledby="fundraising-title">
-    <div class="hero-content">
-      <p class="site-hero__eyebrow">{{ 'Suunnitteilla oleva pienkeräys' if fundraising.is_preparation else 'Pienkeräys' }}</p>
+<article class="public-content campaign-page" lang="fi">
+  <section class="campaign-fundraising-intro" aria-labelledby="fundraising-title">
+    <div>
       <h1 id="fundraising-title">Jotta mielenosoitukset löytyvät</h1>
       <p>Haluamme tuoda mielenosoitukset.fi-palvelun yhä useamman ihmisen tietoon. {{ 'Suunnittelemme pienkeräystä yhteisen markkinointikampanjan toteuttamiseen.' if fundraising.is_preparation else 'Pienkeräyksellä rahoitetaan yhteinen markkinointikampanja.' }}</p>
     </div>

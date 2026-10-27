@@ -1154,7 +1154,18 @@ Actual48h assignment and exact-deadline query/marking while caller supplies24h f
 
 ## tests/test_campaign_volunteer_feedback.py
 
-- [ ] `test_campaign_volunteer_feedback_contract_uses_accessible_in_page_status`
+- [x] `test_campaign_loads_only_its_react_entry_with_translated_json_props`
+
+React migration, 2026-10-26: replaces retired inline-JavaScript source assertions
+with a real Flask response/JSON-props/asset check. Existing browser cases retain
+validation focus, whitespace rejection, feedback and simultaneous-submit coverage.
+Added real Flask signup-to-confirmation coverage (mail queue captured, no delivery),
+pending/error/retry value retention and escaped server errors, missing-module
+disabled fallback, and absence of React on other public/admin pages.
+`tests/test_frontend_assets.py` checks prefixed asset URLs, dependency CSS deduplication,
+watch-build reloading and incomplete/escaping manifest entries. No additional
+CI suite or broad test audit was introduced. Visual evidence is a separate
+in-conversation review; these tests do not establish visual acceptance.
 - [ ] `test_campaign_volunteer_api_localizes_required_fields_error`
 - [ ] `test_campaign_volunteer_api_rejects_blank_normalized_required_values`
 - [ ] `test_campaign_page_embeds_localized_volunteer_feedback`
@@ -3421,3 +3432,30 @@ cases, 13 publication cases and five relevant existing admin/UI/route contracts)
 Actual Flask browser captures separately exercise native admin publish/withdraw,
 write-error feedback, ordinary authenticated preview, restricted publisher rights,
 public anonymous browsing and JavaScript-disabled admin submission.
+
+
+## Campaign presentation refresh — 27 October 2026
+
+Scoped changes only: preserve the approved VolunteerForm component; adapt its
+existing entry/fallback checks to the owning campaign-page React entry and plain
+newsletter copy. Existing submission, validation, localization, module failure,
+no-JavaScript and token round-trip checks remain. On whole-page module failure,
+both signups intentionally retain disabled HTML fallbacks.
+
+- [x] `test_campaign_fallback_is_readable_and_contains_no_public_procurement_detail`:
+  actual Flask HTML contains complete React-authored campaign copy/navigation
+  and form hooks while detailed material quantities/costs are absent.
+- [x] `test_confirmation_keeps_token_validation_and_has_readable_nojs_html`:
+  real valid/invalid/expired token branches retain status/DB semantics, no-store/
+  noindex, readable HTML and safe plain copy without celebratory/personal markup.
+- [x] `test_newsletter_error_never_looks_like_success_and_keeps_email`:
+  browser HTTP error, malformed JSON/schema and network failure show an error,
+  preserve the email and allow retry rather than reporting success.
+- [x] `test_frontend_manifest_unchanged_build_is_parsed_once_per_app`:
+  repeated request contexts reuse one parsed manifest; the existing rebuild test
+  still requires invalidation when a watched build changes.
+
+Public inline-style debt is reduced: both campaign/confirmation style blocks
+are removed; only the two required-marker attributes emitted by the unchanged
+approved form remain in the generated campaign fallback. No unrelated baseline
+or route inventory entries are refreshed.

@@ -4,6 +4,11 @@
 
 ## UNRELEASED
 
+- Rebuild campaign and volunteer-confirmation presentation with the existing React foundation, brand-book typography and concise public copy. Reuse the standard site header/footer and simplify campaign and pienkeräys layouts without changing other public pages. Keep the approved volunteer form component unchanged, remove public procurement quantities/costs and celebratory confirmation language, and retain readable server HTML with disabled no-JavaScript forms.
+
+- Roadmap: adopt migration to React whenever public pages are changed, with an eventual entirely React public frontend; retain Flask backend and current admin, and track staged delivery and compatibility requirements under UI-06.
+
+- Move the campaign volunteer form to an isolated React component while preserving signup, confirmation and translations. Add a reusable TypeScript/Vite build and Flask asset integration for gradual public-frontend migration, without loading React in the admin or other public pages.
 - Keep campaign and fundraising pages behind login until an authorized administrator publishes them from campaign management. Protect the volunteer API, hide unpublished discovery links, and support returning pages to private; publication never enables donations.
 
 - Clarify volunteer roles and email confirmation on the existing campaign page, with readable campaign metrics, focused inputs and footer in both themes, mobile forms, visible submission progress, control-level validation focus and safe JavaScript-disabled guidance for both signups.

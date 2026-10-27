@@ -57,6 +57,7 @@ def main() -> int:
     parser.add_argument("--node", default=os.environ.get("MOSO_QA_NODE", "node"))
     parser.add_argument("--output-dir", type=Path, help="Directory for screenshots and capture metadata")
     parser.add_argument("--stage", choices=("before", "final"), default="final")
+    parser.add_argument("--scenario", choices=("standard", "missing-times"), default="standard")
     args = parser.parse_args()
     if sys.version_info < (3, 12):
         parser.error("Use Python 3.12 or newer with the project's development dependencies installed.")
@@ -80,6 +81,7 @@ def main() -> int:
             env = os.environ.copy()
             env["MOSO_LIST_CAPTURE_DIR"] = str(output)
             env["MOSO_LIST_CAPTURE_STAGE"] = args.stage
+            env["MOSO_LIST_CAPTURE_SCENARIO"] = args.scenario
             run_id = uuid.uuid4().hex
             env["MOSO_LIST_CAPTURE_RUN"] = run_id
             env["PYTHONPATH"] = os.pathsep.join(filter(None, (str(ROOT), env.get("PYTHONPATH"))))
@@ -91,7 +93,8 @@ def main() -> int:
             metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
             if metadata.get("run_id") != run_id or not metadata.get("images"):
                 parser.error("Capture metadata is stale or empty. Visual acceptance remains open.")
-            if metadata.get("errors"):
+            expected_before_errors = args.stage == "before" and args.scenario == "missing-times"
+            if metadata.get("errors") and not expected_before_errors:
                 parser.error(f"Capture recorded uncaught page errors; see {metadata_path}")
             print(f"Capture metadata: {metadata_path}", flush=True)
         return 0

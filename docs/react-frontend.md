@@ -242,6 +242,24 @@ output. Four photo-bearing states require decoded image pixels in both widths
 and themes. The script supplies evidence; an independent reviewer still must
 issue the final visual verdict. It adds no CI workflow or separate CI suite.
 
+The API can return null or absent start/end times. The card formatter accepts
+those values, labels an end time when no start is available, and omits the clock
+when both are unavailable. A failed React card batch follows the existing retry
+path: it does not advance the window, URL or count, and existing pages survive
+an append failure. React root error callbacks must remain connected to that
+loader result; a successful HTTP response alone does not prove cards rendered.
+
+Include the real-data nullable-clock and pagination scenario after clock or card
+renderer changes:
+
+```sh
+python3.12 scripts/verify_react_listings.py capture --scenario missing-times --output-dir /tmp/moso-listing-missing-times
+```
+
+This seeds null/absent clocks and photos in the disposable database and exercises
+page restoration, previous-page and load-more behavior. Keep separate output
+directories for each source snapshot.
+
 ### Before/after response latency
 
 Use the same Python 3.12+ development environment and disposable test services

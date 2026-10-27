@@ -166,7 +166,7 @@ def capture(item) -> None:
 
     if scenario == "continuous-grid":
         def settled_grid(page, first, last):
-            page.wait_for_function("([first,last]) => window.publicListWindow?.first === first && window.publicListWindow?.last === last && document.querySelector('#demos-grid')?.getAttribute('aria-busy') === 'false'", arg=[first, last])
+            page.wait_for_function("([first,last]) => window.publicListWindow?.first === first && window.publicListWindow?.last === last && document.querySelector('#demos-grid')?.getAttribute('aria-busy') === 'false' && !document.querySelector('#load-more-btn').disabled", arg=[first, last])
             assert page.locator(".demo-card").count() == (last - first + 1) * 12
 
         matrix = [("/demonstrations", "all", 1680, theme) for theme in ("light", "dark")] if stage == "before" else [
@@ -208,7 +208,7 @@ def capture(item) -> None:
                     page.locator("#load-more-btn").dispatch_event("click")
                     settled_grid(page, 2, 6)
                     after = anchor.bounding_box()
-                    assert all(abs(after[axis] - before[axis]) <= 1 for axis in ("x", "y"))
+                    assert all(abs(after[axis] - before[axis]) <= 1 for axis in ("x", "y")), (before, after)
                     shot(page, f"grid-evicted-1680-{theme}", "[data-list-page='5'] .demo-card")
                     page.set_viewport_size({"width": 390, "height": 1000})
                     page.wait_for_function("getComputedStyle(document.querySelector('.demo-card')).gridColumnStart === '1'")

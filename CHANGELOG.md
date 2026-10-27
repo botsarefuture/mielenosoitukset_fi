@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Keep campaign asset-isolation and account-settings syntax checks compatible with the shared React header: require the intended page/header bundles and validate inert JSON props separately from executable JavaScript.
+
 - Move the shared public header into reusable React navigation, language, account, notification and theme components using the existing Vite foundation. Preserve Flask-controlled links/permissions and readable navigation when JavaScript or the header bundle is unavailable.
 - Record the modernization context and prioritize header, demonstration listings, then event/recurring-series pages; retain existing data and authentication throughout the gradual migration.
 

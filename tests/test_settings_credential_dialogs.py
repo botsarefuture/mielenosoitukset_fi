@@ -1,5 +1,6 @@
 """Contracts for credential-management dialogs in public account settings."""
 
+import json
 import re
 import shutil
 import subprocess
@@ -53,13 +54,21 @@ def test_rendered_settings_inline_javascript_parses(user_client):
 
     response = user_client.get("/users/auth/settings")
     scripts = re.findall(
-        r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>",
+        r"<script(?![^>]*\bsrc=)([^>]*)>(.*?)</script>",
         response.get_data(as_text=True),
         flags=re.S,
     )
 
     assert scripts
-    for index, script in enumerate(scripts, start=1):
+    checked_javascript = 0
+    checked_json = 0
+    for index, (attributes, script) in enumerate(scripts, start=1):
+        # React props are inert JSON data blocks, not executable JavaScript.
+        if re.search(r"\btype\s*=\s*['\"]application/json['\"]", attributes, re.I):
+            json.loads(script)
+            checked_json += 1
+            continue
+        checked_javascript += 1
         result = subprocess.run(
             [node, "--check"],
             input=script,
@@ -68,6 +77,8 @@ def test_rendered_settings_inline_javascript_parses(user_client):
             check=False,
         )
         assert result.returncode == 0, f"inline script {index}: {result.stderr}"
+    assert checked_javascript > 0
+    assert checked_json > 0
 
 
 def test_credential_dialog_copy_is_translated_in_supported_catalogs():

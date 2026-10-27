@@ -20,7 +20,7 @@ def _set_locale(client, locale):
         session["locale"] = locale
 
 
-def test_campaign_loads_only_its_react_entry_with_translated_json_props(client):
+def test_campaign_loads_its_page_and_shared_header_entries_with_translated_json_props(client):
     import re
 
     page = client.get("/kampanja/").get_data(as_text=True)
@@ -30,9 +30,11 @@ def test_campaign_loads_only_its_react_entry_with_translated_json_props(client):
     assert 'data-react-island="campaign-page"' in page
     assert '<fieldset class="campaign-fallback" disabled="">' in page
     scripts = re.findall(r'<script type="module" src="([^"]+)"', page)
-    assert len(scripts) == 1
-    assert scripts[0].startswith("/static/frontend/assets/campaign-")
-    assert client.get(scripts[0]).status_code == 200
+    assert len(scripts) == 2
+    assert scripts[0].startswith("/static/frontend/assets/header-")
+    assert scripts[1].startswith("/static/frontend/assets/campaign-")
+    for script in scripts:
+        assert client.get(script).status_code == 200
 
 
 @pytest.mark.parametrize(
@@ -352,16 +354,23 @@ def test_missing_react_bundle_keeps_fallback_disabled_and_newsletter_working(liv
     browser_page.goto(f"{live_server}/kampanja/", wait_until="networkidle")
     assert browser_page.locator("#vol-name").is_disabled()
     assert browser_page.locator("#vol-submit").is_disabled()
-    assert "Lomaketta ladataan" in browser_page.locator('[data-react-island]').inner_text()
+    assert "Lomaketta ladataan" in browser_page.locator('[data-react-island="campaign-page"]').inner_text()
     assert browser_page.locator('#vapaaehtoiseksi a[href^="mailto:"]').first.is_visible()
     assert browser_page.locator("#newsletter-form button").is_disabled()
 
 
-def test_other_public_pages_and_admin_do_not_load_react(client, admin_client):
+def test_other_public_pages_load_only_shared_header_and_admin_stays_separate(client, admin_client):
+    import re
+
     for url in ("/", "/info", "/keräys", "/users/auth/login"):
         response = client.get(url)
         assert response.status_code == 200
-        assert "/static/frontend/" not in response.get_data(as_text=True)
+        page = response.get_data(as_text=True)
+        scripts = re.findall(r'<script type="module" src="([^"]+)"', page)
+        assert len(scripts) == 1
+        assert scripts[0].startswith("/static/frontend/assets/header-")
+        assert 'data-react-island="site-header"' in page
+        assert 'data-react-island="campaign-page"' not in page
     response = admin_client.get("/admin/dashboard")
     assert response.status_code == 200
     assert "/static/frontend/" not in response.get_data(as_text=True)

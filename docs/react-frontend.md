@@ -201,6 +201,18 @@ for its cards. No legacy card renderer or legacy card navigation listener is
 loaded on these three routes. Other consumers of the legacy renderer are
 unchanged and remain separate migration tasks.
 
+The listing results use one continuous CSS grid. Page roots use `display:
+contents` so an API page ending halfway through a row does not leave empty cells
+before the next page. The window controller measures those roots through their
+card boxes and anchors a surviving card during eviction/prepending. Other
+consumers with ordinary page boxes retain their existing geometry. Regression
+checks include five/eight-column layouts, the 60-card window, keyboard focus,
+scroll anchoring and hidden/loading results.
+The first retained card keeps its global column via a scoped grid-column value,
+recomputed on viewport resize. Any partial row is confined to the start of the
+retained window; internal API page boundaries stay continuous, and eviction does
+not move surviving cards sideways.
+
 The typed listing adapter checks response metadata, cancels replaced searches,
 ignores stale responses and leaves failed requests available for explicit retry.
 It keeps a maximum of five mounted pages, respects focus/viewport eviction
@@ -259,6 +271,10 @@ python3.12 scripts/verify_react_listings.py capture --scenario missing-times --o
 This seeds null/absent clocks and photos in the disposable database and exercises
 page restoration, previous-page and load-more behavior. Keep separate output
 directories for each source snapshot.
+
+Use `--scenario continuous-grid` for page-boundary layout changes. It adds the
+1680px five-column case to the usual 390px/1440px themes, plus authenticated,
+keyboard-focus, restored-page, empty and loading captures.
 
 ### Before/after response latency
 

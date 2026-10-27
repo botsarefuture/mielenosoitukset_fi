@@ -176,11 +176,18 @@ h1 {
 .public-list-fallback { margin: 0; padding: 0; border: 0; min-width: 0; }
 .public-list-cover { width: 100%; max-height: 20rem; object-fit: cover; margin-bottom: 1rem; }
 .public-list-results { min-width: 0; }
-.public-demonstration-list [hidden] { display: none; }
-.public-demonstration-list .public-list-page {
+.public-demonstration-list .public-list-window {
+  display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
   gap: 1.25rem;
 }
+/* Keep page roots for bounded loading while their cards share one grid. */
+.public-demonstration-list .public-list-page { display: contents; }
+.public-demonstration-list .public-list-page:first-child > .demo-card:first-child {
+  grid-column-start: var(--public-list-first-column, auto);
+}
+.public-demonstration-list .public-list-window > .loading-container { grid-column: 1 / -1; }
+.public-demonstration-list [hidden] { display: none; }
 .public-demonstration-list .demo-card-title a { color: inherit; text-decoration: none; min-width: 0; overflow-wrap: anywhere; }
 .public-demonstration-list .demo-card-title a:focus-visible { outline: 2px solid var(--product-primary); outline-offset: 3px; }
 .public-demonstration-list .no-results-card { padding: 2rem 1rem; border: 0; box-shadow: none; background: transparent; }

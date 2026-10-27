@@ -54,6 +54,9 @@ def test_public_search_fields_are_visible_aligned_and_focusable(live_server, bro
         assert abs(label_rect['x'] - rect['x']) <= 1
         assert rect['height'] >= 44
         assert rect['x'] >= 0 and rect['x'] + rect['width'] <= width + 1
+        # Inspect each label independently of the previous field's transient calendar.
+        if browser_page.locator(f'#{target}').evaluate('element => Boolean(element._flatpickr?.isOpen)'):
+            browser_page.keyboard.press('Escape')
     browser_page.locator('#demo-search').focus()
     browser_page.keyboard.press('Tab')
     assert browser_page.evaluate('document.activeElement.id') == ('demo-location' if path.startswith('/city/') else 'city_input')

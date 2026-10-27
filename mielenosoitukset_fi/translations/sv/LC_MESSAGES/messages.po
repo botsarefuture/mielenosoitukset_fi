@@ -13842,3 +13842,8 @@ msgstr "Lades i kö"
 
 msgid "Ei vielä vastauksia."
 msgstr "Inga svar ännu."
+
+
+#: templates/_layouts/demonstration-list.html
+msgid "Lista avautuu JavaScriptillä. Jos se ei lataudu, päivitä sivu."
+msgstr "Listan kräver JavaScript. Uppdatera sidan om den inte laddas."

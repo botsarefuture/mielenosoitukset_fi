@@ -13661,3 +13661,8 @@ msgstr "Queued at"
 
 msgid "Ei vielä vastauksia."
 msgstr "No replies yet."
+
+
+#: templates/_layouts/demonstration-list.html
+msgid "Lista avautuu JavaScriptillä. Jos se ei lataudu, päivitä sivu."
+msgstr "The list requires JavaScript. If it does not load, refresh the page."

@@ -4,6 +4,15 @@
 
 ## UNRELEASED
 
+- Add a repeatable local before/after listing latency comparison with isolated fixtures, raw samples and p50/p95/p99 summaries.
+
+- Keep the public localization smoke check aligned with the React listing mount and server search fallback, and include it in the reusable listing verification command.
+
+- Add one reusable local React-listing verification command for builds, focused regression checks and real-application screenshots with source/image hashes and decoded-photo checks.
+
+- Move the main, city and tag demonstration listings onto shared React page, search and card components while retaining existing event-card presentation, canonical event links and scoped filters.
+- Use the available page width with a responsive card grid. Group the heading and search in one brand-aligned panel, replace redundant heroes and eyebrow labels, and give the all-events link a styled secondary action.
+- Preserve the bounded five-page loading window, URL/history state, localized date/city widgets and per-page attendance requests. Card and friend text now render safely through React; event invitation links retain existing occurrence query parameters.
 - Keep campaign asset-isolation and account-settings syntax checks compatible with the shared React header: require the intended page/header bundles and validate inert JSON props separately from executable JavaScript.
 
 - Move the shared public header into reusable React navigation, language, account, notification and theme components using the existing Vite foundation. Preserve Flask-controlled links/permissions and readable navigation when JavaScript or the header bundle is unavailable.

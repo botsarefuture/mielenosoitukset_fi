@@ -68,3 +68,13 @@ The context is guidance, not an approved replacement specification.
   within an already approved scope can proceed.
 - Test compatibility and establish rollback before replacing working behavior;
   retire old paths only when safe. Update relevant documentation and changelog.
+
+
+## Repeatable listing verification
+
+For changes to the shared React listings, use
+`python3.12 scripts/verify_react_listings.py all --output-dir /tmp/moso-listing-qa`
+with the project development dependencies and Node 22.12+. The `check` and
+`capture` modes support focused reruns without ad hoc duplicate commands.
+Keep visual output outside the repository. Passing this script is technical
+verification, not the independent visual SHIP required above.

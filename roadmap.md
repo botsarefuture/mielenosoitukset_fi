@@ -375,3 +375,20 @@ The repository programme is complete only when each in-scope requirement has evi
 | Event details and recurring-series selection | Existing Jinja/static-JS bodies with the shared React header after this slice | Next after listings, owner unassigned: reusable metadata/organizers/occurrence selector; preserve canonical URLs, `occurrence` selection, indexability and existing interactions. |
 | Public footer, organizations, submission, accounts/settings, fundraising and other information pages | Existing implementations; some have React header after this slice | Bodies/footer remain open; migrate through their own reviewed slices. Header conversion does not mark those pages complete. |
 | Administration | Existing Flask/Jinja | Outside public frontend migration. |
+
+
+### UI-06 listing slice: 27 October 2026
+
+Owner direction: continue on a stacked branch above #990; use available width,
+avoid unnecessary eyebrows/decorative heroes, group heading/search in a shared
+branded panel, style all-events navigation as a secondary action and preserve
+existing event-card presentation. New UI copy should avoid em dashes.
+
+Main/city/tag listing bodies now use shared React components on
+`codex/react-demonstration-listings`. The existing pagination/history and date/city
+widgets are explicit DOM adapters; their tested five-page/focus/history contracts
+remain. This is a listing slice, not completion of discovery: today/calendar,
+homepage and organization card consumers are still in their current
+implementation. The next selected page family is event details and recurring
+series, including direct occurrence selection and preserved canonical/SEO behavior.
+Merge, deployment and live performance acceptance are still separate.

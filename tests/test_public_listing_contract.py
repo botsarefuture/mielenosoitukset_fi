@@ -14,13 +14,14 @@ def test_public_listing_family_uses_shared_hero_and_pagination_markup():
     city_template = (TEMPLATE_ROOT / "city.html").read_text(encoding="utf-8")
     tag_template = (TEMPLATE_ROOT / "tag_list.html").read_text(encoding="utf-8")
 
-    assert "from '_macros/_hero.html' import hero_section" in list_template
-    assert "from '_macros/_hero.html' import hero_section" in city_template
-    assert "from '_macros/_hero.html' import hero_section" in tag_template
-    assert "load_more_button()" in list_template
-    assert "load_more_button()" in city_template
-    assert "load_more_button()" in tag_template
-    assert "listing_end_message()" not in city_template
+    for source in (list_template, city_template, tag_template):
+        assert "extends '_layouts/demonstration-list.html'" in source
+    layout = (TEMPLATE_ROOT / '_layouts/demonstration-list.html').read_text()
+    page = Path('frontend/src/pages/DemonstrationListingPage.tsx').read_text()
+    assert 'data-react-island="demonstration-listing"' in layout
+    assert 'ListingTools props={props}' in page
+    assert 'id="demos-grid"' in page and 'id="load-more-btn"' in page
+    assert 'hero_section' not in layout and 'eyebrow' not in layout
 
 
 def test_public_listing_pagination_controller_supports_buttons_and_sentinels():
@@ -40,13 +41,13 @@ def test_public_workspace_styles_cover_listing_end_message():
 
 
 def test_public_list_runtime_uses_defined_localized_browser_contracts():
-    source = (TEMPLATE_ROOT / "list.html").read_text(encoding="utf-8")
+    source = (TEMPLATE_ROOT / "_layouts/demonstration-list.html").read_text(encoding="utf-8")
     base_source = (TEMPLATE_ROOT / "base.html").read_text(encoding="utf-8")
 
     assert "setView(view)" not in source
     assert '${_("Kaupunki")}' not in source
-    assert "publicListI18n.city" in source
-    assert "publicListI18n.removeFilter" in source
+    assert "'city': _('Kaupunki')" in source
+    assert "'removeFilter': _('Poista suodatin')" in source
     range_source = (Path("mielenosoitukset_fi/static/js/public-date-range.js")).read_text(encoding="utf-8")
     assert "new Intl.DateTimeFormat" in range_source
     assert "activeLocale" in range_source

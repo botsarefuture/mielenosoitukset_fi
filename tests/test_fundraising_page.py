@@ -40,7 +40,7 @@ def test_fundraising_preview_is_public_and_has_no_payment_instructions(client):
     assert 'datetime="2027-02-15"' in page
     assert "jatkuvuuden turvaamiseen" in page
     assert 'href="/contact"' in page
-    assert '<article class="public-content" lang="fi">' in page
+    assert '<article class="public-content campaign-page" lang="fi">' in page
     assert "MobilePay 1" in page and "MobilePay 2" in page
     assert 'name="iban"' not in page and 'type="submit"' not in page
 
@@ -90,7 +90,7 @@ def test_confirmed_donation_details_render_escaped_and_close_after_end(client, m
     assert "https://qr.mobilepay.fi/box/" not in page
     plan["publication_state"] = "preparation"
     page = client.get("/keräys").get_data(as_text=True)
-    assert "Valmistelussa" in page and "Suunnitteilla oleva pienkeräys" in page
+    assert "Valmistelussa" in page and "Keräyksen suunnitelma" in page
 
 
 def test_header_promotion_is_opt_in_and_campaign_preserves_signup_hooks(client, monkeypatch):
@@ -106,8 +106,9 @@ def test_header_promotion_is_opt_in_and_campaign_preserves_signup_hooks(client, 
     assert 'id="kerays"' in page and 'href="/ker%C3%A4ys"' in page
     assert 'id="volunteer-form"' in page and 'id="newsletter-form"' in page
     assert "Kampanja alkoi 1.3.2026" not in page
-    assert 'id="materiaalitavoitteet"' in page and "25 000" in page
-    assert "1 889,94" in page and "eivät vielä toteutuneita" in page
+    assert 'id="materiaalitavoitteet"' in page
+    assert "25 000" not in page and "1 889,94" not in page
+    assert 'id="campaign-title"' in page and "Yhdessä näkyväksi" in page
 
 
 @pytest.mark.parametrize("url", [

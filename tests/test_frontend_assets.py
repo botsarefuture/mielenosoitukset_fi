@@ -38,3 +38,29 @@ def test_frontend_manifest_rejects_incomplete_or_escaping_build(tmp_path, filena
     app = Flask(__name__, static_folder=str(tmp_path))
     with app.test_request_context(), pytest.raises(ValueError):
         frontend_assets("entry")
+
+
+def test_frontend_manifest_unchanged_build_is_parsed_once_per_app(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    build = tmp_path / "frontend"
+    build.mkdir()
+    (build / "page.js").write_text("")
+    manifest_path = build / "manifest.json"
+    manifest_path.write_text(json.dumps({"entry": {"file": "page.js"}}))
+    reads = []
+    original = Path.read_text
+
+    def read(path, *args, **kwargs):
+        if path == manifest_path:
+            reads.append(path)
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", read)
+    app = Flask(__name__, static_folder=str(tmp_path))
+    with app.test_request_context():
+        frontend_assets("entry")
+        frontend_assets("entry")
+    with app.test_request_context():
+        frontend_assets("entry")
+    assert len(reads) == 1

@@ -24,14 +24,14 @@ def test_campaign_loads_only_its_react_entry_with_translated_json_props(client):
     import re
 
     page = client.get("/kampanja/").get_data(as_text=True)
-    props = json.loads(re.search(r'<script id="volunteer-form-props" type="application/json">(.*?)</script>', page, re.S).group(1))
-    assert props["endpoint"] == "/kampanja/api/volunteers"
-    assert "Nimi ja sähköpostiosoite" in props["messages"]["required"]
-    assert 'data-react-island="volunteer-form"' in page
-    assert '<fieldset disabled id="vol-fields">' in page
+    props = json.loads(re.search(r'<script id="campaign-page-props" type="application/json">(.*?)</script>', page, re.S).group(1))
+    assert props["volunteer"]["endpoint"] == "/kampanja/api/volunteers"
+    assert "Nimi ja sähköpostiosoite" in props["volunteer"]["messages"]["required"]
+    assert 'data-react-island="campaign-page"' in page
+    assert '<fieldset class="campaign-fallback" disabled="">' in page
     scripts = re.findall(r'<script type="module" src="([^"]+)"', page)
     assert len(scripts) == 1
-    assert scripts[0].startswith("/static/frontend/assets/volunteer-")
+    assert scripts[0].startswith("/static/frontend/assets/campaign-")
     assert client.get(scripts[0]).status_code == 200
 
 
@@ -277,7 +277,7 @@ def test_campaign_newsletter_preserves_signup_integration(live_server, browser_p
     browser_page.locator('#newsletter-form button').click()
     browser_page.locator("#newsletter-msg.show").wait_for()
     assert requests == [{"email": "newsletter@example.test", "list_id": "68d26ca27f8e9dee7c846a22"}]
-    assert "Tilauksesi onnistui" in browser_page.locator("#newsletter-msg").inner_text()
+    assert "Uutiskirjeen tilaus onnistui." in browser_page.locator("#newsletter-msg").inner_text()
 
 
 @pytest.mark.e2e
@@ -353,8 +353,8 @@ def test_missing_react_bundle_keeps_fallback_disabled_and_newsletter_working(liv
     assert browser_page.locator("#vol-name").is_disabled()
     assert browser_page.locator("#vol-submit").is_disabled()
     assert "Lomaketta ladataan" in browser_page.locator('[data-react-island]').inner_text()
-    assert browser_page.locator('[data-react-island] a[href^="mailto:"]').is_visible()
-    assert not browser_page.locator("#newsletter-form button").is_disabled()
+    assert browser_page.locator('#vapaaehtoiseksi a[href^="mailto:"]').first.is_visible()
+    assert browser_page.locator("#newsletter-form button").is_disabled()
 
 
 def test_other_public_pages_and_admin_do_not_load_react(client, admin_client):

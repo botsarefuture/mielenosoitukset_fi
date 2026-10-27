@@ -6,7 +6,7 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "tsc --noEmit && vite build --config frontend/vite.config.ts",
+    "build": "tsc --noEmit && vite build --config frontend/vite.config.ts && node frontend/prerender.mjs",
     "dev": "vite build --watch --mode development --config frontend/vite.config.ts",
     "typecheck": "tsc --noEmit"
   },

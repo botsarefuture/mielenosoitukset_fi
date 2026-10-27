@@ -1,8 +1,42 @@
 {
+  "_VolunteerForm-DbIEOOCL.js": {
+    "file": "assets/VolunteerForm-DbIEOOCL.js",
+    "name": "VolunteerForm",
+    "imports": [
+      "_mount-island-CLdDQFsf.js"
+    ]
+  },
+  "_mount-island-CLdDQFsf.js": {
+    "file": "assets/mount-island-CLdDQFsf.js",
+    "name": "mount-island"
+  },
+  "src/entries/campaign.tsx": {
+    "file": "assets/campaign-BXYiKepl.js",
+    "name": "campaign",
+    "src": "src/entries/campaign.tsx",
+    "isEntry": true,
+    "imports": [
+      "_mount-island-CLdDQFsf.js",
+      "_VolunteerForm-DbIEOOCL.js"
+    ]
+  },
+  "src/entries/confirmation.tsx": {
+    "file": "assets/confirmation-C0IuiTL6.js",
+    "name": "confirmation",
+    "src": "src/entries/confirmation.tsx",
+    "isEntry": true,
+    "imports": [
+      "_mount-island-CLdDQFsf.js"
+    ]
+  },
   "src/entries/volunteer.tsx": {
-    "file": "assets/volunteer-C675KbY2.js",
+    "file": "assets/volunteer-CjmixC5Y.js",
     "name": "volunteer",
     "src": "src/entries/volunteer.tsx",
-    "isEntry": true
+    "isEntry": true,
+    "imports": [
+      "_mount-island-CLdDQFsf.js",
+      "_VolunteerForm-DbIEOOCL.js"
+    ]
   }
 }

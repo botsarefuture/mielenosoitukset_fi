@@ -9,8 +9,18 @@ from flask import current_app, url_for
 def frontend_assets(entry):
     """Return an entry's script and dependency CSS in the manifest's import order."""
     build_dir = Path(current_app.static_folder) / "frontend"
-    # Read on demand so `npm run dev` rebuilds work without restarting Flask.
-    manifest = json.loads((build_dir / "manifest.json").read_text(encoding="utf-8"))
+    # Reuse parsed builds across requests, while reloads still notice watch/release
+    # updates. This avoids reading/parsing JSON on every campaign request.
+    manifest_path = build_dir / "manifest.json"
+    stat = manifest_path.stat()
+    signature = (stat.st_mtime_ns, stat.st_size)
+    cache = current_app.extensions.setdefault("frontend_manifest_cache", {})
+    cached = cache.get(manifest_path)
+    if cached is None or cached[0] != signature:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        cache[manifest_path] = (signature, manifest)
+    else:
+        manifest = cached[1]
     styles = []
     visited = set()
 

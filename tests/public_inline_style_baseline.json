@@ -59,13 +59,6 @@
     "info.html": [
       "fe00148d8b421b03"
     ],
-    "kampanja/confirm_success.html": [
-      "8de69eb7dfc89015"
-    ],
-    "kampanja/index.html": [
-      "40d7351036685db0",
-      "b72ee5dd6bb68ef7"
-    ],
     "list_legacy.html": [
       "cee4037077acd701"
     ],
@@ -186,15 +179,6 @@
       "f8f4fe46707cce61",
       "fe9e899c0995cca9"
     ],
-    "kampanja/confirm_success.html": [
-      "0011ec2529ce8bb0",
-      "43caf93229ff5c38"
-    ],
-    "kampanja/index.html": [
-      "06e794adae86502c",
-      "06e794adae86502c",
-      "525d27764727442d"
-    ],
     "list.html": [
       "d0466aa33fa8061c"
     ],
@@ -312,6 +296,10 @@
     ],
     "users/profile/profile.html": [
       "002dc26c478b3c97"
+    ],
+    "kampanja/_campaign_fallback.html": [
+      "88326fa4c4436926",
+      "88326fa4c4436926"
     ]
   }
 }

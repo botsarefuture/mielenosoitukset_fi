@@ -238,7 +238,8 @@ def test_submit_draft_restores_fields_quill_city_and_organizers(
 def test_submit_draft_flushes_pending_edits_on_pagehide(live_server, browser_page):
     """Persist the latest field edit when the page hides before the debounce fires."""
     browser_page.goto(f"{live_server}/submit", wait_until="domcontentloaded")
-    browser_page.wait_for_function("() => window.__submitDraftReady === true")
+    browser_page.wait_for_function("() => typeof window.saveSubmitDraft === 'function'")
+    browser_page.evaluate("() => new Promise(resolve => setTimeout(resolve, 0))")
     browser_page.evaluate("showPage(2)")
     browser_page.locator("#name").fill("Last-second edit")
     browser_page.evaluate("window.dispatchEvent(new Event('pagehide'))")

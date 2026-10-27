@@ -147,12 +147,18 @@ class PageContract(HTMLParser):
         self.active = None
         self.text = {"title": [], "h1": [], "h2": []}
         self.search_input = False
+        self.submit_form = False
+        self.fields = set()
 
     def handle_starttag(self, tag, attrs):
         if tag in self.text:
             self.active = tag
+        attributes = dict(attrs)
+        if tag == "form":
+            self.submit_form |= attributes.get("id") == "myForm" and attributes.get("method", "").upper() == "POST"
+        if tag in {"input", "select", "textarea"} and attributes.get("name"):
+            self.fields.add(attributes["name"])
         if tag == "input":
-            attributes = dict(attrs)
             self.search_input |= attributes.get("name") == "search" or attributes.get("type") == "search"
 
     def handle_endtag(self, tag):
@@ -193,18 +199,25 @@ def verify_responses(base_url, routes, documents, output, side, timeout):
             page.feed(body)
             title = " ".join(page.text["title"]).strip()
             heading = " ".join(page.text["h1"] + page.text["h2"]).strip()
-            if not title or not heading or "mielenosoit" not in title.casefold() or not page.search_input:
+            if not title or not heading or "mielenosoit" not in title.casefold() or (route != "/submit" and not page.search_input):
                 raise RuntimeError(f"{side} page title/heading/search contract failed: {route}")
             fixed = "Helsinki" if route.startswith("/city/") else TAG if route.startswith("/tag/") else None
             if fixed and fixed not in title:
                 raise RuntimeError(f"{side} scoped page title missing {fixed}")
-            contract.update(title=title, heading=heading, search_input=True)
+            if route == "/submit":
+                required = {"title", "date", "city", "description", "submission_token", "accept_terms", "submitter_email"}
+                if not page.submit_form or not required.issubset(page.fields):
+                    raise RuntimeError(f"{side} submit form contract failed")
+                contract.update(title=title, heading=heading, submit_form=True, fields=sorted(page.fields))
+            else:
+                contract.update(title=title, heading=heading, search_input=True)
         evidence[route] = contract
     return evidence
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--scope", choices=("listings", "submit"), default="listings")
     parser.add_argument("--before", required=True)
     parser.add_argument("--after", required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
@@ -248,6 +261,8 @@ def main():
     (output / "documents.json").write_text(document_json)
     routes = ["/demonstrations", "/city/Helsinki", f"/tag/{TAG}",
               f"/api/demonstrations?tag={TAG}&city=Helsinki&page=1&per_page=12&max_days_till=60"]
+    if args.scope == "submit":
+        routes = ["/submit"]
     metadata = {"started_at": datetime.now(timezone.utc).isoformat(), "refs": refs,
                 "arguments": {**vars(args), "output_dir": str(output)}, "routes": routes,
                 "runtime": {"platform": platform.platform(), "python": sys.version,
@@ -332,7 +347,7 @@ def main():
         print(metadata["error"], file=sys.stderr)
         return 1
     results = {}
-    lines = ["# Local listing HTTP comparison", "", f"Before: `{refs['before']}`", f"After: `{refs['after']}`", "",
+    lines = [f"# Local {args.scope} HTTP comparison", "", f"Before: `{refs['before']}`", f"After: `{refs['after']}`", "",
              f"{args.attempts} measured samples per route and side, following {args.warmup} warmup rounds.", "",
              "| Route | Side | p50 ms | p95 ms | p99 ms | median bytes |", "| --- | --- | ---: | ---: | ---: | ---: |"]
     for route in routes:

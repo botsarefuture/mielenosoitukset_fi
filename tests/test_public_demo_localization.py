@@ -231,8 +231,11 @@ def test_demonstrations_list_page_renders_without_server_error(client):
 
     assert response.status_code == 200
     body = response.get_data(as_text=True)
-    assert "demos-grid" in body
-    assert "search-form" in body
+    # The grid is mounted by React; Flask still supplies the readable search fallback.
+    assert 'data-react-island="demonstration-listing"' in body
+    assert 'id="demonstration-listing-props" type="application/json"' in body
+    assert 'id="search-form"' in body
+    assert 'type="module" src="/static/frontend/assets/listing-' in body
 
 
 def test_set_language_redirects_back_to_safe_next_path(app, client):

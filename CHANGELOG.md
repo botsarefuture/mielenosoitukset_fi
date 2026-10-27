@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Keep the public localization smoke check aligned with the React listing mount and server search fallback, and include it in the reusable listing verification command.
+
 - Add one reusable local React-listing verification command for builds, focused regression checks and real-application screenshots with source/image hashes and decoded-photo checks.
 
 - Move the main, city and tag demonstration listings onto shared React page, search and card components while retaining existing event-card presentation, canonical event links and scoped filters.

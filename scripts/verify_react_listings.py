@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TEST_FILES = (
     "tests/test_react_listing.py",
     "tests/test_public_listing_contract.py",
+    "tests/test_public_demo_localization.py",
     "tests/test_public_list_filter_history.py",
     "tests/test_public_windowed_loading.py",
     "tests/test_public_date_range.py",

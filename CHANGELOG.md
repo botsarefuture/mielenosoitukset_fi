@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Add a repeatable local before/after listing latency comparison with isolated fixtures, raw samples and p50/p95/p99 summaries.
+
 - Keep the public localization smoke check aligned with the React listing mount and server search fallback, and include it in the reusable listing verification command.
 
 - Add one reusable local React-listing verification command for builds, focused regression checks and real-application screenshots with source/image hashes and decoded-photo checks.

@@ -241,3 +241,25 @@ source and screenshot hashes and rejects source changes during capture or stale
 output. Four photo-bearing states require decoded image pixels in both widths
 and themes. The script supplies evidence; an independent reviewer still must
 issue the final visual verdict. It adds no CI workflow or separate CI suite.
+
+### Before/after response latency
+
+Use the same Python 3.12+ development environment and disposable test services
+to compare two committed revisions locally:
+
+```sh
+python3.12 scripts/compare_listing_latency.py --before <baseline-ref> --after <candidate-ref> --attempts 500 --output-dir /tmp/moso-listing-latency
+```
+
+The command exports both revisions without changing the working checkout,
+seeds identical synthetic events into separate test databases and starts the
+real Flask application for each revision. Warmup requests precede alternating
+before/after samples for the main, city and tag HTML pages and their existing
+listing API. It records raw timings, response sizes, revisions, fixture/config
+metadata and p50/p95/p99 summaries. Use an empty output directory outside the
+repository for every comparison.
+
+These are warm loopback HTTP response measurements with one sequential client.
+They do not measure browser rendering, asset delivery, LCP, production network
+conditions or production capacity. Report the sample count and these limits
+alongside any comparison; tail percentiles remain sensitive to host load.

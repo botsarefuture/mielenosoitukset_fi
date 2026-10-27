@@ -1,8 +1,7 @@
 # Incremental React frontend
 
-Flask/Jinja owns the public site shell. React owns the campaign content and
-volunteer confirmation, reusing the existing volunteer form. The standard header,
-footer, fundraising page, admin and authentication stay in Jinja. No SPA router
+Flask/Jinja owns the public page shell; the shared header is a React island. React owns the campaign content and
+volunteer confirmation, reusing the existing volunteer form. The footer, fundraising page, admin and authentication stay in Jinja. No SPA router
 or JavaScript server runtime is required. Campaign and fundraising typography
 follows the supplied brand book (Montserrat headings, Roboto body), with the
 existing product tokens and shared navigation.
@@ -125,3 +124,39 @@ Coverage: campaign page content and confirmation success/expired/invalid states
 are React; outer Flask metadata/authentication and the existing global chat stay
 in their current implementation. No other route is declared migrated by this
 slice. Public-page translation/routing work and the rest of UI-06 remain open.
+
+
+## Shared header (27 October 2026)
+
+`SiteHeader` composes `NavigationLink`, `LanguageSwitcher`, `UserMenu`,
+`NotificationMenu` and `ThemeToggle` under `frontend/src/components/header/`.
+`header.html` derives URLs, permissions, notification count and translated labels
+from the existing Flask context and serializes props with `tojson`. No new
+endpoint, session protocol, router or backend service is introduced. The header
+entry is intentionally shared by all consumers of this public header; React's
+runtime chunk is reused on pages that also load a page entry.
+
+The Jinja fallback reuses the same link/account data. Without JavaScript or if
+modules fail to load, mobile navigation uses a native HTML disclosure and
+account destinations remain accessible;
+notification history is a normal link and controls needing JavaScript are absent.
+React replaces this fallback using the existing mounting helper, not hydration.
+The native mobile disclosure starts compact like the mounted header, so the
+static link list does not expand and collapse during module loading. Desktop
+fallback links stay visible. Assess actual loading/layout behavior in production
+before making performance claims.
+
+After mounting, React alone owns menu state, focus, theme controls, notification
+fetching/polling and mark-read feedback. Legacy inline header handlers and the
+unreferenced `public-notifications.js` are removed. The page-level theme helper
+remains for other consumers; the header observes root theme-class changes.
+The header wrappers use `display: contents` so they do not constrain sticky
+navigation. Profile, settings, logout and administrative checks remain on the
+server. No account secrets or authentication tokens are added to props.
+
+This completes the shared header slice, not the public page migration. Next:
+listings with shared filters/cards/pagination, then event details and recurring
+series with shared event metadata, organizer and occurrence components. Before
+moving indexable bodies, verify initial HTML, canonical URLs, metadata, locale
+behavior and the existing occurrence query contract. Design any API changes from
+those real needs in a separate reviewed proposal.

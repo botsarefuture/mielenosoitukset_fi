@@ -4,6 +4,11 @@
 
 ## UNRELEASED
 
+- Keep campaign asset-isolation and account-settings syntax checks compatible with the shared React header: require the intended page/header bundles and validate inert JSON props separately from executable JavaScript.
+
+- Move the shared public header into reusable React navigation, language, account, notification and theme components using the existing Vite foundation. Preserve Flask-controlled links/permissions and readable navigation when JavaScript or the header bundle is unavailable.
+- Record the modernization context and prioritize header, demonstration listings, then event/recurring-series pages; retain existing data and authentication throughout the gradual migration.
+
 - Rebuild campaign and volunteer-confirmation presentation with the existing React foundation, brand-book typography and concise public copy. Reuse the standard site header/footer and simplify campaign and pienkeräys layouts without changing other public pages. Keep the approved volunteer form component unchanged, remove public procurement quantities/costs and celebratory confirmation language, and retain readable server HTML with disabled no-JavaScript forms.
 
 - Roadmap: adopt migration to React whenever public pages are changed, with an eventual entirely React public frontend; retain Flask backend and current admin, and track staged delivery and compatibility requirements under UI-06.

@@ -38,3 +38,33 @@ another independent review. Missing browser/screenshots/reviewer means
 second CI suite or run the full suite just to perform this visual review.
 
 Sticking to these steps keeps the project history readable and prevents surprises for maintainers. Thanks! 🚀
+
+## Modernization direction
+
+For architecture and migration work, read [the maintainer's modernization context](docs/modernization-context.txt)
+and [the initial assessment](docs/modernization-assessment.md) before proposing changes.
+The context is guidance, not an approved replacement specification.
+
+- Preserve existing functionality, public URLs where practical, MongoDB data,
+  accounts, administrative workflows, accessibility, localization and SEO.
+- Inspect the relevant implementation and frontend consumers first. Separate
+  verified facts, maintainer decisions, recommendations, open questions and risks.
+- Migrate incrementally. Measure performance before attributing limitations to
+  Flask or choosing a backend replacement. Go is preferred for evaluation, not
+  an approved requirement; React + API + Flask admin is a direction to assess.
+- Reuse the existing React foundation. React work also exists in other worktrees:
+  see the assessment for the campaign implementation. Absence in this checkout
+  does not establish that the project has no React implementation. Check its
+  current integration status before creating a competing frontend setup.
+- Derive API proposals from real routes, consumers, validation and database
+  operations. Document purpose, request/response, authentication, authorization,
+  database operations, performance concerns and replaced behavior before
+  implementing significant API functionality.
+- Verify actual password formats and session behavior; do not assume bcrypt or
+  introduce JWT/session sharing by default. Keep current authentication working.
+- Significant authentication, database schema, infrastructure, repository
+  restructuring and production deployment changes require explicit maintainer
+  approval. Examples in the context do not supply that approval. Routine work
+  within an already approved scope can proceed.
+- Test compatibility and establish rollback before replacing working behavior;
+  retire old paths only when safe. Update relevant documentation and changelog.

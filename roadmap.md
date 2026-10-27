@@ -88,6 +88,14 @@ a completed page. An urgent production/security fix can ship before conversion;
 record the reason and the page's explicit migration follow-up. This exception
 must not become the default for ordinary page changes.
 
+Owner priority update, 2026-10-27: start with the shared header/navigation,
+then demonstration listings (main/city/tag and relevant discovery variants),
+then event detail and recurring-series pages including direct `occurrence`
+selection. Extract reusable components. The header slice now uses the existing
+React build and Flask props; footer and page bodies remain explicit follow-ups.
+This reorders the shared-shell slice ahead of the next whole-page conversions;
+it does not approve new backend infrastructure or authentication changes.
+
 Stages and completion criteria:
 
 1. **Foundation and first island:** volunteer signup, typed components,
@@ -342,7 +350,7 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |
 | UI-02a | P2 | Merged | Codex | M2/M4 | Footer padding is inside width; card title/address/tag text can wrap. Empty/populated route/theme/viewport and keyboard controls validate this slice; 93 combined cases pass; broader UI-02 acceptance remains open. |
 | UI-02b | P2 | Merged | Codex | M2/M4 | Depends on #936. Shared hero geometry/mobile typography with no fixed-min-width or nowrap conflict; 117 focused cases pass, including 24 actual SSR cases. Wider product acceptance remains open. |
-| UI-06 | P2 | In progress | Codex (foundation); later owners unassigned | M4 | Convert public pages to React when changed; finish remaining routes explicitly. Volunteer foundation implemented on codex/react-volunteer-form (77 focused checks, Node 22 build, independent SHIP), not yet merged/released. Flask backend and current admin may remain; see migration policy and per-page inventory requirement. |
+| UI-06 | P2 | In progress | Codex (header slice); later owners unassigned | M4 | React foundation/campaign refresh are merged through #989 (`c435275d`); deployment unverified. Shared header component slice implemented locally, acceptance tracked in this chat; merge/release pending. Next: listing bodies and shared cards/filters, then event/series bodies and occurrence selection. Footer, remaining public pages and final rendering/routing consolidation remain open. Flask backend and current admin may remain. |
 | USER-01 | P2 | Released | Codex | M4 | #941 merge build e6383141 verified through public HTTPS and direct origin health probes; service active, existing tracked server overlays preserved. Final CI: 1,370 passed /325 skipped. GitHub deploy public-probe403 failure remains explicitly recorded; no authenticated production visual QA claim. |
 | CITY-01 | P2 | Backlog | Unassigned | M2/M4 | Extend existing city assignment/email/escalation with in-app notification and a shared authoritative dashboard deadline/countdown. Code default24h; deployed setting unverified. Define reset/config-change policy before implementation. |
 | CITY-02 | P1 | Backlog | Unassigned | M2 | Urgent pending-event Telegram alert (<48h, higher urgency <24h proposed) via @mielenosoituksetbot to the owner-named channel; edit the same message after canonical processing. Verify numeric chat ID, permissions, existing external bot, retry/state policy and staging send/edit before release. |
@@ -355,3 +363,15 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | All other IDs | As assigned above | Backlog | Unassigned | Assign before starting | Verify requirement, dependencies and acceptance before promoting to Ready. |
 
 The repository programme is complete only when each in-scope requirement has evidence, the per-test reviews are recorded, relevant checks pass, trackers match merged state, and release claims have actual deployment evidence. Do not equate this roadmap's creation with completion of the work.
+
+
+### UI-06 public React inventory — header slice, 27 October 2026
+
+| Surface | Current owner / state | Remaining regions and next slice |
+| --- | --- | --- |
+| Shared public header/navigation | React components with Flask-derived props and native/Jinja fallback, implemented on `codex/react-site-header`; not merged or deployed | Header only; keep footer and page bodies explicit below. Final source/test/visual evidence belongs to this chat. |
+| Campaign and volunteer confirmation | React page content from merged #989, public Flask shell | Shared footer and final public-shell consolidation remain. |
+| Demonstration discovery (main/city/tag, related variants) | Existing Jinja/static-JS bodies with the shared React header after this slice | Next owner unassigned: inspect current consumer/API behavior, choose initial-content rendering, then reuse cards, filters, feedback and pagination. |
+| Event details and recurring-series selection | Existing Jinja/static-JS bodies with the shared React header after this slice | Next after listings, owner unassigned: reusable metadata/organizers/occurrence selector; preserve canonical URLs, `occurrence` selection, indexability and existing interactions. |
+| Public footer, organizations, submission, accounts/settings, fundraising and other information pages | Existing implementations; some have React header after this slice | Bodies/footer remain open; migrate through their own reviewed slices. Header conversion does not mark those pages complete. |
+| Administration | Existing Flask/Jinja | Outside public frontend migration. |

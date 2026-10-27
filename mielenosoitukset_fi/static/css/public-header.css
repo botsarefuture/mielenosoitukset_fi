@@ -261,7 +261,7 @@
     margin-left: auto;
   }
 
-  html:not(.js) .public-main-nav .theme-toggle-item {
+  [data-react-island="site-header"]:not(:has(.public-header-ready)) .public-main-nav .theme-toggle-item {
     display: none;
   }
 
@@ -485,7 +485,7 @@
       padding: 0.5rem 1rem;
     }
 
-    html.js .public-main-nav .mobile-menu-toggle {
+    .public-header-ready .public-main-nav .mobile-menu-toggle {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -493,7 +493,7 @@
       min-height: 2.75rem;
     }
 
-    html.js .public-main-nav .mobile-menu-toggle[aria-expanded="true"] {
+    .public-header-ready .public-main-nav .mobile-menu-toggle[aria-expanded="true"] {
       display: none;
     }
 
@@ -505,7 +505,7 @@
       padding: 0.75rem;
     }
 
-    html.js .public-main-nav .nav-list {
+    .public-header-ready .public-main-nav .nav-list {
       position: fixed;
       top: 0;
       left: 0;
@@ -520,11 +520,11 @@
       z-index: 9999;
     }
 
-    html.js .public-main-nav .nav-list.active {
+    .public-header-ready .public-main-nav .nav-list.active {
       transform: translateX(0);
     }
 
-    html.js .public-main-nav .nav-list.active .mobile-nav-header {
+    .public-header-ready .public-main-nav .nav-list.active .mobile-nav-header {
       width: 100%;
       display: flex;
       justify-content: space-between;
@@ -609,7 +609,7 @@
       font-weight: 500;
     }
 
-    html.js .public-main-nav .nav-list.active .mobile-only {
+    .public-header-ready .public-main-nav .nav-list.active .mobile-only {
       display: block;
     }
   }
@@ -638,3 +638,57 @@
   .public-main-nav .js-focus-visible :focus:not(.focus-visible) {
     outline: none;
   }
+
+/* Static fallback account links remain available if the module cannot load. */
+[data-react-island="site-header"]:not(:has(.public-header-ready)) .dropdown-menu {
+  position: static;
+  display: block;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+/* React owns disclosure state, including Escape and focus restoration. */
+.public-header-ready .user-dropdown[aria-expanded="false"] .dropdown-menu {
+  display: none;
+}
+
+/* Island wrappers must not become the sticky navigation's containing block. */
+[data-react-island="site-header"],
+.public-header-ready {
+  display: contents;
+}
+
+.public-main-nav .user-toggle span {
+  min-width: 0;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Native disclosure keeps the pre-mount mobile layout compact without JS. */
+.public-main-nav .header-fallback-mobile { display: none; }
+@media (max-width: 768px) {
+  .public-main-nav .header-fallback-desktop { display: none; }
+  .public-main-nav .header-fallback-mobile { display: block; width: 100%; }
+  .public-main-nav .header-fallback-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    min-height: 44px;
+    margin-left: auto;
+    list-style: none;
+    cursor: pointer;
+    color: var(--product-on-action);
+    background: var(--product-action-bg);
+    border: 1px solid var(--product-action-bg);
+    border-radius: var(--user-radius-main);
+  }
+  .public-main-nav .header-fallback-toggle::-webkit-details-marker { display: none; }
+  .public-main-nav .header-fallback-toggle:focus-visible {
+    outline: 2px solid var(--product-primary);
+    outline-offset: 2px;
+  }
+}

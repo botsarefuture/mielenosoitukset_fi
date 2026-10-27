@@ -29,6 +29,15 @@
       "_mount-island-CLdDQFsf.js"
     ]
   },
+  "src/entries/header.tsx": {
+    "file": "assets/header-Cjl8sC1F.js",
+    "name": "header",
+    "src": "src/entries/header.tsx",
+    "isEntry": true,
+    "imports": [
+      "_mount-island-CLdDQFsf.js"
+    ]
+  },
   "src/entries/volunteer.tsx": {
     "file": "assets/volunteer-CjmixC5Y.js",
     "name": "volunteer",

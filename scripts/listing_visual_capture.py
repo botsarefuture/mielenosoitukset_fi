@@ -192,6 +192,29 @@ def capture(item) -> None:
             finally:
                 ctx.close()
         if stage == "final":
+            for theme in ("light", "dark"):
+                ctx, page = context(1680, theme)
+                try:
+                    page.goto(base + "/demonstrations?per_page=12", wait_until="networkidle")
+                    settled_grid(page, 1, 1)
+                    for last in range(2, 6):
+                        page.locator("#load-more-btn").click()
+                        settled_grid(page, 1, last)
+                    anchor = page.locator("[data-list-page='5'] .demo-card").first
+                    anchor.scroll_into_view_if_needed()
+                    page.mouse.move(0, 0)
+                    anchor.evaluate("e => Promise.all(e.getAnimations().map(a => a.finished.catch(() => {})))")
+                    before = anchor.bounding_box()
+                    page.locator("#load-more-btn").dispatch_event("click")
+                    settled_grid(page, 2, 6)
+                    after = anchor.bounding_box()
+                    assert all(abs(after[axis] - before[axis]) <= 1 for axis in ("x", "y"))
+                    shot(page, f"grid-evicted-1680-{theme}", "[data-list-page='5'] .demo-card")
+                    page.set_viewport_size({"width": 390, "height": 1000})
+                    page.wait_for_function("getComputedStyle(document.querySelector('.demo-card')).gridColumnStart === '1'")
+                    shot(page, f"grid-resized-390-{theme}", "[data-list-page='5'] .demo-card")
+                finally:
+                    ctx.close()
             for width, theme in ((390, "dark"), (1680, "light")):
                 ctx, page = context(width, theme)
                 try:

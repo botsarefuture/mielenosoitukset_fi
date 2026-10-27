@@ -65,20 +65,29 @@ def test_continuous_grid_eviction_preserves_card_anchor_and_keyboard_focus(live_
     assert browser_page.evaluate('publicListWindow.canExtend()') is False
     anchor = browser_page.locator('[data-list-page="5"] .demo-card').first
     anchor.scroll_into_view_if_needed()
-    before = anchor.bounding_box()['y']
+    browser_page.mouse.move(0, 0)
+    anchor.evaluate('e => Promise.all(e.getAnimations().map(a => a.finished.catch(() => {})))')
+    before = anchor.bounding_box()
     browser_page.locator('#load-more-btn').dispatch_event('click')
     browser_page.wait_for_function('publicListWindow.first === 2 && publicListWindow.last === 6')
-    assert abs(anchor.bounding_box()['y'] - before) <= 1
+    assert abs(anchor.bounding_box()['y'] - before['y']) <= 1
+    assert abs(anchor.bounding_box()['x'] - before['x']) <= 1
     expect(browser_page.locator('.demo-card')).to_have_count(60)
     expect(browser_page.locator('.public-list-page')).to_have_count(5)
+    for resize_width, column in ((390, '1'), (1680, '3'), (width, '1' if width == 390 else '3')):
+        browser_page.set_viewport_size({'width': resize_width, 'height': 1000})
+        browser_page.wait_for_function('column => getComputedStyle(document.querySelector("[data-list-page=\\"2\\"] .demo-card")).gridColumnStart === column', arg=column)
+        assert browser_page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
     first = browser_page.locator('[data-list-page="2"] .demo-card').first
     first.focus()
+    first.evaluate('e => Promise.all(e.getAnimations().map(a => a.finished.catch(() => {})))')
     assert browser_page.evaluate('publicListWindow.canExtend(false, true)') is False
-    before = first.bounding_box()['y']
+    before = first.bounding_box()
     browser_page.locator('#load-previous-btn').dispatch_event('click')
     browser_page.wait_for_function('publicListWindow.first === 1 && publicListWindow.last === 5')
     expect(first).to_be_focused()
-    assert abs(first.bounding_box()['y'] - before) <= 1
+    assert abs(first.bounding_box()['y'] - before['y']) <= 1
+    assert abs(first.bounding_box()['x'] - before['x']) <= 1
     expect(browser_page.locator('.demo-card')).to_have_count(60)
 
 

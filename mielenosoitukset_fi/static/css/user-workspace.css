@@ -183,6 +183,9 @@ h1 {
 }
 /* Keep page roots for bounded loading while their cards share one grid. */
 .public-demonstration-list .public-list-page { display: contents; }
+.public-demonstration-list .public-list-page:first-child > .demo-card:first-child {
+  grid-column-start: var(--public-list-first-column, auto);
+}
 .public-demonstration-list .public-list-window > .loading-container { grid-column: 1 / -1; }
 .public-demonstration-list [hidden] { display: none; }
 .public-demonstration-list .demo-card-title a { color: inherit; text-decoration: none; min-width: 0; overflow-wrap: anywhere; }

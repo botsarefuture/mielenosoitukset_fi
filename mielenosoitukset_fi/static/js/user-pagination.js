@@ -39,8 +39,18 @@
       const bounds = viewport();
       return !pinned(edge.node) && (manual || (previous ? rect.top > bounds.bottom : rect.bottom < bounds.top));
     }
+    function refreshLayout() {
+      if (getComputedStyle(grid).display !== 'grid') return;
+      // An old column start could create implicit tracks after narrowing.
+      grid.style.removeProperty('--public-list-first-column');
+      const columns = getComputedStyle(grid).gridTemplateColumns.split(/\s+/).filter(Boolean).length || 1;
+      // Keep surviving cards in their global columns when a page is evicted.
+      const column = ((pages[0]?.start || 1) - 1) % columns + 1;
+      grid.style.setProperty('--public-list-first-column', column);
+    }
     return {
-      reset() { pages = []; grid.replaceChildren(); },
+      reset() { pages = []; grid.replaceChildren(); grid.style.removeProperty('--public-list-first-column'); },
+      refreshLayout,
       preservePosition(change) {
         const anchor = anchorFor(pages[0]?.node);
         const oldTop = anchor?.getBoundingClientRect().top;
@@ -78,6 +88,7 @@
           const removed = previous ? pages.pop() : pages.shift();
           removed.node.remove();
         }
+        refreshLayout();
         if (anchor?.isConnected && oldTop !== undefined) {
           scrollHost.scrollBy({ top: anchor.getBoundingClientRect().top - oldTop, behavior: 'instant' });
         }
@@ -227,11 +238,13 @@
       direction = delta < 0 ? -1 : 1;
       scheduleAuto();
     }
+    function onResize() { pageWindow.refreshLayout(); scheduleAuto(); }
     const loadPrevious = () => loadNext(true, true);
 
     if (button) button.addEventListener("click", loadNext);
     previousButton?.addEventListener('click', loadPrevious);
     if (pageWindow) scrollHost.addEventListener('scroll', onScroll, { passive: true });
+    if (pageWindow) global.addEventListener('resize', onResize);
     if (sentinel && "IntersectionObserver" in window) {
       observer = new IntersectionObserver((entries) => {
         if (entries.some((entry) => entry.isIntersecting)) loadNext();
@@ -260,6 +273,7 @@
         if (button) button.removeEventListener("click", loadNext);
         previousButton?.removeEventListener('click', loadPrevious);
         scrollHost.removeEventListener('scroll', onScroll);
+        if (pageWindow) global.removeEventListener('resize', onResize);
       },
     };
   }

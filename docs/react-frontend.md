@@ -208,6 +208,10 @@ card boxes and anchors a surviving card during eviction/prepending. Other
 consumers with ordinary page boxes retain their existing geometry. Regression
 checks include five/eight-column layouts, the 60-card window, keyboard focus,
 scroll anchoring and hidden/loading results.
+The first retained card keeps its global column via a scoped grid-column value,
+recomputed on viewport resize. Any partial row is confined to the start of the
+retained window; internal API page boundaries stay continuous, and eviction does
+not move surviving cards sideways.
 
 The typed listing adapter checks response metadata, cancels replaced searches,
 ignores stale responses and leaves failed requests available for explicit retry.

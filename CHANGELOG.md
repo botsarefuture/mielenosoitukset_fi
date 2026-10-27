@@ -4,7 +4,7 @@
 
 ## UNRELEASED
 
-- Keep loaded demonstration cards in one continuous responsive grid, filling rows across page boundaries while preserving bounded loading, focus and scroll restoration.
+- Keep loaded demonstration cards in one continuous responsive grid, filling rows across page boundaries while preserving card columns, bounded loading, focus and scroll restoration during eviction and resizing.
 
 - Keep successfully rendered listing pages visible when another card batch fails, expose retry without advancing the result count, and display missing clock information without orphaned time labels. Extend repeatable real-application checks for nullable clocks and pagination.
 

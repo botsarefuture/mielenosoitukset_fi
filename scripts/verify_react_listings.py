@@ -57,7 +57,7 @@ def main() -> int:
     parser.add_argument("--node", default=os.environ.get("MOSO_QA_NODE", "node"))
     parser.add_argument("--output-dir", type=Path, help="Directory for screenshots and capture metadata")
     parser.add_argument("--stage", choices=("before", "final"), default="final")
-    parser.add_argument("--scenario", choices=("standard", "missing-times"), default="standard")
+    parser.add_argument("--scenario", choices=("standard", "missing-times", "continuous-grid"), default="standard")
     args = parser.parse_args()
     if sys.version_info < (3, 12):
         parser.error("Use Python 3.12 or newer with the project's development dependencies installed.")

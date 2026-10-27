@@ -74,10 +74,10 @@ def capture(item) -> None:
     inputs_before = source_inputs()
 
     record = db.demonstrations.find_one({"_id": seed["demo_id"]})
-    if scenario == "missing-times":
+    if scenario in {"missing-times", "continuous-grid"}:
         db.demonstrations.delete_many({})
         db.recurring_demonstrations.delete_many({})
-    for index in range(72 if scenario == "missing-times" else 15):
+    for index in range(72 if scenario in {"missing-times", "continuous-grid"} else 15):
         row = deepcopy(record)
         event_date = date.today() + timedelta(days=5 + index)
         row.update(
@@ -89,20 +89,20 @@ def capture(item) -> None:
             city="Helsinki", address="Kansalaistori", tags=["react-list-test"],
             approved=True, hide=False, rejected=False,
         )
-        if scenario == "missing-times":
+        if scenario in {"missing-times", "continuous-grid"}:
             for field in IMAGE_FIELDS:
                 row.pop(field, None)
             event_date = date.today() + timedelta(days=5 + index // 12)
             row.update(date=event_date.isoformat(), formatted_date=event_date.strftime("%d.%m.%Y"),
                        start_time="12:00", end_time="14:00")
-            if index % 4 == 0:
+            if scenario == "missing-times" and index % 4 == 0:
                 row["end_time"] = None
-            elif index % 4 == 1:
+            elif scenario == "missing-times" and index % 4 == 1:
                 row["start_time"] = None
-            elif index % 4 == 2:
+            elif scenario == "missing-times" and index % 4 == 2:
                 row.pop("start_time", None)
                 row.pop("end_time", None)
-            if index % 12 == 0:
+            if scenario == "continuous-grid" or index % 12 == 0:
                 row["cover_picture"] = PHOTO
         db.demonstrations.insert_one(row)
     if scenario == "standard":
@@ -120,7 +120,7 @@ def capture(item) -> None:
         ctx.route("**/*", assets)
         if js:
             ctx.add_init_script(f"localStorage.setItem('theme', {json.dumps(theme)})")
-            if scenario == "missing-times":
+            if scenario in {"missing-times", "continuous-grid"}:
                 ctx.add_init_script("Object.defineProperty(navigator,'connection',{value:{saveData:true}})")
         if user:
             ctx.add_cookies([{"name": "session", "value": user.get_cookie("session").value, "url": base}])
@@ -163,6 +163,75 @@ def capture(item) -> None:
             ],
         }
         (output / f"{stage}-metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+
+    if scenario == "continuous-grid":
+        def settled_grid(page, first, last):
+            page.wait_for_function("([first,last]) => window.publicListWindow?.first === first && window.publicListWindow?.last === last && document.querySelector('#demos-grid')?.getAttribute('aria-busy') === 'false'", arg=[first, last])
+            assert page.locator(".demo-card").count() == (last - first + 1) * 12
+
+        matrix = [("/demonstrations", "all", 1680, theme) for theme in ("light", "dark")] if stage == "before" else [
+            (path, name, width, theme)
+            for path, name in (("/demonstrations", "all"), ("/city/Helsinki", "city"), ("/tag/react-list-test", "tag"))
+            for width in (390, 1440, 1680) for theme in ("light", "dark")
+        ]
+        for path, name, width, theme in matrix:
+            ctx, page = context(width, theme)
+            try:
+                page.goto(base + path + "?per_page=12", wait_until="networkidle")
+                settled_grid(page, 1, 1)
+                page.locator("#load-more-btn").click()
+                settled_grid(page, 1, 2)
+                page.evaluate("document.fonts.ready")
+                if width == 1680:
+                    boundary = page.locator(".demo-card").evaluate_all("cards => [cards[11].getBoundingClientRect().top, cards[12].getBoundingClientRect().top]")
+                    if stage == "final":
+                        assert abs(boundary[0] - boundary[1]) <= 1, boundary
+                    else:
+                        assert boundary[1] > boundary[0] + 100, boundary
+                shot(page, f"grid-boundary-{name}-{width}-{theme}", "[data-list-page='1'] .demo-card:last-child")
+            finally:
+                ctx.close()
+        if stage == "final":
+            for width, theme in ((390, "dark"), (1680, "light")):
+                ctx, page = context(width, theme)
+                try:
+                    page.goto(base + "/demonstrations?page=6&per_page=12", wait_until="networkidle")
+                    settled_grid(page, 6, 6)
+                    page.locator("#load-previous-btn").click()
+                    settled_grid(page, 5, 6)
+                    shot(page, f"grid-restored-previous-{width}-{theme}", "[data-list-page='5'] .demo-card:last-child")
+                finally:
+                    ctx.close()
+            user = request.getfixturevalue("user_client")
+            ctx, page = context(1680, "light", user=user)
+            try:
+                page.goto(base + "/demonstrations?per_page=12", wait_until="networkidle")
+                settled_grid(page, 1, 1)
+                page.locator("#load-more-btn").click()
+                settled_grid(page, 1, 2)
+                shot(page, "grid-authenticated-1680-light", "[data-list-page='1'] .demo-card:last-child")
+                page.locator("[data-list-page='2'] .demo-card").first.focus()
+                shot(page, "grid-keyboard-focus-1680-light", "[data-list-page='2'] .demo-card")
+            finally:
+                ctx.close()
+            for width, theme in ((390, "dark"), (1440, "light")):
+                ctx, page = context(width, theme)
+                try:
+                    page.goto(base + "/demonstrations?search=no-such-event", wait_until="networkidle")
+                    page.locator("#no-results").wait_for(state="visible")
+                    assert not page.locator("#demos-grid").is_visible()
+                    shot(page, f"grid-empty-{width}-{theme}", "#no-results")
+                    pending = []
+                    page.route("**/api/demonstrations?*", lambda route: pending.append(route))
+                    page.locator("#demo-search").fill("loading")
+                    page.locator("#search-form button[type='submit']").click()
+                    page.locator(".loading-container").wait_for(state="visible")
+                    shot(page, f"grid-loading-{width}-{theme}", ".loading-container")
+                finally:
+                    ctx.close()
+        assert not errors
+        save_metadata()
+        return
 
     if scenario == "missing-times":
         payload = client.get("/api/demonstrations?tag=react-list-test&page=6&per_page=12").json

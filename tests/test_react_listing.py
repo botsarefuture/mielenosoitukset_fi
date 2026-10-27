@@ -19,6 +19,69 @@ def serve_list(route):
         int(query['page'][0]), search=query.get('search', [''])[0])))
 
 
+def serve_grid_page(route):
+    page = int(parse_qs(urlsplit(route.request.url).query)['page'][0])
+    rows = [{'_id': f'grid-{page}-{index}', 'title': f'Event {page}-{index}',
+             'date': '2099-01-01', 'start_time': '12:00', 'city': 'Helsinki', 'tags': []}
+            for index in range(12)]
+    route.fulfill(content_type='application/json', body=json.dumps(result(page, size=12, rows=rows)))
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize('path', ['/demonstrations', '/city/Helsinki', '/tag/grid-test'])
+@pytest.mark.parametrize('width', [1680, 2560])
+def test_card_rows_continue_across_loaded_page_boundaries(live_server, browser_page, path, width):
+    browser_page.set_viewport_size({'width': width, 'height': 1000})
+    browser_page.add_init_script("Object.defineProperty(navigator,'connection',{value:{saveData:true}})")
+    browser_page.route('**/api/demonstrations?*', serve_grid_page)
+    browser_page.goto(live_server + path, wait_until='domcontentloaded')
+    expect(browser_page.locator('.demo-card')).to_have_count(12)
+    browser_page.locator('#load-more-btn').click()
+    expect(browser_page.locator('.demo-card')).to_have_count(24)
+    boxes = browser_page.locator('.demo-card').evaluate_all(
+        'cards => cards.map(card => {const r=card.getBoundingClientRect();return {top:r.top,left:r.left,right:r.right};})')
+    columns = sum(abs(box['top'] - boxes[0]['top']) <= 1 for box in boxes)
+    assert columns > 1 and 12 % columns != 0  # Exercise an incomplete API-page row.
+    assert abs(boxes[11]['top'] - boxes[12]['top']) <= 1
+    assert boxes[12]['left'] > boxes[11]['left']
+    assert all(0 <= box['left'] < box['right'] <= width for box in boxes)
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize('width', [390, 1680])
+def test_continuous_grid_eviction_preserves_card_anchor_and_keyboard_focus(live_server, browser_page, width):
+    browser_page.set_viewport_size({'width': width, 'height': 1000})
+    browser_page.add_init_script("Object.defineProperty(navigator,'connection',{value:{saveData:true}})")
+    browser_page.route('**/api/demonstrations?*', serve_grid_page)
+    browser_page.goto(live_server + '/demonstrations', wait_until='domcontentloaded')
+    expect(browser_page.locator('.demo-card')).to_have_count(12)
+    for page in range(2, 6):
+        browser_page.locator('#load-more-btn').click()
+        browser_page.wait_for_function('(n) => publicListWindow.last === n', arg=page)
+    # A boxless page root must still protect its visible cards from automatic eviction.
+    browser_page.locator('[data-list-page="1"] .demo-card').first.scroll_into_view_if_needed()
+    assert browser_page.evaluate('publicListWindow.canExtend()') is False
+    anchor = browser_page.locator('[data-list-page="5"] .demo-card').first
+    anchor.scroll_into_view_if_needed()
+    before = anchor.bounding_box()['y']
+    browser_page.locator('#load-more-btn').dispatch_event('click')
+    browser_page.wait_for_function('publicListWindow.first === 2 && publicListWindow.last === 6')
+    assert abs(anchor.bounding_box()['y'] - before) <= 1
+    expect(browser_page.locator('.demo-card')).to_have_count(60)
+    expect(browser_page.locator('.public-list-page')).to_have_count(5)
+    first = browser_page.locator('[data-list-page="2"] .demo-card').first
+    first.focus()
+    assert browser_page.evaluate('publicListWindow.canExtend(false, true)') is False
+    before = first.bounding_box()['y']
+    browser_page.locator('#load-previous-btn').dispatch_event('click')
+    browser_page.wait_for_function('publicListWindow.first === 1 && publicListWindow.last === 5')
+    expect(first).to_be_focused()
+    assert abs(first.bounding_box()['y'] - before) <= 1
+    expect(browser_page.locator('.demo-card')).to_have_count(60)
+
+
 @pytest.mark.e2e
 @pytest.mark.integration
 @pytest.mark.parametrize('path', ['/demonstrations', '/city/Helsinki', '/tag/null-clock-test'])

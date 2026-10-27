@@ -20,15 +20,35 @@
       : scrollHost.getBoundingClientRect();
     let pages = [];
     const pinned = node => node.contains(document.activeElement);
+    const anchorFor = node => node && getComputedStyle(node).display === 'contents'
+      ? node.firstElementChild : node;
+    function pageBounds(node) {
+      if (getComputedStyle(node).display !== 'contents') return node.getBoundingClientRect();
+      // Layout-free React roots retain ownership/focus, but have no box of
+      // their own. Evict only when all of the page's cards are off screen.
+      const boxes = Array.from(node.children, child => child.getBoundingClientRect());
+      return boxes.length ? {
+        top: Math.min(...boxes.map(box => box.top)),
+        bottom: Math.max(...boxes.map(box => box.bottom)),
+      } : node.getBoundingClientRect();
+    }
     function canExtend(previous = false, manual = false) {
       if (pages.length < maxPages) return true;
       const edge = previous ? pages[pages.length - 1] : pages[0];
-      const rect = edge.node.getBoundingClientRect();
+      const rect = pageBounds(edge.node);
       const bounds = viewport();
       return !pinned(edge.node) && (manual || (previous ? rect.top > bounds.bottom : rect.bottom < bounds.top));
     }
     return {
       reset() { pages = []; grid.replaceChildren(); },
+      preservePosition(change) {
+        const anchor = anchorFor(pages[0]?.node);
+        const oldTop = anchor?.getBoundingClientRect().top;
+        change();
+        if (anchor?.isConnected && oldTop !== undefined) {
+          scrollHost.scrollBy({ top: anchor.getBoundingClientRect().top - oldTop, behavior: 'instant' });
+        }
+      },
       canExtend,
       scrollHost,
       viewport,
@@ -43,7 +63,7 @@
         const previous = pages.length && data.page < pages[0].page;
         // Use a surviving card as the scroll anchor. CSS scroll anchoring is
         // disabled for this grid so the correction is applied exactly once.
-        const anchor = previous ? pages[0]?.node : pages[pages.length - 1]?.node;
+        const anchor = anchorFor(previous ? pages[0]?.node : pages[pages.length - 1]?.node);
         const oldTop = anchor?.getBoundingClientRect().top;
         const node = document.createElement('div');
         node.className = 'demos-grid public-list-page';
@@ -105,7 +125,11 @@
       button.classList.remove("loading");
       button.hidden = currentPage >= totalPages;
       if (previousButton) {
-        previousButton.hidden = !pageWindow.first || pageWindow.first <= 1;
+        const hidden = !pageWindow.first || pageWindow.first <= 1;
+        if (previousButton.hidden !== hidden) {
+          // Showing/hiding Previous also changes the grid's top position.
+          pageWindow.preservePosition(() => { previousButton.hidden = hidden; });
+        }
         previousButton.disabled = loading;
       }
     }

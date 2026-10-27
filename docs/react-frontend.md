@@ -222,3 +222,22 @@ These are existing APIs, not a proposal for a new backend. No database schema,
 new endpoint, subdomain, router, session mechanism or deployment topology is
 introduced. Event/series detail bodies, organization pages, homepage card
 consumers, footer and final routing/rendering consolidation remain open.
+
+
+### Repeatable local verification
+
+Use the same command for future listing work, with Python 3.12+ development
+requirements and installed frontend dependencies:
+
+```sh
+python3.12 scripts/verify_react_listings.py all --output-dir /tmp/moso-listing-qa
+```
+
+Use `--node /path/to/node` to select Node 22.12+ explicitly. `check` runs the
+build/typecheck and focused regression set; `capture` regenerates visual evidence
+without repeating the tests. `--stage before` records the current pre-change
+reference. Keep the output outside the repository. Capture metadata records
+source and screenshot hashes and rejects source changes during capture or stale
+output. Four photo-bearing states require decoded image pixels in both widths
+and themes. The script supplies evidence; an independent reviewer still must
+issue the final visual verdict. It adds no CI workflow or separate CI suite.

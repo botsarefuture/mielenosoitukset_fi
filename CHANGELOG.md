@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Add one reusable local React-listing verification command for builds, focused regression checks and real-application screenshots with source/image hashes and decoded-photo checks.
+
 - Move the main, city and tag demonstration listings onto shared React page, search and card components while retaining existing event-card presentation, canonical event links and scoped filters.
 - Use the available page width with a responsive card grid. Group the heading and search in one brand-aligned panel, replace redundant heroes and eyebrow labels, and give the all-events link a styled secondary action.
 - Preserve the bounded five-page loading window, URL/history state, localized date/city widgets and per-page attendance requests. Card and friend text now render safely through React; event invitation links retain existing occurrence query parameters.

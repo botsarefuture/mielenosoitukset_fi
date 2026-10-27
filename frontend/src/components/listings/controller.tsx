@@ -91,9 +91,18 @@ export function attachListing(element: HTMLElement, props: ListingProps) {
       if (append && !pageWindow.canExtend(previous, manual)) return { page: pageWindow.last!, total_pages: data.total_pages, deferred: true };
       if (!append) pageWindow.reset();
       pageWindow.mount(data, container => {
-        const root = createRoot(container); roots.set(container, root);
+        // React reports render failures through the root callback rather than
+        // rejecting this fetch. Never count a page whose cards did not mount.
+        let renderError: unknown;
+        const root = createRoot(container, { onUncaughtError(reason) { renderError = reason; } });
+        roots.set(container, root);
         flushSync(() => root.render(<DemonstrationCards events={data.results} props={props} />));
-        return Array.from(container.querySelectorAll('.demo-card'));
+        const cards = Array.from(container.querySelectorAll('.demo-card'));
+        if (renderError || cards.length !== data.results.length) {
+          root.unmount(); roots.delete(container);
+          throw renderError || new Error('Incomplete card rendering');
+        }
+        return cards;
       });
       releaseRoots();
       const range = pageWindow.range;

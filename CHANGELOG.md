@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Keep successfully rendered listing pages visible when another card batch fails, expose retry without advancing the result count, and display missing clock information without orphaned time labels. Extend repeatable real-application checks for nullable clocks and pagination.
+
 - Fix blank demonstration listings when an event has a null start or end time; keep rendering the complete card batch.
 
 - Add a repeatable local before/after listing latency comparison with isolated fixtures, raw samples and p50/p95/p99 summaries.

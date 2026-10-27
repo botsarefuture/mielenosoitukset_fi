@@ -60,6 +60,7 @@ def capture(item) -> None:
     output = Path(os.environ["MOSO_LIST_CAPTURE_DIR"]).expanduser().resolve()
     output.mkdir(parents=True, exist_ok=True)
     stage = os.environ.get("MOSO_LIST_CAPTURE_STAGE", "final")
+    scenario = os.environ.get("MOSO_LIST_CAPTURE_SCENARIO", "standard")
     if stage not in {"before", "final"}:
         raise ValueError("Capture stage must be before or final")
     request = item._request
@@ -73,7 +74,10 @@ def capture(item) -> None:
     inputs_before = source_inputs()
 
     record = db.demonstrations.find_one({"_id": seed["demo_id"]})
-    for index in range(15):
+    if scenario == "missing-times":
+        db.demonstrations.delete_many({})
+        db.recurring_demonstrations.delete_many({})
+    for index in range(72 if scenario == "missing-times" else 15):
         row = deepcopy(record)
         event_date = date.today() + timedelta(days=5 + index)
         row.update(
@@ -85,8 +89,24 @@ def capture(item) -> None:
             city="Helsinki", address="Kansalaistori", tags=["react-list-test"],
             approved=True, hide=False, rejected=False,
         )
+        if scenario == "missing-times":
+            for field in IMAGE_FIELDS:
+                row.pop(field, None)
+            event_date = date.today() + timedelta(days=5 + index // 12)
+            row.update(date=event_date.isoformat(), formatted_date=event_date.strftime("%d.%m.%Y"),
+                       start_time="12:00", end_time="14:00")
+            if index % 4 == 0:
+                row["end_time"] = None
+            elif index % 4 == 1:
+                row["start_time"] = None
+            elif index % 4 == 2:
+                row.pop("start_time", None)
+                row.pop("end_time", None)
+            if index % 12 == 0:
+                row["cover_picture"] = PHOTO
         db.demonstrations.insert_one(row)
-    db.demonstrations.update_many({}, {"$unset": {name: "" for name in IMAGE_FIELDS}})
+    if scenario == "standard":
+        db.demonstrations.update_many({}, {"$unset": {name: "" for name in IMAGE_FIELDS}})
 
     def assets(route):
         if urlparse(route.request.url).hostname in ALLOWED_HOSTS:
@@ -100,6 +120,8 @@ def capture(item) -> None:
         ctx.route("**/*", assets)
         if js:
             ctx.add_init_script(f"localStorage.setItem('theme', {json.dumps(theme)})")
+            if scenario == "missing-times":
+                ctx.add_init_script("Object.defineProperty(navigator,'connection',{value:{saveData:true}})")
         if user:
             ctx.add_cookies([{"name": "session", "value": user.get_cookie("session").value, "url": base}])
         page = ctx.new_page()
@@ -130,6 +152,7 @@ def capture(item) -> None:
             raise AssertionError("Source changed during visual capture. Rerun with a stable checkout.")
         metadata = {
             "run_id": os.environ.get("MOSO_LIST_CAPTURE_RUN"), "stage": stage,
+            "scenario": scenario,
             "images": images, "image_hashes": image_hashes, "image_states": image_states,
             "errors": errors, "failed": sorted(set(failed)), "source_inputs": after,
             "runtime": {"python": platform.python_version()},
@@ -140,6 +163,87 @@ def capture(item) -> None:
             ],
         }
         (output / f"{stage}-metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+
+    if scenario == "missing-times":
+        payload = client.get("/api/demonstrations?tag=react-list-test&page=6&per_page=12").json
+        assert payload["total"] == 72 and len(payload["results"]) == 12
+        assert any(row.get("end_time") is None for row in payload["results"])
+        assert any(row.get("start_time") is None for row in payload["results"])
+        (output / f"{stage}-fixture-response.json").write_text(json.dumps(payload, indent=2))
+
+        def settled(page, first, last):
+            page.wait_for_function("([first,last]) => window.publicListWindow?.first === first && window.publicListWindow?.last === last && document.querySelector('#demos-grid')?.getAttribute('aria-busy') === 'false'", arg=[first, last])
+            if stage == "final":
+                assert page.locator(".demo-card").count() == (last - first + 1) * 12
+                page.locator(".demo-card").first.wait_for(state="visible")
+                assert not page.locator("#listing-load-error").is_visible()
+            else:
+                assert page.locator(".demo-card").count() == 0
+
+        for path, name in (("/demonstrations", "all"), ("/city/Helsinki", "city"), ("/tag/react-list-test", "tag")):
+            for width in (390, 1440):
+                for theme in ("light", "dark"):
+                    ctx, page = context(width, theme)
+                    try:
+                        page.goto(base + path + "?page=6&per_page=12", wait_until="networkidle")
+                        settled(page, 6, 6)
+                        if stage == "final":
+                            picture = page.locator(".demo-card-image img").first
+                            picture.scroll_into_view_if_needed()
+                            page.wait_for_function("() => Array.from(document.querySelectorAll('.demo-card-image img')).some(image => image.complete && image.naturalWidth > 0)")
+                        shot(page, f"missing-times-{name}-{width}-{theme}", ".public-list-results")
+                        if name == "all":
+                            page.locator("#load-previous-btn").click()
+                            settled(page, 5, 6)
+                            shot(page, f"missing-times-previous-{width}-{theme}", ".public-list-results")
+                            page.goto(base + path + "?page=1&per_page=12", wait_until="networkidle")
+                            settled(page, 1, 1)
+                            page.locator("#load-more-btn").click()
+                            settled(page, 1, 2)
+                    finally:
+                        ctx.close()
+        if stage == "final":
+            for width, theme in ((390, "light"), (1440, "dark")):
+                ctx, page = context(width, theme)
+                bad_pages = {1, 2}
+
+                def inject_render_fault(route):
+                    response = route.fetch()
+                    payload = response.json()
+                    if payload["page"] in bad_pages:
+                        bad_pages.remove(payload["page"])
+                        payload["results"][0]["title"] = {}
+                    route.fulfill(response=response, json=payload)
+
+                page.route("**/api/demonstrations?*", inject_render_fault)
+                try:
+                    page.goto(base + "/demonstrations?per_page=12", wait_until="networkidle")
+                    page.locator("#listing-load-error").wait_for(state="visible")
+                    assert page.locator(".demo-card").count() == 0
+                    assert not page.locator("#listing-result-summary").is_visible()
+                    shot(page, f"render-initial-error-{width}-{theme}", ".public-list-results")
+                    page.locator("#listing-load-error button").click()
+                    settled(page, 1, 1)
+                    shot(page, f"render-initial-retry-{width}-{theme}", "#demos-grid")
+                    summary = page.locator("#listing-result-summary").inner_text()
+                    previous_url = page.url
+                    page.locator("#load-more-btn").click()
+                    page.locator("#listing-load-error").wait_for(state="visible")
+                    assert page.locator(".demo-card").count() == 12
+                    assert page.locator("#listing-result-summary").inner_text() == summary
+                    assert page.url == previous_url
+                    shot(page, f"render-append-error-{width}-{theme}", "#listing-load-error")
+                    page.locator("#listing-load-error button").click()
+                    settled(page, 1, 2)
+                    shot(page, f"render-append-retry-{width}-{theme}", "[data-list-page='2']")
+                finally:
+                    ctx.close()
+        if stage == "before":
+            assert errors and all("null" in error and "split" in error for error in errors)
+        else:
+            assert not errors
+        save_metadata()
+        return
 
     for path, name in (("/demonstrations", "all"), ("/city/Helsinki", "city"), ("/tag/react-list-test", "tag")):
         for width in (390, 1440):

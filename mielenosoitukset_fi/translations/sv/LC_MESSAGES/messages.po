@@ -1118,7 +1118,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:167
 #: mielenosoitukset_fi/templates/submit.html:306
 msgid "Päättymisaika"
-msgstr ""
+msgstr "Sluttid"
 
 #: mielenosoitukset_fi/templates/submit.html:310
 msgid "Kuva (valinnainen)"

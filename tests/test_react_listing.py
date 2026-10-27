@@ -22,16 +22,31 @@ def serve_list(route):
 @pytest.mark.e2e
 @pytest.mark.integration
 @pytest.mark.parametrize('path', ['/demonstrations', '/city/Helsinki', '/tag/null-clock-test'])
-@pytest.mark.parametrize('field', ['start_time', 'end_time'])
-def test_actual_api_null_times_do_not_remove_the_card_batch(client, db, seeded_data, live_server, browser_page, path, field):
-    """A valid nullable API clock must not crash the React root for its whole page."""
-    db.demonstrations.update_one({'_id': seeded_data['demo_id']}, {
-        '$set': {'start_time': '12:34:56', 'end_time': '14:00:00', field: None,
-                 'city': 'Helsinki', 'tags': ['null-clock-test']},
-    })
+@pytest.mark.parametrize('null_fields,missing_fields,expected_time', [
+    (('end_time',), (), '12:34 alkaen'),
+    (('start_time',), (), 'Päättymisaika: 14:00'),
+    (('start_time', 'end_time'), (), None),
+    ((), ('end_time',), '12:34 alkaen'),
+    ((), ('start_time',), 'Päättymisaika: 14:00'),
+    ((), ('start_time', 'end_time'), None),
+])
+def test_actual_api_null_times_do_not_remove_the_card_batch(client, db, seeded_data, live_server, browser_page,
+                                                          path, null_fields, missing_fields, expected_time):
+    """Nullable and absent API clocks keep cards visible with useful clock text."""
+    fields = {'start_time': '12:34:56', 'end_time': '14:00:00',
+              'city': 'Helsinki', 'tags': ['null-clock-test']}
+    fields.update({field: None for field in null_fields})
+    for field in missing_fields:
+        fields.pop(field)
+    update = {'$set': fields}
+    if missing_fields:
+        update['$unset'] = {field: '' for field in missing_fields}
+    db.demonstrations.update_one({'_id': seeded_data['demo_id']}, update)
     response = client.get('/api/demonstrations?tag=null-clock-test&per_page=12')
     assert response.status_code == 200
-    assert response.json['results'][0][field] is None
+    row = response.json['results'][0]
+    assert all(row[field] is None for field in null_fields)
+    assert all(field not in row for field in missing_fields)
     errors = []
     browser_page.on('pageerror', lambda error: errors.append(str(error)))
     browser_page.set_viewport_size({'width': 390, 'height': 1000})
@@ -39,8 +54,109 @@ def test_actual_api_null_times_do_not_remove_the_card_batch(client, db, seeded_d
     card = browser_page.locator(f'[data-demo-id="{seeded_data["demo_id"]}"]')
     expect(card).to_be_visible()
     expect(card.locator('.demo-card-title a')).not_to_be_empty()
+    if expected_time is None:
+        expect(card.locator('.demo-card-time')).to_have_count(0)
+    else:
+        expect(card.locator('.demo-card-time')).to_have_text(expected_time)
     expect(browser_page.locator('#listing-result-summary')).to_be_visible()
     assert errors == []
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize('locale,label', [('en', 'Ends at'), ('sv', 'Sluttid')])
+def test_end_only_card_clock_is_localized(app, client, db, seeded_data, live_server, browser_page, locale, label):
+    app.config['BABEL_PUBLIC_LOCALES'] = ['fi', 'en', 'sv']
+    db.demonstrations.update_one({'_id': seeded_data['demo_id']}, {
+        '$set': {'start_time': None, 'end_time': '14:00:00', 'tags': ['null-clock-test']},
+    })
+    browser_page.goto(live_server + '/set_language/' + locale)
+    browser_page.goto(live_server + '/tag/null-clock-test', wait_until='domcontentloaded')
+    clock = browser_page.locator(f'[data-demo-id="{seeded_data["demo_id"]}"] .demo-card-time')
+    expect(clock).to_have_text(f'{label}: 14:00')
+
+
+def exercise_listing_scroll(page):
+    """Give automatic pagination real scroll events and frames to react to."""
+    page.evaluate('''async () => {
+      const host = publicListWindow.scrollHost;
+      for (let index = 0; index < 3; index++) {
+        host.scrollTo({top: 0, behavior: 'instant'});
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        host.scrollTo({top: 100000, behavior: 'instant'});
+        await new Promise(resolve => requestAnimationFrame(resolve));
+      }
+    }''')
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_initial_card_render_failure_shows_retry_without_a_phantom_count(live_server, browser_page):
+    requested = []
+    errors = []
+
+    def serve(route):
+        page = int(parse_qs(urlsplit(route.request.url).query)['page'][0])
+        requested.append(page)
+        payload = result(page, total_pages=1)
+        if len(requested) == 1:
+            payload['results'][0]['title'] = {}
+        route.fulfill(content_type='application/json', body=json.dumps(payload))
+
+    browser_page.on('pageerror', lambda error: errors.append(str(error)))
+    browser_page.route('**/api/demonstrations?*', serve)
+    browser_page.goto(live_server + '/demonstrations?per_page=1', wait_until='domcontentloaded')
+    expect(browser_page.locator('#listing-load-error')).to_be_visible()
+    expect(browser_page.locator('.demo-card')).to_have_count(0)
+    expect(browser_page.locator('#listing-result-summary')).to_be_hidden()
+    expect(browser_page.locator('#no-results')).to_be_hidden()
+    assert browser_page.evaluate('publicListWindow.range.count') == 0
+    assert parse_qs(urlsplit(browser_page.url).query)['page'] == ['1']
+    exercise_listing_scroll(browser_page)
+    assert requested == [1]
+
+    browser_page.locator('#listing-load-error button').click()
+    expect(browser_page.locator('.demo-card-title a')).to_have_text('Event 1')
+    expect(browser_page.locator('#listing-load-error')).to_be_hidden()
+    expect(browser_page.locator('#listing-result-summary')).to_contain_text('1–1')
+    assert browser_page.evaluate('publicListWindow.range.count') == 1
+    assert requested == [1, 1] and errors == []
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_append_card_render_failure_preserves_cards_history_and_retry(live_server, browser_page):
+    requested = []
+    errors = []
+
+    def serve(route):
+        page = int(parse_qs(urlsplit(route.request.url).query)['page'][0])
+        requested.append(page)
+        payload = result(page, total_pages=2)
+        if page == 2 and requested.count(2) == 1:
+            payload['results'][0]['title'] = {}
+        route.fulfill(content_type='application/json', body=json.dumps(payload))
+
+    browser_page.on('pageerror', lambda error: errors.append(str(error)))
+    browser_page.route('**/api/demonstrations?*', serve)
+    browser_page.goto(live_server + '/demonstrations?per_page=1', wait_until='domcontentloaded')
+    expect(browser_page.locator('.demo-card-title a')).to_have_text('Event 1')
+    exercise_listing_scroll(browser_page)
+    expect(browser_page.locator('#listing-load-error')).to_be_visible()
+    expect(browser_page.locator('.demo-card-title a')).to_have_text('Event 1')
+    expect(browser_page.locator('#listing-result-summary')).to_contain_text('1–1')
+    assert browser_page.evaluate('publicListWindow.range.count') == 1
+    assert parse_qs(urlsplit(browser_page.url).query)['page'] == ['1']
+    exercise_listing_scroll(browser_page)
+    assert requested == [1, 2]
+
+    browser_page.locator('#listing-load-error button').click()
+    expect(browser_page.locator('.demo-card-title a')).to_have_text(['Event 1', 'Event 2'])
+    expect(browser_page.locator('#listing-load-error')).to_be_hidden()
+    expect(browser_page.locator('#listing-result-summary')).to_contain_text('1–2')
+    assert browser_page.evaluate('publicListWindow.range.count') == 2
+    assert parse_qs(urlsplit(browser_page.url).query)['page'] == ['2']
+    assert requested == [1, 2, 2] and errors == []
 
 
 @pytest.mark.e2e

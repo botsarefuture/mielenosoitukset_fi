@@ -79,7 +79,7 @@ def capture(item) -> None:
             "theme": "dark" if "dark" in (page.locator("html").get_attribute("class") or "") else "light",
             "role": "anonymous", "state": name,
         }
-        if stage == "final":
+        if stage != "before":
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), filename
 
     def perform_captures():
@@ -195,9 +195,55 @@ def capture(item) -> None:
                     assert page.locator("#name").input_value().startswith("Yhdessä")
                 finally:
                     context.close()
+    def capture_feedback():
+        for width, theme in ((1440, "light"), (390, "dark")):
+            context = browser.new_context(viewport={"width": width, "height": 1000}, locale="fi-FI", color_scheme=theme)
+            context.route("**/*", assets)
+            context.add_init_script(f"localStorage.setItem('theme', {json.dumps(theme)})")
+            page = context.new_page()
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            page.on("requestfailed", lambda req: failed.append(req.url))
+            pending = []
+            page.route("**/submit/facebook_import", lambda route: pending.append(route))
+            try:
+                page.goto(base + "/submit", wait_until="networkidle")
+                page.get_by_role("button", name="Tuo tiedot Facebookista").click()
+                page.locator("#facebook").fill("https://www.facebook.com/events/123456789/")
+                button = page.locator("#facebook-import-btn")
+                button.click()
+                page.wait_for_function("document.querySelector('#facebook-import-btn').disabled")
+                assert pending
+                shot(page, f"facebook-loading-{width}-{theme}", "#facebook")
+                pending[0].fulfill(status=502, content_type="application/json", body=json.dumps({
+                    "success": False, "error": "Tietojen hakeminen epäonnistui. Yritä uudelleen tai täytä lomake käsin."}))
+                page.locator("#facebook-import-status.error").wait_for(state="visible")
+                shot(page, f"facebook-error-{width}-{theme}", "#facebook")
+                button.click()
+                page.wait_for_function("document.querySelector('#facebook-import-btn').disabled")
+                assert len(pending) == 2
+                pending[1].fulfill(status=200, content_type="application/json", body=json.dumps({
+                    "success": True, "message": "Tapahtuman tiedot tuotiin. Tarkista tiedot ennen lähettämistä.",
+                    "warnings": ["Päättymisaikaa ei löytynyt. Tarkista tapahtuman aika ja paikka."],
+                    "event": {"title": "Mielenosoitus oikeudenmukaisen tulevaisuuden puolesta", "description_html": "<p>Kokoonnumme rauhanomaisesti Kansalaistorille.</p>", "start_date": "2027-11-01", "start_time": "12:00", "city": "Helsinki", "address": "Kansalaistori", "facebook_url": "https://www.facebook.com/events/123456789/"},
+                    "fields_summary": [{"key": "title", "label": "Otsikko", "imported": True}, {"key": "date", "label": "Päivämäärä", "imported": True}, {"key": "organizer", "label": "Järjestäjä", "imported": False}]
+                }))
+                page.locator("#facebook-import-status.success").wait_for(state="visible")
+                shot(page, f"facebook-success-warning-{width}-{theme}", "#facebook")
+                assert page.locator("#facebook_imported").input_value() == "1"
+                assert page.locator("#name").input_value().startswith("Mielenosoitus")
+                page.evaluate("showPage(3)")
+                page.locator(".dropbtn").click()
+                page.locator("#searchInput").fill("Helsinki")
+                shot(page, f"municipality-detail-{width}-{theme}", "#paikkakunta-drop")
+            finally:
+                context.close()
+
     failure = None
     try:
-        perform_captures()
+        if stage == "feedback":
+            capture_feedback()
+        else:
+            perform_captures()
     except Exception as error:
         failure = {"type": type(error).__name__, "message": str(error)}
     after = source_inputs()
@@ -210,7 +256,7 @@ def capture(item) -> None:
         "errors": errors, "failed": sorted(set(failed)), "http_errors": responses,
         "source_inputs": after, "runtime": {"python": platform.python_version()},
         "notes": ["Real Flask page and disposable test database; actual styles, fonts and Quill assets.",
-                  "External analytics blocked; no real event submitted. Success is a presentation-only wizard state; duplicate response is deliberately intercepted for the modal capture.",
+                  "Feedback stage uses synthetic intercepted Facebook import responses through the actual handler. External analytics blocked; no real event submitted. Success is a presentation-only wizard state; duplicate response is deliberately intercepted for the modal capture.",
                   "Image upload preview uses the repository og-banner.png fixture. Actual editor/navigation/draft controls exercised with synthetic contact values."],
     }
     (output / f"{stage}-metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")

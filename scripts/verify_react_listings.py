@@ -23,6 +23,10 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST_FILES = (
+    "tests/test_settings_layout_contract.py::test_settings_shared_css_uses_product_tokens_and_cache_is_bumped",
+    "tests/test_submit_feedback_contract.py::test_submit_feedback_has_shared_light_dark_component_and_cache_bump",
+    "tests/test_submit_organization_search_security.py::test_submit_autocomplete_uses_shared_safe_native_controls",
+    "tests/test_terms_page_contract.py::test_terms_shared_prose_component_uses_product_tokens_and_focus_state",
     "tests/test_react_listing.py",
     "tests/test_public_listing_contract.py",
     "tests/test_public_demo_localization.py",

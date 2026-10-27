@@ -1,6 +1,6 @@
 export type Demonstration = {
   _id: string; title?: string; date?: string; formatted_date?: string; date_display?: string;
-  start_time?: string; end_time?: string; start_time_display?: string; end_time_display?: string;
+  start_time?: string | null; end_time?: string | null; start_time_display?: string | null; end_time_display?: string | null;
   city?: string; address?: string; tags?: string[]; cancelled?: boolean;
   cover_picture?: string; cover_image?: string; preview_image?: string; img?: string;
   detail_url?: string; slug?: string; running_number?: number; parent?: string;

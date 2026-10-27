@@ -7,7 +7,7 @@ export function internalHref(value: string) {
     return url.origin === window.location.origin ? `${url.pathname}${url.search}${url.hash}` : '#';
   } catch { return '#'; }
 }
-function time(value = '') { return value.split(':').slice(0, 2).join(':'); }
+function time(value?: string | null) { return typeof value === 'string' ? value.split(':').slice(0, 2).join(':') : ''; }
 export function eventHref(event: Demonstration, props: ListingProps) {
   const fallback = event.parent ? props.seriesUrl.replace('__ID__', encodeURIComponent(event.parent))
     : props.detailUrl.replace('__ID__', encodeURIComponent(String(event.slug || event.running_number || event._id)));

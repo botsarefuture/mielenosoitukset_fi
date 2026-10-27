@@ -21,6 +21,30 @@ def serve_list(route):
 
 @pytest.mark.e2e
 @pytest.mark.integration
+@pytest.mark.parametrize('path', ['/demonstrations', '/city/Helsinki', '/tag/null-clock-test'])
+@pytest.mark.parametrize('field', ['start_time', 'end_time'])
+def test_actual_api_null_times_do_not_remove_the_card_batch(client, db, seeded_data, live_server, browser_page, path, field):
+    """A valid nullable API clock must not crash the React root for its whole page."""
+    db.demonstrations.update_one({'_id': seeded_data['demo_id']}, {
+        '$set': {'start_time': '12:34:56', 'end_time': '14:00:00', field: None,
+                 'city': 'Helsinki', 'tags': ['null-clock-test']},
+    })
+    response = client.get('/api/demonstrations?tag=null-clock-test&per_page=12')
+    assert response.status_code == 200
+    assert response.json['results'][0][field] is None
+    errors = []
+    browser_page.on('pageerror', lambda error: errors.append(str(error)))
+    browser_page.set_viewport_size({'width': 390, 'height': 1000})
+    browser_page.goto(live_server + path, wait_until='networkidle')
+    card = browser_page.locator(f'[data-demo-id="{seeded_data["demo_id"]}"]')
+    expect(card).to_be_visible()
+    expect(card.locator('.demo-card-title a')).not_to_be_empty()
+    expect(browser_page.locator('#listing-result-summary')).to_be_visible()
+    assert errors == []
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
 @pytest.mark.parametrize('path', ['/demonstrations', '/city/Helsinki', '/tag/react-test'])
 @pytest.mark.parametrize('width', [390, 1440])
 def test_listing_uses_available_width_and_one_branded_search_group(live_server, browser_page, path, width):

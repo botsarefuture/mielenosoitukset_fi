@@ -168,6 +168,7 @@ def test_real_map_reads_all_pride_pages_and_listing_filters_do_not_change_its_sc
     expect(summary).to_have_attribute('data-city-count', '2')
     expect(summary).to_have_attribute('data-mapped-count', '98')
     expect(page.locator('#pride-map path.leaflet-interactive')).to_have_count(98)
+    expect(page.locator('#pride-map-retry')).to_be_hidden()
     expect(page.locator('.demo-card')).to_have_count(12)
     assert_pride_scope(requested)
     assert [query['page'] for query in requested] == [['1'], ['2']]
@@ -313,6 +314,13 @@ def test_map_loading_avoids_fake_counts_and_double_retry_requests(client, db, se
     page = browser_page
     pending = []
 
+    def wait_for_pending(count):
+        for _ in range(100):
+            if len(pending) >= count:
+                break
+            page.wait_for_timeout(50)
+        assert len(pending) == count
+
     def serve(route):
         if is_map_request(route.request):
             pending.append(route)
@@ -326,12 +334,12 @@ def test_map_loading_avoids_fake_counts_and_double_retry_requests(client, db, se
     assert summary.get_attribute('data-event-count') is None
     expect(page.locator('#pride-map-error')).to_be_hidden()
     expect(page.locator('#pride-map-empty')).to_be_hidden()
-    assert len(pending) == 1
+    wait_for_pending(1)
     pending[0].fulfill(status=503, content_type='application/json', body='{"error":"Temporary outage"}')
     expect(page.locator('#pride-map-error')).to_be_visible()
     page.evaluate("() => {const button=document.querySelector('#pride-map-retry');button.click();button.click();}")
     expect(page.locator('#pride-map-retry')).to_be_disabled()
-    assert len(pending) == 2
+    wait_for_pending(2)
     pending[1].fulfill(content_type='application/json', body=json.dumps(map_payload([
         {'_id': '000000000000000000000001', 'title': 'Retried event', 'date': '2099-01-01',
          'latitude': '60.1699', 'longitude': '24.9384', 'city': 'Helsinki'}

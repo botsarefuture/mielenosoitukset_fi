@@ -172,7 +172,7 @@
 .pride-page .leaflet-control-zoom a:hover { background: var(--product-surface-muted); }
 .pride-page .leaflet-control-attribution { background: var(--product-surface); color: var(--product-text-muted); font: 400 .7rem/1.4 Roboto, sans-serif; }
 .pride-page .leaflet-control-attribution a { color: var(--product-primary); }
-.pride-page [hidden] { display: none; }
+.pride-page .pride-map-panel [hidden] { display: none; }
 @media (max-width: 600px) {
   .pride-page { gap: 1.5rem; }
   .pride-page #pride-map { height: 20rem; }

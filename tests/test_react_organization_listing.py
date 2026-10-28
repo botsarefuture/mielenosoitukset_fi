@@ -94,6 +94,7 @@ def test_organization_listing_reuses_shared_shell_without_replacing_profile(clie
     assert len([heading for heading in page.headings if heading[0] == 'h1']) == 1
     assert any(tag == 'h2' and heading_id == 'listing-title' for tag, heading_id, _ in page.headings)
     assert not page.legacy_renderer
+    assert "/static/css/list.css" not in html
     assert 'Test Organization' in html
     assert 'Primary organization used in smoke tests.' in html
     assert 'id="org-follow-btn"' not in html
@@ -187,6 +188,7 @@ def test_org_listing_real_pagination_and_retry_keep_scope_and_rendered_cards(cli
     page.route('**/api/demonstrations?*', scoped_request)
     page.goto(f'{live_server}/organization/{seeded_data["org_id"]}?organization_id={foreign_org}&parent_id={foreign_org}&max_days_till=60', wait_until='domcontentloaded')
     expect(page.locator('#listing-load-error')).to_be_visible()
+    assert page.locator('.public-search-submit').evaluate("e => getComputedStyle(e).backgroundColor") == 'rgb(255, 102, 0)'
     expect(page.locator('.demo-card')).to_have_count(0)
     expect(page.locator('#listing-result-summary')).to_be_hidden()
     page.locator('#listing-load-error button').click()

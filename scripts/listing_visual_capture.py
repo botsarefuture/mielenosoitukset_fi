@@ -33,7 +33,11 @@ def source_inputs() -> dict:
         return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
 
     changed = set(filter(None, git("diff", "--name-only", "-z", "HEAD").split("\0")))
-    changed.update(filter(None, git("diff", "--name-only", "-z", "origin/main...HEAD").split("\0")))
+    try:
+        branch_changes = git("diff", "--name-only", "-z", "origin/main...HEAD")
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError("Capture needs origin/main to record branch changes; fetch that base ref first.") from error
+    changed.update(filter(None, branch_changes.split("\0")))
     changed.update(filter(None, git("ls-files", "--others", "--exclude-standard", "-z").split("\0")))
     changed.update({
         "tests/conftest.py", "config.py", "mielenosoitukset_fi/app.py",
@@ -43,7 +47,6 @@ def source_inputs() -> dict:
         "mielenosoitukset_fi/templates/_layouts/demonstration-list.html",
         "mielenosoitukset_fi/templates/_partials/demonstration-listing.html",
         "mielenosoitukset_fi/templates/organizations/details.html",
-        "mielenosoitukset_fi/static/css/organization.css",
         "mielenosoitukset_fi/static/css/user-workspace.css",
         "mielenosoitukset_fi/static/css/product-tokens.css",
         "mielenosoitukset_fi/static/js/user-pagination.js",
@@ -216,6 +219,8 @@ def capture(item) -> None:
                     page.goto(base + path + "?per_page=12", wait_until="networkidle")
                     settled_org(page)
                     shot(page, f"organization-profile-{width}-{theme}")
+                    if stage == "final":
+                        assert page.locator('.public-search-submit').evaluate("e => getComputedStyle(e).backgroundColor") == 'rgb(255, 102, 0)'
                     shot(page, f"organization-events-{width}-{theme}", "#demos")
                 finally:
                     ctx.close()
@@ -289,6 +294,18 @@ def capture(item) -> None:
                 shot(page, f"organization-{label}-events-1440-light", "#demos")
             finally:
                 ctx.close()
+        invited = request.getfixturevalue("friend_client")
+        db.organizations.update_one({"_id": seed["org_id"]}, {"$push": {"invitations": {"email": "bob@example.test", "role": "member"}}})
+        for width in (390, 1440):
+            for theme in ("light", "dark"):
+                ctx, page = context(width, theme, user=invited, role="invited-user")
+                try:
+                    page.goto(base + path, wait_until="networkidle")
+                    settled_org(page)
+                    page.locator('.invite-banner').wait_for(state='visible')
+                    shot(page, f"organization-invitation-{width}-{theme}", ".invite-banner")
+                finally:
+                    ctx.close()
         assert not errors
         save_metadata()
         return

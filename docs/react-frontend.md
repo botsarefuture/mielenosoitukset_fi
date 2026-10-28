@@ -297,3 +297,42 @@ These are warm loopback HTTP response measurements with one sequential client.
 They do not measure browser rendering, asset delivery, LCP, production network
 conditions or production capacity. Report the sample count and these limits
 alongside any comparison; tail percentiles remain sensitive to host load.
+
+## Submission flow
+
+`/submit` now loads the `submit` entry from the existing Vite build. React owns
+`SubmitProgress`, `SubmitChoices`, `SubmitNavigation` and `SubmitBack`. Each
+region keeps functional Jinja controls when the module is unavailable. There is
+no new route, API, authentication scheme or form payload. The server-localized
+props are serialized with `tojson`.
+
+The existing controller remains the owner of active field panels, validation,
+Quill, organizer lookup, Facebook import, draft storage and multipart POSTs.
+`showPage` emits `submit:stepchange`; progress reads the active panel on mount so
+an early draft restoration is not overwritten. React does not replace field
+nodes or attach competing submit handlers. The final submit button remains
+owned by the existing pending/retry handler. Native field components can migrate
+in a later slice together with their integration initialization.
+
+Only a non-redirected JSON response with `success: true` confirms delivery, for
+both the first attempt and a confirmed duplicate retry. Other responses retain
+the form/draft. Date/time draft restoration uses the existing picker API to
+restore both submitted values and required alternate inputs. Navigation validates before advancing and focuses the new panel
+heading. Failed validation still focuses its first invalid field.
+
+The form's styles are scoped under `.submit-page` and consume product tokens.
+Desktop uses a step rail with the form filling the remaining available width;
+mobile keeps progress in normal flow, with no overlay over fields or actions.
+
+Repeat local checks/captures with the project Python 3.12 development environment
+and Node 22.12+:
+
+```sh
+python3.12 scripts/verify_submit_form.py all --output-dir /tmp/moso-submit-qa
+python3.12 scripts/compare_listing_latency.py --scope submit --before BASE --after HEAD --output-dir /tmp/moso-submit-latency
+```
+
+The HTTP comparison measures GET `/submit` only, excluding browser work and
+writes. Capture output uses disposable data and actual assets; independent
+in-conversation visual acceptance is still required. Roll back this slice by
+reverting its source, template, stylesheet and committed generated build together.

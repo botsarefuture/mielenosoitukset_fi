@@ -56,7 +56,7 @@ def test_submit_draft_contract_is_scoped_versioned_and_exactly_cleared():
     script = DRAFT_SCRIPT.read_text(encoding="utf-8")
     city_partial = CITY_PARTIAL.read_text(encoding="utf-8")
 
-    assert "20261004-submit-draft-1" in template
+    assert "20261028-submit-draft-2" in template
     assert DRAFT_KEY in script
     assert "DRAFT_TTL_MS = 24 * 60 * 60 * 1000" in script
     assert 'const form = document.getElementById("myForm")' in script
@@ -238,7 +238,8 @@ def test_submit_draft_restores_fields_quill_city_and_organizers(
 def test_submit_draft_flushes_pending_edits_on_pagehide(live_server, browser_page):
     """Persist the latest field edit when the page hides before the debounce fires."""
     browser_page.goto(f"{live_server}/submit", wait_until="domcontentloaded")
-    browser_page.wait_for_function("() => window.__submitDraftReady === true")
+    browser_page.wait_for_function("() => typeof window.saveSubmitDraft === 'function'")
+    browser_page.evaluate("() => new Promise(resolve => setTimeout(resolve, 0))")
     browser_page.evaluate("showPage(2)")
     browser_page.locator("#name").fill("Last-second edit")
     browser_page.evaluate("window.dispatchEvent(new Event('pagehide'))")

@@ -23,6 +23,7 @@ export default defineConfig({
     manifest: 'manifest.json',
     rollupOptions: {
       input: {
+        submit: fileURLToPath(new URL('./src/entries/submit.tsx', import.meta.url)),
         listing: fileURLToPath(new URL('./src/entries/listing.tsx', import.meta.url)),
         header: fileURLToPath(new URL('./src/entries/header.tsx', import.meta.url)),
         campaign: fileURLToPath(new URL('./src/entries/campaign.tsx', import.meta.url)),

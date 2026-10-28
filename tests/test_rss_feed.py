@@ -146,3 +146,21 @@ def test_feed_tracking_failure_never_breaks_xml(client, monkeypatch):
         raise RuntimeError('Analytics storage unavailable')
     monkeypatch.setattr(site_analytics, 'record_event', fail)
     assert client.get('/demonstrations.rss').status_code == 200
+
+
+@pytest.mark.parametrize('field', ['city', 'tag'])
+def test_feed_cache_does_not_merge_distinct_unicode_literal_scopes(client, db, seeded_data, field):
+    rows = seed_feed(db, seeded_data)
+    db.demonstrations.delete_many({})
+    for number, value in enumerate(('straße', 'strasse')):
+        row = {**rows[0], '_id': ObjectId(), 'title': f'Unicode scope {number}',
+               'slug': f'unicode-scope-{number}', 'city': value if field == 'city' else 'Helsinki',
+               'tags': [value] if field == 'tag' else ['pride']}
+        db.demonstrations.insert_one(row)
+    origin = 'https://rss-unicode.example.test'
+    first = client.get('/demonstrations.rss', query_string={field: 'straße'}, base_url=origin)
+    second = client.get('/demonstrations.rss', query_string={field: 'strasse'}, base_url=origin,
+                        headers={'If-None-Match': first.headers['ETag']})
+    assert [item.findtext('title').split(':')[0] for item in feed_items(first)] == ['Unicode scope 0']
+    assert [item.findtext('title').split(':')[0] for item in feed_items(second)] == ['Unicode scope 1']
+    assert first.headers['ETag'] != second.headers['ETag']

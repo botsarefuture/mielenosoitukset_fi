@@ -23,13 +23,14 @@ feed through RSS autodiscovery. Feed readers may need the URL pasted manually.
 
 The handler performs one projected Mongo read capped at 50 documents. Canonical
 series links may check parent visibility, using the existing per-request cache.
-It makes no database writes and changes no authentication or schema. Escape
+The feed query is read-only and changes no authentication or schema; optional
+usage reporting writes counters to the existing analytics collection. Escape
 untrusted text for the RSS description's HTML layer and serialize XML with
 ElementTree. Use stable per-occurrence GUIDs even when canonical links coincide.
 The old permalink GUID format changes once during this migration, so some feed
 readers may show the first migrated batch again.
 
-XML is cached for five minutes, partitioned by normalized city/tag, date and
+XML is cached for five minutes, partitioned by exact stripped city/tag, date and
 origin, in a versioned namespace separate from the historical unfiltered cache.
 Visibility changes may therefore take up to five minutes to appear. Redeploying
 or rolling back does not purge readers' already downloaded entries. ETags are
@@ -65,3 +66,10 @@ overcount or leave estimates unavailable. An aggregator may represent many
 subscribers behind one fetching client; shared IPs merge clients, rotating IPs
 split them, and CDN hits never reaching Flask cannot be counted. These numbers
 must never be labelled subscriber counts. Analytics failures do not break RSS.
+
+## Integration order
+
+PR #998 is stacked on Pride PR #997. The combined production build retains the
+Pride map entry and shared listing entry; Pride inherits its fixed `tag=pride`
+RSS link. Review/merge Pride first, then retarget RSS to main and verify the
+combined asset manifest. Neither PR is merged or deployed by this integration.

@@ -22,7 +22,9 @@ def demonstration_feed(collection, event_path):
     # Version the key to avoid serving historical unfiltered responses. Include
     # the origin because RSS links must be absolute, and the day for future scope.
     day = date.today().isoformat()
-    scope = {'city': city.casefold(), 'tag': tag.casefold(), 'day': day,
+    # Unicode casefold is broader than Mongo's case-insensitive literal regex
+    # (for example straße/strasse), so cache exact stripped filter values.
+    scope = {'city': city, 'tag': tag, 'day': day,
              'origin': request.url_root}
     key = 'rss:public-v2:' + hashlib.sha256(json.dumps(scope, sort_keys=True).encode()).hexdigest()
     use_cache = not skip_cache_public_only()
@@ -91,7 +93,7 @@ def record_feed_request(status, scope):
         from urllib.parse import urlencode
         from mielenosoitukset_fi.utils import site_analytics as analytics
 
-        resource = urlencode({name: scope[name] for name in ('city', 'tag') if scope[name]}) or 'all'
+        resource = urlencode({name: scope[name].casefold() for name in ('city', 'tag') if scope[name]}) or 'all'
         analytics.record_event('rss_fetch', resource_id=resource, language='fi')
         if status == 304:
             analytics.record_event('rss_not_modified', resource_id=resource, language='fi')

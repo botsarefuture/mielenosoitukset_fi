@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Reuse the shared React demonstration listing on Pride näkyväksi, add a safe React map with complete scoped pagination and real event counts, and simplify the responsive Pride page in Finnish, English and Swedish. Preserve all three public URLs, submission guidance, map attribution and independently usable listing/error states.
+
 - Reduce repeated test-user setup work and bound stalled CI tests with thread diagnostics and slow-test timings; retain the complete test selection.
 
 - Center completed-step checkmarks inside the submission progress circles on desktop and mobile.

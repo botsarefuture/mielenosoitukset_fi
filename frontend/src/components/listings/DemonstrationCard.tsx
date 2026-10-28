@@ -8,7 +8,7 @@ export function internalHref(value: string) {
   } catch { return '#'; }
 }
 function time(value?: string | null) { return typeof value === 'string' ? value.trim().split(':').slice(0, 2).join(':') : ''; }
-export function eventHref(event: Demonstration, props: ListingProps) {
+export function eventHref(event: Demonstration, props: Pick<ListingProps, 'seriesUrl' | 'detailUrl'>) {
   const fallback = event.parent ? props.seriesUrl.replace('__ID__', encodeURIComponent(event.parent))
     : props.detailUrl.replace('__ID__', encodeURIComponent(String(event.slug || event.running_number || event._id)));
   return internalHref(event.detail_url || fallback);

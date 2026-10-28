@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 import platform
 import subprocess
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from bson import ObjectId
 import pytest
@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ALLOWED_HOSTS = {
     "localhost", "127.0.0.1", "cdn2.mielenosoitukset.fi",
     "fonts.googleapis.com", "fonts.gstatic.com", "cdn.socket.io",
+    "cdnjs.cloudflare.com", "a.tile.openstreetmap.org", "b.tile.openstreetmap.org", "c.tile.openstreetmap.org",
 }
 IMAGE_FIELDS = ("cover_picture", "cover_image", "preview_image", "img", "image_url")
 PHOTO = "/static/kampanja/og-banner.png"
@@ -47,6 +48,8 @@ def source_inputs() -> dict:
         "mielenosoitukset_fi/templates/_layouts/demonstration-list.html",
         "mielenosoitukset_fi/templates/_partials/demonstration-listing.html",
         "mielenosoitukset_fi/templates/organizations/details.html",
+        "mielenosoitukset_fi/templates/pride-nakyvaksi/index.html",
+        "mielenosoitukset_fi/static/leaflet/leaflet.js", "mielenosoitukset_fi/static/leaflet/leaflet.css",
         "mielenosoitukset_fi/static/css/user-workspace.css",
         "mielenosoitukset_fi/static/css/product-tokens.css",
         "mielenosoitukset_fi/static/js/user-pagination.js",
@@ -81,10 +84,10 @@ def capture(item) -> None:
     inputs_before = source_inputs()
 
     record = db.demonstrations.find_one({"_id": seed["demo_id"]})
-    if scenario in {"missing-times", "continuous-grid", "organization"}:
+    if scenario in {"missing-times", "continuous-grid", "organization", "pride"}:
         db.demonstrations.delete_many({})
         db.recurring_demonstrations.delete_many({})
-    for index in range(72 if scenario in {"missing-times", "continuous-grid", "organization"} else 15):
+    for index in range(72 if scenario in {"missing-times", "continuous-grid", "organization", "pride"} else 15):
         row = deepcopy(record)
         event_date = date.today() + timedelta(days=5 + index)
         row.update(
@@ -120,7 +123,30 @@ def capture(item) -> None:
                        end_time=None if index % 4 == 1 else "14:00",
                        cancelled=index % 17 == 4, cover_picture=PHOTO,
                        organizers=[{"organization_id": seed["org_id"], "name": "Yhdenvertaisuusverkosto"}])
+        if scenario == "pride":
+            for field in IMAGE_FIELDS:
+                row.pop(field, None)
+            cities = (("Helsinki", "Kansalaistori", "60.1699", "24.9384"),
+                      ("Turku", "Kauppatori", "60.4518", "22.2666"),
+                      ("Tampere", "Keskustori", "61.4978", "23.7610"))
+            city, address, latitude, longitude = cities[index % 3]
+            row.update(tags=["pride"], city=city, address=address, cover_picture=PHOTO,
+                       cancelled=False, latitude=latitude, longitude=longitude,
+                       start_time=None if index % 4 == 0 else "12:00",
+                       end_time=None if index % 4 == 1 else "14:00")
+            if index % 8 == 0:
+                row["latitude"] = None
+            elif index % 8 == 1:
+                row["longitude"] = "invalid"
         db.demonstrations.insert_one(row)
+    if scenario == "pride":
+        public = db.demonstrations.find_one({"slug": "react-list-0"})
+        for label, changes in (("foreign", {"tags": ["other-topic"]}), ("hidden", {"hide": True}),
+                               ("unapproved", {"approved": False}), ("rejected", {"rejected": True}),
+                               ("past", {"date": (date.today() - timedelta(days=1)).isoformat()})):
+            control = deepcopy(public)
+            control.update(_id=ObjectId(), slug=f"pride-control-{label}", title=f"Control {label}", **changes)
+            db.demonstrations.insert_one(control)
     if scenario == "organization":
         db.organizations.update_one({"_id": seed["org_id"]}, {"$set": {
             "name": "Yhdenvertaisuusverkosto", "logo": PHOTO,
@@ -148,11 +174,12 @@ def capture(item) -> None:
         ctx.route("**/*", assets)
         if js:
             ctx.add_init_script(f"localStorage.setItem('theme', {json.dumps(theme)})")
-            if scenario in {"missing-times", "continuous-grid", "organization"}:
+            if scenario in {"missing-times", "continuous-grid", "organization", "pride"}:
                 ctx.add_init_script("Object.defineProperty(navigator,'connection',{value:{saveData:true}})")
         if user:
             ctx.add_cookies([{"name": "session", "value": user.get_cookie("session").value, "url": base}])
         page = ctx.new_page()
+        page._moso_capture_js = js
         page._moso_capture_role = role or ("authenticated" if user else "anonymous")
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.on("requestfailed", lambda req: failed.append(req.url))
@@ -163,7 +190,7 @@ def capture(item) -> None:
             page.locator(target).first.evaluate("e => e.scrollIntoView({block:'start',behavior:'instant'})")
             page.evaluate("(window.publicListWindow?.scrollHost || window).scrollBy({top:-80,behavior:'instant'})")
         page.evaluate("document.fonts.ready")
-        if scenario == "organization":
+        if scenario in {"organization", "pride"} and page._moso_capture_js:
             page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
             page.evaluate("() => Promise.all(document.getAnimations().filter(a => a.effect?.getTiming().iterations !== Infinity).map(a => a.finished.catch(() => {})))")
         filename = f"{stage}-{name}.png"
@@ -176,7 +203,8 @@ def capture(item) -> None:
             "theme": "dark" if "dark" in (page.locator("html").get_attribute("class") or "") else "light",
             "state": name, "role": page._moso_capture_role,
         }
-        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), filename
+        if not (scenario == "pride" and stage == "before"):
+            assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), filename
 
     def save_metadata():
         after = source_inputs()
@@ -192,9 +220,243 @@ def capture(item) -> None:
                 "Real Flask pages and isolated test Mongo data; actual styles/fonts/assets.",
                 "External analytics are blocked; loading/error/attendance responses and module failure are deliberate test states.",
                 "Photo states use the repository's existing og-banner.png on a synthetic event, not a production event.",
+                *(["Pride primary maps require actual OpenStreetMap tiles; no substitute tiles are supplied.",
+                   "Pride map outage, empty/no-coordinate responses, tile warning, list outage, failed module and failed local Leaflet script states are deliberately intercepted.",
+                   "Pride map fixtures contain 72 public future events, 54 valid map locations across three cities, nullable clocks and excluded visibility/tag/date controls."] if scenario == "pride" else []),
             ],
         }
         (output / f"{stage}-metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+
+    if scenario == "pride":
+        path = "/pride-nakyvaksi"
+        fixture = client.get("/api/demonstrations", query_string={"tag": "pride", "per_page": 100}).json
+        assert fixture["total"] == 72 and len(fixture["results"]) == 72
+        assert all(not row["title"].startswith("Control ") for row in fixture["results"])
+        (output / f"{stage}-fixture-response.json").write_text(json.dumps(fixture, indent=2))
+
+        def wait_for_tiles(page):
+            page.wait_for_function("() => {const tiles=[...document.querySelectorAll('#pride-map img.leaflet-tile')];return tiles.length>0 && tiles.every(tile=>tile.complete && tile.naturalWidth>0);}", timeout=30000)
+
+        def wait_for_map(page):
+            page.locator('#pride-map.leaflet-container').wait_for(state='visible')
+            page.wait_for_function("document.querySelectorAll('#pride-map .leaflet-overlay-pane path.leaflet-interactive').length === 54")
+            wait_for_tiles(page)
+            if stage == 'final':
+                summary = page.locator('.pride-map-summary')
+                assert summary.get_attribute('data-event-count') == '72'
+                assert summary.get_attribute('data-city-count') == '3'
+                assert summary.get_attribute('data-mapped-count') == '54'
+
+        def wait_for_list(page, count=12):
+            page.wait_for_function("count => document.querySelectorAll('.demo-card').length === count && document.querySelector('#demos-grid')?.getAttribute('aria-busy') === 'false'", arg=count)
+
+        def capture_states():
+            for width, theme in ((1440, 'light'), (390, 'dark')):
+                ctx, page = context(width, theme)
+                mode = {'map': 'hold', 'list': 'normal'}
+                pending = []
+
+                def requests(route):
+                    query = parse_qs(urlparse(route.request.url).query)
+                    if query.get('scope') == ['pride_map']:
+                        assert query.get('tag') == ['pride']
+                        if mode['map'] == 'hold':
+                            pending.append(route)
+                            return
+                        if mode['map'] == 'empty':
+                            payload = {**fixture, 'page': 1, 'total_pages': 1, 'total': 0, 'result_start': 0, 'result_end': 0, 'results': []}
+                            route.fulfill(content_type='application/json', body=json.dumps(payload))
+                            return
+                        if mode['map'] == 'no-coordinates':
+                            payload = deepcopy(fixture)
+                            for row in payload['results']:
+                                row['latitude'] = row['longitude'] = None
+                            route.fulfill(content_type='application/json', body=json.dumps(payload))
+                            return
+                    elif mode['list'] == 'error-once':
+                        mode['list'] = 'normal'
+                        route.fulfill(status=503, content_type='application/json', body='{"error":"Synthetic listing outage"}')
+                        return
+                    route.continue_()
+
+                page.route('**/api/demonstrations?*', requests)
+                try:
+                    page.goto(base + path, wait_until='domcontentloaded')
+                    wait_for_list(page)
+                    page.wait_for_function("document.querySelector('#pride-map')?.classList.contains('leaflet-container')")
+                    assert pending, 'The map request must expose its fixed scope marker.'
+                    wait_for_tiles(page)
+                    shot(page, f'pride-map-loading-{width}-{theme}', '#pride-map-section')
+                    pending.pop(0).fulfill(status=503, content_type='application/json', body='{"error":"Synthetic map outage"}')
+                    page.locator('#pride-map-error').wait_for(state='visible')
+                    shot(page, f'pride-map-error-{width}-{theme}', '#pride-map-section')
+                    mode['map'] = 'normal'
+                    page.locator('#pride-map-retry').click()
+                    wait_for_map(page)
+                    page.locator('#pride-map .leaflet-overlay-pane path.leaflet-interactive').last.click()
+                    page.locator('.leaflet-popup-content').wait_for(state='visible')
+                    shot(page, f'pride-map-popup-after-retry-{width}-{theme}', '#pride-map-section')
+                    page.locator('.leaflet-popup-close-button').click()
+                    marker = page.locator('#pride-map .leaflet-overlay-pane path.leaflet-interactive').last
+                    assert marker.get_attribute('role') == 'button'
+                    assert marker.get_attribute('tabindex') == '0'
+                    assert (marker.get_attribute('aria-label') or '').strip()
+                    page.keyboard.press('Tab')
+                    marker.focus()
+                    assert marker.evaluate("element => element === document.activeElement && element.matches(':focus-visible')")
+                    shot(page, f'pride-map-marker-keyboard-focus-{width}-{theme}', '#pride-map-section')
+                    marker.press('Enter')
+                    page.locator('.leaflet-popup-content').wait_for(state='visible')
+                    page.wait_for_function("document.activeElement?.matches('#pride-map .leaflet-popup-content a')")
+                    shot(page, f'pride-map-marker-keyboard-popup-{width}-{theme}', '#pride-map-section')
+                    page.keyboard.press('Escape')
+                    page.locator('.leaflet-popup-content').wait_for(state='hidden')
+                    assert marker.evaluate('element => element === document.activeElement')
+
+                    mode['map'] = 'empty'
+                    page.goto(base + path, wait_until='networkidle')
+                    page.locator('#pride-map-empty').wait_for(state='visible')
+                    assert page.locator('.pride-map-summary').get_attribute('data-event-count') == '0'
+                    wait_for_list(page)
+                    shot(page, f'pride-map-empty-{width}-{theme}', '#pride-map-section')
+                    mode['map'] = 'no-coordinates'
+                    page.goto(base + path, wait_until='networkidle')
+                    page.locator('#pride-map-empty').wait_for(state='visible')
+                    summary = page.locator('.pride-map-summary')
+                    assert summary.get_attribute('data-event-count') == '72'
+                    assert summary.get_attribute('data-mapped-count') == '0'
+                    wait_for_list(page)
+                    shot(page, f'pride-map-no-coordinates-{width}-{theme}', '#pride-map-section')
+
+                    mode['map'] = 'normal'
+                    page.route('**://*.tile.openstreetmap.org/**', lambda route: route.abort())
+                    page.goto(base + path, wait_until='networkidle')
+                    page.locator('.pride-map-tile-warning').wait_for(state='visible')
+                    wait_for_list(page)
+                    shot(page, f'pride-map-tile-warning-{width}-{theme}', '#pride-map-section')
+                    page.unroute('**://*.tile.openstreetmap.org/**')
+                    page.goto(base + path, wait_until='networkidle')
+                    wait_for_map(page)
+                    wait_for_list(page)
+                    page.locator('#load-more-btn').click()
+                    wait_for_list(page, 24)
+                    shot(page, f'pride-loaded-24-{width}-{theme}', "[data-list-page='2'] .demo-card")
+                    page.locator('#demo-search').fill('Ilmastomarssi')
+                    page.locator('#search-form button[type=submit]').click()
+                    wait_for_list(page)
+                    assert all('Ilmastomarssi' in value for value in page.locator('.demo-card-title').all_text_contents())
+                    shot(page, f'pride-filtered-{width}-{theme}', '.public-list-results')
+                    page.locator('#demo-search').fill('no-such-pride-event')
+                    page.locator('#search-form button[type=submit]').click()
+                    page.locator('#no-results').wait_for(state='visible')
+                    shot(page, f'pride-list-empty-{width}-{theme}', '#no-results')
+                    assert page.locator('.pride-map-summary').get_attribute('data-event-count') == '72'
+                    mode['list'] = 'error-once'
+                    page.goto(base + path, wait_until='networkidle')
+                    page.locator('#listing-load-error').wait_for(state='visible')
+                    shot(page, f'pride-list-error-{width}-{theme}', '#listing-load-error')
+                    page.locator('#listing-load-error button').click()
+                    wait_for_list(page)
+                    shot(page, f'pride-list-retry-{width}-{theme}', '#demos-grid')
+                finally:
+                    for route in pending:
+                        try:
+                            route.abort()
+                        except Exception:
+                            pass
+                    ctx.close()
+
+        try:
+            for width in (390, 1440):
+                for theme in ("light", "dark"):
+                    ctx, page = context(width, theme)
+                    try:
+                        page.goto(base + path, wait_until='networkidle')
+                        page.locator('.demo-card').first.wait_for(state='visible')
+                        wait_for_map(page)
+                        shot(page, f"pride-intro-{width}-{theme}")
+                        shot(page, f"pride-map-{width}-{theme}", '#pride-map-section')
+                        shot(page, f"pride-events-{width}-{theme}", '#demos')
+                        if stage == 'final' and (width, theme) in ((1440, 'light'), (390, 'dark')):
+                            shot(page, f'pride-information-{width}-{theme}', '.pride-information')
+                            shot(page, f'pride-guidelines-{width}-{theme}', '#demo-guidelines')
+                            page.locator('.pride-actions a').first.focus()
+                            shot(page, f'pride-keyboard-focus-{width}-{theme}', '.pride-intro')
+                    finally:
+                        ctx.close()
+            if stage == 'final':
+                capture_states()
+                for width, theme in ((1440, 'light'), (390, 'dark')):
+                    ctx, page = context(width, theme, js=False)
+                    try:
+                        page.goto(base + path, wait_until='networkidle')
+                        shot(page, f'pride-no-javascript-{width}-{theme}', '#pride-map-section')
+                    finally:
+                        ctx.close()
+                    ctx, page = context(width, theme)
+                    page.route('**/frontend/assets/pride-*.js', lambda route: route.abort())
+                    try:
+                        page.goto(base + path, wait_until='networkidle')
+                        wait_for_list(page)
+                        assert page.locator('#pride-map.leaflet-container').count() == 0
+                        page.locator('.pride-map-fallback').wait_for(state='visible')
+                        shot(page, f'pride-map-module-failure-{width}-{theme}', '#pride-map-section')
+                    finally:
+                        ctx.close()
+                    ctx, page = context(width, theme)
+                    blocked_leaflet = []
+
+                    def leaflet_failure(route):
+                        if not blocked_leaflet:
+                            blocked_leaflet.append(route.request.url)
+                            route.abort()
+                        else:
+                            route.continue_()
+
+                    page.route('**/leaflet/leaflet.js*', leaflet_failure)
+                    try:
+                        page.goto(base + path, wait_until='networkidle')
+                        page.locator('#pride-map-error').wait_for(state='visible')
+                        wait_for_list(page)
+                        assert blocked_leaflet, 'The local Leaflet script must be blocked once.'
+                        shot(page, f'pride-map-library-failure-{width}-{theme}', '#pride-map-section')
+                        with page.expect_navigation(wait_until='networkidle'):
+                            page.locator('#pride-map-retry').click()
+                        wait_for_map(page)
+                        wait_for_list(page)
+                        assert not page.locator('#pride-map-error').is_visible()
+                        shot(page, f'pride-map-library-retry-{width}-{theme}', '#pride-map-section')
+                    finally:
+                        ctx.close()
+                original_locales = app.config.get('BABEL_PUBLIC_LOCALES')
+                app.config['BABEL_PUBLIC_LOCALES'] = ['fi', 'en', 'sv']
+                try:
+                    for width, theme, locale in ((1440, 'light', 'en'), (390, 'dark', 'sv')):
+                        ctx, page = context(width, theme, locale=locale)
+                        try:
+                            ctx.request.get(base + '/set_language/' + locale)
+                            page.goto(base + path, wait_until='networkidle')
+                            wait_for_map(page)
+                            assert page.locator('html').get_attribute('lang') == locale
+                            shot(page, f'pride-map-{locale}-{width}-{theme}', '#pride-map-section')
+                        finally:
+                            ctx.close()
+                finally:
+                    app.config['BABEL_PUBLIC_LOCALES'] = original_locales
+                for width, theme in ((1440, 'light'), (390, 'dark')):
+                    ctx, page = context(width, theme)
+                    try:
+                        page.goto(base + '/demonstrations', wait_until='networkidle')
+                        wait_for_list(page)
+                        shot(page, f'pride-shared-main-{width}-{theme}')
+                    finally:
+                        ctx.close()
+            assert not errors
+            save_metadata()
+        except Exception:
+            save_metadata()
+            raise
+        return
 
     if scenario == "organization":
         path = f"/organization/{seed['org_id']}"

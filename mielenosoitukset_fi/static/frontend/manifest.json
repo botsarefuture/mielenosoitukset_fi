@@ -1,69 +1,87 @@
 {
-  "_VolunteerForm-3pFlSh1V.js": {
-    "file": "assets/VolunteerForm-3pFlSh1V.js",
-    "name": "VolunteerForm",
+  "_DemonstrationCard-DBeN9s3g.js": {
+    "file": "assets/DemonstrationCard-DBeN9s3g.js",
+    "name": "DemonstrationCard",
     "imports": [
-      "_mount-island-DPmQ0j14.js"
+      "_mount-island-BCC_kmYD.js"
     ]
   },
-  "_mount-island-DPmQ0j14.js": {
-    "file": "assets/mount-island-DPmQ0j14.js",
+  "_VolunteerForm-DCFWsitP.js": {
+    "file": "assets/VolunteerForm-DCFWsitP.js",
+    "name": "VolunteerForm",
+    "imports": [
+      "_mount-island-BCC_kmYD.js"
+    ]
+  },
+  "_mount-island-BCC_kmYD.js": {
+    "file": "assets/mount-island-BCC_kmYD.js",
     "name": "mount-island"
   },
   "src/entries/campaign.tsx": {
-    "file": "assets/campaign-rthzFo5I.js",
+    "file": "assets/campaign-ehCiRC4L.js",
     "name": "campaign",
     "src": "src/entries/campaign.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-DPmQ0j14.js",
-      "_VolunteerForm-3pFlSh1V.js"
+      "_mount-island-BCC_kmYD.js",
+      "_VolunteerForm-DCFWsitP.js"
     ]
   },
   "src/entries/confirmation.tsx": {
-    "file": "assets/confirmation-D_GFUWAV.js",
+    "file": "assets/confirmation-CEuezkln.js",
     "name": "confirmation",
     "src": "src/entries/confirmation.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-DPmQ0j14.js"
+      "_mount-island-BCC_kmYD.js"
     ]
   },
   "src/entries/header.tsx": {
-    "file": "assets/header-BrWqGsAw.js",
+    "file": "assets/header-CFKMTtRE.js",
     "name": "header",
     "src": "src/entries/header.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-DPmQ0j14.js"
+      "_mount-island-BCC_kmYD.js"
     ]
   },
   "src/entries/listing.tsx": {
-    "file": "assets/listing-BxMJqFdO.js",
+    "file": "assets/listing-Jukd5PCb.js",
     "name": "listing",
     "src": "src/entries/listing.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-DPmQ0j14.js"
+      "_mount-island-BCC_kmYD.js",
+      "_DemonstrationCard-DBeN9s3g.js"
+    ]
+  },
+  "src/entries/pride.tsx": {
+    "file": "assets/pride-CJgSN4C9.js",
+    "name": "pride",
+    "src": "src/entries/pride.tsx",
+    "isEntry": true,
+    "imports": [
+      "_mount-island-BCC_kmYD.js",
+      "_DemonstrationCard-DBeN9s3g.js"
     ]
   },
   "src/entries/submit.tsx": {
-    "file": "assets/submit-D02BN7Rn.js",
+    "file": "assets/submit-D1kZ0zOX.js",
     "name": "submit",
     "src": "src/entries/submit.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-DPmQ0j14.js"
+      "_mount-island-BCC_kmYD.js"
     ]
   },
   "src/entries/volunteer.tsx": {
-    "file": "assets/volunteer-C_qnI9XB.js",
+    "file": "assets/volunteer-BTB15vlQ.js",
     "name": "volunteer",
     "src": "src/entries/volunteer.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-DPmQ0j14.js",
-      "_VolunteerForm-3pFlSh1V.js"
+      "_mount-island-BCC_kmYD.js",
+      "_VolunteerForm-DCFWsitP.js"
     ]
   }
 }

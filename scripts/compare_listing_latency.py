@@ -26,6 +26,7 @@ import sys
 import tarfile
 import tempfile
 import time
+from urllib.parse import parse_qs, urlsplit
 
 # Share the existing interpolation and reporting rules.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -196,23 +197,35 @@ def verify_responses(base_url, routes, documents, output, side, timeout):
         if suffix == "json":
             payload = json.loads(body)
             results = payload["results"]
-            selected = scoped_documents if "organization_id=" in route else documents
-            expected = sorted(selected, key=lambda item: (item["date"], item["start_time"], item["_id"]))[:12]
+            query = parse_qs(urlsplit(route).query)
+            is_pride = query.get("tag") == ["pride"]
+            selected = ([row for row in documents if "pride" in row["tags"]] if is_pride else
+                        scoped_documents if "organization_id=" in route else documents)
+            limit = min(int(query.get("per_page", ["12"])[0]), 100)
+            expected = sorted(selected, key=lambda item: (item["date"], item["start_time"], item["_id"]))[:limit]
             if [item["_id"] for item in results] != [item["_id"] for item in expected]:
                 raise RuntimeError(f"{side} API returned unexpected seeded IDs/order")
             if payload["total"] != len(selected) or any(
-                item["city"] != "Helsinki" or TAG not in item["tags"] for item in results
+                ("pride" not in item["tags"] if is_pride else item["city"] != "Helsinki" or TAG not in item["tags"])
+                for item in results
             ):
                 raise RuntimeError(f"{side} API did not preserve scoped seed values/count")
+            if is_pride and (payload["per_page"] != 100 or len(results) != min(100, len(selected))):
+                raise RuntimeError(f"{side} Pride API did not preserve its 100-result page cap")
             contract.update(result_count=len(results), total=payload["total"], ids=[item["_id"] for item in results])
+            if is_pride:
+                contract.update(tag="pride", per_page=payload["per_page"], excluded_controls=len(documents) - len(selected))
         else:
             page = PageContract()
             page.feed(body)
             title = " ".join(page.text["title"]).strip()
             heading = " ".join(page.text["h1"] + page.text["h2"]).strip()
             is_organization = route.startswith("/organization/")
-            valid_title = ORGANIZATION_NAME in title and ORGANIZATION_NAME in heading if is_organization else "mielenosoit" in title.casefold()
-            if not title or not heading or not valid_title or (route != "/submit" and not is_organization and not page.search_input):
+            is_pride = route == "/pride-nakyvaksi"
+            valid_title = ("Pride näkyväksi" in title and "Pride näkyväksi" in heading if is_pride else
+                           ORGANIZATION_NAME in title and ORGANIZATION_NAME in heading if is_organization else
+                           "mielenosoit" in title.casefold())
+            if not title or not heading or not valid_title or (route != "/submit" and not is_organization and not is_pride and not page.search_input):
                 raise RuntimeError(f"{side} page title/heading/search contract failed: {route}")
             fixed = "Helsinki" if route.startswith("/city/") else TAG if route.startswith("/tag/") else None
             if fixed and fixed not in title:
@@ -221,6 +234,8 @@ def verify_responses(base_url, routes, documents, output, side, timeout):
                 if ORGANIZATION_ID not in body:
                     raise RuntimeError(f"{side} organization page lost its fixed scope")
                 contract.update(title=title, heading=heading, organization_id=ORGANIZATION_ID)
+            elif is_pride:
+                contract.update(title=title, heading=heading, search_input=page.search_input, tag="pride")
             elif route == "/submit":
                 required = {"title", "date", "city", "description", "submission_token", "accept_terms", "submitter_email"}
                 if not page.submit_form or not required.issubset(page.fields):
@@ -234,7 +249,7 @@ def verify_responses(base_url, routes, documents, output, side, timeout):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scope", choices=("listings", "submit", "organization"), default="listings")
+    parser.add_argument("--scope", choices=("listings", "submit", "organization", "pride"), default="listings")
     parser.add_argument("--before", required=True)
     parser.add_argument("--after", required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
@@ -277,6 +292,25 @@ def main():
     if args.scope == "organization":
         for number, record in enumerate(documents):
             record["organizers"] = [{"name": ORGANIZATION_NAME, "organization_id": OTHER_ORGANIZATION_ID if number % 6 == 0 else ORGANIZATION_ID}]
+    elif args.scope == "pride":
+        cities = (("Helsinki", "60.1699", "24.9384"),
+                  ("Turku", "60.4518", "22.2666"),
+                  ("Tampere", "61.4978", "23.7610"))
+        for number, record in enumerate(documents):
+            city, latitude, longitude = cities[number % len(cities)]
+            record.update(tags=["pride"], city=city, address=f"Benchmark square, {city}",
+                          latitude=latitude, longitude=longitude)
+        # Keep the requested number of public Pride rows and add foreign-tag
+        # controls that sort among them, exposing an accidentally unscoped API.
+        controls = []
+        for number in range(max(1, args.documents // 6)):
+            control_number = args.documents + number + 1
+            controls.append({**documents[number % len(documents)],
+                             "_id": f"{control_number:024x}", "tags": [TAG],
+                             "title": f"Foreign-tag control {number + 1:03d}",
+                             "slug": f"latency-pride-control-{number + 1}",
+                             "running_number": 5000 + args.documents + number})
+        documents.extend(controls)
     document_json = json.dumps(documents, indent=2, sort_keys=True)
     (output / "documents.json").write_text(document_json)
     routes = ["/demonstrations", "/city/Helsinki", f"/tag/{TAG}",
@@ -285,6 +319,8 @@ def main():
         routes = ["/submit"]
     elif args.scope == "organization":
         routes = [f"/organization/{ORGANIZATION_ID}", f"/api/demonstrations?organization_id={ORGANIZATION_ID}&page=1&per_page=12"]
+    elif args.scope == "pride":
+        routes = ["/pride-nakyvaksi", "/api/demonstrations?tag=pride&page=1&per_page=100"]
     metadata = {"started_at": datetime.now(timezone.utc).isoformat(), "refs": refs,
                 "arguments": {**vars(args), "output_dir": str(output)}, "routes": routes,
                 "runtime": {"platform": platform.platform(), "python": sys.version,

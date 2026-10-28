@@ -70,4 +70,49 @@ def demonstration_feed(collection, event_path):
     response.set_etag(hashlib.sha256(body).hexdigest())
     response.headers['Cache-Control'] = 'public, max-age=300, must-revalidate'
     # Evaluate conditional headers per request, not inside a cached Response.
-    return response.make_conditional(request)
+    response.make_conditional(request)
+    record_feed_request(response.status_code, scope)
+    return response
+
+
+def record_feed_request(status, scope):
+    """Count fetches and approximate reader-days without pageviews or cookies.
+
+    A reader is a weekly HMAC of the trusted IP, deduplicated until Helsinki
+    midnight in the shared cache. Proxies/NAT/cache eviction make this an
+    estimate of fetching clients, never a subscription/person count.
+    """
+    try:
+        if (request.method != 'GET' or status not in (200, 304)
+                or not current_app.config.get('SITE_ANALYTICS_ENABLED', True)
+                or request.headers.get('DNT') == '1'):
+            return
+        from datetime import datetime, timedelta, timezone
+        from urllib.parse import urlencode
+        from mielenosoitukset_fi.utils import site_analytics as analytics
+
+        resource = urlencode({name: scope[name] for name in ('city', 'tag') if scope[name]}) or 'all'
+        analytics.record_event('rss_fetch', resource_id=resource, language='fi')
+        if status == 304:
+            analytics.record_event('rss_not_modified', resource_id=resource, language='fi')
+        if not analytics.visitors_enabled():
+            return
+        moment = analytics.utcnow()
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=timezone.utc)
+        identifier = analytics.visitor_hash(analytics.get_client_ip(default='', request=request),
+                                           device='rss', when=moment)
+        if not identifier:
+            return
+        local = moment.astimezone(analytics.HELSINKI_TZ)
+        midnight = analytics.HELSINKI_TZ.localize(datetime.combine(
+            local.date() + timedelta(days=1), datetime.min.time()))
+        key = f'rss-reader-day:v1:{local.date().isoformat()}:{identifier}'
+        # Keep this global across scopes: fetching city + tag feeds is still one
+        # estimated client-day. No IP/UA/cookie/account data is persisted.
+        if cache.add(key, True, timeout=max(1, int((midnight - moment).total_seconds()))):
+            if not analytics.record_event('rss_reader_day', language='fi'):
+                cache.delete(key)
+    except Exception:
+        # Analytics and cache failures must never prevent feed delivery.
+        pass

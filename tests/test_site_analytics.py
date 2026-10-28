@@ -275,7 +275,8 @@ def test_non_html_responses_are_not_recorded(app, db, monkeypatch):
 
     _clear(db)
     client.get("/demonstrations.rss")
-    assert _counts(db) == []
+    assert _total(db, page_type={"$exists": True}) == 0
+    assert _total(db, event="rss_fetch") == 1
 
 
 def test_analytics_failure_does_not_break_page(app, db, monkeypatch):

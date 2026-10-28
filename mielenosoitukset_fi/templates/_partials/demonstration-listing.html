@@ -38,7 +38,7 @@
       {% set heading_tag = 'h2' if listing_heading_level|default(1) == 2 else 'h1' %}
       <{{ heading_tag }} id="listing-title">{{ listing_title }}</{{ heading_tag }}>
       <div class="public-list-actions">
-      {% if listing_rss_url %}<a class="public-list-all" href="{{ listing_rss_url }}"><i class="fa-solid fa-rss" aria-hidden="true"></i>RSS</a>{% endif %}
+      {% if listing_rss_url %}<a class="public-list-feed" href="{{ listing_rss_url }}"><i class="fa-solid fa-rss" aria-hidden="true"></i>RSS</a>{% endif %}
       {% if listing_fixed %}<a class="public-list-all" href="{{ url_for('demonstrations') }}"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>{{ _('Kaikki mielenosoitukset') }}</a>{% endif %}
       </div>
     </header>

@@ -43,3 +43,25 @@ The visible links additionally require in-conversation visual acceptance under
 `.agents/skills/moso-visual-qa/SKILL.md`. Reverting the source and rebuilding
 frontend assets restores the old behavior, but restores its visibility defect;
 prefer a corrective patch rather than rolling back that security fix.
+
+## Feed usage reporting
+
+Server-side events appear in the existing admin site-analytics Events table:
+`rss_fetch` counts successful GETs including cached XML and 304s;
+`rss_not_modified` counts conditional 304 checks; `rss_reader_day` estimates
+active fetching clients per Helsinki-local day. Summing a date range yields
+reader-days, not unique readers across that range or subscribers. The first
+two events retain a bounded normalized city/tag resource for existing event
+resource reporting. Feed reader/bot user agents are included because automated
+polling is the RSS protocol; HEAD, DNT and disabled analytics are excluded.
+
+Estimated reader-days reuse the existing weekly HMAC of trusted client IP, in
+a separate RSS namespace, with a cache marker expiring at Helsinki midnight.
+No raw IP, user-agent, cookie or account identifier is stored. No new database
+collection or index is required, and website pageviews/visitors stay separate.
+The visitors-enabled setting controls this estimate. Accurate deduplication
+requires a working shared cache; worker-local caches, eviction or outages can
+overcount or leave estimates unavailable. An aggregator may represent many
+subscribers behind one fetching client; shared IPs merge clients, rotating IPs
+split them, and CDN hits never reaching Flask cannot be counted. These numbers
+must never be labelled subscriber counts. Analytics failures do not break RSS.

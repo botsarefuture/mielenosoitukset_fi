@@ -103,3 +103,46 @@ def test_feed_matches_translated_tags_without_exposing_private_source_fields(cli
 def test_admin_feed_cannot_bypass_public_visibility(admin_client, db, seeded_data):
     seed_feed(db, seeded_data)
     assert len(feed_items(admin_client.get('/demonstrations.rss?include_cancelled=true'))) == 3
+
+
+def test_feed_tracking_counts_polling_and_reader_days_separately(app, client, db, seeded_data):
+    from mielenosoitukset_fi.utils.cache import cache
+    seed_feed(db, seeded_data)
+    with app.app_context():
+        cache.clear()
+    db.site_analytics.delete_many({})
+    before_visitors = db.site_analytics_visitors.count_documents({})
+    options = {'REMOTE_ADDR': '198.51.100.42'}
+    first = client.get('/demonstrations.rss', environ_overrides=options, headers={'User-Agent': 'FeedFetcher'})
+    client.get('/demonstrations.rss', environ_overrides=options, headers={'If-None-Match': first.headers['ETag']})
+    client.get('/demonstrations.rss?city=Helsinki', environ_overrides=options)
+    client.get('/demonstrations.rss?tag=pride', environ_overrides={'REMOTE_ADDR': '198.51.100.43'})
+    def count(event):
+        return sum(row['count'] for row in db.site_analytics.find({'event': event}))
+    assert count('rss_fetch') == 4
+    assert count('rss_not_modified') == 1
+    assert count('rss_reader_day') == 2
+    assert db.site_analytics_visitors.count_documents({}) == before_visitors
+    rows = list(db.site_analytics.find({'event': {'$regex': '^rss_'}}))
+    assert not any('page_type' in row for row in rows)
+    assert not any('198.51.100.' in str(row) or 'FeedFetcher' in str(row) for row in rows)
+    assert {row.get('resource_id') for row in rows if row['event'] == 'rss_fetch'} == {
+        'all', 'city=helsinki', 'tag=pride'}
+
+
+@pytest.mark.parametrize('setting,headers', [('disabled', {}), ('dnt', {'DNT': '1'}), ('head', {})])
+def test_feed_tracking_respects_disable_dnt_and_head(app, client, db, setting, headers):
+    db.site_analytics.delete_many({})
+    if setting == 'disabled':
+        app.config['SITE_ANALYTICS_ENABLED'] = False
+    response = client.open('/demonstrations.rss', method='HEAD' if setting == 'head' else 'GET', headers=headers)
+    assert response.status_code == 200
+    assert db.site_analytics.count_documents({'event': {'$regex': '^rss_'}}) == 0
+
+
+def test_feed_tracking_failure_never_breaks_xml(client, monkeypatch):
+    from mielenosoitukset_fi.utils import site_analytics
+    def fail(*args, **kwargs):
+        raise RuntimeError('Analytics storage unavailable')
+    monkeypatch.setattr(site_analytics, 'record_event', fail)
+    assert client.get('/demonstrations.rss').status_code == 200

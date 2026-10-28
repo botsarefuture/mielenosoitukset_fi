@@ -6,6 +6,7 @@ import type { ListingProps } from '../components/listings/types';
 export function DemonstrationListingPage(props: ListingProps) {
   const element = useRef<HTMLElement>(null);
   const text = props.messages;
+  const EmptyHeading = props.headingLevel === 2 ? 'h3' : 'h2';
   useEffect(() => attachListing(element.current!, props), [props]);
   return <section className="public-demonstration-list" ref={element}>
     {props.cover && <img className="public-list-cover" src={props.cover} alt={props.coverAlt} />}
@@ -18,7 +19,7 @@ export function DemonstrationListingPage(props: ListingProps) {
         <p role="alert">{text.loadError}</p><button type="button" className="button button-secondary">{text.retry}</button>
       </div>
       <div id="no-results" className="no-results-card" hidden>
-        <h2 className="no-results-title">{text.emptyTitle}</h2><p className="no-results-text">{text.empty}</p>
+        <EmptyHeading className="no-results-title">{text.emptyTitle}</EmptyHeading><p className="no-results-text">{text.empty}</p>
         <div className="no-results-action">
           <button type="button" id="clear-filters-btn" className="button button-secondary" hidden>{text.clearFilters}</button>
           <a href={props.submitUrl} className="button button-primary">{text.submitEvent}</a>

@@ -33,6 +33,7 @@ def source_inputs() -> dict:
         return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
 
     changed = set(filter(None, git("diff", "--name-only", "-z", "HEAD").split("\0")))
+    changed.update(filter(None, git("diff", "--name-only", "-z", "origin/main...HEAD").split("\0")))
     changed.update(filter(None, git("ls-files", "--others", "--exclude-standard", "-z").split("\0")))
     changed.update({
         "tests/conftest.py", "config.py", "mielenosoitukset_fi/app.py",
@@ -40,6 +41,9 @@ def source_inputs() -> dict:
         "scripts/listing_visual_capture.py", "scripts/verify_react_listings.py",
         "mielenosoitukset_fi/templates/base.html",
         "mielenosoitukset_fi/templates/_layouts/demonstration-list.html",
+        "mielenosoitukset_fi/templates/_partials/demonstration-listing.html",
+        "mielenosoitukset_fi/templates/organizations/details.html",
+        "mielenosoitukset_fi/static/css/organization.css",
         "mielenosoitukset_fi/static/css/user-workspace.css",
         "mielenosoitukset_fi/static/css/product-tokens.css",
         "mielenosoitukset_fi/static/js/user-pagination.js",
@@ -74,10 +78,10 @@ def capture(item) -> None:
     inputs_before = source_inputs()
 
     record = db.demonstrations.find_one({"_id": seed["demo_id"]})
-    if scenario in {"missing-times", "continuous-grid"}:
+    if scenario in {"missing-times", "continuous-grid", "organization"}:
         db.demonstrations.delete_many({})
         db.recurring_demonstrations.delete_many({})
-    for index in range(72 if scenario in {"missing-times", "continuous-grid"} else 15):
+    for index in range(72 if scenario in {"missing-times", "continuous-grid", "organization"} else 15):
         row = deepcopy(record)
         event_date = date.today() + timedelta(days=5 + index)
         row.update(
@@ -104,7 +108,28 @@ def capture(item) -> None:
                 row.pop("end_time", None)
             if scenario == "continuous-grid" or index % 12 == 0:
                 row["cover_picture"] = PHOTO
+        if scenario == "organization":
+            for field in IMAGE_FIELDS:
+                row.pop(field, None)
+            event_date = date.today() + timedelta(days=120 if index == 71 else 5 + index // 12)
+            row.update(date=event_date.isoformat(), formatted_date=event_date.strftime("%d.%m.%Y"),
+                       start_time=None if index % 4 == 0 else "12:00",
+                       end_time=None if index % 4 == 1 else "14:00",
+                       cancelled=index % 17 == 4, cover_picture=PHOTO,
+                       organizers=[{"organization_id": seed["org_id"], "name": "Yhdenvertaisuusverkosto"}])
         db.demonstrations.insert_one(row)
+    if scenario == "organization":
+        db.organizations.update_one({"_id": seed["org_id"]}, {"$set": {
+            "name": "Yhdenvertaisuusverkosto", "logo": PHOTO,
+            "description": "Yhteistä toimintaa ja paikallista vaikuttamista eri puolilla Suomea.",
+        }})
+        public = db.demonstrations.find_one({"slug": "react-list-0"})
+        for label, changes in (("foreign", {"organizers": [{"organization_id": db.organizations.find_one({"_id": {"$ne": seed["org_id"]}})["_id"]}]}),
+                               ("hidden", {"hide": True}), ("unapproved", {"approved": False}),
+                               ("rejected", {"rejected": True})):
+            control = deepcopy(public)
+            control.update(_id=ObjectId(), slug=f"organization-control-{label}", title=f"Control {label}", **changes)
+            db.demonstrations.insert_one(control)
     if scenario == "standard":
         db.demonstrations.update_many({}, {"$unset": {name: "" for name in IMAGE_FIELDS}})
 
@@ -114,17 +139,18 @@ def capture(item) -> None:
         else:
             route.abort()
 
-    def context(width, theme, *, js=True, user=None, locale="fi-FI"):
+    def context(width, theme, *, js=True, user=None, locale="fi-FI", role=None):
         ctx = browser.new_context(viewport={"width": width, "height": 1000},
                                   locale=locale, color_scheme=theme, java_script_enabled=js)
         ctx.route("**/*", assets)
         if js:
             ctx.add_init_script(f"localStorage.setItem('theme', {json.dumps(theme)})")
-            if scenario in {"missing-times", "continuous-grid"}:
+            if scenario in {"missing-times", "continuous-grid", "organization"}:
                 ctx.add_init_script("Object.defineProperty(navigator,'connection',{value:{saveData:true}})")
         if user:
             ctx.add_cookies([{"name": "session", "value": user.get_cookie("session").value, "url": base}])
         page = ctx.new_page()
+        page._moso_capture_role = role or ("authenticated" if user else "anonymous")
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.on("requestfailed", lambda req: failed.append(req.url))
         return ctx, page
@@ -134,6 +160,9 @@ def capture(item) -> None:
             page.locator(target).first.evaluate("e => e.scrollIntoView({block:'start',behavior:'instant'})")
             page.evaluate("(window.publicListWindow?.scrollHost || window).scrollBy({top:-80,behavior:'instant'})")
         page.evaluate("document.fonts.ready")
+        if scenario == "organization":
+            page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+            page.evaluate("() => Promise.all(document.getAnimations().filter(a => a.effect?.getTiming().iterations !== Infinity).map(a => a.finished.catch(() => {})))")
         filename = f"{stage}-{name}.png"
         path = output / filename
         page.screenshot(path=str(path), animations="disabled")
@@ -142,7 +171,7 @@ def capture(item) -> None:
         image_states[filename] = {
             "viewport": page.viewport_size, "locale": page.locator("html").get_attribute("lang"),
             "theme": "dark" if "dark" in (page.locator("html").get_attribute("class") or "") else "light",
-            "state": name,
+            "state": name, "role": page._moso_capture_role,
         }
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), filename
 
@@ -163,6 +192,106 @@ def capture(item) -> None:
             ],
         }
         (output / f"{stage}-metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+
+    if scenario == "organization":
+        path = f"/organization/{seed['org_id']}"
+        fixture = client.get("/api/demonstrations", query_string={"organization_id": str(seed["org_id"]), "per_page": 100}).json
+        assert fixture["total"] == 72 and len(fixture["results"]) == 72
+        assert any(row.get("cancelled") for row in fixture["results"])
+        assert any(row["date"] > (date.today() + timedelta(days=60)).isoformat() for row in fixture["results"])
+        assert all(not row["title"].startswith("Control ") for row in fixture["results"])
+        (output / f"{stage}-fixture-response.json").write_text(json.dumps(fixture, indent=2))
+
+        def settled_org(page, first=1, last=1):
+            if stage == "before":
+                page.locator(".demo-card").first.wait_for(state="attached")
+                return
+            page.wait_for_function("([first,last]) => window.publicListWindow?.first === first && window.publicListWindow?.last === last && document.querySelector('#demos-grid')?.getAttribute('aria-busy') === 'false' && !document.querySelector('#load-more-btn').disabled", arg=[first, last])
+            assert page.locator(".demo-card").count() == (last - first + 1) * 12
+
+        for width in (390, 1440):
+            for theme in ("light", "dark"):
+                ctx, page = context(width, theme)
+                try:
+                    page.goto(base + path + "?per_page=12", wait_until="networkidle")
+                    settled_org(page)
+                    shot(page, f"organization-profile-{width}-{theme}")
+                    shot(page, f"organization-events-{width}-{theme}", "#demos")
+                finally:
+                    ctx.close()
+        if stage == "before":
+            save_metadata()
+            return
+
+        for width, theme in ((390, "dark"), (1440, "light")):
+            ctx, page = context(width, theme)
+            try:
+                page.goto(base + "/demonstrations?per_page=12", wait_until="networkidle")
+                page.locator(".demo-card").first.wait_for(state="visible")
+                shot(page, f"shared-main-{width}-{theme}")
+                page.goto(base + path + "?per_page=12", wait_until="networkidle")
+                settled_org(page)
+                page.locator("#load-more-btn").click()
+                settled_org(page, 1, 2)
+                shot(page, f"organization-loaded-24-{width}-{theme}", "[data-list-page='2'] .demo-card")
+                page.locator("#demo-search").fill("Ilmastomarssi")
+                page.locator("#search-form button[type=submit]").click()
+                settled_org(page)
+                assert all("Ilmastomarssi" in text for text in page.locator(".demo-card-title").all_text_contents())
+                shot(page, f"organization-filtered-{width}-{theme}", ".public-list-tools")
+                page.locator("#demo-search").fill("no-such-organization-event")
+                page.locator("#search-form button[type=submit]").click()
+                page.locator("#no-results").wait_for(state="visible")
+                shot(page, f"organization-empty-{width}-{theme}", "#no-results")
+                page.locator("#clear-filters-btn").click()
+                settled_org(page)
+                page.goto(base + path + "?per_page=12&page=5", wait_until="networkidle")
+                settled_org(page, 5, 5)
+                page.locator("#load-previous-btn").click()
+                settled_org(page, 4, 5)
+                shot(page, f"organization-restored-{width}-{theme}", ".public-list-results")
+            finally:
+                ctx.close()
+            ctx, page = context(width, theme)
+            pending = []
+            page.route("**/api/demonstrations?*", lambda route: pending.append(route))
+            try:
+                page.goto(base + path, wait_until="domcontentloaded")
+                page.locator(".loading-container").wait_for(state="visible")
+                shot(page, f"organization-loading-{width}-{theme}", ".public-list-results")
+                pending.pop().fulfill(status=503, content_type="application/json", body="{}")
+                page.locator("#listing-load-error").wait_for(state="visible")
+                shot(page, f"organization-initial-error-{width}-{theme}", "#listing-load-error")
+                page.unroute("**/api/demonstrations?*")
+                page.locator("#listing-load-error button").click()
+                settled_org(page)
+                shot(page, f"organization-initial-retry-{width}-{theme}", "#demos-grid")
+                page.route("**/api/demonstrations?*", lambda route: route.fulfill(status=503, content_type="application/json", body="{}"))
+                page.locator("#load-more-btn").click()
+                page.locator("#listing-load-error").wait_for(state="visible")
+                assert page.locator(".demo-card").count() == 12
+                shot(page, f"organization-append-error-{width}-{theme}", "#listing-load-error")
+                page.unroute("**/api/demonstrations?*")
+                page.locator("#listing-load-error button").click()
+                settled_org(page, 1, 2)
+                shot(page, f"organization-append-retry-{width}-{theme}", "[data-list-page='2']")
+            finally:
+                ctx.close()
+        for fixture_name, label in (("user_client", "organization-admin"), ("admin_client", "global-admin")):
+            user = request.getfixturevalue(fixture_name)
+            ctx, page = context(1440, "light", user=user, role=label)
+            try:
+                page.goto(base + path, wait_until="networkidle")
+                settled_org(page)
+                assert page.locator("#org-follow-btn").is_visible()
+                assert page.locator("#toolbox-sidebar").count() == 1
+                shot(page, f"organization-{label}-profile-1440-light")
+                shot(page, f"organization-{label}-events-1440-light", "#demos")
+            finally:
+                ctx.close()
+        assert not errors
+        save_metadata()
+        return
 
     if scenario == "continuous-grid":
         def settled_grid(page, first, last):

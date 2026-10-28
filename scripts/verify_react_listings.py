@@ -44,6 +44,14 @@ TEST_FILES = (
     "tests/test_public_pagination_limits.py",
     "tests/test_api_contract.py",
 )
+ORGANIZATION_TEST_FILES = (
+    "tests/test_react_organization_listing.py",
+    "tests/test_public_follow_feedback_contract.py",
+    "tests/test_public_toolbar_contract.py",
+    "tests/test_organization_orphan_members.py",
+    "tests/test_organization_fill_page.py",
+    "tests/test_public_demonstrations_api.py",
+)
 CAPTURE_TEST = (
     "tests/test_public_listing_contract.py::"
     "test_public_listing_pagination_controller_supports_buttons_and_sentinels"
@@ -61,7 +69,7 @@ def main() -> int:
     parser.add_argument("--node", default=os.environ.get("MOSO_QA_NODE", "node"))
     parser.add_argument("--output-dir", type=Path, help="Directory for screenshots and capture metadata")
     parser.add_argument("--stage", choices=("before", "final"), default="final")
-    parser.add_argument("--scenario", choices=("standard", "missing-times", "continuous-grid"), default="standard")
+    parser.add_argument("--scenario", choices=("standard", "missing-times", "continuous-grid", "organization"), default="standard")
     args = parser.parse_args()
     if sys.version_info < (3, 12):
         parser.error("Use Python 3.12 or newer with the project's development dependencies installed.")
@@ -78,7 +86,8 @@ def main() -> int:
             run([args.node, "node_modules/typescript/bin/tsc", "--noEmit"])
             run([args.node, "node_modules/vite/bin/vite.js", "build", "--config", "frontend/vite.config.ts"])
             run([args.node, "frontend/prerender.mjs"])
-            run([sys.executable, "-m", "pytest", *TEST_FILES, "-o", "addopts=", "-q", "--tb=short"])
+            tests = (*TEST_FILES, *ORGANIZATION_TEST_FILES) if args.scenario == "organization" else TEST_FILES
+            run([sys.executable, "-m", "pytest", *tests, "-o", "addopts=", "-q", "--tb=short"])
         if args.mode in ("capture", "all"):
             output = args.output_dir.expanduser().resolve()
             output.mkdir(parents=True, exist_ok=True)

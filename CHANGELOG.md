@@ -10,6 +10,8 @@
 
 - Modernize the demonstration submission flow with reusable React progress, import-choice and navigation components, a full-width product-token layout and accessible step focus. Preserve existing fields, imports, drafts and multipart submission; only explicit JSON success clears a draft. Restore date/time picker displays as well as their submitted values so restored drafts remain valid.
 
+- Reuse shared React cards, search, bounded pagination and retry states on organization event lists, preserving organization scope, cancelled events and existing profile actions. Use available page width and a section heading under the organization name.
+
 - Keep loaded demonstration cards in one continuous responsive grid, filling rows across page boundaries while preserving card columns, bounded loading, focus and scroll restoration during eviction and resizing.
 
 - Keep successfully rendered listing pages visible when another card batch fails, expose retry without advancing the result count, and display missing clock information without orphaned time labels. Extend repeatable real-application checks for nullable clocks and pagination.

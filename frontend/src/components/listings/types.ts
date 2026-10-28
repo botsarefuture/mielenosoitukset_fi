@@ -15,7 +15,7 @@ export type ListingMessages = {
   loginPrompt: string; attendingSuffix: string; loadingFriends: string; invite: string; allEvents: string; endTime: string;
 };
 export type ListingProps = {
-  title: string; locale: string; fixed: Record<string, string>; cities: string[]; authenticated: boolean;
+  title: string; headingLevel?: 1 | 2; locale: string; fixed: Record<string, string>; cities: string[]; authenticated: boolean;
   endpoint: string; attendanceEndpoint: string; allEventsUrl: string; submitUrl: string;
   detailUrl: string; seriesUrl: string; tagUrl: string;
   cover: string | null; coverAlt: string; messages: ListingMessages;

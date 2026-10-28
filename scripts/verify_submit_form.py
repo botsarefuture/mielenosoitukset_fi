@@ -43,7 +43,7 @@ def main() -> int:
     parser.add_argument("mode", choices=("check", "capture", "all"))
     parser.add_argument("--node", default=os.environ.get("MOSO_QA_NODE", "node"))
     parser.add_argument("--output-dir", type=Path)
-    parser.add_argument("--stage", choices=("before", "final", "feedback"), default="final")
+    parser.add_argument("--stage", choices=("before", "final", "feedback", "progress", "progress-before"), default="final")
     args = parser.parse_args()
     if sys.version_info < (3, 12):
         parser.error("Use Python 3.12+ with the project development dependencies.")

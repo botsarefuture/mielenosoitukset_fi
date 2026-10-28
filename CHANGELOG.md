@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Center completed-step checkmarks inside the submission progress circles on desktop and mobile.
+
 - Modernize the demonstration submission flow with reusable React progress, import-choice and navigation components, a full-width product-token layout and accessible step focus. Preserve existing fields, imports, drafts and multipart submission; only explicit JSON success clears a draft. Restore date/time picker displays as well as their submitted values so restored drafts remain valid.
 
 - Keep loaded demonstration cards in one continuous responsive grid, filling rows across page boundaries while preserving card columns, bounded loading, focus and scroll restoration during eviction and resizing.

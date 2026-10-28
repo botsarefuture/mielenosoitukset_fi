@@ -56,6 +56,7 @@ def capture(item) -> None:
     browser = request.getfixturevalue("playwright_browser")
     images, image_hashes, image_states, errors, failed, responses = [], {}, {}, [], [], []
     before = source_inputs()
+    progress_geometry = []
 
     def assets(route):
         if urlparse(route.request.url).scheme in {"blob", "data", "about"} or urlparse(route.request.url).hostname in ALLOWED_HOSTS:
@@ -238,9 +239,40 @@ def capture(item) -> None:
             finally:
                 context.close()
 
+    def capture_progress():
+        for width in (390, 1440):
+            for theme in ("light", "dark"):
+                context = browser.new_context(viewport={"width": width, "height": 1000}, locale="fi-FI", color_scheme=theme)
+                context.route("**/*", assets)
+                context.add_init_script(f"localStorage.setItem('theme', {json.dumps(theme)})")
+                page = context.new_page()
+                page.on("pageerror", lambda error: errors.append(str(error)))
+                page.on("requestfailed", lambda req: failed.append(req.url))
+                try:
+                    page.goto(base + "/submit", wait_until="networkidle")
+                    page.wait_for_function("document.querySelector('[data-react-island=submit-progress]').dataset.reactMounted === 'true'")
+                    page.evaluate("showPage(5)")
+                    shot(page, f"steps-{width}-{theme}", ".progress-container")
+                    geometry = page.locator(".progress-step.completed .step-circle").evaluate_all("""circles => circles.map(circle => {
+                        const icon = circle.querySelector('i');
+                        const outer = circle.getBoundingClientRect(), inner = icon.getBoundingClientRect();
+                        const style = getComputedStyle(icon), pseudo = getComputedStyle(icon, '::before');
+                        return {circle:{x:outer.x,y:outer.y,width:outer.width,height:outer.height}, icon:{x:inner.x,y:inner.y,width:inner.width,height:inner.height},
+                            dx:inner.x+inner.width/2-outer.x-outer.width/2,dy:inner.y+inner.height/2-outer.y-outer.height/2,
+                            margin:style.margin,padding:style.padding,lineHeight:style.lineHeight,font:style.font,content:pseudo.content};
+                    })""")
+                    progress_geometry.append({"width": width, "theme": theme, "completed": geometry})
+                    if stage == "progress":
+                        assert len(geometry) == 4
+                        assert all(abs(icon[axis]) <= .25 for icon in geometry for axis in ("dx", "dy")), geometry
+                finally:
+                    context.close()
+
     failure = None
     try:
-        if stage == "feedback":
+        if stage in {"progress", "progress-before"}:
+            capture_progress()
+        elif stage == "feedback":
             capture_feedback()
         else:
             perform_captures()
@@ -253,6 +285,7 @@ def capture(item) -> None:
         "run_id": os.environ.get("MOSO_SUBMIT_CAPTURE_RUN"), "stage": stage,
         "completed": failure is None, "failure": failure,
         "images": images, "image_hashes": image_hashes, "image_states": image_states,
+        "progress_geometry": progress_geometry,
         "errors": errors, "failed": sorted(set(failed)), "http_errors": responses,
         "source_inputs": after, "runtime": {"python": platform.python_version()},
         "notes": ["Real Flask page and disposable test database; actual styles, fonts and Quill assets.",

@@ -29,6 +29,7 @@
 .submit-page .progress-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
 .submit-page .progress-step { display: flex; align-items: center; gap: .75rem; padding: .5rem .75rem; color: var(--product-text-muted); border-radius: .5rem; }
 .submit-page .step-circle { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 2rem; height: 2rem; border: 1px solid var(--product-border); border-radius: 50%; background: var(--product-surface); color: inherit; font-weight: 600; }
+.submit-page .step-circle > i { margin: 0; }
 .submit-page .step-label { font-size: .9rem; font-weight: 500; }
 .submit-page .progress-step.active { color: var(--product-primary); background: var(--product-primary-soft); }
 .submit-page .progress-step.active .step-circle { background: var(--product-action-bg); border-color: var(--product-action-bg); color: var(--product-on-action); }

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Fix shared admin logout initialization so admin pages load without JavaScript errors and confirmation correctly resets and cancels its countdown.
+
 - Reuse the shared React demonstration listing on Pride näkyväksi, add a safe React map with complete scoped pagination and real event counts, and simplify the responsive Pride page in Finnish, English and Swedish. Preserve all three public URLs, submission guidance, map attribution and independently usable listing/error states.
 - Track RSS fetches, conditional polls and estimated active reader-days in existing analytics, keeping them separate from website visitors and subscriber counts; respect tracking settings and DNT without storing raw client identifiers.
 

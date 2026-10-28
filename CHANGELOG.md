@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 - Reuse the shared React demonstration listing on Pride näkyväksi, add a safe React map with complete scoped pagination and real event counts, and simplify the responsive Pride page in Finnish, English and Swedish. Preserve all three public URLs, submission guidance, map attribution and independently usable listing/error states.
+- Restrict RSS to upcoming approved public demonstrations, add city/tag subscriptions, and isolate cached feed scopes with stable conditional HTTP responses. Add feed autodiscovery and RSS links to main, city and tag listings.
 
 - Reduce repeated test-user setup work and bound stalled CI tests with thread diagnostics and slow-test timings; retain the complete test selection.
 

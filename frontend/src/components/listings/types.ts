@@ -17,7 +17,7 @@ export type ListingMessages = {
 };
 export type ListingProps = {
   title: string; headingLevel?: 1 | 2; locale: string; fixed: Record<string, string>; cities: string[]; authenticated: boolean;
-  endpoint: string; attendanceEndpoint: string; allEventsUrl: string; submitUrl: string;
+  endpoint: string; attendanceEndpoint: string; allEventsUrl: string; submitUrl: string; rssUrl?: string | null;
   detailUrl: string; seriesUrl: string; tagUrl: string;
   cover: string | null; coverAlt: string; messages: ListingMessages;
 };

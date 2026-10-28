@@ -157,6 +157,8 @@
   outline-offset: 3px;
 }
 .pride-page :is(#demos, #demo-guidelines, #pride-map-section) { scroll-margin-top: 6rem; }
+/* Keep mobile popup titles above the map control overlay, inside the map stacking context. */
+.pride-page .leaflet-popup-pane { z-index: 1100; }
 .pride-page .leaflet-popup-content-wrapper,
 .pride-page .leaflet-popup-tip {
   background: var(--product-surface);

@@ -470,6 +470,14 @@ def test_map_markers_open_and_close_details_with_keyboard_focus(client, db, seed
     details.press('Escape')
     expect(popup).to_be_hidden()
     expect(marker).to_be_focused()
+    marker.press('Space')
+    expect(details).to_be_focused()
+    # Leaflet's close control is outside the supplied popup content.
+    close = page.locator('.leaflet-popup-close-button')
+    close.focus()
+    close.press('Escape')
+    expect(popup).to_be_hidden()
+    expect(marker).to_be_focused()
 
 
 @pytest.mark.e2e

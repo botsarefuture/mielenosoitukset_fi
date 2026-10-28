@@ -366,7 +366,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/list.html:415
 #: mielenosoitukset_fi/templates/tag_list.html:466
 msgid "Hae mielenosoituksia..."
-msgstr ""
+msgstr "Sök demonstrationer..."
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:163
 #: mielenosoitukset_fi/templates/city.html:716

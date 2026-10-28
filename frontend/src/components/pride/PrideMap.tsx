@@ -14,6 +14,8 @@ type Tiles = { addTo(map: MapInstance): Tiles; on(name: string, handler: () => v
 type Marker = {
   bindPopup(content: HTMLElement): Marker; addTo(group: Group): Marker;
   getElement(): SVGElement | undefined; openPopup(): Marker; closePopup(): Marker;
+  getPopup(): { getElement(): HTMLElement | undefined } | undefined;
+  on(name: 'popupopen', handler: () => void): Marker;
 };
 type Leaflet = {
   map(node: HTMLElement, options: { center: Point; zoom: number; scrollWheelZoom: boolean }): MapInstance;
@@ -156,11 +158,15 @@ export function PrideMap(props: PrideMapProps) {
                 content.querySelector('a')?.focus();
               }
             });
-            content.addEventListener('keydown', key => {
+            const closeOnEscape = (key: KeyboardEvent) => {
               if (key.key === 'Escape') {
                 key.preventDefault(); key.stopPropagation();
                 marker.closePopup(); node.focus();
               }
+            };
+            marker.on('popupopen', () => {
+              // Include Leaflet's close control, which sits outside our text content.
+              marker.getPopup()?.getElement()?.addEventListener('keydown', closeOnEscape);
             });
           }
           bounds.push(point);

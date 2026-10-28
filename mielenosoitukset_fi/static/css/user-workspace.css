@@ -147,14 +147,15 @@ h1 {
 }
 .public-list-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 1.5rem; margin-bottom: 1.5rem; }
 .public-list-heading h1, .public-list-heading h2 { margin: 0; text-align: left; font-size: clamp(1.5rem, 2vw, 2rem); color: var(--product-primary); font-weight: 700; overflow-wrap: anywhere; }
-.public-list-all {
+.public-list-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.public-list-all, .public-list-feed {
   display: inline-flex; align-items: center; gap: .625rem; min-height: 44px;
   padding: .5rem .875rem; border: 1px solid var(--product-border);
   border-radius: var(--user-radius-small); color: var(--product-primary);
   background: var(--product-surface-muted); text-decoration: none; font-weight: 600;
 }
-.public-list-all:hover { border-color: var(--product-primary); background: var(--product-primary-soft); color: var(--product-primary-strong); }
-.public-list-all:focus-visible { outline: 2px solid var(--product-primary); outline-offset: 3px; }
+.public-list-all:hover, .public-list-feed:hover { border-color: var(--product-primary); background: var(--product-primary-soft); color: var(--product-primary-strong); }
+.public-list-all:focus-visible, .public-list-feed:focus-visible { outline: 2px solid var(--product-primary); outline-offset: 3px; }
 .public-list-tools .public-search-submit {
   min-width: 6rem; background: var(--product-accent); color: var(--product-on-accent);
   border: 1px solid var(--product-accent); box-shadow: none; transform: none;

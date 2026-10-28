@@ -1,12 +1,13 @@
 {% from '_macros/_public_search.html' import public_demo_search with context %}
 {% set listing_locale = current_locale if current_locale is defined and current_locale in get_supported_locales() else session.get('locale', 'fi') %}
 {% set listing_locale = listing_locale if listing_locale in get_supported_locales() else 'fi' %}
+{% set listing_rss_url = url_for('demonstrations_rss', **listing_fixed) if not listing_fixed.get('organization_id') and not listing_fixed.get('parent_id') else none %}
 {% set listing_props = {
   'title': listing_title, 'fixed': listing_fixed, 'locale': listing_locale,
   'headingLevel': listing_heading_level|default(1),
   'cities': city_list, 'authenticated': current_user.is_authenticated,
   'endpoint': url_for('api.list_demonstrations'), 'attendanceEndpoint': url_for('api.friends_attending'),
-  'allEventsUrl': url_for('demonstrations'), 'submitUrl': url_for('submit'),
+  'rssUrl': listing_rss_url, 'allEventsUrl': url_for('demonstrations'), 'submitUrl': url_for('submit'),
   'detailUrl': url_for('demonstration_detail', demo_id='__ID__'),
   'seriesUrl': url_for('siblings_meeting', parent='__ID__'),
   'tagUrl': url_for('tag_detail', tag_name='__TAG__'),
@@ -36,7 +37,10 @@
     <header class="public-list-heading">
       {% set heading_tag = 'h2' if listing_heading_level|default(1) == 2 else 'h1' %}
       <{{ heading_tag }} id="listing-title">{{ listing_title }}</{{ heading_tag }}>
+      <div class="public-list-actions">
+      {% if listing_rss_url %}<a class="public-list-feed" href="{{ listing_rss_url }}"><i class="fa-solid fa-rss" aria-hidden="true"></i>RSS</a>{% endif %}
       {% if listing_fixed %}<a class="public-list-all" href="{{ url_for('demonstrations') }}"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>{{ _('Kaikki mielenosoitukset') }}</a>{% endif %}
+      </div>
     </header>
     <fieldset class="public-list-fallback" disabled>
       {{ public_demo_search(fixed_city=listing_fixed.get('city')) }}

@@ -450,9 +450,7 @@ function confirmAction(action, taskId) {
     </script>
     <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const logoutLink = document.getElementById("logoutLink");
   const logoutModalEl = document.getElementById("logoutConfirmModal");
-  const logoutModal = new bootstrap.Modal(logoutModalEl);
   const countdownEl = document.getElementById("countdown");
   const confirmLogoutBtn = document.getElementById("confirmLogoutBtn");
   const cancelBtn = document.getElementById("cancelLogoutBtn");
@@ -480,17 +478,14 @@ document.addEventListener("DOMContentLoaded", () => {
     clearInterval(countdownTimer);
   }
 
-  logoutLink.addEventListener("click", (e) => {
-    e.preventDefault();
-    logoutModal.show();
-    startCountdown();
-  });
+  // Bootstrap's data API opens the modal from the sidebar button.
+  logoutModalEl.addEventListener("show.bs.modal", startCountdown);
 
   cancelBtn.addEventListener("click", () => {
     stopCountdown();
   });
 
-  logoutModalEl.addEventListener("hidden.bs.modal", () => {
+  logoutModalEl.addEventListener("hide.bs.modal", () => {
     stopCountdown();
   });
 

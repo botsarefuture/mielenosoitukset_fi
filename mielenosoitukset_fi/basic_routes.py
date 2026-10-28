@@ -4472,97 +4472,11 @@ def init_routes(app):
         )
     
     add_api_routes(app)
-    import xml.etree.ElementTree as ET
-    from flask import Response, url_for
-    from datetime import datetime
-    from email.utils import format_datetime
-    from bson import ObjectId
-    import html
-
-
-    def create_rss_feed(demonstrations):
-        """
-        Build an RSS 2.0 feed for demonstrations.
-        """
-        feed = ET.Element("rss", version="2.0")
-        channel = ET.SubElement(feed, "channel")
-
-        # Channel metadata
-        ET.SubElement(channel, "title").text = "Mielenosoitukset"
-        ET.SubElement(channel, "link").text = url_for("index", _external=True)
-        ET.SubElement(channel, "description").text = "Viimeisimmät mielenosoitukset."
-        ET.SubElement(channel, "language").text = "fi-fi"
-
-        now = utcnow()
-        ET.SubElement(channel, "pubDate").text = format_datetime(now)
-        ET.SubElement(channel, "lastBuildDate").text = format_datetime(now)
-        ET.SubElement(channel, "copyright").text = "© 2025 Mielenosoitukset.fi"
-        for demo in demonstrations:
-            item = ET.SubElement(channel, "item")
-
-            demo_id = str(demo.get("_id", ""))
-            demo_title = demo.get("title", "Tuntematon tapahtuma")
-            demo_date = demo.get("formatted_date", "Tuntematon päivämäärä")
-            demo_description = demo.get("description") or "Ei kuvausta."
-
-            # Title
-            ET.SubElement(item, "title").text = f"{demo_title} – {demo_date}"
-
-            # Link + GUID
-            link_url = url_for("demonstration_detail", demo_id=demo_id, _external=True)
-            ET.SubElement(item, "link").text = link_url
-            ET.SubElement(item, "guid", isPermaLink="true").text = link_url
-
-            # Description (safe fallback)
-            ET.SubElement(item, "description").text = html.escape(str(demo_description))
-
-            # pubDate
-            if "date" in demo and isinstance(demo["date"], datetime):
-                ET.SubElement(item, "pubDate").text = format_datetime(demo["date"])
-
-        # Return pretty UTF-8 XML string
-        return ET.tostring(feed, encoding="utf-8", xml_declaration=True)
-
-    from flask import Response, url_for, request
-    from datetime import datetime
-    import hashlib
-
     @app.route("/demonstrations.rss")
-    @cache.cached(timeout=300, unless=skip_cache_public_only)  # cache for 5 minutes
     def demonstrations_rss():
-        """
-        Serve the RSS feed for demonstrations.
-        Cached heavily to reduce DB load.
-        """
-        demonstrations = list(
-            demonstrations_collection.find().sort("date", -1).limit(50)
-        )
+        from mielenosoitukset_fi.utils.rss_feed import demonstration_feed
+        return demonstration_feed(demonstrations_collection, _demo_public_path)
 
-        # Normalize ObjectId → str
-        for demo in demonstrations:
-            if "_id" in demo and isinstance(demo["_id"], ObjectId):
-                demo["_id"] = str(demo["_id"])
-
-        feed_xml = create_rss_feed(demonstrations)
-
-        # Create ETag for conditional GET
-        etag = hashlib.md5(feed_xml).hexdigest()
-        last_modified = utcnow()
-
-        # Check if client already has this version
-        if request.headers.get("If-None-Match") == etag:
-            return Response(status=304)
-
-        return Response(
-            feed_xml,
-            mimetype="application/rss+xml",
-            headers={
-                "Cache-Control": "public, max-age=300, must-revalidate",
-                "ETag": etag,
-                "Last-Modified": last_modified.strftime("%a, %d %b %Y %H:%M:%S GMT"),
-                "Content-Type": "application/rss+xml; charset=utf-8",
-            },
-        )
     from datetime import datetime, date
     from collections import defaultdict
     import calendar

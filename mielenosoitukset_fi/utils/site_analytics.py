@@ -138,6 +138,9 @@ BEACON_EVENT_ALLOWLIST = {"map_interaction", "external_link"}
 # Friendly labels for the dashboard events table. Unknown events are shown
 # as their raw names.
 EVENT_LABELS = {
+    "rss_fetch": "RSS: syötehaut (ei tilaajamäärä)",
+    "rss_not_modified": "RSS: muuttumattoman syötteen tarkistukset",
+    "rss_reader_day": "RSS: aktiiviset lukijapäivät (arvio)",
     "language_change": "Kielenvaihdot",
     "demo_submitted": "Ilmoitetut mielenosoitukset",
     "reminder_subscribe": "Muistutusilmoitukset",

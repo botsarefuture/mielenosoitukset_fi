@@ -465,11 +465,13 @@ def test_map_markers_open_and_close_details_with_keyboard_focus(client, db, seed
     marker.press('Enter')
     popup = page.locator('.leaflet-popup-content')
     expect(popup).to_be_visible()
+    expect(page.locator('#pride-map .leaflet-control-zoom')).to_be_hidden()
     details = popup.locator('a[href*="/demonstration/"]')
     expect(details).to_be_focused()
     details.press('Escape')
     expect(popup).to_be_hidden()
     expect(marker).to_be_focused()
+    expect(page.locator('#pride-map .leaflet-control-zoom')).to_be_visible()
     marker.press('Space')
     expect(details).to_be_focused()
     # Leaflet's close control is outside the supplied popup content.

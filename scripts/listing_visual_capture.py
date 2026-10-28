@@ -306,6 +306,22 @@ def capture(item) -> None:
                     shot(page, f"organization-invitation-{width}-{theme}", ".invite-banner")
                 finally:
                     ctx.close()
+        original_locales = app.config.get('BABEL_PUBLIC_LOCALES')
+        app.config['BABEL_PUBLIC_LOCALES'] = ['fi', 'en', 'sv']
+        try:
+            for width, theme, locale in ((1440, "light", "en"), (390, "dark", "sv")):
+                ctx, page = context(width, theme, locale=locale)
+                try:
+                    page.route('**/api/demonstrations?*', lambda route: route.fulfill(content_type='application/json', body=json.dumps({"page": 1, "per_page": 12, "total_pages": 1, "total": 0, "results": []})))
+                    ctx.request.get(base + '/set_language/' + locale)
+                    page.goto(base + path, wait_until='networkidle')
+                    page.locator('#no-results').wait_for(state='visible')
+                    assert page.locator('html').get_attribute('lang') == locale
+                    shot(page, f"organization-empty-{locale}-{width}-{theme}", '#no-results')
+                finally:
+                    ctx.close()
+        finally:
+            app.config['BABEL_PUBLIC_LOCALES'] = original_locales
         assert not errors
         save_metadata()
         return

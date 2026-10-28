@@ -247,3 +247,19 @@ def test_org_search_clear_and_history_never_switch_organization(client, db, seed
     assert card_ids(page) == [str(rows[0]['_id'])]
     assert_fixed_queries(requested, seeded_data['org_id'])
     assert parse_qs(urlsplit(page.url).query)['organization_id'] == [str(seeded_data['org_id'])]
+
+
+@pytest.mark.parametrize('locale,title,message', [
+    ('en', 'No upcoming demonstrations', 'This organizer has not announced any upcoming demonstrations yet.'),
+    ('sv', 'Inga kommande demonstrationer', 'Den här arrangören har ännu inte anmält några kommande demonstrationer.'),
+])
+def test_organization_empty_state_uses_compiled_public_translations(app, client, seeded_data, locale, title, message):
+    app.config['BABEL_PUBLIC_LOCALES'] = ['fi', 'en', 'sv']
+    with client.session_transaction() as session:
+        session['locale'] = locale
+    response = client.get(f'/organization/{seeded_data["org_id"]}')
+    assert response.status_code == 200
+    page = ListingConfig()
+    page.feed(response.get_data(as_text=True))
+    assert page.props['messages']['emptyTitle'] == title
+    assert page.props['messages']['empty'] == message

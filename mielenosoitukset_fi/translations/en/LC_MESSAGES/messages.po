@@ -11349,11 +11349,11 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/organizations/details.html:1398
 msgid "Ei tulevia mielenosoituksia"
-msgstr ""
+msgstr "No upcoming demonstrations"
 
 #: mielenosoitukset_fi/templates/organizations/details.html:1399
 msgid "Tämä järjestäjä ei ole vielä ilmoittanut tulevia mielenosoituksia."
-msgstr ""
+msgstr "This organizer has not announced any upcoming demonstrations yet."
 
 #: mielenosoitukset_fi/templates/organizations/fill_info.html:3
 #: mielenosoitukset_fi/templates/organizations/fill_info.html:569

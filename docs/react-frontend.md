@@ -374,3 +374,50 @@ responses for the profile and its scoped API, excludes browser/assets/production
 capacity and records raw samples plus p50/p95/p99. No organization, moderation,
 account or session schema changes are introduced. Rollback reverts this page's
 source/template/styles and its tracked generated listing bundle together.
+
+## Pride näkyväksi (28 October 2026)
+
+`/pride-nakyvaksi`, `/pride/` and `/pride` retain their existing Flask routes.
+The localized informational shell and submission guidance remain Jinja. The
+page composes the shared listing with fixed `tag=pride` and a section-level
+heading, plus an isolated `PrideMap` React component using the existing local
+Leaflet assets. There is no new endpoint, schema, authentication or router.
+The shared cards retain their existing typography, images and interactions.
+
+The map reads the existing anonymous GET `/api/demonstrations` contract with
+`tag=pride`, `per_page=100`, page and locale. `scope=pride_map` identifies the
+consumer for verification; it grants no authority and does not alter the API's
+filtering. Flask retains visibility rules, future-event defaults, cancelled
+exclusion and its 100-row cap. Unlike the list, the map does not apply search,
+city or date controls, and does not impose a 60-day horizon. The page explains
+that difference. Requests are read-only Mongo count/sorted-page operations;
+large Pride collections still require one request per API page. No backend
+performance improvement is claimed.
+
+The first response's page count bounds traversal of this live dataset. Later
+page-count changes do not extend or invalidate the traversal; echoed page,
+metadata and row IDs are checked. Unique fetched IDs determine the event count,
+trimmed case-insensitive city names determine the city count, and finite,
+strictly numeric coordinates within geographic bounds determine mapped count.
+This is not a transactional snapshot. Counts remain absent while initially
+loading or after an initial failure. Retrying preserves useful previous data;
+data errors, missing coordinates, zero events and OSM tile failures have separate
+messages. The list remains usable when map fetching or tiles fail.
+
+Leaflet owns only its canvas and popup nodes. Popup text is assigned through
+DOM text properties and links reuse the listing's same-origin canonical URL
+rules, including recurring events. OpenStreetMap attribution is retained.
+Without JavaScript or a failed module, the Jinja guidance, submission links and
+explicit map/list fallback messages remain readable; no live map is promised.
+The dated/decorative counters and legacy inline styles/renderer are removed.
+
+Use `scripts/verify_react_listings.py all --scenario pride --output-dir
+/tmp/moso-pride-qa` for the existing focused regression and real-application
+capture workflow. The capture scenario includes both themes and widths, real
+OSM tiles, map/list failures and retries, scoped search, pagination, translated
+copy and JavaScript/module fallbacks. Independent visual acceptance is still
+required in the conversation. `scripts/compare_listing_latency.py --scope pride`
+compares page HTML and scoped API response percentiles with isolated synthetic
+data; its loopback measurements exclude browser rendering and external tiles.
+Rollback is a source revert plus rebuilding/committing the shared asset manifest;
+no data migration or replacement API needs reversing.

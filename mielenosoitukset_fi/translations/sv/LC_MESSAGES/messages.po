@@ -6074,7 +6074,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/index.html:710
 msgid "Ilmoita Pride-mielenosoitus"
-msgstr ""
+msgstr "Anmäl en Pride-demonstration"
 
 #: mielenosoitukset_fi/templates/info.html:48
 msgid "Tietoa palvelusta"
@@ -12573,7 +12573,7 @@ msgstr ""
 #: ⁨mielenosoitukset_fi/templates/users/profile/profile copy.html⁩:818
 #: mielenosoitukset_fi/templates/users/profile/profile.html:923
 msgid "Avaa mielenosoitus"
-msgstr ""
+msgstr "Öppna demonstrationen"
 
 #: ⁨mielenosoitukset_fi/templates/users/profile/profile copy.html⁩:829
 #: mielenosoitukset_fi/templates/users/profile/profile.html:934
@@ -13847,3 +13847,108 @@ msgstr "Inga svar ännu."
 #: templates/_layouts/demonstration-list.html
 msgid "Lista avautuu JavaScriptillä. Jos se ei lataudu, päivitä sivu."
 msgstr "Listan kräver JavaScript. Uppdatera sidan om den inte laddas."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Löydä tulevat Pride-aiheiset mielenosoitukset eri puolilta Suomea ja ilmoita oma tapahtumasi mukaan."
+msgstr "Hitta kommande Pride-demonstrationer runt om i Finland och anmäl ditt eget evenemang."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Katso mielenosoitukset"
+msgstr "Visa demonstrationer"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Ilmoita mielenosoitus"
+msgstr "Anmäl en demonstration"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Pride-kartta"
+msgstr "Pride-karta"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Kartalla näkyvät kaikki tulevat Pride-mielenosoitukset. Listan haku ei rajaa karttaa."
+msgstr "Kartan visar alla kommande Pride-demonstrationer. Sökningen i listan filtrerar inte kartan."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Pride-kartta avautuu JavaScriptillä. Jos kartta ei lataudu, päivitä sivu."
+msgstr "Pride-kartan kräver JavaScript. Uppdatera sidan om kartan inte laddas."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Ladataan Pride-karttaa..."
+msgstr "Laddar Pride-kartan..."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Pride-kartan lataaminen epäonnistui. Yritä uudelleen."
+msgstr "Pride-kartan kunde inte laddas. Försök igen."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Kartalla ei vielä ole tulevia Pride-mielenosoituksia."
+msgstr "Det finns ännu inga kommande Pride-demonstrationer på kartan."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Tapahtumille ei ole karttasijaintia. Löydät ne mielenosoituslistasta."
+msgstr "Evenemangen saknar en plats på kartan. Du hittar dem i demonstrationslistan."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Karttapohjan lataaminen epäonnistui. Tapahtumat löytyvät myös listasta."
+msgstr "Kartbakgrunden kunde inte laddas. Evenemangen finns också i listan."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+#, python-format
+msgid "Pride-mielenosoituksia: %(events)s. Paikkakuntia: %(cities)s. Kartalla: %(mapped)s."
+msgstr "Pride-demonstrationer: %(events)s. Orter: %(cities)s. På kartan: %(mapped)s."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Lähennä"
+msgstr "Zooma in"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Loitonna"
+msgstr "Zooma ut"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Pride-mielenosoitukset kartalla"
+msgstr "Pride-demonstrationer på kartan"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Pride-mielenosoitukset"
+msgstr "Pride-demonstrationer"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Meille ei vielä ole ilmoitettu tulevia Pride-mielenosoituksia."
+msgstr "Inga kommande Pride-demonstrationer har anmälts ännu."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Miksi Pride näkyväksi?"
+msgstr "Varför Pride näkyväksi?"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Pride näkyväksi kokoaa Pride-aiheiset mielenosoitukset yhteen paikkaan. Näkyvyys auttaa osallistujia löytämään tapahtumat ja tukee yhdenvertaisuutta."
+msgstr "Pride näkyväksi samlar Pride-demonstrationer på ett ställe. Synlighet hjälper deltagare att hitta evenemang och stöder jämlikhet."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Jokaisella on oikeus olla oma itsensä ja osallistua ilman syrjintää."
+msgstr "Alla har rätt att vara sig själva och delta utan diskriminering."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Avaa ilmoituslomake"
+msgstr "Öppna anmälningsformuläret"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Kerro tapahtuman nimi, ajankohta, paikka ja kuvaus."
+msgstr "Ange evenemangets namn, tid, plats och beskrivning."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Lisää tageihin pride, jotta tapahtuma löytyy tältä sivulta."
+msgstr "Lägg till pride bland taggarna så att evenemanget visas på den här sidan."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Tarkista tiedot ja lähetä ilmoitus. Ilmoitukset tarkistetaan ennen julkaisua."
+msgstr "Kontrollera uppgifterna och skicka anmälan. Anmälningarna granskas före publicering."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Ilmoitus ei saa sisältää syrjintää tai vihapuhetta."
+msgstr "En anmälan får inte innehålla diskriminering eller hatretorik."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Lue käyttöehdot"
+msgstr "Läs användarvillkoren"

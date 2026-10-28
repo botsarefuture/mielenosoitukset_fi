@@ -405,7 +405,9 @@ data errors, missing coordinates, zero events and OSM tile failures have separat
 messages. The list remains usable when map fetching or tiles fail.
 
 Leaflet owns only its canvas and popup nodes. Popup text is assigned through
-DOM text properties and links reuse the listing's same-origin canonical URL
+DOM text properties. Labelled markers open with Enter or Space, move focus to
+the details link, and restore marker focus on Escape. A missing Leaflet library
+exposes a page-reload retry. Links reuse the listing's same-origin canonical URL
 rules, including recurring events. OpenStreetMap attribution is retained.
 Without JavaScript or a failed module, the Jinja guidance, submission links and
 explicit map/list fallback messages remain readable; no live map is promised.

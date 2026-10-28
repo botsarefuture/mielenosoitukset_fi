@@ -11,13 +11,15 @@ type MapInstance = {
 };
 type Group = { addTo(map: MapInstance): Group; clearLayers(): void };
 type Tiles = { addTo(map: MapInstance): Tiles; on(name: string, handler: () => void): Tiles; redraw(): void };
+type Marker = {
+  bindPopup(content: HTMLElement): Marker; addTo(group: Group): Marker;
+  getElement(): SVGElement | undefined; openPopup(): Marker; closePopup(): Marker;
+};
 type Leaflet = {
   map(node: HTMLElement, options: { center: Point; zoom: number; scrollWheelZoom: boolean }): MapInstance;
   tileLayer(url: string, options: { attribution: string; maxZoom: number }): Tiles;
   layerGroup(): Group;
-  circleMarker(point: Point, options: { radius: number; color: string; fillColor: string; fillOpacity: number; weight: number }): {
-    bindPopup(content: HTMLElement): { addTo(group: Group): void };
-  };
+  circleMarker(point: Point, options: { radius: number; color: string; fillColor: string; fillOpacity: number; weight: number }): Marker;
 };
 type MapMessages = {
   title: string; loading: string; error: string; retry: string; empty: string; noCoordinates: string;
@@ -76,8 +78,10 @@ export function PrideMap(props: PrideMapProps) {
     let frame: number | null = null;
     const availableLibrary = (window as Window & { L?: Leaflet }).L;
     if (!availableLibrary || !canvas.current) {
+      // A page reload retries the local library too, rather than exposing an inert action.
+      reload.current = () => window.location.reload();
       setPending(false); setError(true);
-      return;
+      return () => { reload.current = null; };
     }
     const library = availableLibrary;
     const map = library.map(canvas.current, { center: INITIAL_CENTER, zoom: 5, scrollWheelZoom: false });
@@ -136,9 +140,29 @@ export function PrideMap(props: PrideMapProps) {
           if (city) cities.add(city);
           const point = pointFor(event);
           if (!point) return;
-          library.circleMarker(point, {
+          const content = popup(event);
+          const marker = library.circleMarker(point, {
             radius: 9, color: 'var(--pride-marker)', fillColor: 'var(--pride-marker-fill)', fillOpacity: .9, weight: 2,
-          }).bindPopup(popup(event)).addTo(markers);
+          }).bindPopup(content).addTo(markers);
+          const node = marker.getElement();
+          if (node) {
+            node.setAttribute('tabindex', '0');
+            node.setAttribute('role', 'button');
+            node.setAttribute('aria-label', [publicText(event.title) || text.title, publicText(event.city), text.popupDetails].filter(Boolean).join(', '));
+            node.addEventListener('keydown', key => {
+              if (key.key === 'Enter' || key.key === ' ') {
+                key.preventDefault();
+                marker.openPopup();
+                content.querySelector('a')?.focus();
+              }
+            });
+            content.addEventListener('keydown', key => {
+              if (key.key === 'Escape') {
+                key.preventDefault(); key.stopPropagation();
+                marker.closePopup(); node.focus();
+              }
+            });
+          }
           bounds.push(point);
         });
         if (bounds.length) map.fitBounds(bounds, { padding: [24, 24], maxZoom: 13 });

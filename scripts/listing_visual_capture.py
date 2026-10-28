@@ -221,7 +221,7 @@ def capture(item) -> None:
                 "External analytics are blocked; loading/error/attendance responses and module failure are deliberate test states.",
                 "Photo states use the repository's existing og-banner.png on a synthetic event, not a production event.",
                 *(["Pride primary maps require actual OpenStreetMap tiles; no substitute tiles are supplied.",
-                   "Pride map outage, empty/no-coordinate responses, tile warning, list outage and failed module states are deliberately intercepted.",
+                   "Pride map outage, empty/no-coordinate responses, tile warning, list outage, failed module and failed local Leaflet script states are deliberately intercepted.",
                    "Pride map fixtures contain 72 public future events, 54 valid map locations across three cities, nullable clocks and excluded visibility/tag/date controls."] if scenario == "pride" else []),
             ],
         }
@@ -296,6 +296,22 @@ def capture(item) -> None:
                     page.locator('#pride-map .leaflet-overlay-pane path.leaflet-interactive').last.click()
                     page.locator('.leaflet-popup-content').wait_for(state='visible')
                     shot(page, f'pride-map-popup-after-retry-{width}-{theme}', '#pride-map-section')
+                    page.locator('.leaflet-popup-close-button').click()
+                    marker = page.locator('#pride-map .leaflet-overlay-pane path.leaflet-interactive').last
+                    assert marker.get_attribute('role') == 'button'
+                    assert marker.get_attribute('tabindex') == '0'
+                    assert (marker.get_attribute('aria-label') or '').strip()
+                    page.keyboard.press('Tab')
+                    marker.focus()
+                    assert marker.evaluate("element => element === document.activeElement && element.matches(':focus-visible')")
+                    shot(page, f'pride-map-marker-keyboard-focus-{width}-{theme}', '#pride-map-section')
+                    marker.press('Enter')
+                    page.locator('.leaflet-popup-content').wait_for(state='visible')
+                    page.wait_for_function("document.activeElement?.matches('#pride-map .leaflet-popup-content a')")
+                    shot(page, f'pride-map-marker-keyboard-popup-{width}-{theme}', '#pride-map-section')
+                    page.keyboard.press('Escape')
+                    page.locator('.leaflet-popup-content').wait_for(state='hidden')
+                    assert marker.evaluate('element => element === document.activeElement')
 
                     mode['map'] = 'empty'
                     page.goto(base + path, wait_until='networkidle')
@@ -385,6 +401,31 @@ def capture(item) -> None:
                         assert page.locator('#pride-map.leaflet-container').count() == 0
                         page.locator('.pride-map-fallback').wait_for(state='visible')
                         shot(page, f'pride-map-module-failure-{width}-{theme}', '#pride-map-section')
+                    finally:
+                        ctx.close()
+                    ctx, page = context(width, theme)
+                    blocked_leaflet = []
+
+                    def leaflet_failure(route):
+                        if not blocked_leaflet:
+                            blocked_leaflet.append(route.request.url)
+                            route.abort()
+                        else:
+                            route.continue_()
+
+                    page.route('**/leaflet/leaflet.js*', leaflet_failure)
+                    try:
+                        page.goto(base + path, wait_until='networkidle')
+                        page.locator('#pride-map-error').wait_for(state='visible')
+                        wait_for_list(page)
+                        assert blocked_leaflet, 'The local Leaflet script must be blocked once.'
+                        shot(page, f'pride-map-library-failure-{width}-{theme}', '#pride-map-section')
+                        with page.expect_navigation(wait_until='networkidle'):
+                            page.locator('#pride-map-retry').click()
+                        wait_for_map(page)
+                        wait_for_list(page)
+                        assert not page.locator('#pride-map-error').is_visible()
+                        shot(page, f'pride-map-library-retry-{width}-{theme}', '#pride-map-section')
                     finally:
                         ctx.close()
                 original_locales = app.config.get('BABEL_PUBLIC_LOCALES')

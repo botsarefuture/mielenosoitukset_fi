@@ -449,3 +449,56 @@ def test_map_traversal_uses_first_page_bound_when_live_totals_change(client, db,
     expect(page.locator('#pride-map-summary')).to_have_attribute('data-mapped-count', '105')
     expect(page.locator('#pride-map-error')).to_be_hidden()
     assert [query['page'] for query in requests] == [['1'], ['2']]
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_map_markers_open_and_close_details_with_keyboard_focus(client, db, seeded_data, live_server, browser_page):
+    pride_events(db, seeded_data, count=1)
+    page = browser_page
+    page.goto(live_server + '/pride-nakyvaksi', wait_until='networkidle')
+    marker = page.locator('#pride-map path.leaflet-interactive[tabindex="0"][role="button"]').first
+    expect(marker).to_have_count(1)
+    assert 'Pride Event 000' in marker.get_attribute('aria-label')
+    marker.focus()
+    expect(marker).to_be_focused()
+    marker.press('Enter')
+    popup = page.locator('.leaflet-popup-content')
+    expect(popup).to_be_visible()
+    details = popup.locator('a[href*="/demonstration/"]')
+    expect(details).to_be_focused()
+    details.press('Escape')
+    expect(popup).to_be_hidden()
+    expect(marker).to_be_focused()
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_missing_leaflet_can_recover_with_retry_page_reload(client, db, seeded_data, live_server, browser_page):
+    pride_events(db, seeded_data, count=1)
+    page = browser_page
+    leaflet_calls = []
+    map_calls = []
+
+    def serve_leaflet(route):
+        leaflet_calls.append(route.request.url)
+        if len(leaflet_calls) == 1:
+            return route.abort()
+        route.continue_()
+
+    page.route('**/leaflet/leaflet.js', serve_leaflet)
+    page.on('request', lambda request: map_calls.append(request.url) if is_map_request(request) else None)
+    page.goto(live_server + '/pride-nakyvaksi', wait_until='networkidle')
+    expect(page.locator('#pride-map-error')).to_be_visible()
+    expect(page.locator('#pride-map-retry')).to_be_enabled()
+    expect(page.locator('.demo-card')).to_have_count(1)
+    assert len(leaflet_calls) == 1
+    assert map_calls == []
+    with page.expect_navigation(wait_until='networkidle'):
+        page.locator('#pride-map-retry').click()
+    expect(page.locator('#pride-map-summary')).to_have_attribute('data-event-count', '1')
+    expect(page.locator('#pride-map path.leaflet-interactive')).to_have_count(1)
+    expect(page.locator('#pride-map-error')).to_be_hidden()
+    expect(page.locator('.demo-card')).to_have_count(1)
+    assert len(leaflet_calls) == 2
+    assert len(map_calls) == 1

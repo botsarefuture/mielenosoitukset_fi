@@ -179,6 +179,7 @@ def capture(item) -> None:
         if user:
             ctx.add_cookies([{"name": "session", "value": user.get_cookie("session").value, "url": base}])
         page = ctx.new_page()
+        page._moso_capture_js = js
         page._moso_capture_role = role or ("authenticated" if user else "anonymous")
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.on("requestfailed", lambda req: failed.append(req.url))
@@ -189,7 +190,7 @@ def capture(item) -> None:
             page.locator(target).first.evaluate("e => e.scrollIntoView({block:'start',behavior:'instant'})")
             page.evaluate("(window.publicListWindow?.scrollHost || window).scrollBy({top:-80,behavior:'instant'})")
         page.evaluate("document.fonts.ready")
-        if scenario in {"organization", "pride"}:
+        if scenario in {"organization", "pride"} and page._moso_capture_js:
             page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
             page.evaluate("() => Promise.all(document.getAnimations().filter(a => a.effect?.getTiming().iterations !== Infinity).map(a => a.finished.catch(() => {})))")
         filename = f"{stage}-{name}.png"

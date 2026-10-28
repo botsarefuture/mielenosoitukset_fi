@@ -157,6 +157,10 @@ def test_real_map_reads_all_pride_pages_and_listing_filters_do_not_change_its_sc
     rows, _ = pride_events(db, seeded_data)
     page = browser_page
     manual_pagination(page)
+    # Technical state check only: local PNG responses avoid the fixture's deliberate
+    # external-tile failure. Visual acceptance separately captures real OSM tiles.
+    page.route('**://*.tile.openstreetmap.org/**', lambda route: route.fulfill(
+        path='mielenosoitukset_fi/static/leaflet/images/layers.png', content_type='image/png'))
     requested = []
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))

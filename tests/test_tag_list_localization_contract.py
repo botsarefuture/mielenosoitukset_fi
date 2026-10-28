@@ -16,7 +16,7 @@ TAG_LABELS = {
 
 
 def test_tag_list_uses_localized_stable_empty_state_markup():
-    source = Path('mielenosoitukset_fi/templates/_layouts/demonstration-list.html').read_text()
+    source = Path('mielenosoitukset_fi/templates/_partials/demonstration-listing.html').read_text()
     page = Path('frontend/src/pages/DemonstrationListingPage.tsx').read_text()
     controller = Path('frontend/src/components/listings/controller.tsx').read_text()
     assert 'id="clear-filters-btn"' in page

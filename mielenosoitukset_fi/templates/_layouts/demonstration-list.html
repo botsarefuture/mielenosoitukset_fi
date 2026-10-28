@@ -5,51 +5,7 @@
 {% block main_class %}public-layout-wide{% endblock %}
 {% block styles %}{{ public_search_styles() }}{% endblock %}
 {% block content %}
-{% set listing_locale = current_locale if current_locale is defined and current_locale in get_supported_locales() else session.get('locale', 'fi') %}
-{% set listing_locale = listing_locale if listing_locale in get_supported_locales() else 'fi' %}
-{% set listing_props = {
-  'title': listing_title, 'fixed': listing_fixed, 'locale': listing_locale,
-  'cities': city_list, 'authenticated': current_user.is_authenticated,
-  'endpoint': url_for('api.list_demonstrations'), 'attendanceEndpoint': url_for('api.friends_attending'),
-  'allEventsUrl': url_for('demonstrations'), 'submitUrl': url_for('submit'),
-  'detailUrl': url_for('demonstration_detail', demo_id='__ID__'),
-  'seriesUrl': url_for('siblings_meeting', parent='__ID__'),
-  'tagUrl': url_for('tag_detail', tag_name='__TAG__'),
-  'cover': tag.cover_picture if tag is defined and tag and tag.cover_picture else none,
-  'coverAlt': _('Tagin kansikuva'),
-  'messages': {
-    'search': _('Hae mielenosoituksia'), 'searchPlaceholder': _('Hae mielenosoituksia...'),
-    'city': _('Kaupunki'), 'location': _('Sijainti'), 'startDate': _('Alkupäivä (pp.mm.vvvv)'),
-    'endDate': _('Loppupäivä (pp.mm.vvvv)'), 'dateError': _('Valitse kelvollinen päivämääräväli tulevaisuudesta'),
-    'year': _('Vuosi'), 'month': _('Kuukausi'), 'submitSearch': _('Hae'), 'removeFilter': _('Poista suodatin'),
-    'loading': _('Ladataan mielenosoituksia...'), 'loadMore': _('Näytä lisää'), 'loadingMore': _('Ladataan...'),
-    'previous': _('Edellinen'),
-    'summary': _('Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta', start='__START__', end='__END__', count='__COUNT__'),
-    'loadError': _('Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen.'), 'retry': _('Yritä uudelleen'),
-    'emptyTitle': _('Ei löytynyt mielenosoituksia'),
-    'empty': _('Tällä tagilla ei ole näkyvillä olevia mielenosoituksia.') if listing_fixed.get('tag') else _('Tällä hetkellä ei ole mielenosoituksia. Tarkista myöhemmin.'),
-    'filteredEmpty': _('Ei löytynyt mielenosoituksia näillä hakukriteereillä. Kokeile poistaa suodattimia tai hae uudelleen.'),
-    'clearFilters': _('Poista suodattimet'), 'submitEvent': _('Ilmoita uusi mielenosoitus'),
-    'cancelled': _('Peruttu'), 'today': _('Tänään'), 'startingFrom': _('alkaen'), 'endTime': _('Päättymisaika'),
-    'loginPrompt': _('Kirjaudu sisään käyttääksesi sosiaalisia toimintoja'), 'attendingSuffix': _('osallistuu'),
-    'loadingFriends': _('Ladataan kavereita...'), 'invite': _('Kutsu kavereita'), 'allEvents': _('Kaikki mielenosoitukset')
-  }
-} %}
-<div data-react-island="demonstration-listing" data-props-id="demonstration-listing-props">
-  <section class="public-demonstration-list">
-    <section class="public-list-tools" aria-labelledby="listing-title">
-    <header class="public-list-heading">
-      <h1 id="listing-title">{{ listing_title }}</h1>
-      {% if listing_fixed %}<a class="public-list-all" href="{{ url_for('demonstrations') }}"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>{{ _('Kaikki mielenosoitukset') }}</a>{% endif %}
-    </header>
-    <fieldset class="public-list-fallback" disabled>
-      {{ public_demo_search(fixed_city=listing_fixed.get('city')) }}
-    </fieldset>
-    </section>
-    <p role="status">{{ _('Lista avautuu JavaScriptillä. Jos se ei lataudu, päivitä sivu.') }}</p>
-  </section>
-</div>
-<script id="demonstration-listing-props" type="application/json">{{ listing_props|tojson }}</script>
+{% include '_partials/demonstration-listing.html' %}
 {% endblock %}
 {% block scripts %}
 {# These localized, tested widgets own only their documented DOM boundaries. #}

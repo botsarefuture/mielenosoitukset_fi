@@ -11805,11 +11805,11 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/organizations/details.html:1398
 msgid "Ei tulevia mielenosoituksia"
-msgstr ""
+msgstr "Inga kommande demonstrationer"
 
 #: mielenosoitukset_fi/templates/organizations/details.html:1399
 msgid "Tämä järjestäjä ei ole vielä ilmoittanut tulevia mielenosoituksia."
-msgstr ""
+msgstr "Den här arrangören har ännu inte anmält några kommande demonstrationer."
 
 #: mielenosoitukset_fi/templates/organizations/fill_info.html:3
 #: mielenosoitukset_fi/templates/organizations/fill_info.html:569

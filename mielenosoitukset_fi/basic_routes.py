@@ -4040,6 +4040,8 @@ def init_routes(app):
 
     @app.route("/organization/<org_id>")
     def org(org_id):
+        if not ObjectId.is_valid(org_id):
+            abort(404)
         _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
         if _org is None:
             flash_message("Organisaatiota ei löytynyt.", "error")
@@ -4059,6 +4061,11 @@ def init_routes(app):
             org=_org,
             org_id=str(org_id),
             is_following_org=is_following_org,
+            listing_title=_("Mielenosoitukset"),
+            listing_fixed={"organization_id": str(_org._id)},
+            listing_heading_level=2,
+            listing_empty_title=_("Ei tulevia mielenosoituksia"),
+            listing_empty=_("Tämä järjestäjä ei ole vielä ilmoittanut tulevia mielenosoituksia."),
             toolbox_org_permissions={
                 permission: current_user.has_permission(permission, _org._id)
                 for permission in (

@@ -32,6 +32,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from measure_http_latency import MAX_RESPONSE_BYTES, summarize
 
 TAG = "latency-baseline"
+ORGANIZATION_ID = "00000000000000000000e001"
+OTHER_ORGANIZATION_ID = "00000000000000000000e002"
+ORGANIZATION_NAME = "Latency Organization"
 LIMITS = [
     "Loopback HTTP only: no browser rendering, JavaScript, images, CSS, LCP or user network.",
     "Single sequential client and Werkzeug test WSGI server; not production capacity.",
@@ -56,9 +59,14 @@ def serve_fixture(request, state_dir):
     documents = json.loads((state / "documents.json").read_text())
     for record in documents:
         record["_id"] = ObjectId(record["_id"])
+        for organizer in record.get("organizers", []):
+            organizer["organization_id"] = ObjectId(organizer["organization_id"])
     db.demonstrations.delete_many({})
     db.recurring_demonstrations.delete_many({})
     db.demonstrations.insert_many(documents)
+    if any(record.get("organizers") for record in documents):
+        for organization_id, name in ((ORGANIZATION_ID, ORGANIZATION_NAME), (OTHER_ORGANIZATION_ID, "Other benchmark organizer")):
+            db.organizations.insert_one({"_id": ObjectId(organization_id), "name": name, "description": "Synthetic benchmark profile.", "email": "benchmark@example.test", "verified": True})
     base_url = request.getfixturevalue("live_server")
     app = client.application
     metadata = {
@@ -173,6 +181,7 @@ class PageContract(HTMLParser):
 def verify_responses(base_url, routes, documents, output, side, timeout):
     """Check real response content once before warming and timing either side."""
     evidence = {}
+    scoped_documents = [row for row in documents if any(org.get("organization_id") == ORGANIZATION_ID for org in row.get("organizers", []))]
     expected = sorted(documents, key=lambda item: (item["date"], item["start_time"], item["_id"]))[:12]
     for index, route in enumerate(routes):
         response = subprocess.run([
@@ -187,9 +196,11 @@ def verify_responses(base_url, routes, documents, output, side, timeout):
         if suffix == "json":
             payload = json.loads(body)
             results = payload["results"]
+            selected = scoped_documents if "organization_id=" in route else documents
+            expected = sorted(selected, key=lambda item: (item["date"], item["start_time"], item["_id"]))[:12]
             if [item["_id"] for item in results] != [item["_id"] for item in expected]:
                 raise RuntimeError(f"{side} API returned unexpected seeded IDs/order")
-            if payload["total"] != len(documents) or any(
+            if payload["total"] != len(selected) or any(
                 item["city"] != "Helsinki" or TAG not in item["tags"] for item in results
             ):
                 raise RuntimeError(f"{side} API did not preserve scoped seed values/count")
@@ -199,12 +210,18 @@ def verify_responses(base_url, routes, documents, output, side, timeout):
             page.feed(body)
             title = " ".join(page.text["title"]).strip()
             heading = " ".join(page.text["h1"] + page.text["h2"]).strip()
-            if not title or not heading or "mielenosoit" not in title.casefold() or (route != "/submit" and not page.search_input):
+            is_organization = route.startswith("/organization/")
+            valid_title = ORGANIZATION_NAME in title and ORGANIZATION_NAME in heading if is_organization else "mielenosoit" in title.casefold()
+            if not title or not heading or not valid_title or (route != "/submit" and not is_organization and not page.search_input):
                 raise RuntimeError(f"{side} page title/heading/search contract failed: {route}")
             fixed = "Helsinki" if route.startswith("/city/") else TAG if route.startswith("/tag/") else None
             if fixed and fixed not in title:
                 raise RuntimeError(f"{side} scoped page title missing {fixed}")
-            if route == "/submit":
+            if is_organization:
+                if ORGANIZATION_ID not in body:
+                    raise RuntimeError(f"{side} organization page lost its fixed scope")
+                contract.update(title=title, heading=heading, organization_id=ORGANIZATION_ID)
+            elif route == "/submit":
                 required = {"title", "date", "city", "description", "submission_token", "accept_terms", "submitter_email"}
                 if not page.submit_form or not required.issubset(page.fields):
                     raise RuntimeError(f"{side} submit form contract failed")
@@ -217,7 +234,7 @@ def verify_responses(base_url, routes, documents, output, side, timeout):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scope", choices=("listings", "submit"), default="listings")
+    parser.add_argument("--scope", choices=("listings", "submit", "organization"), default="listings")
     parser.add_argument("--before", required=True)
     parser.add_argument("--after", required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
@@ -257,12 +274,17 @@ def main():
             "latitude": "60.1699", "longitude": "24.9384", "type": "other",
             "event_type": "other", "editors": [],
         })
+    if args.scope == "organization":
+        for number, record in enumerate(documents):
+            record["organizers"] = [{"name": ORGANIZATION_NAME, "organization_id": OTHER_ORGANIZATION_ID if number % 6 == 0 else ORGANIZATION_ID}]
     document_json = json.dumps(documents, indent=2, sort_keys=True)
     (output / "documents.json").write_text(document_json)
     routes = ["/demonstrations", "/city/Helsinki", f"/tag/{TAG}",
               f"/api/demonstrations?tag={TAG}&city=Helsinki&page=1&per_page=12&max_days_till=60"]
     if args.scope == "submit":
         routes = ["/submit"]
+    elif args.scope == "organization":
+        routes = [f"/organization/{ORGANIZATION_ID}", f"/api/demonstrations?organization_id={ORGANIZATION_ID}&page=1&per_page=12"]
     metadata = {"started_at": datetime.now(timezone.utc).isoformat(), "refs": refs,
                 "arguments": {**vars(args), "output_dir": str(output)}, "routes": routes,
                 "runtime": {"platform": platform.platform(), "python": sys.version,

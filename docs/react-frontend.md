@@ -336,3 +336,41 @@ The HTTP comparison measures GET `/submit` only, excluding browser work and
 writes. Capture output uses disposable data and actual assets; independent
 in-conversation visual acceptance is still required. Roll back this slice by
 reverting its source, template, stylesheet and committed generated build together.
+
+## Organization event lists
+
+The public `/organization/<org_id>` profile embeds the existing listing entry.
+`_partials/demonstration-listing.html` is the shared source for localized props
+and disabled fallback controls on main/city/tag and organization collections.
+`headingLevel: 2` places the event section beneath the profile's sole h1; empty
+results use h3. Profile information, follow actions and server-computed toolbar
+permissions continue in their existing templates. The page uses available width.
+
+The consumer reuses GET `/api/demonstrations` with server-fixed `organization_id`,
+12 records per page by default and the existing public filter fields. Anonymous
+access is intentional. The existing API matches BSON ObjectId organizer links
+under the public approval/visibility rules; cancelled events remain visible in
+organization scope and future events have no artificial 60-day ceiling. User
+query parameters, filter changes, history restoration, pagination and retries
+cannot replace the fixed organization. Membership/user records are not loaded
+or serialized into public listing props. No backend write or authentication
+contract changes. Malformed organization IDs return 404; existing missing-ID
+behavior for valid IDs is retained.
+
+One listing controller owns the page. The legacy renderer/loader is removed;
+profile follow controls, observer and back-to-top behavior retain their existing
+owners. API/response/render failures use the shared retry state without advancing
+count/page or discarding a successfully rendered batch. Bounded windows and
+focus/scroll restoration use the same implementation as other collections.
+
+```sh
+python3.12 scripts/verify_react_listings.py all --scenario organization --output-dir /tmp/moso-organization-qa
+python3.12 scripts/compare_listing_latency.py --scope organization --before BASE --after HEAD --output-dir /tmp/moso-organization-latency
+```
+
+The latency harness uses identical synthetic organizations/events with BSON
+organizer links in isolated databases. It measures warm sequential loopback GET
+responses for the profile and its scoped API, excludes browser/assets/production
+capacity and records raw samples plus p50/p95/p99. No organization, moderation,
+account or session schema changes are introduced. Rollback reverts this page's
+source/template/styles and its tracked generated listing bundle together.

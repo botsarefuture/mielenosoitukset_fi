@@ -18,7 +18,9 @@ def test_public_listing_family_uses_shared_hero_and_pagination_markup():
         assert "extends '_layouts/demonstration-list.html'" in source
     layout = (TEMPLATE_ROOT / '_layouts/demonstration-list.html').read_text()
     page = Path('frontend/src/pages/DemonstrationListingPage.tsx').read_text()
-    assert 'data-react-island="demonstration-listing"' in layout
+    assert "include '_partials/demonstration-listing.html'" in layout
+    listing = (TEMPLATE_ROOT / '_partials/demonstration-listing.html').read_text()
+    assert 'data-react-island="demonstration-listing"' in listing
     assert 'ListingTools props={props}' in page
     assert 'id="demos-grid"' in page and 'id="load-more-btn"' in page
     assert 'hero_section' not in layout and 'eyebrow' not in layout
@@ -41,7 +43,7 @@ def test_public_workspace_styles_cover_listing_end_message():
 
 
 def test_public_list_runtime_uses_defined_localized_browser_contracts():
-    source = (TEMPLATE_ROOT / "_layouts/demonstration-list.html").read_text(encoding="utf-8")
+    source = (TEMPLATE_ROOT / "_partials/demonstration-listing.html").read_text(encoding="utf-8")
     base_source = (TEMPLATE_ROOT / "base.html").read_text(encoding="utf-8")
 
     assert "setView(view)" not in source
@@ -51,7 +53,7 @@ def test_public_list_runtime_uses_defined_localized_browser_contracts():
     range_source = (Path("mielenosoitukset_fi/static/js/public-date-range.js")).read_text(encoding="utf-8")
     assert "new Intl.DateTimeFormat" in range_source
     assert "activeLocale" in range_source
-    assert "public_search_scripts()" in source
+    assert "public_search_scripts()" in (TEMPLATE_ROOT / "_layouts/demonstration-list.html").read_text()
     assert 'filename=\'js/date.js\'' not in source
     assert '["Sunnuntai", "Maanantai"' not in source
     assert '["Tammikuu", "Helmikuu"' not in source

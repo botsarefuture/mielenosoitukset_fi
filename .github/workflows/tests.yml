@@ -6,6 +6,10 @@ on:
       - main
   pull_request:
 
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   python-tests:
     # MongoDB 8 rejects Linux 6.19–7.0.13 (SERVER-121912). The latest
@@ -111,8 +115,10 @@ jobs:
           TEST_MAIL_PORT: "1025"
           TEST_S3_ENDPOINT: http://127.0.0.1:4566
         # Override pytest.ini's quiet flag so stalled runs retain each test ID.
-        # Keep the complete test set and the existing 30-minute job limit.
-        run: python -m pytest -o addopts='' -v --tb=short -o faulthandler_timeout=120
+        # Keep every test and the 30-minute job limit. Bound each test including
+        # fixture setup/teardown; thread mode also exits on an uninterruptible
+        # lock wait and prints thread stacks before failing the job.
+        run: python -u -m pytest -o addopts='' -v --tb=short --durations=25 --timeout=180 --timeout-method=thread -o faulthandler_timeout=120
 
       - name: Dump test service logs on test failure
         if: failure()

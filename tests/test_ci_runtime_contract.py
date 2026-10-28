@@ -24,6 +24,11 @@ def test_mongo_compatible_runner_keeps_database_and_required_suite():
         assert not steps[name].get("continue-on-error", False)
         assert "if" not in steps[name]
     assert shlex.split(steps["Run test suite"]["run"]) == [
-        "python", "-m", "pytest", "-o", "addopts=", "-v", "--tb=short",
+        "python", "-u", "-m", "pytest", "-o", "addopts=", "-v", "--tb=short",
+        "--durations=25", "--timeout=180", "--timeout-method=thread",
         "-o", "faulthandler_timeout=120",
     ]
+
+    concurrency = workflow["concurrency"]
+    assert "github.event.pull_request.number" in concurrency["group"]
+    assert concurrency["cancel-in-progress"] == "${{ github.event_name == 'pull_request' }}"

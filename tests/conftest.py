@@ -224,9 +224,9 @@ def _allow_local_requests(route):
 
 
 def _user_doc(username, email, password, **updates):
-    from mielenosoitukset_fi.users.models import User
+    from tests._seed_users import seed_user_document
 
-    doc = User.create_user(username=username, password=password, email=email, displayname=updates.pop("displayname", username.title()))
+    doc = seed_user_document(username, email, password, updates.pop("displayname", username.title()))
     doc.update(
         {
             "confirmed": True,

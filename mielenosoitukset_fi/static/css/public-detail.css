@@ -1,3 +1,10 @@
+/* Host shell must not constrain the portable page to the old 80% column. */
+.container-main-content.public-detail-main {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  padding-inline: 0;
+}
 .public-detail {
   width:calc(100% - 3rem);
   margin:2rem auto 4rem;

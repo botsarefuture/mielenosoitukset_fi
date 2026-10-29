@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% from '_macros/frontend.html' import frontend_entry %}
+{% block main_class %}public-detail-main{% endblock %}
 {% block title %}{{ metadata_title }} | Mielenosoitukset.fi{% endblock %}
 {% block meta_description %}{{ metadata_description|striptags|truncate(200, true) }}{% endblock %}
 {% block og_title %}{{ metadata_title }}{% endblock %}

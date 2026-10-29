@@ -61,3 +61,28 @@ change the original site's vhost or database data for API rollback.
 
 The detail-page integration and list endpoint are subsequent slices. This
 service's deployment alone does not accelerate an existing HTML page.
+
+## Verified first production activation,29October2026
+
+- Published release9189a017607331b8dbecb32c2b7d41afedf2ef05, source tree
+  9aa3492045c0305379084bd2bdf5d8454fd5c7c9 (identical to reviewed local34a9ddaf).
+  Linux/amd64 binary SHA256
+  05b7f72dc9186aeaf9b1a3414e138288460067bc35053dddfdaf3940cb07479d.
+- Go service active/enabled; local and public HTTPS health return exact release.
+  Real public event200, real nonpublic event404, allowlisted public payload and
+  open CORS verified without database writes. Direct-origin TLS request403;
+  public requests must pass the preserved Cloudflare peer restriction.
+- Environment mode0600 root:root, settings copied only onserver. Existing Apache
+  and Flask service remain active; original site health remainsok.
+- Own Let's Encrypt certificate valid through27January2027. Actual HTTP-01
+  issuance succeeded. Existing Certbot timer isactive and already uses the
+  required distro Python path. Dedicated certificate deploy hook installed to
+  configtest/gracefully reload Apache after renewal. Renewal dryrun not repeated.
+- Target systemd unit verification passed with pre-existing unrelated warnings
+  in shorturl.service and luova_auth.service. Apache configtest passed. A first
+  configtest caught a missing API ACL include before any reload; the standalone
+  copy_origin_restriction.py helper then installed it and configtest passed.
+- Operational rollback state:
+  /var/backups/mielenosoitukset-api/20261029T170121Z.
+  Production files are installed independently of the Flask checkout. Merging
+  this operational documentation does not itself redeploy the Go service.

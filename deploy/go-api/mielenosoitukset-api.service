@@ -1,0 +1,29 @@
+[Unit]
+Description=Public mielenosoitukset.fi Go read API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+WorkingDirectory=/opt/mielenosoitukset-api
+EnvironmentFile=/etc/mielenosoitukset-api/environment
+ExecStart=/opt/mielenosoitukset-api/current/api
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+UMask=0077
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target

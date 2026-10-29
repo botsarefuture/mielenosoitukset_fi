@@ -16,6 +16,9 @@ import (
 	"time"
 )
 
+// buildSHA is set by the release build, never read from a mutable checkout.
+var buildSHA = "development"
+
 type Store interface {
 	FindPublic(context.Context, bson.ObjectID) (bson.M, error)
 	Ping(context.Context) error
@@ -98,7 +101,7 @@ func (a *API) health(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 503, "service unavailable")
 		return
 	}
-	writeJSON(w, 200, map[string]string{"status": "ok"})
+	writeJSON(w, 200, map[string]string{"status": "ok", "build_sha": buildSHA})
 }
 func main() {
 	uri, database := os.Getenv("MONGODB_URI"), os.Getenv("MONGODB_DATABASE")
@@ -121,6 +124,7 @@ func main() {
 	}()
 	a := &API{store: mongoStore{client.Database(database).Collection("demonstrations"), client}}
 	server := &http.Server{Addr: env("API_ADDR", "127.0.0.1:8080"), Handler: a.handler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 * 1024}
+	shutdownDone := make(chan struct{})
 	stopped := make(chan os.Signal, 1)
 	signal.Notify(stopped, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
@@ -128,11 +132,13 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		_ = server.Shutdown(ctx)
+		close(shutdownDone)
 	}()
 	log.Printf("Public API listening on %s", server.Addr)
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal("HTTP server failed")
 	}
+	<-shutdownDone
 }
 func writeError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, map[string]string{"error": message})

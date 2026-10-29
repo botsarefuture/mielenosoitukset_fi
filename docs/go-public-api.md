@@ -55,8 +55,10 @@ go vet ./...
 ```
 
 Both MongoDB settings are required: no guessed production database. API_ADDR
-is loopback-only by default (127.0.0.1:8080). Use a read-only database principal
-limited to the existing demonstrations collection in deployment. One MongoDB
+is loopback-only by default (127.0.0.1:8080). The maintainer explicitly authorized reuse of the existing production MongoDB
+credentials on29October2026. The API implementation performs reads only, but
+the credential itself may allow broader operations; do not claim database-enforced
+read-only access. A separately scoped principal can be introduced later. One MongoDB
 client/pool per process, bounded pool and request/server deadlines. The API
 neither migrates nor creates indexes, users, collections or background jobs.
 Never put MongoDB credentials in Git, logs or browser code.
@@ -88,8 +90,9 @@ sizes, cache headers and source hashes. It overrides the historical fixture
 cleanup to drop only its own database. Do not present HTML-vs-JSON results as a
 Go-only gain or page-rendering improvement. The frontend has not switched yet.
 
-Production publication remains pending: verified TLS/vhost/service, a dedicated
-read-only database principal, deployment acceptance and public health/data
-checks. No production write or existing site routing is changed by this code.
+Production setup is documented in deploy/go-api/README.md. Publication requires
+verified TLS/vhost/service and public health/data checks. Credentials are reused
+only inside the server with a root-owned0600 environment file. No database
+data write or existing website routing is changed by API publication.
 The local default port8080 is already occupied on the inspected production host;
 choose a verified unused loopback port in deployment, not the default blindly.

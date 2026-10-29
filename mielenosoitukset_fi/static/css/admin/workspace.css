@@ -39,6 +39,11 @@ body {
    on the same semantic palette as every page in the workspace. */
 .admin-toast-layer {
   z-index: 1100;
+  pointer-events: none;
+}
+
+.admin-toast-layer .toast {
+  pointer-events: auto;
 }
 
 .admin-sidebar {

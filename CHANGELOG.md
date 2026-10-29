@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Keep the mobile admin menu clickable beneath an empty toast layer while retaining interactive toast dismissal.
+
 - Keep RSS cache entries separate for distinct Unicode city/tag filters, matching the literal database query.
 
 - Fix shared admin logout initialization so admin pages load without JavaScript errors and confirmation correctly resets and cancels its countdown.

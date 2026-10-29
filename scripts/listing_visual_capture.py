@@ -180,6 +180,7 @@ def capture(item) -> None:
             ctx.add_cookies([{"name": "session", "value": user.get_cookie("session").value, "url": base}])
         page = ctx.new_page()
         page._moso_capture_js = js
+        page._moso_capture_theme = theme
         page._moso_capture_role = role or ("authenticated" if user else "anonymous")
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.on("requestfailed", lambda req: failed.append(req.url))
@@ -200,7 +201,7 @@ def capture(item) -> None:
         image_hashes[filename] = hashlib.sha256(path.read_bytes()).hexdigest()
         image_states[filename] = {
             "viewport": page.viewport_size, "locale": page.locator("html").get_attribute("lang"),
-            "theme": "dark" if "dark" in (page.locator("html").get_attribute("class") or "") else "light",
+            "theme": ("dark" if "dark" in (page.locator("html").get_attribute("class") or "") else "light" if "light" in (page.locator("html").get_attribute("class") or "") else page._moso_capture_theme),
             "state": name, "role": page._moso_capture_role,
         }
         if not (scenario == "pride" and stage == "before"):

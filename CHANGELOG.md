@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Add isolated Go API production service and Apache/TLS deployment configuration for api.mielenosoitukset.fi, with exact-build health checks and private reuse of the authorized production database settings.
+
 - Add the first independent Go public demonstration read API with explicit public-field and visibility boundaries, open CORS and bounded MongoDB reads. Existing pages and authenticated workflows remain unchanged.
 
 - Count only pageviews in site-analytics totals, traffic charts and breakdowns; exclude events, redirects, HEAD and prefetch requests. Show Matomo-compatible campaign-link pageviews separately, without adding cookies or visitor profiles.

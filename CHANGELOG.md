@@ -8,6 +8,8 @@
 
 - Add an opt-in client-rendered React demonstration detail page that reads public content directly from the Go API, while keeping lightweight SEO metadata, recurring URLs and legacy account workflows.
 
+- Cache Go demonstration detail content for 15 minutes in bounded process memory while rechecking public visibility on every hit.
+
 - Add isolated Go API production service and Apache/TLS deployment configuration for api.mielenosoitukset.fi, with exact-build health checks and private reuse of the authorized production database settings.
 
 - Add the first independent Go public demonstration read API with explicit public-field and visibility boundaries, open CORS and bounded MongoDB reads. Existing pages and authenticated workflows remain unchanged.

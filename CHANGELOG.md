@@ -6,6 +6,8 @@
 
 - Count only pageviews in site-analytics totals, traffic charts and breakdowns; exclude events, redirects, HEAD and prefetch requests. Show Matomo-compatible campaign-link pageviews separately, without adding cookies or visitor profiles.
 
+- Keep the mobile admin menu clickable beneath an empty toast layer while retaining interactive toast dismissal.
+
 - Keep RSS cache entries separate for distinct Unicode city/tag filters, matching the literal database query.
 
 - Fix shared admin logout initialization so admin pages load without JavaScript errors and confirmation correctly resets and cancels its countdown.

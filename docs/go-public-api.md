@@ -39,8 +39,8 @@ follow/attendance state are intentionally not part of this initial contract.
 This is not a drop-in replacement for the authenticated Flask API.
 
 Invalid ID/parameters:400; unavailable event:404; database failure:503 with a
-bounded generic error. Responses are JSON, no-store and nosniff. No cache initially:
-visibility is checked on every request, including conditional/HEAD requests.
+bounded generic error. Responses are JSON, no-store and nosniff. Content uses the bounded15minute server cache described below; visibility is
+checked on every request, including conditional/HEAD requests.
 GET/HEAD/OPTIONS only; no arbitrary queries, list dumps or write methods.
 `GET /health` checks MongoDB connectivity with a short deadline.
 
@@ -96,3 +96,21 @@ only inside the server with a root-owned0600 environment file. No database
 data write or existing website routing is changed by API publication.
 The local default port8080 is already occupied on the inspected production host;
 choose a verified unused loopback port in deployment, not the default blindly.
+
+
+## Demonstration detail cache
+
+The Go process caches successful projected demonstration documents for15minutes,
+keyed by ObjectId. Localization still runs per request, so languages never share
+rendered translations. Content edits may take up to15minutes to appear. Each
+cache hit performs a lightweight indexed public-visibility check; hidden,
+rejected or unapproved events are not served from stale cached content. Database
+errors fail closed. Missing records/errors and oversized documents are not cached.
+
+The concurrency-safe process-local cache holds at most1024documents of32KiB each
+(approximately32MiB of BSON plus map overhead), pruning expired entries and
+otherwise evicting the earliest-expiring entry. Restart clears it; multiple API
+processes have independent caches. Health is not cached. HTTP responses retain
+no-store, so browser/CDN caching cannot bypass visibility checks. No new database,
+indexes, migrations or service dependencies. Disable by restoring the direct
+mongoStore construction in main; no stored-data rollback is needed.

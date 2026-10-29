@@ -43,6 +43,12 @@ func (s mongoStore) FindPublic(ctx context.Context, id bson.ObjectID) (bson.M, e
 	err := s.collection.FindOne(ctx, publicFilter(id), options.FindOne().SetProjection(publicProjection())).Decode(&doc)
 	return doc, err
 }
+
+// Check only the indexed identity and public visibility, without loading content.
+func (s mongoStore) CheckPublic(ctx context.Context, id bson.ObjectID) error {
+	return s.collection.FindOne(ctx, publicFilter(id), options.FindOne().SetProjection(bson.M{"_id": 1})).Err()
+}
+
 func (s mongoStore) Ping(ctx context.Context) error { return s.client.Ping(ctx, nil) }
 
 type API struct{ store Store }
@@ -122,7 +128,7 @@ func main() {
 		defer cancel()
 		_ = client.Disconnect(ctx)
 	}()
-	a := &API{store: mongoStore{client.Database(database).Collection("demonstrations"), client}}
+	a := &API{store: newCachedDetailStore(mongoStore{client.Database(database).Collection("demonstrations"), client})}
 	server := &http.Server{Addr: env("API_ADDR", "127.0.0.1:8080"), Handler: a.handler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 * 1024}
 	shutdownDone := make(chan struct{})
 	stopped := make(chan os.Signal, 1)

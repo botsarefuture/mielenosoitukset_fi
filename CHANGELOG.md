@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Add the first independent Go public demonstration read API with explicit public-field and visibility boundaries, open CORS and bounded MongoDB reads. Existing pages and authenticated workflows remain unchanged.
+
 - Count only pageviews in site-analytics totals, traffic charts and breakdowns; exclude events, redirects, HEAD and prefetch requests. Show Matomo-compatible campaign-link pageviews separately, without adding cookies or visitor profiles.
 
 - Keep the mobile admin menu clickable beneath an empty toast layer while retaining interactive toast dismissal.

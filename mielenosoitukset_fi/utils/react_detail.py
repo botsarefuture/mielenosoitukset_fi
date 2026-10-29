@@ -141,6 +141,7 @@ def render_public_detail(db, identifier, locale, recurring_context=None):
         "demonstration_detail", demo_id=metadata.get("slug") or metadata.get("running_number") or event_id, _external=True)
     # Keep user/account operations on the existing same-origin routes in this slice.
     urls = {
+        "trackView": url_for("track_demo_view"),
         "listing": url_for("demonstrations"),
         "login": url_for("users.auth.login", next=request.full_path.rstrip("?")),
         "calendar": url_for("download_demo_ics", demo_id="__EVENT_ID__"),

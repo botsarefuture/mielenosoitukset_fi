@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Preserve demonstration-view analytics in the React detail page on initial display and occurrence navigation, without counting rerenders or retries as extra views.
+
 - Add an opt-in client-rendered React demonstration detail page that reads public content directly from the Go API, while keeping lightweight SEO metadata, recurring URLs and legacy account workflows.
 
 - Add isolated Go API production service and Apache/TLS deployment configuration for api.mielenosoitukset.fi, with exact-build health checks and private reuse of the authorized production database settings.

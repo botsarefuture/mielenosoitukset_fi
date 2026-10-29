@@ -1,9 +1,10 @@
 import 'vite/modulepreload-polyfill';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DemonstrationDetailPage } from '../pages/DemonstrationDetailPage';
 import type { DetailProps } from '../pages/DemonstrationDetailPage';
 import type { DetailEvent } from '../components/detail/types';
 import { mountIsland } from '../lib/mount-island';
+import { trackDemoView } from '../lib/track-demo-view';
 
 type Route = { id: string; href: string };
 /** Browser host adapter. Components receive routes and account configuration as data. */
@@ -14,8 +15,16 @@ function DetailRoute(props: DetailProps) {
     setFollowedOrganizations(current => following ? [...new Set([...current, id])] : current.filter(value => value !== id));
   }
 
-  const loaded = useCallback((event: DetailEvent) => { document.title = `${event.title} | Mielenosoitukset.fi`; }, []);
   const [route, setRoute] = useState<Route>({ id: props.id, href: window.location.href });
+  const trackedView = useRef<string | null>(null);
+  useEffect(() => { trackedView.current = null; }, [route.id]);
+  const loaded = useCallback((event: DetailEvent) => {
+    if (event._id !== route.id) return;
+    document.title = `${event.title} | Mielenosoitukset.fi`;
+    if (trackedView.current === event._id) return;
+    trackedView.current = event._id;
+    trackDemoView(props.urls.trackView, event._id);
+  }, [route.id, props.urls.trackView]);
   const [intent, setIntent] = useState<'attend' | 'invite' | null>(() => {
     const action = new URL(window.location.href).searchParams.get('action');
     return action === 'like' ? 'attend' : action === 'inviteFriends' ? 'invite' : null;

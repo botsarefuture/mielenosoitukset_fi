@@ -26,7 +26,7 @@ export type DetailProps = {
   id: string; endpoint: string; locale: string; canonicalUrl: string; authenticated: boolean; csrfToken?: string;
   initialAction?: 'attend' | 'invite' | null; onIntentConsumed?: () => void;
   coverSource?: string | null;
-  urls: { listing: string; login: string; loginInvite?: string; calendar: string; reminder: string; report: string;
+  urls: { trackView: string; listing: string; login: string; loginInvite?: string; calendar: string; reminder: string; report: string;
     invite: string; friends: string; like: string; unlike: string; attendance: string; followOrganization?: string; unfollowOrganization?: string; followRecurring?: string; unfollowRecurring?: string; organizationPrefix: string; tagPrefix: string };
   messages: DetailMessages;
   series?: { title: string; occurrences: Occurrence[] };

@@ -2612,6 +2612,16 @@ def init_routes(app):
         except Exception:
             demo_oid = None
 
+        wants_json = request.method == "POST" and request.accept_mimetypes.best == "application/json"
+        if wants_json:
+            if not error or not error.strip() or len(error) > 10000 or _type != "demonstration" or demo_oid is None:
+                return jsonify({"status": "ERROR", "message": _("Täytä ilmoituksen tiedot.")}), 400
+            from mielenosoitukset_fi.utils.react_detail import public_metadata_query
+            if not mongo.demonstrations.find_one(public_metadata_query({"_id": demo_oid}), {"_id": 1}):
+                return jsonify({"status": "ERROR", "message": _("Tapahtumaa ei löydy tai se ei ole julkinen.")}), 404
+            if reporter_email and not valid_email(reporter_email):
+                return jsonify({"status": "ERROR", "message": _("Sähköpostiosoite ei ole kelvollinen.")}), 400
+
         if _type:
             if _type == "demonstration":
                 report_doc = {
@@ -2683,6 +2693,9 @@ def init_routes(app):
                     "reporter_email": reporter_email,
                 }
             )
+
+        if wants_json:
+            return jsonify({"status": "OK", "message": _("Virhe ilmoitettu onnistuneesti! Kiitos ilmoituksestasi.")})
 
         flash_message(
             "Virhe ilmoitettu onnistuneesti! Kiitos ilmoituksestasi.", "success"
@@ -2951,6 +2964,14 @@ def init_routes(app):
         - the requester is authenticated
         - flash messages are pending for the session/request
         """
+        # The public React shell does only a projected metadata/visibility read.
+        # API content is fetched directly by the browser, never before Flask TTFB.
+        if current_app.config.get("PUBLIC_DETAIL_REACT_ENABLED", False):
+            from mielenosoitukset_fi.utils.react_detail import render_public_detail
+            response = render_public_detail(mongo, demo_id, _current_demo_language(), recurring_context)
+            if response is not None:
+                return response
+
         # Load demonstration and permission checks first (so we don't serve cached 401/404)
         try:
             demo_obj = Demonstration.load_by_id(demo_id)

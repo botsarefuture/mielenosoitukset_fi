@@ -17,6 +17,15 @@
     "file": "assets/mount-island-BCC_kmYD.js",
     "name": "mount-island"
   },
+  "src/components/detail/DetailMap.tsx": {
+    "file": "assets/DetailMap-C9jq3FNc.js",
+    "name": "DetailMap",
+    "src": "src/components/detail/DetailMap.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_mount-island-BCC_kmYD.js"
+    ]
+  },
   "src/entries/campaign.tsx": {
     "file": "assets/campaign-ehCiRC4L.js",
     "name": "campaign",
@@ -34,6 +43,18 @@
     "isEntry": true,
     "imports": [
       "_mount-island-BCC_kmYD.js"
+    ]
+  },
+  "src/entries/detail.tsx": {
+    "file": "assets/detail-BZCFrHDl.js",
+    "name": "detail",
+    "src": "src/entries/detail.tsx",
+    "isEntry": true,
+    "imports": [
+      "_mount-island-BCC_kmYD.js"
+    ],
+    "dynamicImports": [
+      "src/components/detail/DetailMap.tsx"
     ]
   },
   "src/entries/header.tsx": {

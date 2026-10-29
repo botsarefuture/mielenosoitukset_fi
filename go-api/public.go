@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-var textFields = []string{"date", "start_time", "end_time", "city", "address", "slug", "event_type", "facebook", "img", "cover_picture", "preview_image"}
+var textFields = []string{"date", "start_time", "end_time", "city", "address", "slug", "event_type", "facebook", "img", "cover_picture", "cover_source", "preview_image"}
 
 func publicProjection() bson.M {
 	fields := bson.M{"_id": 1, "title": 1, "description": 1, "tags": 1, "default_language": 1, "cancelled": 1, "latitude": 1, "longitude": 1, "running_number": 1, "gallery_images": 1, "images": 1, "route": 1}
@@ -25,9 +25,27 @@ func publicProjection() bson.M {
 			fields["translations."+lang+"."+field] = 1
 		}
 	}
-	for _, field := range []string{"name", "website", "organization_id", "is_private", "show_name_public"} {
-		fields["organizers."+field] = 1
+	// Consent is evaluated in MongoDB, before unconsented addresses cross the
+	// projection boundary. The payload builder independently checks it again.
+	emailConsent := bson.M{"$and": bson.A{
+		bson.M{"$eq": bson.A{bson.M{"$type": "$$organizer.show_email_public"}, "bool"}},
+		bson.M{"$eq": bson.A{"$$organizer.show_email_public", true}},
+	}}
+	organizer := bson.M{"show_email_public": emailConsent}
+	for _, field := range []string{"name", "website", "organization_id", "logo", "is_private", "show_name_public"} {
+		organizer[field] = "$$organizer." + field
 	}
+	organizer["email"] = bson.M{"$cond": bson.A{
+		bson.M{"$and": bson.A{emailConsent, bson.M{"$eq": bson.A{bson.M{"$type": "$$organizer.email"}, "string"}}}},
+		"$$organizer.email", "$$REMOVE",
+	}}
+	fields["organizers"] = bson.M{"$map": bson.M{
+		"input": bson.M{"$filter": bson.M{
+			"input": bson.M{"$cond": bson.A{bson.M{"$isArray": "$organizers"}, "$organizers", bson.A{}}},
+			"as":    "organizer", "cond": bson.M{"$eq": bson.A{bson.M{"$type": "$$organizer"}, "object"}},
+		}},
+		"as": "organizer", "in": organizer,
+	}}
 	return fields
 }
 func parseQuery(raw string) (string, error) {
@@ -192,15 +210,28 @@ func publicPayload(doc bson.M, lang string) bson.M {
 		if _, exists := org["is_private"]; exists && !privateOK {
 			continue
 		}
+		if len(org) == 0 {
+			continue
+		}
 		showName, _ := org["show_name_public"].(bool)
-		if private && !showName {
-			continue
-		}
 		name := text(org["name"])
-		if name == nil || name == "" {
-			continue
+		if name == "" {
+			name = nil
 		}
-		organizers = append(organizers, bson.M{"name": name, "website": text(org["website"]), "organization_id": identifier(org["organization_id"])})
+		entry := bson.M{"name": name, "is_private": private, "website": text(org["website"]),
+			"logo": text(org["logo"]), "organization_id": nil, "email": nil}
+		if !private {
+			entry["organization_id"] = identifier(org["organization_id"])
+		}
+		if private && !showName {
+			// Keep an anonymous organizer placeholder, without identifying links
+			// or images. Separately consented public email is the only exception.
+			entry["name"], entry["website"], entry["logo"] = nil, nil, nil
+		}
+		if consent, ok := org["show_email_public"].(bool); ok && consent {
+			entry["email"] = text(org["email"])
+		}
+		organizers = append(organizers, entry)
 	}
 	r["organizers"] = organizers
 	return r

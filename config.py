@@ -92,6 +92,12 @@ class Config:
         cls.MONGO_URI = config.get("MONGO_URI", "")
         cls.MONGO_DBNAME = config.get("MONGO_DBNAME", "default_db")
 
+        # Opt-in migration; API URL is public browser configuration, not a DB URI.
+        cls.PUBLIC_DETAIL_REACT_ENABLED = config.get("PUBLIC_DETAIL_REACT_ENABLED", False)
+        cls.PUBLIC_DEMONSTRATION_API_URL = config.get(
+            "PUBLIC_DEMONSTRATION_API_URL", "https://api.mielenosoitukset.fi/api/demonstrations"
+        )
+
         cls.MAIL_CONFIG = config.get("MAIL", {})
         cls.MAIL_SERVER = cls.MAIL_CONFIG.get("SERVER", "localhost")
         cls.MAIL_PORT = cls.MAIL_CONFIG.get("PORT", 587)

@@ -9792,7 +9792,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:160
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:182
 msgid "Lähde"
-msgstr ""
+msgstr "Source"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:152
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:165
@@ -13771,3 +13771,92 @@ msgstr "A submission must not contain discrimination or hate speech."
 #: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
 msgid "Lue käyttöehdot"
 msgstr "Read the terms of use"
+
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Avainsana"
+msgstr "Keyword"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Ei vielä kirjattuja kampanjalinkkien sivunäyttöjä tällä aikavälillä."
+msgstr "No campaign-link pageviews have been recorded for this period yet."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Esimerkki kampanjalinkin parametreista:"
+msgstr "Example campaign-link parameters:"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanja"
+msgstr "Campaign"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanjalinkit"
+msgstr "Campaign links"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanjan tunnus"
+msgstr "Campaign ID"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanjaraporttia ei voitu ladata. Tämä ei tarkoita, että kampanjaliikennettä olisi nolla. Yritä päivittää sivu."
+msgstr "The campaign report could not be loaded. This does not mean campaign traffic is zero. Try refreshing the page."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanjatietoja kerätään tunnisteellisista linkeistä tästä toiminnosta alkaen. Vanhaa liikennettä ei voida päätellä jälkikäteen kampanjoiksi."
+msgstr "Campaign data is collected from tagged links once this feature is available. Earlier traffic cannot be attributed to campaigns retrospectively."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kanava"
+msgstr "Medium"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarvio"
+msgstr "Estimated visitors"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarvio jätetään tyhjäksi päiviltä, joilta tunnistetietoja ei ole kerätty."
+msgstr "The visitor estimate is left blank for days when identifier data was not collected."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarvio perustuu IP-osoitteesta ja karkeasta laitetyypistä laskettuihin tunnisteisiin, ei tunnistettuihin henkilöihin. Jaettu osoite voi yhdistää eri ihmisiä, ja vaihtuva osoite tai laite voi jakaa saman ihmisen useaksi arvioksi. Tunnisteen avain vaihtuu seitsemän päivän välein, eikä vaihtumisraja välttämättä osu kalenteriviikon alkuun. Sama ihminen voi siksi tulla lasketuksi useammin kuin kerran valitulla aikavälillä. Tämä laskenta ei käytä evästeitä eikä tallenna raakaa IP-osoitetta."
+msgstr "The visitor estimate uses identifiers derived from IP addresses and coarse device types, not identified people. A shared address can combine different people, while a changing address or device can split one person into several estimates. The identifier key rotates every seven days, and its rotation does not necessarily coincide with the start of a calendar week. The same person may therefore be counted more than once during the selected period. This count uses no cookies and does not store raw IP addresses."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarvioita on kerätty %(date)s alkaen. Vanhempien jaksojen arviota ei ole saatavilla."
+msgstr "Visitor estimates have been collected since %(date)s. Estimates for earlier periods are unavailable."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarviot ja sivunäytöt"
+msgstr "Estimated visitors and pageviews"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarviot ja sivunäytöt päivittäin"
+msgstr "Daily visitor estimates and pageviews"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Laskuriin kirjataan vain julkiset, onnistuneet HTML-sivujen GET-vastaukset. Hallintapaneeli, käyttäjien oma alue, rajapinnat, RSS, staattiset tiedostot, HEAD-pyynnöt, uudelleenohjaukset, esilataukset ja tunnistetut botit eivät kuulu sivunäyttöihin. Tapahtumalaskureita ei lisätä sivunäyttöihin. Kampanjalinkkien sivunäytöt näytetään lisäksi omassa raportissaan. Kaikkea automaattista liikennettä ei voida tunnistaa."
+msgstr "Only successful GET responses containing public HTML pages are counted. Admin and account pages, APIs, RSS, static files, HEAD requests, redirects, prefetches and recognized bots are excluded from pageviews. Event counters are not added to pageviews. Campaign-link pageviews are also shown in their own report. Not all automated traffic can be recognized."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Päivittäiset sivunäytöt ja kävijäarviot viivakaaviona"
+msgstr "Line chart of daily pageviews and visitor estimates"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Ryhmä"
+msgstr "Group"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Sijoittelu"
+msgstr "Placement"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Sivunäytöt ovat laskettujen sivuvastausten määrä. Kävijäarvio kuvaa saman päivän aikana erillisinä pidettyjä tunnisteita, ei henkilömäärää."
+msgstr "Pageviews count the page responses recorded. The visitor estimate represents identifiers treated as distinct during the same day, not a number of people."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Tässä näkymässä käytetään palvelimen laskureita. Sivunäytöt ja kävijäarviot ovat eri mittareita, eivätkä ne vastaa suoraan Matomon käyntejä."
+msgstr "This dashboard uses server-side counters. Pageviews and estimated visitors are different metrics and do not directly correspond to Matomo visits."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Valitun aikavälin enintään 20 yleisintä kampanjalinkkiä sivunäyttöjen mukaan. Luvut eivät ole yksilöllisiä käyntejä, henkilöitä tai konversioita. Sivun päivitys voi kasvattaa lukua."
+msgstr "Up to the 20 most common campaign links during the selected period, ranked by pageviews. These figures are not unique visits, people or conversions. Refreshing a page can increase the count."

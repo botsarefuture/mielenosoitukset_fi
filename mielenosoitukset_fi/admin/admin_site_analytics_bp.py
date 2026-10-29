@@ -14,6 +14,7 @@ from flask_login import login_required
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.campaign_analytics import get_campaign_report
 from mielenosoitukset_fi.utils.site_analytics import (
     DEVICE_LABELS,
     EVENT_LABELS,
@@ -149,6 +150,14 @@ def site_overview():
         logger.exception("Failed to read Web Vitals summary")
         web_vitals = []
 
+    campaign_error = False
+    try:
+        campaigns = get_campaign_report(days=days)
+    except Exception:
+        logger.exception("Failed to read campaign analytics")
+        campaigns = []
+        campaign_error = True
+
     rows = [
         {**row, "url": _page_views_endpoint(row["page_type"], row["resource_id"])}
         for row in top_pages
@@ -178,6 +187,8 @@ def site_overview():
         events=events,
         search_terms=search_terms,
         web_vitals=web_vitals,
+        campaigns=campaigns,
+        campaign_error=campaign_error,
         language_labels=LANGUAGE_LABELS,
         device_labels=DEVICE_LABELS,
         referrer_labels=REFERRER_LABELS,

@@ -10253,7 +10253,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:160
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:182
 msgid "Lähde"
-msgstr ""
+msgstr "Källa"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:152
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:165
@@ -13952,3 +13952,92 @@ msgstr "En anmälan får inte innehålla diskriminering eller hatretorik."
 #: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
 msgid "Lue käyttöehdot"
 msgstr "Läs användarvillkoren"
+
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Avainsana"
+msgstr "Nyckelord"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Ei vielä kirjattuja kampanjalinkkien sivunäyttöjä tällä aikavälillä."
+msgstr "Inga sidvisningar från kampanjlänkar har registrerats för den här perioden ännu."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Esimerkki kampanjalinkin parametreista:"
+msgstr "Exempel på parametrar för en kampanjlänk:"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanja"
+msgstr "Kampanj"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanjalinkit"
+msgstr "Kampanjlänkar"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanjan tunnus"
+msgstr "Kampanj-ID"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanjaraporttia ei voitu ladata. Tämä ei tarkoita, että kampanjaliikennettä olisi nolla. Yritä päivittää sivu."
+msgstr "Kampanjrapporten kunde inte läsas in. Det betyder inte att kampanjtrafiken är noll. Försök uppdatera sidan."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanjatietoja kerätään tunnisteellisista linkeistä tästä toiminnosta alkaen. Vanhaa liikennettä ei voida päätellä jälkikäteen kampanjoiksi."
+msgstr "Kampanjdata samlas in från märkta länkar när den här funktionen är tillgänglig. Tidigare trafik kan inte tillskrivas kampanjer i efterhand."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kanava"
+msgstr "Medium"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarvio"
+msgstr "Uppskattade besökare"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarvio jätetään tyhjäksi päiviltä, joilta tunnistetietoja ei ole kerätty."
+msgstr "Besökaruppskattningen lämnas tom för dagar då identifierardata inte samlades in."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarvio perustuu IP-osoitteesta ja karkeasta laitetyypistä laskettuihin tunnisteisiin, ei tunnistettuihin henkilöihin. Jaettu osoite voi yhdistää eri ihmisiä, ja vaihtuva osoite tai laite voi jakaa saman ihmisen useaksi arvioksi. Tunnisteen avain vaihtuu seitsemän päivän välein, eikä vaihtumisraja välttämättä osu kalenteriviikon alkuun. Sama ihminen voi siksi tulla lasketuksi useammin kuin kerran valitulla aikavälillä. Tämä laskenta ei käytä evästeitä eikä tallenna raakaa IP-osoitetta."
+msgstr "Besökaruppskattningen bygger på identifierare som beräknas från IP-adresser och grova enhetstyper, inte på identifierade personer. En delad adress kan slå ihop olika personer, medan en adress eller enhet som ändras kan dela upp samma person i flera uppskattningar. Nyckeln för identifieraren byts var sjunde dag, och bytet sammanfaller inte nödvändigtvis med kalenderveckans början. Samma person kan därför räknas mer än en gång under den valda perioden. Den här beräkningen använder inga kakor och lagrar inga IP-adresser i klartext."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarvioita on kerätty %(date)s alkaen. Vanhempien jaksojen arviota ei ole saatavilla."
+msgstr "Besökaruppskattningar har samlats in sedan %(date)s. Uppskattningar för äldre perioder saknas."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarviot ja sivunäytöt"
+msgstr "Uppskattade besökare och sidvisningar"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarviot ja sivunäytöt päivittäin"
+msgstr "Dagliga besökaruppskattningar och sidvisningar"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Laskuriin kirjataan vain julkiset, onnistuneet HTML-sivujen GET-vastaukset. Hallintapaneeli, käyttäjien oma alue, rajapinnat, RSS, staattiset tiedostot, HEAD-pyynnöt, uudelleenohjaukset, esilataukset ja tunnistetut botit eivät kuulu sivunäyttöihin. Tapahtumalaskureita ei lisätä sivunäyttöihin. Kampanjalinkkien sivunäytöt näytetään lisäksi omassa raportissaan. Kaikkea automaattista liikennettä ei voida tunnistaa."
+msgstr "Endast lyckade GET-svar med offentliga HTML-sidor räknas. Admin- och kontosidor, API:er, RSS, statiska filer, HEAD-anrop, omdirigeringar, förhandsladdningar och identifierade botar ingår inte i sidvisningarna. Händelseräknare läggs inte till sidvisningarna. Sidvisningar från kampanjlänkar visas även i en egen rapport. All automatiserad trafik kan inte identifieras."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Päivittäiset sivunäytöt ja kävijäarviot viivakaaviona"
+msgstr "Linjediagram över dagliga sidvisningar och besökaruppskattningar"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Ryhmä"
+msgstr "Grupp"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Sijoittelu"
+msgstr "Placering"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Sivunäytöt ovat laskettujen sivuvastausten määrä. Kävijäarvio kuvaa saman päivän aikana erillisinä pidettyjä tunnisteita, ei henkilömäärää."
+msgstr "Sidvisningar anger antalet registrerade sidsvar. Besökaruppskattningen avser identifierare som betraktas som separata under samma dag, inte antalet personer."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Tässä näkymässä käytetään palvelimen laskureita. Sivunäytöt ja kävijäarviot ovat eri mittareita, eivätkä ne vastaa suoraan Matomon käyntejä."
+msgstr "Den här vyn använder räknare på servern. Sidvisningar och uppskattade besökare är olika mått och motsvarar inte direkt besök i Matomo."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Valitun aikavälin enintään 20 yleisintä kampanjalinkkiä sivunäyttöjen mukaan. Luvut eivät ole yksilöllisiä käyntejä, henkilöitä tai konversioita. Sivun päivitys voi kasvattaa lukua."
+msgstr "Upp till de 20 vanligaste kampanjlänkarna under den valda perioden, rangordnade efter sidvisningar. Siffrorna är inte unika besök, personer eller konverteringar. En siduppdatering kan öka antalet."

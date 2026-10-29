@@ -138,6 +138,7 @@ BEACON_EVENT_ALLOWLIST = {"map_interaction", "external_link"}
 # Friendly labels for the dashboard events table. Unknown events are shown
 # as their raw names.
 EVENT_LABELS = {
+    "campaign_view": "Kampanjan sivunäytöt",
     "rss_fetch": "RSS: syötehaut (ei tilaajamäärä)",
     "rss_not_modified": "RSS: muuttumattoman syötteen tarkistukset",
     "rss_reader_day": "RSS: aktiiviset lukijapäivät (arvio)",
@@ -288,7 +289,10 @@ def classify_request(request):
     is read or stored.
     """
     method = (request.method or "GET").upper()
-    if method not in {"GET", "HEAD"}:
+    if method != "GET":
+        return None
+
+    if "prefetch" in (request.headers.get("Sec-Purpose", "") + request.headers.get("Purpose", "")).lower():
         return None
 
     user_agent = request.headers.get("User-Agent") or ""
@@ -392,7 +396,7 @@ def should_count_response(response):
     if response is None:
         return False
     status = response.status_code or 0
-    if status < 200 or status >= 400:
+    if status < 200 or status >= 300:
         return False
     content_type = (response.headers.get("Content-Type") or "").lower()
     if "text/html" not in content_type:
@@ -495,6 +499,13 @@ def record_pageview_from_request(request, response):
         )
     except Exception:
         return False
+
+    # Tagged landing-page views use a separate aggregate event, never a second pageview.
+    try:
+        from mielenosoitukset_fi.utils.campaign_analytics import record_campaign_pageview
+        record_campaign_pageview(request, classified=classified)
+    except Exception:
+        pass
 
     # Counted separately so a visitor-storage failure can never roll back or
     # delay the pageview counter above.
@@ -932,7 +943,7 @@ def get_overview(days=30, start=None, end=None):
 
     def _range_total(a, b):
         pipeline = [
-            {"$match": {"date": {"$gte": a.strftime(_DATE_FMT), "$lte": b.strftime(_DATE_FMT)}}},
+            {"$match": {"page_type": {"$exists": True, "$nin": [None, ""]}, "date": {"$gte": a.strftime(_DATE_FMT), "$lte": b.strftime(_DATE_FMT)}}},
             {"$group": {"_id": None, "count": {"$sum": "$count"}}},
         ]
         rows = list(_collection().aggregate(pipeline))
@@ -1073,6 +1084,7 @@ def get_visitor_series(days=30, start=None, end=None):
 def get_traffic_series(days=30, start=None, end=None):
     """Pageviews per day between two Helsinki-local dates (oldest first)."""
     match, start, end = _match_window(days=days, start=start, end=end)
+    match["page_type"] = {"$exists": True, "$nin": [None, ""]}
     pipeline = [
         {"$match": match},
         {"$group": {"_id": "$date", "count": {"$sum": "$count"}}},
@@ -1132,6 +1144,7 @@ def get_top_pages(page_type=None, days=30, start=None, end=None, limit=10,
 def get_breakdown(field, days=30, start=None, end=None, limit=12):
     """Aggregate pageviews grouped by ``language``/``device``/``referrer``."""
     match, _, _ = _match_window(days=days, start=start, end=end)
+    match["page_type"] = {"$exists": True, "$nin": [None, ""]}
     pipeline = [
         {"$match": match},
         {"$group": {"_id": f"${field}", "count": {"$sum": "$count"}}},

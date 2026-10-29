@@ -190,3 +190,106 @@ func TestLegacyRouteGalleryAndBlankTranslation(t *testing.T) {
 		t.Fatal(w)
 	}
 }
+
+func TestOrganizerPublicConsentAndPlaceholders(t *testing.T) {
+	organizationID := bson.NewObjectID()
+	for _, flag := range []any{nil, false, "true", 1, bson.A{true}, bson.M{"value": true}} {
+		org := bson.M{"name": "Public organizer", "email": "hidden-address@example.test", "show_email_public": flag}
+		result := publicPayload(bson.M{"organizers": bson.A{org}}, "fi")
+		if got := result["organizers"].([]bson.M)[0]["email"]; got != nil {
+			t.Fatalf("non-boolean consent exposed email: flag=%v got=%v", flag, got)
+		}
+	}
+	result := publicPayload(bson.M{"cover_source": "manual", "organizers": bson.A{
+		bson.M{"name": "Hidden private identity", "is_private": true, "show_name_public": false,
+			"website": "https://private.example.test", "logo": "private-photo.jpg", "organization_id": organizationID,
+			"email": "public-address@example.test", "show_email_public": true},
+		bson.M{"name": "Visible private name", "is_private": true, "show_name_public": true, "organization_id": organizationID},
+		bson.M{"name": "Public organization", "organization_id": organizationID, "logo": "public-logo.jpg",
+			"email": "public-address@example.test", "show_email_public": true, "unknown": "private-value"},
+	}}, "fi")
+	organizers := result["organizers"].([]bson.M)
+	hidden := organizers[0]
+	if result["cover_source"] != "manual" || hidden["name"] != nil || hidden["is_private"] != true || hidden["website"] != nil || hidden["logo"] != nil || hidden["organization_id"] != nil || hidden["email"] != "public-address@example.test" {
+		t.Fatalf("private placeholder or explicit email consent lost: %v", result)
+	}
+	if organizers[1]["name"] != "Visible private name" || organizers[1]["organization_id"] != nil || organizers[1]["email"] != nil {
+		t.Fatal("visible private name exposed unconsented identifying fields", organizers[1])
+	}
+	if organizers[2]["organization_id"] != organizationID.Hex() || organizers[2]["logo"] != "public-logo.jpg" || organizers[2]["email"] != "public-address@example.test" {
+		t.Fatal("public organizer fields lost", organizers[2])
+	}
+	if _, exists := organizers[2]["unknown"]; exists {
+		t.Fatal("unknown organizer field exposed")
+	}
+}
+
+func TestMongoOrganizerConsentProjection(t *testing.T) {
+	uri := os.Getenv("TEST_MONGODB_URI")
+	if uri == "" {
+		t.Skip("set TEST_MONGODB_URI for isolated MongoDB integration")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(options.Client().ApplyURI(uri))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Disconnect(context.Background())
+	db := client.Database("moso_go_api_test_" + bson.NewObjectID().Hex())
+	defer db.Drop(context.Background())
+	collection := db.Collection("demonstrations")
+	store := mongoStore{collection, client}
+	for _, tc := range []struct {
+		name       string
+		consent    any
+		setConsent bool
+		public     bool
+	}{
+		{"explicit true", true, true, true},
+		{"missing", nil, false, false},
+		{"false", false, true, false},
+		{"null", nil, true, false},
+		{"string", "true", true, false},
+		{"number", 1, true, false},
+		{"array", bson.A{true}, true, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			id := bson.NewObjectID()
+			org := bson.M{"name": "Private identity", "is_private": true, "show_name_public": false,
+				"website": "https://identity.example.test", "logo": "identity.jpg", "organization_id": bson.NewObjectID(),
+				"email": "contact-address@example.test", "private_token": "unprojected-secret"}
+			if tc.setConsent {
+				org["show_email_public"] = tc.consent
+			}
+			_, err := collection.InsertOne(ctx, bson.M{"_id": id, "approved": true, "cover_source": "manual", "organizers": bson.A{org}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			doc, err := store.FindPublic(ctx, id)
+			if err != nil {
+				t.Fatal(err)
+			}
+			projected, _ := bson.MarshalExtJSON(doc, false, false)
+			if strings.Contains(string(projected), "unprojected-secret") || (!tc.public && strings.Contains(string(projected), "contact-address")) {
+				t.Fatal("projection returned private contact fields", string(projected))
+			}
+			payload := publicPayload(doc, "fi")
+			organizers := payload["organizers"].([]bson.M)
+			if payload["cover_source"] != "manual" || len(organizers) != 1 {
+				t.Fatal("cover source or anonymous organizer lost", payload)
+			}
+			got := organizers[0]
+			if got["name"] != nil || got["website"] != nil || got["logo"] != nil || got["organization_id"] != nil || got["is_private"] != true {
+				t.Fatal("private identity returned", got)
+			}
+			if tc.public {
+				if got["email"] != "contact-address@example.test" {
+					t.Fatal("explicit public contact lost", got)
+				}
+			} else if got["email"] != nil {
+				t.Fatal("unconsented email returned", got)
+			}
+		})
+	}
+}

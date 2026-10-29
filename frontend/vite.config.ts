@@ -23,6 +23,7 @@ export default defineConfig({
     manifest: 'manifest.json',
     rollupOptions: {
       input: {
+        detail: fileURLToPath(new URL('./src/entries/detail.tsx', import.meta.url)),
         pride: fileURLToPath(new URL('./src/entries/pride.tsx', import.meta.url)),
         submit: fileURLToPath(new URL('./src/entries/submit.tsx', import.meta.url)),
         listing: fileURLToPath(new URL('./src/entries/listing.tsx', import.meta.url)),

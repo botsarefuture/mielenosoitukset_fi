@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% from '_macros/frontend.html' import frontend_entry %}
+{% block title %}{{ metadata_title }} | Mielenosoitukset.fi{% endblock %}
+{% block meta_description %}{{ metadata_description|striptags|truncate(200, true) }}{% endblock %}
+{% block og_title %}{{ metadata_title }}{% endblock %}
+{% block og_description %}{{ metadata_description|striptags|truncate(200, true) }}{% endblock %}
+{% block twitter_title %}{{ metadata_title }}{% endblock %}
+{% block twitter_description %}{{ metadata_description|striptags|truncate(200, true) }}{% endblock %}
+{% block og_url %}{{ detail_canonical_url }}{% endblock %}
+{% block og_image %}{{ metadata.get('preview_image') or url_for('screenshot', demo_id=metadata['_id'], _external=True) }}{% endblock %}
+{% block twitter_image %}{{ metadata.get('preview_image') or url_for('screenshot', demo_id=metadata['_id'], _external=True) }}{% endblock %}
+{% block robots %}<meta name="robots" content="{{ 'noindex, follow' if seo_noindex else 'index, follow' }}">{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ detail_canonical_url }}">{% endblock %}
+{% block meta %}
+<script type="application/ld+json">{{ {
+  '@context': 'https://schema.org', '@type': 'Event', 'name': metadata_title,
+  'description': metadata_description|striptags, 'url': detail_canonical_url,
+  'startDate': (metadata.get('date') or '') ~ 'T' ~ (metadata.get('start_time') or '00:00:00'),
+  'endDate': (metadata.get('date') or '') ~ 'T' ~ (metadata.get('end_time') or '23:59:00'),
+  'eventStatus': 'https://schema.org/EventCancelled' if metadata.get('cancelled') else 'https://schema.org/EventScheduled',
+  'eventAttendanceMode': 'https://schema.org/OfflineEventAttendanceMode',
+  'location': {'@type': 'Place', 'name': metadata.get('address') or metadata.get('city') or '',
+    'address': {'@type': 'PostalAddress', 'streetAddress': metadata.get('address') or '', 'addressLocality': metadata.get('city') or '', 'addressCountry': 'FI'}}
+}|tojson }}</script>
+{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/public-detail.css', v='20261029-react-detail-1') }}">{% endblock %}
+{% block content %}
+<div data-react-island="demonstration-detail" data-props-id="demonstration-detail-props">
+  <div class="public-detail public-detail-boot" role="status"><p>{{ props.messages.loading }}</p><a href="{{ props.urls.listing }}">{{ props.messages.allEvents }}</a></div>
+</div>
+<noscript>
+  <article class="public-detail">
+    <h1>{{ metadata_title }}</h1>
+    <p>{{ metadata.get('date') or '' }}{% if metadata.get('start_time') %} · {{ metadata.start_time }}{% endif %}</p>
+    <p>{{ metadata.get('address') or '' }}{% if metadata.get('city') %}, {{ metadata.city }}{% endif %}</p>
+    <p>{{ metadata_description|striptags }}</p>
+    {% if not metadata.get('cancelled') %}<p><a href="{{ props.urls.calendar.replace('__EVENT_ID__', props.id) }}">{{ props.messages.calendar }}</a></p>{% endif %}
+    <a href="{{ props.urls.listing }}">{{ props.messages.allEvents }}</a>
+  </article>
+</noscript>
+<script type="application/json" id="demonstration-detail-props">{{ props|tojson }}</script>
+{{ frontend_entry('src/entries/detail.tsx') }}
+{% endblock %}

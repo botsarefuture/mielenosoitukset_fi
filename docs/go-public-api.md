@@ -22,19 +22,37 @@ visibility rules. Cancelled and past public events remain readable as on the
 existing detail page. Hidden, rejected, unapproved and missing events all return
 404. There is no administrative bypass. Projection and a separately constructed
 response both allowlist fields; never serialize a raw BSON document. Nested
-organizer and translation metadata are also allowlisted. Organizer emails and
-private names, submitter/contact details, moderation, tokens and unknown fields
-are never included. No joins or geocoding/writes on a read request.
+organizer and translation metadata are also allowlisted. Hidden private names,
+submitter/contact details, moderation, tokens and unknown fields are never
+included. The organizer contact extension below permits only explicitly public
+organizer email. No joins or geocoding/writes on a read request.
 
 Response fields: `_id`, `title`, `description`, `tags`, `date`, `start_time`,
 `end_time`, `city`, `address`, `route`, `latitude`, `longitude`, `cancelled`,
 `slug`, `running_number`, `event_type`, `facebook`, `img`, `cover_picture`,
-`preview_image`, `gallery_images`, `organizers`, `default_language`,
+`cover_source`, `preview_image`, `gallery_images`, `organizers`, `default_language`,
 `resolved_language`, `available_languages`. Route is a string array, accepting stored arrays and comma-separated/JSON-array legacy strings. Gallery images also support the old `images` field. Optional textual/numeric values
 are null when absent or malformed; arrays are empty instead of null. Coordinates
-accept legacy numeric strings. Organizer entries contain public name, website
-and organization_id only. Descriptions are content, not a trusted HTML rendering
-instruction. Recurring-parent selection, organization enrichment and personalized
+accept legacy numeric strings. `cover_source` belongs to each returned event,
+so changing a recurring occurrence does not reuse another occurrence's image
+policy. Descriptions are content, not a trusted HTML rendering instruction.
+
+The public organizer DTO now contains nullable `name`, `website`, `logo`,
+`organization_id` and `email`, plus boolean `is_private`. This extends the
+original no-email API contract to support public contacts on the single React
+detail view. Email is included only when the stored `show_email_public` value is
+exactly boolean true and email is a string. Missing, false, null, numeric, array
+or string consent never defaults to true. A computed MongoDB projection removes
+unconsented email before decoding; response construction independently enforces
+the consent check for raw inputs too. Private organizers without explicit
+`show_name_public: true` remain anonymous placeholders: name, website, logo and
+organization ID are null. A separately consented public email is the sole
+identifying exception for those placeholders. Organization IDs are returned only
+for nonprivate entries. No private organizer token, raw contact record or
+unknown nested metadata is returned, and there is no organization collection
+join or inference of publication consent.
+
+Recurring-parent selection, organization enrichment and personalized
 follow/attendance state are intentionally not part of this initial contract.
 This is not a drop-in replacement for the authenticated Flask API.
 

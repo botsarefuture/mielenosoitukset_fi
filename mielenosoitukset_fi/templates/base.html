@@ -35,7 +35,7 @@
 
   <!-- Primary Meta Tags -->
   <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
-  <meta name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa." />
+  <meta name="description" content="{% block meta_description %}Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa.{% endblock %}" />
   <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
   {% block robots %}<meta name="robots" content="index, follow" />{% endblock %}
   {% block canonical %}{% endblock %}

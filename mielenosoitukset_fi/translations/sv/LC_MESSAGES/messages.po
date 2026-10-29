@@ -252,7 +252,7 @@ msgstr ""
 #: mielenosoitukset_fi/users/templates/login.html:7
 #: mielenosoitukset_fi/users/templates/login.html:19
 msgid "Kirjaudu sisään"
-msgstr ""
+msgstr "Logga in"
 
 #: mielenosoitukset_fi/templates/base.html:262
 #: mielenosoitukset_fi/templates/users/auth/login.html:34
@@ -338,7 +338,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/tag_list.html:559
 #: mielenosoitukset_fi/templates/tag_list.html:560
 msgid "Kopioi linkki"
-msgstr ""
+msgstr "Kopiera länk"
 
 #: mielenosoitukset_fi/templates/city.html:162
 #: mielenosoitukset_fi/templates/city.html:164
@@ -494,7 +494,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:462
 msgid "Ilmoita virheestä"
-msgstr ""
+msgstr "Anmäl ett fel"
 
 #: mielenosoitukset_fi/templates/detail.html:482
 #: mielenosoitukset_fi/templates/detail.html:484
@@ -508,7 +508,7 @@ msgstr "och framåt"
 #: mielenosoitukset_fi/templates/detail.html:492
 #: mielenosoitukset_fi/templates/detail.html:493
 msgid "Jaa Facebookissa"
-msgstr ""
+msgstr "Dela på Facebook"
 
 #: mielenosoitukset_fi/templates/detail.html:496
 #: mielenosoitukset_fi/templates/detail.html:497
@@ -538,7 +538,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/detail.html:1130
 #: mielenosoitukset_fi/templates/detail.html:1132
 msgid "Osallistun"
-msgstr ""
+msgstr "Jag deltar"
 
 #: mielenosoitukset_fi/templates/detail.html:529
 msgid "Kirjaudu sisään osallistuaksesi"
@@ -562,7 +562,7 @@ msgstr "Detaljer"
 
 #: mielenosoitukset_fi/templates/detail.html:644
 msgid "Facebook-tapahtuma"
-msgstr ""
+msgstr "Facebook-evenemang"
 
 #: mielenosoitukset_fi/templates/detail.html:653
 msgid "Mielenosoitus toistuu säännöllisesti"
@@ -4546,7 +4546,7 @@ msgstr "Evenemangstyp"
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:169
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:959
 msgid "Reitti"
-msgstr ""
+msgstr "Rutt"
 
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:107
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:189
@@ -5764,11 +5764,11 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:1507
 msgid "Edellinen kuva"
-msgstr ""
+msgstr "Föregående bild"
 
 #: mielenosoitukset_fi/templates/detail.html:1508
 msgid "Seuraava kuva"
-msgstr ""
+msgstr "Nästa bild"
 
 #: mielenosoitukset_fi/templates/detail.html:1515
 msgid "Siirry kuvaan %(num)d"
@@ -5776,7 +5776,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:1525
 msgid "Tämä mielenosoitus on peruttu."
-msgstr ""
+msgstr "Den här demonstrationen har ställts in."
 
 #: mielenosoitukset_fi/templates/detail.html:1540
 msgid "Muistutukset eivät ole saatavilla perutulle tapahtumalle"
@@ -5789,7 +5789,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/detail.html:1545
 #: mielenosoitukset_fi/templates/detail.html:1555
 msgid "Lisää kalenteriin (.ics)"
-msgstr ""
+msgstr "Lägg till i kalendern (.ics)"
 
 #: mielenosoitukset_fi/templates/_modals/reminder-modal.html:21
 #: mielenosoitukset_fi/templates/detail.html:1551
@@ -5802,7 +5802,7 @@ msgstr "Beställ påminnelse"
 #: mielenosoitukset_fi/templates/siblings.html:728
 #: mielenosoitukset_fi/templates/siblings.html:735
 msgid "Seuraa sarjaa"
-msgstr ""
+msgstr "Följ serien"
 
 #: mielenosoitukset_fi/templates/detail.html:1565
 #: mielenosoitukset_fi/templates/detail.html:1569
@@ -5882,7 +5882,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:1796
 msgid "Yksityishenkilö (nimi piilotettu)"
-msgstr ""
+msgstr "Privatperson (namnet dolt)"
 
 #: mielenosoitukset_fi/templates/detail.html:1798
 #: mielenosoitukset_fi/templates/detail.html:1805
@@ -5912,12 +5912,12 @@ msgstr ""
 #: mielenosoitukset_fi/templates/detail.html:1822
 #: mielenosoitukset_fi/templates/organizations/details.html:790
 msgid "Seuraa"
-msgstr ""
+msgstr "Följ"
 
 #: mielenosoitukset_fi/templates/detail.html:1823
 #: mielenosoitukset_fi/templates/organizations/details.html:791
 msgid "Seurataan"
-msgstr ""
+msgstr "Följer"
 
 #: mielenosoitukset_fi/templates/detail.html:1831
 msgid "Seuraa organisaatiota"
@@ -5947,7 +5947,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:1895
 msgid "Organisaation profiili"
-msgstr ""
+msgstr "Organisationens profil"
 
 #: mielenosoitukset_fi/templates/detail.html:1916
 msgid "Järjestäjätietoja ei ole saatavilla."
@@ -6302,7 +6302,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/siblings.html:777
 msgid "Kaikki tapahtuman ajankohdat"
-msgstr ""
+msgstr "Alla datum för evenemanget"
 
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:136
 #: mielenosoitukset_fi/templates/siblings.html:785
@@ -6501,7 +6501,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/submit.html:2683
 msgid "Lähetä ilmoitus"
-msgstr ""
+msgstr "Skicka anmälan"
 
 #: mielenosoitukset_fi/templates/submit.html:2694
 msgid "Kiitos ilmoituksestasi!"
@@ -6861,7 +6861,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/_modals/report-error-modal.html:702
 msgid "Sähköposti (valinnainen)"
-msgstr ""
+msgstr "E-post (valfritt)"
 
 #: mielenosoitukset_fi/templates/_modals/report-error-modal.html:872
 msgid "Peruutushavainto lähetettiin ylläpidolle tarkistettavaksi."
@@ -10643,7 +10643,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/kampanja/list.html:493
 msgid "Tallennettu"
-msgstr ""
+msgstr "Sparat"
 
 #: mielenosoitukset_fi/templates/admin_V2/organizations/dashboard.html:9
 #: mielenosoitukset_fi/templates/admin_V2/organizations/form.html:10
@@ -10904,7 +10904,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html:25
 #: mielenosoitukset_fi/templates/organizations/fill_info.html:588
 msgid "Verkkosivusto"
-msgstr ""
+msgstr "Webbplats"
 
 #: mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html:44
 msgid "Ehdotettu logo"
@@ -14041,3 +14041,107 @@ msgstr "Den här vyn använder räknare på servern. Sidvisningar och uppskattad
 #: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
 msgid "Valitun aikavälin enintään 20 yleisintä kampanjalinkkiä sivunäyttöjen mukaan. Luvut eivät ole yksilöllisiä käyntejä, henkilöitä tai konversioita. Sivun päivitys voi kasvattaa lukua."
 msgstr "Upp till de 20 vanligaste kampanjlänkarna under den valda perioden, rangordnade efter sidvisningar. Siffrorna är inte unika besök, personer eller konverteringar. En siduppdatering kan öka antalet."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Ladataan tapahtuman tietoja..."
+msgstr "Laddar evenemangets uppgifter..."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Tapahtuman tietoja ei voitu ladata."
+msgstr "Evenemangets uppgifter kunde inte laddas."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Tapahtumaa ei löydy tai se ei ole julkinen."
+msgstr "Evenemanget hittades inte eller är inte offentligt."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Jaa tapahtuma"
+msgstr "Dela evenemanget"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Linkki kopioitu"
+msgstr "Länken har kopierats"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kaikki toiminnot ja yhteystiedot"
+msgstr "Alla funktioner och kontaktuppgifter"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kellonaikaa ei ole ilmoitettu"
+msgstr "Klockslag har inte angetts"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Tapahtuman kuvat"
+msgstr "Evenemangets bilder"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Näytä kartta"
+msgstr "Visa karta"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kartta"
+msgstr "Karta"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Karttaa ei voitu ladata."
+msgstr "Kartan kunde inte laddas."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Avaa reittiohjeet"
+msgstr "Öppna vägbeskrivning"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Tapahtumalle ei ole lisätty kuvausta."
+msgstr "Ingen beskrivning har lagts till för evenemanget."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Järjestäjätietoja ei ole ilmoitettu"
+msgstr "Uppgifter om arrangörer har inte angetts"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Avaa kuva"
+msgstr "Öppna bild"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kuvaa ei voitu ladata."
+msgstr "Bilden kunde inte laddas."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Ladataan karttaa..."
+msgstr "Laddar kartan..."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kirjaudu sisään ilmoittaaksesi osallistumisestasi."
+msgstr "Logga in för att meddela att du deltar."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Linkkiä ei voitu kopioida."
+msgstr "Länken kunde inte kopieras."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kaverien lataaminen epäonnistui."
+msgstr "Vännerna kunde inte laddas."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kerro virheestä"
+msgstr "Beskriv felet"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Lähetetään..."
+msgstr "Skickar..."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Peru osallistuminen"
+msgstr "Avboka deltagande"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Tapahtuma on peruttu"
+msgstr "Evenemanget har ställts in"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Toiminto epäonnistui. Yritä uudelleen."
+msgstr "Åtgärden misslyckades. Försök igen."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Täytä ilmoituksen tiedot."
+msgstr "Fyll i uppgifterna för anmälan."

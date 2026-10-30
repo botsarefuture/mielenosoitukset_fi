@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Add a page-family filter to the admin Core Web Vitals report, with scoped sample counts and p50/p95/p99 values while preserving the selected date range.
+
 - Simplify the React front page around event discovery, shared cards and direct search. Load public home events directly from Go, removing event queries from Flask, legacy home scripts/styles and render-blocking home font loading. Keep page controls usable while events load, with clear retry and empty states.
 
 - Fix organizer profile links on demonstration details and restore Mastodon, X and LinkedIn sharing alongside Facebook and link copying.

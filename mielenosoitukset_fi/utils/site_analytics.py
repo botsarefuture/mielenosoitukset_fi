@@ -861,9 +861,13 @@ def _histogram_percentile(histogram, count, boundaries, percentile):
     return boundaries[-1]
 
 
-def get_web_vitals_summary(days=30, minimum_samples=10):
-    """Return site-wide approximate Web Vitals percentiles from histograms."""
+def get_web_vitals_summary(days=30, minimum_samples=10, page_type=None):
+    """Summarize browser histograms site-wide or for one known page family."""
     match, _start, _end = _match_window(days=days)
+    if page_type is not None:
+        if page_type not in PAGE_TYPE_LABELS:
+            raise ValueError("Unknown Web Vitals page type")
+        match["page_type"] = page_type
     documents = _web_vitals_collection().find(match)
     combined = {
         metric: {"count": 0, "sum": 0.0, "histogram": {}}

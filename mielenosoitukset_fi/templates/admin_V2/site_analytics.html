@@ -52,6 +52,7 @@
   ) }}
 
   <form method="get" class="admin-filter-bar" aria-label="{{ _('Aikavälin valinta') }}">
+    {% if vitals_page %}<input type="hidden" name="vitals_page" value="{{ vitals_page }}">{% endif %}
     <div class="admin-field">
       <label for="site-analytics-range">{{ _('Aikaväli') }}</label>
       <select class="form-select" id="site-analytics-range" name="range" onchange="this.form.submit()">
@@ -123,6 +124,24 @@
       </div>
     </header>
     <div class="admin-section-card__body">
+      <form method="get" action="{{ url_for('admin_site_analytics.site_overview') }}#site-web-vitals-title" class="admin-filter-bar" aria-label="{{ _('Suorituskyky sivuittain') }}">
+        <input type="hidden" name="range" value="{{ range_days }}">
+        <div class="admin-field">
+          <label for="vitals-page">{{ _('Sivu') }}</label>
+          <select id="vitals-page" name="vitals_page" class="form-select">
+            <option value="" {% if not vitals_page %}selected{% endif %}>{{ _('Kaikki sivut') }}</option>
+            {% for key, label in page_type_labels.items() %}
+            <option value="{{ key }}" {% if vitals_page == key %}selected{% endif %}>{{ _(label) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit">{{ _('Näytä') }}</button>
+      </form>
+      <p class="admin-analytics__description">{{ _('Valinta rajaa vain selaimissa mitatut suorituskykyarvot. Mielenosoitusten ja muiden sisältösivujen yksittäiset osoitteet yhdistetään sivutyypeiksi.') }}</p>
+      {% if vitals_error %}
+      <p role="alert">{{ _('Suorituskykytietoja ei voitu ladata. Yritä uudelleen.') }}</p>
+      {% else %}
+      <div class="admin-data-view__viewport" tabindex="0" role="region" aria-label="{{ _('Suorituskykyarvot') }}">
       <table class="admin-data-view__table">
         <thead>
           <tr>
@@ -147,6 +166,8 @@
           {% endfor %}
         </tbody>
       </table>
+      </div>
+      {% endif %}
       <p class="admin-analytics__description">
         {{ _('Prosenttipisteet näytetään vasta vähintään kymmenestä otoksesta. Arvot ovat kiinteiden histogrammirajojen ylärajoja. Reitti ja laitetyyppi tallennetaan vain karkeina ryhminä; URL-osoitetta, käyttäjä- tai istuntotunnistetta, mittaustunnistetta tai DOM-elementtiä ei tallenneta.') }}
       </p>

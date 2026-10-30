@@ -19,8 +19,12 @@ function inviteHref(href: string) {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
+export type CardProps = Pick<ListingProps, 'seriesUrl' | 'detailUrl' | 'tagUrl' | 'authenticated' | 'attendanceEndpoint'> & {
+  messages: Pick<ListingProps['messages'], 'startingFrom' | 'endTime' | 'cancelled' | 'today' | 'loginPrompt' | 'loadingFriends' | 'attendingSuffix' | 'invite'>;
+};
+
 export function DemonstrationCard({ event, props, friends }: {
-  event: Demonstration; props: ListingProps; friends: Friend[] | null;
+  event: Demonstration; props: CardProps; friends: Friend[] | null;
 }) {
   const text = props.messages;
   const tags = Array.isArray(event.tags) ? event.tags.filter(tag => typeof tag === 'string') : [];
@@ -70,7 +74,7 @@ export function DemonstrationCard({ event, props, friends }: {
 }
 
 /** One batch per mounted page. Eviction/unmount aborts only that page's request. */
-export function DemonstrationCards({ events, props }: { events: Demonstration[]; props: ListingProps }) {
+export function DemonstrationCards({ events, props }: { events: Demonstration[]; props: CardProps }) {
   const [friends, setFriends] = useState<Record<string, Friend[]> | null>(null);
   useEffect(() => {
     if (!props.authenticated || !events.length) return;

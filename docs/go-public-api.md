@@ -132,3 +132,46 @@ processes have independent caches. Health is not cached. HTTP responses retain
 no-store, so browser/CDN caching cannot bypass visibility checks. No new database,
 indexes, migrations or service dependencies. Disable by restoring the direct
 mongoStore construction in main; no stored-data rollback is needed.
+
+## Portable home-page data
+
+The React home page can read `GET /api/home?lang=fi` directly, without a Flask
+content request. `lang` accepts fi/en/sv and defaults to fi. Unknown, duplicate
+or unsupported parameters return 400. This public read needs no session/token;
+CORS is uncredentialed and the normal GET/HEAD/OPTIONS, no-store and nosniff
+policy applies. No personalized attendance or privileged override is provided.
+
+Response: `{ "events": [...], "recommended": true|false }`. Each card contains
+only `_id`, `title`, `date`, `date_display`, `start_time_display`,
+`end_time_display`, `city`, `address`, `tags`, `cover_image`, `cancelled` and
+`detail_url`. Title/tags use the existing supported-language field fallback.
+Missing covers are empty strings. URLs use `/demonstration/<ObjectId>`, which
+loads the selected public event directly, including a recurring occurrence.
+No descriptions, organizer/contact records, translations object, accounts or
+moderation fields cross the projection/response boundary.
+
+Selection reads at most 50 recommendation references, ordered by
+`recommend_till` and `_id`, then their matching future approved public events.
+Invalid reference IDs are skipped. Recommended events retain their
+recommendation order, with event date as fallback. If none remain, read the
+first six future public events sorted by date and `_id`. Dates use
+Europe/Helsinki. Events require scalar ObjectIds/ISO date strings,
+approved exactly true, hidden/rejected absent or exactly false, and not
+cancelled. Empty results are successful with an empty events array. This
+retains the existing home recommendation precedence with an explicit public
+payload/result bound, not a general listing/search API.
+
+MongoDB operations are bounded projected reads of `recommended_demos` and
+`demonstrations`, using the existing indexes; no schema, new index, authentication
+or write changes. A three-second request deadline bounds database work. Failures
+return generic 503, with no query/data details. Public content is not cached by
+this endpoint, so moderation visibility is checked for each fetch. No browser or
+Flask hop replaces that fresh check.
+
+Deploy the Go binary exposing `/api/home` before enabling direct home requests
+on the public frontend. Verify health SHA and a public home response, then
+release the frontend. Keep the existing source/HTML fallback until that API
+release is available; a pure React host uses the same response contract and
+public URL paths. Roll back via the existing atomic Go release switch and
+frontend source revert. Endpoint implementation alone is not a production
+deployment or evidence of improved response latency.

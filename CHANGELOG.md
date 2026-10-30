@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Fix organizer profile links on demonstration details and restore Mastodon, X and LinkedIn sharing alongside Facebook and link copying.
+
 - Preserve demonstration-view analytics in the React detail page on initial display and occurrence navigation, without counting rerenders or retries as extra views.
 
 - Add an opt-in client-rendered React demonstration detail page that reads public content directly from the Go API, while keeping lightweight SEO metadata, recurring URLs and legacy account workflows.

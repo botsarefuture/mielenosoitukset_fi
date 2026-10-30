@@ -122,7 +122,7 @@ class Organizer(BaseEntity):
                 self.url = url_for("org", org_id=str(self.organization_id))
             except RuntimeError:
                 # fallback if not in request context
-                self.url = f"/org/{self.organization_id}"
+                self.url = f"/organization/{self.organization_id}"
 
     def validate_organization_id(self) -> bool:
         """Check if the linked organization exists in the database."""

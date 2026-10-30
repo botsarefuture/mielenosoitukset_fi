@@ -108,6 +108,8 @@ def detail_messages():
         "loginRequired": _("Kirjaudu sisään ilmoittaaksesi osallistumisestasi."),
         "copyLink": _("Kopioi linkki"), "copyFailed": _("Linkkiä ei voitu kopioida."),
         "facebook": _("Facebook-tapahtuma"), "shareFacebook": _("Jaa Facebookissa"),
+        "shareMastodon": _("Jaa Mastodonissa"), "shareX": _("Jaa X:ssä"),
+        "shareLinkedIn": _("Jaa LinkedInissä"),
     }
 
 
@@ -156,7 +158,7 @@ def render_public_detail(db, identifier, locale, recurring_context=None):
         "unfollowOrganization": url_for("api_unfollow_organization", org_id="__ORGANIZATION_ID__"),
         "followRecurring": url_for("api_follow_recurring", demo_id="__EVENT_ID__"),
         "unfollowRecurring": url_for("api_unfollow_recurring", demo_id="__EVENT_ID__"),
-        "organizationPrefix": "/org/", "tagPrefix": "/tag/",
+        "organizationPrefix": url_for("org", org_id="__ORGANIZATION_ID__").replace("__ORGANIZATION_ID__", ""), "tagPrefix": "/tag/",
     }
     props = {"id": event_id, "endpoint": _api_endpoint(), "locale": locale,
              "canonicalUrl": canonical, "urls": urls,

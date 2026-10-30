@@ -24,13 +24,16 @@ function EventDescription({ event, label }: { event: DetailEvent; label: string 
   const html = useMemo(() => sanitizeDescription(event.description), [event.description]);
   return html ? <section className="detail-section"><h2>{label}</h2><div className="detail-prose" dangerouslySetInnerHTML={{ __html: html }} /></section> : null;
 }
-function ShareActions({ url, messages }: { url: string; messages: DetailProps['messages'] }) {
+function ShareActions({ url, title, messages }: { url: string; title: string; messages: DetailProps['messages'] }) {
   const [shareCopied, setCopied] = useState<'idle' | 'success' | 'error'>('idle');
   async function copy() {
     try { await navigator.clipboard.writeText(url); setCopied('success'); } catch { setCopied('error'); }
   }
   return <div className="detail-share"><button className="detail-button detail-button--quiet" type="button" onClick={() => void copy()}><Icon name="link" />{messages.copyLink}</button>
-    <a className="detail-button detail-button--quiet" target="_blank" rel="noopener noreferrer" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`} aria-label={messages.share}><Icon name="share-nodes" />{messages.shareFacebook}</a>
+    <a className="detail-button detail-button--quiet" target="_blank" rel="noopener noreferrer" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}><i className="fa-brands fa-facebook-f" aria-hidden="true" />{messages.shareFacebook}</a>
+    <a className="detail-button detail-button--quiet" target="_blank" rel="noopener noreferrer" href={`https://mastodon.social/share?text=${encodeURIComponent(`${title} ${url}`)}`}><i className="fa-brands fa-mastodon" aria-hidden="true" />{messages.shareMastodon}</a>
+    <a className="detail-button detail-button--quiet" target="_blank" rel="noopener noreferrer" href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`}><i className="fa-brands fa-x-twitter" aria-hidden="true" />{messages.shareX}</a>
+    <a className="detail-button detail-button--quiet" target="_blank" rel="noopener noreferrer" href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`}><i className="fa-brands fa-linkedin-in" aria-hidden="true" />{messages.shareLinkedIn}</a>
     <span role="status">{shareCopied === 'success' ? messages.shareCopied : shareCopied === 'error' ? messages.copyFailed : ''}</span>
   </div>;
 }
@@ -79,7 +82,7 @@ function EventContent({ event, props }: { event: DetailEvent; props: DetailProps
           : <button className="detail-button" type="button" onClick={() => showMap(true)}><Icon name="map" />{text.showMap}</button>)}
       </section>
       {!event.cancelled && <section className="detail-section"><h2>{text.attend}</h2><Participation event={event} props={props} /><button type="button" className="detail-button" onClick={() => setDialog('invite')}>{text.invite}</button></section>}
-      <section className="detail-section"><h2>{text.share}</h2><ShareActions url={props.canonicalUrl} messages={text} /></section>
+      <section className="detail-section"><h2>{text.share}</h2><ShareActions url={props.canonicalUrl} title={event.title} messages={text} /></section>
     </aside></div>
     {dialog && <DetailActionDialog key={dialog} kind={dialog} event={event} props={props} close={() => setDialog(null)} />}
   </>;

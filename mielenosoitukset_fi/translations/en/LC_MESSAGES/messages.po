@@ -5420,11 +5420,11 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:1598
 msgid "Jaa Mastodonissa"
-msgstr ""
+msgstr "Share on Mastodon"
 
 #: mielenosoitukset_fi/templates/detail.html:1603
 msgid "Jaa X:ssä"
-msgstr ""
+msgstr "Share on X"
 
 #: mielenosoitukset_fi/templates/detail.html:1613
 msgid "Kutsut eivät ole saatavilla perutuille tapahtumille"

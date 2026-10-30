@@ -1751,79 +1751,11 @@ def init_routes(app):
     
     @app.route("/")
     def index():
-        """
-        Render the index page with recommended and featured demonstrations.
-        Uses caching for recommended demos for performance.
-        """
-        today = date.today()
-
-        # --- Recommended demos (cached) ---
-        cache_key = "recommended_demos_v1"
-        recommended_demos = None
-
-        if hasattr(cache, "get") and callable(cache.get):
-            recommended_demos = cache.get(cache_key)
-
-        if recommended_demos is None:
-            # Get recommended demo_ids from the recommended_demos collection
-            recs = list(mongo.recommended_demos.find({}))
-            demo_ids = [ObjectId(rec["demo_id"]) for rec in recs if "demo_id" in rec]
-
-            # Fetch demos, filter for approved and not hidden
-            demos = list(
-                mongo.demonstrations.find({
-                    "_id": {"$in": demo_ids},
-                    "approved": True,
-                    "hide": {"$ne": True},
-                    "cancelled": {"$ne": True},
-                })
-            )
-
-            # Sort by recommend_till (or fallback to date)
-            def get_recommend_till(d):
-                rec = next((r for r in recs if str(r["demo_id"]) == str(d["_id"])), None)
-                return rec["recommend_till"] if rec else d.get("date", "9999-12-31")
-
-            demos.sort(key=get_recommend_till)
-
-            # Remove past demos
-            demos = [
-                d for d in demos
-                if datetime.strptime(d["date"], "%Y-%m-%d").date() >= today
-            ]
-
-            recommended_demos = demos
-
-            if hasattr(cache, "set") and callable(cache.set):
-                cache.set(cache_key, recommended_demos, timeout=60 * 10)  # Cache 10 min
-
-        # --- Featured / other demos ---
-        filtered_demonstrations = list(
-            demonstrations_collection.find(
-                _build_public_demo_query(today),
-            )
-            .sort("date", ASCENDING)
-            .limit(6)
-        )
-
-        locale = _current_demo_language()
-        localized_filtered_demonstrations = _localized_demo_list(
-            filtered_demonstrations, locale
-        )
-        localized_recommended_demos = _localized_demo_list(recommended_demos or [], locale)
-
+        """Return the portable React home shell without querying event data."""
         return render_template(
-            "index.html",
-            demonstrations=localized_filtered_demonstrations,
-            recommended_demos=localized_recommended_demos,
-            featured_demos_json=[
-                format_demo_for_api(demo, locale)
-                for demo in filtered_demonstrations[:6]
-            ],
-            recommended_demos_json=[
-                format_demo_for_api(demo, locale)
-                for demo in (recommended_demos or [])
-            ],
+            "index.html", home_locale=_current_demo_language(),
+            home_endpoint=app.config.get("PUBLIC_HOME_API_URL") or
+                app.config.get("PUBLIC_DEMONSTRATION_API_URL", "https://api.mielenosoitukset.fi/api/demonstrations").rsplit("/", 1)[0] + "/home",
         )
 
 

@@ -66,6 +66,16 @@
       "_mount-island-BCC_kmYD.js"
     ]
   },
+  "src/entries/home.tsx": {
+    "file": "assets/home-DeWFukPh.js",
+    "name": "home",
+    "src": "src/entries/home.tsx",
+    "isEntry": true,
+    "imports": [
+      "_mount-island-BCC_kmYD.js",
+      "_DemonstrationCard-DBeN9s3g.js"
+    ]
+  },
   "src/entries/listing.tsx": {
     "file": "assets/listing-DT0MKl8E.js",
     "name": "listing",

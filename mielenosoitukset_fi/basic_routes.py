@@ -1756,9 +1756,16 @@ def init_routes(app):
         Uses caching for recommended demos for performance.
         """
         today = date.today()
+        # Read only fields used by the initial cards, not full event documents.
+        card_projection = {field: 1 for field in (
+            "_id", "title", "date", "start_time", "end_time", "city", "address",
+            "tags", "parent", "slug", "running_number", "cancelled",
+            "gallery_images", "images", "img", "cover_picture", "cover_image",
+            "preview_image", "default_language", "translations",
+        )}
 
         # --- Recommended demos (cached) ---
-        cache_key = "recommended_demos_v1"
+        cache_key = "recommended_home_cards_v2"
         recommended_demos = None
 
         if hasattr(cache, "get") and callable(cache.get):
@@ -1776,7 +1783,7 @@ def init_routes(app):
                     "approved": True,
                     "hide": {"$ne": True},
                     "cancelled": {"$ne": True},
-                })
+                }, card_projection)
             )
 
             # Sort by recommend_till (or fallback to date)
@@ -1797,33 +1804,25 @@ def init_routes(app):
             if hasattr(cache, "set") and callable(cache.set):
                 cache.set(cache_key, recommended_demos, timeout=60 * 10)  # Cache 10 min
 
-        # --- Featured / other demos ---
-        filtered_demonstrations = list(
-            demonstrations_collection.find(
-                _build_public_demo_query(today),
-            )
+        # Recommendations take precedence; do not query/serialize a hidden grid.
+        selected_demos = recommended_demos or list(
+            demonstrations_collection.find(_build_public_demo_query(today), card_projection)
             .sort("date", ASCENDING)
             .limit(6)
         )
-
         locale = _current_demo_language()
-        localized_filtered_demonstrations = _localized_demo_list(
-            filtered_demonstrations, locale
-        )
-        localized_recommended_demos = _localized_demo_list(recommended_demos or [], locale)
-
+        home_events = []
+        for demo in selected_demos:
+            event = format_demo_for_api(demo, locale)
+            # The home cards do not display descriptions or language metadata.
+            home_events.append({key: value for key, value in event.items() if key in {
+                "_id", "parent", "detail_url", "title", "date_display",
+                "start_time_display", "end_time_display", "city", "address",
+                "tags", "cover_image", "cancelled",
+            }})
         return render_template(
-            "index.html",
-            demonstrations=localized_filtered_demonstrations,
-            recommended_demos=localized_recommended_demos,
-            featured_demos_json=[
-                format_demo_for_api(demo, locale)
-                for demo in filtered_demonstrations[:6]
-            ],
-            recommended_demos_json=[
-                format_demo_for_api(demo, locale)
-                for demo in (recommended_demos or [])
-            ],
+            "index.html", home_events=home_events,
+            home_recommended=bool(recommended_demos),
         )
 
 

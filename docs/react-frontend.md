@@ -423,3 +423,16 @@ compares page HTML and scoped API response percentiles with isolated synthetic
 data; its loopback measurements exclude browser rendering and external tiles.
 Rollback is a source revert plus rebuilding/committing the shared asset manifest;
 no data migration or replacement API needs reversing.
+
+### Front page
+
+`/` now mounts `HomePage` with the initial localized events in escaped JSON,
+using the same `DemonstrationCards` component as public listings. The Jinja
+fallback contains real event links, images, dates, locations and tags, plus a
+working GET search to `/demonstrations`; JavaScript is not required to discover
+an event. Recommendations keep their existing precedence. When present, the
+unused featured query is skipped. Home queries project card fields; the home font stylesheet does not block initial paint (other routes keep their existing loading). Home props omit descriptions and unused
+language metadata. Signed-in attendance uses the existing single batch request.
+The compact home stylesheet replaces the legacy inline CSS and card-rendering
+scripts. Flask still owns data selection, localization and URLs; no new API or
+production setting is required. Rollback is a source revert and frontend rebuild.

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Add a page-family filter to the admin Core Web Vitals report, with scoped sample counts and p50/p95/p99 values while preserving the selected date range.
+
 - Fix organizer profile links on demonstration details and restore Mastodon, X and LinkedIn sharing alongside Facebook and link copying.
 
 - Preserve demonstration-view analytics in the React detail page on initial display and occurrence navigation, without counting rerenders or retries as extra views.

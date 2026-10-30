@@ -144,11 +144,17 @@ def site_overview():
         logger.exception("Failed to build site analytics overview")
         abort(503)
 
+    vitals_page = request.args.get("vitals_page", "")
+    if vitals_page not in PAGE_TYPE_LABELS:
+        vitals_page = ""
+    vitals_error = False
     try:
-        web_vitals = get_web_vitals_summary(days=days)
+        web_vitals = (get_web_vitals_summary(days=days, page_type=vitals_page)
+                      if vitals_page else get_web_vitals_summary(days=days))
     except Exception:
         logger.exception("Failed to read Web Vitals summary")
         web_vitals = []
+        vitals_error = True
 
     campaign_error = False
     try:
@@ -187,6 +193,8 @@ def site_overview():
         events=events,
         search_terms=search_terms,
         web_vitals=web_vitals,
+        vitals_page=vitals_page,
+        vitals_error=vitals_error,
         campaigns=campaigns,
         campaign_error=campaign_error,
         language_labels=LANGUAGE_LABELS,

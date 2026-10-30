@@ -88,3 +88,16 @@ After deployment:
 6. Treat a missing optional metric as an observability warning, not a public
    availability incident; use emergency alerting only if the production site
    itself is materially affected.
+
+## Dashboard page filter
+
+The Core Web Vitals section at `/admin/analytics/` accepts `vitals_page` from
+the existing closed `PAGE_TYPE_LABELS` set (for example `index`,
+`demonstrations` or `demonstration`). Missing/unknown values show all pages.
+Only Web Vitals are scoped; the other dashboard reports retain their normal
+range. Page and range selections survive each other. The query filters the
+existing daily histograms by `page_type`, without new collection, tracking,
+identifiers or raw paths. Samples from individual content URLs remain grouped
+by page family. Counts and the ten-sample threshold apply independently to
+each metric in the selected scope. Histogram bucket upper bounds and
+LCP/INP/CLS/TTFB units retain their existing meaning.

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Update the real-HTTP smoke and shared-header contract tests to the deployed React home shell from #1007: the home page ships no server-side `demos-grid` anymore, loads exactly the shared header plus one home entry, and the smoke test now verifies that the island mounts and renders the `/api/home` data contract over the live server.
+
 - Add `scripts/open_pr.sh`, a maintainer helper that opens or reuses a GitHub pull request using the stored `git push` credential, so PR creation works without an interactive `gh auth login`.
 
 - Fix the React submission page's date, city and route controls: one visible date/time picker per field with a hidden ISO value, a field-styled city picker whose panel opens under the trigger, a readable calendar in dark mode, the march route section for `marssi`, and a "delete draft" button that no longer re-saves the draft on reload.

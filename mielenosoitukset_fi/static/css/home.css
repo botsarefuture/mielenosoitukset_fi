@@ -30,3 +30,5 @@
   .home-links { gap: .5rem 1rem; }
   .home-section-heading { align-items: start; }
 }
+.home-status { min-height: 20rem; padding: 1.5rem; background: var(--product-surface); border: 1px solid var(--product-border); border-radius: .75rem; }
+html:not(.js) .home-status { display: none; }

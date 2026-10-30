@@ -426,13 +426,21 @@ no data migration or replacement API needs reversing.
 
 ### Front page
 
-`/` now mounts `HomePage` with the initial localized events in escaped JSON,
-using the same `DemonstrationCards` component as public listings. The Jinja
-fallback contains real event links, images, dates, locations and tags, plus a
-working GET search to `/demonstrations`; JavaScript is not required to discover
-an event. Recommendations keep their existing precedence. When present, the
-unused featured query is skipped. Home queries project card fields; the home font stylesheet does not block initial paint (other routes keep their existing loading). Home props omit descriptions and unused
-language metadata. Signed-in attendance uses the existing single batch request.
-The compact home stylesheet replaces the legacy inline CSS and card-rendering
-scripts. Flask still owns data selection, localization and URLs; no new API or
-production setting is required. Rollback is a source revert and frontend rebuild.
+`HomePage` is a portable React component accepting plain data props for locale,
+API endpoint, translated strings, URLs and account context. Flask only renders
+its initial shell and bootstrap JSON; the home handler does not query events.
+The browser reads the public Go `/api/home?lang=...` contract directly, with an
+abortable request, bounded wait and retry. Shared `DemonstrationCards` preserve
+listing behavior and the existing signed-in attendance batch on Flask.
+
+Search is a standard GET navigation, usable before React mounts. Heading,
+search/navigation and the compact campaign are initial HTML; event cards wait
+for the API. A loading message, recoverable error and empty state are explicit.
+Without JavaScript, navigation/search/calendar remain available; event cards
+require JavaScript. This favors quick page-shell response over server-rendered
+event discovery. SEO content stays on individual event pages. A future React
+router can render `HomePage` with the same props without Jinja or a Flask data
+request. No new browser authentication scheme is introduced.
+
+Deploy the Go home endpoint before merging/deploying its consumer. See
+`docs/go-public-api.md`. Rollback is a source revert and frontend rebuild.

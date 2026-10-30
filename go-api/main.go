@@ -56,6 +56,7 @@ type API struct{ store Store }
 func (a *API) handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/demonstrations/{id}", a.getDemonstration)
+	mux.HandleFunc("GET /api/home", a.getHome)
 	mux.HandleFunc("GET /health", a.health)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { writeError(w, 404, "not found") })
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -14,7 +14,8 @@
   'search': _('Hae mielenosoituksia'), 'searchPlaceholder': _('Hae mielenosoituksia...'), 'submitSearch': _('Hae'),
   'all': _('Kaikki mielenosoitukset'), 'submit': _('Ilmoita mielenosoituksesta'),
   'calendar': _('Kalenterinäkymä'), 'info': _('Tietoa sivustosta'),
-  'eventsTitle': _('Suosittelemme') if home_recommended else _('Poimintoja ajankohtaisista mielenosoituksista.'),
+  'eventsTitle': _('Poimintoja ajankohtaisista mielenosoituksista.'), 'recommendedTitle': _('Suosittelemme'),
+  'loading': _('Ladataan mielenosoituksia...'), 'loadError': _('Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen.'), 'retry': _('Yritä uudelleen'),
   'emptyTitle': _('Ei mielenosoituksia näytettäväksi'),
   'empty': _('Uusia mielenosoituksia lisätään jatkuvasti. Tarkista myöhemmin uudelleen!'),
   'prideTitle': _('Pride näkyväksi koko Suomessa'),
@@ -30,7 +31,7 @@
     'loadingFriends': _('Ladataan kavereita...'), 'attendingSuffix': _('osallistuu'), 'invite': _('Kutsu kavereita')}
 } %}
 <div data-react-island="home" data-props-id="home-props">
-  {# Useful initial HTML also survives disabled JavaScript or a failed bundle. #}
+  {# The discovery controls and campaign remain usable before the data loads. #}
   <div class="home-page public-demonstration-list">
     <header class="home-intro">
       <div><h1>{{ text.title }}</h1><p>{{ text.intro }}</p></div>
@@ -43,25 +44,12 @@
     </header>
     <section class="home-events" aria-labelledby="home-events-title">
       <div class="home-section-heading"><h2 id="home-events-title">{{ text.eventsTitle }}</h2><a href="{{ urls.all }}">{{ text.all }} →</a></div>
-      {% if home_events %}
-      <div class="demos-grid">
-        {% for event in home_events %}
-        <article class="grid-item demo-card">
-          {% if event.cover_image %}<div class="demo-card-image"><img src="{{ event.cover_image }}" alt="{{ event.title }}" loading="lazy"></div>{% endif %}
-          <div class="demo-card-title"><a href="{{ event.detail_url }}">{{ event.title }}</a></div>
-          <div class="demo-card-details">
-            <div class="demo-card-date-time"><span>{{ event.date_display }}</span><span>{{ event.start_time_display }}{% if event.end_time_display %} – {{ event.end_time_display }}{% elif event.start_time_display %} {{ cards.messages.startingFrom }}{% endif %}</span></div>
-            <div class="demo-card-location-row"><span>{{ event.city }}</span><span>{{ event.address }}</span></div>
-            <div class="demo-card-tags">{% for tag in event.tags %}<a class="demo-card-tag" href="{{ url_for('tag_detail', tag_name=tag) }}">#{{ tag }}</a>{% endfor %}</div>
-          </div>
-        </article>
-        {% endfor %}
-      </div>
-      {% else %}<div class="home-empty"><h3>{{ text.emptyTitle }}</h3><p>{{ text.empty }}</p><a href="{{ urls.submit }}">{{ text.submit }}</a></div>{% endif %}
+      <p class="home-status" role="status">{{ text.loading }}</p>
+      <noscript><p>{{ _('Lista avautuu JavaScriptillä. Jos se ei lataudu, päivitä sivu.') }}</p><a href="{{ urls.calendar }}">{{ text.calendar }}</a></noscript>
     </section>
     <aside class="home-campaign"><div><h2>{{ text.prideTitle }}</h2><p>{{ text.prideIntro }}</p></div><a class="home-button home-button--secondary" href="{{ urls.pride }}">{{ text.prideLink }}</a></aside>
   </div>
 </div>
-<script id="home-props" type="application/json">{{ {'events': home_events, 'cards': cards, 'urls': urls, 'text': text}|tojson }}</script>
+<script id="home-props" type="application/json">{{ {'endpoint': home_endpoint, 'locale': home_locale, 'cards': cards, 'urls': urls, 'text': text}|tojson }}</script>
 {% endblock %}
 {% block scripts %}{{ frontend_entry('src/entries/home.tsx') }}{% endblock %}

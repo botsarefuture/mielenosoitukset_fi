@@ -1751,78 +1751,11 @@ def init_routes(app):
     
     @app.route("/")
     def index():
-        """
-        Render the index page with recommended and featured demonstrations.
-        Uses caching for recommended demos for performance.
-        """
-        today = date.today()
-        # Read only fields used by the initial cards, not full event documents.
-        card_projection = {field: 1 for field in (
-            "_id", "title", "date", "start_time", "end_time", "city", "address",
-            "tags", "parent", "slug", "running_number", "cancelled",
-            "gallery_images", "images", "img", "cover_picture", "cover_image",
-            "preview_image", "default_language", "translations",
-        )}
-
-        # --- Recommended demos (cached) ---
-        cache_key = "recommended_home_cards_v2"
-        recommended_demos = None
-
-        if hasattr(cache, "get") and callable(cache.get):
-            recommended_demos = cache.get(cache_key)
-
-        if recommended_demos is None:
-            # Get recommended demo_ids from the recommended_demos collection
-            recs = list(mongo.recommended_demos.find({}))
-            demo_ids = [ObjectId(rec["demo_id"]) for rec in recs if "demo_id" in rec]
-
-            # Fetch demos, filter for approved and not hidden
-            demos = list(
-                mongo.demonstrations.find({
-                    "_id": {"$in": demo_ids},
-                    "approved": True,
-                    "hide": {"$ne": True},
-                    "cancelled": {"$ne": True},
-                }, card_projection)
-            )
-
-            # Sort by recommend_till (or fallback to date)
-            def get_recommend_till(d):
-                rec = next((r for r in recs if str(r["demo_id"]) == str(d["_id"])), None)
-                return rec["recommend_till"] if rec else d.get("date", "9999-12-31")
-
-            demos.sort(key=get_recommend_till)
-
-            # Remove past demos
-            demos = [
-                d for d in demos
-                if datetime.strptime(d["date"], "%Y-%m-%d").date() >= today
-            ]
-
-            recommended_demos = demos
-
-            if hasattr(cache, "set") and callable(cache.set):
-                cache.set(cache_key, recommended_demos, timeout=60 * 10)  # Cache 10 min
-
-        # Recommendations take precedence; do not query/serialize a hidden grid.
-        selected_demos = recommended_demos or list(
-            demonstrations_collection.find(_build_public_demo_query(today), card_projection)
-            .sort("date", ASCENDING)
-            .limit(6)
-        )
-        locale = _current_demo_language()
-        home_events = []
-        for demo in selected_demos:
-            event = format_demo_for_api(demo, locale)
-            # The home cards do not display descriptions or language metadata.
-            home_events.append({key: value for key, value in event.items() if key in {
-                "_id", "parent", "detail_url", "title", "date_display",
-                "start_time_display", "end_time_display", "city", "address",
-                "tags", "cover_image", "cancelled",
-            }})
+        """Return the portable React home shell without querying event data."""
         return render_template(
-            "index.html", home_events=home_events,
-            home_recommended=bool(recommended_demos),
+            "index.html", home_locale=_current_demo_language(),
+            home_endpoint=app.config.get("PUBLIC_HOME_API_URL") or
+                app.config.get("PUBLIC_DEMONSTRATION_API_URL", "https://api.mielenosoitukset.fi/api/demonstrations").rsplit("/", 1)[0] + "/home",
         )
 
 

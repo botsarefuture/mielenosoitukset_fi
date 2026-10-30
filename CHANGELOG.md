@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Add `scripts/open_pr.sh`, a maintainer helper that opens or reuses a GitHub pull request using the stored `git push` credential, so PR creation works without an interactive `gh auth login`.
+
 - Fix the React submission page's date, city and route controls: one visible date/time picker per field with a hidden ISO value, a field-styled city picker whose panel opens under the trigger, a readable calendar in dark mode, the march route section for `marssi`, and a "delete draft" button that no longer re-saves the draft on reload.
 
 - Add an opt-in React submission page (`PUBLIC_SUBMIT_REACT_ENABLED`) that owns the whole `/submit` wizard with `react-quill-new` and `flatpickr`, keeping the existing draft format, field names, Facebook import, organization lookup, conflict retry and multipart POST contract. The legacy template stays the default and a `<noscript>` form preserves no-JavaScript delivery.

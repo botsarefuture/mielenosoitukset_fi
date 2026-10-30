@@ -1,118 +1,130 @@
 {
-  "_DemonstrationCard-DBeN9s3g.js": {
-    "file": "assets/DemonstrationCard-DBeN9s3g.js",
+  "_DemonstrationCard-uc1uDIgb.js": {
+    "file": "assets/DemonstrationCard-uc1uDIgb.js",
     "name": "DemonstrationCard",
     "imports": [
-      "_mount-island-BCC_kmYD.js"
+      "_mount-island-Bd8CA551.js"
     ]
   },
-  "_VolunteerForm-DCFWsitP.js": {
-    "file": "assets/VolunteerForm-DCFWsitP.js",
+  "_VolunteerForm-CHb3YUwo.js": {
+    "file": "assets/VolunteerForm-CHb3YUwo.js",
     "name": "VolunteerForm",
     "imports": [
-      "_mount-island-BCC_kmYD.js"
+      "_mount-island-Bd8CA551.js"
     ]
   },
-  "_mount-island-BCC_kmYD.js": {
-    "file": "assets/mount-island-BCC_kmYD.js",
+  "_mount-island-Bd8CA551.js": {
+    "file": "assets/mount-island-Bd8CA551.js",
     "name": "mount-island"
   },
   "src/components/detail/DetailMap.tsx": {
-    "file": "assets/DetailMap-C9jq3FNc.js",
+    "file": "assets/DetailMap-D71yWk6N.js",
     "name": "DetailMap",
     "src": "src/components/detail/DetailMap.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_mount-island-BCC_kmYD.js"
+      "_mount-island-Bd8CA551.js"
     ]
   },
   "src/entries/campaign.tsx": {
-    "file": "assets/campaign-ehCiRC4L.js",
+    "file": "assets/campaign-DAF82auY.js",
     "name": "campaign",
     "src": "src/entries/campaign.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-BCC_kmYD.js",
-      "_VolunteerForm-DCFWsitP.js"
+      "_mount-island-Bd8CA551.js",
+      "_VolunteerForm-CHb3YUwo.js"
     ]
   },
   "src/entries/confirmation.tsx": {
-    "file": "assets/confirmation-CEuezkln.js",
+    "file": "assets/confirmation-BBEP2164.js",
     "name": "confirmation",
     "src": "src/entries/confirmation.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-BCC_kmYD.js"
+      "_mount-island-Bd8CA551.js"
     ]
   },
   "src/entries/detail.tsx": {
-    "file": "assets/detail-BwyxncUc.js",
+    "file": "assets/detail-CUfL6tqt.js",
     "name": "detail",
     "src": "src/entries/detail.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-BCC_kmYD.js"
+      "_mount-island-Bd8CA551.js"
     ],
     "dynamicImports": [
       "src/components/detail/DetailMap.tsx"
     ]
   },
   "src/entries/header.tsx": {
-    "file": "assets/header-CFKMTtRE.js",
+    "file": "assets/header-B_OK5xTP.js",
     "name": "header",
     "src": "src/entries/header.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-BCC_kmYD.js"
+      "_mount-island-Bd8CA551.js"
     ]
   },
   "src/entries/home.tsx": {
-    "file": "assets/home-CIZriF6r.js",
+    "file": "assets/home-icuEQl_T.js",
     "name": "home",
     "src": "src/entries/home.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-BCC_kmYD.js",
-      "_DemonstrationCard-DBeN9s3g.js"
+      "_mount-island-Bd8CA551.js",
+      "_DemonstrationCard-uc1uDIgb.js"
     ]
   },
   "src/entries/listing.tsx": {
-    "file": "assets/listing-DT0MKl8E.js",
+    "file": "assets/listing-BVt3dS8H.js",
     "name": "listing",
     "src": "src/entries/listing.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-BCC_kmYD.js",
-      "_DemonstrationCard-DBeN9s3g.js"
+      "_mount-island-Bd8CA551.js",
+      "_DemonstrationCard-uc1uDIgb.js"
     ]
   },
   "src/entries/pride.tsx": {
-    "file": "assets/pride-CJgSN4C9.js",
+    "file": "assets/pride-D4ViiA9l.js",
     "name": "pride",
     "src": "src/entries/pride.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-BCC_kmYD.js",
-      "_DemonstrationCard-DBeN9s3g.js"
+      "_mount-island-Bd8CA551.js",
+      "_DemonstrationCard-uc1uDIgb.js"
+    ]
+  },
+  "src/entries/submit-react.tsx": {
+    "file": "assets/submitReact-C5zc4g7n.js",
+    "name": "submitReact",
+    "src": "src/entries/submit-react.tsx",
+    "isEntry": true,
+    "imports": [
+      "_mount-island-Bd8CA551.js"
+    ],
+    "css": [
+      "assets/submitReact-CCd_DSSP.css"
     ]
   },
   "src/entries/submit.tsx": {
-    "file": "assets/submit-D1kZ0zOX.js",
+    "file": "assets/submit-BWgLxS0r.js",
     "name": "submit",
     "src": "src/entries/submit.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-BCC_kmYD.js"
+      "_mount-island-Bd8CA551.js"
     ]
   },
   "src/entries/volunteer.tsx": {
-    "file": "assets/volunteer-BTB15vlQ.js",
+    "file": "assets/volunteer-Ebc1ZUbT.js",
     "name": "volunteer",
     "src": "src/entries/volunteer.tsx",
     "isEntry": true,
     "imports": [
-      "_mount-island-BCC_kmYD.js",
-      "_VolunteerForm-DCFWsitP.js"
+      "_mount-island-Bd8CA551.js",
+      "_VolunteerForm-CHb3YUwo.js"
     ]
   }
 }

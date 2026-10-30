@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+- Fix the React submission page's date, city and route controls: one visible date/time picker per field with a hidden ISO value, a field-styled city picker whose panel opens under the trigger, a readable calendar in dark mode, the march route section for `marssi`, and a "delete draft" button that no longer re-saves the draft on reload.
+
+- Add an opt-in React submission page (`PUBLIC_SUBMIT_REACT_ENABLED`) that owns the whole `/submit` wizard with `react-quill-new` and `flatpickr`, keeping the existing draft format, field names, Facebook import, organization lookup, conflict retry and multipart POST contract. The legacy template stays the default and a `<noscript>` form preserves no-JavaScript delivery.
+
 - Add a page-family filter to the admin Core Web Vitals report, with scoped sample counts and p50/p95/p99 values while preserving the selected date range.
 
 - Simplify the React front page around event discovery, shared cards and direct search. Load public home events directly from Go, removing event queries from Flask, legacy home scripts/styles and render-blocking home font loading. Keep page controls usable while events load, with clear retry and empty states.

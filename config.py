@@ -94,6 +94,7 @@ class Config:
 
         # Opt-in migration; API URL is public browser configuration, not a DB URI.
         cls.PUBLIC_DETAIL_REACT_ENABLED = config.get("PUBLIC_DETAIL_REACT_ENABLED", False)
+        cls.PUBLIC_SUBMIT_REACT_ENABLED = config.get("PUBLIC_SUBMIT_REACT_ENABLED", False)
         cls.PUBLIC_DEMONSTRATION_API_URL = config.get(
             "PUBLIC_DEMONSTRATION_API_URL", "https://api.mielenosoitukset.fi/api/demonstrations"
         )

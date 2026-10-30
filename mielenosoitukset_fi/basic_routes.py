@@ -2379,9 +2379,15 @@ def init_routes(app):
         except Exception:
             can_edit_demo = False
 
-        # GET — render submission form
+        # GET — render submission form. The React page is opt-in and rollback is a
+        # config flip; both templates receive the same server context.
+        submit_template = (
+            "submit_react.html"
+            if current_app.config.get("PUBLIC_SUBMIT_REACT_ENABLED", False)
+            else "submit.html"
+        )
         return render_template(
-            "submit.html",
+            submit_template,
             city_list=CITY_LIST,
             test_mode_allowed=test_mode_allowed,
             can_edit_demo=can_edit_demo,

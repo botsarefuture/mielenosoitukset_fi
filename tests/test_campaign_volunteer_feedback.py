@@ -362,7 +362,7 @@ def test_missing_react_bundle_keeps_fallback_disabled_and_newsletter_working(liv
 def test_other_public_pages_load_only_shared_header_and_admin_stays_separate(client, admin_client):
     import re
 
-    for url in ("/", "/info", "/keräys", "/users/auth/login"):
+    for url in ("/info", "/keräys", "/users/auth/login"):
         response = client.get(url)
         assert response.status_code == 200
         page = response.get_data(as_text=True)
@@ -371,6 +371,18 @@ def test_other_public_pages_load_only_shared_header_and_admin_stays_separate(cli
         assert scripts[0].startswith("/static/frontend/assets/header-")
         assert 'data-react-island="site-header"' in page
         assert 'data-react-island="campaign-page"' not in page
+    # Since #1007 the home page is a React shell: the shared header entry is
+    # paired with exactly one home entry, and nothing else.
+    response = client.get("/")
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    scripts = re.findall(r'<script type="module" src="([^"]+)"', page)
+    assert len(scripts) == 2
+    assert scripts[0].startswith("/static/frontend/assets/header-")
+    assert scripts[1].startswith("/static/frontend/assets/home-")
+    assert 'data-react-island="site-header"' in page
+    assert 'data-react-island="home"' in page
+    assert 'data-react-island="campaign-page"' not in page
     response = admin_client.get("/admin/dashboard")
     assert response.status_code == 200
     assert "/static/frontend/" not in response.get_data(as_text=True)

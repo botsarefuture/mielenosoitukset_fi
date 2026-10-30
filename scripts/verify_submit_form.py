@@ -19,6 +19,8 @@ ROOT = Path(__file__).resolve().parents[1]
 TEST_FILES = (
     "tests/test_public_inline_style_contract.py",
     "tests/test_react_submit.py",
+    "tests/test_react_submit_page.py",
+    "tests/test_react_submit_page_e2e.py",
     "tests/test_submit_feedback_contract.py",
     "tests/test_submit_draft_reliability.py",
     "tests/test_submit_organization_search_security.py",

@@ -151,3 +151,193 @@
 @media (prefers-reduced-motion: reduce) {
   .submit-page * { scroll-behavior: auto; transition: none; }
 }
+
+/* React submission page (submit_react.html) ------------------------------- */
+
+/* The city picker replaced a <button> + inline script. It must read as a field
+   and the option list must be anchored to it, not to an unrelated ancestor. */
+.submit-page .submit-city {
+  position: relative;
+}
+
+.submit-page .submit-city__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: .65rem .9rem;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--product-text);
+  background: var(--product-surface);
+  border: 1px solid var(--product-border);
+  border-radius: var(--product-radius, 8px);
+}
+
+.submit-page .submit-city__trigger--empty {
+  color: var(--product-text-muted, inherit);
+}
+
+.submit-page .submit-city__trigger:hover {
+  border-color: var(--product-primary);
+}
+
+.submit-page .submit-city__trigger i {
+  flex-shrink: 0;
+  font-size: .85rem;
+  color: var(--product-primary);
+}
+
+.submit-page .submit-city__panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + .35rem);
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  background: var(--product-surface);
+  border: 1px solid var(--product-border);
+  border-radius: var(--product-radius, 8px);
+  box-shadow: var(--product-shadow);
+}
+
+.submit-page .submit-city__search {
+  width: 100%;
+  margin: 0;
+  padding: .6rem .9rem;
+  border: 0;
+  border-bottom: 1px solid var(--product-border);
+  border-radius: 0;
+}
+
+.submit-page .submit-city__list {
+  margin: 0;
+  padding: .25rem;
+  list-style: none;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.submit-page .submit-city__option {
+  display: block;
+  width: 100%;
+  padding: .5rem .75rem;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--product-text);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+}
+
+.submit-page .submit-city__option.is-active {
+  background: var(--product-primary-soft);
+}
+
+.submit-page .submit-city__option.is-selected {
+  font-weight: 600;
+}
+
+.submit-page .submit-city__empty {
+  padding: .75rem;
+  color: var(--product-text-muted, inherit);
+}
+
+/* Native pickers: keep them the same height as the text fields. */
+.submit-page input[type="date"],
+.submit-page input[type="time"] {
+  min-height: 3rem;
+}
+
+/* `.optional-section` is hidden by default (legacy JS toggled it inline); the
+   React page shows the chosen route section with this modifier instead. */
+.submit-page .optional-section--open {
+  display: block;
+}
+
+/* Flatpickr ships light-only defaults, and its stylesheet is bundled after this
+   file, so theme the calendar with a more specific selector. The product tokens
+   already resolve per theme, so one rule set covers light and dark. */
+.public-date-calendar.flatpickr-calendar {
+  background: var(--product-surface);
+  color: var(--product-text);
+  border: 1px solid var(--product-border);
+  box-shadow: var(--product-shadow);
+}
+
+.public-date-calendar .flatpickr-months,
+.public-date-calendar .flatpickr-month,
+.public-date-calendar .flatpickr-current-month,
+.public-date-calendar .flatpickr-monthDropdown-months {
+  background: transparent;
+  color: var(--product-text);
+}
+
+.public-date-calendar .flatpickr-weekdays,
+.public-date-calendar .flatpickr-weekday {
+  background: transparent;
+  color: var(--product-text-muted);
+}
+
+.public-date-calendar .flatpickr-day {
+  color: var(--product-text);
+  border-color: transparent;
+}
+
+.public-date-calendar .flatpickr-day:hover,
+.public-date-calendar .flatpickr-day:focus {
+  background: var(--product-surface-muted);
+  border-color: var(--product-border);
+  color: var(--product-text);
+}
+
+.public-date-calendar .flatpickr-day.today {
+  border-color: var(--product-primary);
+}
+
+.public-date-calendar .flatpickr-day.selected,
+.public-date-calendar .flatpickr-day.selected:hover,
+.public-date-calendar .flatpickr-day.selected:focus {
+  background: var(--product-action-bg);
+  border-color: var(--product-action-bg);
+  color: var(--product-on-action);
+}
+
+.public-date-calendar .flatpickr-day.flatpickr-disabled,
+.public-date-calendar .flatpickr-day.flatpickr-disabled:hover,
+.public-date-calendar .flatpickr-day.prevMonthDay,
+.public-date-calendar .flatpickr-day.nextMonthDay {
+  color: var(--product-text-muted);
+  opacity: .55;
+}
+
+.public-date-calendar .flatpickr-prev-month svg,
+.public-date-calendar .flatpickr-next-month svg {
+  fill: var(--product-text);
+}
+
+.public-date-calendar .numInputWrapper span.arrowUp:after { border-bottom-color: var(--product-text); }
+.public-date-calendar .numInputWrapper span.arrowDown:after { border-top-color: var(--product-text); }
+
+/* Time-only picker (start/end time). */
+.public-date-calendar .flatpickr-time,
+.public-date-calendar .flatpickr-time input {
+  background: transparent;
+  color: var(--product-text);
+}
+
+.public-date-calendar .flatpickr-time input:hover,
+.public-date-calendar .flatpickr-time input:focus,
+.public-date-calendar .flatpickr-time .flatpickr-am-pm:hover,
+.public-date-calendar .flatpickr-time .flatpickr-am-pm:focus {
+  background: var(--product-surface-muted);
+}
+
+.public-date-calendar .flatpickr-time .numInputWrapper span.arrowUp:after,
+.public-date-calendar .flatpickr-time .numInputWrapper span.arrowDown:after {
+  border-bottom-color: var(--product-text);
+}

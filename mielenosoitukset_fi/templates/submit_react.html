@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% from '_macros/frontend.html' import frontend_entry %}
+{% block main_class %}submit-workspace{% endblock %}
+
+{% block title %}{{ _('Ilmoita mielenosoituksesta') }}{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css', v='20261029-react-submit-1') }}" />
+{% endblock %}
+
+{% block content %}
+{% set submit_steps = [_('Aloitus'), _('Perustiedot'), _('Aika ja paikka'), _('Järjestäjät'), _('Yhteystiedot'), _('Valmis')] %}
+{% set submit_messages = {
+  'steps': submit_steps,
+  'previous': _('Edellinen'),
+  'next': _('Seuraava'),
+  'submit': _('Lähetä ilmoitus'),
+  'sending': _('Lähetetään...'),
+
+  'introTitle': _('Ilmoita mielenosoituksesta'),
+  'introLead': _('Ilmoittamalla mielenosoituksesta autat muita löytämään tietoa mielenosoituksista. Mitä useampia ja kattavammin alustalla on mielenosoituksista tietoa, sitä useammille siitä on hyötyä.'),
+  'helpLink': _('Jos lähetys takkuaa, katso ohjeet'),
+  'draftNotice': _('Luonnos palautettiin tästä selaimesta. Se poistuu automaattisesti 24 tunnin kuluttua.'),
+  'draftReset': _('Poista luonnos ja aloita alusta'),
+  'beforeSubmitTitle': _('Ennen lähetystä:'),
+  'beforeSubmitBody': [
+    _('tarkista nimi, päivämäärä, paikka ja sähköpostiosoite huolellisesti.'),
+    _('Jos järjestelmä ilmoittaa samankaltaisesta tapahtumasta tai lähetys ei mene heti läpi, lue toimintaohjeet alta.')
+  ],
+  'beforeSubmitGuides': _('ohjeet ilmoituksen lähettämiseen'),
+
+  'choiceTitle': _('Miten lisäät tapahtuman tiedot?'),
+  'choiceLead': _('Tuotko tiedot julkisesta Facebook-tapahtumasta vai lisäätkö ne itse lomakkeelle?'),
+  'importTitle': _('Tuo tiedot Facebookista'),
+  'importDescription': _('Liitä linkki julkiseen Facebook-tapahtumaan, niin täytämme lomakkeen puolestasi.'),
+  'manualTitle': _('Lisää tiedot itse'),
+  'manualDescription': _('Täytä lomake käsin alusta loppuun.'),
+
+  'basicsTitle': _('Perustiedot'),
+  'basicsLead': _('Kerro meille mielenosoituksesi tärkeimmät tiedot. Tämä auttaa ihmisiä löytämään tapahtumasi!'),
+  'facebookLabel': _('Facebook-tapahtumalinkki (valinnainen)'),
+  'facebookPlaceholder': 'https://facebook.com/events/...',
+  'facebookHelper': _('Linkitä Facebook-tapahtuma jos sellainen on'),
+  'importButton': _('Hae tiedot Facebookista'),
+  'importHelper': _('Täyttää lomakkeen otsikko-, kuvaus-, aika-, paikka- ja järjestäjätiedot julkisesta Facebook-tapahtumasta, kun olet lisännyt linkin yläpuolelle.'),
+  'importEmptyUrl': _('Lisää Facebook-tapahtuman linkki ensin yllä olevaan kenttään.'),
+  'importLoading': _('Haetaan tapahtuman tietoja...'),
+  'importFailed': _('Tietojen hakeminen epäonnistui. Yritä uudelleen tai täytä lomake käsin.'),
+  'importImported': _('Tuotu:'),
+  'importMissing': _('Täydennettävä:'),
+  'titleLabel': _('Mielenosoituksen nimi'),
+  'titlePlaceholder': _('esim. Ilmastonmuutoksen vastainen marssi'),
+  'titleHelper': _('Valitse lyhyt ja kuvaava nimi'),
+  'tagsLabel': _('Tagit (pilkuilla erotettuna)'),
+  'tagsPlaceholder': _('esim. ilmasto, tasa-arvo, oikeudet'),
+  'tagsHelper': _('Tagit auttavat ihmisiä löytämään tapahtumasi. Lisää ne ilman #-merkkiä.'),
+  'languageLabel': _('Sisällön kieli'),
+  'languageHelper': _('Valitse millä kielellä kirjoitat otsikon, tagit ja kuvauksen. Varsinaiset käännökset voi lisätä myöhemmin.'),
+  'descriptionLabel': _('Kuvausteksti'),
+  'descriptionHelper': _('Kuvaile mielenosoituksen tarkoitus ja tavoitteet'),
+  'imageLabel': _('Kuva (valinnainen)'),
+  'imageHelper': _('Suositus: vaakakuva, vähintään 1200 × 675 px. Pieni kuva voi näyttää tapahtumasivulla pehmeältä.'),
+  'removeImage': _('Poista kuva'),
+
+  'timePlaceTitle': _('Aika ja paikka'),
+  'timePlaceLead': _('Milloin ja missä mielenosoitus järjestetään? Tarkat tiedot auttavat osallistujia löytämään perille!'),
+  'dateLabel': _('Päivämäärä'),
+  'datePlaceholder': _('pp.kk.vvvv'),
+  'dateFormatHelper': _('Valitse päivä kalenterista tai kirjoita muodossa pp.kk.vvvv.'),
+  'startTimeLabel': _('Alkamisaika'),
+  'endTimeLabel': _('Päättymisaika (valinnainen)'),
+  'endTimeHelper': _('Anna arvio tapahtuman kestosta'),
+  'typeLabel': _('Mielenosoituksen tyyppi'),
+  'typePlaceholder': _('Mielenosoituksen tyyppi'),
+  'typeOption': {'paikallaan': _('Paikallaan'), 'marssi': _('Marssi / kulkue'), 'muut': _('Muu')},
+  'routeLabel': _('Marssin reitti'),
+  'routePlaceholder': _('Kuvaile marssin reitti pilkuilla eroteltuna, esim. Rautatientori, Mannerheimintie, Eduskuntatalo'),
+  'routeHelper': _('Anna osallistujille käsitys marssin kulusta. Erota kadunnimet pilkulla (,) — näin voimme renderöidä ne demo-sivulla.'),
+  'routePreviewLabel': _('Reitin esikatselu'),
+  'routePreviewEmpty': _('Ei reittiä annettu'),
+  'routePreviewHelper': _('Tarkista että listaus näkyy tässä oikein, näin ne renderöityvät demo-sivulla.'),
+  'cityLabel': _('Paikkakunta'),
+  'cityPlaceholder': _('Paikkakunta'),
+  'citySearch': _('Hae paikkakunta...'),
+  'cityNoMatch': _('Ei osumia'),
+  'addressLabel': _('Katuosoite / paikannimi'),
+  'addressPlaceholder': _('esim. Mannerheimintie 1, 00100 tai Eduskuntatalo'),
+  'addressHelper': _('Anna katuosoite tai pelkkä paikannimi (esim. "Eduskuntatalo"). Voit lisätä postinumeron pilkun jälkeen. Älä lisää paikkakuntaa, se lisätään automaattisesti paikkakuntavalinnan perusteella.'),
+
+  'organizersTitle': _('Järjestäjät'),
+  'organizersLead': _('Kuka tai ketkä järjestävät tämän mielenosoituksen? Voit lisätä yhden tai useamman järjestäjän.'),
+  'organizerLabel': _('Järjestäjä'),
+  'addOrganizer': _('Lisää järjestäjä'),
+  'organizerHelper': _('Järjestäjätiedot auttavat osallistujia saamaan lisätietoja ja olemaan yhteydessä'),
+  'organizerSearchLabel': _('Etsi olemassa olevaa organisaatiota'),
+  'organizerSearchPlaceholder': _('Kirjoita organisaation nimi...'),
+  'organizerSearchHelp': _('tai täytä tiedot alla manuaalisesti'),
+  'organizerSearchEmpty': _('Organisaatiota ei löytynyt'),
+  'organizerSearchError': _('Organisaatiohaku ei onnistunut. Yritä uudelleen.'),
+  'organizerName': _('Nimi'),
+  'organizerWebsite': _('Verkkosivut'),
+  'organizerEmail': _('Sähköpostiosoite'),
+  'organizerPrivate': _('Olen yksityishenkilö enkä edusta organisaatiota'),
+  'organizerShowName': _('Saa näyttää nimeni julkisesti'),
+  'organizerShowEmail': _('Saa näyttää sähköpostiosoitteeni julkisesti'),
+  'organizerPrivacyHint': _('Jos valitset yksityishenkilön, voit piilottaa nimesi ja sähköpostisi. Käytämme tietoja silti yhteydenottoja varten.'),
+  'removeOrganizer': _('Poista järjestäjä'),
+
+  'contactTitle': _('Yhteystietosi'),
+  'contactLead': _('Viimeinen askel! Kerro meille vielä omat yhteystietosi. Tietojasi käsitellään luottamuksellisesti.'),
+  'roleLabel': _('Roolisi'),
+  'rolePlaceholder': _('esim. järjestäjä, osallistuja, vapaaehtoinen'),
+  'roleHelper': _('Mikä on suhteesi tapahtumaan?'),
+  'nameLabel': _('Nimesi tai nimimerkkisi'),
+  'namePlaceholder': _('Nimi'),
+  'emailLabel': _('Sähköpostiosoitteesi'),
+  'emailPlaceholder': 'email@example.com',
+  'contactHelper': _('Yhteystietojasi käytetään vain tarvittaessa yhteydenottoon liittyen ilmoitukseesi'),
+  'acceptTermsPrefix': _('Hyväksyn'),
+  'termsLink': _('käyttöehdot'),
+  'acceptTermsAnd': _('ja olen lukenut'),
+  'privacyLink': _('tietosuojaselosteen'),
+
+  'successTitle': _('Kiitos ilmoituksestasi!'),
+  'successBody': _('Mielenosoitusilmoituksesi on vastaanotettu ja se käsitellään pian. Saat vahvistusviestin sähköpostiisi.'),
+  'backHome': _('Palaa etusivulle'),
+  'newEvent': _('Ilmoita uusi tapahtuma'),
+
+  'supportTitle': _('Tarvitsetko apua?'),
+  'supportLead': _('Olemme täällä auttamassa sinua! Jos sinulla on kysymyksiä tai tarvitset tukea lomakkeen täyttämisessä.'),
+  'supportContact': _('Ota yhteyttä'),
+  'supportInfo': _('Lisätietoja'),
+
+  'conflictTitle': _('Löytyi mahdollinen päällekkäinen ilmoitus'),
+  'conflictLead': _('Tarkista osumat alta. Jos tämä on eri tapahtuma, valitse Lähetä silti. Jos kyse on vahingossa duplikaatista, voit palata korjaamaan tietoja.'),
+  'conflictMatches': _('Mahdolliset osumat'),
+  'conflictCancel': _('Peruuta'),
+  'conflictConfirm': _('Lähetä silti'),
+
+  'errorGeneric': _('Lähetyksessä tapahtui virhe. Yritä uudelleen.'),
+  'errorRateLimited': _('Lähetysyrityksiä on liian monta. Odota hetki ja yritä uudelleen.'),
+  'errorRequired': _('Täytä kaikki pakolliset kentät ennen jatkamista.'),
+  'errorTerms': _('Sinun täytyy hyväksyä käyttöehdot ja tietosuojaseloste ennen lähettämistä.'),
+  'errorConflictCancelled': _('Lähetystä ei tehty vielä. Tarkista tiedot ja lähetä uudelleen, jos ilmoitus on oikea.'),
+  'errorConflictForceFailed': _('Ilmoituksen lähetys ei onnistunut vahvistuksen jälkeen. Tarkista tiedot ja yritä uudelleen.'),
+  'errorCodeLabel': _('Virhekoodi')
+} %}
+
+<div data-react-island="submit-page" data-props-id="submit-page-props">
+  <div class="submit-page" role="status">
+    <p>{{ _('Ladataan lomaketta...') }}</p>
+  </div>
+</div>
+
+<noscript>
+  <div class="submit-page">
+    <section class="submit-intro">
+      <div class="submit-intro-content">
+        <h1>{{ _('Ilmoita mielenosoituksesta') }}</h1>
+        <p class="lead">{{ _('Ilmoittamalla mielenosoituksesta autat muita löytämään tietoa mielenosoituksista.') }}</p>
+      </div>
+    </section>
+    {# Deliberate no-JavaScript fallback: the same server contract, plain HTML. #}
+    <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" class="user-form">
+      <input type="hidden" name="submission_token" value="{{ submission_token or '' }}">
+      <div class="form-container">
+        <div class="form-group">
+          <label for="noscript-name">{{ _('Mielenosoituksen nimi') }}<span class="required-asterisk">*</span></label>
+          <input type="text" id="noscript-name" name="title" required>
+        </div>
+        <div class="form-group">
+          <label for="noscript-tags">{{ _('Tagit (pilkuilla erotettuna)') }}<span class="required-asterisk">*</span></label>
+          <input type="text" id="noscript-tags" name="tags" required>
+        </div>
+        <div class="form-group">
+          <label for="noscript-date">{{ _('Päivämäärä') }}<span class="required-asterisk">*</span></label>
+          <input type="date" id="noscript-date" name="date" required>
+        </div>
+        <div class="form-group">
+          <label for="noscript-start">{{ _('Alkamisaika') }}<span class="required-asterisk">*</span></label>
+          <input type="time" id="noscript-start" name="start_time" required>
+        </div>
+        <div class="form-group">
+          <label for="noscript-type">{{ _('Mielenosoituksen tyyppi') }}<span class="required-asterisk">*</span></label>
+          <select id="noscript-type" name="type" required>
+            <option value="paikallaan">{{ _('Paikallaan') }}</option>
+            <option value="marssi">{{ _('Marssi / kulkue') }}</option>
+            <option value="muut">{{ _('Muu') }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="noscript-city">{{ _('Paikkakunta') }}<span class="required-asterisk">*</span></label>
+          <select id="noscript-city" name="city" required>
+            {% for city in city_list %}<option value="{{ city }}">{{ city }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="noscript-address">{{ _('Katuosoite / paikannimi') }}<span class="required-asterisk">*</span></label>
+          <input type="text" id="noscript-address" name="address" required>
+        </div>
+        <div class="form-group">
+          <label for="noscript-description">{{ _('Kuvausteksti') }}</label>
+          <textarea id="noscript-description" name="description"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="noscript-role">{{ _('Roolisi') }}<span class="required-asterisk">*</span></label>
+          <input type="text" id="noscript-role" name="submitter_role" required>
+        </div>
+        <div class="form-group">
+          <label for="noscript-submitter">{{ _('Nimesi tai nimimerkkisi') }}<span class="required-asterisk">*</span></label>
+          <input type="text" id="noscript-submitter" name="submitter_name" required>
+        </div>
+        <div class="form-group">
+          <label for="noscript-email">{{ _('Sähköpostiosoitteesi') }}<span class="required-asterisk">*</span></label>
+          <input type="email" id="noscript-email" name="submitter_email" required>
+        </div>
+        <div class="form-group">
+          <label for="noscript-organizer">{{ _('Järjestäjä') }}</label>
+          <input type="text" id="noscript-organizer" name="organizer_name_1">
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="noscript-terms" name="accept_terms" value="1" required>
+          <label for="noscript-terms">
+            {{ _('Hyväksyn') }}
+            <a href="{{ url_for('terms') }}">{{ _('käyttöehdot') }}</a>
+            {{ _('ja olen lukenut') }}
+            <a href="{{ url_for('privacy') }}">{{ _('tietosuojaselosteen') }}</a>.
+          </label>
+        </div>
+        <div class="form-navigation">
+          <button type="submit" class="btn btn-success">{{ _('Lähetä ilmoitus') }}</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</noscript>
+
+<script type="application/json" id="submit-page-props">{{ {
+  'action': url_for('submit'),
+  'importUrl': url_for('submit_facebook_import'),
+  'orgSearchUrl': url_for('search_organizations'),
+  'termsUrl': url_for('terms'),
+  'privacyUrl': url_for('privacy'),
+  'homeUrl': url_for('index'),
+  'guidesUrl': url_for('public_guides'),
+  'contactUrl': url_for('contact'),
+  'infoUrl': url_for('info'),
+  'token': submission_token or '',
+  'cities': city_list,
+  'locales': translation_locales,
+  'localeNames': translation_language_names,
+  'defaultLanguage': default_demo_language,
+  'canEditDemo': can_edit_demo,
+  'messages': submit_messages
+} | tojson }}</script>
+
+{{ frontend_entry('src/entries/submit-react.tsx') }}
+{% endblock %}

@@ -444,3 +444,82 @@ request. No new browser authentication scheme is introduced.
 
 Deploy the Go home endpoint before merging/deploying its consumer. See
 `docs/go-public-api.md`. Rollback is a source revert and frontend rebuild.
+
+
+## Submission page (opt-in, 30 October 2026)
+
+`/submit` has a second, fully client-rendered implementation. It is selected by
+`PUBLIC_SUBMIT_REACT_ENABLED` (default `False`); `submit.html` stays the default
+and is unchanged. Rollback is a config flip plus the shared asset rebuild, with
+no data migration and no change to the POST contract.
+
+Both templates receive the same server context (`city_list`,
+`submission_token`, `test_mode_allowed`, `can_edit_demo`, translation locales),
+so the branch in `basic_routes.py` only chooses the template name.
+`submit_react.html` builds its JSON props with `tojson` and loads
+`src/entries/submit-react.tsx`.
+
+React now owns the whole wizard: the six steps, every field, the city picker,
+the organizer rows and organization lookup, the Facebook import, the duplicate
+conflict dialog, feedback, the pending/submit state and the success step. Nothing
+is delegated to `window` globals and there is no second owner of any field.
+
+### Preserved contracts
+
+- field names are unchanged (`title`, `tags`, `default_language`, `date`,
+  `start_time`, `end_time`, `type`, `route`, `city`, `address`,
+  `submitter_*`, `accept_terms`, `facebook*`, `organizer_*_N`, `submission_token`,
+  `force_submit`) and the POST is still multipart with `X-Requested-With`;
+- only a non-redirected JSON `{"success": true}` confirms delivery, for the first
+  attempt and the confirmed duplicate retry; other responses keep the draft;
+- the draft keeps key `mielenosoitukset.submit-draft.v2`, version 2, the 24-hour
+  TTL, byte/character caps, the legacy `form_*` migration and the same field
+  names, so a draft written by either page restores in the other;
+- date/time fields are one visible Flatpickr-backed text field plus a hidden
+  ISO input. `altInput` is deliberately not used: it left the source input
+  visible beside a second unlabelled control, so each field rendered twice and
+  the `required` attribute lived on the hidden copy. Restore and import go
+  through the widget API, and the visible field shows `d.m.Y` while the hidden
+  value stays `Y-m-d`;
+- the `?mode=test` autofill stays behind the existing admin-only check;
+- `draftHasContent()` ignores `default_language`, which always holds the server
+  default; counting it made an untouched form look like a draft, so a blank
+  entry was saved on every visit and "draft restored" appeared even after the
+  user deleted it;
+- deleting a draft suppresses autosave and the unload flush before reloading,
+  otherwise the restored values were written straight back.
+
+### Widgets
+
+`react-quill-new@3.8.3` replaces the Quill CDN script and `flatpickr@4.6.13`
+replaces the CDN picker; both are pinned exact like the rest of the dependency
+list. `react-quill` 2.0.0 was rejected because it peers on React <= 18 while this
+project pins React 19.3.1. The city dropdown was our own inline script, so it is
+now a native React combobox instead of a wrapped widget; it renders as a form
+field, and its panel is anchored to a `position: relative` container (Flatpickr
+and this panel both escape a container that is not positioned).
+
+Flatpickr appends its calendar to `<body>`, so `.submit-page`-scoped selectors do
+not reach it. The calendar is themed through the unscoped
+`.public-date-calendar` rules in `submit.css`, which is why dark mode needs those
+rules to stand on their own rather than inherit from the page wrapper. The priced cost of the
+entry is about 86 KB gzip JavaScript plus 37 KB gzip CSS (Quill included); the
+React runtime chunk is already loaded on this page by the site header.
+
+### Verification
+
+```sh
+python3.12 scripts/verify_submit_form.py all --output-dir /tmp/moso-submit-qa
+```
+
+`tests/test_react_submit_page.py` covers both templates, the props contract and
+both POST error contracts. `tests/test_react_submit_page_e2e.py` drives the React
+DOM: validation and focus before advancing, draft retention across a failed
+delivery, single-POST then confirmed retry, draft rehydration, and a
+no-horizontal-overflow check at 390 px and 1440 px. The legacy
+`tests/test_react_submit.py` still covers the default template.
+
+Known gaps: the React page's draft module is exercised through the browser tests
+rather than a unit runner, because the project has no JavaScript test runner; and
+cross-version draft interop is asserted by format equality, not by a round-trip
+test between the two pages.

@@ -1759,6 +1759,59 @@ def init_routes(app):
         )
 
 
+    @app.route("/api/session")
+    def public_session_summary():
+        """Read-only account summary for the standalone React public host.
+
+        The React host cannot read Flask's signed session cookie. It asks this
+        same-origin endpoint for the same header state the templates receive:
+        identity labels, role flags and the unread notification count. No
+        cookie value, token, email, permission list or private record is
+        returned, and this endpoint grants no authority by itself.
+        """
+        supported = current_app.config.get("BABEL_PUBLIC_LOCALES") or ["fi", "en", "sv"]
+        locale = session.get("locale", "fi")
+        if locale not in supported:
+            locale = "fi"
+        details = fundraising_details()
+        language_names = current_app.config.get("BABEL_LANGUAGES") or {}
+        payload = {
+            "authenticated": current_user.is_authenticated,
+            "locale": locale,
+            "locales": [
+                {"code": code, "name": language_names.get(code) or code.upper()}
+                for code in supported
+            ],
+            "role": "guest",
+            "name": None,
+            "picture": None,
+            "global_admin": False,
+            "has_admin_access": False,
+            "unread": 0,
+            "fundraising": bool(details.get("show_header_link"))
+            and (campaign_pages_public() or current_user.is_authenticated),
+        }
+        if current_user.is_authenticated:
+            payload.update({
+                "role": getattr(current_user, "role", None) or "user",
+                "name": current_user.displayname or current_user.username,
+                "picture": current_user.profile_picture or None,
+                "global_admin": bool(getattr(current_user, "global_admin", False)),
+                "has_admin_access": bool(current_user.has_admin_access()),
+            })
+            try:
+                payload["unread"] = sum(
+                    1 for item in fetch_notifications(current_user.id, limit=20)
+                    if not item.get("read")
+                )
+            except Exception:
+                # A notification read must never break the page shell.
+                payload["unread"] = 0
+        response = jsonify(payload)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Vary"] = "Cookie"
+        return response
+
     @app.route("/terms")
     def terms():
         """

@@ -8,7 +8,9 @@
   "scripts": {
     "build": "tsc --noEmit && vite build --config frontend/vite.config.ts && node frontend/prerender.mjs",
     "dev": "vite build --watch --mode development --config frontend/vite.config.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "app:build": "tsc --noEmit && vite build --config frontend/vite.app.config.ts && vite build --config frontend/vite.app.ssr.config.ts",
+    "app:start": "node frontend/server.mjs"
   },
   "dependencies": {
     "react": "19.3.1",

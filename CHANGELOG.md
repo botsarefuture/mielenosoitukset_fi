@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Add a standalone React host for the public front page: the server writes only the document metadata and an empty app root, the browser renders the shared header, page content and footer, and events keep coming from the public Go home API. Add a read-only `GET /api/session` summary for the signed-in header, explicit GET-only Apache routing for migrated pages, and keep every other route and form on Flask.
+
 - Add a page-family filter to the admin Core Web Vitals report, with scoped sample counts and p50/p95/p99 values while preserving the selected date range.
 
 - Simplify the React front page around event discovery, shared cards and direct search. Load public home events directly from Go, removing event queries from Flask, legacy home scripts/styles and render-blocking home font loading. Keep page controls usable while events load, with clear retry and empty states.

@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import type { HeaderMessages } from './types';
 
 export function ThemeToggle({ messages }: { messages: HeaderMessages }) {
-  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
+  // The server has no document; the inline theme script sets the class before paint.
+  const [dark, setDark] = useState(() => typeof document !== 'undefined'
+    && document.documentElement.classList.contains('dark'));
   useEffect(() => {
     // Other existing page controls can still change the shared theme.
     const observer = new MutationObserver(() => setDark(document.documentElement.classList.contains('dark')));

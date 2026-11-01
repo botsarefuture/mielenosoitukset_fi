@@ -444,3 +444,10 @@ request. No new browser authentication scheme is introduced.
 
 Deploy the Go home endpoint before merging/deploying its consumer. See
 `docs/go-public-api.md`. Rollback is a source revert and frontend rebuild.
+
+### Standalone host for migrated pages
+
+The front page now also has a standalone React host that renders only metadata on
+the server and the page in the browser. It is the path for the remaining
+React-only public pages, including the Apache GET-only routing split. See
+[`docs/react-ssr-app.md`](react-ssr-app.md).

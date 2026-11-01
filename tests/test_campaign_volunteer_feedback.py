@@ -367,8 +367,13 @@ def test_other_public_pages_load_only_shared_header_and_admin_stays_separate(cli
         assert response.status_code == 200
         page = response.get_data(as_text=True)
         scripts = re.findall(r'<script type="module" src="([^"]+)"', page)
-        assert len(scripts) == 1
-        assert scripts[0].startswith("/static/frontend/assets/header-")
+        # The front page owns its content through the home entry as well as the
+        # shared header; other public pages load only the shared header.
+        expected = 2 if url == "/" else 1
+        assert len(scripts) == expected
+        assert any(script.startswith("/static/frontend/assets/header-") for script in scripts)
+        if url == "/":
+            assert any(script.startswith("/static/frontend/assets/home-") for script in scripts)
         assert 'data-react-island="site-header"' in page
         assert 'data-react-island="campaign-page"' not in page
     response = admin_client.get("/admin/dashboard")

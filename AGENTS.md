@@ -83,6 +83,26 @@ The context is guidance, not an approved replacement specification.
   retire old paths only when safe. Update relevant documentation and changelog.
 
 
+## Working in this checkout
+
+- `main` is checked out in another worktree, so `git checkout main` fails here. Branch from `origin/main` or add a `git worktree`; symlink the existing `node_modules` into it instead of reinstalling.
+- The shared working tree can contain another agent's uncommitted work. Never stage, stash or revert files you did not edit; do your own work in a separate worktree.
+- Run Python tests from a worktree with the main checkout's `.venv/bin/python`; pytest imports the package from the current directory, so no venv copy is needed.
+- `mielenosoitukset_fi/static/frontend/manifest.json` and the hashed `assets/*` it names must be regenerated (`npm run build`) in the same commit as their source. A bot's conflict resolution can leave stale hashes behind.
+- A `codex://threads/<uuid>` reference maps to `~/.codex/sessions/<date>/rollout-*-<uuid>.jsonl`; read that file when a Codex conversation is needed but not available as a thread reference.
+
+## Public UI ownership and copy
+
+- Maintainer instruction (1 November 2026): no new Flask surface for public UI. New behaviour goes into the Go API plus React; reusing an existing Flask page or endpoint is fine, adding a route, view or template is not.
+- The target is a standalone React app that does not need Flask at runtime, not Flask-hosted islands. Treat island props (`react_detail.py` and similar) as a bridge to keep correct, not as the contract to extend; new copy and URLs belong in the TypeScript catalog/config the host will use.
+- The public site is Finnish-only today. Keep the localization plumbing, prefer existing msgids, and when a new string is required leave `en`/`sv` copy to human translators rather than machine-guessing it.
+- The catalogs already fail `msgfmt` on duplicate msgids and the compiled `.mo` files are committed, so a new msgid stays untranslated until a human edits and recompiles. `msgid "Takaisin"` currently maps to `"Starts at "` in `en`.
+
+## Production host
+
+- `ssh lc-main-root` reaches production as root; the React host is `mielenosoitukset-public.service`, released under `/opt/mielenosoitukset-public`, routed by `/etc/apache2/mielenosoitukset-react-ssr.conf`. Paths and rollback are in `docs/react-ssr-app.md`.
+- Production Flask config is `/var/www/mielenosoitukset_fi/config.yaml` with `MONGO_URI`/`MONGO_DBNAME` (not `MONGODB_URI`); Gunicorn listens on `/var/www/mielenosoitukset_fi/mielenosoitus.sock`.
+
 ## Repeatable listing verification
 
 For changes to the shared React listings, use

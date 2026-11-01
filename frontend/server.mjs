@@ -4,6 +4,7 @@
 // components and event data are fetched and rendered by the browser, so a page
 // request does no React rendering and no event query.
 import { createServer } from 'node:http';
+import { isIP } from 'node:net';
 import { readFileSync, existsSync } from 'node:fs';
 import { readFile, realpath, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
@@ -121,9 +122,22 @@ const server = createServer(async (request, response) => {
     return;
   }
   try {
+    // Only our loopback reverse proxy may supply a forwarded client address.
+    // Apache appends its peer on the right, matching Flask's one-hop ProxyFix.
+    const peer = request.socket.remoteAddress;
+    const localProxy = peer === '127.0.0.1' || peer === '::1' || peer === '::ffff:127.0.0.1';
+    const forwarded = request.headers['x-forwarded-for'];
+    const candidate = localProxy && typeof forwarded === 'string'
+      ? forwarded.split(',').at(-1)?.trim() : peer;
+    const clientIp = candidate && isIP(candidate) ? candidate : undefined;
+    const cfCandidate = request.headers['cf-connecting-ipv6'] ?? request.headers['cf-connecting-ip'];
+    const cloudflareIp = localProxy && typeof cfCandidate === 'string' && isIP(cfCandidate)
+      ? cfCandidate : undefined;
     const result = await renderPage({
       path: url.pathname, search: url.search, origin, apiBase, apiReadBase, sessionUrl, flaskSocketPath,
       cookie: request.headers.cookie,
+      clientIp,
+      cloudflareIp,
       doNotTrack: request.headers.dnt === '1',
     }, assets);
     if (result.redirect) {

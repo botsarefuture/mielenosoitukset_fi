@@ -45,7 +45,7 @@ function Root({ config, session, path: initialPath, detail, series, home }: Boot
       // Detail views are counted by the screen's own track_view call, so the
       // generic pageview beacon must not misattribute them to the referrer.
       if ((document as Document & { prerendering?: boolean }).prerendering
-        || navigator.doNotTrack === '1' || !clientRoute(path)) return;
+        || navigator.doNotTrack === '1') return;
       if (session.matomoEnabled && !document.getElementById('public-app-matomo')) {
         const script = document.createElement('script');
         script.id = 'public-app-matomo';
@@ -53,6 +53,7 @@ function Root({ config, session, path: initialPath, detail, series, home }: Boot
         script.async = true;
         document.head.appendChild(script);
       }
+      if (!clientRoute(path)) return;
       if (!session.siteAnalyticsEnabled || trackedPage.current === path) return;
       trackedPage.current = path;
       try {
@@ -67,7 +68,11 @@ function Root({ config, session, path: initialPath, detail, series, home }: Boot
   }, [path, session.siteAnalyticsEnabled, session.matomoEnabled]);
   useEffect(() => {
     function navigate() {
-      if (!clientRoute(window.location.pathname)) return;
+      if (!clientRoute(window.location.pathname)) {
+        // The destination needs its own server-rendered metadata and bootstrap.
+        window.location.reload();
+        return;
+      }
       setPath(window.location.pathname);
       resetScroll();
     }

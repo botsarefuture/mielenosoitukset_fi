@@ -49,7 +49,7 @@ export function App({ config, session, route, path, detail, series, home }: AppP
   }, [route.name, meta.title]);
   return <>
     <SiteHeader {...headerProps(config, session, text, path)} />
-    <main className="container-main-content public-layout-wide" id="main-content">
+    <main className={`container-main-content ${route.name === 'home' ? 'public-layout-wide' : 'public-detail-main'}`} id="main-content">
       {route.name === 'home' && <HomePage
         endpoint={config.homeApi}
         locale={config.locale}

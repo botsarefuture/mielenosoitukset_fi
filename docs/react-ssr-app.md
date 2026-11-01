@@ -21,12 +21,10 @@ claiming a performance improvement.
 | Detail head (title, canonical, JSON-LD, robots) | Server requests the same public API once, `/api/demonstrations/<identifier>` |
 | Home card batch | Server reads `/api/home` once, caches it for 30 s and inlines it in the bootstrap |
 
-The server renders no React tree and queries no event collection. A page
-response is a small amount of string composition plus one bounded read of the
-Flask session summary. This keeps server CPU per page low while the browser
-renders once. The home metadata is static, so it needs no event lookup. Routes
-whose metadata depends on an event (detail pages) must add that single projected
-read to the head path before they can move here.
+The server renders no React tree and accesses no event collection directly.
+It composes the document and reads the bounded Flask session summary. Public
+home data and event metadata come from the Go API through bounded caches;
+production uses `PUBLIC_API_LOCAL=http://127.0.0.1:8091/api` for those reads.
 
 ## Files
 
@@ -46,15 +44,13 @@ read to the head path before they can move here.
 
 ## Demonstration detail route
 
-`GET /demonstration/<identifier>` is prepared for the host and verified, but the
-Apache rule in `deploy/apache/react-ssr-routing.conf` is commented out until the
-visual review and maintainer approval, because that include already runs in
-production for the front page.
+`GET /demonstration/<identifier>` is enabled in the reviewed Apache include.
+The maintainer approved activation on 1 November 2026. Deploy the matching Go
+API and host before installing the include, and complete visual acceptance.
 
 The host claims exactly one path segment. `/demonstration/<id>/ics`,
-`/demonstration/<id>/some`, `/demonstration/<id>/children` and a trailing slash
-keep their Flask handlers, which also keeps the recurring-series page on Flask
-for now.
+`/demonstration/<id>/some` and a trailing slash keep their Flask handlers.
+The series route is separately listed below.
 
 An occurrence URL of a public series is 301'd to
 `/demonstration/<parent>/children?occurrence=<slug or id>`, like Flask; when the
@@ -74,10 +70,10 @@ for the head. Canonical is the series URL without the query, and robots is
 Upcoming occurrences are listed first, then cancelled and past ones, matching the
 chooser. A series with no active occurrence is 404 with `noindex`; a nonpublic or
 unknown parent is 404; an unavailable API is 503. The Apache rule for this path
-is prepared and commented out with the detail rule.
+is enabled alongside the detail rule.
 
-The head comes from one bounded (1.5 s) read of the public API, which the API
-caches itself. The host does not cache the document again. The identifier is
+The head comes from one bounded (1.5 s) read of the public API. The host caches
+successful metadata for 60 seconds, not session-bound HTML. The identifier is
 resolved by the API in the same precedence the site already uses (ObjectId,
 alias, running number, slug), and the canonical link always uses
 `slug`, then `running_number`, then the id. Description text is stripped of markup
@@ -134,6 +130,10 @@ degrades to the anonymous header after a maximum 1.2-second wait. Cookie-bearing
 requests always fetch their own summary. Cookieless public configuration is
 coalesced and cached inside the host for five minutes; identity, role privileges,
 notifications and failed responses are never shared through this cache.
+Socket requests preserve the validated reverse-proxy peer and Cloudflare
+client header; Flask retains its own Cloudflare-network validation. Forwarded
+headers are accepted only from the host's loopback proxy, keeping the session
+rate limiter scoped as it was before migration. No IP is added to cache keys.
 Restarting the host clears it. Public locale options, fundraising visibility and
 tracking configuration may therefore remain stale for up to five minutes.
 
@@ -202,8 +202,8 @@ The web server sends only migrated page GET/HEAD requests to the app host:
 | Request | Handler |
 | --- | --- |
 | `GET|HEAD /` | React app host |
-| `GET|HEAD /demonstration/<id>` | React app host (rule prepared, enable after approval) |
-| `GET|HEAD /demonstration/<parent>/children` | React app host (rule prepared, enable after approval) |
+| `GET|HEAD /demonstration/<id>` | React app host (except `preview=1`) |
+| `GET|HEAD /demonstration/<parent>/children` | React app host (except `preview=1`) |
 | `GET /demonstration/<id>/ics`, `/some` | Flask (unchanged) |
 | `POST /submit`, form posts, login/logout and other mutations | Flask (unchanged) |
 | `GET /admin*`, `/users*`, `/api*`, `/static*`, feeds, sitemap, robots | Flask (unchanged) |

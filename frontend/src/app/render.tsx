@@ -29,6 +29,8 @@ export type RenderInput = {
   apiReadBase?: string;
   sessionUrl: string;
   flaskSocketPath?: string;
+  clientIp?: string;
+  cloudflareIp?: string;
   cookie?: string;
   doNotTrack?: boolean;
   /** Raw query string; used only to detect the Flask preview fallback. */
@@ -55,7 +57,7 @@ const serialize = (value: unknown) => JSON.stringify(value)
   .replaceAll('&', '\\u0026').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 
 /** The existing detail stylesheet; the host page uses the same markup. */
-const DETAIL_STYLESHEET = '/static/css/public-detail.css?v=20261029-react-detail-1';
+const DETAIL_STYLESHEET = '/static/css/public-detail.css?v=20261101-react-detail-2';
 
 /**
  * The home batch is the same for every anonymous visitor, so the server reads it
@@ -199,7 +201,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   if (!route) return { status: 404, html: notFoundDocument() };
 
   const summary: SessionSummary = await fetchSession(input.sessionUrl, input.cookie,
-    1200, input.flaskSocketPath, input.origin);
+    1200, input.flaskSocketPath, input.origin, input.clientIp, input.cloudflareIp);
   const session = input.doNotTrack
     ? { ...summary, siteAnalyticsEnabled: false, matomoEnabled: false }
     : summary;
@@ -265,8 +267,22 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     if (loaded.status === 'not-found') {
       return { status: 404, html: notFoundDocument(), headers: { 'X-Robots-Tag': 'noindex, follow' } };
     }
-    const requested = new URLSearchParams(input.search ?? '').get('occurrence');
-    const selected = selectOccurrence(loaded.occurrences, requested);
+    const requested = new URLSearchParams(input.search ?? '').get('occurrence')?.trim() || null;
+    let occurrences = loaded.occurrences;
+    if (requested && !loaded.occurrences.some((occurrence) => occurrence.slug === requested
+      || occurrence.id === requested
+      || (occurrence.runningNumber !== null && String(occurrence.runningNumber) === requested))) {
+      // Explicit archive/cancelled links are not limited by the chooser window.
+      // The public event read must still prove membership in this exact series.
+      const requestedEvent = await loadDetailHead(requested, config, readBase);
+      if (requestedEvent.status === 'unavailable') {
+        return { status: 503, html: unavailableDocument(), headers: { 'Cache-Control': 'no-store', 'Retry-After': '30' } };
+      }
+      if (requestedEvent.status === 'ready' && requestedEvent.parent === route.parent) {
+        occurrences = [...occurrences, requestedEvent.occurrence];
+      }
+    }
+    const selected = selectOccurrence(occurrences, requested);
     if (!selected) {
       // A series with no active occurrence has nothing to show, like the
       // chooser's empty state, and must stay out of the index.
@@ -288,7 +304,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       robots: loaded.indexable ? 'index, follow' : 'noindex, follow',
     };
     detail = { ...event.bootstrap, canonicalUrl: canonical };
-    series = seriesNavigation(config, loaded, selected.id, messages.series);
+    series = seriesNavigation(config, { ...loaded, occurrences }, selected.id, messages.series);
     jsonLd = event.jsonLd;
     extraHead = `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
     if (!loaded.indexable) headers['X-Robots-Tag'] = 'noindex, follow';

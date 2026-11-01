@@ -85,8 +85,10 @@ func (s mongoStore) FindSeries(ctx context.Context, parent bson.ObjectID) (serie
 		return payload, mongo.ErrNoDocuments
 	}
 	for _, field := range []string{"hide", "rejected"} {
-		if value, ok := parentDoc[field].(bool); ok && value {
-			return payload, mongo.ErrNoDocuments
+		if stored, exists := parentDoc[field]; exists {
+			if value, ok := stored.(bool); !ok || value {
+				return payload, mongo.ErrNoDocuments
+			}
 		}
 	}
 

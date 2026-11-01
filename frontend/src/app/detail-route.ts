@@ -36,7 +36,7 @@ export type DetailLoad =
   | { status: 'ready'; meta: RouteMeta; bootstrap: DetailBootstrap; noindex: boolean;
       jsonLd: Record<string, unknown>; heading: string;
       /** Present when the event belongs to a recurring series. */
-      parent: string | null; slug: string | null }
+      parent: string | null; slug: string | null; occurrence: SeriesOccurrence }
   | { status: 'not-found' }
   | { status: 'unavailable' };
 
@@ -228,6 +228,11 @@ export async function loadDetail(
       jsonLd: jsonLd(config, payload, canonical, plainText(payload.description) || FALLBACK_DESCRIPTION),
       parent: payload.parent,
       slug: payload.slug,
+      occurrence: {
+        id: payload.id, slug: payload.slug, runningNumber: payload.runningNumber,
+        date: payload.date, startTime: payload.startTime, endTime: payload.endTime,
+        cancelled: payload.cancelled,
+      },
     };
   } catch {
     return { status: 'unavailable' };
@@ -291,13 +296,13 @@ function occurrenceEnd(occurrence: SeriesOccurrence): string | null {
 }
 
 function occurrenceOrder(occurrence: SeriesOccurrence): string {
-  return `${occurrence.date ?? ''}|${clock(occurrence.startTime, '00:00:00')}|${occurrence.id}`;
+  return `${occurrence.date ?? ''}|${occurrence.startTime ? '0' : '1'}|${clock(occurrence.startTime, '00:00:00')}|${occurrence.id}`;
 }
 
 /**
  * The occurrence the series page opens with: the next active one, otherwise the
  * latest past one, matching the Flask chooser. A requested slug, id or running
- * number wins when it is still an active occurrence.
+ * number wins, including a cancelled occurrence explicitly requested by URL.
  */
 export function selectOccurrence(
   occurrences: SeriesOccurrence[],
@@ -306,9 +311,8 @@ export function selectOccurrence(
 ): SeriesOccurrence | null {
   const wanted = requested?.trim();
   if (wanted) {
-    const match = occurrences.find((occurrence) => !occurrence.cancelled
-      && (occurrence.slug === wanted || occurrence.id === wanted
-        || (occurrence.runningNumber !== null && String(occurrence.runningNumber) === wanted)));
+    const match = occurrences.find((occurrence) => occurrence.slug === wanted || occurrence.id === wanted
+      || (occurrence.runningNumber !== null && String(occurrence.runningNumber) === wanted));
     if (match) return match;
   }
   const active = occurrences

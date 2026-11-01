@@ -4,6 +4,18 @@
 
 ## UNRELEASED
 
+- Keep the standalone detail and series screens at the existing full page width, and wrap long Finnish event titles inside the mobile heading.
+
+- Preserve Matomo analytics on standalone React demonstration and series pages while keeping their existing demonstration-view tracking separate from homepage pageview signals.
+
+- Restore the correct detail page when browser Back returns from an in-app homepage visit, loading the destination's metadata and event instead of leaving the homepage under the detail URL.
+
+- Reject malformed recurring-series moderation flags in the public API, keeping hidden or invalid parents out of the React series screen.
+
+- Preserve explicit recurring-occurrence links outside the chooser window, including cancelled events, while verifying the selected event belongs to the requested public series.
+
+- Preserve the reverse proxy's validated client address when the React host reads Flask sessions over its socket, preventing signed-in visitors from sharing one rate-limit bucket. Production host reads now use the Go API on loopback, avoiding a public CDN round trip.
+
 - Close the remaining legacy sections of the demonstration detail screen: the public API now returns the attendance total (`likes`, null when the stored counter is unusable), and the React page shows the participant count, the countdown to the start, the organizer logo, an empty-description note and an explicit “participation is closed” notice for cancelled events instead of silently dropping those blocks. Unit words come from `Intl`, so no new translation msgids were added. Visual acceptance for these states is still open.
 
 - Stop the API's Apache vhost from overriding response caching: `Header always set Cache-Control "no-store"` wrote `err_headers_out`, which Apache merges into the proxied response instead of replacing it, so every answer shipped `no-store` next to the API's own policy and browsers and Cloudflare could not use the cached reads' `max-age`/`s-maxage`. The vhost now leaves `Cache-Control` to the API, which sets it on every response.

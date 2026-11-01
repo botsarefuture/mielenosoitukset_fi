@@ -135,10 +135,19 @@ errors fail closed. Missing records/errors and oversized documents are not cache
 The concurrency-safe process-local cache holds at most1024documents of32KiB each
 (approximately32MiB of BSON plus map overhead), pruning expired entries and
 otherwise evicting the earliest-expiring entry. Restart clears it; multiple API
-processes have independent caches. Health is not cached. HTTP responses retain
-no-store, so browser/CDN caching cannot bypass visibility checks. No new database,
-indexes, migrations or service dependencies. Disable by restoring the direct
-mongoStore construction in main; no stored-data rollback is needed.
+processes have independent caches. Health is not cached. Cached reads answer with
+`public, max-age=60, s-maxage=900, stale-while-revalidate=3600,
+stale-if-error=86400`, so a shared cache may replay them for up to15minutes; every
+cache hit still performs the indexed public-visibility check, so hiding or
+unapproving an event takes effect on the next request rather than after the
+header expires. Errors, `no-store` paths and `/health` stay uncached. The Apache
+vhost must not set `Cache-Control` itself: `Header always` writes
+`err_headers_out`, which Apache merges into the proxied response, so a `no-store`
+there ships beside the API's policy and disables browser and edge caching. A
+Cloudflare Cache Rule is still required before the edge caches these JSON reads;
+without one they report `cf-cache-status: DYNAMIC`. No new database, indexes,
+migrations or service dependencies. Disable by restoring the direct mongoStore
+construction in main; no stored-data rollback is needed.
 
 ## Recurring series endpoint
 
@@ -223,8 +232,11 @@ review other consumers before doing so.
 The React home page can read `GET /api/home?lang=fi` directly, without a Flask
 content request. `lang` accepts fi/en/sv and defaults to fi. Unknown, duplicate
 or unsupported parameters return 400. This public read needs no session/token;
-CORS is uncredentialed and the normal GET/HEAD/OPTIONS, no-store and nosniff
-policy applies. No personalized attendance or privileged override is provided.
+CORS is uncredentialed and the normal GET/HEAD/OPTIONS and nosniff policy
+applies. The read is cached for60seconds in process and answers with `public,
+max-age=30, s-maxage=60, stale-while-revalidate=120, stale-if-error=900`, so a
+shared cache may replay it for up to a minute. No personalized attendance or
+privileged override is provided.
 
 Response: `{ "events": [...], "recommended": true|false }`. Each card contains
 only `_id`, `title`, `date`, `date_display`, `start_time_display`,

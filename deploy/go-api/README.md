@@ -48,6 +48,9 @@ record if publication used the GitHub connector.
 6. Verify public HTTPS health with exact release SHA, one approved event, generic
    404 for a nonpublic event and public CORS. Confirm existing site health and
    Flask service remain good. No bulk production benchmark is required.
+   Also confirm each response carries exactly one `Cache-Control`: `no-store` on
+   `/health`, and the API's `public, max-age, s-maxage` policy on cached reads. A
+   second value means the vhost is setting the header again (see below).
 
 ## Rollback
 

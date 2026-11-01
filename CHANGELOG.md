@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Stop the API's Apache vhost from overriding response caching: `Header always set Cache-Control "no-store"` wrote `err_headers_out`, which Apache merges into the proxied response instead of replacing it, so every answer shipped `no-store` next to the API's own policy and browsers and Cloudflare could not use the cached reads' `max-age`/`s-maxage`. The vhost now leaves `Cache-Control` to the API, which sets it on every response.
+
 - Serve recurring series from React: a new public `GET /api/series/<parent>` returns the parent's visibility and the same bounded occurrence list the Flask chooser reads, the host renders `/demonstration/<parent>/children` with the series navigation and the series canonical URL, and an occurrence URL of a public series 301s to the series page instead of staying a dead end. The Apache rules stay commented out until activation is approved.
 
 - Cut the React host's own latency: server-side reads now prefer a local API address (`PUBLIC_API_LOCAL`) instead of a public round trip, detail head metadata is cached for 60 s, and the home card batch is read once, cached for 30 s and inlined into the document so cards paint without a second request. Only public metadata is cached; sessions stay uncached.

@@ -1,7 +1,7 @@
 import { appConfig } from './config';
 import { catalog } from './i18n';
 import { routeForPath, routeMeta } from './routes';
-import { fetchSession } from './session';
+import { fetchSession } from './session-server';
 import type { SessionSummary } from './session';
 
 /**
@@ -19,6 +19,7 @@ export type RenderInput = {
   origin: string;
   apiBase: string;
   sessionUrl: string;
+  flaskSocketPath?: string;
   cookie?: string;
   doNotTrack?: boolean;
 };
@@ -126,7 +127,8 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
 <p><a href="/">Mielenosoitukset.fi</a></p></main></body></html>`,
     };
   }
-  const summary: SessionSummary = await fetchSession(input.sessionUrl, input.cookie);
+  const summary: SessionSummary = await fetchSession(input.sessionUrl, input.cookie,
+    1200, input.flaskSocketPath, input.origin);
   const session = input.doNotTrack
     ? { ...summary, siteAnalyticsEnabled: false, matomoEnabled: false }
     : summary;

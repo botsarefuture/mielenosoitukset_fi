@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { createServer, request } from 'node:http';
 import { spawn } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // Run after npm run app:build. No MongoDB, credentials or external services required.
@@ -62,12 +64,69 @@ try {
   console.log('PASS: unknown-route zero reads; eight concurrent anonymous pages one read; warm zero reads; private sessions isolated; TTL and failure handling');
 } finally { await new Promise(resolve => sessionServer.close(resolve)); }
 
+const socketDirectory = mkdtempSync(join(tmpdir(), 'moso-session-'));
+const socketPath = join(socketDirectory, 'flask.sock');
+let socketReads = 0;
+const socketServer = createServer((req, res) => {
+  socketReads++;
+  assert.equal(req.headers.host, 'mielenosoitukset.fi');
+  assert.equal(req.headers['x-forwarded-proto'], 'https');
+  if (req.url === '/slow') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.write('{'); setTimeout(() => res.end('}'), 2000); return;
+  }
+  if (req.url === '/aborted') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.write('{'); res.destroy(); return; }
+  if (req.url === '/redirect') { res.writeHead(302, { Location: '/api/session' }); res.end(); return; }
+  if (req.url === '/invalid') { res.writeHead(200, { 'Content-Type': 'text/html' }); res.end('<html>'); return; }
+  res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+  if (req.url === '/oversized') { res.end(JSON.stringify({ authenticated: false, name: 'x'.repeat(70_000) })); return; }
+  res.end(JSON.stringify({ authenticated: Boolean(req.headers.cookie), name: req.headers.cookie ?? null,
+    locale: 'fi', locales: [{ code: 'fi', name: 'Suomi' }] }));
+});
+await new Promise(resolve => socketServer.listen(socketPath, resolve));
+const socketPage = (changes = {}) => page({ sessionUrl: 'http://mielenosoitukset.fi/api/session',
+  origin: 'https://mielenosoitukset.fi', flaskSocketPath: socketPath, ...changes });
+try {
+  await socketPage({ path: '/not-migrated' });
+  assert.equal(socketReads, 0);
+  await Promise.all(Array.from({ length: 8 }, () => socketPage()));
+  assert.equal(socketReads, 1, 'Socket public configuration is coalesced');
+  await socketPage();
+  assert.equal(socketReads, 1, 'Socket public configuration is cached');
+  const [alice, bob] = await Promise.all([socketPage({ cookie: 'session=alice' }), socketPage({ cookie: 'session=bob' })]);
+  assert.equal(bootstrap(alice.html).session.name, 'session=alice');
+  assert.equal(bootstrap(bob.html).session.name, 'session=bob');
+  assert.equal(socketReads, 3, 'Socket private sessions are uncached and isolated');
+  assert.equal(bootstrap((await socketPage()).html).session.name, null);
+  for (const path of ['/redirect', '/invalid', '/oversized', '/aborted']) {
+    const before = socketReads;
+    for (let i = 0; i < 2; i++) {
+      const result = await socketPage({ sessionUrl: `http://mielenosoitukset.fi${path}` });
+      assert.equal(bootstrap(result.html).session.authenticated, false);
+    }
+    assert.equal(socketReads, before + 2, `${path} failures must not be cached or followed`);
+  }
+  const started = performance.now();
+  await socketPage({ sessionUrl: 'http://mielenosoitukset.fi/slow' });
+  assert(performance.now() - started < 1800, 'Socket timeout includes incomplete response bodies');
+  const before = socketReads;
+  const missing = await socketPage({ flaskSocketPath: join(socketDirectory, 'missing.sock') });
+  assert.equal(bootstrap(missing.html).session.siteAnalyticsEnabled, false);
+  assert.equal(socketReads, before, 'Cache cannot leak between socket paths');
+  console.log('PASS: Unix socket host/proto, anonymous coalescing/cache, private cookie isolation, bounded body/timeout, aborted/invalid/redirect responses and transport isolation');
+} finally {
+  socketServer.closeAllConnections();
+  await new Promise(resolve => socketServer.close(resolve));
+  rmSync(socketDirectory, { recursive: true, force: true });
+}
+
 const listener = createServer();
 await new Promise(resolve => listener.listen(0, '127.0.0.1', resolve));
 const port = listener.address().port;
 await new Promise(resolve => listener.close(resolve));
 const child = spawn(process.execPath, ['frontend/server.mjs'], { cwd: root,
-  env: { ...process.env, APP_PORT: String(port), SESSION_URL: `${base}/down` }, stdio: ['ignore', 'pipe', 'pipe'] });
+  env: { ...process.env, APP_PORT: String(port), SESSION_URL: `${base}/down`,
+    APP_BUILD_SHA: 'verification-build', FLASK_SOCKET_PATH: '' }, stdio: ['ignore', 'pipe', 'pipe'] });
 const get = (path, method = 'GET') => new Promise((resolve, reject) => {
   const req = request({ hostname: '127.0.0.1', port, path, method }, res => {
     let body = ''; res.on('data', value => { body += value; });
@@ -85,6 +144,7 @@ try {
     assert.equal((await get(path)).status, 404, path);
     assert.equal((await get('/health')).status, 200, 'Malformed asset requests must not crash the host');
   }
+  assert.equal(JSON.parse((await get('/health')).body).build_sha, 'verification-build');
   const manifest = JSON.parse(readFileSync(`${root}/frontend/dist/client/.vite/manifest.json`));
   const asset = `/app-assets/${manifest['src/app/client.tsx'].file}`;
   assert.equal((await get(asset)).status, 200);

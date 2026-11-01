@@ -18,6 +18,7 @@ const origin = (process.env.APP_ORIGIN || `http://127.0.0.1:${port}`).replace(/\
 const apiBase = (process.env.PUBLIC_API_BASE || 'https://api.mielenosoitukset.fi/api').replace(/\/+$/, '');
 const flaskOrigin = (process.env.FLASK_API_ORIGIN || 'http://127.0.0.1:8000').replace(/\/+$/, '');
 const sessionUrl = process.env.SESSION_URL || `${flaskOrigin}/api/session`;
+const flaskSocketPath = process.env.FLASK_SOCKET_PATH || undefined;
 // Local verification only: production serves /static directly from the web server.
 const staticDir = process.env.STATIC_DIR ? resolve(process.env.STATIC_DIR) : null;
 
@@ -104,7 +105,7 @@ const server = createServer(async (request, response) => {
   }
   if (url.pathname === '/health') {
     response.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
-    response.end(JSON.stringify({ status: 'ok' }));
+    response.end(headOnly ? undefined : JSON.stringify({ status: 'ok', build_sha: process.env.APP_BUILD_SHA || 'development' }));
     return;
   }
   if (url.pathname.startsWith('/app-assets/')) {
@@ -117,7 +118,7 @@ const server = createServer(async (request, response) => {
   }
   try {
     const result = await renderPage({
-      path: url.pathname, origin, apiBase, sessionUrl,
+      path: url.pathname, origin, apiBase, sessionUrl, flaskSocketPath,
       cookie: request.headers.cookie,
       doNotTrack: request.headers.dnt === '1',
     }, assets);

@@ -5,6 +5,7 @@
 // request does no React rendering and no event query.
 import { createServer } from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
+import { readFile, realpath, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -66,27 +67,36 @@ function sendHTML(response, status, html, headOnly) {
   response.end(headOnly ? undefined : html);
 }
 
-function serveAsset(pathname, response, headOnly, prefix = '/app-assets/', directory = clientDir) {
-  const relative = normalize(decodeURIComponent(pathname.slice(prefix.length)));
-  const file = resolve(directory, relative);
-  if (!file.startsWith(`${directory}/`) || !existsSync(file)) {
+async function serveAsset(pathname, response, headOnly, prefix = '/app-assets/', directory = clientDir) {
+  try {
+    const relative = normalize(decodeURIComponent(pathname.slice(prefix.length)));
+    const base = await realpath(directory);
+    const file = await realpath(resolve(directory, relative));
+    if (!file.startsWith(`${base}/`) || !(await stat(file)).isFile()) throw new Error('Not an asset');
+    const body = headOnly ? undefined : await readFile(file);
+    response.writeHead(200, {
+      'Content-Type': types[extname(file)] || 'application/octet-stream',
+      // Only the app bundle has hashed file names; existing site assets keep a short cache.
+      'Cache-Control': prefix === '/app-assets/'
+        ? 'public, max-age=31536000, immutable' : 'public, max-age=3600',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    response.end(body);
+  } catch {
     response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-    response.end('not found');
-    return;
+    response.end(headOnly ? undefined : 'not found');
   }
-  response.writeHead(200, {
-    'Content-Type': types[extname(file)] || 'application/octet-stream',
-    // Only the app bundle has hashed file names; existing site assets keep a short cache.
-    'Cache-Control': prefix === '/app-assets/'
-      ? 'public, max-age=31536000, immutable' : 'public, max-age=3600',
-    'X-Content-Type-Options': 'nosniff',
-  });
-  response.end(headOnly ? undefined : readFileSync(file));
 }
 
 const server = createServer(async (request, response) => {
-  const url = new URL(request.url ?? '/', 'http://localhost');
   const headOnly = request.method === 'HEAD';
+  let url;
+  try { url = new URL(request.url ?? '/', 'http://localhost'); }
+  catch {
+    response.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+    response.end(headOnly ? undefined : 'invalid request URL');
+    return;
+  }
   if (request.method !== 'GET' && !headOnly) {
     response.writeHead(405, { Allow: 'GET, HEAD', 'Content-Type': 'text/plain; charset=utf-8' });
     response.end('method not allowed');
@@ -98,17 +108,18 @@ const server = createServer(async (request, response) => {
     return;
   }
   if (url.pathname.startsWith('/app-assets/')) {
-    serveAsset(url.pathname, response, headOnly);
+    await serveAsset(url.pathname, response, headOnly);
     return;
   }
   if (staticDir && url.pathname.startsWith('/static/')) {
-    serveAsset(url.pathname, response, headOnly, '/static/', staticDir);
+    await serveAsset(url.pathname, response, headOnly, '/static/', staticDir);
     return;
   }
   try {
     const result = await renderPage({
       path: url.pathname, origin, apiBase, sessionUrl,
       cookie: request.headers.cookie,
+      doNotTrack: request.headers.dnt === '1',
     }, assets);
     sendHTML(response, result.status, result.html, headOnly);
   } catch (error) {

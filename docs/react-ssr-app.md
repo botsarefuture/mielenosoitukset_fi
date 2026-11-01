@@ -5,6 +5,11 @@ pages stop using Jinja bodies, and the server cost of that stays low. This slice
 starts the standalone host with the front page. The existing Flask pages remain
 in place and unchanged for every route that has not moved yet.
 
+The deadline is January 2027. New public work must be portable to the React
+host; admin UI is excluded. Hosting a route in Node is an architectural step,
+not proof of a speedup. Verify its blocking requests and data access before
+claiming a performance improvement.
+
 ## Rendering split
 
 | Work | Where |
@@ -54,7 +59,21 @@ header without a frontend change.
 It returns no cookie value, token, email, permission list or private record, is
 `Cache-Control: no-store` with `Vary: Cookie`, and grants no authority. Flask
 still decides every permission and every write. A missing or slow endpoint
-degrades to the anonymous header; it never blocks the page.
+degrades to the anonymous header after a maximum 1.2-second wait. Cookie-bearing
+requests always fetch their own summary. Cookieless public configuration is
+coalesced and cached inside the host for 30 seconds; identity, role privileges,
+notifications and failed responses are never shared through this cache.
+
+The host rejects unmigrated routes before fetching session state. Static asset
+reads are asynchronous, regular-file-only and restricted to the resolved asset
+directory. Malformed URLs, directory requests and traversal attempts return
+errors without terminating the host.
+
+After `npm run app:build`, run `node scripts/verify_public_host.mjs` for bounded
+request-count and host-availability checks. Eight concurrent cookieless page
+requests cause one public-configuration lookup; warm requests cause none.
+Private requests remain independent. This verifies removed work, not a measured
+page-load speedup.
 
 The summary also exposes public `site_analytics_enabled` and `matomo_enabled`
 booleans. A missing summary defaults both to disabled; the host does not guess

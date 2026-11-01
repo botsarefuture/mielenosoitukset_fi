@@ -20,6 +20,7 @@ export type RenderInput = {
   apiBase: string;
   sessionUrl: string;
   cookie?: string;
+  doNotTrack?: boolean;
 };
 
 export type RenderAssets = { head: string; scripts: string };
@@ -125,7 +126,10 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
 <p><a href="/">Mielenosoitukset.fi</a></p></main></body></html>`,
     };
   }
-  const session: SessionSummary = await fetchSession(input.sessionUrl, input.cookie);
+  const summary: SessionSummary = await fetchSession(input.sessionUrl, input.cookie);
+  const session = input.doNotTrack
+    ? { ...summary, siteAnalyticsEnabled: false, matomoEnabled: false }
+    : summary;
   const config = appConfig({
     origin: input.origin, apiBase: input.apiBase, locale: session.locale,
     path: input.path, locales: session.locales,

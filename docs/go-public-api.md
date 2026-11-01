@@ -159,6 +159,13 @@ how many records MongoDB must examine. Resolution is not cached, so slug or
 visibility changes take effect on the next request. Existing public slug URLs
 can therefore resolve without a Flask hop.
 
+The cached detail handler performs the same resolution before its cache lookup
+and keys the cache by the resolved ObjectId. Two URLs for one event share a
+cached response, while a renamed slug or a moderation change is picked up on the
+next request because only the body is cached. Invalid identifiers are rejected
+before any query; unknown and nonpublic identifiers return 404 with the
+not-found cache header.
+
 ### Identifier index rollout requirement
 
 A read-only production check on 1 November 2026 found approximately 61,267

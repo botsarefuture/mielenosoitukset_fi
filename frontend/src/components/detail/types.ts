@@ -8,7 +8,7 @@ export type DetailEvent = {
   organizers: { name: string | null; email: string | null; logo: string | null; is_private: boolean; website: string | null; organization_id: string | null }[];
 };
 export type DetailMessages = {
-  follow: string; following: string; followSeries: string;
+  follow: string; following: string; followSeries: string; followDisabled: string;
   suggestEditTitle: string; suggestEdit: string; reportOnlyTitle: string; reportOnly: string;
   loading: string; error: string; retry: string; notFound: string; allEvents: string;
   date: string; location: string; startingFrom: string; cancelled: string; description: string;

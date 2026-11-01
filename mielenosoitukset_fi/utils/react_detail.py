@@ -108,6 +108,7 @@ def detail_messages():
         "saved": _("Tallennettu"), "cancelAttendance": _("Peru osallistuminen"),
         "anonymousOrganizer": _("Yksityishenkilö (nimi piilotettu)"),
         "follow": _("Seuraa"), "following": _("Seurataan"), "followSeries": _("Seuraa sarjaa"),
+        "followDisabled": _("Seuraaminen on teknisten muutosten vuoksi tilapäisesti pois käytöstä tässä näkymässä. Voit siirtyä organisaation sivulle organisaation napista ja seurata sieltä."),
         "noDescription": _("Tapahtumalle ei ole lisätty kuvausta."),
         "noOrganizers": _("Järjestäjätietoja ei ole ilmoitettu"),
         "organizerProfile": _("Organisaation profiili"),

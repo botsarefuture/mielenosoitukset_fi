@@ -423,3 +423,102 @@ func TestMongoOrganizerConsentProjection(t *testing.T) {
 		})
 	}
 }
+
+// fakeJSONStore implements detailJSONStore, so the cached handler path runs
+// without MongoDB while still counting resolver and body reads.
+type fakeJSONStore struct {
+	id           bson.ObjectID
+	resolveErr   error
+	documentErr  error
+	resolveCalls int
+	findCalls    int
+	lastID       bson.ObjectID
+}
+
+func (s *fakeJSONStore) FindPublic(context.Context, bson.ObjectID) (bson.M, error) {
+	return nil, mongo.ErrNoDocuments
+}
+func (s *fakeJSONStore) Ping(context.Context) error { return nil }
+func (s *fakeJSONStore) ResolvePublicID(ctx context.Context, raw string) (bson.ObjectID, error) {
+	if _, ok := ctx.Deadline(); !ok {
+		panic("missing query deadline")
+	}
+	s.resolveCalls++
+	if s.resolveErr != nil {
+		return bson.NilObjectID, s.resolveErr
+	}
+	if !validIdentifier(raw) {
+		return bson.NilObjectID, errInvalidIdentifier
+	}
+	return s.id, nil
+}
+func (s *fakeJSONStore) FindPublicJSON(ctx context.Context, id bson.ObjectID, lang string, render func(bson.M, string) ([]byte, error)) ([]byte, error) {
+	if _, ok := ctx.Deadline(); !ok {
+		panic("missing query deadline")
+	}
+	s.findCalls++
+	s.lastID = id
+	if s.documentErr != nil {
+		return nil, s.documentErr
+	}
+	return []byte(`{"_id":"` + id.Hex() + `"}`), nil
+}
+
+// Existing site URLs use slugs, running numbers and aliases, so the cached
+// handler must resolve them before touching the cache.
+func TestCachedHandlerResolvesPublicIdentifiers(t *testing.T) {
+	id, _ := bson.ObjectIDFromHex(demoID)
+	for _, tc := range []struct {
+		name                    string
+		path                    string
+		resolveErr, documentErr error
+		status                  int
+		resolveCalls, findCalls int
+	}{
+		{"slug", "/api/demonstrations/may-day-2026", nil, nil, 200, 1, 1},
+		{"objectid", "/api/demonstrations/" + demoID, nil, nil, 200, 1, 1},
+		{"running number", "/api/demonstrations/4242", nil, nil, 200, 1, 1},
+		{"unknown slug", "/api/demonstrations/no-such-event", mongo.ErrNoDocuments, nil, 404, 1, 0},
+		// The resolver is asked once and rejects the input without a database read.
+		{"invalid identifier", "/api/demonstrations/bad%20slug!", nil, nil, 400, 1, 0},
+		{"resolver failure", "/api/demonstrations/may-day-2026", errors.New("mongodb://secret"), nil, 503, 1, 0},
+		{"invalid query", "/api/demonstrations/may-day-2026?lang=en&lang=sv", nil, nil, 400, 0, 0},
+		{"body read failure", "/api/demonstrations/may-day-2026", nil, errors.New("mongodb://secret"), 503, 1, 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &fakeJSONStore{id: id, resolveErr: tc.resolveErr, documentErr: tc.documentErr}
+			w := httptest.NewRecorder()
+			(&API{s}).handler().ServeHTTP(w, httptest.NewRequest("GET", tc.path, nil))
+			if w.Code != tc.status || s.resolveCalls != tc.resolveCalls || s.findCalls != tc.findCalls || strings.Contains(w.Body.String(), "secret") {
+				t.Fatalf("status=%d resolve=%d find=%d body=%s", w.Code, s.resolveCalls, s.findCalls, w.Body.String())
+			}
+			if tc.findCalls > 0 && s.lastID != id {
+				t.Fatalf("cache must be keyed by the resolved id, got %s", s.lastID)
+			}
+			if tc.status == 200 && w.Header().Get("Cache-Control") != demoCacheControl {
+				t.Fatalf("missing public cache header: %v", w.Header())
+			}
+			if tc.status == 404 && w.Header().Get("Cache-Control") != notFoundCacheControl {
+				t.Fatalf("missing not-found cache header: %v", w.Header())
+			}
+		})
+	}
+}
+
+// A renamed slug or moderation change must take effect immediately, so the
+// identifier is resolved on every request even when the body is cached.
+func TestCachedHandlerResolvesOnEveryRequest(t *testing.T) {
+	id, _ := bson.ObjectIDFromHex(demoID)
+	s := &fakeJSONStore{id: id}
+	handler := (&API{s}).handler()
+	for _, identifier := range []string{"may-day-2026", "4242", demoID} {
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, httptest.NewRequest("GET", "/api/demonstrations/"+identifier, nil))
+		if w.Code != 200 {
+			t.Fatalf("%s: status=%d body=%s", identifier, w.Code, w.Body.String())
+		}
+	}
+	if s.resolveCalls != 3 || s.findCalls != 3 {
+		t.Fatalf("expected one resolution and one body read per request, got %d/%d", s.resolveCalls, s.findCalls)
+	}
+}

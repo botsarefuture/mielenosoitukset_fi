@@ -56,7 +56,7 @@ const types = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.map': 'application/json',
 };
 
-function sendHTML(response, status, html, headOnly) {
+function sendHTML(response, status, html, headOnly, extraHeaders = {}) {
   response.writeHead(status, {
     'Content-Type': 'text/html; charset=utf-8',
     // The header depends on the session cookie; never share it through a cache.
@@ -64,6 +64,7 @@ function sendHTML(response, status, html, headOnly) {
     Vary: 'Cookie',
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
+    ...extraHeaders,
   });
   response.end(headOnly ? undefined : html);
 }
@@ -118,11 +119,20 @@ const server = createServer(async (request, response) => {
   }
   try {
     const result = await renderPage({
-      path: url.pathname, origin, apiBase, sessionUrl, flaskSocketPath,
+      path: url.pathname, search: url.search, origin, apiBase, sessionUrl, flaskSocketPath,
       cookie: request.headers.cookie,
       doNotTrack: request.headers.dnt === '1',
     }, assets);
-    sendHTML(response, result.status, result.html, headOnly);
+    if (result.redirect) {
+      // A site-relative preview target stays on the same public origin; the web
+      // server decides which handler owns the flagged request.
+      response.writeHead(result.status, {
+        Location: result.redirect, 'Content-Length': '0', 'Cache-Control': 'no-store', Vary: 'Cookie',
+      });
+      response.end();
+      return;
+    }
+    sendHTML(response, result.status, result.html, headOnly, result.headers);
   } catch (error) {
     console.error('Page rendering failed', error);
     sendHTML(response, 503, '<!DOCTYPE html><title>Palvelu ei ole juuri nyt käytettävissä</title>'

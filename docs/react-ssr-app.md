@@ -18,6 +18,7 @@ claiming a performance improvement.
 | App root, bootstrap JSON (config, session summary, current path) | Server |
 | Header, page components, event cards, footer, in-app navigation | Browser (`frontend/src/app/client.tsx`) |
 | Event data | Browser requests the public Go `/api/home?lang=...` contract |
+| Detail head (title, canonical, JSON-LD, robots) | Server requests the same public API once, `/api/demonstrations/<identifier>` |
 
 The server renders no React tree and queries no event collection. A page
 response is a small amount of string composition plus one bounded read of the
@@ -30,12 +31,66 @@ read to the head path before they can move here.
 
 - `frontend/src/app/` — configuration (existing public URL paths), copy catalog
   (fi/en/sv), routes, session contract, header props, footer, app shell, server
-  render and browser entry.
+  render and browser entry. `detail.ts` holds detail copy and endpoints,
+  `detail-route.ts` loads one event for the head, and
+  `components/detail/DetailScreen.tsx` is the browser adapter shared with the
+  Flask island.
 - `frontend/vite.app.config.ts` and `frontend/vite.app.ssr.config.ts` — separate
   client and server bundles. Output goes to `frontend/dist/` (not committed).
 - `frontend/server.mjs` — HTTP server: metadata pages, `/app-assets/*`, `/health`.
 - `deploy/apache/react-ssr-routing.conf` — web server routing rules.
 - `mielenosoitukset_fi/basic_routes.py` — `GET /api/session`.
+
+## Demonstration detail route
+
+`GET /demonstration/<identifier>` is prepared for the host and verified, but the
+Apache rule in `deploy/apache/react-ssr-routing.conf` is commented out until the
+visual review and maintainer approval, because that include already runs in
+production for the front page.
+
+The host claims exactly one path segment. `/demonstration/<id>/ics`,
+`/demonstration/<id>/some`, `/demonstration/<id>/children` and a trailing slash
+keep their Flask handlers, which also keeps the recurring-series page on Flask
+for now.
+
+Known gap until the series slice: Flask 301s an occurrence URL to
+`/demonstration/<parent>/children?occurrence=...` only when the parent series is
+public. The host cannot tell, so it renders the occurrence at its own URL with a
+self-canonical instead of risking a 404 for an occurrence whose parent is hidden.
+A series endpoint that answers parent visibility and occurrences closes this and
+moves `/children` here.
+
+The head comes from one bounded (1.5 s) read of the public API, which the API
+caches itself. The host does not cache the document again. The identifier is
+resolved by the API in the same precedence the site already uses (ObjectId,
+alias, running number, slug), and the canonical link always uses
+`slug`, then `running_number`, then the id. Description text is stripped of markup
+and truncated to 200 characters like the shell. `application/ld+json` carries the
+same `Event` fields as the template. Dates past the two-year discovery horizon
+send `noindex, follow` in the head and in the `X-Robots-Tag` header.
+
+A missing or nonpublic event returns 404. A signed-in visitor is redirected to
+the same URL with `?preview=1` so the existing Flask preview workflow still
+answers; the flag is excluded from the host routing rule and a flagged request
+that reaches the host returns 404 instead of redirecting again. An API failure
+returns 503 with `Retry-After`, never a page that looks indexable.
+
+Detail views are counted by the screen's existing `POST /api/analytics/track_view`
+call, so the generic pageview beacon is not sent for this route and cannot
+misattribute the view to the referrer. A detail page is always loaded as a
+document: the client bundle only navigates in place for the front page, which
+keeps every detail entry with a server-rendered head and a resolved event id.
+
+## Detail copy and endpoints
+
+`frontend/src/app/detail.ts` holds the detail screen's copy (`DetailMessages`),
+the account-route templates it posts to and the canonical path helper. It is the
+single source instead of Flask template props, so detail copy moves here rather
+than into `react_detail.py`; `tests/test_public_detail_copy_parity.py` fails if
+the two diverge while the Flask shell still supplies the island. Finnish is the
+source catalog and `en`/`sv` reuse it until a human translator supplies those
+strings. The route itself still needs the single projected event read in the
+head path before it can move here.
 
 ## Session summary contract
 
@@ -111,6 +166,8 @@ The web server sends only migrated page GET/HEAD requests to the app host:
 | Request | Handler |
 | --- | --- |
 | `GET|HEAD /` | React app host |
+| `GET|HEAD /demonstration/<id>` | React app host (rule prepared, enable after approval) |
+| `GET /demonstration/<id>/ics`, `/some`, `/children` | Flask (unchanged) |
 | `POST /submit`, form posts, login/logout and other mutations | Flask (unchanged) |
 | `GET /admin*`, `/users*`, `/api*`, `/static*`, feeds, sitemap, robots | Flask (unchanged) |
 | `GET` of any page not yet migrated | Flask (unchanged) |

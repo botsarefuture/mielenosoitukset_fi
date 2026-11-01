@@ -24,6 +24,9 @@ const (
 // detailJSONStore is implemented by *cachedDetailStore. Stores that don't
 // implement it (e.g. test fakes) fall back to the original handlers.
 type detailJSONStore interface {
+	// Resolution stays outside the cache: a renamed slug or a moderation change
+	// must take effect on the next request, and the cache is keyed by id only.
+	ResolvePublicID(ctx context.Context, raw string) (bson.ObjectID, error)
 	FindPublicJSON(ctx context.Context, id bson.ObjectID, lang string, render func(bson.M, string) ([]byte, error)) ([]byte, error)
 }
 
@@ -49,11 +52,6 @@ func (a *API) getDemonstrationCached(w http.ResponseWriter, r *http.Request) {
 		a.getDemonstration(w, r)
 		return
 	}
-	id, err := bson.ObjectIDFromHex(r.PathValue("id"))
-	if err != nil {
-		writeError(w, 400, "invalid demonstration ID") // no cache, no DB
-		return
-	}
 	lang, err := parseQuery(r.URL.RawQuery)
 	if err != nil {
 		writeError(w, 400, "invalid query parameters")
@@ -61,6 +59,22 @@ func (a *API) getDemonstrationCached(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
+	// The public identifier may be an ObjectId, alias, running number or slug,
+	// exactly like the uncached handler and the existing site URLs.
+	id, err := cached.ResolvePublicID(ctx, r.PathValue("id"))
+	switch {
+	case errors.Is(err, errInvalidIdentifier):
+		writeError(w, 400, "invalid demonstration ID") // no cache, no body read
+		return
+	case errors.Is(err, mongo.ErrNoDocuments):
+		w.Header().Set("Cache-Control", notFoundCacheControl)
+		writeError(w, 404, "demonstration not found")
+		return
+	case err != nil:
+		log.Print("Demonstration identifier lookup failed")
+		writeError(w, 503, "service unavailable") // stays no-store
+		return
+	}
 	data, err := cached.FindPublicJSON(ctx, id, lang, renderDemonstration)
 	switch {
 	case err == nil:

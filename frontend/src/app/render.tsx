@@ -1,6 +1,10 @@
 import { appConfig } from './config';
+import { detailMessages } from './detail';
+import { loadDetail } from './detail-route';
+import type { DetailBootstrap } from './detail-route';
 import { catalog } from './i18n';
 import { routeForPath, routeMeta } from './routes';
+import type { RouteMeta } from './routes';
 import { fetchSession } from './session-server';
 import type { SessionSummary } from './session';
 
@@ -9,9 +13,9 @@ import type { SessionSummary } from './session';
  *
  * The server writes the document head (title, description, robots, social
  * previews, favicons, theme bootstrap and stylesheets) and an empty app root.
- * Page components render in the browser, so a request does no React rendering
- * and no event query. Event metadata that must be indexed can be added to this
- * head per route without rendering the page body.
+ * Page components render in the browser, so a request does no React rendering.
+ * Routes whose metadata comes from an event do one projected API read for the
+ * head; the page body is still fetched by the browser.
  */
 
 export type RenderInput = {
@@ -22,6 +26,8 @@ export type RenderInput = {
   flaskSocketPath?: string;
   cookie?: string;
   doNotTrack?: boolean;
+  /** Raw query string; used only to detect the Flask preview fallback. */
+  search?: string;
 };
 
 export type RenderAssets = { head: string; scripts: string };
@@ -29,6 +35,9 @@ export type RenderAssets = { head: string; scripts: string };
 export type RenderResult = {
   status: number;
   html: string;
+  headers?: Record<string, string>;
+  /** Absolute or site-relative redirect target; the server sends Location. */
+  redirect?: string;
 };
 
 const escapeHtml = (value: string) => value
@@ -40,12 +49,18 @@ const serialize = (value: unknown) => JSON.stringify(value)
   .replaceAll('<', '\\u003c').replaceAll('>', '\\u003e')
   .replaceAll('&', '\\u0026').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 
+/** The existing detail stylesheet; the host page uses the same markup. */
+const DETAIL_STYLESHEET = '/static/css/public-detail.css?v=20261029-react-detail-1';
+
 function headMarkup(options: {
   title: string; description: string; robots: string; canonical: string | null;
   url: string; origin: string; locale: string; assets: string;
   siteAnalyticsEnabled: boolean;
+  image?: string | null;
+  jsonLd?: unknown;
+  extraHead?: string;
 }) {
-  const ogImage = `${options.origin}/static/images/og-default.jpg`;
+  const ogImage = options.image ?? `${options.origin}/static/images/og-default.jpg`;
   return `<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,6 +112,7 @@ ${options.canonical ? `<link rel="canonical" href="${escapeHtml(options.canonica
 <meta name="twitter:site" content="@Mielenosoitukset" />
 <meta name="twitter:creator" content="@Mielenosoitukset" />
 <meta name="twitter:image:alt" content="Mielenosoituksen kuva" />
+${options.jsonLd ? `<script type="application/ld+json">${serialize(options.jsonLd)}</script>` : ''}
 <link rel="preload" href="/static/css/style.css?v=20261015-heading-1" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="/static/css/style.css?v=20261015-heading-1"></noscript>
 <link rel="preload" href="/static/fa/css/all.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -109,24 +125,32 @@ ${options.canonical ? `<link rel="canonical" href="${escapeHtml(options.canonica
 <link rel="stylesheet" href="/static/css/public-header.css?v=20261027-react-header-1">
 <link rel="stylesheet" href="/static/css/flash.css?v=20260928-campaign-feedback-1">
 <link rel="stylesheet" href="/static/css/public_hero.css?v=20261015-hero-width-1">
+${options.extraHead ?? ''}
 ${options.siteAnalyticsEnabled ? `<script src="https://cdn2.mielenosoitukset.fi/vendor/web-vitals/6.2.2/web-vitals.iife.js" integrity="sha256-Hl6bmva41xz+9QjlqGnFO0zyu8ytjJtaxmTDTpP2FRo=" defer crossorigin="anonymous"></script>
 <script src="/static/js/site_analytics.js" defer></script>` : ''}
 ${options.assets}`;
 }
 
-export async function renderPage(input: RenderInput, assets: RenderAssets): Promise<RenderResult> {
-  const route = routeForPath(input.path);
-  if (!route) {
-    return {
-      status: 404,
-      html: `<!DOCTYPE html><html lang="fi"><head>
+function notFoundDocument() {
+  return `<!DOCTYPE html><html lang="fi"><head>
 <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="robots" content="noindex, follow" /><title>404 | Mielenosoitukset.fi</title>
 <link rel="stylesheet" href="/static/css/style.css"></head>
 <body><main id="main-content" class="container-main-content"><h1>404</h1>
-<p><a href="/">Mielenosoitukset.fi</a></p></main></body></html>`,
-    };
-  }
+<p><a href="/">Mielenosoitukset.fi</a></p></main></body></html>`;
+}
+
+function unavailableDocument() {
+  return '<!DOCTYPE html><html lang="fi"><head><meta charset="UTF-8" />'
+    + '<meta name="robots" content="noindex, follow" />'
+    + '<title>Palvelu ei ole juuri nyt käytettävissä</title></head>'
+    + '<body><h1>Palvelu ei ole juuri nyt käytettävissä</h1></body></html>';
+}
+
+export async function renderPage(input: RenderInput, assets: RenderAssets): Promise<RenderResult> {
+  const route = routeForPath(input.path);
+  if (!route) return { status: 404, html: notFoundDocument() };
+
   const summary: SessionSummary = await fetchSession(input.sessionUrl, input.cookie,
     1200, input.flaskSocketPath, input.origin);
   const session = input.doNotTrack
@@ -137,25 +161,61 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     path: input.path, locales: session.locales,
   });
   const text = catalog(config.locale);
-  const meta = routeMeta(route, config, text);
+
+  let meta: RouteMeta = routeMeta(route, config, text);
+  let detail: DetailBootstrap | undefined;
+  let jsonLd: unknown;
+  let extraHead = '';
+  let noscript = '<noscript><p class="container-main-content">Mielenosoitukset.fi käyttää JavaScriptiä. '
+    + '<a href="/demonstrations">Kaikki mielenosoitukset</a> · <a href="/calendar/">Kalenteri</a></p></noscript>';
+  const headers: Record<string, string> = {};
+
+  if (route.name === 'detail') {
+    const loaded = await loadDetail(route.identifier, config);
+    if (loaded.status === 'unavailable') {
+      // Never answer a down backend with a page that looks fine to a crawler.
+      return { status: 503, html: unavailableDocument(), headers: { 'Cache-Control': 'no-store', 'Retry-After': '30' } };
+    }
+    if (loaded.status === 'not-found') {
+      // A signed-in visitor may still be able to preview a nonpublic event; the
+      // preview workflow stays on Flask behind an explicit query flag.
+      const askedForPreview = new URLSearchParams(input.search ?? '').has('preview');
+      if (session.authenticated && !askedForPreview) {
+        return { status: 302, html: '', redirect: `${input.path}?preview=1` };
+      }
+      return { status: 404, html: notFoundDocument(), headers: { 'X-Robots-Tag': 'noindex, follow' } };
+    }
+    const messages = detailMessages(config.locale);
+    meta = loaded.meta;
+    detail = loaded.bootstrap;
+    jsonLd = loaded.jsonLd;
+    extraHead = `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    if (loaded.noindex) headers['X-Robots-Tag'] = 'noindex, follow';
+    noscript = `<noscript><article class="public-detail container-main-content">`
+      + `<h1>${escapeHtml(loaded.heading)}</h1>`
+      + `<p>${escapeHtml(meta.description)}</p>`
+      + `<a href="${escapeHtml(config.urls.demonstrations)}">${escapeHtml(messages.allEvents)}</a>`
+      + `</article></noscript>`;
+  }
+
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
-  const bootstrap = serialize({ config, session, path: input.path, route });
+  const bootstrap = serialize({ config, session, path: input.path, route, ...(detail ? { detail } : {}) });
   const html = `<!DOCTYPE html>
 <html lang="${escapeHtml(config.locale)}">
 <head>
 ${headMarkup({
     title: meta.title, description: meta.description, robots: meta.robots,
     canonical: meta.canonical, url, origin: config.origin, locale: config.locale,
-    assets: assets.head,
+    assets: assets.head, image: meta.image ?? null, jsonLd, extraHead,
     siteAnalyticsEnabled: session.siteAnalyticsEnabled,
   })}
 </head>
 <body>
 <div id="app"></div>
-<noscript><p class="container-main-content">Mielenosoitukset.fi käyttää JavaScriptiä. <a href="/demonstrations">Kaikki mielenosoitukset</a> · <a href="/calendar/">Kalenteri</a></p></noscript>
+${noscript}
 <script type="application/json" id="app-bootstrap">${bootstrap}</script>
 ${assets.scripts}
 </body>
 </html>`;
-  return { status: 200, html };
+  return { status: 200, html, headers };
 }

@@ -6,6 +6,16 @@
 
 - Restore the structured suggest-an-edit path on the React demonstration detail page: the report dialog opens on the same choice as the legacy modal, so visitors can correct fields on the existing suggestion page or send a free-text report instead of only the latter.
 
+- Prepare the React host to serve `/demonstration/<identifier>`: one bounded public-API read builds the head (title, description, canonical slug URL, Open Graph, Event JSON-LD, two-year-horizon `noindex` in the head and `X-Robots-Tag`), the page body comes from the existing detail screen, a missing event is 404 or the signed-in `?preview=1` Flask fallback, and an API failure is 503 instead of an indexable shell. The Apache rule is prepared but left disabled until the visual review and maintainer approval.
+
+- Resolve demonstration identifiers before the public API's detail cache, so slugs, running numbers and aliases work on the cached endpoint production uses. Only the body is cached, keyed by the resolved ObjectId, so renamed slugs and moderation changes apply on the next request.
+
+- Share one detail browser adapter between the Flask island and the React host, so URL history, occurrence navigation, `action` intents, login links and the single view-tracking call stay identical across both hosts.
+
+- Move the demonstration detail screen's copy and account endpoints into the React host's TypeScript catalog (`frontend/src/app/detail.ts`), so the detail route can render without Flask template props. A parity test keeps those strings identical to the msgids the Flask shell still supplies, and `en`/`sv` wait for human translations.
+
+- Temporarily disable organization follows on demonstration detail pages: an info box above Järjestäjät explains the technical break and points to the organization's own page, and the follow button renders disabled instead of submitting.
+
 - Serve the public front page from the React host in production: Apache routes only `GET`/`HEAD /` and `/app-assets/**` to a checksum-verified Node release on loopback, while Flask keeps every other page, API, form and write. The host reads the signed-in header summary over the existing Gunicorn socket, so no credentials are copied to it.
 
 - Ship the public React host as a versioned, checksum-verified release bundle with its own systemd unit and a deploy script that refuses unsafe archives and requires exact-build health. Node runs as `www-data` on loopback and reads the Flask session over the existing Unix socket, so the new service holds no database credentials or application secret.

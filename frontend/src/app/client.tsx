@@ -2,7 +2,9 @@ import { createRoot } from 'react-dom/client';
 import { useEffect, useRef, useState } from 'react';
 import { App } from './App';
 import type { AppConfig } from './config';
+import type { DetailBootstrap } from './detail-route';
 import { routeForPath } from './routes';
+import type { AppRoute } from './routes';
 import type { SessionSummary } from './session';
 
 /**
@@ -14,7 +16,17 @@ import type { SessionSummary } from './session';
  * link keeps normal browser navigation to Flask.
  */
 
-type Bootstrap = { config: AppConfig; session: SessionSummary; path: string };
+type Bootstrap = { config: AppConfig; session: SessionSummary; path: string; detail?: DetailBootstrap };
+
+/**
+ * Routes the app can enter without a server round trip for their metadata.
+ * A detail page is always loaded as a document, so its head, canonical URL and
+ * resolved event id come from the server; only the front page navigates in place.
+ */
+function clientRoute(path: string): AppRoute | null {
+  const route = routeForPath(path);
+  return route?.name === 'home' ? route : null;
+}
 
 /** The existing layout scrolls the body element, not only the document. */
 function resetScroll() {
@@ -23,13 +35,15 @@ function resetScroll() {
   document.body.scrollTop = 0;
 }
 
-function Root({ config, session, path: initialPath }: Bootstrap) {
+function Root({ config, session, path: initialPath, detail }: Bootstrap) {
   const [path, setPath] = useState(initialPath);
   const trackedPage = useRef<string | null>(null);
   useEffect(() => {
     function activate() {
+      // Detail views are counted by the screen's own track_view call, so the
+      // generic pageview beacon must not misattribute them to the referrer.
       if ((document as Document & { prerendering?: boolean }).prerendering
-        || navigator.doNotTrack === '1' || !routeForPath(path)) return;
+        || navigator.doNotTrack === '1' || !clientRoute(path)) return;
       if (session.matomoEnabled && !document.getElementById('public-app-matomo')) {
         const script = document.createElement('script');
         script.id = 'public-app-matomo';
@@ -51,7 +65,7 @@ function Root({ config, session, path: initialPath }: Bootstrap) {
   }, [path, session.siteAnalyticsEnabled, session.matomoEnabled]);
   useEffect(() => {
     function navigate() {
-      if (!routeForPath(window.location.pathname)) return;
+      if (!clientRoute(window.location.pathname)) return;
       setPath(window.location.pathname);
       resetScroll();
     }
@@ -67,7 +81,7 @@ function Root({ config, session, path: initialPath }: Bootstrap) {
       if (!href || href.startsWith('#')) return;
       let url: URL;
       try { url = new URL(href, window.location.origin); } catch { return; }
-      if (url.origin !== window.location.origin || !routeForPath(url.pathname)) return;
+      if (url.origin !== window.location.origin || !clientRoute(url.pathname)) return;
       event.preventDefault();
       window.history.pushState({ appPath: url.pathname }, '', url);
       setPath(url.pathname);
@@ -82,7 +96,7 @@ function Root({ config, session, path: initialPath }: Bootstrap) {
   }, []);
   const route = routeForPath(path);
   if (!route) return null;
-  return <App config={config} session={session} route={route} path={path} />;
+  return <App config={config} session={session} route={route} path={path} detail={detail} />;
 }
 
 const container = document.getElementById('app');

@@ -209,6 +209,18 @@ func TestMongoFindSeries(t *testing.T) {
 	if _, err := store.FindSeries(ctx, hiddenParent); !errors.Is(err, mongo.ErrNoDocuments) {
 		t.Fatalf("hidden parent resolved: %v", err)
 	}
+	for _, field := range []string{"hide", "rejected"} {
+		for _, value := range []any{"true", bson.A{true}, nil} {
+			_, err := db.Collection("recu_demos").UpdateByID(ctx, hiddenParent,
+				bson.M{"$set": bson.M{"hide": false, "rejected": false, field: value}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := store.FindSeries(ctx, hiddenParent); !errors.Is(err, mongo.ErrNoDocuments) {
+				t.Fatalf("malformed parent %s=%v resolved: %v", field, value, err)
+			}
+		}
+	}
 	if _, err := store.FindSeries(ctx, bson.NewObjectID()); !errors.Is(err, mongo.ErrNoDocuments) {
 		t.Fatalf("missing parent resolved: %v", err)
 	}

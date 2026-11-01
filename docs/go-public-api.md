@@ -213,7 +213,7 @@ slug lookup. Alias/running-number lookup instead used the approved-event index
 with broad date/cancelled bounds and post-fetch filtering. This was a plan
 inspection only: no full scans were executed and no latency claim is made.
 
-Proposed non-unique indexes, to be approved before a production rollout:
+Non-unique sparse indexes approved and created in production on 1 November 2026:
 
 ```javascript
 db.demonstrations.createIndexes([
@@ -224,9 +224,9 @@ db.demonstrations.createIndexes([
 
 These do not impose uniqueness or rewrite stored events. Sparse indexes omit
 documents lacking the identifier; array aliases use MongoDB's multikey index.
-After creation, repeat the same plan check and require identifier equality
-bounds on the corresponding index. No production index was created by this
-change. Removing just these named indexes reverses the index addition if needed;
+The post-creation `queryPlanner` check confirmed identifier equality bounds on
+`aliases_1` and `running_number_1`. This did not execute a full collection scan
+or establish a latency improvement. Removing just these named indexes reverses the index addition if needed;
 review other consumers before doing so.
 
 ## Portable home-page data

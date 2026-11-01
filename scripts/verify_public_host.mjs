@@ -91,6 +91,7 @@ const childPast = '66fa58601102367d5d528011';
 const childCancelled = '66fa58601102367d5d528012';
 const orphanChild = '66fa58601102367d5d528013';
 const farChild = '66fa58601102367d5d528014';
+const archivedChild = '66fa58601102367d5d528015';
 const seriesOccurrences = [
   { id: childUpcoming, slug: 'occurrence-a', date: day(30), start_time: '14:00', end_time: '15:00', cancelled: false },
   { id: childPast, slug: 'occurrence-b', date: day(-30), start_time: '10:00', end_time: '11:00', cancelled: false },
@@ -100,9 +101,12 @@ const seriesOccurrences = [
 const children = {
   'occurrence-a': { id: childUpcoming, parent: seriesParent },
   'occurrence-b': { id: childPast, parent: seriesParent },
+  'archived-child': { id: archivedChild, parent: seriesParent, date: day(-900) },
   'orphan-child': { id: orphanChild, parent: orphanParent },
   [childUpcoming]: { id: childUpcoming, parent: seriesParent, slug: 'occurrence-a' },
   [childPast]: { id: childPast, parent: seriesParent, slug: 'occurrence-b' },
+  [childCancelled]: { id: childCancelled, parent: seriesParent, slug: 'occurrence-c', cancelled: true },
+  [archivedChild]: { id: archivedChild, parent: seriesParent, slug: 'archived-child', date: day(-900) },
   [orphanChild]: { id: orphanChild, parent: orphanParent, slug: 'orphan-child' },
 };
 function createApi(log) {
@@ -131,8 +135,8 @@ function createApi(log) {
     const child = children[identifier];
     if (child) {
       return send(200, { _id: child.id, title: 'Test occurrence', description: 'Kuvaus',
-        slug: child.slug ?? identifier, parent: child.parent, date: day(30),
-        start_time: '14:00', end_time: '15:00', cancelled: false, city: 'Helsinki',
+        slug: child.slug ?? identifier, parent: child.parent, date: child.date ?? day(30),
+        start_time: '14:00', end_time: '15:00', cancelled: child.cancelled ?? false, city: 'Helsinki',
         address: 'Mannerheimintie 1', preview_image: null });
     }
     const doc = {
@@ -261,6 +265,18 @@ try {
   const chosen = await detailPage({ path: `/demonstration/${seriesParent}/children`, search: '?occurrence=occurrence-b' });
   assert.equal(bootstrap(chosen.html).detail.id, childPast, 'A requested occurrence wins');
 
+  const archived = await detailPage({ path: `/demonstration/${seriesParent}/children`, search: '?occurrence=archived-child' });
+  assert.equal(bootstrap(archived.html).detail.id, archivedChild, 'An explicit archive link bypasses the chooser window');
+  const cancelledChoice = await detailPage({ path: `/demonstration/${seriesParent}/children`, search: '?occurrence=occurrence-c' });
+  assert.equal(bootstrap(cancelledChoice.html).detail.id, childCancelled, 'An explicit cancelled occurrence remains selectable');
+  const foreignChoice = await detailPage({ path: `/demonstration/${seriesParent}/children`, search: '?occurrence=orphan-child' });
+  assert.equal(bootstrap(foreignChoice.html).detail.id, childUpcoming, 'A foreign occurrence cannot override series membership');
+  assert.equal((await detailPage({ path: `/demonstration/${seriesParent}/children`, search: '?occurrence=broken' })).status,
+    503, 'An unavailable explicit selection does not silently show another event');
+  const unchangedSeries = await detailPage({ path: `/demonstration/${seriesParent}/children` });
+  assert.equal(bootstrap(unchangedSeries.html).series.occurrences.length, seriesOccurrences.length,
+    'An explicit selection does not expand the shared cached chooser');
+
   // A public series redirects its occurrence URLs to the series page.
   const moved = await detailPage({ path: '/demonstration/occurrence-a' });
   assert.equal(moved.status, 301);
@@ -295,6 +311,9 @@ const socketServer = createServer((req, res) => {
   socketReads++;
   assert.equal(req.headers.host, 'mielenosoitukset.fi');
   assert.equal(req.headers['x-forwarded-proto'], 'https');
+  if (req.headers.cookie === 'session=alice') assert.equal(req.headers['x-forwarded-for'], '192.0.2.1');
+  if (req.headers.cookie === 'session=alice') assert.equal(req.headers['cf-connecting-ip'], '2001:db8::1');
+  if (req.headers.cookie === 'session=bob') assert.equal(req.headers['x-forwarded-for'], undefined);
   if (req.url === '/slow') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.write('{'); setTimeout(() => res.end('}'), 2000); return;
@@ -317,7 +336,10 @@ try {
   assert.equal(socketReads, 1, 'Socket public configuration is coalesced');
   await socketPage();
   assert.equal(socketReads, 1, 'Socket public configuration is cached');
-  const [alice, bob] = await Promise.all([socketPage({ cookie: 'session=alice' }), socketPage({ cookie: 'session=bob' })]);
+  const [alice, bob] = await Promise.all([
+    socketPage({ cookie: 'session=alice', clientIp: '192.0.2.1', cloudflareIp: '2001:db8::1' }),
+    socketPage({ cookie: 'session=bob', clientIp: 'invalid, 192.0.2.2' }),
+  ]);
   assert.equal(bootstrap(alice.html).session.name, 'session=alice');
   assert.equal(bootstrap(bob.html).session.name, 'session=bob');
   assert.equal(socketReads, 3, 'Socket private sessions are uncached and isolated');

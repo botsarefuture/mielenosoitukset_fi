@@ -1,4 +1,5 @@
 import { request } from 'node:http';
+import { isIP } from 'node:net';
 import { anonymousSession, normalizeSession } from './session';
 import type { SessionSummary } from './session';
 
@@ -13,13 +14,16 @@ function copySession(value: SessionSummary): SessionSummary {
 }
 
 function socketSession(endpoint: string, socketPath: string, cookie: string | undefined,
-  timeoutMs: number, publicOrigin: string): Promise<unknown> {
+  timeoutMs: number, publicOrigin: string, clientIp?: string, cloudflareIp?: string): Promise<unknown> {
   return new Promise((resolve) => {
     const url = new URL(endpoint);
     if (url.protocol !== 'http:' || url.username || url.password) { resolve(null); return; }
     const req = request({ socketPath, path: `${url.pathname}${url.search}`, method: 'GET',
       headers: { Host: url.host, Accept: 'application/json',
         'X-Forwarded-Proto': new URL(publicOrigin).protocol.slice(0, -1),
+        ...(clientIp && isIP(clientIp) ? { 'X-Forwarded-For': clientIp } : {}),
+        // Flask independently checks that the forwarded peer belongs to Cloudflare.
+        ...(cloudflareIp && isIP(cloudflareIp) ? { 'CF-Connecting-IP': cloudflareIp } : {}),
         ...(cookie ? { Cookie: cookie } : {}) } });
     const timer = setTimeout(() => req.destroy(new Error('Session timeout')), timeoutMs);
     const finish = (value: unknown) => { clearTimeout(timer); resolve(value); };
@@ -47,13 +51,14 @@ function socketSession(endpoint: string, socketPath: string, cookie: string | un
 }
 
 async function requestSession(endpoint: string, cookie: string | undefined,
-  timeoutMs: number, socketPath?: string, publicOrigin = endpoint): Promise<SessionSummary | null> {
+  timeoutMs: number, socketPath?: string, publicOrigin = endpoint, clientIp?: string,
+  cloudflareIp?: string): Promise<SessionSummary | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     let value: unknown;
     if (socketPath) {
-      value = await socketSession(endpoint, socketPath, cookie, timeoutMs, publicOrigin);
+      value = await socketSession(endpoint, socketPath, cookie, timeoutMs, publicOrigin, clientIp, cloudflareIp);
     } else {
       const response = await fetch(endpoint, {
         signal: controller.signal, redirect: 'error',
@@ -72,12 +77,13 @@ async function requestSession(endpoint: string, cookie: string | undefined,
 
 /** Cookie-bearing requests stay private; only cookieless public configuration is shared. */
 export async function fetchSession(endpoint: string, cookie: string | undefined,
-  timeoutMs = 1200, socketPath?: string, publicOrigin = endpoint): Promise<SessionSummary> {
-  if (cookie) return (await requestSession(endpoint, cookie, timeoutMs, socketPath, publicOrigin)) ?? copySession(anonymousSession);
+  timeoutMs = 1200, socketPath?: string, publicOrigin = endpoint, clientIp?: string,
+  cloudflareIp?: string): Promise<SessionSummary> {
+  if (cookie) return (await requestSession(endpoint, cookie, timeoutMs, socketPath, publicOrigin, clientIp, cloudflareIp)) ?? copySession(anonymousSession);
   const key = JSON.stringify([socketPath ?? null, endpoint, publicOrigin]);
   if (publicSummary?.key === key && publicSummary.expiresAt > Date.now()) return copySession(publicSummary.value);
   if (publicPending?.key !== key) {
-    const promise = requestSession(endpoint, undefined, timeoutMs, socketPath, publicOrigin).then((value) => {
+    const promise = requestSession(endpoint, undefined, timeoutMs, socketPath, publicOrigin, clientIp, cloudflareIp).then((value) => {
       if (value && !value.authenticated) {
         const publicValue = { ...value, role: 'guest', name: null, picture: null,
           globalAdmin: false, hasAdminAccess: false, unread: 0 };

@@ -14,3 +14,14 @@
   background: var(--product-surface);
   color: var(--product-text);
 }
+
+.public-date-calendar.flatpickr-calendar .flatpickr-current-month,
+.public-date-calendar.flatpickr-calendar input.cur-year {
+  color: var(--product-text);
+}
+
+.public-date-calendar.flatpickr-calendar .flatpickr-day:not(.selected):focus {
+  background: var(--product-surface-muted);
+  border-color: var(--product-border);
+  color: var(--product-text);
+}

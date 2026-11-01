@@ -154,6 +154,39 @@ the existing home-only include before its catch-all proxy rule, run configtest
 and gracefully reload. Keep origin restrictions, TLS, existing proxy headers
 and all unmigrated paths unchanged. The deployment README includes rollback.
 
+### Production state, 1 November 2026
+
+The front page has been served by this host since 1 November 2026, from merge
+commit `0a10d6198d066d133965c1b4d21bbb8c22e3db18` (`#1012`), with the public
+identifier API from `#1013` in the same release.
+
+| Item | Value |
+| --- | --- |
+| Service | `mielenosoitukset-public.service`, active, enabled |
+| Runtime | official Node v22.23.4, checksum-verified, `/opt/mielenosoitukset-public/node` |
+| Release | `/opt/mielenosoitukset-public/releases/0a10d619…`, `current` symlink |
+| Environment | `/etc/mielenosoitukset-public/environment` (public values only) |
+| Apache include | `/etc/apache2/mielenosoitukset-react-ssr.conf`, inside the TLS vhost before `ProxyPass "/"` |
+| Vhost backup | `/root/apache-backups/mielenosoitukset-le-ssl.conf.20261101T180335Z` |
+| Deploy backup | `/var/backups/mielenosoitukset-public/20261101T180248Z` |
+
+Checked on the live origin after activation: `/` returns 200 with
+`Cache-Control: no-store` and `Vary: Cookie` from the host, `/app-assets/**`
+returns the hashed bundle with `immutable`, `POST /submit` still reaches Flask
+(400 JSON for an empty body), an unknown path still returns Flask's 404 HTML,
+`/api/session` still returns JSON, and `/demonstrations` and `/users/auth/login`
+are unchanged. A real browser rendered the header, hero, six live cards and
+footer at 390px and 1440px with no console errors, and `/api/home?lang=fi`
+returned 200. The service log contains no errors.
+
+Two cosmetic facts are worth knowing: the response carries `Referrer-Policy`
+twice because the host sets it and the server-wide
+`conf-enabled/wordpress-hardening.conf` sets it again with the same value, and
+the existing Flask socket is mode `0777` (pre-existing, not changed by this
+release). Signed-in header state was not exercised against production because
+that needs a real account session; the socket transport, cookie isolation and
+anonymous/signed-in separation are covered by `scripts/verify_public_host.mjs`.
+
 ## Verification performed
 
 - `npx tsc --noEmit` and `npm run app:build` pass.
@@ -172,29 +205,37 @@ typography and card start).
 - Unknown paths return 404 from the app host, so nothing is silently claimed.
 - `/app-assets` path traversal attempts return 404.
 
-## Open items before switching production
+## Open items
 
-1. Install the checksum-verified Node 22 runtime and the prepared systemd unit,
-   ship build output with the reviewed release, and verify exact-build health.
-2. Detail, listing, organization, Pride and submit routes still have Jinja
+1. Detail, listing, organization, Pride and submit routes still have Jinja
    shells. Each needs its metadata source and (where required) data contract
    before its GET rule is added.
-3. Page data for migrated routes comes from the public Go API. Routes still
+2. Page data for migrated routes comes from the public Go API. Routes still
    served by Flask keep using the existing authenticated Flask APIs.
-4. Independent visual acceptance is **SHIP** for the reviewed home, shared
+3. Independent visual acceptance is **SHIP** for the reviewed home, shared
    header/footer and admin analytics explanation: 390px/1440px, both themes,
    signed-in navigation and focus states. The packet SHA256 is
    `ab17febae09eaaea6c3aacd6e769ecdfa7b78267f402fc88f9caa213b6342a58`.
    This is scoped visual acceptance, not proof of production delivery.
-5. A real local gateway now verifies Flask/Go/Node routing together. Repeat the
+4. A real local gateway now verifies Flask/Go/Node routing together. Repeat the
    public and signed-in smoke checks after production routing changes, including
    legacy page links, API/session transport, analytics and existing form paths.
-6. The Apache include must be placed before the catch-all `ProxyPass "/"` line.
-   Only `/` is proxied in this slice, so `/demonstrations`, `/submit` and event
-   pages keep their current responses.
+5. Repeat the signed-in header check on production with a real account, and
+   confirm the duplicate `Referrer-Policy` header is acceptable or change the
+   server-wide header configuration.
 
 ## Rollback
 
-Remove or comment the Apache include, configtest and gracefully reload Apache, then revert the source
-and rebuild the island bundle if needed. No database or session change is
-required: `/api/session` is additive and unread once routing is rolled back.
+The Apache include is what routes `/` to the host, so rolling back is:
+
+```sh
+sed -i '/mielenosoitukset-react-ssr.conf/d' /etc/apache2/sites-enabled/mielenosoitukset-le-ssl.conf
+apache2ctl configtest && systemctl reload apache2
+```
+
+That sends the front page straight back to the unchanged Flask route. The
+`/api/session` endpoint is additive and unread once routing is rolled back. To
+stop the service afterwards, `systemctl disable --now mielenosoitukset-public`;
+the release, backup and environment files can stay for inspection. Restoring a
+prior Node release uses the backup directory the deploy script printed. No
+database or session change is required.

@@ -142,6 +142,15 @@ mongoStore construction in main; no stored-data rollback is needed.
 
 ## Detail identifier compatibility
 
+Production now carries non-unique, sparse `aliases_1` and `running_number_1`
+indexes on `demonstrations`, alongside the existing `slug_1`. Verified on the
+live database with `explain`: slug, running number and alias lookups each take
+an `IXSCAN` with one document examined (zero for a miss), so resolution does not
+scan the collection. These indexes were approved and created separately from the
+code change; a deployment that skips them still works but resolves slugs,
+running numbers and aliases by collection scan.
+
+
 Public ObjectIds resolve in one indexed `_id` read. A miss checks whether a
 nonpublic original exists before permitting alias fallback; numeric identifiers
 try `running_number` before `slug`. Lookups project only `_id` and share the

@@ -36,9 +36,11 @@ Response fields: `_id`, `title`, `description`, `tags`, `date`, `start_time`,
 `end_time`, `city`, `address`, `route`, `latitude`, `longitude`, `cancelled`,
 `slug`, `running_number`, `parent`, `event_type`, `facebook`, `img`, `cover_picture`,
 `cover_source`, `preview_image`, `gallery_images`, `organizers`, `default_language`,
-`resolved_language`, `available_languages`. `parent` is the series identifier of a
+`resolved_language`, `available_languages`, `likes`. `parent` is the series identifier of a
 recurring occurrence, or null; it lets a host link back to the series without a
-second Flask request. Aliases are accepted for lookup but never returned. Route is a string array, accepting stored arrays and comma-separated/JSON-array legacy strings. Gallery images also support the old `images` field. Optional textual/numeric values
+second Flask request. `likes` is the public attendance total the detail page
+already prints; it is null when the stored counter is missing, negative or not a
+whole number, so a page never reports zero participants it cannot prove. Aliases are accepted for lookup but never returned. Route is a string array, accepting stored arrays and comma-separated/JSON-array legacy strings. Gallery images also support the old `images` field. Optional textual/numeric values
 are null when absent or malformed; arrays are empty instead of null. Coordinates
 accept legacy numeric strings. `cover_source` belongs to each returned event,
 so changing a recurring occurrence does not reuse another occurrence's image
@@ -135,10 +137,46 @@ errors fail closed. Missing records/errors and oversized documents are not cache
 The concurrency-safe process-local cache holds at most1024documents of32KiB each
 (approximately32MiB of BSON plus map overhead), pruning expired entries and
 otherwise evicting the earliest-expiring entry. Restart clears it; multiple API
-processes have independent caches. Health is not cached. HTTP responses retain
-no-store, so browser/CDN caching cannot bypass visibility checks. No new database,
-indexes, migrations or service dependencies. Disable by restoring the direct
-mongoStore construction in main; no stored-data rollback is needed.
+processes have independent caches. Health is not cached. Cached reads answer with
+`public, max-age=60, s-maxage=900, stale-while-revalidate=3600,
+stale-if-error=86400`, so a shared cache may replay them for up to15minutes; every
+cache hit still performs the indexed public-visibility check, so hiding or
+unapproving an event takes effect on the next request rather than after the
+header expires. Errors, `no-store` paths and `/health` stay uncached. The Apache
+vhost must not set `Cache-Control` itself: `Header always` writes
+`err_headers_out`, which Apache merges into the proxied response, so a `no-store`
+there ships beside the API's policy and disables browser and edge caching. A
+Cloudflare Cache Rule is still required before the edge caches these JSON reads;
+without one they report `cf-cache-status: DYNAMIC`. No new database, indexes,
+migrations or service dependencies. Disable by restoring the direct mongoStore
+construction in main; no stored-data rollback is needed.
+
+## Recurring series endpoint
+
+`GET /api/series/{parent}?lang=fi` returns one public recurring series and its
+bounded occurrence list, replacing the reads the Flask chooser page performs.
+`parent` is the `recu_demos` ObjectId; anything else is 404, because a series
+parent is never reachable by slug, running number or alias. The parent must be
+approved with `hide` and `rejected` absent or exactly false, otherwise the
+answer is 404: there is no privileged override and no session is read.
+
+The occurrence query mirrors the existing page: children whose `parent` is the
+ObjectId or its string form and that are publicly visible, split into upcoming
+(today through +90 days), past (before today) and cancelled (within ±90 days),
+each capped at 16 documents, merged by id and sorted by date, start time and id.
+Only raw fields are returned; selection, display order and the index window are
+the caller's decisions.
+
+```json
+{"id": "66fa...", "occurrences": [{"id": "66fa...", "slug": "may-day-2026",
+  "running_number": 4242, "date": "2026-12-01", "start_time": "14:00",
+  "end_time": "15:00", "cancelled": false}]}
+```
+
+The endpoint is read-only, needs no cookie, returns `no-store` and is not cached
+in the process, so a newly generated occurrence appears on the next request.
+One parent read plus three indexed range queries serve a request; there is no
+aggregation and no collection scan.
 
 ## Detail identifier compatibility
 
@@ -158,6 +196,13 @@ existing three-second deadline, but a one-document result limit does not bound
 how many records MongoDB must examine. Resolution is not cached, so slug or
 visibility changes take effect on the next request. Existing public slug URLs
 can therefore resolve without a Flask hop.
+
+The cached detail handler performs the same resolution before its cache lookup
+and keys the cache by the resolved ObjectId. Two URLs for one event share a
+cached response, while a renamed slug or a moderation change is picked up on the
+next request because only the body is cached. Invalid identifiers are rejected
+before any query; unknown and nonpublic identifiers return 404 with the
+not-found cache header.
 
 ### Identifier index rollout requirement
 
@@ -189,8 +234,11 @@ review other consumers before doing so.
 The React home page can read `GET /api/home?lang=fi` directly, without a Flask
 content request. `lang` accepts fi/en/sv and defaults to fi. Unknown, duplicate
 or unsupported parameters return 400. This public read needs no session/token;
-CORS is uncredentialed and the normal GET/HEAD/OPTIONS, no-store and nosniff
-policy applies. No personalized attendance or privileged override is provided.
+CORS is uncredentialed and the normal GET/HEAD/OPTIONS and nosniff policy
+applies. The read is cached for60seconds in process and answers with `public,
+max-age=30, s-maxage=60, stale-while-revalidate=120, stale-if-error=900`, so a
+shared cache may replay it for up to a minute. No personalized attendance or
+privileged override is provided.
 
 Response: `{ "events": [...], "recommended": true|false }`. Each card contains
 only `_id`, `title`, `date`, `date_display`, `start_time_display`,

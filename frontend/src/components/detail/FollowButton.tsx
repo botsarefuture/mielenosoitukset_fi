@@ -3,7 +3,7 @@ import type { DetailProps } from './types';
 import { accountEndpoint, accountRequest } from './account';
 
 /** Account mutation adapter, separate from the open event-data API. */
-export function FollowButton({ props, organizationId }: { props: DetailProps; organizationId?: string }) {
+export function FollowButton({ props, organizationId, disabled = false }: { props: DetailProps; organizationId?: string; disabled?: boolean }) {
   const organization = Boolean(organizationId);
   const following = organization
     ? (props.followedOrganizations ?? []).includes(organizationId!) : Boolean(props.recurringFollowing);
@@ -22,6 +22,11 @@ export function FollowButton({ props, organizationId }: { props: DetailProps; or
       return '';
     } catch { return props.messages.actionError; }
   }, '');
+  if (disabled) {
+    return <span><button className="detail-button" type="button" disabled aria-disabled="true" title={props.messages.followDisabled}>
+      {organization ? props.messages.follow : props.messages.followSeries}
+    </button></span>;
+  }
   return <form action={submit}><button className="detail-button" type="submit" disabled={pending} aria-pressed={following}>
     {pending ? props.messages.sending : following ? props.messages.following : organization ? props.messages.follow : props.messages.followSeries}
   </button>{error && <p role="alert">{error}</p>}</form>;

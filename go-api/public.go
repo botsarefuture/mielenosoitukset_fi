@@ -16,7 +16,9 @@ import (
 var textFields = []string{"date", "start_time", "end_time", "city", "address", "slug", "event_type", "facebook", "img", "cover_picture", "cover_source", "preview_image"}
 
 func publicProjection() bson.M {
-	fields := bson.M{"_id": 1, "title": 1, "description": 1, "tags": 1, "default_language": 1, "cancelled": 1, "latitude": 1, "longitude": 1, "running_number": 1, "gallery_images": 1, "images": 1, "route": 1, "parent": 1}
+	// likes is a public aggregate the detail page already prints next to the
+	// participation button; it carries no visitor identity.
+	fields := bson.M{"_id": 1, "title": 1, "description": 1, "tags": 1, "default_language": 1, "cancelled": 1, "latitude": 1, "longitude": 1, "running_number": 1, "gallery_images": 1, "images": 1, "route": 1, "parent": 1, "likes": 1}
 	for _, field := range textFields {
 		fields[field] = 1
 	}
@@ -151,6 +153,20 @@ func number(value any) any {
 	}
 	return n
 }
+
+// nonNegativeInt keeps a stored counter usable as a count: whole, non-negative
+// and bounded, otherwise nil so the caller can omit it instead of printing 0.
+func nonNegativeInt(value any) any {
+	n := number(value)
+	if n == nil {
+		return nil
+	}
+	f := n.(float64)
+	if f < 0 || f != math.Trunc(f) || f > math.MaxInt32 {
+		return nil
+	}
+	return int64(f)
+}
 func publicPayload(doc bson.M, lang string) bson.M {
 	defaultLang, _ := doc["default_language"].(string)
 	if defaultLang != "fi" && defaultLang != "en" && defaultLang != "sv" {
@@ -198,6 +214,9 @@ func publicPayload(doc bson.M, lang string) bson.M {
 	// Series parent lets the host link a recurring event back to its series
 	// without a second Flask trip; it is a public identifier, not content.
 	r["parent"] = identifier(doc["parent"])
+	// Attendance total, or nil when the stored counter is absent or unusable:
+	// a missing counter must not be reported as zero participants.
+	r["likes"] = nonNegativeInt(doc["likes"])
 	r["latitude"] = number(doc["latitude"])
 	r["longitude"] = number(doc["longitude"])
 	r["route"] = routeStops(doc["route"])

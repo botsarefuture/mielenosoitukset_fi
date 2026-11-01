@@ -4,7 +4,25 @@
 
 ## UNRELEASED
 
+- Close the remaining legacy sections of the demonstration detail screen: the public API now returns the attendance total (`likes`, null when the stored counter is unusable), and the React page shows the participant count, the countdown to the start, the organizer logo, an empty-description note and an explicit “participation is closed” notice for cancelled events instead of silently dropping those blocks. Unit words come from `Intl`, so no new translation msgids were added. Visual acceptance for these states is still open.
+
+- Stop the API's Apache vhost from overriding response caching: `Header always set Cache-Control "no-store"` wrote `err_headers_out`, which Apache merges into the proxied response instead of replacing it, so every answer shipped `no-store` next to the API's own policy and browsers and Cloudflare could not use the cached reads' `max-age`/`s-maxage`. The vhost now leaves `Cache-Control` to the API, which sets it on every response.
+
+- Serve recurring series from React: a new public `GET /api/series/<parent>` returns the parent's visibility and the same bounded occurrence list the Flask chooser reads, the host renders `/demonstration/<parent>/children` with the series navigation and the series canonical URL, and an occurrence URL of a public series 301s to the series page instead of staying a dead end. Occurrences list by date, then start time, then id, and an occurrence without an announced time sorts after one that has one on the same day. The Apache rules stay commented out until activation is approved.
+
+- Cut the React host's own latency: server-side reads now prefer a local API address (`PUBLIC_API_LOCAL`) instead of a public round trip, detail head metadata is cached for 60 s, and the home card batch is read once, cached for 30 s and inlined into the document so cards paint without a second request. Only public metadata is cached; sessions stay uncached.
+
 - Restore the structured suggest-an-edit path on the React demonstration detail page: the report dialog opens on the same choice as the legacy modal, so visitors can correct fields on the existing suggestion page or send a free-text report instead of only the latter.
+
+- Prepare the React host to serve `/demonstration/<identifier>`: one bounded public-API read builds the head (title, description, canonical slug URL, Open Graph, Event JSON-LD, two-year-horizon `noindex` in the head and `X-Robots-Tag`), the page body comes from the existing detail screen, a missing event is 404 or the signed-in `?preview=1` Flask fallback, and an API failure is 503 instead of an indexable shell. The Apache rule is prepared but left disabled until the visual review and maintainer approval.
+
+- Resolve demonstration identifiers before the public API's detail cache, so slugs, running numbers and aliases work on the cached endpoint production uses. Only the body is cached, keyed by the resolved ObjectId, so renamed slugs and moderation changes apply on the next request.
+
+- Share one detail browser adapter between the Flask island and the React host, so URL history, occurrence navigation, `action` intents, login links and the single view-tracking call stay identical across both hosts.
+
+- Move the demonstration detail screen's copy and account endpoints into the React host's TypeScript catalog (`frontend/src/app/detail.ts`), so the detail route can render without Flask template props. A parity test keeps those strings identical to the msgids the Flask shell still supplies, and `en`/`sv` wait for human translations.
+
+- Temporarily disable organization follows on demonstration detail pages: an info box above Järjestäjät explains the technical break and points to the organization's own page, and the follow button renders disabled instead of submitting.
 
 - Serve the public front page from the React host in production: Apache routes only `GET`/`HEAD /` and `/app-assets/**` to a checksum-verified Node release on loopback, while Flask keeps every other page, API, form and write. The host reads the signed-in header summary over the existing Gunicorn socket, so no credentials are copied to it.
 

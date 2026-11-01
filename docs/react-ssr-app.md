@@ -18,6 +18,8 @@ claiming a performance improvement.
 | App root, bootstrap JSON (config, session summary, current path) | Server |
 | Header, page components, event cards, footer, in-app navigation | Browser (`frontend/src/app/client.tsx`) |
 | Event data | Browser requests the public Go `/api/home?lang=...` contract |
+| Detail head (title, canonical, JSON-LD, robots) | Server requests the same public API once, `/api/demonstrations/<identifier>` |
+| Home card batch | Server reads `/api/home` once, caches it for 30 s and inlines it in the bootstrap |
 
 The server renders no React tree and queries no event collection. A page
 response is a small amount of string composition plus one bounded read of the
@@ -28,14 +30,83 @@ read to the head path before they can move here.
 
 ## Files
 
+- `frontend/src/app/detail-route.ts` — the detail and series head reads, occurrence
+  selection and the series navigation that the host renders.
 - `frontend/src/app/` — configuration (existing public URL paths), copy catalog
   (fi/en/sv), routes, session contract, header props, footer, app shell, server
-  render and browser entry.
+  render and browser entry. `detail.ts` holds detail copy and endpoints,
+  `detail-route.ts` loads one event for the head, and
+  `components/detail/DetailScreen.tsx` is the browser adapter shared with the
+  Flask island.
 - `frontend/vite.app.config.ts` and `frontend/vite.app.ssr.config.ts` — separate
   client and server bundles. Output goes to `frontend/dist/` (not committed).
 - `frontend/server.mjs` — HTTP server: metadata pages, `/app-assets/*`, `/health`.
 - `deploy/apache/react-ssr-routing.conf` — web server routing rules.
 - `mielenosoitukset_fi/basic_routes.py` — `GET /api/session`.
+
+## Demonstration detail route
+
+`GET /demonstration/<identifier>` is prepared for the host and verified, but the
+Apache rule in `deploy/apache/react-ssr-routing.conf` is commented out until the
+visual review and maintainer approval, because that include already runs in
+production for the front page.
+
+The host claims exactly one path segment. `/demonstration/<id>/ics`,
+`/demonstration/<id>/some`, `/demonstration/<id>/children` and a trailing slash
+keep their Flask handlers, which also keeps the recurring-series page on Flask
+for now.
+
+An occurrence URL of a public series is 301'd to
+`/demonstration/<parent>/children?occurrence=<slug or id>`, like Flask; when the
+parent series is not public the occurrence renders on its own, which is also the
+Flask behaviour.
+
+## Recurring series route
+
+`GET /demonstration/<parent>/children` is hosted and reads
+`/api/series/<parent>`: parent visibility plus the bounded occurrence list
+(upcoming, recent past, cancelled). The host selects the occurrence — the
+`?occurrence=` slug, id or running number when it is active, otherwise the next
+active one, otherwise the latest past one — then reads that occurrence's detail
+for the head. Canonical is the series URL without the query, and robots is
+`noindex` when no occurrence date falls inside the discovery window.
+
+Upcoming occurrences are listed first, then cancelled and past ones, matching the
+chooser. A series with no active occurrence is 404 with `noindex`; a nonpublic or
+unknown parent is 404; an unavailable API is 503. The Apache rule for this path
+is prepared and commented out with the detail rule.
+
+The head comes from one bounded (1.5 s) read of the public API, which the API
+caches itself. The host does not cache the document again. The identifier is
+resolved by the API in the same precedence the site already uses (ObjectId,
+alias, running number, slug), and the canonical link always uses
+`slug`, then `running_number`, then the id. Description text is stripped of markup
+and truncated to 200 characters like the shell. `application/ld+json` carries the
+same `Event` fields as the template. Dates past the two-year discovery horizon
+send `noindex, follow` in the head and in the `X-Robots-Tag` header.
+
+A missing or nonpublic event returns 404. A signed-in visitor is redirected to
+the same URL with `?preview=1` so the existing Flask preview workflow still
+answers; the flag is excluded from the host routing rule and a flagged request
+that reaches the host returns 404 instead of redirecting again. An API failure
+returns 503 with `Retry-After`, never a page that looks indexable.
+
+Detail views are counted by the screen's existing `POST /api/analytics/track_view`
+call, so the generic pageview beacon is not sent for this route and cannot
+misattribute the view to the referrer. A detail page is always loaded as a
+document: the client bundle only navigates in place for the front page, which
+keeps every detail entry with a server-rendered head and a resolved event id.
+
+## Detail copy and endpoints
+
+`frontend/src/app/detail.ts` holds the detail screen's copy (`DetailMessages`),
+the account-route templates it posts to and the canonical path helper. It is the
+single source instead of Flask template props, so detail copy moves here rather
+than into `react_detail.py`; `tests/test_public_detail_copy_parity.py` fails if
+the two diverge while the Flask shell still supplies the island. Finnish is the
+source catalog and `en`/`sv` reuse it until a human translator supplies those
+strings. The route itself still needs the single projected event read in the
+head path before it can move here.
 
 ## Session summary contract
 
@@ -74,8 +145,28 @@ errors without terminating the host.
 After `npm run app:build`, run `node scripts/verify_public_host.mjs` for bounded
 request-count and host-availability checks. Eight concurrent cookieless page
 requests cause one public-configuration lookup; warm requests cause none.
-Private requests remain independent. This verifies removed work, not a measured
-page-load speedup.
+Private requests remain independent. It also asserts that repeated detail views
+reuse the cached head, that the home batch is read once and reused, and that
+server reads use the local API address. This verifies removed work, not a
+measured page-load speedup.
+
+### Server-side public caching
+
+- Detail head metadata: 60 s TTL, 500 entries, keyed by read base, locale and
+  identifier. Only successful public metadata is stored, so a newly published or
+  edited event appears within a minute and failures are never cached.
+- Home batch: 30 s TTL, 4 entries, keyed by read base and locale. The same batch
+  is inlined into the document, so the browser paints cards without a second
+  request; a failed or invalid batch falls back to the browser request.
+- Nothing session-bound is ever cached here: the session summary keeps its own
+  rules and private responses stay uncached.
+
+Measured on 1 November 2026 before this change: `GET /` 207 ms TTFB, `GET /api/session`
+195 ms, `GET /api/demonstrations/<id>` 130-190 ms, and `GET /api/home` about 470 ms
+with `Cache-Control: no-store` and `cf-cache-status: DYNAMIC`. That last response is
+the front page's real bottleneck, since the cards wait for it after hydration. The
+host-side cache removes it from repeat page views; making the API itself cacheable
+at the edge is a separate change on the API side.
 
 The summary also exposes public `site_analytics_enabled` and `matomo_enabled`
 booleans. A missing summary defaults both to disabled; the host does not guess
@@ -111,6 +202,9 @@ The web server sends only migrated page GET/HEAD requests to the app host:
 | Request | Handler |
 | --- | --- |
 | `GET|HEAD /` | React app host |
+| `GET|HEAD /demonstration/<id>` | React app host (rule prepared, enable after approval) |
+| `GET|HEAD /demonstration/<parent>/children` | React app host (rule prepared, enable after approval) |
+| `GET /demonstration/<id>/ics`, `/some` | Flask (unchanged) |
 | `POST /submit`, form posts, login/logout and other mutations | Flask (unchanged) |
 | `GET /admin*`, `/users*`, `/api*`, `/static*`, feeds, sitemap, robots | Flask (unchanged) |
 | `GET` of any page not yet migrated | Flask (unchanged) |
@@ -128,8 +222,14 @@ npm run app:build          # typecheck, client bundle, server bundle
 APP_ORIGIN=https://mielenosoitukset.fi \
 FLASK_API_ORIGIN=http://127.0.0.1:8000 \
 PUBLIC_API_BASE=https://api.mielenosoitukset.fi/api \
+PUBLIC_API_LOCAL=http://127.0.0.1:8080/api \
 APP_PORT=8090 npm run app:start
 ```
+
+`PUBLIC_API_LOCAL` is the address the host uses for its own server-side reads; the
+browser keeps `PUBLIC_API_BASE`. Pointing the server at the API on loopback avoids
+a public round trip (measured 130-190 ms) that the host would otherwise pay to
+reach an API on the same machine.
 
 For local verification only, `STATIC_DIR=mielenosoitukset_fi/static` lets the app
 host serve `/static/*`, which production serves directly from the web server.

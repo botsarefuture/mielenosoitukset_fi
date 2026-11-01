@@ -9,6 +9,10 @@ function strings(value: unknown): string[] { return Array.isArray(value) ? value
 function coordinate(value: unknown, maximum: number): number | null {
   return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= maximum ? value : null;
 }
+/** A stored counter is a count only when it is a whole, non-negative number. */
+function count(value: unknown): number | null {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null;
+}
 export function parseDetail(value: unknown, expectedId: string): DetailEvent {
   if (!value || typeof value !== 'object') throw new Error('Invalid demonstration response');
   const data = value as Record<string, unknown>;
@@ -18,8 +22,7 @@ export function parseDetail(value: unknown, expectedId: string): DetailEvent {
   }
   const result: DetailEvent = {
     _id: expectedId, title: data.title, description: text(data.description) ?? '', date: text(data.date),
-    start_time: text(data.start_time), end_time: text(data.end_time), city: text(data.city), address: text(data.address),
-    latitude: coordinate(data.latitude, 90), longitude: coordinate(data.longitude, 180), tags: strings(data.tags),
+    start_time: text(data.start_time), end_time: text(data.end_time), city: text(data.city), address: text(data.address),	  latitude: coordinate(data.latitude, 90), longitude: coordinate(data.longitude, 180), tags: strings(data.tags), likes: count(data.likes),
     route: strings(data.route), cancelled: data.cancelled, event_type: text(data.event_type), facebook: text(data.facebook),
     img: text(data.img), cover_picture: text(data.cover_picture), preview_image: text(data.preview_image), gallery_images: strings(data.gallery_images),
     organizers: [], cover_source: text(data.cover_source),

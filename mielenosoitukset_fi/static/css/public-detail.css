@@ -168,6 +168,43 @@
 .detail-note {
   color:var(--product-text-muted)
 }
+/* Legacy countdown card: the heading row already carries the start time, so this
+   stays a quiet summary line instead of a second hero block. */
+.detail-countdown {
+  margin:0 0 1.75rem;
+  padding:1.25rem 1.75rem;
+  background:var(--product-surface);
+  border:1px solid var(--product-border);
+  border-radius:12px
+}
+.detail-countdown>h2 {
+  margin-bottom:.35rem;
+  font-size:1rem;
+  color:var(--product-text-muted)
+}
+.detail-countdown p {
+  margin:0;
+  font-size:1.15rem;
+  font-weight:700;
+  font-variant-numeric:tabular-nums
+}
+.detail-attendees {
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  margin:.75rem 0 0;
+  color:var(--product-text-muted);
+  font-variant-numeric:tabular-nums
+}
+.detail-organizer__logo {
+  display:block;
+  width:48px;
+  height:48px;
+  margin-bottom:.5rem;
+  border-radius:9px;
+  object-fit:cover;
+  background:var(--product-surface)
+}
 /* Report dialog: the legacy modal offered a structured edit before the free-text
    report, so both paths keep the same visual weight as that choice. */
 .detail-choice {

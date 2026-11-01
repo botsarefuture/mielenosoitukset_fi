@@ -23,7 +23,16 @@ const sessionServer = createServer((req, res) => {
 });
 await new Promise(resolve => sessionServer.listen(0, '127.0.0.1', resolve));
 const base = `http://127.0.0.1:${sessionServer.address().port}`;
-const input = { path: '/', origin: 'https://example.test', apiBase: `${base}/api`, sessionUrl: `${base}/session` };
+// The home batch is read by the server, so it needs its own address; the session
+// fake below is only a session endpoint.
+const homeApi = createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify({ events: [], recommended: false }));
+});
+await new Promise(resolve => homeApi.listen(0, '127.0.0.1', resolve));
+const homeBase = `http://127.0.0.1:${homeApi.address().port}/api`;
+const input = { path: '/', origin: 'https://example.test', apiBase: `${base}/api`,
+  apiReadBase: homeBase, sessionUrl: `${base}/session` };
 const assets = { head: '', scripts: '' };
 const page = (changes = {}) => renderPage({ ...input, ...changes }, assets);
 const bootstrap = html => JSON.parse(html.match(/id="app-bootstrap">([\s\S]*?)<\/script>/)[1]);
@@ -62,7 +71,222 @@ try {
   await page({ sessionUrl: `${base}/down` });
   assert.equal(reads, 6, 'Failed configuration reads must not be cached');
   console.log('PASS: unknown-route zero reads; eight concurrent anonymous pages one read; warm zero reads; private sessions isolated; TTL and failure handling');
-} finally { await new Promise(resolve => sessionServer.close(resolve)); }
+} finally {
+  await new Promise(resolve => sessionServer.close(resolve));
+  await new Promise(resolve => homeApi.close(resolve));
+}
+
+// Detail route: one projected API read for the head, no body rendering.
+const detailId = '66fa58601102367d5d52887f';
+const longDescription = `<p>${'Pitkä kuvaus '.repeat(40)}</p>`;
+const publicReads = [];
+const localReads = [];
+// Relative dates keep the selection and index assertions stable over time.
+const day = offset => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+const seriesParent = '66fa58601102367d5d528000';
+const farParent = '66fa58601102367d5d528001';
+const orphanParent = '66fa58601102367d5d528002';
+const childUpcoming = '66fa58601102367d5d528010';
+const childPast = '66fa58601102367d5d528011';
+const childCancelled = '66fa58601102367d5d528012';
+const orphanChild = '66fa58601102367d5d528013';
+const farChild = '66fa58601102367d5d528014';
+const seriesOccurrences = [
+  { id: childUpcoming, slug: 'occurrence-a', date: day(30), start_time: '14:00', end_time: '15:00', cancelled: false },
+  { id: childPast, slug: 'occurrence-b', date: day(-30), start_time: '10:00', end_time: '11:00', cancelled: false },
+  { id: childCancelled, slug: 'occurrence-c', date: day(31), cancelled: true },
+];
+// Children resolve by id or slug, and know their parent series.
+const children = {
+  'occurrence-a': { id: childUpcoming, parent: seriesParent },
+  'occurrence-b': { id: childPast, parent: seriesParent },
+  'orphan-child': { id: orphanChild, parent: orphanParent },
+  [childUpcoming]: { id: childUpcoming, parent: seriesParent, slug: 'occurrence-a' },
+  [childPast]: { id: childPast, parent: seriesParent, slug: 'occurrence-b' },
+  [orphanChild]: { id: orphanChild, parent: orphanParent, slug: 'orphan-child' },
+};
+function createApi(log) {
+  return createServer((req, res) => {
+    const url = new URL(req.url, 'http://api.test');
+    log.push(req.url);
+    const identifier = decodeURIComponent(url.pathname.split('/').pop() ?? '');
+    const send = (status, body) => {
+      res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(body));
+    };
+    if (identifier === 'home') {
+      return send(200, { events: [{ _id: detailId, title: 'Test event', detail_url: '/demonstration/may-day-2026' }], recommended: false });
+    }
+    if (url.pathname.includes('/series/')) {
+      if (identifier === orphanParent) return send(404, { error: 'series not found' });
+      if (identifier === farParent) {
+        return send(200, { id: farParent, occurrences: [{ id: farChild, slug: 'far-child', date: day(900), cancelled: false }] });
+      }
+      if (identifier === seriesParent) return send(200, { id: seriesParent, occurrences: seriesOccurrences });
+      return send(404, { error: 'series not found' });
+    }
+    if (identifier === 'slow') return; // never answers; the host must give up
+    if (identifier === 'broken') { res.writeHead(503); res.end('{}'); return; }
+    if (identifier === 'nonpublic') return send(404, { error: 'demonstration not found' });
+    const child = children[identifier];
+    if (child) {
+      return send(200, { _id: child.id, title: 'Test occurrence', description: 'Kuvaus',
+        slug: child.slug ?? identifier, parent: child.parent, date: day(30),
+        start_time: '14:00', end_time: '15:00', cancelled: false, city: 'Helsinki',
+        address: 'Mannerheimintie 1', preview_image: null });
+    }
+    const doc = {
+      _id: detailId, title: 'Test event', description: longDescription,
+      slug: identifier === detailId ? 'may-day-2026' : identifier,
+      running_number: 4242, date: identifier === 'far-future' ? day(900) : '2026-12-01',
+      start_time: '14:00', end_time: '15:00', cancelled: false,
+      city: 'Helsinki', address: 'Mannerheimintie 1', preview_image: null, parent: null,
+    };
+    send(200, doc);
+  });
+}
+const publicApi = createApi(publicReads);
+const localApi = createApi(localReads);
+await new Promise(resolve => publicApi.listen(0, '127.0.0.1', resolve));
+await new Promise(resolve => localApi.listen(0, '127.0.0.1', resolve));
+const apiBase = `http://127.0.0.1:${publicApi.address().port}/api`;
+// The server reads through the local address; the browser keeps the public one.
+const apiReadBase = `http://127.0.0.1:${localApi.address().port}/api`;
+let detailSessionReads = 0;
+const detailSession = createServer((req, res) => {
+  detailSessionReads++;
+  res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify({ authenticated: Boolean(req.headers.cookie), name: null, locale: 'fi',
+    locales: [{ code: 'fi', name: 'Suomi' }], site_analytics_enabled: true, matomo_enabled: false }));
+});
+await new Promise(resolve => detailSession.listen(0, '127.0.0.1', resolve));
+const detailSessionUrl = `http://127.0.0.1:${detailSession.address().port}/session`;
+const detailPage = (changes = {}) => page({ apiBase, apiReadBase, sessionUrl: detailSessionUrl, ...changes });
+try {
+  const event = await detailPage({ path: '/demonstration/may-day-2026' });
+  assert.equal(event.status, 200);
+  assert.match(event.html, /<title>Test event \| Mielenosoitukset\.fi<\/title>/);
+  assert.match(event.html, /<link rel="canonical" href="https:\/\/example\.test\/demonstration\/may-day-2026">/);
+  assert.match(event.html, /<meta name="robots" content="index, follow" \/>/);
+  assert.match(event.html, /<script type="application\/ld\+json">\{"@context":"https:\/\/schema\.org","@type":"Event"/);
+  assert.match(event.html, /"startDate":"2026-12-01T14:00"/);
+  assert.match(event.html, /public-detail\.css/);
+  assert.equal(event.headers?.['X-Robots-Tag'], undefined, 'Indexable detail pages set no robots header');
+  const detailBootstrap = bootstrap(event.html).detail;
+  assert.deepEqual(detailBootstrap, { id: detailId, identifier: 'may-day-2026',
+    canonicalUrl: 'https://example.test/demonstration/may-day-2026' });
+  const description = event.html.match(/<meta name="description" content="([^"]*)"/)[1];
+  assert(!description.includes('<p>'), 'Meta description must strip markup');
+  assert(description.length <= 200 && description.endsWith('...'), 'Meta description is truncated like the shell');
+  assert(detailSessionReads <= 1, 'Anonymous detail configuration is read at most once while cached');
+  const readsAfterFirstPage = detailSessionReads;
+
+  // A hex URL resolves and still advertises the canonical slug.
+  const byId = await detailPage({ path: `/demonstration/${detailId}` });
+  assert.equal(byId.status, 200);
+  assert.equal(bootstrap(byId.html).detail.identifier, detailId);
+  assert.equal(bootstrap(byId.html).detail.canonicalUrl, 'https://example.test/demonstration/may-day-2026');
+
+  // Dates past the discovery horizon stay out of the index, in the head and header.
+  const farFuture = await detailPage({ path: '/demonstration/far-future' });
+  assert.equal(farFuture.status, 200);
+  assert.match(farFuture.html, /<meta name="robots" content="noindex, follow" \/>/);
+  assert.equal(farFuture.headers?.['X-Robots-Tag'], 'noindex, follow');
+
+  // Anonymous visitors get 404; signed-in visitors keep the Flask preview path.
+  assert.equal((await detailPage({ path: '/demonstration/nonpublic' })).status, 404);
+  const preview = await detailPage({ path: '/demonstration/nonpublic', cookie: 'session=alice' });
+  assert.equal(preview.status, 302);
+  assert.equal(preview.redirect, '/demonstration/nonpublic?preview=1');
+  const flagged = await detailPage({ path: '/demonstration/nonpublic', cookie: 'session=alice', search: '?preview=1' });
+  assert.equal(flagged.status, 404, 'The flagged request must not redirect again');
+
+  // A backend failure is a 503, never a shell that looks indexed.
+  const broken = await detailPage({ path: '/demonstration/broken' });
+  assert.equal(broken.status, 503);
+  assert.equal(broken.headers?.['Retry-After'], '30');
+  const started = performance.now();
+  assert.equal((await detailPage({ path: '/demonstration/slow' })).status, 503);
+  assert(performance.now() - started < 2500, 'The head read is bounded');
+
+  // Sub-paths, a trailing slash and the bare route still belong to Flask.
+  const unowned = ['/demonstration/may-day-2026/ics', '/demonstration/may-day-2026/children',
+    '/demonstration/may-day-2026/', '/demonstration/'];
+  const apiBefore = localReads.length;
+  const readsBefore = detailSessionReads;
+  for (const path of unowned) {
+    assert.equal((await detailPage({ path })).status, 404, path);
+  }
+  assert.equal(localReads.length, apiBefore, 'Unowned paths must not query the API');
+  assert.equal(detailSessionReads, readsBefore, 'Unowned paths must not read the session');
+  assert(detailSessionReads >= readsAfterFirstPage, 'Detail pages do read the session summary');
+  for (const read of localReads) {
+    assert(read.includes('?lang=fi'), `The head read asks for the page language: ${read}`);
+  }
+  assert.equal(publicReads.length, 0, 'Server reads must use the local API address');
+
+  // A repeated view reuses the cached head instead of another API request.
+  const readsBeforeRepeat = localReads.length;
+  const repeated = await detailPage({ path: '/demonstration/may-day-2026' });
+  assert.equal(repeated.status, 200);
+  assert.equal(localReads.length, readsBeforeRepeat, 'A repeat view must not re-read the head');
+
+  // The home batch is read once by the server and inlined for the browser.
+  const homeFirst = await detailPage({ path: '/' });
+  assert.equal(homeFirst.status, 200);
+  assert.equal(bootstrap(homeFirst.html).home.events.length, 1);
+  assert.equal(bootstrap(homeFirst.html).config.apiBase, apiBase, 'The browser keeps the public API base');
+  const homeReads = localReads.filter(read => read.includes('/home')).length;
+  assert.equal(homeReads, 1, 'The home batch is read once');
+  const homeAgain = await detailPage({ path: '/' });
+  assert.equal(bootstrap(homeAgain.html).home.events.length, 1);
+  assert.equal(localReads.filter(read => read.includes('/home')).length, homeReads, 'The home batch is cached');
+  // The series page renders the selected occurrence with its own canonical.
+  const seriesPage = await detailPage({ path: `/demonstration/${seriesParent}/children` });
+  assert.equal(seriesPage.status, 200);
+  const seriesBootstrap = bootstrap(seriesPage.html);
+  assert.equal(seriesBootstrap.detail.id, childUpcoming, 'The next active occurrence is shown first');
+  assert.equal(seriesBootstrap.detail.canonicalUrl,
+    `https://example.test/demonstration/${seriesParent}/children`, 'Sharing uses the series URL');
+  assert.deepEqual(seriesBootstrap.series.occurrences.map(item => item.id),
+    [childUpcoming, childCancelled, childPast], 'Upcoming, then cancelled and past occurrences');
+  assert.equal(seriesBootstrap.series.occurrences[0].selected, true);
+  assert.equal(seriesBootstrap.series.occurrences[0].url,
+    `/demonstration/${seriesParent}/children?occurrence=occurrence-a`);
+  assert.match(seriesPage.html,
+    new RegExp(`<link rel="canonical" href="https://example.test/demonstration/${seriesParent}/children">`));
+  assert.match(seriesPage.html, /<meta name="robots" content="index, follow" \/>/);
+  assert.match(seriesPage.html, /"@type":"Event"/, 'The selected occurrence still carries structured data');
+
+  const chosen = await detailPage({ path: `/demonstration/${seriesParent}/children`, search: '?occurrence=occurrence-b' });
+  assert.equal(bootstrap(chosen.html).detail.id, childPast, 'A requested occurrence wins');
+
+  // A public series redirects its occurrence URLs to the series page.
+  const moved = await detailPage({ path: '/demonstration/occurrence-a' });
+  assert.equal(moved.status, 301);
+  assert.equal(moved.redirect, `/demonstration/${seriesParent}/children?occurrence=occurrence-a`);
+
+  // An occurrence whose parent series is not public stands on its own.
+  const orphan = await detailPage({ path: '/demonstration/orphan-child' });
+  assert.equal(orphan.status, 200);
+  assert.equal(bootstrap(orphan.html).detail.identifier, 'orphan-child');
+
+  // A series without any date in the discovery window stays noindex.
+  const farSeries = await detailPage({ path: `/demonstration/${farParent}/children` });
+  assert.equal(farSeries.status, 200);
+  assert.equal(farSeries.headers?.['X-Robots-Tag'], 'noindex, follow');
+  assert.equal((await detailPage({ path: '/demonstration/nothex/children' })).status, 404,
+    'A series parent must be an ObjectId');
+  assert.equal((await detailPage({ path: `/demonstration/${orphanParent}/children` })).status, 404,
+    'A nonpublic series is 404');
+  console.log('PASS: detail head metadata, canonical, JSON-LD, noindex header, preview redirect, bounded 503, local read base, head and home caching, series page and occurrence redirect, unowned sub-paths');
+} finally {
+  publicApi.closeAllConnections?.();
+  localApi.closeAllConnections?.();
+  await new Promise(resolve => publicApi.close(resolve));
+  await new Promise(resolve => localApi.close(resolve));
+  await new Promise(resolve => detailSession.close(resolve));
+}
 
 const socketDirectory = mkdtempSync(join(tmpdir(), 'moso-session-'));
 const socketPath = join(socketDirectory, 'flask.sock');
@@ -124,11 +348,30 @@ const listener = createServer();
 await new Promise(resolve => listener.listen(0, '127.0.0.1', resolve));
 const port = listener.address().port;
 await new Promise(resolve => listener.close(resolve));
+// The spawned host serves a detail page through the real HTTP server: headers,
+// the preview redirect and the query flag all have to survive that layer.
+const hostApi = createServer((req, res) => {
+  const identifier = decodeURIComponent(new URL(req.url, 'http://api.test').pathname.split('/').pop() ?? '');
+  if (identifier === 'nonpublic') { res.writeHead(404); res.end('{}'); return; }
+  res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify({ _id: detailId, title: 'Test event', description: 'Kuvaus',
+    slug: identifier, running_number: 4242, date: identifier === 'far-future' ? '2035-01-01' : '2026-12-01',
+    start_time: '14:00', end_time: '15:00', cancelled: false, city: 'Helsinki', address: null, preview_image: null }));
+});
+await new Promise(resolve => hostApi.listen(0, '127.0.0.1', resolve));
+const hostSession = createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify({ authenticated: true, name: 'Alice', locale: 'fi',
+    locales: [{ code: 'fi', name: 'Suomi' }], site_analytics_enabled: false, matomo_enabled: false }));
+});
+await new Promise(resolve => hostSession.listen(0, '127.0.0.1', resolve));
 const child = spawn(process.execPath, ['frontend/server.mjs'], { cwd: root,
-  env: { ...process.env, APP_PORT: String(port), SESSION_URL: `${base}/down`,
+  env: { ...process.env, APP_PORT: String(port),
+    SESSION_URL: `http://127.0.0.1:${hostSession.address().port}/api/session`,
+    PUBLIC_API_BASE: `http://127.0.0.1:${hostApi.address().port}/api`,
     APP_BUILD_SHA: 'verification-build', FLASK_SOCKET_PATH: '' }, stdio: ['ignore', 'pipe', 'pipe'] });
-const get = (path, method = 'GET') => new Promise((resolve, reject) => {
-  const req = request({ hostname: '127.0.0.1', port, path, method }, res => {
+const get = (path, method = 'GET', headers = {}) => new Promise((resolve, reject) => {
+  const req = request({ hostname: '127.0.0.1', port, path, method, headers }, res => {
     let body = ''; res.on('data', value => { body += value; });
     res.on('end', () => resolve({ status: res.statusCode, body, headers: res.headers }));
   });
@@ -151,5 +394,25 @@ try {
   const head = await get(asset, 'HEAD');
   assert.equal(head.status, 200); assert.equal(head.body, '');
   assert.match(head.headers['cache-control'], /immutable/);
+  const detail = await get('/demonstration/may-day-2026');
+  assert.equal(detail.status, 200);
+  assert.match(detail.body, /<link rel="canonical" href="http:\/\/127\.0\.0\.1:\d+\/demonstration\/may-day-2026">/);
+  assert.equal(detail.headers['x-robots-tag'], undefined);
+  const farFuture = await get('/demonstration/far-future');
+  assert.equal(farFuture.headers['x-robots-tag'], 'noindex, follow', 'The robots header reaches the browser');
+  const signedIn = { Cookie: 'session=alice' };
+  assert.equal((await get('/demonstration/nonpublic')).status, 404, 'Anonymous visitors keep the 404');
+  const preview = await get('/demonstration/nonpublic', 'GET', signedIn);
+  assert.equal(preview.status, 302);
+  assert.equal(preview.headers.location, '/demonstration/nonpublic?preview=1');
+  assert.match(preview.headers['cache-control'], /no-store/);
+  assert.equal((await get('/demonstration/nonpublic?preview=1', 'GET', signedIn)).status, 404,
+    'The flagged request must not redirect again');
   console.log('PASS: malformed URL, directory and traversal requests return 404 without crashing; real asset GET/HEAD and immutable caching');
-} finally { child.kill('SIGTERM'); }
+  console.log('PASS: the HTTP server sends detail metadata, the robots header and the preview redirect');
+} finally {
+  child.kill('SIGTERM');
+  hostApi.closeAllConnections?.();
+  await new Promise(resolve => hostApi.close(resolve));
+  await new Promise(resolve => hostSession.close(resolve));
+}

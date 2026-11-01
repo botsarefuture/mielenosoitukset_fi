@@ -16,6 +16,9 @@ const manifestPath = join(clientDir, '.vite', 'manifest.json');
 const port = Number(process.env.APP_PORT || 8090);
 const origin = (process.env.APP_ORIGIN || `http://127.0.0.1:${port}`).replace(/\/+$/, '');
 const apiBase = (process.env.PUBLIC_API_BASE || 'https://api.mielenosoitukset.fi/api').replace(/\/+$/, '');
+// Server-side reads prefer a local API address, so the host does not pay a
+// public round trip to itself. Browsers keep using PUBLIC_API_BASE.
+const apiReadBase = (process.env.PUBLIC_API_LOCAL || apiBase).replace(/\/+$/, '');
 const flaskOrigin = (process.env.FLASK_API_ORIGIN || 'http://127.0.0.1:8000').replace(/\/+$/, '');
 const sessionUrl = process.env.SESSION_URL || `${flaskOrigin}/api/session`;
 const flaskSocketPath = process.env.FLASK_SOCKET_PATH || undefined;
@@ -56,7 +59,7 @@ const types = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.map': 'application/json',
 };
 
-function sendHTML(response, status, html, headOnly) {
+function sendHTML(response, status, html, headOnly, extraHeaders = {}) {
   response.writeHead(status, {
     'Content-Type': 'text/html; charset=utf-8',
     // The header depends on the session cookie; never share it through a cache.
@@ -64,6 +67,7 @@ function sendHTML(response, status, html, headOnly) {
     Vary: 'Cookie',
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
+    ...extraHeaders,
   });
   response.end(headOnly ? undefined : html);
 }
@@ -118,11 +122,20 @@ const server = createServer(async (request, response) => {
   }
   try {
     const result = await renderPage({
-      path: url.pathname, origin, apiBase, sessionUrl, flaskSocketPath,
+      path: url.pathname, search: url.search, origin, apiBase, apiReadBase, sessionUrl, flaskSocketPath,
       cookie: request.headers.cookie,
       doNotTrack: request.headers.dnt === '1',
     }, assets);
-    sendHTML(response, result.status, result.html, headOnly);
+    if (result.redirect) {
+      // A site-relative preview target stays on the same public origin; the web
+      // server decides which handler owns the flagged request.
+      response.writeHead(result.status, {
+        Location: result.redirect, 'Content-Length': '0', 'Cache-Control': 'no-store', Vary: 'Cookie',
+      });
+      response.end();
+      return;
+    }
+    sendHTML(response, result.status, result.html, headOnly, result.headers);
   } catch (error) {
     console.error('Page rendering failed', error);
     sendHTML(response, 503, '<!DOCTYPE html><title>Palvelu ei ole juuri nyt käytettävissä</title>'

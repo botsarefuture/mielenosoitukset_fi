@@ -368,7 +368,9 @@ def test_admin_overview_documents_limits(admin_client, db):
     response = admin_client.get("/admin/analytics/")
     assert response.status_code == 200
     page = response.get_data(as_text=True)
-    assert "Laskuriin kirjataan vain julkiset" in page
+    assert "HTML-sivujen onnistuneet GET-vastaukset" in page
+    assert "React-sivujen sivunäyttösignaalit" in page
+    assert "estetty tai epäonnistunut signaali jää laskematta" in page
 
 
 def test_overview_period_math(admin_client, db, app):

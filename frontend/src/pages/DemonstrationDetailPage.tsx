@@ -69,10 +69,14 @@ function Countdown({ event, label, locale }: { event: DetailEvent; label: string
   const minutes = Math.max(1, Math.round(remaining / 60_000));
   const days = Math.floor(minutes / 1_440);
   const hours = Math.floor((minutes % 1_440) / 60);
-  const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
-  const parts = days > 0 ? [format.format(days, 'day'), format.format(hours, 'hour')]
-    : hours > 0 ? [format.format(hours, 'hour'), format.format(minutes % 60, 'minute')]
-      : [format.format(minutes, 'minute')];
+  // A duration, not a relative date: "5 päivää 15 tuntia" reads correctly under
+  // "Aikaa mielenosoituksen alkuun", where RelativeTimeFormat produced the
+  // doubled "5 päivän päästä 15 tunnin päästä".
+  const unit = (value: number, name: 'day' | 'hour' | 'minute') =>
+    new Intl.NumberFormat(locale, { style: 'unit', unit: name, unitDisplay: 'long' }).format(value);
+  const parts = days > 0 ? [unit(days, 'day'), unit(hours, 'hour')]
+    : hours > 0 ? [unit(hours, 'hour'), unit(minutes % 60, 'minute')]
+      : [unit(minutes, 'minute')];
   return <section className="detail-countdown"><h2>{label}</h2><p>{parts.join(' ')}</p></section>;
 }
 function ShareActions({ url, title, messages }: { url: string; title: string; messages: DetailProps['messages'] }) {

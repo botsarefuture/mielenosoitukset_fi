@@ -64,9 +64,10 @@ retain their separate privileged view.
 The screen keeps the legacy page's quieter sections: the attendance total from
 `likes`, the countdown to the start time, the organizer logo, an empty-description
 note and an explicit cancelled-participation notice. Countdown unit words come
-from `Intl.RelativeTimeFormat`, and every message reuses an existing Finnish msgid
-already present in the Flask catalogs, so no catalog or compiled `.mo` changes are
-part of this step.
+from `Intl.NumberFormat` unit formatting (a duration such as "5 päivää 15 tuntia",
+not a doubled "5 päivän päästä 15 tunnin päästä"), and every message reuses an
+existing Finnish msgid already present in the Flask catalogs, so no catalog or
+compiled `.mo` changes are part of this step.
 
 Reminder, report and friend invitation forms use React dialogs and useActionState,
 with explicit submission, pending/error feedback and retained field values. They

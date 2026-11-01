@@ -61,8 +61,10 @@ It returns no cookie value, token, email, permission list or private record, is
 still decides every permission and every write. A missing or slow endpoint
 degrades to the anonymous header after a maximum 1.2-second wait. Cookie-bearing
 requests always fetch their own summary. Cookieless public configuration is
-coalesced and cached inside the host for 30 seconds; identity, role privileges,
+coalesced and cached inside the host for five minutes; identity, role privileges,
 notifications and failed responses are never shared through this cache.
+Restarting the host clears it. Public locale options, fundraising visibility and
+tracking configuration may therefore remain stale for up to five minutes.
 
 The host rejects unmigrated routes before fetching session state. Static asset
 reads are asynchronous, regular-file-only and restricted to the resolved asset

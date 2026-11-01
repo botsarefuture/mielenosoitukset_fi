@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Cache cookieless public React-host configuration for five minutes, reducing repeat lookups while keeping private sessions uncached.
+
 - Keep the public React host alive on malformed asset requests, use asynchronous file reads, and avoid repeated cookieless configuration requests while keeping private sessions isolated.
 
 - Preserve the standalone React host's page, campaign and visitor aggregates, Matomo and Web Vitals through configuration-controlled, nonblocking browser hooks. Browser page signals accept only the migrated home route and retain the existing bot, DNT and privacy limits.

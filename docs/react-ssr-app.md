@@ -104,6 +104,35 @@ source catalog and `en`/`sv` reuse it until a human translator supplies those
 strings. The route itself still needs the single projected event read in the
 head path before it can move here.
 
+## Standalone demonstration listings
+
+The host owns `/demonstrations`, `/city/<city>` and `/tag/<tag>` GET/HEAD.
+React owns the filters, localized calendar, city selection, URL history,
+retry controls and a maximum five-page card window. The old listing island
+remains available to organization pages until their whole page moves; the
+standalone pages load none of its global pagination/filter scripts.
+
+`GET /api/demonstrations` on Go supplies public card data. The host reads it
+over loopback, coalesces identical requests and embeds the initial page in the
+document. Successful public pages are cached for 30 seconds with at most 64
+entries and 16 in-flight query variants; stale `no-store` API fallbacks are not
+cached again. Query normalization is shared with the browser and excludes
+campaign parameters while retaining those parameters in the address bar.
+Go's separate 30-second cache is bounded by both memory and entry count;
+combined host/API/browser freshness windows can add, rather than guaranteeing
+30-second end-to-end freshness. See [the API contract](go-listing-api.md).
+
+Only listing documents preload their split listing/calendar bundle. Home does
+not download it. Page, search, campaign and Web Vitals tracking use the existing
+allowlisted analytics endpoints; Go cache hits never substitute for browser
+display/search signals. DNT and analytics settings retain their existing rules.
+RSS links keep their city/tag scopes. Signed-in attendance remains with Flask.
+
+Deployment order is Go API, host release, then the reviewed listing GET routing
+rule. Removing that rule returns the pages to the existing Flask shells without
+changing their URLs or data. Nested city-today routes and all writes stay with
+their existing handlers.
+
 ## Session summary contract
 
 `GET /api/session` returns the same header state the templates receive:

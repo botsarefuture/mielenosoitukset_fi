@@ -135,7 +135,7 @@ _UNKNOWN_CLIENT_ADDRESSES = {"0.0.0.0", "::", ""}
 # Events accepted from the browser beacon. Deliberately tiny: these are the
 # only browser-side signals with a real dashboard use case. Everything else
 # is recorded server-side from actual application actions.
-BEACON_EVENT_ALLOWLIST = {"map_interaction", "external_link"}
+BEACON_EVENT_ALLOWLIST = {"map_interaction", "external_link", "demo_search"}
 
 # Friendly labels for the dashboard events table. Unknown events are shown
 # as their raw names.
@@ -537,10 +537,14 @@ def _record_classified_pageview(request, classified):
     return True
 
 
+def _public_app_listing_path(path):
+    return path == "/demonstrations" or bool(re.fullmatch(r"/(?:city|tag)/[^/]+", path))
+
+
 def record_public_app_pageview(payload, request):
     """Record a displayed migrated page from a bounded, same-origin beacon.
 
-    Only the standalone home route is migrated. Legacy Flask pages must not
+    Only explicitly migrated home and listing routes are accepted. Legacy Flask pages must not
     send this beacon, since their HTML responses already record their views.
     The page location comes from the same-origin Referer, never a payload URL.
     Raw locations and referrers are reduced to existing aggregate dimensions.
@@ -561,7 +565,8 @@ def record_public_app_pageview(payload, request):
         if (landing.scheme not in {"http", "https"}
                 or (landing.scheme.lower(), landing.netloc.lower())
                 != (origin.scheme.lower(), origin.netloc.lower())
-                or landing.path != "/" or landing.username or landing.password):
+                or not (landing.path == "/" or _public_app_listing_path(landing.path))
+                or landing.username or landing.password):
             return False
         supplied_origin = request.headers.get("Origin")
         if supplied_origin and supplied_origin.rstrip("/") != request.host_url.rstrip("/"):
@@ -830,6 +835,13 @@ def record_beacon_event(payload, request=None):
             return False
 
         resource_id = str(payload.get("resource_id") or "").strip()[:MAX_RESOURCE_LENGTH]
+        if event == "demo_search":
+            landing = urlsplit(request.headers.get("Referer") or "")
+            origin = urlsplit(request.host_url)
+            if (len(resource_id) < 2 or not _public_app_listing_path(landing.path)
+                    or (landing.scheme, landing.netloc) != (origin.scheme, origin.netloc)
+                    or request.headers.get("Sec-Fetch-Site") == "cross-site"):
+                return False
         return record_event_for_request(event, resource_id or None, request=request)
     except Exception:
         return False

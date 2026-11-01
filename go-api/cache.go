@@ -179,7 +179,8 @@ type cachedDetailStore struct {
 
 	known        atomic.Pointer[map[bson.ObjectID]int64] // public IDs as of the last batch; nil until the first success
 	unknownLimit *rate.Limiter
-	home         *homeCache // nil if the source has no FindHome
+	home         *homeCache    // nil if the source has no FindHome
+	listing      *listingCache // nil if the source has no FindListing
 
 	hits, staleHits, negHits, misses, loads, loadErrors, oversize, unknownDropped atomic.Uint64
 }
@@ -209,6 +210,9 @@ func newCachedDetailStoreWithConfig(src Store, cfg detailCacheConfig) *cachedDet
 	if hs, ok := src.(homeStore); ok {
 		s.home = newHomeCache(hs, base)
 		go s.home.Warm(base)
+	}
+	if source, ok := src.(listingStore); ok {
+		s.listing = newListingCache(source, base)
 	}
 	return s
 }

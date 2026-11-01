@@ -1,0 +1,27 @@
+.public-react-list .date-error:not([hidden]) {
+  display: block;
+}
+
+/* The vendor stylesheet also sets this surface; keep theme tokens authoritative. */
+.public-date-calendar.flatpickr-calendar {
+  background: var(--product-surface);
+  color: var(--product-text);
+  border: 1px solid var(--product-border);
+  box-shadow: var(--product-shadow);
+}
+
+.public-date-calendar .flatpickr-monthDropdown-months option {
+  background: var(--product-surface);
+  color: var(--product-text);
+}
+
+.public-date-calendar.flatpickr-calendar .flatpickr-current-month,
+.public-date-calendar.flatpickr-calendar input.cur-year {
+  color: var(--product-text);
+}
+
+.public-date-calendar.flatpickr-calendar .flatpickr-day:not(.selected):focus {
+  background: var(--product-surface-muted);
+  border-color: var(--product-border);
+  color: var(--product-text);
+}

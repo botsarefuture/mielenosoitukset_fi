@@ -7,6 +7,7 @@ import type { HomeData } from '../pages/HomePage';
 import { routeForPath } from './routes';
 import type { AppRoute } from './routes';
 import type { SessionSummary } from './session';
+import type { ListingBootstrap } from './listing';
 
 /**
  * Browser entry for the standalone public app.
@@ -18,7 +19,7 @@ import type { SessionSummary } from './session';
  */
 
 type Bootstrap = { config: AppConfig; session: SessionSummary; path: string;
-  detail?: DetailBootstrap; series?: DetailSeries; home?: HomeData | null };
+  detail?: DetailBootstrap; series?: DetailSeries; home?: HomeData | null; listing?: ListingBootstrap };
 
 /**
  * Routes the app can enter without a server round trip for their metadata.
@@ -37,7 +38,7 @@ function resetScroll() {
   document.body.scrollTop = 0;
 }
 
-function Root({ config, session, path: initialPath, detail, series, home }: Bootstrap) {
+function Root({ config, session, path: initialPath, detail, series, home, listing }: Bootstrap) {
   const [path, setPath] = useState(initialPath);
   const trackedPage = useRef<string | null>(null);
   useEffect(() => {
@@ -53,7 +54,7 @@ function Root({ config, session, path: initialPath, detail, series, home }: Boot
         script.async = true;
         document.head.appendChild(script);
       }
-      if (!clientRoute(path)) return;
+      if (!clientRoute(path) && routeForPath(path)?.name !== 'listing') return;
       if (!session.siteAnalyticsEnabled || trackedPage.current === path) return;
       trackedPage.current = path;
       try {
@@ -68,6 +69,8 @@ function Root({ config, session, path: initialPath, detail, series, home }: Boot
   }, [path, session.siteAnalyticsEnabled, session.matomoEnabled]);
   useEffect(() => {
     function navigate() {
+      // The listing owns query-only filter/page history inside this document.
+      if (routeForPath(initialPath)?.name === 'listing' && window.location.pathname === initialPath) return;
       if (!clientRoute(window.location.pathname)) {
         // The destination needs its own server-rendered metadata and bootstrap.
         window.location.reload();
@@ -103,7 +106,7 @@ function Root({ config, session, path: initialPath, detail, series, home }: Boot
   }, []);
   const route = routeForPath(path);
   if (!route) return null;
-  return <App config={config} session={session} route={route} path={path} detail={detail} series={series} home={home} />;
+  return <App config={config} session={session} route={route} path={path} detail={detail} series={series} home={home} listing={listing} />;
 }
 
 const container = document.getElementById('app');

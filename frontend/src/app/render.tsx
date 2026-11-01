@@ -4,6 +4,8 @@ import { loadDetailHead, loadSeries, selectOccurrence, seriesNavigation, seriesP
 import type { DetailBootstrap, DetailSeries } from './detail-route';
 import { catalog } from './i18n';
 import { ttlCache } from './server-cache';
+import { listingProps, listingQuery, loadListingPage } from './listing';
+import type { ListingBootstrap } from './listing';
 import type { HomeData } from '../pages/HomePage';
 import { routeForPath, routeMeta } from './routes';
 import type { RouteMeta } from './routes';
@@ -37,7 +39,7 @@ export type RenderInput = {
   search?: string;
 };
 
-export type RenderAssets = { head: string; scripts: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string };
 
 export type RenderResult = {
   status: number;
@@ -216,6 +218,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   let detail: DetailBootstrap | undefined;
   let series: DetailSeries | undefined;
   let home: HomeData | null = null;
+  let listing: ListingBootstrap | undefined;
   let jsonLd: unknown;
   let extraHead = '';
   let noscript = '<noscript><p class="container-main-content">Mielenosoitukset.fi käyttää JavaScriptiä. '
@@ -316,9 +319,21 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   }
 
   if (route.name === 'home') home = await loadHomeBatch(readBase, config.locale);
+  if (route.name === 'listing') {
+    const props = listingProps(route, config, session);
+    const query = listingQuery(route, input.search ?? '', config.locale);
+    listing = { query: input.search ?? '', page: await loadListingPage(readBase, query) };
+    meta = { title: `${props.title} | Mielenosoitukset.fi`, description: props.title,
+      canonical: `${config.origin}${input.path}`, robots: 'index, follow' };
+    extraHead = '<link rel="stylesheet" href="/static/vendor/flatpickr/4.6.13/flatpickr.min.css">'
+      + (assets.listing ?? '');
+    noscript = `<noscript><p class="container-main-content">Lista avautuu JavaScriptillä. `
+      + `<a href="${escapeHtml(props.rssUrl!)}">RSS</a> · <a href="/calendar/">Kalenteri</a></p></noscript>`;
+  }
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
   const bootstrap = serialize({ config, session, path: input.path, route,
-    ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}) });
+    ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}),
+    ...(listing ? { listing } : {}) });
   const html = `<!DOCTYPE html>
 <html lang="${escapeHtml(config.locale)}">
 <head>

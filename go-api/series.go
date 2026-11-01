@@ -151,19 +151,28 @@ func (s mongoStore) FindSeries(ctx context.Context, parent bson.ObjectID) (serie
 			return payload, err
 		}
 	}
-	// One display order for every caller: date, clock, then id.
-	sort.Slice(occurrences, func(i, j int) bool {
-		left, right := occurrences[i], occurrences[j]
-		if left.Date != right.Date {
-			return left.Date < right.Date
-		}
-		if left.StartTime != right.StartTime {
-			return left.StartTime < right.StartTime
-		}
-		return left.ID < right.ID
-	})
+	// One display order for every caller.
+	sort.Slice(occurrences, func(i, j int) bool { return lessOccurrence(occurrences[i], occurrences[j]) })
 	payload.Occurrences = occurrences
 	return payload, nil
+}
+
+// lessOccurrence is the single ordering rule: date, then clock, then id. Within
+// one date an occurrence with an announced time sorts first, because it is the
+// more actionable row; an occurrence without a clock sorts last instead of
+// jumping ahead of one that has a time.
+func lessOccurrence(left, right seriesOccurrence) bool {
+	if left.Date != right.Date {
+		return left.Date < right.Date
+	}
+	leftTime, rightTime := left.StartTime != "", right.StartTime != ""
+	if leftTime != rightTime {
+		return leftTime
+	}
+	if left.StartTime != right.StartTime {
+		return left.StartTime < right.StartTime
+	}
+	return left.ID < right.ID
 }
 
 func cloneFilter(source bson.M) bson.M {

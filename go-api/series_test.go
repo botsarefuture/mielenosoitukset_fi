@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http/httptest"
 	"os"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -107,6 +108,36 @@ func TestSeriesWithoutStoreFailsClosed(t *testing.T) {
 	(&API{&fakeStore{}}).handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/series/"+demoID, nil))
 	if w.Code != 503 {
 		t.Fatalf("status=%d body=%s", w.Code, w.Body.String())
+	}
+}
+
+// The display order is a product rule, not a Mongo accident, so it is checked
+// without a database as well as through the integration test below.
+func TestSeriesOccurrenceOrder(t *testing.T) {
+	entry := func(id, date, clock string, cancelled bool) seriesOccurrence {
+		return seriesOccurrence{ID: id, Date: date, StartTime: clock, Cancelled: cancelled}
+	}
+	past := entry("a", "2026-10-01", "09:00", false)
+	todayUntimed := entry("b", "2026-11-01", "", true)
+	todayTimed := entry("c", "2026-11-01", "14:00", false)
+	sameClock := entry("d", "2026-11-01", "14:00", false)
+	later := entry("e", "2026-11-08", "10:00", false)
+
+	want := []seriesOccurrence{past, todayTimed, sameClock, todayUntimed, later}
+	got := []seriesOccurrence{later, todayUntimed, sameClock, past, todayTimed}
+	sort.Slice(got, func(i, j int) bool { return lessOccurrence(got[i], got[j]) })
+	if len(got) != len(want) {
+		t.Fatalf("length %d", len(got))
+	}
+	for index := range want {
+		if got[index].ID != want[index].ID {
+			t.Fatalf("order=%v want %v", got, want)
+		}
+	}
+	// A known clock must sort before an unknown one on the same date, in either
+	// input order.
+	if lessOccurrence(todayUntimed, todayTimed) || !lessOccurrence(todayTimed, todayUntimed) {
+		t.Fatal("untimed occurrence did not sort last")
 	}
 }
 

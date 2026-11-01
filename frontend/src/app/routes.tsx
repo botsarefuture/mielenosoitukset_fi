@@ -1,5 +1,6 @@
 import type { AppConfig } from './config';
 import type { Catalog } from './i18n';
+import type { ListingRoute } from './listing';
 
 /**
  * Public routes owned by the standalone React application.
@@ -12,6 +13,7 @@ import type { Catalog } from './i18n';
  */
 export type AppRoute =
   | { name: 'home' }
+  | ListingRoute
   | { name: 'detail'; identifier: string }
   | { name: 'series'; parent: string };
 
@@ -41,6 +43,12 @@ function readIdentifier(raw: string): string | null {
 }
 
 export function routeForPath(path: string): AppRoute | null {
+  if (path === '/demonstrations') return { name: 'listing', scope: 'all' };
+  const listing = /^\/(city|tag)\/([^/]+)$/.exec(path);
+  if (listing) {
+    const value = readIdentifier(listing[2]);
+    return value && !value.includes('/') ? { name: 'listing', scope: listing[1] as 'city' | 'tag', value } : null;
+  }
   const series = SERIES_PATH.exec(path);
   if (series) {
     const parent = readIdentifier(series[1]);

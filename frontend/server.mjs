@@ -43,6 +43,10 @@ function assetTags(manifest) {
     for (const file of imported.css ?? []) css.add(file);
   }
   return {
+    listing: manifest['src/app/ListingScreen.tsx']
+      ? `<link rel="modulepreload" href="/app-assets/${manifest['src/app/ListingScreen.tsx'].file}">`
+        + (manifest['src/app/ListingScreen.tsx'].css ?? []).map(file => `<link rel="stylesheet" href="/app-assets/${file}">`).join('')
+      : '',
     head: [...css].map((file) => `<link rel="stylesheet" href="/app-assets/${file}">`)
       .concat([...modules].filter((file) => file.endsWith('.js'))
         .map((file) => `<link rel="modulepreload" href="/app-assets/${file}">`)).join('\n'),

@@ -121,6 +121,10 @@ function createApi(log) {
     if (identifier === 'home') {
       return send(200, { events: [{ _id: detailId, title: 'Test event', detail_url: '/demonstration/may-day-2026' }], recommended: false });
     }
+    if (url.pathname === '/api/demonstrations') {
+      return send(200, { page: 1, per_page: 12, total: 1, total_pages: 1, result_start: 1, result_end: 1,
+        results: [{ _id: detailId, title: 'Test listing event' }] });
+    }
     if (url.pathname.includes('/series/')) {
       if (identifier === orphanParent) return send(404, { error: 'series not found' });
       if (identifier === farParent) {
@@ -296,6 +300,19 @@ try {
   assert.equal((await detailPage({ path: `/demonstration/${orphanParent}/children` })).status, 404,
     'A nonpublic series is 404');
   console.log('PASS: detail head metadata, canonical, JSON-LD, noindex header, preview redirect, bounded 503, local read base, head and home caching, series page and occurrence redirect, unowned sub-paths');
+  const beforeListing = localReads.filter(read => read.startsWith('/api/demonstrations?')).length;
+  const listings = await Promise.all(Array.from({ length: 8 }, () => detailPage({ path: '/demonstrations', search: '?utm_source=review' })));
+  assert(listings.every(result => bootstrap(result.html).listing.page.results.length === 1));
+  await detailPage({ path: '/demonstrations' });
+  assert.equal(localReads.filter(read => read.startsWith('/api/demonstrations?')).length, beforeListing + 1,
+    'Concurrent and warm listings coalesce and ignore campaign cache fragmentation');
+  const cityPage = await detailPage({ path: '/city/helsinki', search: '?city=Tampere' });
+  assert.match(cityPage.html, /Helsinki: Mielenosoitukset/);
+  assert(localReads.some(read => read.startsWith('/api/demonstrations?') && read.includes('city=Helsinki')));
+  const tagPage = await detailPage({ path: '/tag/rauha' });
+  assert.match(tagPage.html, /#rauha: Mielenosoitukset/);
+  assert.equal(bootstrap(tagPage.html).listing.page.total, 1);
+  console.log('PASS: listing bootstrap, query coalescing/cache, canonical city/tag titles and fixed scopes');
 } finally {
   publicApi.closeAllConnections?.();
   localApi.closeAllConnections?.();

@@ -43,7 +43,7 @@ def test_public_app_beacon_records_one_page_without_counting_the_api(client, app
     ({"Referer": "https://external.test/"}, {}),
     ({"Referer": "http://localhost:9999/"}, {}),
     ({"Referer": "https://localhost/"}, {}),
-    ({"Referer": "http://localhost/demonstrations"}, {}),
+    ({"Referer": "http://localhost/city/helsinki/tanaan"}, {}),
     ({"Referer": ""}, {}),
     ({"Origin": "https://external.test"}, {}),
     ({"Sec-Fetch-Site": "cross-site"}, {}),
@@ -89,3 +89,29 @@ def test_public_session_summary_exposes_public_telemetry_flags(client, app):
     payload = client.get("/api/session").get_json()
     assert payload["site_analytics_enabled"] is False
     assert payload["matomo_enabled"] is True
+
+
+@pytest.mark.parametrize("path,page_type", [
+    ("/demonstrations", "demonstrations"),
+    ("/city/Helsinki", "city"),
+    ("/tag/rauha", "tag"),
+])
+def test_migrated_listing_display_and_search_signals(client, app, db, path, page_type):
+    app.config.update(SITE_ANALYTICS_ENABLED=True, SITE_ANALYTICS_VISITORS_ENABLED=True)
+    _clear(db)
+    headers = _headers(Referer="http://localhost" + path)
+    client.post("/api/analytics/pageview", json={}, headers=headers)
+    page = db.site_analytics.find_one({"page_type": page_type})
+    assert page and page["count"] == 1
+    client.post("/api/analytics/event", json={"event": "demo_search", "resource_id": "rauha"}, headers=headers)
+    search = db.site_analytics.find_one({"event": "demo_search"})
+    assert search and search["count"] == 1
+
+
+@pytest.mark.parametrize("path", ["/", "/admin", "/city/Helsinki/tanaan"])
+def test_search_beacon_is_restricted_to_migrated_listings(client, app, db, path):
+    app.config["SITE_ANALYTICS_ENABLED"] = True
+    _clear(db)
+    client.post("/api/analytics/event", json={"event": "demo_search", "resource_id": "rauha"},
+                headers=_headers(Referer="http://localhost" + path))
+    assert db.site_analytics.count_documents({"event": "demo_search"}) == 0

@@ -1,0 +1,3 @@
+.public-react-list .date-error:not([hidden]) {
+  display: block;
+}

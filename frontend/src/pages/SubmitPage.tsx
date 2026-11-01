@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { CitySelect } from '../components/submit/CitySelect';
-import { DateField } from '../components/submit/DateField';
+import { DateField, isoToDisplay } from '../components/submit/DateField';
 import { DescriptionEditor } from '../components/submit/DescriptionEditor';
 import type { DescriptionEditorHandle } from '../components/submit/DescriptionEditor';
 import { OrganizerList } from '../components/submit/OrganizerList';
@@ -1097,7 +1097,7 @@ export function SubmitPage(props: SubmitPageProps) {
               <ol id="submit-conflict-matches" className="user-conflict-list">
                 {(conflict?.demos ?? []).slice(0, 5).map((demo, index) => (
                   <li key={`${demo.title ?? ''}-${index}`}>
-                    {[demo.title, demo.date, demo.address].filter(Boolean).join(' | ')}
+                    {[demo.title, isoToDisplay(demo.date ?? '') || demo.date, demo.address].filter(Boolean).join(' | ')}
                   </li>
                 ))}
               </ol>

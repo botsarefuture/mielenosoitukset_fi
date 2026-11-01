@@ -361,3 +361,9 @@
 .submit-conflict-dialog .modal-header,
 .submit-conflict-dialog .modal-footer { gap: .75rem; }
 .submit-conflict-dialog .modal-header .btn-close { margin: 0; padding: .5rem; }
+.submit-city__trigger[aria-invalid="true"] {
+  border-color: var(--product-danger);
+  outline: 2px solid var(--product-danger);
+  outline-offset: 2px;
+}
+.dark .submit-conflict-dialog .btn-close { filter: invert(1) grayscale(1) brightness(2); }

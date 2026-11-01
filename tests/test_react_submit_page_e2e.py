@@ -110,7 +110,7 @@ def test_draft_is_retained_until_json_success_confirms_delivery(app, page_one_re
             return route.fulfill(status=200, content_type="text/html", body="<h1>Outage</h1>")
         if len(posts) in (2, 3):
             return route.fulfill(status=409, content_type="application/json", body=json.dumps({
-                "success": False, "conflict": True, "message": "Possible duplicate", "demos": [],
+                "success": False, "conflict": True, "message": "Possible duplicate", "demos": [{"title": "Existing event", "date": "2099-01-01"}],
             }))
         return route.fulfill(status=200, content_type="application/json", body='{"success": true}')
 
@@ -136,6 +136,8 @@ def test_draft_is_retained_until_json_success_confirms_delivery(app, page_one_re
     page.locator("#submit-form").click()
     dialog = page.locator("#submitConflictModal")
     expect(dialog).to_be_visible()
+    expect(page.locator("#submit-conflict-matches")).to_contain_text("01.01.2099")
+    expect(page.locator("#submit-conflict-matches")).not_to_contain_text("2099-01-01")
     page.keyboard.press("Escape")
     expect(dialog).not_to_be_visible()
     expect(page.locator("#submit-form")).to_be_enabled()

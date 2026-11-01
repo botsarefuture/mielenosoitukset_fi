@@ -4,7 +4,7 @@
 
 ## UNRELEASED
 
-- Keep successfully submitted React drafts cleared, restore visible duplicate confirmation and Escape cancellation, and focus the visible date/city controls on validation errors.
+- Keep successfully submitted React drafts cleared, restore visible duplicate confirmation and Escape cancellation, display readable duplicate dates, and focus the visible date/city controls on validation errors.
 
 - Show a whole-site performance timeline above a table of normalized page URI groups. Selecting a page changes its daily-average chart while preserving the date range and metric; undersampled days remain gaps.
 

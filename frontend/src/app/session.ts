@@ -62,6 +62,7 @@ export function normalizeSession(value: unknown): SessionSummary {
 }
 
 type PublicSummary = { endpoint: string; value: SessionSummary; expiresAt: number };
+const PUBLIC_CONFIG_TTL_MS = 5 * 60 * 1000;
 let publicSummary: PublicSummary | null = null;
 let publicPending: { endpoint: string; promise: Promise<SessionSummary> } | null = null;
 
@@ -102,7 +103,7 @@ export async function fetchSession(endpoint: string, cookie: string | undefined,
       if (value && !value.authenticated) {
         const publicValue = { ...value, role: 'guest', name: null, picture: null,
           globalAdmin: false, hasAdminAccess: false, unread: 0 };
-        publicSummary = { endpoint, value: publicValue, expiresAt: Date.now() + 30_000 };
+        publicSummary = { endpoint, value: publicValue, expiresAt: Date.now() + PUBLIC_CONFIG_TTL_MS };
         return publicValue;
       }
       return copySession(anonymousSession);

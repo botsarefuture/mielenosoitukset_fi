@@ -47,7 +47,12 @@ try {
   assert.equal(bootstrap((await page()).html).session.name, null);
   const originalNow = Date.now;
   try {
-    Date.now = () => originalNow() + 31_000;
+    for (const elapsed of [31_000, 299_000]) {
+      Date.now = () => originalNow() + elapsed;
+      await page();
+      assert.equal(reads, 3, 'Public configuration stays cached before five minutes');
+    }
+    Date.now = () => originalNow() + 301_000;
     await page();
   } finally { Date.now = originalNow; }
   assert.equal(reads, 4, 'Expired public configuration is refreshed');

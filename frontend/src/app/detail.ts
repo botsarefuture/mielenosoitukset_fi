@@ -44,7 +44,7 @@ const fi: DetailMessages = {
   organizers: 'Järjestäjät', noOrganizers: 'Järjestäjätietoja ei ole ilmoitettu',
   organizerProfile: 'Organisaation profiili', website: 'Verkkosivusto',
   route: 'Reitti', map: 'Kartta', showMap: 'Näytä kartta', mapLoading: 'Ladataan karttaa...',
-  directions: 'Avaa reittiohjeet',
+  directions: 'Avaa reittiohjeet', series: 'Kaikki tapahtuman ajankohdat',
   gallery: 'Tapahtuman kuvat', openImage: 'Avaa kuva', close: 'Sulje',
   previous: 'Edellinen kuva', next: 'Seuraava kuva', imageUnavailable: 'Kuvaa ei voitu ladata.',
   calendar: 'Lisää kalenteriin (.ics)', reminder: 'Tilaa muistutus',

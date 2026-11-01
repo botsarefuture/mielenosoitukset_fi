@@ -1,7 +1,7 @@
 import { appConfig } from './config';
 import { detailMessages } from './detail';
-import { loadDetailHead } from './detail-route';
-import type { DetailBootstrap } from './detail-route';
+import { loadDetailHead, loadSeries, selectOccurrence, seriesNavigation, seriesPath } from './detail-route';
+import type { DetailBootstrap, DetailSeries } from './detail-route';
 import { catalog } from './i18n';
 import { ttlCache } from './server-cache';
 import type { HomeData } from '../pages/HomePage';
@@ -212,6 +212,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   const readBase = input.apiReadBase ?? input.apiBase;
   let meta: RouteMeta = routeMeta(route, config, text);
   let detail: DetailBootstrap | undefined;
+  let series: DetailSeries | undefined;
   let home: HomeData | null = null;
   let jsonLd: unknown;
   let extraHead = '';
@@ -234,6 +235,15 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       }
       return { status: 404, html: notFoundDocument(), headers: { 'X-Robots-Tag': 'noindex, follow' } };
     }
+    // An occurrence of a public series lives on the series page, exactly like the
+    // Flask redirect. A nonpublic parent leaves the occurrence standing alone.
+    if (loaded.parent) {
+      const parentSeries = await loadSeries(loaded.parent, config, readBase);
+      if (parentSeries.status === 'ready') {
+        const target = seriesPath(config, loaded.parent, loaded.slug ?? loaded.bootstrap.id);
+        return { status: 301, html: '', redirect: target };
+      }
+    }
     const messages = detailMessages(config.locale);
     meta = loaded.meta;
     detail = loaded.bootstrap;
@@ -247,10 +257,52 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       + `</article></noscript>`;
   }
 
+  if (route.name === 'series') {
+    const loaded = await loadSeries(route.parent, config, readBase);
+    if (loaded.status === 'unavailable') {
+      return { status: 503, html: unavailableDocument(), headers: { 'Cache-Control': 'no-store', 'Retry-After': '30' } };
+    }
+    if (loaded.status === 'not-found') {
+      return { status: 404, html: notFoundDocument(), headers: { 'X-Robots-Tag': 'noindex, follow' } };
+    }
+    const requested = new URLSearchParams(input.search ?? '').get('occurrence');
+    const selected = selectOccurrence(loaded.occurrences, requested);
+    if (!selected) {
+      // A series with no active occurrence has nothing to show, like the
+      // chooser's empty state, and must stay out of the index.
+      return { status: 404, html: notFoundDocument(), headers: { 'X-Robots-Tag': 'noindex, follow' } };
+    }
+    const event = await loadDetailHead(selected.id, config, readBase);
+    if (event.status === 'unavailable') {
+      return { status: 503, html: unavailableDocument(), headers: { 'Cache-Control': 'no-store', 'Retry-After': '30' } };
+    }
+    if (event.status === 'not-found') {
+      return { status: 404, html: notFoundDocument(), headers: { 'X-Robots-Tag': 'noindex, follow' } };
+    }
+    const messages = detailMessages(config.locale);
+    const canonical = `${config.origin}${seriesPath(config, route.parent)}`;
+    meta = {
+      ...event.meta,
+      // The series page is canonical for every occurrence, as on Flask.
+      canonical,
+      robots: loaded.indexable ? 'index, follow' : 'noindex, follow',
+    };
+    detail = { ...event.bootstrap, canonicalUrl: canonical };
+    series = seriesNavigation(config, loaded, selected.id, messages.series);
+    jsonLd = event.jsonLd;
+    extraHead = `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    if (!loaded.indexable) headers['X-Robots-Tag'] = 'noindex, follow';
+    noscript = `<noscript><article class="public-detail container-main-content">`
+      + `<h1>${escapeHtml(event.heading)}</h1>`
+      + `<p>${escapeHtml(meta.description)}</p>`
+      + `<a href="${escapeHtml(config.urls.demonstrations)}">${escapeHtml(messages.allEvents)}</a>`
+      + `</article></noscript>`;
+  }
+
   if (route.name === 'home') home = await loadHomeBatch(readBase, config.locale);
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
   const bootstrap = serialize({ config, session, path: input.path, route,
-    ...(detail ? { detail } : {}), ...(home ? { home } : {}) });
+    ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}) });
   const html = `<!DOCTYPE html>
 <html lang="${escapeHtml(config.locale)}">
 <head>

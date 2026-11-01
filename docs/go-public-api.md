@@ -140,6 +140,33 @@ no-store, so browser/CDN caching cannot bypass visibility checks. No new databas
 indexes, migrations or service dependencies. Disable by restoring the direct
 mongoStore construction in main; no stored-data rollback is needed.
 
+## Recurring series endpoint
+
+`GET /api/series/{parent}?lang=fi` returns one public recurring series and its
+bounded occurrence list, replacing the reads the Flask chooser page performs.
+`parent` is the `recu_demos` ObjectId; anything else is 404, because a series
+parent is never reachable by slug, running number or alias. The parent must be
+approved with `hide` and `rejected` absent or exactly false, otherwise the
+answer is 404: there is no privileged override and no session is read.
+
+The occurrence query mirrors the existing page: children whose `parent` is the
+ObjectId or its string form and that are publicly visible, split into upcoming
+(today through +90 days), past (before today) and cancelled (within ±90 days),
+each capped at 16 documents, merged by id and sorted by date, start time and id.
+Only raw fields are returned; selection, display order and the index window are
+the caller's decisions.
+
+```json
+{"id": "66fa...", "occurrences": [{"id": "66fa...", "slug": "may-day-2026",
+  "running_number": 4242, "date": "2026-12-01", "start_time": "14:00",
+  "end_time": "15:00", "cancelled": false}]}
+```
+
+The endpoint is read-only, needs no cookie, returns `no-store` and is not cached
+in the process, so a newly generated occurrence appears on the next request.
+One parent read plus three indexed range queries serve a request; there is no
+aggregation and no collection scan.
+
 ## Detail identifier compatibility
 
 Production now carries non-unique, sparse `aliases_1` and `running_number_1`

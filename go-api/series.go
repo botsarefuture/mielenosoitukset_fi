@@ -24,12 +24,13 @@ const (
 )
 
 type seriesOccurrence struct {
-	ID        string `json:"id"`
-	Slug      string `json:"slug,omitempty"`
-	Date      string `json:"date,omitempty"`
-	StartTime string `json:"start_time,omitempty"`
-	EndTime   string `json:"end_time,omitempty"`
-	Cancelled bool   `json:"cancelled"`
+	ID            string `json:"id"`
+	Slug          string `json:"slug,omitempty"`
+	RunningNumber int64  `json:"running_number,omitempty"`
+	Date          string `json:"date,omitempty"`
+	StartTime     string `json:"start_time,omitempty"`
+	EndTime       string `json:"end_time,omitempty"`
+	Cancelled     bool   `json:"cancelled"`
 }
 
 type seriesPayload struct {
@@ -95,7 +96,7 @@ func (s mongoStore) FindSeries(ctx context.Context, parent bson.ObjectID) (serie
 	windowEnd := shiftDay(today, seriesWindowDays)
 	windowStart := shiftDay(today, -seriesWindowDays)
 	projection := options.Find().SetProjection(bson.M{
-		"_id": 1, "slug": 1, "date": 1, "start_time": 1, "end_time": 1, "cancelled": 1,
+		"_id": 1, "slug": 1, "running_number": 1, "date": 1, "start_time": 1, "end_time": 1, "cancelled": 1,
 	}).SetLimit(seriesLimit)
 
 	upcomingFilter := cloneFilter(base)
@@ -181,6 +182,14 @@ func seriesEntry(doc bson.M) (seriesOccurrence, bool) {
 	entry := seriesOccurrence{ID: id.Hex(), Cancelled: doc["cancelled"] == true}
 	if slug, ok := doc["slug"].(string); ok {
 		entry.Slug = slug
+	}
+	switch value := doc["running_number"].(type) {
+	case int32:
+		entry.RunningNumber = int64(value)
+	case int64:
+		entry.RunningNumber = value
+	case float64:
+		entry.RunningNumber = int64(value)
 	}
 	switch value := doc["date"].(type) {
 	case string:

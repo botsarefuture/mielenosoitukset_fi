@@ -80,6 +80,7 @@ def detail_messages():
         "date": _("Ajankohta"), "location": _("Sijainti"),
         "description": _("Kuvaus"), "organizers": _("Järjestäjät"),
         "route": _("Reitti"), "cancelled": _("Tämä mielenosoitus on peruttu."),
+        "series": _("Kaikki tapahtuman ajankohdat"),
         "calendar": _("Lisää kalenteriin (.ics)"), "reminder": _("Tilaa muistutus"),
         "report": _("Ilmoita virheestä"), "invite": _("Kutsu kavereita"),
         "share": _("Jaa tapahtuma"), "shareCopied": _("Linkki kopioitu"),

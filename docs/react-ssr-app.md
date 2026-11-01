@@ -30,6 +30,8 @@ read to the head path before they can move here.
 
 ## Files
 
+- `frontend/src/app/detail-route.ts` — the detail and series head reads, occurrence
+  selection and the series navigation that the host renders.
 - `frontend/src/app/` — configuration (existing public URL paths), copy catalog
   (fi/en/sv), routes, session contract, header props, footer, app shell, server
   render and browser entry. `detail.ts` holds detail copy and endpoints,
@@ -54,12 +56,25 @@ The host claims exactly one path segment. `/demonstration/<id>/ics`,
 keep their Flask handlers, which also keeps the recurring-series page on Flask
 for now.
 
-Known gap until the series slice: Flask 301s an occurrence URL to
-`/demonstration/<parent>/children?occurrence=...` only when the parent series is
-public. The host cannot tell, so it renders the occurrence at its own URL with a
-self-canonical instead of risking a 404 for an occurrence whose parent is hidden.
-A series endpoint that answers parent visibility and occurrences closes this and
-moves `/children` here.
+An occurrence URL of a public series is 301'd to
+`/demonstration/<parent>/children?occurrence=<slug or id>`, like Flask; when the
+parent series is not public the occurrence renders on its own, which is also the
+Flask behaviour.
+
+## Recurring series route
+
+`GET /demonstration/<parent>/children` is hosted and reads
+`/api/series/<parent>`: parent visibility plus the bounded occurrence list
+(upcoming, recent past, cancelled). The host selects the occurrence — the
+`?occurrence=` slug, id or running number when it is active, otherwise the next
+active one, otherwise the latest past one — then reads that occurrence's detail
+for the head. Canonical is the series URL without the query, and robots is
+`noindex` when no occurrence date falls inside the discovery window.
+
+Upcoming occurrences are listed first, then cancelled and past ones, matching the
+chooser. A series with no active occurrence is 404 with `noindex`; a nonpublic or
+unknown parent is 404; an unavailable API is 503. The Apache rule for this path
+is prepared and commented out with the detail rule.
 
 The head comes from one bounded (1.5 s) read of the public API, which the API
 caches itself. The host does not cache the document again. The identifier is
@@ -188,7 +203,8 @@ The web server sends only migrated page GET/HEAD requests to the app host:
 | --- | --- |
 | `GET|HEAD /` | React app host |
 | `GET|HEAD /demonstration/<id>` | React app host (rule prepared, enable after approval) |
-| `GET /demonstration/<id>/ics`, `/some`, `/children` | Flask (unchanged) |
+| `GET|HEAD /demonstration/<parent>/children` | React app host (rule prepared, enable after approval) |
+| `GET /demonstration/<id>/ics`, `/some` | Flask (unchanged) |
 | `POST /submit`, form posts, login/logout and other mutations | Flask (unchanged) |
 | `GET /admin*`, `/users*`, `/api*`, `/static*`, feeds, sitemap, robots | Flask (unchanged) |
 | `GET` of any page not yet migrated | Flask (unchanged) |

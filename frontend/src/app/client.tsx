@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client';
 import { useEffect, useRef, useState } from 'react';
 import { App } from './App';
 import type { AppConfig } from './config';
-import type { DetailBootstrap } from './detail-route';
+import type { DetailBootstrap, DetailSeries } from './detail-route';
 import type { HomeData } from '../pages/HomePage';
 import { routeForPath } from './routes';
 import type { AppRoute } from './routes';
@@ -18,7 +18,7 @@ import type { SessionSummary } from './session';
  */
 
 type Bootstrap = { config: AppConfig; session: SessionSummary; path: string;
-  detail?: DetailBootstrap; home?: HomeData | null };
+  detail?: DetailBootstrap; series?: DetailSeries; home?: HomeData | null };
 
 /**
  * Routes the app can enter without a server round trip for their metadata.
@@ -37,7 +37,7 @@ function resetScroll() {
   document.body.scrollTop = 0;
 }
 
-function Root({ config, session, path: initialPath, detail, home }: Bootstrap) {
+function Root({ config, session, path: initialPath, detail, series, home }: Bootstrap) {
   const [path, setPath] = useState(initialPath);
   const trackedPage = useRef<string | null>(null);
   useEffect(() => {
@@ -98,7 +98,7 @@ function Root({ config, session, path: initialPath, detail, home }: Bootstrap) {
   }, []);
   const route = routeForPath(path);
   if (!route) return null;
-  return <App config={config} session={session} route={route} path={path} detail={detail} home={home} />;
+  return <App config={config} session={session} route={route} path={path} detail={detail} series={series} home={home} />;
 }
 
 const container = document.getElementById('app');

@@ -81,6 +81,30 @@ const detailId = '66fa58601102367d5d52887f';
 const longDescription = `<p>${'Pitkä kuvaus '.repeat(40)}</p>`;
 const publicReads = [];
 const localReads = [];
+// Relative dates keep the selection and index assertions stable over time.
+const day = offset => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+const seriesParent = '66fa58601102367d5d528000';
+const farParent = '66fa58601102367d5d528001';
+const orphanParent = '66fa58601102367d5d528002';
+const childUpcoming = '66fa58601102367d5d528010';
+const childPast = '66fa58601102367d5d528011';
+const childCancelled = '66fa58601102367d5d528012';
+const orphanChild = '66fa58601102367d5d528013';
+const farChild = '66fa58601102367d5d528014';
+const seriesOccurrences = [
+  { id: childUpcoming, slug: 'occurrence-a', date: day(30), start_time: '14:00', end_time: '15:00', cancelled: false },
+  { id: childPast, slug: 'occurrence-b', date: day(-30), start_time: '10:00', end_time: '11:00', cancelled: false },
+  { id: childCancelled, slug: 'occurrence-c', date: day(31), cancelled: true },
+];
+// Children resolve by id or slug, and know their parent series.
+const children = {
+  'occurrence-a': { id: childUpcoming, parent: seriesParent },
+  'occurrence-b': { id: childPast, parent: seriesParent },
+  'orphan-child': { id: orphanChild, parent: orphanParent },
+  [childUpcoming]: { id: childUpcoming, parent: seriesParent, slug: 'occurrence-a' },
+  [childPast]: { id: childPast, parent: seriesParent, slug: 'occurrence-b' },
+  [orphanChild]: { id: orphanChild, parent: orphanParent, slug: 'orphan-child' },
+};
 function createApi(log) {
   return createServer((req, res) => {
     const url = new URL(req.url, 'http://api.test');
@@ -93,13 +117,28 @@ function createApi(log) {
     if (identifier === 'home') {
       return send(200, { events: [{ _id: detailId, title: 'Test event', detail_url: '/demonstration/may-day-2026' }], recommended: false });
     }
+    if (url.pathname.includes('/series/')) {
+      if (identifier === orphanParent) return send(404, { error: 'series not found' });
+      if (identifier === farParent) {
+        return send(200, { id: farParent, occurrences: [{ id: farChild, slug: 'far-child', date: day(900), cancelled: false }] });
+      }
+      if (identifier === seriesParent) return send(200, { id: seriesParent, occurrences: seriesOccurrences });
+      return send(404, { error: 'series not found' });
+    }
     if (identifier === 'slow') return; // never answers; the host must give up
     if (identifier === 'broken') { res.writeHead(503); res.end('{}'); return; }
     if (identifier === 'nonpublic') return send(404, { error: 'demonstration not found' });
+    const child = children[identifier];
+    if (child) {
+      return send(200, { _id: child.id, title: 'Test occurrence', description: 'Kuvaus',
+        slug: child.slug ?? identifier, parent: child.parent, date: day(30),
+        start_time: '14:00', end_time: '15:00', cancelled: false, city: 'Helsinki',
+        address: 'Mannerheimintie 1', preview_image: null });
+    }
     const doc = {
       _id: detailId, title: 'Test event', description: longDescription,
       slug: identifier === detailId ? 'may-day-2026' : identifier,
-      running_number: 4242, date: identifier === 'far-future' ? '2035-01-01' : '2026-12-01',
+      running_number: 4242, date: identifier === 'far-future' ? day(900) : '2026-12-01',
       start_time: '14:00', end_time: '15:00', cancelled: false,
       city: 'Helsinki', address: 'Mannerheimintie 1', preview_image: null, parent: null,
     };
@@ -202,7 +241,45 @@ try {
   const homeAgain = await detailPage({ path: '/' });
   assert.equal(bootstrap(homeAgain.html).home.events.length, 1);
   assert.equal(localReads.filter(read => read.includes('/home')).length, homeReads, 'The home batch is cached');
-  console.log('PASS: detail head metadata, canonical, JSON-LD, noindex header, preview redirect, bounded 503, local read base, head and home caching, unowned sub-paths');
+  // The series page renders the selected occurrence with its own canonical.
+  const seriesPage = await detailPage({ path: `/demonstration/${seriesParent}/children` });
+  assert.equal(seriesPage.status, 200);
+  const seriesBootstrap = bootstrap(seriesPage.html);
+  assert.equal(seriesBootstrap.detail.id, childUpcoming, 'The next active occurrence is shown first');
+  assert.equal(seriesBootstrap.detail.canonicalUrl,
+    `https://example.test/demonstration/${seriesParent}/children`, 'Sharing uses the series URL');
+  assert.deepEqual(seriesBootstrap.series.occurrences.map(item => item.id),
+    [childUpcoming, childCancelled, childPast], 'Upcoming, then cancelled and past occurrences');
+  assert.equal(seriesBootstrap.series.occurrences[0].selected, true);
+  assert.equal(seriesBootstrap.series.occurrences[0].url,
+    `/demonstration/${seriesParent}/children?occurrence=occurrence-a`);
+  assert.match(seriesPage.html,
+    new RegExp(`<link rel="canonical" href="https://example.test/demonstration/${seriesParent}/children">`));
+  assert.match(seriesPage.html, /<meta name="robots" content="index, follow" \/>/);
+  assert.match(seriesPage.html, /"@type":"Event"/, 'The selected occurrence still carries structured data');
+
+  const chosen = await detailPage({ path: `/demonstration/${seriesParent}/children`, search: '?occurrence=occurrence-b' });
+  assert.equal(bootstrap(chosen.html).detail.id, childPast, 'A requested occurrence wins');
+
+  // A public series redirects its occurrence URLs to the series page.
+  const moved = await detailPage({ path: '/demonstration/occurrence-a' });
+  assert.equal(moved.status, 301);
+  assert.equal(moved.redirect, `/demonstration/${seriesParent}/children?occurrence=occurrence-a`);
+
+  // An occurrence whose parent series is not public stands on its own.
+  const orphan = await detailPage({ path: '/demonstration/orphan-child' });
+  assert.equal(orphan.status, 200);
+  assert.equal(bootstrap(orphan.html).detail.identifier, 'orphan-child');
+
+  // A series without any date in the discovery window stays noindex.
+  const farSeries = await detailPage({ path: `/demonstration/${farParent}/children` });
+  assert.equal(farSeries.status, 200);
+  assert.equal(farSeries.headers?.['X-Robots-Tag'], 'noindex, follow');
+  assert.equal((await detailPage({ path: '/demonstration/nothex/children' })).status, 404,
+    'A series parent must be an ObjectId');
+  assert.equal((await detailPage({ path: `/demonstration/${orphanParent}/children` })).status, 404,
+    'A nonpublic series is 404');
+  console.log('PASS: detail head metadata, canonical, JSON-LD, noindex header, preview redirect, bounded 503, local read base, head and home caching, series page and occurrence redirect, unowned sub-paths');
 } finally {
   publicApi.closeAllConnections?.();
   localApi.closeAllConnections?.();

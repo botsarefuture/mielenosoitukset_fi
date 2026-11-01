@@ -14,6 +14,7 @@ export type DetailMessages = {
   date: string; location: string; startingFrom: string; cancelled: string; description: string;
   organizers: string; noOrganizers: string; organizerProfile: string; website: string;
   route: string; map: string; showMap: string; mapLoading: string; directions: string;
+  series: string;
   gallery: string; openImage: string; close: string; previous: string; next: string; imageUnavailable: string;
   calendar: string; reminder: string; report: string; invite: string; attend: string;
   loginRequired: string; share: string; copyLink: string; shareCopied: string; copyFailed: string;

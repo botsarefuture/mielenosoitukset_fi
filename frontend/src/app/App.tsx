@@ -6,7 +6,7 @@ import { HomePage } from '../pages/HomePage';
 import type { HomeData } from '../pages/HomePage';
 import type { AppConfig } from './config';
 import { detailEndpoint, detailMessages, detailUrls } from './detail';
-import type { DetailBootstrap } from './detail-route';
+import type { DetailBootstrap, DetailSeries } from './detail-route';
 import { SiteFooter } from './Footer';
 import { headerProps } from './header-props';
 import { catalog } from './i18n';
@@ -21,6 +21,8 @@ export type AppProps = {
   path: string;
   /** Server-resolved event for the detail route; absent on other pages. */
   detail?: DetailBootstrap;
+  /** Series navigation for the `/children` route. */
+  series?: DetailSeries;
   /** Server-read home batch, so cards paint without a second request. */
   home?: HomeData | null;
 };
@@ -37,7 +39,7 @@ function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<
 }
 
 /** One public application shell: shared header, routed page content, footer. */
-export function App({ config, session, route, path, detail, home }: AppProps) {
+export function App({ config, session, route, path, detail, series, home }: AppProps) {
   const text = catalog(config.locale);
   const meta = routeMeta(route, config, text);
   useEffect(() => {
@@ -59,12 +61,13 @@ export function App({ config, session, route, path, detail, home }: AppProps) {
         }}
         text={text.home}
       />}
-      {route.name === 'detail' && (detail
+      {(route.name === 'detail' || route.name === 'series') && (detail
         ? <DetailScreen
             base={{
               endpoint: detailEndpoint(config), locale: config.locale,
               authenticated: session.authenticated,
               urls: detailUrls(config), messages: detailMessages(config.locale),
+              series,
             }}
             id={detail.id}
             canonicalUrl={detail.canonicalUrl}

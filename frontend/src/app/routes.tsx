@@ -6,10 +6,14 @@ import type { Catalog } from './i18n';
  *
  * Only routes listed here are served by the React host. Everything else keeps
  * its existing Flask handler, so an unknown path is never claimed here. The
- * detail route claims exactly one path segment: `/demonstration/<id>/ics`,
- * `/demonstration/<id>/children` and a trailing slash all stay on Flask.
+ * detail route claims exactly one path segment and the series route claims the
+ * `/children` path; `/demonstration/<id>/ics`, `/demonstration/<id>/some` and a
+ * trailing slash all stay on Flask.
  */
-export type AppRoute = { name: 'home' } | { name: 'detail'; identifier: string };
+export type AppRoute =
+  | { name: 'home' }
+  | { name: 'detail'; identifier: string }
+  | { name: 'series'; parent: string };
 
 export type RouteMeta = {
   title: string;
@@ -21,6 +25,7 @@ export type RouteMeta = {
 };
 
 const DETAIL_PATH = /^\/demonstration\/([^/]+)$/;
+const SERIES_PATH = /^\/demonstration\/([^/]+)\/children$/;
 
 function readIdentifier(raw: string): string | null {
   try {
@@ -36,6 +41,11 @@ function readIdentifier(raw: string): string | null {
 }
 
 export function routeForPath(path: string): AppRoute | null {
+  const series = SERIES_PATH.exec(path);
+  if (series) {
+    const parent = readIdentifier(series[1]);
+    return parent && /^[a-f\d]{24}$/i.test(parent) ? { name: 'series', parent } : null;
+  }
   const match = DETAIL_PATH.exec(path);
   if (match) {
     const identifier = readIdentifier(match[1]);

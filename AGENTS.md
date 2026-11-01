@@ -41,6 +41,19 @@ Sticking to these steps keeps the project history readable and prevents surprise
 
 ## Modernization direction
 
+### Maintainer decision, 1 November 2026
+
+The public UI must become fully React by January 2027. All new public UI work
+must advance or remain directly compatible with that target. Do not introduce
+temporary Flask/Jinja-specific UI optimizations or new public markup that must
+be rewritten for the React host. Reuse portable React routes, components and
+API data loaders, and migrate existing mostly-React pages once their behavior,
+localization, tracking and SEO are verified. Admin UI is outside this scope.
+Preserve existing accounts, authentication, URLs and form/API contracts. Apache
+may route explicitly migrated page GETs to the React host while APIs, writes,
+authentication and administration retain their existing handlers. Prepare and
+verify production routing before asking for its activation approval.
+
 For architecture and migration work, read [the maintainer's modernization context](docs/modernization-context.txt)
 and [the initial assessment](docs/modernization-assessment.md) before proposing changes.
 The context is guidance, not an approved replacement specification.

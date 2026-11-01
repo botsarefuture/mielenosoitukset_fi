@@ -54,6 +54,7 @@ from mielenosoitukset_fi.utils.public_pagination import (
 from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.site_analytics import (
     record_beacon_event,
+    record_public_app_pageview,
     record_event_for_request,
     record_web_vital,
 )
@@ -1298,6 +1299,22 @@ def init_routes(app):
         record_beacon_event(payload)
         return jsonify({"ok": True})
 
+    @app.route("/api/analytics/pageview", methods=["POST"])
+    @_optional_limit("60 per minute")
+    def track_public_app_pageview():
+        """Receive anonymous display signals only for migrated React pages."""
+        if request.content_length is not None and request.content_length > 1024:
+            return jsonify({"ok": True})
+        raw_payload = request.stream.read(1025)
+        if len(raw_payload) > 1024:
+            return jsonify({"ok": True})
+        try:
+            payload = json.loads(raw_payload.decode("utf-8")) if request.is_json else None
+        except (UnicodeDecodeError, ValueError):
+            payload = None
+        record_public_app_pageview(payload, request)
+        return jsonify({"ok": True})
+
     @app.route("/api/analytics/vitals", methods=["POST"])
     @_optional_limit("120 per minute")
     def track_web_vital():
@@ -1790,6 +1807,8 @@ def init_routes(app):
             "unread": 0,
             "fundraising": bool(details.get("show_header_link"))
             and (campaign_pages_public() or current_user.is_authenticated),
+            "site_analytics_enabled": bool(current_app.config.get("SITE_ANALYTICS_ENABLED", True)),
+            "matomo_enabled": bool(current_app.config.get("MATOMO_ENABLED", True)),
         }
         if current_user.is_authenticated:
             payload.update({

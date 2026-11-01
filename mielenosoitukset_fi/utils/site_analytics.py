@@ -68,9 +68,11 @@ import re
 from bisect import bisect_left
 from datetime import date, datetime, time, timedelta, timezone
 from ipaddress import ip_address
-from urllib.parse import urlsplit
+from types import SimpleNamespace
+from urllib.parse import parse_qsl, urlsplit
 
 import pytz
+from werkzeug.datastructures import Headers, MultiDict
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.request_ip import get_client_ip
@@ -501,6 +503,14 @@ def record_pageview_from_request(request, response):
         classified = classify_request(request)
         if not classified:
             return False
+        return _record_classified_pageview(request, classified)
+    except Exception:
+        return False
+
+
+def _record_classified_pageview(request, classified):
+    """Share the existing aggregate writes between HTML and React page views."""
+    try:
         increment_counter(
             page_type=classified.get("page_type"),
             resource_id=classified.get("resource_id"),
@@ -525,6 +535,55 @@ def record_pageview_from_request(request, response):
     except Exception:
         return False
     return True
+
+
+def record_public_app_pageview(payload, request):
+    """Record a displayed migrated page from a bounded, same-origin beacon.
+
+    Only the standalone home route is migrated. Legacy Flask pages must not
+    send this beacon, since their HTML responses already record their views.
+    The page location comes from the same-origin Referer, never a payload URL.
+    Raw locations and referrers are reduced to existing aggregate dimensions.
+    """
+    try:
+        from flask import current_app
+
+        if (not current_app.config.get("SITE_ANALYTICS_ENABLED", True)
+                or request.headers.get("DNT") == "1"):
+            return False
+        if not isinstance(payload, dict) or set(payload) - {"referrer"}:
+            return False
+        original_referrer = payload.get("referrer", "")
+        if not isinstance(original_referrer, str) or len(original_referrer) > 2048:
+            return False
+        landing = urlsplit(request.headers.get("Referer") or "")
+        origin = urlsplit(request.host_url)
+        if (landing.scheme not in {"http", "https"}
+                or (landing.scheme.lower(), landing.netloc.lower())
+                != (origin.scheme.lower(), origin.netloc.lower())
+                or landing.path != "/" or landing.username or landing.password):
+            return False
+        supplied_origin = request.headers.get("Origin")
+        if supplied_origin and supplied_origin.rstrip("/") != request.host_url.rstrip("/"):
+            return False
+        if request.headers.get("Sec-Fetch-Site") == "cross-site":
+            return False
+
+        # This is a browser page signal, not a fabricated HTTP response. Keep
+        # the actual request's trusted peer/proxy headers for visitor hashing.
+        headers = Headers(request.headers)
+        headers["Referer"] = original_referrer
+        signal = SimpleNamespace(
+            method="GET", path=landing.path, host=request.host,
+            headers=headers, environ=request.environ,
+            args=MultiDict(parse_qsl(landing.query, keep_blank_values=True, max_num_fields=32)),
+        )
+        classified = classify_request(signal)
+        return bool(classified and _record_classified_pageview(signal, classified))
+    except (TypeError, ValueError):
+        return False
+    except Exception:
+        return False
 
 
 # ---------------------------------------------------------------------------

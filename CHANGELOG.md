@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Let the public Go API resolve demonstration identifiers the way the site already does (ObjectId, alias, running number, slug) and return a recurring event's series `parent`, so a host can serve the existing `/demonstration/<slug>` URLs and link back to a series without a Flask request. Public ObjectIds resolve in one indexed read. Nonpublic events stay 404, including through their aliases.
+
 - Cache cookieless public React-host configuration for five minutes, reducing repeat lookups while keeping private sessions uncached.
 
 - Keep the public React host alive on malformed asset requests, use asynchronous file reads, and avoid repeated cookieless configuration requests while keeping private sessions isolated.

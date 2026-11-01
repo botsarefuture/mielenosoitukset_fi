@@ -218,6 +218,12 @@ func (s *cachedDetailStore) Close() { s.cancel() }
 
 func (s *cachedDetailStore) Ping(ctx context.Context) error { return s.source.Ping(ctx) }
 
+// Identifier resolution is cheap and never cached: a renamed slug or a
+// moderation change must take effect immediately.
+func (s *cachedDetailStore) ResolvePublicID(ctx context.Context, raw string) (bson.ObjectID, error) {
+	return s.source.ResolvePublicID(ctx, raw)
+}
+
 func (s *cachedDetailStore) shardFor(id bson.ObjectID) *detailShard {
 	// Last 4 bytes of an ObjectID are the counter; mix them for an even spread.
 	h := binary.LittleEndian.Uint32(id[8:12]) * 2654435761

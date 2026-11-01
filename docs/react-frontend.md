@@ -509,8 +509,9 @@ Flatpickr appends its calendar to `<body>`, so `.submit-page`-scoped selectors d
 not reach it. The calendar is themed through the unscoped
 `.public-date-calendar` rules in `submit.css`, which is why dark mode needs those
 rules to stand on their own rather than inherit from the page wrapper. The priced cost of the
-entry is about 86 KB gzip JavaScript plus 37 KB gzip CSS (Quill included); the
-React runtime chunk is already loaded on this page by the site header.
+entry is about 86 KB gzip JavaScript plus 37 KB gzip CSS (Quill included).
+The current merged assets load separate React runtime chunks for the site header
+and submission page; rebuilding the shared frontend assets can reunify them.
 
 ### Verification
 

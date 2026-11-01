@@ -254,6 +254,17 @@ PAGE_TYPE_LABELS = {
     PAGE_TYPE_GENERIC: "Muu sivu",
 }
 
+# URI families already represented by the stored page_type dimension.
+PAGE_TYPE_PATHS = {
+    "index": "/", "demonstrations": "/demonstrations",
+    "demonstration": "/demonstration/<id>", "organization": "/organization/<id>",
+    "city": "/city/<city>", "cities": "/cities", "tag": "/tag/<tag>",
+    "calendar": "/calendar/*", "today": "/mielenosoitukset-tanaan",
+    "submit": "/submit", "search": "/search_organizations",
+    "campaign": "/kampanja/*, /pride-nakyvaksi", "page": None,
+}
+
+
 
 def _mongo():
     """Database handle resolved lazily so tests can rebind modules cleanly."""
@@ -907,6 +918,67 @@ def get_web_vitals_summary(days=30, minimum_samples=10, page_type=None):
             )
         result.append(row)
     return result
+
+
+def get_web_vitals_explorer(days=30, metric="TTFB", minimum_samples=10):
+    """Compare page groups and sample-weighted daily averages in one metric.
+
+    Missing or undersampled days remain None instead of zero-duration results.
+    One projected read supplies every page group in the chosen metric/window.
+    """
+    if metric not in WEB_VITAL_NAMES:
+        raise ValueError("Unknown Web Vitals metric")
+    match, start, end = _match_window(days=max(1, min(int(days), 90)))
+    match["metric"] = metric
+    match["page_type"] = {"$in": list(PAGE_TYPE_LABELS)}
+    labels = []
+    day = start
+    while day <= end:
+        labels.append(day.strftime("%Y-%m-%d"))
+        day += timedelta(days=1)
+    scopes = {key: {"count": 0, "sum": 0.0, "histogram": {}, "days": {}}
+              for key in ("", *PAGE_TYPE_LABELS)}
+    for document in _web_vitals_collection().find(match, {
+        "page_type": 1, "date": 1, "count": 1, "sum": 1, "histogram": 1,
+    }):
+        page = document.get("page_type")
+        date_key = document.get("date")
+        if page not in PAGE_TYPE_LABELS or date_key not in labels:
+            continue
+        count = int(document.get("count", 0) or 0)
+        total = float(document.get("sum", 0) or 0)
+        if count <= 0 or not math.isfinite(total) or total < 0:
+            continue
+        for key in ("", page):
+            target = scopes[key]
+            target["count"] += count
+            target["sum"] += total
+            daily = target["days"].setdefault(date_key, {"count": 0, "sum": 0.0})
+            daily["count"] += count
+            daily["sum"] += total
+            for bucket, number in (document.get("histogram") or {}).items():
+                target["histogram"][bucket] = target["histogram"].get(bucket, 0) + int(number or 0)
+    rows = []
+    series = {}
+    boundaries = _web_vital_buckets(metric)
+    for key, values in scopes.items():
+        count = values["count"]
+        sufficient = count >= minimum_samples
+        row = {"page_type": key, "metric": metric, "uri": PAGE_TYPE_PATHS.get(key),
+               "count": count, "sufficient": sufficient,
+               "average": values["sum"] / count if sufficient else None}
+        for name, quantile in (("p50", 0.50), ("p95", 0.95), ("p99", 0.99)):
+            row[name] = (_histogram_percentile(values["histogram"], count, boundaries, quantile)
+                         if sufficient else None)
+        rows.append(row)
+        series[key] = {
+            "values": [round(values["days"][date_key]["sum"] / values["days"][date_key]["count"], 3)
+                       if values["days"].get(date_key, {}).get("count", 0) >= minimum_samples else None
+                       for date_key in labels],
+            "counts": [values["days"].get(date_key, {}).get("count", 0) for date_key in labels],
+        }
+    rows[1:] = sorted(rows[1:], key=lambda row: (-row["count"], row["page_type"]))
+    return {"metric": metric, "labels": labels, "rows": rows, "series": series}
 
 
 # ---------------------------------------------------------------------------

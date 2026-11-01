@@ -341,3 +341,17 @@
 .public-date-calendar .flatpickr-time .numInputWrapper span.arrowDown:after {
   border-bottom-color: var(--product-text);
 }
+
+/* The React conflict dialog uses the native top layer, separately from Bootstrap .modal. */
+.submit-conflict-dialog {
+  width: min(40rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: 1px solid var(--product-border);
+  border-radius: .75rem;
+  background: var(--product-surface);
+  color: var(--product-text);
+  overflow: auto;
+}
+.submit-conflict-dialog::backdrop { background: var(--product-overlay); }
+.submit-conflict-dialog .modal-dialog { margin: 0; max-width: none; min-height: 0; }

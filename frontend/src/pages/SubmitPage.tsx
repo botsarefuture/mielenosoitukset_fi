@@ -30,12 +30,12 @@ const FIELD_IDS: Record<string, string> = {
   title: 'name',
   tags: 'tags',
   defaultLanguage: 'default_language',
-  date: 'date',
-  startTime: 'start_time',
-  endTime: 'end_time',
+  date: 'date-display',
+  startTime: 'start_time-display',
+  endTime: 'end_time-display',
   eventType: 'type',
   route: 'route',
-  city: 'city-value',
+  city: 'city-trigger',
   address: 'address',
   submitterRole: 'submitter_role',
   submitterName: 'submitter_name',
@@ -117,6 +117,7 @@ export function SubmitPage(props: SubmitPageProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const conflictRef = useRef<HTMLDialogElement>(null);
   const conflictResolve = useRef<((confirmed: boolean) => void) | null>(null);
+  const openedConflictResolve = useRef<((confirmed: boolean) => void) | null>(null);
   const draftReady = useRef(false);
   // Set by "delete draft": the pagehide flush must not recreate what we just removed.
   const draftSuppressed = useRef(false);
@@ -444,17 +445,29 @@ export function SubmitPage(props: SubmitPageProps) {
     setConflict(data);
     window.setTimeout(() => {
       conflictRef.current?.showModal();
+      openedConflictResolve.current = resolve;
       document.getElementById('submit-conflict-cancel')?.focus();
     }, 0);
   }), []);
 
   const closeConflict = (confirmed: boolean) => {
-    conflictRef.current?.close();
-    setConflict(null);
     const resolve = conflictResolve.current;
     conflictResolve.current = null;
+    openedConflictResolve.current = null;
+    conflictRef.current?.close();
+    setConflict(null);
     resolve?.(confirmed);
   };
+
+  const finishDelivery = useCallback(() => {
+    // Neither the pending debounce nor pagehide may recreate a delivered draft.
+    draftSuppressed.current = true;
+    if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+    saveTimer.current = null;
+    clearDraft();
+    setStep(STEP_COUNT);
+    window.setTimeout(() => focusHeading(STEP_COUNT), 0);
+  }, []);
 
   const submit = useCallback(async (event?: FormEvent) => {
     event?.preventDefault();
@@ -469,9 +482,7 @@ export function SubmitPage(props: SubmitPageProps) {
     try {
       const response = await post(false);
       if (await delivered(response)) {
-        clearDraft();
-        setStep(STEP_COUNT);
-        window.setTimeout(() => focusHeading(STEP_COUNT), 0);
+        finishDelivery();
         return;
       }
       if (response.status === 409) {
@@ -492,9 +503,7 @@ export function SubmitPage(props: SubmitPageProps) {
           }
           const retry = await post(true);
           if (await delivered(retry)) {
-            clearDraft();
-            setStep(STEP_COUNT);
-            window.setTimeout(() => focusHeading(STEP_COUNT), 0);
+            finishDelivery();
             return;
           }
           await reportError(retry, messages.errorConflictForceFailed);
@@ -510,7 +519,7 @@ export function SubmitPage(props: SubmitPageProps) {
     } finally {
       setSubmitting(false);
     }
-  }, [askConflict, delivered, messages, post, reportError, showProblems, submitting, validate]);
+  }, [askConflict, delivered, finishDelivery, messages, post, reportError, showProblems, submitting, validate]);
 
   /* ------------------------------------------------------- test mode (§dev) */
 
@@ -829,10 +838,11 @@ export function SubmitPage(props: SubmitPageProps) {
 
             <div className="form-row">
               <div className="form-group">
-                <label id="date-label" htmlFor="date">{messages.dateLabel}<span className="required-asterisk">*</span></label>
+                <label id="date-label" htmlFor="date-display">{messages.dateLabel}<span className="required-asterisk">*</span></label>
                 <DateField
                   id="date"
                   name="date"
+                  invalid={invalid.has('date')}
                   value={fields.date}
                   onChange={(value) => set('date', value)}
                   required
@@ -844,10 +854,11 @@ export function SubmitPage(props: SubmitPageProps) {
                 </div>
               </div>
               <div className="form-group">
-                <label htmlFor="start_time">{messages.startTimeLabel}<span className="required-asterisk">*</span></label>
+                <label htmlFor="start_time-display">{messages.startTimeLabel}<span className="required-asterisk">*</span></label>
                 <DateField
                   id="start_time"
                   name="start_time"
+                  invalid={invalid.has('startTime')}
                   mode="time"
                   value={fields.startTime}
                   onChange={(value) => set('startTime', value)}
@@ -858,10 +869,11 @@ export function SubmitPage(props: SubmitPageProps) {
             </div>
 
             <div className="form-group">
-              <label htmlFor="end_time">{messages.endTimeLabel}</label>
+              <label htmlFor="end_time-display">{messages.endTimeLabel}</label>
               <DateField
                 id="end_time"
                 name="end_time"
+                invalid={invalid.has('endTime')}
                 mode="time"
                 value={fields.endTime}
                 onChange={(value) => set('endTime', value)}
@@ -915,6 +927,7 @@ export function SubmitPage(props: SubmitPageProps) {
 
             <CitySelect
               id="city"
+              invalid={invalid.has('city')}
               cities={cities}
               value={fields.city}
               onChange={(city) => set('city', city)}
@@ -1064,7 +1077,13 @@ export function SubmitPage(props: SubmitPageProps) {
         </div>
       </form>
 
-      <dialog className="modal user-modal" id="submitConflictModal" ref={conflictRef} aria-labelledby="submitConflictModalLabel">
+      <dialog className="submit-conflict-dialog user-modal" id="submitConflictModal" ref={conflictRef} aria-labelledby="submitConflictModalLabel"
+        onCancel={(event) => { event.preventDefault(); closeConflict(false); }}
+        onClose={(event) => {
+          // Ignore a queued close from the previous dialog if another is pending.
+          if (!event.currentTarget.open && conflictResolve.current && openedConflictResolve.current === conflictResolve.current) closeConflict(false);
+        }}
+      >
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             <div className="modal-header">

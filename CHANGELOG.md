@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+- Keep successfully submitted React drafts cleared, restore visible duplicate confirmation and Escape cancellation, and focus the visible date/city controls on validation errors.
+
+- Show a whole-site performance timeline above a table of normalized page URI groups. Selecting a page changes its daily-average chart while preserving the date range and metric; undersampled days remain gaps.
+
 - Update the real-HTTP smoke and shared-header contract tests to the deployed React home shell from #1007: the home page ships no server-side `demos-grid` anymore, loads exactly the shared header plus one home entry, and the smoke test now verifies that the island mounts and renders the `/api/home` data contract over the live server.
 
 - Add `scripts/open_pr.sh`, a maintainer helper that opens or reuses a GitHub pull request using the stored `git push` credential, so PR creation works without an interactive `gh auth login`.

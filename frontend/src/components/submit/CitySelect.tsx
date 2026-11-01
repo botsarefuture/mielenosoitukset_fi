@@ -20,13 +20,14 @@ type CitySelectProps = {
   value: string;
   onChange: (city: string) => void;
   required?: boolean;
+  invalid?: boolean;
   messages: SubmitMessages;
   label: string;
   describedBy?: string;
 };
 
 export function CitySelect({
-  id, cities, value, onChange, required, messages, label, describedBy,
+  id, cities, value, onChange, required, invalid, messages, label, describedBy,
 }: CitySelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -101,6 +102,7 @@ export function CitySelect({
           id={`${id}-trigger`}
           ref={triggerRef}
           className={`submit-city__trigger${value ? '' : ' submit-city__trigger--empty'}`}
+          aria-invalid={invalid || undefined}
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-controls={open ? listId : undefined}

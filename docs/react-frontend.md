@@ -523,3 +523,13 @@ Known gaps: the React page's draft module is exercised through the browser tests
 rather than a unit runner, because the project has no JavaScript test runner; and
 cross-version draft interop is asserted by format equality, not by a round-trip
 test between the two pages.
+
+### Submission review follow-up
+
+The React wizard is enabled in the checked production configuration; its config
+class default remains off for rollback. After explicit JSON delivery, autosave
+is suppressed and any pending save is cancelled before deleting the draft.
+Native duplicate-confirmation cancellation settles the pending decision and
+re-enables submission. The dialog uses its own native-dialog class rather than
+Bootstrap's hidden `.modal` root. Validation and date labels target the visible
+picker/city controls, while hidden ISO inputs keep the existing POST names.

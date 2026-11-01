@@ -82,6 +82,16 @@ def test_wizard_validates_before_advancing_and_focuses_the_problem(app, page_one
     expect(page.locator("#page-3")).to_be_visible()
     expect(page.locator(".progress-step[aria-current='step']")).to_have_attribute("data-page", "3")
 
+    page.locator("#page-3").get_by_role("button", name=re.compile("Seuraava")).click()
+    expect(page.locator("#date-display")).to_be_focused()
+    expect(page.locator("#date-display")).to_have_attribute("aria-invalid", "true")
+    page.evaluate("document.getElementById('date-display')._flatpickr.setDate('01.01.2099', true)")
+    page.evaluate("document.getElementById('start_time-display')._flatpickr.setDate('12:00', true)")
+    page.locator("#type").select_option("paikallaan")
+    page.locator("#page-3").get_by_role("button", name=re.compile("Seuraava")).click()
+    expect(page.locator("#city-trigger")).to_be_focused()
+    expect(page.locator("#city-trigger")).to_have_attribute("aria-invalid", "true")
+
     page.locator("#page-3").get_by_role("button", name=re.compile("Edellinen")).click()
     expect(page.locator("#page-2")).to_be_visible()
     expect(page.locator("#name")).to_have_value("Retained title")
@@ -98,6 +108,10 @@ def test_draft_is_retained_until_json_success_confirms_delivery(app, page_one_re
         assert route.request.headers["x-requested-with"] == "XMLHttpRequest"
         if len(posts) == 1:
             return route.fulfill(status=200, content_type="text/html", body="<h1>Outage</h1>")
+        if len(posts) in (2, 3):
+            return route.fulfill(status=409, content_type="application/json", body=json.dumps({
+                "success": False, "conflict": True, "message": "Possible duplicate", "demos": [{"title": "Existing event", "date": "2099-01-01"}],
+            }))
         return route.fulfill(status=200, content_type="application/json", body='{"success": true}')
 
     page.route("**/submit", submit)
@@ -120,13 +134,36 @@ def test_draft_is_retained_until_json_success_confirms_delivery(app, page_one_re
     )
 
     page.locator("#submit-form").click()
+    dialog = page.locator("#submitConflictModal")
+    expect(dialog).to_be_visible()
+    expect(page.locator("#submit-conflict-matches")).to_contain_text("01.01.2099")
+    expect(page.locator("#submit-conflict-matches")).not_to_contain_text("2099-01-01")
+    page.keyboard.press("Escape")
+    expect(dialog).not_to_be_visible()
+    expect(page.locator("#submit-form")).to_be_enabled()
+    assert len(posts) == 2
+    assert page.evaluate("key => localStorage.getItem(key) !== null", DRAFT_KEY)
+
+    # A new conflict after native cancellation can still be confirmed and delivered.
+    page.locator("#submit-form").click()
+    expect(dialog).to_be_visible()
+    page.locator("#submit-conflict-confirm").click()
     expect(page.locator("#page-6")).to_be_visible()
     expect(page.locator(".progress-step[aria-current='step']")).to_have_attribute("data-page", "6")
     assert page.evaluate("key => localStorage.getItem(key)", DRAFT_KEY) is None
-    assert len(posts) == 2
+    assert len(posts) == 4
+    assert 'name="force_submit"' in posts[-1]
     # Organizers and terms still cross the wire under the legacy field names.
     assert "organizer_name_1" in posts[-1]
     assert 'name="accept_terms"' in posts[-1]
+    # Wait beyond the autosave debounce, then exercise the unload flush as well.
+    page.wait_for_timeout(450)
+    page.evaluate("window.dispatchEvent(new PageTransitionEvent('pagehide'))")
+    assert page.evaluate("key => localStorage.getItem(key)", DRAFT_KEY) is None
+    page.reload(wait_until="networkidle")
+    expect(page.locator("#page-1")).to_be_visible()
+    expect(page.locator("#name")).to_have_value("")
+    expect(page.locator("#cacheNotice")).to_have_count(0)
 
 
 def test_restored_draft_rehydrates_fields_and_step(app, live_server, browser_page):

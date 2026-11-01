@@ -53,6 +53,7 @@ type DateFieldProps = {
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
+  invalid?: boolean;
   mode?: 'date' | 'time';
   describedBy?: string;
   labelledBy?: string;
@@ -60,7 +61,7 @@ type DateFieldProps = {
 };
 
 export function DateField({
-  id, name, value, onChange, required, mode = 'date', describedBy, labelledBy, label,
+  id, name, value, onChange, required, invalid, mode = 'date', describedBy, labelledBy, label,
 }: DateFieldProps) {
   const displayRef = useRef<HTMLInputElement>(null);
   const pickerRef = useRef<Instance | null>(null);
@@ -114,6 +115,7 @@ export function DateField({
         placeholder={mode === 'date' ? 'pp.kk.vvvv' : 'hh:mm'}
         autoComplete="off"
         required={required}
+        aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
         aria-labelledby={labelledBy}
         aria-label={labelledBy ? undefined : label}

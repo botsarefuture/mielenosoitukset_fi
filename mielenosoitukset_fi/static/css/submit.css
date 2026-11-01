@@ -341,3 +341,29 @@
 .public-date-calendar .flatpickr-time .numInputWrapper span.arrowDown:after {
   border-bottom-color: var(--product-text);
 }
+
+/* The React conflict dialog uses the native top layer, separately from Bootstrap .modal. */
+.submit-conflict-dialog {
+  width: min(40rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: 1px solid var(--product-border);
+  border-radius: .75rem;
+  background: var(--product-surface);
+  color: var(--product-text);
+  overflow: auto;
+}
+.submit-conflict-dialog::backdrop { background: var(--product-overlay); }
+.submit-conflict-dialog .modal-dialog { margin: 0; max-width: none; min-height: 0; }
+.submit-conflict-dialog .modal-header,
+.submit-conflict-dialog .modal-body,
+.submit-conflict-dialog .modal-footer { padding: 1rem; }
+.submit-conflict-dialog .modal-header,
+.submit-conflict-dialog .modal-footer { gap: .75rem; }
+.submit-conflict-dialog .modal-header .btn-close { margin: 0; padding: .5rem; }
+.submit-city__trigger[aria-invalid="true"] {
+  border-color: var(--product-danger);
+  outline: 2px solid var(--product-danger);
+  outline-offset: 2px;
+}
+.dark .submit-conflict-dialog .btn-close { filter: invert(1) grayscale(1) brightness(2); }

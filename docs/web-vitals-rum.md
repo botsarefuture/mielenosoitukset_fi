@@ -101,3 +101,27 @@ identifiers or raw paths. Samples from individual content URLs remain grouped
 by page family. Counts and the ten-sample threshold apply independently to
 each metric in the selected scope. Histogram bucket upper bounds and
 LCP/INP/CLS/TTFB units retain their existing meaning.
+
+## Page performance explorer
+
+The performance section starts with the whole site's daily average for the
+selected 7/14/30/90-day window. The table lists all existing page families,
+showing their normalized URI pattern, period average, histogram p50/p95/p99 and
+sample count for TTFB (default), LCP, INP or CLS. Selecting a row changes the
+chart immediately; native GET links preserve keyboard/no-JavaScript navigation
+and shareable `vitals_page`, `vitals_metric` and `range` parameters. The whole-site
+row/button resets the selection. Metric and date controls preserve the page.
+
+A single projected read of the existing daily histograms supplies the selected
+metric's table and chart data. Every mean is `sum / count`, including the
+site-wide series across page/device buckets; daily means are never averaged
+together. Days with fewer than ten samples are gaps, not zero-duration results.
+Period statistics use the same ten-sample threshold. Percentiles retain the
+fixed-bucket upper-bound interpretation. CLS is unitless; other metrics use ms.
+The chart uses straight segments and does not connect missing days.
+
+URI labels reflect the already stored coarse `page_type` groups. Content IDs
+share one row; historical campaign/calendar/general page groups cannot be split
+into more specific endpoints retroactively. This change does not collect raw
+URLs, introduce tracking identifiers or add a database collection/index. Other
+analytics reports keep their existing scope, and access permissions are unchanged.

@@ -355,3 +355,9 @@
 }
 .submit-conflict-dialog::backdrop { background: var(--product-overlay); }
 .submit-conflict-dialog .modal-dialog { margin: 0; max-width: none; min-height: 0; }
+.submit-conflict-dialog .modal-header,
+.submit-conflict-dialog .modal-body,
+.submit-conflict-dialog .modal-footer { padding: 1rem; }
+.submit-conflict-dialog .modal-header,
+.submit-conflict-dialog .modal-footer { gap: .75rem; }
+.submit-conflict-dialog .modal-header .btn-close { margin: 0; padding: .5rem; }

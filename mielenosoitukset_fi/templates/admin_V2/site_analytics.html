@@ -160,7 +160,7 @@
             <tr>
               <th scope="row">
                 <a href="{{ url_for('admin_site_analytics.site_overview', range=range_days, vitals_page=row.page_type, vitals_metric=vitals_metric) }}#site-web-vitals-title" data-vitals-page="{{ row.page_type }}" data-vitals-name="{{ _(page_type_labels[row.page_type]) if row.page_type else _('Koko sivusto') }}{% if row.uri %} ({{ row.uri }}){% endif %}" {% if row.page_type == vitals_page %}aria-current="true"{% endif %}>{{ _(page_type_labels[row.page_type]) if row.page_type else _('Koko sivusto') }}</a>
-                {% if row.uri %}<div><code>{{ row.uri }}</code></div>{% endif %}
+                {% if row.uri %}<div><code class="text-lowercase">{{ row.uri }}</code></div>{% endif %}
               </th>
               <td>{{ web_vital_value(row, 'average') }}</td><td>{{ web_vital_value(row, 'p50') }}</td>
               <td>{{ web_vital_value(row, 'p95') }}</td><td>{{ web_vital_value(row, 'p99') }}</td><td>{{ row.count }}</td>

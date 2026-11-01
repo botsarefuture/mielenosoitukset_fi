@@ -57,7 +57,7 @@ const serialize = (value: unknown) => JSON.stringify(value)
   .replaceAll('&', '\\u0026').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 
 /** The existing detail stylesheet; the host page uses the same markup. */
-const DETAIL_STYLESHEET = '/static/css/public-detail.css?v=20261029-react-detail-1';
+const DETAIL_STYLESHEET = '/static/css/public-detail.css?v=20261101-react-detail-2';
 
 /**
  * The home batch is the same for every anonymous visitor, so the server reads it

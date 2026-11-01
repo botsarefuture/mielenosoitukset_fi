@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Keep the standalone detail and series screens at the existing full page width, and wrap long Finnish event titles inside the mobile heading.
+
 - Preserve Matomo analytics on standalone React demonstration and series pages while keeping their existing demonstration-view tracking separate from homepage pageview signals.
 
 - Restore the correct detail page when browser Back returns from an in-app homepage visit, loading the destination's metadata and event instead of leaving the homepage under the detail URL.

@@ -23,6 +23,7 @@
 }
 .public-detail h1 {
   font-size:clamp(2rem,4vw,3.65rem);
+  overflow-wrap:anywhere;
   max-width:24ch;
   font-weight:800
 }

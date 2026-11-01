@@ -41,6 +41,7 @@ const serialize = (value: unknown) => JSON.stringify(value)
 function headMarkup(options: {
   title: string; description: string; robots: string; canonical: string | null;
   url: string; origin: string; locale: string; assets: string;
+  siteAnalyticsEnabled: boolean;
 }) {
   const ogImage = `${options.origin}/static/images/og-default.jpg`;
   return `<meta charset="UTF-8" />
@@ -100,33 +101,23 @@ ${options.canonical ? `<link rel="canonical" href="${escapeHtml(options.canonica
 <noscript><link rel="stylesheet" href="/static/fa/css/all.css"></noscript>
 <link rel="preload" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" as="style" crossorigin onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" crossorigin></noscript>
-<style>
-  .modal.show { display: flex !important; align-items: center; justify-content: center; }
-  .modal, .modal.fade { z-index: 20000; }
-  .modal-backdrop { z-index: 19999; }
-  .modal-dialog { margin: 0; }
-</style>
 <link rel="stylesheet" href="/static/css/home.css">
 <link rel="stylesheet" href="/static/css/product-tokens.css?v=20261027-product-tokens-1">
 <link rel="stylesheet" href="/static/css/user-workspace.css?v=20261028-user-workspace-2">
 <link rel="stylesheet" href="/static/css/public-header.css?v=20261027-react-header-1">
 <link rel="stylesheet" href="/static/css/flash.css?v=20260928-campaign-feedback-1">
 <link rel="stylesheet" href="/static/css/public_hero.css?v=20261015-hero-width-1">
+${options.siteAnalyticsEnabled ? `<script src="https://cdn2.mielenosoitukset.fi/vendor/web-vitals/6.2.2/web-vitals.iife.js" integrity="sha256-Hl6bmva41xz+9QjlqGnFO0zyu8ytjJtaxmTDTpP2FRo=" defer crossorigin="anonymous"></script>
+<script src="/static/js/site_analytics.js" defer></script>` : ''}
 ${options.assets}`;
 }
 
 export async function renderPage(input: RenderInput, assets: RenderAssets): Promise<RenderResult> {
-  const session: SessionSummary = await fetchSession(input.sessionUrl, input.cookie);
-  const config = appConfig({
-    origin: input.origin, apiBase: input.apiBase, locale: session.locale,
-    path: input.path, locales: session.locales,
-  });
-  const text = catalog(config.locale);
   const route = routeForPath(input.path);
   if (!route) {
     return {
       status: 404,
-      html: `<!DOCTYPE html><html lang="${escapeHtml(config.locale)}"><head>
+      html: `<!DOCTYPE html><html lang="fi"><head>
 <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="robots" content="noindex, follow" /><title>404 | Mielenosoitukset.fi</title>
 <link rel="stylesheet" href="/static/css/style.css"></head>
@@ -134,6 +125,12 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
 <p><a href="/">Mielenosoitukset.fi</a></p></main></body></html>`,
     };
   }
+  const session: SessionSummary = await fetchSession(input.sessionUrl, input.cookie);
+  const config = appConfig({
+    origin: input.origin, apiBase: input.apiBase, locale: session.locale,
+    path: input.path, locales: session.locales,
+  });
+  const text = catalog(config.locale);
   const meta = routeMeta(route, config, text);
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
   const bootstrap = serialize({ config, session, path: input.path, route });
@@ -144,6 +141,7 @@ ${headMarkup({
     title: meta.title, description: meta.description, robots: meta.robots,
     canonical: meta.canonical, url, origin: config.origin, locale: config.locale,
     assets: assets.head,
+    siteAnalyticsEnabled: session.siteAnalyticsEnabled,
   })}
 </head>
 <body>

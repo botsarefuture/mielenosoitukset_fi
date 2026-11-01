@@ -56,6 +56,33 @@ It returns no cookie value, token, email, permission list or private record, is
 still decides every permission and every write. A missing or slow endpoint
 degrades to the anonymous header; it never blocks the page.
 
+The summary also exposes public `site_analytics_enabled` and `matomo_enabled`
+booleans. A missing summary defaults both to disabled; the host does not guess
+whether tracking was enabled in production configuration.
+
+## Analytics across the host boundary
+
+Flask records successful legacy HTML responses in its request hook. A migrated
+React page does not execute that hook, so after the React tree commits the app
+sends one optional `POST /api/analytics/pageview` signal. It sends only the
+original document referrer; the same-origin `Referer` header determines the
+displayed page. The receiver currently allows only `/`, rejects bots,
+cross-origin signals, prefetches, disabled tracking and DNT, bounds its JSON
+body to 1 KiB, and uses the existing aggregate page/campaign/visitor writes.
+The trusted request peer supplies the visitor-hash input; the browser cannot
+provide an IP, identifier or page path. No raw location/referrer is stored.
+Legacy pages must not emit this signal because their HTML hook already counts
+them. Newly migrated routes must be added explicitly to the receiver allowlist.
+
+The host loads the pinned existing Web Vitals observer and aggregate-beacon
+script when first-party analytics is enabled. Matomo loads asynchronously after
+the app commits when enabled and DNT is absent. Prerendered documents wait for
+activation before page/Matomo hooks run. Analytics never blocks rendering and
+does not retry page signals, avoiding duplicate increments on ambiguous errors.
+The counts retain their existing aggregate meanings, but migrated pages need
+working JavaScript and beacon delivery: blocked scripts, DNT and failed signals
+can reduce their coverage compared with legacy server-side HTML counts.
+
 ## Routing
 
 The web server sends only migrated page GET/HEAD requests to the app host:

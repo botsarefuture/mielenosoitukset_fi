@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { App } from './App';
 import type { AppConfig } from './config';
 import { routeForPath } from './routes';
@@ -25,6 +25,30 @@ function resetScroll() {
 
 function Root({ config, session, path: initialPath }: Bootstrap) {
   const [path, setPath] = useState(initialPath);
+  const trackedPage = useRef<string | null>(null);
+  useEffect(() => {
+    function activate() {
+      if ((document as Document & { prerendering?: boolean }).prerendering
+        || navigator.doNotTrack === '1' || !routeForPath(path)) return;
+      if (session.matomoEnabled && !document.getElementById('public-app-matomo')) {
+        const script = document.createElement('script');
+        script.id = 'public-app-matomo';
+        script.src = '/static/js/matomo.js';
+        script.async = true;
+        document.head.appendChild(script);
+      }
+      if (!session.siteAnalyticsEnabled || trackedPage.current === path) return;
+      trackedPage.current = path;
+      try {
+        navigator.sendBeacon('/api/analytics/pageview', new Blob([
+          JSON.stringify({ referrer: document.referrer }),
+        ], { type: 'application/json' }));
+      } catch { /* Optional analytics never blocks rendering or navigation. */ }
+    }
+    activate();
+    document.addEventListener('prerenderingchange', activate);
+    return () => document.removeEventListener('prerenderingchange', activate);
+  }, [path, session.siteAnalyticsEnabled, session.matomoEnabled]);
   useEffect(() => {
     function navigate() {
       if (!routeForPath(window.location.pathname)) return;

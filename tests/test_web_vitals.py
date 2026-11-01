@@ -286,12 +286,12 @@ def test_admin_overview_reads_vitals_once_and_preserves_devices(
         side_effect=lambda dimension, **kwargs: devices if dimension == "device" else []
     )
     monkeypatch.setattr(analytics, "get_breakdown", breakdown)
-    summary = [{"metric": "LCP", "count": 12}]
+    summary = {"metric": "TTFB", "rows": [], "series": {}, "labels": []}
     read_vitals = Mock(
         return_value=summary,
         side_effect=RuntimeError("optional storage unavailable") if summary_fails else None,
     )
-    monkeypatch.setattr(analytics, "get_web_vitals_summary", read_vitals)
+    monkeypatch.setattr(analytics, "get_web_vitals_explorer", read_vitals)
     monkeypatch.setattr(analytics, "log_admin_action_V2", Mock())
     render = Mock(return_value="dashboard rendered")
     monkeypatch.setattr(analytics, "render_template", render)
@@ -299,8 +299,8 @@ def test_admin_overview_reads_vitals_once_and_preserves_devices(
     with app.test_request_context("/admin/analytics/?range=7"):
         assert unwrap(analytics.site_overview)() == "dashboard rendered"
 
-    read_vitals.assert_called_once_with(days=7)
+    read_vitals.assert_called_once_with(days=7, metric="TTFB")
     assert render.call_args.kwargs["devices"] == devices
-    assert render.call_args.kwargs["web_vitals"] == ([] if summary_fails else summary)
+    assert render.call_args.kwargs["vitals_explorer"] == (None if summary_fails else summary)
     assert render.call_args.kwargs["range_days"] == 7
     assert breakdown.call_args_list[1].args == ("device",)

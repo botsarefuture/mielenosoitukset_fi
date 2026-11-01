@@ -44,23 +44,19 @@ func (s mongoStore) FindPublic(ctx context.Context, id bson.ObjectID) (bson.M, e
 	return doc, err
 }
 
-// Check only the indexed identity and public visibility, without loading content.
-func (s mongoStore) CheckPublic(ctx context.Context, id bson.ObjectID) error {
-	return s.collection.FindOne(ctx, publicFilter(id), options.FindOne().SetProjection(bson.M{"_id": 1})).Err()
-}
-
 func (s mongoStore) Ping(ctx context.Context) error { return s.client.Ping(ctx, nil) }
 
 type API struct{ store Store }
 
 func (a *API) handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/demonstrations/{id}", a.getDemonstration)
-	mux.HandleFunc("GET /api/home", a.getHome)
+	mux.HandleFunc("GET /api/demonstrations/{id}", a.getDemonstrationCached)
+	mux.HandleFunc("GET /api/home", a.getHomeCached)
 	mux.HandleFunc("GET /health", a.health)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { writeError(w, 404, "not found") })
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
+		// Default for everything; the cached handlers override it per response.
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		if r.Method == http.MethodOptions {
@@ -76,6 +72,9 @@ func (a *API) handler() http.Handler {
 		mux.ServeHTTP(w, r)
 	})
 }
+
+// Original uncached handler, still used as the fallback when the store is not
+// the cache (for example a test fake).
 func (a *API) getDemonstration(w http.ResponseWriter, r *http.Request) {
 	id, err := bson.ObjectIDFromHex(r.PathValue("id"))
 	if err != nil {
@@ -129,7 +128,16 @@ func main() {
 		defer cancel()
 		_ = client.Disconnect(ctx)
 	}()
-	a := &API{store: newCachedDetailStore(mongoStore{client.Database(database).Collection("demonstrations"), client})}
+
+	// Deferred after the Disconnect above, so it runs first: background loads
+	// stop before the client closes.
+	cache := newCachedDetailStore(mongoStore{client.Database(database).Collection("demonstrations"), client})
+	defer cache.Close()
+	if err := cache.StartBatchRefresh(); err != nil {
+		log.Print("Batch refresh disabled: ", err)
+	}
+	a := &API{store: cache}
+
 	server := &http.Server{Addr: env("API_ADDR", "127.0.0.1:8080"), Handler: a.handler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 * 1024}
 	shutdownDone := make(chan struct{})
 	stopped := make(chan os.Signal, 1)

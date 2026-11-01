@@ -1,7 +1,8 @@
 export type DetailEvent = {
   _id: string; title: string; description: string; date: string | null;
-  start_time: string | null; end_time: string | null; city: string | null; address: string | null;
-  latitude: number | null; longitude: number | null; tags: string[]; route: string[];
+  start_time: string | null; end_time: string | null; city: string | null; address: string | null;	latitude: number | null; longitude: number | null; tags: string[]; route: string[];
+	/** Public attendance total; null when the stored counter is absent. */
+	likes: number | null;
   cancelled: boolean; event_type: string | null; facebook: string | null;
   img: string | null; cover_picture: string | null; preview_image: string | null; gallery_images: string[];
   cover_source?: string | null;
@@ -17,8 +18,7 @@ export type DetailMessages = {
   series: string;
   gallery: string; openImage: string; close: string; previous: string; next: string; imageUnavailable: string;
   calendar: string; reminder: string; report: string; invite: string; attend: string;
-  loginRequired: string; share: string; copyLink: string; shareCopied: string; copyFailed: string;
-  login: string; email: string; emailOptional: string; reportDescription: string; markCancelled: string; sendReport: string; sendInvites: string; chooseFriends: string; noFriends: string; friendsError: string; inviteSent: string; actionError: string; sending: string; saved: string; cancelAttendance: string; anonymousOrganizer: string; noDescription: string; facebook: string; shareFacebook: string; shareMastodon: string; shareX: string; shareLinkedIn: string; unknownTime: string;
+  loginRequired: string; share: string; copyLink: string; shareCopied: string; copyFailed: string;	login: string; email: string; emailOptional: string; reportDescription: string; markCancelled: string; sendReport: string; sendInvites: string; chooseFriends: string; noFriends: string; friendsError: string; inviteSent: string; actionError: string; sending: string; saved: string; cancelAttendance: string; anonymousOrganizer: string; noDescription: string; participants: string; countdown: string; participationClosed: string; facebook: string; shareFacebook: string; shareMastodon: string; shareX: string; shareLinkedIn: string; unknownTime: string;
 };
 export type Occurrence = {
   id: string; url: string; date: string; start_time?: string | null; end_time?: string | null;

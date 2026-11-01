@@ -36,9 +36,11 @@ Response fields: `_id`, `title`, `description`, `tags`, `date`, `start_time`,
 `end_time`, `city`, `address`, `route`, `latitude`, `longitude`, `cancelled`,
 `slug`, `running_number`, `parent`, `event_type`, `facebook`, `img`, `cover_picture`,
 `cover_source`, `preview_image`, `gallery_images`, `organizers`, `default_language`,
-`resolved_language`, `available_languages`. `parent` is the series identifier of a
+`resolved_language`, `available_languages`, `likes`. `parent` is the series identifier of a
 recurring occurrence, or null; it lets a host link back to the series without a
-second Flask request. Aliases are accepted for lookup but never returned. Route is a string array, accepting stored arrays and comma-separated/JSON-array legacy strings. Gallery images also support the old `images` field. Optional textual/numeric values
+second Flask request. `likes` is the public attendance total the detail page
+already prints; it is null when the stored counter is missing, negative or not a
+whole number, so a page never reports zero participants it cannot prove. Aliases are accepted for lookup but never returned. Route is a string array, accepting stored arrays and comma-separated/JSON-array legacy strings. Gallery images also support the old `images` field. Optional textual/numeric values
 are null when absent or malformed; arrays are empty instead of null. Coordinates
 accept legacy numeric strings. `cover_source` belongs to each returned event,
 so changing a recurring occurrence does not reuse another occurrence's image

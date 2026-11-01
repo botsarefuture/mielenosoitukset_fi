@@ -20,9 +20,60 @@ function LinkButton({ href, children, primary = false }: { href: string; childre
   const safe = safeHref(href);
   return safe ? <a className={`detail-button${primary ? ' detail-button--primary' : ''}`} href={safe}>{children}</a> : null;
 }
-function EventDescription({ event, label }: { event: DetailEvent; label: string }) {
+function EventDescription({ event, label, empty }: { event: DetailEvent; label: string; empty: string }) {
   const html = useMemo(() => sanitizeDescription(event.description), [event.description]);
-  return html ? <section className="detail-section"><h2>{label}</h2><div className="detail-prose" dangerouslySetInnerHTML={{ __html: html }} /></section> : null;
+  return <section className="detail-section"><h2>{label}</h2>
+    {html ? <div className="detail-prose" dangerouslySetInnerHTML={{ __html: html }} /> : <p className="detail-note">{empty}</p>}
+  </section>;
+}
+
+/**
+ * Helsinki wall clock on a UTC basis, so two wall clocks can be subtracted.
+ * The page has no timezone dependency of its own and the site is Helsinki-only.
+ */
+function helsinkiWallClock(): number {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Helsinki', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).formatToParts(new Date());
+  const value = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? 0);
+  return Date.UTC(value('year'), value('month') - 1, value('day'), value('hour'), value('minute'), value('second'));
+}
+
+/** Event start on the same wall-clock basis, or null without a usable date. */
+function startWallClock(date: string | null, time: string | null): number | null {
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const [year, month, day] = date.split('-').map(Number);
+  const clock = /^(\d{1,2}):(\d{2})/.exec(time ?? '');
+  const stamp = Date.UTC(year, month - 1, day, Number(clock?.[1] ?? 0), Number(clock?.[2] ?? 0));
+  return Number.isFinite(stamp) ? stamp : null;
+}
+
+/**
+ * Time left before the event starts, the legacy countdown card. Unit words come
+ * from Intl, so no unit copy enters the catalog. Both sides are Helsinki wall
+ * clocks; a daylight-saving switch inside the remaining window is the one case
+ * this does not correct for.
+ */
+function Countdown({ event, label, locale }: { event: DetailEvent; label: string; locale: string }) {
+  const start = useMemo(() => startWallClock(event.date, event.start_time), [event.date, event.start_time]);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (start === null) return;
+    const timer = window.setInterval(() => tick((value) => value + 1), 30_000);
+    return () => window.clearInterval(timer);
+  }, [start]);
+  if (start === null) return null;
+  const remaining = start - helsinkiWallClock();
+  if (remaining <= 0) return null;
+  const minutes = Math.max(1, Math.round(remaining / 60_000));
+  const days = Math.floor(minutes / 1_440);
+  const hours = Math.floor((minutes % 1_440) / 60);
+  const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  const parts = days > 0 ? [format.format(days, 'day'), format.format(hours, 'hour')]
+    : hours > 0 ? [format.format(hours, 'hour'), format.format(minutes % 60, 'minute')]
+      : [format.format(minutes, 'minute')];
+  return <section className="detail-countdown"><h2>{label}</h2><p>{parts.join(' ')}</p></section>;
 }
 function ShareActions({ url, title, messages }: { url: string; title: string; messages: DetailProps['messages'] }) {
   const [shareCopied, setCopied] = useState<'idle' | 'success' | 'error'>('idle');
@@ -64,11 +115,13 @@ function EventContent({ event, props }: { event: DetailEvent; props: DetailProps
       </div>
       {props.authenticated && props.recurringTargetId && !event.cancelled && <FollowButton props={props} />}
     </header>
+    {!event.cancelled && <Countdown event={event} label={text.countdown} locale={props.locale} />}
     <div className="detail-layout"><div className="detail-main">
       <DetailGallery key={event._id} images={images} title={event.title} messages={text} />
-      <EventDescription event={event} label={text.description} />
+      <EventDescription event={event} label={text.description} empty={text.noDescription} />
       {event.route.length > 0 && <section className="detail-section"><h2>{text.route}</h2><ol className="detail-route">{event.route.map((stop, index) => <li key={`${index}-${stop}`}>{stop}</li>)}</ol></section>}
-      <section className="detail-section"><h2>{text.organizers}</h2>{event.organizers.some((organizer) => organizer.organization_id && !organizer.is_private) && <p className="detail-note" role="note"><Icon name="circle-info" />{text.followDisabled}</p>}{event.organizers.length ? <ul className="detail-organizers">{event.organizers.map((organizer, index) => <li key={`${index}-${organizer.name}`}>
+      <section className="detail-section"><h2>{text.organizers}</h2>{event.organizers.some((organizer) => organizer.organization_id && !organizer.is_private) && <p className="detail-note" role="note"><Icon name="circle-info" />{text.followDisabled}</p>}      {event.organizers.length ? <ul className="detail-organizers">{event.organizers.map((organizer, index) => <li key={`${index}-${organizer.name}`}>
+        {safeHref(organizer.logo) && <img className="detail-organizer__logo" src={safeHref(organizer.logo)} alt="" width={48} height={48} loading="lazy" decoding="async" />}
         <h3>{organizer.name || text.anonymousOrganizer}</h3><div>{organizer.organization_id && !organizer.is_private && <a href={safeHref(`${props.urls.organizationPrefix}${encodeURIComponent(organizer.organization_id)}`)}>{text.organizerProfile}</a>}{props.authenticated && organizer.organization_id && (props.followableOrganizations ?? []).includes(organizer.organization_id) && <FollowButton props={props} organizationId={organizer.organization_id} disabled />}
         {safeHref(organizer.website) && <a href={safeHref(organizer.website)} target="_blank" rel="noopener noreferrer">{text.website}<Icon name="arrow-up-right-from-square" /></a>}
         {organizer.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(organizer.email) && <a href={`mailto:${encodeURIComponent(organizer.email)}`}>{organizer.email}</a>}</div>
@@ -81,7 +134,14 @@ function EventContent({ event, props }: { event: DetailEvent; props: DetailProps
           ? <MapBoundary fallback={<p>{text.error}</p>}><Suspense fallback={<p role="status">{text.mapLoading}</p>}><DetailMap latitude={event.latitude} longitude={event.longitude} messages={text} /></Suspense></MapBoundary>
           : <button className="detail-button" type="button" onClick={() => showMap(true)}><Icon name="map" />{text.showMap}</button>)}
       </section>
-      {!event.cancelled && <section className="detail-section"><h2>{text.attend}</h2><Participation event={event} props={props} /><button type="button" className="detail-button" onClick={() => setDialog('invite')}>{text.invite}</button></section>}
+      {event.cancelled
+        ? <section className="detail-section"><h2>{text.attend}</h2>
+            <p className="detail-note" role="note"><Icon name="ban" />{text.participationClosed}</p>
+          </section>
+        : <section className="detail-section"><h2>{text.attend}</h2><Participation event={event} props={props} />
+            {event.likes !== null && <p className="detail-attendees"><Icon name="users" />{event.likes} {text.participants}</p>}
+            <button type="button" className="detail-button" onClick={() => setDialog('invite')}>{text.invite}</button>
+          </section>}
       <section className="detail-section"><h2>{text.share}</h2><ShareActions url={props.canonicalUrl} title={event.title} messages={text} /></section>
     </aside></div>
     {dialog && <DetailActionDialog key={dialog} kind={dialog} event={event} props={props} close={() => setDialog(null)} />}

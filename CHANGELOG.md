@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Close the remaining legacy sections of the demonstration detail screen: the public API now returns the attendance total (`likes`, null when the stored counter is unusable), and the React page shows the participant count, the countdown to the start, the organizer logo, an empty-description note and an explicit “participation is closed” notice for cancelled events instead of silently dropping those blocks. Unit words come from `Intl`, so no new translation msgids were added. Visual acceptance for these states is still open.
+
 - Stop the API's Apache vhost from overriding response caching: `Header always set Cache-Control "no-store"` wrote `err_headers_out`, which Apache merges into the proxied response instead of replacing it, so every answer shipped `no-store` next to the API's own policy and browsers and Cloudflare could not use the cached reads' `max-age`/`s-maxage`. The vhost now leaves `Cache-Control` to the API, which sets it on every response.
 
 - Serve recurring series from React: a new public `GET /api/series/<parent>` returns the parent's visibility and the same bounded occurrence list the Flask chooser reads, the host renders `/demonstration/<parent>/children` with the series navigation and the series canonical URL, and an occurrence URL of a public series 301s to the series page instead of staying a dead end. The Apache rules stay commented out until activation is approved.

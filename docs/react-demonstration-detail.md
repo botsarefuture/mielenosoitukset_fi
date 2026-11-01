@@ -61,6 +61,13 @@ Classic/overview cookies and old public layout parameters do not select another
 view when this migration is enabled. Only authorized nonpublic internal previews
 retain their separate privileged view.
 
+The screen keeps the legacy page's quieter sections: the attendance total from
+`likes`, the countdown to the start time, the organizer logo, an empty-description
+note and an explicit cancelled-participation notice. Countdown unit words come
+from `Intl.RelativeTimeFormat`, and every message reuses an existing Finnish msgid
+already present in the Flask catalogs, so no catalog or compiled `.mo` changes are
+part of this step.
+
 Reminder, report and friend invitation forms use React dialogs and useActionState,
 with explicit submission, pending/error feedback and retained field values. They
 call existing same-origin Flask workflows; success requires a JSON acknowledgement,

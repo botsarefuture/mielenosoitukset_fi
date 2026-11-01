@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -136,6 +137,38 @@ func TestPayloadSeriesParent(t *testing.T) {
 		if got := publicPayload(bson.M{"parent": value}, "fi")["parent"]; got != nil {
 			t.Fatalf("non-ObjectId parent exposed: %v", got)
 		}
+	}
+}
+
+// The attendance total is a public aggregate. A missing or unusable counter must
+// stay nil so the page hides it instead of claiming zero participants.
+func TestPayloadAttendeeCount(t *testing.T) {
+	for _, tc := range []struct {
+		value any
+		want  any
+	}{
+		{int32(7), int64(7)},
+		{int64(12), int64(12)},
+		{float64(3), int64(3)},
+		{0, int64(0)},
+		{nil, nil},
+		{"nonsense", nil},
+		{-4, nil},
+		{int64(-1), nil},
+		{2.5, nil},
+		{float64(math.MaxInt32) + 1, nil},
+	} {
+		payload := publicPayload(bson.M{"_id": bson.NewObjectID(), "likes": tc.value}, "fi")
+		if got := payload["likes"]; got != tc.want {
+			t.Fatalf("likes=%v exposed %v, want %v", tc.value, got, tc.want)
+		}
+	}
+	// A document without the counter reports null, never a zero count.
+	if got := publicPayload(bson.M{"_id": bson.NewObjectID()}, "fi")["likes"]; got != nil {
+		t.Fatalf("absent counter reported %v", got)
+	}
+	if publicProjection()["likes"] != 1 {
+		t.Fatal("the projection must read the attendance counter")
 	}
 }
 

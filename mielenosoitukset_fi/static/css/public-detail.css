@@ -168,6 +168,35 @@
 .detail-note {
   color:var(--product-text-muted)
 }
+/* Report dialog: the legacy modal offered a structured edit before the free-text
+   report, so both paths keep the same visual weight as that choice. */
+.detail-choice {
+  display:grid;
+  gap:1rem
+}
+.detail-choice__option {
+  display:grid;
+  gap:.5rem;
+  padding:1rem;
+  border:1px solid var(--product-border);
+  border-radius:9px;
+  background:var(--product-surface)
+}
+.detail-choice__option--primary {
+  border-color:var(--product-accent)
+}
+.detail-choice__option h3 {
+  margin:0;
+  font-size:1.05rem;
+  color:var(--product-text)
+}
+.detail-choice__option p {
+  margin:0;
+  color:var(--product-text-muted)
+}
+.detail-choice__option .detail-button {
+  justify-self:start
+}
 .detail-cancelled {
   display:flex;
   align-items:center;

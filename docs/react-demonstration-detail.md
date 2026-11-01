@@ -33,6 +33,14 @@ Enable `PUBLIC_DETAIL_REACT_ENABLED: true`. Browser API base is configurable as
 https://api.mielenosoitukset.fi/api/demonstrations. This is a public address, not
 a MongoDB URI. Development/capture sets it to the actual local Go server.
 
+The report dialog opens on the same choice the legacy modal shows: a structured
+suggestion on the existing `/suggest_change/<id>` page, or a free-text report to
+the existing `/report` endpoint. The React dialog previously skipped that choice,
+which removed the structured path without anyone deciding to. No new Flask route,
+template or write endpoint is added: the choice reuses existing same-origin pages
+and existing msgids, so the copy needs no new catalog entries. Translation of the
+public UI remains a human workflow; the public site is Finnish-first today.
+
 Public routes use one projected metadata read for normal identifiers,
 with the existing alias/number/slug priority. No Demonstration constructor,
 normalization writes, geocoding, organizer enrichment, similar-events queries,

@@ -36,7 +36,27 @@ function ReminderForm({ event, props }: { event: DetailEvent; props: DetailProps
     <button className="detail-button detail-button--primary" type="submit" disabled={pending}>{pending ? props.messages.sending : props.messages.reminder}</button>
   </form>}<FeedbackMessage value={result} /></>;
 }
+/**
+ * The legacy dialog opened on a choice: fix the fields structurally, or send a
+ * free-text report. The React dialog used to jump straight to the textarea, which
+ * silently removed the structured suggest-edit path visitors relied on.
+ */
+function ReportChoice({ props, eventId, onReport }: { props: DetailProps; eventId: string; onReport(): void }) {
+  const suggest = safeHref((props.urls.suggestChange ?? '').replaceAll('__EVENT_ID__', encodeURIComponent(eventId)));
+  return <div className="detail-choice">
+    {suggest && <section className="detail-choice__option detail-choice__option--primary">
+      <h3>{props.messages.suggestEditTitle}</h3>
+      <a className="detail-button detail-button--primary" href={suggest}>{props.messages.suggestEdit}</a>
+    </section>}
+    <section className="detail-choice__option">
+      <h3>{props.messages.reportOnlyTitle}</h3>
+      <button className="detail-button" type="button" onClick={onReport} autoFocus={!suggest}>{props.messages.reportOnly}</button>
+    </section>
+  </div>;
+}
+
 function ReportForm({ event, props }: { event: DetailEvent; props: DetailProps }) {
+  const [step, setStep] = useState<'choice' | 'error'>('choice');
   const [description, setDescription] = useState('');
   const [email, setEmail] = useState('');
   const [cancelled, setCancelled] = useState(false);
@@ -49,6 +69,7 @@ function ReportForm({ event, props }: { event: DetailEvent; props: DetailProps }
       return { ok: true, message: typeof payload.message === 'string' ? payload.message : props.messages.saved };
     } catch (error) { return { ok: false, message: actionMessage(error, props.messages.actionError) }; }
   }, null);
+  if (step === 'choice' && !result?.ok) return <ReportChoice props={props} eventId={event._id} onReport={() => setStep('error')} />;
   return <>{!result?.ok && <form action={submit} className="detail-form" aria-busy={pending}>
     <label htmlFor={`${id}-description`}>{props.messages.reportDescription}</label><textarea id={`${id}-description`} name="error" value={description} onChange={e => setDescription(e.target.value)} required maxLength={5000} rows={5} autoFocus disabled={pending} />
     <label className="detail-checkbox"><input type="checkbox" name="mark_cancelled" value="1" checked={cancelled} onChange={e => setCancelled(e.target.checked)} disabled={pending} />{props.messages.markCancelled}</label>

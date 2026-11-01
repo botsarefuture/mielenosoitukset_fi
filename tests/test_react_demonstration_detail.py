@@ -150,3 +150,20 @@ def test_json_report_has_explicit_acknowledgement_and_validation(client, db, pub
     result=client.post('/report',data={'type':'demonstration','demo_id':str(public_detail['_id']),'error':'Wrong time'},headers=headers)
     assert result.status_code==200 and result.json['status']=='OK'
     assert db.reports.count_documents({})==before+1
+
+
+def test_report_dialog_keeps_the_structured_suggest_edit_choice(client, public_detail):
+    """The dialog must offer the suggest-edit path before the free-text report.
+
+    The React dialog previously jumped straight to the textarea, which removed a
+    path the legacy modal opened on. The URL and copy come from the same props
+    contract, so assert both rather than the client-rendered markup.
+    """
+    response = client.get(f"/demonstration/{public_detail['_id']}")
+    assert response.status_code == 200
+    props = props_from(response)
+    assert props['urls']['suggestChange'].endswith('/suggest_change/__EVENT_ID__')
+    for key in ('suggestEditTitle', 'suggestEdit', 'reportOnlyTitle', 'reportOnly'):
+        assert props['messages'][key].strip(), key
+    target = client.get(f"/suggest_change/{public_detail['_id']}")
+    assert target.status_code == 200

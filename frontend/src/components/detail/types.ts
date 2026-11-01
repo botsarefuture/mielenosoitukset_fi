@@ -9,6 +9,7 @@ export type DetailEvent = {
 };
 export type DetailMessages = {
   follow: string; following: string; followSeries: string;
+  suggestEditTitle: string; suggestEdit: string; reportOnlyTitle: string; reportOnly: string;
   loading: string; error: string; retry: string; notFound: string; allEvents: string;
   date: string; location: string; startingFrom: string; cancelled: string; description: string;
   organizers: string; noOrganizers: string; organizerProfile: string; website: string;
@@ -27,7 +28,7 @@ export type DetailProps = {
   initialAction?: 'attend' | 'invite' | null; onIntentConsumed?: () => void;
   coverSource?: string | null;
   urls: { trackView: string; listing: string; login: string; loginInvite?: string; calendar: string; reminder: string; report: string;
-    invite: string; friends: string; like: string; unlike: string; attendance: string; followOrganization?: string; unfollowOrganization?: string; followRecurring?: string; unfollowRecurring?: string; organizationPrefix: string; tagPrefix: string };
+    invite: string; friends: string; like: string; unlike: string; attendance: string; suggestChange: string; followOrganization?: string; unfollowOrganization?: string; followRecurring?: string; unfollowRecurring?: string; organizationPrefix: string; tagPrefix: string };
   messages: DetailMessages;
   series?: { title: string; occurrences: Occurrence[] };
   onSelect?: (id: string, url: string) => void;

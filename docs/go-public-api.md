@@ -142,15 +142,38 @@ mongoStore construction in main; no stored-data rollback is needed.
 
 ## Detail identifier compatibility
 
-The three extra reads above are the only cost of accepting slugs, running numbers
-and aliases: an ObjectId-shaped identifier probes the original by `_id` before
-trying the alias index, and a numeric identifier tries `running_number` before
-`slug`. All lookups are single-document indexed reads with an `_id`-only
-projection, run under the same three-second request deadline before the cached
-body read. Resolution itself is not cached, so renaming a slug or hiding an event
-takes effect on the next request. The React host needs this to serve the existing
-public `/demonstration/<slug>` URLs unchanged; without it, every slug link would
-have to hop through Flask for an ID.
+Public ObjectIds resolve in one indexed `_id` read. A miss checks whether a
+nonpublic original exists before permitting alias fallback; numeric identifiers
+try `running_number` before `slug`. Lookups project only `_id` and share the
+existing three-second deadline, but a one-document result limit does not bound
+how many records MongoDB must examine. Resolution is not cached, so slug or
+visibility changes take effect on the next request. Existing public slug URLs
+can therefore resolve without a Flask hop.
+
+### Identifier index rollout requirement
+
+A read-only production check on 1 November 2026 found approximately 61,267
+demonstrations, an existing `slug_1` index, and no identifier indexes on `aliases`
+or `running_number`. `explain` with `queryPlanner` showed exact slug bounds for
+slug lookup. Alias/running-number lookup instead used the approved-event index
+with broad date/cancelled bounds and post-fetch filtering. This was a plan
+inspection only: no full scans were executed and no latency claim is made.
+
+Proposed non-unique indexes, to be approved before a production rollout:
+
+```javascript
+db.demonstrations.createIndexes([
+  { key: { aliases: 1 }, name: "aliases_1", sparse: true },
+  { key: { running_number: 1 }, name: "running_number_1", sparse: true }
+]);
+```
+
+These do not impose uniqueness or rewrite stored events. Sparse indexes omit
+documents lacking the identifier; array aliases use MongoDB's multikey index.
+After creation, repeat the same plan check and require identifier equality
+bounds on the corresponding index. No production index was created by this
+change. Removing just these named indexes reverses the index addition if needed;
+review other consumers before doing so.
 
 ## Portable home-page data
 

@@ -4,7 +4,11 @@
 
 ## UNRELEASED
 
-- Let the public Go API resolve demonstration identifiers the way the site already does (ObjectId, alias, running number, slug) and return a recurring event's series `parent`, so a host can serve the existing `/demonstration/<slug>` URLs and link back to a series without a Flask request. Nonpublic events stay 404, including through their aliases.
+- Let the public Go API resolve demonstration identifiers the way the site already does (ObjectId, alias, running number, slug) and return a recurring event's series `parent`, so a host can serve the existing `/demonstration/<slug>` URLs and link back to a series without a Flask request. Public ObjectIds resolve in one indexed read. Nonpublic events stay 404, including through their aliases.
+
+- Keep the public React host alive on malformed asset requests, use asynchronous file reads, and avoid repeated cookieless configuration requests while keeping private sessions isolated.
+
+- Preserve the standalone React host's page, campaign and visitor aggregates, Matomo and Web Vitals through configuration-controlled, nonblocking browser hooks. Browser page signals accept only the migrated home route and retain the existing bot, DNT and privacy limits.
 
 - Add a standalone React host for the public front page: the server writes only the document metadata and an empty app root, the browser renders the shared header, page content and footer, and events keep coming from the public Go home API. Add a read-only `GET /api/session` summary for the signed-in header, explicit GET-only Apache routing for migrated pages, and keep every other route and form on Flask.
 

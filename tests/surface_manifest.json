@@ -250,12 +250,13 @@
       ]
     },
     "mielenosoitukset_fi/basic_routes.py": {
-      "count": 56,
-      "sha256": "933897acb290bbd157d7b16bf7289bc1e80f9ff4c68b38623467930178471ad8",
+      "count": 58,
+      "sha256": "5d15762ba7f16e29b9cb0a6a094ae7adb1ab1967dad45e535185977089718e42",
       "coverage": [
         "integration",
         "e2e-public",
-        "tests/test_fundraising_page.py"
+        "tests/test_fundraising_page.py",
+        "tests/test_public_session_summary.py"
       ]
     },
     "mielenosoitukset_fi/developer_bp.py": {

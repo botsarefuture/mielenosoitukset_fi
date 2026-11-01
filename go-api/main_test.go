@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go.mongodb.org/mongo-driver/v2/bson"
 
+	"go.mongodb.org/mongo-driver/v2/event"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -234,7 +236,13 @@ func TestMongoResolvePublicID(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(options.Client().ApplyURI(uri))
+	var reads atomic.Int64
+	monitor := &event.CommandMonitor{Started: func(_ context.Context, command *event.CommandStartedEvent) {
+		if command.CommandName == "find" {
+			reads.Add(1)
+		}
+	}}
+	client, err := mongo.Connect(options.Client().ApplyURI(uri).SetMonitor(monitor))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -271,7 +279,11 @@ func TestMongoResolvePublicID(t *testing.T) {
 		{"private original by id", privateID.Hex(), bson.NilObjectID, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			before := reads.Load()
 			got, err := store.ResolvePublicID(ctx, tc.raw)
+			if tc.name == "object id" && reads.Load()-before != 1 {
+				t.Fatalf("public ObjectId resolution used %d reads, want 1", reads.Load()-before)
+			}
 			if tc.missing {
 				if !errors.Is(err, mongo.ErrNoDocuments) {
 					t.Fatalf("resolved nonpublic %q: %v %v", tc.raw, got, err)

@@ -80,13 +80,17 @@ func (s mongoStore) ResolvePublicID(ctx context.Context, raw string) (bson.Objec
 		return bson.NilObjectID, errInvalidIdentifier
 	}
 	if id, err := bson.ObjectIDFromHex(raw); err == nil {
+		// Public ObjectIds are the common path: resolve them in one indexed read.
+		if resolved, err := s.resolveID(ctx, publicFilter(id)); !errors.Is(err, mongo.ErrNoDocuments) {
+			return resolved, err
+		}
 		var probe struct {
 			ID bson.ObjectID `bson:"_id"`
 		}
 		err := s.collection.FindOne(ctx, bson.M{"_id": id}, options.FindOne().SetProjection(bson.M{"_id": 1})).Decode(&probe)
 		if err == nil {
-			// The original exists: it is the answer, public or not.
-			return s.resolveID(ctx, publicFilter(id))
+			// A nonpublic original still prevents fallback through an alias.
+			return bson.NilObjectID, mongo.ErrNoDocuments
 		}
 		if !errors.Is(err, mongo.ErrNoDocuments) {
 			return bson.NilObjectID, err

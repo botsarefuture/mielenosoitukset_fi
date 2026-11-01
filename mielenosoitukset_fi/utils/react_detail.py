@@ -93,6 +93,14 @@ def detail_messages():
         "series": _("Kaikki tapahtuman ajankohdat"), "website": _("Verkkosivusto"),
         "email": _("Sähköpostiosoite"), "emailOptional": _("Sähköposti (valinnainen)"),
         "reportDescription": _("Kerro virheestä"), "markCancelled": _("Tapahtuma on peruttu"),
+        # The report dialog opens on the same choice the legacy modal shows, so
+        # the structured suggest-edit path stays discoverable.
+        # Only strings that already exist in the catalogs; the longer explanatory
+        # copy belongs with the React suggest-edit form, not a new Flask msgid.
+        "suggestEditTitle": _("Korjaa tiedot muokkauslomakkeella"),
+        "suggestEdit": _("Siirry ehdottamaan muokkauksia"),
+        "reportOnlyTitle": _("Ilmoita ongelmasta ylläpidolle"),
+        "reportOnly": _("Haluan vain ilmoittaa virheen"),
         "sendReport": _("Lähetä ilmoitus"), "sendInvites": _("Lähetä kutsut"),
         "chooseFriends": _("Valitse ainakin yksi kaveri."), "noFriends": _("Sinulla ei ole vielä kutsuttavia kavereita."),
         "friendsError": _("Kaverien lataaminen epäonnistui."), "inviteSent": _("Kutsut lähetetty!"),
@@ -149,6 +157,8 @@ def render_public_detail(db, identifier, locale, recurring_context=None):
         "calendar": url_for("download_demo_ics", demo_id="__EVENT_ID__"),
         "reminder": url_for("subscribe_reminder", demo_id="__EVENT_ID__"),
         "report": url_for("report"),
+        # Existing Flask page for structured edits; opened from the report dialog.
+        "suggestChange": url_for("suggest_change", demo_id="__EVENT_ID__"),
         "invite": url_for("api.invite_friends", demo_id="__EVENT_ID__"),
         "friends": url_for("users.profile.api_friends_list"),
         "like": url_for("api.like_demo", demo_id="__EVENT_ID__"),

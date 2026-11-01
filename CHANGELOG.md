@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Restore the structured suggest-an-edit path on the React demonstration detail page: the report dialog opens on the same choice as the legacy modal, so visitors can correct fields on the existing suggestion page or send a free-text report instead of only the latter.
+
 - Serve the public front page from the React host in production: Apache routes only `GET`/`HEAD /` and `/app-assets/**` to a checksum-verified Node release on loopback, while Flask keeps every other page, API, form and write. The host reads the signed-in header summary over the existing Gunicorn socket, so no credentials are copied to it.
 
 - Ship the public React host as a versioned, checksum-verified release bundle with its own systemd unit and a deploy script that refuses unsafe archives and requires exact-build health. Node runs as `www-data` on loopback and reads the Flask session over the existing Unix socket, so the new service holds no database credentials or application secret.

@@ -23,7 +23,16 @@ const sessionServer = createServer((req, res) => {
 });
 await new Promise(resolve => sessionServer.listen(0, '127.0.0.1', resolve));
 const base = `http://127.0.0.1:${sessionServer.address().port}`;
-const input = { path: '/', origin: 'https://example.test', apiBase: `${base}/api`, sessionUrl: `${base}/session` };
+// The home batch is read by the server, so it needs its own address; the session
+// fake below is only a session endpoint.
+const homeApi = createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify({ events: [], recommended: false }));
+});
+await new Promise(resolve => homeApi.listen(0, '127.0.0.1', resolve));
+const homeBase = `http://127.0.0.1:${homeApi.address().port}/api`;
+const input = { path: '/', origin: 'https://example.test', apiBase: `${base}/api`,
+  apiReadBase: homeBase, sessionUrl: `${base}/session` };
 const assets = { head: '', scripts: '' };
 const page = (changes = {}) => renderPage({ ...input, ...changes }, assets);
 const bootstrap = html => JSON.parse(html.match(/id="app-bootstrap">([\s\S]*?)<\/script>/)[1]);
@@ -62,34 +71,48 @@ try {
   await page({ sessionUrl: `${base}/down` });
   assert.equal(reads, 6, 'Failed configuration reads must not be cached');
   console.log('PASS: unknown-route zero reads; eight concurrent anonymous pages one read; warm zero reads; private sessions isolated; TTL and failure handling');
-} finally { await new Promise(resolve => sessionServer.close(resolve)); }
+} finally {
+  await new Promise(resolve => sessionServer.close(resolve));
+  await new Promise(resolve => homeApi.close(resolve));
+}
 
 // Detail route: one projected API read for the head, no body rendering.
 const detailId = '66fa58601102367d5d52887f';
-const apiReads = [];
 const longDescription = `<p>${'Pitkä kuvaus '.repeat(40)}</p>`;
-const apiServer = createServer((req, res) => {
-  const url = new URL(req.url, 'http://api.test');
-  apiReads.push(req.url);
-  const identifier = decodeURIComponent(url.pathname.split('/').pop() ?? '');
-  const send = (status, body) => {
-    res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify(body));
-  };
-  if (identifier === 'slow') return; // never answers; the host must give up
-  if (identifier === 'broken') { res.writeHead(503); res.end('{}'); return; }
-  if (identifier === 'nonpublic') return send(404, { error: 'demonstration not found' });
-  const doc = {
-    _id: detailId, title: 'Test event', description: longDescription,
-    slug: identifier === detailId ? 'may-day-2026' : identifier,
-    running_number: 4242, date: identifier === 'far-future' ? '2035-01-01' : '2026-12-01',
-    start_time: '14:00', end_time: '15:00', cancelled: false,
-    city: 'Helsinki', address: 'Mannerheimintie 1', preview_image: null, parent: null,
-  };
-  send(200, doc);
-});
-await new Promise(resolve => apiServer.listen(0, '127.0.0.1', resolve));
-const apiBase = `http://127.0.0.1:${apiServer.address().port}/api`;
+const publicReads = [];
+const localReads = [];
+function createApi(log) {
+  return createServer((req, res) => {
+    const url = new URL(req.url, 'http://api.test');
+    log.push(req.url);
+    const identifier = decodeURIComponent(url.pathname.split('/').pop() ?? '');
+    const send = (status, body) => {
+      res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(body));
+    };
+    if (identifier === 'home') {
+      return send(200, { events: [{ _id: detailId, title: 'Test event', detail_url: '/demonstration/may-day-2026' }], recommended: false });
+    }
+    if (identifier === 'slow') return; // never answers; the host must give up
+    if (identifier === 'broken') { res.writeHead(503); res.end('{}'); return; }
+    if (identifier === 'nonpublic') return send(404, { error: 'demonstration not found' });
+    const doc = {
+      _id: detailId, title: 'Test event', description: longDescription,
+      slug: identifier === detailId ? 'may-day-2026' : identifier,
+      running_number: 4242, date: identifier === 'far-future' ? '2035-01-01' : '2026-12-01',
+      start_time: '14:00', end_time: '15:00', cancelled: false,
+      city: 'Helsinki', address: 'Mannerheimintie 1', preview_image: null, parent: null,
+    };
+    send(200, doc);
+  });
+}
+const publicApi = createApi(publicReads);
+const localApi = createApi(localReads);
+await new Promise(resolve => publicApi.listen(0, '127.0.0.1', resolve));
+await new Promise(resolve => localApi.listen(0, '127.0.0.1', resolve));
+const apiBase = `http://127.0.0.1:${publicApi.address().port}/api`;
+// The server reads through the local address; the browser keeps the public one.
+const apiReadBase = `http://127.0.0.1:${localApi.address().port}/api`;
 let detailSessionReads = 0;
 const detailSession = createServer((req, res) => {
   detailSessionReads++;
@@ -99,7 +122,7 @@ const detailSession = createServer((req, res) => {
 });
 await new Promise(resolve => detailSession.listen(0, '127.0.0.1', resolve));
 const detailSessionUrl = `http://127.0.0.1:${detailSession.address().port}/session`;
-const detailPage = (changes = {}) => page({ apiBase, sessionUrl: detailSessionUrl, ...changes });
+const detailPage = (changes = {}) => page({ apiBase, apiReadBase, sessionUrl: detailSessionUrl, ...changes });
 try {
   const event = await detailPage({ path: '/demonstration/may-day-2026' });
   assert.equal(event.status, 200);
@@ -150,19 +173,41 @@ try {
   // Sub-paths, a trailing slash and the bare route still belong to Flask.
   const unowned = ['/demonstration/may-day-2026/ics', '/demonstration/may-day-2026/children',
     '/demonstration/may-day-2026/', '/demonstration/'];
-  const apiBefore = apiReads.length;
+  const apiBefore = localReads.length;
   const readsBefore = detailSessionReads;
   for (const path of unowned) {
     assert.equal((await detailPage({ path })).status, 404, path);
   }
-  assert.equal(apiReads.length, apiBefore, 'Unowned paths must not query the API');
+  assert.equal(localReads.length, apiBefore, 'Unowned paths must not query the API');
   assert.equal(detailSessionReads, readsBefore, 'Unowned paths must not read the session');
   assert(detailSessionReads >= readsAfterFirstPage, 'Detail pages do read the session summary');
-  assert(apiReads.every(url => url.includes('?lang=fi')), 'The head read asks for the page language');
-  console.log('PASS: detail head metadata, canonical, JSON-LD, noindex header, preview redirect, bounded 503 and unowned sub-paths');
+  for (const read of localReads) {
+    assert(read.includes('?lang=fi'), `The head read asks for the page language: ${read}`);
+  }
+  assert.equal(publicReads.length, 0, 'Server reads must use the local API address');
+
+  // A repeated view reuses the cached head instead of another API request.
+  const readsBeforeRepeat = localReads.length;
+  const repeated = await detailPage({ path: '/demonstration/may-day-2026' });
+  assert.equal(repeated.status, 200);
+  assert.equal(localReads.length, readsBeforeRepeat, 'A repeat view must not re-read the head');
+
+  // The home batch is read once by the server and inlined for the browser.
+  const homeFirst = await detailPage({ path: '/' });
+  assert.equal(homeFirst.status, 200);
+  assert.equal(bootstrap(homeFirst.html).home.events.length, 1);
+  assert.equal(bootstrap(homeFirst.html).config.apiBase, apiBase, 'The browser keeps the public API base');
+  const homeReads = localReads.filter(read => read.includes('/home')).length;
+  assert.equal(homeReads, 1, 'The home batch is read once');
+  const homeAgain = await detailPage({ path: '/' });
+  assert.equal(bootstrap(homeAgain.html).home.events.length, 1);
+  assert.equal(localReads.filter(read => read.includes('/home')).length, homeReads, 'The home batch is cached');
+  console.log('PASS: detail head metadata, canonical, JSON-LD, noindex header, preview redirect, bounded 503, local read base, head and home caching, unowned sub-paths');
 } finally {
-  apiServer.closeAllConnections?.();
-  await new Promise(resolve => apiServer.close(resolve));
+  publicApi.closeAllConnections?.();
+  localApi.closeAllConnections?.();
+  await new Promise(resolve => publicApi.close(resolve));
+  await new Promise(resolve => localApi.close(resolve));
   await new Promise(resolve => detailSession.close(resolve));
 }
 

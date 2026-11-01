@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { App } from './App';
 import type { AppConfig } from './config';
 import type { DetailBootstrap } from './detail-route';
+import type { HomeData } from '../pages/HomePage';
 import { routeForPath } from './routes';
 import type { AppRoute } from './routes';
 import type { SessionSummary } from './session';
@@ -16,7 +17,8 @@ import type { SessionSummary } from './session';
  * link keeps normal browser navigation to Flask.
  */
 
-type Bootstrap = { config: AppConfig; session: SessionSummary; path: string; detail?: DetailBootstrap };
+type Bootstrap = { config: AppConfig; session: SessionSummary; path: string;
+  detail?: DetailBootstrap; home?: HomeData | null };
 
 /**
  * Routes the app can enter without a server round trip for their metadata.
@@ -35,7 +37,7 @@ function resetScroll() {
   document.body.scrollTop = 0;
 }
 
-function Root({ config, session, path: initialPath, detail }: Bootstrap) {
+function Root({ config, session, path: initialPath, detail, home }: Bootstrap) {
   const [path, setPath] = useState(initialPath);
   const trackedPage = useRef<string | null>(null);
   useEffect(() => {
@@ -96,7 +98,7 @@ function Root({ config, session, path: initialPath, detail }: Bootstrap) {
   }, []);
   const route = routeForPath(path);
   if (!route) return null;
-  return <App config={config} session={session} route={route} path={path} detail={detail} />;
+  return <App config={config} session={session} route={route} path={path} detail={detail} home={home} />;
 }
 
 const container = document.getElementById('app');

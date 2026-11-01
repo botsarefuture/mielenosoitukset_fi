@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Cut the React host's own latency: server-side reads now prefer a local API address (`PUBLIC_API_LOCAL`) instead of a public round trip, detail head metadata is cached for 60 s, and the home card batch is read once, cached for 30 s and inlined into the document so cards paint without a second request. Only public metadata is cached; sessions stay uncached.
+
 - Restore the structured suggest-an-edit path on the React demonstration detail page: the report dialog opens on the same choice as the legacy modal, so visitors can correct fields on the existing suggestion page or send a free-text report instead of only the latter.
 
 - Prepare the React host to serve `/demonstration/<identifier>`: one bounded public-API read builds the head (title, description, canonical slug URL, Open Graph, Event JSON-LD, two-year-horizon `noindex` in the head and `X-Robots-Tag`), the page body comes from the existing detail screen, a missing event is 404 or the signed-in `?preview=1` Flask fallback, and an API failure is 503 instead of an indexable shell. The Apache rule is prepared but left disabled until the visual review and maintainer approval.

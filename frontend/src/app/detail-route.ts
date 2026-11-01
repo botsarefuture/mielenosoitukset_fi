@@ -1,6 +1,7 @@
 import type { AppConfig } from './config';
 import { detailPath } from './detail';
 import type { RouteMeta } from './routes';
+import { ttlCache } from './server-cache';
 
 /**
  * Server-side metadata for one public event.
@@ -20,6 +21,9 @@ const FALLBACK_DESCRIPTION = 'Mielenosoituksen tiedot.';
 const NOINDEX_HORIZON_DAYS = 365 * 2;
 const HEAD_TIMEOUT_MS = 1500;
 const DESCRIPTION_LIMIT = 200;
+/** Repeat renders of the same event reuse the head instead of re-reading it. */
+const HEAD_CACHE_TTL_MS = 60_000;
+const HEAD_CACHE_ENTRIES = 500;
 
 export type DetailBootstrap = {
   /** Resolved public id; the browser component only accepts this form. */
@@ -161,9 +165,10 @@ function jsonLd(config: AppConfig, payload: Payload, canonical: string, descript
 export async function loadDetail(
   identifier: string,
   config: AppConfig,
+  apiBase: string = config.apiBase,
   fetchImpl: typeof fetch = fetch,
 ): Promise<DetailLoad> {
-  const url = `${config.apiBase}/demonstrations/${encodeURIComponent(identifier)}?lang=${encodeURIComponent(config.locale)}`;
+  const url = `${apiBase}/demonstrations/${encodeURIComponent(identifier)}?lang=${encodeURIComponent(config.locale)}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), HEAD_TIMEOUT_MS);
   try {
@@ -200,4 +205,23 @@ export async function loadDetail(
   } finally {
     clearTimeout(timer);
   }
+}
+
+const heads = ttlCache<Extract<DetailLoad, { status: 'ready' }>>(HEAD_CACHE_TTL_MS, HEAD_CACHE_ENTRIES);
+
+/**
+ * Cached head read. Only successful public metadata is stored, so a published
+ * event appears immediately while repeat page views cost no API request.
+ */
+export async function loadDetailHead(
+  identifier: string,
+  config: AppConfig,
+  apiBase: string = config.apiBase,
+): Promise<DetailLoad> {
+  const key = `${apiBase}\n${config.locale}\n${identifier}`;
+  const cached = heads.get(key);
+  if (cached) return cached;
+  const loaded = await loadDetail(identifier, config, apiBase);
+  if (loaded.status === 'ready') heads.set(key, loaded);
+  return loaded;
 }

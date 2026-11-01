@@ -1,8 +1,10 @@
 import { appConfig } from './config';
 import { detailMessages } from './detail';
-import { loadDetail } from './detail-route';
+import { loadDetailHead } from './detail-route';
 import type { DetailBootstrap } from './detail-route';
 import { catalog } from './i18n';
+import { ttlCache } from './server-cache';
+import type { HomeData } from '../pages/HomePage';
 import { routeForPath, routeMeta } from './routes';
 import type { RouteMeta } from './routes';
 import { fetchSession } from './session-server';
@@ -21,7 +23,10 @@ import type { SessionSummary } from './session';
 export type RenderInput = {
   path: string;
   origin: string;
+  /** Public API base the browser uses; also the fallback read base. */
   apiBase: string;
+  /** Preferred server-side read base, e.g. the API on loopback. */
+  apiReadBase?: string;
   sessionUrl: string;
   flaskSocketPath?: string;
   cookie?: string;
@@ -51,6 +56,48 @@ const serialize = (value: unknown) => JSON.stringify(value)
 
 /** The existing detail stylesheet; the host page uses the same markup. */
 const DETAIL_STYLESHEET = '/static/css/public-detail.css?v=20261029-react-detail-1';
+
+/**
+ * The home batch is the same for every anonymous visitor, so the server reads it
+ * once and inlines it. The browser then paints cards without a second request.
+ */
+const HOME_CACHE_TTL_MS = 30_000;
+const HOME_TIMEOUT_MS = 1200;
+const homeBatches = ttlCache<HomeData>(HOME_CACHE_TTL_MS, 4);
+
+function validHomeData(value: unknown): value is HomeData {
+  if (!value || typeof value !== 'object') return false;
+  const data = value as Record<string, unknown>;
+  if (!Array.isArray(data.events) || data.events.length > 50 || typeof data.recommended !== 'boolean') return false;
+  return data.events.every((event) => {
+    if (!event || typeof event !== 'object') return false;
+    const item = event as Record<string, unknown>;
+    return typeof item._id === 'string' && typeof item.title === 'string';
+  });
+}
+
+async function loadHomeBatch(readBase: string, locale: string): Promise<HomeData | null> {
+  const key = `${readBase}\n${locale}`;
+  const cached = homeBatches.get(key);
+  if (cached) return cached;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), HOME_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${readBase}/home?lang=${encodeURIComponent(locale)}`, {
+      signal: controller.signal, credentials: 'omit', headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (!validHomeData(data)) return null;
+    homeBatches.set(key, data);
+    return data;
+  } catch {
+    // The page still works: the browser retries its own request after hydration.
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 function headMarkup(options: {
   title: string; description: string; robots: string; canonical: string | null;
@@ -162,8 +209,10 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   });
   const text = catalog(config.locale);
 
+  const readBase = input.apiReadBase ?? input.apiBase;
   let meta: RouteMeta = routeMeta(route, config, text);
   let detail: DetailBootstrap | undefined;
+  let home: HomeData | null = null;
   let jsonLd: unknown;
   let extraHead = '';
   let noscript = '<noscript><p class="container-main-content">Mielenosoitukset.fi käyttää JavaScriptiä. '
@@ -171,7 +220,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   const headers: Record<string, string> = {};
 
   if (route.name === 'detail') {
-    const loaded = await loadDetail(route.identifier, config);
+    const loaded = await loadDetailHead(route.identifier, config, readBase);
     if (loaded.status === 'unavailable') {
       // Never answer a down backend with a page that looks fine to a crawler.
       return { status: 503, html: unavailableDocument(), headers: { 'Cache-Control': 'no-store', 'Retry-After': '30' } };
@@ -198,8 +247,10 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       + `</article></noscript>`;
   }
 
+  if (route.name === 'home') home = await loadHomeBatch(readBase, config.locale);
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
-  const bootstrap = serialize({ config, session, path: input.path, route, ...(detail ? { detail } : {}) });
+  const bootstrap = serialize({ config, session, path: input.path, route,
+    ...(detail ? { detail } : {}), ...(home ? { home } : {}) });
   const html = `<!DOCTYPE html>
 <html lang="${escapeHtml(config.locale)}">
 <head>

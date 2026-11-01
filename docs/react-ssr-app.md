@@ -19,6 +19,7 @@ claiming a performance improvement.
 | Header, page components, event cards, footer, in-app navigation | Browser (`frontend/src/app/client.tsx`) |
 | Event data | Browser requests the public Go `/api/home?lang=...` contract |
 | Detail head (title, canonical, JSON-LD, robots) | Server requests the same public API once, `/api/demonstrations/<identifier>` |
+| Home card batch | Server reads `/api/home` once, caches it for 30 s and inlines it in the bootstrap |
 
 The server renders no React tree and queries no event collection. A page
 response is a small amount of string composition plus one bounded read of the
@@ -129,8 +130,28 @@ errors without terminating the host.
 After `npm run app:build`, run `node scripts/verify_public_host.mjs` for bounded
 request-count and host-availability checks. Eight concurrent cookieless page
 requests cause one public-configuration lookup; warm requests cause none.
-Private requests remain independent. This verifies removed work, not a measured
-page-load speedup.
+Private requests remain independent. It also asserts that repeated detail views
+reuse the cached head, that the home batch is read once and reused, and that
+server reads use the local API address. This verifies removed work, not a
+measured page-load speedup.
+
+### Server-side public caching
+
+- Detail head metadata: 60 s TTL, 500 entries, keyed by read base, locale and
+  identifier. Only successful public metadata is stored, so a newly published or
+  edited event appears within a minute and failures are never cached.
+- Home batch: 30 s TTL, 4 entries, keyed by read base and locale. The same batch
+  is inlined into the document, so the browser paints cards without a second
+  request; a failed or invalid batch falls back to the browser request.
+- Nothing session-bound is ever cached here: the session summary keeps its own
+  rules and private responses stay uncached.
+
+Measured on 1 November 2026 before this change: `GET /` 207 ms TTFB, `GET /api/session`
+195 ms, `GET /api/demonstrations/<id>` 130-190 ms, and `GET /api/home` about 470 ms
+with `Cache-Control: no-store` and `cf-cache-status: DYNAMIC`. That last response is
+the front page's real bottleneck, since the cards wait for it after hydration. The
+host-side cache removes it from repeat page views; making the API itself cacheable
+at the edge is a separate change on the API side.
 
 The summary also exposes public `site_analytics_enabled` and `matomo_enabled`
 booleans. A missing summary defaults both to disabled; the host does not guess
@@ -185,8 +206,14 @@ npm run app:build          # typecheck, client bundle, server bundle
 APP_ORIGIN=https://mielenosoitukset.fi \
 FLASK_API_ORIGIN=http://127.0.0.1:8000 \
 PUBLIC_API_BASE=https://api.mielenosoitukset.fi/api \
+PUBLIC_API_LOCAL=http://127.0.0.1:8080/api \
 APP_PORT=8090 npm run app:start
 ```
+
+`PUBLIC_API_LOCAL` is the address the host uses for its own server-side reads; the
+browser keeps `PUBLIC_API_BASE`. Pointing the server at the API on loopback avoids
+a public round trip (measured 130-190 ms) that the host would otherwise pay to
+reach an API on the same machine.
 
 For local verification only, `STATIC_DIR=mielenosoitukset_fi/static` lets the app
 host serve `/static/*`, which production serves directly from the web server.

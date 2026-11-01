@@ -3,6 +3,7 @@ import type { CardProps } from '../components/listings/DemonstrationCard';
 import { SiteHeader } from '../components/header/SiteHeader';
 import { DetailScreen } from '../components/detail/DetailScreen';
 import { HomePage } from '../pages/HomePage';
+import type { HomeData } from '../pages/HomePage';
 import type { AppConfig } from './config';
 import { detailEndpoint, detailMessages, detailUrls } from './detail';
 import type { DetailBootstrap } from './detail-route';
@@ -20,6 +21,8 @@ export type AppProps = {
   path: string;
   /** Server-resolved event for the detail route; absent on other pages. */
   detail?: DetailBootstrap;
+  /** Server-read home batch, so cards paint without a second request. */
+  home?: HomeData | null;
 };
 
 function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<typeof catalog>): CardProps {
@@ -34,7 +37,7 @@ function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<
 }
 
 /** One public application shell: shared header, routed page content, footer. */
-export function App({ config, session, route, path, detail }: AppProps) {
+export function App({ config, session, route, path, detail, home }: AppProps) {
   const text = catalog(config.locale);
   const meta = routeMeta(route, config, text);
   useEffect(() => {
@@ -48,6 +51,7 @@ export function App({ config, session, route, path, detail }: AppProps) {
       {route.name === 'home' && <HomePage
         endpoint={config.homeApi}
         locale={config.locale}
+        initialData={home ?? null}
         cards={cardProps(config, session, text)}
         urls={{
           all: config.urls.demonstrations, submit: config.urls.submit, calendar: config.urls.calendar,

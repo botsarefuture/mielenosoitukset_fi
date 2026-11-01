@@ -9,7 +9,12 @@ working tree, not a parallel implementation.
 
 ## Contract before implementation
 
-`GET /api/demonstrations/{id}?lang=fi` retrieves one public event by BSON ObjectId.
+`GET /api/demonstrations/{identifier}?lang=fi` retrieves one public event. The
+identifier accepts the existing public forms in the same precedence as the Flask
+detail route: BSON ObjectId, then an alias ObjectId, then a running number, then
+a slug. Resolution is capped at 200 characters and rejects anything outside
+`[A-Za-z0-9-]` as invalid input. A nonpublic original never resolves through one
+of its aliases, so an unpublished duplicate cannot be reached by another ID.
 Consumer: the planned React detail page and external clients. No token, cookie,
 session or privileged override. All origins may read the API; credentialed CORS
 is not enabled. `lang` accepts fi/en/sv; omission uses the document default.
@@ -29,9 +34,11 @@ organizer email. No joins or geocoding/writes on a read request.
 
 Response fields: `_id`, `title`, `description`, `tags`, `date`, `start_time`,
 `end_time`, `city`, `address`, `route`, `latitude`, `longitude`, `cancelled`,
-`slug`, `running_number`, `event_type`, `facebook`, `img`, `cover_picture`,
+`slug`, `running_number`, `parent`, `event_type`, `facebook`, `img`, `cover_picture`,
 `cover_source`, `preview_image`, `gallery_images`, `organizers`, `default_language`,
-`resolved_language`, `available_languages`. Route is a string array, accepting stored arrays and comma-separated/JSON-array legacy strings. Gallery images also support the old `images` field. Optional textual/numeric values
+`resolved_language`, `available_languages`. `parent` is the series identifier of a
+recurring occurrence, or null; it lets a host link back to the series without a
+second Flask request. Aliases are accepted for lookup but never returned. Route is a string array, accepting stored arrays and comma-separated/JSON-array legacy strings. Gallery images also support the old `images` field. Optional textual/numeric values
 are null when absent or malformed; arrays are empty instead of null. Coordinates
 accept legacy numeric strings. `cover_source` belongs to each returned event,
 so changing a recurring occurrence does not reuse another occurrence's image
@@ -52,12 +59,12 @@ for nonprivate entries. No private organizer token, raw contact record or
 unknown nested metadata is returned, and there is no organization collection
 join or inference of publication consent.
 
-Recurring-parent selection, organization enrichment and personalized
+Recurring-parent *content* selection, organization enrichment and personalized
 follow/attendance state are intentionally not part of this initial contract.
 This is not a drop-in replacement for the authenticated Flask API.
 
-Invalid ID/parameters:400; unavailable event:404; database failure:503 with a
-bounded generic error. Responses are JSON, no-store and nosniff. Content uses the bounded15minute server cache described below; visibility is
+Invalid identifier/parameters:400; unknown or nonpublic event:404; identifier
+lookup or database failure:503, both with a bounded generic error. Responses are JSON, no-store and nosniff. Content uses the bounded15minute server cache described below; visibility is
 checked on every request, including conditional/HEAD requests.
 GET/HEAD/OPTIONS only; no arbitrary queries, list dumps or write methods.
 `GET /health` checks MongoDB connectivity with a short deadline.
@@ -132,6 +139,18 @@ processes have independent caches. Health is not cached. HTTP responses retain
 no-store, so browser/CDN caching cannot bypass visibility checks. No new database,
 indexes, migrations or service dependencies. Disable by restoring the direct
 mongoStore construction in main; no stored-data rollback is needed.
+
+## Detail identifier compatibility
+
+The three extra reads above are the only cost of accepting slugs, running numbers
+and aliases: an ObjectId-shaped identifier probes the original by `_id` before
+trying the alias index, and a numeric identifier tries `running_number` before
+`slug`. All lookups are single-document indexed reads with an `_id`-only
+projection, run under the same three-second request deadline before the cached
+body read. Resolution itself is not cached, so renaming a slug or hiding an event
+takes effect on the next request. The React host needs this to serve the existing
+public `/demonstration/<slug>` URLs unchanged; without it, every slug link would
+have to hop through Flask for an ID.
 
 ## Portable home-page data
 

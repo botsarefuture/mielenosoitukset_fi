@@ -16,7 +16,7 @@ import (
 var textFields = []string{"date", "start_time", "end_time", "city", "address", "slug", "event_type", "facebook", "img", "cover_picture", "cover_source", "preview_image"}
 
 func publicProjection() bson.M {
-	fields := bson.M{"_id": 1, "title": 1, "description": 1, "tags": 1, "default_language": 1, "cancelled": 1, "latitude": 1, "longitude": 1, "running_number": 1, "gallery_images": 1, "images": 1, "route": 1}
+	fields := bson.M{"_id": 1, "title": 1, "description": 1, "tags": 1, "default_language": 1, "cancelled": 1, "latitude": 1, "longitude": 1, "running_number": 1, "gallery_images": 1, "images": 1, "route": 1, "parent": 1}
 	for _, field := range textFields {
 		fields[field] = 1
 	}
@@ -195,6 +195,9 @@ func publicPayload(doc bson.M, lang string) bson.M {
 	cancelled, _ := doc["cancelled"].(bool)
 	r["cancelled"] = cancelled
 	r["running_number"] = number(doc["running_number"])
+	// Series parent lets the host link a recurring event back to its series
+	// without a second Flask trip; it is a public identifier, not content.
+	r["parent"] = identifier(doc["parent"])
 	r["latitude"] = number(doc["latitude"])
 	r["longitude"] = number(doc["longitude"])
 	r["route"] = routeStops(doc["route"])

@@ -36,6 +36,12 @@ func newCachedDetailStore(source publicDetailStore) *cachedDetailStore {
 
 func (s *cachedDetailStore) Ping(ctx context.Context) error { return s.source.Ping(ctx) }
 
+// Identifier resolution is cheap and never cached: a renamed slug or a
+// moderation change must take effect immediately.
+func (s *cachedDetailStore) ResolvePublicID(ctx context.Context, raw string) (bson.ObjectID, error) {
+	return s.source.ResolvePublicID(ctx, raw)
+}
+
 func (s *cachedDetailStore) FindPublic(ctx context.Context, id bson.ObjectID) (bson.M, error) {
 	now := time.Now()
 	s.mu.Lock()

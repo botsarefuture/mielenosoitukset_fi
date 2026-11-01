@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"strconv"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -21,6 +22,7 @@ var buildSHA = "development"
 
 type Store interface {
 	FindPublic(context.Context, bson.ObjectID) (bson.M, error)
+	ResolvePublicID(context.Context, string) (bson.ObjectID, error)
 	Ping(context.Context) error
 }
 type mongoStore struct {
@@ -28,8 +30,10 @@ type mongoStore struct {
 	client     *mongo.Client
 }
 
-func publicFilter(id bson.ObjectID) bson.M {
-	return bson.M{"_id": id, "approved": true, "$expr": bson.M{"$and": bson.A{
+// publicVisibility is the single definition of what a public event is. Callers
+// combine it with the identity they resolved, so an alias can never widen it.
+func publicVisibility() bson.M {
+	return bson.M{"approved": true, "$expr": bson.M{"$and": bson.A{
 		bson.M{"$eq": bson.A{bson.M{"$type": "$approved"}, "bool"}},
 		bson.M{"$in": bson.A{bson.M{"$type": "$hide"}, bson.A{"missing", "bool"}}},
 		bson.M{"$in": bson.A{bson.M{"$type": "$rejected"}, bson.A{"missing", "bool"}}},
@@ -37,6 +41,72 @@ func publicFilter(id bson.ObjectID) bson.M {
 		bson.M{"$or": bson.A{bson.M{"hide": bson.M{"$exists": false}}, bson.M{"hide": false}}},
 		bson.M{"$or": bson.A{bson.M{"rejected": bson.M{"$exists": false}}, bson.M{"rejected": false}}},
 	}}
+}
+
+func publicFilter(id bson.ObjectID) bson.M {
+	filter := publicVisibility()
+	filter["_id"] = id
+	return filter
+}
+
+// errInvalidIdentifier marks input that cannot be any supported identifier.
+var errInvalidIdentifier = errors.New("invalid identifier")
+
+func validIdentifier(raw string) bool {
+	if raw == "" || len(raw) > 200 {
+		return false
+	}
+	for _, r := range raw {
+		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-') {
+			return false
+		}
+	}
+	return true
+}
+
+func (s mongoStore) resolveID(ctx context.Context, filter bson.M) (bson.ObjectID, error) {
+	var result struct {
+		ID bson.ObjectID `bson:"_id"`
+	}
+	err := s.collection.FindOne(ctx, filter, options.FindOne().SetProjection(bson.M{"_id": 1})).Decode(&result)
+	return result.ID, err
+}
+
+// ResolvePublicID mirrors the site's long-standing identifier precedence:
+// ObjectId, then alias, then running number, then slug. A nonpublic original
+// never resolves through one of its aliases.
+func (s mongoStore) ResolvePublicID(ctx context.Context, raw string) (bson.ObjectID, error) {
+	if !validIdentifier(raw) {
+		return bson.NilObjectID, errInvalidIdentifier
+	}
+	if id, err := bson.ObjectIDFromHex(raw); err == nil {
+		var probe struct {
+			ID bson.ObjectID `bson:"_id"`
+		}
+		err := s.collection.FindOne(ctx, bson.M{"_id": id}, options.FindOne().SetProjection(bson.M{"_id": 1})).Decode(&probe)
+		if err == nil {
+			// The original exists: it is the answer, public or not.
+			return s.resolveID(ctx, publicFilter(id))
+		}
+		if !errors.Is(err, mongo.ErrNoDocuments) {
+			return bson.NilObjectID, err
+		}
+		filter := publicVisibility()
+		filter["aliases"] = id
+		if resolved, err := s.resolveID(ctx, filter); !errors.Is(err, mongo.ErrNoDocuments) {
+			return resolved, err
+		}
+	}
+	if runningNumber, err := strconv.Atoi(raw); err == nil && len(raw) <= 18 && runningNumber >= 0 {
+		filter := publicVisibility()
+		filter["running_number"] = runningNumber
+		if resolved, err := s.resolveID(ctx, filter); !errors.Is(err, mongo.ErrNoDocuments) {
+			return resolved, err
+		}
+	}
+	filter := publicVisibility()
+	filter["slug"] = raw
+	return s.resolveID(ctx, filter)
 }
 func (s mongoStore) FindPublic(ctx context.Context, id bson.ObjectID) (bson.M, error) {
 	var doc bson.M
@@ -77,11 +147,6 @@ func (a *API) handler() http.Handler {
 	})
 }
 func (a *API) getDemonstration(w http.ResponseWriter, r *http.Request) {
-	id, err := bson.ObjectIDFromHex(r.PathValue("id"))
-	if err != nil {
-		writeError(w, 400, "invalid demonstration ID")
-		return
-	}
 	lang, err := parseQuery(r.URL.RawQuery)
 	if err != nil {
 		writeError(w, 400, "invalid query parameters")
@@ -89,6 +154,20 @@ func (a *API) getDemonstration(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
+	id, err := a.store.ResolvePublicID(ctx, r.PathValue("id"))
+	if errors.Is(err, errInvalidIdentifier) {
+		writeError(w, 400, "invalid demonstration ID")
+		return
+	}
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		writeError(w, 404, "demonstration not found")
+		return
+	}
+	if err != nil {
+		log.Print("Demonstration identifier lookup failed")
+		writeError(w, 503, "service unavailable")
+		return
+	}
 	doc, err := a.store.FindPublic(ctx, id)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		writeError(w, 404, "demonstration not found")

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Let the public Go API resolve demonstration identifiers the way the site already does (ObjectId, alias, running number, slug) and return a recurring event's series `parent`, so a host can serve the existing `/demonstration/<slug>` URLs and link back to a series without a Flask request. Nonpublic events stay 404, including through their aliases.
+
 - Add a standalone React host for the public front page: the server writes only the document metadata and an empty app root, the browser renders the shared header, page content and footer, and events keep coming from the public Go home API. Add a read-only `GET /api/session` summary for the signed-in header, explicit GET-only Apache routing for migrated pages, and keep every other route and form on Flask.
 
 - Add a page-family filter to the admin Core Web Vitals report, with scoped sample counts and p50/p95/p99 values while preserving the selected date range.

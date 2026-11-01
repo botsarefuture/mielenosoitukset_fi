@@ -445,6 +445,12 @@ request. No new browser authentication scheme is introduced.
 Deploy the Go home endpoint before merging/deploying its consumer. See
 `docs/go-public-api.md`. Rollback is a source revert and frontend rebuild.
 
+### Standalone host for migrated pages
+
+The front page now also has a standalone React host that renders only metadata on
+the server and the page in the browser. It is the path for the remaining
+React-only public pages, including the Apache GET-only routing split. See
+[`docs/react-ssr-app.md`](react-ssr-app.md).
 
 ## Submission page (opt-in, 30 October 2026)
 
@@ -503,8 +509,9 @@ Flatpickr appends its calendar to `<body>`, so `.submit-page`-scoped selectors d
 not reach it. The calendar is themed through the unscoped
 `.public-date-calendar` rules in `submit.css`, which is why dark mode needs those
 rules to stand on their own rather than inherit from the page wrapper. The priced cost of the
-entry is about 86 KB gzip JavaScript plus 37 KB gzip CSS (Quill included); the
-React runtime chunk is already loaded on this page by the site header.
+entry is about 86 KB gzip JavaScript plus 37 KB gzip CSS (Quill included).
+The current merged assets load separate React runtime chunks for the site header
+and submission page; rebuilding the shared frontend assets can reunify them.
 
 ### Verification
 

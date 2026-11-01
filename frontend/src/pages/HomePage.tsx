@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { DemonstrationCards } from '../components/listings/DemonstrationCard';
 import type { CardProps } from '../components/listings/DemonstrationCard';
 import type { Demonstration } from '../components/listings/types';
@@ -9,23 +10,33 @@ export type HomeProps = {
     all: string; submit: string; calendar: string; info: string; eventsTitle: string;
     emptyTitle: string; empty: string; prideTitle: string; prideIntro: string; prideLink: string;
     recommendedTitle: string; loading: string; loadError: string; retry: string };
+  /** Optional pre-fetched batch. Without it the component requests the public API. */
+  initialData?: HomeData | null;
 };
 
-type HomeData = { events: Demonstration[]; recommended: boolean };
+export type HomeData = { events: Demonstration[]; recommended: boolean };
 
-/** Portable browser consumer: Flask only supplies bootstrap configuration. */
-export function HomePage({ endpoint, locale, cards, urls, text }: HomeProps) {
-  const [data, setData] = useState<HomeData | null>(null);
+/** Server rendering has no location; the render entry supplies the public origin. */
+function pageOrigin() {
+  if (typeof window !== 'undefined') return window.location.origin;
+  return (globalThis as { __MOSO_ORIGIN__?: string }).__MOSO_ORIGIN__ ?? '';
+}
+
+/** Portable browser consumer: the host only supplies bootstrap configuration. */
+export function HomePage({ endpoint, locale, cards, urls, text, initialData = null }: HomeProps) {
+  const [data, setData] = useState<HomeData | null>(initialData);
   const [failed, setFailed] = useState(false);
   const [attempt, retry] = useState(0);
   useEffect(() => {
+    // A supplied batch is already displayed; only retries request it again.
+    if (attempt === 0 && initialData) return;
     const controller = new AbortController();
     let active = true;
     const timeout = window.setTimeout(() => controller.abort(), 8000);
     setData(null); setFailed(false);
     async function load() {
       try {
-        const url = new URL(endpoint, window.location.origin);
+        const url = new URL(endpoint, pageOrigin() || window.location.origin);
         url.searchParams.set('lang', locale);
         const response = await fetch(url, { signal: controller.signal, credentials: 'omit', headers: { Accept: 'application/json' } });
         if (!response.ok) throw new Error('Home data unavailable');
@@ -38,7 +49,7 @@ export function HomePage({ endpoint, locale, cards, urls, text }: HomeProps) {
     }
     void load();
     return () => { active = false; window.clearTimeout(timeout); controller.abort(); };
-  }, [endpoint, locale, attempt]);
+  }, [endpoint, locale, attempt, initialData]);
   return <div className="home-page public-demonstration-list">
     <header className="home-intro">
       <div><h1>{text.title}</h1><p>{text.intro}</p></div>
@@ -64,4 +75,3 @@ export function HomePage({ endpoint, locale, cards, urls, text }: HomeProps) {
       <a className="home-button home-button--secondary" href={urls.pride}>{text.prideLink}</a></aside>
   </div>;
 }
-import { useEffect, useState } from 'react';

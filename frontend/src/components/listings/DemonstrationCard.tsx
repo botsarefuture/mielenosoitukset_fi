@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { Demonstration, Friend, ListingProps } from './types';
 
+/** Server rendering has no location; the render entry supplies the public origin. */
+function pageOrigin() {
+  if (typeof window !== 'undefined') return window.location.origin;
+  return (globalThis as { __MOSO_ORIGIN__?: string }).__MOSO_ORIGIN__ ?? '';
+}
 export function internalHref(value: string) {
   try {
-    const url = new URL(value, window.location.origin);
-    return url.origin === window.location.origin ? `${url.pathname}${url.search}${url.hash}` : '#';
+    const url = new URL(value, pageOrigin());
+    return url.origin === pageOrigin() ? `${url.pathname}${url.search}${url.hash}` : '#';
   } catch { return '#'; }
 }
 function time(value?: string | null) { return typeof value === 'string' ? value.trim().split(':').slice(0, 2).join(':') : ''; }
@@ -14,7 +19,7 @@ export function eventHref(event: Demonstration, props: Pick<ListingProps, 'serie
   return internalHref(event.detail_url || fallback);
 }
 function inviteHref(href: string) {
-  const url = new URL(href, window.location.origin);
+  const url = new URL(href, pageOrigin());
   url.searchParams.set('action', 'inviteFriends');
   return `${url.pathname}${url.search}${url.hash}`;
 }

@@ -9,7 +9,9 @@ import { NotificationMenu } from './NotificationMenu';
 
 export function SiteHeader(props: HeaderProps) {
   const { messages: text, account } = props;
-  const [mobile, setMobile] = useState(() => matchMedia('(max-width: 768px)').matches);
+  // Server rendering has no viewport; the client measures after hydration.
+  const [mobile, setMobile] = useState(() => typeof window !== 'undefined'
+    && matchMedia('(max-width: 768px)').matches);
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
   const close = useRef<HTMLButtonElement>(null);

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go.mongodb.org/mongo-driver/v2/bson"
 
+	"go.mongodb.org/mongo-driver/v2/event"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"io"
@@ -13,14 +14,16 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
 
 type fakeStore struct {
-	doc   bson.M
-	err   error
-	calls int
+	doc        bson.M
+	err        error
+	resolveErr error
+	calls      int
 }
 
 func (s *fakeStore) FindPublic(ctx context.Context, id bson.ObjectID) (bson.M, error) {
@@ -29,6 +32,18 @@ func (s *fakeStore) FindPublic(ctx context.Context, id bson.ObjectID) (bson.M, e
 		panic("missing query deadline")
 	}
 	return s.doc, s.err
+}
+func (s *fakeStore) ResolvePublicID(ctx context.Context, raw string) (bson.ObjectID, error) {
+	if _, ok := ctx.Deadline(); !ok {
+		panic("missing query deadline")
+	}
+	if s.resolveErr != nil {
+		return bson.NilObjectID, s.resolveErr
+	}
+	if !validIdentifier(raw) {
+		return bson.NilObjectID, errInvalidIdentifier
+	}
+	return bson.ObjectIDFromHex(demoID)
 }
 func (s *fakeStore) Ping(context.Context) error { return s.err }
 
@@ -63,11 +78,13 @@ func TestValidationMethodsAndFailures(t *testing.T) {
 		err           error
 		status, calls int
 	}{
-		{"GET", "/api/demonstrations/bad", nil, 400, 0},
+		{"GET", "/api/demonstrations/bad%20slug!", nil, 400, 0},
+		{"GET", "/api/demonstrations/" + demoID, mongo.ErrNoDocuments, 404, 1},
+		{"GET", "/api/demonstrations/may-day-2026", nil, 200, 1},
+		{"GET", "/api/demonstrations/123456", nil, 200, 1},
 		{"GET", "/api/demonstrations/" + demoID + "?lang=en&lang=sv", nil, 400, 0},
 		{"GET", "/api/demonstrations/" + demoID + "?approved=false", nil, 400, 0},
 		{"GET", "/api/demonstrations/" + demoID + "?lang=%ZZ", nil, 400, 0},
-		{"GET", "/api/demonstrations/" + demoID, mongo.ErrNoDocuments, 404, 1},
 		{"GET", "/api/demonstrations/" + demoID, errors.New("mongodb://secret"), 503, 1},
 		{"POST", "/api/demonstrations/" + demoID, nil, 405, 0},
 		{"DELETE", "/api/demonstrations/" + demoID, nil, 405, 0},
@@ -87,6 +104,41 @@ func TestValidationMethodsAndFailures(t *testing.T) {
 		})
 	}
 }
+
+// Identifier resolution runs before the body read, so a lookup failure must not
+// touch FindPublic and must not leak driver detail.
+func TestResolveFailures(t *testing.T) {
+	for _, tc := range []struct {
+		lookup error
+		status int
+	}{{mongo.ErrNoDocuments, 404}, {errors.New("mongodb://secret"), 503}} {
+		s := &fakeStore{resolveErr: tc.lookup}
+		w := httptest.NewRecorder()
+		(&API{s}).handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/demonstrations/may-day-2026", nil))
+		if w.Code != tc.status || s.calls != 0 || strings.Contains(w.Body.String(), "secret") {
+			t.Fatalf("lookup=%v status=%d calls=%d body=%s", tc.lookup, w.Code, s.calls, w.Body.String())
+		}
+	}
+}
+
+// Public output must expose the series parent identifier and nothing about the
+// parent's content, so a host can link a recurring occurrence.
+func TestPayloadSeriesParent(t *testing.T) {
+	parent, alias := bson.NewObjectID(), bson.NewObjectID()
+	payload := publicPayload(bson.M{"parent": parent, "aliases": bson.A{alias}}, "fi")
+	if payload["parent"] != parent.Hex() {
+		t.Fatalf("parent lost: %v", payload)
+	}
+	if _, leaked := payload["aliases"]; leaked {
+		t.Fatalf("aliases leaked: %v", payload)
+	}
+	for _, value := range []any{nil, "", 42, bson.A{parent}} {
+		if got := publicPayload(bson.M{"parent": value}, "fi")["parent"]; got != nil {
+			t.Fatalf("non-ObjectId parent exposed: %v", got)
+		}
+	}
+}
+
 func TestLocalizationLegacyAndMalformedValues(t *testing.T) {
 	doc := bson.M{"_id": bson.NewObjectID(), "title": "Original", "description": "Fallback", "tags": bson.A{"one", 42}, "latitude": "60.1", "longitude": "NaN", "start_time": nil, "date": bson.NewDateTimeFromTime(time.Date(2026, 10, 29, 0, 0, 0, 0, time.UTC)), "translations": bson.M{"en": bson.M{"title": "English", "description": "", "tags": bson.A{}}}}
 	payload := publicPayload(doc, "en")
@@ -172,6 +224,84 @@ func TestMongoPublicBoundary(t *testing.T) {
 				t.Fatal("withdrawn event remained public", err)
 			}
 		})
+	}
+}
+
+// Real MongoDB confirms identifier precedence and that nonpublic originals never
+// resolve through an alias. Opt-in, isolated database only.
+func TestMongoResolvePublicID(t *testing.T) {
+	uri := os.Getenv("TEST_MONGODB_URI")
+	if uri == "" {
+		t.Skip("set TEST_MONGODB_URI for isolated MongoDB integration")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	var reads atomic.Int64
+	monitor := &event.CommandMonitor{Started: func(_ context.Context, command *event.CommandStartedEvent) {
+		if command.CommandName == "find" {
+			reads.Add(1)
+		}
+	}}
+	client, err := mongo.Connect(options.Client().ApplyURI(uri).SetMonitor(monitor))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Disconnect(context.Background())
+	db := client.Database("moso_go_api_test_" + bson.NewObjectID().Hex())
+	defer db.Drop(context.Background())
+	collection := db.Collection("demonstrations")
+	store := mongoStore{collection, client}
+	publicID, aliasID, parentID := bson.NewObjectID(), bson.NewObjectID(), bson.NewObjectID()
+	privateID, hiddenAliasID := bson.NewObjectID(), bson.NewObjectID()
+	for _, doc := range []bson.M{
+		{"_id": publicID, "approved": true, "slug": "series-child", "running_number": int32(4242), "aliases": bson.A{aliasID}, "parent": parentID, "title": "Public"},
+		{"_id": privateID, "approved": false, "slug": "private-original", "aliases": bson.A{hiddenAliasID}, "title": "Private"},
+		// A public record pointing at the private original must not revive it.
+		{"_id": bson.NewObjectID(), "approved": true, "slug": "unrelated", "aliases": bson.A{privateID}, "title": "Unrelated"},
+	} {
+		if _, err := collection.InsertOne(ctx, doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, tc := range []struct {
+		name, raw string
+		want      bson.ObjectID
+		missing   bool
+	}{
+		{"slug", "series-child", publicID, false},
+		{"running number", "4242", publicID, false},
+		{"alias", aliasID.Hex(), publicID, false},
+		{"object id", publicID.Hex(), publicID, false},
+		{"unknown slug", "no-such-event", bson.NilObjectID, true},
+		{"hidden slug", "private-original", bson.NilObjectID, true},
+		{"hidden alias", hiddenAliasID.Hex(), bson.NilObjectID, true},
+		// A public alias pointing at a private original still resolves to nothing.
+		{"private original by id", privateID.Hex(), bson.NilObjectID, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			before := reads.Load()
+			got, err := store.ResolvePublicID(ctx, tc.raw)
+			if tc.name == "object id" && reads.Load()-before != 1 {
+				t.Fatalf("public ObjectId resolution used %d reads, want 1", reads.Load()-before)
+			}
+			if tc.missing {
+				if !errors.Is(err, mongo.ErrNoDocuments) {
+					t.Fatalf("resolved nonpublic %q: %v %v", tc.raw, got, err)
+				}
+				return
+			}
+			if err != nil || got != tc.want {
+				t.Fatalf("resolved %q: %v %v", tc.raw, got, err)
+			}
+		})
+	}
+	if _, err := store.ResolvePublicID(ctx, "bad slug!"); !errors.Is(err, errInvalidIdentifier) {
+		t.Fatalf("invalid identifier accepted: %v", err)
+	}
+	// The alias check for the public record itself must not resurrect its parent.
+	doc, err := store.FindPublic(ctx, publicID)
+	if err != nil || identifier(doc["parent"]) != parentID.Hex() {
+		t.Fatalf("parent not projected: %v %v", doc, err)
 	}
 }
 

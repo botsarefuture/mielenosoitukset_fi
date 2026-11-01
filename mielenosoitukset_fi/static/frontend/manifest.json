@@ -1,6 +1,6 @@
 {
-  "_DemonstrationCard-uc1uDIgb.js": {
-    "file": "assets/DemonstrationCard-uc1uDIgb.js",
+  "_DemonstrationCard-Dq-wNDBh.js": {
+    "file": "assets/DemonstrationCard-Dq-wNDBh.js",
     "name": "DemonstrationCard",
     "imports": [
       "_mount-island-Bd8CA551.js"
@@ -58,7 +58,7 @@
     ]
   },
   "src/entries/header.tsx": {
-    "file": "assets/header-B_OK5xTP.js",
+    "file": "assets/header-CJhLDyuo.js",
     "name": "header",
     "src": "src/entries/header.tsx",
     "isEntry": true,
@@ -67,33 +67,33 @@
     ]
   },
   "src/entries/home.tsx": {
-    "file": "assets/home-icuEQl_T.js",
+    "file": "assets/home-gHdw0gqS.js",
     "name": "home",
     "src": "src/entries/home.tsx",
     "isEntry": true,
     "imports": [
       "_mount-island-Bd8CA551.js",
-      "_DemonstrationCard-uc1uDIgb.js"
+      "_DemonstrationCard-Dq-wNDBh.js"
     ]
   },
   "src/entries/listing.tsx": {
-    "file": "assets/listing-BVt3dS8H.js",
+    "file": "assets/listing-QcjEWxCr.js",
     "name": "listing",
     "src": "src/entries/listing.tsx",
     "isEntry": true,
     "imports": [
       "_mount-island-Bd8CA551.js",
-      "_DemonstrationCard-uc1uDIgb.js"
+      "_DemonstrationCard-Dq-wNDBh.js"
     ]
   },
   "src/entries/pride.tsx": {
-    "file": "assets/pride-D4ViiA9l.js",
+    "file": "assets/pride-CPJfxdge.js",
     "name": "pride",
     "src": "src/entries/pride.tsx",
     "isEntry": true,
     "imports": [
       "_mount-island-Bd8CA551.js",
-      "_DemonstrationCard-uc1uDIgb.js"
+      "_DemonstrationCard-Dq-wNDBh.js"
     ]
   },
   "src/entries/submit-react.tsx": {

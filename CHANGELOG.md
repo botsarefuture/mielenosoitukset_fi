@@ -4,6 +4,18 @@
 
 ## UNRELEASED
 
+- Ship the public React host as a versioned, checksum-verified release bundle with its own systemd unit and a deploy script that refuses unsafe archives and requires exact-build health. Node runs as `www-data` on loopback and reads the Flask session over the existing Unix socket, so the new service holds no database credentials or application secret.
+
+- Let the public Go API resolve demonstration identifiers the way the site already does (ObjectId, alias, running number, slug) and return a recurring event's series `parent`, so a host can serve the existing `/demonstration/<slug>` URLs and link back to a series without a Flask request. Public ObjectIds resolve in one indexed read. Nonpublic events stay 404, including through their aliases.
+
+- Cache cookieless public React-host configuration for five minutes, reducing repeat lookups while keeping private sessions uncached.
+
+- Keep the public React host alive on malformed asset requests, use asynchronous file reads, and avoid repeated cookieless configuration requests while keeping private sessions isolated.
+
+- Preserve the standalone React host's page, campaign and visitor aggregates, Matomo and Web Vitals through configuration-controlled, nonblocking browser hooks. Browser page signals accept only the migrated home route and retain the existing bot, DNT and privacy limits.
+
+- Add a standalone React host for the public front page: the server writes only the document metadata and an empty app root, the browser renders the shared header, page content and footer, and events keep coming from the public Go home API. Add a read-only `GET /api/session` summary for the signed-in header, explicit GET-only Apache routing for migrated pages, and keep every other route and form on Flask.
+
 - Keep successfully submitted React drafts cleared, restore visible duplicate confirmation and Escape cancellation, display readable duplicate dates, and focus the visible date/city controls on validation errors.
 
 - Show a whole-site performance timeline above a table of normalized page URI groups. Selecting a page changes its daily-average chart while preserving the date range and metric; undersampled days remain gaps.

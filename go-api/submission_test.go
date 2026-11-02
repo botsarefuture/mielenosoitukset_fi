@@ -191,6 +191,23 @@ func TestSubmissionClientTrustBoundary(t *testing.T) {
 	}
 }
 
+func TestSubmissionOriginMatchesBothProductionHosts(t *testing.T) {
+	primary := "https://mielenosoitukset.fi"
+	for _, origin := range []string{primary, "https://www.mielenosoitukset.fi"} {
+		if !submissionOriginAllowed(origin, primary) {
+			t.Fatal("supported site hostname rejected", origin)
+		}
+	}
+	for _, origin := range []string{"", "null", "http://www.mielenosoitukset.fi", "https://evil.mielenosoitukset.fi", "https://www.mielenosoitukset.fi.evil.test", primary + ":444", primary + "/", "https://www.example.test"} {
+		if submissionOriginAllowed(origin, primary) {
+			t.Fatal("untrusted origin accepted", origin)
+		}
+	}
+	if submissionOriginAllowed("https://www.example.test", "https://example.test") {
+		t.Fatal("custom deployments gained an implicit alias")
+	}
+}
+
 func TestMongoSubmissionConcurrencyAndRecovery(t *testing.T) {
 	uri := os.Getenv("TEST_MONGODB_URI")
 	if uri == "" {

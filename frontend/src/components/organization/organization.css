@@ -28,11 +28,11 @@
 .organization-page .section-card { margin-bottom: 1.75rem; padding: 2.5rem; border: 1px solid var(--product-border); border-radius: 1.5rem; background: var(--product-surface); box-shadow: var(--product-shadow); }
 .organization-page .section-title { display: flex; align-items: center; justify-content: center; gap: .75rem; margin: 0 0 2rem; color: var(--product-primary); font-size: 2rem; font-weight: 700; text-align: center; }
 .organization-page .section-title i { font-size: 1.5rem; }
-.organization-page .contact-methods { display: grid; gap: 1.5rem; margin-bottom: 2rem; }
-.organization-page .contact-item, .organization-page .social-item { display: flex; align-items: center; gap: 1rem; min-width: 0; padding: 1.5rem; border: 1px solid var(--product-border); border-radius: 1rem; background: var(--product-canvas); color: var(--product-text); text-decoration: none; }
+.organization-page .contact-methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+.organization-page .contact-item, .organization-page .social-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; min-width: 0; padding: 1.5rem; border: 1px solid var(--product-border); border-radius: 1rem; background: var(--product-canvas); color: var(--product-text); text-align: center; text-decoration: none; }
 .organization-page .contact-item:hover, .organization-page .social-item:hover { border-color: var(--product-primary); }
 .organization-page .contact-icon, .organization-page .social-icon, .organization-page .help-us-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 50px; height: 50px; border-radius: 1rem; background: var(--product-action-bg); color: var(--product-on-action); font-size: 1.25rem; }
-.organization-page .contact-info, .organization-page .social-info { min-width: 0; overflow-wrap: anywhere; }
+.organization-page .contact-info, .organization-page .social-info { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .organization-page .contact-info h3 { margin: 0 0 .25rem; color: var(--product-text); font-size: 1.1rem; font-weight: 600; }
 .organization-page .contact-info p { margin: 0; color: var(--product-text-muted); font-size: .95rem; }
 .organization-page .socials { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); gap: 1rem; margin-top: 2rem; }

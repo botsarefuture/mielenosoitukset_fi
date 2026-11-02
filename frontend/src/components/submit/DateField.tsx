@@ -90,7 +90,7 @@ export function DateField({
         };
 
     const picker = flatpickr(input, config) as unknown as Instance;
-    picker.calendarContainer?.classList.add('public-date-calendar');
+    picker.calendarContainer?.classList.add('public-date-calendar', 'submit-date-calendar');
     pickerRef.current = picker;
     return () => {
       picker.destroy();

@@ -259,7 +259,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       description: 'Ilmoita mielenosoituksesta ja auta muita löytämään tapahtuma. Tarkistamme ilmoituksen ennen julkaisua.',
       canonical: `${config.origin}/submit`, robots: submission.sent || submission.conflict ? 'noindex, follow' : 'index, follow' };
     headers['Cache-Control'] = 'no-store';
-    extraHead = '<link rel="stylesheet" href="/static/css/submit.css?v=20261102-standalone-submit-1">'
+    extraHead = '<link rel="stylesheet" href="/static/css/submit.css?v=20261102-submit-calendar-grid-1">'
       + (assets.submit ?? '');
     const props = submitProps(config, submission);
     noscript = `<noscript>${submission.sent

@@ -6,7 +6,7 @@ import '../components/organization/organization.css';
 import '../../../mielenosoitukset_fi/static/css/toolbox.css';
 
 function Icon({ name, brand = false }: { name: string; brand?: boolean }) {
-  return <i className={`${brand ? 'fa-brands' : 'fa-solid'} fa-${name}`} aria-hidden="true" />;
+  return <i className={`organization-icon ${brand ? 'fa-brands' : 'fa-solid'} fa-${name}`} aria-hidden="true" />;
 }
 
 /** Public profile links are data, never executable URLs or HTML. */
@@ -126,8 +126,6 @@ export function OrganizationPage({ organization: org, authenticated, privateStat
           ? <img src={logo} alt={`${text.logo} ${org.name}`} decoding="async" referrerPolicy="no-referrer" />
           : <div className="org-logo-placeholder"><Icon name="building" /></div>}</div>
         <div className="org-hero-info">
-          <div className={`org-label${org.verified ? ' verified' : ''}`}><Icon name={org.verified ? 'circle-check' : 'building'} />
-            <span>{org.verified ? text.verified : text.organization}</span></div>
           <h1 className="org-name">{org.name}</h1>
           {org.description && <p className="org-desc">{org.description}</p>}
         </div>

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Use the full available page width for organization headers, center the logo above the name and description, and remove the redundant organization eyebrow. Present verification as supporting information rather than a button, center contact details and social links in responsive cards, and correct inherited icon spacing.
+
 - Move public organization profiles to the standalone React host, with a bounded public Go profile cache and the Go event listing API. Keep follows, invitations and management permissions private and fresh, preserve existing action URLs, invitation feedback and signed-in chat, and load organization code only on organization pages. The chat connection and panel load only when opened.
   - Keep the mobile back-to-top control separate from chat and organization management tools.
 

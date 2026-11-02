@@ -21,6 +21,7 @@ export type SessionSummary = {
   fundraising: boolean;
   siteAnalyticsEnabled: boolean;
   matomoEnabled: boolean;
+  submission?: { locales: AppLocale[]; defaultLanguage: AppLocale; canEditDemo: boolean };
   organization?: {
     id: string; following: boolean; invited: boolean; hasMessages: boolean;
     permissions: Record<'VIEW_ORGANIZATION' | 'EDIT_ORGANIZATION' | 'DELETE_ORGANIZATION' | 'INVITE_TO_ORGANIZATION', boolean>;
@@ -38,6 +39,9 @@ export const anonymousSession: SessionSummary = {
 export function normalizeSession(value: unknown): SessionSummary {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return { ...anonymousSession };
   const raw = value as Record<string, unknown>;
+  const submission = raw.submission && typeof raw.submission === 'object'
+    ? raw.submission as Record<string, unknown> : {};
+  const submissionLocales = Array.isArray(submission.locales) ? submission.locales.filter(isLocale) : ['fi' as const];
   const locales = Array.isArray(raw.locales)
     ? raw.locales.flatMap((item) => {
       const entry = item as { code?: unknown; name?: unknown } | null;
@@ -73,6 +77,12 @@ export function normalizeSession(value: unknown): SessionSummary {
     fundraising: raw.fundraising === true,
     siteAnalyticsEnabled: raw.site_analytics_enabled === true,
     matomoEnabled: raw.matomo_enabled === true,
+    submission: {
+      locales: submissionLocales.length ? submissionLocales : ['fi'],
+      defaultLanguage: isLocale(submission.default_language) && submissionLocales.includes(submission.default_language)
+        ? submission.default_language : 'fi',
+      canEditDemo: raw.authenticated === true && submission.can_edit_demo === true,
+    },
     ...(organization ? { organization } : {}),
   };
 }

@@ -213,6 +213,7 @@ def _enqueue_admin_reminders(db, max_to_enqueue: int = 50):
     query = {
         "$and": [
             {"approved": False},
+            {"submission_delivery_pending": {"$ne": True}},
             {"in_past": {"$ne": True}},
             {"cancelled": {"$ne": True}},
             {"$or": [{"rejected": {"$exists": False}}, {"rejected": False}]},
@@ -363,6 +364,15 @@ def run(max_jobs: int = 25):
         job_id = job["_id"]
         owner = {"_id": job_id, "status": "processing", "claim_token": job["claim_token"]}
         try:
+            if job.get("notification_type") == "go_submission_prepare":
+                from mielenosoitukset_fi.utils.go_submission_delivery import prepare_go_submission
+                prepare_go_submission(db, queue, job, owner, _owned_update)
+                _owned_update(queue, owner, {"$set": {
+                    "status": "completed", "processed_at": utcnow(), "updated_at": utcnow(),
+                    "marks_admin_contact": False,
+                }, "$unset": {"claim_token": "", "prepared_children": ""}})
+                processed += 1
+                continue
             if job.get("notification_type") == "city_assignment":
                 # Inbox eligibility uses the live assignment, independently of
                 # whether the queued SMTP address is still current/eligible.

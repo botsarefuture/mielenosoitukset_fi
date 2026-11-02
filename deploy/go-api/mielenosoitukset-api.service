@@ -1,11 +1,12 @@
 [Unit]
-Description=Public mielenosoitukset.fi Go read API
+Description=Mielenosoitukset.fi public Go API
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 DynamicUser=yes
+SupplementaryGroups=www-data
 WorkingDirectory=/opt/mielenosoitukset-api
 EnvironmentFile=/etc/mielenosoitukset-api/environment
 ExecStart=/opt/mielenosoitukset-api/current/api

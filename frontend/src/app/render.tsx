@@ -1,4 +1,9 @@
 import { appConfig } from './config';
+import { randomUUID } from 'node:crypto';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { SubmitFallback } from './SubmitFallback';
+import { submitProps } from './submit';
+import type { SubmitBootstrap } from './submit';
 import { detailMessages } from './detail';
 import { loadDetailHead, loadSeries, selectOccurrence, seriesNavigation, seriesPath } from './detail-route';
 import type { DetailBootstrap, DetailSeries } from './detail-route';
@@ -22,7 +27,7 @@ import type { SessionSummary } from './session';
  *
  * The server writes the document head (title, description, robots, social
  * previews, favicons, theme bootstrap and stylesheets) and an empty app root.
- * Page components render in the browser, so a request does no React rendering.
+ * Page components render in the browser, except a small React-owned no-JS form.
  * Routes whose metadata comes from an event do one projected API read for the
  * head; the page body is still fetched by the browser.
  */
@@ -44,7 +49,7 @@ export type RenderInput = {
   search?: string;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string };
 
 export type RenderResult = {
   status: number;
@@ -236,12 +241,31 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   let listing: ListingBootstrap | undefined;
   let organization: OrganizationBootstrap | undefined;
   let cities: CitiesData | null | undefined;
+  let submission: SubmitBootstrap | undefined;
   let status = 200;
   let jsonLd: unknown;
   let extraHead = '';
   let noscript = '<noscript><p class="container-main-content">Mielenosoitukset.fi käyttää JavaScriptiä. '
     + '<a href="/demonstrations">Kaikki mielenosoitukset</a> · <a href="/calendar/">Kalenteri</a></p></noscript>';
   const headers: Record<string, string> = {};
+
+  if (route.name === 'submit') {
+    const settings = session.submission;
+    submission = { token: randomUUID().replaceAll('-', ''), locales: settings?.locales ?? ['fi'],
+      defaultLanguage: settings?.defaultLanguage ?? 'fi', canEditDemo: settings?.canEditDemo ?? false,
+      sent: new URLSearchParams(input.search ?? '').get('sent') === '1',
+      conflict: new URLSearchParams(input.search ?? '').get('conflict') === '1' };
+    meta = { title: 'Ilmoita mielenosoituksesta | Mielenosoitukset.fi',
+      description: 'Ilmoita mielenosoituksesta ja auta muita löytämään tapahtuma. Tarkistamme ilmoituksen ennen julkaisua.',
+      canonical: `${config.origin}/submit`, robots: submission.sent || submission.conflict ? 'noindex, follow' : 'index, follow' };
+    headers['Cache-Control'] = 'no-store';
+    extraHead = '<link rel="stylesheet" href="/static/css/submit.css?v=20261102-standalone-submit-1">'
+      + (assets.submit ?? '');
+    const props = submitProps(config, submission);
+    noscript = `<noscript>${submission.sent
+      ? `<article class="submit-page"><h1>${escapeHtml(props.messages.successTitle)}</h1><p>${escapeHtml(props.messages.successBody)}</p><a href="/">${escapeHtml(props.messages.backHome)}</a></article>`
+      : (submission.conflict ? `<p role="alert">${escapeHtml(props.messages.conflictTitle)}. ${escapeHtml(props.messages.errorConflictCancelled)}</p>` : '') + renderToStaticMarkup(<SubmitFallback {...props} />)}</noscript>`;
+  }
 
   if (route.name === 'detail') {
     const loaded = await loadDetailHead(route.identifier, config, readBase);
@@ -408,7 +432,8 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
   const bootstrap = serialize({ config, session, path: input.path, route,
     ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}),
-    ...(listing ? { listing } : {}), ...(organization ? { organization } : {}), ...(cities !== undefined ? { cities } : {}) });
+    ...(listing ? { listing } : {}), ...(organization ? { organization } : {}), ...(cities !== undefined ? { cities } : {}),
+    ...(submission ? { submission } : {}) });
   const html = `<!DOCTYPE html>
 <html lang="${escapeHtml(config.locale)}">
 <head>

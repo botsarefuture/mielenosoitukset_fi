@@ -75,6 +75,7 @@ export function DateField({
       ? {
           dateFormat: 'd.m.Y',
           allowInput: true,
+          disableMobile: true,
           locale: FINNISH_LOCALE,
           onChange: (_dates: Date[], text: string) => onChangeRef.current(displayToIso(text ?? '')),
         }
@@ -83,6 +84,7 @@ export function DateField({
           noCalendar: true,
           dateFormat: 'H:i',
           allowInput: true,
+          disableMobile: true,
           time_24hr: true,
           onChange: (_dates: Date[], text: string) => onChangeRef.current(text ?? ''),
         };

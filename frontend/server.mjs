@@ -64,6 +64,7 @@ function assetTags(manifest) {
     organization: routeAssets('src/app/OrganizationScreen.tsx'),
     cities: routeAssets('src/pages/CitiesPage.tsx'),
     today: routeAssets('src/app/TodayScreen.tsx'),
+    submit: routeAssets('src/app/SubmitScreen.tsx'),
     head: [...css].map((file) => `<link rel="stylesheet" href="/app-assets/${file}">`)
       .concat([...modules].filter((file) => file.endsWith('.js'))
         .map((file) => `<link rel="modulepreload" href="/app-assets/${file}">`)).join('\n'),

@@ -532,7 +532,7 @@ export function SubmitPage(props: SubmitPageProps) {
     const iso = `${future.getFullYear()}-${String(future.getMonth() + 1).padStart(2, '0')}-${String(future.getDate()).padStart(2, '0')}`;
     setFields((current) => ({
       ...current,
-      title: 'Testi-ilmoitus — automatisoitu',
+      title: 'Testi-ilmoitus, automatisoitu',
       tags: 'testi, automaattinen',
       date: iso,
       startTime: '18:00',
@@ -562,7 +562,7 @@ export function SubmitPage(props: SubmitPageProps) {
     <div className="submit-page">
       {showTestBanner && (
         <div className="cache-notice" role="status">
-          <strong>Test Mode</strong> — automaattinen testidata täytetty.
+          <strong>Test Mode</strong>: automaattinen testidata täytetty.
           <button type="button" onClick={() => setShowTestBanner(false)}>Sulje</button>
         </div>
       )}

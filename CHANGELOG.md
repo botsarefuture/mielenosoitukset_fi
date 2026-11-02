@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Move the submission form to the standalone React host and add opt-in Go submission intake with bounded validation, shared rate limits, duplicate protection and crash-safe writes. Keep email delivery and trusted moderation-link preparation in Flask's existing worker; preserve drafts, imports, duplicate confirmation and a no-JavaScript form.
+
 - Keep every configured WebAuthn origin, so passkey registration and step-up login work on both `mielenosoitukset.fi` and `www.mielenosoitukset.fi`. App creation used to replace the configured list with the single primary origin, which failed origin validation on the www host.
 
 - Deploy the React public host and the Go public API from CI instead of a developer workstation. A push to `main` now builds and publishes both artifacts with a checksummed release manifest, and the existing restricted SSH deploy installs them after Flask, verifying each service's reported build SHA. Only services that do not already report the commit are touched, so retries are safe. Apache routing remains an explicit manual dispatch because it changes which URLs the host answers.

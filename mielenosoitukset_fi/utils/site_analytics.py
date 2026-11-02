@@ -538,7 +538,7 @@ def _record_classified_pageview(request, classified):
 
 
 def _public_app_listing_path(path):
-    return path in {"/demonstrations", "/cities", "/mielenosoitukset-tanaan"} or bool(re.fullmatch(
+    return path in {"/demonstrations", "/cities", "/mielenosoitukset-tanaan", "/submit"} or bool(re.fullmatch(
         r"/city/[^/]+(?:/tanaan)?|/tag/[^/]+|/organization/[a-f\d]{24}", path, re.IGNORECASE
     ))
 

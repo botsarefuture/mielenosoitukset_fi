@@ -210,3 +210,80 @@ def test_legacy_unreceipted_failures_need_reconciliation(db, worker, status):
     script.run()
     assert sent == []
     assert db.demo_notifications_queue.find_one({"_id": job_id})["status"] == "delivery_unknown"
+
+
+def test_go_preparation_replays_child_jobs_without_duplicate_delivery(app, db, monkeypatch, worker):
+    from mielenosoitukset_fi.utils import go_submission_delivery as delivery
+
+    script, clock, sent, job_id, demo_id = worker
+    db.demo_notifications_queue.delete_many({})
+    db.demonstrations.update_one({"_id": demo_id}, {"$set": {"title": "Example", "date": "2099-01-01"}})
+    db.submitters.insert_one({"demonstration_id": demo_id, "submitter_email": "example@example.test"})
+    record_id = db.demo_submission_tokens.insert_one({
+        "token": f"test-go-replay:{demo_id}", "go_submission": True, "pending_image": b"private bytes", "pending_event": {"title": "Example"},
+        "pending_submitter": {"submitter_email": "example@example.test"},
+    }).inserted_id
+    media = []
+    monkeypatch.setattr(delivery, "_prepare_media", lambda *args: media.append(True))
+    monkeypatch.setattr(delivery, "_prepare_messages", lambda *args: [{
+        "suffix": "confirmation", "notification_type": "go_confirmation", "marks_admin_contact": False,
+        "messages": [{"template_name": "demo_submitter_confirmation.html", "subject": "confirmation",
+                      "recipients": ["example@example.test"], "context": {}}],
+    }])
+    parent_id = db.demo_notifications_queue.insert_one({
+        "demo_id": demo_id, "status": "pending", "created_at": clock[0], "submission_record": record_id,
+        "notification_type": "go_submission_prepare", "delivery_tracking_version": 1,
+    }).inserted_id
+    real_update = script._owned_update
+    interrupted = []
+
+    def interrupt_ack(queue, owner, update):
+        if owner["_id"] == parent_id and update.get("$set", {}).get("status") == "completed" and not interrupted:
+            interrupted.append(True)
+            raise RuntimeError("crash after durable child insertion")
+        return real_update(queue, owner, update)
+
+    monkeypatch.setattr(script, "_owned_update", interrupt_ack)
+    with app.app_context():
+        script.run()
+        clock[0] += timedelta(minutes=2)
+        script.run()
+        script.run()
+    assert sent == ["confirmation"]
+    assert media == [True]
+    assert db.demo_notifications_queue.count_documents({"_id": f"go:{demo_id}:confirmation"}) == 1
+    assert db.demo_notifications_queue.find_one({"_id": parent_id})["status"] == "completed"
+    record = db.demo_submission_tokens.find_one({"_id": record_id})
+    assert not any(key in record for key in ("pending_image", "pending_event", "pending_submitter"))
+
+
+def test_go_submission_uses_real_flask_links_and_existing_delivery_receipts(app, db, worker):
+    script, clock, sent, job_id, demo_id = worker
+    db.demo_notifications_queue.delete_many({})
+    db.demonstrations.update_one({"_id": demo_id}, {"$set": {
+        "title": "Example", "date": "2099-01-01", "address": "Kauppatori", "submission_delivery_pending": True,
+        "organizers": [{"name": "Example organizer", "email": "organizer@example.test"}],
+    }})
+    db.submitters.insert_one({"demonstration_id": demo_id, "submitter_email": "submitter@example.test"})
+    actor_id = ObjectId()
+    record = db.demo_submission_tokens.insert_one({"token": f"test-go-real:{demo_id}", "go_submission": True, "pending_event": {}, "pending_submitter": {"actor_id": actor_id}}).inserted_id
+    parent = db.demo_notifications_queue.insert_one({
+        "demo_id": demo_id, "status": "pending", "created_at": clock[0], "submission_record": record,
+        "notification_type": "go_submission_prepare", "delivery_tracking_version": 1,
+    }).inserted_id
+    with app.app_context():
+        script.run()
+        script.run()
+    assert db.demo_notifications_queue.find_one({"_id": parent})["status"] == "completed"
+    assert len(sent) == 3
+    children = list(db.demo_notifications_queue.find({"_id": {"$in": [
+        f"go:{demo_id}:confirmation", f"go:{demo_id}:moderation", f"go:{demo_id}:cancellation",
+    ]}}))
+    assert len(children) == 3
+    assert all(job["status"] == "completed" and job["delivered_indices"] == [0] for job in children)
+    moderation = next(job for job in children if job["notification_type"] == "initial_submission")
+    assert moderation["messages"][0]["context"]["approve_link"].startswith("https://mielenosoitukset.fi/")
+    assert db.cases.find_one({"_id": demo_id})["type"] == "new_demo"
+    assert db.cases.find_one({"_id": demo_id})["submitter_id"] == actor_id
+    assert db.demo_cancellation_tokens.find_one({"demo_id": demo_id})["organizer_email"] == "organizer@example.test"
+    assert "submission_delivery_pending" not in db.demonstrations.find_one({"_id": demo_id})

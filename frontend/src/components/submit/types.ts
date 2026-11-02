@@ -1,9 +1,8 @@
 /**
  * Portable contracts for the demonstration submission page.
  *
- * Flask supplies URLs, the submission token, the city list and translated
- * strings as escaped JSON props. Everything else (validation, drafts, request
- * building) lives here so the page can move to another host unchanged.
+ * The standalone host supplies URLs, an idempotency token, the city list and
+ * catalog copy. The Flask rollback shell can supply the same portable props.
  */
 
 /** One organizer row. `key` is React-local and never submitted. */
@@ -177,7 +176,7 @@ export type SubmitMessages = {
   errorCodeLabel: string;
 };
 
-/** Everything the page needs from Flask. */
+/** Everything the page needs from its host. The token grants no authority. */
 export type SubmitPageProps = {
   action: string;
   importUrl: string;

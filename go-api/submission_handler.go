@@ -92,6 +92,10 @@ func submissionFailure(w http.ResponseWriter, status int, code, message string) 
 	writeJSON(w, status, bson.M{"success": false, "error_code": code, "message": message})
 }
 
+func submissionOriginAllowed(origin, configured string) bool {
+	return origin == configured || (configured == "https://mielenosoitukset.fi" && origin == "https://www.mielenosoitukset.fi")
+}
+
 func publicSubmissionHandler(next http.Handler, db *mongo.Database, config submissionConfig) http.Handler {
 	inflight := make(chan struct{}, 4)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -110,7 +114,7 @@ func publicSubmissionHandler(next http.Handler, db *mongo.Database, config submi
 			submissionFailure(w, 405, "SUBMIT_METHOD", "Käytä lomaketta ilmoittamiseen.")
 			return
 		}
-		if r.Header.Get("Origin") != config.Origin || r.Header.Get("Sec-Fetch-Site") == "cross-site" {
+		if !submissionOriginAllowed(r.Header.Get("Origin"), config.Origin) || r.Header.Get("Sec-Fetch-Site") == "cross-site" {
 			submissionFailure(w, 403, "SUBMIT_ORIGIN", "Lähetä ilmoitus sivuston lomakkeella.")
 			return
 		}

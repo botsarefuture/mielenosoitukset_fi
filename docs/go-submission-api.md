@@ -12,7 +12,9 @@ published as raw uploaded bytes.
 `POST /api/submissions` consumes the existing multipart form contract. Apache
 forwards only same-origin `POST /submit` to it; `/submit/facebook_import` stays
 with Flask. Requests require the configured exact public Origin and are never
-cacheable. Cookies grant no submission privileges. Client moderation, identity,
+cacheable. The primary production origin also accepts the site's existing exact
+`https://www.mielenosoitukset.fi` alias; custom origins gain no implicit aliases.
+Cookies grant no submission privileges. Client moderation, identity,
 assignment and arbitrary document fields are ignored. Every new event is
 unapproved, not rejected and not cancelled.
 

@@ -538,15 +538,15 @@ def _record_classified_pageview(request, classified):
 
 
 def _public_app_listing_path(path):
-    return path == "/demonstrations" or bool(re.fullmatch(
-        r"/(?:city|tag)/[^/]+|/organization/[a-f\d]{24}", path, re.IGNORECASE
+    return path in {"/demonstrations", "/cities", "/mielenosoitukset-tanaan"} or bool(re.fullmatch(
+        r"/city/[^/]+(?:/tanaan)?|/tag/[^/]+|/organization/[a-f\d]{24}", path, re.IGNORECASE
     ))
 
 
 def record_public_app_pageview(payload, request):
     """Record a displayed migrated page from a bounded, same-origin beacon.
 
-    Only explicitly migrated home and listing routes are accepted. Legacy Flask pages must not
+    Only explicitly migrated home, directory and listing routes are accepted. Legacy Flask pages must not
     send this beacon, since their HTML responses already record their views.
     The page location comes from the same-origin Referer, never a payload URL.
     Raw locations and referrers are reduced to existing aggregate dimensions.

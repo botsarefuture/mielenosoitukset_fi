@@ -149,10 +149,10 @@ export function ReactSearchFilters({ props, values, change, submit, removeCity }
       <input type="text" id="demo-location" name="location" value={values.location}
         onChange={event => change({ ...values, location: event.target.value })} placeholder={text.location} />
     </div>
-    <div className="date-range public-search-dates">
+    {!props.fixed.today && <div className="date-range public-search-dates">
       <DateField edge="start" value={values.date_start} change={value => change({ ...values, date_start: value })} props={props} invalid={invalid} />
       <DateField edge="end" value={values.date_end} change={value => change({ ...values, date_end: value })} props={props} invalid={invalid} />
-    </div>
+    </div>}
     <div className="date-error" id="date-error" role="alert" hidden={!invalid}>{text.dateError}</div>
     <input type="hidden" name="date_start" id="iso_date_start" value={isoDate(values.date_start) ?? ''} />
     <input type="hidden" name="date_end" id="iso_date_end" value={isoDate(values.date_end) ?? ''} />

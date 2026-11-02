@@ -130,8 +130,32 @@ RSS links keep their city/tag scopes. Signed-in attendance remains with Flask.
 
 Deployment order is Go API, host release, then the reviewed listing GET routing
 rule. Removing that rule returns the pages to the existing Flask shells without
-changing their URLs or data. Nested city-today routes and all writes stay with
-their existing handlers.
+changing their URLs or data. All writes stay with their existing handlers.
+
+## City discovery and today
+
+The host also owns exact GET/HEAD `/cities`, `/mielenosoitukset-tanaan` and
+`/city/<city>/tanaan`. The directory uses Go `/api/cities`; today reuses
+`/api/demonstrations?today=true` with its city scope fixed by the route. Date
+parameters cannot turn a today page into a different date range. Both caches
+include the Helsinki day, and open pages reload after the day changes.
+
+Directory summaries are coalesced and cached for 60 seconds in the host and
+origin loader. The shared API tier permits five minutes, capped at midnight;
+these layers can add freshness delay. Only public counts and the generated
+city catalog reach the document. See [the contract](go-cities-api.md).
+
+Navigation between pages uses normal links and browser document loads, including
+Back/Forward. React owns in-page search and filter history. The initial document
+contains canonical/title/description and collection structured data, with
+no-JavaScript discovery links or event summaries. API failures produce a
+non-indexable 503 with a React retry control rather than a false empty result.
+Filtered directory URLs are non-indexable and canonicalize to `/cities`.
+
+Deploy Go first, then the host, then the exact Apache GET/HEAD allowlist.
+Removing only the discovery/today routing rule restores the existing Flask
+pages. API and write ownership does not change. The homepage does not preload
+the split directory or today bundles.
 
 ## Organization profiles
 

@@ -125,6 +125,7 @@ type API struct{ store Store }
 func (a *API) handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/demonstrations", a.getListing)
+	mux.HandleFunc("GET /api/cities", a.getCities)
 	mux.HandleFunc("GET /api/demonstrations/{id}", a.getDemonstrationCached)
 	mux.HandleFunc("GET /api/series/{parent}", a.getSeries)
 	mux.HandleFunc("GET /api/organizations/{id}", a.getOrganization)
@@ -223,8 +224,21 @@ func main() {
 		log.Print("Batch refresh disabled: ", err)
 	}
 	a := &API{store: cache}
+	var shared responseCache
+	if rawURL := os.Getenv("PUBLIC_REDIS_URL"); rawURL != "" {
+		source, err := publicCacheSource(uri, database)
+		if err != nil {
+			log.Fatal("Public Redis cache source is invalid")
+		}
+		redisCache, err := newRedisResponseCache(rawURL, source)
+		if err != nil {
+			log.Fatal("Public Redis cache configuration is invalid")
+		}
+		defer redisCache.client.Close()
+		shared = redisCache
+	}
 
-	server := &http.Server{Addr: env("API_ADDR", "127.0.0.1:8080"), Handler: a.handler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 * 1024}
+	server := &http.Server{Addr: env("API_ADDR", "127.0.0.1:8080"), Handler: publicResponseCache(a.handler(), shared), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 * 1024}
 	shutdownDone := make(chan struct{})
 	stopped := make(chan os.Signal, 1)
 	signal.Notify(stopped, syscall.SIGINT, syscall.SIGTERM)

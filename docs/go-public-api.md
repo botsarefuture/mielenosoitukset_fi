@@ -1,5 +1,9 @@
 # Public Go API: first read-only slice
 
+Current cache behavior: [public response caching](go-public-cache.md). The
+initial-slice and document-cache descriptions below are historical layer
+details, not a promise of per-request freshness through Redis or Cloudflare.
+
 Owner direction (29 October 2026): start with freely accessible demonstration
 information APIs at api.mielenosoitukset.fi, using Go and the existing MongoDB.
 The existing detail page will adopt the API in a later slice. No frontend,
@@ -66,8 +70,9 @@ follow/attendance state are intentionally not part of this initial contract.
 This is not a drop-in replacement for the authenticated Flask API.
 
 Invalid identifier/parameters:400; unknown or nonpublic event:404; identifier
-lookup or database failure:503, both with a bounded generic error. Responses are JSON, no-store and nosniff. Content uses the bounded15minute server cache described below; visibility is
-checked on every request, including conditional/HEAD requests.
+lookup or database failure:503, both with a bounded generic error. Responses are
+JSON and nosniff. Successful public responses follow the current shared-cache
+policy; moderation is rechecked on origin loads, not on Redis/CDN hits.
 GET/HEAD/OPTIONS only; no arbitrary queries, list dumps or write methods.
 `GET /health` checks MongoDB connectivity with a short deadline.
 
@@ -127,29 +132,25 @@ choose a verified unused loopback port in deployment, not the default blindly.
 
 ## Demonstration detail cache
 
-The Go process caches successful projected demonstration documents for15minutes,
-keyed by ObjectId. Localization still runs per request, so languages never share
-rendered translations. Content edits may take up to15minutes to appear. Each
-cache hit performs a lightweight indexed public-visibility check; hidden,
-rejected or unapproved events are not served from stale cached content. Database
-errors fail closed. Missing records/errors and oversized documents are not cached.
+The process-local document cache is keyed by ObjectId, with memoized JSON per
+language. Defaults are a15minute soft lifetime,24hour hard lifetime,128MiB total
+budget across32shards, and256KiB per entry. Background version checks refresh
+changed public documents; identical misses are coalesced and database concurrency
+is bounded. Definitive missing/nonpublic results have a short negative cache;
+transient database errors are not negatively cached.
 
-The concurrency-safe process-local cache holds at most1024documents of32KiB each
-(approximately32MiB of BSON plus map overhead), pruning expired entries and
-otherwise evicting the earliest-expiring entry. Restart clears it; multiple API
-processes have independent caches. Health is not cached. Cached reads answer with
-`public, max-age=60, s-maxage=900, stale-while-revalidate=3600,
-stale-if-error=86400`, so a shared cache may replay them for up to15minutes; every
-cache hit still performs the indexed public-visibility check, so hiding or
-unapproving an event takes effect on the next request rather than after the
-header expires. Errors, `no-store` paths and `/health` stay uncached. The Apache
+The document-cache handler resolves identifiers and checks public visibility
+before loading a body. The outer Redis/CDN response tier can answer without
+running that handler, so edits and moderation changes may remain visible until
+response freshness expires. See the cache guide for the tier-by-tier policy.
+Errors, `no-store` paths and `/health` stay uncached. The Apache
 vhost must not set `Cache-Control` itself: `Header always` writes
 `err_headers_out`, which Apache merges into the proxied response, so a `no-store`
 there ships beside the API's policy and disables browser and edge caching. A
 Cloudflare Cache Rule is still required before the edge caches these JSON reads;
-without one they report `cf-cache-status: DYNAMIC`. No new database, indexes,
-migrations or service dependencies. Disable by restoring the direct mongoStore
-construction in main; no stored-data rollback is needed.
+without one they report `cf-cache-status: DYNAMIC`. No MongoDB schema/index
+change is required. Redis uses the existing local service with an isolated
+bounded namespace; activation and rollback are described in the cache guide.
 
 ## Recurring series endpoint
 
@@ -173,8 +174,8 @@ the caller's decisions.
   "end_time": "15:00", "cancelled": false}]}
 ```
 
-The endpoint is read-only, needs no cookie, returns `no-store` and is not cached
-in the process, so a newly generated occurrence appears on the next request.
+The endpoint is read-only and needs no cookie. Its database loader has no
+document cache; the outer Redis/CDN response tier now caches series for five minutes.
 One parent read plus three indexed range queries serve a request; there is no
 aggregation and no collection scan.
 
@@ -193,14 +194,14 @@ Public ObjectIds resolve in one indexed `_id` read. A miss checks whether a
 nonpublic original exists before permitting alias fallback; numeric identifiers
 try `running_number` before `slug`. Lookups project only `_id` and share the
 existing three-second deadline, but a one-document result limit does not bound
-how many records MongoDB must examine. Resolution is not cached, so slug or
-visibility changes take effect on the next request. Existing public slug URLs
+how many records MongoDB must examine. Resolution is not cached inside the
+document loader; Redis/CDN can reuse a response until its policy expires. Existing public slug URLs
 can therefore resolve without a Flask hop.
 
 The cached detail handler performs the same resolution before its cache lookup
 and keys the cache by the resolved ObjectId. Two URLs for one event share a
-cached response, while a renamed slug or a moderation change is picked up on the
-next request because only the body is cached. Invalid identifiers are rejected
+cached document. Redis/CDN responses may delay renamed slugs or moderation
+changes until their response TTL expires. Invalid identifiers are rejected
 before any query; unknown and nonpublic identifiers return 404 with the
 not-found cache header.
 
@@ -235,9 +236,9 @@ The React home page can read `GET /api/home?lang=fi` directly, without a Flask
 content request. `lang` accepts fi/en/sv and defaults to fi. Unknown, duplicate
 or unsupported parameters return 400. This public read needs no session/token;
 CORS is uncredentialed and the normal GET/HEAD/OPTIONS and nosniff policy
-applies. The read is cached for60seconds in process and answers with `public,
-max-age=30, s-maxage=60, stale-while-revalidate=120, stale-if-error=900`, so a
-shared cache may replay it for up to a minute. No personalized attendance or
+applies. The in-process cache starts refreshing after60seconds. The outer
+runtime Redis/CDN policy is five minutes, with60seconds for browsers; see
+[the cache guide](go-public-cache.md). No personalized attendance or
 privileged override is provided.
 
 Response: `{ "events": [...], "recommended": true|false }`. Each card contains
@@ -263,9 +264,10 @@ payload/result bound, not a general listing/search API.
 MongoDB operations are bounded projected reads of `recommended_demos` and
 `demonstrations`, using the existing indexes; no schema, new index, authentication
 or write changes. A three-second request deadline bounds database work. Failures
-return generic 503, with no query/data details. Public content is not cached by
-this endpoint, so moderation visibility is checked for each fetch. No browser or
-Flask hop replaces that fresh check.
+return generic 503, with no query/data details. Moderation visibility is checked
+when MongoDB is read, not for every HTTP request: response caches reuse the
+public payload. See [the shared cache policies](go-public-cache.md) for current
+Redis/CDN lifetimes, keys, activation and invalidation limits.
 
 Deploy the Go binary exposing `/api/home` before enabling direct home requests
 on the public frontend. Verify health SHA and a public home response, then

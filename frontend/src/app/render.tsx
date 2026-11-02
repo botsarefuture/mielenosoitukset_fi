@@ -8,6 +8,9 @@ import { listingProps, listingQuery, loadListingPage } from './listing';
 import type { ListingBootstrap } from './listing';
 import { loadOrganization } from './organization';
 import type { OrganizationBootstrap } from './organization';
+import { dayLabel, findCity, helsinkiDay, loadCities } from './cities';
+import type { CitiesData } from './cities';
+import { citiesMeta, todayMeta, cityItems, todayItems, discoveryStructuredData } from './discovery-meta';
 import type { HomeData } from '../pages/HomePage';
 import { routeForPath, routeMeta } from './routes';
 import type { RouteMeta } from './routes';
@@ -41,7 +44,7 @@ export type RenderInput = {
   search?: string;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string };
 
 export type RenderResult = {
   status: number;
@@ -204,7 +207,11 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   const route = routeForPath(input.path);
   if (!route) return { status: 404, html: notFoundDocument() };
   const readBase = input.apiReadBase ?? input.apiBase;
+  if (route.name === 'today' && route.value && !findCity(route.value)) {
+    return { status: 404, html: notFoundDocument(), headers: { 'X-Robots-Tag': 'noindex, follow' } };
+  }
   const organizationRead = route.name === 'organization' ? loadOrganization(readBase, route.id) : null;
+  const citiesRead = route.name === 'cities' ? loadCities(readBase) : null;
   let sessionUrl = input.sessionUrl;
   if (route.name === 'organization' && input.cookie) {
     const scoped = new URL(sessionUrl);
@@ -228,6 +235,8 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   let home: HomeData | null = null;
   let listing: ListingBootstrap | undefined;
   let organization: OrganizationBootstrap | undefined;
+  let cities: CitiesData | null | undefined;
+  let status = 200;
   let jsonLd: unknown;
   let extraHead = '';
   let noscript = '<noscript><p class="container-main-content">Mielenosoitukset.fi käyttää JavaScriptiä. '
@@ -328,6 +337,36 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   }
 
   if (route.name === 'home') home = await loadHomeBatch(readBase, config.locale);
+  if (route.name === 'cities') {
+    cities = await citiesRead;
+    const filters = new URLSearchParams(input.search ?? '');
+    meta = citiesMeta(config, cities, Boolean(filters.get('q') || filters.get('today')));
+    const items = cityItems(config, cities);
+    jsonLd = discoveryStructuredData(meta, items);
+    extraHead = assets.cities ?? '';
+    noscript = `<noscript><article class="container-main-content"><h1>Kaupungit</h1><p>${escapeHtml(meta.description)}</p>`
+      + `<a href="/mielenosoitukset-tanaan">Mielenosoitukset tänään</a><ul>`
+      + items.map(item => `<li><a href="${escapeHtml(item.url)}">${escapeHtml(item.name)}</a></li>`).join('') + '</ul></article></noscript>';
+    if (!cities) { status = 503; headers['Retry-After'] = '30'; headers['X-Robots-Tag'] = 'noindex, follow'; }
+  }
+  if (route.name === 'today') {
+    const todayRoute = { name: 'listing', scope: route.value ? 'city-today' : 'today', value: route.value } as const;
+    const query = listingQuery(todayRoute, input.search ?? '', config.locale);
+    listing = { query: input.search ?? '', page: await loadListingPage(readBase, query) };
+    meta = todayMeta(config, route.value);
+    const items = todayItems(config, listing.page);
+    jsonLd = discoveryStructuredData(meta, items);
+    extraHead = assets.today ?? '';
+    noscript = `<noscript><article class="container-main-content"><h1>${escapeHtml(meta.title.split(' | ')[0])}</h1>`
+      + `<p>${escapeHtml(dayLabel(listing.page?.day ?? helsinkiDay()))}</p><p>${escapeHtml(meta.description)}</p><ul>`
+      + items.map((item, index) => {
+        const event = listing?.page?.results[index];
+        const details = [event?.cancelled ? 'Peruttu' : '', event?.start_time, event?.city, event?.address].filter(Boolean).join(' · ');
+        return `<li><a href="${escapeHtml(item.url)}">${escapeHtml(item.name)}</a> ${escapeHtml(details)}</li>`;
+      }).join('')
+      + '</ul><a href="/demonstrations">Kaikki mielenosoitukset</a></article></noscript>';
+    if (!listing.page) { status = 503; meta.robots = 'noindex, follow'; headers['Retry-After'] = '30'; headers['X-Robots-Tag'] = 'noindex, follow'; }
+  }
   if (route.name === 'listing') {
     const props = listingProps(route, config, session);
     const query = listingQuery(route, input.search ?? '', config.locale);
@@ -369,7 +408,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
   const bootstrap = serialize({ config, session, path: input.path, route,
     ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}),
-    ...(listing ? { listing } : {}), ...(organization ? { organization } : {}) });
+    ...(listing ? { listing } : {}), ...(organization ? { organization } : {}), ...(cities !== undefined ? { cities } : {}) });
   const html = `<!DOCTYPE html>
 <html lang="${escapeHtml(config.locale)}">
 <head>
@@ -387,5 +426,5 @@ ${noscript}
 ${assets.scripts}
 </body>
 </html>`;
-  return { status: 200, html, headers };
+  return { status, html, headers };
 }

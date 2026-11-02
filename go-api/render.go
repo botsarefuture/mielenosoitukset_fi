@@ -12,9 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-// Cache-Control values for Cloudflare and browsers. s-maxage is what the CDN
-// obeys; max-age is what browsers obey. The demo route is long-lived (the
-// in-process cache refreshes it in batches), the home route is short-lived.
+// Fallback handler defaults. The runtime publicResponseCache wrapper applies
+// the shared response policy to eligible successes; stale/errors stay uncached.
 const (
 	demoCacheControl     = "public, max-age=60, s-maxage=900, stale-while-revalidate=3600, stale-if-error=86400"
 	homeCacheControl     = "public, max-age=30, s-maxage=60, stale-while-revalidate=120, stale-if-error=900"
@@ -24,8 +23,8 @@ const (
 // detailJSONStore is implemented by *cachedDetailStore. Stores that don't
 // implement it (e.g. test fakes) fall back to the original handlers.
 type detailJSONStore interface {
-	// Resolution stays outside the cache: a renamed slug or a moderation change
-	// must take effect on the next request, and the cache is keyed by id only.
+	// Resolution stays outside the document cache, keyed by id. The outer
+	// response cache can reuse the resolved response until its policy expires.
 	ResolvePublicID(ctx context.Context, raw string) (bson.ObjectID, error)
 	FindPublicJSON(ctx context.Context, id bson.ObjectID, lang string, render func(bson.M, string) ([]byte, error)) ([]byte, error)
 }

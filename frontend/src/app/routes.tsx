@@ -13,6 +13,8 @@ import type { ListingRoute } from './listing';
  */
 export type AppRoute =
   | { name: 'home' }
+  | { name: 'cities' }
+  | { name: 'today'; value?: string }
   | ListingRoute
   | { name: 'organization'; id: string }
   | { name: 'detail'; identifier: string }
@@ -44,6 +46,13 @@ function readIdentifier(raw: string): string | null {
 }
 
 export function routeForPath(path: string): AppRoute | null {
+  if (path === '/cities') return { name: 'cities' };
+  if (path === '/mielenosoitukset-tanaan') return { name: 'today' };
+  const today = /^\/city\/([^/]+)\/tanaan$/.exec(path);
+  if (today) {
+    const value = readIdentifier(today[1]);
+    return value && !value.includes('/') ? { name: 'today', value } : null;
+  }
   const organization = /^\/organization\/([a-f\d]{24})$/i.exec(path);
   if (organization) return { name: 'organization', id: organization[1].toLowerCase() };
   if (path === '/demonstrations') return { name: 'listing', scope: 'all' };
@@ -72,12 +81,12 @@ export function routeForPath(path: string): AppRoute | null {
  * needs no event request; its head is static. The detail route supplies its own
  * metadata from one projected API read.
  */
-export function routeMeta(_route: AppRoute, _config: AppConfig, text: Catalog): RouteMeta {
+export function routeMeta(route: AppRoute, config: AppConfig, text: Catalog): RouteMeta {
   return {
     title: text.meta.title,
     description: text.meta.description,
     robots: 'index, follow',
-    canonical: null,
+    canonical: route.name === 'home' ? `${config.origin}/` : null,
     image: null,
   };
 }

@@ -182,6 +182,7 @@ type cachedDetailStore struct {
 	home         *homeCache         // nil if the source has no FindHome
 	listing      *listingCache      // nil if the source has no FindListing
 	organization *organizationCache // nil if the source has no FindOrganization
+	cities       *citiesCache
 
 	hits, staleHits, negHits, misses, loads, loadErrors, oversize, unknownDropped atomic.Uint64
 }
@@ -218,6 +219,9 @@ func newCachedDetailStoreWithConfig(src Store, cfg detailCacheConfig) *cachedDet
 	if source, ok := src.(organizationStore); ok {
 		s.organization = newOrganizationCache(source, base)
 	}
+	if source, ok := src.(citiesStore); ok {
+		s.cities = &citiesCache{source: source, base: base, now: time.Now}
+	}
 	return s
 }
 
@@ -226,8 +230,8 @@ func (s *cachedDetailStore) Close() { s.cancel() }
 
 func (s *cachedDetailStore) Ping(ctx context.Context) error { return s.source.Ping(ctx) }
 
-// Identifier resolution is cheap and never cached: a renamed slug or a
-// moderation change must take effect immediately.
+// This document-cache layer does not cache identifier resolution. The outer
+// Redis/CDN response tiers may reuse an HTTP response for their policy TTL.
 func (s *cachedDetailStore) ResolvePublicID(ctx context.Context, raw string) (bson.ObjectID, error) {
 	return s.source.ResolvePublicID(ctx, raw)
 }

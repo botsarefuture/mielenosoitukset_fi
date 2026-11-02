@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+- Redesign the city directory with search, clear upcoming/today counts and direct links. Move cities and today pages to the standalone React host with a cached Go summary API, shared event cards, Helsinki-day filtering, server-delivered SEO metadata and consistent normal page navigation.
+
+- Make Go homepage and listing code easier to follow with named loading, validation and card-formatting helpers. Add bounded shared Redis response caching and explicit public cache policies while preserving response bodies, filtering and privacy boundaries.
+
 - Use the full available page width for organization headers, center the logo above the name and description, and remove the redundant organization eyebrow. Present verification as supporting information rather than a button, center contact details and social links in responsive cards, and correct inherited icon spacing.
 
 - Move public organization profiles to the standalone React host, with a bounded public Go profile cache and the Go event listing API. Keep follows, invitations and management permissions private and fresh, preserve existing action URLs, invitation feedback and signed-in chat, and load organization code only on organization pages. The chat connection and panel load only when opened.

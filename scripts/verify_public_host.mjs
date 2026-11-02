@@ -122,6 +122,10 @@ function createApi(log) {
     if (identifier === 'home') {
       return send(200, { events: [{ _id: detailId, title: 'Test event', detail_url: '/demonstration/may-day-2026' }], recommended: false });
     }
+    if (url.pathname === '/api/cities') {
+      return send(200, { day: day(0), cities: [{ key: 'helsinki', name: 'Helsinki', phrase: 'Helsingissä',
+        demo_count: 5, today_count: 2, upcoming_count: 3 }], private: 'DO-NOT-BOOTSTRAP' });
+    }
     if (url.pathname.startsWith('/api/organizations/')) {
       if (identifier !== organizationId) return send(404, { error: 'organization not found' });
       return send(200, { _id: organizationId, name: 'Test Organization', description: 'Public profile',
@@ -324,6 +328,29 @@ try {
   assert.match(tagPage.html, /#rauha: Mielenosoitukset/);
   assert.equal(bootstrap(tagPage.html).listing.page.total, 1);
   console.log('PASS: listing bootstrap, query coalescing/cache, canonical city/tag titles and fixed scopes');
+  const beforeCities = localReads.filter(read => read === '/api/cities').length;
+  const cityDocuments = await Promise.all(Array.from({ length: 8 }, () => detailPage({ path: '/cities' })));
+  assert.equal(localReads.filter(read => read === '/api/cities').length, beforeCities + 1);
+  const directory = cityDocuments[0];
+  assert.equal(directory.status, 200);
+  assert.equal(bootstrap(directory.html).cities.cities[0].upcoming_count, 3);
+  assert(!directory.html.includes('DO-NOT-BOOTSTRAP'));
+  assert.match(directory.html, /<link rel="canonical" href="https:\/\/example.test\/cities">/);
+  assert.equal((directory.html.match(/<title>/g) ?? []).length, 1);
+  assert.match(directory.html, /"@type":"CollectionPage"/);
+  const todayDocument = await detailPage({ path: '/city/helsinki/tanaan', search: '?city=Tampere&date_start=2000-01-01&in_past=true&parent_id=foreign' });
+  assert.equal(todayDocument.status, 200);
+  assert.match(todayDocument.html, /Mielenosoitukset Helsingissä tänään/);
+  const todayRead = localReads.filter(read => read.startsWith('/api/demonstrations?') && read.includes('today=true')).at(-1);
+  assert(todayRead && todayRead.includes('city=Helsinki') && !/date_start|in_past|parent_id/.test(todayRead));
+  assert.equal((todayDocument.html.match(/rel="canonical"/g) ?? []).length, 1);
+  assert.equal((await detailPage({ path: '/city/not-a-city/tanaan' })).status, 404);
+  assert.equal((await detailPage({ path: '/mielenosoitukset-tanaan' })).status, 200);
+  const unavailableCities = await detailPage({ path: '/cities', apiReadBase: `${apiReadBase}/missing-api` });
+  assert.equal(unavailableCities.status, 503);
+  assert.equal(bootstrap(unavailableCities.html).cities, null);
+  assert.equal(unavailableCities.headers['X-Robots-Tag'], 'noindex, follow');
+  console.log('PASS: city directory coalescing/public projection, today locked filters, canonical/head/structured data and invalid-city404');
   const beforeOrganizations = localReads.filter(read => read.startsWith('/api/organizations/')).length;
   const organizationPages = await Promise.all(Array.from({ length: 8 }, () => detailPage({ path: `/organization/${organizationId}` })));
   await detailPage({ path: `/organization/${organizationId}` });

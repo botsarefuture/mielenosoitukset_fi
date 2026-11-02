@@ -10,6 +10,7 @@ export function listingQuery(search: string, fixed: Record<string, string>): { p
   const query = new URLSearchParams(search);
   const params: ListParams = {};
   for (const name of QUERY_FILTERS) {
+    if (fixed.today && ['date_start', 'date_end', 'in_past', 'parent_id', 'organization_id', 'include_cancelled', 'max_days_till'].includes(name)) continue;
     if (fixed.organization_id && ['parent_id', 'max_days_till', 'in_past'].includes(name)) continue;
     const value = query.get(name)?.trim();
     if (value) params[name] = value;

@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -19,6 +18,7 @@ import (
 )
 
 type listingQuery struct {
+	Today                                   bool
 	Lang, Day, Search, Title, Tag, Location string
 	Cities                                  []string
 	Start, End                              string
@@ -28,6 +28,7 @@ type listingQuery struct {
 }
 
 type listingPage struct {
+	Day         string   `json:"day,omitempty"`
 	Page        int      `json:"page"`
 	PerPage     int      `json:"per_page"`
 	Total       int64    `json:"total"`
@@ -43,98 +44,135 @@ type listingStore interface {
 
 func parseListingQuery(raw string, now time.Time) (listingQuery, error) {
 	q := listingQuery{Lang: "fi", Day: localDay(now), Page: 1, PerPage: 20}
+	values, err := listingValues(raw)
+	if err != nil {
+		return q, err
+	}
+	if lang := strings.ToLower(values.Get("lang")); lang != "" {
+		if lang != "fi" && lang != "en" && lang != "sv" {
+			return q, errors.New("invalid listing parameters")
+		}
+		q.Lang = lang
+	}
+	if err := q.parsePagination(values); err != nil {
+		return q, err
+	}
+	if err := q.parseScopes(values); err != nil {
+		return q, err
+	}
+	if err := q.parseDates(values); err != nil {
+		return q, err
+	}
+	q.Search, q.Title = strings.ToLower(values.Get("search")), strings.ToLower(values.Get("title"))
+	q.Tag, q.Location = strings.ToLower(values.Get("tag")), strings.ToLower(values.Get("location"))
+	q.Cities = listingCities(values.Get("city"))
+	if len(q.Cities) > 20 {
+		return q, errors.New("invalid listing parameters")
+	}
+	return q, nil
+}
+
+func listingValues(raw string) (url.Values, error) {
 	invalid := errors.New("invalid listing parameters")
 	if len(raw) > 4096 {
-		return q, invalid
+		return nil, invalid
 	}
 	values, err := url.ParseQuery(raw)
 	if err != nil {
-		return q, invalid
+		return nil, invalid
 	}
 	allowed := map[string]bool{}
-	for _, key := range []string{"lang", "page", "per_page", "search", "title", "tag", "city", "location", "date_start", "date_end", "in_past", "include_cancelled", "parent_id", "organization_id", "max_days_till", "recurring"} {
+	for _, key := range []string{"lang", "page", "per_page", "search", "title", "tag", "city", "location", "date_start", "date_end", "in_past", "include_cancelled", "parent_id", "organization_id", "max_days_till", "recurring", "today"} {
 		allowed[key] = true
 	}
 	for key, entries := range values {
 		if !allowed[key] || len(entries) != 1 || !utf8.ValidString(entries[0]) {
-			return q, invalid
+			return nil, invalid
 		}
 		value := strings.TrimSpace(entries[0])
 		if utf8.RuneCountInString(value) > 200 || strings.IndexFunc(value, unicode.IsControl) >= 0 {
-			return q, invalid
+			return nil, invalid
 		}
 		values.Set(key, value)
 	}
-	if lang := strings.ToLower(values.Get("lang")); lang != "" {
-		if lang != "fi" && lang != "en" && lang != "sv" {
-			return q, invalid
-		}
-		q.Lang = lang
-	}
+	return values, nil
+}
+
+func (q *listingQuery) parsePagination(values url.Values) error {
+	invalid := errors.New("invalid listing parameters")
 	for key, target := range map[string]*int{"page": &q.Page, "per_page": &q.PerPage, "max_days_till": &q.MaxDays} {
 		if raw := values.Get(key); raw != "" {
 			value, err := strconv.Atoi(raw)
 			if err != nil || value < 0 || (value == 0 && key != "max_days_till") || value > 100000 {
-				return q, invalid
+				return invalid
 			}
 			*target = value
 		}
 	}
 	if q.PerPage > 100 || int64(q.Page-1)*int64(q.PerPage) > 100000 {
-		return q, invalid
+		return invalid
 	}
-	for key, target := range map[string]*bool{"in_past": &q.InPast, "include_cancelled": &q.IncludeCancelled} {
+	return nil
+}
+
+func (q *listingQuery) parseScopes(values url.Values) error {
+	invalid := errors.New("invalid listing parameters")
+	for key, target := range map[string]*bool{"in_past": &q.InPast, "include_cancelled": &q.IncludeCancelled, "today": &q.Today} {
 		if value := strings.ToLower(values.Get(key)); value != "" {
 			if value != "true" && value != "false" {
-				return q, invalid
+				return invalid
 			}
 			*target = value == "true"
 		}
+	}
+	// Today retains public cancellation notices and ignores widening date filters.
+	if q.Today {
+		q.IncludeCancelled = true
 	}
 	for key, target := range map[string]*bson.ObjectID{"parent_id": &q.Parent, "organization_id": &q.Organization} {
 		if value := values.Get(key); value != "" {
 			id, err := bson.ObjectIDFromHex(value)
 			if err != nil || id.IsZero() {
-				return q, invalid
+				return invalid
 			}
 			*target = id
 		}
 	}
+	return nil
+}
+
+func (q *listingQuery) parseDates(values url.Values) error {
+	invalid := errors.New("invalid listing parameters")
 	for key, target := range map[string]*string{"date_start": &q.Start, "date_end": &q.End} {
 		if value := values.Get(key); value != "" {
 			if parsed, err := time.Parse("2006-01-02", value); err != nil || parsed.Format("2006-01-02") != value {
-				return q, invalid
+				return invalid
 			}
 			*target = value
 		}
 	}
 	if q.Start != "" && q.End != "" && q.Start > q.End {
-		return q, invalid
+		return invalid
 	}
-	q.Search, q.Title = strings.ToLower(values.Get("search")), strings.ToLower(values.Get("title"))
-	q.Tag, q.Location = strings.ToLower(values.Get("tag")), strings.ToLower(values.Get("location"))
+	return nil
+}
+
+func listingCities(raw string) []string {
+	var cities []string
 	seen := map[string]bool{}
-	for _, value := range strings.Split(values.Get("city"), ",") {
+	for _, value := range strings.Split(raw, ",") {
 		city := strings.ToLower(strings.TrimSpace(value))
 		if city != "" && !seen[city] {
 			seen[city] = true
-			q.Cities = append(q.Cities, city)
+			cities = append(cities, city)
 		}
 	}
-	if len(q.Cities) > 20 {
-		return q, invalid
-	}
-	sort.Strings(q.Cities)
-	return q, nil
+	sort.Strings(cities)
+	return cities
 }
 
 func listingFilter(q listingQuery) bson.M {
-	filter := publicVisibility()
-	// A public date range must not match malformed arrays or non-ObjectId rows.
-	clauses := object(filter["$expr"])["$and"].(bson.A)
-	object(filter["$expr"])["$and"] = append(clauses,
-		bson.M{"$eq": bson.A{bson.M{"$type": "$date"}, "string"}},
-		bson.M{"$eq": bson.A{bson.M{"$type": "$_id"}, "objectId"}})
+	filter := publicDatedFilter()
 	if !q.IncludeCancelled && q.Parent.IsZero() && q.Organization.IsZero() {
 		filter["cancelled"] = bson.M{"$ne": true}
 	}
@@ -143,6 +181,17 @@ func listingFilter(q listingQuery) bson.M {
 	}
 	if !q.Organization.IsZero() {
 		filter["organizers"] = bson.M{"$elemMatch": bson.M{"organization_id": bson.M{"$in": bson.A{q.Organization, q.Organization.Hex()}}}}
+	}
+	if dates := listingDates(q); len(dates) > 0 {
+		filter["date"] = dates
+	}
+	filter["$and"] = listingSearch(q, filter["$and"].(bson.A))
+	return filter
+}
+
+func listingDates(q listingQuery) bson.M {
+	if q.Today {
+		return bson.M{"$eq": q.Day}
 	}
 	dates := bson.M{}
 	if !q.InPast {
@@ -164,47 +213,34 @@ func listingFilter(q listingQuery) bson.M {
 			dates["$lte"] = q.End
 		}
 	}
-	if len(dates) > 0 {
-		filter["date"] = dates
-	}
-	and := filter["$and"].(bson.A)
-	literal := func(value string, exact bool) bson.Regex {
-		pattern := regexp.QuoteMeta(value)
-		if exact {
-			pattern = "^" + pattern + "$"
-		}
-		return bson.Regex{Pattern: pattern, Options: "i"}
-	}
-	translated := func(fields []string, value string, exact bool) {
-		if value == "" {
-			return
-		}
-		or := bson.A{}
-		for _, field := range fields {
-			or = append(or, bson.M{field: literal(value, exact)})
-			if field == "title" || field == "description" || field == "tags" {
-				for _, lang := range []string{"fi", "en", "sv"} {
-					or = append(or, bson.M{"translations." + lang + "." + field: literal(value, exact)})
-				}
-			}
-		}
-		and = append(and, bson.M{"$or": or})
-	}
-	translated([]string{"title", "description", "tags", "address"}, q.Search, false)
-	translated([]string{"title"}, q.Title, false)
-	translated([]string{"tags"}, q.Tag, true)
+	return dates
+}
+
+func listingSearch(q listingQuery, and bson.A) bson.A {
+	and = appendTranslatedMatch(and, []string{"title", "description", "tags", "address"}, q.Search, false)
+	and = appendTranslatedMatch(and, []string{"title"}, q.Title, false)
+	and = appendTranslatedMatch(and, []string{"tags"}, q.Tag, true)
 	if q.Location != "" {
-		and = append(and, bson.M{"address": literal(q.Location, false)})
+		and = append(and, bson.M{"address": literalMatch(q.Location, false)})
 	}
 	if len(q.Cities) > 0 {
 		cities := bson.A{}
 		for _, city := range q.Cities {
-			cities = append(cities, literal(city, true))
+			cities = append(cities, literalMatch(city, true))
 		}
-		and = append(and, bson.M{"city": bson.M{"$in": cities}})
+		match := bson.M{"city": bson.M{"$in": cities}}
+		keys := bson.A{}
+		for _, name := range q.Cities {
+			if city, known := cityCatalog[normalizeCityKey(name)]; known {
+				keys = append(keys, city.Key)
+			}
+		}
+		if len(keys) > 0 {
+			match = bson.M{"$or": bson.A{match, bson.M{"city_key": bson.M{"$in": keys}}}}
+		}
+		and = append(and, match)
 	}
-	filter["$and"] = and
-	return filter
+	return and
 }
 
 func listingProjection() bson.M {
@@ -221,18 +257,10 @@ func listingCard(doc bson.M, lang string) bson.M {
 	for _, field := range []string{"_id", "title", "date", "start_time", "end_time", "city", "address", "tags", "cancelled", "parent", "slug", "running_number", "latitude", "longitude"} {
 		card[field] = payload[field]
 	}
-	if day, ok := payload["date"].(string); ok {
-		if parsed, err := time.Parse("2006-01-02", day); err == nil {
-			card["date_display"] = parsed.Format("02.01.2006")
-		}
+	if day, valid := cardDate(payload["date"]); valid {
+		card["date_display"] = day
 	}
-	card["cover_image"] = ""
-	for _, field := range []string{"cover_picture", "cover_image", "preview_image", "img", "gallery_images", "images"} {
-		if images := galleryImages(doc[field]); len(images) > 0 {
-			card["cover_image"] = images[0]
-			break
-		}
-	}
+	card["cover_image"] = firstCardImage(doc, "cover_picture", "cover_image", "preview_image", "img", "gallery_images", "images")
 	id, _ := payload["_id"].(string)
 	identifier := id
 	if slug, ok := payload["slug"].(string); ok && validIdentifier(slug) {
@@ -248,6 +276,9 @@ func listingCard(doc bson.M, lang string) bson.M {
 
 func (s mongoStore) FindListing(ctx context.Context, q listingQuery) (listingPage, error) {
 	result := listingPage{Page: q.Page, PerPage: q.PerPage, TotalPages: 1, Results: []bson.M{}}
+	if q.Today {
+		result.Day = q.Day
+	}
 	filter := listingFilter(q)
 	total, err := s.collection.CountDocuments(ctx, filter)
 	if err != nil {

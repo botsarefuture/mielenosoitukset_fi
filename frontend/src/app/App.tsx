@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import type { CardProps } from '../components/listings/DemonstrationCard';
 import { SiteHeader } from '../components/header/SiteHeader';
 import { DetailScreen } from '../components/detail/DetailScreen';
@@ -10,15 +9,17 @@ import type { DetailBootstrap, DetailSeries } from './detail-route';
 import { SiteFooter } from './Footer';
 import { headerProps } from './header-props';
 import { catalog } from './i18n';
-import { routeMeta } from './routes';
 import type { AppRoute } from './routes';
 import type { SessionSummary } from './session';
 import { lazy, Suspense } from 'react';
 import type { ListingBootstrap } from './listing';
 import type { OrganizationBootstrap } from './organization';
+import type { CitiesData } from './cities';
 
 const ListingScreen = lazy(() => import('./ListingScreen'));
 const OrganizationScreen = lazy(() => import('./OrganizationScreen'));
+const CitiesPage = lazy(() => import('../pages/CitiesPage'));
+const TodayScreen = lazy(() => import('./TodayScreen'));
 
 export type AppProps = {
   config: AppConfig;
@@ -33,6 +34,7 @@ export type AppProps = {
   home?: HomeData | null;
   listing?: ListingBootstrap;
   organization?: OrganizationBootstrap;
+  cities?: CitiesData | null;
 };
 
 function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<typeof catalog>): CardProps {
@@ -47,17 +49,17 @@ function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<
 }
 
 /** One public application shell: shared header, routed page content, footer. */
-export function App({ config, session, route, path, detail, series, home, listing, organization }: AppProps) {
+export function App({ config, session, route, path, detail, series, home, listing, organization, cities }: AppProps) {
   const text = catalog(config.locale);
-  const meta = routeMeta(route, config, text);
-  useEffect(() => {
-    // Client navigation updates the same title the server rendered. The detail
-    // title comes from the event once it loads, so it is not overwritten here.
-    if (route.name === 'home') document.title = meta.title;
-  }, [route.name, meta.title]);
   return <>
     <SiteHeader {...headerProps(config, session, text, path)} />
-    <main className={`container-main-content ${route.name === 'detail' || route.name === 'series' ? 'public-detail-main' : 'public-layout-wide'}`} id="main-content">
+    <main className={`container-main-content ${route.name === 'detail' || route.name === 'series' ? 'public-detail-main' : 'public-layout-wide'}`} id="main-content" tabIndex={-1}>
+      {route.name === 'cities' && <Suspense fallback={<p role="status">Ladataan kaupunkeja…</p>}>
+        <CitiesPage initialData={cities ?? null} endpoint={`${config.apiBase}/cities`} />
+      </Suspense>}
+      {route.name === 'today' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia…</p>}>
+        <TodayScreen city={route.value} listing={listing} config={config} session={session} />
+      </Suspense>}
       {route.name === 'organization' && organization && <Suspense fallback={<p role="status">Ladataan organisaatiota...</p>}>
         <OrganizationScreen key={path} organization={organization} config={config} session={session} />
       </Suspense>}

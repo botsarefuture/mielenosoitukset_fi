@@ -38,10 +38,12 @@ fi
 snapshot="$(mktemp /run/moso-deploy.XXXXXX.sh)"
 trap 'rm -f -- "$snapshot"' EXIT
 git -C "$repo_dir" show "${commit_sha}:deploy/production_deploy.sh" >"$snapshot"
-chmod 0700 "$snapshot"
+chmod 0600 "$snapshot"
 
+# /run is mounted noexec on the production host, so the snapshot is executed
+# through an interpreter instead of being run directly.
 if [[ -n "$routing_argument" ]]; then
-  "$snapshot" "$routing_argument" "$commit_sha"
+  bash "$snapshot" "$routing_argument" "$commit_sha"
 else
-  "$snapshot" "$commit_sha"
+  bash "$snapshot" "$commit_sha"
 fi

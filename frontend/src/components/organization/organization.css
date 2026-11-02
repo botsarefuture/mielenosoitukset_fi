@@ -6,14 +6,15 @@
 .organization-page .org-hero.site-hero { width: 100%; max-width: none; }
 .organization-page .org-hero.site-hero .org-hero-content { position: relative; width: 100%; max-width: none; margin-inline: auto; }
 .organization-page .org-hero.site-hero .org-name { max-width: none; }
-.organization-page .org-hero-header { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; }
-.organization-page .org-hero-info { flex: 1; min-width: 0; }
-.organization-page .org-logo-wrapper { width: 120px; height: 120px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--product-border); border-radius: 30px; background: var(--product-surface); box-shadow: var(--product-shadow); }
-.organization-page .org-logo-wrapper img { width: 100%; height: 100%; object-fit: contain; padding: 16px; }
+.organization-page .org-hero-header { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
+.organization-page .org-hero-info { width: 100%; min-width: 0; }
+.organization-page .org-logo-wrapper { width: 96px; height: 96px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--product-border); border-radius: 24px; background: var(--product-surface); box-shadow: var(--product-shadow); }
+.organization-page .org-logo-wrapper img { width: 100%; height: 100%; object-fit: contain; padding: 12px; }
 .organization-page .org-logo-placeholder { font-size: 2.5rem; color: var(--product-text-muted); }
 .organization-page .org-name { margin: .5rem 0 .75rem; color: inherit; font-size: 2.2rem; font-weight: 800; line-height: 1.2; letter-spacing: -.02em; overflow-wrap: anywhere; }
 .organization-page .org-desc { max-width: 550px; margin: 0 auto; color: inherit; font-size: 1.05rem; line-height: 1.6; overflow-wrap: anywhere; white-space: pre-line; }
-.organization-page .verified-banner { position: relative; display: inline-flex; align-items: center; gap: .6rem; margin-top: 1.75rem; padding: .8rem 1.5rem; border: 1px solid currentColor; border-radius: 999px; color: inherit; font-size: .95rem; font-weight: 600; }
+.organization-page .verified-banner { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .6rem; max-width: 100%; margin-top: 1.5rem; color: inherit; font-size: .9rem; font-weight: 500; }
+.organization-page .verified-banner:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
 .organization-page .tooltip-text { position: absolute; visibility: hidden; opacity: 0; z-index: 5; bottom: 125%; left: 50%; transform: translateX(-50%); width: min(280px, calc(100vw - 3rem)); padding: .75rem; border: 1px solid var(--product-border); border-radius: .6rem; background: var(--product-surface); color: var(--product-text); box-shadow: var(--product-shadow); font-size: .85rem; line-height: 1.4; font-weight: 400; }
 .organization-page .verified-banner:hover .tooltip-text, .organization-page .verified-banner:focus-visible .tooltip-text { visibility: visible; opacity: 1; }
 .organization-page .follow-card { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin: -2rem auto 3rem; padding: 2rem 2.5rem; border: 1px solid var(--product-border); border-radius: 1.5rem; background: var(--product-surface); box-shadow: var(--product-shadow); }
@@ -60,7 +61,7 @@
   .organization-page .org-hero { padding: 3rem 1.5rem; }
   .organization-page .org-name { font-size: 1.75rem; }
   .organization-page .org-desc { font-size: .95rem; }
-  .organization-page .verified-banner { padding: .65rem 1.25rem; font-size: .85rem; }
+  .organization-page .verified-banner { font-size: .85rem; }
   .organization-page .follow-card { flex-direction: column; align-items: flex-start; gap: 1.5rem; margin: 1.5rem 0 2rem; padding: 2rem 1.5rem; }
   .organization-page .section-card { padding: 2rem 1.5rem; }
   .organization-page .section-title { font-size: 1.75rem; }

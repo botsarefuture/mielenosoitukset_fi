@@ -22,5 +22,5 @@ export type ListingProps = {
   cover: string | null; coverAlt: string; messages: ListingMessages;
 };
 export type ListParams = Record<string, string | number>;
-export type Page = { page: number; per_page: number; total_pages: number; total: number;
+export type Page = { day?: string; page: number; per_page: number; total_pages: number; total: number;
   result_start: number; result_end: number; results: Demonstration[] };

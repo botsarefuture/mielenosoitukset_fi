@@ -49,6 +49,9 @@ func publicResponsePolicy(r *http.Request, now time.Time) (responsePolicy, bool)
 	if err != nil {
 		return responsePolicy{}, false
 	}
+	if path == "/api/cities" {
+		return responsePolicy{key: path + ":" + localDay(now), ttl: publicListTTL, dayBound: true}, true
+	}
 	if path == "/api/home" {
 		if lang == "" {
 			lang = "fi"

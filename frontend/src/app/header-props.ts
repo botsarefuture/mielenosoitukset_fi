@@ -31,7 +31,8 @@ export function headerProps(config: AppConfig, session: SessionSummary, text: Ca
   return {
     brand: 'Mielenosoitukset.fi',
     home: config.urls.home,
-    path,
+    path: path === '/mielenosoitukset-tanaan' || path.startsWith('/demonstration/') || path.startsWith('/tag/') ? config.urls.demonstrations
+      : path.startsWith('/city/') ? config.urls.cities : path,
     role: session.authenticated ? session.role : 'guest',
     links: account ? links : [...links, {
       href: config.urls.login, label: text.account.login, icon: 'fa-sign-in-alt',

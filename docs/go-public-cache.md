@@ -2,8 +2,8 @@
 
 The homepage and listing response bodies retain their previous contract. The
 maintainer subsequently requested longer, shared caching, so cache headers and
-the Redis tier intentionally change. There are no new public routes or writes
-to MongoDB, and no account/session data in Redis.
+the Redis tier intentionally change. City discovery adds a read-only public
+route; there are no writes to MongoDB or account/session data in Redis.
 
 ## Reading the code
 
@@ -28,6 +28,7 @@ to MongoDB, and no account/session data in Redis.
 | --- | --- | --- |
 | Homepage | 5 minutes | 60 seconds |
 | Demonstration listing, including search/city/tag/organization | 5 minutes | 60 seconds |
+| City directory and today listings | 5 minutes, capped at Helsinki midnight | 60 seconds |
 | Recurring series | 5 minutes | 60 seconds |
 | Demonstration detail | 15 minutes | 60 seconds |
 | Organization profile | 1 hour | 60 seconds |

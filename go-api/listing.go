@@ -18,6 +18,7 @@ import (
 )
 
 type listingQuery struct {
+	Today                                   bool
 	Lang, Day, Search, Title, Tag, Location string
 	Cities                                  []string
 	Start, End                              string
@@ -27,6 +28,7 @@ type listingQuery struct {
 }
 
 type listingPage struct {
+	Day         string   `json:"day,omitempty"`
 	Page        int      `json:"page"`
 	PerPage     int      `json:"per_page"`
 	Total       int64    `json:"total"`
@@ -80,7 +82,7 @@ func listingValues(raw string) (url.Values, error) {
 		return nil, invalid
 	}
 	allowed := map[string]bool{}
-	for _, key := range []string{"lang", "page", "per_page", "search", "title", "tag", "city", "location", "date_start", "date_end", "in_past", "include_cancelled", "parent_id", "organization_id", "max_days_till", "recurring"} {
+	for _, key := range []string{"lang", "page", "per_page", "search", "title", "tag", "city", "location", "date_start", "date_end", "in_past", "include_cancelled", "parent_id", "organization_id", "max_days_till", "recurring", "today"} {
 		allowed[key] = true
 	}
 	for key, entries := range values {
@@ -115,13 +117,17 @@ func (q *listingQuery) parsePagination(values url.Values) error {
 
 func (q *listingQuery) parseScopes(values url.Values) error {
 	invalid := errors.New("invalid listing parameters")
-	for key, target := range map[string]*bool{"in_past": &q.InPast, "include_cancelled": &q.IncludeCancelled} {
+	for key, target := range map[string]*bool{"in_past": &q.InPast, "include_cancelled": &q.IncludeCancelled, "today": &q.Today} {
 		if value := strings.ToLower(values.Get(key)); value != "" {
 			if value != "true" && value != "false" {
 				return invalid
 			}
 			*target = value == "true"
 		}
+	}
+	// Today retains public cancellation notices and ignores widening date filters.
+	if q.Today {
+		q.IncludeCancelled = true
 	}
 	for key, target := range map[string]*bson.ObjectID{"parent_id": &q.Parent, "organization_id": &q.Organization} {
 		if value := values.Get(key); value != "" {
@@ -184,6 +190,9 @@ func listingFilter(q listingQuery) bson.M {
 }
 
 func listingDates(q listingQuery) bson.M {
+	if q.Today {
+		return bson.M{"$eq": q.Day}
+	}
 	dates := bson.M{}
 	if !q.InPast {
 		dates["$gte"] = q.Day
@@ -219,7 +228,17 @@ func listingSearch(q listingQuery, and bson.A) bson.A {
 		for _, city := range q.Cities {
 			cities = append(cities, literalMatch(city, true))
 		}
-		and = append(and, bson.M{"city": bson.M{"$in": cities}})
+		match := bson.M{"city": bson.M{"$in": cities}}
+		keys := bson.A{}
+		for _, name := range q.Cities {
+			if city, known := cityCatalog[normalizeCityKey(name)]; known {
+				keys = append(keys, city.Key)
+			}
+		}
+		if len(keys) > 0 {
+			match = bson.M{"$or": bson.A{match, bson.M{"city_key": bson.M{"$in": keys}}}}
+		}
+		and = append(and, match)
 	}
 	return and
 }
@@ -257,6 +276,9 @@ func listingCard(doc bson.M, lang string) bson.M {
 
 func (s mongoStore) FindListing(ctx context.Context, q listingQuery) (listingPage, error) {
 	result := listingPage{Page: q.Page, PerPage: q.PerPage, TotalPages: 1, Results: []bson.M{}}
+	if q.Today {
+		result.Day = q.Day
+	}
 	filter := listingFilter(q)
 	total, err := s.collection.CountDocuments(ctx, filter)
 	if err != nil {

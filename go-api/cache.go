@@ -182,6 +182,7 @@ type cachedDetailStore struct {
 	home         *homeCache         // nil if the source has no FindHome
 	listing      *listingCache      // nil if the source has no FindListing
 	organization *organizationCache // nil if the source has no FindOrganization
+	cities       *citiesCache
 
 	hits, staleHits, negHits, misses, loads, loadErrors, oversize, unknownDropped atomic.Uint64
 }
@@ -217,6 +218,9 @@ func newCachedDetailStoreWithConfig(src Store, cfg detailCacheConfig) *cachedDet
 	}
 	if source, ok := src.(organizationStore); ok {
 		s.organization = newOrganizationCache(source, base)
+	}
+	if source, ok := src.(citiesStore); ok {
+		s.cities = &citiesCache{source: source, base: base, now: time.Now}
 	}
 	return s
 }

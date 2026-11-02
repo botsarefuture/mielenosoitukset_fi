@@ -125,6 +125,7 @@ type API struct{ store Store }
 func (a *API) handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/demonstrations", a.getListing)
+	mux.HandleFunc("GET /api/cities", a.getCities)
 	mux.HandleFunc("GET /api/demonstrations/{id}", a.getDemonstrationCached)
 	mux.HandleFunc("GET /api/series/{parent}", a.getSeries)
 	mux.HandleFunc("GET /api/organizations/{id}", a.getOrganization)

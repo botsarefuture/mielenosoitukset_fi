@@ -1,6 +1,6 @@
 {
   "description": "Public Go read API: cache successful responses using origin freshness",
-  "expression": "http.host eq \"api.mielenosoitukset.fi\" and http.request.method in {\"GET\" \"HEAD\"} and http.cookie eq \"\" and not any(http.request.headers[\"authorization\"][*] ne \"\") and (http.request.uri.path eq \"/api/home\" or http.request.uri.path eq \"/api/demonstrations\" or starts_with(http.request.uri.path, \"/api/demonstrations/\") or starts_with(http.request.uri.path, \"/api/series/\") or starts_with(http.request.uri.path, \"/api/organizations/\"))",
+  "expression": "http.host eq \"api.mielenosoitukset.fi\" and http.request.method in {\"GET\" \"HEAD\"} and http.cookie eq \"\" and not any(http.request.headers[\"authorization\"][*] ne \"\") and (http.request.uri.path eq \"/api/home\" or http.request.uri.path eq \"/api/cities\" or http.request.uri.path eq \"/api/demonstrations\" or starts_with(http.request.uri.path, \"/api/demonstrations/\") or starts_with(http.request.uri.path, \"/api/series/\") or starts_with(http.request.uri.path, \"/api/organizations/\"))",
   "action": "set_cache_settings",
   "action_parameters": {
     "cache": true,

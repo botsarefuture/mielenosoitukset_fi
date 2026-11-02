@@ -127,6 +127,7 @@ func (a *API) handler() http.Handler {
 	mux.HandleFunc("GET /api/demonstrations", a.getListing)
 	mux.HandleFunc("GET /api/demonstrations/{id}", a.getDemonstrationCached)
 	mux.HandleFunc("GET /api/series/{parent}", a.getSeries)
+	mux.HandleFunc("GET /api/organizations/{id}", a.getOrganization)
 	mux.HandleFunc("GET /api/home", a.getHomeCached)
 	mux.HandleFunc("GET /health", a.health)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { writeError(w, 404, "not found") })

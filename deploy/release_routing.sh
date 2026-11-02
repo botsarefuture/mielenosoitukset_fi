@@ -37,8 +37,11 @@ log() { printf 'release_routing: %s\n' "$*"; }
 }
 log "activating routing for ${expected_sha}"
 
-include_line=$(grep -n 'mielenosoitukset-react-ssr\.conf' "$vhost" | head -1 | cut -d: -f1 || true)
-proxy_line=$(grep -n 'ProxyPass[[:space:]]*"/"' "$vhost" | head -1 | cut -d: -f1 || true)
+# Match only real directives at the start of a line. The vhost documents the
+# expected order in a comment that itself contains ProxyPass "/", and a comment
+# must not be mistaken for the rule the include has to precede.
+include_line=$(grep -nE '^[[:space:]]*Include[[:space:]]+.*mielenosoitukset-react-ssr\.conf' "$vhost" | head -1 | cut -d: -f1 || true)
+proxy_line=$(grep -nE '^[[:space:]]*ProxyPass[[:space:]]+"/"' "$vhost" | head -1 | cut -d: -f1 || true)
 if [[ -z $include_line ]]; then
   log "the TLS vhost does not include $include; add it before ProxyPass \"/\" first"
   exit 1

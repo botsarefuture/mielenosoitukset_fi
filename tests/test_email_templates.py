@@ -1,6 +1,18 @@
 from jinja2 import Environment, FileSystemLoader
 
 
+def test_submission_confirmation_email_formats_event_date():
+    env = Environment(loader=FileSystemLoader("mielenosoitukset_fi/templates/emails"))
+    template = env.get_template("demo_submitter_confirmation.html")
+
+    for stored, displayed in (("2026-11-09", "9.11.2026"), ("2028-02-29", "29.2.2028"),
+                              ("9.11.2026", "9.11.2026"), ("", "")):
+        rendered = template.render(title="Testi", date=stored, city="Akaa", address="Testiosoite")
+        assert f"<strong>Päivämäärä:</strong> {displayed}</p>" in rendered
+        if stored != displayed:
+            assert stored not in rendered
+
+
 def test_settings_changed_email_template_renders():
     env = Environment(loader=FileSystemLoader("mielenosoitukset_fi/templates/emails"))
     template = env.get_template("auth/settings_changed.html")

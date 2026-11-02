@@ -6,7 +6,7 @@ import '../components/organization/organization.css';
 import '../../../mielenosoitukset_fi/static/css/toolbox.css';
 
 function Icon({ name, brand = false }: { name: string; brand?: boolean }) {
-  return <i className={`${brand ? 'fa-brands' : 'fa-solid'} fa-${name}`} aria-hidden="true" />;
+  return <i className={`organization-icon ${brand ? 'fa-brands' : 'fa-solid'} fa-${name}`} aria-hidden="true" />;
 }
 
 /** Public profile links are data, never executable URLs or HTML. */

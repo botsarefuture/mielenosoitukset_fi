@@ -1,6 +1,7 @@
 /* Organization geometry stays local; shared product tokens own both themes. */
 .organization-page { width: 100%; min-width: 0; color: var(--product-text); line-height: 1.7; }
 .organization-page *, .organization-page *::before, .organization-page *::after { box-sizing: border-box; }
+.organization-page .organization-icon { display: inline-block; flex-shrink: 0; width: 1em; margin: 0; line-height: 1; text-align: center; }
 .organization-page .org-hero { position: relative; overflow: hidden; padding: 4rem 2rem; margin-bottom: 3rem; border-radius: 1.5rem; text-align: center; color: var(--product-on-action); background: linear-gradient(135deg, var(--product-action-bg), var(--product-action-hover)); box-shadow: var(--product-shadow); }
 .organization-page .org-hero::after { content: ''; position: absolute; inset: auto 0 0; height: 6px; background: var(--product-accent); }
 .organization-page .org-hero.site-hero { width: 100%; max-width: none; }

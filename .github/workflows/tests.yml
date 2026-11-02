@@ -47,6 +47,11 @@ jobs:
           git diff --exit-code -- mielenosoitukset_fi/static/frontend mielenosoitukset_fi/templates/kampanja/_*_fallback.html
           test -z "$(git ls-files --others --exclude-standard -- mielenosoitukset_fi/static/frontend mielenosoitukset_fi/templates/kampanja/_*_fallback.html)"
 
+      - name: Verify the React public host build
+        run: |
+          npm run app:build
+          node scripts/verify_public_host.mjs
+
       - name: Install dependencies
         run: |
           bash deploy/bootstrap_python_trust.sh python

@@ -11,7 +11,14 @@ root-owned release binary and environment file. Its credentials are copied on
 the server from config.yaml, never fetched into tool output or Git. The existing
 Flask service and routing are untouched. No Go compiler is needed on the server.
 
-Build a reviewed clean release with Go1.27.3:
+Release is automated: `.github/workflows/production-deploy.yml` builds the
+linux/amd64 binary in CI, publishes it as a `release-<commit>` asset, and the
+server installs it through `deploy/release_public.sh` before the React host, so
+the host never starts against an API that lacks its routes. The API is
+redeployed only when `http://127.0.0.1:8091/health` does not already report the
+requested commit. The manual procedure below is the break-glass path.
+
+Manual build of a reviewed clean release with Go1.27.3:
 
 ```
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go -C go-api build -trimpath -ldflags="-s -w -X main.buildSHA=$RELEASE_SHA" -o /tmp/go-api-release/api .

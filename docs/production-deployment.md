@@ -1,8 +1,25 @@
 # Production deployment
 
 Every commit pushed to `main` triggers `.github/workflows/production-deploy.yml`.
-The workflow connects with a dedicated SSH credential and invokes
-`deploy/production_deploy.sh` on the server with the exact merged commit SHA.
+It builds, publishes and deploys all three production pieces: the Flask site, the
+standalone React public host and the Go public API. Nothing has to be built or
+uploaded from a workstation, and no service is deployed from a local checkout.
+
+The workflow has three jobs:
+
+| Job | Runs on | What it does |
+| --- | --- | --- |
+| `release` | every push to `main` | `npm run app:build` + `verify_public_host.mjs`, `tar` of `frontend/server.mjs` and `frontend/dist`, linux/amd64 `go build`, then publishes `api`, `app.tar.gz` and `release.json` as the assets of a `release-<commit>` GitHub release |
+| `deploy` | after `release` | one restricted SSH call, `deploy <sha>`, which runs Flask → Go API → React host on the server and verifies each service's reported `build_sha` |
+| `routing` | only on a manual dispatch with the `routing` input enabled | one restricted SSH call, `deploy-routing <sha>`, which installs `deploy/apache/react-ssr-routing.conf`, runs `apache2ctl configtest`, gracefully reloads Apache and restores the previous include on any failure |
+
+`release.json` names the commit and the source tree and records the size and
+SHA-256 of both artifacts. The server downloads the assets for the requested
+commit with `deploy/release_artifacts.py`, which refuses anything missing,
+renamed, oversized or not matching its recorded digest. The artifacts therefore
+come from the same GitHub repository the server already fetches from, and each
+one is tied to the commit by construction instead of by an operator's local
+`git rev-parse` check.
 
 The server script serializes deployments, refuses stale SHAs, fast-forwards the
 production checkout, verifies dependency deltas against an installation receipt,
@@ -70,10 +87,46 @@ On an older OpenSSH release without `restrict`, use the explicit equivalent:
 no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty,command="/var/www/mielenosoitukset_fi/deploy/production_ssh_entrypoint.sh" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA_REPLACE_WITH_GITHUB_ACTIONS_PUBLIC_KEY github-actions-production
 ```
 
-The forced command accepts only `deploy <full 40-character SHA>` and then calls
-`/root/update-moso.sh`. The installed update script should be kept byte-for-byte
-in sync with `deploy/production_deploy.sh`; the private key remains only in the
-GitHub production environment secret.
+The forced command accepts only `deploy <full 40-character SHA>` and
+`deploy-routing <full 40-character SHA>`. It never takes a shell command, a port
+forward or another executable, and the private key remains only in the GitHub
+production environment secret.
+
+`deploy/production_ssh_entrypoint.sh` also snapshots the deploy logic from the
+requested commit (`git show <sha>:deploy/production_deploy.sh`) into
+`/run/moso-deploy.*.sh` and runs that copy. A deployment can therefore neither
+execute a half-updated script nor need a hand-copied `/root/update-moso.sh`:
+the reviewed logic ships with the commit it deploys.
+
+## One-time server bootstrap for the automated release
+
+The pipeline needs the updated forced command once. Until it is installed, the
+current `/usr/local/sbin/moso-github-deploy` still accepts `deploy <sha>`, so a
+push would run the new `production_deploy.sh` (which downloads release assets)
+but reject `deploy-routing`. Apply this as root on lc-main, from a reviewed
+`main` checkout at `/var/www/mielenosoitukset_fi`:
+
+```sh
+install -m 0755 /var/www/mielenosoitukset_fi/deploy/production_ssh_entrypoint.sh \
+  /usr/local/sbin/moso-github-deploy.tmp
+mv -f /usr/local/sbin/moso-github-deploy.tmp /usr/local/sbin/moso-github-deploy
+```
+
+The `authorized_keys` entry keeps `command="/usr/local/sbin/moso-github-deploy"`,
+so only that file changes. No new key, service, toolchain or secret is needed on
+the server; the artifacts are public release assets of a public repository.
+
+Verify after the next push: the `deploy` job must end with both health checks
+reporting the pushed SHA (`https://mielenosoitukset.fi/health` and
+`https://api.mielenosoitukset.fi/health`), and the step log must say whether the
+active Apache include already matches the commit. A route set that is not yet
+active stays with Flask and is activated only by a dispatch run with `routing`
+enabled.
+
+Rollback is unchanged and does not depend on the pipeline: restore the previous
+Apache include first, then restore the prior release from the backup directory
+each deploy script prints. Reverting the bootstrap is re-installing a previous
+`production_ssh_entrypoint.sh` copy over `/usr/local/sbin/moso-github-deploy`.
 
 ## Python trust-store security update (2026-10-22)
 

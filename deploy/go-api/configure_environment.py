@@ -10,6 +10,13 @@ import yaml
 def configure(source, target):
     config = yaml.safe_load(Path(source).read_text())
     values = {"MONGODB_URI": config.get("MONGO_URI"), "MONGODB_DATABASE": config.get("MONGO_DBNAME"), "API_ADDR": "127.0.0.1:8091"}
+    # Existing local Redis; isolated application keys, no global Redis changes.
+    # An empty explicit value opts out and keeps the in-process caches only.
+    redis_url = config.get("GO_PUBLIC_REDIS_URL", "redis://127.0.0.1:6379/0")
+    if not isinstance(redis_url, str) or any(c in redis_url for c in "\n\r\0"):
+        raise ValueError("Invalid GO_PUBLIC_REDIS_URL")
+    if redis_url:
+        values["PUBLIC_REDIS_URL"] = redis_url
     for key, value in values.items():
         if not isinstance(value, str) or not value or any(c in value for c in "\n\r\0"):
             raise ValueError(f"Missing or invalid {key}; refusing to guess production settings")

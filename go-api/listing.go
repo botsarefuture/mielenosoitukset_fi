@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -209,38 +208,16 @@ func listingDates(q listingQuery) bson.M {
 }
 
 func listingSearch(q listingQuery, and bson.A) bson.A {
-	literal := func(value string, exact bool) bson.Regex {
-		pattern := regexp.QuoteMeta(value)
-		if exact {
-			pattern = "^" + pattern + "$"
-		}
-		return bson.Regex{Pattern: pattern, Options: "i"}
-	}
-	translated := func(fields []string, value string, exact bool) {
-		if value == "" {
-			return
-		}
-		or := bson.A{}
-		for _, field := range fields {
-			or = append(or, bson.M{field: literal(value, exact)})
-			if field == "title" || field == "description" || field == "tags" {
-				for _, lang := range []string{"fi", "en", "sv"} {
-					or = append(or, bson.M{"translations." + lang + "." + field: literal(value, exact)})
-				}
-			}
-		}
-		and = append(and, bson.M{"$or": or})
-	}
-	translated([]string{"title", "description", "tags", "address"}, q.Search, false)
-	translated([]string{"title"}, q.Title, false)
-	translated([]string{"tags"}, q.Tag, true)
+	and = appendTranslatedMatch(and, []string{"title", "description", "tags", "address"}, q.Search, false)
+	and = appendTranslatedMatch(and, []string{"title"}, q.Title, false)
+	and = appendTranslatedMatch(and, []string{"tags"}, q.Tag, true)
 	if q.Location != "" {
-		and = append(and, bson.M{"address": literal(q.Location, false)})
+		and = append(and, bson.M{"address": literalMatch(q.Location, false)})
 	}
 	if len(q.Cities) > 0 {
 		cities := bson.A{}
 		for _, city := range q.Cities {
-			cities = append(cities, literal(city, true))
+			cities = append(cities, literalMatch(city, true))
 		}
 		and = append(and, bson.M{"city": bson.M{"$in": cities}})
 	}

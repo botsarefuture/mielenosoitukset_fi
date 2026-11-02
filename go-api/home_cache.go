@@ -29,6 +29,7 @@ type homeJSONStore interface {
 type homeValue struct {
 	data       []byte // final JSON, newline-terminated
 	hardExpiry int64  // unix nanos
+	day        string // Helsinki day of the upcoming-event selection
 }
 
 type homeSlot struct {
@@ -66,7 +67,7 @@ func (h *homeCache) Get(ctx context.Context, lang string) ([]byte, error) {
 	slot := &h.slots[idx]
 	now := time.Now().UnixNano()
 
-	if v := slot.cur.Load(); v != nil && now < v.hardExpiry {
+	if v := slot.cur.Load(); v != nil && now < v.hardExpiry && v.day == localDay(time.Now()) {
 		if now >= slot.refreshAfter.Load() {
 			h.refreshAsync(idx)
 		}
@@ -88,6 +89,7 @@ func (h *homeCache) load(idx int) <-chan singleflight.Result {
 	lang := homeLangs[idx] // canonical value only: arbitrary input never reaches the source
 	slot := &h.slots[idx]
 	return h.group.DoChan(lang, func() (any, error) {
+		day := localDay(time.Now())
 		ctx, cancel := context.WithTimeout(h.base, homeLoadTimeout)
 		defer cancel()
 		result, err := h.source.FindHome(ctx, lang)
@@ -100,7 +102,7 @@ func (h *homeCache) load(idx int) <-chan singleflight.Result {
 		}
 		data = append(data, '\n')
 		now := time.Now()
-		slot.cur.Store(&homeValue{data: data, hardExpiry: now.Add(homeHardTTL).UnixNano()})
+		slot.cur.Store(&homeValue{data: data, hardExpiry: now.Add(homeHardTTL).UnixNano(), day: day})
 		slot.refreshAfter.Store(now.Add(jitter(homeSoftTTL)).UnixNano())
 		slot.failures.Store(0)
 		return data, nil

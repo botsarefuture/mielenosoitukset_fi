@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Show the event date in submission confirmation emails in Finnish day.month.year format instead of the database's ISO format.
+
 - Preserve Go form submissions from the existing `www.mielenosoitukset.fi` hostname while retaining strict Origin checks for other hosts.
 
 - Move the submission form to the standalone React host and add opt-in Go submission intake with bounded validation, shared rate limits, duplicate protection and crash-safe writes. Keep email delivery and trusted moderation-link preparation in Flask's existing worker; preserve drafts, imports, duplicate confirmation and a no-JavaScript form.

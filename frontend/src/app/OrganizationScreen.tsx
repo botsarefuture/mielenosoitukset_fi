@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { OrganizationPage } from '../pages/OrganizationPage';
+import { OrganizationChat } from '../components/organization/OrganizationChat';
 import type { AppConfig } from './config';
 import { listingProps } from './listing';
 import type { OrganizationBootstrap } from './organization';
@@ -29,7 +30,7 @@ export default function OrganizationScreen({ organization, config, session }: {
     return () => { controller.abort(); clearTimeout(timer); };
   }, [id, state?.hasMessages]);
   const path = `/organization/${id}`;
-  return <>
+  return <div className={session.authenticated ? 'organization-screen organization-screen--signed-in' : 'organization-screen'}>
     {notices.map((notice, index) => <div key={index} className={`flash-message flash-message--inline flash-${notice.category}`}
       role={notice.category === 'error' ? 'alert' : 'status'}><span className="flash-text">{notice.message}</span></div>)}
     <OrganizationPage organization={organization.profile} authenticated={session.authenticated} privateState={state}
@@ -46,5 +47,6 @@ export default function OrganizationScreen({ organization, config, session }: {
             JSON.stringify({ event: 'demo_search', resource_id: search.slice(0, 120) }),
           ], { type: 'application/json' })); } catch { /* Optional analytics. */ }
         } }} />
-  </>;
+    <OrganizationChat authenticated={session.authenticated} />
+  </div>;
 }

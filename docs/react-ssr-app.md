@@ -170,6 +170,12 @@ route bundles and preloaded only where needed. Home downloads neither the
 organization screen nor its styles. Organization page/search/campaign/Web Vitals
 signals use the existing analytics handlers and respect DNT/settings.
 
+Signed-in organization pages retain their chat launcher as a React component.
+The conversation panel and existing Socket.IO client load only after it is
+opened; messaging still uses Flask's existing authenticated friend checks and
+socket events. Private messages stay in component memory and never enter the
+public API, bootstrap or caches. Closing the panel disconnects its socket.
+
 Deploy Go first, then the host, then the exact organization GET routing rule.
 Rollback removes that rule and restores the previous host/API release, leaving
 the preserved Flask profile and data intact. See [the public API contract](go-organization-api.md).

@@ -23,3 +23,6 @@
 .organization-chat p { padding: .5em; margin: 0; }
 .organization-chat .chat-input-label { font-size: .85rem; }
 .organization-screen--signed-in .organization-page .back-to-top { bottom: 5.5rem; }
+@media (max-width: 768px) {
+  .organization-screen--signed-in .organization-page .back-to-top { left: 1rem; right: auto; bottom: 1rem; }
+}

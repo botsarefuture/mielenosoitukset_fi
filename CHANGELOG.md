@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Keep every configured WebAuthn origin, so passkey registration and step-up login work on both `mielenosoitukset.fi` and `www.mielenosoitukset.fi`. App creation used to replace the configured list with the single primary origin, which failed origin validation on the www host.
+
 - Deploy the React public host and the Go public API from CI instead of a developer workstation. A push to `main` now builds and publishes both artifacts with a checksummed release manifest, and the existing restricted SSH deploy installs them after Flask, verifying each service's reported build SHA. Only services that do not already report the commit are touched, so retries are safe. Apache routing remains an explicit manual dispatch because it changes which URLs the host answers.
 
 - Redesign the city directory with search, clear upcoming/today counts and direct links. Move cities and today pages to the standalone React host with a cached Go summary API, shared event cards, Helsinki-day filtering, server-delivered SEO metadata and consistent normal page navigation.

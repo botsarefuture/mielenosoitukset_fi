@@ -72,10 +72,17 @@ def create_app(config_overrides=None) -> Flask:
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
     if config_overrides:
         app.config.update(config_overrides)
-    # Keep the allowed WebAuthn origins in sync when only the primary origin is
-    # overridden (e.g. in tests), unless explicitly overridden as well.
-    if "WEBAUTHN_ALLOWED_ORIGINS" not in (config_overrides or {}):
-        app.config["WEBAUTHN_ALLOWED_ORIGINS"] = [app.config["WEBAUTHN_ORIGIN"]]
+    # Config already resolves WEBAUTHN_ALLOWED_ORIGINS from configuration, falling
+    # back to WEBAUTHN_ORIGIN, so a configured list (for example the apex and the
+    # www host) must survive app creation. Only re-derive it when a caller
+    # overrides the primary origin without also overriding the allowed list, as
+    # the test suite does.
+    overrides = config_overrides or {}
+    if "WEBAUTHN_ALLOWED_ORIGINS" not in overrides:
+        if "WEBAUTHN_ORIGIN" in overrides or not app.config.get(
+            "WEBAUTHN_ALLOWED_ORIGINS"
+        ):
+            app.config["WEBAUTHN_ALLOWED_ORIGINS"] = [app.config["WEBAUTHN_ORIGIN"]]
     app.config.setdefault("BUILD_SHA", resolve_build_sha())
 
     # Keep translation catalogs separate from languages that are ready to be

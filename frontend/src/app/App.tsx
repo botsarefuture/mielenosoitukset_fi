@@ -15,8 +15,10 @@ import type { AppRoute } from './routes';
 import type { SessionSummary } from './session';
 import { lazy, Suspense } from 'react';
 import type { ListingBootstrap } from './listing';
+import type { OrganizationBootstrap } from './organization';
 
 const ListingScreen = lazy(() => import('./ListingScreen'));
+const OrganizationScreen = lazy(() => import('./OrganizationScreen'));
 
 export type AppProps = {
   config: AppConfig;
@@ -30,6 +32,7 @@ export type AppProps = {
   /** Server-read home batch, so cards paint without a second request. */
   home?: HomeData | null;
   listing?: ListingBootstrap;
+  organization?: OrganizationBootstrap;
 };
 
 function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<typeof catalog>): CardProps {
@@ -44,7 +47,7 @@ function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<
 }
 
 /** One public application shell: shared header, routed page content, footer. */
-export function App({ config, session, route, path, detail, series, home, listing }: AppProps) {
+export function App({ config, session, route, path, detail, series, home, listing, organization }: AppProps) {
   const text = catalog(config.locale);
   const meta = routeMeta(route, config, text);
   useEffect(() => {
@@ -55,6 +58,9 @@ export function App({ config, session, route, path, detail, series, home, listin
   return <>
     <SiteHeader {...headerProps(config, session, text, path)} />
     <main className={`container-main-content ${route.name === 'detail' || route.name === 'series' ? 'public-detail-main' : 'public-layout-wide'}`} id="main-content">
+      {route.name === 'organization' && organization && <Suspense fallback={<p role="status">Ladataan organisaatiota...</p>}>
+        <OrganizationScreen key={path} organization={organization} config={config} session={session} />
+      </Suspense>}
       {route.name === 'listing' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia...</p>}>
         <ListingScreen key={path} route={route} config={config} session={session} listing={listing} />
       </Suspense>}

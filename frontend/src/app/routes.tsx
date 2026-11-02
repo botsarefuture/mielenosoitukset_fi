@@ -14,6 +14,7 @@ import type { ListingRoute } from './listing';
 export type AppRoute =
   | { name: 'home' }
   | ListingRoute
+  | { name: 'organization'; id: string }
   | { name: 'detail'; identifier: string }
   | { name: 'series'; parent: string };
 
@@ -43,6 +44,8 @@ function readIdentifier(raw: string): string | null {
 }
 
 export function routeForPath(path: string): AppRoute | null {
+  const organization = /^\/organization\/([a-f\d]{24})$/i.exec(path);
+  if (organization) return { name: 'organization', id: organization[1].toLowerCase() };
   if (path === '/demonstrations') return { name: 'listing', scope: 'all' };
   const listing = /^\/(city|tag)\/([^/]+)$/.exec(path);
   if (listing) {

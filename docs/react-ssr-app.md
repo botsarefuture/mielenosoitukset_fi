@@ -133,6 +133,53 @@ rule. Removing that rule returns the pages to the existing Flask shells without
 changing their URLs or data. Nested city-today routes and all writes stay with
 their existing handlers.
 
+## Organization profiles
+
+`GET/HEAD /organization/<ObjectId>` uses the standalone React screen and public
+Go `GET /api/organizations/<id>`. Only the allowlisted profile fields are public;
+membership records and invitation lists never enter that API or its cache.
+The Go cache has a 60-second lifetime and 128-entry/2 MiB bounds. The host
+coalesces public profile reads, caches up to 64 profiles for 60 seconds, and
+starts the profile read alongside the session request. Cache layers can add
+freshness delay. Missing valid identifiers retain the existing home redirect;
+API failure returns a non-indexable 503. Malformed/nested paths keep their
+existing handlers.
+
+The initial event batch comes from the shared Go listing API and is embedded
+with the profile. The organization scope overrides URL parameters, and conflicting
+parent, past and maximum-day filters are removed like the legacy page. Search,
+dates, city selection, cancelled events and pagination use the shared React
+listing. No generic RSS feed is presented as an organization-specific feed.
+
+Signed-in requests ask the existing `/api/session?organization_id=<id>` endpoint
+for one organization's follow/invitation state and four management booleans.
+These are display hints, never authorization; every write retains its existing
+Flask permission check. Private summaries and HTML are uncached. Cookieless
+requests keep using the ordinary shared public summary without organization
+permissions. No account cookie or database credential is exposed to JavaScript.
+
+The existing native invitation forms retain their POST targets. When feedback
+is queued, the private summary reports only that fact; the browser reads the
+existing `/get_flash_messages` endpoint with `no-store`, allowing Flask's
+cookie update to consume the messages once. Ordinary profile visits make no
+extra feedback request. Follow actions likewise retain the existing endpoints.
+Fill forms, administration and writes remain with Flask.
+
+Organization code, calendar, shared listing and toolbox styles are split into
+route bundles and preloaded only where needed. Home downloads neither the
+organization screen nor its styles. Organization page/search/campaign/Web Vitals
+signals use the existing analytics handlers and respect DNT/settings.
+
+Signed-in organization pages retain their chat launcher as a React component.
+The conversation panel and existing Socket.IO client load only after it is
+opened; messaging still uses Flask's existing authenticated friend checks and
+socket events. Private messages stay in component memory and never enter the
+public API, bootstrap or caches. Closing the panel disconnects its socket.
+
+Deploy Go first, then the host, then the exact organization GET routing rule.
+Rollback removes that rule and restores the previous host/API release, leaving
+the preserved Flask profile and data intact. See [the public API contract](go-organization-api.md).
+
 ## Session summary contract
 
 `GET /api/session` returns the same header state the templates receive:

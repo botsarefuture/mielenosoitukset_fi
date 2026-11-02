@@ -1,0 +1,72 @@
+/* Organization geometry stays local; shared product tokens own both themes. */
+.organization-page { color: var(--product-text); line-height: 1.7; }
+.organization-page *, .organization-page *::before, .organization-page *::after { box-sizing: border-box; }
+.organization-page .org-hero { position: relative; overflow: hidden; padding: 4rem 2rem; margin-bottom: 3rem; border-radius: 1.5rem; text-align: center; color: var(--product-on-action); background: linear-gradient(135deg, var(--product-action-bg), var(--product-action-hover)); box-shadow: var(--product-shadow); }
+.organization-page .org-hero::after { content: ''; position: absolute; inset: auto 0 0; height: 6px; background: var(--product-accent); }
+.organization-page .org-hero-content { position: relative; max-width: 800px; margin-inline: auto; }
+.organization-page .org-hero-header { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; }
+.organization-page .org-hero-info { flex: 1; min-width: 0; }
+.organization-page .org-logo-wrapper { width: 120px; height: 120px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--product-border); border-radius: 30px; background: var(--product-surface); box-shadow: var(--product-shadow); }
+.organization-page .org-logo-wrapper img { width: 100%; height: 100%; object-fit: contain; padding: 16px; }
+.organization-page .org-logo-placeholder { font-size: 2.5rem; color: var(--product-text-muted); }
+.organization-page .org-label { display: inline-flex; align-items: center; gap: .5rem; padding: .6rem 1rem; border: 1px solid currentColor; border-radius: 999px; font-size: .95rem; font-weight: 700; }
+.organization-page .org-name { margin: .5rem 0 .75rem; color: inherit; font-size: 2.2rem; font-weight: 800; line-height: 1.2; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.organization-page .org-desc { max-width: 550px; margin: 0 auto; color: inherit; font-size: 1.05rem; line-height: 1.6; overflow-wrap: anywhere; white-space: pre-line; }
+.organization-page .verified-banner { position: relative; display: inline-flex; align-items: center; gap: .6rem; margin-top: 1.75rem; padding: .8rem 1.5rem; border: 1px solid currentColor; border-radius: 999px; color: inherit; font-size: .95rem; font-weight: 600; }
+.organization-page .tooltip-text { position: absolute; visibility: hidden; opacity: 0; z-index: 5; bottom: 125%; left: 50%; transform: translateX(-50%); width: min(280px, calc(100vw - 3rem)); padding: .75rem; border: 1px solid var(--product-border); border-radius: .6rem; background: var(--product-surface); color: var(--product-text); box-shadow: var(--product-shadow); font-size: .85rem; line-height: 1.4; font-weight: 400; }
+.organization-page .verified-banner:hover .tooltip-text, .organization-page .verified-banner:focus-visible .tooltip-text { visibility: visible; opacity: 1; }
+.organization-page .follow-card { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin: -2rem auto 3rem; padding: 2rem 2.5rem; border: 1px solid var(--product-border); border-radius: 1.5rem; background: var(--product-surface); box-shadow: var(--product-shadow); }
+.organization-page .follow-card-text { min-width: 0; }
+.organization-page .follow-card h2 { margin: 0 0 .5rem; color: var(--product-text); font-size: 1.4rem; font-weight: 700; }
+.organization-page .follow-card p { max-width: 520px; margin: 0; color: var(--product-text-muted); }
+.organization-page .follow-card-action { min-width: 0; }
+.organization-page .follow-pill-button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 44px; padding: .65rem 1.5rem; border: 1px solid var(--product-border); border-radius: 999px; background: var(--product-surface-muted); color: var(--product-text); font: inherit; font-weight: 700; letter-spacing: .07em; cursor: pointer; }
+.organization-page .follow-pill-button.is-following { background: var(--product-action-bg); border-color: var(--product-action-bg); color: var(--product-on-action); }
+.organization-page button:disabled { cursor: wait; opacity: .65; }
+.organization-page .follow-card .org-action-error { margin-top: .75rem; color: var(--product-danger); }
+.organization-page .section-card { margin-bottom: 1.75rem; padding: 2.5rem; border: 1px solid var(--product-border); border-radius: 1.5rem; background: var(--product-surface); box-shadow: var(--product-shadow); }
+.organization-page .section-title { display: flex; align-items: center; justify-content: center; gap: .75rem; margin: 0 0 2rem; color: var(--product-primary); font-size: 2rem; font-weight: 700; text-align: center; }
+.organization-page .section-title i { font-size: 1.5rem; }
+.organization-page .contact-methods { display: grid; gap: 1.5rem; margin-bottom: 2rem; }
+.organization-page .contact-item, .organization-page .social-item { display: flex; align-items: center; gap: 1rem; min-width: 0; padding: 1.5rem; border: 1px solid var(--product-border); border-radius: 1rem; background: var(--product-canvas); color: var(--product-text); text-decoration: none; }
+.organization-page .contact-item:hover, .organization-page .social-item:hover { border-color: var(--product-primary); }
+.organization-page .contact-icon, .organization-page .social-icon, .organization-page .help-us-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 50px; height: 50px; border-radius: 1rem; background: var(--product-action-bg); color: var(--product-on-action); font-size: 1.25rem; }
+.organization-page .contact-info, .organization-page .social-info { min-width: 0; overflow-wrap: anywhere; }
+.organization-page .contact-info h3 { margin: 0 0 .25rem; color: var(--product-text); font-size: 1.1rem; font-weight: 600; }
+.organization-page .contact-info p { margin: 0; color: var(--product-text-muted); font-size: .95rem; }
+.organization-page .socials { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); gap: 1rem; margin-top: 2rem; }
+.organization-page .social-item { padding: 1rem 1.5rem; }
+.organization-page .social-icon { width: 40px; height: 40px; background: var(--product-accent); color: var(--product-on-accent); }
+.organization-page .platform { font-weight: 700; }
+.organization-page .username { color: var(--product-text-muted); font-size: .9rem; }
+.organization-page .invite-banner, .organization-page .help-us-banner { display: flex; justify-content: space-between; align-items: center; gap: 2rem; margin-bottom: 3rem; padding: 2rem 2.5rem; border: 2px solid var(--product-primary); border-radius: 1.5rem; background: var(--product-surface); box-shadow: var(--product-shadow); }
+.organization-page .help-us-banner { border: 2px dashed var(--product-border); }
+.organization-page .invite-content, .organization-page .help-us-content { display: flex; align-items: center; gap: 1.5rem; min-width: 0; }
+.organization-page .invite-content > i { font-size: 2rem; color: var(--product-primary); }
+.organization-page .invite-content h2, .organization-page .help-us-text h2 { margin: 0 0 .5rem; color: var(--product-text); font-size: 1.1rem; line-height: 1.6; overflow-wrap: anywhere; }
+.organization-page .invite-content p, .organization-page .help-us-text p { margin: 0; color: var(--product-text-muted); }
+.organization-page .help-us-icon { background: var(--product-accent-soft); color: var(--product-accent-strong); }
+.organization-page .invite-actions { display: flex; flex-shrink: 0; gap: 1rem; }
+.organization-page .invite-actions form { margin: 0; }
+.organization-page .org-action, .organization-page .help-us-button { display: inline-flex; align-items: center; justify-content: center; gap: .75rem; min-height: 44px; padding: .875rem 1.5rem; border: 1px solid var(--product-border); border-radius: 1rem; background: var(--product-surface-muted); color: var(--product-text); text-decoration: none; font: inherit; font-weight: 600; cursor: pointer; }
+.organization-page .org-action--success { background: var(--product-success-soft); color: var(--product-success); border-color: var(--product-success); }
+.organization-page .help-us-button { flex-shrink: 0; background: var(--product-accent); color: var(--product-on-accent); border-color: var(--product-accent); }
+.organization-page a:focus-visible, .organization-page button:focus-visible, .organization-page .verified-banner:focus-visible { outline: 3px solid var(--product-primary); outline-offset: 3px; }
+.organization-page .org-hero :focus-visible { outline-color: var(--product-on-action); }
+.organization-page .back-to-top { position: fixed; right: 2rem; bottom: 2rem; z-index: 1000; display: inline-flex; align-items: center; justify-content: center; width: 50px; height: 50px; border: 0; border-radius: 50%; background: var(--product-action-bg); color: var(--product-on-action); box-shadow: var(--product-shadow); cursor: pointer; opacity: 0; visibility: hidden; }
+.organization-page .back-to-top.visible { opacity: 1; visibility: visible; }
+@media (max-width: 768px) {
+  .organization-page .org-hero { padding: 3rem 1.5rem; }
+  .organization-page .org-name { font-size: 1.75rem; }
+  .organization-page .org-desc { font-size: .95rem; }
+  .organization-page .verified-banner { padding: .65rem 1.25rem; font-size: .85rem; }
+  .organization-page .follow-card { flex-direction: column; align-items: flex-start; gap: 1.5rem; margin: 1.5rem 0 2rem; padding: 2rem 1.5rem; }
+  .organization-page .section-card { padding: 2rem 1.5rem; }
+  .organization-page .section-title { font-size: 1.75rem; }
+  .organization-page .contact-item { padding: 1rem; }
+  .organization-page .invite-banner, .organization-page .help-us-banner { flex-direction: column; align-items: stretch; padding: 2rem 1.5rem; gap: 1.5rem; }
+  .organization-page .invite-content, .organization-page .help-us-content { flex-direction: column; text-align: center; gap: 1rem; }
+  .organization-page .invite-actions { flex-direction: column; gap: .75rem; }
+  .organization-page .invite-actions button, .organization-page .help-us-button { width: 100%; }
+  .organization-page .back-to-top { right: 1rem; bottom: 1rem; }
+}

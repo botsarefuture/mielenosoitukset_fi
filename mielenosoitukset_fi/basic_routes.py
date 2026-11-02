@@ -1786,6 +1786,12 @@ def init_routes(app):
         cookie value, token, email, permission list or private record is
         returned, and this endpoint grants no authority by itself.
         """
+        organization_scope = request.args.getlist("organization_id")
+        if organization_scope and (len(organization_scope) != 1 or not ObjectId.is_valid(organization_scope[0])):
+            response = jsonify({"error": "invalid organization scope"})
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["Vary"] = "Cookie"
+            return response, 400
         supported = current_app.config.get("BABEL_PUBLIC_LOCALES") or ["fi", "en", "sv"]
         locale = session.get("locale", "fi")
         if locale not in supported:
@@ -1826,6 +1832,20 @@ def init_routes(app):
             except Exception:
                 # A notification read must never break the page shell.
                 payload["unread"] = 0
+            if organization_scope:
+                org_oid = ObjectId(organization_scope[0])
+                payload["organization"] = {
+                    "id": str(org_oid),
+                    "following": str(org_oid) in getattr(current_user, "followed_organizations", []),
+                    "invited": bool(current_user.has_invite(org_oid)),
+                    "has_messages": bool(session.get("_flashes")),
+                    "permissions": {
+                        permission: bool(current_user.has_permission(permission, org_oid))
+                        for permission in (
+                            "VIEW_ORGANIZATION", "EDIT_ORGANIZATION", "DELETE_ORGANIZATION", "INVITE_TO_ORGANIZATION"
+                        )
+                    },
+                }
         response = jsonify(payload)
         response.headers["Cache-Control"] = "no-store"
         response.headers["Vary"] = "Cookie"
@@ -4251,13 +4271,13 @@ def init_routes(app):
         )
 
         messages = get_flashed_messages(with_categories=True)
-        if not messages:
-            return jsonify(messages=[])
-
         flash_message_data = [
             {"category": category, "message": message} for category, message in messages
         ]
-        return jsonify(messages=flash_message_data)
+        response = jsonify(messages=flash_message_data)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Vary"] = "Cookie"
+        return response
 
     
     @app.route("/set_language/<lang>")

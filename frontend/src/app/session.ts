@@ -21,6 +21,10 @@ export type SessionSummary = {
   fundraising: boolean;
   siteAnalyticsEnabled: boolean;
   matomoEnabled: boolean;
+  organization?: {
+    id: string; following: boolean; invited: boolean; hasMessages: boolean;
+    permissions: Record<'VIEW_ORGANIZATION' | 'EDIT_ORGANIZATION' | 'DELETE_ORGANIZATION' | 'INVITE_TO_ORGANIZATION', boolean>;
+  };
 };
 
 export const anonymousSession: SessionSummary = {
@@ -43,6 +47,17 @@ export function normalizeSession(value: unknown): SessionSummary {
     })
     : [];
   const enabled = locales.length ? locales : [{ code: 'fi' as const, name: 'Suomi' }];
+  const scoped = raw.organization && typeof raw.organization === 'object'
+    ? raw.organization as Record<string, unknown> : null;
+  const permissions = scoped?.permissions && typeof scoped.permissions === 'object'
+    ? scoped.permissions as Record<string, unknown> : {};
+  const organization = raw.authenticated === true && scoped && typeof scoped.id === 'string' && /^[a-f\d]{24}$/.test(scoped.id)
+    ? { id: scoped.id, following: scoped.following === true, invited: scoped.invited === true,
+      hasMessages: scoped.has_messages === true,
+      permissions: { VIEW_ORGANIZATION: permissions.VIEW_ORGANIZATION === true,
+        EDIT_ORGANIZATION: permissions.EDIT_ORGANIZATION === true,
+        DELETE_ORGANIZATION: permissions.DELETE_ORGANIZATION === true,
+        INVITE_TO_ORGANIZATION: permissions.INVITE_TO_ORGANIZATION === true } } : undefined;
   return {
     authenticated: raw.authenticated === true,
     locale: isLocale(raw.locale) && enabled.some((item) => item.code === raw.locale)
@@ -58,6 +73,7 @@ export function normalizeSession(value: unknown): SessionSummary {
     fundraising: raw.fundraising === true,
     siteAnalyticsEnabled: raw.site_analytics_enabled === true,
     matomoEnabled: raw.matomo_enabled === true,
+    ...(organization ? { organization } : {}),
   };
 }
 

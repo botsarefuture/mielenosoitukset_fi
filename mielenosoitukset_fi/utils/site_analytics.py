@@ -538,7 +538,9 @@ def _record_classified_pageview(request, classified):
 
 
 def _public_app_listing_path(path):
-    return path == "/demonstrations" or bool(re.fullmatch(r"/(?:city|tag)/[^/]+", path))
+    return path == "/demonstrations" or bool(re.fullmatch(
+        r"/(?:city|tag)/[^/]+|/organization/[a-f\d]{24}", path, re.IGNORECASE
+    ))
 
 
 def record_public_app_pageview(payload, request):

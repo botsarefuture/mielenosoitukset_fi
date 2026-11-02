@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Deploy the React public host and the Go public API from CI instead of a developer workstation. A push to `main` now builds and publishes both artifacts with a checksummed release manifest, and the existing restricted SSH deploy installs them after Flask, verifying each service's reported build SHA. Only services that do not already report the commit are touched, so retries are safe. Apache routing remains an explicit manual dispatch because it changes which URLs the host answers.
+
 - Redesign the city directory with search, clear upcoming/today counts and direct links. Move cities and today pages to the standalone React host with a cached Go summary API, shared event cards, Helsinki-day filtering, server-delivered SEO metadata and consistent normal page navigation.
 
 - Make Go homepage and listing code easier to follow with named loading, validation and card-formatting helpers. Add bounded shared Redis response caching and explicit public cache policies while preserving response bodies, filtering and privacy boundaries.

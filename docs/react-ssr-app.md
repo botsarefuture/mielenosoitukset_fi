@@ -337,7 +337,16 @@ host serve `/static/*`, which production serves directly from the web server.
 
 ## Production release
 
-Use the reviewed artifact procedure in [`deploy/public-app/README.md`](../deploy/public-app/README.md).
+A push to `main` builds, publishes and deploys this host automatically; see
+[`docs/production-deployment.md`](production-deployment.md). The workflow builds
+`frontend/server.mjs` plus `frontend/dist`, publishes them as a
+`release-<commit>` asset, and the server installs them only when
+`http://127.0.0.1:8090/health` does not already report that commit. Apache
+routing stays a separate, explicit dispatch because it changes which URL class
+the host answers. The manual procedure in
+[`deploy/public-app/README.md`](../deploy/public-app/README.md) remains the
+break-glass path.
+
 The maintainer approved the production deployment on 1 November 2026. The
 root-owned release bundle contains `frontend/server.mjs` and `frontend/dist`;
 the service uses a separately checksum-verified official Node 22 runtime, runs

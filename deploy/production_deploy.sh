@@ -9,7 +9,23 @@ health_socket="${PRODUCTION_HEALTH_SOCKET:-${repo_dir}/mielenosoitus.sock}"
 build_sha_file="${PRODUCTION_BUILD_SHA_FILE:-${repo_dir}/.deploy-build-sha}"
 production_python="${PRODUCTION_PYTHON:-python3}"
 dependency_receipt="${PRODUCTION_DEPENDENCY_RECEIPT:-/var/lib/mielenosoitukset-fi-deploy/dependencies.json}"
-expected_sha="${1:-}"
+routing=false
+skip_public=false
+expected_sha=""
+
+for argument in "$@"; do
+  case "$argument" in
+    --routing) routing=true ;;
+    --skip-public) skip_public=true ;;
+    *)
+      if [[ -n "$expected_sha" ]]; then
+        echo "production_deploy.sh: unexpected argument: $argument" >&2
+        exit 2
+      fi
+      expected_sha="$argument"
+      ;;
+  esac
+done
 
 if [[ ! "$expected_sha" =~ ^[0-9a-f]{40}$ ]]; then
   echo "production_deploy.sh: expected a full 40-character commit SHA" >&2
@@ -79,13 +95,41 @@ mv -f "$build_sha_tmp" "$build_sha_file"
 # workers, avoiding the hard outage caused by systemctl restart.
 systemctl reload "$service_name"
 
-if systemctl is-active --quiet "$service_name" && \
-   "$production_python" "$repo_dir/deploy/verify_health_sha.py" \
+if ! systemctl is-active --quiet "$service_name" || \
+   ! "$production_python" "$repo_dir/deploy/verify_health_sha.py" \
      "$expected_sha" "$health_url" --unix-socket "$health_socket" \
      --attempts 30 --delay 2 --timeout 5; then
-  echo "Deployed ${expected_sha} with a verified graceful worker reload."
-  exit 0
+  echo "production_deploy.sh: no replacement worker served ${expected_sha}" >&2
+  exit 1
 fi
 
-echo "production_deploy.sh: no replacement worker served ${expected_sha}" >&2
-exit 1
+echo "Deployed ${expected_sha} to Flask with a verified graceful worker reload."
+
+if [[ "$skip_public" == true ]]; then
+  echo "production_deploy.sh: skipping the public host and API (--skip-public)" >&2
+elif [[ -x "$repo_dir/deploy/release_public.sh" ]]; then
+  "$repo_dir/deploy/release_public.sh" "$expected_sha"
+else
+  echo "production_deploy.sh: deploy/release_public.sh is missing; skipping the public host and API" >&2
+fi
+
+if [[ "$routing" == true ]]; then
+  if [[ ! -x "$repo_dir/deploy/release_routing.sh" ]]; then
+    echo "production_deploy.sh: deploy/release_routing.sh is missing; refusing to claim routing was activated" >&2
+    exit 1
+  fi
+  "$repo_dir/deploy/release_routing.sh" "$expected_sha"
+elif [[ -f /etc/apache2/mielenosoitukset-react-ssr.conf ]] && \
+     ! cmp -s "$repo_dir/deploy/apache/react-ssr-routing.conf" /etc/apache2/mielenosoitukset-react-ssr.conf; then
+  # Routing stays a separate, explicit step; say so instead of letting the
+  # release look fully activated when a route set is still handled by Flask.
+  echo "production_deploy.sh: the active Apache routing include differs from ${expected_sha}; run 'deploy-routing ${expected_sha}' to activate it" >&2
+fi
+
+if [[ "$skip_public" == true ]]; then
+  echo "Deployed ${expected_sha} to Flask; the public host and API were skipped."
+else
+  echo "Deployed ${expected_sha} to Flask, the React public host and the Go API."
+fi
+exit 0
+

@@ -4,7 +4,15 @@ The maintainer approved the production rollout on 1 November 2026. This service
 serves only the explicitly migrated public home GET/HEAD route. Flask retains
 administration, authentication, APIs, other pages and all writes.
 
-Build the reviewed commit with the repository's Node 22.12+ toolchain:
+Release is automated: `.github/workflows/production-deploy.yml` builds this
+bundle in CI, publishes it as a `release-<commit>` asset, and the server
+installs it through `deploy/release_public.sh` after the Flask deploy. The host
+is redeployed only when `http://127.0.0.1:8090/health` does not already report
+the requested commit, so a re-run or a retry after a partial failure converges
+without touching a healthy service. The manual procedure below is the
+break-glass path for a host that CI cannot reach; it is not the normal release.
+
+Manual build of a reviewed commit with the repository's Node 22.12+ toolchain:
 
 ```sh
 npm ci

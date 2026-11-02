@@ -167,7 +167,9 @@ func serveSubmission(ctx context.Context, w http.ResponseWriter, r *http.Request
 	// Check the token before fingerprint lookup so stale-token protection cannot
 	// be bypassed by content that happens to match a different saved submission.
 	var binding struct {
-		Fingerprint string `bson:"fingerprint"`
+		Fingerprint string        `bson:"fingerprint"`
+		DemoID      bson.ObjectID `bson:"demo_id"`
+		Status      string        `bson:"status"`
 	}
 	err := db.Collection("demo_submission_tokens").FindOne(ctx, bson.M{"token": input.Token}).Decode(&binding)
 	if err == nil && binding.Fingerprint != "" && binding.Fingerprint != input.Fingerprint {
@@ -178,7 +180,12 @@ func serveSubmission(ctx context.Context, w http.ResponseWriter, r *http.Request
 		submissionFailure(w, 503, "SUBMIT_SAVE_FAILED", "Yritä uudelleen hetken kuluttua.")
 		return
 	}
-	id, err := legacySubmissionDuplicate(ctx, db, input)
+	id := bson.NilObjectID
+	if binding.Status == "completed" && !binding.DemoID.IsZero() {
+		id, err = binding.DemoID, nil
+	} else {
+		id, err = legacySubmissionDuplicate(ctx, db, input)
+	}
 	if err == nil && id.IsZero() {
 		id, err = resumeSubmission(ctx, db, input)
 	}
@@ -201,6 +208,9 @@ func serveSubmission(ctx context.Context, w http.ResponseWriter, r *http.Request
 			err = finishSubmission(ctx, db, reservation)
 			id = reservation.DemoID
 		}
+	}
+	if err == nil && !id.IsZero() {
+		err = bindSubmissionResult(ctx, db, input, id)
 	}
 	if errors.Is(err, errStaleSubmission) {
 		submissionFailure(w, 409, "SUBMIT_STALE_TOKEN", "Päivitä lomake ennen uuden ilmoituksen lähettämistä.")

@@ -220,7 +220,7 @@ def test_go_preparation_replays_child_jobs_without_duplicate_delivery(app, db, m
     db.demonstrations.update_one({"_id": demo_id}, {"$set": {"title": "Example", "date": "2099-01-01"}})
     db.submitters.insert_one({"demonstration_id": demo_id, "submitter_email": "example@example.test"})
     record_id = db.demo_submission_tokens.insert_one({
-        "token": f"test-go-replay:{demo_id}", "go_submission": True, "pending_image": b"private bytes", "pending_event": {"title": "Example"},
+        "token": f"test-go-replay:{demo_id}", "status": "completed", "go_submission": True, "pending_image": b"private bytes", "pending_event": {"title": "Example"},
         "pending_submitter": {"submitter_email": "example@example.test"},
     }).inserted_id
     media = []
@@ -266,12 +266,18 @@ def test_go_submission_uses_real_flask_links_and_existing_delivery_receipts(app,
     }})
     db.submitters.insert_one({"demonstration_id": demo_id, "submitter_email": "submitter@example.test"})
     actor_id = ObjectId()
-    record = db.demo_submission_tokens.insert_one({"token": f"test-go-real:{demo_id}", "go_submission": True, "pending_event": {}, "pending_submitter": {"actor_id": actor_id}}).inserted_id
+    record = db.demo_submission_tokens.insert_one({"token": f"test-go-real:{demo_id}", "status": "go_preparing", "go_submission": True, "pending_event": {}, "pending_submitter": {"actor_id": actor_id}}).inserted_id
     parent = db.demo_notifications_queue.insert_one({
         "demo_id": demo_id, "status": "pending", "created_at": clock[0], "submission_record": record,
         "notification_type": "go_submission_prepare", "delivery_tracking_version": 1,
     }).inserted_id
     with app.app_context():
+        script.run(max_jobs=1)
+        assert sent == []
+        assert db.demo_notifications_queue.find_one({"_id": parent})["status"] == "error"
+        assert "pending_submitter" in db.demo_submission_tokens.find_one({"_id": record})
+        db.demo_submission_tokens.update_one({"_id": record}, {"$set": {"status": "completed"}})
+        clock[0] += timedelta(minutes=2)
         script.run()
         script.run()
     assert db.demo_notifications_queue.find_one({"_id": parent})["status"] == "completed"

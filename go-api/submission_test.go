@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"mime/multipart"
 	"net"
@@ -20,10 +21,15 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-func submissionRequest(token, title string) *http.Request {
+func submissionRequest(token, title string, overrides ...map[string]string) *http.Request {
 	var body bytes.Buffer
 	form := multipart.NewWriter(&body)
 	fields := map[string]string{"submission_token": token, "title": title, "tags": "test", "date": "2099-01-01", "start_time": "12:00", "city": "Helsinki", "address": "Kauppatori", "type": "paikallaan", "submitter_name": "Example", "submitter_email": "example@example.test", "submitter_role": "organizer", "accept_terms": "1", "description": `<p>Hello <strong>world</strong><script>alert(1)</script><a href="javascript:alert(1)">link</a></p>`, "approved": "true"}
+	for _, values := range overrides {
+		for key, value := range values {
+			fields[key] = value
+		}
+	}
 	for key, value := range fields {
 		_ = form.WriteField(key, value)
 	}
@@ -36,6 +42,12 @@ func submissionRequest(token, title string) *http.Request {
 }
 
 func TestSubmissionValidationAndSanitizing(t *testing.T) {
+	for _, locale := range []string{"en", "sv"} {
+		input, err := readSubmission(httptest.NewRecorder(), submissionRequest("0123456789abcdef0123456789abcdef", "Title", map[string]string{"default_language": locale}), map[string]bool{"fi": true, "en": true, "sv": true})
+		if err != nil || input.Event["default_language"] != locale {
+			t.Fatal("configured content language rejected", locale, err)
+		}
+	}
 	r := submissionRequest("0123456789abcdef0123456789abcdef", "Title")
 	input, err := readSubmission(httptest.NewRecorder(), r, map[string]bool{"fi": true})
 	if err != nil {
@@ -61,6 +73,64 @@ func TestSubmissionValidationAndSanitizing(t *testing.T) {
 	}
 	if !similarSubmission(bson.M{"title": "Tasa-arvo ja oikeudet kaikille"}, "Oikeudet kaikille nyt", "") {
 		t.Fatal("word duplicate missed")
+	}
+}
+
+func TestMongoSubmissionTokenOutlivesFingerprintWindow(t *testing.T) {
+	uri := os.Getenv("TEST_MONGODB_URI")
+	if uri == "" {
+		t.Skip("set TEST_MONGODB_URI for submission integration")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(options.Client().ApplyURI(uri))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Disconnect(context.Background())
+	db := client.Database("moso_go_submission_lifetime_" + bson.NewObjectID().Hex())
+	defer db.Drop(context.Background())
+	_, err = db.Collection("demo_submission_tokens").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "token", Value: 1}}, Options: options.Index().SetUnique(true)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := publicSubmissionHandler(http.NotFoundHandler(), db, submissionConfig{Origin: "https://mielenosoitukset.fi", Secret: strings.Repeat("s", 32), Locales: map[string]bool{"fi": true}})
+	submit := func(token, title string) (int, string) {
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, submissionRequest(token, title))
+		var response struct {
+			ID string `json:"demo_id"`
+		}
+		if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+			t.Fatal(err)
+		}
+		return w.Code, response.ID
+	}
+	status, original := submit("original-form-token-0123456789", "Lifetime event")
+	if status != 200 || original == "" {
+		t.Fatal(status, original)
+	}
+	_, err = db.Collection("demo_submission_tokens").UpdateMany(ctx, bson.M{"status": "completed"}, bson.M{"$set": bson.M{"created_at": time.Now().Add(-13 * time.Hour)}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	status, retried := submit("original-form-token-0123456789", "Lifetime event")
+	if status != 200 || retried != original {
+		t.Fatal("same form created a different event after 12h", status, original, retried)
+	}
+	status, fresh := submit("fresh-form-token-0123456789", "Lifetime event")
+	if status != 200 || fresh == original || fresh == "" {
+		t.Fatal("fresh form did not retain the 12h fingerprint policy", status, fresh)
+	}
+	status, _ = submit("original-form-token-0123456789", "Changed content")
+	if status != 409 {
+		t.Fatal("completed token changed content", status)
+	}
+	for _, collection := range []string{"demonstrations", "submitters", "demo_notifications_queue"} {
+		count, err := db.Collection(collection).CountDocuments(ctx, bson.M{})
+		if err != nil || count != 2 {
+			t.Fatal(collection, count, err)
+		}
 	}
 }
 

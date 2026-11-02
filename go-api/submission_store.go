@@ -34,14 +34,15 @@ func checkSubmissionIndexes(ctx context.Context, db *mongo.Database) error {
 }
 
 type submissionReservation struct {
-	ID          bson.ObjectID `bson:"_id"`
-	DemoID      bson.ObjectID `bson:"demo_id"`
-	Fingerprint string        `bson:"fingerprint"`
-	Created     time.Time     `bson:"created_at"`
-	Event       bson.M        `bson:"pending_event"`
-	Submitter   bson.M        `bson:"pending_submitter"`
-	Status      string        `bson:"status"`
-	Image       []byte        `bson:"pending_image"`
+	ID            bson.ObjectID `bson:"_id"`
+	DemoID        bson.ObjectID `bson:"demo_id"`
+	Fingerprint   string        `bson:"fingerprint"`
+	Created       time.Time     `bson:"created_at"`
+	Event         bson.M        `bson:"pending_event"`
+	Submitter     bson.M        `bson:"pending_submitter"`
+	Status        string        `bson:"status"`
+	Image         []byte        `bson:"pending_image"`
+	OriginalToken string        `bson:"original_token"`
 }
 
 func submissionUpsert(ctx context.Context, collection *mongo.Collection, id any, fields bson.M) error {
@@ -58,7 +59,10 @@ func submissionUpsert(ctx context.Context, collection *mongo.Collection, id any,
 func reserveSubmission(ctx context.Context, db *mongo.Database, input submissionInput) (submissionReservation, error) {
 	tokens := db.Collection("demo_submission_tokens")
 	var binding struct {
-		Fingerprint string `bson:"fingerprint"`
+		Fingerprint   string        `bson:"fingerprint"`
+		DemoID        bson.ObjectID `bson:"demo_id"`
+		Status        string        `bson:"status"`
+		ReservationID bson.ObjectID `bson:"reservation_id"`
 	}
 	err := tokens.FindOneAndUpdate(ctx, bson.M{"token": input.Token}, bson.M{"$setOnInsert": bson.M{
 		"fingerprint": input.Fingerprint, "status": "go_bound", "created_at": time.Now().UTC(),
@@ -71,6 +75,14 @@ func reserveSubmission(ctx context.Context, db *mongo.Database, input submission
 	}
 	if binding.Fingerprint != "" && binding.Fingerprint != input.Fingerprint {
 		return submissionReservation{}, errStaleSubmission
+	}
+	if binding.Status == "completed" && !binding.DemoID.IsZero() {
+		return submissionReservation{DemoID: binding.DemoID, Status: "completed"}, nil
+	}
+	if !binding.ReservationID.IsZero() {
+		var saved submissionReservation
+		err := tokens.FindOne(ctx, bson.M{"_id": binding.ReservationID}).Decode(&saved)
+		return saved, err
 	}
 	key := "go-fingerprint:" + input.Fingerprint
 	var reservation submissionReservation
@@ -88,13 +100,28 @@ func reserveSubmission(ctx context.Context, db *mongo.Database, input submission
 	}
 	now := time.Now().UTC()
 	fields := bson.M{"demo_id": bson.NewObjectID(), "fingerprint": input.Fingerprint, "created_at": now, "status": "go_preparing",
-		"pending_event": input.Event, "pending_submitter": input.Submitter, "pending_image": input.Image, "go_submission": true}
+		"pending_event": input.Event, "pending_submitter": input.Submitter, "pending_image": input.Image, "go_submission": true, "original_token": input.Token}
 	err = tokens.FindOneAndUpdate(ctx, bson.M{"token": key}, bson.M{"$setOnInsert": fields},
 		options.FindOneAndUpdate().SetUpsert(true).SetReturnDocument(options.After)).Decode(&reservation)
 	if mongo.IsDuplicateKeyError(err) {
 		err = tokens.FindOne(ctx, bson.M{"token": key}).Decode(&reservation)
 	}
+	if err == nil {
+		_, err = tokens.UpdateOne(ctx, bson.M{"token": input.Token, "fingerprint": input.Fingerprint},
+			bson.M{"$set": bson.M{"reservation_id": reservation.ID}})
+	}
 	return reservation, err
+}
+
+func bindSubmissionResult(ctx context.Context, db *mongo.Database, input submissionInput, id bson.ObjectID) error {
+	_, err := db.Collection("demo_submission_tokens").UpdateOne(ctx,
+		bson.M{"token": input.Token, "fingerprint": input.Fingerprint},
+		bson.M{"$set": bson.M{"status": "completed", "demo_id": id},
+			"$setOnInsert": bson.M{"created_at": time.Now().UTC()}}, options.UpdateOne().SetUpsert(true))
+	if mongo.IsDuplicateKeyError(err) {
+		return errStaleSubmission
+	}
+	return err
 }
 
 // Each write is insert-only and uses a reserved ID. A crash at any point can be
@@ -127,7 +154,17 @@ func finishSubmission(ctx context.Context, db *mongo.Database, item submissionRe
 	if err := submissionUpsert(ctx, db.Collection("demo_notifications_queue"), item.DemoID, job); err != nil {
 		return err
 	}
-	_, err := db.Collection("demo_submission_tokens").UpdateOne(ctx, bson.M{"_id": item.ID}, bson.M{"$set": bson.M{"status": "completed", "completed_at": time.Now().UTC()}})
+	bindings := bson.A{bson.M{"reservation_id": item.ID}}
+	if item.OriginalToken != "" {
+		bindings = append(bindings, bson.M{"token": item.OriginalToken, "fingerprint": item.Fingerprint})
+	}
+	_, err := db.Collection("demo_submission_tokens").UpdateMany(ctx, bson.M{"$or": bindings},
+		bson.M{"$set": bson.M{"status": "completed", "demo_id": item.DemoID}})
+	if err != nil {
+		return err
+	}
+	_, err = db.Collection("demo_submission_tokens").UpdateOne(ctx, bson.M{"_id": item.ID},
+		bson.M{"$set": bson.M{"status": "completed", "completed_at": time.Now().UTC()}})
 	return err
 }
 

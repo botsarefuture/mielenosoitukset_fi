@@ -91,6 +91,8 @@ def prepare_go_submission(db, queue, job, owner, owned_update):
     submitter = db.submitters.find_one({"demonstration_id": job["demo_id"]})
     if not record or not demo or not submitter:
         raise RuntimeError("Go submission records are incomplete")
+    if record.get("status") != "completed":
+        raise RuntimeError("Go submission acceptance is not complete yet")
     children = job.get("prepared_children")
     if children is None:
         # A stable case ID protects retries and preserves later admin edits.

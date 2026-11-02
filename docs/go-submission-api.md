@@ -51,6 +51,10 @@ Keep success JSON, 409 conflict/stale-token responses and 429 retry feedback
 compatible with React. Duplicate summaries include public events only. Force
 submission bypasses only the duplicate warning, never moderation or rate limits.
 The server generates IDs and never accepts a client-selected event identifier.
+Completed form tokens retain their original event ID indefinitely; the
+twelve-hour fingerprint window applies only to fresh form tokens. Token/event
+bindings become durable before the acceptance record is marked completed, and
+the Flask worker waits for that marker before preparing mail or removing payloads.
 
 ## Delivery and rollout
 

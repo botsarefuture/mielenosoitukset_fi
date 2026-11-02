@@ -23,8 +23,8 @@ function publicLink(value: string | null | undefined): string | null {
 function Tool({ permissions, urls, name }: { permissions: OrganizationPermissions; urls: OrganizationUrls; name: string }) {
   const [collapsed, collapse] = useState(() => {
     if (window.matchMedia('(max-width: 35rem)').matches) return true;
-    try { return window.sessionStorage.getItem('publicToolboxCollapsed') === 'true'; }
-    catch { return false; }
+    try { return window.sessionStorage.getItem('publicToolboxCollapsed') !== 'false'; }
+    catch { return true; }
   });
   useEffect(() => {
     if (window.matchMedia('(max-width: 35rem)').matches) return;

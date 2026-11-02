@@ -21,7 +21,9 @@ claiming a performance improvement.
 | Detail head (title, canonical, JSON-LD, robots) | Server requests the same public API once, `/api/demonstrations/<identifier>` |
 | Home card batch | Server reads `/api/home` once, caches it for 30 s and inlines it in the bootstrap |
 
-The server renders no React tree and accesses no event collection directly.
+The server accesses no event collection directly. Submission pages additionally
+render a small React no-JavaScript fallback form; their interactive wizard is
+browser-rendered and loads only on the submit route.
 It composes the document and reads the bounded Flask session summary. Public
 home data and event metadata come from the Go API through bounded caches;
 production uses `PUBLIC_API_LOCAL=http://127.0.0.1:8091/api` for those reads.
@@ -156,6 +158,28 @@ Deploy Go first, then the host, then the exact Apache GET/HEAD allowlist.
 Removing only the discovery/today routing rule restores the existing Flask
 pages. API and write ownership does not change. The homepage does not preload
 the split directory or today bundles.
+
+## Submission form
+
+Exact GET/HEAD `/submit` renders the portable React wizard with a fresh
+idempotency token per document and `Cache-Control: no-store`. Source copy and
+URL configuration live in TypeScript; the host does not fetch the Flask form
+or its island props. Shared public session configuration remains briefly cached
+for anonymous visits, while signed-in summaries stay private. The form and its
+editor/calendar bundle are split from home. Native page navigation and server
+canonical/title/description remain consistent with the other migrated pages.
+
+Exact POST `/submit` is forwarded to Go `/api/submissions`, never Node. The
+Facebook importer and organization search retain their existing Flask URLs.
+Flask's existing worker owns email sending and trusted link preparation. See
+[the submission contract and safety/rollout details](go-submission-api.md).
+
+Deploy the Flask worker first, enable/configure Go intake and verify its socket
+access, then deploy the host and activate both exact Apache method rules. Remove
+both submit rules to roll back to the existing Flask GET/POST flow; keep the
+updated worker running to drain already accepted Go submissions. No database
+rollback, mail-queue deletion or public response cache purge is needed for this
+uncached write route. The old Flask React/legacy templates remain rollback paths.
 
 ## Organization profiles
 

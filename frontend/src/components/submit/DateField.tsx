@@ -75,6 +75,7 @@ export function DateField({
       ? {
           dateFormat: 'd.m.Y',
           allowInput: true,
+          disableMobile: true,
           locale: FINNISH_LOCALE,
           onChange: (_dates: Date[], text: string) => onChangeRef.current(displayToIso(text ?? '')),
         }
@@ -83,12 +84,13 @@ export function DateField({
           noCalendar: true,
           dateFormat: 'H:i',
           allowInput: true,
+          disableMobile: true,
           time_24hr: true,
           onChange: (_dates: Date[], text: string) => onChangeRef.current(text ?? ''),
         };
 
     const picker = flatpickr(input, config) as unknown as Instance;
-    picker.calendarContainer?.classList.add('public-date-calendar');
+    picker.calendarContainer?.classList.add('public-date-calendar', 'submit-date-calendar');
     pickerRef.current = picker;
     return () => {
       picker.destroy();

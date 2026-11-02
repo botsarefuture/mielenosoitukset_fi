@@ -13,6 +13,7 @@ import type { ListingRoute } from './listing';
  */
 export type AppRoute =
   | { name: 'home' }
+  | { name: 'submit' }
   | { name: 'cities' }
   | { name: 'today'; value?: string }
   | ListingRoute
@@ -46,6 +47,7 @@ function readIdentifier(raw: string): string | null {
 }
 
 export function routeForPath(path: string): AppRoute | null {
+  if (path === '/submit') return { name: 'submit' };
   if (path === '/cities') return { name: 'cities' };
   if (path === '/mielenosoitukset-tanaan') return { name: 'today' };
   const today = /^\/city\/([^/]+)\/tanaan$/.exec(path);

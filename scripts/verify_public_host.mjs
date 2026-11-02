@@ -56,6 +56,21 @@ try {
   assert.equal(bootstrap(alice.html).session.name, 'Alice');
   assert.equal(bootstrap(bob.html).session.name, 'Bob');
   assert.equal(bootstrap((await page()).html).session.name, null);
+  const forms = await Promise.all(Array.from({ length: 8 }, () => page({ path: '/submit' })));
+  const tokens = forms.map(result => bootstrap(result.html).submission.token);
+  assert.equal(new Set(tokens).size, 8, 'Submission idempotency tokens are per document, never shared');
+  for (const result of forms) {
+    assert.equal(result.status, 200);
+    assert.equal(result.headers['Cache-Control'], 'no-store');
+    assert.match(result.html, /<title>Ilmoita mielenosoituksesta \| Mielenosoitukset.fi<\/title>/);
+    assert.match(result.html, /<link rel="canonical" href="https:\/\/example.test\/submit">/);
+    assert.match(result.html, /<noscript><article class="submit-page">/);
+    assert.match(result.html, /name="submission_token"/);
+    assert(!bootstrap(result.html).submission.canEditDemo);
+  }
+  assert.equal((await page({ path: '/submit/facebook_import' })).status, 404,
+    'Nested import POST handling remains outside the page host');
+  console.log('PASS: standalone submission head/no-JS form and per-document tokens without content reads');
   const originalNow = Date.now;
   try {
     for (const elapsed of [31_000, 299_000]) {

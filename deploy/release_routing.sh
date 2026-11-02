@@ -15,7 +15,7 @@ probe_host=mielenosoitukset.fi
 host_http=http://127.0.0.1:8090
 # Keep this list in sync with the RewriteRules in react-ssr-routing.conf: a path
 # is probed here only when the reviewed include is expected to route it.
-routed_paths=(/ /cities /mielenosoitukset-tanaan)
+routed_paths=(/ /cities /mielenosoitukset-tanaan /submit)
 # The app host serves its own hashed bundle links; Flask serves /static/**.
 host_marker=/app-assets/
 
@@ -54,6 +54,18 @@ fi
 if cmp -s "$reviewed" "$include"; then
   log "routing include already matches ${expected_sha}"
   exit 0
+fi
+
+# This rejected request performs no writes: Origin validation precedes rate
+# counters, body parsing and MongoDB intake. A disabled/old Go service returns
+# 503/405 instead of 403, and must never take ownership of the working form.
+if grep -q 'http://127.0.0.1:8091/api/submissions' "$reviewed"; then
+  submit_status=$(curl --silent --show-error --max-time 5 --output /dev/null \
+    --write-out '%{http_code}' --request POST http://127.0.0.1:8091/api/submissions)
+  if [[ $submit_status != 403 ]]; then
+    log "Go submission intake is not enabled/ready; keeping the current routing"
+    exit 1
+  fi
 fi
 
 install -d -m 0700 "$backup_root"

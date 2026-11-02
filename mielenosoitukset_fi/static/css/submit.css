@@ -269,6 +269,18 @@
   box-shadow: var(--product-shadow);
 }
 
+/* Keep all seven day columns aligned with the weekday headings. Scope geometry
+   to this form so shared listing calendars retain their existing layout. */
+.submit-date-calendar .dayContainer {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.submit-date-calendar .flatpickr-day {
+  width: 100%;
+  max-width: none;
+}
+
 .public-date-calendar .flatpickr-months,
 .public-date-calendar .flatpickr-month,
 .public-date-calendar .flatpickr-current-month,

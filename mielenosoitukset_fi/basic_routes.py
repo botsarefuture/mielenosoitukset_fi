@@ -1798,6 +1798,10 @@ def init_routes(app):
             locale = "fi"
         details = fundraising_details()
         language_names = current_app.config.get("BABEL_LANGUAGES") or {}
+        try:
+            can_edit_demo = bool(current_user.is_authenticated and current_user.has_permission("EDIT_DEMO"))
+        except Exception:
+            can_edit_demo = False
         payload = {
             "authenticated": current_user.is_authenticated,
             "locale": locale,
@@ -1815,6 +1819,11 @@ def init_routes(app):
             and (campaign_pages_public() or current_user.is_authenticated),
             "site_analytics_enabled": bool(current_app.config.get("SITE_ANALYTICS_ENABLED", True)),
             "matomo_enabled": bool(current_app.config.get("MATOMO_ENABLED", True)),
+            "submission": {
+                "locales": current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"],
+                "default_language": current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
+                "can_edit_demo": can_edit_demo,
+            },
         }
         if current_user.is_authenticated:
             payload.update({
@@ -1823,6 +1832,7 @@ def init_routes(app):
                 "picture": current_user.profile_picture or None,
                 "global_admin": bool(getattr(current_user, "global_admin", False)),
                 "has_admin_access": bool(current_user.has_admin_access()),
+                "actor_id": str(current_user._id),
             })
             try:
                 payload["unread"] = sum(

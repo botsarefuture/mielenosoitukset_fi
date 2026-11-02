@@ -238,7 +238,23 @@ func main() {
 		shared = redisCache
 	}
 
-	server := &http.Server{Addr: env("API_ADDR", "127.0.0.1:8080"), Handler: publicResponseCache(a.handler(), shared), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 * 1024}
+	submissionConfig, err := submissionConfigFromEnv()
+	if err != nil {
+		log.Fatal("Public submission configuration is invalid")
+	}
+	handler := publicSubmissionHandler(publicResponseCache(a.handler(), shared), client.Database(database), submissionConfig)
+	if submissionConfig.Origin != "" {
+		indexContext, cancelIndexCheck := context.WithTimeout(context.Background(), 3*time.Second)
+		indexError := checkSubmissionIndexes(indexContext, client.Database(database))
+		cancelIndexCheck()
+		if indexError != nil {
+			log.Fatal("Existing unique submission token index is required before enabling writes")
+		}
+		recoveryContext, stopRecovery := context.WithCancel(context.Background())
+		defer stopRecovery()
+		go runSubmissionRecovery(recoveryContext, client.Database(database))
+	}
+	server := &http.Server{Addr: env("API_ADDR", "127.0.0.1:8080"), Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 * 1024}
 	shutdownDone := make(chan struct{})
 	stopped := make(chan os.Signal, 1)
 	signal.Notify(stopped, syscall.SIGINT, syscall.SIGTERM)

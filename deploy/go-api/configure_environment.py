@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Copy the authorized production DB settings without printing credential values."""
 import json
+import hashlib
+import hmac
 import os
 from pathlib import Path
 import tempfile
@@ -17,6 +19,19 @@ def configure(source, target):
         raise ValueError("Invalid GO_PUBLIC_REDIS_URL")
     if redis_url:
         values["PUBLIC_REDIS_URL"] = redis_url
+    # Writes require an explicit rollout switch. Derive a separate key; Go
+    # cannot use this value to validate Flask sessions or mint authentication.
+    if config.get("GO_SUBMIT_ENABLED") is True:
+        secret = config.get("SECRET_KEY")
+        if not isinstance(secret, str) or len(secret) < 32:
+            raise ValueError("A strong SECRET_KEY is required for Go submission intake")
+        values["PUBLIC_SUBMIT_SECRET"] = hmac.new(
+            secret.encode(), b"moso-go-submission-rate-v1", hashlib.sha256,
+        ).hexdigest()
+        values["PUBLIC_SUBMIT_ORIGIN"] = config.get("GO_SUBMIT_ORIGIN", "https://mielenosoitukset.fi")
+        values["PUBLIC_SUBMIT_SESSION_SOCKET"] = "/var/www/mielenosoitukset_fi/mielenosoitus.sock"
+        babel = config.get("BABEL") or {}
+        values["PUBLIC_SUBMIT_LOCALES"] = ",".join(babel.get("SUPPORTED_LOCALES", ["fi", "en"]) or ["fi"])
     for key, value in values.items():
         if not isinstance(value, str) or not value or any(c in value for c in "\n\r\0"):
             raise ValueError(f"Missing or invalid {key}; refusing to guess production settings")

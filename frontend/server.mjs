@@ -42,11 +42,26 @@ function assetTags(manifest) {
     modules.add(imported.file);
     for (const file of imported.css ?? []) css.add(file);
   }
+  function routeAssets(name) {
+    const files = new Set();
+    const styles = new Set();
+    const visited = new Set();
+    function collect(key) {
+      if (visited.has(key) || !manifest[key]) return;
+      visited.add(key);
+      const chunk = manifest[key];
+      files.add(chunk.file);
+      for (const file of chunk.css ?? []) styles.add(file);
+      for (const dependency of chunk.imports ?? []) collect(dependency);
+    }
+    collect(name);
+    return [...files].filter(file => file.endsWith('.js'))
+      .map(file => `<link rel="modulepreload" href="/app-assets/${file}">`).join('')
+      + [...styles].map(file => `<link rel="stylesheet" href="/app-assets/${file}">`).join('');
+  }
   return {
-    listing: manifest['src/app/ListingScreen.tsx']
-      ? `<link rel="modulepreload" href="/app-assets/${manifest['src/app/ListingScreen.tsx'].file}">`
-        + (manifest['src/app/ListingScreen.tsx'].css ?? []).map(file => `<link rel="stylesheet" href="/app-assets/${file}">`).join('')
-      : '',
+    listing: routeAssets('src/app/ListingScreen.tsx'),
+    organization: routeAssets('src/app/OrganizationScreen.tsx'),
     head: [...css].map((file) => `<link rel="stylesheet" href="/app-assets/${file}">`)
       .concat([...modules].filter((file) => file.endsWith('.js'))
         .map((file) => `<link rel="modulepreload" href="/app-assets/${file}">`)).join('\n'),

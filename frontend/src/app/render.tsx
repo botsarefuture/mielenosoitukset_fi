@@ -6,6 +6,8 @@ import { catalog } from './i18n';
 import { ttlCache } from './server-cache';
 import { listingProps, listingQuery, loadListingPage } from './listing';
 import type { ListingBootstrap } from './listing';
+import { loadOrganization } from './organization';
+import type { OrganizationBootstrap } from './organization';
 import type { HomeData } from '../pages/HomePage';
 import { routeForPath, routeMeta } from './routes';
 import type { RouteMeta } from './routes';
@@ -39,7 +41,7 @@ export type RenderInput = {
   search?: string;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string };
 
 export type RenderResult = {
   status: number;
@@ -201,8 +203,15 @@ function unavailableDocument() {
 export async function renderPage(input: RenderInput, assets: RenderAssets): Promise<RenderResult> {
   const route = routeForPath(input.path);
   if (!route) return { status: 404, html: notFoundDocument() };
-
-  const summary: SessionSummary = await fetchSession(input.sessionUrl, input.cookie,
+  const readBase = input.apiReadBase ?? input.apiBase;
+  const organizationRead = route.name === 'organization' ? loadOrganization(readBase, route.id) : null;
+  let sessionUrl = input.sessionUrl;
+  if (route.name === 'organization' && input.cookie) {
+    const scoped = new URL(sessionUrl);
+    scoped.searchParams.set('organization_id', route.id);
+    sessionUrl = scoped.href;
+  }
+  const summary: SessionSummary = await fetchSession(sessionUrl, input.cookie,
     1200, input.flaskSocketPath, input.origin, input.clientIp, input.cloudflareIp);
   const session = input.doNotTrack
     ? { ...summary, siteAnalyticsEnabled: false, matomoEnabled: false }
@@ -213,12 +222,12 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   });
   const text = catalog(config.locale);
 
-  const readBase = input.apiReadBase ?? input.apiBase;
   let meta: RouteMeta = routeMeta(route, config, text);
   let detail: DetailBootstrap | undefined;
   let series: DetailSeries | undefined;
   let home: HomeData | null = null;
   let listing: ListingBootstrap | undefined;
+  let organization: OrganizationBootstrap | undefined;
   let jsonLd: unknown;
   let extraHead = '';
   let noscript = '<noscript><p class="container-main-content">Mielenosoitukset.fi käyttää JavaScriptiä. '
@@ -330,10 +339,37 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     noscript = `<noscript><p class="container-main-content">Lista avautuu JavaScriptillä. `
       + `<a href="${escapeHtml(props.rssUrl!)}">RSS</a> · <a href="/calendar/">Kalenteri</a></p></noscript>`;
   }
+  if (route.name === 'organization') {
+    const loaded = await organizationRead!;
+    if (loaded.status === 'not-found') {
+      return { status: 302, html: '', redirect: config.urls.home };
+    }
+    if (loaded.status === 'unavailable') {
+      return { status: 503, html: unavailableDocument(), headers: { 'Retry-After': '30' } };
+    }
+    const profile = loaded.profile;
+    const query = listingQuery({ name: 'listing', scope: 'organization', value: route.id }, input.search ?? '', config.locale);
+    organization = { profile, listing: { query: input.search ?? '', page: await loadListingPage(readBase, query) } };
+    meta = { title: `${profile.name} - Tiedot | Mielenosoitukset.fi`,
+      description: profile.description.slice(0, 200) || `${profile.name}: organisaation tiedot ja mielenosoitukset.`,
+      canonical: `${config.origin}/organization/${profile._id}`, robots: 'index, follow',
+      image: profile.logo ? new URL(profile.logo, config.origin).href : null };
+    jsonLd = { '@context': 'https://schema.org', '@type': 'Organization', name: profile.name,
+      description: profile.description, url: meta.canonical,
+      ...(meta.image ? { logo: meta.image } : {}),
+      sameAs: Object.values(profile.social_media_links).filter(url => /^https?:\/\//i.test(url)) };
+    extraHead = '<link rel="stylesheet" href="/static/vendor/flatpickr/4.6.13/flatpickr.min.css">'
+      + (assets.organization ?? '');
+    noscript = `<noscript><article class="container-main-content"><h1>${escapeHtml(profile.name)}</h1>`
+      + `<p>${escapeHtml(profile.description)}</p>`
+      + (profile.website ? `<p><a href="${escapeHtml(profile.website)}">Verkkosivut</a></p>` : '')
+      + (profile.email ? `<p><a href="mailto:${escapeHtml(profile.email)}">${escapeHtml(profile.email)}</a></p>` : '')
+      + `<a href="/demonstrations">Kaikki mielenosoitukset</a></article></noscript>`;
+  }
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
   const bootstrap = serialize({ config, session, path: input.path, route,
     ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}),
-    ...(listing ? { listing } : {}) });
+    ...(listing ? { listing } : {}), ...(organization ? { organization } : {}) });
   const html = `<!DOCTYPE html>
 <html lang="${escapeHtml(config.locale)}">
 <head>

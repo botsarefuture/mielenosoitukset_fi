@@ -84,6 +84,7 @@ const localReads = [];
 // Relative dates keep the selection and index assertions stable over time.
 const day = offset => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
 const seriesParent = '66fa58601102367d5d528000';
+const organizationId = '66fa58601102367d5d528099';
 const farParent = '66fa58601102367d5d528001';
 const orphanParent = '66fa58601102367d5d528002';
 const childUpcoming = '66fa58601102367d5d528010';
@@ -120,6 +121,12 @@ function createApi(log) {
     };
     if (identifier === 'home') {
       return send(200, { events: [{ _id: detailId, title: 'Test event', detail_url: '/demonstration/may-day-2026' }], recommended: false });
+    }
+    if (url.pathname.startsWith('/api/organizations/')) {
+      if (identifier !== organizationId) return send(404, { error: 'organization not found' });
+      return send(200, { _id: organizationId, name: 'Test Organization', description: 'Public profile',
+        email: 'public@example.test', website: 'https://example.test', logo: '', verified: false,
+        social_media_links: {}, invitations: ['private@example.test'], members: ['private-user'] });
     }
     if (url.pathname === '/api/demonstrations') {
       return send(200, { page: 1, per_page: 12, total: 1, total_pages: 1, result_start: 1, result_end: 1,
@@ -163,9 +170,13 @@ const apiReadBase = `http://127.0.0.1:${localApi.address().port}/api`;
 let detailSessionReads = 0;
 const detailSession = createServer((req, res) => {
   detailSessionReads++;
+  const scopedId = new URL(req.url, 'http://session.test').searchParams.get('organization_id');
   res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify({ authenticated: Boolean(req.headers.cookie), name: null, locale: 'fi',
-    locales: [{ code: 'fi', name: 'Suomi' }], site_analytics_enabled: true, matomo_enabled: false }));
+    locales: [{ code: 'fi', name: 'Suomi' }], site_analytics_enabled: true, matomo_enabled: false,
+    ...(scopedId && req.headers.cookie ? { organization: { id: scopedId,
+      following: req.headers.cookie === 'session=alice', invited: false, has_messages: false,
+      permissions: { EDIT_ORGANIZATION: req.headers.cookie === 'session=alice' } } } : {}) }));
 });
 await new Promise(resolve => detailSession.listen(0, '127.0.0.1', resolve));
 const detailSessionUrl = `http://127.0.0.1:${detailSession.address().port}/session`;
@@ -313,6 +324,29 @@ try {
   assert.match(tagPage.html, /#rauha: Mielenosoitukset/);
   assert.equal(bootstrap(tagPage.html).listing.page.total, 1);
   console.log('PASS: listing bootstrap, query coalescing/cache, canonical city/tag titles and fixed scopes');
+  const beforeOrganizations = localReads.filter(read => read.startsWith('/api/organizations/')).length;
+  const organizationPages = await Promise.all(Array.from({ length: 8 }, () => detailPage({ path: `/organization/${organizationId}` })));
+  await detailPage({ path: `/organization/${organizationId}` });
+  assert.equal(localReads.filter(read => read.startsWith('/api/organizations/')).length, beforeOrganizations + 1);
+  assert(organizationPages.every(result => result.status === 200 && bootstrap(result.html).organization.listing.page));
+  assert(!organizationPages[0].html.includes('private@example.test'));
+  assert(!organizationPages[0].html.includes('private-user'));
+  assert.match(organizationPages[0].html, /"@type":"Organization"/);
+  const [orgAlice, orgBob] = await Promise.all(['alice', 'bob'].map(name => detailPage({
+    path: `/organization/${organizationId}`, cookie: `session=${name}`,
+  })));
+  assert.equal(bootstrap(orgAlice.html).session.organization.following, true);
+  assert.equal(bootstrap(orgBob.html).session.organization.following, false);
+  assert.equal(bootstrap(organizationPages[0].html).session.organization, undefined);
+  const restricted = await detailPage({ path: `/organization/${organizationId}`,
+    search: '?organization_id=foreign&parent_id=foreign&in_past=true&max_days_till=1' });
+  assert(restricted.status === 200);
+  const scopedRead = localReads.filter(read => read.startsWith('/api/demonstrations?') && read.includes(`organization_id=${organizationId}`)).at(-1);
+  assert(scopedRead && !/parent_id|in_past|max_days_till/.test(scopedRead));
+  const missingOrg = await detailPage({ path: '/organization/66fa58601102367d5d528098' });
+  assert.equal(missingOrg.status, 302); assert.equal(missingOrg.redirect, '/');
+  assert.equal((await detailPage({ path: `/organization/${organizationId}/fill` })).status, 404);
+  console.log('PASS: organization cache/coalescing, public projection, private scoped sessions, fixed event scope and legacy missing/subpath behavior');
 } finally {
   publicApi.closeAllConnections?.();
   localApi.closeAllConnections?.();

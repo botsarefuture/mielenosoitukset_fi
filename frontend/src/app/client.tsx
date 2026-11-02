@@ -8,6 +8,7 @@ import { routeForPath } from './routes';
 import type { AppRoute } from './routes';
 import type { SessionSummary } from './session';
 import type { ListingBootstrap } from './listing';
+import type { OrganizationBootstrap } from './organization';
 
 /**
  * Browser entry for the standalone public app.
@@ -19,7 +20,8 @@ import type { ListingBootstrap } from './listing';
  */
 
 type Bootstrap = { config: AppConfig; session: SessionSummary; path: string;
-  detail?: DetailBootstrap; series?: DetailSeries; home?: HomeData | null; listing?: ListingBootstrap };
+  detail?: DetailBootstrap; series?: DetailSeries; home?: HomeData | null; listing?: ListingBootstrap;
+  organization?: OrganizationBootstrap };
 
 /**
  * Routes the app can enter without a server round trip for their metadata.
@@ -38,7 +40,7 @@ function resetScroll() {
   document.body.scrollTop = 0;
 }
 
-function Root({ config, session, path: initialPath, detail, series, home, listing }: Bootstrap) {
+function Root({ config, session, path: initialPath, detail, series, home, listing, organization }: Bootstrap) {
   const [path, setPath] = useState(initialPath);
   const trackedPage = useRef<string | null>(null);
   useEffect(() => {
@@ -54,7 +56,7 @@ function Root({ config, session, path: initialPath, detail, series, home, listin
         script.async = true;
         document.head.appendChild(script);
       }
-      if (!clientRoute(path) && routeForPath(path)?.name !== 'listing') return;
+      if (!clientRoute(path) && !['listing', 'organization'].includes(routeForPath(path)?.name ?? '')) return;
       if (!session.siteAnalyticsEnabled || trackedPage.current === path) return;
       trackedPage.current = path;
       try {
@@ -70,7 +72,7 @@ function Root({ config, session, path: initialPath, detail, series, home, listin
   useEffect(() => {
     function navigate() {
       // The listing owns query-only filter/page history inside this document.
-      if (routeForPath(initialPath)?.name === 'listing' && window.location.pathname === initialPath) return;
+      if (['listing', 'organization'].includes(routeForPath(initialPath)?.name ?? '') && window.location.pathname === initialPath) return;
       if (!clientRoute(window.location.pathname)) {
         // The destination needs its own server-rendered metadata and bootstrap.
         window.location.reload();
@@ -106,7 +108,7 @@ function Root({ config, session, path: initialPath, detail, series, home, listin
   }, []);
   const route = routeForPath(path);
   if (!route) return null;
-  return <App config={config} session={session} route={route} path={path} detail={detail} series={series} home={home} listing={listing} />;
+  return <App config={config} session={session} route={route} path={path} detail={detail} series={series} home={home} listing={listing} organization={organization} />;
 }
 
 const container = document.getElementById('app');

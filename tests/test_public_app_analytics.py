@@ -95,6 +95,7 @@ def test_public_session_summary_exposes_public_telemetry_flags(client, app):
     ("/demonstrations", "demonstrations"),
     ("/city/Helsinki", "city"),
     ("/tag/rauha", "tag"),
+    ("/organization/66fa58601102367d5d52887f", "organization"),
 ])
 def test_migrated_listing_display_and_search_signals(client, app, db, path, page_type):
     app.config.update(SITE_ANALYTICS_ENABLED=True, SITE_ANALYTICS_VISITORS_ENABLED=True)

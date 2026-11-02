@@ -5,7 +5,7 @@ import type { SessionSummary } from './session';
 import { ttlCache } from './server-cache';
 import { listingQuery as parseQuery } from '../components/listings/query';
 
-export type ListingRoute = { name: 'listing'; scope: 'all' | 'city' | 'tag'; value?: string };
+export type ListingRoute = { name: 'listing'; scope: 'all' | 'city' | 'tag' | 'organization'; value?: string };
 export type ListingBootstrap = { query: string; page: Page | null };
 const cities: string[] = JSON.parse(cityData);
 const cityKey = (value: string) => value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
@@ -13,6 +13,7 @@ const cityKey = (value: string) => value.normalize('NFKD').replace(/[\u0300-\u03
 const cityNames = new Map(cities.map(name => [cityKey(name), name]));
 
 export function listingFixed(route: ListingRoute): Record<string, string> {
+  if (route.scope === 'organization') return { organization_id: route.value! };
   if (route.scope === 'tag') return { tag: route.value! };
   if (route.scope === 'city') {
     const value = route.value!;
@@ -40,16 +41,20 @@ const messages: ListingMessages = {
 export function listingProps(route: ListingRoute, config: AppConfig, session: SessionSummary): ListingProps {
   const fixed = listingFixed(route);
   const title = route.scope === 'tag' ? `#${route.value}: Mielenosoitukset`
-    : route.scope === 'city' ? `${fixed.city}: Mielenosoitukset` : 'Tulevat mielenosoitukset';
+    : route.scope === 'city' ? `${fixed.city}: Mielenosoitukset`
+      : route.scope === 'organization' ? 'Mielenosoitukset' : 'Tulevat mielenosoitukset';
   const feed = new URLSearchParams(fixed).toString();
   return {
     title, locale: config.locale, fixed, cities, authenticated: session.authenticated,
     endpoint: `${config.apiBase}/demonstrations`, attendanceEndpoint: config.urls.attendance,
     allEventsUrl: config.urls.demonstrations, submitUrl: config.urls.submit,
-    rssUrl: `${config.urls.rss}${feed ? `?${feed}` : ''}`,
+    rssUrl: route.scope === 'organization' ? null : `${config.urls.rss}${feed ? `?${feed}` : ''}`,
+    headingLevel: route.scope === 'organization' ? 2 : 1,
     detailUrl: config.urls.detail, seriesUrl: config.urls.series, tagUrl: config.urls.tag,
     cover: null, coverAlt: 'Tagin kansikuva',
-    messages: { ...messages, ...(route.scope === 'tag' ? { empty: 'Tällä tagilla ei ole näkyvillä olevia mielenosoituksia.' } : {}) },
+    messages: { ...messages, ...(route.scope === 'tag' ? { empty: 'Tällä tagilla ei ole näkyvillä olevia mielenosoituksia.' } : {}),
+      ...(route.scope === 'organization' ? { emptyTitle: 'Ei tulevia mielenosoituksia',
+        empty: 'Tämä järjestäjä ei ole vielä ilmoittanut tulevia mielenosoituksia.' } : {}) },
   };
 }
 

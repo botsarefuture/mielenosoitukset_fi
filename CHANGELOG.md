@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Move public organization profiles to the standalone React host, with a bounded public Go profile cache and the Go event listing API. Keep follows, invitations and management permissions private and fresh, preserve existing action URLs and invitation feedback, and load organization code only on organization pages.
+
 - Move the main, city and tag demonstration listings into the standalone React host with React-owned search, filters and pagination. A bounded, cached public Go listing API supplies the first batch in the document and subsequent pages, preserving RSS links and existing attendance actions.
 
 - Keep the React listing calendar readable in both themes when the vendor calendar stylesheet loads after the shared product styles.

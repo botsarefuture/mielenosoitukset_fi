@@ -73,6 +73,11 @@ Build with `npm run app:build` and `npm run build`, run the public-host verifier
 and focused Go/Mongo tests, and complete independent visual acceptance. The
 reviewed Apache include claims calendar GET/HEADs, including year and city
 views, never writes. After approved deployment, activate with the documented
-`deploy/release_routing.sh <release-sha>` flow. Its backups and configtest provide
-rollback; restoring the previous include returns months to Flask without data
-changes. This PR alone does not activate production routing.
+`deploy/release_routing.sh <release-sha>` flow. The month release (#1033) is already
+active; activate the expanded include immediately after the year/city release
+passes its health checks, so its newly visible city links reach the React host.
+Its backups and configtest support routing rollback. For the year/city extension,
+restore both the previous include and the previous React host release (see
+`docs/react-ssr-app.md`) so the host also stops offering the new city URLs.
+The Go reads remain backwards compatible; there are no data changes to undo.
+This PR alone does not activate production routing.

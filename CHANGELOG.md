@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Automatically activate the committed Apache routing after a main-branch production deployment passes its health checks. Keep configuration validation, rollback backups and an opt-out for manually dispatched deployments.
+
 - Move the calendar month view to the standalone React host with a clear day selector and shared event cards. Count only the requested month through the cached public Go API, paginate busy days, and preserve month navigation, event links, SEO and a readable no-JavaScript fallback. The year view retains its existing handler.
   - Keep populated-day links usable without JavaScript by rendering the selected day's event links and pagination from one cached Go listing batch, which React also reuses.
 

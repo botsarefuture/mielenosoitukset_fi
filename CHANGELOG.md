@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 - Move the calendar month view to the standalone React host with a clear day selector and shared event cards. Count only the requested month through the cached public Go API, paginate busy days, and preserve month navigation, event links, SEO and a readable no-JavaScript fallback. The year view retains its existing handler.
+  - Keep populated-day links usable without JavaScript by rendering the selected day's event links and pagination from one cached Go listing batch, which React also reuses.
 
 - Show the event date in submission confirmation emails in Finnish day.month.year format instead of the database's ISO format.
 

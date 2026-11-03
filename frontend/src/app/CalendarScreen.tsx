@@ -16,7 +16,7 @@ export default function CalendarScreen({ calendar, config, session }: {
   const { data, day, page } = calendar;
   const date = dateForDay(calendar, day);
   const count = data?.days.find(row => row.date === date)?.count ?? 0;
-  const [events, setEvents] = useState<Page | null>(null);
+  const [events, setEvents] = useState<Page | null>(calendar.events ?? null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const props = listingProps({ name: 'listing', scope: 'all' }, config, session);
@@ -28,6 +28,7 @@ export default function CalendarScreen({ calendar, config, session }: {
     }
   }, [date, page]);
   useEffect(() => {
+    if (calendar.events && attempt === 0) { setEvents(calendar.events); setFailed(false); return; }
     setEvents(null); setFailed(false);
     if (!data || count === 0) return;
     const controller = new AbortController();
@@ -43,7 +44,7 @@ export default function CalendarScreen({ calendar, config, session }: {
       .finally(() => clearTimeout(timer));
     let disposed = false;
     return () => { disposed = true; clearTimeout(timer); controller.abort(); };
-  }, [date, page, count, data, config.apiBase, config.locale, attempt]);
+  }, [date, page, count, data, config.apiBase, config.locale, attempt, calendar.events]);
   const previous = adjacentMonth(calendar, -1);
   const next = adjacentMonth(calendar, 1);
   const firstWeekday = (new Date(Date.UTC(calendar.year, calendar.month - 1, 1)).getUTCDay() + 6) % 7;

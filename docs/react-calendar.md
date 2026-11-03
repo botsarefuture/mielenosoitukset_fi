@@ -43,8 +43,11 @@ Private header sessions and page HTML are never shared-cache entries.
 
 The head includes a Finnish month title, description, canonical explicit month
 URL and CollectionPage metadata. Query variants are noindex/follow. No-JS output
-lists populated dates with links to the corresponding dated listing, preserving
-discovery without duplicating React markup in Flask. Global pageview/Matomo
+lists populated dates linking to selected-day calendar URLs. An explicit day
+URL reads one cached Go listing batch and renders actual event-detail links and
+pagination in the no-JavaScript fallback. React reuses that inlined batch without
+another browser fetch. The plain month URL still loads only its summary before
+the first paint. This preserves discovery without new Flask markup. Global pageview/Matomo
 tracking uses the existing standalone application path.
 
 ## Rollout

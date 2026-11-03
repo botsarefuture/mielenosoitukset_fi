@@ -1,9 +1,10 @@
 import { ttlCache } from './server-cache';
 import { helsinkiDay } from './cities';
+import type { Page } from '../components/listings/types';
 
 export type CalendarMonth = { year: number; month: number };
 export type CalendarData = CalendarMonth & { total: number; days: { date: string; count: number }[] };
-export type CalendarBootstrap = CalendarMonth & { data: CalendarData | null; day: number; page: number };
+export type CalendarBootstrap = CalendarMonth & { data: CalendarData | null; day: number; page: number; events?: Page | null };
 export const monthPath = ({ year, month }: CalendarMonth) => `/calendar/${year}/${month}/`;
 export const monthName = ({ year, month }: CalendarMonth) => new Intl.DateTimeFormat('fi-FI', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(year, month - 1, 1)));
 export const monthLength = ({ year, month }: CalendarMonth) => new Date(Date.UTC(year, month, 0)).getUTCDate();

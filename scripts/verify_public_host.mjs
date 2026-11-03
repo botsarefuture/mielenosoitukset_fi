@@ -151,6 +151,9 @@ function createApi(log) {
         social_media_links: {}, invitations: ['private@example.test'], members: ['private-user'] });
     }
     if (url.pathname === '/api/demonstrations') {
+      if (url.searchParams.get('per_page') === '20') return send(200, { page: Number(url.searchParams.get('page')), per_page: 20,
+        total: 21, total_pages: 2, result_start: 21, result_end: 21,
+        results: [{ _id: detailId, title: 'Selected calendar event', date: url.searchParams.get('date_start'), detail_url: `/demonstration/${detailId}` }] });
       return send(200, { page: 1, per_page: 12, total: 1, total_pages: 1, result_start: 1, result_end: 1,
         results: [{ _id: detailId, title: 'Test listing event' }] });
     }
@@ -381,6 +384,9 @@ try {
   const leapSelection = await detailPage({ path: '/calendar/2028/2/', search: '?day=29&page=2' });
   assert.equal(bootstrap(leapSelection.html).calendar.day, 29);
   assert.equal(bootstrap(leapSelection.html).calendar.page, 2);
+  assert.equal(bootstrap(leapSelection.html).calendar.events.results[0].date, '2028-02-29');
+  assert.match(leapSelection.html, /<noscript>[\s\S]*Selected calendar event<\/a>/);
+  assert.match(leapSelection.html, /href="\?day=29&amp;page=1#calendar-agenda"|href="\?day=29&page=1#calendar-agenda"/);
   assert.match(leapSelection.html, /noindex, follow/);
   assert.equal((await detailPage({ path: '/calendar/2028/2', search: '?day=29' })).redirect, '/calendar/2028/2/?day=29');
   for (const path of ['/calendar/2028/13/', '/calendar/1999/12/', '/calendar/2028/']) assert.equal((await detailPage({ path })).status, 404);

@@ -142,7 +142,12 @@ function createApi(log) {
         demo_count: 5, today_count: 2, upcoming_count: 3 }], private: 'DO-NOT-BOOTSTRAP' });
     }
     if (url.pathname === '/api/calendar/2028/2') {
-      return send(200, { year: 2028, month: 2, total: 2, days: [{ date: '2028-02-29', count: 2 }] });
+      return send(200, { year: 2028, month: 2, ...(url.searchParams.get('city') ? {city:url.searchParams.get('city')} : {}), total: 2, days: [{ date: '2028-02-29', count: 2 }] });
+    }
+    if (url.pathname === '/api/calendar/2028') {
+      const city = url.searchParams.get('city');
+      return send(200, {year:2028,month:0,...(city ? {city} : {}),total:city ? 2 : 3,
+        days:[{date:'2028-02-29',count:2},...(!city ? [{date:'2028-12-31',count:1}] : [])]});
     }
     if (url.pathname.startsWith('/api/organizations/')) {
       if (identifier !== organizationId) return send(404, { error: 'organization not found' });
@@ -389,11 +394,27 @@ try {
   assert.match(leapSelection.html, /href="\?day=29&amp;page=1#calendar-agenda"|href="\?day=29&page=1#calendar-agenda"/);
   assert.match(leapSelection.html, /noindex, follow/);
   assert.equal((await detailPage({ path: '/calendar/2028/2', search: '?day=29' })).redirect, '/calendar/2028/2/?day=29');
-  for (const path of ['/calendar/2028/13/', '/calendar/1999/12/', '/calendar/2028/']) assert.equal((await detailPage({ path })).status, 404);
+  for (const path of ['/calendar/2028/13/', '/calendar/1999/12/', '/city/not-a-city/calendar/']) assert.equal((await detailPage({ path })).status, 404);
+  const annual = await detailPage({ path:'/calendar/2028/' });
+  assert.equal(annual.status,200);
+  assert.equal(bootstrap(annual.html).calendar.data.total,3);
+  assert.equal(bootstrap(annual.html).route.name,'calendar-year');
+  assert.match(annual.html,/rel="canonical" href="https:\/\/example.test\/calendar\/2028\/"/);
+  const cityAnnual = await detailPage({ path:'/city/helsinki/calendar/2028/' });
+  assert.equal(bootstrap(cityAnnual.html).calendar.data.total,2);
+  assert.equal(bootstrap(cityAnnual.html).calendar.city,'helsinki');
+  assert.match(cityAnnual.html,/href="\/city\/helsinki\/calendar\/2028\/2\/"/);
+  const cityMonth = await detailPage({ path:'/city/helsinki/calendar/2028/2/', search:'?day=29' });
+  assert.equal(cityMonth.status,200);
+  assert(bootstrap(cityMonth.html).calendar.events);
+  assert(localReads.some(read=>read.startsWith('/api/demonstrations?') && read.includes('date_start=2028-02-29') && read.includes('city=Helsinki')));
+  assert.equal((await detailPage({ path:'/calendar/2028/',search:'?city=Helsinki' })).redirect,'/city/helsinki/calendar/2028/');
+  assert.equal((await detailPage({ path:'/city/helsinki/calendar/2028/',search:'?city=' })).redirect,'/calendar/2028/');
+  assert.equal((await detailPage({ path:'/city/HELSINKI/calendar/2028/' })).redirect,'/city/helsinki/calendar/2028/');
   const unavailableCalendar = await detailPage({ path: '/calendar/2028/2/', apiReadBase: `${apiReadBase}/missing-api` });
   assert.equal(unavailableCalendar.status, 503);
   assert.equal(unavailableCalendar.headers['X-Robots-Tag'], 'noindex, follow');
-  console.log('PASS: calendar month cache/coalescing, leap-day selection, canonical/no-JS/metadata, query preservation, annual route exclusion and failed-read503');
+  console.log('PASS: calendar year/month/city scopes, cache/coalescing, leap day, canonical/no-JS/metadata, query preservation, native area form redirects and failed-read503');
   const beforeOrganizations = localReads.filter(read => read.startsWith('/api/organizations/')).length;
   const organizationPages = await Promise.all(Array.from({ length: 8 }, () => detailPage({ path: `/organization/${organizationId}` })));
   await detailPage({ path: `/organization/${organizationId}` });

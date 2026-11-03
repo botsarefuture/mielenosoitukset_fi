@@ -58,7 +58,7 @@ func (c *calendarCache) get(ctx context.Context, month calendarMonth) ([]byte, e
 			return nil, err
 		}
 		c.mu.Lock()
-		if len(c.items) >= 24 {
+		if len(c.items) >= 64 {
 			var oldest calendarMonth
 			var at time.Time
 			for key, entry := range c.items {

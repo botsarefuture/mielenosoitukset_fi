@@ -16,7 +16,8 @@ import type { OrganizationBootstrap } from './organization';
 import { dayLabel, findCity, helsinkiDay, loadCities } from './cities';
 import type { CitiesData } from './cities';
 import { citiesMeta, todayMeta, cityItems, todayItems, discoveryStructuredData } from './discovery-meta';
-import { adjacentMonth, dateForDay, loadCalendar, monthName, monthPath, selectedDay } from './calendar';
+import { calendarPlace, dateForDay, loadCalendar, monthName, monthPath, selectedDay } from './calendar';
+import { CalendarFallback } from './CalendarFallback';
 import type { CalendarBootstrap } from './calendar';
 import type { HomeData } from '../pages/HomePage';
 import { routeForPath, routeMeta } from './routes';
@@ -51,7 +52,7 @@ export type RenderInput = {
   search?: string;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string };
 
 export type RenderResult = {
   status: number;
@@ -213,8 +214,20 @@ function unavailableDocument() {
 export async function renderPage(input: RenderInput, assets: RenderAssets): Promise<RenderResult> {
   const route = routeForPath(input.path);
   if (!route) return { status: 404, html: notFoundDocument() };
-  if (route.name === 'calendar' && !input.path.endsWith('/')) {
-    return { status: 308, html: '', redirect: `${input.path}/${input.search ?? ''}` };
+  const calendarRoute = route.name === 'calendar' || route.name === 'calendar-year';
+  if (calendarRoute) {
+    const query = new URLSearchParams(input.search ?? '');
+    if (query.has('city')) {
+      const value = query.get('city')!;
+      const city = value ? findCity(value) : undefined;
+      if (value && !city) return { status:404, html:notFoundDocument() };
+      query.delete('city');
+      return { status:302, html:'', redirect: monthPath({ ...route, city: city?.key }) + (query.size ? `?${query}` : '') };
+    }
+    const normalized = route.city ? input.path.replace(/^\/city\/[^/]+/, `/city/${route.city}`) : input.path;
+    if (!normalized.endsWith('/') || normalized !== input.path) {
+      return { status:308, html:'', redirect: `${normalized.endsWith('/') ? normalized : `${normalized}/`}${input.search ?? ''}` };
+    }
   }
   const readBase = input.apiReadBase ?? input.apiBase;
   if (route.name === 'today' && route.value && !findCity(route.value)) {
@@ -222,7 +235,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   }
   const organizationRead = route.name === 'organization' ? loadOrganization(readBase, route.id) : null;
   const citiesRead = route.name === 'cities' ? loadCities(readBase) : null;
-  const calendarRead = route.name === 'calendar' ? loadCalendar(readBase, route) : null;
+  const calendarRead = calendarRoute ? loadCalendar(readBase, route) : null;
   let sessionUrl = input.sessionUrl;
   if (route.name === 'organization' && input.cookie) {
     const scoped = new URL(sessionUrl);
@@ -368,45 +381,35 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   }
 
   if (route.name === 'home') home = await loadHomeBatch(readBase, config.locale);
-  if (route.name === 'calendar') {
+  if (calendarRoute) {
     const data = await calendarRead;
     const search = new URLSearchParams(input.search ?? '');
     const pageValue = search.get('page') ?? '1';
     if (!/^\d{1,4}$/.test(pageValue) || Number(pageValue) < 1 || Number(pageValue) > 5001) {
       return { status: 404, html: notFoundDocument(), headers: { 'X-Robots-Tag': 'noindex, follow' } };
     }
-    calendar = { year: route.year, month: route.month, data: data ?? null, day: selectedDay(route, data ?? null, input.search ?? ''), page: Number(pageValue) };
+    calendar = { year: route.year, month: route.month, ...(route.city ? { city:route.city } : {}), data: data ?? null,
+      day: route.month ? selectedDay(route, data ?? null, input.search ?? '') : 1, page: Number(pageValue) };
     // Explicit day links remain useful without JavaScript. Inline that cached
     // batch for React too, avoiding a second browser fetch. The plain month URL
     // still reads only the small summary before its first paint.
     const selectedDate = dateForDay(calendar, calendar.day);
-    if (data && search.has('day')) {
-      calendar.events = await loadListingPage(readBase, new URLSearchParams({ date_start: selectedDate,
-        date_end: selectedDate, in_past: 'true', lang: config.locale, page: String(calendar.page), per_page: '20' }).toString());
+    if (data && route.month && search.has('day')) {
+      const query = new URLSearchParams({ date_start: selectedDate,
+        date_end: selectedDate, in_past: 'true', lang: config.locale, page: String(calendar.page), per_page: '20' });
+      if (route.city) query.set('city', findCity(route.city)!.name);
+      calendar.events = await loadListingPage(readBase, query.toString());
     }
-    const label = monthName(route);
-    meta = { title: `${label}: Mielenosoituskalenteri | Mielenosoitukset.fi`,
-      description: `Mielenosoitukset Suomessa, ${label}. Valitse päivä ja katso tapahtumien ajat ja paikat.`,
+    const label = route.month ? monthName(route) : String(route.year);
+    meta = { title: `${label}: Mielenosoituskalenteri${route.city ? `, ${findCity(route.city)!.name}` : ''} | Mielenosoitukset.fi`,
+      description: `Mielenosoitukset ${calendarPlace(route)}, ${label}. Valitse päivä ja katso tapahtumien ajat ja paikat.`,
       canonical: `${config.origin}${monthPath(route)}`, robots: !data || search.size > 0 ? 'noindex, follow' : 'index, follow' };
-    const items = (data?.days ?? []).map(row => ({ name: `${dayLabel(row.date)}: ${row.count} mielenosoitusta`,
-      url: `${config.origin}${monthPath(route)}?day=${Number(row.date.slice(8))}#calendar-agenda` }));
+    const items = route.month ? (data?.days ?? []).map(row => ({ name: `${dayLabel(row.date)}: ${row.count} mielenosoitusta`,
+      url: `${config.origin}${monthPath(route)}?day=${Number(row.date.slice(8))}#calendar-agenda` }))
+      : Array.from({length:12},(_,index)=>({ name:monthName({...route,month:index+1}), url:`${config.origin}${monthPath({...route,month:index+1})}` }));
     jsonLd = discoveryStructuredData(meta, items);
-    extraHead = assets.calendar ?? '';
-    noscript = `<noscript><article class="container-main-content"><h1>${escapeHtml(label)}</h1><p>${escapeHtml(meta.description)}</p>`
-      + `<nav aria-label="Kuukauden valinta">${route.year > 2000 || route.month > 1 ? `<a href="${monthPath(adjacentMonth(route, -1))}">Edellinen kuukausi</a> · ` : ''}`
-      + `${route.year < 2100 || route.month < 12 ? `<a href="${monthPath(adjacentMonth(route, 1))}">Seuraava kuukausi</a> · ` : ''}<a href="/calendar/${route.year}/">Vuosi ${route.year}</a></nav>`
-      + (data ? `<p>${data.total} mielenosoitusta</p><ul>${items.map(item => `<li><a href="${escapeHtml(item.url)}">${escapeHtml(item.name)}</a></li>`).join('')}</ul>`
-        : '<p>Kalenterin lataaminen epäonnistui. Yritä uudelleen.</p>')
-      + (search.has('day') && data ? `<section id="calendar-agenda"><h2>${escapeHtml(dayLabel(selectedDate))}</h2>`
-        + (calendar.events ? `<ul>${todayItems(config, calendar.events).map((item, index) => {
-          const event = calendar!.events!.results[index];
-          return `<li><a href="${escapeHtml(item.url)}">${escapeHtml(item.name)}</a> ${escapeHtml([event.start_time, event.city, event.address].filter(Boolean).join(' · '))}</li>`;
-        }).join('')}</ul>`
-          + (calendar.events.total === 0 ? '<p>Tälle päivälle ei ole ilmoitettu mielenosoituksia.</p>' : '')
-          + `<nav aria-label="Päivän mielenosoitusten sivut">${calendar.page > 1 ? `<a href="?day=${calendar.day}&page=${calendar.page - 1}#calendar-agenda">Edellinen sivu</a> ` : ''}`
-          + (calendar.page < calendar.events.total_pages ? `<a href="?day=${calendar.day}&page=${calendar.page + 1}#calendar-agenda">Seuraava sivu</a>` : '') + '</nav>'
-          : '<p>Mielenosoitusten lataaminen epäonnistui. Päivitä sivu ja yritä uudelleen.</p>') + '</section>' : '')
-      + '<a href="/demonstrations">Kaikki mielenosoitukset</a></article></noscript>';
+    extraHead = (route.month ? assets.calendar : assets.calendarYear) ?? '';
+    noscript = `<noscript>${renderToStaticMarkup(<CalendarFallback calendar={calendar} config={config} />)}</noscript>`;
     if (!data || calendar.events === null) { status = 503; headers['Retry-After'] = '30'; headers['X-Robots-Tag'] = 'noindex, follow'; }
   }
   if (route.name === 'cities') {

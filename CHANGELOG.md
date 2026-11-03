@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Move the annual calendar to React with one cached Go summary for the whole year. Add city month/year calendars, a shared area selector, city-scoped navigation and calendar links on event listings. Reuse the accessible month grid and preserve event links, SEO and working no-JavaScript navigation.
+
 - Move the calendar month view to the standalone React host with a clear day selector and shared event cards. Count only the requested month through the cached public Go API, paginate busy days, and preserve month navigation, event links, SEO and a readable no-JavaScript fallback. The year view retains its existing handler.
   - Keep populated-day links usable without JavaScript by rendering the selected day's event links and pagination from one cached Go listing batch, which React also reuses.
 

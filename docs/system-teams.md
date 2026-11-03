@@ -99,20 +99,49 @@ human approval. Disabling a board member's account never shrinks the board roste
 ## Provisioning and rollback
 
 Emergency appointment is not enabled by the ordinary joint-override endpoint.
-The requested separate `panel.lan` path still needs a verified deployment target
-and the maintainer's emergency board-quorum choice. It must bind a named board
-decision, target, reason, electorate, expiry and single-use challenge to either
-a fresh complete god login or a signature from a separately registered USB key.
-Neither proof may bypass the nominee's security enrollment. A panel button must
-send credentials only to the production HTTPS authentication origin, never the
-current plain-HTTP LAN dashboard. LAN reachability is not authentication.
+The maintainer's chosen rule is either:
 
-The attached `VAULT-KEY-A` already contains a SessionVault key. Do not read, reuse
-or replace that key for this feature. Use a separate encrypted appointment key;
-the Mac-side signer must verify the mounted USB device before signing and never
-upload its private key. An ordinary USB key is copyable and is not equivalent to
-a non-exportable hardware authenticator. No USB key or emergency trust anchor has
-been generated, registered or activated by this change.
+- two distinct current board members approve the named request, or
+- a registered USB-key signature is supplied together with a fresh complete god
+  login (receipt at most five minutes old).
+
+Neither branch may bypass the nominee's security enrollment. Each request binds
+the target account, credential version, current board roster, reason and a
+single-use challenge to a fifteen-minute expiry. A roster, credential or expiry
+change invalidates the request. The panel only signs a launch ticket; it never
+approves an appointment and never receives passwords, authenticator codes or
+private USB keys. Signing clients talk only to the production HTTPS origin.
+
+The `panel.lan` button is deployed as a small extension to the existing homelab
+status panel on `192.168.1.112:8090` (proxied as `http://panel.lan`). It is
+reachable only after the panel passphrase has been entered, requires a
+same-origin POST with a CSRF token, and refuses to sign while `enabled` is not
+`true`. Its Ed25519 private key lives at
+`/etc/moso-emergency-panel/private.pem` (root-only, 0600); the panel public key
+must be registered in `GOD_EMERGENCY_PANEL_KEYS` before activation. The current
+panel key ID is `edcb7ae6c355e23ac52e7a2ce81266fa05b12d91f771d08fd619a3210ace00d9`.
+
+The attached `VAULT-KEY-A` also contains an unrelated SessionVault key. It was
+left untouched. A separate encrypted appointment key
+(`mielenosoitukset-god-emergency-v1.encrypted.pem`) now exists on the same
+volume; its public key ID is
+`720a7c26b97024b16152fe6123a16403bb5f1e0c86e41b879d83175abaf84ca1`. Only the
+owner knows the password; it is not stored in the repository, chat or the
+application. The Mac-side signer verifies the mounted device and never uploads
+the private key. An ordinary USB key is copyable and is not equivalent to a
+non-exportable hardware authenticator; losing the password or the drive
+requires the offline recovery procedure.
+
+Both trust anchors stay inactive until the protected application code is
+deployed and `GOD_EMERGENCY_ENABLED`, `GOD_EMERGENCY_PANEL_KEYS` and
+`GOD_EMERGENCY_USB_KEYS` are configured. Removing those values, or setting
+`GOD_EMERGENCY_ENABLED=false`, disables the emergency path without changing
+existing accounts.
+
+To revoke the panel key, delete it from `GOD_EMERGENCY_PANEL_KEYS` and remove
+`/etc/moso-emergency-panel/private.pem`; to revoke the USB key, delete its entry
+from `GOD_EMERGENCY_USB_KEYS`. Existing approvals that used a revoked key fail
+the activation recheck.
 
 Deploy and verify protections before configuring or seeding memberships. Use
 `scripts/provision_system_teams.py` first without `--apply`, supplying deliberate

@@ -77,7 +77,9 @@ def _enroll(db, candidate, kind, state):
         raise GovernanceConflict("Ylläpitotiimien asetukset puuttuvat.")
     db.memberships.update_one(
         {"user_id": candidate, "organization_id": organization},
-        {"$set": {"governance_approved": True, "grant_source": "board_approval", "approval_request_id": state["id"]},
+        {"$set": {"governance_approved": True,
+                  "grant_source": "emergency_god_appointment" if state.get("method") in {"two_board", "usb_and_god"} else "board_approval",
+                  "approval_request_id": state["id"]},
          "$setOnInsert": {"role": "member", "permissions": [], "created_at": utcnow()}}, upsert=True,
     )
     if kind == "national":

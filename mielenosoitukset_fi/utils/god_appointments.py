@@ -47,10 +47,14 @@ def appointment_approved(db, candidate_id):
     # Two board approvals for new super-admin access remain mandatory. An empty
     # existing-god group permits the first appointment; other groups cannot be
     # empty or be replaced by an ordinary two-person/joint override.
-    return bool(state.get("approved") is True and state.get("method") == "unanimous"
+    unanimous = bool(state.get("approved") is True and state.get("method") == "unanimous"
                 and len(roster["board"]) >= 2 and roster["super_admins"]
                 and state.get("roster") == roster
                 and required_voters(roster).issubset(set(state.get("votes") or {})))
+    if unanimous:
+        return True
+    from mielenosoitukset_fi.utils.god_emergency import approved_for_activation
+    return approved_for_activation(db, candidate_id)
 
 
 def can_vote(db, user, candidate_id):

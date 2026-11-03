@@ -70,6 +70,7 @@
             <td>{% if user.approved %}<span class="admin-status-badge admin-status-badge--success"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ _('Hyväksytty') }}</span>{% else %}<span class="admin-status-badge"><i class="fa-solid fa-clock" aria-hidden="true"></i>{{ user.approval_count }} / 2</span>{% endif %}
               <div>{% if user.board_member %}{{ _('Hallituksen jäsen') }}{% else %}{{ _('Hallitus') }}: {{ (user.board_request.get('votes') or {})|length }} / {{ user.board_request.get('required', board_size) }}{% endif %}</div>
               {% if user.god_candidate %}<div>{{ _('God-tilin hyväksynnät') }}: {{ user.god_approval_count }} / {{ user.god_required }}</div>{% endif %}
+              {% if user.emergency %}<div>{{ _('Hätätilapyyntö') }}: {{ _('Vahvistettu') if user.emergency.approved else ((user.emergency.get('board_votes') or {})|length|string ~ ' / 2') }}</div><div>{{ user.emergency.reason }}</div>{% endif %}
               {% for name, state in [('Ylläpitäjäohitus', user.national_request), ('Hallitusohitus', user.board_request)] %}
                 {% if state.get('override_votes') and not state.get('approved') %}<div>{{ name }}: {{ state.override_votes|length }} / 2 ({{ state.override_votes.keys()|join(', ') }})</div>{% endif %}
               {% endfor %}
@@ -79,6 +80,7 @@
             <td class="actions-cell">
               <div class="d-flex flex-wrap gap-2">
               {% if user.god_candidate %}<button class="btn btn-sm btn-primary" type="button" data-clearance-action data-kind="god" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="{{ 'false' if user.my_god_vote else 'true' }}" data-username="{{ user.username }}" {% if not user.can_god_vote %}disabled{% endif %}>{{ _('Peru oma god-hyväksyntä') if user.my_god_vote else _('Hyväksy god-tili') }}</button>{% endif %}
+              {% if user.god_candidate and user.emergency and not user.emergency.approved %}<button class="btn btn-sm btn-outline-secondary" type="button" data-emergency-open data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-request="{{ user.emergency.id }}" data-username="{{ user.username }}">{{ _('Avaa hätätilavahvistus') }}</button>{% endif %}
               <button class="btn btn-sm {{ 'btn-outline-secondary' if user.my_vote else 'btn-primary' }}" type="button" data-clearance-action data-kind="national" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="{{ 'false' if user.my_vote else 'true' }}" data-username="{{ user.username }}" {% if not can_vote or user.id == current_user.id %}disabled{% endif %}>{{ _('Peru oma hyväksyntä') if user.my_vote else _('Hyväksy ylläpitäjäksi') }}</button>
               {% if not user.board_member %}<button class="btn btn-sm btn-outline-secondary" type="button" data-clearance-action data-kind="board" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="true" data-username="{{ user.username }}" {% if not can_vote or user.id == current_user.id %}disabled{% endif %}>{{ _('Hyväksy hallitukseen') }}</button>{% endif %}
               {% if can_override and user.id != current_user.id %}
@@ -118,7 +120,76 @@
   </div></div>
 </div>
 
+<div class="modal fade" id="emergency-modal" tabindex="-1" aria-labelledby="emergency-title" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><h2 class="modal-title fs-5" id="emergency-title">{{ _('God-tilin hätätilavahvistus') }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div>
+    <div class="modal-body">
+      <p>{{ _('Vahvistus vaatii joko kaksi eri hallituksen jäsentä TAI USB-allekirjoituksen JA tuoreen täydellisen god-kirjautumisen. Kohteen turvatekijöiden käyttöönotto on aina pakollinen.') }}</p>
+      <p id="emergency-target"></p><p id="emergency-reason"></p><p id="emergency-count"></p>
+      <div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-primary" id="emergency-board">{{ _('Hyväksy hallituksen jäsenenä') }}</button><button type="button" class="btn btn-outline-secondary" id="emergency-download">{{ _('Lataa USB-allekirjoituspyyntö') }}</button></div>
+      <div class="admin-field mt-3"><label for="emergency-proof">{{ _('USB-allekirjoitus (.json), ei yksityistä avainta') }}</label><input class="form-control" id="emergency-proof" type="file" accept=".json,application/json"></div>
+      <button type="button" class="btn btn-primary mt-3" id="emergency-usb">{{ _('Vahvista USB-allekirjoitus ja god-kirjautuminen') }}</button>
+      <p class="admin-live-status mt-3" id="emergency-status" role="status" aria-live="polite"></p>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button></div>
+  </div></div>
+</div>
+
 <script>
+let emergencyContext = null;
+const emergencyStatus = document.getElementById('emergency-status');
+async function emergencyAction(command, extra = {}) {
+  if (!emergencyContext) throw new Error({{ _('Avaa hätätilapyyntö ensin.')|tojson }});
+  const response = await fetch(emergencyContext.url, {method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':{{ governance_csrf_token|tojson }}},body:JSON.stringify({kind:'god_emergency',command,request_id:emergencyContext.id,...extra})});
+  const data = await response.json();
+  if (!response.ok || data.status !== 'OK') throw new Error(data.message || {{ _('Vahvistus epäonnistui.')|tojson }});
+  return data.emergency;
+}
+function showEmergency(state) {
+  emergencyContext.id = state.id;
+  emergencyContext.state = state;
+  document.getElementById('emergency-target').textContent = {{ _('Kohde')|tojson }} + ': ' + emergencyContext.username;
+  document.getElementById('emergency-reason').textContent = {{ _('Perustelu')|tojson }} + ': ' + state.reason;
+  document.getElementById('emergency-count').textContent = {{ _('Hallituksen hyväksynnät')|tojson }} + ': ' + Object.keys(state.board_votes || {}).length + ' / 2';
+  document.getElementById('emergency-board').disabled = !{{ can_vote|tojson }} || state.approved;
+  document.getElementById('emergency-usb').disabled = {{ (current_user.role != 'god')|tojson }} || state.approved;
+  emergencyStatus.textContent = state.approved ? {{ _('Hätätilavahvistus on valmis. Tapahtuma on kirjattu lokiin.')|tojson }} : {{ _('Pyyntö on voimassa 15 minuuttia. Valitse yksi kahdesta vahvistustavasta.')|tojson }};
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('emergency-modal')).show();
+}
+document.querySelectorAll('[data-emergency-open]').forEach(button => button.addEventListener('click',async () => {
+  emergencyContext = {url:button.dataset.url,id:button.dataset.request,username:button.dataset.username};
+  try {showEmergency(await emergencyAction('status'));} catch(error) {document.getElementById('clearance-status').textContent=error.message;}
+}));
+document.getElementById('emergency-board').addEventListener('click', async (event) => {
+  event.currentTarget.disabled=true;
+  try {showEmergency(await emergencyAction('approve_board'));} catch(error) {emergencyStatus.textContent=error.message;event.currentTarget.disabled=false;}
+});
+document.getElementById('emergency-download').addEventListener('click', () => {
+  if (!emergencyContext?.state?.challenge) return;
+  const url=URL.createObjectURL(new Blob([JSON.stringify(emergencyContext.state.challenge,null,2)],{type:'application/json'}));
+  const link=document.createElement('a');link.href=url;link.download='god-emergency-'+emergencyContext.id+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+document.getElementById('emergency-usb').addEventListener('click',async (event) => {
+  event.currentTarget.disabled=true;
+  try {
+    const file=document.getElementById('emergency-proof').files[0];
+    if(!file || file.size>16384) throw new Error({{ _('Valitse pieni JSON-allekirjoitustiedosto. Älä lataa yksityistä avainta.')|tojson }});
+    let proof;try {proof=JSON.parse(await file.text());} catch {throw new Error({{ _('Tiedosto ei ole JSON-allekirjoitus.')|tojson }});}
+    showEmergency(await emergencyAction('approve_usb_god',{proof}));
+  } catch(error) {emergencyStatus.textContent=error.message;event.currentTarget.disabled=false;}
+});
+const emergencyLink=new URLSearchParams(location.hash.slice(1)).get('emergency');
+if(emergencyLink){
+  history.replaceState(null,'',location.pathname+location.search);
+  try {
+    const raw=emergencyLink.replace(/-/g,'+').replace(/_/g,'/');
+    const ticket=JSON.parse(atob(raw+'='.repeat((4-raw.length%4)%4)));
+    const id=ticket.message?.candidate_id;
+    if(!/^[a-f0-9]{24}$/.test(id)) throw new Error('invalid');
+    emergencyContext={url:'/board/api/clearance/'+id,username:id};
+    emergencyAction('open',{ticket}).then(showEmergency).catch(error=>{document.getElementById('clearance-status').textContent=error.message;});
+  } catch {document.getElementById('clearance-status').textContent={{ _('Paneelin hätätilapyyntö on virheellinen.')|tojson }};}
+}
 let pendingClearance = null;
 document.querySelectorAll('[data-clearance-action]').forEach((button) => {
   button.addEventListener('click', () => {

@@ -88,6 +88,7 @@ def clearance_rows():
                 "god_required": len(required_voters(god_roster)),
                 "my_god_vote": str(current_user.id) in god_votes,
                 "can_god_vote": can_vote(mongo, current_user, user_id) if user_doc.get("god_candidate") else False,
+                "emergency": request_state(clearances.get(user_id), "god_emergency"),
             }
         )
     return rows
@@ -135,6 +136,13 @@ def set_clearance(user_id):
 
     try:
         kind = data.get("kind","national")
+        if kind == "god_emergency":
+            from mielenosoitukset_fi.utils.god_emergency import open_request, act
+            if data.get("command") == "open":
+                result = open_request(mongo, user_id, current_user, data.get("ticket"))
+            else:
+                result = act(mongo, user_id, current_user, data.get("request_id"), data.get("command"), data.get("proof"))
+            return jsonify(status="OK", emergency=result)
         if kind == "god":
             if data.get("override"):
                 raise PermissionError("Tavallinen yhteinen ohitus ei korvaa god-tilin kaikkia hyväksyntöjä.")

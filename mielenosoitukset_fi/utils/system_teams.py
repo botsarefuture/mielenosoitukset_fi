@@ -63,6 +63,17 @@ def clearance_approved(db, user_id):
 
 
 def clearance_record_approved(record):
+    emergency = ((record.get("team_requests") or {}).get("god_emergency") or {})
+    if (record.get("approved") is True and emergency.get("approved") is True
+            and emergency.get("method") == "usb_and_god"
+            and emergency.get("id") == record.get("god_appointment_emergency_id")
+            and emergency.get("candidate_id") == record.get("user_id")
+            and ObjectId.is_valid(str(emergency.get("god_user_id", "")))
+            and emergency.get("usb_key_id") and emergency.get("god_proof_id") and emergency.get("usb_proof")):
+        # Durable evidence from the dedicated, signature-verified appointment
+        # workflow. It is not a second fictitious board member or a generic
+        # override of national-admin membership rules.
+        return True
     approvals = record.get("approvals") or {}
     if not isinstance(approvals, dict):
         return False

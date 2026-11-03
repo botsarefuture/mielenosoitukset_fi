@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Add a disabled-by-default emergency god-appointment path for the homelab `panel.lan` button. A request must be launched by a panel-signed ticket and then completed by either two distinct board votes, or a registered USB-key signature plus a fresh complete god login. Bind the target, credential version, board roster, reason and single-use challenge to a fifteen-minute expiry; keep security enrollment mandatory and recheck the live roster at activation.
+
 - Require unanimous approval from every super admin, board member and existing god account before activating a new god account. Freeze the approver roster, discard old votes when it changes, and keep security enrollment mandatory.
 
 - Protect the configured national-admin and board organizations from ordinary membership edits. Require two board approvals for new super admins, unanimous board approval for board additions, or a joint Olivia and freshly authenticated god-account override.

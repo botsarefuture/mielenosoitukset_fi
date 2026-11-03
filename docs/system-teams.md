@@ -119,13 +119,25 @@ same-origin POST with a CSRF token, and refuses to sign while `enabled` is not
 `true`. Its Ed25519 private key lives at
 `/etc/moso-emergency-panel/private.pem` (root-only, 0600); the panel public key
 must be registered in `GOD_EMERGENCY_PANEL_KEYS` before activation. The current
-panel key ID is `edcb7ae6c355e23ac52e7a2ce81266fa05b12d91f771d08fd619a3210ace00d9`.
+panel key ID is `edcb7ae6c355e23ac52e7a2ce81266fa05b12d91f771d08fd619a3210ace00d9`:
+
+```
+-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAB6mUwiq2Z0Uo0lljpc/NTmJSHB6x5oQqbOpGFeaZAnk=
+-----END PUBLIC KEY-----
+```
 
 The attached `VAULT-KEY-A` also contains an unrelated SessionVault key. It was
 left untouched. A separate encrypted appointment key
 (`mielenosoitukset-god-emergency-v1.encrypted.pem`) now exists on the same
 volume; its public key ID is
-`720a7c26b97024b16152fe6123a16403bb5f1e0c86e41b879d83175abaf84ca1`. Only the
+`720a7c26b97024b16152fe6123a16403bb5f1e0c86e41b879d83175abaf84ca1`:
+
+```
+-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAkLnhiJQlOza7ZH9+WKG6y/UUjbGon3LPX8Wb6LUGh4Y=
+-----END PUBLIC KEY-----
+``` Only the
 owner knows the password; it is not stored in the repository, chat or the
 application. The Mac-side signer verifies the mounted device and never uploads
 the private key. An ordinary USB key is copyable and is not equivalent to a

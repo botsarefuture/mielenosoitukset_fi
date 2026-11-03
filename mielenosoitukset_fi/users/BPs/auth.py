@@ -832,6 +832,8 @@ def mfa_check():
                 pass
             return jsonify({"enabled": False, "valid": False, "unverified": True})
 
+        if user.role == "god":
+            return jsonify({"enabled": False, "valid": True})
         if user.mfa_enabled:
             _set_pending_mfa_login(user)
         else:
@@ -887,6 +889,11 @@ def _check(safe_next_page, request):
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     """Verify password or pending MFA proof, then establish the login session."""
+    if request.method == "POST" and request.is_json:
+        from mielenosoitukset_fi.users.god_auth import handle_action
+        response = current_app.make_response(handle_action(_get_mongo(), request.get_json(silent=True)))
+        response.headers["Cache-Control"] = "no-store"
+        return response
     # Get the next page from GET param or from session fallback
     next_page = request.args.get("next") or session.get("next_page") or ""
     safe_next_page = _normalize_post_login_target(next_page)
@@ -948,6 +955,9 @@ def login():
                 return redirect(url_for("users.auth.login", next=safe_next_page))
 
             user = User.from_db(user_doc)
+            if user.role == "god":
+                _clear_pending_mfa_login()
+                return redirect("/auth/god")
             if not user.check_password(password):
                 flash_message("Käyttäjänimi tai salasana on väärin.", "error")
                 log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Invalid password", user_id=user.id)
@@ -993,6 +1003,9 @@ def login():
                 flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
                 return redirect(url_for("users.auth.login", next=safe_next_page))
             user = User.from_db(current)
+        # A legacy pending MFA proof must never bypass god's ordered flow.
+        if user.role == "god":
+            return redirect("/auth/god")
         # Everything good, log the user in
         login_user(user)
         if mfa_credential_version is not None:

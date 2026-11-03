@@ -144,6 +144,8 @@ class Organization(BaseEntity):
         return data
 
     def save(self):
+        from mielenosoitukset_fi.utils.system_teams import forbid_ordinary_team_write
+        forbid_ordinary_team_write(self._id)
         DB["organizations"].update_one(
             {"_id": self._id}, {"$set": self.to_dict()}, upsert=True
         )

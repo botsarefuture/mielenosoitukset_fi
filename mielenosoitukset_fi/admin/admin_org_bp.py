@@ -180,6 +180,9 @@ def _can_edit_organization(user, organization) -> bool:
     )
     if org_id is None:
         return False
+    from mielenosoitukset_fi.utils.system_teams import protected_organization
+    if protected_organization(org_id):
+        return False
     if not _is_limited_city_admin(user):
         return _has_explicit_organization_permission(user, "EDIT_ORGANIZATION", org_id)
     verified = (
@@ -768,6 +771,8 @@ def delete_organization(org_id):
         return redirect(request.referrer or url_for("admin_org.organization_control"))
 
     if "confirm_delete" in request.form:
+        from mielenosoitukset_fi.utils.system_teams import forbid_ordinary_team_write
+        forbid_ordinary_team_write(org_id)
         mongo.organizations.delete_one({"_id": ObjectId(org_id)})
         flash_message(_("Organisaatio poistettu onnistuneesti."))
         _log_org_event("organization_deleted", org_id=org_id)
@@ -955,6 +960,9 @@ def delete_membership() -> Tuple[Response, int]:
         _log_org_event("membership_delete_error", membership_id=membership_id, reason="forbidden")
         return jsonify({"error": "Sinulla ei ole oikeutta muokata varmennettua organisaatiota."}), 403
 
+    # Protected memberships are changed only by the governance service.
+    from mielenosoitukset_fi.utils.system_teams import forbid_ordinary_team_write
+    forbid_ordinary_team_write(org_id)
     # --- Delete membership ---
     result = mongo.memberships.delete_one({
         "_id": ObjectId(membership_id), "organization_id": raw_org_id,

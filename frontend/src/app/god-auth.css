@@ -1,0 +1,14 @@
+.god-auth { width: 100%; max-width: 42rem; margin: 2rem auto; padding: 1.5rem; background: var(--product-surface); color: var(--product-text); border: 1px solid var(--product-border); border-radius: .75rem; }
+.god-auth h1, .god-auth h2 { text-align: left; color: var(--product-text); line-height: 1.3; }
+.god-auth h1 { font-size: 1.75rem; }
+.god-auth h2 { font-size: 1.3rem; }
+.god-auth form, .god-auth label { display: flex; flex-direction: column; gap: .6rem; }
+.god-auth form { gap: 1.25rem; margin: 1rem 0; }
+.god-auth label { font-weight: 600; }
+.god-auth input { box-sizing: border-box; width: 100%; min-height: 48px; padding: .75rem; font: inherit; color: var(--product-text); background: var(--product-canvas); border: 1px solid var(--product-border); border-radius: .4rem; }
+.god-auth button { min-height: 48px; padding: .75rem 1rem; font: inherit; font-weight: 600; color: var(--product-on-action); background: var(--product-action-bg); border: 1px solid var(--product-border); border-radius: .4rem; cursor: pointer; }
+.god-auth button:disabled { opacity: .6; cursor: default; }
+.god-auth .god-auth-secondary { color: var(--product-text); background: var(--product-canvas); }
+.god-auth > a { display: block; color: var(--product-primary-strong); margin-top: 1rem; padding-block: .5rem; }
+.god-auth-error { border-left: 4px solid var(--product-text); padding: .75rem; }
+@media (max-width: 600px) { .god-auth { box-sizing: border-box; padding: 1rem; margin: 1rem auto; } }

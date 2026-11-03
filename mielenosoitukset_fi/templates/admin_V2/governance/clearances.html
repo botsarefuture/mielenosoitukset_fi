@@ -8,7 +8,7 @@
 <section class="admin-page admin-workspace">
   {{ admin_page_hero(
     _('Superkäyttäjäroolin hyväksynnät'),
-    _('Hallituksen hyväksyntä vaaditaan ennen kuin käyttäjälle voidaan myöntää global_admin-superkäyttäjärooli. Jokainen muutos kirjataan tapahtumalokiin.'),
+    _('Uusi superkäyttäjä vaatii kaksi hallituksen hyväksyntää. Uusi hallituksen jäsen vaatii koko hallituksen hyväksynnän. Ohitus vaatii sekä Olivian että erillisen god-tilin vahvistuksen.'),
     _('Hallinto'),
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Hallinto ja käyttöoikeudet'), url_for('admin_governance.dashboard')), (_('Superkäyttäjäroolin hyväksynnät'), none)],
     back_url=url_for('admin_governance.dashboard'),
@@ -66,11 +66,25 @@
           {% for user in users %}
           <tr>
             <td><strong>{{ user.username }}</strong></td>
-            <td>{{ user.role or '—' }}</td>
-            <td>{% if user.approved %}<span class="admin-status-badge admin-status-badge--success"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ _('Hyväksytty') }}</span>{% else %}<span class="admin-status-badge"><i class="fa-solid fa-clock" aria-hidden="true"></i>{{ _('Ei hyväksyntää') }}</span>{% endif %}</td>
-            <td>{{ user.granted_by or '—' }}</td>
-            <td>{{ user.timestamp|datetimeformat('%d.%m.%Y %H:%M') if user.timestamp else '—' }}</td>
-            <td class="actions-cell"><button class="btn btn-sm {{ 'btn-outline-danger' if user.approved else 'btn-outline-success' }}" type="button" data-clearance-action data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="{{ 'false' if user.approved else 'true' }}" data-username="{{ user.username }}">{{ _('Peru hyväksyntä') if user.approved else _('Myönnä hyväksyntä') }}</button></td>
+            <td>{{ user.role or '-' }}</td>
+            <td>{% if user.approved %}<span class="admin-status-badge admin-status-badge--success"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ _('Hyväksytty') }}</span>{% else %}<span class="admin-status-badge"><i class="fa-solid fa-clock" aria-hidden="true"></i>{{ user.approval_count }} / 2</span>{% endif %}
+              <div>{% if user.board_member %}{{ _('Hallituksen jäsen') }}{% else %}{{ _('Hallitus') }}: {{ (user.board_request.get('votes') or {})|length }} / {{ user.board_request.get('required', board_size) }}{% endif %}</div>
+              {% for name, state in [('Ylläpitäjäohitus', user.national_request), ('Hallitusohitus', user.board_request)] %}
+                {% if state.get('override_votes') and not state.get('approved') %}<div>{{ name }}: {{ state.override_votes|length }} / 2 ({{ state.override_votes.keys()|join(', ') }})</div>{% endif %}
+              {% endfor %}
+            </td>
+            <td>{{ user.approvers|join(', ') if user.approvers else user.granted_by or '-' }}</td>
+            <td>{{ user.timestamp|datetimeformat('%d.%m.%Y %H:%M') if user.timestamp else '-' }}</td>
+            <td class="actions-cell">
+              <div class="d-flex flex-wrap gap-2">
+              <button class="btn btn-sm {{ 'btn-outline-secondary' if user.my_vote else 'btn-primary' }}" type="button" data-clearance-action data-kind="national" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="{{ 'false' if user.my_vote else 'true' }}" data-username="{{ user.username }}" {% if not can_vote or user.id == current_user.id %}disabled{% endif %}>{{ _('Peru oma hyväksyntä') if user.my_vote else _('Hyväksy ylläpitäjäksi') }}</button>
+              {% if not user.board_member %}<button class="btn btn-sm btn-outline-secondary" type="button" data-clearance-action data-kind="board" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="true" data-username="{{ user.username }}" {% if not can_vote or user.id == current_user.id %}disabled{% endif %}>{{ _('Hyväksy hallitukseen') }}</button>{% endif %}
+              {% if can_override and user.id != current_user.id %}
+              <button class="btn btn-sm btn-outline-secondary" type="button" data-clearance-action data-kind="national" data-override="true" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="true" data-username="{{ user.username }}">{{ _('Yhteinen ylläpitäjäohitus') }}</button>
+              {% if not user.board_member %}<button class="btn btn-sm btn-outline-secondary" type="button" data-clearance-action data-kind="board" data-override="true" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="true" data-username="{{ user.username }}">{{ _('Yhteinen hallitusohitus') }}</button>{% endif %}
+              {% endif %}
+              </div>
+            </td>
           </tr>
           {% else %}
           <tr><td colspan="6"><div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-user-shield" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Käyttäjiä ei löytynyt') }}</strong><span>{{ _('Kokeile muuttaa suodattimia tai tyhjennä ne.') }}</span></div></td></tr>
@@ -94,14 +108,31 @@
   </section>
 </section>
 
-<script>
-document.querySelectorAll('[data-clearance-action]').forEach((button) => {
-  button.addEventListener('click', async () => {
-    const approved = button.dataset.approved === 'true';
-    const verb = approved ? {{ _('myöntää hyväksyntä käyttäjälle')|tojson }} : {{ _('perua käyttäjän hyväksyntä')|tojson }};
-    const prompt = {{ _('Haluatko varmasti')|tojson }} + ' ' + verb + ' ' + button.dataset.username + '?';
-    if (!window.confirm(prompt)) return;
+<div class="modal fade" id="clearance-confirm" tabindex="-1" aria-labelledby="clearance-confirm-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><h2 class="modal-title fs-5" id="clearance-confirm-title">{{ _('Vahvista hyväksyntä') }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div>
+    <div class="modal-body"><p id="clearance-confirm-copy"></p><p>{{ _('Oma hyväksyntäsi kirjataan tapahtumalokiin. Oikeudet muuttuvat vasta, kun kaikki vaaditut hyväksynnät ovat valmiit.') }}</p></div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button><button type="button" class="btn btn-primary" id="clearance-confirm-submit">{{ _('Vahvista') }}</button></div>
+  </div></div>
+</div>
 
+<script>
+let pendingClearance = null;
+document.querySelectorAll('[data-clearance-action]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const approved = button.dataset.approved === 'true';
+    const action = approved ? button.textContent : {{ _('Peru oma hyväksyntä')|tojson }};
+    document.getElementById('clearance-confirm-copy').textContent = action + ': ' + button.dataset.username + '?';
+    pendingClearance = button;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('clearance-confirm')).show();
+  });
+});
+document.getElementById('clearance-confirm-submit').addEventListener('click', async () => {
+    const button = pendingClearance;
+    if (!button) return;
+    pendingClearance = null;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('clearance-confirm')).hide();
+    const approved = button.dataset.approved === 'true';
     const status = document.getElementById('clearance-status');
     button.disabled = true;
     button.setAttribute('aria-busy', 'true');
@@ -111,7 +142,7 @@ document.querySelectorAll('[data-clearance-action]').forEach((button) => {
       const response = await fetch(button.dataset.url, {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRF-Token': {{ governance_csrf_token|tojson }}},
-        body: JSON.stringify({approved})
+        body: JSON.stringify({approved,kind:button.dataset.kind||'national',override:button.dataset.override==='true'})
       });
       const result = await response.json();
       if (!response.ok || result.status !== 'OK') throw new Error(result.message || {{ _('Tallennus epäonnistui.')|tojson }});
@@ -123,7 +154,6 @@ document.querySelectorAll('[data-clearance-action]').forEach((button) => {
       button.disabled = false;
       button.removeAttribute('aria-busy');
     }
-  });
 });
 </script>
 {% endblock %}

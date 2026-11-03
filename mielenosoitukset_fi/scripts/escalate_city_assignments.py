@@ -77,20 +77,17 @@ def _queue_escalation_email(
     }
 
     try:
-        rendered_body = email_sender._env.get_template(ASSIGNMENT_TEMPLATE).render(context)
-    except Exception:
-        logger.exception("Failed to render escalation email for demo %s", demo_id)
-        return False
-
-    job = EmailJob(
-        subject=f"Eskaloitu: {context['title'] or 'mielenosoitus'} odottaa edelleen hyväksyntää ({context['city']})",
-        recipients=ADMIN_RECIPIENTS,
-        body=rendered_body,
-        html=rendered_body,
-        instance_id=email_sender._instance_id,
-    )
-    try:
-        email_sender.send_email(job, raise_on_error=True)
+        from mielenosoitukset_fi.utils.moderation_mail import personalize_moderation_messages
+        messages = personalize_moderation_messages(db, demo_id, [{
+            "template_name": ASSIGNMENT_TEMPLATE,
+            "subject": f"Eskaloitu: {context['title'] or 'mielenosoitus'} odottaa edelleen hyväksyntää ({context['city']})",
+            "recipients": ADMIN_RECIPIENTS, "context": context,
+        }], national=True)
+        for message in messages:
+            rendered_body = email_sender._env.get_template(ASSIGNMENT_TEMPLATE).render(message["context"])
+            job = EmailJob(subject=message["subject"], recipients=message["recipients"], body=rendered_body,
+                           html=rendered_body, instance_id=email_sender._instance_id)
+            email_sender.send_email(job, raise_on_error=True)
     except Exception:
         logger.exception("Failed to send escalation email for demo %s", demo_id)
         return False

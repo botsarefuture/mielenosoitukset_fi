@@ -51,7 +51,7 @@ export type RenderInput = {
   search?: string;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; godAuth?: string };
 
 export type RenderResult = {
   status: number;
@@ -231,7 +231,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   }
   const summary: SessionSummary = await fetchSession(sessionUrl, input.cookie,
     1200, input.flaskSocketPath, input.origin, input.clientIp, input.cloudflareIp);
-  const session = input.doNotTrack
+  const session = input.doNotTrack || route.name === 'god-auth'
     ? { ...summary, siteAnalyticsEnabled: false, matomoEnabled: false }
     : summary;
   const config = appConfig({
@@ -255,6 +255,14 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   let noscript = '<noscript><p class="container-main-content">Mielenosoitukset.fi käyttää JavaScriptiä. '
     + '<a href="/demonstrations">Kaikki mielenosoitukset</a> · <a href="/calendar/">Kalenteri</a></p></noscript>';
   const headers: Record<string, string> = {};
+
+  if (route.name === 'god-auth') {
+    meta = { title: 'Turvallinen kirjautuminen | Mielenosoitukset.fi', description: '', canonical: null, robots: 'noindex, nofollow' };
+    headers['Cache-Control'] = 'no-store';
+    headers['Referrer-Policy'] = 'no-referrer';
+    extraHead = assets.godAuth ?? '';
+    noscript = '<noscript><p>God-tilin kirjautuminen vaatii JavaScriptin ja passkey-tuen.</p><a href="/users/auth/login">Tavallinen kirjautuminen</a></noscript>';
+  }
 
   if (route.name === 'submit') {
     const settings = session.submission;

@@ -189,7 +189,7 @@ def _descriptors_for(user_id) -> list:
 # ---------------------------------------------------------------------------
 
 
-def registration_options(user, exclude_credentials: bool = True) -> dict:
+def registration_options(user, exclude_credentials: bool = True, require_user_verification: bool = False) -> dict:
     """Build WebAuthn registration options for a logged-in user."""
     opts = generate_registration_options(
         rp_id=_rp_id(),
@@ -201,7 +201,7 @@ def registration_options(user, exclude_credentials: bool = True) -> dict:
         timeout=AUTHENTICATOR_TIMEOUT_MS,
         authenticator_selection=AuthenticatorSelectionCriteria(
             resident_key=ResidentKeyRequirement.PREFERRED,
-            user_verification=UserVerificationRequirement.PREFERRED,
+            user_verification=UserVerificationRequirement.REQUIRED if require_user_verification else UserVerificationRequirement.PREFERRED,
         ),
         exclude_credentials=_descriptors_for(user._id) if exclude_credentials else [],
     )
@@ -211,6 +211,7 @@ def registration_options(user, exclude_credentials: bool = True) -> dict:
 def verify_registration(
     credential,
     user_id: ObjectId,
+    require_user_verification: bool = False,
 ):
     """
     Verify a registration response against the stored server-side challenge.
@@ -227,6 +228,7 @@ def verify_registration(
             expected_challenge=base64url_to_bytes(challenge_b64),
             expected_rp_id=_rp_id(),
             expected_origin=_allowed_origins(),
+            require_user_verification=require_user_verification,
         )
     except Exception as exc:
         _logger.debug("Registration verification failed: %s", exc)
@@ -269,6 +271,7 @@ def store_credential(
 def authentication_options(
     user_id: Optional[ObjectId] = None,
     purpose: str = PURPOSE_LOGIN,
+    require_user_verification: bool = False,
 ) -> dict:
     """Build WebAuthn request options.
 
@@ -286,7 +289,7 @@ def authentication_options(
         challenge=challenge,
         timeout=AUTHENTICATOR_TIMEOUT_MS,
         allow_credentials=_descriptors_for(user_id) if user_id else None,
-        user_verification=UserVerificationRequirement.PREFERRED,
+        user_verification=UserVerificationRequirement.REQUIRED if require_user_verification else UserVerificationRequirement.PREFERRED,
     )
     return options_to_json_dict(opts)
 
@@ -323,6 +326,7 @@ def verify_authentication(
     credential,
     user_id: Optional[ObjectId] = None,
     purpose: str = PURPOSE_LOGIN,
+    require_user_verification: bool = False,
 ):
     """
     Verify an assertion and update the roaming sign counter.
@@ -350,6 +354,7 @@ def verify_authentication(
             expected_origin=_allowed_origins(),
             credential_public_key=base64url_to_bytes(record["public_key"]),
             credential_current_sign_count=record.get("sign_count", 0),
+            require_user_verification=require_user_verification,
         )
     except Exception:
         return None, "Virheellinen vahvistusvastaus."

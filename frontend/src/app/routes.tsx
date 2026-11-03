@@ -15,6 +15,7 @@ import { currentMonth } from './calendar';
 export type AppRoute =
   | { name: 'home' }
   | { name: 'submit' }
+  | { name: 'god-auth' }
   | { name: 'cities' }
   | { name: 'calendar'; year: number; month: number }
   | { name: 'today'; value?: string }
@@ -49,6 +50,7 @@ function readIdentifier(raw: string): string | null {
 }
 
 export function routeForPath(path: string): AppRoute | null {
+  if (path === '/auth/god') return { name: 'god-auth' };
   if (path === '/calendar/' || path === '/calendar') return { name: 'calendar', ...currentMonth() };
   const calendar = /^\/calendar\/(\d{4})\/(\d{1,2})\/?$/.exec(path);
   if (calendar) {

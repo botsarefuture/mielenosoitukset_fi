@@ -353,7 +353,9 @@ def compare_user_levels(user1, user2):
     target_full = bool(getattr(user2, "global_admin", False)) or user2.role in full_roles
     if target_full and not actor_full:
         return False
-    return user1._id != user2._id and USER_ACCESS_LEVELS[user1.role] > USER_ACCESS_LEVELS[user2.role]
+    actor_level = USER_ACCESS_LEVELS["global_admin"] if "national" in getattr(user1, "system_team_access", ()) and user1.role != "god" else USER_ACCESS_LEVELS[user1.role]
+    target_level = USER_ACCESS_LEVELS["global_admin"] if "national" in getattr(user2, "system_team_access", ()) and user2.role != "god" else USER_ACCESS_LEVELS[user2.role]
+    return user1._id != user2._id and actor_level > target_level
 
 
 def _check_user_target(actor, target, *, allow_self=False):

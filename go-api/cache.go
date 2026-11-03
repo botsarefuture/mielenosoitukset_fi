@@ -183,6 +183,7 @@ type cachedDetailStore struct {
 	listing      *listingCache      // nil if the source has no FindListing
 	organization *organizationCache // nil if the source has no FindOrganization
 	cities       *citiesCache
+	calendar     *calendarCache
 
 	hits, staleHits, negHits, misses, loads, loadErrors, oversize, unknownDropped atomic.Uint64
 }
@@ -221,6 +222,9 @@ func newCachedDetailStoreWithConfig(src Store, cfg detailCacheConfig) *cachedDet
 	}
 	if source, ok := src.(citiesStore); ok {
 		s.cities = &citiesCache{source: source, base: base, now: time.Now}
+	}
+	if source, ok := src.(calendarStore); ok {
+		s.calendar = &calendarCache{source: source, base: base, items: map[calendarMonth]calendarEntry{}, sem: make(chan struct{}, 4)}
 	}
 	return s
 }

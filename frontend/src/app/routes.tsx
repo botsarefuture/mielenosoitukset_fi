@@ -1,6 +1,7 @@
 import type { AppConfig } from './config';
 import type { Catalog } from './i18n';
 import type { ListingRoute } from './listing';
+import { currentMonth } from './calendar';
 
 /**
  * Public routes owned by the standalone React application.
@@ -15,6 +16,7 @@ export type AppRoute =
   | { name: 'home' }
   | { name: 'submit' }
   | { name: 'cities' }
+  | { name: 'calendar'; year: number; month: number }
   | { name: 'today'; value?: string }
   | ListingRoute
   | { name: 'organization'; id: string }
@@ -47,6 +49,12 @@ function readIdentifier(raw: string): string | null {
 }
 
 export function routeForPath(path: string): AppRoute | null {
+  if (path === '/calendar/' || path === '/calendar') return { name: 'calendar', ...currentMonth() };
+  const calendar = /^\/calendar\/(\d{4})\/(\d{1,2})\/?$/.exec(path);
+  if (calendar) {
+    const year = Number(calendar[1]), month = Number(calendar[2]);
+    return year >= 2000 && year <= 2100 && month >= 1 && month <= 12 ? { name: 'calendar', year, month } : null;
+  }
   if (path === '/submit') return { name: 'submit' };
   if (path === '/cities') return { name: 'cities' };
   if (path === '/mielenosoitukset-tanaan') return { name: 'today' };

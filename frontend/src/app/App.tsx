@@ -16,12 +16,14 @@ import type { ListingBootstrap } from './listing';
 import type { OrganizationBootstrap } from './organization';
 import type { CitiesData } from './cities';
 import type { SubmitBootstrap } from './submit';
+import type { CalendarBootstrap } from './calendar';
 
 const ListingScreen = lazy(() => import('./ListingScreen'));
 const OrganizationScreen = lazy(() => import('./OrganizationScreen'));
 const CitiesPage = lazy(() => import('../pages/CitiesPage'));
 const TodayScreen = lazy(() => import('./TodayScreen'));
 const SubmitScreen = lazy(() => import('./SubmitScreen'));
+const CalendarScreen = lazy(() => import('./CalendarScreen'));
 
 export type AppProps = {
   config: AppConfig;
@@ -38,6 +40,7 @@ export type AppProps = {
   organization?: OrganizationBootstrap;
   cities?: CitiesData | null;
   submission?: SubmitBootstrap;
+  calendar?: CalendarBootstrap;
 };
 
 function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<typeof catalog>): CardProps {
@@ -52,11 +55,14 @@ function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<
 }
 
 /** One public application shell: shared header, routed page content, footer. */
-export function App({ config, session, route, path, detail, series, home, listing, organization, cities, submission }: AppProps) {
+export function App({ config, session, route, path, detail, series, home, listing, organization, cities, submission, calendar }: AppProps) {
   const text = catalog(config.locale);
   return <>
     <SiteHeader {...headerProps(config, session, text, path)} />
     <main className={`container-main-content ${route.name === 'submit' ? 'submit-workspace' : route.name === 'detail' || route.name === 'series' ? 'public-detail-main' : 'public-layout-wide'}`} id="main-content" tabIndex={-1}>
+      {route.name === 'calendar' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria...</p>}>
+        <CalendarScreen calendar={calendar} config={config} session={session} />
+      </Suspense>}
       {route.name === 'submit' && submission && <Suspense fallback={<p role="status">Ladataan lomaketta...</p>}>
         <SubmitScreen config={config} submission={submission} />
       </Suspense>}

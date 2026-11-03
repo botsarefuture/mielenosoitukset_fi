@@ -141,6 +141,9 @@ function createApi(log) {
       return send(200, { day: day(0), cities: [{ key: 'helsinki', name: 'Helsinki', phrase: 'Helsingissä',
         demo_count: 5, today_count: 2, upcoming_count: 3 }], private: 'DO-NOT-BOOTSTRAP' });
     }
+    if (url.pathname === '/api/calendar/2028/2') {
+      return send(200, { year: 2028, month: 2, total: 2, days: [{ date: '2028-02-29', count: 2 }] });
+    }
     if (url.pathname.startsWith('/api/organizations/')) {
       if (identifier !== organizationId) return send(404, { error: 'organization not found' });
       return send(200, { _id: organizationId, name: 'Test Organization', description: 'Public profile',
@@ -148,6 +151,9 @@ function createApi(log) {
         social_media_links: {}, invitations: ['private@example.test'], members: ['private-user'] });
     }
     if (url.pathname === '/api/demonstrations') {
+      if (url.searchParams.get('per_page') === '20') return send(200, { page: Number(url.searchParams.get('page')), per_page: 20,
+        total: 21, total_pages: 2, result_start: 21, result_end: 21,
+        results: [{ _id: detailId, title: 'Selected calendar event', date: url.searchParams.get('date_start'), detail_url: `/demonstration/${detailId}` }] });
       return send(200, { page: 1, per_page: 12, total: 1, total_pages: 1, result_start: 1, result_end: 1,
         results: [{ _id: detailId, title: 'Test listing event' }] });
     }
@@ -366,6 +372,28 @@ try {
   assert.equal(bootstrap(unavailableCities.html).cities, null);
   assert.equal(unavailableCities.headers['X-Robots-Tag'], 'noindex, follow');
   console.log('PASS: city directory coalescing/public projection, today locked filters, canonical/head/structured data and invalid-city404');
+  const monthReads = localReads.filter(read => read === '/api/calendar/2028/2').length;
+  const calendarPages = await Promise.all(Array.from({ length: 8 }, () => detailPage({ path: '/calendar/2028/2/' })));
+  assert.equal(localReads.filter(read => read === '/api/calendar/2028/2').length, monthReads + 1);
+  const month = calendarPages[0];
+  assert.equal(month.status, 200);
+  assert.equal(bootstrap(month.html).calendar.day, 29);
+  assert.match(month.html, /<link rel="canonical" href="https:\/\/example.test\/calendar\/2028\/2\/">/);
+  assert.match(month.html, /"@type":"CollectionPage"/);
+  assert.match(month.html, /<noscript>.*helmikuu 2028/);
+  const leapSelection = await detailPage({ path: '/calendar/2028/2/', search: '?day=29&page=2' });
+  assert.equal(bootstrap(leapSelection.html).calendar.day, 29);
+  assert.equal(bootstrap(leapSelection.html).calendar.page, 2);
+  assert.equal(bootstrap(leapSelection.html).calendar.events.results[0].date, '2028-02-29');
+  assert.match(leapSelection.html, /<noscript>[\s\S]*Selected calendar event<\/a>/);
+  assert.match(leapSelection.html, /href="\?day=29&amp;page=1#calendar-agenda"|href="\?day=29&page=1#calendar-agenda"/);
+  assert.match(leapSelection.html, /noindex, follow/);
+  assert.equal((await detailPage({ path: '/calendar/2028/2', search: '?day=29' })).redirect, '/calendar/2028/2/?day=29');
+  for (const path of ['/calendar/2028/13/', '/calendar/1999/12/', '/calendar/2028/']) assert.equal((await detailPage({ path })).status, 404);
+  const unavailableCalendar = await detailPage({ path: '/calendar/2028/2/', apiReadBase: `${apiReadBase}/missing-api` });
+  assert.equal(unavailableCalendar.status, 503);
+  assert.equal(unavailableCalendar.headers['X-Robots-Tag'], 'noindex, follow');
+  console.log('PASS: calendar month cache/coalescing, leap-day selection, canonical/no-JS/metadata, query preservation, annual route exclusion and failed-read503');
   const beforeOrganizations = localReads.filter(read => read.startsWith('/api/organizations/')).length;
   const organizationPages = await Promise.all(Array.from({ length: 8 }, () => detailPage({ path: `/organization/${organizationId}` })));
   await detailPage({ path: `/organization/${organizationId}` });

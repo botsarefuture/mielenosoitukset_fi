@@ -49,6 +49,14 @@ func publicResponsePolicy(r *http.Request, now time.Time) (responsePolicy, bool)
 	if err != nil {
 		return responsePolicy{}, false
 	}
+	parts := strings.Split(path, "/")
+	if len(parts) == 5 && parts[1] == "api" && parts[2] == "calendar" {
+		month, err := parseCalendarMonth(parts[3], parts[4])
+		if err != nil {
+			return responsePolicy{}, false
+		}
+		return responsePolicy{key: "/api/calendar/v1:" + month.key(), ttl: publicListTTL}, true
+	}
 	if path == "/api/cities" {
 		return responsePolicy{key: path + ":" + localDay(now), ttl: publicListTTL, dayBound: true}, true
 	}

@@ -15,7 +15,7 @@ probe_host=mielenosoitukset.fi
 host_http=http://127.0.0.1:8090
 # Keep this list in sync with the RewriteRules in react-ssr-routing.conf: a path
 # is probed here only when the reviewed include is expected to route it.
-routed_paths=(/ /cities /mielenosoitukset-tanaan /submit)
+routed_paths=(/ /cities /mielenosoitukset-tanaan /submit /calendar/)
 # The app host serves its own hashed bundle links; Flask serves /static/**.
 host_marker=/app-assets/
 

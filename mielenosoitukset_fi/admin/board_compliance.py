@@ -12,6 +12,7 @@ from .utils import mongo
 from .board_audit import log_board_action
 from mielenosoitukset_fi.utils.system_teams import board_ids, clearance_approved, clearance_record_approved
 from mielenosoitukset_fi.utils.team_governance import cast_vote, cast_joint_override, request_state, GovernanceConflict
+from mielenosoitukset_fi.utils.god_appointments import appointment_roster, required_voters, can_vote, cast_appointment_vote
 
 board_bp = Blueprint("board_compliance", __name__, url_prefix="/board")
 GOVERNANCE_CSRF_SESSION_KEY = "governance_csrf_token"
@@ -68,6 +69,9 @@ def clearance_rows():
             clearances.get(user_id),
             iso_timestamp=False,
         )
+        god_request = request_state(clearances.get(user_id), "god")
+        god_roster = appointment_roster(mongo, user_id) if user_doc.get("god_candidate") else {}
+        god_votes = (god_request.get("votes") or {}) if god_request.get("roster") == god_roster else {}
         rows.append(
             {
                 "id": user_id,
@@ -79,6 +83,11 @@ def clearance_rows():
                 "board_member": user_id in board,
                 "board_request": visible_request(clearances.get(user_id),"board"),
                 "national_request": visible_request(clearances.get(user_id),"national"),
+                "god_candidate": user_doc.get("god_candidate") is True,
+                "god_approval_count": len(god_votes),
+                "god_required": len(required_voters(god_roster)),
+                "my_god_vote": str(current_user.id) in god_votes,
+                "can_god_vote": can_vote(mongo, current_user, user_id) if user_doc.get("god_candidate") else False,
             }
         )
     return rows
@@ -126,7 +135,12 @@ def set_clearance(user_id):
 
     try:
         kind = data.get("kind","national")
-        result = cast_joint_override(mongo,user_id,current_user,kind) if data.get("override") is True else cast_vote(mongo,user_id,current_user.id,kind,approved)
+        if kind == "god":
+            if data.get("override"):
+                raise PermissionError("Tavallinen yhteinen ohitus ei korvaa god-tilin kaikkia hyväksyntöjä.")
+            result = cast_appointment_vote(mongo, user_id, current_user, approved)
+        else:
+            result = cast_joint_override(mongo,user_id,current_user,kind) if data.get("override") is True else cast_vote(mongo,user_id,current_user.id,kind,approved)
     except PermissionError as exc:
         return jsonify(status="ERROR",message=str(exc)),403
     except GovernanceConflict as exc:

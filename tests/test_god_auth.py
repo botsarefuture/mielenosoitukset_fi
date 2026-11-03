@@ -147,6 +147,12 @@ def test_owner_enrollment_stays_inactive_until_both_board_votes(app, db, teams, 
         assert not cast_vote(db, candidate, teams['admin_id'], 'national', True)['approved']
         assert db.users.find_one({'_id': candidate})['active'] is False
         assert cast_vote(db, candidate, teams['friend_id'], 'national', True)['approved']
+        # Two-person national consent no longer creates a god account.
+        assert db.users.find_one({'_id': candidate})['active'] is False
+        from mielenosoitukset_fi.utils.god_appointments import cast_appointment_vote
+        from mielenosoitukset_fi.users.models import User
+        assert not cast_appointment_vote(db, candidate, User.from_OID(teams['admin_id']), True)['approved']
+        assert cast_appointment_vote(db, candidate, User.from_OID(teams['friend_id']), True)['approved']
     user = db.users.find_one({'_id': candidate})
     assert user['active'] and user['confirmed'] and user['role'] == 'god'
     with client.session_transaction() as state:

@@ -113,7 +113,7 @@ export default function GodScreen() {
       {error && <p role="alert" className="god-auth-error">{error}</p>}
       {stage === 'enrolled' ? <p>{reply.activated
         ? 'Turvatekijät ja hallituksen hyväksynnät ovat valmiit. Voit nyt kirjautua god-tilille.'
-        : 'Turvatekijät on tallennettu. Tili pysyy poissa käytöstä, kunnes kaksi hallituksen jäsentä on hyväksynyt sen.'}</p>
+        : 'Turvatekijät on tallennettu. Tili pysyy poissa käytöstä, kunnes kaikki superylläpitäjät, hallituksen jäsenet ja nykyiset god-käyttäjät ovat hyväksyneet sen.'}</p>
         : <form onSubmit={submit}>
           {stage === 'start' && <>
             {setup ? <p>Kirjaudu ensin Olivian tavalliselle tilille. Vahvista sen salasana ja authenticator-koodi. Käyttöönoton linkki lähetetään uuden tilin sähköpostiin.</p>

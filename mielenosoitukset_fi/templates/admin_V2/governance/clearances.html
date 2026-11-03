@@ -8,7 +8,7 @@
 <section class="admin-page admin-workspace">
   {{ admin_page_hero(
     _('Superkäyttäjäroolin hyväksynnät'),
-    _('Uusi superkäyttäjä vaatii kaksi hallituksen hyväksyntää. Uusi hallituksen jäsen vaatii koko hallituksen hyväksynnän. Ohitus vaatii sekä Olivian että erillisen god-tilin vahvistuksen.'),
+    _('Uusi superkäyttäjä vaatii kaksi hallituksen hyväksyntää. Uusi hallituksen jäsen vaatii koko hallituksen hyväksynnän. Uusi god-tili vaatii kaikkien superylläpitäjien, hallituksen jäsenten ja nykyisten god-käyttäjien hyväksynnän.'),
     _('Hallinto'),
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Hallinto ja käyttöoikeudet'), url_for('admin_governance.dashboard')), (_('Superkäyttäjäroolin hyväksynnät'), none)],
     back_url=url_for('admin_governance.dashboard'),
@@ -69,6 +69,7 @@
             <td>{{ user.role or '-' }}</td>
             <td>{% if user.approved %}<span class="admin-status-badge admin-status-badge--success"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ _('Hyväksytty') }}</span>{% else %}<span class="admin-status-badge"><i class="fa-solid fa-clock" aria-hidden="true"></i>{{ user.approval_count }} / 2</span>{% endif %}
               <div>{% if user.board_member %}{{ _('Hallituksen jäsen') }}{% else %}{{ _('Hallitus') }}: {{ (user.board_request.get('votes') or {})|length }} / {{ user.board_request.get('required', board_size) }}{% endif %}</div>
+              {% if user.god_candidate %}<div>{{ _('God-tilin hyväksynnät') }}: {{ user.god_approval_count }} / {{ user.god_required }}</div>{% endif %}
               {% for name, state in [('Ylläpitäjäohitus', user.national_request), ('Hallitusohitus', user.board_request)] %}
                 {% if state.get('override_votes') and not state.get('approved') %}<div>{{ name }}: {{ state.override_votes|length }} / 2 ({{ state.override_votes.keys()|join(', ') }})</div>{% endif %}
               {% endfor %}
@@ -77,6 +78,7 @@
             <td>{{ user.timestamp|datetimeformat('%d.%m.%Y %H:%M') if user.timestamp else '-' }}</td>
             <td class="actions-cell">
               <div class="d-flex flex-wrap gap-2">
+              {% if user.god_candidate %}<button class="btn btn-sm btn-primary" type="button" data-clearance-action data-kind="god" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="{{ 'false' if user.my_god_vote else 'true' }}" data-username="{{ user.username }}" {% if not user.can_god_vote %}disabled{% endif %}>{{ _('Peru oma god-hyväksyntä') if user.my_god_vote else _('Hyväksy god-tili') }}</button>{% endif %}
               <button class="btn btn-sm {{ 'btn-outline-secondary' if user.my_vote else 'btn-primary' }}" type="button" data-clearance-action data-kind="national" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="{{ 'false' if user.my_vote else 'true' }}" data-username="{{ user.username }}" {% if not can_vote or user.id == current_user.id %}disabled{% endif %}>{{ _('Peru oma hyväksyntä') if user.my_vote else _('Hyväksy ylläpitäjäksi') }}</button>
               {% if not user.board_member %}<button class="btn btn-sm btn-outline-secondary" type="button" data-clearance-action data-kind="board" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="true" data-username="{{ user.username }}" {% if not can_vote or user.id == current_user.id %}disabled{% endif %}>{{ _('Hyväksy hallitukseen') }}</button>{% endif %}
               {% if can_override and user.id != current_user.id %}

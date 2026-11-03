@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Require unanimous approval from every super admin, board member and existing god account before activating a new god account. Freeze the approver roster, discard old votes when it changes, and keep security enrollment mandatory.
+
 - Protect the configured national-admin and board organizations from ordinary membership edits. Require two board approvals for new super admins, unanimous board approval for board additions, or a joint Olivia and freshly authenticated god-account override.
 - Add an ordered god-account login with two separately enrolled authenticators, password, email code, verified passkey, email link and a separate 64-character minimum secret. Keep new accounts inactive until owner enrollment and board approval are complete.
 - Send separate moderation action links to each city or national-team recipient. Preserve intended recipient identity alongside the actual signed-in actor in decision and case history, without treating bearer-link use as verified identity. Retain per-recipient acknowledgements and links when retrying escalation mail.

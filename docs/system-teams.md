@@ -61,7 +61,17 @@ owner installed the two TOTP secrets on physically independent devices. The owne
 must do so. Do not enroll or select passwords on the owner's behalf.
 
 Enrollment never logs the candidate in. Activation requires both completed
-enrollment and two board votes, in either order. An enrolled candidate cannot use
+enrollment and unanimous appointment consent from all existing super admins,
+board members and god accounts, in either order. Overlapping roles count as one
+distinct account, and the candidate cannot vote for itself. The first appointment
+has no existing god voters, but still requires all super admins and board members,
+including the existing minimum of two board approvals. Inactive or banned
+approvers remain in the roster; disabling accounts must not shrink the quorum.
+God voters must complete a fresh full login within five minutes. Membership or
+role changes start a new approval request without inherited votes. Activation
+rechecks the live roster, so old consent cannot authorize a changed electorate.
+The ordinary Olivia-plus-god override and two-person national approval do not
+replace appointment consent. An enrolled candidate cannot use
 initial setup to replace factors. Recovery of lost god factors requires an
 explicit, audited offline procedure; ordinary password reset alone does not
 produce a valid god login or bypass the remaining factors.
@@ -87,6 +97,22 @@ Olivia owns both accounts, this is two-account confirmation, not independent
 human approval. Disabling a board member's account never shrinks the board roster.
 
 ## Provisioning and rollback
+
+Emergency appointment is not enabled by the ordinary joint-override endpoint.
+The requested separate `panel.lan` path still needs a verified deployment target
+and the maintainer's emergency board-quorum choice. It must bind a named board
+decision, target, reason, electorate, expiry and single-use challenge to either
+a fresh complete god login or a signature from a separately registered USB key.
+Neither proof may bypass the nominee's security enrollment. A panel button must
+send credentials only to the production HTTPS authentication origin, never the
+current plain-HTTP LAN dashboard. LAN reachability is not authentication.
+
+The attached `VAULT-KEY-A` already contains a SessionVault key. Do not read, reuse
+or replace that key for this feature. Use a separate encrypted appointment key;
+the Mac-side signer must verify the mounted USB device before signing and never
+upload its private key. An ordinary USB key is copyable and is not equivalent to
+a non-exportable hardware authenticator. No USB key or emergency trust anchor has
+been generated, registered or activated by this change.
 
 Deploy and verify protections before configuring or seeding memberships. Use
 `scripts/provision_system_teams.py` first without `--apply`, supplying deliberate

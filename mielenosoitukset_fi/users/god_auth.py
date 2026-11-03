@@ -172,7 +172,9 @@ def _email_origin():
 def activate_enrolled_candidate(db, user_id):
     """Either ordering of owner enrollment and board consent is supported."""
     user = db.users.find_one({"_id": ObjectId(str(user_id)), "god_candidate": True, "god_security.policy": 1})
-    if not user or not credential_version(db, user) or not clearance_approved(db, user_id) or "national" not in user_team_access(db, user_id):
+    from mielenosoitukset_fi.utils.god_appointments import appointment_approved
+    if (not user or not credential_version(db, user) or not appointment_approved(db, user_id)
+            or not clearance_approved(db, user_id) or "national" not in user_team_access(db, user_id)):
         return False
     changed = db.users.update_one({"_id": user["_id"], "god_candidate": True, "god_security.policy": 1}, {"$set": {
         "role": "god", "active": True, "confirmed": True, "governance_managed": True, "god_candidate": False}})

@@ -66,6 +66,7 @@ function assetTags(manifest) {
     today: routeAssets('src/app/TodayScreen.tsx'),
     submit: routeAssets('src/app/SubmitScreen.tsx'),
     calendar: routeAssets('src/app/CalendarScreen.tsx'),
+    godAuth: routeAssets('src/app/GodScreen.tsx'),
     head: [...css].map((file) => `<link rel="stylesheet" href="/app-assets/${file}">`)
       .concat([...modules].filter((file) => file.endsWith('.js'))
         .map((file) => `<link rel="modulepreload" href="/app-assets/${file}">`)).join('\n'),

@@ -63,6 +63,10 @@ def create_token(
     Categories: user, app, system, session.
     token_type: short (48h), long (90d), session (7d). Long is typically created via exchange.
     """
+    if user_id:
+        user = get_database_manager()["users"].find_one({"_id": ObjectId(user_id)}, {"role": 1})
+        if user and user.get("role") == "god":
+            raise ValueError("God-tilille ei luoda kirjautumisvaiheet ohittavaa API-tokenia.")
     if scopes is not None and (
         not isinstance(scopes, (list, tuple, set))
         or not all(isinstance(scope, str) for scope in scopes)
@@ -115,6 +119,11 @@ def check_token(token: str):
 
     if token_expired(record):
         raise ApiException(Message("Token has expired", "token_expired"), 401)
+
+    if record.get("user_id"):
+        user = get_database_manager()["users"].find_one({"_id": ObjectId(record["user_id"])}, {"role": 1})
+        if user and user.get("role") == "god":
+            raise ApiException(Message("God accounts require the full interactive login", "god_interactive_required"), 403)
 
     return record
 

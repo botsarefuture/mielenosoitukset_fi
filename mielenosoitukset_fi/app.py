@@ -173,12 +173,17 @@ def create_app(config_overrides=None) -> Flask:
     def clear_old_mfa_binding(sender, user, **extra):
         """A new sign-in replaces any prior MFA credential binding."""
         session.pop("mfa_credential_version", None)
+        session.pop("god_login_receipt", None)
 
     # User Loader function
     @login_manager.user_loader
     def load_user(user_id):
         user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
         if user_doc:
+            if user_doc.get("role") == "god":
+                from mielenosoitukset_fi.users.god_auth import valid_god_session
+                if not valid_god_session(mongo, user_doc):
+                    return None
             bound_version = session.get("mfa_credential_version")
             current_version = hashlib.sha256(user_doc["password_hash"].encode("utf-8")).hexdigest()
             if bound_version is not None and bound_version != current_version:

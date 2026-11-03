@@ -3,6 +3,7 @@ import re
 from mielenosoitukset_fi.utils.time_utils import utcnow
 
 from tests.conftest import _client_for_user
+from tests.test_system_teams import teams
 
 
 def _governance_csrf_headers(client):
@@ -26,7 +27,7 @@ def test_governance_dashboard_collects_admin_tools(app, db, seeded_data):
     assert "Avaa admin-valikko" in page
 
 
-def test_board_clearance_is_persisted_and_audited(app, db, seeded_data):
+def test_board_clearance_is_persisted_and_audited(app, db, seeded_data, teams):
     client = _client_for_user(app, seeded_data["admin_id"])
     user_id = str(seeded_data["user_id"])
 
@@ -37,11 +38,14 @@ def test_board_clearance_is_persisted_and_audited(app, db, seeded_data):
     )
 
     assert response.status_code == 200
+    assert response.json['approved'] is False
+    second = _client_for_user(app, seeded_data['friend_id'])
+    assert second.post(f"/board/api/clearance/{user_id}", json={'approved': True}, headers=_governance_csrf_headers(second)).json['approved'] is True
     clearance = db.board_clearances.find_one({"user_id": user_id})
     assert clearance["approved"] is True
-    assert clearance["granted_by"] == "admin"
+    assert clearance["granted_by"] == "bob"
     assert db.board_audit_logs.find_one(
-        {"user_id": user_id, "action": "myönnetty"}
+        {"user_id": user_id, "action": "hyväksyntä"}
     )
 
     page = client.get("/admin/governance/clearances").get_data(as_text=True)
@@ -199,7 +203,7 @@ def test_governance_migration_preserves_existing_city_managers(db):
     assert "user_id_1" in db.board_clearances.index_information()
 
 
-def test_global_admin_promotion_requires_persistent_clearance(app, db, seeded_data):
+def test_global_admin_promotion_requires_persistent_clearance(app, db, seeded_data, teams):
     client = _client_for_user(app, seeded_data["admin_id"])
     user_id = seeded_data["user_id"]
     payload = {
@@ -219,10 +223,13 @@ def test_global_admin_promotion_requires_persistent_clearance(app, db, seeded_da
         json={"approved": True},
         headers=_governance_csrf_headers(client),
     )
-    promoted = client.post(f"/admin/user/save_user/{user_id}", data=payload)
-
-    assert promoted.status_code == 302
-    assert db.users.find_one({"_id": user_id})["role"] == "global_admin"
+    second = _client_for_user(app, seeded_data['friend_id'])
+    second.post(f"/board/api/clearance/{user_id}", json={'approved': True}, headers=_governance_csrf_headers(second))
+    from mielenosoitukset_fi.users.models import User
+    with app.app_context():
+        assert User.from_OID(user_id).has_full_permissions()
+    # Membership confers access directly, without persisting a permanent role.
+    assert db.users.find_one({"_id": user_id})["role"] == "user"
 
 
 def test_city_permission_is_independent_from_user_editing(app, db, seeded_data):

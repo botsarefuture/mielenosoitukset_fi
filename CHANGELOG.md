@@ -4,6 +4,14 @@
 
 ## UNRELEASED
 
+- Add a disabled-by-default emergency god-appointment path for the homelab `panel.lan` button. A request must be launched by a panel-signed ticket and then completed by either two distinct board votes, or a registered USB-key signature plus a fresh complete god login. Bind the target, credential version, board roster, reason and single-use challenge to a fifteen-minute expiry; keep security enrollment mandatory and recheck the live roster at activation.
+
+- Require unanimous approval from every super admin, board member and existing god account before activating a new god account. Freeze the approver roster, discard old votes when it changes, and keep security enrollment mandatory.
+
+- Protect the configured national-admin and board organizations from ordinary membership edits. Require two board approvals for new super admins, unanimous board approval for board additions, or a joint Olivia and freshly authenticated god-account override.
+- Add an ordered god-account login with two separately enrolled authenticators, password, email code, verified passkey, email link and a separate 64-character minimum secret. Keep new accounts inactive until owner enrollment and board approval are complete.
+- Send separate moderation action links to each city or national-team recipient. Preserve intended recipient identity alongside the actual signed-in actor in decision and case history, without treating bearer-link use as verified identity. Retain per-recipient acknowledgements and links when retrying escalation mail.
+
 - Move the calendar month view to the standalone React host with a clear day selector and shared event cards. Count only the requested month through the cached public Go API, paginate busy days, and preserve month navigation, event links, SEO and a readable no-JavaScript fallback. The year view retains its existing handler.
   - Keep populated-day links usable without JavaScript by rendering the selected day's event links and pagination from one cached Go listing batch, which React also reuses.
 

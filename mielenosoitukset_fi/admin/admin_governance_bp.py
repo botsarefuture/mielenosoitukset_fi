@@ -10,6 +10,8 @@ from .board_audit import audit_rows
 from .board_compliance import clearance_rows, governance_csrf_token
 from .pagination import build_admin_pagination, parse_admin_pagination
 from .utils import _ADMIN_TEMPLATE_FOLDER, mongo
+from mielenosoitukset_fi.utils.system_teams import board_ids, clearance_record_approved
+from mielenosoitukset_fi.utils.team_governance import override_role
 
 
 admin_governance_bp = Blueprint(
@@ -37,7 +39,7 @@ def dashboard():
     if not any(permissions.values()):
         abort(403)
 
-    clearance_count = mongo.board_clearances.count_documents({"approved": True})
+    clearance_count = sum(clearance_record_approved(row) for row in mongo.board_clearances.find({"approved": True}))
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}governance/dashboard.html",
         permissions=permissions,
@@ -89,6 +91,9 @@ def clearances():
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}governance/clearances.html",
         users=users,
+        can_vote=str(current_user.id) in board_ids(mongo),
+        can_override=override_role(mongo,current_user) is not None,
+        board_size=len(board_ids(mongo)),
         approved_count=approved_count,
         total_count=total_count,
         filtered_count=filtered_count,

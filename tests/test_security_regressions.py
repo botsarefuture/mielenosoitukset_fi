@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_legacy_settings_rejects_privilege_fields(user_client, db, seeded_data):
     response = user_client.post(
         "/users/auth/api/v1/settings/",
@@ -36,15 +39,26 @@ def test_legacy_settings_still_updates_allowed_fields(user_client, db, seeded_da
     assert user["city"] == "Helsinki"
 
 
-def test_ordinary_user_cannot_issue_mcp_admin_token(user_client, db, seeded_data):
+@pytest.mark.parametrize("role", ["user", "admin"])
+@pytest.mark.parametrize("privileged_scope", ["admin", "mcp.admin"])
+def test_non_global_user_cannot_issue_privileged_token(user_client, db, seeded_data, role, privileged_scope):
+    db.users.update_one({"_id": seeded_data["user_id"]}, {"$set": {"role": role}})
+    # Elevation proves identity; it must not grant a limited user global authority.
+    step_up = user_client.post(
+        "/users/auth/api/v2/step-up/password",
+        json={"password": "UserPass1!"},
+    )
+    assert step_up.status_code == 200
+    assert user_client.get("/users/auth/api/v2/step-up/status").get_json()["elevated"] is True
     tokens_before = db.api_tokens.count_documents({"user_id": seeded_data["user_id"]})
 
     response = user_client.post(
         "/users/auth/api_token",
-        json={"type": "short", "scopes": ["read", "mcp.admin"]},
+        json={"type": "short", "scopes": ["read", privileged_scope]},
     )
 
     assert response.status_code == 403
+    assert response.get_json()["error"] != "step_up_required"
     assert db.api_tokens.count_documents({"user_id": seeded_data["user_id"]}) == tokens_before
 
 
@@ -60,12 +74,13 @@ def test_api_token_rejects_unknown_scopes(user_client, db, seeded_data):
     assert db.api_tokens.count_documents({"user_id": seeded_data["user_id"]}) == tokens_before
 
 
-def test_api_token_rejects_malformed_scope_payload(user_client, db, seeded_data):
+@pytest.mark.parametrize("scopes", ["mcp.admin", ["read", 1]])
+def test_api_token_rejects_malformed_scope_payload(user_client, db, seeded_data, scopes):
     tokens_before = db.api_tokens.count_documents({"user_id": seeded_data["user_id"]})
 
     response = user_client.post(
         "/users/auth/api_token",
-        json={"type": "short", "scopes": "mcp.admin"},
+        json={"type": "short", "scopes": scopes},
     )
 
     assert response.status_code == 400

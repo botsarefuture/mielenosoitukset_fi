@@ -5,6 +5,188 @@
 ## UNRELEASED
 
 - Strengthen identity regression tests for wrong-password rejection, normalized and legacy MFA preflights, canonical uniqueness and duplicate-email registration; individually assess the existing identity tests. Authentication behavior is unchanged.
+- Move the annual calendar to React with one cached Go summary for the whole year. Add city month/year calendars, a shared area selector, city-scoped navigation and calendar links on event listings. Reuse the accessible month grid and preserve event links, SEO and working no-JavaScript navigation.
+
+- Automatically activate the committed Apache routing after a main-branch production deployment passes its health checks. Keep configuration validation, rollback backups and an opt-out for manually dispatched deployments.
+
+- Replace the god-appointment quorum with two chambers: the whole board or every existing god user nominates, the other chamber then has 48 hours to veto, and a veto moves the decision to a second round where 75 prosenttia of all board and god users combined must approve. Ordinary super admins no longer participate, the first god needs only the whole board, and the fixed two-board emergency bypass is removed while the USB + fresh god login route stays available.
+- Add audited security cases for privileged accounts: two board members or one freshly authenticated god user can suspend, the owner's sessions, API tokens and magic links are revoked immediately, removal needs a majority of the unaffected board, and the seven-day review deadline escalates instead of restoring access. Block privileged account edits, token creation and magic links while a case is open, and notify the board and god users.
+- Extend the public lockdown to the React host and the Go API: locked pages answer 503 with `Retry-After` and `noindex` from a shared one-second gate outside response caches, while health checks, authentication and administration stay reachable.
+
+- Add a disabled-by-default emergency god-appointment path for the homelab `panel.lan` button. A request must be launched by a panel-signed ticket and then completed by either two distinct board votes, or a registered USB-key signature plus a fresh complete god login. Bind the target, credential version, board roster, reason and single-use challenge to a fifteen-minute expiry; keep security enrollment mandatory and recheck the live roster at activation.
+
+- Require unanimous approval from every super admin, board member and existing god account before activating a new god account. Freeze the approver roster, discard old votes when it changes, and keep security enrollment mandatory.
+
+- Protect the configured national-admin and board organizations from ordinary membership edits. Require two board approvals for new super admins, unanimous board approval for board additions, or a joint Olivia and freshly authenticated god-account override.
+- Add an ordered god-account login with two separately enrolled authenticators, password, email code, verified passkey, email link and a separate 64-character minimum secret. Keep new accounts inactive until owner enrollment and board approval are complete.
+- Send separate moderation action links to each city or national-team recipient. Preserve intended recipient identity alongside the actual signed-in actor in decision and case history, without treating bearer-link use as verified identity. Retain per-recipient acknowledgements and links when retrying escalation mail.
+
+- Move the calendar month view to the standalone React host with a clear day selector and shared event cards. Count only the requested month through the cached public Go API, paginate busy days, and preserve month navigation, event links, SEO and a readable no-JavaScript fallback. The year view retains its existing handler.
+  - Keep populated-day links usable without JavaScript by rendering the selected day's event links and pagination from one cached Go listing batch, which React also reuses.
+
+- Show the event date in submission confirmation emails in Finnish day.month.year format instead of the database's ISO format.
+
+- Preserve Go form submissions from the existing `www.mielenosoitukset.fi` hostname while retaining strict Origin checks for other hosts.
+
+- Move the submission form to the standalone React host and add opt-in Go submission intake with bounded validation, shared rate limits, duplicate protection and crash-safe writes. Keep email delivery and trusted moderation-link preparation in Flask's existing worker; preserve drafts, imports, duplicate confirmation and a no-JavaScript form.
+  - Give the submission calendar seven explicit, equal-width date columns so weekend dates remain clearly separated in both themes.
+  - Keep completed form tokens tied to their original event after the twelve-hour duplicate window, and read Go's accepted content languages from the same nested Babel settings as Flask.
+
+- Keep every configured WebAuthn origin, so passkey registration and step-up login work on both `mielenosoitukset.fi` and `www.mielenosoitukset.fi`. App creation used to replace the configured list with the single primary origin, which failed origin validation on the www host.
+
+- Deploy the React public host and the Go public API from CI instead of a developer workstation. A push to `main` now builds and publishes both artifacts with a checksummed release manifest, and the existing restricted SSH deploy installs them after Flask, verifying each service's reported build SHA. Only services that do not already report the commit are touched, so retries are safe. Apache routing remains an explicit manual dispatch because it changes which URLs the host answers.
+
+- Redesign the city directory with search, clear upcoming/today counts and direct links. Move cities and today pages to the standalone React host with a cached Go summary API, shared event cards, Helsinki-day filtering, server-delivered SEO metadata and consistent normal page navigation.
+
+- Make Go homepage and listing code easier to follow with named loading, validation and card-formatting helpers. Add bounded shared Redis response caching and explicit public cache policies while preserving response bodies, filtering and privacy boundaries.
+
+- Use the full available page width for organization headers, center the logo above the name and description, and remove the redundant organization eyebrow. Present verification as supporting information rather than a button, center contact details and social links in responsive cards, and correct inherited icon spacing.
+
+- Move public organization profiles to the standalone React host, with a bounded public Go profile cache and the Go event listing API. Keep follows, invitations and management permissions private and fresh, preserve existing action URLs, invitation feedback and signed-in chat, and load organization code only on organization pages. The chat connection and panel load only when opened.
+  - Keep the mobile back-to-top control separate from chat and organization management tools.
+
+- Move the main, city and tag demonstration listings into the standalone React host with React-owned search, filters and pagination. A bounded, cached public Go listing API supplies the first batch in the document and subsequent pages, preserving RSS links and existing attendance actions.
+
+- Keep the React listing calendar readable in both themes when the vendor calendar stylesheet loads after the shared product styles.
+
+- Keep the standalone detail and series screens at the existing full page width, and wrap long Finnish event titles inside the mobile heading.
+
+- Preserve Matomo analytics on standalone React demonstration and series pages while keeping their existing demonstration-view tracking separate from homepage pageview signals.
+
+- Restore the correct detail page when browser Back returns from an in-app homepage visit, loading the destination's metadata and event instead of leaving the homepage under the detail URL.
+
+- Reject malformed recurring-series moderation flags in the public API, keeping hidden or invalid parents out of the React series screen.
+
+- Preserve explicit recurring-occurrence links outside the chooser window, including cancelled events, while verifying the selected event belongs to the requested public series.
+
+- Preserve the reverse proxy's validated client address when the React host reads Flask sessions over its socket, preventing signed-in visitors from sharing one rate-limit bucket. Production host reads now use the Go API on loopback, avoiding a public CDN round trip.
+
+- Close the remaining legacy sections of the demonstration detail screen: the public API now returns the attendance total (`likes`, null when the stored counter is unusable), and the React page shows the participant count, the countdown to the start, the organizer logo, an empty-description note and an explicit “participation is closed” notice for cancelled events instead of silently dropping those blocks. Unit words come from `Intl`, so no new translation msgids were added. Visual acceptance for these states is still open.
+
+- Stop the API's Apache vhost from overriding response caching: `Header always set Cache-Control "no-store"` wrote `err_headers_out`, which Apache merges into the proxied response instead of replacing it, so every answer shipped `no-store` next to the API's own policy and browsers and Cloudflare could not use the cached reads' `max-age`/`s-maxage`. The vhost now leaves `Cache-Control` to the API, which sets it on every response.
+
+- Serve recurring series from React: a new public `GET /api/series/<parent>` returns the parent's visibility and the same bounded occurrence list the Flask chooser reads, the host renders `/demonstration/<parent>/children` with the series navigation and the series canonical URL, and an occurrence URL of a public series 301s to the series page instead of staying a dead end. Occurrences list by date, then start time, then id, and an occurrence without an announced time sorts after one that has one on the same day. The Apache rules stay commented out until activation is approved.
+
+- Cut the React host's own latency: server-side reads now prefer a local API address (`PUBLIC_API_LOCAL`) instead of a public round trip, detail head metadata is cached for 60 s, and the home card batch is read once, cached for 30 s and inlined into the document so cards paint without a second request. Only public metadata is cached; sessions stay uncached.
+
+- Restore the structured suggest-an-edit path on the React demonstration detail page: the report dialog opens on the same choice as the legacy modal, so visitors can correct fields on the existing suggestion page or send a free-text report instead of only the latter.
+
+- Prepare the React host to serve `/demonstration/<identifier>`: one bounded public-API read builds the head (title, description, canonical slug URL, Open Graph, Event JSON-LD, two-year-horizon `noindex` in the head and `X-Robots-Tag`), the page body comes from the existing detail screen, a missing event is 404 or the signed-in `?preview=1` Flask fallback, and an API failure is 503 instead of an indexable shell. The Apache rule is prepared but left disabled until the visual review and maintainer approval.
+
+- Resolve demonstration identifiers before the public API's detail cache, so slugs, running numbers and aliases work on the cached endpoint production uses. Only the body is cached, keyed by the resolved ObjectId, so renamed slugs and moderation changes apply on the next request.
+
+- Share one detail browser adapter between the Flask island and the React host, so URL history, occurrence navigation, `action` intents, login links and the single view-tracking call stay identical across both hosts.
+
+- Move the demonstration detail screen's copy and account endpoints into the React host's TypeScript catalog (`frontend/src/app/detail.ts`), so the detail route can render without Flask template props. A parity test keeps those strings identical to the msgids the Flask shell still supplies, and `en`/`sv` wait for human translations.
+
+- Temporarily disable organization follows on demonstration detail pages: an info box above Järjestäjät explains the technical break and points to the organization's own page, and the follow button renders disabled instead of submitting.
+
+- Serve the public front page from the React host in production: Apache routes only `GET`/`HEAD /` and `/app-assets/**` to a checksum-verified Node release on loopback, while Flask keeps every other page, API, form and write. The host reads the signed-in header summary over the existing Gunicorn socket, so no credentials are copied to it.
+
+- Ship the public React host as a versioned, checksum-verified release bundle with its own systemd unit and a deploy script that refuses unsafe archives and requires exact-build health. Node runs as `www-data` on loopback and reads the Flask session over the existing Unix socket, so the new service holds no database credentials or application secret.
+
+- Let the public Go API resolve demonstration identifiers the way the site already does (ObjectId, alias, running number, slug) and return a recurring event's series `parent`, so a host can serve the existing `/demonstration/<slug>` URLs and link back to a series without a Flask request. Public ObjectIds resolve in one indexed read. Nonpublic events stay 404, including through their aliases.
+
+- Cache cookieless public React-host configuration for five minutes, reducing repeat lookups while keeping private sessions uncached.
+
+- Keep the public React host alive on malformed asset requests, use asynchronous file reads, and avoid repeated cookieless configuration requests while keeping private sessions isolated.
+
+- Preserve the standalone React host's page, campaign and visitor aggregates, Matomo and Web Vitals through configuration-controlled, nonblocking browser hooks. Browser page signals accept only the migrated home route and retain the existing bot, DNT and privacy limits.
+
+- Add a standalone React host for the public front page: the server writes only the document metadata and an empty app root, the browser renders the shared header, page content and footer, and events keep coming from the public Go home API. Add a read-only `GET /api/session` summary for the signed-in header, explicit GET-only Apache routing for migrated pages, and keep every other route and form on Flask.
+
+- Keep successfully submitted React drafts cleared, restore visible duplicate confirmation and Escape cancellation, display readable duplicate dates, and focus the visible date/city controls on validation errors.
+
+- Show a whole-site performance timeline above a table of normalized page URI groups. Selecting a page changes its daily-average chart while preserving the date range and metric; undersampled days remain gaps.
+
+- Update the real-HTTP smoke and shared-header contract tests to the deployed React home shell from #1007: the home page ships no server-side `demos-grid` anymore, loads exactly the shared header plus one home entry, and the smoke test now verifies that the island mounts and renders the `/api/home` data contract over the live server.
+
+- Add `scripts/open_pr.sh`, a maintainer helper that opens or reuses a GitHub pull request using the stored `git push` credential, so PR creation works without an interactive `gh auth login`.
+
+- Fix the React submission page's date, city and route controls: one visible date/time picker per field with a hidden ISO value, a field-styled city picker whose panel opens under the trigger, a readable calendar in dark mode, the march route section for `marssi`, and a "delete draft" button that no longer re-saves the draft on reload.
+
+- Add an opt-in React submission page (`PUBLIC_SUBMIT_REACT_ENABLED`) that owns the whole `/submit` wizard with `react-quill-new` and `flatpickr`, keeping the existing draft format, field names, Facebook import, organization lookup, conflict retry and multipart POST contract. The legacy template stays the default and a `<noscript>` form preserves no-JavaScript delivery.
+
+- Add a page-family filter to the admin Core Web Vitals report, with scoped sample counts and p50/p95/p99 values while preserving the selected date range.
+
+- Simplify the React front page around event discovery, shared cards and direct search. Load public home events directly from Go, removing event queries from Flask, legacy home scripts/styles and render-blocking home font loading. Keep page controls usable while events load, with clear retry and empty states.
+
+- Fix organizer profile links on demonstration details and restore Mastodon, X and LinkedIn sharing alongside Facebook and link copying.
+
+- Preserve demonstration-view analytics in the React detail page on initial display and occurrence navigation, without counting rerenders or retries as extra views.
+
+- Add an opt-in client-rendered React demonstration detail page that reads public content directly from the Go API, while keeping lightweight SEO metadata, recurring URLs and legacy account workflows.
+
+- Cache Go demonstration detail content for 15 minutes in bounded process memory while rechecking public visibility on every hit.
+
+- Add isolated Go API production service and Apache/TLS deployment configuration for api.mielenosoitukset.fi, with exact-build health checks and private reuse of the authorized production database settings.
+
+- Add the first independent Go public demonstration read API with explicit public-field and visibility boundaries, open CORS and bounded MongoDB reads. Existing pages and authenticated workflows remain unchanged.
+
+- Count only pageviews in site-analytics totals, traffic charts and breakdowns; exclude events, redirects, HEAD and prefetch requests. Show Matomo-compatible campaign-link pageviews separately, without adding cookies or visitor profiles.
+
+- Keep the mobile admin menu clickable beneath an empty toast layer while retaining interactive toast dismissal.
+
+- Keep RSS cache entries separate for distinct Unicode city/tag filters, matching the literal database query.
+
+- Fix shared admin logout initialization so admin pages load without JavaScript errors and confirmation correctly resets and cancels its countdown.
+
+- Reuse the shared React demonstration listing on Pride näkyväksi, add a safe React map with complete scoped pagination and real event counts, and simplify the responsive Pride page in Finnish, English and Swedish. Preserve all three public URLs, submission guidance, map attribution and independently usable listing/error states.
+- Track RSS fetches, conditional polls and estimated active reader-days in existing analytics, keeping them separate from website visitors and subscriber counts; respect tracking settings and DNT without storing raw client identifiers.
+
+- Restrict RSS to upcoming approved public demonstrations, add city/tag subscriptions, and isolate cached feed scopes with stable conditional HTTP responses. Add feed autodiscovery and RSS links to main, city and tag listings.
+
+- Reduce repeated test-user setup work and bound stalled CI tests with thread diagnostics and slow-test timings; retain the complete test selection.
+
+- Center completed-step checkmarks inside the submission progress circles on desktop and mobile.
+
+- Modernize the demonstration submission flow with reusable React progress, import-choice and navigation components, a full-width product-token layout and accessible step focus. Preserve existing fields, imports, drafts and multipart submission; only explicit JSON success clears a draft. Restore date/time picker displays as well as their submitted values so restored drafts remain valid.
+
+- Reuse shared React cards, search, bounded pagination and retry states on organization event lists, preserving organization scope, cancelled events and existing profile actions. Use available page width and a section heading under the organization name, with English and Swedish empty-state messages.
+
+- Keep loaded demonstration cards in one continuous responsive grid, filling rows across page boundaries while preserving card columns, bounded loading, focus and scroll restoration during eviction and resizing.
+
+- Keep successfully rendered listing pages visible when another card batch fails, expose retry without advancing the result count, and display missing clock information without orphaned time labels. Extend repeatable real-application checks for nullable clocks and pagination.
+
+- Fix blank demonstration listings when an event has a null start or end time; keep rendering the complete card batch.
+
+- Add a repeatable local before/after listing latency comparison with isolated fixtures, raw samples and p50/p95/p99 summaries.
+
+- Keep the public localization smoke check aligned with the React listing mount and server search fallback, and include it in the reusable listing verification command.
+
+- Add one reusable local React-listing verification command for builds, focused regression checks and real-application screenshots with source/image hashes and decoded-photo checks.
+
+- Move the main, city and tag demonstration listings onto shared React page, search and card components while retaining existing event-card presentation, canonical event links and scoped filters.
+- Use the available page width with a responsive card grid. Group the heading and search in one brand-aligned panel, replace redundant heroes and eyebrow labels, and give the all-events link a styled secondary action.
+- Preserve the bounded five-page loading window, URL/history state, localized date/city widgets and per-page attendance requests. Card and friend text now render safely through React; event invitation links retain existing occurrence query parameters.
+- Keep campaign asset-isolation and account-settings syntax checks compatible with the shared React header: require the intended page/header bundles and validate inert JSON props separately from executable JavaScript.
+
+- Move the shared public header into reusable React navigation, language, account, notification and theme components using the existing Vite foundation. Preserve Flask-controlled links/permissions and readable navigation when JavaScript or the header bundle is unavailable.
+- Record the modernization context and prioritize header, demonstration listings, then event/recurring-series pages; retain existing data and authentication throughout the gradual migration.
+
+- Rebuild campaign and volunteer-confirmation presentation with the existing React foundation, brand-book typography and concise public copy. Reuse the standard site header/footer and simplify campaign and pienkeräys layouts without changing other public pages. Keep the approved volunteer form component unchanged, remove public procurement quantities/costs and celebratory confirmation language, and retain readable server HTML with disabled no-JavaScript forms.
+
+- Roadmap: adopt migration to React whenever public pages are changed, with an eventual entirely React public frontend; retain Flask backend and current admin, and track staged delivery and compatibility requirements under UI-06.
+
+- Move the campaign volunteer form to an isolated React component while preserving signup, confirmation and translations. Add a reusable TypeScript/Vite build and Flask asset integration for gradual public-frontend migration, without loading React in the admin or other public pages.
+- Keep campaign and fundraising pages behind login until an authorized administrator publishes them from campaign management. Protect the volunteer API, hide unpublished discovery links, and support returning pages to private; publication never enables donations.
+
+- Clarify volunteer roles and email confirmation on the existing campaign page, with readable campaign metrics, focused inputs and footer in both themes, mobile forms, visible submission progress, control-level validation focus and safe JavaScript-disabled guidance for both signups.
+
+- Add a mobile-friendly `/keräys` page with clearly marked pending details and one fill-in configuration file for the planned €2,500 collection. Confirmed bank/payment-link instructions require explicit activation and valid collection dates. Add an opt-in site-header link and refresh campaign fundraising information while preserving existing signups.
+
+- Require session-bound CSRF proof before single or bulk revocation of admin magic links.
+
+- Strengthen regression protection for Mongo client argument forwarding, first-overflow pagination metadata and permission-decorator dispatch; retain parser tests where no additional coverage is justified.
+
+- Require full global authority and session-bound CSRF proof for OAuth MCP consent; prevent simultaneous reuse of authorization codes.
+
+- Keep MCP credential fragments out of debug logs and return structured scope-denial errors; strengthen existing read-only, filtering, history and client-authentication regression checks.
+
+- Restrict privileged `admin` and `mcp.admin` API-token issuance to full global authority, including after password step-up; preserve ordinary and limited-admin denial.
+
+- Strengthen existing regression checks for session-proof time bounds and token revocation without deleting other usable credentials.
+- Admin MCP now accepts populated profile links and name-only freeform event organizers using the dashboard's shared parser, prevents blank organizer cards, makes unknown end times and organization descriptions optional, and supports image-byte uploads to event covers, previews, galleries and organization logos through the existing storage pipeline. Replacing an automatic cover marks the new image as user-provided so it remains visible on the event page.
 
 - Show support-ticket outgoing replies in a dedicated, permission-scoped history with sender, recorded recipient, queued/sent times, full escaped message and explicit queue/failure status. New replies retain their actual recipient; older records show unknown rather than guessing from the current contact address. Shared message styling preserves line breaks in both themes.
 

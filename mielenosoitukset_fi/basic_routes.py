@@ -10,6 +10,8 @@ import time
 import uuid
 import hashlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
+from mielenosoitukset_fi.utils.fundraising import fundraising_details
+from mielenosoitukset_fi.utils.campaign_publication import campaign_pages_public, campaign_preview_required
 from datetime import datetime, date, timedelta, timezone
 from urllib.parse import parse_qs, urlencode, urlsplit
 from flask_babel import _, refresh, format_date, get_locale
@@ -52,6 +54,7 @@ from mielenosoitukset_fi.utils.public_pagination import (
 from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.site_analytics import (
     record_beacon_event,
+    record_public_app_pageview,
     record_event_for_request,
     record_web_vital,
 )
@@ -1296,6 +1299,22 @@ def init_routes(app):
         record_beacon_event(payload)
         return jsonify({"ok": True})
 
+    @app.route("/api/analytics/pageview", methods=["POST"])
+    @_optional_limit("60 per minute")
+    def track_public_app_pageview():
+        """Receive anonymous display signals only for migrated React pages."""
+        if request.content_length is not None and request.content_length > 1024:
+            return jsonify({"ok": True})
+        raw_payload = request.stream.read(1025)
+        if len(raw_payload) > 1024:
+            return jsonify({"ok": True})
+        try:
+            payload = json.loads(raw_payload.decode("utf-8")) if request.is_json else None
+        except (UnicodeDecodeError, ValueError):
+            payload = None
+        record_public_app_pageview(payload, request)
+        return jsonify({"ok": True})
+
     @app.route("/api/analytics/vitals", methods=["POST"])
     @_optional_limit("120 per minute")
     def track_web_vital():
@@ -1420,8 +1439,10 @@ def init_routes(app):
                 {"loc": "contact"},
                 {"loc": "api_docs"},
                 {"loc": "pride_nakyvaksi"},
-                {"loc": "campaign.index"},
             ]
+
+            if campaign_pages_public():
+                static_routes.extend([{"loc": "campaign.index"}, {"loc": "fundraising"}])
 
             # Helper to add url + optional alternate links
             def _add_url_with_alternates(parent, endpoint, lastmod=None, **values):
@@ -1696,6 +1717,7 @@ def init_routes(app):
             xml_bytes = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
             resp = Response(xml_bytes, mimetype="application/xml")
             resp.headers["Content-Type"] = "application/xml; charset=utf-8"
+            resp.headers["Cache-Control"] = "no-store"
             return resp
 
         except Exception:
@@ -1746,81 +1768,98 @@ def init_routes(app):
     
     @app.route("/")
     def index():
-        """
-        Render the index page with recommended and featured demonstrations.
-        Uses caching for recommended demos for performance.
-        """
-        today = date.today()
-
-        # --- Recommended demos (cached) ---
-        cache_key = "recommended_demos_v1"
-        recommended_demos = None
-
-        if hasattr(cache, "get") and callable(cache.get):
-            recommended_demos = cache.get(cache_key)
-
-        if recommended_demos is None:
-            # Get recommended demo_ids from the recommended_demos collection
-            recs = list(mongo.recommended_demos.find({}))
-            demo_ids = [ObjectId(rec["demo_id"]) for rec in recs if "demo_id" in rec]
-
-            # Fetch demos, filter for approved and not hidden
-            demos = list(
-                mongo.demonstrations.find({
-                    "_id": {"$in": demo_ids},
-                    "approved": True,
-                    "hide": {"$ne": True},
-                    "cancelled": {"$ne": True},
-                })
-            )
-
-            # Sort by recommend_till (or fallback to date)
-            def get_recommend_till(d):
-                rec = next((r for r in recs if str(r["demo_id"]) == str(d["_id"])), None)
-                return rec["recommend_till"] if rec else d.get("date", "9999-12-31")
-
-            demos.sort(key=get_recommend_till)
-
-            # Remove past demos
-            demos = [
-                d for d in demos
-                if datetime.strptime(d["date"], "%Y-%m-%d").date() >= today
-            ]
-
-            recommended_demos = demos
-
-            if hasattr(cache, "set") and callable(cache.set):
-                cache.set(cache_key, recommended_demos, timeout=60 * 10)  # Cache 10 min
-
-        # --- Featured / other demos ---
-        filtered_demonstrations = list(
-            demonstrations_collection.find(
-                _build_public_demo_query(today),
-            )
-            .sort("date", ASCENDING)
-            .limit(6)
-        )
-
-        locale = _current_demo_language()
-        localized_filtered_demonstrations = _localized_demo_list(
-            filtered_demonstrations, locale
-        )
-        localized_recommended_demos = _localized_demo_list(recommended_demos or [], locale)
-
+        """Return the portable React home shell without querying event data."""
         return render_template(
-            "index.html",
-            demonstrations=localized_filtered_demonstrations,
-            recommended_demos=localized_recommended_demos,
-            featured_demos_json=[
-                format_demo_for_api(demo, locale)
-                for demo in filtered_demonstrations[:6]
-            ],
-            recommended_demos_json=[
-                format_demo_for_api(demo, locale)
-                for demo in (recommended_demos or [])
-            ],
+            "index.html", home_locale=_current_demo_language(),
+            home_endpoint=app.config.get("PUBLIC_HOME_API_URL") or
+                app.config.get("PUBLIC_DEMONSTRATION_API_URL", "https://api.mielenosoitukset.fi/api/demonstrations").rsplit("/", 1)[0] + "/home",
         )
 
+
+    @app.route("/api/session")
+    def public_session_summary():
+        """Read-only account summary for the standalone React public host.
+
+        The React host cannot read Flask's signed session cookie. It asks this
+        same-origin endpoint for the same header state the templates receive:
+        identity labels, role flags and the unread notification count. No
+        cookie value, token, email, permission list or private record is
+        returned, and this endpoint grants no authority by itself.
+        """
+        organization_scope = request.args.getlist("organization_id")
+        if organization_scope and (len(organization_scope) != 1 or not ObjectId.is_valid(organization_scope[0])):
+            response = jsonify({"error": "invalid organization scope"})
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["Vary"] = "Cookie"
+            return response, 400
+        supported = current_app.config.get("BABEL_PUBLIC_LOCALES") or ["fi", "en", "sv"]
+        locale = session.get("locale", "fi")
+        if locale not in supported:
+            locale = "fi"
+        details = fundraising_details()
+        language_names = current_app.config.get("BABEL_LANGUAGES") or {}
+        try:
+            can_edit_demo = bool(current_user.is_authenticated and current_user.has_permission("EDIT_DEMO"))
+        except Exception:
+            can_edit_demo = False
+        payload = {
+            "authenticated": current_user.is_authenticated,
+            "locale": locale,
+            "locales": [
+                {"code": code, "name": language_names.get(code) or code.upper()}
+                for code in supported
+            ],
+            "role": "guest",
+            "name": None,
+            "picture": None,
+            "global_admin": False,
+            "has_admin_access": False,
+            "unread": 0,
+            "fundraising": bool(details.get("show_header_link"))
+            and (campaign_pages_public() or current_user.is_authenticated),
+            "site_analytics_enabled": bool(current_app.config.get("SITE_ANALYTICS_ENABLED", True)),
+            "matomo_enabled": bool(current_app.config.get("MATOMO_ENABLED", True)),
+            "submission": {
+                "locales": current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"],
+                "default_language": current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
+                "can_edit_demo": can_edit_demo,
+            },
+        }
+        if current_user.is_authenticated:
+            payload.update({
+                "role": getattr(current_user, "role", None) or "user",
+                "name": current_user.displayname or current_user.username,
+                "picture": current_user.profile_picture or None,
+                "global_admin": bool(getattr(current_user, "global_admin", False)),
+                "has_admin_access": bool(current_user.has_admin_access()),
+                "actor_id": str(current_user._id),
+            })
+            try:
+                payload["unread"] = sum(
+                    1 for item in fetch_notifications(current_user.id, limit=20)
+                    if not item.get("read")
+                )
+            except Exception:
+                # A notification read must never break the page shell.
+                payload["unread"] = 0
+            if organization_scope:
+                org_oid = ObjectId(organization_scope[0])
+                payload["organization"] = {
+                    "id": str(org_oid),
+                    "following": str(org_oid) in getattr(current_user, "followed_organizations", []),
+                    "invited": bool(current_user.has_invite(org_oid)),
+                    "has_messages": bool(session.get("_flashes")),
+                    "permissions": {
+                        permission: bool(current_user.has_permission(permission, org_oid))
+                        for permission in (
+                            "VIEW_ORGANIZATION", "EDIT_ORGANIZATION", "DELETE_ORGANIZATION", "INVITE_TO_ORGANIZATION"
+                        )
+                    },
+                }
+        response = jsonify(payload)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Vary"] = "Cookie"
+        return response
 
     @app.route("/terms")
     def terms():
@@ -2399,6 +2438,8 @@ def init_routes(app):
 
             if notification_messages:
                 try:
+                    from mielenosoitukset_fi.utils.moderation_mail import personalize_moderation_messages
+                    notification_messages = personalize_moderation_messages(mongo, demo_id, notification_messages, national=not bool(assignment_email))
                     demo_notifications_queue.insert_one(
                         {
                             "demo_id": demo_id,
@@ -2442,9 +2483,15 @@ def init_routes(app):
         except Exception:
             can_edit_demo = False
 
-        # GET — render submission form
+        # GET — render submission form. The React page is opt-in and rollback is a
+        # config flip; both templates receive the same server context.
+        submit_template = (
+            "submit_react.html"
+            if current_app.config.get("PUBLIC_SUBMIT_REACT_ENABLED", False)
+            else "submit.html"
+        )
         return render_template(
-            "submit.html",
+            submit_template,
             city_list=CITY_LIST,
             test_mode_allowed=test_mode_allowed,
             can_edit_demo=can_edit_demo,
@@ -2607,6 +2654,16 @@ def init_routes(app):
         except Exception:
             demo_oid = None
 
+        wants_json = request.method == "POST" and request.accept_mimetypes.best == "application/json"
+        if wants_json:
+            if not error or not error.strip() or len(error) > 10000 or _type != "demonstration" or demo_oid is None:
+                return jsonify({"status": "ERROR", "message": _("Täytä ilmoituksen tiedot.")}), 400
+            from mielenosoitukset_fi.utils.react_detail import public_metadata_query
+            if not mongo.demonstrations.find_one(public_metadata_query({"_id": demo_oid}), {"_id": 1}):
+                return jsonify({"status": "ERROR", "message": _("Tapahtumaa ei löydy tai se ei ole julkinen.")}), 404
+            if reporter_email and not valid_email(reporter_email):
+                return jsonify({"status": "ERROR", "message": _("Sähköpostiosoite ei ole kelvollinen.")}), 400
+
         if _type:
             if _type == "demonstration":
                 report_doc = {
@@ -2678,6 +2735,9 @@ def init_routes(app):
                     "reporter_email": reporter_email,
                 }
             )
+
+        if wants_json:
+            return jsonify({"status": "OK", "message": _("Virhe ilmoitettu onnistuneesti! Kiitos ilmoituksestasi.")})
 
         flash_message(
             "Virhe ilmoitettu onnistuneesti! Kiitos ilmoituksestasi.", "success"
@@ -2946,6 +3006,14 @@ def init_routes(app):
         - the requester is authenticated
         - flash messages are pending for the session/request
         """
+        # The public React shell does only a projected metadata/visibility read.
+        # API content is fetched directly by the browser, never before Flask TTFB.
+        if current_app.config.get("PUBLIC_DETAIL_REACT_ENABLED", False):
+            from mielenosoitukset_fi.utils.react_detail import render_public_detail
+            response = render_public_detail(mongo, demo_id, _current_demo_language(), recurring_context)
+            if response is not None:
+                return response
+
         # Load demonstration and permission checks first (so we don't serve cached 401/404)
         try:
             demo_obj = Demonstration.load_by_id(demo_id)
@@ -3805,6 +3873,19 @@ def init_routes(app):
     def info():
         return render_template("info.html")
 
+    @app.route("/keräys")
+    @campaign_preview_required
+    def fundraising():
+        return render_template("fundraising.html", fundraising=fundraising_details())
+
+    @app.context_processor
+    def inject_fundraising_campaign():
+        details = fundraising_details()
+        details["show_header_link"] = details["show_header_link"] and (
+            campaign_pages_public() or current_user.is_authenticated
+        )
+        return {"fundraising_campaign": details}
+
     @app.route("/privacy")
     def privacy():
         return render_template("privacy.html")
@@ -4022,6 +4103,8 @@ def init_routes(app):
 
     @app.route("/organization/<org_id>")
     def org(org_id):
+        if not ObjectId.is_valid(org_id):
+            abort(404)
         _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
         if _org is None:
             flash_message("Organisaatiota ei löytynyt.", "error")
@@ -4041,6 +4124,11 @@ def init_routes(app):
             org=_org,
             org_id=str(org_id),
             is_following_org=is_following_org,
+            listing_title=_("Mielenosoitukset"),
+            listing_fixed={"organization_id": str(_org._id)},
+            listing_heading_level=2,
+            listing_empty_title=_("Ei tulevia mielenosoituksia"),
+            listing_empty=_("Tämä järjestäjä ei ole vielä ilmoittanut tulevia mielenosoituksia."),
             toolbox_org_permissions={
                 permission: current_user.has_permission(permission, _org._id)
                 for permission in (
@@ -4195,13 +4283,13 @@ def init_routes(app):
         )
 
         messages = get_flashed_messages(with_categories=True)
-        if not messages:
-            return jsonify(messages=[])
-
         flash_message_data = [
             {"category": category, "message": message} for category, message in messages
         ]
-        return jsonify(messages=flash_message_data)
+        response = jsonify(messages=flash_message_data)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Vary"] = "Cookie"
+        return response
 
     
     @app.route("/set_language/<lang>")
@@ -4447,97 +4535,11 @@ def init_routes(app):
         )
     
     add_api_routes(app)
-    import xml.etree.ElementTree as ET
-    from flask import Response, url_for
-    from datetime import datetime
-    from email.utils import format_datetime
-    from bson import ObjectId
-    import html
-
-
-    def create_rss_feed(demonstrations):
-        """
-        Build an RSS 2.0 feed for demonstrations.
-        """
-        feed = ET.Element("rss", version="2.0")
-        channel = ET.SubElement(feed, "channel")
-
-        # Channel metadata
-        ET.SubElement(channel, "title").text = "Mielenosoitukset"
-        ET.SubElement(channel, "link").text = url_for("index", _external=True)
-        ET.SubElement(channel, "description").text = "Viimeisimmät mielenosoitukset."
-        ET.SubElement(channel, "language").text = "fi-fi"
-
-        now = utcnow()
-        ET.SubElement(channel, "pubDate").text = format_datetime(now)
-        ET.SubElement(channel, "lastBuildDate").text = format_datetime(now)
-        ET.SubElement(channel, "copyright").text = "© 2025 Mielenosoitukset.fi"
-        for demo in demonstrations:
-            item = ET.SubElement(channel, "item")
-
-            demo_id = str(demo.get("_id", ""))
-            demo_title = demo.get("title", "Tuntematon tapahtuma")
-            demo_date = demo.get("formatted_date", "Tuntematon päivämäärä")
-            demo_description = demo.get("description") or "Ei kuvausta."
-
-            # Title
-            ET.SubElement(item, "title").text = f"{demo_title} – {demo_date}"
-
-            # Link + GUID
-            link_url = url_for("demonstration_detail", demo_id=demo_id, _external=True)
-            ET.SubElement(item, "link").text = link_url
-            ET.SubElement(item, "guid", isPermaLink="true").text = link_url
-
-            # Description (safe fallback)
-            ET.SubElement(item, "description").text = html.escape(str(demo_description))
-
-            # pubDate
-            if "date" in demo and isinstance(demo["date"], datetime):
-                ET.SubElement(item, "pubDate").text = format_datetime(demo["date"])
-
-        # Return pretty UTF-8 XML string
-        return ET.tostring(feed, encoding="utf-8", xml_declaration=True)
-
-    from flask import Response, url_for, request
-    from datetime import datetime
-    import hashlib
-
     @app.route("/demonstrations.rss")
-    @cache.cached(timeout=300, unless=skip_cache_public_only)  # cache for 5 minutes
     def demonstrations_rss():
-        """
-        Serve the RSS feed for demonstrations.
-        Cached heavily to reduce DB load.
-        """
-        demonstrations = list(
-            demonstrations_collection.find().sort("date", -1).limit(50)
-        )
+        from mielenosoitukset_fi.utils.rss_feed import demonstration_feed
+        return demonstration_feed(demonstrations_collection, _demo_public_path)
 
-        # Normalize ObjectId → str
-        for demo in demonstrations:
-            if "_id" in demo and isinstance(demo["_id"], ObjectId):
-                demo["_id"] = str(demo["_id"])
-
-        feed_xml = create_rss_feed(demonstrations)
-
-        # Create ETag for conditional GET
-        etag = hashlib.md5(feed_xml).hexdigest()
-        last_modified = utcnow()
-
-        # Check if client already has this version
-        if request.headers.get("If-None-Match") == etag:
-            return Response(status=304)
-
-        return Response(
-            feed_xml,
-            mimetype="application/rss+xml",
-            headers={
-                "Cache-Control": "public, max-age=300, must-revalidate",
-                "ETag": etag,
-                "Last-Modified": last_modified.strftime("%a, %d %b %Y %H:%M:%S GMT"),
-                "Content-Type": "application/rss+xml; charset=utf-8",
-            },
-        )
     from datetime import datetime, date
     from collections import defaultdict
     import calendar
@@ -4749,6 +4751,9 @@ def init_routes(app):
     
     @app.before_request
     def _check_panic_mode():
-        if not request.path.startswith("/admin") and not request.path.startswith("/users/auth") and not request.path.startswith("/static"):
-            if PANIC_MODE:
-                return render_template("heavy.html")
+        # Administration, authentication and diagnostics remain available for
+        # recovery. Read current shared state rather than a worker-local flag.
+        if request.path.startswith(("/admin", "/board", "/users/auth", "/auth/god", "/static", "/health")):
+            return None
+        if mongo.panic.find_one({"name": {"$in": ["global", "security"]}, "panic": True}, {"_id": 1}):
+            return render_template("heavy.html"), 503, {"Cache-Control": "no-store", "Retry-After": "60", "X-Robots-Tag": "noindex"}

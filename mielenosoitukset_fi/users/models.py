@@ -31,6 +31,29 @@ CITY_ADMIN_ORGANIZATION_PERMISSIONS = {
 }
 
 class User(UserMixin):
+    @property
+    def system_team_access(self):
+        if not self.active or self.banned or not self.confirmed:
+            return frozenset()
+        if self._system_team_access is None:
+            from mielenosoitukset_fi.utils.system_teams import user_team_access
+            self._system_team_access = user_team_access(_get_mongo(), self._id)
+        return self._system_team_access
+
+    @property
+    def global_admin(self):
+        if getattr(self, "_governance_managed", False):
+            return "national" in self.system_team_access
+        return self._global_admin or "national" in self.system_team_access
+
+    @global_admin.setter
+    def global_admin(self, value):
+        self._global_admin = bool(value)
+
+    def has_system_permission(self, permission):
+        from mielenosoitukset_fi.utils.system_teams import BOARD_PERMISSIONS
+        return permission in BOARD_PERMISSIONS and "board" in self.system_team_access
+
     def has_admin_access(self) -> bool:
         """Return whether this account may enter any admin workspace."""
         return (
@@ -48,10 +71,13 @@ class User(UserMixin):
             )
             or self.has_city_admin_scope_grants()
             or self.has_admin_scope_grants()
+            or "board" in self.system_team_access
         )
 
     def has_full_permissions(self) -> bool:
         """Return whether this account bypasses individual permission grants."""
+        if self._governance_managed:
+            return bool(self.global_admin)
         return bool(self.global_admin) or self.role in {
             "global_admin",
             "god",
@@ -74,7 +100,7 @@ class User(UserMixin):
             List of organization IDs or "global" where the user has the permission.
         """
         
-        if self.has_full_permissions():
+        if self.has_full_permissions() or self.has_system_permission(permission):
             return ["global"]
 
         scopes = []
@@ -136,6 +162,9 @@ class User(UserMixin):
         """
         New method of creating a user, that also validates the data"""
         
+        from mielenosoitukset_fi.utils.system_teams import SUPER_ROLES
+        if user_data.get("role") in SUPER_ROLES:
+            raise PermissionError("Privileged accounts require governance approval")
         required_fields = ["username", "password", "email"]
         
         valid_fields = ["username", "password", "email", "displayname", "role", "bio"]
@@ -166,6 +195,12 @@ class User(UserMixin):
         new_password : str
             The new password to set.
         """
+        security = (_get_mongo().users.find_one({"_id": self._id}) or {}).get("god_security") or {}
+        if (self.role == "god" or security.get("policy") == 1) and len(new_password) < 32:
+            raise ValueError("God-tilin salasanan vähimmäispituus on 32 merkkiä.")
+        if self.role == "god" or security.get("policy") == 1:
+            if security.get("secret_hash") and check_password_hash(security["secret_hash"], new_password):
+                raise ValueError("Kirjautumissalasanan on oltava eri kuin erillinen vahvistussalasana.")
         self.password_hash = generate_password_hash(new_password)
         self.save()
 
@@ -198,7 +233,10 @@ class User(UserMixin):
         forced_pwd_reset: bool = False,
         forced_identity_change: bool = False,
         active: bool = True,
-        last_login: datetime.datetime = None
+        last_login: datetime.datetime = None,
+        governance_managed: bool = False,
+        security_suspended: bool = False,
+        auth_epoch: int = 0,
     ):
         self.id                = str(user_id)  # flask‑login expects .id str
         self._id               = ObjectId(user_id)
@@ -214,7 +252,9 @@ class User(UserMixin):
         self.following         = following or []
         self.followed_organizations = followed_organizations or []
         self.followed_recurring_demos = followed_recurring_demos or []
-        self.global_admin      = global_admin
+        self._global_admin     = bool(global_admin)
+        self._governance_managed = governance_managed
+        self._system_team_access = None
         self.confirmed         = confirmed
         self.global_permissions= global_permissions or []
         self.role              = role
@@ -227,6 +267,8 @@ class User(UserMixin):
         self.forced_identity_change = forced_identity_change
         self.active             = active
         self.last_login         = last_login
+        self.security_suspended = security_suspended
+        self.auth_epoch = auth_epoch
 
         # CACHED memberships (lazy)  --------------------------------------------
         self._memberships: Optional[List[MemberShip]] = None
@@ -262,7 +304,10 @@ class User(UserMixin):
             forced_pwd_reset = doc.get("forced_pwd_reset", False),
             forced_identity_change = doc.get("forced_identity_change", False),
             active          = doc.get("active", True),
-            last_login      = doc.get("last_login", None)
+            last_login      = doc.get("last_login", None),
+            governance_managed = doc.get("governance_managed", False),
+            security_suspended = bool((doc.get("security_suspension") or {}).get("active")),
+            auth_epoch = doc.get("auth_epoch", 0),
         )
 
     @classmethod
@@ -344,7 +389,7 @@ class User(UserMixin):
         scope_type: str,
         scope_key: str,
     ) -> bool:
-        if self.has_full_permissions():
+        if self.has_full_permissions() or self.has_system_permission(permission):
             return True
         if permission in self.global_permissions:
             return True
@@ -392,7 +437,7 @@ class User(UserMixin):
           the organization_id of that membership is included.
         The list is deduplicated and keeps a predictable order.
         """
-        if self.has_full_permissions():
+        if self.has_full_permissions() or self.has_system_permission(permission):
             return ["global"]
 
         scopes: List[Union[str, ObjectId]] = []
@@ -474,7 +519,7 @@ class User(UserMixin):
     @property
     def is_active(self) -> bool:
         """Allow authentication only while the account is enabled and unbanned."""
-        return bool(self.active) and not bool(self.banned)
+        return bool(self.active) and not bool(self.banned) and not self.security_suspended
 
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
@@ -491,6 +536,12 @@ class User(UserMixin):
         return list(perms)
 
     def has_permission(self, perm: str, organization_id: Optional[Union[str, ObjectId]]=None, strict=False) -> bool:
+        if organization_id and perm in {"EDIT_ORGANIZATION", "DELETE_ORGANIZATION", "INVITE_TO_ORGANIZATION"}:
+            from mielenosoitukset_fi.utils.system_teams import protected_organization
+            if protected_organization(organization_id):
+                return False
+        if self.has_system_permission(perm):
+            return True
         if self.has_full_permissions():
             return True
         if perm in self.global_permissions:
@@ -572,6 +623,17 @@ class User(UserMixin):
         """Persist user (does **not** touch memberships)."""
         doc = self.to_dict()
         doc.pop("_id", None)
+        from mielenosoitukset_fi.utils.system_teams import SUPER_ROLES, clearance_approved
+        previous = _get_mongo().users.find_one({"_id": self._id}) or {}
+        if doc.get("role") == "god" and previous.get("role") != "god":
+            raise PermissionError("God-tili aktivoidaan vain vahvistetun käyttöönoton kautta.")
+        already_privileged = previous.get("global_admin") is True or previous.get("role") in SUPER_ROLES
+        incoming_privileged = doc.get("global_admin") is True or doc.get("role") in SUPER_ROLES
+        if incoming_privileged and not already_privileged:
+            if doc.get("role") == "god" or not clearance_approved(_get_mongo(), self._id) or "national" not in self.system_team_access:
+                raise PermissionError("Uusi superkäyttäjä vaatii hallinnon hyväksyntäkierroksen.")
+            doc["governance_managed"] = True
+            self._governance_managed = True
         _get_mongo().users.update_one({"_id": self._id}, {"$set": doc}, upsert=True)
         # invalidate cache after save
         self._memberships = None
@@ -594,7 +656,8 @@ class User(UserMixin):
             "following": self.following,
             "followed_organizations": self.followed_organizations,
             "followed_recurring_demos": self.followed_recurring_demos,
-            "global_admin": self.global_admin,
+            "global_admin": self._global_admin,
+            "governance_managed": self._governance_managed,
             "confirmed": self.confirmed,
             "global_permissions": self.global_permissions,
             "role": self.role,

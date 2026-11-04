@@ -471,11 +471,12 @@ def _apply_demo_decision(demo_id, decision, source, used_token_id=None):
     """Route adapter for the shared idempotent moderation service."""
     actor = capture_actor_context()
     if source == "token":
-        actor = {
-            **actor,
-            "username": "magic-link",
-            "role": "token",
-        }
+        registered = mongo[MAGIC_COLLECTION].find_one({"_id": used_token_id}) or {}
+        recipient = registered.get("intended_recipient")
+        actor = {**actor, "link_recipient": recipient, "authentication": "session" if actor.get("user_id") else "bearer_link"}
+        if not actor.get("user_id"):
+            actor["username"] = f"Linkki lähetetty: {recipient.get('username') or recipient.get('email')}" if recipient else "magic-link"
+            actor["role"] = "token"
     return apply_demo_decision(
         mongo,
         demo_id,
@@ -1240,6 +1241,7 @@ EDIT_LINK_DURATION_SECONDS = {
 }
 EDIT_LINK_MAX_AGE_SECONDS = max(EDIT_LINK_DURATION_SECONDS.values())
 EDIT_LINK_CSRF_SESSION_KEY = "demo_edit_link_csrf_token"
+MAGIC_TOKEN_CSRF_SESSION_KEY = "admin_magic_token_csrf"
 
 # Recommended: create TTL index (run once on startup/migration)
 # mongo[MAGIC_COLLECTION].create_index("expires_at", expireAfterSeconds=0)
@@ -1301,6 +1303,7 @@ def _token_payload(doc: dict | None) -> dict:
         "created_user_agent": doc.get("created_user_agent"),
         "created_process": doc.get("created_process"),
         "created_actor": doc.get("created_actor"),
+        "intended_recipient": doc.get("intended_recipient"),
         "bound_ip": doc.get("bound_ip"),
         "first_seen_at": doc.get("first_seen_at"),
         "ua_first": doc.get("ua_first"),
@@ -1368,6 +1371,7 @@ def _registry_upsert_initial(
     demo_id: str,
     creator: str | None = None,
     ttl_seconds: int = MAGIC_TTL_SECONDS,
+    recipient: dict | None = None,
 ):
     """
     Create registry doc if missing. Do not bind IP yet (bind on first GET).
@@ -1404,6 +1408,7 @@ def _registry_upsert_initial(
                 "created_user_agent": req_ctx.get("user_agent") if req_ctx else None,
                 "created_process": proc_ctx,
                 "created_actor": actor_ctx,
+                "intended_recipient": recipient,
             }
         },
         upsert=True,
@@ -1440,8 +1445,9 @@ def _check_and_bind(action: str, token: str) -> dict:
         flash_message("Linkki on virheellinen.", "error")
         abort(400)
 
-    # payload is the demo_id (string). You could also sign a dict with jti if you want.
-    demo_id = str(payload)
+    # Old links remain valid; new personalized links carry only an opaque jti,
+    # never the recipient's email address in the signed public URL.
+    demo_id = str(payload.get("demo_id")) if isinstance(payload, dict) else str(payload)
     token_hash = _hash_token(token)
     doc = mongo[MAGIC_COLLECTION].find_one_and_update(
         {"token_hash": token_hash},
@@ -1467,7 +1473,8 @@ def _check_and_bind(action: str, token: str) -> dict:
 
     # TTL / revoked / used checks
     now = _now_utc()
-    if doc.get("revoked"):
+    from mielenosoitukset_fi.utils.security_cases import link_suspended
+    if doc.get("revoked") or link_suspended(mongo, doc):
         flash_message("Linkki on mitätöity.", "error")
         abort(403)
     
@@ -1558,11 +1565,11 @@ def _load_demo_or_bust(demo_id: str):
 # GENERATION HELPERS (call these when creating links)
 # ------------------------------------------------------------------------------
 
-def generate_demo_preview_link(demo_id: str) -> str:
+def generate_demo_preview_link(demo_id: str, *, recipient: dict | None = None) -> str:
     # Create signed token and registry doc
-    token = serializer.dumps(str(demo_id), salt="preview-demo")
+    token = serializer.dumps({"demo_id": str(demo_id), "jti": secrets.token_urlsafe(24)} if recipient else str(demo_id), salt="preview-demo")
     actor = _get_actor_label()
-    _registry_upsert_initial(_hash_token(token), "preview", str(demo_id), actor)
+    _registry_upsert_initial(_hash_token(token), "preview", str(demo_id), actor, recipient=recipient)
     demo = _load_demo_or_bust(demo_id)
     log_demo_audit_entry(
         demo_id,
@@ -1572,10 +1579,10 @@ def generate_demo_preview_link(demo_id: str) -> str:
     )
     return url_for("admin_demo.preview_demo_with_token", token=token, _external=True)
 
-def generate_demo_approve_link(demo_id: str) -> str:
-    token = serializer.dumps(str(demo_id), salt="approve-demo")
+def generate_demo_approve_link(demo_id: str, *, recipient: dict | None = None) -> str:
+    token = serializer.dumps({"demo_id": str(demo_id), "jti": secrets.token_urlsafe(24)} if recipient else str(demo_id), salt="approve-demo")
     actor = _get_actor_label()
-    _registry_upsert_initial(_hash_token(token), "approve", str(demo_id), actor)
+    _registry_upsert_initial(_hash_token(token), "approve", str(demo_id), actor, recipient=recipient)
     demo = _load_demo_or_bust(demo_id)
     log_demo_audit_entry(
         demo_id,
@@ -1585,10 +1592,10 @@ def generate_demo_approve_link(demo_id: str) -> str:
     )
     return url_for("admin_demo.approve_demo_with_token", token=token, _external=True)
 
-def generate_demo_reject_link(demo_id: str) -> str:
-    token = serializer.dumps(str(demo_id), salt="reject-demo")
+def generate_demo_reject_link(demo_id: str, *, recipient: dict | None = None) -> str:
+    token = serializer.dumps({"demo_id": str(demo_id), "jti": secrets.token_urlsafe(24)} if recipient else str(demo_id), salt="reject-demo")
     actor = _get_actor_label()
-    _registry_upsert_initial(_hash_token(token), "reject", str(demo_id), actor)
+    _registry_upsert_initial(_hash_token(token), "reject", str(demo_id), actor, recipient=recipient)
     demo = _load_demo_or_bust(demo_id)
     log_demo_audit_entry(
         demo_id,
@@ -1658,7 +1665,8 @@ def _resolve_demo_edit_link(token: str):
         or token_doc.get("demo_id") != demo_id
     ):
         return None, "invalid", 400
-    if token_doc.get("revoked"):
+    from mielenosoitukset_fi.utils.security_cases import link_suspended
+    if token_doc.get("revoked") or link_suspended(mongo, token_doc):
         return None, "revoked", 403
 
     expires_at = _utc_datetime(token_doc.get("expires_at"))
@@ -5008,6 +5016,12 @@ def manage_magic_tokens():
         abort(403)
 
     if request.method == "POST":
+        expected = session.get(MAGIC_TOKEN_CSRF_SESSION_KEY, "")
+        provided = request.form.get("csrf_token", "")
+        if not (expected and provided and hmac.compare_digest(
+            expected.encode("utf-8"), provided.encode("utf-8")
+        )):
+            abort(403)
         if request.form.get("revoke_all") == "1":
             revoke_filter = {
                 "revoked": {"$ne": True},
@@ -5156,8 +5170,14 @@ def manage_magic_tokens():
             }
         )
 
+    csrf_token = session.get(MAGIC_TOKEN_CSRF_SESSION_KEY)
+    if not csrf_token:
+        csrf_token = secrets.token_urlsafe(32)
+        session[MAGIC_TOKEN_CSRF_SESSION_KEY] = csrf_token
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/magic_tokens.html",
+        csrf_token=csrf_token,
         tokens=tokens,
         filters=filters,
         actions=distinct_actions,

@@ -19,10 +19,10 @@ def test_public_page_size_is_bounded_and_existing_defaults_survive(raw, expected
     assert PUBLIC_MAX_PER_PAGE == 100
 
 
-def _many_demos(db, seeded_data):
+def _many_demos(db, seeded_data, count=105):
     original = db.demonstrations.find_one({'_id': seeded_data['demo_id']})
     records = []
-    for index in range(105):
+    for index in range(count):
         record = deepcopy(original)
         record.update(_id=ObjectId(), title=f'Bounded demo {index}', approved=True,
             hide=False, rejected=False, date=(date.today() + timedelta(days=7)).isoformat(),
@@ -35,17 +35,22 @@ def _many_demos(db, seeded_data):
     ('/api/demonstrations', 'results'), ('/api/v1/demonstrations', 'demonstrations'),
 ])
 def test_demo_apis_cap_the_real_query_and_return_bounded_metadata(client, db, seeded_data, endpoint, key):
-    _many_demos(db, seeded_data)
+    # One record beyond the cap catches page-count rounding down at the boundary.
+    _many_demos(db, seeded_data, count=101)
     response = client.get(endpoint, query_string={'tag': 'pagination-limits', 'per_page': '600000'})
     assert response.status_code == 200
     payload = response.get_json()
     assert payload['per_page'] == 100 and len(payload[key]) == 100
-    assert payload['total'] == 105 and payload['total_pages'] == 2
+    assert payload['total'] == 101 and payload['total_pages'] == 2
     assert (payload['result_start'], payload['result_end']) == (1, 100)
     if key == 'results':
         assert 'per_page=100' in payload['next_url']
-    second = client.get(endpoint, query_string={'tag': 'pagination-limits', 'per_page': '600000', 'page': '2'}).get_json()
-    assert len(second[key]) == 5 and second['result_start'] == 101
+    second_response = client.get(endpoint, query_string={'tag': 'pagination-limits', 'per_page': '600000', 'page': '2'})
+    assert second_response.status_code == 200
+    second = second_response.get_json()
+    assert len(second[key]) == 1
+    assert (second['page'], second['per_page'], second['total'], second['total_pages']) == (2, 100, 101, 2)
+    assert (second['result_start'], second['result_end']) == (101, 101)
     assert not ({row['_id'] for row in payload[key]} & {row['_id'] for row in second[key]})
 
 

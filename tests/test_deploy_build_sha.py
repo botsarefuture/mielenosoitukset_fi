@@ -100,6 +100,21 @@ def test_production_deploy_contract_is_sha_bound():
     assert "no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty" in documentation
 
 
+def test_routing_activation_follows_successful_deployment():
+    import yaml
+    workflow = yaml.load(Path('.github/workflows/production-deploy.yml').read_text(), Loader=yaml.BaseLoader)
+    routing = workflow['jobs']['routing']
+    assert routing['needs'] == 'deploy'
+    assert 'always()' not in routing['if']
+    assert "github.event_name == 'push'" in routing['if']
+    assert "github.ref == 'refs/heads/main'" in routing['if']
+    assert workflow['on']['workflow_dispatch']['inputs']['routing']['default'] == 'true'
+    deploy_steps = workflow['jobs']['deploy']['steps']
+    assert any('https://api.mielenosoitukset.fi/health' in step.get('run', '') for step in deploy_steps)
+    assert any('https://mielenosoitukset.fi/health' in step.get('run', '') for step in deploy_steps)
+    assert any('deploy-routing $GITHUB_SHA' in step.get('run', '') for step in routing['steps'])
+
+
 @pytest.mark.parametrize("status,body,expected", [
     (200, '{"status":"ok","build_sha":"' + SHA + '"}', SHA),
     (503, '{"status":"ok","build_sha":"' + SHA + '"}', None),

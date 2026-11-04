@@ -43,6 +43,17 @@ def run(max_jobs: int = 50):
     from the queue after a successful send.
     """
     db = DatabaseManager().get_instance().get_db()
+    from mielenosoitukset_fi.utils.security_cases import process_cases
+    try:
+        process_cases(db)
+    except Exception:
+        # A broken incident projection must never block unrelated confirmations.
+        logger.exception("Security case reconciliation needs attention")
+    from mielenosoitukset_fi.utils.god_appointments import process_appointments
+    try:
+        process_appointments(db)
+    except Exception:
+        logger.exception("God appointment veto windows need attention")
     # The drainer is imported by the scheduler at process start, while tests
     # and maintenance commands may subsequently select another database.
     # Always follow DatabaseManager's current database instead of retaining

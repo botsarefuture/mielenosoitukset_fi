@@ -1,0 +1,25 @@
+{
+  "publication_state": "preparation",
+  "details_confirmed": false,
+  "show_header_link": false,
+  "start_date": "",
+  "end_date": "",
+  "organizer": "",
+  "collection_number": "",
+  "recipient": "",
+  "iban": "",
+  "reference": "",
+  "payment_url": "",
+  "mobilepay_links": [
+    {
+      "label": "MobilePay 1",
+      "url": ""
+    },
+    {
+      "label": "MobilePay 2",
+      "url": ""
+    }
+  ],
+  "planned_start_date": "2026-11-15",
+  "planned_end_date": "2027-02-15"
+}

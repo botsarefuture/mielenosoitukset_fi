@@ -14,6 +14,7 @@ from flask_login import login_required
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.campaign_analytics import get_campaign_report
 from mielenosoitukset_fi.utils.site_analytics import (
     DEVICE_LABELS,
     EVENT_LABELS,
@@ -30,7 +31,7 @@ from mielenosoitukset_fi.utils.site_analytics import (
     get_traffic_series,
     get_visitor_overview,
     get_visitor_series,
-    get_web_vitals_summary,
+    get_web_vitals_explorer,
 )
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from mielenosoitukset_fi.admin.utils import _ADMIN_TEMPLATE_FOLDER, log_admin_action_V2
@@ -143,11 +144,25 @@ def site_overview():
         logger.exception("Failed to build site analytics overview")
         abort(503)
 
+    vitals_page = request.args.get("vitals_page", "")
+    if vitals_page not in PAGE_TYPE_LABELS:
+        vitals_page = ""
+    vitals_metric = request.args.get("vitals_metric", "TTFB")
+    if vitals_metric not in {"TTFB", "LCP", "INP", "CLS"}:
+        vitals_metric = "TTFB"
+    vitals_explorer = None
     try:
-        web_vitals = get_web_vitals_summary(days=days)
+        vitals_explorer = get_web_vitals_explorer(days=days, metric=vitals_metric)
     except Exception:
-        logger.exception("Failed to read Web Vitals summary")
-        web_vitals = []
+        logger.exception("Failed to read Web Vitals page trends")
+
+    campaign_error = False
+    try:
+        campaigns = get_campaign_report(days=days)
+    except Exception:
+        logger.exception("Failed to read campaign analytics")
+        campaigns = []
+        campaign_error = True
 
     rows = [
         {**row, "url": _page_views_endpoint(row["page_type"], row["resource_id"])}
@@ -177,7 +192,11 @@ def site_overview():
         referrers=referrers,
         events=events,
         search_terms=search_terms,
-        web_vitals=web_vitals,
+        vitals_page=vitals_page,
+        vitals_metric=vitals_metric,
+        vitals_explorer=vitals_explorer,
+        campaigns=campaigns,
+        campaign_error=campaign_error,
         language_labels=LANGUAGE_LABELS,
         device_labels=DEVICE_LABELS,
         referrer_labels=REFERRER_LABELS,

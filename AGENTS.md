@@ -38,3 +38,76 @@ another independent review. Missing browser/screenshots/reviewer means
 second CI suite or run the full suite just to perform this visual review.
 
 Sticking to these steps keeps the project history readable and prevents surprises for maintainers. Thanks! 🚀
+
+## Modernization direction
+
+### Maintainer decision, 1 November 2026
+
+The public UI must become fully React by January 2027. All new public UI work
+must advance or remain directly compatible with that target. Do not introduce
+temporary Flask/Jinja-specific UI optimizations or new public markup that must
+be rewritten for the React host. Reuse portable React routes, components and
+API data loaders, and migrate existing mostly-React pages once their behavior,
+localization, tracking and SEO are verified. Admin UI is outside this scope.
+Preserve existing accounts, authentication, URLs and form/API contracts. Apache
+may route explicitly migrated page GETs to the React host while APIs, writes,
+authentication and administration retain their existing handlers. Prepare and
+verify production routing before asking for its activation approval.
+
+For architecture and migration work, read [the maintainer's modernization context](docs/modernization-context.txt)
+and [the initial assessment](docs/modernization-assessment.md) before proposing changes.
+The context is guidance, not an approved replacement specification.
+
+- Preserve existing functionality, public URLs where practical, MongoDB data,
+  accounts, administrative workflows, accessibility, localization and SEO.
+- Inspect the relevant implementation and frontend consumers first. Separate
+  verified facts, maintainer decisions, recommendations, open questions and risks.
+- Migrate incrementally. Measure performance before attributing limitations to
+  Flask or choosing a backend replacement. Go is preferred for evaluation, not
+  an approved requirement; React + API + Flask admin is a direction to assess.
+- Reuse the existing React foundation. React work also exists in other worktrees:
+  see the assessment for the campaign implementation. Absence in this checkout
+  does not establish that the project has no React implementation. Check its
+  current integration status before creating a competing frontend setup.
+- Derive API proposals from real routes, consumers, validation and database
+  operations. Document purpose, request/response, authentication, authorization,
+  database operations, performance concerns and replaced behavior before
+  implementing significant API functionality.
+- Verify actual password formats and session behavior; do not assume bcrypt or
+  introduce JWT/session sharing by default. Keep current authentication working.
+- Significant authentication, database schema, infrastructure, repository
+  restructuring and production deployment changes require explicit maintainer
+  approval. Examples in the context do not supply that approval. Routine work
+  within an already approved scope can proceed.
+- Test compatibility and establish rollback before replacing working behavior;
+  retire old paths only when safe. Update relevant documentation and changelog.
+
+
+## Working in this checkout
+
+- `main` is checked out in another worktree, so `git checkout main` fails here. Branch from `origin/main` or add a `git worktree`; symlink the existing `node_modules` into it instead of reinstalling.
+- The shared working tree can contain another agent's uncommitted work. Never stage, stash or revert files you did not edit; do your own work in a separate worktree.
+- Run Python tests from a worktree with the main checkout's `.venv/bin/python`; pytest imports the package from the current directory, so no venv copy is needed.
+- `mielenosoitukset_fi/static/frontend/manifest.json` and the hashed `assets/*` it names must be regenerated (`npm run build`) in the same commit as their source. A bot's conflict resolution can leave stale hashes behind.
+- A `codex://threads/<uuid>` reference maps to `~/.codex/sessions/<date>/rollout-*-<uuid>.jsonl`; read that file when a Codex conversation is needed but not available as a thread reference.
+
+## Public UI ownership and copy
+
+- Maintainer instruction (1 November 2026): no new Flask surface for public UI. New behaviour goes into the Go API plus React; reusing an existing Flask page or endpoint is fine, adding a route, view or template is not.
+- The target is a standalone React app that does not need Flask at runtime, not Flask-hosted islands. Treat island props (`react_detail.py` and similar) as a bridge to keep correct, not as the contract to extend; new copy and URLs belong in the TypeScript catalog/config the host will use.
+- The public site is Finnish-only today. Keep the localization plumbing, prefer existing msgids, and when a new string is required leave `en`/`sv` copy to human translators rather than machine-guessing it.
+- The catalogs already fail `msgfmt` on duplicate msgids and the compiled `.mo` files are committed, so a new msgid stays untranslated until a human edits and recompiles. `msgid "Takaisin"` currently maps to `"Starts at "` in `en`.
+
+## Production host
+
+- `ssh lc-main-root` reaches production as root; the React host is `mielenosoitukset-public.service`, released under `/opt/mielenosoitukset-public`, routed by `/etc/apache2/mielenosoitukset-react-ssr.conf`. Paths and rollback are in `docs/react-ssr-app.md`.
+- Production Flask config is `/var/www/mielenosoitukset_fi/config.yaml` with `MONGO_URI`/`MONGO_DBNAME` (not `MONGODB_URI`); Gunicorn listens on `/var/www/mielenosoitukset_fi/mielenosoitus.sock`.
+
+## Repeatable listing verification
+
+For changes to the shared React listings, use
+`python3.12 scripts/verify_react_listings.py all --output-dir /tmp/moso-listing-qa`
+with the project development dependencies and Node 22.12+. The `check` and
+`capture` modes support focused reruns without ad hoc duplicate commands.
+Keep visual output outside the repository. Passing this script is technical
+verification, not the independent visual SHIP required above.

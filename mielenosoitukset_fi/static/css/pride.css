@@ -1,0 +1,186 @@
+/* Pride page content and map only. Shared listings retain their own typography. */
+.pride-page {
+  --pride-marker: light-dark(#8b1c7a, #dfb8f4);
+  --pride-marker-fill: light-dark(#d61f85, #bf67d0);
+  display: grid;
+  gap: 2rem;
+  min-width: 0;
+  color: var(--product-text);
+}
+.pride-page .pride-intro,
+.pride-page .pride-map-section,
+.pride-page .pride-information,
+.pride-page .pride-guidelines {
+  min-width: 0;
+  font-family: Roboto, sans-serif;
+  line-height: 1.6;
+}
+.pride-page .pride-intro {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+  border: 1px solid var(--product-border);
+  border-radius: .75rem;
+  background: var(--product-surface);
+}
+.pride-page .pride-intro::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(to right, #e40303 0% 16.66%, #ff8c00 16.66% 33.33%, #ffed00 33.33% 50%, #008026 50% 66.66%, #24408e 66.66% 83.33%, #732982 83.33% 100%);
+}
+.pride-page .pride-intro h1 {
+  margin: 0 0 .75rem;
+  color: var(--product-primary);
+  font: 700 clamp(1.75rem, 2.7vw, 2.25rem)/1.25 Montserrat, sans-serif;
+  text-align: start;
+}
+.pride-page .pride-intro__lead {
+  max-width: 75ch;
+  margin: 0;
+  font-size: 1.05rem;
+}
+.pride-page .pride-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.25rem;
+}
+.pride-page .pride-actions .button,
+.pride-page .pride-map-panel .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: .65rem 1rem;
+  border: 1px solid var(--product-border);
+  border-radius: .5rem;
+  background: var(--product-surface);
+  color: var(--product-text);
+  font: 500 1rem/1.4 Roboto, sans-serif;
+  text-decoration: none;
+  box-shadow: none;
+  cursor: pointer;
+}
+.pride-page .pride-actions .button-primary,
+.pride-page .pride-map-panel .button-primary {
+  background: var(--product-action-bg);
+  border-color: var(--product-action-bg);
+  color: var(--product-on-action);
+}
+.pride-page .pride-actions .button-primary:hover,
+.pride-page .pride-map-panel .button-primary:hover {
+  background: var(--product-action-hover);
+  color: var(--product-on-action);
+}
+.pride-page .pride-actions .button-secondary:hover,
+.pride-page .pride-map-panel .button-secondary:hover {
+  background: var(--product-surface-muted);
+}
+.pride-page :is(.pride-actions, .pride-map-panel) .button:disabled {
+  opacity: .65;
+  cursor: wait;
+}
+.pride-page .pride-section-header {
+  margin-bottom: 1rem;
+}
+.pride-page :is(.pride-section-header, .pride-information, .pride-guidelines) h2 {
+  margin: 0 0 .75rem;
+  color: var(--product-text);
+  font: 700 1.4rem/1.35 Montserrat, sans-serif;
+  text-align: start;
+}
+.pride-page .pride-section-header p {
+  max-width: 85ch;
+  margin: 0;
+  color: var(--product-text-muted);
+}
+.pride-page .pride-map-panel {
+  display: grid;
+  gap: .75rem;
+  min-width: 0;
+}
+.pride-page #pride-map {
+  width: 100%;
+  height: 24rem;
+  border: 1px solid var(--product-border);
+  border-radius: .75rem;
+  background: var(--product-surface-muted);
+  z-index: 0;
+}
+.pride-page .pride-map-summary {
+  margin: 0;
+  color: var(--product-text-muted);
+  font-size: .95rem;
+  font-variant-numeric: tabular-nums;
+}
+.pride-page :is(.pride-map-fallback, #pride-map-empty) {
+  margin: 0;
+  padding: .85rem 1rem;
+  border: 1px solid var(--product-border);
+  border-radius: .5rem;
+  background: var(--product-surface);
+  color: var(--product-text-muted);
+}
+.pride-page #pride-map-error {
+  padding: .85rem 1rem;
+  border-inline-start: 3px solid var(--product-danger);
+  border-radius: .3rem;
+  background: var(--product-danger-soft);
+  color: var(--product-danger);
+}
+.pride-page #pride-map-error p { margin: 0 0 .75rem; }
+.pride-page .pride-map-tile-warning {
+  margin: 0;
+  padding: .85rem 1rem;
+  border-inline-start: 3px solid var(--product-accent-strong);
+  border-radius: .3rem;
+  color: var(--product-accent-strong);
+  background: var(--product-accent-soft);
+}
+.pride-page .pride-information,
+.pride-page .pride-guidelines {
+  max-width: 85ch;
+}
+.pride-page .pride-information p,
+.pride-page .pride-guidelines p { margin: 0 0 .75rem; }
+.pride-page .pride-guidelines ol { margin: 0 0 1rem; padding-inline-start: 1.5rem; }
+.pride-page .pride-guidelines li { padding-inline-start: .25rem; margin-bottom: .65rem; }
+.pride-page :is(.pride-information, .pride-guidelines) a,
+.pride-page .leaflet-popup-content a {
+  color: var(--product-primary);
+  text-underline-offset: .2em;
+}
+.pride-page :is(.pride-intro, .pride-map-section, .pride-information, .pride-guidelines) :focus-visible {
+  outline: 2px solid var(--product-primary);
+  outline-offset: 3px;
+}
+.pride-page :is(#demos, #demo-guidelines, #pride-map-section) { scroll-margin-top: 6rem; }
+/* Leaflet controls sit above the map pane. Hide zoom while details are open
+   so the title stays readable on narrow maps; closing restores the controls. */
+.pride-page #pride-map:has(.leaflet-popup) .leaflet-control-zoom { visibility: hidden; }
+.pride-page .leaflet-popup-content-wrapper,
+.pride-page .leaflet-popup-tip {
+  background: var(--product-surface);
+  color: var(--product-text);
+}
+.pride-page .leaflet-popup-content-wrapper { box-shadow: var(--product-shadow); }
+.pride-page .leaflet-popup-content { font: 400 .95rem/1.5 Roboto, sans-serif; overflow-wrap: anywhere; }
+.pride-page .leaflet-popup-content p { margin: .4rem 0; }
+.pride-page .leaflet-popup-content-wrapper .leaflet-popup-content a { display: inline-block; margin-top: .35rem; }
+.pride-page .leaflet-container a.leaflet-popup-close-button { color: var(--product-text-muted); }
+.pride-page .leaflet-bar { border-color: var(--product-border); }
+.pride-page .leaflet-control-zoom a { background: var(--product-surface); color: var(--product-text); border-color: var(--product-border); }
+.pride-page .leaflet-control-zoom a:hover { background: var(--product-surface-muted); }
+.pride-page .leaflet-control-attribution { background: var(--product-surface); color: var(--product-text-muted); font: 400 .7rem/1.4 Roboto, sans-serif; }
+.pride-page .leaflet-control-attribution a { color: var(--product-primary); }
+.pride-page .pride-map-panel [hidden] { display: none; }
+@media (max-width: 600px) {
+  .pride-page { gap: 1.5rem; }
+  .pride-page #pride-map { height: 20rem; }
+  .pride-page .pride-actions > .button { flex: 1 1 auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pride-page * { scroll-behavior: auto; transition: none; }
+}

@@ -13758,3 +13758,8 @@ msgstr "Lisätty jonoon"
 
 msgid "Ei vielä vastauksia."
 msgstr "Ei vielä vastauksia."
+
+
+#: templates/_layouts/demonstration-list.html
+msgid "Lista avautuu JavaScriptillä. Jos se ei lataudu, päivitä sivu."
+msgstr "Lista avautuu JavaScriptillä. Jos se ei lataudu, päivitä sivu."

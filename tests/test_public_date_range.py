@@ -85,6 +85,7 @@ def test_actual_calendar_is_theme_safe_and_keyboard_reachable(live_server, brows
     browser_page.route('**/api/demonstrations?*', lambda route: route.fulfill(
         content_type='application/json', body='{"page":1,"total_pages":1,"total":0,"results":[]}'))
     browser_page.goto(f'{live_server}/demonstrations', wait_until='domcontentloaded')
+    browser_page.wait_for_function("document.getElementById('date_start')?._flatpickr")
     browser_page.evaluate("document.getElementById('date_start')._flatpickr.setDate(new Date(), false)")
     browser_page.locator('#date_start').focus()
     browser_page.keyboard.press('ArrowDown')

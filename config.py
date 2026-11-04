@@ -92,6 +92,13 @@ class Config:
         cls.MONGO_URI = config.get("MONGO_URI", "")
         cls.MONGO_DBNAME = config.get("MONGO_DBNAME", "default_db")
 
+        # Opt-in migration; API URL is public browser configuration, not a DB URI.
+        cls.PUBLIC_DETAIL_REACT_ENABLED = config.get("PUBLIC_DETAIL_REACT_ENABLED", False)
+        cls.PUBLIC_SUBMIT_REACT_ENABLED = config.get("PUBLIC_SUBMIT_REACT_ENABLED", False)
+        cls.PUBLIC_DEMONSTRATION_API_URL = config.get(
+            "PUBLIC_DEMONSTRATION_API_URL", "https://api.mielenosoitukset.fi/api/demonstrations"
+        )
+
         cls.MAIL_CONFIG = config.get("MAIL", {})
         cls.MAIL_SERVER = cls.MAIL_CONFIG.get("SERVER", "localhost")
         cls.MAIL_PORT = cls.MAIL_CONFIG.get("PORT", 587)
@@ -298,6 +305,13 @@ class Config:
         cls.CITY_ASSIGNMENT_ESCALATION_HOURS = config.get(
             "CITY_ASSIGNMENT_ESCALATION_HOURS", 24
         )
+        cls.NATIONAL_ADMIN_ORG_ID = config.get("NATIONAL_ADMIN_ORG_ID")
+        cls.BOARD_ORG_ID = config.get("BOARD_ORG_ID")
+        cls.OVERRIDE_OLIVIA_USER_ID = config.get("OVERRIDE_OLIVIA_USER_ID")
+        cls.GOD_AUTH_ORIGIN = config.get("GOD_AUTH_ORIGIN", "https://mielenosoitukset.fi")
+        cls.GOD_EMERGENCY_ENABLED = config.get("GOD_EMERGENCY_ENABLED", False)
+        cls.GOD_EMERGENCY_PANEL_KEYS = config.get("GOD_EMERGENCY_PANEL_KEYS", {})
+        cls.GOD_EMERGENCY_USB_KEYS = config.get("GOD_EMERGENCY_USB_KEYS", {})
         cls.URGENT_REVIEW_TELEGRAM_ENABLED = config.get("URGENT_REVIEW_TELEGRAM_ENABLED", False)
         cls.ENABLE_PANIC_THREAD = config.get("ENABLE_PANIC_THREAD", True)
         cls.ENABLE_BACKGROUND_JOBS = config.get("ENABLE_BACKGROUND_JOBS", True)

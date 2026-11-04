@@ -1,0 +1,1856 @@
+[
+  {
+    "key": "akaa",
+    "name": "Akaa",
+    "phrase": "kaupungissa Akaa",
+    "default_enabled": false
+  },
+  {
+    "key": "alajarvi",
+    "name": "Alajärvi",
+    "phrase": "kaupungissa Alajärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "alavieska",
+    "name": "Alavieska",
+    "phrase": "kaupungissa Alavieska",
+    "default_enabled": false
+  },
+  {
+    "key": "alavus",
+    "name": "Alavus",
+    "phrase": "kaupungissa Alavus",
+    "default_enabled": false
+  },
+  {
+    "key": "asikkala",
+    "name": "Asikkala",
+    "phrase": "kaupungissa Asikkala",
+    "default_enabled": false
+  },
+  {
+    "key": "askola",
+    "name": "Askola",
+    "phrase": "kaupungissa Askola",
+    "default_enabled": false
+  },
+  {
+    "key": "aura",
+    "name": "Aura",
+    "phrase": "kaupungissa Aura",
+    "default_enabled": false
+  },
+  {
+    "key": "brando",
+    "name": "Brändö",
+    "phrase": "kaupungissa Brändö",
+    "default_enabled": false
+  },
+  {
+    "key": "eckero",
+    "name": "Eckerö",
+    "phrase": "kaupungissa Eckerö",
+    "default_enabled": false
+  },
+  {
+    "key": "enonkoski",
+    "name": "Enonkoski",
+    "phrase": "kaupungissa Enonkoski",
+    "default_enabled": false
+  },
+  {
+    "key": "enontekio",
+    "name": "Enontekiö",
+    "phrase": "kaupungissa Enontekiö",
+    "default_enabled": false
+  },
+  {
+    "key": "espoo",
+    "name": "Espoo",
+    "phrase": "kaupungissa Espoo",
+    "default_enabled": false
+  },
+  {
+    "key": "eura",
+    "name": "Eura",
+    "phrase": "kaupungissa Eura",
+    "default_enabled": false
+  },
+  {
+    "key": "eurajoki",
+    "name": "Eurajoki",
+    "phrase": "kaupungissa Eurajoki",
+    "default_enabled": false
+  },
+  {
+    "key": "evijarvi",
+    "name": "Evijärvi",
+    "phrase": "kaupungissa Evijärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "finstrom",
+    "name": "Finström",
+    "phrase": "kaupungissa Finström",
+    "default_enabled": false
+  },
+  {
+    "key": "forssa",
+    "name": "Forssa",
+    "phrase": "kaupungissa Forssa",
+    "default_enabled": false
+  },
+  {
+    "key": "foglo",
+    "name": "Föglö",
+    "phrase": "kaupungissa Föglö",
+    "default_enabled": false
+  },
+  {
+    "key": "geta",
+    "name": "Geta",
+    "phrase": "kaupungissa Geta",
+    "default_enabled": false
+  },
+  {
+    "key": "haapajarvi",
+    "name": "Haapajärvi",
+    "phrase": "kaupungissa Haapajärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "haapavesi",
+    "name": "Haapavesi",
+    "phrase": "kaupungissa Haapavesi",
+    "default_enabled": false
+  },
+  {
+    "key": "hailuoto",
+    "name": "Hailuoto",
+    "phrase": "kaupungissa Hailuoto",
+    "default_enabled": false
+  },
+  {
+    "key": "halsua",
+    "name": "Halsua",
+    "phrase": "kaupungissa Halsua",
+    "default_enabled": false
+  },
+  {
+    "key": "hamina",
+    "name": "Hamina",
+    "phrase": "Haminassa",
+    "default_enabled": false
+  },
+  {
+    "key": "hammarland",
+    "name": "Hammarland",
+    "phrase": "kaupungissa Hammarland",
+    "default_enabled": false
+  },
+  {
+    "key": "hankasalmi",
+    "name": "Hankasalmi",
+    "phrase": "kaupungissa Hankasalmi",
+    "default_enabled": false
+  },
+  {
+    "key": "hanko",
+    "name": "Hanko",
+    "phrase": "kaupungissa Hanko",
+    "default_enabled": false
+  },
+  {
+    "key": "harjavalta",
+    "name": "Harjavalta",
+    "phrase": "kaupungissa Harjavalta",
+    "default_enabled": false
+  },
+  {
+    "key": "hartola",
+    "name": "Hartola",
+    "phrase": "kaupungissa Hartola",
+    "default_enabled": false
+  },
+  {
+    "key": "hattula",
+    "name": "Hattula",
+    "phrase": "kaupungissa Hattula",
+    "default_enabled": false
+  },
+  {
+    "key": "hausjarvi",
+    "name": "Hausjärvi",
+    "phrase": "kaupungissa Hausjärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "heinola",
+    "name": "Heinola",
+    "phrase": "kaupungissa Heinola",
+    "default_enabled": false
+  },
+  {
+    "key": "heinavesi",
+    "name": "Heinävesi",
+    "phrase": "kaupungissa Heinävesi",
+    "default_enabled": false
+  },
+  {
+    "key": "helsinki",
+    "name": "Helsinki",
+    "phrase": "Helsingissä",
+    "default_enabled": false
+  },
+  {
+    "key": "hirvensalmi",
+    "name": "Hirvensalmi",
+    "phrase": "kaupungissa Hirvensalmi",
+    "default_enabled": false
+  },
+  {
+    "key": "hollola",
+    "name": "Hollola",
+    "phrase": "kaupungissa Hollola",
+    "default_enabled": false
+  },
+  {
+    "key": "huittinen",
+    "name": "Huittinen",
+    "phrase": "kaupungissa Huittinen",
+    "default_enabled": false
+  },
+  {
+    "key": "humppila",
+    "name": "Humppila",
+    "phrase": "kaupungissa Humppila",
+    "default_enabled": false
+  },
+  {
+    "key": "hyrynsalmi",
+    "name": "Hyrynsalmi",
+    "phrase": "kaupungissa Hyrynsalmi",
+    "default_enabled": false
+  },
+  {
+    "key": "hyvinkaa",
+    "name": "Hyvinkää",
+    "phrase": "kaupungissa Hyvinkää",
+    "default_enabled": false
+  },
+  {
+    "key": "hameenkyro",
+    "name": "Hämeenkyrö",
+    "phrase": "kaupungissa Hämeenkyrö",
+    "default_enabled": false
+  },
+  {
+    "key": "hameenlinna",
+    "name": "Hämeenlinna",
+    "phrase": "kaupungissa Hämeenlinna",
+    "default_enabled": false
+  },
+  {
+    "key": "ii",
+    "name": "Ii",
+    "phrase": "kaupungissa Ii",
+    "default_enabled": false
+  },
+  {
+    "key": "iisalmi",
+    "name": "Iisalmi",
+    "phrase": "kaupungissa Iisalmi",
+    "default_enabled": false
+  },
+  {
+    "key": "iitti",
+    "name": "Iitti",
+    "phrase": "kaupungissa Iitti",
+    "default_enabled": false
+  },
+  {
+    "key": "ikaalinen",
+    "name": "Ikaalinen",
+    "phrase": "kaupungissa Ikaalinen",
+    "default_enabled": false
+  },
+  {
+    "key": "ilmajoki",
+    "name": "Ilmajoki",
+    "phrase": "kaupungissa Ilmajoki",
+    "default_enabled": false
+  },
+  {
+    "key": "ilomantsi",
+    "name": "Ilomantsi",
+    "phrase": "kaupungissa Ilomantsi",
+    "default_enabled": false
+  },
+  {
+    "key": "imatra",
+    "name": "Imatra",
+    "phrase": "kaupungissa Imatra",
+    "default_enabled": false
+  },
+  {
+    "key": "inari",
+    "name": "Inari",
+    "phrase": "kaupungissa Inari",
+    "default_enabled": false
+  },
+  {
+    "key": "inkoo",
+    "name": "Inkoo",
+    "phrase": "kaupungissa Inkoo",
+    "default_enabled": false
+  },
+  {
+    "key": "isojoki",
+    "name": "Isojoki",
+    "phrase": "kaupungissa Isojoki",
+    "default_enabled": false
+  },
+  {
+    "key": "isokyro",
+    "name": "Isokyrö",
+    "phrase": "kaupungissa Isokyrö",
+    "default_enabled": false
+  },
+  {
+    "key": "janakkala",
+    "name": "Janakkala",
+    "phrase": "kaupungissa Janakkala",
+    "default_enabled": false
+  },
+  {
+    "key": "joensuu",
+    "name": "Joensuu",
+    "phrase": "Joensuussa",
+    "default_enabled": false
+  },
+  {
+    "key": "jokioinen",
+    "name": "Jokioinen",
+    "phrase": "kaupungissa Jokioinen",
+    "default_enabled": false
+  },
+  {
+    "key": "jomala",
+    "name": "Jomala",
+    "phrase": "kaupungissa Jomala",
+    "default_enabled": false
+  },
+  {
+    "key": "joroinen",
+    "name": "Joroinen",
+    "phrase": "kaupungissa Joroinen",
+    "default_enabled": false
+  },
+  {
+    "key": "joutsa",
+    "name": "Joutsa",
+    "phrase": "kaupungissa Joutsa",
+    "default_enabled": false
+  },
+  {
+    "key": "juuka",
+    "name": "Juuka",
+    "phrase": "kaupungissa Juuka",
+    "default_enabled": false
+  },
+  {
+    "key": "juupajoki",
+    "name": "Juupajoki",
+    "phrase": "kaupungissa Juupajoki",
+    "default_enabled": false
+  },
+  {
+    "key": "juva",
+    "name": "Juva",
+    "phrase": "kaupungissa Juva",
+    "default_enabled": false
+  },
+  {
+    "key": "jyvaskyla",
+    "name": "Jyväskylä",
+    "phrase": "Jyväskylässä",
+    "default_enabled": true
+  },
+  {
+    "key": "jamijarvi",
+    "name": "Jämijärvi",
+    "phrase": "kaupungissa Jämijärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "jamsa",
+    "name": "Jämsä",
+    "phrase": "kaupungissa Jämsä",
+    "default_enabled": false
+  },
+  {
+    "key": "jarvenpaa",
+    "name": "Järvenpää",
+    "phrase": "kaupungissa Järvenpää",
+    "default_enabled": false
+  },
+  {
+    "key": "kaarina",
+    "name": "Kaarina",
+    "phrase": "kaupungissa Kaarina",
+    "default_enabled": false
+  },
+  {
+    "key": "kaavi",
+    "name": "Kaavi",
+    "phrase": "kaupungissa Kaavi",
+    "default_enabled": false
+  },
+  {
+    "key": "kajaani",
+    "name": "Kajaani",
+    "phrase": "Kajaanissa",
+    "default_enabled": false
+  },
+  {
+    "key": "kalajoki",
+    "name": "Kalajoki",
+    "phrase": "kaupungissa Kalajoki",
+    "default_enabled": false
+  },
+  {
+    "key": "kangasala",
+    "name": "Kangasala",
+    "phrase": "kaupungissa Kangasala",
+    "default_enabled": false
+  },
+  {
+    "key": "kangasniemi",
+    "name": "Kangasniemi",
+    "phrase": "kaupungissa Kangasniemi",
+    "default_enabled": false
+  },
+  {
+    "key": "kankaanpaa",
+    "name": "Kankaanpää",
+    "phrase": "kaupungissa Kankaanpää",
+    "default_enabled": false
+  },
+  {
+    "key": "kannonkoski",
+    "name": "Kannonkoski",
+    "phrase": "kaupungissa Kannonkoski",
+    "default_enabled": false
+  },
+  {
+    "key": "kannus",
+    "name": "Kannus",
+    "phrase": "kaupungissa Kannus",
+    "default_enabled": false
+  },
+  {
+    "key": "karijoki",
+    "name": "Karijoki",
+    "phrase": "kaupungissa Karijoki",
+    "default_enabled": false
+  },
+  {
+    "key": "karkkila",
+    "name": "Karkkila",
+    "phrase": "kaupungissa Karkkila",
+    "default_enabled": false
+  },
+  {
+    "key": "karstula",
+    "name": "Karstula",
+    "phrase": "kaupungissa Karstula",
+    "default_enabled": false
+  },
+  {
+    "key": "karvia",
+    "name": "Karvia",
+    "phrase": "kaupungissa Karvia",
+    "default_enabled": false
+  },
+  {
+    "key": "kaskinen",
+    "name": "Kaskinen",
+    "phrase": "kaupungissa Kaskinen",
+    "default_enabled": false
+  },
+  {
+    "key": "kauhajoki",
+    "name": "Kauhajoki",
+    "phrase": "kaupungissa Kauhajoki",
+    "default_enabled": false
+  },
+  {
+    "key": "kauhava",
+    "name": "Kauhava",
+    "phrase": "kaupungissa Kauhava",
+    "default_enabled": false
+  },
+  {
+    "key": "kauniainen",
+    "name": "Kauniainen",
+    "phrase": "kaupungissa Kauniainen",
+    "default_enabled": false
+  },
+  {
+    "key": "kaustinen",
+    "name": "Kaustinen",
+    "phrase": "kaupungissa Kaustinen",
+    "default_enabled": false
+  },
+  {
+    "key": "keitele",
+    "name": "Keitele",
+    "phrase": "kaupungissa Keitele",
+    "default_enabled": false
+  },
+  {
+    "key": "kemi",
+    "name": "Kemi",
+    "phrase": "Kemissä",
+    "default_enabled": false
+  },
+  {
+    "key": "kemijarvi",
+    "name": "Kemijärvi",
+    "phrase": "kaupungissa Kemijärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "keminmaa",
+    "name": "Keminmaa",
+    "phrase": "kaupungissa Keminmaa",
+    "default_enabled": false
+  },
+  {
+    "key": "kemionsaari",
+    "name": "Kemiönsaari",
+    "phrase": "kaupungissa Kemiönsaari",
+    "default_enabled": false
+  },
+  {
+    "key": "kempele",
+    "name": "Kempele",
+    "phrase": "kaupungissa Kempele",
+    "default_enabled": false
+  },
+  {
+    "key": "kerava",
+    "name": "Kerava",
+    "phrase": "kaupungissa Kerava",
+    "default_enabled": false
+  },
+  {
+    "key": "keuruu",
+    "name": "Keuruu",
+    "phrase": "kaupungissa Keuruu",
+    "default_enabled": false
+  },
+  {
+    "key": "kihnio",
+    "name": "Kihniö",
+    "phrase": "kaupungissa Kihniö",
+    "default_enabled": false
+  },
+  {
+    "key": "kinnula",
+    "name": "Kinnula",
+    "phrase": "kaupungissa Kinnula",
+    "default_enabled": false
+  },
+  {
+    "key": "kirkkonummi",
+    "name": "Kirkkonummi",
+    "phrase": "kaupungissa Kirkkonummi",
+    "default_enabled": false
+  },
+  {
+    "key": "kitee",
+    "name": "Kitee",
+    "phrase": "kaupungissa Kitee",
+    "default_enabled": false
+  },
+  {
+    "key": "kittila",
+    "name": "Kittilä",
+    "phrase": "kaupungissa Kittilä",
+    "default_enabled": false
+  },
+  {
+    "key": "kiuruvesi",
+    "name": "Kiuruvesi",
+    "phrase": "kaupungissa Kiuruvesi",
+    "default_enabled": false
+  },
+  {
+    "key": "kivijarvi",
+    "name": "Kivijärvi",
+    "phrase": "kaupungissa Kivijärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "kokemaki",
+    "name": "Kokemäki",
+    "phrase": "kaupungissa Kokemäki",
+    "default_enabled": false
+  },
+  {
+    "key": "kokkola",
+    "name": "Kokkola",
+    "phrase": "Kokkolassa",
+    "default_enabled": true
+  },
+  {
+    "key": "kolari",
+    "name": "Kolari",
+    "phrase": "kaupungissa Kolari",
+    "default_enabled": false
+  },
+  {
+    "key": "konnevesi",
+    "name": "Konnevesi",
+    "phrase": "kaupungissa Konnevesi",
+    "default_enabled": false
+  },
+  {
+    "key": "kontiolahti",
+    "name": "Kontiolahti",
+    "phrase": "kaupungissa Kontiolahti",
+    "default_enabled": false
+  },
+  {
+    "key": "korsnas",
+    "name": "Korsnäs",
+    "phrase": "kaupungissa Korsnäs",
+    "default_enabled": false
+  },
+  {
+    "key": "koski-tl",
+    "name": "Koski Tl",
+    "phrase": "kaupungissa Koski Tl",
+    "default_enabled": false
+  },
+  {
+    "key": "kotka",
+    "name": "Kotka",
+    "phrase": "Kotkassa",
+    "default_enabled": false
+  },
+  {
+    "key": "kouvola",
+    "name": "Kouvola",
+    "phrase": "kaupungissa Kouvola",
+    "default_enabled": false
+  },
+  {
+    "key": "kristiinankaupunki",
+    "name": "Kristiinankaupunki",
+    "phrase": "kaupungissa Kristiinankaupunki",
+    "default_enabled": false
+  },
+  {
+    "key": "kruunupyy",
+    "name": "Kruunupyy",
+    "phrase": "kaupungissa Kruunupyy",
+    "default_enabled": false
+  },
+  {
+    "key": "kuhmo",
+    "name": "Kuhmo",
+    "phrase": "kaupungissa Kuhmo",
+    "default_enabled": false
+  },
+  {
+    "key": "kuhmoinen",
+    "name": "Kuhmoinen",
+    "phrase": "kaupungissa Kuhmoinen",
+    "default_enabled": false
+  },
+  {
+    "key": "kumlinge",
+    "name": "Kumlinge",
+    "phrase": "kaupungissa Kumlinge",
+    "default_enabled": false
+  },
+  {
+    "key": "kuopio",
+    "name": "Kuopio",
+    "phrase": "Kuopiossa",
+    "default_enabled": true
+  },
+  {
+    "key": "kuortane",
+    "name": "Kuortane",
+    "phrase": "kaupungissa Kuortane",
+    "default_enabled": false
+  },
+  {
+    "key": "kurikka",
+    "name": "Kurikka",
+    "phrase": "kaupungissa Kurikka",
+    "default_enabled": false
+  },
+  {
+    "key": "kustavi",
+    "name": "Kustavi",
+    "phrase": "kaupungissa Kustavi",
+    "default_enabled": false
+  },
+  {
+    "key": "kuusamo",
+    "name": "Kuusamo",
+    "phrase": "kaupungissa Kuusamo",
+    "default_enabled": false
+  },
+  {
+    "key": "kyyjarvi",
+    "name": "Kyyjärvi",
+    "phrase": "kaupungissa Kyyjärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "karkola",
+    "name": "Kärkölä",
+    "phrase": "kaupungissa Kärkölä",
+    "default_enabled": false
+  },
+  {
+    "key": "karsamaki",
+    "name": "Kärsämäki",
+    "phrase": "kaupungissa Kärsämäki",
+    "default_enabled": false
+  },
+  {
+    "key": "kokar",
+    "name": "Kökar",
+    "phrase": "kaupungissa Kökar",
+    "default_enabled": false
+  },
+  {
+    "key": "lahti",
+    "name": "Lahti",
+    "phrase": "kaupungissa Lahti",
+    "default_enabled": false
+  },
+  {
+    "key": "laihia",
+    "name": "Laihia",
+    "phrase": "kaupungissa Laihia",
+    "default_enabled": false
+  },
+  {
+    "key": "laitila",
+    "name": "Laitila",
+    "phrase": "kaupungissa Laitila",
+    "default_enabled": false
+  },
+  {
+    "key": "lapinjarvi",
+    "name": "Lapinjärvi",
+    "phrase": "kaupungissa Lapinjärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "lapinlahti",
+    "name": "Lapinlahti",
+    "phrase": "kaupungissa Lapinlahti",
+    "default_enabled": false
+  },
+  {
+    "key": "lappajarvi",
+    "name": "Lappajärvi",
+    "phrase": "kaupungissa Lappajärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "lappeenranta",
+    "name": "Lappeenranta",
+    "phrase": "Lappeenrannassa",
+    "default_enabled": true
+  },
+  {
+    "key": "lapua",
+    "name": "Lapua",
+    "phrase": "kaupungissa Lapua",
+    "default_enabled": false
+  },
+  {
+    "key": "laukaa",
+    "name": "Laukaa",
+    "phrase": "kaupungissa Laukaa",
+    "default_enabled": false
+  },
+  {
+    "key": "lemi",
+    "name": "Lemi",
+    "phrase": "kaupungissa Lemi",
+    "default_enabled": false
+  },
+  {
+    "key": "lemland",
+    "name": "Lemland",
+    "phrase": "kaupungissa Lemland",
+    "default_enabled": false
+  },
+  {
+    "key": "lempaala",
+    "name": "Lempäälä",
+    "phrase": "kaupungissa Lempäälä",
+    "default_enabled": false
+  },
+  {
+    "key": "leppavirta",
+    "name": "Leppävirta",
+    "phrase": "kaupungissa Leppävirta",
+    "default_enabled": false
+  },
+  {
+    "key": "lestijarvi",
+    "name": "Lestijärvi",
+    "phrase": "kaupungissa Lestijärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "lieksa",
+    "name": "Lieksa",
+    "phrase": "kaupungissa Lieksa",
+    "default_enabled": false
+  },
+  {
+    "key": "lieto",
+    "name": "Lieto",
+    "phrase": "kaupungissa Lieto",
+    "default_enabled": false
+  },
+  {
+    "key": "liminka",
+    "name": "Liminka",
+    "phrase": "kaupungissa Liminka",
+    "default_enabled": false
+  },
+  {
+    "key": "liperi",
+    "name": "Liperi",
+    "phrase": "kaupungissa Liperi",
+    "default_enabled": false
+  },
+  {
+    "key": "lohja",
+    "name": "Lohja",
+    "phrase": "kaupungissa Lohja",
+    "default_enabled": false
+  },
+  {
+    "key": "loimaa",
+    "name": "Loimaa",
+    "phrase": "kaupungissa Loimaa",
+    "default_enabled": false
+  },
+  {
+    "key": "loppi",
+    "name": "Loppi",
+    "phrase": "kaupungissa Loppi",
+    "default_enabled": false
+  },
+  {
+    "key": "loviisa",
+    "name": "Loviisa",
+    "phrase": "kaupungissa Loviisa",
+    "default_enabled": false
+  },
+  {
+    "key": "luhanka",
+    "name": "Luhanka",
+    "phrase": "kaupungissa Luhanka",
+    "default_enabled": false
+  },
+  {
+    "key": "lumijoki",
+    "name": "Lumijoki",
+    "phrase": "kaupungissa Lumijoki",
+    "default_enabled": false
+  },
+  {
+    "key": "lumparland",
+    "name": "Lumparland",
+    "phrase": "kaupungissa Lumparland",
+    "default_enabled": false
+  },
+  {
+    "key": "luoto",
+    "name": "Luoto",
+    "phrase": "kaupungissa Luoto",
+    "default_enabled": false
+  },
+  {
+    "key": "luumaki",
+    "name": "Luumäki",
+    "phrase": "kaupungissa Luumäki",
+    "default_enabled": false
+  },
+  {
+    "key": "maalahti",
+    "name": "Maalahti",
+    "phrase": "kaupungissa Maalahti",
+    "default_enabled": false
+  },
+  {
+    "key": "maarianhamina-mariehamn",
+    "name": "Maarianhamina – Mariehamn",
+    "phrase": "kaupungissa Maarianhamina – Mariehamn",
+    "default_enabled": false
+  },
+  {
+    "key": "marttila",
+    "name": "Marttila",
+    "phrase": "kaupungissa Marttila",
+    "default_enabled": false
+  },
+  {
+    "key": "masku",
+    "name": "Masku",
+    "phrase": "kaupungissa Masku",
+    "default_enabled": false
+  },
+  {
+    "key": "merijarvi",
+    "name": "Merijärvi",
+    "phrase": "kaupungissa Merijärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "merikarvia",
+    "name": "Merikarvia",
+    "phrase": "kaupungissa Merikarvia",
+    "default_enabled": false
+  },
+  {
+    "key": "miehikkala",
+    "name": "Miehikkälä",
+    "phrase": "kaupungissa Miehikkälä",
+    "default_enabled": false
+  },
+  {
+    "key": "mikkeli",
+    "name": "Mikkeli",
+    "phrase": "kaupungissa Mikkeli",
+    "default_enabled": false
+  },
+  {
+    "key": "muhos",
+    "name": "Muhos",
+    "phrase": "kaupungissa Muhos",
+    "default_enabled": false
+  },
+  {
+    "key": "multia",
+    "name": "Multia",
+    "phrase": "kaupungissa Multia",
+    "default_enabled": false
+  },
+  {
+    "key": "muonio",
+    "name": "Muonio",
+    "phrase": "kaupungissa Muonio",
+    "default_enabled": false
+  },
+  {
+    "key": "mustasaari",
+    "name": "Mustasaari",
+    "phrase": "kaupungissa Mustasaari",
+    "default_enabled": false
+  },
+  {
+    "key": "muurame",
+    "name": "Muurame",
+    "phrase": "kaupungissa Muurame",
+    "default_enabled": false
+  },
+  {
+    "key": "mynamaki",
+    "name": "Mynämäki",
+    "phrase": "kaupungissa Mynämäki",
+    "default_enabled": false
+  },
+  {
+    "key": "myrskyla",
+    "name": "Myrskylä",
+    "phrase": "kaupungissa Myrskylä",
+    "default_enabled": false
+  },
+  {
+    "key": "mantsala",
+    "name": "Mäntsälä",
+    "phrase": "kaupungissa Mäntsälä",
+    "default_enabled": false
+  },
+  {
+    "key": "mantta-vilppula",
+    "name": "Mänttä-Vilppula",
+    "phrase": "kaupungissa Mänttä-Vilppula",
+    "default_enabled": false
+  },
+  {
+    "key": "mantyharju",
+    "name": "Mäntyharju",
+    "phrase": "kaupungissa Mäntyharju",
+    "default_enabled": false
+  },
+  {
+    "key": "naantali",
+    "name": "Naantali",
+    "phrase": "kaupungissa Naantali",
+    "default_enabled": false
+  },
+  {
+    "key": "nakkila",
+    "name": "Nakkila",
+    "phrase": "kaupungissa Nakkila",
+    "default_enabled": false
+  },
+  {
+    "key": "nivala",
+    "name": "Nivala",
+    "phrase": "kaupungissa Nivala",
+    "default_enabled": false
+  },
+  {
+    "key": "nokia",
+    "name": "Nokia",
+    "phrase": "kaupungissa Nokia",
+    "default_enabled": false
+  },
+  {
+    "key": "nousiainen",
+    "name": "Nousiainen",
+    "phrase": "kaupungissa Nousiainen",
+    "default_enabled": false
+  },
+  {
+    "key": "nurmes",
+    "name": "Nurmes",
+    "phrase": "kaupungissa Nurmes",
+    "default_enabled": false
+  },
+  {
+    "key": "nurmijarvi",
+    "name": "Nurmijärvi",
+    "phrase": "kaupungissa Nurmijärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "narpio",
+    "name": "Närpiö",
+    "phrase": "kaupungissa Närpiö",
+    "default_enabled": false
+  },
+  {
+    "key": "orimattila",
+    "name": "Orimattila",
+    "phrase": "kaupungissa Orimattila",
+    "default_enabled": false
+  },
+  {
+    "key": "oripaa",
+    "name": "Oripää",
+    "phrase": "kaupungissa Oripää",
+    "default_enabled": false
+  },
+  {
+    "key": "orivesi",
+    "name": "Orivesi",
+    "phrase": "kaupungissa Orivesi",
+    "default_enabled": false
+  },
+  {
+    "key": "oulainen",
+    "name": "Oulainen",
+    "phrase": "kaupungissa Oulainen",
+    "default_enabled": false
+  },
+  {
+    "key": "oulu",
+    "name": "Oulu",
+    "phrase": "Oulussa",
+    "default_enabled": true
+  },
+  {
+    "key": "outokumpu",
+    "name": "Outokumpu",
+    "phrase": "kaupungissa Outokumpu",
+    "default_enabled": false
+  },
+  {
+    "key": "padasjoki",
+    "name": "Padasjoki",
+    "phrase": "kaupungissa Padasjoki",
+    "default_enabled": false
+  },
+  {
+    "key": "paimio",
+    "name": "Paimio",
+    "phrase": "kaupungissa Paimio",
+    "default_enabled": false
+  },
+  {
+    "key": "paltamo",
+    "name": "Paltamo",
+    "phrase": "kaupungissa Paltamo",
+    "default_enabled": false
+  },
+  {
+    "key": "parainen",
+    "name": "Parainen",
+    "phrase": "kaupungissa Parainen",
+    "default_enabled": false
+  },
+  {
+    "key": "parikkala",
+    "name": "Parikkala",
+    "phrase": "kaupungissa Parikkala",
+    "default_enabled": false
+  },
+  {
+    "key": "parkano",
+    "name": "Parkano",
+    "phrase": "kaupungissa Parkano",
+    "default_enabled": false
+  },
+  {
+    "key": "pedersore",
+    "name": "Pedersöre",
+    "phrase": "kaupungissa Pedersöre",
+    "default_enabled": false
+  },
+  {
+    "key": "pelkosenniemi",
+    "name": "Pelkosenniemi",
+    "phrase": "kaupungissa Pelkosenniemi",
+    "default_enabled": false
+  },
+  {
+    "key": "pello",
+    "name": "Pello",
+    "phrase": "kaupungissa Pello",
+    "default_enabled": false
+  },
+  {
+    "key": "perho",
+    "name": "Perho",
+    "phrase": "kaupungissa Perho",
+    "default_enabled": false
+  },
+  {
+    "key": "pertunmaa",
+    "name": "Pertunmaa",
+    "phrase": "kaupungissa Pertunmaa",
+    "default_enabled": false
+  },
+  {
+    "key": "petajavesi",
+    "name": "Petäjävesi",
+    "phrase": "kaupungissa Petäjävesi",
+    "default_enabled": false
+  },
+  {
+    "key": "pieksamaki",
+    "name": "Pieksämäki",
+    "phrase": "Pieksämäellä",
+    "default_enabled": true
+  },
+  {
+    "key": "pielavesi",
+    "name": "Pielavesi",
+    "phrase": "kaupungissa Pielavesi",
+    "default_enabled": false
+  },
+  {
+    "key": "pietarsaari",
+    "name": "Pietarsaari",
+    "phrase": "Pietarsaaressa",
+    "default_enabled": true
+  },
+  {
+    "key": "pihtipudas",
+    "name": "Pihtipudas",
+    "phrase": "kaupungissa Pihtipudas",
+    "default_enabled": false
+  },
+  {
+    "key": "pirkkala",
+    "name": "Pirkkala",
+    "phrase": "kaupungissa Pirkkala",
+    "default_enabled": false
+  },
+  {
+    "key": "polvijarvi",
+    "name": "Polvijärvi",
+    "phrase": "kaupungissa Polvijärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "pomarkku",
+    "name": "Pomarkku",
+    "phrase": "kaupungissa Pomarkku",
+    "default_enabled": false
+  },
+  {
+    "key": "pori",
+    "name": "Pori",
+    "phrase": "Porissa",
+    "default_enabled": false
+  },
+  {
+    "key": "pornainen",
+    "name": "Pornainen",
+    "phrase": "kaupungissa Pornainen",
+    "default_enabled": false
+  },
+  {
+    "key": "porvoo",
+    "name": "Porvoo",
+    "phrase": "Porvoossa",
+    "default_enabled": true
+  },
+  {
+    "key": "posio",
+    "name": "Posio",
+    "phrase": "kaupungissa Posio",
+    "default_enabled": false
+  },
+  {
+    "key": "pudasjarvi",
+    "name": "Pudasjärvi",
+    "phrase": "kaupungissa Pudasjärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "pukkila",
+    "name": "Pukkila",
+    "phrase": "kaupungissa Pukkila",
+    "default_enabled": false
+  },
+  {
+    "key": "punkalaidun",
+    "name": "Punkalaidun",
+    "phrase": "kaupungissa Punkalaidun",
+    "default_enabled": false
+  },
+  {
+    "key": "puolanka",
+    "name": "Puolanka",
+    "phrase": "kaupungissa Puolanka",
+    "default_enabled": false
+  },
+  {
+    "key": "puumala",
+    "name": "Puumala",
+    "phrase": "kaupungissa Puumala",
+    "default_enabled": false
+  },
+  {
+    "key": "pyhtaa",
+    "name": "Pyhtää",
+    "phrase": "kaupungissa Pyhtää",
+    "default_enabled": false
+  },
+  {
+    "key": "pyhajoki",
+    "name": "Pyhäjoki",
+    "phrase": "kaupungissa Pyhäjoki",
+    "default_enabled": false
+  },
+  {
+    "key": "pyhajarvi",
+    "name": "Pyhäjärvi",
+    "phrase": "kaupungissa Pyhäjärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "pyhanta",
+    "name": "Pyhäntä",
+    "phrase": "kaupungissa Pyhäntä",
+    "default_enabled": false
+  },
+  {
+    "key": "pyharanta",
+    "name": "Pyhäranta",
+    "phrase": "kaupungissa Pyhäranta",
+    "default_enabled": false
+  },
+  {
+    "key": "palkane",
+    "name": "Pälkäne",
+    "phrase": "kaupungissa Pälkäne",
+    "default_enabled": false
+  },
+  {
+    "key": "poytya",
+    "name": "Pöytyä",
+    "phrase": "kaupungissa Pöytyä",
+    "default_enabled": false
+  },
+  {
+    "key": "raahe",
+    "name": "Raahe",
+    "phrase": "kaupungissa Raahe",
+    "default_enabled": false
+  },
+  {
+    "key": "raasepori",
+    "name": "Raasepori",
+    "phrase": "Raaseporissa",
+    "default_enabled": false
+  },
+  {
+    "key": "raisio",
+    "name": "Raisio",
+    "phrase": "kaupungissa Raisio",
+    "default_enabled": false
+  },
+  {
+    "key": "rantasalmi",
+    "name": "Rantasalmi",
+    "phrase": "kaupungissa Rantasalmi",
+    "default_enabled": false
+  },
+  {
+    "key": "ranua",
+    "name": "Ranua",
+    "phrase": "kaupungissa Ranua",
+    "default_enabled": false
+  },
+  {
+    "key": "rauma",
+    "name": "Rauma",
+    "phrase": "kaupungissa Rauma",
+    "default_enabled": false
+  },
+  {
+    "key": "rautalampi",
+    "name": "Rautalampi",
+    "phrase": "kaupungissa Rautalampi",
+    "default_enabled": false
+  },
+  {
+    "key": "rautavaara",
+    "name": "Rautavaara",
+    "phrase": "kaupungissa Rautavaara",
+    "default_enabled": false
+  },
+  {
+    "key": "rautjarvi",
+    "name": "Rautjärvi",
+    "phrase": "kaupungissa Rautjärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "reisjarvi",
+    "name": "Reisjärvi",
+    "phrase": "kaupungissa Reisjärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "riihimaki",
+    "name": "Riihimäki",
+    "phrase": "kaupungissa Riihimäki",
+    "default_enabled": false
+  },
+  {
+    "key": "ristijarvi",
+    "name": "Ristijärvi",
+    "phrase": "kaupungissa Ristijärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "rovaniemi",
+    "name": "Rovaniemi",
+    "phrase": "Rovaniemellä",
+    "default_enabled": true
+  },
+  {
+    "key": "ruokolahti",
+    "name": "Ruokolahti",
+    "phrase": "kaupungissa Ruokolahti",
+    "default_enabled": false
+  },
+  {
+    "key": "ruovesi",
+    "name": "Ruovesi",
+    "phrase": "kaupungissa Ruovesi",
+    "default_enabled": false
+  },
+  {
+    "key": "rusko",
+    "name": "Rusko",
+    "phrase": "kaupungissa Rusko",
+    "default_enabled": false
+  },
+  {
+    "key": "raakkyla",
+    "name": "Rääkkylä",
+    "phrase": "kaupungissa Rääkkylä",
+    "default_enabled": false
+  },
+  {
+    "key": "saarijarvi",
+    "name": "Saarijärvi",
+    "phrase": "kaupungissa Saarijärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "salla",
+    "name": "Salla",
+    "phrase": "kaupungissa Salla",
+    "default_enabled": false
+  },
+  {
+    "key": "salo",
+    "name": "Salo",
+    "phrase": "kaupungissa Salo",
+    "default_enabled": false
+  },
+  {
+    "key": "saltvik",
+    "name": "Saltvik",
+    "phrase": "kaupungissa Saltvik",
+    "default_enabled": false
+  },
+  {
+    "key": "sastamala",
+    "name": "Sastamala",
+    "phrase": "Sastamalassa",
+    "default_enabled": true
+  },
+  {
+    "key": "sauvo",
+    "name": "Sauvo",
+    "phrase": "kaupungissa Sauvo",
+    "default_enabled": false
+  },
+  {
+    "key": "savitaipale",
+    "name": "Savitaipale",
+    "phrase": "kaupungissa Savitaipale",
+    "default_enabled": false
+  },
+  {
+    "key": "savonlinna",
+    "name": "Savonlinna",
+    "phrase": "Savonlinnassa",
+    "default_enabled": true
+  },
+  {
+    "key": "savukoski",
+    "name": "Savukoski",
+    "phrase": "kaupungissa Savukoski",
+    "default_enabled": false
+  },
+  {
+    "key": "seinajoki",
+    "name": "Seinäjoki",
+    "phrase": "Seinäjoella",
+    "default_enabled": true
+  },
+  {
+    "key": "sievi",
+    "name": "Sievi",
+    "phrase": "kaupungissa Sievi",
+    "default_enabled": false
+  },
+  {
+    "key": "siikainen",
+    "name": "Siikainen",
+    "phrase": "kaupungissa Siikainen",
+    "default_enabled": false
+  },
+  {
+    "key": "siikajoki",
+    "name": "Siikajoki",
+    "phrase": "kaupungissa Siikajoki",
+    "default_enabled": false
+  },
+  {
+    "key": "siikalatva",
+    "name": "Siikalatva",
+    "phrase": "kaupungissa Siikalatva",
+    "default_enabled": false
+  },
+  {
+    "key": "siilinjarvi",
+    "name": "Siilinjärvi",
+    "phrase": "kaupungissa Siilinjärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "simo",
+    "name": "Simo",
+    "phrase": "kaupungissa Simo",
+    "default_enabled": false
+  },
+  {
+    "key": "sipoo",
+    "name": "Sipoo",
+    "phrase": "kaupungissa Sipoo",
+    "default_enabled": false
+  },
+  {
+    "key": "siuntio",
+    "name": "Siuntio",
+    "phrase": "kaupungissa Siuntio",
+    "default_enabled": false
+  },
+  {
+    "key": "sodankyla",
+    "name": "Sodankylä",
+    "phrase": "kaupungissa Sodankylä",
+    "default_enabled": false
+  },
+  {
+    "key": "soini",
+    "name": "Soini",
+    "phrase": "kaupungissa Soini",
+    "default_enabled": false
+  },
+  {
+    "key": "somero",
+    "name": "Somero",
+    "phrase": "kaupungissa Somero",
+    "default_enabled": false
+  },
+  {
+    "key": "sonkajarvi",
+    "name": "Sonkajärvi",
+    "phrase": "kaupungissa Sonkajärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "sotkamo",
+    "name": "Sotkamo",
+    "phrase": "kaupungissa Sotkamo",
+    "default_enabled": false
+  },
+  {
+    "key": "sottunga",
+    "name": "Sottunga",
+    "phrase": "kaupungissa Sottunga",
+    "default_enabled": false
+  },
+  {
+    "key": "sulkava",
+    "name": "Sulkava",
+    "phrase": "kaupungissa Sulkava",
+    "default_enabled": false
+  },
+  {
+    "key": "sund",
+    "name": "Sund",
+    "phrase": "kaupungissa Sund",
+    "default_enabled": false
+  },
+  {
+    "key": "suomussalmi",
+    "name": "Suomussalmi",
+    "phrase": "kaupungissa Suomussalmi",
+    "default_enabled": false
+  },
+  {
+    "key": "suonenjoki",
+    "name": "Suonenjoki",
+    "phrase": "kaupungissa Suonenjoki",
+    "default_enabled": false
+  },
+  {
+    "key": "sysma",
+    "name": "Sysmä",
+    "phrase": "kaupungissa Sysmä",
+    "default_enabled": false
+  },
+  {
+    "key": "sakyla",
+    "name": "Säkylä",
+    "phrase": "kaupungissa Säkylä",
+    "default_enabled": false
+  },
+  {
+    "key": "taipalsaari",
+    "name": "Taipalsaari",
+    "phrase": "kaupungissa Taipalsaari",
+    "default_enabled": false
+  },
+  {
+    "key": "taivalkoski",
+    "name": "Taivalkoski",
+    "phrase": "kaupungissa Taivalkoski",
+    "default_enabled": false
+  },
+  {
+    "key": "taivassalo",
+    "name": "Taivassalo",
+    "phrase": "kaupungissa Taivassalo",
+    "default_enabled": false
+  },
+  {
+    "key": "tammela",
+    "name": "Tammela",
+    "phrase": "kaupungissa Tammela",
+    "default_enabled": false
+  },
+  {
+    "key": "tampere",
+    "name": "Tampere",
+    "phrase": "Tampereella",
+    "default_enabled": true
+  },
+  {
+    "key": "tervo",
+    "name": "Tervo",
+    "phrase": "kaupungissa Tervo",
+    "default_enabled": false
+  },
+  {
+    "key": "tervola",
+    "name": "Tervola",
+    "phrase": "kaupungissa Tervola",
+    "default_enabled": false
+  },
+  {
+    "key": "teuva",
+    "name": "Teuva",
+    "phrase": "kaupungissa Teuva",
+    "default_enabled": false
+  },
+  {
+    "key": "tohmajarvi",
+    "name": "Tohmajärvi",
+    "phrase": "kaupungissa Tohmajärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "toholampi",
+    "name": "Toholampi",
+    "phrase": "kaupungissa Toholampi",
+    "default_enabled": false
+  },
+  {
+    "key": "toivakka",
+    "name": "Toivakka",
+    "phrase": "kaupungissa Toivakka",
+    "default_enabled": false
+  },
+  {
+    "key": "tornio",
+    "name": "Tornio",
+    "phrase": "kaupungissa Tornio",
+    "default_enabled": false
+  },
+  {
+    "key": "turku",
+    "name": "Turku",
+    "phrase": "Turussa",
+    "default_enabled": true
+  },
+  {
+    "key": "tuusniemi",
+    "name": "Tuusniemi",
+    "phrase": "kaupungissa Tuusniemi",
+    "default_enabled": false
+  },
+  {
+    "key": "tuusula",
+    "name": "Tuusula",
+    "phrase": "kaupungissa Tuusula",
+    "default_enabled": false
+  },
+  {
+    "key": "tyrnava",
+    "name": "Tyrnävä",
+    "phrase": "kaupungissa Tyrnävä",
+    "default_enabled": false
+  },
+  {
+    "key": "ulvila",
+    "name": "Ulvila",
+    "phrase": "kaupungissa Ulvila",
+    "default_enabled": false
+  },
+  {
+    "key": "urjala",
+    "name": "Urjala",
+    "phrase": "kaupungissa Urjala",
+    "default_enabled": false
+  },
+  {
+    "key": "utajarvi",
+    "name": "Utajärvi",
+    "phrase": "kaupungissa Utajärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "utsjoki",
+    "name": "Utsjoki",
+    "phrase": "kaupungissa Utsjoki",
+    "default_enabled": false
+  },
+  {
+    "key": "uurainen",
+    "name": "Uurainen",
+    "phrase": "kaupungissa Uurainen",
+    "default_enabled": false
+  },
+  {
+    "key": "uusikaarlepyy",
+    "name": "Uusikaarlepyy",
+    "phrase": "kaupungissa Uusikaarlepyy",
+    "default_enabled": false
+  },
+  {
+    "key": "uusikaupunki",
+    "name": "Uusikaupunki",
+    "phrase": "kaupungissa Uusikaupunki",
+    "default_enabled": false
+  },
+  {
+    "key": "vaala",
+    "name": "Vaala",
+    "phrase": "kaupungissa Vaala",
+    "default_enabled": false
+  },
+  {
+    "key": "vaasa",
+    "name": "Vaasa",
+    "phrase": "Vaasassa",
+    "default_enabled": true
+  },
+  {
+    "key": "valkeakoski",
+    "name": "Valkeakoski",
+    "phrase": "kaupungissa Valkeakoski",
+    "default_enabled": false
+  },
+  {
+    "key": "vantaa",
+    "name": "Vantaa",
+    "phrase": "kaupungissa Vantaa",
+    "default_enabled": false
+  },
+  {
+    "key": "varkaus",
+    "name": "Varkaus",
+    "phrase": "Varkaudessa",
+    "default_enabled": false
+  },
+  {
+    "key": "vehmaa",
+    "name": "Vehmaa",
+    "phrase": "kaupungissa Vehmaa",
+    "default_enabled": false
+  },
+  {
+    "key": "vesanto",
+    "name": "Vesanto",
+    "phrase": "kaupungissa Vesanto",
+    "default_enabled": false
+  },
+  {
+    "key": "vesilahti",
+    "name": "Vesilahti",
+    "phrase": "kaupungissa Vesilahti",
+    "default_enabled": false
+  },
+  {
+    "key": "veteli",
+    "name": "Veteli",
+    "phrase": "kaupungissa Veteli",
+    "default_enabled": false
+  },
+  {
+    "key": "vierema",
+    "name": "Vieremä",
+    "phrase": "kaupungissa Vieremä",
+    "default_enabled": false
+  },
+  {
+    "key": "vihti",
+    "name": "Vihti",
+    "phrase": "kaupungissa Vihti",
+    "default_enabled": false
+  },
+  {
+    "key": "viitasaari",
+    "name": "Viitasaari",
+    "phrase": "kaupungissa Viitasaari",
+    "default_enabled": false
+  },
+  {
+    "key": "vimpeli",
+    "name": "Vimpeli",
+    "phrase": "kaupungissa Vimpeli",
+    "default_enabled": false
+  },
+  {
+    "key": "virolahti",
+    "name": "Virolahti",
+    "phrase": "kaupungissa Virolahti",
+    "default_enabled": false
+  },
+  {
+    "key": "virrat",
+    "name": "Virrat",
+    "phrase": "kaupungissa Virrat",
+    "default_enabled": false
+  },
+  {
+    "key": "vardo",
+    "name": "Vårdö",
+    "phrase": "kaupungissa Vårdö",
+    "default_enabled": false
+  },
+  {
+    "key": "voyri",
+    "name": "Vöyri",
+    "phrase": "kaupungissa Vöyri",
+    "default_enabled": false
+  },
+  {
+    "key": "ylitornio",
+    "name": "Ylitornio",
+    "phrase": "kaupungissa Ylitornio",
+    "default_enabled": false
+  },
+  {
+    "key": "ylivieska",
+    "name": "Ylivieska",
+    "phrase": "kaupungissa Ylivieska",
+    "default_enabled": false
+  },
+  {
+    "key": "ylojarvi",
+    "name": "Ylöjärvi",
+    "phrase": "kaupungissa Ylöjärvi",
+    "default_enabled": false
+  },
+  {
+    "key": "ypaja",
+    "name": "Ypäjä",
+    "phrase": "kaupungissa Ypäjä",
+    "default_enabled": false
+  },
+  {
+    "key": "ahtari",
+    "name": "Ähtäri",
+    "phrase": "kaupungissa Ähtäri",
+    "default_enabled": false
+  },
+  {
+    "key": "aanekoski",
+    "name": "Äänekoski",
+    "phrase": "kaupungissa Äänekoski",
+    "default_enabled": false
+  }
+]

@@ -38,12 +38,14 @@ def _install_bootstrap_modal_test_double(page):
               instances.set(element, this);
             }
             show() {
+              this.element.dispatchEvent(new Event('show.bs.modal'));
               this.element.style.display = 'block';
               this.element.classList.add('show');
               this.element.removeAttribute('aria-hidden');
               this.element.dispatchEvent(new Event('shown.bs.modal'));
             }
             hide() {
+              this.element.dispatchEvent(new Event('hide.bs.modal'));
               this.element.style.display = 'none';
               this.element.classList.remove('show');
               this.element.setAttribute('aria-hidden', 'true');
@@ -57,7 +59,13 @@ def _install_bootstrap_modal_test_double(page):
           document.addEventListener('click', event => {
             const dismiss = event.target.closest('[data-bs-dismiss="modal"]');
             const modal = dismiss?.closest('.modal');
-            if (modal) Modal.getOrCreateInstance(modal).hide();
+            if (modal) {
+              Modal.getOrCreateInstance(modal).hide();
+              return;
+            }
+            const trigger = event.target.closest('[data-bs-toggle="modal"]');
+            const target = trigger && document.querySelector(trigger.dataset.bsTarget);
+            if (target) Modal.getOrCreateInstance(target).show();
           });
         })();
         """
@@ -223,6 +231,59 @@ def test_admin_dashboard_redirects_through_login_in_real_browser(
     _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
     _wait_for_body_text(browser_page, "Reaaliaikainen tilannekuva")
     _wait_for_body_text(browser_page, "Panic Mode")
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.parametrize("logout_action", ["countdown", "confirm"])
+def test_admin_shell_logout_countdown_can_cancel_reset_and_complete(
+    app,
+    db,
+    live_server,
+    browser_page,
+    logout_action,
+):
+    _install_bootstrap_modal_test_double(browser_page)
+    _seed_database(app, db)
+    errors = []
+    browser_page.on("pageerror", lambda error: errors.append(str(error)))
+    browser_page.goto(f"{live_server}/admin/dashboard", wait_until="domcontentloaded")
+    _submit_login_form(browser_page, "admin", "AdminPass1!")
+    _wait_for_url(browser_page, re.compile(r".*/admin/dashboard$"))
+    assert errors == []
+
+    theme_toggle = browser_page.locator("#theme-toggle")
+    theme_toggle.click()
+    assert browser_page.locator("html").get_attribute("data-bs-theme") == "light"
+    theme_toggle.click()
+    assert browser_page.locator("html").get_attribute("data-bs-theme") == "dark"
+
+    browser_page.clock.install()
+    browser_page.clock.pause_at(datetime.now())
+    trigger = browser_page.locator('[data-bs-target="#logoutConfirmModal"]')
+    modal = browser_page.locator("#logoutConfirmModal")
+    countdown = modal.locator("#countdown")
+    for dismiss_selector in ("#cancelLogoutBtn", ".btn-close"):
+        trigger.click()
+        modal.wait_for(state="visible")
+        assert countdown.text_content() == "5"
+        browser_page.clock.run_for(2000)
+        assert countdown.text_content() == "3"
+        modal.locator(dismiss_selector).click()
+        modal.wait_for(state="hidden")
+        browser_page.clock.run_for(6000)
+        assert countdown.text_content() == "3"
+        assert browser_page.url == f"{live_server}/admin/dashboard"
+
+    trigger.click()
+    assert countdown.text_content() == "5"
+    if logout_action == "countdown":
+        browser_page.clock.run_for(5000)
+    else:
+        modal.locator("#confirmLogoutBtn").click()
+    _wait_for_url(browser_page, re.compile(r".*/users/auth/login/?$"))
+    _wait_for_body_text(browser_page, "Kirjauduit onnistuneesti ulos")
+    assert errors == []
 
 
 @pytest.mark.e2e

@@ -1,14 +1,21 @@
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, date
+import hmac
+import secrets
 
 from bson.objectid import ObjectId
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, session, abort, current_app
 from flask_login import login_required
+from pymongo.errors import PyMongoError
 from mielenosoitukset_fi.utils.flashing import flash_message
 
 from mielenosoitukset_fi.utils.classes import RecurringDemonstration, Organizer
 from mielenosoitukset_fi.utils.variables import CITY_LIST
-from mielenosoitukset_fi.utils.wrappers import permission_required, admin_required
+from mielenosoitukset_fi.utils.wrappers import (
+    permission_required, admin_required, global_permission_required,
+    has_admin_access, has_global_permission,
+)
+from mielenosoitukset_fi.utils.campaign_publication import campaign_pages_public, PUBLICATION_ID
 
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
 from .utils import mongo, _ADMIN_TEMPLATE_FOLDER
@@ -26,9 +33,18 @@ from flask_login import current_user
 @admin_kampanja_bp.before_request
 def log_request_info():
     """Log request information before handling it."""
+    if request.endpoint == "admin_kampanja.update_publication":
+        return  # The action audit below deliberately excludes session/CSRF material.
     log_admin_action_V2(
         AdminActParser().log_request_info(request.__dict__, current_user)
     )
+
+@admin_kampanja_bp.after_request
+def private_admin_response(response):
+    response.headers["Cache-Control"] = "private, no-store"
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
 
 @admin_kampanja_bp.route("/")
 @login_required
@@ -38,11 +54,55 @@ def index():
     volunteers = list(mongo.volunteers.find({}))
     volunteer_count = len(volunteers)
 
+    can_publish = has_admin_access(current_user) and has_global_permission(current_user, "KAMPANJA")
+    token = None
+    if can_publish:
+        token = session.setdefault("campaign_publication_csrf", secrets.token_urlsafe(32))
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}kampanja/list.html",
         volunteers=volunteers,
-        volunteer_count=volunteer_count
+        volunteer_count=volunteer_count,
+        pages_public=campaign_pages_public(),
+        can_publish=can_publish,
+        publication_csrf=token,
     )
+
+@admin_kampanja_bp.route("/publication", methods=["POST"])
+@login_required
+@admin_required
+@global_permission_required("KAMPANJA")
+def update_publication():
+    """Publish or withdraw pages without enabling fundraising payments."""
+    expected = session.get("campaign_publication_csrf", "")
+    supplied = request.form.get("csrf_token", "")
+    if not expected or not supplied or not hmac.compare_digest(expected.encode("utf-8"), supplied.encode("utf-8")):
+        abort(400)
+    action = request.form.get("publication")
+    if action not in {"publish", "private"}:
+        abort(400)
+    published = action == "publish"
+    try:
+        mongo.campaign_settings.update_one(
+            {"_id": PUBLICATION_ID},
+            {"$set": {"published": published, "updated_at": utcnow(), "updated_by": str(current_user.id)}},
+            upsert=True,
+        )
+    except PyMongoError:
+        current_app.logger.exception("Could not save campaign publication state")
+        flash_message("Tallennusta ei voitu varmistaa. Tarkista sivujen näkyvyys ja yritä tarvittaessa uudelleen.", "error")
+        return redirect(url_for("admin_kampanja.index"), code=303)
+    log_admin_action_V2({
+        "action": "campaign_publication_changed", "published": published,
+        "actor": str(current_user.id), "entity_type": "campaign_settings", "entity_id": PUBLICATION_ID,
+    })
+    flash_message(
+        "Kampanja- ja keräyssivut on julkaistu kaikille." if published
+        else "Kampanja- ja keräyssivut näkyvät vain kirjautuneille.",
+        "success",
+    )
+    return redirect(url_for("admin_kampanja.index"), code=303)
+
 
 from flask import jsonify
 

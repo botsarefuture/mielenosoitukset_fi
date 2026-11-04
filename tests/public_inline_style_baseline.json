@@ -53,18 +53,8 @@
     "heavy.html": [
       "ff0c428cadb71597"
     ],
-    "index.html": [
-      "1768c8b1c1741385"
-    ],
     "info.html": [
       "fe00148d8b421b03"
-    ],
-    "kampanja/confirm_success.html": [
-      "8de69eb7dfc89015"
-    ],
-    "kampanja/index.html": [
-      "b72ee5dd6bb68ef7",
-      "efb7e9b7f38a6428"
     ],
     "list_legacy.html": [
       "cee4037077acd701"
@@ -96,18 +86,13 @@
     "preview.html": [
       "43a83ace52d2c22c"
     ],
-    "pride-nakyvaksi/index.html": [
-      "232fa411d63a1df7"
-    ],
     "status.html": [
       "22bab53a5bff36df"
     ],
     "submit.html": [
       "12b6769f4eface8e",
-      "67d616d3225d2fb8",
       "7a4bf6fb6eed86c8",
-      "bdefd3c936ed8358",
-      "dc7a14570f46438b"
+      "bdefd3c936ed8358"
     ],
     "suggest_change.html": [
       "6d6b70688716521b"
@@ -141,9 +126,6 @@
     "cities.html": [
       "86724d88b8424a8b"
     ],
-    "city.html": [
-      "d0466aa33fa8061c"
-    ],
     "contact.html": [
       "4f8dbc76c79461a7",
       "8c6874961e1d0717"
@@ -176,33 +158,11 @@
       "8c1ca60f9f4e9ac3",
       "d0466aa33fa8061c"
     ],
-    "index.html": [
-      "390316f315d83783",
-      "390316f315d83783"
-    ],
     "info.html": [
       "4f8dbc76c79461a7",
       "f8f4fe46707cce61",
       "f8f4fe46707cce61",
       "fe9e899c0995cca9"
-    ],
-    "kampanja/confirm_success.html": [
-      "0011ec2529ce8bb0",
-      "43caf93229ff5c38"
-    ],
-    "kampanja/index.html": [
-      "06e794adae86502c",
-      "06e794adae86502c",
-      "452f29d613bfaa10",
-      "4f8dbc76c79461a7",
-      "525d27764727442d",
-      "5a53db362e3584e9",
-      "a6dcfd4e8b8a0f0b",
-      "cc090cf42e591658",
-      "cfed67a2d705039f"
-    ],
-    "list.html": [
-      "d0466aa33fa8061c"
     ],
     "list_legacy.html": [
       "1e4a9cdd73e35cc4",
@@ -232,23 +192,6 @@
       "f98591319f3c8ccc",
       "fa7bfc03d46ea54f"
     ],
-    "organizations/details.html": [
-      "68227a9129902957",
-      "6e22c58a7a6a60cb",
-      "d0466aa33fa8061c"
-    ],
-    "pride-nakyvaksi/index.html": [
-      "1cd8065303a6f897",
-      "2efec56b4b03dcc1",
-      "726cf47beb6feb68",
-      "8b6b19cac26c2ba6",
-      "8b6b19cac26c2ba6",
-      "b2d337164b95faf2",
-      "c51ec35a4e6a31e3",
-      "d0466aa33fa8061c",
-      "dfe1a7ab43510c8a",
-      "f8f4fe46707cce61"
-    ],
     "submit.html": [
       "00e08c616d29b396",
       "01f0880b4edf1f86",
@@ -270,7 +213,6 @@
       "412f45944044f1d8",
       "455c183cb6c0e7d4",
       "4f4fe0792744526b",
-      "4f8dbc76c79461a7",
       "6e22c58a7a6a60cb",
       "77cdc91c24ecfbe3",
       "81b5de1857c19677",
@@ -287,9 +229,6 @@
       "ce02897c651f5b1f",
       "e324e1ae09581056",
       "e8e2de95277c394f"
-    ],
-    "tag_list.html": [
-      "d0466aa33fa8061c"
     ],
     "upcoming/translations.html": [
       "02419cffd4a239de",
@@ -318,6 +257,10 @@
     ],
     "users/profile/profile.html": [
       "002dc26c478b3c97"
+    ],
+    "kampanja/_campaign_fallback.html": [
+      "88326fa4c4436926",
+      "88326fa4c4436926"
     ]
   }
 }

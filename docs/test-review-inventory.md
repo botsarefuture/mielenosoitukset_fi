@@ -3,6 +3,120 @@
 Baseline: `main` at `52a971e1e11c6560e1eb45393c2ef812bbadd693`, 2026-10-12.
 
 QA-01m on main `e3aba1f8`, 2026-10-25: **1,290 repository-wide definitions /175 test files /442 individually assessed definitions**. Preserves all424 merged assessments and individually reviews18 existing identity definitions (42 cases after three boundary/MFA parameter additions). Production/templates/styles/translations unchanged. Existing MFA lifecycle assessments are not counted again. Real Flask/Mongo plus pure validators, isolated mail; no provider/browser acceptance. In-memory password-check bypass is detected by all six strengthened route-negative cases. Focused identity/MFA run:59 passed; broader identity/MFA/login-redirect/step-up run:123 passed. Hosted CI/review remain gates.
+Fundraising preview checkpoint, 2026-10-26, based on main `b43276cc`:
+**1,331 definitions /177 files /489 individually assessed**. Preserve the 471
+main assessments and add only the new feature's focused regression below.
+The separate test-audit chat owns systematic suite review; this feature batch
+does not repeat that audit. Broad pending scope remains 842 definitions and two
+supporting fixtures.
+
+## tests/test_fundraising_page.py
+
+- [x] `test_fundraising_preview_is_public_and_has_no_payment_instructions`
+
+Keep: actual anonymous Flask GET with existing isolated app/Mongo fixtures
+asserts200, preparation/closed-donation copy, target, proposed date markup,
+secondary purpose, contact route and explicit Finnish content language. The
+negative payment-control assertions are a narrow preview guard, not complete
+financial-content validation. One focused case passes. Actual browser captures
+separately exercise mobile/desktop, both themes and focused links; the HTTP test
+alone does not establish visual quality or validate a future donation flow.
+
+- [x] `test_donations_require_complete_confirmed_active_details_within_dates`
+
+Keep:13 deterministic cases for explicit activation/confirmation, required
+organizer/number, start/end inclusive boundaries, invalid/reversed dates and
+payment-method alternatives (bank, HTTPS and MobilePay-only). Uses pure helper
+with fixed Helsinki-calendar dates; no payment provider or ownership validation.
+
+- [x] `test_confirmed_donation_details_render_escaped_and_close_after_end`
+
+Keep: actual Flask/Jinja rendering with synthetic confirmed configuration,
+escaped organizer, bank/reference, generic HTTPS and two MobilePay anchors.
+Advances the fixed date beyond end and checks instructions/links disappear;
+confirmed preparation still retains preparation copy. No real money or network
+requests; not a concurrent date rollover or static-snapshot closure guarantee.
+
+- [x] `test_header_promotion_is_opt_in_and_campaign_preserves_signup_hooks`
+
+Keep: actual public responses prove promotion absent by default and injected on
+ordinary `/info` after opt-in, resolves encoded fundraiser path, and campaign
+section links while original signup form hooks remain. This does not establish
+provider signup success; existing volunteer feedback tests are the compatibility
+control. No systematic unrelated test review performed.
+
+Additional feature-only checks (2026-10-26):
+
+- [x] `test_unsafe_payment_urls_never_enable_donations`: unsafe schemes,
+  credentials, invalid ports, backslashes and embedded whitespace must not open
+  either configured payment-link alternative (six deterministic cases).
+- [x] `test_planned_dates_do_not_replace_confirmed_dates_or_explicit_opening`:
+  planned dates alone never activate payments; explicit closure wins inside the period.
+- [x] `test_campaign_without_javascript_disables_both_signups`: actual browser
+  with JavaScript off checks disabled volunteer/newsletter fields and submit
+  buttons, explicit unsent notice and direct support email, hidden success states.
+- [x] `test_campaign_newsletter_preserves_signup_integration`: browser intercepts
+  the existing external signup endpoint and checks the unchanged list ID/email
+  payload and displayed success response; no actual subscription or mail is sent.
+
+The existing first-invalid-field browser check now covers both empty required
+fields and a nonempty malformed email; the fieldset must not capture error focus.
+
+Feature-only CI compatibility follow-up: update the shared-header assertion for
+its new cache key/conditional promotion class, reconcile only the reviewed
+campaign inline-style hashes (six attributes removed, no new inline attributes),
+and add the new public fundraising route to basic_routes' surface count/hash and
+coverage anchor. All unrelated baseline/manifest entries are preserved. This is
+compatibility maintenance, not a new systematic test-audit disposition. The
+45 feature cases plus these three CI contracts pass together (48 passed).
+
+Focused feature validation: 45 cases passed, including the existing volunteer
+validation, localization, request-outcome and duplicate-submit protections. No
+broad suite audit or provider transaction validation is implied.
+
+Batch14 local checkpoint, 2026-10-26, based on merged main `ccc2eb0f`:
+**1,313 definitions /175 files /471 individually assessed**. Two existing
+organization-search definitions improved (two cases become12); no definitions
+added/removed. **842 test definitions plus two supporting fixtures remain
+pending**. Batch13/PR#985 is merged and deployed; its PR and post-merge CI both
+passed (1,764 passed/337 skipped). Historical local checkpoints below retain
+the evidence available when written. This batch has no publication approval.
+
+Batch13 local checkpoint, 2026-10-26, based on merged main `7cadeedf`:
+**1,313 definitions /175 files /469 individually assessed**. Preserve all464
+merged dispositions; assess four existing magic-token definitions and one new
+CSRF definition. **844 test definitions plus two supporting fixtures remain
+pending**. All definitions map uniquely to inventory entries; fixtures are
+tracked separately. Focused compatibility control38 passed; final local review
+completed with zero findings. No publication/merge/deployment for this batch yet.
+Groups1–3 have merged with successful hosted checks and production deployment;
+the pending-publication statements below preserve their historical checkpoints.
+
+Regression integration Group 3, 2026-10-25, on main `16ade1ec`:
+**1,312 definitions /175 files /464 individually assessed**. Preserve all458
+main assessments. Mongo/parser/pagination follow-ups update prior evidence
+without recounting dispositions; five existing decorator definitions and one
+new ordinary-denial definition add six assessed entries. Focused control78
+passed; local CodeRabbit review completed with zero findings. Final
+documentation reconciliation restored newer main provenance; hosted Group3
+CI remains pending publication.
+
+OAuth/MCP integration Group 2, 2026-10-25, on main `d524fe0b`:
+**1,311 definitions /175 files /458 individually assessed**. Preserve all440
+main assessments; transfer eighteen non-overlapping Batch08–11 dispositions.
+Add fourteen previously unlisted main MCP definitions as pending, not assessed
+merely because their compatibility cases pass. Current focused validation74
+passed; local CodeRabbit review completed with zero findings and independent
+visual review returned SHIP for the captured consent/permission states. Hosted
+Group2 CI remains pending publication.
+
+Token review integration group1, 2026-10-25, based on main `e3aba1f8`:
+**1,290 repository-wide definitions /175 files /440 individually assessed**.
+Preserves all424 main assessments and transfers sixteen non-overlapping
+Batch05/07/12 dispositions; Batch06 updates existing expiry evidence without
+counting it twice. Focused validation39 passed; no hosted/current-PR result yet.
+Only this group's changes are included, not the other local audit batches.
+See [integration evidence](mutation-test-review.md#integration-group1--api-token-authority-and-revocation).
 
 DATA-04b/#771 on main `54b02c58`, 2026-10-25: **1,290 repository-wide definitions /175 test files /424 individually assessed definitions**. Preserves all417 merged assessments and adds six reply-history definitions/13 cases plus one existing case-component contract assessment. All107 focused cases pass, including actual Chromium mobile/light and desktop/dark; Jinja/Python syntax and diff checks pass. Disposable Mongo, real permission-scoped routes/Jinja; email enqueue is isolated, not provider delivery. Full audit/retention policy and CASE-01/CASE-02 remain separate roadmap work. Local CodeRabbit review was rate-limited before analysis, not a clean review.
 
@@ -104,6 +218,8 @@ QA-02a/P1/#969. Real Mongo handles and monkeypatched Config database name. New m
 
 QA-02a/P1/#969. Isolated recorder factory; asserts no early construction/foreign-endpoint call, same options reuse and rejection of changed pool options. Exact one-call assertion catches silent reconstruction. Keep; real connection behavior covered separately, not URI credential/security scanner acceptance.
 
+Mutation batch01, 2026-10-24: mutmut3.8.0 with the three unchanged isolated owner tests initially killed21/32 mutants. Three genuine survivors passed None instead of the configured URI, omitted the URI, or discarded constructor options. Added one exact recorder-argument assertion; a fresh run killed24/32, including all three forwarding bugs. Remaining eight survivors are six non-contractual error-message edits and two equivalent initial values, not reasons to assert private representation or exact prose. Keep this test; [batch evidence and keep/drop policy](mutation-test-review.md). No test definitions added/removed and no new assessment counted.
+
 - [x] `test_owner_constructs_one_client_under_concurrent_requests`
 
 QA-02a/P1/#969. Four real Python threads, barrier and deliberately slow fake constructor. Asserts single construction and same returned identity; bounded waits avoid indefinite deadlock. Keep; scheduler-dependent stress can expose missing lock, not a proof of every possible interleaving or cross-process sharing.
@@ -185,7 +301,7 @@ QA-02a/#969 update · 2026-10-24: also assert the unchanged30-minute limit and s
 
 ## Supporting audit — tests/conftest.py
 
-These two functions are `@pytest.fixture` definitions despite their names. They require supporting review and are excluded from the 997-test total.
+These two functions are `@pytest.fixture` definitions despite their names. They require supporting review and are excluded from test-definition totals.
 
 - [ ] `test_settings`
 - [ ] `test_config_path`
@@ -379,24 +495,210 @@ QA-03a / SEC-04c support · P2 · Codex · 2026-10-22 · main8e6f0e2b. Each exis
 
 ## tests/test_admin_magic_tokens.py
 
-- [ ] `test_magic_token_collection_uses_stable_server_pagination`
-- [ ] `test_magic_token_filters_preserve_truthful_counts_and_page_size`
-- [ ] `test_magic_token_revocation_and_global_admin_boundary`
-- [ ] `test_magic_token_template_uses_shared_collection_and_modal_contracts`
+Batch13, 2026-10-26, based on merged main `7cadeedf`: four existing definitions
+improved and one distinct CSRF definition added; **five definitions /10 cases**.
+Real Flask/session/Mongo integration on an exclusively owned loopback database.
+See the Batch13 report for controls, fault evidence and limitations.
+
+- [x] `test_magic_token_collection_uses_stable_server_pagination`
+
+Improve: separate timestamp order from ID tie-breaking; exact ordered rows on
+both pages detect duplication, omission and reversed primary sorting. Two cases,
+one definition; scrambled insertion avoids accidental agreement with ordering.
+
+- [x] `test_magic_token_filters_preserve_truthful_counts_and_page_size`
+
+Improve: action, active, used and revoked cases assert actual rows, both counts
+and retained filters/page size. An expired unused row distinguishes active from
+merely unused. Existing definition extended rather than four new definitions.
+
+- [x] `test_magic_token_revocation_and_global_admin_boundary`
+
+Improve: exact target/neighbour persistence and real audit attribution; same
+actor loses global authority after obtaining a valid proof. GET and both POST
+branches deny without writes. Higher fixture cost is justified for destructive
+privileged actions; CSRF cannot accidentally mask the authority assertion.
+
+- [x] `test_magic_token_template_uses_shared_collection_and_modal_contracts`
+
+Improve maintenance: path relative to the test file and unordered class-token
+sets preserve shared-component contracts without class-order/extra-class
+coupling. Retain forbidden legacy hooks. Cheap architecture guard complements
+browser rendering; it does not certify visual quality.
+
+- [x] `test_magic_token_revocation_requires_session_csrf`
+
+Add/keep: distinct request-authenticity boundary for single and bulk actions.
+Missing, wrong, Unicode and other-session proof must deny without token/audit
+changes; legitimate proof permits the intended action and preserves used rows.
+Two parametrized cases. Red on the original handler, green after protection.
 
 ## tests/test_admin_mcp.py
 
-- [ ] `test_admin_mcp_requires_bearer_token`
-- [ ] `test_admin_mcp_lists_tools`
-- [ ] `test_admin_mcp_oauth_metadata_advertises_registration_and_pkce`
-- [ ] `test_admin_mcp_dynamic_client_registration_and_oauth_code_flow`
-- [ ] `test_admin_mcp_accepts_oauth_bearer_tokens`
-- [ ] `test_admin_mcp_accepts_existing_api_tokens`
-- [ ] `test_admin_mcp_rejects_ordinary_api_token`
-- [ ] `test_admin_mcp_can_search_demos`
-- [ ] `test_admin_mcp_can_add_case_note`
-- [ ] `test_admin_mcp_can_update_organization`
-- [ ] `test_admin_mcp_can_create_demo`
+Current checkpoint for integration Group 2: **32 definitions /68 collected
+cases: 18 individually assessed, 14 newer main definitions still pending**.
+Focused integration run:74 passed (68 MCP plus six moderation compatibility
+cases). Historical Batch08–11 numbers below describe their original audit
+snapshots and are not current totals.
+
+- [x] `test_admin_mcp_requires_bearer_token`
+- [x] `test_admin_mcp_lists_tools`
+- [x] `test_admin_mcp_oauth_metadata_advertises_registration_and_pkce`
+- [x] `test_admin_mcp_dynamic_client_registration_and_oauth_code_flow`
+- [x] `test_admin_mcp_accepts_oauth_bearer_tokens`
+- [x] `test_admin_mcp_accepts_existing_api_tokens`
+- [x] `test_admin_mcp_rejects_api_token_without_mcp_scope`
+- [x] `test_admin_mcp_can_search_demos`
+- [x] `test_admin_mcp_can_add_case_note`
+- [x] `test_admin_mcp_can_update_organization`
+- [x] `test_admin_mcp_can_create_demo`
+
+Batch08 · Codex · 2026-10-25 · starting `c27604dc`; MCP source/tests matched
+main 54b02c58. The two checked existing definitions and two new definitions below
+were individually assessed at that checkpoint; the nine then-pending entries
+above are assessed in Batch09 below.
+Original 11 cases passed in 5.51s; complete revised 14 cases pass against private
+Mongo. Actual fixtures/session/routes/database, no permission/JWT answers mocked.
+CodeRabbit review was rejected for exhausted capacity/seat assignment; no
+external review result claimed. [Batch08 evidence and cost review](mutation-test-review.md#batch08--oauth-mcp-discovery-and-consent).
+
+`test_admin_mcp_oauth_metadata_advertises_registration_and_pkce`: improve fixture
+cost by removing unused full seeding. Retain discovery endpoint paths, S256
+advertisement and resource metadata; real config/routes. Metadata advertisement
+is not PKCE verification or external-server reachability evidence.
+
+`test_admin_mcp_dynamic_client_registration_and_oauth_code_flow`: improve existing
+flow for rendered session CSRF proof and shared actual registration helper.
+Retain state echo, exchange, requested scope and working MCP bearer. Remove
+editorial heading coupling; client identity/form remain checked. No negative
+PKCE/binding/replay or concurrent-consumption claim from this positive flow.
+
+- [x] `test_admin_mcp_oauth_consent_requires_csrf`
+
+New/keep: missing, wrong, Unicode wrong and other-session proof all deny without
+a code write; valid proof from the rendered form supports both denial without
+a code and approval. Distinct CSRF risk,
+real registered client and two authenticated cookie jars. Previous no-proof
+POST issued a code. No token-entropy or general cookie-theft assertion.
+
+- [x] `test_admin_mcp_oauth_consent_rechecks_global_authority`
+
+New/keep: user/admin downgrade cases reject GET and POST with no code after
+actual current authority loss; POST carries valid proof from the earlier
+allowed form. Prevents another guard from masking authorization failure. The
+maintainer explicitly chose full global authority over the documented legacy
+admin exception on 2026-10-25; shared model policy and docs now agree. Existing
+codes/tokens are not revoked. No consolidation/removal justified. At Batch08,
+the file had 13 definitions/14 cases; Batch09 below records the current totals.
+
+Batch09 · Codex · 2026-10-25 · starting `c96cebac`. The nine previously
+unchecked definitions above are now assessed, plus two new negative definitions
+below. Complete file: 15 definitions/25 cases; combined current-head run 31 passed
+in 12.73s including six unchanged moderation compatibility cases, not new reviews.
+Real auth/config/Flask/private Mongo, existing external-effect isolation. Four
+explicit fault controls escaped original assertions and are now detected; no
+mutmut score claimed. Two real failures (credential-prefix logging and uncaught
+required-scope error) were reproduced before their small source fixes.
+[Batch09 detailed controls/cost/limitations](mutation-test-review.md#batch09--mcp-bearer-failures-and-readwrite-workflow-contracts).
+
+| Existing definition | Individual disposition |
+| --- | --- |
+| `test_admin_mcp_requires_bearer_token` | Improve: three absent/unknown/unsupported-scheme cases, machine error/ID/challenge; no exact prose. Real adapters, not full header/config fuzzing. |
+| `test_admin_mcp_lists_tools` | Improve: initialize/catalog IDs and credential/prefix absence in debug logs with same two requests; core tool subset retained. No exact log/catalog formatting or full production-log audit. |
+| `test_admin_mcp_accepts_oauth_bearer_tokens` | Keep: locally signed external-issuer JWT accepted using real configured validation; no provider/TLS/mandatory-claims policy claim. |
+| `test_admin_mcp_accepts_existing_api_tokens` | Keep: real stored API token carrying mcp.admin reaches catalog; not issuer/entropy/revocation proof. |
+| `test_admin_mcp_rejects_api_token_without_mcp_scope` | Improve/rename ordinary-token denial: read/write and admin-only API cases independently require mcp.admin; RPC -32003/403, no diagnostic prose. Records are deliberately constructed by internal helper, not public-user issuance. |
+| `test_admin_mcp_can_search_demos` | Improve: exclude existing nonmatching ID and require filtered total 1 alongside positive match. No new fixture rows; resource bounds/other fields remain separate. |
+| `test_admin_mcp_can_add_case_note` | Improve: preserve prior nonempty audit prefix and default action type alongside note/actor. Real persistence; no caller-identity trust or concurrency claim. |
+| `test_admin_mcp_can_update_organization` | Keep: actual target website persists; distinct success workflow, paired with new scope denial. Not all fields/invalid patches. |
+| `test_admin_mcp_can_create_demo` | Keep: returned ID points to actual new title/city; moderation invariants remain separate retained tests. No redundant new positive. |
+
+- [x] `test_admin_mcp_rejects_invalid_oauth_bearer`
+
+New/keep: five wrong-key/issuer/audience/expired/missing-scope cases exercise our
+verification configuration and error response contract. Actual signed tokens,
+no decoder mock or cryptographic-internals test; epoch expiry avoids sleeps.
+Missing scope previously raised uncaught PermissionError/500; now 403 with the
+correlated machine error, other invalid credentials remain 401.
+
+- [x] `test_admin_mcp_read_only_token_cannot_mutate`
+
+New/keep: three valid case/org/demo write requests using a read-only key must
+deny 403 and preserve targets/count. Successful real read first prevents bad
+authentication from masking missing write checks. No write-result mock, generic
+all-tool claim or extra positive definition; whole forbidden targets are checked
+intentionally. Four distinct fault controls and consolidation choices recorded
+in Batch09; all current fifteen definitions now assessed. Code-exchange binding,
+expiry/replay/atomic consumption still require follow-up, not implied by the
+positive consent flow.
+
+Batch10 · Codex · 2026-10-25 · starting `3089fac2`. Reassessed the existing
+registration/code flow and added two distinct security definitions. Full MCP:
+32 cases passed in 14.52s; atomic exchange also passed two fresh-process repeats.
+[Detailed regression, cost and limits](mutation-test-review.md#batch10--oauth-authorization-code-binding-and-single-consumption).
+
+Existing `test_admin_mcp_dynamic_client_registration_and_oauth_code_flow`:
+**improve/keep**. Extend successful real registration/consent/CSRF/exchange/bearer
+use with sequential replay denial and no token leakage. One extra request,
+shared approval helper, stable protocol error instead of prose. Not all OAuth
+failures or issuer delivery/crash recovery.
+
+- [x] `test_admin_mcp_oauth_code_rejects_invalid_exchange`
+
+**Add/keep**, six cases: wrong/missing S256 verifier, redirect mismatch, another
+actually registered client, expired and unknown code. Each denies without token
+or consumption; legitimate retry works except deliberately expired code. Actual
+Flask/JWT/Mongo, fixed past expiry, shared approval helper; distinct security
+failures justify setup cost. Not confidential clients, plain/must-use-PKCE policy
+or exhaustive input shapes.
+
+- [x] `test_admin_mcp_oauth_code_consumption_is_atomic`
+
+**Add/keep**. Two independent HTTP clients overlap real reads of one unused
+code through a bounded barrier; actual writes must yield one200 and one400
+invalid_grant. Before fix both200, after fix one winner; no write-result stub.
+Narrow Collection.find_one scheduling patch is intentional coupling justified
+by a reproduced replay failure. Future lookup redesign requires adapting it;
+not multi-region, revocation or crash-safe token delivery evidence.
+
+
+Batch11 · Codex · 2026-10-25 · `ff20f09b`. Existing code flow **improve/keep**:
+three public/POST-secret/Basic-secret cases share all success/replay assertions.
+Basic sends client identity only through its actual header, guarding resolution.
+No separate positive definition. Complete MCP36 cases passed in16.33s.
+
+- [x] `test_admin_mcp_oauth_confidential_client_requires_secret`
+
+**Add/keep**, two methods: missing and wrong secret deny401/invalid_client, no
+access token or code consumption; real correct secret then succeeds. Shared
+real registration/approval/code fixture reduces duplication; no auth stub in
+normal controls, no dependency hash-internal assertions. Deliberate secret-check
+bypass passed all32 prior cases; now these two fail while34 pass. Higher setup
+cost justified by a distinct authentication boundary. Does not establish TLS,
+rotation, exact auth-method mismatch or all registration input policy.
+[Batch11 evidence and costs](mutation-test-review.md#batch11--oauth-confidential-client-secret-contract).
+
+
+The following fourteen definitions came from independent main MCP editing/image
+work and retain identical ASTs. Their32 cases passed as compatibility checks;
+that does not supply individual dispositions. Preserve them and review when
+that behavior group is selected, without repeating the eighteen assessments.
+
+- [ ] `test_mcp_creates_demo_without_end_time_or_organizer_contact`
+- [ ] `test_mcp_creates_organization_without_description`
+- [ ] `test_mcp_failed_storage_keeps_existing_image`
+- [ ] `test_mcp_invalid_update_is_atomic`
+- [ ] `test_mcp_invalid_upload_does_not_reach_storage`
+- [ ] `test_mcp_organizer_update_preserves_metadata_and_privacy`
+- [ ] `test_mcp_rejects_invalid_organizers_without_changing_demo`
+- [ ] `test_mcp_schema_describes_freeform_organizers_optional_fields_and_uploads`
+- [ ] `test_mcp_upload_attaches_image_using_shared_storage`
+- [ ] `test_mcp_upload_checks_size_before_contacting_storage`
+- [ ] `test_mcp_upload_requires_write_scope`
+- [ ] `test_mcp_upload_runs_real_image_conversion`
+- [ ] `test_mcp_upload_sets_organization_logo`
+- [ ] `test_mcp_user_cover_replaces_automatic_source`
+
 
 ## tests/test_admin_media_retirement.py
 
@@ -853,7 +1155,18 @@ Actual48h assignment and exact-deadline query/marking while caller supplies24h f
 
 ## tests/test_campaign_volunteer_feedback.py
 
-- [ ] `test_campaign_volunteer_feedback_contract_uses_accessible_in_page_status`
+- [x] `test_campaign_loads_only_its_react_entry_with_translated_json_props`
+
+React migration, 2026-10-26: replaces retired inline-JavaScript source assertions
+with a real Flask response/JSON-props/asset check. Existing browser cases retain
+validation focus, whitespace rejection, feedback and simultaneous-submit coverage.
+Added real Flask signup-to-confirmation coverage (mail queue captured, no delivery),
+pending/error/retry value retention and escaped server errors, missing-module
+disabled fallback, and absence of React on other public/admin pages.
+`tests/test_frontend_assets.py` checks prefixed asset URLs, dependency CSS deduplication,
+watch-build reloading and incomplete/escaping manifest entries. No additional
+CI suite or broad test audit was introduced. Visual evidence is a separate
+in-conversation review; these tests do not establish visual acceptance.
 - [ ] `test_campaign_volunteer_api_localizes_required_fields_error`
 - [ ] `test_campaign_volunteer_api_rejects_blank_normalized_required_values`
 - [ ] `test_campaign_page_embeds_localized_volunteer_feedback`
@@ -1801,10 +2114,34 @@ UI-01 / QA-04 supporting review, 2026-10-12, Codex, P1. Anonymous real Flask res
 
 DATA-01a / QA-02, P1; reviewed 2026-10-13 by Codex. Disposable local database and real Flask queries only; no production stress request. Together with existing public API/history/analytics coverage, 92 focused cases passed. These tests establish response/query bounds, not rate limiting or bounded browser memory.
 
+Mutation follow-up, 2026-10-24: the parser definition alone passed all nine
+existing cases in an isolated harness and killed all 26 selected
+`public_page_args` mutants. Source bytes and test AST were verified against
+this branch. Keep unchanged: cheap, distinct application-level bounds/default
+coverage; no additional test justified by this run. The other six definitions
+were not rerun, and 46 module mutants outside the parser were not selected.
+See [Batch02](mutation-test-review.md#batch02--public-page-size-argument-bounds)
+for scope and maintenance-cost reasoning. No assessment-count change.
+
+Mutation batch03 follow-up, 2026-10-24: four existing definitions/ten cases
+across this file and `test_public_demonstrations_api.py` passed against an
+exclusively owned temporary Mongo instance. Original assertions detected 35/36
+mutmut-generated metadata variants; the sole rounding survivor reports one
+page for 101 records at 100 per page. Improved the existing API bounds definition
+with that first-overflow fixture and exact final-page metadata. Retained the
+empty-range, chronological traversal and enormous-offset definitions for their
+distinct risks. See [Batch03](mutation-test-review.md#batch03--pagination-metadata-and-boundary-behavior)
+for individual reliability/runtime/mock/coupling and consolidation decisions.
+Fresh final sweep detected all 36 selected metadata variants with no harness
+errors/timeouts. Both whole pagination files passed 32 cases (13 definitions),
+including the unchanged seed-helper callers. Compatibility controls outside the
+four-definition batch are not new assessments. No new assessment, definition
+or parametrized case is counted.
+
 | Definition | Requirement / assertions | Fixtures, variants and limitations | Disposition |
 |---|---|---|---|
 | `test_public_page_size_is_bounded_and_existing_defaults_survive` | Maximum 100, minimum 1, malformed/default handling preserved. | Nine raw variants; direct shared parser, tag default 10. | Keep; fails without the cap. |
-| `test_demo_apis_cap_the_real_query_and_return_bounded_metadata` | Both APIs return 100 then 5 records with exact counts/ranges and no overlap. | 105 uniquely tagged real records; modern next URL carries bounded size. No production query-plan measurement. | Keep. |
+| `test_demo_apis_cap_the_real_query_and_return_bounded_metadata` | Both APIs return 100 records then one record with exact counts/ranges and no overlap. | 101 uniquely tagged real records; first overflow detects page-count rounding down, modern next URL carries bounded size. No production query-plan measurement. | Improve (Batch03); no added definition/case. |
 | `test_tag_page_materializes_only_the_bounded_page` | HTML tag context contains only 100 records and two pages. | Actual render signal, disconnected in finally; does not assess visual layout. | Keep. |
 | `test_public_organization_api_cannot_bypass_page_size_limit` | Organization endpoint applies the same bound, including last page. | 105 uniquely searchable local records; real database query. | Keep. |
 | `test_enormous_out_of_range_pages_never_reach_database_skip` | Four endpoint variants return empty results without huge Mongo offsets. | Cursor skip wrapper raises rather than mocking returned records; 100-digit page. Count cost remains outside this guarantee. | Keep. |
@@ -1914,6 +2251,14 @@ DATA-01 / QA-02, 2026-10-12, Codex, P1. Real Flask/public routes and MongoDB fix
 | `test_public_page_metadata_handles_empty_and_out_of_range` | Empty pages have 0–0 range and correct filtered total/page count. | Both endpoints, no matches versus beyond-last page; exact empty arrays. UI handling remains next slice. | Keep. |
 | `test_public_pagination_normalizes_invalid_numeric_args` | Malformed/negative args do not crash and independent valid arg survives. | Six parameter cases: two endpoints × three input variants. Huge page-size/offset bounds and legacy time normalization remain follow-up evidence. | Keep. |
 | `test_public_chronological_sort_has_index_backed_plan` | Approved/date/start-time/ID index registers idempotently without removing old indexes; actual broad public query has IXSCAN and no blocking SORT, returns 12 rows. | Real disposable MongoDB, 200 synthetic future records plus seed, unhinted winning plan. Reproduced SORT before the fix; no mocked planner. Does not claim production timings, arbitrary filter plans or live index presence. | Keep; review-driven regression. |
+
+Batch03 pagination follow-up, 2026-10-24: the chronological traversal and
+empty/out-of-range definitions were individually re-reviewed and rerun (two
+cases each), alongside the two resource-bound definitions. Both are keep: their
+distinct ordering/filter and empty-range contracts are not duplicates of the
+capped partial-page test. See [Batch03](mutation-test-review.md#batch03--pagination-metadata-and-boundary-behavior)
+for focused mutation evidence, maintenance reasoning and validation limits.
+No additional assessment is counted.
 
 Remaining DATA-01: browser cumulative summaries, URL/filter reset and stale-request protection across list/city/tag; representative light/dark/mobile checks. API pagination does not claim snapshot stability during concurrent insert/delete, nor canonicalization of non-normalized historical times.
 
@@ -2122,13 +2467,33 @@ UI-01 / QA-04, 2026-10-12, Codex, P1, stacked on #922. Actual shared macro and c
 
 ## tests/test_public_token_manager.py
 
-- [ ] `test_token_manager_requires_authentication`
+- [x] `test_token_manager_requires_authentication`
 - [ ] `test_token_manager_renders_shared_accessible_contract`
 - [ ] `test_token_manager_uses_safe_dom_and_shared_styles`
 - [ ] `test_token_manager_rendered_javascript_parses`
-- [ ] `test_token_creation_rejects_malformed_scopes_with_localized_error`
-- [ ] `test_token_revoke_rejects_invalid_and_foreign_ids`
-- [ ] `test_token_revoke_deletes_only_the_current_users_token`
+- [x] `test_token_creation_rejects_malformed_scopes_with_localized_error`
+- [x] `test_token_revoke_rejects_invalid_and_foreign_ids`
+- [x] `test_token_revoke_deletes_only_the_current_users_token`
+
+Batch12 · Codex · 2026-10-25 · starting `e3ed9d94`. Four existing security
+checks individually **improve/keep**; no new definitions. The three UI/static/JS
+checks remain pending despite passing compatibility runs. Public-token file:
+seven definitions /10 cases; combined MCP validation46 cases passed in18.91s.
+[Detailed controls and cost](mutation-test-review.md#batch12--public-token-authentication-and-revocation-isolation).
+
+| Definition | Unique regression and disposition | Cost / reliability / limits |
+| --- | --- | --- |
+| `test_token_manager_requires_authentication` | Four actual UI/list/create/revoke routes deny anonymous callers through internal login with unchanged credential records; improve/keep. | Shared definition, real valid payloads and Flask-Login, parsed destination instead of substring. Added seeded setup justified for independently registered routes; not all auth paths. |
+| `test_token_creation_rejects_malformed_scopes_with_localized_error` | Malformed string scope400 plus actual localized error and no token write; improve/keep. | Existing exact Finnish assertion intentionally guards localization, distinct from broader Batch05 shape/authority matrix. No duplicate new matrix. Copy-edit maintenance acknowledged. |
+| `test_token_revoke_rejects_invalid_and_foreign_ids` | Existing malformed/foreign400/404 checks now require all tokens unchanged, not only foreign target retained; improve/keep. | Reuses two requests and small sorted snapshot; existing localized errors retained. Over-deletion fault now caught; not every ID shape or CSRF policy. |
+| `test_token_revoke_deletes_only_the_current_users_token` | Usable actual target becomes401/token_invalid; same-owner spare remains usable and all other records unchanged; improve/keep. | Two actual helper-created credentials, real hash lookup/revoke/check. Replaces dummy seeded target and success-prose coupling. No entropy or arbitrary concurrent-token guarantee. |
+
+Deliberately deleting the caller's other credentials passed all four original
+cases; now both revocation definitions fail at preservation checks, not harness
+errors. No production fix needed. Snapshots protect forbidden mutation, not
+incidental success formatting. No consolidation: each of the four protects a
+different authentication/shape/ownership/success boundary.
+
 
 ## tests/test_public_toolbar_contract.py
 
@@ -2223,14 +2588,70 @@ Review follow-up, 2026-10-18: the unrelated-organization negative explicitly cle
 
 ## tests/test_security_regressions.py
 
-- [ ] `test_legacy_settings_rejects_privilege_fields`
-- [ ] `test_legacy_settings_still_updates_allowed_fields`
-- [ ] `test_ordinary_user_cannot_issue_mcp_admin_token`
-- [ ] `test_api_token_rejects_unknown_scopes`
-- [ ] `test_api_token_rejects_malformed_scope_payload`
-- [ ] `test_global_admin_can_issue_mcp_admin_token`
-- [ ] `test_privileged_token_without_step_up_is_rejected`
-- [ ] `test_auth_security_routes_ignore_stale_module_database_handle`
+QA-01 / Batch05 · Codex · 2026-10-25 · starting `f901ee99`. Eight existing
+definitions individually assessed, twelve collected cases after extending two
+existing definitions. Real Flask/session/Mongo; seeded authentication and
+stubbed external notification/upload effects, not actual login or CSRF proof.
+Control 8 passed in 4.36s. Two explicit handler faults escaped all original cases
+and are detected after improvements. A new elevated limited-admin scenario
+reproduced real privileged-token issuance before the one-line shared-policy
+fix. Final security/global-authority/MCP controls 27 passed in 9.27s; other 15
+cases not newly assessed. [Batch05 evidence and maintenance rationale](mutation-test-review.md#batch05--settings-privilege-fields-and-api-token-authority).
+No new definitions; renamed the existing ordinary-user denial definition.
+
+- [x] `test_legacy_settings_rejects_privilege_fields`
+
+Keep: exact forbidden role/admin/grant field names, unchanged persisted privilege
+values and no partial language update on mixed input. Small real request; no
+whole-document or message-prose coupling. Not arbitrary mass-assignment fuzzing.
+
+- [x] `test_legacy_settings_still_updates_allowed_fields`
+
+Keep: all three allowed fields persist after a valid request; prevents a blanket
+settings rejection from satisfying only negative security tests. Real route,
+notification transport stubbed; not a message delivery proof.
+
+- [x] `test_non_global_user_cannot_issue_privileged_token`
+
+Improve/rename from `test_ordinary_user_cannot_issue_mcp_admin_token`: two roles
+(user and limited admin) × two privileged scopes (admin/mcp.admin), after real
+password step-up plus elevated-status control. Require 403 for authority rather
+than step-up and unchanged token count. Previously ordinary denial could be
+masked by freshness; limited admin actually issued both scopes. Route now uses
+User.has_full_permissions(). Four-case/password cost justified by security risk;
+no historical-token revocation or full role matrix claim.
+
+- [x] `test_api_token_rejects_unknown_scopes`
+
+Keep: supported+unknown scope rejected 400 with no insert. Token helper may also
+enforce this, so do not couple test to which application layer rejects it.
+No exact translated error message or unsupported-name quota.
+
+- [x] `test_api_token_rejects_malformed_scope_payload`
+
+Improve existing: two cases cover string outer shape and list with an integer
+member; require 400 and no insert. The mixed list detects TypeError/500 when the
+early shape/item guard is removed. Modest extra fixture, no separate definition
+or exhaustive speculative JSON-type matrix.
+
+- [x] `test_global_admin_can_issue_mcp_admin_token`
+
+Keep: actual admin password step-up, exact returned scopes and a persisted token
+owned by that admin. Distinct positive authority/freshness control, not token
+entropy/hash/expiry, OAuth transport or role-backend unit coverage.
+
+- [x] `test_privileged_token_without_step_up_is_rejected`
+
+Keep: authorized admin without elevation must get step_up_required and preserve
+token count. Separates freshness from authority; timing/session binding reviewed
+separately. No exact prose assertion.
+
+- [x] `test_auth_security_routes_ignore_stale_module_database_handle`
+
+Keep: controlled obsolete module DB cannot disable token validation or swallow
+allowed settings writes; real current DB determines results/persistence. Distinct
+legacy state justifies overlapping allowed-field assertions. No real database
+outage or concurrent reconfiguration proof. No consolidation/removal justified.
 
 ## tests/test_service_integrations.py
 
@@ -2397,11 +2818,29 @@ QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. El
 | `test_step_up_password_without_mfa_and_without_totp_works` | No-MFA fallback returns success, records correct actor/method and reports elevated. | Real no-device account. Overlaps first test but explicitly protects method/session payload; not a reason to remove route-level guard case. | Strengthened; keep. |
 | `test_step_up_options_reflect_methods` | Password-only method initially; real registered key makes WebAuthn preferred. | Signed simulated registration, explicit option response statuses; no hardware/browser claim. | Keep; status assertions strengthened. |
 | `test_step_up_webauthn_flow` | Fresh session initially denied; real signed step-up grants actor-bound WebAuthn elevation and unlocks guard; password fallback remains. | Real registration/assertion verification through API using generated key. Challenge replay/origin/counter negative matrices are assessed in separate WebAuthn tests, not proved here. | Strengthened recorded method/actor; keep. |
-| `test_elevation_times_out` | Configured 10/900-second windows allow exact boundary, reject just after, clear sudo while retaining login. | Only step-up module clock replaced, not cookie/signing/TOTP clocks; no sleep and no production clock change. Invalid configuration and future timestamps remain follow-up cases. | Strengthened deterministic boundary integration; keep. |
+| `test_elevation_times_out` | Configured 10/900-second windows allow age zero and exact upper boundary; expired and future-dated proofs deny/clear sudo while retaining login. | Only step-up module clock replaced, not cookie/signing/TOTP clocks; no sleep or production clock change. Batch06 extends this same definition; invalid configuration/malformed internal proof remain outside scope. | Improve existing; deterministic temporal-bound integration. |
 | `test_elevation_does_not_leak_across_sessions` | Separate client for same/different account starts denied; copied sudo bound to a different actor is rejected/cleared; original session stays elevated. | Distinct cookie jars and real guard. Deliberate wrong-actor state is fixture preparation, not a claim that stolen same-actor session cookies are safe. | Strengthened same-account and ownership boundaries; keep. |
 | `test_sudo_required_redirects_anonymous_to_login` | Anonymous registration attempt redirects to login. | Actual outer login_required decorator returns 302; this does not test direct sudo_required's standalone 401 branch. | Keep with narrowed claim. |
 | `test_logout_clears_elevation` | Original session loses sudo/login, protected route redirects, and real re-login on same cookie jar remains unelevated. | Replaces vacuous fresh-client-only assertion. An isolated runtime mutation making logout clear_elevation a no-op is detected by this test; no production file was mutated. Does not prove copied-cookie invalidation. | Strengthened; mutation confirmed. |
 | `test_change_password_requires_step_up` | No elevation and weak password leave stored hash unchanged; successful strong update verifies new password and rejects old one. | Real DB/hash and policy route; no success-status-only claim. Broader existing-session revocation/MFA-reset lifecycle remains separate. | Strengthened; keep. |
+
+
+Batch06 follow-up, 2026-10-25, starting `451e049d`: only the expiry and
+session/account-isolation definitions were revisited (four collected cases).
+Existing prior assessments for all eleven definitions remain intact and are
+not counted again. Original assertions detected 26/34 mutmut-generated
+has_elevation variants; the age <= 0 survivor exposed a missing exact-zero
+assertion. Extended the existing expiry test with immediate validity and
+backwards-clock fail-closed/session-preservation checks, retaining its two
+configured-window cases. Each survivor has an individual maintenance decision
+in [Batch06](mutation-test-review.md#batch06--session-elevation-time-and-actor-bounds-follow-up).
+Optional unused timeout override and unsupported missing-timestamp schema are
+explicitly deferred, not misreported as generally equivalent or tested.
+Fresh final run detects 27/34 generated variants; seven have explicit equivalent
+or deferred-contract rationales, and the separate future-guard-removal control
+now fails the intended negative-age assertion. Real-import step-up/global-model
+validation passed 17 cases in 6.07s. Four model controls are separate from this
+follow-up. No test definition or parametrized case was added or removed.
 
 ## tests/test_submit_draft_reliability.py
 
@@ -2428,8 +2867,25 @@ QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. El
 
 ## tests/test_submit_organization_search_security.py
 
-- [ ] `test_organization_search_treats_query_as_bounded_literal_text`
-- [ ] `test_organization_search_normalizes_public_result_fields`
+- [x] `test_organization_search_treats_query_as_bounded_literal_text`
+
+Batch14 · improve existing: eight cases exercise absent/blank/short queries,
+exact two- and100-character acceptance,101-character rejection, trimmed
+case-insensitive literal brackets and ten-result cap over eleven matches.
+Real Flask/Mongo, no result-order assumption or exact translated error prose.
+This protects bounded literal-search behavior; not query-plan/index timing or
+an arbitrary-regex stress benchmark. Added parametrization makes failures local
+and costs existing fixture setup per case, justified for a public endpoint.
+- [x] `test_organization_search_normalizes_public_result_fields`
+
+Batch14 · improve existing: four cases retain malformed fields and add missing,
+exact-limit and over-limit data. Exact public mapping includes string ID and
+excludes a private field; name/email/website/description limits and ellipsis
+boundary are asserted. Useful valid values catch accidental field loss that
+blank-only assertions missed. Common fixtures, fixed strings, no sleeps or
+clock dependency. Exact keys intentionally protect the public whitelist, not
+Mongo projection syntax. Browser selection and stale-response behavior remain
+separate, pending definitions below.
 - [ ] `test_submit_autocomplete_uses_shared_safe_native_controls`
 - [ ] `test_submit_autocomplete_feedback_is_localized_in_english_and_swedish`
 - [ ] `test_submit_autocomplete_renders_and_selects_untrusted_values_safely`
@@ -2437,10 +2893,43 @@ QA-01a / P1, reviewed 2026-10-15 by Codex on a branch based on main 9098c02a. El
 
 ## tests/test_super_admin_permissions.py
 
-- [ ] `test_global_admin_flag_grants_every_permission_scope`
-- [ ] `test_super_admin_roles_grant_every_permission`
-- [ ] `test_god_role_also_enables_legacy_global_admin_checks_when_loaded`
-- [ ] `test_regular_user_still_needs_an_explicit_permission`
+QA-01 / Batch07 · Codex · 2026-10-25 · after `93fb40cd`. Four definitions/cases
+individually reviewed; all keep unchanged. Models/tests match main snapshot
+`54b02c58`. Actual User constructors/loading/permission methods, empty grants,
+unique BSON IDs; ordinary negative can query empty private membership data.
+No permission mock, password/login, HTTP authorization, real grant assignment
+or dependency-internals claim. Four cases pass in current-head 17-case validation
+(6.07s combined). A scoped fault adding limited admin to full-authority roles
+passes these four cases but fails both limited-admin variants in retained
+Batch05 token tests (two failures/six passes in 3.40s). This distributed evidence
+is explicit, not claimed as full model deny-role or mutation coverage.
+[Batch07 rationale and controls](mutation-test-review.md#batch07--global-authority-model-contracts).
+
+- [x] `test_global_admin_flag_grants_every_permission_scope`
+
+Keep: explicit full flag with ordinary base role grants arbitrary future,
+organization and city permissions; scope helper returns global. Four meaningful
+application-contract assertions, tiny setup; no HTTP or grant-write proof.
+
+- [x] `test_super_admin_roles_grant_every_permission`
+
+Keep: three named full-authority roles without explicit flag grant arbitrary
+permission. Three loop inputs within one collected case, not three test
+definitions. Cheap, distinct role path; no exhaustive restricted-role claim.
+
+- [x] `test_god_role_also_enables_legacy_global_admin_checks_when_loaded`
+
+Keep: persisted god role must expose the legacy global flag as well as modern
+permission success. Real loader catches compatibility break the direct role
+method alone would miss; no DB persistence/migration or other legacy-role proof.
+
+- [x] `test_regular_user_still_needs_an_explicit_permission`
+
+Keep: ordinary account with no grants must deny arbitrary permission. Real
+model/empty-membership lookup, complementary negative control. Explicit grant
+success and limited-admin negatives remain separate tests, including the retained
+Batch05 real route. No extra duplicate scenario, consolidation or removal
+justified; four distinct regression signals remain at low maintenance cost.
 
 ## tests/test_super_audit_collection.py
 
@@ -2876,8 +3365,152 @@ Tampere-only ACCEPT_DEMO grant cannot authorize Jyväskylä. Keep; municipality 
 
 ## tests/test_wrappers_decorators.py
 
-- [ ] `WrapperDecoratorTests::test_permission_required_redirects_unauthenticated_users`
-- [ ] `WrapperDecoratorTests::test_permission_required_allows_users_with_permission`
-- [ ] `WrapperDecoratorTests::test_permission_required_aborts_when_demo_permission_is_missing`
-- [ ] `WrapperDecoratorTests::test_permission_required_allows_demonstration_access_when_granted`
-- [ ] `WrapperDecoratorTests::test_deprecated_endpoint_aborts_with_gone`
+QA-01 / Batch04 · Codex · 2026-10-25 · starting `a875f50a`. Five existing
+unittest definitions improved and one distinct ordinary-denial definition added;
+six collected cases, eight subtest leaf scenarios. Tiny real Flask request
+contexts, FakeCurrentUser and targeted boundary patches; no membership/session
+or database-policy proof. Isolated original/revised controls both 0.09s. Twelve
+explicit fault controls detected 4 before and 12 after, all individually inspected;
+mutmut skipped the nested decorated code, so this is not a mutation score.
+Actual repository/permission/city compatibility run: 41 passed in 12.46s against
+private Mongo; other 35 cases not newly assessed. [Full evidence and individual
+maintenance review](mutation-test-review.md#batch04--permission-decorators-and-denial-dispatch).
+
+- [x] `WrapperDecoratorTests::test_permission_required_redirects_unauthenticated_users`
+
+Improve: ordinary/admin-flag unauthenticated subtests both require 302 to login,
+exact endpoint passed to URL builder and one flash. Detects bypass-before-auth
+and wrong-target navigation. Fake current user/URL builder, real redirect;
+not actual login or disabled-account loading. No exact message prose.
+
+- [x] `WrapperDecoratorTests::test_permission_required_allows_users_with_permission`
+
+Improve: successful return plus exact EDIT_DEMO/None permission-method call.
+Cheap spy catches wrong action/scope that constant True previously hid. Public
+integration contract, not real backend permission calculation.
+
+- [x] `WrapperDecoratorTests::test_permission_required_denies_users_without_permission`
+
+New/keep: real Forbidden, one notification and protected Mock never called for
+authenticated ordinary user lacking grants. Distinct final denial branch was
+uncovered; separate definition justified over mixing negative behavior into an
+allow test. No real role/membership resolution.
+
+- [x] `WrapperDecoratorTests::test_permission_required_aborts_when_demo_permission_is_missing`
+
+Improve: retain Forbidden/notification, require exact user/demo-id/EDIT_DEMO
+helper call. Distinct demo denial; actual helper answer mocked, not permission
+scope/cache acceptance.
+
+- [x] `WrapperDecoratorTests::test_permission_required_allows_demonstration_access_when_granted`
+
+Improve: fixed-ID and dynamic demo_id subtests assert exact user/target/action;
+dynamic route keyword reaches handler once and successful result survives.
+Extends same existing grant/forwarding behavior; inexpensive Mock and request
+contexts. Other ID aliases/global grants/city fallbacks not established here.
+
+- [x] `WrapperDecoratorTests::test_deprecated_endpoint_aborts_with_gone`
+
+Improve maintenance: keep Gone and one flash, relax exact English sentence.
+Status/notification protection remains while editorial copy changes no longer
+cause irrelevant failures. Distinct endpoint retirement behavior; no translated
+message/rendered response claim. No consolidation or removal justified.
+
+
+## tests/test_campaign_publication.py
+
+Feature-only publication follow-up, 2026-10-26; no unrelated audit dispositions
+are changed. Existing public-content tests now explicitly seed published state
+after their isolated database seed, rather than bypassing the production gate.
+
+- [x] `test_unpublished_pages_require_login_and_allow_any_logged_in_preview`:
+  both pages redirect anonymous users with a return target, allow ordinary logged-in
+  preview, and emit no-store/noindex/Vary Cookie headers.
+- [x] `test_signup_cannot_bypass_unpublished_page_gate`: anonymous private API
+  returns JSON 401 and makes no write; logged-in preview can use the existing flow.
+- [x] `test_admin_can_publish_and_withdraw_without_opening_donations`: authorized
+  POST persists state/actor/time, opens pages/API, preserves closed payments,
+  records both audit actions and restores private access.
+- [x] `test_publication_requires_session_bound_csrf`: missing, forged and Unicode
+  invalid CSRF proofs fail without a settings write.
+- [x] `test_publication_rejects_foreign_session_token_and_get`: a token from a
+  different authenticated session and GET cannot change publication.
+- [x] `test_ordinary_and_scoped_users_cannot_publish`: user and scope-limited
+  admin without the global grant cannot change this global state.
+- [x] `test_publication_fails_closed_on_non_boolean_state_and_database_failure`:
+  string booleans and synthetic DB read errors never open anonymous access.
+- [x] `test_private_discovery_and_public_sitemap_follow_publication`: anonymous
+  promotion/sitemap links track publish/withdraw, while logged-in preview promotion
+  remains available. Header opt-in and payment configuration stay separate.
+- [x] `test_existing_confirmation_tokens_keep_working_while_private`: the original
+  expiring token confirmation still works after an authenticated preview signup.
+- [x] `test_publication_write_error_does_not_report_success`: a synthetic write
+  failure shows uncertainty/error rather than a false publication success.
+
+Only admin_kampanja's new publication route count/hash/coverage is updated in the
+existing surface manifest. No application styling or other route baseline is
+changed by this manifest maintenance.
+
+Publication follow-up validation: 63 targeted cases pass (45 existing feature
+cases, 13 publication cases and five relevant existing admin/UI/route contracts).
+Actual Flask browser captures separately exercise native admin publish/withdraw,
+write-error feedback, ordinary authenticated preview, restricted publisher rights,
+public anonymous browsing and JavaScript-disabled admin submission.
+
+
+## Campaign presentation refresh — 27 October 2026
+
+Scoped changes only: preserve the approved VolunteerForm component; adapt its
+existing entry/fallback checks to the owning campaign-page React entry and plain
+newsletter copy. Existing submission, validation, localization, module failure,
+no-JavaScript and token round-trip checks remain. On whole-page module failure,
+both signups intentionally retain disabled HTML fallbacks.
+
+- [x] `test_campaign_fallback_is_readable_and_contains_no_public_procurement_detail`:
+  actual Flask HTML contains complete React-authored campaign copy/navigation
+  and form hooks while detailed material quantities/costs are absent.
+- [x] `test_confirmation_keeps_token_validation_and_has_readable_nojs_html`:
+  real valid/invalid/expired token branches retain status/DB semantics, no-store/
+  noindex, readable HTML and safe plain copy without celebratory/personal markup.
+- [x] `test_newsletter_error_never_looks_like_success_and_keeps_email`:
+  browser HTTP error, malformed JSON/schema and network failure show an error,
+  preserve the email and allow retry rather than reporting success.
+- [x] `test_frontend_manifest_unchanged_build_is_parsed_once_per_app`:
+  repeated request contexts reuse one parsed manifest; the existing rebuild test
+  still requires invalidation when a watched build changes.
+
+Public inline-style debt is reduced: both campaign/confirmation style blocks
+are removed; only the two required-marker attributes emitted by the unchanged
+approved form remain in the generated campaign fallback. No unrelated baseline
+or route inventory entries are refreshed.
+
+
+## Shared React header — 27 October 2026
+
+Existing public chrome/mobile/no-JavaScript, notification safety/token, frontend
+asset, inline-style and campaign behavior checks are retained and adapted to the
+new DOM owner. Additional checks in `tests/test_react_header.py` cover server
+permission-derived links, escaped props, preserved locale-return queries,
+keyboard/focus and sticky behavior, real notification read/mark calls, unsafe
+notification text/links, network-error retry, shared theme synchronization and a
+failed module's native mobile/account navigation. Mark-read failure is checked
+at both widths, including dismissal without an obscured trigger. Visual
+acceptance remains the independent in-conversation gate; no extra CI suite.
+
+
+## Shared React listings: 27 October 2026
+
+Preserve existing bounded-window, attendance lifetime, history/back-forward,
+filter/date, locale, search-label, resource-cap and API contracts. Template-source
+assertions now point to the shared layout and React owner. Calendar checks wait
+for its asynchronous React mount and close the previous transient calendar
+before testing another label. The window test permits an initial automatic
+prefetch when a shorter listing layout brings the next control into view.
+
+`tests/test_react_listing.py` adds actual-page checks for available width,
+heading/search grouping, styled navigation, brand action contrast/typography,
+safe event/friend text and URLs, query-preserving series links, per-page request
+cancellation, stale append suppression and localized tag-empty/reset behavior.
+Only the three removed inline-style debt entries are deleted from the baseline.
+The in-conversation visual gate covers the final source and captures; no new CI
+suite is introduced.

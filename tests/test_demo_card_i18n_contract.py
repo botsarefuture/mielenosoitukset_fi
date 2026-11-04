@@ -134,5 +134,14 @@ def test_demo_list_renders_shared_card_contract_for_active_locale(
 
     assert response.status_code == 200
     body = response.get_data(as_text=True)
-    for fragment in expected:
-        assert fragment in body
+    import json, re
+    match = re.search(r'<script id="demonstration-listing-props" type="application/json">(.*?)</script>', body, re.S)
+    props = json.loads(match.group(1))
+    assert props['locale'] == locale
+    with app.test_request_context():
+        from flask import session
+        from flask_babel import gettext
+        session['locale'] = locale
+        for key, label in {'loading': 'Ladataan mielenosoituksia...', 'cancelled': 'Peruttu',
+                           'loadingFriends': 'Ladataan kavereita...', 'invite': 'Kutsu kavereita'}.items():
+            assert props['messages'][key] == gettext(label)

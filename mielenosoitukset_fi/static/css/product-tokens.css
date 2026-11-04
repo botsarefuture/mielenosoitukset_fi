@@ -13,6 +13,7 @@
   --product-action-hover: light-dark(#00267a, #416fbd);
   --product-on-action: #ffffff;
   --product-accent: #ff6600;
+  --product-on-accent: #172033;
   --product-accent-strong: light-dark(#9c3b00, #ffb078);
   --product-accent-soft: light-dark(#fff2e8, #3a2418);
   --product-canvas: light-dark(#f6f8fb, #171b22);

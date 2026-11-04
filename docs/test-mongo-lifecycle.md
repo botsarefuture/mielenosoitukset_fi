@@ -50,3 +50,30 @@ The main-based prerequisite head55933f8b subsequently passed full hosted
 Tests40104202951:1,562 passed /327 skipped in857.15 seconds on Python3.12,
 including both real manager regressions. This is not the combined #962 feature
 head: after integrating the prerequisite, require that head's own complete CI.
+
+## CI test setup and stall containment (28 October 2026)
+
+Synthetic seeded users now reuse session-cached templates built by the real
+`User.create_user` constructor. Every caller receives a deep copy, so inserted
+IDs, permissions and list mutations cannot leak between tests. Password creation
+and verification in production and authentication tests remain unpatched; only
+repeated fixture construction is cached, with the password included in the key.
+
+A local comparison of the first17test files (through test_admin_recu_demo.py)
+passed198tests in110.59seconds before this change. The same selection plus two
+new isolation/password regression cases passed200tests in49.34seconds afterward.
+This is a local setup measurement, not a promise about total hosted CI time.
+
+The required CI job still collects the entire suite. It now records the25slowest
+phases and uses pytest-timeout's180-second thread watchdog over setup, call and
+teardown. A stuck test fails the job with thread stacks instead of silently
+consuming the full30-minute budget. The thread watchdog intentionally aborts the
+pytest process on timeout, so normal pytest teardown/reporting may not run;
+workflow-level service teardown remains `always()`. Three subprocess regressions
+verify diagnostic failure for hangs in each lifecycle phase. Newer commits cancel
+older runs for the same pull request; main runs are not canceled this way.
+
+The original hosted hang after the recurring-child slug test was not reproduced
+locally (all15tests in that file passed in8.67seconds). Its first attempt was
+canceled and GitHub did not retain downloadable logs. These changes bound and
+diagnose a recurrence; they do not establish the original deadlock's cause.

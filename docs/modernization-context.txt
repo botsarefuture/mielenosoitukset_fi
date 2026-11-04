@@ -1,0 +1,707 @@
+mielenosoitukset.fi — Modernization Project Context & Migration Plan
+1. Project Overview
+We are planning to modernize the architecture of mielenosoitukset.fi, an existing website currently running primarily on Python Flask.
+This document provides the context, goals, architectural direction, and considerations for the modernization process.
+IMPORTANT: This document is not a finalized technical specification.
+Some architectural directions have been discussed, but many implementation details remain undecided.
+Do not interpret technologies, folder structures, endpoints, authentication approaches, or infrastructure examples in this document as approved implementation requirements unless explicitly stated.
+Before making significant changes, inspect the existing codebase, identify the actual requirements, present recommendations, and request approval where appropriate.
+The objective is to modernize the application gradually while preserving existing functionality.
+ 
+⸻
+ 
+2. Current Situation
+The website currently uses:
+* Python Flask for backend functionality.
+* Flask for serving frontend pages and other website functionality.
+* MongoDB as its database.
+* bcrypt for password hashing.
+* An existing administrative interface implemented using Flask.
+We are already gradually transitioning the frontend toward React.
+The current Flask-based application has experienced limitations when handling larger amounts of traffic.
+We want to investigate ways to improve:
+* Performance.
+* Request handling capacity.
+* Concurrency.
+* Resource efficiency.
+* Maintainability.
+* Scalability.
+* Separation of responsibilities.
+However, the exact cause of the existing performance limitations has not yet been established.
+It may involve Flask deployment configuration, database queries, application code, infrastructure, or a combination of factors.
+Do not assume that Flask itself is the sole performance bottleneck.
+The current implementation and hosting configuration should be examined before drawing conclusions.
+ 
+⸻
+ 
+3. General Modernization Direction
+We are considering moving toward an architecture with three main components:
+1. A React-based public frontend.
+2. A separate backend API, potentially implemented in Go.
+3. The existing Flask application continuing to provide administrative functionality.
+The applications would potentially operate under the following domains:
+Domain	Intended purpose	Technology
+mielenosoitukset.fi	Public website	React
+api.mielenosoitukset.fi	Backend API	Go, currently preferred
+admin.mielenosoitukset.fi	Administration	Existing Flask application
+This is the current architectural direction, not a fully approved deployment specification.
+The exact technologies, routing, deployment strategy, and migration order should be evaluated against the existing implementation.
+Important principles
+* Avoid unnecessary rewrites.
+* Preserve existing functionality.
+* Maintain compatibility with MongoDB.
+* Keep existing user accounts working.
+* Avoid unnecessary downtime.
+* Allow gradual migration.
+* Prefer simple, maintainable solutions.
+* Do not introduce complexity without a clear benefit.
+ 
+⸻
+ 
+4. Backend Technology Considerations
+We have discussed several backend technologies:
+* Python Flask.
+* Python FastAPI.
+* Node.js.
+* TypeScript with Fastify.
+* Go with Gin.
+* C# with ASP.NET Core.
+* Rust with Axum or Actix Web.
+Go is currently an attractive option because of its:
+* Performance.
+* Low resource overhead.
+* Concurrency capabilities.
+* MongoDB support.
+* Deployment simplicity.
+* Relatively straightforward syntax.
+* Suitability for AI-assisted development.
+However, Go has not been established as an irreversible decision.
+One important consideration is that the project maintainer has not previously written Go code.
+AI-assisted development is expected to play a role, but the resulting application must remain understandable, debuggable, and maintainable.
+TypeScript with Fastify remains a possible alternative.
+Before committing to a complete backend migration, consider the actual requirements, expected performance improvements, development complexity, and long-term maintenance implications.
+A small proof of concept may be appropriate.
+ 
+⸻
+ 
+5. Incremental Migration Strategy
+We do not want to rewrite the entire website simultaneously.
+The existing Flask application should remain operational while new components are developed.
+A possible transitional architecture is:
+                 INTERNET
+                    |
+                    v
+             mielenosoitukset.fi
+                    |
+             Existing Flask
+              + React pages
+                    |
+                    |
+       +------------+------------+
+       |                         |
+       v                         v
+Existing Flask              New Backend API
+functionality               (Potentially Go)
+       |                         |
+       +------------+------------+
+                    |
+                    v
+                 MongoDB
+As migration progresses, more public functionality can move to React and the new backend.
+The Flask application can gradually become focused on administration.
+Migration requirements
+Each migration should:
+1. Begin by inspecting the existing implementation.
+2. Identify the actual functionality being migrated.
+3. Understand its database interactions.
+4. Identify authentication and authorization requirements.
+5. Determine whether migration is necessary.
+6. Design the replacement based on real requirements.
+7. Implement and test the replacement.
+8. Integrate it with the frontend.
+9. Verify compatibility with existing functionality.
+10. Retire the old implementation only when it is safe.
+The migration order should be determined after examining the codebase.
+Do not assume that specific endpoints or features must be migrated first without understanding their dependencies.
+ 
+⸻
+ 
+6. API Design — Very Important
+Do not invent API endpoints based on generic examples or assumptions.
+We specifically want the new backend API to be designed around the actual needs of mielenosoitukset.fi.
+The API should not be designed by blindly following a predetermined list of REST endpoints.
+Instead, inspect:
+* Existing Flask routes.
+* Existing database operations.
+* Existing frontend behavior.
+* Current React components.
+* Authentication flows.
+* User-facing functionality.
+* Administrative functionality.
+* Existing business logic.
+* Data validation requirements.
+* Performance-sensitive operations.
+Use this information to determine which API endpoints are actually necessary.
+Endpoint design requirements
+For every proposed endpoint, identify:
+* Its purpose.
+* The application or component that requires it.
+* Required request data.
+* Expected response data.
+* Authentication requirements.
+* Authorization requirements.
+* Database operations.
+* Relevant performance considerations.
+* Existing Flask functionality it replaces, if applicable.
+Present the proposed API structure before implementing significant functionality.
+Do not assume that existing Flask routes should be copied directly.
+Some existing routes may be specific to HTML rendering, and others may no longer be necessary.
+Likewise, do not invent new application features.
+The API must serve actual requirements, not hypothetical ones.
+ 
+⸻
+ 
+7. React Frontend
+The public website is already being gradually migrated toward React.
+We want to continue that transition without unnecessarily disrupting the existing website.
+The new frontend would eventually communicate with the separate backend API.
+However, the existing React setup must be inspected before making architectural decisions.
+Do not assume that the project uses:
+* Vite.
+* Next.js.
+* React Router.
+* A particular state management library.
+* A specific CSS framework.
+* A particular rendering strategy.
+Determine what is already being used.
+Frontend considerations
+The migration should preserve:
+* Existing functionality.
+* Existing public URLs where practical.
+* Search engine visibility.
+* Accessibility.
+* Responsive layouts.
+* Existing user workflows.
+* Compatibility with backend functionality.
+Because the website publishes public information about demonstrations, search engine indexing may be important.
+Evaluate whether client-side rendering, server-side rendering, or prerendering is appropriate for the actual project.
+Do not introduce a new frontend framework or rendering architecture without a clear reason.
+ 
+⸻
+ 
+8. Flask Administration
+We intend to keep the existing Flask administration functionality working for now.
+There is no immediate requirement to rewrite the admin panel in Go, Node.js, or React.
+We have discussed potentially moving the administrative interface to:
+admin.mielenosoitukset.fi
+However, the timing of this move has not been decided.
+Before recommending or implementing the move, inspect:
+* Existing administrative routes.
+* Authentication dependencies.
+* Session handling.
+* Templates.
+* Static assets.
+* Redirects.
+* Internal links.
+* Dependencies on public Flask functionality.
+* Deployment configuration.
+The admin panel may currently be tightly integrated with the public Flask application.
+If so, separating it may require additional work.
+Do not assume that moving it to a subdomain is merely a DNS change.
+Desired outcome
+Eventually, the Flask application may serve primarily or exclusively administrative functionality.
+However, keeping some other functionality in Flask is acceptable if there is a good reason.
+The goal is not to eliminate Flask at all costs.
+ 
+⸻
+ 
+9. MongoDB
+The website already uses MongoDB.
+We want to preserve the existing database and its data.
+Go has an official MongoDB driver, so using Go would not require replacing MongoDB.
+During migration, the existing Flask application and the new backend may both need to access the database.
+This is technically possible, but shared database access must be managed carefully.
+Database requirements
+Before implementing database operations:
+* Inspect existing collections.
+* Inspect document structures.
+* Identify relationships between data.
+* Understand existing indexes.
+* Review current queries.
+* Identify validation rules.
+* Document relevant BSON types.
+* Identify any compatibility concerns.
+Do not assume collection names or document structures.
+Do not introduce schema changes without justification and approval.
+Shared database access
+During migration, Flask and the new backend may both read from MongoDB.
+Write operations require particular care.
+We should avoid situations where different applications apply conflicting validation or business rules to the same data.
+The ownership of write operations should be determined based on the actual functionality being migrated.
+Do not automatically move all database operations to Go.
+Database performance
+MongoDB may contribute to the existing performance limitations.
+Investigate:
+* Query performance.
+* Index usage.
+* Connection pooling.
+* Database load.
+* Unnecessary queries.
+* Large responses.
+* Pagination requirements.
+* Caching opportunities.
+Do not assume that changing the backend language will automatically resolve database bottlenecks.
+ 
+⸻
+ 
+10. Existing User Accounts and Authentication
+The website already has a user account system.
+Password hashing uses bcrypt.
+We want existing accounts to remain functional throughout the migration.
+Users should not need to create new accounts simply because the backend technology changes.
+Password compatibility
+Standard bcrypt password hashes can generally be verified across Python and Go.
+This means existing password hashes may be reused.
+However, the exact current implementation must be inspected.
+Check:
+* Which bcrypt library is used.
+* How passwords are encoded.
+* How password hashes are stored.
+* Whether passwords undergo preprocessing.
+* How long passwords are handled.
+* Whether other authentication mechanisms are involved.
+Do not assume compatibility without testing it.
+Shared accounts
+The public website, new backend, and Flask administration should continue using the same underlying user identities.
+However, sharing user records does not automatically mean sharing login sessions.
+Authentication and session handling require separate consideration.
+Authentication migration
+There is currently no requirement to immediately replace Flask authentication.
+A gradual approach is preferred.
+Possible directions include:
+* Temporarily retaining Flask authentication.
+* Allowing the new backend to authenticate against existing users.
+* Introducing centralized authentication later.
+* Maintaining separate application sessions backed by shared identities.
+These are possibilities, not finalized decisions.
+The final approach should be chosen after inspecting the existing authentication implementation.
+Security requirements
+Any authentication migration must preserve or improve security.
+Important considerations include:
+* Password verification.
+* Session security.
+* Secure cookies.
+* CSRF protection.
+* Account permissions.
+* Administrative access controls.
+* Password reset functionality.
+* Account disabling.
+* Session expiration.
+* Session revocation.
+Do not implement JWT authentication simply because it is common.
+Choose session and token mechanisms based on actual requirements.
+ 
+⸻
+ 
+11. Repository Organization
+We have discussed using a monorepo, meaning one Git repository containing multiple applications in separate directories.
+This currently appears to be a good option because:
+* The applications are closely related.
+* The migration requires understanding existing Flask functionality.
+* React and the new API will evolve together.
+* AI coding agents may benefit from accessing the complete codebase.
+* Cross-application changes can be coordinated.
+* Documentation can remain centralized.
+However, the existing repository structure has not yet been inspected.
+Do not reorganize the project without first understanding how it is currently structured.
+Possible directory structure
+The following is an example, not a mandatory specification:
+mielenosoitukset/
+│
+├── apps/
+│   ├── web/        # React frontend
+│   ├── api/        # New backend
+│   └── legacy/     # Existing Flask application
+│
+├── infrastructure/
+│
+├── docs/
+│
+├── AGENTS.md
+│
+└── README.md
+Additional directories should only be introduced when necessary.
+For example, shared API contracts or infrastructure configuration may justify additional directories.
+Do not create empty directories or unnecessary abstractions simply to match an example.
+Existing Flask code
+During migration, the Flask application may be referred to as legacy.
+Once it primarily handles administration, renaming it to admin may make sense.
+This is optional and should not take priority over functional improvements.
+Independent deployment
+Even if a monorepo is used, the applications should be independently deployable where practical.
+Changes to the React frontend should not automatically require rebuilding the Go backend or Flask administration unless necessary.
+ 
+⸻
+ 
+12. Infrastructure and Deployment
+The current hosting and deployment setup must be inspected before proposing a final infrastructure design.
+We have discussed possible use of:
+* Cloudflare.
+* Nginx.
+* Caddy.
+* Docker.
+* Docker Compose.
+* Separate application processes.
+* Independent subdomain routing.
+However, these are not automatically required.
+Use existing infrastructure where it is suitable.
+Potential deployment architecture
+                    INTERNET
+                       |
+                       v
+                Reverse Proxy
+                       |
+          +------------+------------+
+          |            |            |
+          v            v            v
+        React         Go API      Flask Admin
+          |            |            |
+          |            v            |
+          |          MongoDB <------+
+          |
+          +---- HTTP API ----> Go
+The applications may initially run on the same server.
+Separate physical servers are not required unless justified by resource usage, reliability, or operational requirements.
+Deployment considerations
+Investigate:
+* Current hosting provider.
+* Available CPU and RAM.
+* Operating system.
+* Existing reverse proxy.
+* Existing process management.
+* Existing Docker usage.
+* SSL/TLS configuration.
+* DNS configuration.
+* Database hosting.
+* Monitoring.
+* Backups.
+* Deployment procedures.
+Do not assume a particular VPS configuration.
+Production safety
+Before changing production routing:
+* Test the new deployment.
+* Verify HTTPS.
+* Verify authentication behavior.
+* Verify database connectivity.
+* Verify application logs.
+* Establish a rollback procedure.
+* Confirm existing functionality remains available.
+Avoid unnecessary downtime.
+ 
+⸻
+ 
+13. Performance and Scalability
+One of the main reasons for considering modernization is that the existing Flask application struggles with larger request volumes.
+However, the exact bottleneck has not been identified.
+Performance improvements must be based on measurements.
+Initial investigation
+Examine:
+* How Flask is currently started.
+* Whether a production WSGI server is used.
+* Number of workers and threads.
+* CPU utilization.
+* RAM utilization.
+* Request latency.
+* Request throughput.
+* Database query latency.
+* MongoDB connection usage.
+* Reverse proxy configuration.
+* Static asset delivery.
+* Error rates under load.
+The existing Flask application may be significantly improved through deployment changes alone.
+Performance goals
+We want:
+* Faster response times.
+* Better concurrent request handling.
+* Lower resource consumption.
+* Stable behavior under traffic spikes.
+* Efficient MongoDB usage.
+* Predictable production performance.
+However, specific numerical performance targets have not yet been agreed upon.
+Do not invent requirements such as supporting 10,000 requests per second.
+Actual targets should be established using current traffic data, expected growth, hosting resources, and realistic load tests.
+Caching
+Caching may improve performance, especially for frequently requested public information.
+Potential approaches include:
+* HTTP caching.
+* CDN caching.
+* Application-level caching.
+* Redis.
+Redis is not currently a confirmed requirement.
+Start with simpler solutions and introduce additional infrastructure only when justified.
+ 
+⸻
+ 
+14. Security
+Security must remain a priority throughout the migration.
+Separating the application into subdomains does not automatically improve security.
+The new architecture must consider:
+* HTTPS.
+* Authentication.
+* Authorization.
+* Session management.
+* CSRF protection.
+* CORS configuration.
+* Input validation.
+* Rate limiting.
+* Database permissions.
+* Secrets management.
+* Administrative access.
+* Dependency security.
+* Logging without exposing sensitive data.
+The React frontend must never contain MongoDB credentials or backend secrets.
+Production credentials must not be committed to Git.
+The Go API and Flask application should use appropriately restricted database credentials where practical.
+Any new authentication or authorization implementation should be reviewed and tested before production use.
+ 
+⸻
+ 
+15. AI-Assisted Development
+AI-assisted coding will likely play an important role in this project.
+The maintainer is already familiar with the existing project but has not previously written Go.
+Therefore, generated code must prioritize:
+* Readability.
+* Simplicity.
+* Maintainability.
+* Correctness.
+* Security.
+* Compatibility with existing functionality.
+Avoid overly complicated Go patterns or unnecessary abstractions.
+Instructions for AI coding agents
+When working on this project:
+First, inspect the existing code.
+Do not assume how the application works.
+Second, explain what you found.
+Identify relevant routes, functions, database operations, and dependencies.
+Third, propose a solution.
+Explain the proposed changes and their reasoning.
+Fourth, distinguish requirements from suggestions.
+Do not present optional architectural decisions as already approved.
+Fifth, implement only the agreed scope.
+Do not rewrite unrelated functionality.
+Sixth, verify the implementation.
+Run appropriate tests, builds, and static analysis where available.
+Seventh, document important changes.
+Explain any changes to architecture, database behavior, authentication, or deployment.
+AI development restrictions
+Do not:
+* Invent application requirements.
+* Invent API endpoints.
+* Assume database schemas.
+* Introduce unnecessary dependencies.
+* Rewrite working code without a reason.
+* Change authentication unexpectedly.
+* Modify production data without approval.
+* Remove existing functionality prematurely.
+* Make major architectural decisions without explaining alternatives.
+* Treat examples in this document as mandatory implementation instructions.
+ 
+⸻
+ 
+16. Proposed Project Phases
+The following phases represent a possible migration sequence.
+The exact order and scope are not finalized.
+Phase 1 — Existing System Assessment
+Inspect the current application.
+Understand:
+* Repository structure.
+* Flask architecture.
+* React migration progress.
+* MongoDB integration.
+* Authentication.
+* Administration.
+* Hosting.
+* Performance bottlenecks.
+Deliverable: A technical assessment of the current system and recommended next steps.
+Do not begin a large rewrite during this phase.
+Phase 2 — Architecture Proposal
+Based on the assessment, propose:
+* Backend technology.
+* Repository organization.
+* Application boundaries.
+* API design principles.
+* Authentication migration strategy.
+* Deployment approach.
+* Testing strategy.
+Explain alternatives and tradeoffs.
+Deliverable: An architecture proposal for review.
+Phase 3 — Backend Proof of Concept
+If Go is selected, create a small Go backend prototype.
+The prototype should demonstrate:
+* HTTP request handling.
+* MongoDB connectivity.
+* Compatibility with existing data.
+* Basic error handling.
+* Application configuration.
+* Deployment feasibility.
+The actual functionality should be selected based on the existing application’s needs.
+Do not create arbitrary demonstration endpoints beyond what is necessary to validate the technology.
+Deliverable: A working prototype and evaluation of its suitability.
+Phase 4 — Gradual API Migration
+Identify suitable functionality to migrate.
+For each feature:
+1. Inspect the existing Flask implementation.
+2. Identify frontend requirements.
+3. Propose the necessary API design.
+4. Implement the functionality.
+5. Test compatibility.
+6. Integrate with React.
+7. Verify production behavior.
+8. Retire replaced Flask functionality when safe.
+Deliverable: Incrementally migrated functionality.
+Phase 5 — Public Frontend Migration
+Continue migrating public pages toward React.
+Ensure compatibility with the new API.
+Preserve:
+* Existing public functionality.
+* Important URLs.
+* SEO.
+* User workflows.
+* Accessibility.
+Deliverable: A progressively modernized public frontend.
+Phase 6 — Administration Separation
+Evaluate moving the Flask administration interface to:
+admin.mielenosoitukset.fi
+Perform the move when the application structure and migration progress make it appropriate.
+Verify authentication, sessions, redirects, and administrative functionality.
+Deliverable: Independently accessible Flask administration, if approved.
+Phase 7 — Authentication Modernization
+Evaluate migrating public authentication to the new backend.
+Preserve existing accounts and bcrypt password hashes.
+Determine how Flask administration should integrate with the authentication system.
+Do not introduce incompatible login systems without a deliberate transition strategy.
+Deliverable: A secure authentication architecture compatible with existing users.
+Phase 8 — Optimization and Cleanup
+After functionality has been migrated:
+* Remove obsolete code.
+* Review database indexes.
+* Optimize measured bottlenecks.
+* Improve caching where useful.
+* Review security.
+* Improve monitoring.
+* Simplify deployment.
+* Update documentation.
+Deliverable: A maintainable and efficient production architecture.
+ 
+⸻
+ 
+17. Decisions and Open Questions
+Currently established project facts
+* The existing website uses Flask.
+* Flask currently handles both frontend and backend responsibilities.
+* MongoDB is used.
+* bcrypt is used for password hashing.
+* Administrative functionality exists in Flask.
+* The frontend is gradually moving toward React.
+* The current application has experienced request-handling limitations.
+* Existing functionality and accounts must be preserved.
+* Migration should be gradual rather than a complete immediate rewrite.
+Current preferences and directions
+These have been discussed positively but should not be treated as irreversible decisions:
+* Go as the new backend language.
+* Gin as a possible Go web framework.
+* A separate API subdomain.
+* A separate administration subdomain.
+* Keeping Flask for administration.
+* Using a monorepo.
+* Independent application deployments.
+* Sharing the existing MongoDB database.
+* Eventually centralizing authentication.
+Not yet decided or verified
+* Final backend language and framework.
+* Exact API endpoints.
+* MongoDB schemas and collection structures.
+* Current Flask authentication implementation.
+* Session-sharing strategy.
+* Administrative authentication integration.
+* Final repository structure.
+* React build and rendering strategy.
+* Hosting configuration.
+* Reverse proxy choice.
+* Docker usage.
+* Caching architecture.
+* Redis requirements.
+* Performance targets.
+* Migration timeline.
+* Order of feature migrations.
+* Exact timing of the admin subdomain move.
+* Whether additional infrastructure is necessary.
+These decisions should be made after reviewing the actual application and its requirements.
+ 
+⸻
+ 
+18. Immediate Next Steps
+The first task should be to understand the existing system, not to immediately start rewriting it.
+An AI coding agent or developer should begin by:
+1. Examining the repository.
+2. Mapping the existing Flask application.
+3. Identifying the current React implementation.
+4. Understanding MongoDB usage.
+5. Reviewing authentication and administrative functionality.
+6. Investigating the current deployment.
+7. Identifying likely performance bottlenecks.
+8. Evaluating the proposed architecture.
+9. Recommending a practical migration sequence.
+10. Presenting findings and recommendations before making major changes.
+The initial assessment should clearly separate:
+* Verified facts: Confirmed by inspecting the code or infrastructure.
+* Existing decisions: Explicitly stated by the project maintainer.
+* Recommendations: Suggested technical approaches.
+* Open questions: Information requiring clarification.
+* Risks: Potential problems that need investigation.
+ 
+⸻
+ 
+19. Final Project Principles
+The modernization of mielenosoitukset.fi should follow these principles:
+1. Preserve what works.
+Do not replace existing functionality simply because a newer technology is available.
+2. Improve performance based on evidence.
+Measure bottlenecks before optimizing them.
+3. Migrate gradually.
+Avoid unnecessary disruption to the existing website.
+4. Design around actual requirements.
+Do not invent endpoints, database structures, or application features.
+5. Keep existing accounts compatible.
+Preserve MongoDB data and bcrypt password hashes.
+6. Maintain administrative functionality.
+The existing Flask admin panel should continue working throughout the transition.
+7. Prefer maintainability over unnecessary complexity.
+The architecture must remain understandable, including to developers learning Go.
+8. Separate confirmed decisions from suggestions.
+No optional technical choice should be presented as approved without explicit confirmation.
+9. Test before replacing.
+New functionality must be verified before removing its existing implementation.
+10. Ask before making major changes.
+Significant decisions involving authentication, database schemas, infrastructure, repository restructuring, or production deployment require explicit approval.
+ 
+⸻
+ 
+20. Instructions to the AI Agent Receiving This Document
+You are assisting with the modernization of an existing production website.
+Do not begin by generating an entire replacement application.
+First, inspect the available codebase and understand how the existing system works.
+Use this document as architectural context, not as a rigid specification.
+Your first response after inspecting the project should provide:
+1. A summary of the existing architecture.
+2. Relevant findings from the codebase.
+3. Potential performance issues.
+4. An evaluation of the proposed React + Go + Flask architecture.
+5. Recommendations for repository organization.
+6. Authentication and MongoDB compatibility considerations.
+7. A proposed incremental migration strategy.
+8. Risks and unresolved questions.
+9. A small, practical first implementation milestone.
+Clearly identify which conclusions are supported by actual code and which are recommendations.
+Do not assume approval for implementation.
+The ultimate objective is to gradually transform mielenosoitukset.fi into a faster, more scalable, maintainable application while preserving existing functionality, user accounts, and administrative capabilities.

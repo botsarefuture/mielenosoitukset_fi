@@ -1,0 +1,9 @@
+# Public settings only. The Flask session cookie is forwarded unchanged over its socket.
+NODE_ENV=production
+APP_ORIGIN=https://mielenosoitukset.fi
+PUBLIC_API_BASE=https://api.mielenosoitukset.fi/api
+PUBLIC_API_LOCAL=http://127.0.0.1:8091/api
+APP_ADDR=127.0.0.1
+APP_PORT=8090
+SESSION_URL=http://mielenosoitukset.fi/api/session
+FLASK_SOCKET_PATH=/var/www/mielenosoitukset_fi/mielenosoitus.sock

@@ -10,63 +10,67 @@ WORKSPACE_CSS = Path("mielenosoitukset_fi/static/css/user-workspace.css")
 BASE_TEMPLATE = Path("mielenosoitukset_fi/templates/base.html")
 
 
-def test_organization_search_treats_query_as_bounded_literal_text(client, db):
-    literal_name = "Literal [demo] organization"
-    regex_only_name = "Literal d organization"
-    db.organizations.insert_many(
-        [
-            {
-                "name": literal_name,
-                "email": "literal@example.test",
-                "website": "https://example.test/literal",
-                "description": "Literal match",
-            },
-            {
-                "name": regex_only_name,
-                "email": "regex@example.test",
-                "website": "https://example.test/regex",
-                "description": "Would match an unescaped character class",
-            },
-        ]
-    )
+@pytest.mark.parametrize("query,expected_names", [
+    (None, set()),
+    ("   ", set()),
+    ("L", set()),
+    ("zz", {"zz minimum"}),
+    ("  literal [DEMO]  ", {"Literal [demo] organization"}),
+    ("x" * 100, {"x" * 100}),
+    ("x" * 101, None),
+    ("Limit match", {f"Limit match {index}" for index in range(11)}),
+])
+def test_organization_search_treats_query_as_bounded_literal_text(client, db, query, expected_names):
+    names = [
+        "Literal [demo] organization", "Literal d organization", "zz minimum", "x" * 100,
+        *[f"Limit match {index}" for index in range(11)],
+    ]
+    db.organizations.insert_many([{"name": name} for name in names])
 
     response = client.get(
         "/api/v1/search_organizations",
-        query_string={"q": "Literal [demo]"},
+        query_string={} if query is None else {"q": query},
     )
+    if expected_names is None:
+        assert response.status_code == 400
+        error = response.get_json()
+        assert set(error) == {"error"}
+        assert isinstance(error["error"], str) and error["error"]
+        return
 
     assert response.status_code == 200
-    assert [result["name"] for result in response.get_json()] == [literal_name]
-
-    too_long = client.get(
-        "/api/v1/search_organizations",
-        query_string={"q": "x" * 101},
-    )
-    assert too_long.status_code == 400
-    assert too_long.get_json() == {"error": "Hakuteksti on liian pitkä."}
+    results = response.get_json()
+    assert len(results) == min(len(expected_names), 10)
+    actual_names = {result["name"] for result in results}
+    assert len(actual_names) == len(results)
+    assert actual_names <= expected_names
 
 
-def test_organization_search_normalizes_public_result_fields(client, db):
-    db.organizations.insert_one(
-        {
-            "name": "Normalization target",
-            "email": {"unexpected": "mapping"},
-            "website": ["https://example.test"],
-            "description": "d" * 101,
-        }
-    )
+@pytest.mark.parametrize("variant", ["malformed", "missing", "boundary", "overlong"])
+def test_organization_search_normalizes_public_result_fields(client, db, variant):
+    record = {"name": "Normalization target", "internal_note": "not a public field"}
+    expected = {"name": record["name"], "email": "", "website": "", "description": ""}
+    if variant == "malformed":
+        record.update(email={"unexpected": "mapping"}, website=["https://example.test"],
+            description={"unexpected": "mapping"})
+    elif variant in {"boundary", "overlong"}:
+        excess = int(variant == "overlong")
+        record.update(
+            name=record["name"].ljust(200 + excess, "n"),
+            email="e" * (254 + excess),
+            website="w" * (2048 + excess),
+            description="d" * (100 + excess),
+        )
+        expected.update(name=record["name"][:200], email="e" * 254, website="w" * 2048,
+            description="d" * 100 + ("..." if excess else ""))
+    inserted = db.organizations.insert_one(record)
 
     response = client.get(
         "/api/v1/search_organizations",
         query_string={"q": "Normalization target"},
     )
-
     assert response.status_code == 200
-    result = response.get_json()[0]
-    assert result["name"] == "Normalization target"
-    assert result["email"] == ""
-    assert result["website"] == ""
-    assert result["description"] == f"{'d' * 100}..."
+    assert response.get_json() == [{"id": str(inserted.inserted_id), **expected}]
 
 
 def test_submit_autocomplete_uses_shared_safe_native_controls():

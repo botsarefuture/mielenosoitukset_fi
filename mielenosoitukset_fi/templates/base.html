@@ -9,7 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdn2.mielenosoitukset.fi" crossorigin>
+  {% block body_font_styles %}
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  {% endblock %}
 
   <!-- Apply the theme before first paint to avoid a dark/light flash.
        Mirrors static/js/theme.js (saved pref -> cached user pref -> system). -->
@@ -31,9 +33,11 @@
     })();
   </script>
 
+  <link rel="alternate" type="application/rss+xml" title="Mielenosoitukset.fi: RSS" href="{{ url_for('demonstrations_rss', _external=True) }}">
+
   <!-- Primary Meta Tags -->
   <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
-  <meta name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa." />
+  <meta name="description" content="{% block meta_description %}Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa.{% endblock %}" />
   <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
   {% block robots %}<meta name="robots" content="index, follow" />{% endblock %}
   {% block canonical %}{% endblock %}
@@ -122,9 +126,9 @@
   </style>
 
   {% block styles %}{% endblock %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/product-tokens.css', v='20261015-product-tokens-1') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20261015-user-workspace-3') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/public-header.css', v='20261002-public-header-4') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/product-tokens.css', v='20261027-product-tokens-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20261028-user-workspace-2') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/public-header.css', v='20261027-react-header-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css', v='20260928-campaign-feedback-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/public_hero.css', v='20261015-hero-width-1') }}">
 
@@ -574,7 +578,7 @@ body.banner-closed {
   <!--{% include "update_notice.html" %}-->
 
   <!-- Main Content Area -->
-  <main class="container-main-content" id="main-content">
+  <main class="container-main-content {% block main_class %}{% endblock %}" id="main-content">
     {% block content %}
     <!-- The content from child templates will be injected here -->
     {% endblock %}

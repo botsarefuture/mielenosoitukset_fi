@@ -1,13 +1,11 @@
 {% extends "base.html" %}
+{% from '_macros/_public_search.html' import public_search_styles, public_search_scripts with context %}
+{% from '_macros/frontend.html' import frontend_entry with context %}
+{% block main_class %}public-layout-wide{% endblock %}
 {% block title %}
 {{ org.name }} - {{ _('Tiedot') }}
 {% endblock %}
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/demo-card-render.js', v='20261013-date-range-1') }}" defer></script>
-
-{% include "_modals/_demo-card-template.html" %}
-
 <script>
   // Add scroll animations
   const observerOptions = {
@@ -26,7 +24,7 @@
   }, observerOptions);
 
   document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.section-card, .hero-section, .demo-card').forEach(el => {
+    document.querySelectorAll('.section-card, .hero-section').forEach(el => {
       observer.observe(el);
     });
 
@@ -48,66 +46,12 @@
     });
   }
 </script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Observe animations (assuming observer is defined elsewhere)
-    document.querySelectorAll('.section-card, .hero-section, .demo-card').forEach(el => observer.observe(el));
-
-    // Back to top button
-    const backToTop = document.getElementById('backToTop');
-    window.addEventListener('scroll', () => {
-      backToTop.classList.toggle('visible', window.pageYOffset > 300);
-    });
-
-    // Pagination state
-    let currentPage = 1;
-    let totalPages = 1;
-    const perPage = 12;
-
-    const grid = document.getElementById('demos-grid');
-    const loadMoreBtn = document.getElementById('load-more-btn');
-
-    // Extra params for page (e.g., parent_id)
-    const extraParams = {
-      organization_id: '{{ org_id }}'
-    };
-
-    // Wrapper to handle loading UI + call the main loadDemos
-    async function loadDemosWrapper(page = 1, append = false) {
-      // Show loading
-      if (!append) {
-        grid.innerHTML = `
-        <div class="loading-container">
-          <div class="spinner"></div>
-          <p>Ladataan mielenosoituksia...</p>
-        </div>`;
-      } else {
-        loadMoreBtn.classList.add('loading');
-        loadMoreBtn.disabled = true;
-      }
-
-      // Call the reusable loadDemos function
-      await loadDemos(page, append, extraParams);
-
-      // After load, remove loading states
-      loadMoreBtn.classList.remove('loading');
-      loadMoreBtn.disabled = false;
-
-      // Update Load More button display (handled inside loadDemos already, but keep safety)
-      //loadMoreBtn.style.display = currentPage < totalPages ? 'block' : 'none';
-    }
-
-    // Initial load
-    loadDemosWrapper();
-
-    // Load more click
-    /*loadMoreBtn.addEventListener('click', () => {
-      if (currentPage < totalPages) loadDemosWrapper(currentPage + 1, true);
-    });*/
-  });
-</script>
+<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261027-continuous-grid-1') }}"></script>
+{{ public_search_scripts() }}
+{{ frontend_entry('src/entries/listing.tsx') }}
 {% endblock %}
 {% block styles %}
+{{ public_search_styles() }}
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -115,7 +59,6 @@
 
 <!-- Stylesheets -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/demo_list.css') }}" />
 
@@ -1370,32 +1313,10 @@
 {% endif %}
 
 
-<!-- Demonstrations Section -->
-
-<section class="section-card" id="demos">
-  <h2 class="demos-title">
-    <i class="fa-solid fa-calendar-check"></i>
-    {{ _('Mielenosoitukset') }}
-  </h2>
-  <p class="text-center text-secondary" style="margin-bottom:1rem;">
-    {{ _('Tämän järjestäjän mielenosoitukset') }}
-  </p>
-
-
-  <div id="demos-grid" class="demos-grid">
-
-  </div>
-
-  <button id="load-more-btn" class="button button-secondary" style="display:none;">{{ _('Näytä lisää') }}</button>
-
-  <div id="no-results" class="no-results" style="display: none;">
-    <i class="fa-regular fa-calendar-xmark"></i>
-    <h3>{{ _('Ei tulevia mielenosoituksia') }}</h3>
-    <p>{{ _('Tämä järjestäjä ei ole vielä ilmoittanut tulevia mielenosoituksia.') }}</p>
-  </div>
+<!-- The same listing island owns filtering, cards and pagination on public collections. -->
+<section id="demos">
+  {% include '_partials/demonstration-listing.html' %}
 </section>
-
-
 
 <!-- Back to Top Button -->
 <button class="back-to-top" id="backToTop" onclick="scrollToTop()">

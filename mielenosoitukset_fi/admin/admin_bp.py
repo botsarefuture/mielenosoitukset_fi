@@ -1012,15 +1012,9 @@ def admin_dashboard():
 @admin_required
 def activate_panic():
     """Activate global panic mode."""
+    # Keep the old URL, but never retain an unreviewed single-super-admin bypass.
     _require_global_admin_surface()
-    mongo.panic.update_one(
-        {"name": "global"},
-        {"$set": {"panic": True}},
-        upsert=True
-    )
-    _log_admin_event("panic_mode_update", panic_mode=True)
-    flash_message("Hätätila otettiin käyttöön.", "success")
-    return redirect(url_for("admin.admin_dashboard"))
+    return redirect(url_for("admin_governance.security"), code=303)
 
 
 # Route to deactivate panic mode
@@ -1030,14 +1024,7 @@ def activate_panic():
 def deactivate_panic():
     """Deactivate global panic mode."""
     _require_global_admin_surface()
-    mongo.panic.update_one(
-        {"name": "global"},
-        {"$set": {"panic": False}},
-        upsert=True
-    )
-    _log_admin_event("panic_mode_update", panic_mode=False)
-    flash_message("Hätätila poistettiin käytöstä.", "success")
-    return redirect(url_for("admin.admin_dashboard"))
+    return redirect(url_for("admin_governance.security"), code=303)
 
 
 # Optional: route to get current status as JSON (useful for AJAX)

@@ -135,7 +135,7 @@ func publicSubmissionHandler(next http.Handler, db *mongo.Database, config submi
 		var panicMode struct {
 			Panic bool `bson:"panic"`
 		}
-		err := db.Collection("panic").FindOne(ctx, bson.M{"name": "global"}).Decode(&panicMode)
+		err := db.Collection("panic").FindOne(ctx, bson.M{"name": bson.M{"$in": bson.A{"global", "security"}}}).Decode(&panicMode)
 		if (err != nil && !errors.Is(err, mongo.ErrNoDocuments)) || panicMode.Panic {
 			submissionFailure(w, 503, "SUBMIT_UNAVAILABLE", "Palvelu ei ole juuri nyt käytettävissä.")
 			return

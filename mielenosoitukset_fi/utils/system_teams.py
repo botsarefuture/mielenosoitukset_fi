@@ -37,7 +37,8 @@ def forbid_ordinary_team_write(organization_id):
 
 
 def active_account(doc):
-    return bool(doc and doc.get("active", True) is True and doc.get("banned", False) is False and doc.get("confirmed") is True)
+    return bool(doc and doc.get("active", True) is True and doc.get("banned", False) is False
+                and not (doc.get("security_suspension") or {}).get("active") and doc.get("confirmed") is True)
 
 
 def approved_members(db, team, *, include_inactive=False):
@@ -48,7 +49,7 @@ def approved_members(db, team, *, include_inactive=False):
     ids = {ObjectId(str(row["user_id"])) for row in rows if ObjectId.is_valid(str(row.get("user_id", "")))}
     if not ids:
         return []
-    users = db.users.find({"_id": {"$in": list(ids)}}, {"username": 1, "email": 1, "active": 1, "banned": 1, "confirmed": 1})
+    users = db.users.find({"_id": {"$in": list(ids)}}, {"username": 1, "email": 1, "active": 1, "banned": 1, "confirmed": 1, "security_suspension": 1})
     return sorted((doc for doc in users if include_inactive or active_account(doc)), key=lambda doc: str(doc["_id"]))
 
 

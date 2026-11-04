@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+- Replace the god-appointment quorum with two chambers: the whole board or every existing god user nominates, the other chamber then has 48 hours to veto, and a veto moves the decision to a second round where 75 prosenttia of all board and god users combined must approve. Ordinary super admins no longer participate, the first god needs only the whole board, and the fixed two-board emergency bypass is removed while the USB + fresh god login route stays available.
+- Add audited security cases for privileged accounts: two board members or one freshly authenticated god user can suspend, the owner's sessions, API tokens and magic links are revoked immediately, removal needs a majority of the unaffected board, and the seven-day review deadline escalates instead of restoring access. Block privileged account edits, token creation and magic links while a case is open, and notify the board and god users.
+- Extend the public lockdown to the React host and the Go API: locked pages answer 503 with `Retry-After` and `noindex` from a shared one-second gate outside response caches, while health checks, authentication and administration stay reachable.
+
 - Add a disabled-by-default emergency god-appointment path for the homelab `panel.lan` button. A request must be launched by a panel-signed ticket and then completed by either two distinct board votes, or a registered USB-key signature plus a fresh complete god login. Bind the target, credential version, board roster, reason and single-use challenge to a fifteen-minute expiry; keep security enrollment mandatory and recheck the live roster at activation.
 
 - Require unanimous approval from every super admin, board member and existing god account before activating a new god account. Freeze the approver roster, discard old votes when it changes, and keep security enrollment mandatory.

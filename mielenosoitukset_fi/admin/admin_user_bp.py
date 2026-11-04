@@ -360,6 +360,9 @@ def compare_user_levels(user1, user2):
 
 def _check_user_target(actor, target, *, allow_self=False):
     """Enforce the same target hierarchy on every privileged entrypoint."""
+    from mielenosoitukset_fi.utils.security_cases import protected_account
+    if request.method != "GET" and protected_account(mongo, mongo.users.find_one({"_id": target._id})):
+        abort(403, "Hallituksen ja god-tilien turvamuutokset tehdään hallinnon turvatapauksessa.")
     if allow_self and actor._id == target._id:
         return
     if not compare_user_levels(actor, target):
@@ -398,6 +401,9 @@ def safe_redirect(target):
 
 def can_change_account_status(actor, target):
     """Share status-action visibility with the authoritative target hierarchy."""
+    from mielenosoitukset_fi.utils.security_cases import protected_account
+    if protected_account(mongo, mongo.users.find_one({"_id": target._id})):
+        return False
     return ((actor.has_full_permissions() or "EDIT_USER" in actor.global_permissions)
             and actor._id != target._id
             and compare_user_levels(actor, target))

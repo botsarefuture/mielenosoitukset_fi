@@ -8,7 +8,7 @@
 <section class="admin-page admin-workspace">
   {{ admin_page_hero(
     _('Superkäyttäjäroolin hyväksynnät'),
-    _('Uusi superkäyttäjä vaatii kaksi hallituksen hyväksyntää. Uusi hallituksen jäsen vaatii koko hallituksen hyväksynnän. Uusi god-tili vaatii kaikkien superylläpitäjien, hallituksen jäsenten ja nykyisten god-käyttäjien hyväksynnän.'),
+    _('Uusi superkäyttäjä vaatii kaksi hallituksen hyväksyntää. Uusi hallituksen jäsen vaatii koko hallituksen hyväksynnän. Uusi god-tili vaatii ensin joko koko hallituksen tai kaikkien nykyisten god-käyttäjien hyväksynnän, minkä jälkeen toisella ryhmällä on 48 tuntia aikaa veto-oikeuteen. Veto siirtää päätöksen toiselle kierrokselle, jossa tarvitaan 75 prosenttia kaikista hallituksen ja god-käyttäjien äänistä.'),
     _('Hallinto'),
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Hallinto ja käyttöoikeudet'), url_for('admin_governance.dashboard')), (_('Superkäyttäjäroolin hyväksynnät'), none)],
     back_url=url_for('admin_governance.dashboard'),
@@ -69,8 +69,8 @@
             <td>{{ user.role or '-' }}</td>
             <td>{% if user.approved %}<span class="admin-status-badge admin-status-badge--success"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ _('Hyväksytty') }}</span>{% else %}<span class="admin-status-badge"><i class="fa-solid fa-clock" aria-hidden="true"></i>{{ user.approval_count }} / 2</span>{% endif %}
               <div>{% if user.board_member %}{{ _('Hallituksen jäsen') }}{% else %}{{ _('Hallitus') }}: {{ (user.board_request.get('votes') or {})|length }} / {{ user.board_request.get('required', board_size) }}{% endif %}</div>
-              {% if user.god_candidate %}<div>{{ _('God-tilin hyväksynnät') }}: {{ user.god_approval_count }} / {{ user.god_required }}</div>{% endif %}
-              {% if user.emergency %}<div>{{ _('Hätätilapyyntö') }}: {{ _('Vahvistettu') if user.emergency.approved else ((user.emergency.get('board_votes') or {})|length|string ~ ' / 2') }}</div><div>{{ user.emergency.reason }}</div>{% endif %}
+              {% if user.god_candidate %}<div>{{ _('God-tilin hyväksynnät') }}: {{ user.god_approval_count }} / {{ user.god_required }}{% if user.god_phase == 'window' and user.god_window_ends_at %} · {{ _('Veto-oikeus päättyy') }} {{ user.god_window_ends_at|datetimeformat('%d.%m.%Y %H:%M') }}{% elif user.god_phase == 'second_round' %} · {{ _('Toinen kierros, 75 prosenttia') }}{% endif %}</div>{% if user.god_vetoed %}<div>{{ _('Veto kirjattu') }}</div>{% endif %}{% endif %}
+              {% if user.emergency %}<div>{{ _('USB-hätätilapyyntö') }}: {{ _('Vahvistettu') if user.emergency.approved else _('Odottaa USB-allekirjoitusta ja god-kirjautumista') }}</div><div>{{ user.emergency.reason }}</div>{% endif %}
               {% for name, state in [('Ylläpitäjäohitus', user.national_request), ('Hallitusohitus', user.board_request)] %}
                 {% if state.get('override_votes') and not state.get('approved') %}<div>{{ name }}: {{ state.override_votes|length }} / 2 ({{ state.override_votes.keys()|join(', ') }})</div>{% endif %}
               {% endfor %}
@@ -79,7 +79,7 @@
             <td>{{ user.timestamp|datetimeformat('%d.%m.%Y %H:%M') if user.timestamp else '-' }}</td>
             <td class="actions-cell">
               <div class="d-flex flex-wrap gap-2">
-              {% if user.god_candidate %}<button class="btn btn-sm btn-primary" type="button" data-clearance-action data-kind="god" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="{{ 'false' if user.my_god_vote else 'true' }}" data-username="{{ user.username }}" {% if not user.can_god_vote %}disabled{% endif %}>{{ _('Peru oma god-hyväksyntä') if user.my_god_vote else _('Hyväksy god-tili') }}</button>{% endif %}
+              {% if user.god_candidate %}<button class="btn btn-sm {{ 'btn-danger' if user.god_veto and not user.god_vetoed else 'btn-primary' }}" type="button" data-clearance-action data-kind="god" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="{{ 'false' if user.my_god_vote else 'true' }}" data-username="{{ user.username }}" {% if not user.can_god_vote or user.god_vetoed %}disabled{% endif %}>{% if user.god_vetoed %}{{ _('Veto kirjattu') }}{% elif user.god_veto %}{{ _('Käytä veto-oikeutta') }}{% elif user.my_god_vote %}{{ _('Peru oma god-hyväksyntä') }}{% else %}{{ _('Hyväksy god-tili') }}{% endif %}</button>{% endif %}
               {% if user.god_candidate and user.emergency and not user.emergency.approved %}<button class="btn btn-sm btn-outline-secondary" type="button" data-emergency-open data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-request="{{ user.emergency.id }}" data-username="{{ user.username }}">{{ _('Avaa hätätilavahvistus') }}</button>{% endif %}
               <button class="btn btn-sm {{ 'btn-outline-secondary' if user.my_vote else 'btn-primary' }}" type="button" data-clearance-action data-kind="national" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="{{ 'false' if user.my_vote else 'true' }}" data-username="{{ user.username }}" {% if not can_vote or user.id == current_user.id %}disabled{% endif %}>{{ _('Peru oma hyväksyntä') if user.my_vote else _('Hyväksy ylläpitäjäksi') }}</button>
               {% if not user.board_member %}<button class="btn btn-sm btn-outline-secondary" type="button" data-clearance-action data-kind="board" data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="true" data-username="{{ user.username }}" {% if not can_vote or user.id == current_user.id %}disabled{% endif %}>{{ _('Hyväksy hallitukseen') }}</button>{% endif %}
@@ -124,9 +124,9 @@
   <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
     <div class="modal-header"><h2 class="modal-title fs-5" id="emergency-title">{{ _('God-tilin hätätilavahvistus') }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div>
     <div class="modal-body">
-      <p>{{ _('Vahvistus vaatii joko kaksi eri hallituksen jäsentä TAI USB-allekirjoituksen JA tuoreen täydellisen god-kirjautumisen. Kohteen turvatekijöiden käyttöönotto on aina pakollinen.') }}</p>
+      <p>{{ _('Hätätilavahvistus vaatii USB-allekirjoituksen ja tuoreen täydellisen god-kirjautumisen. Tavallinen koko hallituksen ja nykyisten god-käyttäjien hyväksyntä toimii ilman kotipalvelinta tai USB-avainta. Kohteen turvatekijöiden käyttöönotto on aina pakollinen.') }}</p>
       <p id="emergency-target"></p><p id="emergency-reason"></p><p id="emergency-count"></p>
-      <div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-primary" id="emergency-board">{{ _('Hyväksy hallituksen jäsenenä') }}</button><button type="button" class="btn btn-outline-secondary" id="emergency-download">{{ _('Lataa USB-allekirjoituspyyntö') }}</button></div>
+      <div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-outline-secondary" id="emergency-download">{{ _('Lataa USB-allekirjoituspyyntö') }}</button></div>
       <div class="admin-field mt-3"><label for="emergency-proof">{{ _('USB-allekirjoitus (.json), ei yksityistä avainta') }}</label><input class="form-control" id="emergency-proof" type="file" accept=".json,application/json"></div>
       <button type="button" class="btn btn-primary mt-3" id="emergency-usb">{{ _('Vahvista USB-allekirjoitus ja god-kirjautuminen') }}</button>
       <p class="admin-live-status mt-3" id="emergency-status" role="status" aria-live="polite"></p>
@@ -150,20 +150,15 @@ function showEmergency(state) {
   emergencyContext.state = state;
   document.getElementById('emergency-target').textContent = {{ _('Kohde')|tojson }} + ': ' + emergencyContext.username;
   document.getElementById('emergency-reason').textContent = {{ _('Perustelu')|tojson }} + ': ' + state.reason;
-  document.getElementById('emergency-count').textContent = {{ _('Hallituksen hyväksynnät')|tojson }} + ': ' + Object.keys(state.board_votes || {}).length + ' / 2';
-  document.getElementById('emergency-board').disabled = !{{ can_vote|tojson }} || state.approved;
+  document.getElementById('emergency-count').textContent = {{ _('Vahvistustapa: USB-avain ja god-käyttäjä')|tojson }};
   document.getElementById('emergency-usb').disabled = {{ (current_user.role != 'god')|tojson }} || state.approved;
-  emergencyStatus.textContent = state.approved ? {{ _('Hätätilavahvistus on valmis. Tapahtuma on kirjattu lokiin.')|tojson }} : {{ _('Pyyntö on voimassa 15 minuuttia. Valitse yksi kahdesta vahvistustavasta.')|tojson }};
+  emergencyStatus.textContent = state.approved ? {{ _('Hätätilavahvistus on valmis. Tapahtuma on kirjattu lokiin.')|tojson }} : {{ _('Pyyntö on voimassa 15 minuuttia. Allekirjoita USB-avaimella ja vahvista tuoreella god-kirjautumisella.')|tojson }};
   bootstrap.Modal.getOrCreateInstance(document.getElementById('emergency-modal')).show();
 }
 document.querySelectorAll('[data-emergency-open]').forEach(button => button.addEventListener('click',async () => {
   emergencyContext = {url:button.dataset.url,id:button.dataset.request,username:button.dataset.username};
   try {showEmergency(await emergencyAction('status'));} catch(error) {document.getElementById('clearance-status').textContent=error.message;}
 }));
-document.getElementById('emergency-board').addEventListener('click', async (event) => {
-  event.currentTarget.disabled=true;
-  try {showEmergency(await emergencyAction('approve_board'));} catch(error) {emergencyStatus.textContent=error.message;event.currentTarget.disabled=false;}
-});
 document.getElementById('emergency-download').addEventListener('click', () => {
   if (!emergencyContext?.state?.challenge) return;
   const url=URL.createObjectURL(new Blob([JSON.stringify(emergencyContext.state.challenge,null,2)],{type:'application/json'}));

@@ -95,6 +95,8 @@ def cast_vote(db, candidate_id, voter_id, kind, approve):
     if voter not in roster or voter == candidate:
         raise PermissionError("Hyväksyntä vaatii toisen hallituksen jäsenen.")
     target = db.users.find_one({"_id": ObjectId(candidate)})
+    if target and target.get("role") == "god" and not approve:
+        raise GovernanceConflict("God-tilin käyttöoikeus keskeytetään tai poistetaan turvatapauksessa.")
     if not target or not active_account(target) and not target.get("god_candidate"):
         raise ValueError("Käyttäjätili ei ole käytössä tai vahvistettu.")
     if kind not in team_ids():

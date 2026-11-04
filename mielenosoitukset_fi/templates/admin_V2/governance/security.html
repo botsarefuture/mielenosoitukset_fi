@@ -1,0 +1,52 @@
+{% extends 'admin_base.html' %}
+{% set governance_tab = 'security' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% block title %}Turvatapaukset – Mielenosoitukset.fi{% endblock %}
+{% block main_content %}
+<section class="admin-page admin-workspace">
+  {{ admin_page_hero('Turvatapaukset', 'Keskeytä vaarantunut käyttöoikeus, kuule asianomaista ja kirjaa hallituksen päätös. Seitsemän vuorokauden määräaika ei palauta käyttöoikeutta automaattisesti.', 'Hallinto', [('Hallintapaneeli', url_for('admin.admin_dashboard')), ('Hallinto', url_for('admin_governance.dashboard')), ('Turvatapaukset', none)], back_url=url_for('admin_governance.dashboard')) }}
+  {% include 'admin_V2/governance/_tabs.html' %}
+  {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+  <section class="admin-form-section mb-4" aria-labelledby="security-create-heading">
+    <h2 id="security-create-heading">Uusi turvatoimi</h2>
+    <p>Keskeytys ja sivuston sulkeminen tai avaaminen: kaksi eri hallituksen jäsentä tai yksi god-käyttäjä, jonka täysi kirjautuminen on enintään viisi minuuttia vanha. Kotipalvelinta tai USB-avainta ei tarvita.</p>
+    <form method="post" class="admin-form-grid">
+      <input type="hidden" name="csrf_token" value="{{ governance_csrf_token }}">
+      <div class="admin-field"><label for="security-action">Toiminto</label><select id="security-action" name="action" class="form-select"><option value="suspend">Keskeytä käyttäjätilin käyttö</option><option value="lockdown">Sulje julkinen sivusto</option></select></div>
+      <div class="admin-field"><label for="security-username">Käyttäjätunnus</label><input id="security-username" name="username" class="form-control" autocomplete="off"><span class="admin-field__help">Tarvitaan vain käyttäjätilin keskeytykseen.</span></div>
+      <div class="admin-field"><label for="security-reason">Perustelu</label><textarea id="security-reason" name="reason" class="form-control" minlength="10" maxlength="1000" required rows="3"></textarea></div>
+      <div><button class="btn btn-danger" type="submit">Kirjaa ja vahvista turvatoimi</button></div>
+    </form>
+  </section>
+  <h2>Tapaukset</h2>
+  {% for case in cases %}
+  <section class="admin-form-section mb-4" aria-labelledby="case-{{ case._id }}">
+    <h3 id="case-{{ case._id }}">{{ case.target_name }}</h3>
+    <p><strong>{{ {'pending': 'Odottaa hyväksyntöjä', 'suspended': 'Käyttö keskeytetty', 'restored': 'Palautettu', 'role_removed': 'Rooli poistettu, käyttö keskeytetty', 'locked': 'Julkinen sivusto suljettu'}.get(case.status, case.status) }}</strong></p>
+    <p>{{ case.reason }}</p>
+    <p class="admin-field__help">Tapaus {{ case._id }} · {{ case.created_at|datetimeformat('%d.%m.%Y %H:%M') }}</p>
+    {% if case.review_due_at and case.status == 'suspended' %}<p>Käsittely viimeistään {{ case.review_due_at|datetimeformat('%d.%m.%Y %H:%M') }}.</p>{% endif %}
+    {% if case.overdue %}<div class="alert alert-warning">Käsittely on myöhässä. Käyttöoikeus pysyy keskeytettynä, kunnes hallitus ratkaisee asian.</div>{% endif %}
+    {% if case.reviewers < 2 and case.kind == 'account' %}<div class="alert alert-warning">Vain {{ case.reviewers }} riippumatonta hallitusjäsentä voi käsitellä tämän tapauksen. Vähintään kaksi tarvitaan palautukseen ja pysyvään roolin poistoon. Puuttuvia hyväksyntöjä ei ohiteta.</div>{% endif %}
+    {% if case.proposal %}<p>Odottaa samaa päätöstä koskevia hyväksyntöjä: {{ case.proposal.votes|length }} / {{ case.proposal.required }}. Perustelun, kuulemisen tai toiminnon muuttaminen aloittaa uuden hyväksyntäkierroksen.</p>{% endif %}
+    {% if case.status not in ['restored', 'role_removed'] %}
+    <form method="post" class="admin-form-grid">
+      <input type="hidden" name="csrf_token" value="{{ governance_csrf_token }}"><input type="hidden" name="case_id" value="{{ case._id }}">
+      <div class="admin-field"><label for="action-{{ case._id }}">Päätös</label><select id="action-{{ case._id }}" name="action" class="form-select">
+        {% if case.status == 'pending' %}<option value="{{ 'lockdown' if case.kind == 'lockdown' else 'suspend' }}">Vahvista alkuperäinen turvatoimi</option>
+        {% elif case.kind == 'lockdown' %}<option value="reopen">Avaa julkinen sivusto</option>
+        {% else %}<option value="extend">Jatka keskeytystä seitsemän vuorokautta</option><option value="restore" {% if case.proposal and case.proposal.decision.action == 'restore' %}selected{% endif %}>Palauta käyttöoikeus (kaksi hallitusjäsentä)</option><option value="remove_role" {% if case.proposal and case.proposal.decision.action == 'remove_role' %}selected{% endif %}>Poista luottamusroolit (hallituksen enemmistö, vähintään kaksi)</option>{% endif %}
+      </select></div>
+      <div class="admin-field"><label for="reason-{{ case._id }}">Päätöksen perustelu</label><textarea id="reason-{{ case._id }}" name="reason" class="form-control" required minlength="10" maxlength="1000" rows="3">{{ case.proposal.decision.reason if case.proposal else case.reason }}</textarea></div>
+      {% if case.kind == 'account' and case.status != 'pending' %}
+      <div class="admin-field"><label for="hearing-{{ case._id }}">Kuuleminen tai kuulemisyritys</label><textarea id="hearing-{{ case._id }}" name="hearing" class="form-control" maxlength="2000" rows="3">{{ case.proposal.decision.hearing if case.proposal else '' }}</textarea><span class="admin-field__help">Asianomainen voi vastata ilmoitussähköpostiin. Kirjaa yhteenveto ja ajankohta. Sähköpostivastaus ei korvaa hallituksen hyväksyntää.</span></div>
+      <div class="form-check"><input id="recovery-{{ case._id }}" name="recovery_confirmed" value="yes" type="checkbox" class="form-check-input"><label class="form-check-label" for="recovery-{{ case._id }}">Omistaja on tehnyt tarvittavan tunnusten palautuksen. Palautus tarkistaa myös, että tunnukset ovat muuttuneet.</label></div>
+      {% endif %}
+      <div><button type="submit" class="btn btn-primary">Kirjaa oma hyväksyntä</button></div>
+    </form>
+    {% endif %}
+    <details class="mt-3"><summary>Päätöshistoria</summary><ol class="mt-3">{% for event in case.events %}<li><strong>{{ event.actor_name }}</strong> · {{ event.at|datetimeformat('%d.%m.%Y %H:%M') }} · {{ {'suspend': 'Keskeytys', 'extend': 'Jatkaminen', 'restore': 'Palautus', 'remove_role': 'Roolien poisto', 'lockdown': 'Sivuston sulkeminen', 'reopen': 'Sivuston avaaminen', 'overdue': 'Käsittely myöhässä'}.get(event.action, event.action) }}<p>{{ event.reason }}</p>{% if event.hearing %}<p>Kuuleminen: {{ event.hearing }}</p>{% endif %}<p>{{ 'Hyväksytty' if event.approved else 'Osahyväksyntä tai muistutus' }}</p></li>{% endfor %}</ol></details>
+  </section>
+  {% else %}<div class="admin-empty-state"><strong class="admin-empty-state__title">Ei turvatapauksia</strong><span>Turvatoimet ja niiden päätöshistoria tulevat tähän.</span></div>{% endfor %}
+</section>
+{% endblock %}

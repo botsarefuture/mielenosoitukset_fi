@@ -1473,7 +1473,8 @@ def _check_and_bind(action: str, token: str) -> dict:
 
     # TTL / revoked / used checks
     now = _now_utc()
-    if doc.get("revoked"):
+    from mielenosoitukset_fi.utils.security_cases import link_suspended
+    if doc.get("revoked") or link_suspended(mongo, doc):
         flash_message("Linkki on mitätöity.", "error")
         abort(403)
     
@@ -1664,7 +1665,8 @@ def _resolve_demo_edit_link(token: str):
         or token_doc.get("demo_id") != demo_id
     ):
         return None, "invalid", 400
-    if token_doc.get("revoked"):
+    from mielenosoitukset_fi.utils.security_cases import link_suspended
+    if token_doc.get("revoked") or link_suspended(mongo, token_doc):
         return None, "revoked", 403
 
     expires_at = _utc_datetime(token_doc.get("expires_at"))

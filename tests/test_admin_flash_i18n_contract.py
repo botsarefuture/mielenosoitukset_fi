@@ -38,7 +38,7 @@ def test_admin_flash_messages_do_not_mix_known_english_source_copy():
     }
 
     assert messages.isdisjoint(removed_english_messages)
-    assert "Hätätila otettiin käyttöön." in messages
+    assert "Taustatyö otettiin käyttöön." in messages
     assert "Tilastojen lataaminen epäonnistui." in messages
 
 
@@ -57,7 +57,7 @@ def test_babel_extracts_flash_message_first_arguments():
         elif messages:
             extracted.add(messages)
 
-    assert "Hätätila otettiin käyttöön." in extracted
+    assert "Taustatyö otettiin käyttöön." in extracted
     assert "Taustatyön ajastuksen päivitys epäonnistui: %(error)s" in extracted
 
 

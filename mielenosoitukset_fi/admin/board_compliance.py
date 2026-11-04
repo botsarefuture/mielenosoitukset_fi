@@ -71,7 +71,9 @@ def clearance_rows():
         )
         god_request = request_state(clearances.get(user_id), "god")
         god_roster = appointment_roster(mongo, user_id) if user_doc.get("god_candidate") else {}
-        god_votes = (god_request.get("votes") or {}) if god_request.get("roster") == god_roster else {}
+        current = god_request.get("roster") == god_roster
+        god_votes = (god_request.get("votes") or {}) if current else {}
+        veto_voters = set(god_request.get("veto_voters") or []) if current else set()
         rows.append(
             {
                 "id": user_id,
@@ -85,8 +87,14 @@ def clearance_rows():
                 "national_request": visible_request(clearances.get(user_id),"national"),
                 "god_candidate": user_doc.get("god_candidate") is True,
                 "god_approval_count": len(god_votes),
-                "god_required": len(required_voters(god_roster)),
+                "god_required": (god_request.get("required") if current and god_request.get("required")
+                                 else len(required_voters(god_roster))),
                 "my_god_vote": str(current_user.id) in god_votes,
+                "god_phase": god_request.get("phase") if current else None,
+                "god_chamber": god_request.get("chamber") if current else None,
+                "god_window_ends_at": god_request.get("window_ends_at") if current else None,
+                "god_veto": str(current_user.id) in veto_voters and god_request.get("phase") == "window",
+                "god_vetoed": str(current_user.id) in ((god_request.get("vetoes") or {}) if current else {}),
                 "can_god_vote": can_vote(mongo, current_user, user_id) if user_doc.get("god_candidate") else False,
                 "emergency": request_state(clearances.get(user_id), "god_emergency"),
             }

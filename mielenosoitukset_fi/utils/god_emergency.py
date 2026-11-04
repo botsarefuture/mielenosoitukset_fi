@@ -1,4 +1,4 @@
-"""Emergency appointment: two board votes OR (USB signature AND fresh god).
+"""Emergency appointment: USB signature AND fresh god, launched by the panel.
 
 Panel launch signatures authorize only opening a named request. They cannot
 grant a role, count as a board vote, or replace owner security enrollment.
@@ -73,8 +73,8 @@ def open_request(db, candidate_id, user, ticket):
     if not enabled():
         raise PermissionError("Hätätilamenettely ei ole käytössä.")
     _actor(db, user, candidate_id)
-    if str(user.id) not in board_ids(db) and not _fresh_god(db, user):
-        raise PermissionError("Pyynnön avaaminen vaatii hallituksen jäsenen tai tuoreen god-kirjautumisen.")
+    if not _fresh_god(db, user):
+        raise PermissionError("USB-hätätilapyyntö vaatii tuoreen täydellisen god-kirjautumisen.")
     target, version = _candidate(db, candidate_id)
     launch = verify(ticket, current_app.config["GOD_EMERGENCY_PANEL_KEYS"], PANEL_DOMAIN)
     now = int(utcnow().replace(tzinfo=timezone.utc).timestamp())
@@ -133,16 +133,7 @@ def act(db, candidate_id, user, request_id, command, proof=None):
             _enroll(db, ObjectId(str(candidate_id)), "national", old)
             return public_state(old)
         state = {**old, "board_votes": dict(old["board_votes"])}
-        if command in {"approve_board", "withdraw_board"}:
-            if str(user.id) not in state["board_roster"]:
-                raise PermissionError("Tämä vahvistus vaatii hallituksen jäsenen.")
-            if command == "approve_board":
-                state["board_votes"][str(user.id)] = {"username": user.username, "at": utcnow()}
-            else:
-                state["board_votes"].pop(str(user.id), None)
-            if len(state["board_votes"]) >= 2:
-                state.update(approved=True, method="two_board")
-        elif command == "approve_usb_god":
+        if command == "approve_usb_god":
             if not _fresh_god(db, user):
                 raise PermissionError("USB-menettely vaatii tuoreen täydellisen god-kirjautumisen.")
             message = verify(proof, current_app.config.get("GOD_EMERGENCY_USB_KEYS"), USB_DOMAIN)
@@ -156,10 +147,6 @@ def act(db, candidate_id, user, request_id, command, proof=None):
         if state["approved"]:
             state["approved_at"] = utcnow()
             update.update(approved=True, god_appointment_emergency_id=state["id"])
-            if state["method"] == "two_board":
-                update["approvals"] = state["board_votes"]
-                update["team_requests.national"] = {"id": state["id"], "votes": state["board_votes"], "roster": state["board_roster"],
-                    "approved": True, "required": 2, "updated_at": utcnow(), "source": "god_emergency"}
         result = db.board_clearances.update_one({"_id": record["_id"], "revision": record.get("revision")},
             {"$set": update, "$inc": {"revision": 1}})
         if not result.matched_count:
@@ -180,8 +167,6 @@ def approved_for_activation(db, candidate_id):
         return False
     if not state.get("approved"):
         return False
-    if state.get("method") == "two_board":
-        return len(set(state["board_votes"]) & set(state["board_roster"])) >= 2
     if state.get("method") == "usb_and_god":
         try:
             return verify(state.get("usb_proof"), current_app.config.get("GOD_EMERGENCY_USB_KEYS"), USB_DOMAIN) == state["challenge"] and bool(state.get("god_proof_id"))

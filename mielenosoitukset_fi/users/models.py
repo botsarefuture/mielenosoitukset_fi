@@ -235,6 +235,8 @@ class User(UserMixin):
         active: bool = True,
         last_login: datetime.datetime = None,
         governance_managed: bool = False,
+        security_suspended: bool = False,
+        auth_epoch: int = 0,
     ):
         self.id                = str(user_id)  # flask‑login expects .id str
         self._id               = ObjectId(user_id)
@@ -265,6 +267,8 @@ class User(UserMixin):
         self.forced_identity_change = forced_identity_change
         self.active             = active
         self.last_login         = last_login
+        self.security_suspended = security_suspended
+        self.auth_epoch = auth_epoch
 
         # CACHED memberships (lazy)  --------------------------------------------
         self._memberships: Optional[List[MemberShip]] = None
@@ -302,6 +306,8 @@ class User(UserMixin):
             active          = doc.get("active", True),
             last_login      = doc.get("last_login", None),
             governance_managed = doc.get("governance_managed", False),
+            security_suspended = bool((doc.get("security_suspension") or {}).get("active")),
+            auth_epoch = doc.get("auth_epoch", 0),
         )
 
     @classmethod
@@ -513,7 +519,7 @@ class User(UserMixin):
     @property
     def is_active(self) -> bool:
         """Allow authentication only while the account is enabled and unbanned."""
-        return bool(self.active) and not bool(self.banned)
+        return bool(self.active) and not bool(self.banned) and not self.security_suspended
 
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)

@@ -174,12 +174,15 @@ def create_app(config_overrides=None) -> Flask:
         """A new sign-in replaces any prior MFA credential binding."""
         session.pop("mfa_credential_version", None)
         session.pop("god_login_receipt", None)
+        session["auth_epoch"] = getattr(user, "auth_epoch", 0)
 
     # User Loader function
     @login_manager.user_loader
     def load_user(user_id):
         user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
         if user_doc:
+            if (user_doc.get("security_suspension") or {}).get("active") or session.get("auth_epoch", 0) != user_doc.get("auth_epoch", 0):
+                return None
             if user_doc.get("role") == "god":
                 from mielenosoitukset_fi.users.god_auth import valid_god_session
                 if not valid_god_session(mongo, user_doc):

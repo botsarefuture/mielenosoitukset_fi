@@ -46,20 +46,17 @@ def api(app, uid, candidate):
     return client, command
 
 
-def test_two_distinct_board_members_need_neither_god_login_nor_usb(app, db, emergency):
+def test_board_votes_cannot_bypass_normal_god_appointment(app, db, emergency, god):
     _, first = api(app, emergency['admin_id'], emergency['candidate'])
     opened = first('open', ticket=emergency['ticket'])
-    assert opened.status_code == 200
-    request_id = opened.json['emergency']['id']
-    assert first('approve_board', request_id=request_id).json['emergency']['approved'] is False
-    assert first('approve_board', request_id=request_id).json['emergency']['approved'] is False
+    assert opened.status_code == 403
     assert db.users.find_one({'_id': emergency['candidate']})['active'] is False
+    command, _ = god_client(app, db, god, emergency['candidate'])
+    state = command('open', ticket=emergency['ticket']).json['emergency']
     _, second = api(app, emergency['friend_id'], emergency['candidate'])
-    response = second('approve_board', request_id=request_id)
-    assert response.status_code == 200 and response.json['emergency']['method'] == 'two_board'
-    target = db.users.find_one({'_id': emergency['candidate']})
-    assert target['active'] is True and target['role'] == 'god'
-    assert second('approve_board', request_id=request_id).status_code == 409
+    assert second('approve_board', request_id=state['id']).status_code == 400
+    assert command('status', request_id=state['id']).json['emergency']['approved'] is False
+    assert db.users.find_one({'_id': emergency['candidate']})['active'] is False
 
 
 def god_client(app, db, god, candidate):
@@ -91,11 +88,12 @@ def test_usb_and_fresh_god_need_no_board_votes(app, db, emergency, god):
         assert User.from_OID(target['_id']).has_full_permissions()
 
 
-def test_usb_without_god_is_not_enough(app, db, emergency):
-    _, command = api(app, emergency['admin_id'], emergency['candidate'])
-    state = command('open', ticket=emergency['ticket']).json['emergency']
+def test_usb_without_god_is_not_enough(app, db, emergency, god):
+    opened, _ = god_client(app, db, god, emergency['candidate'])
+    state = opened('open', ticket=emergency['ticket']).json['emergency']
     proof = sign(emergency['usb'], state['challenge'])
-    assert command('approve_usb_god', request_id=state['id'], proof=proof).status_code == 403
+    _, board = api(app, emergency['admin_id'], emergency['candidate'])
+    assert board('approve_usb_god', request_id=state['id'], proof=proof).status_code == 403
     assert not db.users.find_one({'_id': emergency['candidate']})['active']
 
 
@@ -109,8 +107,8 @@ def test_stale_god_login_and_wrong_target_signature_are_rejected(app, db, emerge
 
 
 @pytest.mark.parametrize('change', ['expiry', 'credential', 'board_roster'])
-def test_changed_or_expired_request_cannot_be_approved(app, db, emergency, change):
-    _, command = api(app, emergency['admin_id'], emergency['candidate'])
+def test_changed_or_expired_request_cannot_be_approved(app, db, emergency, god, change):
+    command, _ = god_client(app, db, god, emergency['candidate'])
     state = command('open', ticket=emergency['ticket']).json['emergency']
     if change == 'expiry':
         db.board_clearances.update_one({'user_id': str(emergency['candidate'])}, {'$set': {'team_requests.god_emergency.expires_at': utcnow() - timedelta(seconds=1)}})
@@ -118,11 +116,11 @@ def test_changed_or_expired_request_cannot_be_approved(app, db, emergency, chang
         db.users.update_one({'_id': emergency['candidate']}, {'$set': {'password_hash': generate_password_hash('different-' * 4)}})
     else:
         db.memberships.insert_one({'user_id': emergency['developer_id'], 'organization_id': emergency['board'], 'governance_approved': True})
-    assert command('approve_board', request_id=state['id']).status_code == 409
+    assert command('approve_usb_god', request_id=state['id']).status_code == 409
 
 
-def test_enrollment_panel_signature_and_launch_replay_checks(app, db, emergency):
-    _, command = api(app, emergency['admin_id'], emergency['candidate'])
+def test_enrollment_panel_signature_and_launch_replay_checks(app, db, emergency, god):
+    command, _ = god_client(app, db, god, emergency['candidate'])
     tampered = {**emergency['ticket'], 'message': {**emergency['ticket']['message'], 'reason': 'Tampered emergency reason'}}
     assert command('open', ticket=tampered).status_code == 400
     assert command('open', ticket=emergency['ticket']).status_code == 200

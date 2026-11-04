@@ -366,8 +366,9 @@ A push to `main` builds, publishes and deploys this host automatically; see
 `frontend/server.mjs` plus `frontend/dist`, publishes them as a
 `release-<commit>` asset, and the server installs them only when
 `http://127.0.0.1:8090/health` does not already report that commit. Apache
-routing stays a separate, explicit dispatch because it changes which URL class
-the host answers. The manual procedure in
+routing runs automatically after that deployment and its health checks succeed
+on a push to main. Configuration validation, backup and rollback still run;
+manual dispatch can opt out of routing for recovery. The manual procedure in
 [`deploy/public-app/README.md`](../deploy/public-app/README.md) remains the
 break-glass path.
 
@@ -382,9 +383,9 @@ credentials or Flask signing secret are copied into the Node service.
 `deploy/public-app/deploy.sh` verifies the archive, switches the release pointer
 atomically and requires exact-build health before reporting success. It saves
 the prior environment, unit and release pointer and restores them on failure.
-Apache activation is deliberately separate: back up the active vhost, insert
-the existing home-only include before its catch-all proxy rule, run configtest
-and gracefully reload. Keep origin restrictions, TLS, existing proxy headers
+Apache activation remains a dependent job: back up the active include, install
+the committed rules before the catch-all proxy, run configtest and gracefully
+reload. Keep origin restrictions, TLS, existing proxy headers
 and all unmigrated paths unchanged. The deployment README includes rollback.
 
 ### Production state, 1 November 2026

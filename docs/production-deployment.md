@@ -11,7 +11,7 @@ The workflow has three jobs:
 | --- | --- | --- |
 | `release` | every push to `main` | `npm run app:build` + `verify_public_host.mjs`, `tar` of `frontend/server.mjs` and `frontend/dist`, linux/amd64 `go build`, then publishes `api`, `app.tar.gz` and `release.json` as the assets of a `release-<commit>` GitHub release |
 | `deploy` | after `release` | one restricted SSH call, `deploy <sha>`, which runs Flask → Go API → React host on the server and verifies each service's reported `build_sha` |
-| `routing` | only on a manual dispatch with the `routing` input enabled | one restricted SSH call, `deploy-routing <sha>`, which installs `deploy/apache/react-ssr-routing.conf`, runs `apache2ctl configtest`, gracefully reloads Apache and restores the previous include on any failure |
+| `routing` | automatically after a successful main-push deployment and its health checks; manual dispatch defaults to enabled | one restricted SSH call, `deploy-routing <sha>`, which installs `deploy/apache/react-ssr-routing.conf`, runs `apache2ctl configtest`, gracefully reloads Apache and restores the previous include on any failure |
 
 `release.json` names the commit and the source tree and records the size and
 SHA-256 of both artifacts. The server downloads the assets for the requested
@@ -119,9 +119,11 @@ the server; the artifacts are public release assets of a public repository.
 Verify after the next push: the `deploy` job must end with both health checks
 reporting the pushed SHA (`https://mielenosoitukset.fi/health` and
 `https://api.mielenosoitukset.fi/health`), and the step log must say whether the
-active Apache include already matches the commit. A route set that is not yet
-active stays with Flask and is activated only by a dispatch run with `routing`
-enabled.
+active Apache include already matches the commit. Once deployment and both
+health checks pass, main-push runs automatically activate the committed route
+set. A failed deployment or health check prevents the routing job from running.
+Manual dispatch keeps an optional `routing` switch (enabled by default) for
+deliberate deployment-only recovery runs.
 
 Rollback is unchanged and does not depend on the pipeline: restore the previous
 Apache include first, then restore the prior release from the backup directory

@@ -2,6 +2,7 @@ import { appConfig } from './config';
 import { randomUUID } from 'node:crypto';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { SubmitFallback } from './SubmitFallback';
+import { MaintenancePage } from './MaintenancePage';
 import { submitProps } from './submit';
 import type { SubmitBootstrap } from './submit';
 import { detailMessages } from './detail';
@@ -50,9 +51,10 @@ export type RenderInput = {
   doNotTrack?: boolean;
   /** Raw query string; used only to detect the Flask preview fallback. */
   search?: string;
+  publicUnavailable?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string };
 
 export type RenderResult = {
   status: number;
@@ -214,6 +216,14 @@ function unavailableDocument() {
 export async function renderPage(input: RenderInput, assets: RenderAssets): Promise<RenderResult> {
   const route = routeForPath(input.path);
   if (!route) return { status: 404, html: notFoundDocument() };
+  if (input.publicUnavailable && route.name !== 'god-auth') {
+    return { status: 503, headers: { 'Retry-After': '60', 'X-Robots-Tag': 'noindex' },
+      html: '<!DOCTYPE html><html lang="fi"><head>' + headMarkup({
+        title: 'Palvelu on tilapäisesti suljettu | Mielenosoitukset.fi', description: '', robots: 'noindex',
+        canonical: null, url: input.origin + input.path, origin: input.origin, locale: 'fi',
+        assets: assets.head, siteAnalyticsEnabled: false,
+      }) + '</head><body>' + renderToStaticMarkup(<MaintenancePage />) + '</body></html>' };
+  }
   const calendarRoute = route.name === 'calendar' || route.name === 'calendar-year';
   if (calendarRoute) {
     const query = new URLSearchParams(input.search ?? '');
@@ -244,7 +254,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   }
   const summary: SessionSummary = await fetchSession(sessionUrl, input.cookie,
     1200, input.flaskSocketPath, input.origin, input.clientIp, input.cloudflareIp);
-  const session = input.doNotTrack
+  const session = input.doNotTrack || route.name === 'god-auth'
     ? { ...summary, siteAnalyticsEnabled: false, matomoEnabled: false }
     : summary;
   const config = appConfig({
@@ -268,6 +278,14 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   let noscript = '<noscript><p class="container-main-content">Mielenosoitukset.fi käyttää JavaScriptiä. '
     + '<a href="/demonstrations">Kaikki mielenosoitukset</a> · <a href="/calendar/">Kalenteri</a></p></noscript>';
   const headers: Record<string, string> = {};
+
+  if (route.name === 'god-auth') {
+    meta = { title: 'Turvallinen kirjautuminen | Mielenosoitukset.fi', description: '', canonical: null, robots: 'noindex, nofollow' };
+    headers['Cache-Control'] = 'no-store';
+    headers['Referrer-Policy'] = 'no-referrer';
+    extraHead = assets.godAuth ?? '';
+    noscript = '<noscript><p>God-tilin kirjautuminen vaatii JavaScriptin ja passkey-tuen.</p><a href="/users/auth/login">Tavallinen kirjautuminen</a></noscript>';
+  }
 
   if (route.name === 'submit') {
     const settings = session.submission;

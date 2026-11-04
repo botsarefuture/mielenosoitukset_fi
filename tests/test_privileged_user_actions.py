@@ -196,8 +196,8 @@ def test_clearance_routes_require_global_not_membership_permission(app, db, seed
     assert response.status_code == (302 if path == '/board/ui' and status == 200 else status)
 
 
-@pytest.mark.parametrize('authority,status', [('organization', 403), ('global', 200)])
-def test_clearance_write_requires_global_permission_even_with_valid_csrf(app, db, seeded_data, authority, status):
+@pytest.mark.parametrize('authority,status', [('organization', 403), ('global', 403)])
+def test_clearance_write_requires_board_membership_even_with_valid_csrf(app, db, seeded_data, authority, status):
     actor = _create_organization_admin(db, seeded_data['org_id'], ['MANAGE_CLEARANCE'])
     if authority == 'global':
         db.users.update_one({'_id': actor}, {'$set': {'global_permissions': ['MANAGE_CLEARANCE']}})

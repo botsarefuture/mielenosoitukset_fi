@@ -13,6 +13,7 @@ from mielenosoitukset_fi.utils.city_assignment import active_city_admins_for_cit
 from mielenosoitukset_fi.utils.classes import Case
 from mielenosoitukset_fi.utils.demo_cancellation import cancellation_link_messages
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
+from mielenosoitukset_fi.utils.moderation_mail import personalize_moderation_messages
 
 
 def _prepare_media(db, record, demo):
@@ -43,9 +44,6 @@ def _prepare_media(db, record, demo):
 
 
 def _prepare_messages(db, record, demo, submitter):
-    from mielenosoitukset_fi.admin.admin_demo_bp import (
-        generate_demo_approve_link, generate_demo_preview_link, generate_demo_reject_link,
-    )
     context = {key: demo.get(key) for key in ("title", "date", "city", "address")}
     confirmation = {
         "template_name": "demo_submitter_confirmation.html",
@@ -55,9 +53,6 @@ def _prepare_messages(db, record, demo, submitter):
     context.update({key: submitter.get(key) for key in (
         "submitter_name", "submitter_email", "submitter_role",
     )})
-    context.update(approve_link=generate_demo_approve_link(str(demo["_id"])),
-                   preview_link=generate_demo_preview_link(str(demo["_id"])),
-                   reject_link=generate_demo_reject_link(str(demo["_id"])))
     city = normalize_city_key(demo.get("city", ""))
     admins = active_city_admins_for_city(db, city)
     assignment = None
@@ -78,7 +73,7 @@ def _prepare_messages(db, record, demo, submitter):
         {"suffix": "confirmation", "notification_type": "go_confirmation",
          "marks_admin_contact": False, "messages": [confirmation]},
         {"suffix": "moderation", "notification_type": "city_assignment" if assignment else "initial_submission",
-         "marks_admin_contact": not bool(assignment), "messages": [admin]},
+         "marks_admin_contact": not bool(assignment), "messages": personalize_moderation_messages(db, demo["_id"], [admin], national=not bool(assignment))},
         {"suffix": "cancellation", "notification_type": "go_cancellation",
          "marks_admin_contact": False, "messages": cancellation_link_messages(demo)},
     ]

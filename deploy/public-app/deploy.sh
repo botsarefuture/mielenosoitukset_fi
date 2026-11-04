@@ -46,7 +46,7 @@ with tarfile.open(sys.argv[1], "r:gz") as archive:
                 or not (member.isfile() or member.isdir())):
             raise SystemExit("Unsafe app archive member")
     archive.extractall(destination, members=members)
-required = ["frontend/server.mjs", "frontend/dist/server/render.js",
+required = ["frontend/server.mjs", "frontend/public-availability.mjs", "frontend/dist/server/render.js",
             "frontend/dist/client/.vite/manifest.json"]
 if not all((destination / path).is_file() for path in required):
     raise SystemExit("Incomplete app release")

@@ -268,7 +268,7 @@ def test_confirmation_is_bound_to_the_authenticated_actor(app, admin_client, db,
     target = seeded_data["user_id"]
     token = _confirmation(admin_client, target)
     actor = seeded_data["friend_id"]
-    db.users.update_one({"_id": actor}, {"$set": {"role": "god", "global_admin": True}})
+    db.users.update_one({"_id": actor}, {"$set": {"role": "global_admin", "global_admin": True}})
     other = _client_for_user(app, actor)
     with admin_client.session_transaction() as source:
         nonces = source["account_status_nonces"]

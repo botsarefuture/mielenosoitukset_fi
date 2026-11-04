@@ -14,6 +14,7 @@ def has_global_permission(user, permission_name: str) -> bool:
     return bool(user.is_authenticated and (
         user.has_full_permissions()
         or permission_name in (user.global_permissions or [])
+        or getattr(user, "has_system_permission", lambda _permission: False)(permission_name)
     ))
 
 

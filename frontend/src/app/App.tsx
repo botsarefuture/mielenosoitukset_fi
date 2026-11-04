@@ -25,6 +25,7 @@ const TodayScreen = lazy(() => import('./TodayScreen'));
 const SubmitScreen = lazy(() => import('./SubmitScreen'));
 const CalendarScreen = lazy(() => import('./CalendarScreen'));
 const YearCalendarScreen = lazy(() => import('./YearCalendarScreen'));
+const GodScreen = lazy(() => import('./GodScreen'));
 
 export type AppProps = {
   config: AppConfig;
@@ -61,6 +62,7 @@ export function App({ config, session, route, path, detail, series, home, listin
   return <>
     <SiteHeader {...headerProps(config, session, text, path)} />
     <main className={`container-main-content ${route.name === 'submit' ? 'submit-workspace' : route.name === 'detail' || route.name === 'series' ? 'public-detail-main' : 'public-layout-wide'}`} id="main-content" tabIndex={-1}>
+      {route.name === 'god-auth' && <Suspense fallback={<p role="status">Ladataan kirjautumista...</p>}><GodScreen /></Suspense>}
       {route.name === 'calendar' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria...</p>}>
         <CalendarScreen calendar={calendar} config={config} session={session} />
       </Suspense>}

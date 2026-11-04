@@ -514,7 +514,18 @@ const port = listener.address().port;
 await new Promise(resolve => listener.close(resolve));
 // The spawned host serves a detail page through the real HTTP server: headers,
 // the preview redirect and the query flag all have to survive that layer.
+let publicAvailable = true;
 const hostApi = createServer((req, res) => {
+  if (req.url === '/api/public-status') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ available: publicAvailable }));
+    return;
+  }
+  if (req.url === '/toggle-lockdown') {
+    publicAvailable = false;
+    res.end('ok');
+    return;
+  }
   const identifier = decodeURIComponent(new URL(req.url, 'http://api.test').pathname.split('/').pop() ?? '');
   if (identifier === 'nonpublic') { res.writeHead(404); res.end('{}'); return; }
   res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -572,6 +583,22 @@ try {
   assert.match(preview.headers['cache-control'], /no-store/);
   assert.equal((await get('/demonstration/nonpublic?preview=1', 'GET', signedIn)).status, 404,
     'The flagged request must not redirect again');
+  // A security lockdown must stop public pages, yet keep recovery entry points
+  // reachable so the board can sign in and reopen the site.
+  await new Promise((resolve, reject) => {
+    request(`http://127.0.0.1:${hostApi.address().port}/toggle-lockdown`, res => { res.resume(); res.on('end', resolve); })
+      .on('error', reject).end();
+  });
+  await new Promise(resolve => setTimeout(resolve, 1100));
+  const locked = await get('/demonstration/may-day-2026');
+  assert.equal(locked.status, 503, 'Locked public page must not be served');
+  assert.equal(locked.headers['retry-after'], '60');
+  assert.equal(locked.headers['x-robots-tag'], 'noindex');
+  assert.match(locked.body, /Palvelu on tilapäisesti suljettu/);
+  assert.equal(locked.headers['cache-control'], 'no-store');
+  assert.equal((await get('/health')).status, 200, 'Health stays available during a lockdown');
+  assert.notEqual((await get('/auth/god')).status, 503, 'God login stays reachable during a lockdown');
+  console.log('PASS: public lockdown returns 503 with Retry-After and keeps health and god login reachable');
   console.log('PASS: malformed URL, directory and traversal requests return 404 without crashing; real asset GET/HEAD and immutable caching');
   console.log('PASS: the HTTP server sends detail metadata, the robots header and the preview redirect');
 } finally {

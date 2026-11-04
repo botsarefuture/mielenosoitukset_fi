@@ -16,6 +16,7 @@ import { findCity } from './cities';
 export type AppRoute =
   | { name: 'home' }
   | { name: 'submit' }
+  | { name: 'god-auth' }
   | { name: 'cities' }
   | { name: 'calendar' | 'calendar-year'; year: number; month: number; city?: string }
   | { name: 'today'; value?: string }
@@ -50,6 +51,7 @@ function readIdentifier(raw: string): string | null {
 }
 
 export function routeForPath(path: string): AppRoute | null {
+  if (path === '/auth/god') return { name: 'god-auth' };
   const calendar = /^\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
   const scoped = /^\/city\/([^/]+)\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
   if (calendar || scoped) {

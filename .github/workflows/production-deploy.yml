@@ -53,7 +53,7 @@ jobs:
       - name: Pack the React host bundle
         run: |
           set -euo pipefail
-          tar -czf "$RUNNER_TEMP/app.tar.gz" frontend/server.mjs frontend/dist
+          tar -czf "$RUNNER_TEMP/app.tar.gz" frontend/server.mjs frontend/public-availability.mjs frontend/dist
 
       - name: Build the Go public API
         run: |

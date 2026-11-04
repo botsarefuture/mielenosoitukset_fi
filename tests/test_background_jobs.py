@@ -502,7 +502,7 @@ def test_process_submit_notifications_marks_job_error_when_delivery_fails(db, mo
 
 @pytest.mark.integration
 @pytest.mark.jobs
-def test_admin_pending_reminder_ignores_old_completed_notifications(db, monkeypatch):
+def test_admin_pending_reminder_ignores_old_completed_notifications(app, db, monkeypatch):
     from mielenosoitukset_fi.scripts import process_submission_notifications as script
 
     db.demonstrations.delete_many({})
@@ -558,7 +558,8 @@ def test_admin_pending_reminder_ignores_old_completed_notifications(db, monkeypa
         lambda demo_id: f"https://example.test/{demo_id}/reject",
     )
 
-    script._enqueue_admin_reminders(db)
+    with app.app_context():
+        script._enqueue_admin_reminders(db)
 
     reminder = db.demo_notifications_queue.find_one(
         {"demo_id": demo_id, "notification_type": "admin_pending_reminder"}

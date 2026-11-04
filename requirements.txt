@@ -23,5 +23,6 @@ PyYAML==6.0.2
 Requests==2.32.4
 tqdm==4.67.2
 webauthn==3.0.0
+cryptography==50.0.1
 Werkzeug==3.1.5
 imgkit==1.2.0

@@ -77,20 +77,38 @@ def _queue_escalation_email(
     }
 
     try:
-        rendered_body = email_sender._env.get_template(ASSIGNMENT_TEMPLATE).render(context)
-    except Exception:
-        logger.exception("Failed to render escalation email for demo %s", demo_id)
-        return False
-
-    job = EmailJob(
-        subject=f"Eskaloitu: {context['title'] or 'mielenosoitus'} odottaa edelleen hyväksyntää ({context['city']})",
-        recipients=ADMIN_RECIPIENTS,
-        body=rendered_body,
-        html=rendered_body,
-        instance_id=email_sender._instance_id,
-    )
-    try:
-        email_sender.send_email(job, raise_on_error=True)
+        from mielenosoitukset_fi.utils.moderation_mail import personalize_moderation_messages
+        assigned_at = (demo.get('city_assignment') or {}).get('assigned_at')
+        assignment_query = {'_id': demo_id, 'city_assignment.assigned_at': assigned_at}
+        current = db.demonstrations.find_one(assignment_query) or {}
+        delivery = (current.get('city_assignment') or {}).get('escalation_delivery')
+        if delivery is None:
+            messages = personalize_moderation_messages(db, demo_id, [{
+                "template_name": ASSIGNMENT_TEMPLATE,
+                "subject": f"Eskaloitu: {context['title'] or 'mielenosoitus'} odottaa edelleen hyväksyntää ({context['city']})",
+                "recipients": ADMIN_RECIPIENTS, "context": context,
+            }], national=True)
+            # Persist both personal links and receipts on the existing assignment.
+            # A later recipient failure must not regenerate the earlier links or
+            # resend already acknowledged mail. A reassignment resets this state.
+            db.demonstrations.update_one({**assignment_query, 'city_assignment.escalation_delivery': {'$exists': False}},
+                {'$set': {'city_assignment.escalation_delivery': {'messages': messages, 'delivered_indices': []}}})
+            current = db.demonstrations.find_one(assignment_query) or {}
+            delivery = (current.get('city_assignment') or {}).get('escalation_delivery')
+        if not delivery:
+            return False
+        for index, message in enumerate(delivery['messages']):
+            if index in delivery.get('delivered_indices', []):
+                continue
+            rendered_body = email_sender._env.get_template(ASSIGNMENT_TEMPLATE).render(message["context"])
+            job = EmailJob(subject=message["subject"], recipients=message["recipients"], body=rendered_body,
+                           html=rendered_body, instance_id=email_sender._instance_id)
+            if email_sender.send_email(job, raise_on_error=True) is not True:
+                return False
+            result = db.demonstrations.update_one(assignment_query,
+                {'$addToSet': {'city_assignment.escalation_delivery.delivered_indices': index}})
+            if not result.matched_count:
+                return False
     except Exception:
         logger.exception("Failed to send escalation email for demo %s", demo_id)
         return False

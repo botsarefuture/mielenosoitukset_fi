@@ -18,7 +18,7 @@ Manual build of a reviewed commit with the repository's Node 22.12+ toolchain:
 npm ci
 npm run app:build
 node scripts/verify_public_host.mjs
-tar -czf /tmp/app.tar.gz frontend/server.mjs frontend/dist
+tar -czf /tmp/app.tar.gz frontend/server.mjs frontend/public-availability.mjs frontend/dist
 sha256sum /tmp/app.tar.gz
 ```
 

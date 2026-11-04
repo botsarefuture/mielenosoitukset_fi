@@ -88,6 +88,7 @@ def _close_related_cases(db, demo_id, demo, decision, decision_meta) -> int:
             "action_logs": {
                 "timestamp": timestamp,
                 "admin": actor_name,
+                "actor": decision_meta.get("actor"),
                 "action_type": action,
                 "note": (
                     f"Mielenosoitus {demo.get('title') or 'tuntematon'} "
@@ -102,6 +103,7 @@ def _close_related_cases(db, demo_id, demo, decision, decision_meta) -> int:
                     "decision": decision,
                     "decision_id": decision_id,
                     "source": decision_meta.get("source"),
+                    "actor": decision_meta.get("actor"),
                 },
             },
         },

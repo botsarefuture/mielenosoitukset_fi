@@ -2438,6 +2438,8 @@ def init_routes(app):
 
             if notification_messages:
                 try:
+                    from mielenosoitukset_fi.utils.moderation_mail import personalize_moderation_messages
+                    notification_messages = personalize_moderation_messages(mongo, demo_id, notification_messages, national=not bool(assignment_email))
                     demo_notifications_queue.insert_one(
                         {
                             "demo_id": demo_id,
@@ -4749,6 +4751,9 @@ def init_routes(app):
     
     @app.before_request
     def _check_panic_mode():
-        if not request.path.startswith("/admin") and not request.path.startswith("/users/auth") and not request.path.startswith("/static"):
-            if PANIC_MODE:
-                return render_template("heavy.html")
+        # Administration, authentication and diagnostics remain available for
+        # recovery. Read current shared state rather than a worker-local flag.
+        if request.path.startswith(("/admin", "/board", "/users/auth", "/auth/god", "/static", "/health")):
+            return None
+        if mongo.panic.find_one({"name": {"$in": ["global", "security"]}, "panic": True}, {"_id": 1}):
+            return render_template("heavy.html"), 503, {"Cache-Control": "no-store", "Retry-After": "60", "X-Robots-Tag": "noindex"}

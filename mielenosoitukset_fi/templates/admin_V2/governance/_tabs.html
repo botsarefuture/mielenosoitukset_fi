@@ -2,6 +2,11 @@
   <a href="{{ url_for('admin_governance.dashboard') }}" {% if governance_tab == 'overview' %}aria-current="page"{% endif %}>
     <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>{{ _('Yleiskuva') }}
   </a>
+  {% if current_user.role == 'god' or 'board' in current_user.system_team_access %}
+  <a href="{{ url_for('admin_governance.security') }}" {% if governance_tab == 'security' %}aria-current="page"{% endif %}>
+    <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>Turvatapaukset
+  </a>
+  {% endif %}
   {% if current_user.global_admin or current_user.has_permission('MANAGE_CLEARANCE') %}
   <a href="{{ url_for('admin_governance.clearances') }}" {% if governance_tab == 'clearances' %}aria-current="page"{% endif %}>
     <i class="fa-solid fa-user-shield" aria-hidden="true"></i>{{ _('Superkäyttäjähyväksynnät') }}

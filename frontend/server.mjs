@@ -9,6 +9,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { readFile, realpath, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { availabilityReader } from './public-availability.mjs';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const clientDir = join(root, 'dist', 'client');
@@ -20,6 +21,7 @@ const apiBase = (process.env.PUBLIC_API_BASE || 'https://api.mielenosoitukset.fi
 // Server-side reads prefer a local API address, so the host does not pay a
 // public round trip to itself. Browsers keep using PUBLIC_API_BASE.
 const apiReadBase = (process.env.PUBLIC_API_LOCAL || apiBase).replace(/\/+$/, '');
+const publicAvailable = availabilityReader(apiReadBase);
 const flaskOrigin = (process.env.FLASK_API_ORIGIN || 'http://127.0.0.1:8000').replace(/\/+$/, '');
 const sessionUrl = process.env.SESSION_URL || `${flaskOrigin}/api/session`;
 const flaskSocketPath = process.env.FLASK_SOCKET_PATH || undefined;
@@ -66,6 +68,7 @@ function assetTags(manifest) {
     today: routeAssets('src/app/TodayScreen.tsx'),
     submit: routeAssets('src/app/SubmitScreen.tsx'),
     calendar: routeAssets('src/app/CalendarScreen.tsx'),
+    godAuth: routeAssets('src/app/GodScreen.tsx'),
     head: [...css].map((file) => `<link rel="stylesheet" href="/app-assets/${file}">`)
       .concat([...modules].filter((file) => file.endsWith('.js'))
         .map((file) => `<link rel="modulepreload" href="/app-assets/${file}">`)).join('\n'),
@@ -162,6 +165,7 @@ const server = createServer(async (request, response) => {
       clientIp,
       cloudflareIp,
       doNotTrack: request.headers.dnt === '1',
+      publicUnavailable: url.pathname === '/auth/god' ? false : !await publicAvailable(),
     }, assets);
     if (result.redirect) {
       // A site-relative preview target stays on the same public origin; the web

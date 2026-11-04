@@ -353,11 +353,16 @@ def compare_user_levels(user1, user2):
     target_full = bool(getattr(user2, "global_admin", False)) or user2.role in full_roles
     if target_full and not actor_full:
         return False
-    return user1._id != user2._id and USER_ACCESS_LEVELS[user1.role] > USER_ACCESS_LEVELS[user2.role]
+    actor_level = USER_ACCESS_LEVELS["global_admin"] if "national" in getattr(user1, "system_team_access", ()) and user1.role != "god" else USER_ACCESS_LEVELS[user1.role]
+    target_level = USER_ACCESS_LEVELS["global_admin"] if "national" in getattr(user2, "system_team_access", ()) and user2.role != "god" else USER_ACCESS_LEVELS[user2.role]
+    return user1._id != user2._id and actor_level > target_level
 
 
 def _check_user_target(actor, target, *, allow_self=False):
     """Enforce the same target hierarchy on every privileged entrypoint."""
+    from mielenosoitukset_fi.utils.security_cases import protected_account
+    if request.method != "GET" and protected_account(mongo, mongo.users.find_one({"_id": target._id})):
+        abort(403, "Hallituksen ja god-tilien turvamuutokset tehdään hallinnon turvatapauksessa.")
     if allow_self and actor._id == target._id:
         return
     if not compare_user_levels(actor, target):
@@ -396,6 +401,9 @@ def safe_redirect(target):
 
 def can_change_account_status(actor, target):
     """Share status-action visibility with the authoritative target hierarchy."""
+    from mielenosoitukset_fi.utils.security_cases import protected_account
+    if protected_account(mongo, mongo.users.find_one({"_id": target._id})):
+        return False
     return ((actor.has_full_permissions() or "EDIT_USER" in actor.global_permissions)
             and actor._id != target._id
             and compare_user_levels(actor, target))

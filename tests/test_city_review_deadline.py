@@ -126,7 +126,8 @@ def test_escalation_email_uses_stored_window_and_deadline(app, db, seeded_data, 
         monkeypatch.setattr(script, name, lambda demo_id: "https://example.test/review")
     sent = []
     monkeypatch.setattr(email_sender, "send_email", lambda job, **kwargs: sent.append(job) or True)
-    assert script.escalate_once(db, email_sender=email_sender, escalate_after_hours=24) == 1
+    with app.app_context():
+        assert script.escalate_once(db, email_sender=email_sender, escalate_after_hours=24) == 1
     assert len(sent) == 1
     assert "48 tunnin" in sent[0].html
     assert "24 tunnin" not in sent[0].html

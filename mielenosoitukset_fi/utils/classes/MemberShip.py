@@ -102,6 +102,8 @@ class MemberShip(BaseModel):
 
     def save(self):
         """Ensure unique user/org combo and upsert safely."""
+        from mielenosoitukset_fi.utils.system_teams import forbid_ordinary_team_write
+        forbid_ordinary_team_write(self.organization_id)
         db = _get_db()
         existing = db["memberships"].find_one({
             "user_id": self.user_id,

@@ -2,6 +2,7 @@ import { appConfig } from './config';
 import { randomUUID } from 'node:crypto';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { SubmitFallback } from './SubmitFallback';
+import { MaintenancePage } from './MaintenancePage';
 import { submitProps } from './submit';
 import type { SubmitBootstrap } from './submit';
 import { detailMessages } from './detail';
@@ -49,6 +50,7 @@ export type RenderInput = {
   doNotTrack?: boolean;
   /** Raw query string; used only to detect the Flask preview fallback. */
   search?: string;
+  publicUnavailable?: boolean;
 };
 
 export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; godAuth?: string };
@@ -213,6 +215,14 @@ function unavailableDocument() {
 export async function renderPage(input: RenderInput, assets: RenderAssets): Promise<RenderResult> {
   const route = routeForPath(input.path);
   if (!route) return { status: 404, html: notFoundDocument() };
+  if (input.publicUnavailable && route.name !== 'god-auth') {
+    return { status: 503, headers: { 'Retry-After': '60', 'X-Robots-Tag': 'noindex' },
+      html: '<!DOCTYPE html><html lang="fi"><head>' + headMarkup({
+        title: 'Palvelu on tilapäisesti suljettu | Mielenosoitukset.fi', description: '', robots: 'noindex',
+        canonical: null, url: input.origin + input.path, origin: input.origin, locale: 'fi',
+        assets: assets.head, siteAnalyticsEnabled: false,
+      }) + '</head><body>' + renderToStaticMarkup(<MaintenancePage />) + '</body></html>' };
+  }
   if (route.name === 'calendar' && !input.path.endsWith('/')) {
     return { status: 308, html: '', redirect: `${input.path}/${input.search ?? ''}` };
   }

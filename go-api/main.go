@@ -244,6 +244,7 @@ func main() {
 		log.Fatal("Public submission configuration is invalid")
 	}
 	handler := publicSubmissionHandler(publicResponseCache(a.handler(), shared), client.Database(database), submissionConfig)
+	handler = publicAvailability(handler, readPublicLockdown(client.Database(database)))
 	if submissionConfig.Origin != "" {
 		indexContext, cancelIndexCheck := context.WithTimeout(context.Background(), 3*time.Second)
 		indexError := checkSubmissionIndexes(indexContext, client.Database(database))

@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       routing:
-        description: Activate the reviewed Apache React routing include
+        description: Activate Apache routing after deployment and health checks
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
@@ -180,7 +180,7 @@ jobs:
 
   routing:
     needs: deploy
-    if: github.event_name == 'workflow_dispatch' && inputs.routing
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.routing)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production

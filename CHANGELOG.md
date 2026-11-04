@@ -6,6 +6,8 @@
 
 - Move the annual calendar to React with one cached Go summary for the whole year. Add city month/year calendars, a shared area selector, city-scoped navigation and calendar links on event listings. Reuse the accessible month grid and preserve event links, SEO and working no-JavaScript navigation.
 
+- Automatically activate the committed Apache routing after a main-branch production deployment passes its health checks. Keep configuration validation, rollback backups and an opt-out for manually dispatched deployments.
+
 - Replace the god-appointment quorum with two chambers: the whole board or every existing god user nominates, the other chamber then has 48 hours to veto, and a veto moves the decision to a second round where 75 prosenttia of all board and god users combined must approve. Ordinary super admins no longer participate, the first god needs only the whole board, and the fixed two-board emergency bypass is removed while the USB + fresh god login route stays available.
 - Add audited security cases for privileged accounts: two board members or one freshly authenticated god user can suspend, the owner's sessions, API tokens and magic links are revoked immediately, removal needs a majority of the unaffected board, and the seven-day review deadline escalates instead of restoring access. Block privileged account edits, token creation and magic links while a case is open, and notify the board and god users.
 - Extend the public lockdown to the React host and the Go API: locked pages answer 503 with `Retry-After` and `noindex` from a shared one-second gate outside response caches, while health checks, authentication and administration stay reachable.

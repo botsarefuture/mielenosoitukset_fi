@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Strengthen identity regression tests for wrong-password rejection, normalized and legacy MFA preflights, canonical uniqueness and duplicate-email registration; individually assess the existing identity tests. Authentication behavior is unchanged.
 - Move the annual calendar to React with one cached Go summary for the whole year. Add city month/year calendars, a shared area selector, city-scoped navigation and calendar links on event listings. Reuse the accessible month grid and preserve event links, SEO and working no-JavaScript navigation.
 
 - Automatically activate the committed Apache routing after a main-branch production deployment passes its health checks. Keep configuration validation, rollback backups and an opt-out for manually dispatched deployments.

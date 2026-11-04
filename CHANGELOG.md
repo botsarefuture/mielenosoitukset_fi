@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Move the annual calendar to React with one cached Go summary for the whole year. Add city month/year calendars, a shared area selector, city-scoped navigation and calendar links on event listings. Reuse the accessible month grid and preserve event links, SEO and working no-JavaScript navigation.
+
 - Automatically activate the committed Apache routing after a main-branch production deployment passes its health checks. Keep configuration validation, rollback backups and an opt-out for manually dispatched deployments.
 
 - Replace the god-appointment quorum with two chambers: the whole board or every existing god user nominates, the other chamber then has 48 hours to veto, and a veto moves the decision to a second round where 75 prosenttia of all board and god users combined must approve. Ordinary super admins no longer participate, the first god needs only the whole board, and the fixed two-board emergency bypass is removed while the USB + fresh god login route stays available.

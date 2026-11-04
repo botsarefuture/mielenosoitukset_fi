@@ -2,6 +2,7 @@ import type { AppConfig } from './config';
 import type { Catalog } from './i18n';
 import type { ListingRoute } from './listing';
 import { currentMonth } from './calendar';
+import { findCity } from './cities';
 
 /**
  * Public routes owned by the standalone React application.
@@ -17,7 +18,7 @@ export type AppRoute =
   | { name: 'submit' }
   | { name: 'god-auth' }
   | { name: 'cities' }
-  | { name: 'calendar'; year: number; month: number }
+  | { name: 'calendar' | 'calendar-year'; year: number; month: number; city?: string }
   | { name: 'today'; value?: string }
   | ListingRoute
   | { name: 'organization'; id: string }
@@ -51,11 +52,18 @@ function readIdentifier(raw: string): string | null {
 
 export function routeForPath(path: string): AppRoute | null {
   if (path === '/auth/god') return { name: 'god-auth' };
-  if (path === '/calendar/' || path === '/calendar') return { name: 'calendar', ...currentMonth() };
-  const calendar = /^\/calendar\/(\d{4})\/(\d{1,2})\/?$/.exec(path);
-  if (calendar) {
-    const year = Number(calendar[1]), month = Number(calendar[2]);
-    return year >= 2000 && year <= 2100 && month >= 1 && month <= 12 ? { name: 'calendar', year, month } : null;
+  const calendar = /^\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
+  const scoped = /^\/city\/([^/]+)\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
+  if (calendar || scoped) {
+    const city = scoped ? findCity(readIdentifier(scoped[1]) ?? '') : undefined;
+    if (scoped && !city) return null;
+    const yearValue = scoped ? scoped[2] : calendar![1];
+    const monthValue = scoped ? scoped[3] : calendar![2];
+    const current = currentMonth();
+    const year = yearValue ? Number(yearValue) : current.year;
+    const month = monthValue ? Number(monthValue) : yearValue ? 0 : current.month;
+    if (year < 2000 || year > 2100 || month < 0 || month > 12 || monthValue === '0' || monthValue === '00') return null;
+    return { name: month ? 'calendar' : 'calendar-year', year, month, ...(city ? { city: city.key } : {}) };
   }
   if (path === '/submit') return { name: 'submit' };
   if (path === '/cities') return { name: 'cities' };

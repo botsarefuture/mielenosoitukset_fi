@@ -24,6 +24,7 @@ const CitiesPage = lazy(() => import('../pages/CitiesPage'));
 const TodayScreen = lazy(() => import('./TodayScreen'));
 const SubmitScreen = lazy(() => import('./SubmitScreen'));
 const CalendarScreen = lazy(() => import('./CalendarScreen'));
+const YearCalendarScreen = lazy(() => import('./YearCalendarScreen'));
 const GodScreen = lazy(() => import('./GodScreen'));
 
 export type AppProps = {
@@ -64,6 +65,9 @@ export function App({ config, session, route, path, detail, series, home, listin
       {route.name === 'god-auth' && <Suspense fallback={<p role="status">Ladataan kirjautumista...</p>}><GodScreen /></Suspense>}
       {route.name === 'calendar' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria...</p>}>
         <CalendarScreen calendar={calendar} config={config} session={session} />
+      </Suspense>}
+      {route.name === 'calendar-year' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria...</p>}>
+        <YearCalendarScreen calendar={calendar} />
       </Suspense>}
       {route.name === 'submit' && submission && <Suspense fallback={<p role="status">Ladataan lomaketta...</p>}>
         <SubmitScreen config={config} submission={submission} />

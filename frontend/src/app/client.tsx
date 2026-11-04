@@ -23,7 +23,7 @@ function Root(props: Bootstrap) {
       }
       // Detail/series views keep their separate demonstration-view collection.
       const name = routeForPath(path)?.name;
-      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar'].includes(name)
+      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year'].includes(name)
         || !session.siteAnalyticsEnabled || tracked.current) return;
       tracked.current = true;
       try {

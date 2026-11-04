@@ -50,6 +50,8 @@ export function listingProps(route: ListingRoute, config: AppConfig, session: Se
     endpoint: `${config.apiBase}/demonstrations`, attendanceEndpoint: config.urls.attendance,
     allEventsUrl: config.urls.demonstrations, submitUrl: config.urls.submit,
     rssUrl: route.scope === 'organization' || today ? null : `${config.urls.rss}${feed ? `?${feed}` : ''}`,
+    calendarUrl: (route.scope === 'city' || route.scope === 'city-today') && findCity(route.value!)
+      ? `/city/${findCity(route.value!)!.key}/calendar/` : route.scope === 'all' || route.scope === 'today' ? '/calendar/' : undefined,
     headingLevel: route.scope === 'organization' ? 2 : 1,
     detailUrl: config.urls.detail, seriesUrl: config.urls.series, tagUrl: config.urls.tag,
     cover: null, coverAlt: 'Tagin kansikuva',

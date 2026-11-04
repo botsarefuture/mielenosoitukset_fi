@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { adjacentMonth, currentMonth, dateForDay, monthLength, monthName, monthPath } from './calendar';
+import { adjacentMonth, calendarPlace, currentMonth, dateForDay, monthName, monthPath } from './calendar';
 import type { CalendarBootstrap } from './calendar';
 import type { AppConfig } from './config';
 import type { SessionSummary } from './session';
-import { dayLabel, helsinkiDay } from './cities';
+import { dayLabel, findCity, helsinkiDay } from './cities';
+import { CalendarGrid } from './CalendarGrid';
+import { CalendarScope } from './CalendarScope';
 import { listingProps, validListingPage } from './listing';
 import type { Page } from '../components/listings/types';
 import { DemonstrationCards } from '../components/listings/DemonstrationCard';
@@ -15,7 +17,7 @@ export default function CalendarScreen({ calendar, config, session }: {
 }) {
   const { data, day, page } = calendar;
   const date = dateForDay(calendar, day);
-  const count = data?.days.find(row => row.date === date)?.count ?? 0;
+  const count = calendar.events?.total ?? data?.days.find(row => row.date === date)?.count ?? 0;
   const [events, setEvents] = useState<Page | null>(calendar.events ?? null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -34,6 +36,7 @@ export default function CalendarScreen({ calendar, config, session }: {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10_000);
     const query = new URLSearchParams({ date_start: date, date_end: date, in_past: 'true', lang: config.locale, page: String(page), per_page: '20' });
+    if (calendar.city) query.set('city', findCity(calendar.city)?.name ?? calendar.city);
     void fetch(`${config.apiBase}/demonstrations?${query}`, { signal: controller.signal, credentials: 'omit' })
       .then(async response => {
         if (!response.ok) throw new Error('Calendar day unavailable');
@@ -44,39 +47,25 @@ export default function CalendarScreen({ calendar, config, session }: {
       .finally(() => clearTimeout(timer));
     let disposed = false;
     return () => { disposed = true; clearTimeout(timer); controller.abort(); };
-  }, [date, page, count, data, config.apiBase, config.locale, attempt, calendar.events]);
+  }, [date, page, count, data, config.apiBase, config.locale, attempt, calendar.events, calendar.city]);
   const previous = adjacentMonth(calendar, -1);
   const next = adjacentMonth(calendar, 1);
-  const firstWeekday = (new Date(Date.UTC(calendar.year, calendar.month - 1, 1)).getUTCDay() + 6) % 7;
-  const cells = Math.ceil((firstWeekday + monthLength(calendar)) / 7) * 7;
   const href = (selected: number, page = 1) => `${monthPath(calendar)}?day=${selected}${page > 1 ? `&page=${page}` : ''}#calendar-agenda`;
   return <article className="month-calendar">
-    <header className="month-calendar-heading"><div><h1>Mielenosoituskalenteri</h1><p>Valitse päivä ja katso sen mielenosoitukset.</p></div>
+    <header className="month-calendar-heading"><div><h1>Mielenosoituskalenteri</h1><p>Mielenosoitukset {calendarPlace(calendar)}. Valitse päivä ja katso sen mielenosoitukset.</p></div>
       <a className="calendar-submit" href={config.urls.submit}>Ilmoita mielenosoituksesta</a></header>
+    <CalendarScope period={calendar} />
     <section className="month-calendar-panel" aria-labelledby="calendar-month">
       <div className="month-calendar-nav"><h2 id="calendar-month">{monthName(calendar)}</h2>
         <nav aria-label="Kuukauden valinta">
           {previous.year >= 2000 && <a href={monthPath(previous)} aria-label={`Edellinen kuukausi: ${monthName(previous)}`}>← Edellinen</a>}
-          <a href={monthPath(currentMonth())}>Tämä kuukausi</a>
+          <a href={monthPath({ ...currentMonth(), city: calendar.city })}>Tämä kuukausi</a>
           {next.year <= 2100 && <a href={monthPath(next)} aria-label={`Seuraava kuukausi: ${monthName(next)}`}>Seuraava →</a>}
         </nav></div>
       {!data ? <div role="alert" className="calendar-notice"><p>Kalenterin lataaminen epäonnistui.</p><button onClick={() => window.location.reload()}>Yritä uudelleen</button></div> : <>
         <p className="month-calendar-summary">{data.total} {data.total === 1 ? 'mielenosoitus' : 'mielenosoitusta'} tässä kuussa. Päivän numeroiden alla näkyy mielenosoitusten määrä.</p>
-        <table className="month-calendar-grid"><caption className="calendar-sr-only">{monthName(calendar)}</caption>
-          <thead><tr>{['Ma', 'Ti', 'Ke', 'To', 'Pe', 'La', 'Su'].map(name => <th key={name} scope="col">{name}</th>)}</tr></thead>
-          <tbody>{Array.from({ length: cells / 7 }, (_, week) => <tr key={week}>{Array.from({ length: 7 }, (_, weekday) => {
-            const number = week * 7 + weekday - firstWeekday + 1;
-            if (number < 1 || number > monthLength(calendar)) return <td key={weekday} />;
-            const value = dateForDay(calendar, number);
-            const total = data.days.find(row => row.date === value)?.count ?? 0;
-            return <td key={weekday}><a href={href(number)} aria-current={day === number ? 'date' : undefined}
-              className={value === helsinkiDay() ? 'is-today' : undefined}
-              aria-label={`${dayLabel(value)}, ${total} mielenosoitusta${value === helsinkiDay() ? ', tänään' : ''}`}>
-              <span>{number}</span>{total > 0 && <span className="calendar-day-count" aria-hidden="true">{total}</span>}
-            </a></td>;
-          })}</tr>)}</tbody>
-        </table>
-        <div className="month-calendar-links"><span>Tänään on {dayLabel(helsinkiDay())}</span><a href={`/calendar/${calendar.year}/`}>Vuosi {calendar.year}</a></div>
+        <CalendarGrid period={calendar} days={data.days} selected={day} />
+        <div className="month-calendar-links"><span>Tänään on {dayLabel(helsinkiDay())}</span><a href={monthPath({ ...calendar, month: 0 })}>Vuosi {calendar.year}</a></div>
       </>}
     </section>
     {data && <section className="calendar-agenda public-demonstration-list" id="calendar-agenda" aria-labelledby="calendar-day">

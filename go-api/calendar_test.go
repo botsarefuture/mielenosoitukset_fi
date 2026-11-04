@@ -30,7 +30,7 @@ func (s *fakeCalendarStore) FindCalendar(ctx context.Context, month calendarMont
 	if s.fail.Load() {
 		return calendarPayload{}, errors.New("unavailable")
 	}
-	return calendarPayload{Year: month.Year, Month: month.Month, Total: 2, Days: []calendarDay{{month.key() + "-09", 2}}}, nil
+	return calendarPayload{Year: month.Year, Month: month.Month, City: month.City, Total: 2, Days: []calendarDay{{month.start().Format("2006-01-") + "09", 2}}}, nil
 }
 
 func TestCalendarCacheAndHTTP(t *testing.T) {
@@ -42,7 +42,7 @@ func TestCalendarCacheAndHTTP(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if _, err := store.FindCalendarJSON(context.Background(), calendarMonth{2026, 11}); err != nil {
+			if _, err := store.FindCalendarJSON(context.Background(), calendarMonth{Year: 2026, Month: 11}); err != nil {
 				t.Error(err)
 			}
 		}()
@@ -88,13 +88,13 @@ func TestCalendarCacheAndHTTP(t *testing.T) {
 		t.Fatal("error was cached")
 	}
 	source.fail.Store(false)
-	for month := 0; month < 30; month++ {
-		_, err := store.FindCalendarJSON(context.Background(), calendarMonth{2020 + month/12, month%12 + 1})
+	for month := 0; month < 70; month++ {
+		_, err := store.FindCalendarJSON(context.Background(), calendarMonth{Year: 2020 + month/12, Month: month%12 + 1})
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
-	if len(store.calendar.items) > 24 {
+	if len(store.calendar.items) > 64 {
 		t.Fatal("calendar cache unbounded")
 	}
 }
@@ -123,12 +123,47 @@ func TestMongoCalendarMonthVisibilityAndDates(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	result, err := store.FindCalendar(ctx, calendarMonth{2028, 2})
+	result, err := store.FindCalendar(ctx, calendarMonth{Year: 2028, Month: 2})
 	if err != nil || result.Total != 2 || len(result.Days) != 2 || result.Days[1].Date != "2028-02-29" {
 		t.Fatalf("month/visibility boundary: %+v %v", result, err)
 	}
-	empty, err := store.FindCalendar(ctx, calendarMonth{2027, 2})
+	empty, err := store.FindCalendar(ctx, calendarMonth{Year: 2027, Month: 2})
 	if err != nil || empty.Total != 0 || empty.Days == nil {
 		t.Fatal("empty month contract", empty, err)
+	}
+	if _, err := store.collection.InsertOne(ctx, bson.M{"approved": true, "date": "2028-12-31", "city": "Helsingfors", "city_key": "helsinki"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.collection.InsertOne(ctx, bson.M{"approved": true, "date": "2028-12-31", "city": "Tampere"}); err != nil {
+		t.Fatal(err)
+	}
+	annual, err := store.FindCalendar(ctx, calendarMonth{Year: 2028, City: "helsinki"})
+	if err != nil || annual.Total != 1 || len(annual.Days) != 1 || annual.Days[0].Date != "2028-12-31" || annual.City != "helsinki" {
+		t.Fatal("annual/city boundary", annual, err)
+	}
+}
+
+func TestCalendarScopedKeys(t *testing.T) {
+	policy := func(path string) responsePolicy {
+		t.Helper()
+		p, ok := publicResponsePolicy(httptest.NewRequest("GET", path, nil), time.Now())
+		if !ok {
+			t.Fatal(path)
+		}
+		return p
+	}
+	a := policy("/api/calendar/2028?city=Helsinki")
+	if a.key != policy("/api/calendar/2028?city=helsinki&lang=sv").key {
+		t.Fatal("city aliases fragmented cache")
+	}
+	for _, path := range []string{"/api/calendar/2028", "/api/calendar/2028?city=Tampere", "/api/calendar/2028/1?city=helsinki", "/api/calendar/2027?city=helsinki"} {
+		if policy(path).key == a.key {
+			t.Fatal("calendar scopes shared a cache key", path)
+		}
+	}
+	for _, raw := range []string{"city=not-a-city", "city=Helsinki&city=Tampere", "city=.*", "private=1", "lang=de"} {
+		if _, err := parseCalendarRequest("2028", "", raw); err == nil {
+			t.Fatal("invalid scope accepted", raw)
+		}
 	}
 }

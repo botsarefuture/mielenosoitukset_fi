@@ -379,6 +379,7 @@ try {
     assert.match(pride.html, /<noscript>[^]*Test listing event[^]*<\/noscript>/);
     assert.match(pride.html, /<noscript>[^]*Miksi Pride näkyväksi\?[^]*id="demo-guidelines"[^]*<\/noscript>/);
     assert.match(pride.html, /<noscript>[^]*Näytetään [^]*Kaikki mielenosoitukset[^]*<\/noscript>/);
+    assert.match(pride.html, /<noscript>[^]*kun JavaScript on käytössä[^]*<\/noscript>/);
     assert.equal(bootstrap(pride.html).route.name, 'pride');
   }
   assert(localReads.some(read => read.startsWith('/api/demonstrations?') && read.includes('tag=pride') && read.includes('city=Tampere')

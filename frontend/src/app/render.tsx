@@ -519,6 +519,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       pridePage && pridePage.page < pridePage.total_pages ? `<a href="${escapeHtml(pageLink(pridePage.page + 1))}">${escapeHtml(prideProps.messages.loadMore)}</a>` : '',
     ].filter(Boolean).join(prideSeparator);
     noscript = `<noscript><article class="container-main-content pride-noscript"><h1>${escapeHtml(prideCopy.title)}</h1>`
+      + '<p>Sivu toimii parhaiten, kun JavaScript on käytössä. Ilman sitä näet kevyemmän version.</p>'
       + `<p>${escapeHtml(prideCopy.lead)}</p><section id="demos"><h2>Pride-mielenosoitukset</h2>`
       + (pridePage?.total
         ? `<p>${escapeHtml(prideProps.messages.summary.replace('__START__', String(pridePage.result_start))

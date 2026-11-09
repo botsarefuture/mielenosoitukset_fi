@@ -10,6 +10,11 @@
   margin: 0;
 }
 
+.information-actions button.button {
+  font-family: inherit;
+  line-height: inherit;
+}
+
 .information-page .public-prose-card h3 {
   margin-top: 1.25rem;
 }

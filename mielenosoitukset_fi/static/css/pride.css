@@ -192,3 +192,6 @@
 .container-main-content.pride-noscript h1 { font-size: clamp(2rem, 3.7vw, 3.2rem); line-height: 1.1; }
 .container-main-content.pride-noscript h2 { font-size: 1.35rem; line-height: 1.25; }
 .pride-noscript ul a, .pride-noscript__links a { display: inline-block; min-width: 44px; min-height: 44px; padding-block: .6rem; }
+/* Padding and an equal negative margin widen each link's target without moving its text, so the dots stay evenly spaced. */
+.pride-noscript__links { display: flex; flex-wrap: wrap; align-items: center; column-gap: .6rem; }
+.pride-noscript__links a { min-width: 0; padding-inline: .5rem; margin-inline: -.5rem; }

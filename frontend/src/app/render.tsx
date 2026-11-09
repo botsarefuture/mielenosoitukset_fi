@@ -502,7 +502,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       canonical: `${config.origin}${config.urls.pride}`, robots: input.search ? 'noindex, follow' : 'index, follow' };
     extraHead = '<link rel="stylesheet" href="/static/vendor/flatpickr/4.6.13/flatpickr.min.css">'
       + '<link rel="stylesheet" href="/static/leaflet/leaflet.css">'
-      + '<link rel="stylesheet" href="/static/css/pride.css?v=20261109-pride-noscript-3">'
+      + '<link rel="stylesheet" href="/static/css/pride.css?v=20261109-pride-noscript-4">'
       + '<script src="/static/leaflet/leaflet.js" defer></script>'
       + (assets.pride ?? '');
     const prideProps = listingProps(prideRoute, config, session);
@@ -513,10 +513,11 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       return `${config.urls.pride}?${params}#demos`;
     };
     const filtered = [...new URLSearchParams(input.search ?? '').keys()].some(key => key !== 'page');
+    const prideSeparator = '<span aria-hidden="true">·</span>';
     const pager = [
       pridePage && pridePage.page > 1 ? `<a href="${escapeHtml(pageLink(pridePage.page - 1))}">${escapeHtml(prideProps.messages.previous)}</a>` : '',
       pridePage && pridePage.page < pridePage.total_pages ? `<a href="${escapeHtml(pageLink(pridePage.page + 1))}">${escapeHtml(prideProps.messages.loadMore)}</a>` : '',
-    ].filter(Boolean).join(' · ');
+    ].filter(Boolean).join(prideSeparator);
     noscript = `<noscript><article class="container-main-content pride-noscript"><h1>${escapeHtml(prideCopy.title)}</h1>`
       + `<p>${escapeHtml(prideCopy.lead)}</p><section id="demos"><h2>Pride-mielenosoitukset</h2>`
       + (pridePage?.total
@@ -532,7 +533,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
         return `<li><a href="${escapeHtml(item.url)}">${escapeHtml(item.name)}</a> ${escapeHtml(details)}</li>`;
       }).join('')
       + `</ul>${pager ? `<p class="pride-noscript__links">${pager}</p>` : ''}`
-      + `<p class="pride-noscript__links"><a href="${escapeHtml(prideProps.rssUrl!)}">RSS</a> · <a href="/demonstrations">Kaikki mielenosoitukset</a></p></section>`
+      + `<p class="pride-noscript__links"><a href="${escapeHtml(prideProps.rssUrl!)}">RSS</a>${prideSeparator}<a href="/demonstrations">Kaikki mielenosoitukset</a></p></section>`
       + renderToStaticMarkup(<PrideDetails submitUrl={config.urls.submit} />)
       + '</article></noscript>';
   }

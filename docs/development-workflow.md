@@ -72,6 +72,9 @@ done, in progress and left (the roadmap inventory plus open PRs is enough).
 
 - Public UI is React on the standalone host, with data from the Go API. No new Flask
   routes, views or templates for public pages. Admin stays Flask/Jinja.
+- Keep no-JavaScript fallbacks light: title, lead, event links with paging and the
+  notice that the page works best with JavaScript. Test them with assertions, not
+  visual review.
 - Migrating a page is a chance to improve it, not only to port it. Look at it as a
   visitor on a phone and on a desktop: is it clear what the page is for, is the main
   action obvious, does it work with the keyboard, is the contrast sufficient.

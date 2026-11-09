@@ -5,6 +5,10 @@ conversation workflow, **not another GitHub test job**. Existing functional and
 component checks still apply; do not duplicate them or rerun the whole suite
 merely to get a visual opinion.
 
+No-JavaScript `<noscript>` fallbacks are out of scope. Check them with automated
+assertions instead (see "No-JavaScript fallbacks" in `AGENTS.md`). Do not capture
+them for the packet or hold SHIP for them.
+
 ## Review packet
 
 The implementer supplies a compact packet with:

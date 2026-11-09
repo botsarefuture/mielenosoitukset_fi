@@ -1,42 +1,37 @@
 # Blockers and resume points
 
 Working notes for the maintainer. Lives on branch `claude/vibrant-gates-syjhk4` only; not meant for `main`.
+Work moved from the cloud session to a local Claude Code session on 9 November 2026.
 
 ## Waiting for you
 
-- **Panel host root password (pasted in a Codex thread on Nov 3) must be rotated.** Not used, not touched. Needs an approved secure procedure.
-- **Disk/VM request (Nov 9):** see "Storage investigation" below. Needs your decision; nothing provisioned.
-- **/info campaign block:** the old page showed "Tule mukaan valtakunnalliseen kampanjaan!" as an orange promo right under the hero; #1040 made it a plain fourth card. Keep it demoted, or restore the prominent placement?
-- **#1040 note:** it extends the existing Flask `/api/session` with `?translation_join=1`, returning the existing session-bound join nonce and flash messages. Not new auth, but touches the session endpoint. Flagging for your review.
+- **Panel host root password (pasted in a Codex thread on Nov 3) must be rotated.** Not used, not touched.
+- **#1047 fundraising page:** independent SHIP; needs your merge approval. Merging routes `/keräys` to the React host.
+- **#1040 content, now live:** the /info and translation stat tiles were removed, some sentences shortened, and the /info campaign block is a plain fourth card instead of the orange promo. Keep, or restore?
+- **#1040 session endpoint, now live:** `/api/session?translation_join=1` returns the session-bound join nonce and flash messages. Not new auth, but it touches the session endpoint.
+- **Contact and report forms:** see "Proposal: remaining public pages".
 
-## Approved, waiting on a condition
+## Done on 9 November
 
-- **#1040 merge** pre-approved by you (Nov 9). Visual review SHIP at 2311703. Merging when CI is green.
-- **#1040 content edits to confirm:** the /info and translation stat tiles are removed, and some /info and translation sentences are shortened (the reviewer listed them in the PR). Privacy is word for word the same. Say if any should come back.
+- Merged and live: #1040 information pages, #1042 style.css cleanup, #1043 Pride, #1044 no-JS policy, #1045 contrast and listing states, #1046 campaign page.
+- No-JS policy (your decision): fallbacks stay light, are checked by assertions, and get no visual review.
 
-## In progress
+## Proposal: remaining public pages
 
-- Pride #1043 (draft): 30 focused tests pass, including e2e. Captures done; independent review running.
-- #1042: style.css cleanup, the parsed CSS is unchanged. Needs only your merge.
+These need a backend decision before they can move, so they were not started:
 
-## Resume next
-
-- UI-06 next item after information pages: Pride, then campaign and fundraising.
-- Triage of ~18 old open PRs (Dependabot, #948 pyjwt security bump, etc.): report only, don't touch.
-
-## Decisions I made on my own
-
-- Removed the "Ohjekeskus" hero pill from the React guide; left it in the old Flask template (being retired).
-- Local test setup: Mongo/Redis via `compose.test.yml` in Docker, Go API built from `go-api/`.
-
-## Storage investigation (Nov 9)
-
-- This session runs in Anthropic's managed cloud container, not on your Proxmox host. Its disk is a fixed per-session allowance (about 39G here: 9G used, 30G free after cleanup). I cannot resize it from inside, and there are no Proxmox tools or credentials here (correctly so).
-- The disk-full stall was self-inflicted: the Docker test MongoDB grew to ~29G from per-test databases. Fix: run test Mongo on a size-capped tmpfs and drop test DBs; no extra capacity needed for current work.
-- Proxmox VM work (resize, new VMs within 100G total) is only possible from a session that can reach your homelab through an approved route (Claude Code on your machine, or Remote Control to a folder there). Roadmap is in my Nov 9 reply; waiting for your approval and an access route.
+- `/contact`: the form's anti-abuse token is issued into the Flask session on GET and checked on POST. Moving the page means the host must obtain that token, most simply through another `/api/session` scope like `translation_join`. That is a session change, so it needs your approval.
+- `/report`: the error report form posts to Flask with a CSRF token; same question as `/contact`.
+- `/status`: runs Flask's health checks. Moving it needs a Go or Flask JSON endpoint for those checks.
+- Account pages (`/login`, `/register`, `/settings`, password reset, MFA): authentication flows, explicitly yours to approve.
 
 ## Backlog discoveries
 
-- `mielenosoitukset_fi/static/css/style.css` around line 461 contains a pasted Python traceback fragment (`enosoitukset_fi/.../database_manager.py", line 90, in _init_client`). Browsers skip it as invalid CSS, but it should be removed in its own small PR.
-- Guide (/ohjeet) dark theme: section headings and step titles use the global `--header_color` (#3366cc on #171b22, about 3:1). The support banner body is 3.2:1 and its kicker 2.4:1. Pre-existing; fix in a follow-up with the design-system tokens.
-- Shared `public-page-header` description in dark mode is about 4.4 to 5.0:1 on the lighter gradient. Borderline; check next time the component changes.
+- Measuring no-JS visitors needs a `<noscript>` pixel and a counting endpoint; the pageview beacon only runs with JavaScript. Bots will dominate the raw count. Not started.
+- At 390 the campaign form's error message is below the fold after an empty submit.
+- Charcoal "Poista suodattimet" and pale grey light secondary buttons; underline next to the card invite "+"; centred guide step titles at 390.
+- In the fundraising open state the MobilePay links sit far apart (same as the old Flask page).
+
+## Dropped
+
+- Homelab VM disk and memory resizing: not wanted (9 November).

@@ -192,7 +192,7 @@ ${options.jsonLd ? `<script type="application/ld+json">${serialize(options.jsonL
 <noscript><link rel="stylesheet" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" crossorigin></noscript>
 <link rel="stylesheet" href="/static/css/home.css">
 <link rel="stylesheet" href="/static/css/product-tokens.css?v=20261027-product-tokens-1">
-<link rel="stylesheet" href="/static/css/user-workspace.css?v=20261028-user-workspace-2">
+<link rel="stylesheet" href="/static/css/user-workspace.css?v=20261109-user-workspace-3">
 <link rel="stylesheet" href="/static/css/public-header.css?v=20261027-react-header-1">
 <link rel="stylesheet" href="/static/css/flash.css?v=20260928-campaign-feedback-1">
 <link rel="stylesheet" href="/static/css/public_hero.css?v=20261015-hero-width-1">
@@ -296,7 +296,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   if (route.name === 'information') {
     extraHead = assets.information ?? '';
     if (route.page === 'guides') {
-      extraHead += '<link rel="stylesheet" href="/static/css/public-guides.css?v=20261109-react-guides-1">';
+      extraHead += '<link rel="stylesheet" href="/static/css/public-guides.css?v=20261109-guide-contrast-1">';
     }
     noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
@@ -525,7 +525,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
         ? `<p>${escapeHtml(prideProps.messages.summary.replace('__START__', String(pridePage.result_start))
           .replace('__END__', String(pridePage.result_end)).replace('__COUNT__', String(pridePage.total)))}</p>`
         : filtered
-          ? `<p>${escapeHtml(prideProps.messages.filteredEmpty)}</p><p class="pride-noscript__links"><a href="${escapeHtml(config.urls.pride)}#demos">${escapeHtml(prideProps.messages.clearFilters)}</a></p>`
+          ? `<p>${escapeHtml(prideProps.messages.emptyTitle)}. ${escapeHtml(prideProps.messages.filteredEmpty)}</p><p class="pride-noscript__links"><a href="${escapeHtml(config.urls.pride)}#demos">${escapeHtml(prideProps.messages.clearFilters)}</a></p>`
           : `<p>${escapeHtml(prideCopy.empty)}</p>`)
       + '<ul>'
       + todayItems(config, pridePage).map((item, index) => {

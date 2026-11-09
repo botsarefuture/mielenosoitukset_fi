@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Raise text contrast on the organizer guide, the information page headers, the notification badge and the invite link on event cards in the dark theme. The guide's orange numbers and labels now use the darker accent so they meet the 4.5:1 minimum.
+- Tidy the React listing states: empty-state buttons no longer touch, the result count is hidden when nothing was found, the empty message no longer repeats its title, a failed load shows only the retry button, and "Näytä lisää" uses a quieter tinted style.
 - Move the about, organizer guides, privacy notice, terms and translation project pages to the standalone React host. Render the content on the first response, preserve guide and terms anchors, and keep translator signup and email delivery in Flask.
 - Move the Pride page (`/pride-nakyvaksi`, `/pride`) to the standalone React host. The map and the event list read the public Go API, the page keeps its sections and canonical address, and without JavaScript the page lists events with paging, background and submission instructions. Direct links to its sections scroll to them.
 - Show the date format as `pp.kk.vvvv` in the date filters of the React listings.

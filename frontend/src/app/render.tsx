@@ -26,6 +26,7 @@ import type { HomeData } from '../pages/HomePage';
 import { PrideDetails, prideCopy, prideRoute } from './PrideScreen';
 import CampaignScreen from './CampaignScreen';
 import FundraisingScreen from './FundraisingScreen';
+import ContactScreen from './ContactScreen';
 import { helsinkiToday } from './fundraising';
 export { fundraisingDetails } from './fundraising';
 import { campaignPath, loadCampaignPublication } from './campaign-route';
@@ -64,7 +65,7 @@ export type RenderInput = {
   headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; pride?: string; information?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; pride?: string; information?: string };
 
 export type RenderResult = {
   status: number;
@@ -258,6 +259,8 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   const calendarRead = calendarRoute ? loadCalendar(readBase, route) : null;
   let sessionUrl = input.sessionUrl;
   const translationJoin = route.name === 'information' && route.page === 'translations' && !input.headOnly;
+  // Each GET mints a one-time form token in the visitor's session, so it is never shared.
+  const contactForm = route.name === 'contact' && !input.headOnly;
   let responseCookies: string[] = [];
   if (route.name === 'organization' && input.cookie) {
     const scoped = new URL(sessionUrl);
@@ -269,9 +272,14 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     scoped.searchParams.set('translation_join', '1');
     sessionUrl = scoped.href;
   }
+  if (contactForm) {
+    const scoped = new URL(sessionUrl);
+    scoped.searchParams.set('contact_form', '1');
+    sessionUrl = scoped.href;
+  }
   const summary: SessionSummary = await fetchSession(sessionUrl, input.cookie,
     1200, input.flaskSocketPath, input.origin, input.clientIp, input.cloudflareIp,
-    translationJoin ? cookies => { responseCookies = cookies; } : undefined);
+    translationJoin || contactForm ? cookies => { responseCookies = cookies; } : undefined, contactForm);
   const session = input.doNotTrack || route.name === 'god-auth'
     ? { ...summary, siteAnalyticsEnabled: false, matomoEnabled: false }
     : summary;
@@ -339,6 +347,15 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
         serverPage={<FundraisingScreen config={config} today={today} />} />);
     }
+  }
+
+  if (route.name === 'contact') {
+    headers['Cache-Control'] = 'private, no-store';
+    extraHead = assets.contact ?? '';
+    // The form is plain HTML that posts to Flask, so it works without JavaScript.
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<ContactScreen session={session} />} />);
   }
 
   if (route.name === 'god-auth') {

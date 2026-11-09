@@ -23,7 +23,7 @@ function Root(props: Bootstrap) {
       }
       // Detail/series views keep their separate demonstration-view collection.
       const name = routeForPath(path)?.name;
-      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride', 'information', 'campaign', 'fundraising'].includes(name)
+      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride', 'information', 'campaign', 'fundraising', 'contact'].includes(name)
         || !session.siteAnalyticsEnabled || tracked.current) return;
       tracked.current = true;
       try {
@@ -51,6 +51,10 @@ if (container) {
       void import('./InformationScreen').then(({ default: InformationScreen }) => {
         hydrateRoot(container, <Root {...props} serverPage={<InformationScreen page={route.page} session={props.session} />} />);
       }).catch(error => console.error('Could not start information page controls', error));
+    } else if (route?.name === 'contact') {
+      void import('./ContactScreen').then(({ default: ContactScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<ContactScreen session={props.session} />} />);
+      }).catch(error => console.error('Could not start the contact page', error));
     } else if (route?.name === 'fundraising') {
       void import('./FundraisingScreen').then(({ default: FundraisingScreen }) => {
         hydrateRoot(container, <Root {...props} serverPage={<FundraisingScreen config={props.config} today={props.today ?? ''} />} />);

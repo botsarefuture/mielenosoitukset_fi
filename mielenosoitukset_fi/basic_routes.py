@@ -1785,6 +1785,8 @@ def init_routes(app):
         identity labels, role flags and the unread notification count. No
         cookie value, email, permission list or private record is returned.
         The translation page may request its existing session-bound form nonce.
+        The contact page requests a contact form token, for anonymous visitors
+        too; that response may set the session cookie and must never be shared.
         """
         organization_scope = request.args.getlist("organization_id")
         if organization_scope and (len(organization_scope) != 1 or not ObjectId.is_valid(organization_scope[0])):
@@ -1866,6 +1868,20 @@ def init_routes(app):
                         )
                     },
                 }
+        if request.args.get("contact_form") == "1":
+            from flask import get_flashed_messages
+
+            payload["contact_form"] = {
+                "enabled": bool(app.config.get("CONTACT_FORM_ENABLED", True)),
+                "csrf_token": _new_contact_form_token(),
+                "messages": get_flashed_messages(with_categories=True),
+                "limits": {
+                    "name_max": app.config.get("CONTACT_NAME_MAX_LENGTH", 120),
+                    "email_max": app.config.get("CONTACT_EMAIL_MAX_LENGTH", 254),
+                    "message_min": app.config.get("CONTACT_MESSAGE_MIN_LENGTH", 10),
+                    "message_max": app.config.get("CONTACT_MESSAGE_MAX_LENGTH", 5000),
+                },
+            }
         response = jsonify(payload)
         response.headers["Cache-Control"] = "no-store"
         response.headers["Vary"] = "Cookie"

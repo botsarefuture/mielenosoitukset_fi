@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Move the contact page (`/contact`) to the standalone React host. The form still posts to Flask with every existing anti-abuse check; the host gets each visitor's one-time form token through a new `contact_form` scope of the session endpoint. The page drops the label above its title, uses visible focus rings and 44 px fields, and shows the support email if the form cannot load.
 - Move the fundraising page (`/keräys`) to the standalone React host behind the campaign's publication gate. The rules that decide when payment details appear are shared with the Flask version through one set of test cases, so the two cannot drift.
 - Move the volunteer campaign page (`/kampanja/`) to the standalone React host. It keeps the same content, signup and newsletter forms, and the same publication gate: until the campaign is published only signed-in users see a non-indexed preview. A new read-only Go endpoint reports the publication state.
 - Raise text contrast on the organizer guide, the information page headers, the notification badge and the invite link on event cards in the dark theme. The guide's orange numbers and labels now use the darker accent so they meet the 4.5:1 minimum.

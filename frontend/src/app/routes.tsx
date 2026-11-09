@@ -4,6 +4,7 @@ import type { ListingRoute } from './listing';
 import { currentMonth } from './calendar';
 import { findCity } from './cities';
 import { informationPageForPath, informationPages } from './information';
+import { contactCopy, contactPath } from './contact-route';
 import { campaignCopy, campaignPath } from './campaign-route';
 import type { InformationPage } from './information';
 
@@ -22,6 +23,7 @@ export type AppRoute =
   | { name: 'god-auth' }
   | { name: 'pride' }
   | { name: 'information'; page: InformationPage }
+  | { name: 'contact' }
   | { name: 'campaign' }
   | { name: 'fundraising' }
   | { name: 'cities' }
@@ -61,6 +63,7 @@ export function routeForPath(path: string): AppRoute | null {
   const informationPage = informationPageForPath(path);
   if (informationPage) return { name: 'information', page: informationPage };
   if (path === '/auth/god') return { name: 'god-auth' };
+  if (path === contactPath) return { name: 'contact' };
   if (path === campaignPath) return { name: 'campaign' };
   if (path === '/keräys' || path === '/ker%C3%A4ys' || path === '/ker%c3%a4ys') return { name: 'fundraising' };
   const calendar = /^\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
@@ -114,6 +117,10 @@ export function routeForPath(path: string): AppRoute | null {
  * metadata from one projected API read.
  */
 export function routeMeta(route: AppRoute, config: AppConfig, text: Catalog): RouteMeta {
+  if (route.name === 'contact') {
+    return { title: `${contactCopy.title} | Mielenosoitukset.fi`, description: contactCopy.description,
+      robots: 'index, follow', canonical: config.origin + contactPath };
+  }
   if (route.name === 'information') {
     const { path, title, description } = informationPages[route.page];
     return { title: `${title} | Mielenosoitukset.fi`, description,

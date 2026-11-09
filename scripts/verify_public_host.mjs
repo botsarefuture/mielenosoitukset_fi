@@ -103,6 +103,67 @@ try {
   }
   assert.equal((await page({ path: '/upcoming/translations/join' })).status, 404);
   console.log('PASS: information pages render readable HTML and retain canonical URLs and anchors');
+  const contactReads = [];
+  let contactMode = 'ok';
+  let minted = 0;
+  const contactSessions = createServer((req, res) => {
+    const url = new URL(req.url, 'http://session.test');
+    contactReads.push({ scoped: url.searchParams.get('contact_form') === '1', cookie: req.headers.cookie ?? null });
+    if (contactMode === 'down') { res.writeHead(503); res.end(); return; }
+    const body = { authenticated: false, locale: 'fi', locales: [{ code: 'fi', name: 'Suomi' }], role: 'guest' };
+    const headers = { 'Content-Type': 'application/json' };
+    if (url.searchParams.get('contact_form') === '1') {
+      minted++;
+      body.contact_form = { enabled: contactMode !== 'disabled', csrf_token: String(minted).padStart(43, 'T'),
+        messages: contactMode === 'sent' ? [['success', 'Yhteydenottopyyntö välitetty onnistuneesti!']] : [],
+        limits: { name_max: 120, email_max: 254, message_min: 10, message_max: 5000 } };
+      headers['Set-Cookie'] = `session=visitor-${minted}; HttpOnly; Path=/; SameSite=Lax`;
+    }
+    res.writeHead(200, headers);
+    res.end(JSON.stringify(body));
+  });
+  await new Promise(resolve => contactSessions.listen(0, '127.0.0.1', resolve));
+  try {
+    const contact = changes => page({ path: '/contact', sessionUrl: `http://127.0.0.1:${contactSessions.address().port}/session`, ...changes });
+    const [first, second] = await Promise.all([contact(), contact()]);
+    for (const [index, result] of [first, second].entries()) {
+      assert.equal(result.status, 200);
+      assert.equal(result.headers['Cache-Control'], 'private, no-store');
+      assert.equal(result.headers['Set-Cookie'].length, 1);
+      assert.match(result.headers['Set-Cookie'][0], /^session=visitor-\d; HttpOnly/);
+      assert(result.html.includes(`value="${result.headers['Set-Cookie'][0].match(/visitor-(\d)/)[1].padStart(43, 'T')}"`),
+        'Each visitor receives the cookie that belongs to their own token');
+    }
+    assert.notDeepEqual(first.headers['Set-Cookie'], second.headers['Set-Cookie']);
+    const tokenOf = result => result.html.match(/name="csrf_token" value="([^"]+)"/)[1];
+    assert.notEqual(tokenOf(first), tokenOf(second), 'Concurrent anonymous visitors never share a form token');
+    assert.equal(contactReads.filter(read => read.scoped && read.cookie === null).length, 2,
+      'Each cookieless visitor gets its own scoped session read');
+    const body = first.html.split('<body>')[1].split('<script type="application/json"')[0];
+    for (const text of ['Ota yhteyttä', 'action="/contact"', 'method="post"', 'name="website"', 'name="subject"',
+      'value="Tuki"', 'maxLength="5000"', 'minLength="10"', 'tuki@mielenosoitukset.fi']) assert(body.includes(text), text);
+    assert(first.html.includes('rel="canonical" href="https://example.test/contact"'));
+    assert(!body.includes('site-hero__eyebrow'));
+    const before = contactReads.length;
+    const head = await contact({ headOnly: true });
+    assert.equal(head.status, 200);
+    assert(contactReads.slice(before).every(read => !read.scoped), 'HEAD must not mint a token');
+    const returning = await contact({ cookie: 'session=visitor-1' });
+    assert.equal(contactReads.at(-1).cookie, 'session=visitor-1');
+    assert.notEqual(tokenOf(returning), tokenOf(first));
+    contactMode = 'sent';
+    const sent = await contact({ cookie: 'session=visitor-1' });
+    assert.match(sent.html, /role="status"[^>]*><span class="flash-text">Yhteydenottopyyntö välitetty onnistuneesti!/);
+    contactMode = 'disabled';
+    const disabled = await contact();
+    assert(disabled.html.includes('tilapäisesti poissa käytöstä') && !disabled.html.includes('id="contact-form"'));
+    contactMode = 'down';
+    const down = await contact();
+    assert.equal(down.status, 200);
+    assert(down.html.includes('Lomaketta ei voitu ladata') && !down.html.includes('id="contact-form"'));
+    assert.equal(down.headers['Set-Cookie'], undefined);
+  } finally { contactSessions.close(); }
+  console.log('PASS: contact page mints a private per-visitor form token, forwards the session cookie, skips HEAD and degrades to email');
   let campaignState = { status: 200, body: { published: false } };
   const campaignApi = createServer((req, res) => {
     if (req.url !== '/api/campaign/publication') { res.writeHead(404); res.end(); return; }

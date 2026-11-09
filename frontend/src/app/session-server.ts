@@ -71,7 +71,8 @@ async function requestSession(endpoint: string, cookie: string | undefined,
     const value = result?.value;
     if (!value || typeof value !== 'object' || typeof (value as Record<string, unknown>).authenticated !== 'boolean') return null;
     const session = normalizeSession(value);
-    if (session.authenticated && session.translationJoin && result?.cookies.length) onCookies?.(result.cookies);
+    // Only scoped reads may change the session, so only they pass Flask's cookie on.
+    if (result?.cookies.length && ((session.authenticated && session.translationJoin) || session.contactForm)) onCookies?.(result.cookies);
     return session;
   } catch {
     // Failures fall back after the bounded timeout and are never cached.
@@ -79,11 +80,14 @@ async function requestSession(endpoint: string, cookie: string | undefined,
   } finally { clearTimeout(timer); }
 }
 
-/** Cookie-bearing requests stay private; only cookieless public configuration is shared. */
+/**
+ * Cookie-bearing requests stay private; only cookieless public configuration is shared.
+ * `privateRead` keeps a cookieless request private too, for scopes that issue per-visitor state.
+ */
 export async function fetchSession(endpoint: string, cookie: string | undefined,
   timeoutMs = 1200, socketPath?: string, publicOrigin = endpoint, clientIp?: string,
-  cloudflareIp?: string, onCookies?: (cookies: string[]) => void): Promise<SessionSummary> {
-  if (cookie) return (await requestSession(endpoint, cookie, timeoutMs, socketPath, publicOrigin, clientIp, cloudflareIp, onCookies)) ?? copySession(anonymousSession);
+  cloudflareIp?: string, onCookies?: (cookies: string[]) => void, privateRead = false): Promise<SessionSummary> {
+  if (cookie || privateRead) return (await requestSession(endpoint, cookie, timeoutMs, socketPath, publicOrigin, clientIp, cloudflareIp, onCookies)) ?? copySession(anonymousSession);
   const key = JSON.stringify([socketPath ?? null, endpoint, publicOrigin]);
   if (publicSummary?.key === key && publicSummary.expiresAt > Date.now()) return copySession(publicSummary.value);
   if (publicPending?.key !== key) {

@@ -47,6 +47,28 @@ continue to run. Deploy the Flask contract and app build before activating
 the reviewed Apache rules. Removing these rules restores the existing Flask
 pages.
 
+### Contact page
+
+The Apache include routes GET/HEAD `/contact` to Node. The form posts to Flask
+at the same URL, where every existing check stays: per-IP and global rate
+limits, the size cap, the one-time token (2 seconds to 2 hours old, at most 5
+outstanding, consumed once so restored cookies cannot replay it), the honeypot,
+field validation and email delivery. Flask then redirects back to `/contact`,
+and Node shows its feedback.
+
+**Session scope.** For each GET, Node calls
+`GET /api/session?contact_form=1`, with the visitor's cookie or with none. The
+response adds `contact_form`: `enabled`, a new `csrf_token` from the existing
+`_new_contact_form_token()`, pending `messages`, and the field `limits` from
+config. It is `no-store` and varies by cookie. Because the token lives in the
+visitor's session, this is a private read even without a cookie: it never uses
+the shared anonymous summary, and Node forwards Flask's `Set-Cookie`. The page
+is `private, no-store`. `HEAD` skips the scope and mints nothing. If the read
+fails, the page shows the support email instead of a form. Approved by the
+maintainer on 9 November 2026 as a session change.
+
+Removing the Apache rule restores the Flask page; the scope is additive.
+
 ### Campaign page
 
 The Apache include routes GET/HEAD `/kampanja/` to Node. Flask keeps the

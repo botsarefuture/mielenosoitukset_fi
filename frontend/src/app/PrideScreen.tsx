@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { PrideMap } from '../components/pride/PrideMap';
 import { PublicListingPage } from '../pages/PublicListingPage';
 import type { AppConfig } from './config';
@@ -10,6 +11,7 @@ export const prideRoute = { name: 'listing', scope: 'tag', value: 'pride' } as c
 export const prideCopy = {
   title: 'Pride näkyväksi',
   lead: 'Löydä tulevat Pride-aiheiset mielenosoitukset eri puolilta Suomea ja ilmoita oma tapahtumasi mukaan.',
+  empty: 'Meille ei vielä ole ilmoitettu tulevia Pride-mielenosoituksia.',
 };
 
 const mapMessages = {
@@ -26,10 +28,52 @@ const mapMessages = {
   mapLabel: 'Pride-mielenosoitukset kartalla',
 };
 
+/** Shared with the no-JavaScript document, so both keep the same background and instructions. */
+export function PrideDetails({ submitUrl }: { submitUrl: string }) {
+  return <>
+    <section className="pride-information" aria-labelledby="pride-about-title">
+      <h2 id="pride-about-title">Miksi Pride näkyväksi?</h2>
+      <p>Pride näkyväksi kokoaa Pride-aiheiset mielenosoitukset yhteen paikkaan. Näkyvyys auttaa osallistujia löytämään tapahtumat ja tukee yhdenvertaisuutta.</p>
+      <p>Jokaisella on oikeus olla oma itsensä ja osallistua ilman syrjintää.</p>
+    </section>
+
+    <section className="pride-guidelines" id="demo-guidelines" aria-labelledby="pride-guidelines-title">
+      <h2 id="pride-guidelines-title">Ilmoita Pride-mielenosoitus</h2>
+      <ol>
+        <li><a href={submitUrl}>Avaa ilmoituslomake</a>. Kerro tapahtuman nimi, ajankohta, paikka ja kuvaus.</li>
+        <li>Lisää tageihin pride, jotta tapahtuma löytyy tältä sivulta.</li>
+        <li>Tarkista tiedot ja lähetä ilmoitus. Ilmoitukset tarkistetaan ennen julkaisua.</li>
+      </ol>
+      <p>Ilmoitus ei saa sisältää syrjintää tai vihapuhetta. <a href="/terms">Lue käyttöehdot</a>.</p>
+    </section>
+  </>;
+}
+
 export default function PrideScreen({ config, session, listing }: {
   config: AppConfig; session: SessionSummary; listing?: ListingBootstrap;
 }) {
   const props = listingProps(prideRoute, config, session);
+  // The page mounts after the browser resolves the address hash, so a direct link has to scroll here.
+  // Scrolling loads more events above the lower sections, so stay aligned until the reader takes over.
+  useEffect(() => {
+    const { hash } = window.location;
+    const target = ['#demos', '#demo-guidelines', '#pride-map-section'].includes(hash) ? document.querySelector(hash) : null;
+    const page = document.querySelector('.pride-page');
+    if (!target || !page) return undefined;
+    const align = () => target.scrollIntoView({ block: 'start' });
+    const observer = new ResizeObserver(align);
+    observer.observe(page);
+    const inputs = ['wheel', 'touchstart', 'pointerdown', 'keydown'];
+    const stop = () => {
+      observer.disconnect();
+      window.clearTimeout(timer);
+      inputs.forEach(name => window.removeEventListener(name, stop));
+    };
+    const timer = window.setTimeout(stop, 8000);
+    inputs.forEach(name => window.addEventListener(name, stop, { passive: true }));
+    align();
+    return stop;
+  }, []);
   return <div className="pride-page">
     <section className="pride-intro" aria-labelledby="pride-title">
       <h1 id="pride-title">{prideCopy.title}</h1>
@@ -51,24 +95,10 @@ export default function PrideScreen({ config, session, listing }: {
 
     <section id="demos" aria-labelledby="listing-title">
       <PublicListingPage {...props} title="Pride-mielenosoitukset" headingLevel={2}
-        messages={{ ...props.messages, empty: 'Meille ei vielä ole ilmoitettu tulevia Pride-mielenosoituksia.' }}
+        messages={{ ...props.messages, empty: prideCopy.empty }}
         initialData={listing?.page ?? undefined} initialSearch={listing?.query} />
     </section>
 
-    <section className="pride-information" aria-labelledby="pride-about-title">
-      <h2 id="pride-about-title">Miksi Pride näkyväksi?</h2>
-      <p>Pride näkyväksi kokoaa Pride-aiheiset mielenosoitukset yhteen paikkaan. Näkyvyys auttaa osallistujia löytämään tapahtumat ja tukee yhdenvertaisuutta.</p>
-      <p>Jokaisella on oikeus olla oma itsensä ja osallistua ilman syrjintää.</p>
-    </section>
-
-    <section className="pride-guidelines" id="demo-guidelines" aria-labelledby="pride-guidelines-title">
-      <h2 id="pride-guidelines-title">Ilmoita Pride-mielenosoitus</h2>
-      <ol>
-        <li><a href={config.urls.submit}>Avaa ilmoituslomake</a>. Kerro tapahtuman nimi, ajankohta, paikka ja kuvaus.</li>
-        <li>Lisää tageihin pride, jotta tapahtuma löytyy tältä sivulta.</li>
-        <li>Tarkista tiedot ja lähetä ilmoitus. Ilmoitukset tarkistetaan ennen julkaisua.</li>
-      </ol>
-      <p>Ilmoitus ei saa sisältää syrjintää tai vihapuhetta. <a href="/terms">Lue käyttöehdot</a>.</p>
-    </section>
+    <PrideDetails submitUrl={config.urls.submit} />
   </div>;
 }

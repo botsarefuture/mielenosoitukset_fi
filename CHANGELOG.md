@@ -5,7 +5,8 @@
 ## UNRELEASED
 
 - Move the about, organizer guides, privacy notice, terms and translation project pages to the standalone React host. Render the content on the first response, preserve guide and terms anchors, and keep translator signup and email delivery in Flask.
-- Move the Pride page (`/pride-nakyvaksi`, `/pride`) to the standalone React host. The map and the event list read the public Go API, the page keeps its sections and canonical address, and the first events are listed without JavaScript.
+- Move the Pride page (`/pride-nakyvaksi`, `/pride`) to the standalone React host. The map and the event list read the public Go API, the page keeps its sections and canonical address, and without JavaScript the page lists events with paging, background and submission instructions. Direct links to its sections scroll to them.
+- Show the date format as `pp.kk.vvvv` in the date filters of the React listings.
 
 - Let enrolled god nominees activate after valid god-chamber or second-round approval even when the decision contains fewer than two board votes. Keep ordinary national-admin approvals separate.
 

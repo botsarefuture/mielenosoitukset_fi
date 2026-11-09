@@ -23,7 +23,7 @@ import { calendarPlace, dateForDay, loadCalendar, monthName, monthPath, selected
 import { CalendarFallback } from './CalendarFallback';
 import type { CalendarBootstrap } from './calendar';
 import type { HomeData } from '../pages/HomePage';
-import { prideCopy, prideRoute } from './PrideScreen';
+import { PrideDetails, prideCopy, prideRoute } from './PrideScreen';
 import { routeForPath, routeMeta } from './routes';
 import type { RouteMeta } from './routes';
 import { fetchSession } from './session-server';
@@ -502,17 +502,36 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       canonical: `${config.origin}${config.urls.pride}`, robots: input.search ? 'noindex, follow' : 'index, follow' };
     extraHead = '<link rel="stylesheet" href="/static/vendor/flatpickr/4.6.13/flatpickr.min.css">'
       + '<link rel="stylesheet" href="/static/leaflet/leaflet.css">'
-      + '<link rel="stylesheet" href="/static/css/pride.css?v=20261028-pride-1">'
+      + '<link rel="stylesheet" href="/static/css/pride.css?v=20261109-pride-noscript-1">'
       + '<script src="/static/leaflet/leaflet.js" defer></script>'
       + (assets.pride ?? '');
-    noscript = `<noscript><article class="container-main-content"><h1>${escapeHtml(prideCopy.title)}</h1>`
-      + `<p>${escapeHtml(prideCopy.lead)}</p><ul>`
-      + todayItems(config, listing.page).map((item, index) => {
-        const event = listing?.page?.results[index];
+    const prideProps = listingProps(prideRoute, config, session);
+    const pridePage = listing.page;
+    const pageLink = (page: number) => {
+      const params = new URLSearchParams(input.search ?? '');
+      params.set('page', String(page));
+      return `${config.urls.pride}?${params}#demos`;
+    };
+    const pager = [
+      pridePage && pridePage.page > 1 ? `<a href="${escapeHtml(pageLink(pridePage.page - 1))}">${escapeHtml(prideProps.messages.previous)}</a>` : '',
+      pridePage && pridePage.page < pridePage.total_pages ? `<a href="${escapeHtml(pageLink(pridePage.page + 1))}">${escapeHtml(prideProps.messages.loadMore)}</a>` : '',
+    ].filter(Boolean).join(' · ');
+    noscript = `<noscript><article class="container-main-content pride-noscript"><h1>${escapeHtml(prideCopy.title)}</h1>`
+      + `<p>${escapeHtml(prideCopy.lead)}</p><section id="demos"><h2>Pride-mielenosoitukset</h2>`
+      + (pridePage?.total
+        ? `<p>${escapeHtml(prideProps.messages.summary.replace('__START__', String(pridePage.result_start))
+          .replace('__END__', String(pridePage.result_end)).replace('__COUNT__', String(pridePage.total)))}</p>`
+        : `<p>${escapeHtml(prideCopy.empty)}</p>`)
+      + '<ul>'
+      + todayItems(config, pridePage).map((item, index) => {
+        const event = pridePage?.results[index];
         const details = [event?.cancelled ? 'Peruttu' : '', event?.date_display ?? event?.date, event?.city].filter(Boolean).join(' · ');
         return `<li><a href="${escapeHtml(item.url)}">${escapeHtml(item.name)}</a> ${escapeHtml(details)}</li>`;
       }).join('')
-      + `</ul><a href="${escapeHtml(config.urls.submit)}">Ilmoita mielenosoitus</a></article></noscript>`;
+      + `</ul>${pager ? `<p class="pride-noscript__links">${pager}</p>` : ''}`
+      + `<p class="pride-noscript__links"><a href="${escapeHtml(prideProps.rssUrl!)}">RSS</a> · <a href="/demonstrations">Kaikki mielenosoitukset</a></p></section>`
+      + renderToStaticMarkup(<PrideDetails submitUrl={config.urls.submit} />)
+      + '</article></noscript>';
   }
   if (route.name === 'organization') {
     const loaded = await organizationRead!;

@@ -184,3 +184,9 @@
 @media (prefers-reduced-motion: reduce) {
   .pride-page * { scroll-behavior: auto; transition: none; }
 }
+.pride-noscript { box-sizing: border-box; max-width: 72rem; margin-inline: auto; padding-inline: 1rem; color: var(--product-text); }
+.pride-noscript ul { padding: 0; list-style: none; }
+.pride-noscript li { padding-block: .35rem; }
+.pride-noscript a { color: var(--product-primary); }
+.pride-noscript h1, .pride-noscript h2 { color: var(--product-text); text-align: left; }
+.pride-noscript ul a, .pride-noscript__links a { display: inline-block; min-height: 44px; padding-block: .6rem; }

@@ -28,6 +28,18 @@ html.light {
   display: none;
 }
 
+/* A quiet tinted action: the list continues, it is not the page's main call to action. */
+#load-more-btn.load-more {
+  background: var(--product-primary-soft);
+  color: var(--product-primary);
+  box-shadow: none;
+}
+
+#load-more-btn.load-more:hover {
+  background: var(--product-action-hover);
+  color: var(--product-on-action);
+}
+
 .public-date-calendar {
   background: var(--product-surface); color: var(--product-text);
   border: 1px solid var(--product-border); box-shadow: var(--product-shadow);
@@ -334,7 +346,7 @@ h1 {
 .public-page-header__description {
   max-width: 42rem;
   margin: 0.85rem 0 0;
-  color: color-mix(in srgb, var(--product-on-action) 86%, transparent);
+  color: var(--product-on-action);
   font-size: 1rem;
   line-height: 1.65;
 }
@@ -1140,6 +1152,13 @@ h1 {
   margin-bottom: 1.5rem;
 }
 
+.no-results-action {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
 .no-results-action .button {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
@@ -1215,7 +1234,7 @@ h1 {
 }
 
 .demo-table-tag:hover {
-  background: var(--product-primary);
+  background: var(--product-action-bg);
   color: var(--product-on-action);
 }
 
@@ -1339,7 +1358,7 @@ h1 {
 
 .demo-card-tag:hover,
 .demo-table-tag:hover {
-  background: var(--product-primary);
+  background: var(--product-action-bg);
   color: var(--product-on-action);
 }
 
@@ -1518,6 +1537,10 @@ h1 {
   transition: transform 0.2s, color 0.2s;
 }
 
+.demo-card-no-friends .invite-text {
+  color: var(--product-primary);
+}
+
 .demo-card-no-friends .login-prompt {
   text-align: center;
 }
@@ -1526,7 +1549,7 @@ h1 {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--product-primary);
+  background: var(--product-action-bg);
   color: var(--product-on-action);
   display: flex;
   align-items: center;
@@ -1791,7 +1814,7 @@ h1 {
 
 .notif-badge {
   background: var(--product-danger);
-  color: var(--product-on-action);
+  color: light-dark(var(--product-on-action), var(--product-surface));
   font-size: 0.7rem;
   font-weight: 800;
   line-height: 1;

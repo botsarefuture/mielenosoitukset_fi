@@ -113,6 +113,11 @@ def cast_vote(db, candidate_id, voter_id, kind, approve):
     for _ in range(8):
         record = db.board_clearances.find_one({"user_id": candidate})
         previous = request_state(record, kind)
+        if (kind == "national" and previous.get("approved")
+                and previous.get("source") in {"unanimous_god_appointment", "god_appointment_consent"}):
+            # A routine board vote must not replace the appointment evidence
+            # used to authorize the nominee at and after activation.
+            return previous
         if previous.get("approved") and kind == "board":
             if not approve:
                 raise GovernanceConflict("Hallituksen jäsenyyttä ei poisteta yksittäisellä äänellä.")

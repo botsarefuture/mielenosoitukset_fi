@@ -61,12 +61,13 @@ owner installed the two TOTP secrets on physically independent devices. The owne
 must do so. Do not enroll or select passwords on the owner's behalf.
 
 Enrollment never logs the candidate in. Activation requires both completed
-enrollment and unanimous appointment consent from all existing super admins,
-board members and god accounts, in either order. Overlapping roles count as one
-distinct account, and the candidate cannot vote for itself. The first appointment
-has no existing god voters, but still requires all super admins and board members,
-including the existing minimum of two board approvals. Inactive or banned
-approvers remain in the roster; disabling accounts must not shrink the quorum.
+enrollment and appointment consent, in either order. The whole board or all
+existing god accounts can nominate. The other chamber then has 48 hours to veto.
+A veto starts a second round requiring at least 75% of the combined electorate,
+rounded up and with a minimum of two votes. Overlapping roles count as one
+account, and the nominee cannot vote. The first appointment needs the whole
+board, with at least two board members. Ordinary super admins are outside this
+electorate. Inactive or banned approvers remain on the roster.
 God voters must complete a fresh full login within five minutes. Membership or
 role changes start a new approval request without inherited votes. Activation
 rechecks the live roster, so old consent cannot authorize a changed electorate.
@@ -98,14 +99,10 @@ human approval. Disabling a board member's account never shrinks the board roste
 
 ## Provisioning and rollback
 
-Emergency appointment is not enabled by the ordinary joint-override endpoint.
-The maintainer's chosen rule is either:
-
-- two distinct current board members approve the named request, or
-- a registered USB-key signature is supplied together with a fresh complete god
-  login (receipt at most five minutes old).
-
-Neither branch may bypass the nominee's security enrollment. Each request binds
+Emergency appointment requires a registered USB-key signature together with a
+fresh complete god login (receipt at most five minutes old). Start the request
+through the panel. The ordinary appointment workflow runs on the site without
+the panel or USB key. Security enrollment is mandatory. Each emergency request binds
 the target account, credential version, current board roster, reason and a
 single-use challenge to a fifteen-minute expiry. A roster, credential or expiry
 change invalidates the request. The panel only signs a launch ticket; it never

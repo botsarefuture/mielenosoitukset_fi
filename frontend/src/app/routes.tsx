@@ -23,6 +23,7 @@ export type AppRoute =
   | { name: 'pride' }
   | { name: 'information'; page: InformationPage }
   | { name: 'campaign' }
+  | { name: 'fundraising' }
   | { name: 'cities' }
   | { name: 'calendar' | 'calendar-year'; year: number; month: number; city?: string }
   | { name: 'today'; value?: string }
@@ -61,6 +62,7 @@ export function routeForPath(path: string): AppRoute | null {
   if (informationPage) return { name: 'information', page: informationPage };
   if (path === '/auth/god') return { name: 'god-auth' };
   if (path === campaignPath) return { name: 'campaign' };
+  if (path === '/keräys' || path === '/ker%C3%A4ys' || path === '/ker%c3%a4ys') return { name: 'fundraising' };
   const calendar = /^\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
   const scoped = /^\/city\/([^/]+)\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
   if (calendar || scoped) {
@@ -116,6 +118,11 @@ export function routeMeta(route: AppRoute, config: AppConfig, text: Catalog): Ro
     const { path, title, description } = informationPages[route.page];
     return { title: `${title} | Mielenosoitukset.fi`, description,
       robots: 'index, follow', canonical: config.origin + path };
+  }
+  if (route.name === 'fundraising') {
+    return { title: 'Pienkeräys – Mielenosoitukset.fi',
+      description: 'Suunnittelemme 2 500 euron pienkeräystä, jotta yhä useampi löytäisi mielenosoitukset.fi-palvelun. Tutustu suunnitelmaan.',
+      robots: 'index, follow', canonical: `${config.origin}/ker%C3%A4ys` };
   }
   if (route.name === 'campaign') {
     return { title: campaignCopy.title, description: campaignCopy.description,

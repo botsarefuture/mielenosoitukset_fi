@@ -25,6 +25,9 @@ import type { CalendarBootstrap } from './calendar';
 import type { HomeData } from '../pages/HomePage';
 import { PrideDetails, prideCopy, prideRoute } from './PrideScreen';
 import CampaignScreen from './CampaignScreen';
+import FundraisingScreen from './FundraisingScreen';
+import { helsinkiToday } from './fundraising';
+export { fundraisingDetails } from './fundraising';
 import { campaignPath, loadCampaignPublication } from './campaign-route';
 import { routeForPath, routeMeta } from './routes';
 import type { RouteMeta } from './routes';
@@ -61,7 +64,7 @@ export type RenderInput = {
   headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; pride?: string; information?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; pride?: string; information?: string };
 
 export type RenderResult = {
   status: number;
@@ -295,6 +298,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   const headers: Record<string, string | string[]> = {};
   if (responseCookies.length) headers['Set-Cookie'] = responseCookies;
   let appMarkup = '';
+  let today: string | undefined;
   if (route.name === 'information') {
     extraHead = assets.information ?? '';
     if (route.page === 'guides') {
@@ -305,11 +309,12 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       serverPage={<InformationScreen page={route.page} session={session} />} />);
   }
 
-  if (route.name === 'campaign') {
+  if (route.name === 'campaign' || route.name === 'fundraising') {
     // The Flask gate: signed-in preview until the campaign is published.
     const published = await loadCampaignPublication(readBase);
+    const gatedPath = route.name === 'campaign' ? campaignPath : config.urls.fundraising;
     if (!published && !session.authenticated) {
-      return { status: 302, html: '', redirect: `${config.urls.login}?next=${encodeURIComponent(campaignPath)}`,
+      return { status: 302, html: '', redirect: `${config.urls.login}?next=${encodeURIComponent(gatedPath)}`,
         headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } };
     }
     headers['Cache-Control'] = 'private, no-store';
@@ -317,12 +322,23 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       headers['X-Robots-Tag'] = 'noindex, nofollow';
       meta = { ...meta, robots: 'noindex, nofollow' };
     }
-    extraHead = (assets.campaign ?? '')
-      + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261027-campaign-refresh-2">';
-    noscript = '<noscript><p class="container-main-content">Sivu toimii parhaiten, kun JavaScript on käytössä. '
-      + 'Ilmoittautuminen ja uutiskirjeen tilaus tarvitsevat sen.</p></noscript>';
-    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
-      serverPage={<CampaignScreen config={config} />} />);
+    if (route.name === 'campaign') {
+      extraHead = (assets.campaign ?? '')
+        + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261027-campaign-refresh-2">';
+      noscript = '<noscript><p class="container-main-content">Sivu toimii parhaiten, kun JavaScript on käytössä. '
+        + 'Ilmoittautuminen ja uutiskirjeen tilaus tarvitsevat sen.</p></noscript>';
+      appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+        serverPage={<CampaignScreen config={config} />} />);
+    } else {
+      today = helsinkiToday();
+      extraHead = (assets.fundraising ?? '')
+        + '<link rel="stylesheet" href="/static/css/public-content.css?v=20261026-fundraising-2">'
+        + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261027-campaign-refresh-2">';
+      // The whole page is in the server-rendered document; no fallback is needed.
+      noscript = '';
+      appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+        serverPage={<FundraisingScreen config={config} today={today} />} />);
+    }
   }
 
   if (route.name === 'god-auth') {
@@ -588,7 +604,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       + `<a href="/demonstrations">Kaikki mielenosoitukset</a></article></noscript>`;
   }
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
-  const bootstrap = serialize({ config, session, path: input.path, route,
+  const bootstrap = serialize({ config, session, path: input.path, route, ...(today ? { today } : {}),
     ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}),
     ...(listing ? { listing } : {}), ...(organization ? { organization } : {}), ...(cities !== undefined ? { cities } : {}),
     ...(submission ? { submission } : {}), ...(calendar ? { calendar } : {}) });

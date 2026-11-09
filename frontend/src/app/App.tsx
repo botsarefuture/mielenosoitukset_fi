@@ -47,6 +47,8 @@ export type AppProps = {
   calendar?: CalendarBootstrap;
   /** A page rendered on the server and hydrated, such as the information pages. */
   serverPage?: ReactNode;
+  /** Helsinki date the server used for the fundraising page, so hydration matches. */
+  today?: string;
 };
 
 function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<typeof catalog>): CardProps {
@@ -64,7 +66,7 @@ function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<
 export function App({ config, session, route, path, detail, series, home, listing, organization, cities, submission, calendar, serverPage }: AppProps) {
   const text = catalog(config.locale);
   return <>
-    <SiteHeader {...headerProps(config, session, text, path)} hydrating={route.name === 'information' || route.name === 'campaign'} />
+    <SiteHeader {...headerProps(config, session, text, path)} hydrating={route.name === 'information' || route.name === 'campaign' || route.name === 'fundraising'} />
     <main className={`container-main-content ${route.name === 'submit' ? 'submit-workspace' : route.name === 'detail' || route.name === 'series' ? 'public-detail-main' : 'public-layout-wide'}`} id="main-content" tabIndex={-1}>
       {serverPage}
       {route.name === 'god-auth' && <Suspense fallback={<p role="status">Ladataan kirjautumista...</p>}><GodScreen /></Suspense>}

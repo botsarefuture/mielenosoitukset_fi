@@ -37,6 +37,8 @@ another independent review. Missing browser/screenshots/reviewer means
 **BLOCKED**, never an implied pass. Keep existing relevant tests; do not add a
 second CI suite or run the full suite just to perform this visual review.
 
+Branch, PR, review and approval routines are in [docs/development-workflow.md](docs/development-workflow.md); follow it in every session.
+
 Sticking to these steps keeps the project history readable and prevents surprises for maintainers. Thanks! 🚀
 
 ## Modernization direction

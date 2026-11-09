@@ -79,6 +79,9 @@ done, in progress and left (the roadmap inventory plus open PRs is enough).
   second use for it.
 - Use few headings, cards, badges and icons. Prefer plain, specific Finnish copy to
   generic marketing wording. Avoid em dashes in user-facing text.
+- No hero eyebrows: the small pill or uppercase label above a page title (for example
+  "Ohjekeskus" on the guide hero) only repeats the title. Section labels that tell the
+  reader where they are in a sequence, such as "01 Aloita tästä", are fine.
 - Strings: reuse existing msgids; leave `en` and `sv` text to the human translators.
 - Verification for any rendered change follows `docs/visual-qa.md`: real captures at
   390px and 1440px in light and dark, reviewed by a separate reviewer. The implementer

@@ -64,7 +64,8 @@ def clearance_approved(db, user_id):
 
 
 def clearance_record_approved(record):
-    emergency = ((record.get("team_requests") or {}).get("god_emergency") or {})
+    requests = record.get("team_requests") or {}
+    emergency = requests.get("god_emergency") or {}
     if (record.get("approved") is True and emergency.get("approved") is True
             and emergency.get("method") == "usb_and_god"
             and emergency.get("id") == record.get("god_appointment_emergency_id")
@@ -75,6 +76,16 @@ def clearance_record_approved(record):
         # workflow. It is not a second fictitious board member or a generic
         # override of national-admin membership rules.
         return True
+    appointment = requests.get("god") or {}
+    national = requests.get("national") or {}
+    roster = appointment.get("roster") or {}
+    if (record.get("approved") is True and national.get("approved") is True
+            and appointment.get("id") and appointment["id"] == national.get("id")
+            and national.get("source") in {"unanimous_god_appointment", "god_appointment_consent"}):
+        from mielenosoitukset_fi.utils.god_appointments import consent_approved, required_voters
+        if (str(record.get("user_id")) not in required_voters(roster)
+                and consent_approved(appointment, roster)):
+            return True
     approvals = record.get("approvals") or {}
     if not isinstance(approvals, dict):
         return False

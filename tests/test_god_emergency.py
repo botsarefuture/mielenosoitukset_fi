@@ -9,8 +9,11 @@ import pytest
 from werkzeug.security import generate_password_hash
 
 from mielenosoitukset_fi.users import god_auth
+from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.utils.emergency_signatures import PANEL_DOMAIN, public_key_id, sign
+from mielenosoitukset_fi.utils.god_appointments import advance_appointment, cast_appointment_vote
 from mielenosoitukset_fi.utils.god_emergency import open_request
+from mielenosoitukset_fi.utils.team_governance import cast_vote
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from tests.conftest import _client_for_user, _user_doc
 from tests.test_system_teams import teams
@@ -44,6 +47,27 @@ def api(app, uid, candidate):
         return client.post(f'/board/api/clearance/{candidate}', json={'kind': 'god_emergency', 'command': action, **fields},
                            headers={'X-CSRF-Token': 'emergency-qa'})
     return client, command
+
+
+def test_god_chamber_can_activate_enrolled_candidate_without_board_votes(app, db, emergency, god, monkeypatch):
+    monkeypatch.setattr(god_auth, "valid_god_session", lambda *args, **kwargs: True)
+    candidate = emergency["candidate"]
+    with app.test_request_context():
+        state = cast_appointment_vote(db, candidate, User.from_OID(god["id"]), True)
+        assert state["phase"] == "window"
+        assert not god_auth.eligible(db, db.users.find_one({"_id": candidate}))
+
+        db.board_clearances.update_one({"user_id": str(candidate)}, {"$set": {
+            "team_requests.god.window_ends_at": utcnow() - timedelta(seconds=1),
+        }})
+        assert advance_appointment(db, candidate)["approved"]
+        assert god_auth.eligible(db, db.users.find_one({"_id": candidate}))
+        assert db.board_clearances.find_one({"user_id": str(candidate)})["approvals"] == {}
+
+        # A board member using the ordinary national approval control cannot
+        # overwrite the completed god appointment.
+        cast_vote(db, candidate, emergency["admin_id"], "national", True)
+        assert god_auth.eligible(db, db.users.find_one({"_id": candidate}))
 
 
 def test_board_votes_cannot_bypass_normal_god_appointment(app, db, emergency, god):

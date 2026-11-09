@@ -37,6 +37,22 @@ another independent review. Missing browser/screenshots/reviewer means
 **BLOCKED**, never an implied pass. Keep existing relevant tests; do not add a
 second CI suite or run the full suite just to perform this visual review.
 
+### No-JavaScript fallbacks
+
+Maintainer decision, 9 November 2026: most visitors use the JavaScript page, so
+the `<noscript>` fallback of a public React route stays deliberately light and
+is not part of visual acceptance.
+
+- Keep what crawlers, link previews and failed script loads need: the page title
+  and lead, the event links with paging, and a link to all demonstrations. Keep
+  the canonical URL and metadata on the server-rendered document.
+- Start the fallback with the short notice that the page works best with
+  JavaScript. Do not add background sections, layout polish or page-specific
+  styling to it.
+- Check fallbacks with automated assertions such as
+  `scripts/verify_public_host.mjs`, not with screenshots or a reviewer SHIP. A
+  change that only touches `<noscript>` output needs no visual review.
+
 Branch, PR, review and approval routines are in [docs/development-workflow.md](docs/development-workflow.md); follow it in every session.
 
 Sticking to these steps keeps the project history readable and prevents surprises for maintainers. Thanks! 🚀

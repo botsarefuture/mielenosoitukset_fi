@@ -778,6 +778,29 @@ try {
   assert.equal((await get('/health')).status, 200, 'Health stays available during a lockdown');
   assert.notEqual((await get('/auth/god')).status, 503, 'God login stays reachable during a lockdown');
   console.log('PASS: public lockdown returns 503 with Retry-After and keeps health and god login reachable');
+  {
+    const { availabilityReader, AVAILABILITY_GRACE_MS } = await import(pathToFileURL(`${root}/frontend/public-availability.mjs`));
+    let clock = 1_000_000;
+    let reply = 'error';
+    const fetcher = async () => {
+      if (reply === 'error') throw new Error('connection refused');
+      if (reply === 'http-503') return new Response('{}', { status: 503 });
+      return new Response(JSON.stringify({ available: reply === 'open' }), { status: 200 });
+    };
+    const read = availabilityReader('http://api.test/api', fetcher, () => clock);
+    const step = async (next, ms = 2000) => { reply = next; clock += ms; return read(); };
+    assert.equal(await step('error'), false, 'A fresh host without an answer fails closed');
+    assert.equal(await step('open'), true);
+    assert.equal(await step('error'), true, 'A failed read within the grace period keeps the last open answer');
+    assert.equal(await step('http-503'), true, 'An HTTP error is a failed read, not a lockdown');
+    assert.equal(await step('error', AVAILABILITY_GRACE_MS), false, 'A failure outlasting the grace period fails closed');
+    assert.equal(await step('open'), true);
+    assert.equal(await step('locked'), false, 'An explicit lockdown applies at once');
+    assert.equal(await step('error'), false, 'A failed read after a lockdown does not reopen the site');
+    reply = 'open';
+    assert.equal(await read(), false, 'Answers are reused for one second');
+  }
+  console.log('PASS: availability reads ride out brief failures for 30 s but apply a lockdown at once and fail closed without an answer');
   console.log('PASS: malformed URL, directory and traversal requests return 404 without crashing; real asset GET/HEAD and immutable caching');
   console.log('PASS: the HTTP server sends detail metadata, the robots header and the preview redirect');
 } finally {

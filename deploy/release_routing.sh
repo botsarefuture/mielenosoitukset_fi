@@ -29,6 +29,18 @@ host_marker=/app-assets/
 }
 log() { printf 'release_routing: %s\n' "$*"; }
 
+# retry ATTEMPTS DELAY COMMAND...: a page can answer 503 for a moment while a
+# freshly restarted Go API warms up. A real failure fails every attempt.
+retry() {
+  local attempts=$1 delay=$2 try
+  shift 2
+  for ((try = 1; try <= attempts; try++)); do
+    "$@" && return 0
+    ((try < attempts)) && sleep "$delay"
+  done
+  return 1
+}
+
 [[ -f $reviewed ]] || { log "missing $reviewed"; exit 1; }
 [[ -f $vhost ]] || { log "missing vhost $vhost"; exit 1; }
 [[ -f $include ]] || {
@@ -139,8 +151,8 @@ probe_public() {
 }
 
 for path in "${routed_paths[@]}"; do
-  probe_origin "$path"
-  probe_public "$path"
+  retry 3 2 probe_origin "$path"
+  retry 3 2 probe_public "$path"
 done
 
 trap - EXIT

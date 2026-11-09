@@ -17,6 +17,7 @@ export type AppRoute =
   | { name: 'home' }
   | { name: 'submit' }
   | { name: 'god-auth' }
+  | { name: 'pride' }
   | { name: 'cities' }
   | { name: 'calendar' | 'calendar-year'; year: number; month: number; city?: string }
   | { name: 'today'; value?: string }
@@ -66,6 +67,7 @@ export function routeForPath(path: string): AppRoute | null {
     return { name: month ? 'calendar' : 'calendar-year', year, month, ...(city ? { city: city.key } : {}) };
   }
   if (path === '/submit') return { name: 'submit' };
+  if (path === '/pride-nakyvaksi' || path === '/pride' || path === '/pride/') return { name: 'pride' };
   if (path === '/cities') return { name: 'cities' };
   if (path === '/mielenosoitukset-tanaan') return { name: 'today' };
   const today = /^\/city\/([^/]+)\/tanaan$/.exec(path);

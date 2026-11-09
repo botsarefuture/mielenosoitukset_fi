@@ -26,6 +26,7 @@ const SubmitScreen = lazy(() => import('./SubmitScreen'));
 const CalendarScreen = lazy(() => import('./CalendarScreen'));
 const YearCalendarScreen = lazy(() => import('./YearCalendarScreen'));
 const GodScreen = lazy(() => import('./GodScreen'));
+const PrideScreen = lazy(() => import('./PrideScreen'));
 
 export type AppProps = {
   config: AppConfig;
@@ -80,6 +81,9 @@ export function App({ config, session, route, path, detail, series, home, listin
       </Suspense>}
       {route.name === 'organization' && organization && <Suspense fallback={<p role="status">Ladataan organisaatiota...</p>}>
         <OrganizationScreen key={path} organization={organization} config={config} session={session} />
+      </Suspense>}
+      {route.name === 'pride' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia...</p>}>
+        <PrideScreen config={config} session={session} listing={listing} />
       </Suspense>}
       {route.name === 'listing' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia...</p>}>
         <ListingScreen key={path} route={route} config={config} session={session} listing={listing} />

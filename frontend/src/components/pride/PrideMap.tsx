@@ -124,7 +124,7 @@ export function PrideMap(props: PrideMapProps) {
         const events = new Map<string, Demonstration>();
         let pages = 1;
         for (let pageNumber = 1; pageNumber <= pages; pageNumber++) {
-          const query = new URLSearchParams({ tag: props.tag, page: String(pageNumber), per_page: '100', lang: props.locale, scope: 'pride_map' });
+          const query = new URLSearchParams({ tag: props.tag, page: String(pageNumber), per_page: '100', lang: props.locale });
           const response = await fetch(`${props.endpoint}?${query}`, { signal, credentials: 'same-origin', headers: { Accept: 'application/json' } });
           if (!response.ok || response.redirected) throw new Error('Pride map request failed');
           const page = parsePage(await response.json(), pageNumber);

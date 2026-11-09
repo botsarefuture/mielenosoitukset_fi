@@ -21,6 +21,7 @@ import { calendarPlace, dateForDay, loadCalendar, monthName, monthPath, selected
 import { CalendarFallback } from './CalendarFallback';
 import type { CalendarBootstrap } from './calendar';
 import type { HomeData } from '../pages/HomePage';
+import { prideCopy, prideRoute } from './PrideScreen';
 import { routeForPath, routeMeta } from './routes';
 import type { RouteMeta } from './routes';
 import { fetchSession } from './session-server';
@@ -54,7 +55,7 @@ export type RenderInput = {
   publicUnavailable?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; pride?: string };
 
 export type RenderResult = {
   status: number;
@@ -470,6 +471,25 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       + (assets.listing ?? '');
     noscript = `<noscript><p class="container-main-content">Lista avautuu JavaScriptillä. `
       + `<a href="${escapeHtml(props.rssUrl!)}">RSS</a> · <a href="/calendar/">Kalenteri</a></p></noscript>`;
+  }
+  if (route.name === 'pride') {
+    const query = listingQuery(prideRoute, input.search ?? '', config.locale);
+    listing = { query: input.search ?? '', page: await loadListingPage(readBase, query) };
+    meta = { title: `${prideCopy.title} | Mielenosoitukset.fi`, description: prideCopy.lead,
+      canonical: `${config.origin}${config.urls.pride}`, robots: input.search ? 'noindex, follow' : 'index, follow' };
+    extraHead = '<link rel="stylesheet" href="/static/vendor/flatpickr/4.6.13/flatpickr.min.css">'
+      + '<link rel="stylesheet" href="/static/leaflet/leaflet.css">'
+      + '<link rel="stylesheet" href="/static/css/pride.css?v=20261028-pride-1">'
+      + '<script src="/static/leaflet/leaflet.js" defer></script>'
+      + (assets.pride ?? '');
+    noscript = `<noscript><article class="container-main-content"><h1>${escapeHtml(prideCopy.title)}</h1>`
+      + `<p>${escapeHtml(prideCopy.lead)}</p><ul>`
+      + todayItems(config, listing.page).map((item, index) => {
+        const event = listing?.page?.results[index];
+        const details = [event?.cancelled ? 'Peruttu' : '', event?.date_display ?? event?.date, event?.city].filter(Boolean).join(' · ');
+        return `<li><a href="${escapeHtml(item.url)}">${escapeHtml(item.name)}</a> ${escapeHtml(details)}</li>`;
+      }).join('')
+      + `</ul><a href="${escapeHtml(config.urls.submit)}">Ilmoita mielenosoitus</a></article></noscript>`;
   }
   if (route.name === 'organization') {
     const loaded = await organizationRead!;

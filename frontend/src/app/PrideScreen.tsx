@@ -96,7 +96,13 @@ export default function PrideScreen({ config, session, listing }: {
     <section id="demos" aria-labelledby="listing-title">
       <PublicListingPage {...props} title="Pride-mielenosoitukset" headingLevel={2}
         messages={{ ...props.messages, empty: prideCopy.empty }}
-        initialData={listing?.page ?? undefined} initialSearch={listing?.query} />
+        initialData={listing?.page ?? undefined} initialSearch={listing?.query}
+        onSearch={search => {
+          if (!session.siteAnalyticsEnabled || navigator.doNotTrack === '1') return;
+          try { navigator.sendBeacon('/api/analytics/event', new Blob([
+            JSON.stringify({ event: 'demo_search', resource_id: search.slice(0, 120) }),
+          ], { type: 'application/json' })); } catch { /* Optional analytics. */ }
+        }} />
     </section>
 
     <PrideDetails submitUrl={config.urls.submit} />

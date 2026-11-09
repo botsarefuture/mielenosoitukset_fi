@@ -51,23 +51,30 @@ def _blank(previous, roster, request_id):
             "updated_at": utcnow()}
 
 
+def consent_approved(state, roster):
+    """Validate the outcome against either the live or recorded electorate."""
+    if (len(set(roster.get("board") or [])) < 2 or state.get("roster") != roster
+            or state.get("approved") is not True or state.get("window_ends_at") is not None):
+        return False
+    votes = set(state.get("votes") or {})
+    nominating = set(roster.get(state.get("chamber")) or [])
+    if state.get("method") == "unanimous" and state.get("phase") == "collecting":
+        return bool(nominating) and nominating.issubset(votes) and not state.get("vetoes")
+    if state.get("method") == "supermajority" and state.get("phase") == "second_round":
+        return len(votes & required_voters(roster)) >= supermajority(roster)
+    return False
+
+
 def appointment_approved(db, candidate_id):
     advance_appointment(db, candidate_id)
     record = db.board_clearances.find_one({"user_id": str(candidate_id)}) or {}
     state = (record.get("team_requests") or {}).get("god") or {}
-    roster = appointment_roster(db, candidate_id)
-    # Ordinary super admins do not participate. A changed electorate never
-    # inherits old votes, and disabling an approver never lowers the threshold.
-    if len(roster["board"]) < 2 or state.get("roster") != roster or state.get("approved") is not True:
-        from mielenosoitukset_fi.utils.god_emergency import approved_for_activation
-        return approved_for_activation(db, candidate_id)
-    votes = set(state.get("votes") or {})
-    nominating = set(roster.get(state.get("chamber")) or [])
-    if state.get("method") == "unanimous":
-        return bool(nominating) and nominating.issubset(votes) and not state.get("vetoes")
-    if state.get("method") == "supermajority":
-        return len(votes & required_voters(roster)) >= supermajority(roster)
-    return False
+    # Activation rechecks the live roster. Completed grants retain the roster
+    # that approved them, since activation itself changes the god roster.
+    if consent_approved(state, appointment_roster(db, candidate_id)):
+        return True
+    from mielenosoitukset_fi.utils.god_emergency import approved_for_activation
+    return approved_for_activation(db, candidate_id)
 
 
 def can_vote(db, user, candidate_id):

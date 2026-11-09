@@ -6,14 +6,13 @@ Work moved from the cloud session to a local Claude Code session on 9 November 2
 ## Waiting for you
 
 - **Panel host root password (pasted in a Codex thread on Nov 3) must be rotated.** Not used, not touched.
-- **#1047 fundraising page:** independent SHIP; needs your merge approval. Merging routes `/keräys` to the React host.
 - **#1040 content, now live:** the /info and translation stat tiles were removed, some sentences shortened, and the /info campaign block is a plain fourth card instead of the orange promo. Keep, or restore?
 - **#1040 session endpoint, now live:** `/api/session?translation_join=1` returns the session-bound join nonce and flash messages. Not new auth, but it touches the session endpoint.
 - **Contact and report forms:** see "Proposal: remaining public pages".
 
 ## Done on 9 November
 
-- Merged and live: #1040 information pages, #1042 style.css cleanup, #1043 Pride, #1044 no-JS policy, #1045 contrast and listing states, #1046 campaign page.
+- Merged and live: #1040 information pages, #1042 style.css cleanup, #1043 Pride, #1044 no-JS policy, #1045 contrast and listing states, #1046 campaign page, #1047 fundraising page.
 - No-JS policy (your decision): fallbacks stay light, are checked by assertions, and get no visual review.
 
 ## Proposal: remaining public pages

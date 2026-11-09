@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Move the volunteer campaign page (`/kampanja/`) to the standalone React host. It keeps the same content, signup and newsletter forms, and the same publication gate: until the campaign is published only signed-in users see a non-indexed preview. A new read-only Go endpoint reports the publication state.
 - Move the about, organizer guides, privacy notice, terms and translation project pages to the standalone React host. Render the content on the first response, preserve guide and terms anchors, and keep translator signup and email delivery in Flask.
 - Move the Pride page (`/pride-nakyvaksi`, `/pride`) to the standalone React host. The map and the event list read the public Go API, the page keeps its sections and canonical address, and without JavaScript the page lists events with paging, background and submission instructions. Direct links to its sections scroll to them.
 - Show the date format as `pp.kk.vvvv` in the date filters of the React listings.

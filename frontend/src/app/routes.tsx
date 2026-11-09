@@ -4,6 +4,7 @@ import type { ListingRoute } from './listing';
 import { currentMonth } from './calendar';
 import { findCity } from './cities';
 import { informationPageForPath, informationPages } from './information';
+import { campaignCopy, campaignPath } from './campaign-route';
 import type { InformationPage } from './information';
 
 /**
@@ -21,6 +22,7 @@ export type AppRoute =
   | { name: 'god-auth' }
   | { name: 'pride' }
   | { name: 'information'; page: InformationPage }
+  | { name: 'campaign' }
   | { name: 'cities' }
   | { name: 'calendar' | 'calendar-year'; year: number; month: number; city?: string }
   | { name: 'today'; value?: string }
@@ -58,6 +60,7 @@ export function routeForPath(path: string): AppRoute | null {
   const informationPage = informationPageForPath(path);
   if (informationPage) return { name: 'information', page: informationPage };
   if (path === '/auth/god') return { name: 'god-auth' };
+  if (path === campaignPath) return { name: 'campaign' };
   const calendar = /^\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
   const scoped = /^\/city\/([^/]+)\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
   if (calendar || scoped) {
@@ -113,6 +116,10 @@ export function routeMeta(route: AppRoute, config: AppConfig, text: Catalog): Ro
     const { path, title, description } = informationPages[route.page];
     return { title: `${title} | Mielenosoitukset.fi`, description,
       robots: 'index, follow', canonical: config.origin + path };
+  }
+  if (route.name === 'campaign') {
+    return { title: campaignCopy.title, description: campaignCopy.description,
+      robots: 'index, follow', canonical: config.origin + campaignPath, image: config.origin + campaignCopy.image };
   }
   return {
     title: text.meta.title,

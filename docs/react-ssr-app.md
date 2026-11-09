@@ -47,6 +47,44 @@ continue to run. Deploy the Flask contract and app build before activating
 the reviewed Apache rules. Removing these rules restores the existing Flask
 pages.
 
+### Campaign page
+
+The Apache include routes GET/HEAD `/kampanja/` to Node. Flask keeps the
+`/kampanja` slash redirect, the volunteer signup
+`POST /kampanja/api/volunteers`, email confirmation `/kampanja/confirm/<token>`
+and the existing template as the rollback path. The page is the same
+`CampaignPage` component the Flask island used, now rendered on the server and
+hydrated; its Finnish copy and endpoints live in `frontend/src/app/campaign-route.ts`.
+
+The page has the same publication gate as Flask's `campaign_preview_required`:
+
+| Publication | Visitor | Response |
+| --- | --- | --- |
+| Not published | Anonymous | `302` to `/users/auth/login?next=%2Fkampanja%2F` |
+| Not published | Signed in | `200` preview with `X-Robots-Tag` and robots meta `noindex, nofollow` |
+| Published | Anyone | `200`, indexable |
+
+Every response is `private, no-store`, so a later return to private cannot be
+served from a cache.
+
+**Publication API.** `GET /api/campaign/publication` on the Go API returns
+`{"published": true|false}` with `Cache-Control: no-store`.
+- *Purpose:* lets the host apply the gate without a Flask route.
+- *Request:* no parameters. `GET` and `HEAD` only; other methods get `405`.
+- *Authentication and authorization:* none; it reveals only whether the page is
+  public, which the page itself shows to anyone once published.
+- *Database:* one read of `campaign_settings` `{_id: "public_pages"}`, at most
+  once a second per process, outside the response caches and Redis.
+- *Semantics:* only a stored boolean `true` counts, matching Flask. A missing
+  document, any other value, a failed read and the public lockdown (`503`)
+  all mean private, and the host treats any non-`200` or malformed reply the
+  same way.
+- *Replaces:* the `campaign_pages_public()` read for page GETs only. The Flask
+  signup API keeps its own gate.
+
+Deploy the Go API and the host before activating the Apache rule. Removing the
+rule restores the Flask page.
+
 ## Files
 
 - `frontend/src/app/detail-route.ts` — the detail and series head reads, occurrence

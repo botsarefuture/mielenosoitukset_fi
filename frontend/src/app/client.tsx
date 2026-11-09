@@ -23,7 +23,7 @@ function Root(props: Bootstrap) {
       }
       // Detail/series views keep their separate demonstration-view collection.
       const name = routeForPath(path)?.name;
-      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride', 'information'].includes(name)
+      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride', 'information', 'campaign'].includes(name)
         || !session.siteAnalyticsEnabled || tracked.current) return;
       tracked.current = true;
       try {
@@ -49,8 +49,12 @@ if (container) {
     const route = routeForPath(props.path);
     if (route?.name === 'information') {
       void import('./InformationScreen').then(({ default: InformationScreen }) => {
-        hydrateRoot(container, <Root {...props} information={<InformationScreen page={route.page} session={props.session} />} />);
+        hydrateRoot(container, <Root {...props} serverPage={<InformationScreen page={route.page} session={props.session} />} />);
       }).catch(error => console.error('Could not start information page controls', error));
+    } else if (route?.name === 'campaign') {
+      void import('./CampaignScreen').then(({ default: CampaignScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<CampaignScreen config={props.config} />} />);
+      }).catch(error => console.error('Could not start campaign page forms', error));
     } else {
       createRoot(container).render(<Root {...props} />);
     }

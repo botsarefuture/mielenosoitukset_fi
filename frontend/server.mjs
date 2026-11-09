@@ -71,6 +71,7 @@ function assetTags(manifest) {
     godAuth: routeAssets('src/app/GodScreen.tsx'),
     pride: routeAssets('src/app/PrideScreen.tsx'),
     information: routeAssets('src/app/InformationScreen.tsx'),
+    campaign: routeAssets('src/app/CampaignScreen.tsx'),
     head: [...css].map((file) => `<link rel="stylesheet" href="/app-assets/${file}">`)
       .concat([...modules].filter((file) => file.endsWith('.js'))
         .map((file) => `<link rel="modulepreload" href="/app-assets/${file}">`)).join('\n'),

@@ -24,6 +24,8 @@ import { CalendarFallback } from './CalendarFallback';
 import type { CalendarBootstrap } from './calendar';
 import type { HomeData } from '../pages/HomePage';
 import { PrideDetails, prideCopy, prideRoute } from './PrideScreen';
+import CampaignScreen from './CampaignScreen';
+import { campaignPath, loadCampaignPublication } from './campaign-route';
 import { routeForPath, routeMeta } from './routes';
 import type { RouteMeta } from './routes';
 import { fetchSession } from './session-server';
@@ -59,7 +61,7 @@ export type RenderInput = {
   headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; pride?: string; information?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; pride?: string; information?: string };
 
 export type RenderResult = {
   status: number;
@@ -300,7 +302,27 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     }
     noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
-      information={<InformationScreen page={route.page} session={session} />} />);
+      serverPage={<InformationScreen page={route.page} session={session} />} />);
+  }
+
+  if (route.name === 'campaign') {
+    // The Flask gate: signed-in preview until the campaign is published.
+    const published = await loadCampaignPublication(readBase);
+    if (!published && !session.authenticated) {
+      return { status: 302, html: '', redirect: `${config.urls.login}?next=${encodeURIComponent(campaignPath)}`,
+        headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } };
+    }
+    headers['Cache-Control'] = 'private, no-store';
+    if (!published) {
+      headers['X-Robots-Tag'] = 'noindex, nofollow';
+      meta = { ...meta, robots: 'noindex, nofollow' };
+    }
+    extraHead = (assets.campaign ?? '')
+      + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261027-campaign-refresh-2">';
+    noscript = '<noscript><p class="container-main-content">Sivu toimii parhaiten, kun JavaScript on käytössä. '
+      + 'Ilmoittautuminen ja uutiskirjeen tilaus tarvitsevat sen.</p></noscript>';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<CampaignScreen config={config} />} />);
   }
 
   if (route.name === 'god-auth') {

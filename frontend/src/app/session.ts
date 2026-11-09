@@ -5,7 +5,8 @@ import { isLocale } from './config';
  * Header state for the public app.
  *
  * Flask owns the session and permissions. This summary is the only account data
- * the React host receives: no cookie value, token or private field is included.
+ * the React host receives. The authenticated translation scope also provides
+ * its existing CSRF form nonce and flash messages.
  */
 export type SessionSummary = {
   authenticated: boolean;
@@ -22,6 +23,7 @@ export type SessionSummary = {
   siteAnalyticsEnabled: boolean;
   matomoEnabled: boolean;
   submission?: { locales: AppLocale[]; defaultLanguage: AppLocale; canEditDemo: boolean };
+  translationJoin?: { joined: boolean; csrfToken?: string; messages: { category: string; message: string }[] };
   organization?: {
     id: string; following: boolean; invited: boolean; hasMessages: boolean;
     permissions: Record<'VIEW_ORGANIZATION' | 'EDIT_ORGANIZATION' | 'DELETE_ORGANIZATION' | 'INVITE_TO_ORGANIZATION', boolean>;
@@ -84,7 +86,20 @@ export function normalizeSession(value: unknown): SessionSummary {
       canEditDemo: raw.authenticated === true && submission.can_edit_demo === true,
     },
     ...(organization ? { organization } : {}),
+    ...(raw.authenticated === true && raw.translation_join && typeof raw.translation_join === 'object'
+      ? { translationJoin: normalizeTranslationJoin(raw.translation_join as Record<string, unknown>) } : {}),
   };
+}
+
+function normalizeTranslationJoin(raw: Record<string, unknown>): NonNullable<SessionSummary['translationJoin']> {
+  const csrfToken = typeof raw.csrf_token === 'string' && /^[A-Za-z0-9_-]{43}$/.test(raw.csrf_token)
+    ? raw.csrf_token : undefined;
+  const messages = Array.isArray(raw.messages) ? raw.messages.slice(0, 10).flatMap(entry => {
+    if (!Array.isArray(entry) || typeof entry[1] !== 'string') return [];
+    const category = ['success', 'error', 'danger', 'warning', 'info'].includes(entry[0]) ? String(entry[0]) : 'default';
+    return [{ category, message: entry[1].slice(0, 1000) }];
+  }) : [];
+  return { joined: raw.joined === true, csrfToken, messages };
 }
 
 /** Browser refresh after the session changes outside the app. */

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Move the about, organizer guides, privacy notice, terms and translation project pages to the standalone React host. Render the content on the first response, preserve guide and terms anchors, and keep translator signup and email delivery in Flask.
+
 - Let enrolled god nominees activate after valid god-chamber or second-round approval even when the decision contains fewer than two board votes. Keep ordinary national-admin approvals separate.
 
 - Move the annual calendar to React with one cached Go summary for the whole year. Add city month/year calendars, a shared area selector, city-scoped navigation and calendar links on event listings. Reuse the accessible month grid and preserve event links, SEO and working no-JavaScript navigation.

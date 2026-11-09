@@ -1,6 +1,8 @@
 import { appConfig } from './config';
 import { randomUUID } from 'node:crypto';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { renderToStaticMarkup, renderToString } from 'react-dom/server';
+import { App } from './App';
+import InformationScreen from './InformationScreen';
 import { SubmitFallback } from './SubmitFallback';
 import { MaintenancePage } from './MaintenancePage';
 import { submitProps } from './submit';
@@ -27,11 +29,12 @@ import { fetchSession } from './session-server';
 import type { SessionSummary } from './session';
 
 /**
- * Metadata-only server rendering.
+ * Standalone public document rendering.
  *
  * The server writes the document head (title, description, robots, social
  * previews, favicons, theme bootstrap and stylesheets) and an empty app root.
- * Page components render in the browser, except a small React-owned no-JS form.
+ * Event pages render in the browser. Information pages render their React
+ * content on the server and hydrate the shared controls in the browser.
  * Routes whose metadata comes from an event do one projected API read for the
  * head; the page body is still fetched by the browser.
  */
@@ -52,14 +55,15 @@ export type RenderInput = {
   /** Raw query string; used only to detect the Flask preview fallback. */
   search?: string;
   publicUnavailable?: boolean;
+  headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; information?: string };
 
 export type RenderResult = {
   status: number;
   html: string;
-  headers?: Record<string, string>;
+  headers?: Record<string, string | string[]>;
   /** Absolute or site-relative redirect target; the server sends Location. */
   redirect?: string;
 };
@@ -247,13 +251,21 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   const citiesRead = route.name === 'cities' ? loadCities(readBase) : null;
   const calendarRead = calendarRoute ? loadCalendar(readBase, route) : null;
   let sessionUrl = input.sessionUrl;
+  const translationJoin = route.name === 'information' && route.page === 'translations' && !input.headOnly;
+  let responseCookies: string[] = [];
   if (route.name === 'organization' && input.cookie) {
     const scoped = new URL(sessionUrl);
     scoped.searchParams.set('organization_id', route.id);
     sessionUrl = scoped.href;
   }
+  if (translationJoin && input.cookie) {
+    const scoped = new URL(sessionUrl);
+    scoped.searchParams.set('translation_join', '1');
+    sessionUrl = scoped.href;
+  }
   const summary: SessionSummary = await fetchSession(sessionUrl, input.cookie,
-    1200, input.flaskSocketPath, input.origin, input.clientIp, input.cloudflareIp);
+    1200, input.flaskSocketPath, input.origin, input.clientIp, input.cloudflareIp,
+    translationJoin ? cookies => { responseCookies = cookies; } : undefined);
   const session = input.doNotTrack || route.name === 'god-auth'
     ? { ...summary, siteAnalyticsEnabled: false, matomoEnabled: false }
     : summary;
@@ -277,7 +289,18 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   let extraHead = '';
   let noscript = '<noscript><p class="container-main-content">Mielenosoitukset.fi käyttää JavaScriptiä. '
     + '<a href="/demonstrations">Kaikki mielenosoitukset</a> · <a href="/calendar/">Kalenteri</a></p></noscript>';
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string | string[]> = {};
+  if (responseCookies.length) headers['Set-Cookie'] = responseCookies;
+  let appMarkup = '';
+  if (route.name === 'information') {
+    extraHead = assets.information ?? '';
+    if (route.page === 'guides') {
+      extraHead += '<link rel="stylesheet" href="/static/css/public-guides.css?v=20261109-react-guides-1">';
+    }
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      information={<InformationScreen page={route.page} session={session} />} />);
+  }
 
   if (route.name === 'god-auth') {
     meta = { title: 'Turvallinen kirjautuminen | Mielenosoitukset.fi', description: '', canonical: null, robots: 'noindex, nofollow' };
@@ -514,7 +537,7 @@ ${headMarkup({
   })}
 </head>
 <body>
-<div id="app"></div>
+<div id="app">${appMarkup}</div>
 ${noscript}
 <script type="application/json" id="app-bootstrap">${bootstrap}</script>
 ${assets.scripts}

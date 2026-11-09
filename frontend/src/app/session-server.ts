@@ -4,6 +4,7 @@ import { anonymousSession, normalizeSession } from './session';
 import type { SessionSummary } from './session';
 
 type PublicSummary = { key: string; value: SessionSummary; expiresAt: number };
+type SessionResponse = { value: unknown; cookies: string[] };
 const PUBLIC_CONFIG_TTL_MS = 5 * 60 * 1000;
 const MAX_BODY_BYTES = 64 * 1024;
 let publicSummary: PublicSummary | null = null;
@@ -14,7 +15,7 @@ function copySession(value: SessionSummary): SessionSummary {
 }
 
 function socketSession(endpoint: string, socketPath: string, cookie: string | undefined,
-  timeoutMs: number, publicOrigin: string, clientIp?: string, cloudflareIp?: string): Promise<unknown> {
+  timeoutMs: number, publicOrigin: string, clientIp?: string, cloudflareIp?: string): Promise<SessionResponse | null> {
   return new Promise((resolve) => {
     const url = new URL(endpoint);
     if (url.protocol !== 'http:' || url.username || url.password) { resolve(null); return; }
@@ -26,7 +27,7 @@ function socketSession(endpoint: string, socketPath: string, cookie: string | un
         ...(cloudflareIp && isIP(cloudflareIp) ? { 'CF-Connecting-IP': cloudflareIp } : {}),
         ...(cookie ? { Cookie: cookie } : {}) } });
     const timer = setTimeout(() => req.destroy(new Error('Session timeout')), timeoutMs);
-    const finish = (value: unknown) => { clearTimeout(timer); resolve(value); };
+    const finish = (value: SessionResponse | null) => { clearTimeout(timer); resolve(value); };
     req.on('error', () => finish(null));
     req.on('response', (res) => {
       if (res.statusCode !== 200 || !/^application\/json(?:;|$)/i.test(res.headers['content-type'] ?? '')) {
@@ -42,7 +43,7 @@ function socketSession(endpoint: string, socketPath: string, cookie: string | un
       res.on('error', () => finish(null));
       res.on('aborted', () => finish(null));
       res.on('end', () => {
-        try { finish(JSON.parse(Buffer.concat(chunks).toString('utf8'))); }
+        try { finish({ value: JSON.parse(Buffer.concat(chunks).toString('utf8')), cookies: res.headers['set-cookie'] ?? [] }); }
         catch { finish(null); }
       });
     });
@@ -52,23 +53,26 @@ function socketSession(endpoint: string, socketPath: string, cookie: string | un
 
 async function requestSession(endpoint: string, cookie: string | undefined,
   timeoutMs: number, socketPath?: string, publicOrigin = endpoint, clientIp?: string,
-  cloudflareIp?: string): Promise<SessionSummary | null> {
+  cloudflareIp?: string, onCookies?: (cookies: string[]) => void): Promise<SessionSummary | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    let value: unknown;
+    let result: SessionResponse | null;
     if (socketPath) {
-      value = await socketSession(endpoint, socketPath, cookie, timeoutMs, publicOrigin, clientIp, cloudflareIp);
+      result = await socketSession(endpoint, socketPath, cookie, timeoutMs, publicOrigin, clientIp, cloudflareIp);
     } else {
       const response = await fetch(endpoint, {
         signal: controller.signal, redirect: 'error',
         headers: { Accept: 'application/json', ...(cookie ? { Cookie: cookie } : {}) },
       });
       if (response.status !== 200) return null;
-      value = await response.json();
+      result = { value: await response.json(), cookies: onCookies ? response.headers.getSetCookie() : [] };
     }
+    const value = result?.value;
     if (!value || typeof value !== 'object' || typeof (value as Record<string, unknown>).authenticated !== 'boolean') return null;
-    return normalizeSession(value);
+    const session = normalizeSession(value);
+    if (session.authenticated && session.translationJoin && result?.cookies.length) onCookies?.(result.cookies);
+    return session;
   } catch {
     // Failures fall back after the bounded timeout and are never cached.
     return null;
@@ -78,8 +82,8 @@ async function requestSession(endpoint: string, cookie: string | undefined,
 /** Cookie-bearing requests stay private; only cookieless public configuration is shared. */
 export async function fetchSession(endpoint: string, cookie: string | undefined,
   timeoutMs = 1200, socketPath?: string, publicOrigin = endpoint, clientIp?: string,
-  cloudflareIp?: string): Promise<SessionSummary> {
-  if (cookie) return (await requestSession(endpoint, cookie, timeoutMs, socketPath, publicOrigin, clientIp, cloudflareIp)) ?? copySession(anonymousSession);
+  cloudflareIp?: string, onCookies?: (cookies: string[]) => void): Promise<SessionSummary> {
+  if (cookie) return (await requestSession(endpoint, cookie, timeoutMs, socketPath, publicOrigin, clientIp, cloudflareIp, onCookies)) ?? copySession(anonymousSession);
   const key = JSON.stringify([socketPath ?? null, endpoint, publicOrigin]);
   if (publicSummary?.key === key && publicSummary.expiresAt > Date.now()) return copySession(publicSummary.value);
   if (publicPending?.key !== key) {

@@ -24,6 +24,11 @@ export type SessionSummary = {
   matomoEnabled: boolean;
   submission?: { locales: AppLocale[]; defaultLanguage: AppLocale; canEditDemo: boolean };
   translationJoin?: { joined: boolean; csrfToken?: string; messages: { category: string; message: string }[] };
+  /** The contact page's one-time form token, feedback and field limits; anonymous visitors get one too. */
+  contactForm?: {
+    enabled: boolean; csrfToken?: string; messages: { category: string; message: string }[];
+    limits: { nameMax: number; emailMax: number; messageMin: number; messageMax: number };
+  };
   organization?: {
     id: string; following: boolean; invited: boolean; hasMessages: boolean;
     permissions: Record<'VIEW_ORGANIZATION' | 'EDIT_ORGANIZATION' | 'DELETE_ORGANIZATION' | 'INVITE_TO_ORGANIZATION', boolean>;
@@ -88,18 +93,38 @@ export function normalizeSession(value: unknown): SessionSummary {
     ...(organization ? { organization } : {}),
     ...(raw.authenticated === true && raw.translation_join && typeof raw.translation_join === 'object'
       ? { translationJoin: normalizeTranslationJoin(raw.translation_join as Record<string, unknown>) } : {}),
+    ...(raw.contact_form && typeof raw.contact_form === 'object' && !Array.isArray(raw.contact_form)
+      ? { contactForm: normalizeContactForm(raw.contact_form as Record<string, unknown>) } : {}),
   };
 }
 
-function normalizeTranslationJoin(raw: Record<string, unknown>): NonNullable<SessionSummary['translationJoin']> {
-  const csrfToken = typeof raw.csrf_token === 'string' && /^[A-Za-z0-9_-]{43}$/.test(raw.csrf_token)
-    ? raw.csrf_token : undefined;
-  const messages = Array.isArray(raw.messages) ? raw.messages.slice(0, 10).flatMap(entry => {
+function formToken(value: unknown): string | undefined {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{43}$/.test(value) ? value : undefined;
+}
+
+function flashMessages(value: unknown): { category: string; message: string }[] {
+  return Array.isArray(value) ? value.slice(0, 10).flatMap(entry => {
     if (!Array.isArray(entry) || typeof entry[1] !== 'string') return [];
     const category = ['success', 'error', 'danger', 'warning', 'info'].includes(entry[0]) ? String(entry[0]) : 'default';
     return [{ category, message: entry[1].slice(0, 1000) }];
   }) : [];
-  return { joined: raw.joined === true, csrfToken, messages };
+}
+
+function normalizeContactForm(raw: Record<string, unknown>): NonNullable<SessionSummary['contactForm']> {
+  const limits = raw.limits && typeof raw.limits === 'object' ? raw.limits as Record<string, unknown> : {};
+  const bounded = (value: unknown, fallback: number, max: number) =>
+    typeof value === 'number' && Number.isInteger(value) && value > 0 && value <= max ? value : fallback;
+  return {
+    enabled: raw.enabled === true,
+    csrfToken: formToken(raw.csrf_token),
+    messages: flashMessages(raw.messages),
+    limits: { nameMax: bounded(limits.name_max, 120, 1000), emailMax: bounded(limits.email_max, 254, 1000),
+      messageMin: bounded(limits.message_min, 10, 1000), messageMax: bounded(limits.message_max, 5000, 100000) },
+  };
+}
+
+function normalizeTranslationJoin(raw: Record<string, unknown>): NonNullable<SessionSummary['translationJoin']> {
+  return { joined: raw.joined === true, csrfToken: formToken(raw.csrf_token), messages: flashMessages(raw.messages) };
 }
 
 /** Browser refresh after the session changes outside the app. */

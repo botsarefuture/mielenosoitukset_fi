@@ -370,7 +370,21 @@ try {
   const tagPage = await detailPage({ path: '/tag/rauha' });
   assert.match(tagPage.html, /#rauha: Mielenosoitukset/);
   assert.equal(bootstrap(tagPage.html).listing.page.total, 1);
-  console.log('PASS: listing bootstrap, query coalescing/cache, canonical city/tag titles and fixed scopes');
+  for (const path of ['/pride-nakyvaksi', '/pride', '/pride/']) {
+    const pride = await detailPage({ path, search: '?tag=rauha&city=Tampere' });
+    assert.equal(pride.status, 200);
+    assert.match(pride.html, /<link rel="canonical" href="https:\/\/example.test\/pride-nakyvaksi">/);
+    assert.match(pride.html, /<title>Pride näkyväksi \| Mielenosoitukset.fi<\/title>/);
+    assert.match(pride.html, /leaflet\/leaflet.js/);
+    assert.match(pride.html, /<noscript>[^]*Test listing event[^]*<\/noscript>/);
+    assert.match(pride.html, /<noscript>[^]*Miksi Pride näkyväksi\?[^]*id="demo-guidelines"[^]*<\/noscript>/);
+    assert.match(pride.html, /<noscript>[^]*Näytetään [^]*Kaikki mielenosoitukset[^]*<\/noscript>/);
+    assert.match(pride.html, /<noscript>[^]*kun JavaScript on käytössä[^]*<\/noscript>/);
+    assert.equal(bootstrap(pride.html).route.name, 'pride');
+  }
+  assert(localReads.some(read => read.startsWith('/api/demonstrations?') && read.includes('tag=pride') && read.includes('city=Tampere')
+    && !read.includes('tag=rauha')), 'Pride keeps its fixed tag and accepts listing filters');
+  console.log('PASS: listing bootstrap, query coalescing/cache, canonical city/tag titles and fixed scopes, Pride aliases');
   const beforeCities = localReads.filter(read => read === '/api/cities').length;
   const cityDocuments = await Promise.all(Array.from({ length: 8 }, () => detailPage({ path: '/cities' })));
   assert.equal(localReads.filter(read => read === '/api/cities').length, beforeCities + 1);

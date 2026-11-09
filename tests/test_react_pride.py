@@ -92,7 +92,7 @@ def map_payload(rows, *, page=1, total=None, total_pages=1):
 
 def is_map_request(request):
     query = parse_qs(urlsplit(request.url).query)
-    return query.get('scope') == ['pride_map']
+    return query.get('tag') == ['pride'] and query.get('per_page') == ['100']
 
 
 def manual_pagination(page):

@@ -69,6 +69,7 @@ function assetTags(manifest) {
     calendar: routeAssets('src/app/CalendarScreen.tsx'),
     calendarYear: routeAssets('src/app/YearCalendarScreen.tsx'),
     godAuth: routeAssets('src/app/GodScreen.tsx'),
+    pride: routeAssets('src/app/PrideScreen.tsx'),
     information: routeAssets('src/app/InformationScreen.tsx'),
     head: [...css].map((file) => `<link rel="stylesheet" href="/app-assets/${file}">`)
       .concat([...modules].filter((file) => file.endsWith('.js'))

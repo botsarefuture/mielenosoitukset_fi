@@ -147,6 +147,13 @@ Only listing documents preload their split listing/calendar bundle. Home does
 not download it. Page, search, campaign and Web Vitals tracking use the existing
 allowlisted analytics endpoints; Go cache hits never substitute for browser
 display/search signals. DNT and analytics settings retain their existing rules.
+
+`/pride-nakyvaksi`, `/pride` and `/pride/` render the Pride page on the host with
+the same `tag=pride` listing bootstrap and the existing Pride map, which reads
+every Pride page from the Go listing endpoint at `per_page=100`. The canonical URL
+is `/pride-nakyvaksi`; filtered addresses are `noindex`. Leaflet still loads from
+`/static/leaflet/`. Without JavaScript the document lists the first page of events.
+The Flask template stays as the rollback path.
 RSS links keep their city/tag scopes. Signed-in attendance remains with Flask.
 
 Deployment order is Go API, host release, then the reviewed listing GET routing

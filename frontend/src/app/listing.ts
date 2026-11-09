@@ -23,7 +23,7 @@ export function listingFixed(route: ListingRoute): Record<string, string> {
 
 const messages: ListingMessages = {
   search: 'Hae mielenosoituksia', searchPlaceholder: 'Hae mielenosoituksia...', city: 'Kaupunki',
-  location: 'Sijainti', startDate: 'Alkupäivä (pp.mm.vvvv)', endDate: 'Loppupäivä (pp.mm.vvvv)',
+  location: 'Sijainti', startDate: 'Alkupäivä (pp.kk.vvvv)', endDate: 'Loppupäivä (pp.kk.vvvv)',
   dateError: 'Valitse kelvollinen päivämääräväli tulevaisuudesta', year: 'Vuosi', month: 'Kuukausi',
   submitSearch: 'Hae', removeFilter: 'Poista suodatin', loading: 'Ladataan mielenosoituksia...',
   loadMore: 'Näytä lisää', loadingMore: 'Ladataan...', previous: 'Edellinen',

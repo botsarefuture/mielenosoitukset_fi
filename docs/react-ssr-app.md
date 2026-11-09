@@ -427,6 +427,24 @@ The counts retain their existing aggregate meanings, but migrated pages need
 working JavaScript and beacon delivery: blocked scripts, DNT and failed signals
 can reduce their coverage compared with legacy server-side HTML counts.
 
+## Public lockdown and restarts
+
+Every page except `/health` and `/auth/god` first asks the Go API's
+`/api/public-status` whether the site is locked down, at most once a second.
+The Go API reads the `panic` collection for that answer in the same way.
+
+- An explicit lockdown answer applies at once and clears the remembered "open"
+  answer, so a later failed read cannot reopen the site.
+- A failed or timed-out read is not a lockdown. For up to 30 seconds after the
+  last explicit "open" answer, both the host and the Go API keep serving; after
+  that, or with no answer since the process started, they fail closed with the
+  maintenance page. This keeps a Go API or database restart from briefly closing
+  the site. Approved by the maintainer on 9 November 2026.
+- `deploy/public-app/deploy.sh` waits until the host renders the home page with
+  its own assets, not only `/health`, and `deploy/release_routing.sh` retries
+  each page probe three times, two seconds apart, before restoring the previous
+  routing include.
+
 ## Routing
 
 The web server sends only migrated page GET/HEAD requests to the app host:

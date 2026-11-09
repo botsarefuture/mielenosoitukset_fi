@@ -175,7 +175,9 @@ const server = createServer(async (request, response) => {
     if (result.redirect) {
       // A site-relative preview target stays on the same public origin; the web
       // server decides which handler owns the flagged request.
+      // Route headers such as the campaign gate's noindex still apply; caching stays off.
       response.writeHead(result.status, {
+        ...(result.headers ?? {}),
         Location: result.redirect, 'Content-Length': '0', 'Cache-Control': 'no-store', Vary: 'Cookie',
       });
       response.end();

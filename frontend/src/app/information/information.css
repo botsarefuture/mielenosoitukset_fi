@@ -1,0 +1,29 @@
+.information-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-top: 1rem;
+}
+
+.information-actions form {
+  margin: 0;
+}
+
+.information-page .public-prose-card h3 {
+  margin-top: 1.25rem;
+}
+
+.information-page .public-prose-card h2,
+.information-page .public-prose-card h3 {
+  text-align: start;
+}
+
+.information-page .public-page-header__meta > span {
+  gap: 0.35rem;
+}
+
+.information-page [id],
+.guide-page [id] {
+  scroll-margin-top: 6rem;
+}

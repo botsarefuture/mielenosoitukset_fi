@@ -12,6 +12,7 @@ import { catalog } from './i18n';
 import type { AppRoute } from './routes';
 import type { SessionSummary } from './session';
 import { lazy, Suspense } from 'react';
+import type { ReactNode } from 'react';
 import type { ListingBootstrap } from './listing';
 import type { OrganizationBootstrap } from './organization';
 import type { CitiesData } from './cities';
@@ -43,6 +44,7 @@ export type AppProps = {
   cities?: CitiesData | null;
   submission?: SubmitBootstrap;
   calendar?: CalendarBootstrap;
+  information?: ReactNode;
 };
 
 function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<typeof catalog>): CardProps {
@@ -57,11 +59,12 @@ function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<
 }
 
 /** One public application shell: shared header, routed page content, footer. */
-export function App({ config, session, route, path, detail, series, home, listing, organization, cities, submission, calendar }: AppProps) {
+export function App({ config, session, route, path, detail, series, home, listing, organization, cities, submission, calendar, information }: AppProps) {
   const text = catalog(config.locale);
   return <>
-    <SiteHeader {...headerProps(config, session, text, path)} />
+    <SiteHeader {...headerProps(config, session, text, path)} hydrating={route.name === 'information'} />
     <main className={`container-main-content ${route.name === 'submit' ? 'submit-workspace' : route.name === 'detail' || route.name === 'series' ? 'public-detail-main' : 'public-layout-wide'}`} id="main-content" tabIndex={-1}>
+      {information}
       {route.name === 'god-auth' && <Suspense fallback={<p role="status">Ladataan kirjautumista...</p>}><GodScreen /></Suspense>}
       {route.name === 'calendar' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria...</p>}>
         <CalendarScreen calendar={calendar} config={config} session={session} />

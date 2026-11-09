@@ -7,10 +7,10 @@ import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 import { NotificationMenu } from './NotificationMenu';
 
-export function SiteHeader(props: HeaderProps) {
+export function SiteHeader(props: HeaderProps & { hydrating?: boolean }) {
   const { messages: text, account } = props;
   // Server rendering has no viewport; the client measures after hydration.
-  const [mobile, setMobile] = useState(() => typeof window !== 'undefined'
+  const [mobile, setMobile] = useState(() => !props.hydrating && typeof window !== 'undefined'
     && matchMedia('(max-width: 768px)').matches);
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
@@ -28,6 +28,7 @@ export function SiteHeader(props: HeaderProps) {
   useEffect(() => {
     try { localStorage.setItem('user_role', props.role); } catch { /* Storage is optional. */ }
     const query = matchMedia('(max-width: 768px)');
+    if (props.hydrating) setMobile(query.matches);
     function resize() {
       if (!query.matches && openRef.current) {
         list.current?.querySelector<HTMLElement>('.nav-link[aria-current="page"], .nav-link')?.focus();
@@ -36,7 +37,7 @@ export function SiteHeader(props: HeaderProps) {
     }
     query.addEventListener('change', resize);
     return () => query.removeEventListener('change', resize);
-  }, [props.role]);
+  }, [props.role, props.hydrating]);
   useLayoutEffect(() => {
     document.body.classList.toggle('public-nav-open', mobile && open);
     if (mobile && open) close.current?.focus();
@@ -85,7 +86,7 @@ export function SiteHeader(props: HeaderProps) {
           {account?.globalAdmin && <li className="mobile-only"><div className="admin-alert" role="alert">
             <Icon name="fa-exclamation-triangle" /><span>{text.adminWarning}</span>
           </div></li>}
-          <ThemeToggle messages={text} />
+          <ThemeToggle messages={text} hydrating={props.hydrating} />
         </ul>
       </div>
     </nav>

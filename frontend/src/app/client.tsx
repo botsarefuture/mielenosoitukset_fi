@@ -1,4 +1,4 @@
-import { createRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 import { useEffect, useRef } from 'react';
 import { App } from './App';
 import type { AppProps } from './App';
@@ -23,7 +23,7 @@ function Root(props: Bootstrap) {
       }
       // Detail/series views keep their separate demonstration-view collection.
       const name = routeForPath(path)?.name;
-      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride'].includes(name)
+      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride', 'information'].includes(name)
         || !session.siteAnalyticsEnabled || tracked.current) return;
       tracked.current = true;
       try {
@@ -45,7 +45,15 @@ const bootstrap = document.getElementById('app-bootstrap')?.textContent;
 if (container) {
   try {
     if (!bootstrap) throw new Error('Missing app bootstrap');
-    createRoot(container).render(<Root {...(JSON.parse(bootstrap) as Bootstrap)} />);
+    const props = JSON.parse(bootstrap) as Bootstrap;
+    const route = routeForPath(props.path);
+    if (route?.name === 'information') {
+      void import('./InformationScreen').then(({ default: InformationScreen }) => {
+        hydrateRoot(container, <Root {...props} information={<InformationScreen page={route.page} session={props.session} />} />);
+      }).catch(error => console.error('Could not start information page controls', error));
+    } else {
+      createRoot(container).render(<Root {...props} />);
+    }
   } catch (error) {
     console.error('Could not start the public app', error);
     container.textContent = 'Mielenosoitukset.fi · /demonstrations';

@@ -3,6 +3,8 @@ import type { Catalog } from './i18n';
 import type { ListingRoute } from './listing';
 import { currentMonth } from './calendar';
 import { findCity } from './cities';
+import { informationPageForPath, informationPages } from './information';
+import type { InformationPage } from './information';
 
 /**
  * Public routes owned by the standalone React application.
@@ -18,6 +20,7 @@ export type AppRoute =
   | { name: 'submit' }
   | { name: 'god-auth' }
   | { name: 'pride' }
+  | { name: 'information'; page: InformationPage }
   | { name: 'cities' }
   | { name: 'calendar' | 'calendar-year'; year: number; month: number; city?: string }
   | { name: 'today'; value?: string }
@@ -52,6 +55,8 @@ function readIdentifier(raw: string): string | null {
 }
 
 export function routeForPath(path: string): AppRoute | null {
+  const informationPage = informationPageForPath(path);
+  if (informationPage) return { name: 'information', page: informationPage };
   if (path === '/auth/god') return { name: 'god-auth' };
   const calendar = /^\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
   const scoped = /^\/city\/([^/]+)\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
@@ -104,6 +109,11 @@ export function routeForPath(path: string): AppRoute | null {
  * metadata from one projected API read.
  */
 export function routeMeta(route: AppRoute, config: AppConfig, text: Catalog): RouteMeta {
+  if (route.name === 'information') {
+    const { path, title, description } = informationPages[route.page];
+    return { title: `${title} | Mielenosoitukset.fi`, description,
+      robots: 'index, follow', canonical: config.origin + path };
+  }
   return {
     title: text.meta.title,
     description: text.meta.description,

@@ -46,6 +46,26 @@ def _perms_for(db, user_id):
     return list(doc.get("global_permissions", []))
 
 
+def test_standalone_join_session_scope(client, user_client, friend_client, welcome_calls):
+    url = "/api/session?translation_join=1"
+    assert "translation_join" not in client.get(url).json
+    assert "translation_join" not in user_client.get("/api/session").json
+
+    response = user_client.get(url)
+    assert response.headers["Cache-Control"] == "no-store"
+    assert "Cookie" in response.headers["Vary"]
+    assert response.headers.getlist("Set-Cookie")
+    state = response.json["translation_join"]
+    assert state["joined"] is False and len(state["csrf_token"]) == 43
+    assert friend_client.post(JOIN_URL, data={"csrf_token": state["csrf_token"]}).status_code == 400
+    assert user_client.post(JOIN_URL, data={"csrf_token": state["csrf_token"]}).status_code == 302
+    joined = user_client.get(url).json["translation_join"]
+    assert joined["joined"] and joined["csrf_token"] is None
+    assert any(category == "success" for category, _ in joined["messages"])
+    assert user_client.get(url).json["translation_join"]["messages"] == []
+    assert len(welcome_calls) == 1
+
+
 def test_guest_cannot_join(app, client, db, welcome_calls):
     before = list(db.users.find().sort("_id", 1))
     res = client.post(JOIN_URL)

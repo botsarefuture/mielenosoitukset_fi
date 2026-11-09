@@ -1,4 +1,4 @@
-# Standalone React public app (metadata-only server rendering)
+# Standalone React public app
 
 Owner direction (1 November 2026): the public UI becomes React-only, migrated
 pages stop using Jinja bodies, and the server cost of that stays low. This slice
@@ -20,6 +20,7 @@ claiming a performance improvement.
 | Event data | Browser requests the public Go `/api/home?lang=...` contract |
 | Detail head (title, canonical, JSON-LD, robots) | Server requests the same public API once, `/api/demonstrations/<identifier>` |
 | Home card batch | Server reads `/api/home` once, caches it for 30 s and inlines it in the bootstrap |
+| Information pages | Server renders the React page and shell. The client hydrates the navigation and theme controls. The content, guide anchors, FAQ and translator form work without JavaScript. |
 
 The server accesses no event collection directly. Submission pages additionally
 render a small React no-JavaScript fallback form; their interactive wizard is
@@ -27,6 +28,24 @@ browser-rendered and loads only on the submit route.
 It composes the document and reads the bounded Flask session summary. Public
 home data and event metadata come from the Go API through bounded caches;
 production uses `PUBLIC_API_LOCAL=http://127.0.0.1:8091/api` for those reads.
+
+### Information pages
+
+The Apache include routes GET/HEAD `/info`, `/ohjeet` and `/ohjeet/`,
+`/privacy`, `/terms`, and `/upcoming/translations/` to Node. Both guide
+URLs canonicalize to `/ohjeet` and retain fragment navigation.
+Page content and Finnish metadata live in the React app and require no content
+API calls.
+
+On the signed-in translation project page, Node asks the existing private
+`GET /api/session?translation_join=1` scope for the join status, the existing
+form CSRF nonce when needed, and flash feedback. Node forwards Flask's
+session cookie update only for this scope. The scoped response and resulting
+HTML use `no-store` and vary by cookie. The same-origin join POST stays in
+Flask, where login, CSRF validation, permission grants and welcome mail
+continue to run. Deploy the Flask contract and app build before activating
+the reviewed Apache rules. Removing these rules restores the existing Flask
+pages.
 
 ## Files
 

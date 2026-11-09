@@ -86,6 +86,23 @@ try {
   await page({ sessionUrl: `${base}/down` });
   assert.equal(reads, 6, 'Failed configuration reads must not be cached');
   console.log('PASS: unknown-route zero reads; eight concurrent anonymous pages one read; warm zero reads; private sessions isolated; TTL and failure handling');
+  for (const [path, heading, canonical, anchor] of [
+    ['/info', 'Tietoa Mielenosoitukset.fi', '/info'],
+    ['/ohjeet', 'Selkeät ohjeet kaikille järjestäjille', '/ohjeet', 'submit-checklist'],
+    ['/ohjeet/', 'Selkeät ohjeet kaikille järjestäjille', '/ohjeet', 'faq'],
+    ['/privacy', 'Tietosuojaseloste', '/privacy'],
+    ['/terms', 'Käyttöehdot', '/terms', 'terms-appeal'],
+    ['/upcoming/translations/', 'Käännöshanke', '/upcoming/translations/'],
+  ]) {
+    const response = await page({ path });
+    assert.equal(response.status, 200, path);
+    const body = response.html.split('<body>')[1].split('<script type="application/json"')[0];
+    assert(body.includes(heading) && body.includes('id="main-content"'), path);
+    assert(response.html.includes(`rel="canonical" href="${input.origin}${canonical}"`), path);
+    if (anchor) assert(body.includes(`id="${anchor}"`), path);
+  }
+  assert.equal((await page({ path: '/upcoming/translations/join' })).status, 404);
+  console.log('PASS: information pages render readable HTML and retain canonical URLs and anchors');
 } finally {
   await new Promise(resolve => sessionServer.close(resolve));
   await new Promise(resolve => homeApi.close(resolve));
@@ -474,6 +491,11 @@ const socketServer = createServer((req, res) => {
   if (req.url === '/aborted') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.write('{'); res.destroy(); return; }
   if (req.url === '/redirect') { res.writeHead(302, { Location: '/api/session' }); res.end(); return; }
   if (req.url === '/invalid') { res.writeHead(200, { 'Content-Type': 'text/html' }); res.end('<html>'); return; }
+  if (req.url === '/api/session?translation_join=1' && req.headers.cookie === 'session=translator-candidate') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': ['session=updated; Path=/; HttpOnly'] });
+    res.end(JSON.stringify({ authenticated: true, translation_join: { joined: false, csrf_token: 't'.repeat(43) } }));
+    return;
+  }
   res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
   if (req.url === '/oversized') { res.end(JSON.stringify({ authenticated: false, name: 'x'.repeat(70_000) })); return; }
   res.end(JSON.stringify({ authenticated: Boolean(req.headers.cookie), name: req.headers.cookie ?? null,
@@ -512,6 +534,15 @@ try {
   const missing = await socketPage({ flaskSocketPath: join(socketDirectory, 'missing.sock') });
   assert.equal(bootstrap(missing.html).session.siteAnalyticsEnabled, false);
   assert.equal(socketReads, before, 'Cache cannot leak between socket paths');
+  const joinPage = { path: '/upcoming/translations/', cookie: 'session=translator-candidate' };
+  const joinResponse = await socketPage(joinPage);
+  assert.deepEqual(joinResponse.headers['Set-Cookie'], ['session=updated; Path=/; HttpOnly']);
+  assert(joinResponse.html.includes(`name="csrf_token" value="${'t'.repeat(43)}"`));
+  const joinHead = await socketPage({ ...joinPage, headOnly: true });
+  assert.equal(joinHead.headers['Set-Cookie'], undefined);
+  assert(!joinHead.html.includes('name="csrf_token"'));
+  const guestJoin = await socketPage({ path: joinPage.path });
+  assert(!guestJoin.html.includes('name="csrf_token"') && !guestJoin.headers['Set-Cookie']);
   console.log('PASS: Unix socket host/proto, anonymous coalescing/cache, private cookie isolation, bounded body/timeout, aborted/invalid/redirect responses and transport isolation');
 } finally {
   socketServer.closeAllConnections();

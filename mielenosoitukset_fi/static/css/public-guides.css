@@ -47,23 +47,13 @@
 }
 
 .guide-hero-content, .guide-hero-summary { position: relative; z-index: 1; }
-.guide-eyebrow, .guide-kicker {
+.guide-kicker {
   margin: 0 0 .7rem;
   color: var(--guide-orange);
   font-size: .78rem;
   font-weight: 800;
   letter-spacing: .12em;
   text-transform: uppercase;
-}
-.guide-eyebrow {
-  display: inline-flex;
-  gap: .55rem;
-  align-items: center;
-  padding: .42rem .75rem;
-  border: 1px solid rgba(255, 255, 255, .24);
-  border-radius: 999px;
-  color: #fff;
-  background: rgba(255, 255, 255, .1);
 }
 .guide-hero h1 {
   max-width: 760px;

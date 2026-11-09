@@ -3,7 +3,6 @@ export function GuidesContent() {
     <div className="guide-page">
       <header className="guide-hero">
         <div className="guide-hero-content">
-          <p className="guide-eyebrow"><i className="fas fa-book-open" aria-hidden="true" /> Ohjekeskus</p>
           <h1>Selkeät ohjeet kaikille järjestäjille</h1>
           <p className="guide-lead">
             Ilmoita tapahtuma onnistuneesti, valitse toimiva kuva ja löydä apu nopeasti.

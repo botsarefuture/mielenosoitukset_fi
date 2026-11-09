@@ -102,6 +102,10 @@ try {
     if (anchor) assert(body.includes(`id="${anchor}"`), path);
   }
   assert.equal((await page({ path: '/upcoming/translations/join' })).status, 404);
+  const infoBody = result => result.html.split('<body>')[1].split('<script type="application/json"')[0];
+  assert(!infoBody(await page({ path: '/info' })).includes('about-campaign'), 'Anonymous visitors do not see a campaign that sends them to login');
+  assert(infoBody(await page({ path: '/info', cookie: 'session=alice' })).includes('about-campaign'), 'Signed-in visitors can preview the campaign');
+  assert(infoBody(await page({ path: '/info' })).includes('about-facts'));
   console.log('PASS: information pages render readable HTML and retain canonical URLs and anchors');
   const contactReads = [];
   let contactMode = 'ok';

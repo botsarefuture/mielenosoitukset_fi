@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Give the about page (`/info`) a richer layout again without changing its text: key facts as tiles, the campaign as a highlighted card, a two-column layout on wide screens and contact options as cards. The campaign card appears only when the campaign is public or the visitor can preview it, so anonymous visitors are no longer sent to a login page.
 - Move the contact page (`/contact`) to the standalone React host. The form still posts to Flask with every existing anti-abuse check; the host gets each visitor's one-time form token through a new `contact_form` scope of the session endpoint. The page drops the label above its title, uses visible focus rings and 44 px fields, and shows the support email if the form cannot load.
 - Move the fundraising page (`/keräys`) to the standalone React host behind the campaign's publication gate. The rules that decide when payment details appear are shared with the Flask version through one set of test cases, so the two cannot drift.
 - Move the volunteer campaign page (`/kampanja/`) to the standalone React host. It keeps the same content, signup and newsletter forms, and the same publication gate: until the campaign is published only signed-in users see a non-indexed preview. A new read-only Go endpoint reports the publication state.

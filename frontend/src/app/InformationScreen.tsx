@@ -13,7 +13,9 @@ const documentDates = {
   terms: { iso: '2025-10-12', label: '12.10.2025' },
 };
 
-export default function InformationScreen({ page, session }: { page: InformationPage; session: SessionSummary }) {
+export default function InformationScreen({ page, session, campaign = false }: {
+  page: InformationPage; session: SessionSummary; campaign?: boolean;
+}) {
   if (page === 'guides') return <GuidesContent />;
   const { title, description } = informationPages[page];
   const date = page === 'privacy' || page === 'terms' ? documentDates[page] : null;
@@ -34,7 +36,7 @@ export default function InformationScreen({ page, session }: { page: Information
           role={category === 'error' || category === 'danger' ? 'alert' : 'status'}>
           <span className="flash-text">{message}</span>
         </div>)}
-      {page === 'info' && <AboutContent />}
+      {page === 'info' && <AboutContent campaign={campaign} />}
       {page === 'privacy' && <PrivacyContent />}
       {page === 'terms' && <TermsContent />}
       {page === 'translations' && <TranslationContent session={session} />}

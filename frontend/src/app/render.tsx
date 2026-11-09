@@ -307,14 +307,19 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   if (responseCookies.length) headers['Set-Cookie'] = responseCookies;
   let appMarkup = '';
   let today: string | undefined;
+  let campaignVisible: boolean | undefined;
   if (route.name === 'information') {
+    if (route.page === 'info') {
+      // Anonymous visitors would land on a login page while the campaign is private.
+      campaignVisible = session.authenticated || await loadCampaignPublication(readBase);
+    }
     extraHead = assets.information ?? '';
     if (route.page === 'guides') {
       extraHead += '<link rel="stylesheet" href="/static/css/public-guides.css?v=20261109-guide-contrast-1">';
     }
     noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
-      serverPage={<InformationScreen page={route.page} session={session} />} />);
+      serverPage={<InformationScreen page={route.page} session={session} campaign={campaignVisible} />} />);
   }
 
   if (route.name === 'campaign' || route.name === 'fundraising') {
@@ -622,6 +627,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   }
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
   const bootstrap = serialize({ config, session, path: input.path, route, ...(today ? { today } : {}),
+    ...(campaignVisible !== undefined ? { campaignVisible } : {}),
     ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}),
     ...(listing ? { listing } : {}), ...(organization ? { organization } : {}), ...(cities !== undefined ? { cities } : {}),
     ...(submission ? { submission } : {}), ...(calendar ? { calendar } : {}) });

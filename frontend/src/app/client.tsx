@@ -49,7 +49,7 @@ if (container) {
     const route = routeForPath(props.path);
     if (route?.name === 'information') {
       void import('./InformationScreen').then(({ default: InformationScreen }) => {
-        hydrateRoot(container, <Root {...props} serverPage={<InformationScreen page={route.page} session={props.session} />} />);
+        hydrateRoot(container, <Root {...props} serverPage={<InformationScreen page={route.page} session={props.session} campaign={props.campaignVisible} />} />);
       }).catch(error => console.error('Could not start information page controls', error));
     } else if (route?.name === 'contact') {
       void import('./ContactScreen').then(({ default: ContactScreen }) => {

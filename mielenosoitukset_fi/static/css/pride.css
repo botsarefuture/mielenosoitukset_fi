@@ -188,5 +188,7 @@
 .pride-noscript ul { padding: 0; list-style: none; }
 .pride-noscript li { padding-block: .35rem; }
 .pride-noscript a { color: var(--product-primary); }
-.pride-noscript h1, .pride-noscript h2 { color: var(--product-text); text-align: left; }
-.pride-noscript ul a, .pride-noscript__links a { display: inline-block; min-height: 44px; padding-block: .6rem; }
+.container-main-content.pride-noscript h1, .container-main-content.pride-noscript h2 { color: var(--product-text); font-weight: 800; text-align: left; }
+.container-main-content.pride-noscript h1 { font-size: clamp(2rem, 3.7vw, 3.2rem); line-height: 1.1; }
+.container-main-content.pride-noscript h2 { font-size: 1.35rem; line-height: 1.25; }
+.pride-noscript ul a, .pride-noscript__links a { display: inline-block; min-width: 44px; min-height: 44px; padding-block: .6rem; text-align: center; }

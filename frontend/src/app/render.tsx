@@ -502,7 +502,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       canonical: `${config.origin}${config.urls.pride}`, robots: input.search ? 'noindex, follow' : 'index, follow' };
     extraHead = '<link rel="stylesheet" href="/static/vendor/flatpickr/4.6.13/flatpickr.min.css">'
       + '<link rel="stylesheet" href="/static/leaflet/leaflet.css">'
-      + '<link rel="stylesheet" href="/static/css/pride.css?v=20261109-pride-noscript-1">'
+      + '<link rel="stylesheet" href="/static/css/pride.css?v=20261109-pride-noscript-2">'
       + '<script src="/static/leaflet/leaflet.js" defer></script>'
       + (assets.pride ?? '');
     const prideProps = listingProps(prideRoute, config, session);
@@ -512,6 +512,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       params.set('page', String(page));
       return `${config.urls.pride}?${params}#demos`;
     };
+    const filtered = [...new URLSearchParams(input.search ?? '').keys()].some(key => key !== 'page');
     const pager = [
       pridePage && pridePage.page > 1 ? `<a href="${escapeHtml(pageLink(pridePage.page - 1))}">${escapeHtml(prideProps.messages.previous)}</a>` : '',
       pridePage && pridePage.page < pridePage.total_pages ? `<a href="${escapeHtml(pageLink(pridePage.page + 1))}">${escapeHtml(prideProps.messages.loadMore)}</a>` : '',
@@ -521,7 +522,9 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       + (pridePage?.total
         ? `<p>${escapeHtml(prideProps.messages.summary.replace('__START__', String(pridePage.result_start))
           .replace('__END__', String(pridePage.result_end)).replace('__COUNT__', String(pridePage.total)))}</p>`
-        : `<p>${escapeHtml(prideCopy.empty)}</p>`)
+        : filtered
+          ? `<p>${escapeHtml(prideProps.messages.filteredEmpty)}</p><p class="pride-noscript__links"><a href="${escapeHtml(config.urls.pride)}#demos">${escapeHtml(prideProps.messages.clearFilters)}</a></p>`
+          : `<p>${escapeHtml(prideCopy.empty)}</p>`)
       + '<ul>'
       + todayItems(config, pridePage).map((item, index) => {
         const event = pridePage?.results[index];

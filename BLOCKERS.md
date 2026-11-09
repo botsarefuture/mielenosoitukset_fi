@@ -11,13 +11,13 @@ Working notes for the maintainer. Lives on branch `claude/vibrant-gates-syjhk4` 
 
 ## Approved, waiting on a condition
 
-- **#1040 merge** pre-approved by you (Nov 9). I merge once the independent visual review says SHIP.
+- **#1040 merge** pre-approved by you (Nov 9). Visual review SHIP at 2311703. Merging when CI is green.
+- **#1040 content edits to confirm:** the /info and translation stat tiles are removed, and some /info and translation sentences are shortened (the reviewer listed them in the PR). Privacy is word for word the same. Say if any should come back.
 
 ## In progress
 
-- #1040 review round 1 = BLOCKED (my full-page captures were blank below 900px). Fixing capture, plus review finding: the "Liity kääntäjäksi" button is ~8px shorter than other primary buttons. Then new review.
-- Pride (`codex/react-pride`): /pride-nakyvaksi, /pride, /pride/ on the standalone React host. Implemented and host-checked, Python e2e tests not yet run, no PR yet.
-- (old) #1040 independent visual review of snapshot c4aae12 (390/1440, light/dark, three translation roles, no-JS guide). Captures: `/tmp/claude-0/-home-user-mielenosoitukset-fi/8469dc3e-c0fb-5022-bf64-67a8e4da67d7/scratchpad/qa/out/` (container-local). On SHIP: mark #1040 ready. On FIX: fix, recapture, new reviewer.
+- Pride #1043 (draft): 30 focused tests pass, including e2e. Captures done; independent review running.
+- #1042: style.css cleanup, the parsed CSS is unchanged. Needs only your merge.
 
 ## Resume next
 
@@ -38,3 +38,5 @@ Working notes for the maintainer. Lives on branch `claude/vibrant-gates-syjhk4` 
 ## Backlog discoveries
 
 - `mielenosoitukset_fi/static/css/style.css` around line 461 contains a pasted Python traceback fragment (`enosoitukset_fi/.../database_manager.py", line 90, in _init_client`). Browsers skip it as invalid CSS, but it should be removed in its own small PR.
+- Guide (/ohjeet) dark theme: section headings and step titles use the global `--header_color` (#3366cc on #171b22, about 3:1). The support banner body is 3.2:1 and its kicker 2.4:1. Pre-existing; fix in a follow-up with the design-system tokens.
+- Shared `public-page-header` description in dark mode is about 4.4 to 5.0:1 on the lighter gradient. Borderline; check next time the component changes.

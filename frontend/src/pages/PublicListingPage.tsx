@@ -230,7 +230,7 @@ export function PublicListingPage(props: PublicListingProps) {
         </div>)}
         {loading && !pages.length && <p className="loading-container" role="status">{text.loading}</p>}
       </div>
-      <p id="listing-result-summary" className="public-listing-summary" role="status" aria-live="polite" aria-atomic="true" hidden={!first}>{summary}</p>
+      <p id="listing-result-summary" className="public-listing-summary" role="status" aria-live="polite" aria-atomic="true" hidden={!first || !count}>{summary}</p>
       <div id="listing-load-error" className="public-listing-summary" hidden={!failure}>
         <p role="alert">{text.loadError}</p><button type="button" className="button button-secondary" disabled={loading}
           onClick={() => failure && void load({ ...failure, manual: true })}>{text.retry}</button>
@@ -241,7 +241,7 @@ export function PublicListingPage(props: PublicListingProps) {
           <a href={props.submitUrl} className="button button-primary">{text.submitEvent}</a></div>
       </div>
       <button ref={more} id="load-more-btn" type="button" className="button button-secondary load-more"
-        hidden={!last || last.page >= last.total_pages} disabled={loading}
+        hidden={!last || last.page >= last.total_pages || Boolean(failure)} disabled={loading}
         onClick={() => void load({ params, page: last.page + 1, append: true, manual: true })}>{loading ? text.loadingMore : text.loadMore}</button>
     </section>
   </section>;

@@ -49,6 +49,8 @@ export type AppProps = {
   serverPage?: ReactNode;
   /** Helsinki date the server used for the fundraising page, so hydration matches. */
   today?: string;
+  /** Whether the /info page may promote the campaign: published, or the visitor can preview it. */
+  campaignVisible?: boolean;
 };
 
 function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<typeof catalog>): CardProps {

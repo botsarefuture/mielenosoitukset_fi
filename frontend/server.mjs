@@ -72,6 +72,7 @@ function assetTags(manifest) {
     pride: routeAssets('src/app/PrideScreen.tsx'),
     information: routeAssets('src/app/InformationScreen.tsx'),
     campaign: routeAssets('src/app/CampaignScreen.tsx'),
+    fundraising: routeAssets('src/app/FundraisingScreen.tsx'),
     head: [...css].map((file) => `<link rel="stylesheet" href="/app-assets/${file}">`)
       .concat([...modules].filter((file) => file.endsWith('.js'))
         .map((file) => `<link rel="modulepreload" href="/app-assets/${file}">`)).join('\n'),
@@ -174,7 +175,9 @@ const server = createServer(async (request, response) => {
     if (result.redirect) {
       // A site-relative preview target stays on the same public origin; the web
       // server decides which handler owns the flagged request.
+      // Route headers such as the campaign gate's noindex still apply; caching stays off.
       response.writeHead(result.status, {
+        ...(result.headers ?? {}),
         Location: result.redirect, 'Content-Length': '0', 'Cache-Control': 'no-store', Vary: 'Cookie',
       });
       response.end();

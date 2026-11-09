@@ -85,6 +85,28 @@ served from a cache.
 Deploy the Go API and the host before activating the Apache rule. Removing the
 rule restores the Flask page.
 
+### Fundraising page
+
+`/keräys` (sent as `/ker%C3%A4ys`) is routed to Node behind the same
+publication gate as the campaign page. The page content is the Flask template
+as a React component (`frontend/src/app/FundraisingScreen.tsx`).
+
+Its data still comes from `mielenosoitukset_fi/utils/data/fundraising.json`,
+which the host build bundles. Editing that file therefore needs a host
+deploy, which every push to `main` already runs. `frontend/src/app/fundraising.ts`
+ports `fundraising_details()`, which decides when the organizer, collection
+number and payment details may appear. Both versions are tested against the
+shared cases in `tests/fixtures/fundraising_parity.json`
+(`tests/test_fundraising_parity.py` and `scripts/verify_public_host.mjs`), so
+a change to either rule fails until both agree. Regenerate the fixture from
+Python when the rules change on purpose. The TypeScript port accepts dates only
+as `YYYY-MM-DD`, the format this file documents; any other form keeps
+donations closed. The server passes its Helsinki date to the browser so both
+render the same state.
+
+The Flask route and template stay as the rollback path; removing the Apache
+rule restores them.
+
 ## Files
 
 - `frontend/src/app/detail-route.ts` — the detail and series head reads, occurrence

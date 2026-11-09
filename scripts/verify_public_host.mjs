@@ -139,8 +139,39 @@ try {
     assert(body.includes('/kampanja/api/volunteers') || live.html.includes('/kampanja/api/volunteers'));
     assert.equal((await page({ path: '/kampanja' })).status, 404, 'Flask keeps the slash redirect');
     assert.equal((await page({ path: '/kampanja/confirm/token' })).status, 404, 'Confirmation stays in Flask');
+    const fundraising = changes => campaign({ path: '/ker%C3%A4ys', ...changes });
+    campaignState = { status: 200, body: { published: false } };
+    for (const path of ['/ker%C3%A4ys', '/keräys']) {
+      const hidden = await fundraising({ path });
+      assert.equal(hidden.status, 302, path);
+      assert.equal(hidden.redirect, '/users/auth/login?next=%2Fker%C3%A4ys');
+      assert.equal(hidden.headers['Cache-Control'], 'private, no-store');
+    }
+    const fundPreview = await fundraising({ cookie: 'session=alice' });
+    assert.equal(fundPreview.status, 200);
+    assert.equal(fundPreview.headers['X-Robots-Tag'], 'noindex, nofollow');
+    campaignState = { status: 200, body: { published: true } };
+    const fundLive = await fundraising();
+    assert.equal(fundLive.status, 200);
+    assert.equal(fundLive.headers['Cache-Control'], 'private, no-store');
+    const fundBody = fundLive.html.split('<body>')[1].split('<script type="application/json"')[0];
+    for (const text of ['Jotta mielenosoitukset löytyvät', '2 500 €', 'Valmistelussa', 'Lahjoittaminen ei ole vielä avoinna',
+      'jatkuvuuden turvaamiseen', 'href="/contact"', 'MobilePay 1', 'MobilePay 2',
+      '<article class="public-content campaign-page" lang="fi">']) assert(fundBody.includes(text), text);
+    assert.match(fundBody, /datetime="2026-11-15"[^]*datetime="2027-02-15"/i);
+    for (const text of ['Näin lahjoitat', 'Tilinumero (IBAN)', 'name="iban"', 'type="submit"']) assert(!fundBody.includes(text), text);
+    assert(fundLive.html.includes('rel="canonical" href="https://example.test/ker%C3%A4ys"'));
+    assert(fundLive.html.includes('/static/css/public-content.css'));
+    assert.match(bootstrap(fundLive.html).today, /^\d{4}-\d{2}-\d{2}$/);
   } finally { campaignApi.close(); }
-  console.log('PASS: campaign page keeps the publication gate: signed-in preview, fail-closed reads, private no-store and noindex until published');
+  console.log('PASS: campaign and fundraising pages keep the publication gate: signed-in preview, fail-closed reads, private no-store and noindex until published');
+  const { fundraisingDetails } = await import(pathToFileURL(`${root}/frontend/dist/server/render.js`));
+  const parity = JSON.parse(readFileSync(`${root}/tests/fixtures/fundraising_parity.json`, "utf8"));
+  for (const item of parity) {
+    const got = fundraisingDetails(item.input, item.today);
+    assert.deepEqual(Object.fromEntries(Object.entries(got).sort()), item.expected, item.name);
+  }
+  console.log(`PASS: fundraising rules match the Python implementation on ${parity.length} shared cases`);
 } finally {
   await new Promise(resolve => sessionServer.close(resolve));
   await new Promise(resolve => homeApi.close(resolve));

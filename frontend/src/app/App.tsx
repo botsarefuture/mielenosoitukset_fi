@@ -45,7 +45,8 @@ export type AppProps = {
   cities?: CitiesData | null;
   submission?: SubmitBootstrap;
   calendar?: CalendarBootstrap;
-  information?: ReactNode;
+  /** A page rendered on the server and hydrated, such as the information pages. */
+  serverPage?: ReactNode;
 };
 
 function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<typeof catalog>): CardProps {
@@ -60,12 +61,12 @@ function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<
 }
 
 /** One public application shell: shared header, routed page content, footer. */
-export function App({ config, session, route, path, detail, series, home, listing, organization, cities, submission, calendar, information }: AppProps) {
+export function App({ config, session, route, path, detail, series, home, listing, organization, cities, submission, calendar, serverPage }: AppProps) {
   const text = catalog(config.locale);
   return <>
-    <SiteHeader {...headerProps(config, session, text, path)} hydrating={route.name === 'information'} />
+    <SiteHeader {...headerProps(config, session, text, path)} hydrating={route.name === 'information' || route.name === 'campaign'} />
     <main className={`container-main-content ${route.name === 'submit' ? 'submit-workspace' : route.name === 'detail' || route.name === 'series' ? 'public-detail-main' : 'public-layout-wide'}`} id="main-content" tabIndex={-1}>
-      {information}
+      {serverPage}
       {route.name === 'god-auth' && <Suspense fallback={<p role="status">Ladataan kirjautumista...</p>}><GodScreen /></Suspense>}
       {route.name === 'calendar' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria...</p>}>
         <CalendarScreen calendar={calendar} config={config} session={session} />

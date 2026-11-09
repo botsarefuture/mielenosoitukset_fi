@@ -103,6 +103,44 @@ try {
   }
   assert.equal((await page({ path: '/upcoming/translations/join' })).status, 404);
   console.log('PASS: information pages render readable HTML and retain canonical URLs and anchors');
+  let campaignState = { status: 200, body: { published: false } };
+  const campaignApi = createServer((req, res) => {
+    if (req.url !== '/api/campaign/publication') { res.writeHead(404); res.end(); return; }
+    res.writeHead(campaignState.status, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(campaignState.body));
+  });
+  await new Promise(resolve => campaignApi.listen(0, '127.0.0.1', resolve));
+  try {
+    const campaign = changes => page({ path: '/kampanja/', apiReadBase: `http://127.0.0.1:${campaignApi.address().port}/api`, ...changes });
+    for (const state of [{ status: 200, body: { published: false } }, { status: 200, body: { published: 'true' } },
+      { status: 503, body: {} }, { status: 200, body: [] }]) {
+      campaignState = state;
+      const hidden = await campaign();
+      assert.equal(hidden.status, 302, JSON.stringify(state));
+      assert.equal(hidden.redirect, '/users/auth/login?next=%2Fkampanja%2F');
+      assert.equal(hidden.headers['Cache-Control'], 'private, no-store');
+    }
+    campaignState = { status: 200, body: { published: false } };
+    const preview = await campaign({ cookie: 'session=alice' });
+    assert.equal(preview.status, 200);
+    assert.equal(preview.headers['Cache-Control'], 'private, no-store');
+    assert.equal(preview.headers['X-Robots-Tag'], 'noindex, nofollow');
+    assert.match(preview.html, /<meta name="robots" content="noindex, nofollow" \/>/);
+    campaignState = { status: 200, body: { published: true } };
+    const live = await campaign();
+    assert.equal(live.status, 200);
+    assert.equal(live.headers['Cache-Control'], 'private, no-store');
+    assert.equal(live.headers['X-Robots-Tag'], undefined);
+    const body = live.html.split('<body>')[1].split('<script type="application/json"')[0];
+    assert(body.includes('Yhdessä näkyväksi') && body.includes('id="vapaaehtoiseksi"') && body.includes('id="newsletter"'));
+    assert(live.html.includes('rel="canonical" href="https://example.test/kampanja/"'));
+    assert(live.html.includes('og:image" content="https://example.test/static/kampanja/og-banner.png"'));
+    assert(live.html.includes('/static/css/campaign.css'));
+    assert(body.includes('/kampanja/api/volunteers') || live.html.includes('/kampanja/api/volunteers'));
+    assert.equal((await page({ path: '/kampanja' })).status, 404, 'Flask keeps the slash redirect');
+    assert.equal((await page({ path: '/kampanja/confirm/token' })).status, 404, 'Confirmation stays in Flask');
+  } finally { campaignApi.close(); }
+  console.log('PASS: campaign page keeps the publication gate: signed-in preview, fail-closed reads, private no-store and noindex until published');
 } finally {
   await new Promise(resolve => sessionServer.close(resolve));
   await new Promise(resolve => homeApi.close(resolve));

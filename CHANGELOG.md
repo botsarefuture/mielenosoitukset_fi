@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Move the volunteer campaign page (`/kampanja/`) to the standalone React host. It keeps the same content, signup and newsletter forms, and the same publication gate: until the campaign is published only signed-in users see a non-indexed preview. A new read-only Go endpoint reports the publication state.
 - Raise text contrast on the organizer guide, the information page headers, the notification badge and the invite link on event cards in the dark theme. The guide's orange numbers and labels now use the darker accent so they meet the 4.5:1 minimum.
 - Tidy the React listing states: empty-state buttons no longer touch, the result count is hidden when nothing was found, the empty message no longer repeats its title, a failed load shows only the retry button, and "Näytä lisää" uses a quieter tinted style.
 - Move the about, organizer guides, privacy notice, terms and translation project pages to the standalone React host. Render the content on the first response, preserve guide and terms anchors, and keep translator signup and email delivery in Flask.

@@ -102,8 +102,9 @@
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-areas: "icon value" "icon label";
+  grid-template-rows: auto 1fr;
   column-gap: 0.85rem;
-  align-items: center;
+  align-items: start;
   padding: 1.1rem 1.25rem;
   border: 1px solid var(--product-border);
   border-radius: 12px;
@@ -113,6 +114,7 @@
 
 .about-fact > i {
   grid-area: icon;
+  align-self: center;
   display: grid;
   width: 2.75rem;
   height: 2.75rem;
@@ -211,9 +213,10 @@
   background: var(--product-surface-muted);
 }
 
-.about-questions h3 {
+.information-page .about-questions h3 {
   margin: 0 0 0.35rem;
   font-size: 1rem;
+  font-weight: 700;
 }
 
 .about-questions p {
@@ -228,6 +231,7 @@
 .about-side .public-prose-card h3 {
   margin-top: 1.25rem;
   font-size: 1.05rem;
+  font-weight: 700;
 }
 
 @media (max-width: 860px) {

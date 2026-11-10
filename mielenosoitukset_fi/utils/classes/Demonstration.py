@@ -1094,7 +1094,10 @@ def is_none(s):
     if s is None:
         return True
     
-    if isinstance(s, str) and not s.strip():
+    if isinstance(s, str) and (
+        not s.strip() or s.strip().lower() in {"none", "null"}
+    ):
+        # Legacy rows stored the literal text "None" for a missing value.
         return True
     
     return False

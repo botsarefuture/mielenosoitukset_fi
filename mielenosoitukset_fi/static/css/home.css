@@ -1,8 +1,9 @@
 .home-page { color: var(--product-text); padding-block: 1.5rem 2rem; }
-.home-intro { display: grid; grid-template-columns: 1fr auto; gap: 1.5rem 2rem; padding: clamp(1.25rem, 3vw, 2.5rem); background: var(--product-primary-soft); border-top: 4px solid var(--product-accent); border-radius: 0 0 1rem 1rem; }
-.home-intro h1 { color: var(--product-primary); font-size: clamp(1.8rem, 3vw, 2.75rem); line-height: 1.15; margin: 0 0 .75rem; }
+.home-intro { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; gap: 1.5rem 2rem; padding: clamp(1.25rem, 3vw, 2.5rem); background: var(--product-primary-soft); border-top: 4px solid var(--product-accent); border-radius: 0 0 18px 18px; }
+.home-intro h1 { color: var(--product-text); font-size: clamp(1.8rem, 3vw, 2.75rem); line-height: 1.15; margin: 0 0 .75rem; }
 .home-intro p, .home-campaign p { margin: 0; max-width: 65ch; }
-.home-intro > a { align-self: start; }
+.home-intro p { max-width: 60ch; margin-inline: auto; }
+.home-intro > a { grid-row: 4; }
 .home-search { grid-column: 1 / -1; width: 100%; max-width: 48rem; min-width: 0; margin-inline: auto; }
 .home-search label { display: block; font-weight: 650; margin-bottom: .5rem; }
 .home-search > div { display: flex; gap: .5rem; }
@@ -12,7 +13,7 @@
 .home-button--secondary { background: var(--product-surface); color: var(--product-primary); border-color: var(--product-border); }
 .home-button--secondary:hover { background: var(--product-primary-soft); color: var(--product-primary-strong); }
 .home-page a:focus-visible, .home-page button:focus-visible, .home-page input:focus-visible { outline: 3px solid var(--product-primary); outline-offset: 3px; }
-.home-links { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; grid-column: 1 / -1; }
+.home-links { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem 1.5rem; grid-column: 1 / -1; }
 .home-links a, .home-section-heading a, .home-empty a { color: var(--product-primary); font-weight: 650; text-underline-offset: .2em; }
 .home-links a { padding-block: .3rem; }
 .home-events { margin-block: 2.25rem; }
@@ -25,7 +26,6 @@
 @media (max-width: 1000px) { .home-page .demos-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) {
   .home-intro { grid-template-columns: 1fr; gap: 1.25rem; }
-  .home-intro > a { grid-row: 4; justify-self: start; }
   .home-page .demos-grid { grid-template-columns: 1fr; }
   .home-links { gap: .5rem 1rem; }
   .home-section-heading { align-items: start; }

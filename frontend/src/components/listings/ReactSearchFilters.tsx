@@ -96,6 +96,14 @@ export function ReactSearchFilters({ props, values, change, submit, removeCity }
   const [active, setActive] = useState(-1);
   const [focused, setFocused] = useState(false);
   const [invalid, setInvalid] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const hasSecondaryValues = Boolean((!props.fixed.city && values.city) || values.location
+    || (!props.fixed.today && (values.date_start || values.date_end)) || cityInput);
+  useEffect(() => { setHydrated(true); }, []);
+  useEffect(() => {
+    if (hasSecondaryValues) setFiltersOpen(true);
+  }, [hasSecondaryValues, values.city, values.location, values.date_start, values.date_end, cityInput]);
   useEffect(() => {
     const start = isoDate(values.date_start), end = isoDate(values.date_end);
     if (start !== null && end !== null && !(start && end && start > end)) setInvalid(false);
@@ -123,6 +131,11 @@ export function ReactSearchFilters({ props, values, change, submit, removeCity }
       <input type="text" id="demo-search" name="search" value={values.search}
         onChange={event => change({ ...values, search: event.target.value })} placeholder={text.searchPlaceholder} />
     </div>
+    {hydrated && <button type="button" className="detail-button public-search-toggle"
+      aria-expanded={filtersOpen} aria-controls="secondary-filters" onClick={() => setFiltersOpen(open => !open)}>
+      {text.filters}
+    </button>}
+    <div id="secondary-filters" className="public-search-secondary" data-collapsed={hydrated && !filtersOpen}>
     {props.fixed.city ? <input type="hidden" name="city" value={props.fixed.city} /> :
       <div className="public-search-field"><label htmlFor="city_input">{text.city}</label>
         <input type="text" id="city_input" value={cityInput} placeholder={text.city} autoComplete="off"
@@ -153,6 +166,7 @@ export function ReactSearchFilters({ props, values, change, submit, removeCity }
       <DateField edge="start" value={values.date_start} change={value => change({ ...values, date_start: value })} props={props} invalid={invalid} />
       <DateField edge="end" value={values.date_end} change={value => change({ ...values, date_end: value })} props={props} invalid={invalid} />
     </div>}
+    </div>
     <div className="date-error" id="date-error" role="alert" hidden={!invalid}>{text.dateError}</div>
     <input type="hidden" name="date_start" id="iso_date_start" value={isoDate(values.date_start) ?? ''} />
     <input type="hidden" name="date_end" id="iso_date_end" value={isoDate(values.date_end) ?? ''} />

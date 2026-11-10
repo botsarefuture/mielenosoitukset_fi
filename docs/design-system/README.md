@@ -94,7 +94,7 @@ The extraction found places where existing screens solve the same problem differ
 | Radii | 6, 7, 8, 9, 10, 12, 14, 16 and 18px, 0.5em, 0.9rem, 1.1em, 1.2em | `tag-radius` 6px for small badges and tags · `button-radius` 8px for controls and cells · `section-radius` 12px for surfaces and dialogs · `site-hero-radius` 18px for heroes · `radius-pill` for status pills |
 | Tags | Card tag (0.5em radius, centred, hover fills) vs detail tag (6px, 0.35rem 0.65rem) | One tag: `product-primary` text on `product-primary-soft`, `tag-radius`, weight 600, `#`-prefixed |
 | Clock times | Cards show `17:00 – 19:00`, the detail page shows `17.00–19.00` | Finnish standard: `17.00–19.00` (dot, en dash, no spaces) and `13.00 alkaen` |
-| Page headings | Centred `product-primary` `page-title` (older pages) vs left-aligned `product-text` (calendar, detail) | Left-aligned `product-text`. Centre only inside a hero |
+| Page headings | Centred `product-primary` `page-title` (older pages) vs left-aligned `product-text` (calendar, detail) | Left-aligned `product-text`. The front-page hero is the centred exception: title, lead, search and links share one axis |
 | Cancelled | `badge-cancelled` `#c0392b` on cards, `product-danger` on the detail page | `product-danger` (`product-danger-soft` for grounds), always with the word *Peruttu* |
 | Feedback colours | `flash-*` palette (separate hues) vs `product-success` / `product-danger` | `product-success`, `product-danger` and `product-accent` with their `*-soft` grounds; the `flash-*` set stays only for the existing toast |
 | Today | `badge-today` `#ff595e` with white text (3.1:1) on cards, a 2px `product-primary` outline in the calendar | Mark today with `product-primary` (outline or text) plus the word *Tänään* |

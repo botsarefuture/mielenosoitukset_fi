@@ -54,7 +54,7 @@ export function HomePage({ endpoint, locale, cards, urls, text, initialData = nu
   return <div className="home-page public-demonstration-list">
     <header className="home-intro">
       <div><h1>{text.title}</h1><p>{text.intro}</p></div>
-      <a className="home-button home-button--secondary" href={urls.submit}>{text.submit}</a>
+      <a className="detail-button" href={urls.submit}>{text.submit}</a>
       <form className="home-search" action={urls.all} method="get" role="search">
         <label htmlFor="home-search">{text.search}</label>
         <div><input id="home-search" name="search" type="search" placeholder={text.searchPlaceholder} />

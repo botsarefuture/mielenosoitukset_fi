@@ -46,6 +46,7 @@ From the maintainer, 10 November 2026:
 - [ ] Profile page: the red notification count sits under the bell instead of on top of it. Other pages look right.
 - [x] Front page: center the search bar. *(Implemented; sandbox blocks visual acceptance.)*
 - [x] `/demonstrations` (Tulevat mielenosoitukset): the search area is too heavy. Make it lighter and simpler. *(Implemented; sandbox blocks visual acceptance.)*
+- [x] Search review fixes: restore focus rings and filled fields, centre the full home intro and collapse secondary mobile filters. *(Implemented; visual acceptance remains blocked by sandbox.)*
 - [ ] `/cities`: the city list is too much. Sort it alphabetically and make it scale to every city in Finland (for example grouped by first letter, with search).
 
 From the visual reviews:

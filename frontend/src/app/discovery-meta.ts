@@ -1,6 +1,6 @@
 import type { AppConfig } from './config';
 import type { CitiesData } from './cities';
-import { findCity } from './cities';
+import { findCity, groupCities } from './cities';
 import type { Page } from '../components/listings/types';
 import type { RouteMeta } from './routes';
 
@@ -24,7 +24,7 @@ export function discoveryStructuredData(meta: RouteMeta, items: { name: string; 
 }
 
 export function cityItems(config: AppConfig, data: CitiesData | null) {
-  return (data?.cities ?? []).map(city => ({ name: city.name, url: `${config.origin}/city/${city.key}` }));
+  return groupCities(data?.cities ?? []).flatMap(group => group.cities.map(city => ({ name: city.name, url: `${config.origin}/city/${city.key}` })));
 }
 
 export function todayItems(config: AppConfig, page: Page | null) {

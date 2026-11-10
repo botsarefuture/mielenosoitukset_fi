@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+- Keep city links compact with inline event counts only when needed, add alphabetical jump links, and fix empty-state alignment and result spacing.
+
+- Make the city directory easier to scan with Finnish alphabetical letter groups, compact links in columns and the existing live search. Keep the full grouped list, event counts and city links available without JavaScript.
+
 - Show the red unread count on the notification bell on profile pages too; a page button style clipped it.
 - Move the demonstration change form (`/suggest_change/<id>`) to the standalone React SSR host with Go-read prefills, editable lists and Markdown preview. The plain form still posts to Flask for review; cancel stays a red button. Keep the public API's visibility and organizer privacy rules, without submitting redacted organizer lists as replacements.
 - Stop demonstration change suggestions from listing an unchanged start or end time as a change when the stored time and the form use different formats (`12:00` and `12:00:00`).

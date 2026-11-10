@@ -307,6 +307,13 @@ contains canonical/title/description and collection structured data, with
 no-JavaScript discovery links or event summaries. API failures produce a
 non-indexable 503 with a React retry control rather than a false empty result.
 Filtered directory URLs are non-indexable and canonicalize to `/cities`.
+The directory groups compact city links by initial in Finnish alphabetical
+order. Search narrows those groups as you type and preserves the existing `q`
+and `today` query filters. The unfiltered grouped directory, including event
+counts and today links, also renders in the no-JavaScript fallback. Counts appear
+inline only for cities with upcoming events, with the full Finnish phrase for
+screen readers. Native letter jump links target the existing group headings;
+they are hidden while search text is active and work without JavaScript.
 
 Deploy Go first, then the host, then the exact Apache GET/HEAD allowlist.
 Removing only the discovery/today routing rule restores the existing Flask

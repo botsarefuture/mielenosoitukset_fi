@@ -8,6 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // Run after npm run app:build. No MongoDB, credentials or external services required.
 const root = fileURLToPath(new URL('..', import.meta.url)).replace(/\/$/, '');
+const cityCatalog = JSON.parse(readFileSync(`${root}/go-api/city_catalog.json`, 'utf8'));
 const { renderPage } = await import(pathToFileURL(`${root}/frontend/dist/server/render.js`));
 let reads = 0;
 const sessionServer = createServer((req, res) => {
@@ -290,8 +291,9 @@ function createApi(log) {
       return send(200, { events: [{ _id: detailId, title: 'Test event', detail_url: '/demonstration/may-day-2026' }], recommended: false });
     }
     if (url.pathname === '/api/cities') {
-      return send(200, { day: day(0), cities: [{ key: 'helsinki', name: 'Helsinki', phrase: 'Helsingissä',
-        demo_count: 5, today_count: 2, upcoming_count: 3 }], private: 'DO-NOT-BOOTSTRAP' });
+      return send(200, { day: day(0), cities: [...cityCatalog].reverse().map(city => ({ ...city,
+        demo_count: 5, today_count: city.key === 'akaa' ? 0 : city.key === 'alajarvi' ? 1 : 2,
+        upcoming_count: city.key === 'akaa' ? 0 : city.key === 'alajarvi' ? 1 : 3 })), private: 'DO-NOT-BOOTSTRAP' });
     }
     if (url.pathname === '/api/calendar/2028/2') {
       return send(200, { year: 2028, month: 2, ...(url.searchParams.get('city') ? {city:url.searchParams.get('city')} : {}), total: 2, days: [{ date: '2028-02-29', count: 2 }] });
@@ -543,6 +545,31 @@ try {
   assert.match(directory.html, /<link rel="canonical" href="https:\/\/example.test\/cities">/);
   assert.equal((directory.html.match(/<title>/g) ?? []).length, 1);
   assert.match(directory.html, /"@type":"CollectionPage"/);
+  assert.match(directory.html, /href="\/static\/css\/public-detail.css/);
+  const directoryFallback = directory.html.match(/<noscript>(<article[^]*?)<\/noscript>/)[1];
+  assert.match(directoryFallback, /Sivu toimii parhaiten, kun JavaScript on käytössä/);
+  assert.match(directoryFallback, /href="\/demonstrations"/);
+  const sortedCities = [...cityCatalog].sort((first, second) => first.name.localeCompare(second.name, 'fi'));
+  assert.deepEqual([...directoryFallback.matchAll(/data-city-key="([^"]+)"/g)].map(match => match[1]), sortedCities.map(city => city.key));
+  assert.deepEqual([...directoryFallback.matchAll(/<h2[^>]*>([^<]+)<\/h2>/g)].map(match => match[1]),
+    [...new Set(sortedCities.map(city => city.name.charAt(0).toLocaleUpperCase('fi')))]);
+  assert.deepEqual([...directoryFallback.matchAll(/href="#city-letter-([^"]+)"/g)].map(match => match[1]),
+    [...new Set(sortedCities.map(city => city.name.charAt(0).toLocaleUpperCase('fi')))]);
+  for (const city of cityCatalog) {
+    assert(directoryFallback.includes(`href="/city/${city.key}"`));
+    assert.equal(directoryFallback.includes(`href="/city/${city.key}/tanaan"`), city.key !== 'akaa');
+  }
+  assert.match(directoryFallback, /3 tulevaa mielenosoitusta/);
+  assert.match(directoryFallback, /class="city-upcoming" aria-hidden="true">\(3\)<\/span>/);
+  assert(!directoryFallback.includes('Ei tulevia mielenosoituksia'));
+  assert.match(directoryFallback, /href="\/city\/akaa"><span class="city-name">Akaa<\/span><\/a>/);
+  assert.match(directoryFallback, /class="city-upcoming" aria-hidden="true">\(1\)<\/span>/);
+  assert.match(directoryFallback, /class="city-link-context visually-hidden"> 1 tuleva mielenosoitus<\/span>/);
+  assert.match(directoryFallback, /Tänään 2 mielenosoitusta/);
+  const filteredDirectory = await detailPage({ path: '/cities', search: '?q=Helsinki&today=1&utm_source=test' });
+  assert.match(filteredDirectory.html, /<meta name="robots" content="noindex, follow"\s*\/?>/);
+  assert.match(filteredDirectory.html, /<link rel="canonical" href="https:\/\/example.test\/cities">/);
+  assert.equal((filteredDirectory.html.match(/data-city-key=/g) ?? []).length, cityCatalog.length);
   const todayDocument = await detailPage({ path: '/city/helsinki/tanaan', search: '?city=Tampere&date_start=2000-01-01&in_past=true&parent_id=foreign' });
   assert.equal(todayDocument.status, 200);
   assert.match(todayDocument.html, /Mielenosoitukset Helsingissä tänään/);

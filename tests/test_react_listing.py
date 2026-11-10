@@ -95,11 +95,12 @@ def test_continuous_grid_eviction_preserves_card_anchor_and_keyboard_focus(live_
 @pytest.mark.integration
 @pytest.mark.parametrize('path', ['/demonstrations', '/city/Helsinki', '/tag/null-clock-test'])
 @pytest.mark.parametrize('null_fields,missing_fields,expected_time', [
-    (('end_time',), (), '12:34 alkaen'),
-    (('start_time',), (), 'Päättymisaika: 14:00'),
+    ((), (), '12.34–14.00'),
+    (('end_time',), (), '12.34 alkaen'),
+    (('start_time',), (), 'Päättymisaika: 14.00'),
     (('start_time', 'end_time'), (), None),
-    ((), ('end_time',), '12:34 alkaen'),
-    ((), ('start_time',), 'Päättymisaika: 14:00'),
+    ((), ('end_time',), '12.34 alkaen'),
+    ((), ('start_time',), 'Päättymisaika: 14.00'),
     ((), ('start_time', 'end_time'), None),
 ])
 def test_actual_api_null_times_do_not_remove_the_card_batch(client, db, seeded_data, live_server, browser_page,
@@ -145,7 +146,7 @@ def test_end_only_card_clock_is_localized(app, client, db, seeded_data, live_ser
     browser_page.goto(live_server + '/set_language/' + locale)
     browser_page.goto(live_server + '/tag/null-clock-test', wait_until='domcontentloaded')
     clock = browser_page.locator(f'[data-demo-id="{seeded_data["demo_id"]}"] .demo-card-time')
-    expect(clock).to_have_text(f'{label}: 14:00')
+    expect(clock).to_have_text(f'{label}: 14.00')
 
 
 def exercise_listing_scroll(page):

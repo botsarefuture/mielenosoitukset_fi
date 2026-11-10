@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 - Stop recurring series from generating events centuries ahead (#1029). The worker now schedules at most one rolling year ahead whatever end date a series has; before, a distant end date added up to 1000 occurrences on every run. Public listings, the front page and city counts ignore events more than two years ahead unless a visitor asks for a later end date, so Helsinki no longer shows tens of thousands of upcoming events. `mielenosoitukset_fi/scripts/far_future_demos.py` reports the stored occurrences and can remove them after review; it changes nothing by default.
+- Polish React public notices, guide headings, MobilePay link spacing and listing controls: reuse default secondary buttons, show filter disclosure chevrons, remove the invite underline and keep keyboard-only action focus rings. Share Finnish dot-formatted event clocks between cards and details without changing API values.
 - Confirm support replies are persisted in the email queue before recording a correlated queued reply and audit entries. Unconfirmed queue or case writes now show a safe warning instead of claiming delivery or retrying silently (#984).
 
 - Restore visible listing search focus rings and compact filled secondary fields; collapse mobile filters after hydration, opening active filters automatically. Centre the whole front-page introduction while preserving search URLs and no-JavaScript forms.

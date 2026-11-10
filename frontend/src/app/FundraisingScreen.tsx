@@ -59,8 +59,8 @@ export function FundraisingPage({ details, config }: { details: FundraisingDetai
         {f.can_donate ? <section className="public-content__notice" aria-labelledby="donate-title">
           <h3 id="donate-title">Näin lahjoitat</h3>
           <p>Lahjoita vain keräysaikana {finnishDate(f.start_date!)}–{finnishDate(f.end_date!)}. Älä tee lahjoitusta keräysajan päätyttyä.</p>
-          {f.mobilepay_links.filter(link => link.url).map(link =>
-            <p key={link.url}><a className="public-content__link" href={link.url} rel="noopener noreferrer">{link.label} <Arrow /></a></p>)}
+          <div className="campaign-mobilepay-links">{f.mobilepay_links.filter(link => link.url).map(link =>
+            <a key={link.url} className="public-content__link" href={link.url} rel="noopener noreferrer">{link.label} <Arrow /></a>)}</div>
           {f.iban && f.recipient && <dl className="public-content__facts">
             <div><dt>Saaja</dt><dd>{f.recipient}</dd></div>
             <div><dt>Tilinumero (IBAN)</dt><dd>{f.iban}</dd></div>

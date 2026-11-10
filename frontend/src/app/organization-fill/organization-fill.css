@@ -12,7 +12,7 @@
   height: 5rem;
   place-items: center;
   overflow: hidden;
-  border-radius: 1rem;
+  border-radius: 12px;
   background: var(--product-surface);
   color: var(--product-text-muted);
   font-size: 1.75rem;
@@ -146,40 +146,9 @@
   color: var(--product-danger);
 }
 
-/* Match the save button's shape so the actions read as one group. */
-.org-fill-actions .button,
-.org-fill-form .org-fill-add {
-  min-height: 44px;
-  padding: 0.6rem 1.1rem;
-  border-radius: 8px;
-}
 
-.org-fill-form .org-fill-add {
-  min-height: 44px;
-  border: 0;
-  background: var(--product-primary-soft);
-  color: var(--product-primary);
-  box-shadow: none;
-}
-
-.org-fill-actions .org-fill-cancel {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--product-text-muted);
-  background: var(--product-surface);
-  color: var(--product-text);
-  text-decoration: none;
-  box-shadow: none;
-}
-
-.org-fill-actions .org-fill-cancel:hover {
-  border-color: var(--product-primary);
-  color: var(--product-primary);
-}
-
-.org-fill-form .org-fill-add:hover {
-  background: var(--product-action-hover);
-  color: var(--product-on-action);
+.org-fill-add {
+  margin-top: 0.25rem;
 }
 
 .org-fill-actions {

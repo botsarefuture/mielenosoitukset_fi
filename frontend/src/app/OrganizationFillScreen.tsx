@@ -80,14 +80,14 @@ export default function OrganizationFillScreen({ profile }: { profile: PublicOrg
                 </button>
               </div>)}
             </div>
-            <button type="button" className="button org-fill-add"
+            <button type="button" className="detail-button org-fill-add"
               onClick={() => { setRows(current => [...current, { key: nextKey, platform: '', url: '' }]); setNextKey(nextKey + 1); }}>
               <i className="fa-solid fa-plus" aria-hidden="true" /> Lisää alusta
             </button>
           </fieldset>
-          <div className="information-actions org-fill-actions">
-            <button type="submit" className="button button-primary"><i className="fa-solid fa-floppy-disk" aria-hidden="true" /> Tallenna ehdotus</button>
-            <a className="button org-fill-cancel" href={orgPath}>Peruuta</a>
+          <div className="detail-actions org-fill-actions">
+            <button type="submit" className="detail-button detail-button--primary"><i className="fa-solid fa-floppy-disk" aria-hidden="true" /> Tallenna ehdotus</button>
+            <a className="detail-button" href={orgPath}>Peruuta</a>
           </div>
         </form>
       </section>

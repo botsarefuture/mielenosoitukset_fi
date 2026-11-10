@@ -315,7 +315,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       // Anonymous visitors would land on a login page while the campaign is private.
       campaignVisible = session.authenticated || await loadCampaignPublication(readBase);
     }
-    extraHead = assets.information ?? '';
+    extraHead = (assets.information ?? '') + (route.page === 'info' ? `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">` : '');
     if (route.page === 'guides') {
       extraHead += '<link rel="stylesheet" href="/static/css/public-guides.css?v=20261109-guide-contrast-1">';
     }
@@ -366,7 +366,8 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     organizationFill = loaded.profile;
     meta = { title: `Täydennä järjestön tietoja - ${organizationFill.name} | Mielenosoitukset.fi`,
       description: 'Auta täydentämään tämän organisaation profiilia.', canonical: null, robots: 'noindex, follow' };
-    extraHead = assets.organizationFill ?? '';
+    // The form uses the shared .detail-button contract.
+    extraHead = (assets.organizationFill ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
     // A plain form that posts to Flask; only adding social media rows needs JavaScript.
     noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}

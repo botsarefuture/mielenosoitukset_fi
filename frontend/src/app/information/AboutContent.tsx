@@ -20,9 +20,9 @@ export function AboutContent({ campaign = false }: { campaign?: boolean }) {
       <div>
         <h2 id="about-campaign-title">Tule mukaan valtakunnalliseen kampanjaan!</h2>
         <p>Tule mukaan levittämään tietoa mielenosoitukset.fi:stä kaikkialle Suomeen. Rahoita kampanjaa, levitä markkinointimateriaaleja, tule vapaaehtoiseksi tai jaa tietoa sosiaalisessa mediassa.</p>
-        <div className="information-actions">
-          <a className="button button-primary" href="/kampanja/">Tutustu kampanjaan</a>
-          <a href="/kampanja/#vapaaehtoiseksi">Tule vapaaehtoiseksi</a>
+        <div className="detail-actions">
+          <a className="detail-button detail-button--primary" href="/kampanja/">Tutustu kampanjaan</a>
+          <a className="detail-button" href="/kampanja/#vapaaehtoiseksi">Tule vapaaehtoiseksi</a>
         </div>
       </div>
     </section>}
@@ -33,7 +33,7 @@ export function AboutContent({ campaign = false }: { campaign?: boolean }) {
           <h2 id="about-what-title">Mikä on Mielenosoitukset.fi?</h2>
           <p>Mielenosoitukset.fi on sivusto, joka kokoaa yhteen kaikki Suomessa järjestettävät mielenosoitukset ja yhteiskunnalliset tapahtumat. Tavoitteenamme on tarjota kattava ja ajankohtainen tietolähde, jossa voit seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi helposti ja nopeasti.</p>
           <p>Sivustomme toimii riippumattomana alustana, joka tarjoaa avoimen ja neutraalin paikan kaikille mielenosoituksille ja protesteille. Meidän tavoitteemme on auttaa löytämään tietoa, osallistumaan aktiivisesti yhteiskunnallisiin tapahtumiin ja edistämään vapaata mielipiteenilmaisua.</p>
-          <div className="information-actions"><a className="button button-primary" href="/demonstrations">Selaa mielenosoituksia</a></div>
+          <div className="detail-actions"><a className="detail-button detail-button--primary" href="/demonstrations">Selaa mielenosoituksia</a></div>
         </section>
         <section className="public-prose-card" aria-labelledby="about-submit-title">
           <h2 id="about-submit-title">Kuinka ilmoitan mielenosoituksesta?</h2>
@@ -48,9 +48,9 @@ export function AboutContent({ campaign = false }: { campaign?: boolean }) {
               <p>Hyväksyntä kestää yleensä noin yhdestä tunnista 48 tuntiin. Ethän huolestu, jos hyväksynnässä menee kauemmin. Mikäli ilmoitus tarvitsee käsitellä nopeasti, voit ottaa yhteyttä!</p>
             </div>
           </div>
-          <div className="information-actions">
-            <a className="button button-primary" href="/submit">Ilmoita tapahtuma</a>
-            <a href="/ohjeet">Ohjeet järjestäjille</a>
+          <div className="detail-actions">
+            <a className="detail-button detail-button--primary" href="/submit">Ilmoita tapahtuma</a>
+            <a className="detail-button" href="/ohjeet">Ohjeet järjestäjille</a>
           </div>
         </section>
       </div>

@@ -148,7 +148,7 @@
   align-items: flex-start;
   padding: clamp(1.25rem, 3vw, 2rem);
   border: 1px solid color-mix(in srgb, var(--product-accent) 35%, transparent);
-  border-radius: 1rem;
+  border-radius: 12px;
   background: var(--product-accent-soft);
   color: var(--product-text);
   line-height: 1.7;
@@ -177,7 +177,7 @@
   margin: 0;
 }
 
-.about-campaign a:not(.button) {
+.about-campaign a:not(.detail-button) {
   color: var(--product-accent-strong);
   font-weight: 700;
 }
@@ -240,4 +240,8 @@
   .about-campaign {
     flex-direction: column;
   }
+}
+
+.information-page .detail-actions {
+  margin-top: 1rem;
 }

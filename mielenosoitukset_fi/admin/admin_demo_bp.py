@@ -925,6 +925,8 @@ def suggestion_apply(suggestion_id):
     update = {}
     for f in selected:
         if f in suggested:
+            if isinstance(suggested[f], str) and suggested[f].strip().lower() in {'none', 'null'}:
+                continue
             update[f] = suggested[f]
 
     if not update:

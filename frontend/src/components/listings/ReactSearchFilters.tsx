@@ -134,6 +134,7 @@ export function ReactSearchFilters({ props, values, change, submit, removeCity }
     {hydrated && <button type="button" className="detail-button public-search-toggle"
       aria-expanded={filtersOpen} aria-controls="secondary-filters" onClick={() => setFiltersOpen(open => !open)}>
       {text.filters}
+      <i className={`fa-solid fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden="true" />
     </button>}
     <div id="secondary-filters" className="public-search-secondary" data-collapsed={hydrated && !filtersOpen}>
     {props.fixed.city ? <input type="hidden" name="city" value={props.fixed.city} /> :

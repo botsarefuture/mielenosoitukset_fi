@@ -6,6 +6,7 @@
 
 - Move public `/status` to React SSR with a cached, time-bounded Go database check. Keep HTTP 200 and noindex when status cannot be fetched; explicitly disclose the omitted Flask cache and file-storage checks. Admin status is unchanged.
 
+- Polish React public notices, guide headings, MobilePay link spacing and listing controls: reuse default secondary buttons, show filter disclosure chevrons, remove the invite underline and keep keyboard-only action focus rings. Share Finnish dot-formatted event clocks between cards and details without changing API values.
 - Confirm support replies are persisted in the email queue before recording a correlated queued reply and audit entries. Unconfirmed queue or case writes now show a safe warning instead of claiming delivery or retrying silently (#984).
 
 - Restore visible listing search focus rings and compact filled secondary fields; collapse mobile filters after hydration, opening active filters automatically. Centre the whole front-page introduction while preserving search URLs and no-JavaScript forms.

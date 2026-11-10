@@ -18,7 +18,7 @@ Mielenosoitukset.fi is a Finnish public calendar of demonstrations. The interfac
 - **Plain, neutral, factual.** The site lists demonstrations from every cause, so copy never takes a side. Avoid exclamation marks, hype and emoji.
 - **Imperative actions, noun titles.** Buttons name the action (*Hae mielenosoituksia*, *Merkitse luetuiksi*, *Näytä kaikki*). Page titles are nouns (*Kaupungit*).
 - **Sentence case** for everything except status badges and language codes, which are uppercase (`TÄNÄÄN`, `PERUTTU`, `FI`).
-- **Finnish formats.** Dates are `9.11.2026`, with the weekday written out on the detail page (*maanantai 9.11.2026*). Times are 24-hour in the Finnish dot form, `17.00–19.00`, or `13.00 alkaen` when there is no end time. Some cards still show `17:00 – 19:00`: see *Consistency*.
+- **Finnish formats.** Dates are `9.11.2026`, with the weekday written out on the detail page (*maanantai 9.11.2026*). Times are 24-hour in the Finnish dot form, `17.00–19.00`, or `13.00 alkaen` when there is no end time. Cards and details share the same clock helper.
 - **Counts agree with their noun:** *1 mielenosoitus*, *3 mielenosoitusta*, *128 osallistujaa*. A duration is written as a duration (*5 päivää 15 tuntia*).
 - Feedback is one sentence that says what happened (*Ilmoituksia ei voitu merkitä luetuiksi.*).
 
@@ -93,7 +93,7 @@ The extraction found places where existing screens solve the same problem differ
 | Buttons | `.detail-button` (8px, 0.94rem/650), `.hero-button` (10px, 750), `.calendar-submit` (0.6rem), `.demo-card-action-btn` (0.5em), header link (10px) | The `Button` contract (`.detail-button`): 44px, `button-radius`, primary / default / quiet, and `--danger` (always red) for cancel. On blue grounds, the hero's white-outline treatment |
 | Radii | 6, 7, 8, 9, 10, 12, 14, 16 and 18px, 0.5em, 0.9rem, 1.1em, 1.2em | `tag-radius` 6px for small badges and tags · `button-radius` 8px for controls and cells · `section-radius` 12px for surfaces and dialogs · `site-hero-radius` 18px for heroes · `radius-pill` for status pills |
 | Tags | Card tag (0.5em radius, centred, hover fills) vs detail tag (6px, 0.35rem 0.65rem) | One tag: `product-primary` text on `product-primary-soft`, `tag-radius`, weight 600, `#`-prefixed |
-| Clock times | Cards show `17:00 – 19:00`, the detail page shows `17.00–19.00` | Finnish standard: `17.00–19.00` (dot, en dash, no spaces) and `13.00 alkaen` |
+| Clock times | Cards and details share `clockLabel`; raw API clocks remain `17:00` | Finnish standard: `17.00–19.00` (dot, en dash, no spaces) and `13.00 alkaen` |
 | Page headings | Centred `product-primary` `page-title` (older pages) vs left-aligned `product-text` (calendar, detail) | Left-aligned `product-text`. The front-page hero is the centred exception: title, lead, search and links share one axis |
 | Cancelled | `badge-cancelled` `#c0392b` on cards, `product-danger` on the detail page | `product-danger` (`product-danger-soft` for grounds), always with the word *Peruttu* |
 | Feedback colours | `flash-*` palette (separate hues) vs `product-success` / `product-danger` | `product-success`, `product-danger` and `product-accent` with their `*-soft` grounds; the `flash-*` set stays only for the existing toast |

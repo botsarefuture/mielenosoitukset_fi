@@ -108,6 +108,32 @@ try {
   assert(infoBody(await page({ path: '/info', cookie: 'session=alice' })).includes('about-campaign'), 'Signed-in visitors can preview the campaign');
   assert(infoBody(await page({ path: '/info' })).includes('about-facts'));
   console.log('PASS: information pages render readable HTML and retain canonical URLs and anchors');
+  const apiDocs = await page({ path: '/api-docs/', search: '?lang=fi&source=test' });
+  assert.equal(apiDocs.status, 200);
+  assert(apiDocs.html.includes('<title>API-dokumentaatio | Mielenosoitukset.fi</title>'));
+  assert(apiDocs.html.includes('name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa."'));
+  assert(!apiDocs.html.includes('rel="canonical"'), 'Preserve the empty Flask canonical block');
+  const apiDocsBody = infoBody(apiDocs);
+  for (const expected of ['id="api-docs-page"', 'API-dokumentaatio', 'Sisältö', 'id="quick-start"',
+    'href="#quick-start"', 'class="headerlink"', 'href="/api-docs/openapi.yaml"',
+    '<table>', '<pre tabindex="0"><code class="language-json">']) {
+    assert(apiDocsBody.includes(expected), expected);
+  }
+  assert(!apiDocsBody.includes('public-page-header__kicker'));
+  assert(!apiDocsBody.includes('pride-noscript'), 'The full API document is already readable without JavaScript');
+  assert.deepEqual(bootstrap(apiDocs.html).route, { name: 'api-docs' });
+  assert(!('apiDocs' in bootstrap(apiDocs.html)), 'Do not duplicate Markdown HTML in the bootstrap');
+  for (const block of apiDocsBody.matchAll(/<pre\b[^>]*>/g)) assert(block[0].includes('tabindex="0"'));
+  for (const link of apiDocsBody.matchAll(/class="headerlink" href="#([^"]+)"/g)) {
+    assert(apiDocsBody.includes(`id="${link[1]}"`), link[1]);
+  }
+  assert.equal((await page({ path: '/api-docs/', headOnly: true })).status, 200);
+  for (const path of ['/api-docs', '/api-docs/openapi.yaml', '/api-docs/extra', '/api-docs//']) {
+    assert.equal((await page({ path })).status, 404, `${path} remains outside the host`);
+  }
+  const routing = readFileSync(`${root}/deploy/apache/react-ssr-routing.conf`, 'utf8');
+  assert(routing.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/api-docs/$" "http://127.0.0.1:8090/api-docs/" [P,L]'));
+  console.log('PASS: API docs render static Markdown, TOC, tables, focusable code and existing SEO; exact GET/HEAD routing retains Flask YAML and slash redirect');
   const contactReads = [];
   let contactMode = 'ok';
   let minted = 0;

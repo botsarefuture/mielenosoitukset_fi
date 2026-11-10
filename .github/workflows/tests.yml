@@ -49,6 +49,7 @@ jobs:
 
       - name: Verify the React public host build
         run: |
+          python3 -m pip install "$(sed -n '/^Markdown==/p' requirements.txt)"
           npm run app:build
           node scripts/verify_public_host.mjs
 

@@ -48,6 +48,36 @@ host; admin UI is excluded. Hosting a route in Node is an architectural step,
 not proof of a speedup. Verify its blocking requests and data access before
 claiming a performance improvement.
 
+### API documentation
+
+GET/HEAD of exactly `/api-docs/` renders `docs/api.md` on the React host.
+The SSR Vite build runs `frontend/render-api-docs.py` with the repository's
+existing pinned Python-Markdown compiler (`requirements.txt`). The resulting
+HTML and TOC are bundled into `render.js`; neither Python, the Markdown file
+nor Flask is needed to render the documentation at runtime. Missing source or
+compiler fails the build rather than publishing an incomplete page. Rebuild
+the host after editing `docs/api.md`.
+
+The compiler uses the same fenced-code, table and TOC extensions as Flask,
+including its heading IDs and permalink suffixes. Code blocks and scrollable
+table wrappers are keyboard reachable. Page-specific CSS contains horizontal
+scrolling inside code/table blocks. The static document is not sent a second
+time in bootstrap JSON or compiled in the browser: hydration reuses its SSR
+HTML while starting the shared header controls and page-view tracking. The
+whole document and anchor navigation also work with JavaScript disabled.
+
+Title and description match the Flask template. That template does not emit a
+canonical link (the base canonical block is empty), so this page preserves its
+absence. `/api-docs/openapi.yaml` remains on Flask. Slashless `/api-docs` stays
+on Flask, whose strict-slash redirect is 308 to `/api-docs/`, preserving the query
+string. No new redirect is added to Node. The Flask route/template remain as
+rollback: deploy the app bundle and static CSS before enabling the exact Apache
+rule; removing only that rule restores the previous page. No data migration or
+API contract change is involved.
+
+Visual acceptance: independent reviewer SHIP on 10 November 2026 (#1068), from
+real application captures at 390px and 1440px in both themes, including no-JS.
+
 ## Rendering split
 
 | Work | Where |
@@ -128,8 +158,8 @@ Rollout order: deploy Go first, build/deploy the host, verify the form and API,
 then activate the exact GET/HEAD Apache rule. Removing just that rule restores
 the untouched Flask GET/template; POST ownership and stored suggestions never
 change. Do not remove the Flask implementation in this migration. Visual
-acceptance remains BLOCKED until real application captures at 390px/1440px in
-both themes and independent reviewer SHIP are available.
+acceptance: independent reviewer SHIP on 10 November 2026 (#1060), from real
+application captures at 390px/1440px in both themes.
 
 ### Contact page
 
@@ -543,6 +573,8 @@ The web server sends only migrated page GET/HEAD requests to the app host:
 | Request | Handler |
 | --- | --- |
 | `GET|HEAD /` | React app host |
+| `GET|HEAD /api-docs/` | React app host |
+| `GET|HEAD /api-docs`, `/api-docs/openapi.yaml` | Flask (slash redirect / YAML) |
 | `GET|HEAD /demonstration/<id>` | React app host (except `preview=1`) |
 | `GET|HEAD /demonstration/<parent>/children` | React app host (except `preview=1`) |
 | `GET /demonstration/<id>/ics`, `/some` | Flask (unchanged) |
@@ -555,10 +587,12 @@ working when the include is removed.
 
 ## Build and run
 
-Use Node 22.12+ (the repository's existing requirement):
+Use Node 22.12+ (the repository's existing requirement), plus Python 3 with the
+existing pinned Markdown package at build time (or activate the project venv):
 
 ```sh
 npm ci
+python3 -m pip install "$(sed -n '/^Markdown==/p' requirements.txt)"
 npm run app:build          # typecheck, client bundle, server bundle
 APP_ORIGIN=https://mielenosoitukset.fi \
 FLASK_API_ORIGIN=http://127.0.0.1:8000 \

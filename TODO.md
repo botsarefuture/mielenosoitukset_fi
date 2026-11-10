@@ -21,7 +21,8 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 - [x] `/status`: React SSR with read-only Go `/api/status`, bounded cached database check and HTTP 200 on dependency/API failure. Routing prepared; visual acceptance BLOCKED (no socket/browser captures in this sandbox).
 - [ ] Token pages: `/cancel_demonstration/<token>`, `/confirm/<token>`, `/confirm_email/<token>`, `/accept_invite`.
 - [ ] Account pages: login, register and next steps, settings, password reset, forced password and identity change, MFA verification, public profile `/<username>`. *(approval: authentication flows)*
-- [ ] Secondary tools: `/developer`, `/api-docs/`, demo material download.
+- [x] `/api-docs/`: build-time Markdown on the React host; OpenAPI YAML stays in Flask (#1068).
+- [ ] Secondary tools: `/developer`, demo material download.
 - [ ] Retire the Flask templates each migrated page leaves behind as rollback, once its React page has been stable for a while.
 - [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).
 

@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 - Polish the contact page: hide the "Yhteydenottolomake" option card when the form cannot be used, make the topic select as tall as the text fields, and use the design system's primary button for "Lähetä".
+- Revert the Pillow, PyJWT and PyMongo update for now: production runs Flask on the read-only system Python, so the deploy could not install the new versions and every later deploy was blocked. The update returns once production has an application-owned virtual environment.
 - Stop deploys from briefly closing the site or rolling back routing. A failed lockdown status read no longer closes public pages for up to 30 seconds after the last successful "open" answer; an actual lockdown still applies at once. Host deploys wait for a rendered page, and routing activation retries each page check before rolling back.
 - Give the about page (`/info`) a richer layout again without changing its text: key facts as tiles, the campaign as a highlighted card, a two-column layout on wide screens and contact options as cards. The campaign card appears only when the campaign is public or the visitor can preview it, so anonymous visitors are no longer sent to a login page.
 - Move the contact page (`/contact`) to the standalone React host. The form still posts to Flask with every existing anti-abuse check; the host gets each visitor's one-time form token through a new `contact_form` scope of the session endpoint. The page drops the label above its title, uses visible focus rings and 44 px fields, and shows the support email if the form cannot load.

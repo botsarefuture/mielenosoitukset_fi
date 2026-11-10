@@ -1,66 +1,123 @@
-# TODO — active task list
+# TODO
 
-Consolidated list of fixes/features requested (so none are forgotten). Tick items off as they land.
+Everything still to do, in one list. Updated 10 November 2026.
 
-## Overflow fixes
+- **Sources:** `roadmap.md` (IDs like UI-06), open GitHub issues (`#123`), open pull requests, review follow-ups and `BLOCKERS.md` on `claude/vibrant-gates-syjhk4`.
+- **Where status lives:** priorities, owners and acceptance evidence stay in `roadmap.md`; this file is the checklist. When an item lands, tick it here and update the roadmap entry.
+- **Approval:** items marked *(approval)* need the maintainer's explicit go-ahead before merge or activation (see `docs/development-workflow.md`).
 
-- [x] Ensure no overflow on public pages (reported for `/city/helsinki/tanaan`, cities pages)
-  - [x] Header `.container` overflows viewport by 24–64px on the right (clips bell/user area)
-  - [x] Header `.branding` pokes ~9px past viewport on mobile
-  - [x] `.city-card` overflows ~6px past viewport on `/cities` at ~360px
-- [x] Verify no horizontal page scroll / protruding elements on home, cities, city today pages at desktop + mobile widths
-  - Verified via Playwright + Jinja harness at 320/360/390/768/1024/1440 (zero right-side offenders); live-site header also measured.
+## Now
 
-## Fixes
-- [x] Please ensure hero consistency between all the user facing pages!
+- [ ] **Security dependency update:** Pillow 11.0.0 → 13.0.0, PyJWT 2.10.1 → 2.15.1, PyMongo 4.6.3 → 4.19.0. Pillow decodes uploaded images and has a critical advisory. Replaces #948, #527, #457 and #445. *(approval)*
+- [ ] **#778 city admins and cases (P0):** #917 is merged and the issue says it was revalidated. Confirm on production that a city admin can open and act on their city's cases, then close the issue.
+- [ ] **#1029 far-future events:** the database holds events dated 2094–3100, so Helsinki shows 60,884 upcoming events. Find where they come from (recurring generation is the likely source), clean them up *(approval: data change)* and stop new ones.
+- [ ] **#984 support replies:** a reply is recorded as sent before the email is safely queued. Fix the order and error handling (DATA-04).
+- [ ] **Panel host root password:** it was pasted in a Codex thread on 3 November. Rotate it; never use it.
 
-## Features
+## Public site in React (UI-06, due January 2027)
 
-- [x] Add an info/welcome email to people who sign up as translators
-- [x] Allow all logged-in users to access the admin dashboard, but only show modules relevant to their role/job
-- [x] On demo detail pages, hide the "Seuraa" (follow) button for organizations that cannot be followed
-- [x] Ensure that the user can enable 2fa in their settings!
+Already on the React host: home, listings (all, city, tag, today), detail and series, calendar, cities, submit, organization profile, information pages, Pride, campaign, fundraising and contact.
 
-## Audit logging and GDPR
+- [ ] `/report` error report form. It needs a session-scope token like `/contact`. *(approval: session change)*
+- [ ] `/status` service status page. It needs a JSON endpoint for the health checks.
+- [ ] `/organization/<id>/fill` organization fill-in form.
+- [ ] Token pages: `/cancel_demonstration/<token>`, `/confirm/<token>`, `/confirm_email/<token>`, `/accept_invite`.
+- [ ] Account pages: login, register and next steps, settings, password reset, forced password and identity change, MFA verification, public profile `/<username>`. *(approval: authentication flows)*
+- [ ] Secondary tools: `/developer`, `/api-docs/`, demo material download.
+- [ ] Retire the Flask templates each migrated page leaves behind as rollback, once its React page has been stable for a while.
+- [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).
 
-- [ ] Build a complete, reliable and mutually compatible audit logging system across the whole service
-  - [ ] Define one versioned canonical event schema for `admin_logs`, `super_audit_logs`, `demo_audit_logs`, `login_logs`, `board_audit_logs` and future audit sources
-  - [ ] Include stable event, actor, subject/entity, timestamp, outcome, source, request and `correlation_id` fields so one investigation can be followed across every log source
-  - [ ] Add adapters and migration coverage for legacy entries; document which fields may be absent and guarantee that mixed old/new data remains searchable
-  - [ ] Audit every security- or privacy-relevant read and write, including log access itself, permission changes, exports, deletions, authentication attempts and automated/background actions
-  - [ ] Make audit writes failure-aware and observable: retries or a durable queue, delivery/error metrics and alerts must prevent silent gaps
-  - [ ] Use UTC timestamps, deterministic ordering and tamper-evident/append-only storage controls with documented administrator access
-  - [ ] Provide one investigation UI with cross-source search, actor/entity links, surrounding events, correlation navigation and appropriately permission-gated technical details
-  - [ ] Apply field allowlists and centralized secret redaction before persistence where possible; never store passwords, credentials, authorization headers, session cookies or raw tokens
-  - [ ] Define and enforce per-log retention, deletion/anonymization and backup policies based on purpose, legal basis and data-minimization requirements
-  - [ ] Document data-subject access/export workflows, access auditing, incident procedures, controller/processor responsibilities and relevant data flows
-  - [ ] Add automated completeness, authorization, redaction, retention, migration and cross-source correlation tests, plus periodic production audit sampling
-  - [ ] Complete and record a GDPR/privacy review with the responsible privacy or legal owner; technical tests alone must not be treated as proof of full legal compliance
+## UI follow-ups from reviews
 
-## Infrastructure reliability (MongoDB performance)
+- [ ] `/contact`: hide the "Yhteydenottolomake" card while the form is switched off.
+- [ ] Shared inline success message: more space above than below (`.flash-message--inline`).
+- [ ] Charcoal "Poista suodattimet" secondary button and the pale grey light secondary button.
+- [ ] Underline next to the invite "+" on event cards.
+- [ ] Organizer guide: step titles are centred at 390 px.
+- [ ] Campaign page: on phones the form's error message is below the fold after an empty submit.
+- [ ] Contact form: the subject select is 6 px shorter than the text fields.
+- [ ] Fundraising, open state: the MobilePay links sit far apart.
+- [ ] Card times use `12:00 – 14:00` instead of `12.00–14.00`; the PRIDE badge text has weak contrast; map markers cover city labels.
+- [ ] Keep action menus outside the scroll viewport (#743).
 
-Full status and evidence: `docs/mongodb-analytics-performance.md`.
+## Security and permissions
 
-- [x] `analytics` COLLSCAN investigation (Task #2) — root cause: `prep()`/admin overview
-      streamed all 1,041,654 raw view events into Python every 15 minutes (no index can
-      fix an unfiltered count). Fix = server-side `$group`; no index added.
-- [x] `d_analytics` overcount investigation (Task #1) — `d_analytics` counters total
-      1,930,142 vs 1,041,654 raw events (≈1.85×); minute-level proof of exact 2×
-      duplicates. Live rollup has been exact since 2026-07-01, so damage is historical.
-- [x] Repair `d_analytics` from raw events (rebuild job) + make the rollup replay-safe
-      (per-demo `last_event_id` written atomically with the `$inc`, no swallowed errors,
-      single writer only) — **implemented on branch `codex/analytics-rollup-aggregation`**:
-      `rebuild_d_analytics` job (server-side recount + pause/`last_event_id`), cursor re-read
-      per pass, `ROLLUP_IN_APP` opt-in, era-aware bucketing. Tests
-      `tests/test_analytics_rollup.py` (5) pass; awaiting merge/deploy, then run the rebuild
-      once on prod and verify `sum(d_analytics…) == db.analytics.countDocuments()`.
-- [x] `prepped_analytics` drop+reinsert churn — `prep()` now rewrites rows in
-      place keyed on `demo_id` (bulk update/insert/delete), touching only changed
-      counters instead of 28,604 drop+insert per 15 min. Implemented on branch
-      `codex/analytics-rollup-aggregation`; tests pass.
-- [ ] Related follow-ups: `demonstrations` COLLSCAN slow ops, admin overview
-      rendering 28,604 rows.
+- [ ] **SEC-01:** release acceptance evidence for the MFA challenge (#901).
+- [ ] **SEC-03:** broader role and audit acceptance after #917/#918/#919.
+- [ ] **SEC-04:** token and approval lifecycle: revocation, expiry, replay, idempotent decisions.
+- [ ] **SEC-05:** review incident #912/#913 protections before touching related code.
+- [ ] Harden privileged admin user actions (#547), organization membership and invites (#550, #342), and the organization admin panel (#549).
+- [ ] **QA-01:** finish the individual review of authentication and permission tests. Open: #979 identity test audit (rebase on `CHANGELOG.md`, then merge), QA-01j, QA-01k.
 
-## Process
+## Data, jobs and integrations
 
-- [x] Update CHANGELOG.md for every user-facing change
+- [ ] **DATA-01:** public pagination and totals, verified with the API and the browser together.
+- [ ] **DATA-02:** fence analytics workers and coordinate rebuild pruning (#908).
+- [ ] **DATA-03:** analytics correctness, access and pagination (#551); `demonstrations` COLLSCAN slow queries; the admin overview rendering 28,604 rows.
+- [ ] **DATA-04:** email queue retries and idempotency, case reply history (#771), job leadership, database error handling (#176).
+- [ ] **DATA-05:** preview images failing (#579), Cloudflare rate limiting on normal use (#580), Socket.IO reconnect storm (#640).
+- [ ] **DATA-06:** module TODO issues (#391–#394), settings and configuration (#196, #226), creating users from invites (#387).
+- [ ] **DATA-07:** multi-day demonstrations as their own duration, separate from recurring series.
+- [ ] **CITY-01:** city review dashboard with an authoritative deadline countdown (#967).
+- [ ] **CITY-02:** urgent pending-event alerts to Telegram through a durable outbox (#963).
+- [ ] **CASE-01/02:** let submitters answer case questions and follow progress (#976).
+- [ ] Recurring demonstration cancellation breaks: #620 is useful but over 1,000 commits behind; rebase or redo it.
+- [ ] Production performance and hosting review (#859).
+
+## Privacy and audit logging
+
+- [ ] **PRIV-03 / #596:** GDPR retention and consent review with the privacy owner. #597 (user deletion cleanup) is far behind and overlaps later deletion work (#887); redo it fresh.
+- [ ] **PRIV-01:** one versioned audit event schema for `admin_logs`, `super_audit_logs`, `demo_audit_logs`, `login_logs`, `board_audit_logs` and future sources, with stable event, actor, subject, time, outcome, source, request and correlation fields, plus adapters for legacy entries.
+- [ ] **PRIV-02:** audit every security- or privacy-relevant read and write, including log access. Make writes failure-aware (retries or a durable queue, metrics, alerts), UTC and tamper-evident.
+- [ ] One investigation UI with cross-source search and correlation, behind the right permissions.
+- [ ] Field allowlists and central redaction before storage; never store passwords, credentials, authorization headers, cookies or raw tokens.
+- [ ] Per-log retention, deletion, anonymization and backup rules; documented access, export and incident procedures.
+- [ ] Tests for completeness, authorization, redaction, retention, migration and correlation, plus periodic production sampling.
+- [ ] A recorded GDPR review with the responsible privacy or legal owner. Tests alone are not proof of compliance.
+
+## Operations
+
+- [ ] **OPS-01:** backup coverage and freshness, failure alerts, recovery access and ownership.
+- [ ] **OPS-02:** authorized recovery exercises with recorded RPO and RTO.
+- [ ] **OPS-03:** review Web Vitals once there are enough samples.
+- [ ] **OPS-04:** keep exact-build deployment, rollback and CDN contracts.
+- [ ] Watch the next deploys that change routing: confirm the new probe retries (#1050) and that no 503 appears after restarts.
+
+## Localization and docs
+
+- [ ] **I18N-01:** inventory untranslated strings and catalog gaps per route family; English and Swedish copy comes from human translators.
+- [ ] **I18N-02:** standardize backend, API, moderation and email messages (#582, #553).
+- [ ] **DOC-01:** user and moderator guides (#563).
+- [ ] **DOC-02:** keep `roadmap.md`, this file, issues and release evidence aligned. Refresh `BLOCKERS.md`.
+
+## Product ideas (after core work)
+
+- [ ] **ENGAGE-01:** optional newsletter of relevant upcoming events.
+- [ ] **ENGAGE-02:** optional email digest of a user's own notifications.
+- [ ] **PRODUCT-01:** broader societal events (#583), following tags (#117), city and tag email subscriptions (#121).
+- [ ] Count visitors who browse without JavaScript (a `<noscript>` pixel; filter bots) to decide how much the no-JS fallback matters.
+- [ ] **FUND-01:** fill in the official fundraising details when they are confirmed, then open donations.
+
+## Maintenance
+
+- [ ] **CLEAN-01:** remove orphaned `list_legacy.html`, template `submit.css` and tracked backups after checking references.
+- [ ] **CLEAN-02:** consolidate legacy palettes and hero geometry.
+- [ ] **CLEAN-04:** keep a finite exception list for dynamic styles and a CSS cache contract.
+- [ ] Admin dashboard workflow: pagination, previews and clearer edit fields (#552); organization form UI (#178).
+- [ ] Unit tests for remaining routes and functions (#174).
+
+### Open pull requests to close or decide (CLEAN-03)
+
+- [ ] Close after the security update: #948, #527, #457, #445.
+- [ ] Close as already done on main: #351 (flask-cors 6.0.0), #293 (python-dateutil 2.9.0.post0), #477 (Docker setup, see #537), #570 (board approval, landed in other PRs), #585 (agent workflow hooks, now in `AGENTS.md`).
+- [ ] Close as outdated: #911 (CodeRabbit docs), #598 (email without TLS, testing only; thank the contributor).
+- [ ] Decide: #440 (flask-limiter 4.0, a major version), #849 (project memory guidance), #617 (preview teardown; are previews still used?), #599 (`Config.reload` path, external contributor), #1011 (submit migration check; most of it is on main).
+
+## Done recently
+
+- [x] Information pages, Pride, campaign, fundraising and contact moved to React (#1040, #1043, #1046, #1047, #1048).
+- [x] Contrast and shared listing states (#1045); richer `/info` layout (#1049).
+- [x] No-JavaScript fallbacks kept light and out of visual review (#1044).
+- [x] Deploys no longer briefly close the site (#1050).
+- [x] Overflow fixes, hero consistency, translator welcome email, role-based admin dashboard, follow button rules, MFA in settings.
+- [x] `analytics` COLLSCAN, `d_analytics` overcount repair and in-place `prepped_analytics` (see `docs/mongodb-analytics-performance.md`).

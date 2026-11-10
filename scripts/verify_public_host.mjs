@@ -696,6 +696,68 @@ try {
   const apacheRouting = readFileSync(`${root}/deploy/apache/react-ssr-routing.conf`, 'utf8');
   assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/suggest_change/[a-fA-F0-9]{24}$"'));
   console.log('PASS: suggestion SSR fields, Markdown, privacy-safe prefills, no-JS POST, cancel, bootstrap, noindex and failures');
+
+  const statusFetch = globalThis.fetch;
+  const healthyStatus = { overall_ok: true, services: [{ name: 'Tietokanta', status: 'ok', message: 'Yhteys kunnossa' }],
+    updated_at: '10.11.2026 12:00:00 UTC', latency_ms: 1 };
+  let statusReply = healthyStatus;
+  let statusMode = 'json';
+  const statusReads = [];
+  globalThis.fetch = async (url, options) => {
+    if (String(url) !== `${apiReadBase}/status`) return statusFetch(url, options);
+    statusReads.push(String(url));
+    assert.equal(options?.headers?.Cookie, undefined);
+    if (statusMode === 'network') throw new Error('private-host secret stack trace');
+    if (statusMode === 'timeout') return new Promise((resolve, reject) => {
+      options.signal.addEventListener('abort', () => reject(new Error('timeout')), { once: true });
+    });
+    if (statusMode === '503') return new Response('{}', { status: 503 });
+    if (statusMode === 'invalid-json') return new Response('{');
+    return new Response(JSON.stringify(statusReply));
+  };
+  try {
+    const servicePage = await detailPage({ path: '/status', search: '?lang=fi&force_reload=1', publicUnavailable: true });
+    assert.equal(servicePage.status, 200);
+    assert.equal(servicePage.headers['X-Robots-Tag'], 'noindex, follow');
+    assert.match(servicePage.html, /<title>Palvelun tila — Mielenosoitukset.fi<\/title>/);
+    assert.match(servicePage.html, /name="robots" content="noindex, follow"/);
+    assert.match(servicePage.html, /rel="canonical" href="https:\/\/example.test\/status"/);
+    const statusBody = servicePage.html.split('id="app"')[1].split('id="app-bootstrap"')[0].replace(/<!-- -->/g, '');
+    for (const copy of ['Palvelun tila', 'Kaikki palvelut toimivat', 'Tietokanta', 'Yhteys kunnossa',
+      '10.11.2026 12:00:00 UTC', 'Viive 1 ms', 'Välimuistin ja tiedostovaraston tilaa ei tarkisteta.']) {
+      assert(statusBody.includes(copy), copy);
+    }
+    assert(!statusBody.includes('<noscript>'), 'The status content works without JavaScript');
+    assert.deepEqual(bootstrap(servicePage.html).serviceStatus, healthyStatus);
+    assert.equal((await detailPage({ path: '/status', headOnly: true })).status, 200);
+    statusReply = { ...healthyStatus, overall_ok: false,
+      services: [{ name: 'Tietokanta', status: 'err', message: 'Ei vastaa' }] };
+    const failedProbe = await detailPage({ path: '/status' });
+    assert.equal(failedProbe.status, 200);
+    assert.match(failedProbe.html, /Jokin palvelu ei vastaa/);
+    assert.match(failedProbe.html, /Ei vastaa/);
+    for (const mode of ['503', 'invalid-json', 'network', 'timeout', 'json']) {
+      statusMode = mode;
+      statusReply = { ...healthyStatus, updated_at: 'private-host secret version', private: 'secret' };
+      const started = performance.now();
+      const unavailableStatus = await detailPage({ path: '/status', publicUnavailable: true });
+      assert.equal(unavailableStatus.status, 200, mode);
+      assert.equal(unavailableStatus.headers['X-Robots-Tag'], 'noindex, follow');
+      assert.match(unavailableStatus.html, /Palvelun tilaa ei voitu hakea\./);
+      assert(!unavailableStatus.html.includes('private-host'));
+      assert.equal(bootstrap(unavailableStatus.html).serviceStatus, null);
+      assert(performance.now() - started < 3000, 'Status API timeout is bounded');
+    }
+    const beforeUnknown = statusReads.length;
+    for (const path of ['/status/', '/status/extra', '/admin/status']) {
+      assert.equal((await detailPage({ path })).status, 404);
+    }
+    assert.equal(statusReads.length, beforeUnknown);
+    assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/status$"'));
+    console.log('PASS: status SSR data, no-JS content, exact routing, noindex and HTTP 200 on dependency/API failure');
+  } finally {
+    globalThis.fetch = statusFetch;
+  }
   console.log('PASS: organization cache/coalescing, public projection, private scoped sessions, fixed event scope and missing organizations and the fill-in form');
 } finally {
   publicApi.closeAllConnections?.();
@@ -789,6 +851,9 @@ await new Promise(resolve => listener.close(resolve));
 // the preview redirect and the query flag all have to survive that layer.
 let publicAvailable = true;
 const hostApi = createServer((req, res) => {
+  if (req.url === '/api/status') {
+    res.writeHead(503); res.end('{}'); return;
+  }
   if (req.url === '/api/public-status') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ available: publicAvailable }));
@@ -870,6 +935,11 @@ try {
   assert.match(locked.body, /Palvelu on tilapäisesti suljettu/);
   assert.equal(locked.headers['cache-control'], 'no-store');
   assert.equal((await get('/health')).status, 200, 'Health stays available during a lockdown');
+  const statusDuringLockdown = await get('/status?force_reload=1');
+  assert.equal(statusDuringLockdown.status, 200);
+  assert.equal(statusDuringLockdown.headers['x-robots-tag'], 'noindex, follow');
+  assert.match(statusDuringLockdown.body, /Palvelun tilaa ei voitu hakea\./);
+  assert.equal((await get('/status', 'HEAD')).status, 200);
   assert.notEqual((await get('/auth/god')).status, 503, 'God login stays reachable during a lockdown');
   console.log('PASS: public lockdown returns 503 with Retry-After and keeps health and god login reachable');
   {

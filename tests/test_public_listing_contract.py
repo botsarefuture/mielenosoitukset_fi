@@ -42,6 +42,22 @@ def test_public_workspace_styles_cover_listing_end_message():
     assert ".end-of-content-message[hidden]" in stylesheet
 
 
+def test_react_listing_filter_disclosure_preserves_plain_fields_and_focus():
+    source = Path('frontend/src/components/listings/ReactSearchFilters.tsx').read_text()
+    stylesheet = Path('frontend/src/components/listings/react-listing.css').read_text()
+
+    assert 'data-collapsed={hydrated && !filtersOpen}' in source
+    assert 'aria-expanded={filtersOpen}' in source
+    assert 'aria-controls="secondary-filters"' in source
+    assert 'if (hasSecondaryValues) setFiltersOpen(true)' in source
+    assert 'className="detail-button public-search-toggle"' in source
+    assert '@media (max-width: 560px)' in stylesheet
+    assert 'input[type="text"]:focus' in stylesheet
+    assert 'button:focus' in stylesheet
+    assert 'outline: 3px solid var(--product-primary)' in stylesheet
+    assert 'outline-offset: 3px' in stylesheet
+
+
 def test_public_list_runtime_uses_defined_localized_browser_contracts():
     source = (TEMPLATE_ROOT / "_partials/demonstration-listing.html").read_text(encoding="utf-8")
     base_source = (TEMPLATE_ROOT / "base.html").read_text(encoding="utf-8")

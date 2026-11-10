@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DemonstrationCards } from '../components/listings/DemonstrationCard';
+import '../../../mielenosoitukset_fi/static/css/public-detail.css';
 import type { CardProps } from '../components/listings/DemonstrationCard';
 import type { Demonstration } from '../components/listings/types';
 
@@ -53,11 +54,11 @@ export function HomePage({ endpoint, locale, cards, urls, text, initialData = nu
   return <div className="home-page public-demonstration-list">
     <header className="home-intro">
       <div><h1>{text.title}</h1><p>{text.intro}</p></div>
-      <a className="home-button home-button--secondary" href={urls.submit}>{text.submit}</a>
+      <a className="detail-button" href={urls.submit}>{text.submit}</a>
       <form className="home-search" action={urls.all} method="get" role="search">
         <label htmlFor="home-search">{text.search}</label>
         <div><input id="home-search" name="search" type="search" placeholder={text.searchPlaceholder} />
-          <button className="home-button" type="submit">{text.submitSearch}</button></div>
+          <button className="detail-button detail-button--primary" type="submit">{text.submitSearch}</button></div>
       </form>
       <nav className="home-links" aria-label={text.title}>
         <a href={urls.all}>{text.all} <span aria-hidden="true">→</span></a>

@@ -1,3 +1,4 @@
+import type { PublicOrganization } from '../components/organization/types';
 import { appConfig } from './config';
 import { randomUUID } from 'node:crypto';
 import { renderToStaticMarkup, renderToString } from 'react-dom/server';
@@ -27,6 +28,7 @@ import { PrideDetails, prideCopy, prideRoute } from './PrideScreen';
 import CampaignScreen from './CampaignScreen';
 import FundraisingScreen from './FundraisingScreen';
 import ContactScreen from './ContactScreen';
+import OrganizationFillScreen from './OrganizationFillScreen';
 import { helsinkiToday } from './fundraising';
 export { fundraisingDetails } from './fundraising';
 import { campaignPath, loadCampaignPublication } from './campaign-route';
@@ -65,7 +67,7 @@ export type RenderInput = {
   headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; pride?: string; information?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; organizationFill?: string; pride?: string; information?: string };
 
 export type RenderResult = {
   status: number;
@@ -85,7 +87,7 @@ const serialize = (value: unknown) => JSON.stringify(value)
   .replaceAll('&', '\\u0026').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 
 /** The existing detail stylesheet; the host page uses the same markup. */
-const DETAIL_STYLESHEET = '/static/css/public-detail.css?v=20261101-react-detail-2';
+const DETAIL_STYLESHEET = '/static/css/public-detail.css?v=20261110-detail-buttons-1';
 
 /**
  * The home batch is the same for every anonymous visitor, so the server reads it
@@ -254,7 +256,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   if (route.name === 'today' && route.value && !findCity(route.value)) {
     return { status: 404, html: notFoundDocument(), headers: { 'X-Robots-Tag': 'noindex, follow' } };
   }
-  const organizationRead = route.name === 'organization' ? loadOrganization(readBase, route.id) : null;
+  const organizationRead = route.name === 'organization' || route.name === 'organization-fill' ? loadOrganization(readBase, route.id) : null;
   const citiesRead = route.name === 'cities' ? loadCities(readBase) : null;
   const calendarRead = calendarRoute ? loadCalendar(readBase, route) : null;
   let sessionUrl = input.sessionUrl;
@@ -313,7 +315,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       // Anonymous visitors would land on a login page while the campaign is private.
       campaignVisible = session.authenticated || await loadCampaignPublication(readBase);
     }
-    extraHead = assets.information ?? '';
+    extraHead = (assets.information ?? '') + (route.page === 'info' ? `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">` : '');
     if (route.page === 'guides') {
       extraHead += '<link rel="stylesheet" href="/static/css/public-guides.css?v=20261109-guide-contrast-1">';
     }
@@ -352,6 +354,24 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
         serverPage={<FundraisingScreen config={config} today={today} />} />);
     }
+  }
+
+  let organizationFill: PublicOrganization | undefined;
+  if (route.name === 'organization-fill') {
+    const loaded = await organizationRead!;
+    if (loaded.status === 'not-found') return { status: 302, html: '', redirect: config.urls.home };
+    if (loaded.status === 'unavailable') {
+      return { status: 503, html: unavailableDocument(), headers: { 'Cache-Control': 'no-store', 'Retry-After': '30' } };
+    }
+    organizationFill = loaded.profile;
+    meta = { title: `Täydennä järjestön tietoja - ${organizationFill.name} | Mielenosoitukset.fi`,
+      description: 'Auta täydentämään tämän organisaation profiilia.', canonical: null, robots: 'noindex, follow' };
+    // The form uses the shared .detail-button contract.
+    extraHead = (assets.organizationFill ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    // A plain form that posts to Flask; only adding social media rows needs JavaScript.
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<OrganizationFillScreen profile={organizationFill} />} />);
   }
 
   if (route.name === 'contact') {
@@ -628,6 +648,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
   const bootstrap = serialize({ config, session, path: input.path, route, ...(today ? { today } : {}),
     ...(campaignVisible !== undefined ? { campaignVisible } : {}),
+    ...(organizationFill ? { organizationFill } : {}),
     ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}),
     ...(listing ? { listing } : {}), ...(organization ? { organization } : {}), ...(cities !== undefined ? { cities } : {}),
     ...(submission ? { submission } : {}), ...(calendar ? { calendar } : {}) });

@@ -31,6 +31,7 @@ export type AppRoute =
   | { name: 'today'; value?: string }
   | ListingRoute
   | { name: 'organization'; id: string }
+  | { name: 'organization-fill'; id: string }
   | { name: 'detail'; identifier: string }
   | { name: 'series'; parent: string };
 
@@ -88,6 +89,8 @@ export function routeForPath(path: string): AppRoute | null {
     const value = readIdentifier(today[1]);
     return value && !value.includes('/') ? { name: 'today', value } : null;
   }
+  const organizationFill = /^\/organization\/([a-f\d]{24})\/fill$/i.exec(path);
+  if (organizationFill) return { name: 'organization-fill', id: organizationFill[1].toLowerCase() };
   const organization = /^\/organization\/([a-f\d]{24})$/i.exec(path);
   if (organization) return { name: 'organization', id: organization[1].toLowerCase() };
   if (path === '/demonstrations') return { name: 'listing', scope: 'all' };

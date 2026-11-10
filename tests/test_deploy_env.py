@@ -68,6 +68,10 @@ def test_symlinked_settings_file_is_refused(tmp_path):
     assert code == 2 and "regular file" in error
 
 
+def test_script_reads_settings_after_taking_the_lock():
+    assert SCRIPT.index("flock -w 300 9") < SCRIPT.index("load_deploy_env \"$deploy_env\"")
+
+
 def test_script_resolves_python_before_any_use():
     assert SCRIPT.index("load_deploy_env \"$deploy_env\"") < SCRIPT.index('"$production_python" "$repo_dir/deploy/install_dependencies.py"')
     assert '|| exit 2' in SCRIPT.split('load_deploy_env "$deploy_env"')[1].splitlines()[0]

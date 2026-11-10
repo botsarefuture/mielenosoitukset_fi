@@ -47,8 +47,6 @@ load_deploy_env() {
     "${receipt:-${file_receipt:-/var/lib/mielenosoitukset-fi-deploy/dependencies.json}}"
 }
 
-{ read -r production_python && read -r dependency_receipt; } < <(load_deploy_env "$deploy_env") || exit 2
-[[ -n ${production_python:-} && -n ${dependency_receipt:-} ]] || exit 2
 routing=false
 skip_public=false
 expected_sha=""
@@ -77,6 +75,11 @@ flock -w 300 9 || {
   echo "production_deploy.sh: another deployment still holds the lock" >&2
   exit 1
 }
+
+# Read host settings only while holding the lock, so a deploy queued behind a
+# migration that changes deploy.env uses the settings the migration left.
+{ read -r production_python && read -r dependency_receipt; } < <(load_deploy_env "$deploy_env") || exit 2
+[[ -n ${production_python:-} && -n ${dependency_receipt:-} ]] || exit 2
 
 cd "$repo_dir"
 git config --global --add safe.directory "$repo_dir" >/dev/null 2>&1 || true

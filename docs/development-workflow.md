@@ -75,7 +75,7 @@ done, in progress and left (the roadmap inventory plus open PRs is enough).
 - Migrating a page is a chance to improve it, not only to port it. Look at it as a
   visitor on a phone and on a desktop: is it clear what the page is for, is the main
   action obvious, does it work with the keyboard, is the contrast sufficient.
-- Reuse the existing components, tokens and layout. Add a new one only when there is a
+- Reuse the existing components, tokens and layout described in `docs/design-system/`. Add a new one only when there is a
   second use for it.
 - Use few headings, cards, badges and icons. Prefer plain, specific Finnish copy to
   generic marketing wording. Avoid em dashes in user-facing text.

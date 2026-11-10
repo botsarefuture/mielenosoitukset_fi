@@ -95,6 +95,7 @@ The context is guidance, not an approved replacement specification.
 
 ## Public UI ownership and copy
 
+- Before building or changing a public screen, read [the design system](docs/design-system/README.md): tokens, component guidelines, copy rules and the *Consistency* table that settles where existing pages differ. Reuse its components and tokens; if a rule changes, update that folder in the same PR.
 - Maintainer instruction (1 November 2026): no new Flask surface for public UI. New behaviour goes into the Go API plus React; reusing an existing Flask page or endpoint is fine, adding a route, view or template is not.
 - The target is a standalone React app that does not need Flask at runtime, not Flask-hosted islands. Treat island props (`react_detail.py` and similar) as a bridge to keep correct, not as the contract to extend; new copy and URLs belong in the TypeScript catalog/config the host will use.
 - The public site is Finnish-only today. Keep the localization plumbing, prefer existing msgids, and when a new string is required leave `en`/`sv` copy to human translators rather than machine-guessing it.

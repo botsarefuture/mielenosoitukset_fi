@@ -115,6 +115,16 @@
   font-size: .95rem;
   font-variant-numeric: tabular-nums;
 }
+.pride-page .pride-city-label {
+  color: var(--product-text);
+  background: var(--product-surface);
+  border: 1px solid var(--product-border);
+  border-radius: .5rem;
+  box-shadow: var(--product-shadow);
+}
+.pride-page .leaflet-tooltip-right.pride-city-label::before {
+  border-right-color: var(--product-surface);
+}
 .pride-page :is(.pride-map-fallback, #pride-map-empty) {
   margin: 0;
   padding: .85rem 1rem;
@@ -153,7 +163,7 @@
   text-underline-offset: .2em;
 }
 .pride-page :is(.pride-intro, .pride-map-section, .pride-information, .pride-guidelines) :focus-visible {
-  outline: 2px solid var(--product-primary);
+  outline: 3px solid var(--product-primary);
   outline-offset: 3px;
 }
 .pride-page :is(#demos, #demo-guidelines, #pride-map-section) { scroll-margin-top: 6rem; }

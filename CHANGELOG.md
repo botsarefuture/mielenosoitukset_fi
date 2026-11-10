@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Give Pride badges contrasting solid backgrounds with rainbow borders, keep Pride map city names readable above markers, and let admin table action menus escape horizontal-scroll clipping (#743).
 - Polish React public notices, guide headings, MobilePay link spacing and listing controls: reuse default secondary buttons, show filter disclosure chevrons, remove the invite underline and keep keyboard-only action focus rings. Share Finnish dot-formatted event clocks between cards and details without changing API values.
 - Confirm support replies are persisted in the email queue before recording a correlated queued reply and audit entries. Unconfirmed queue or case writes now show a safe warning instead of claiming delivery or retrying silently (#984).
 

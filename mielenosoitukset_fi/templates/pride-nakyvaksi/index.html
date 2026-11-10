@@ -6,7 +6,7 @@
 {% block styles %}
 {{ public_search_styles() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/pride.css', v='20261028-pride-1') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pride.css', v='20261110-pride-labels-1') }}">
 {% endblock %}
 {% block content %}
 {% set pride_locale = current_locale if current_locale is defined and current_locale in get_supported_locales() else session.get('locale', 'fi') %}

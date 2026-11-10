@@ -55,13 +55,13 @@ From the visual reviews:
 - [x] Campaign page: on phones the form's error message is below the fold after an empty submit.
 - [x] Fundraising, open state: the MobilePay links sit far apart.
 - [x] Card times use `12:00 – 14:00` instead of `12.00–14.00` (reuse the detail clock helper; keep raw API clocks unchanged).
-- [ ] The PRIDE badge text has weak contrast; map markers cover city labels.
+- [x] The PRIDE badge text has weak contrast; map markers cover city labels.
 - [x] Mobile "Suodattimet" toggle: show an open/closed chevron tied to `aria-expanded`.
 - [x] Listing buttons and links: use `:focus-visible`; text inputs retain `:focus`.
 
 The checked visual follow-ups above are implemented; visual acceptance remains **BLOCKED** until real captures and an independent reviewer SHIP are available. This checkout's sandbox cannot bind sockets, and captures were explicitly excluded from this task.
 
-- [ ] Keep action menus outside the scroll viewport (#743).
+- [x] Keep action menus outside the scroll viewport (#743). Implemented; visual acceptance remains **BLOCKED** as above.
 - [ ] Organization page: an anonymous visitor who sends a fill-in suggestion never sees the "Kiitos! Ehdotuksesi on tallennettu" message, because the React page only fetches flash messages for signed-in members of that organization. Needs the session endpoint to report pending messages for everyone (session change: maintainer approval).
 
 ## Security and permissions

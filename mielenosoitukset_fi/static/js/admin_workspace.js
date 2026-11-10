@@ -32,6 +32,13 @@ function rememberAdminModalTrigger(trigger) {
 
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-admin-boolean]").forEach(updateAdminBooleanStatus);
+  // Table viewports scroll horizontally, which would clip their action menus.
+  if (window.bootstrap?.Dropdown) document.querySelectorAll('.admin-data-view__viewport [data-bs-toggle="dropdown"]').forEach((toggle) => {
+    bootstrap.Dropdown.getOrCreateInstance(toggle, {
+      boundary: "viewport",
+      popperConfig: (config) => ({ ...config, strategy: "fixed" }),
+    });
+  });
 });
 
 document.addEventListener("change", (event) => {

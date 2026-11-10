@@ -564,7 +564,7 @@ try {
   assert(!directoryFallback.includes('Ei tulevia mielenosoituksia'));
   assert.match(directoryFallback, /href="\/city\/akaa"><span class="city-name">Akaa<\/span><\/a>/);
   assert.match(directoryFallback, /class="city-upcoming" aria-hidden="true">\(1\)<\/span>/);
-  assert.match(directoryFallback, /class="city-link-context"> 1 tuleva mielenosoitus<\/span>/);
+  assert.match(directoryFallback, /class="city-link-context visually-hidden"> 1 tuleva mielenosoitus<\/span>/);
   assert.match(directoryFallback, /Tänään 2 mielenosoitusta/);
   const filteredDirectory = await detailPage({ path: '/cities', search: '?q=Helsinki&today=1&utm_source=test' });
   assert.match(filteredDirectory.html, /<meta name="robots" content="noindex, follow"\s*\/?>/);

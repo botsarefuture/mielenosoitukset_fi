@@ -24,11 +24,16 @@ export function VolunteerForm({ endpoint, messages }: VolunteerFormProps) {
   const requestPending = useRef(false);
   const message = useRef<HTMLDivElement>(null);
   const focusMessage = useRef(false);
+  const revealMessage = useRef(false);
   // Server results move focus to the message, which sits above the fields, so
   // it is in view on a phone after the visitor taps the submit button below.
   useEffect(() => {
     if (feedback && focusMessage.current) message.current?.focus();
+    // A validation error keeps focus on the first invalid field but brings the
+    // message, which sits above the fields, into view below the sticky nav.
+    if (feedback && revealMessage.current) message.current?.scrollIntoView({ block: 'start' });
     focusMessage.current = false;
+    revealMessage.current = false;
   }, [feedback]);
 
   function clearInvalid(event: FormEvent<HTMLFormElement>) {
@@ -48,8 +53,9 @@ export function VolunteerForm({ endpoint, messages }: VolunteerFormProps) {
     const invalidFields = fields.filter((field) => missing.includes(field) || !field.validity.valid);
     setInvalid(invalidFields.map((field) => field.id));
     if (invalidFields.length) {
+      revealMessage.current = true;
       setFeedback({ kind: 'error', message: missing.length ? messages.required : messages.invalid });
-      invalidFields[0].focus();
+      invalidFields[0].focus({ preventScroll: true });
       return;
     }
 

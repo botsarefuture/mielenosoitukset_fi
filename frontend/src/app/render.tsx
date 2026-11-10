@@ -342,7 +342,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     }
     if (route.name === 'campaign') {
       extraHead = (assets.campaign ?? '')
-        + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261110-mobilepay-spacing-1">';
+        + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261110-volunteer-message-1">';
       noscript = '<noscript><p class="container-main-content">Sivu toimii parhaiten, kun JavaScript on käytössä. '
         + 'Ilmoittautuminen ja uutiskirjeen tilaus tarvitsevat sen.</p></noscript>';
       appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
@@ -351,7 +351,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       today = helsinkiToday();
       extraHead = (assets.fundraising ?? '')
         + '<link rel="stylesheet" href="/static/css/public-content.css?v=20261026-fundraising-2">'
-        + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261110-mobilepay-spacing-1">';
+        + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261110-volunteer-message-1">';
       // The whole page is in the server-rendered document; no fallback is needed.
       noscript = '';
       appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}

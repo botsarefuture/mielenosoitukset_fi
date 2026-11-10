@@ -10,6 +10,7 @@ import time
 import uuid
 import hashlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
+from mielenosoitukset_fi.utils.demo_seo import _parse_clock
 from mielenosoitukset_fi.utils.fundraising import fundraising_details
 from mielenosoitukset_fi.utils.campaign_publication import campaign_pages_public, campaign_preview_required
 from datetime import datetime, date, timedelta, timezone
@@ -3555,6 +3556,11 @@ def init_routes(app):
                         if val and _organizer_identity_keys(val) != _organizer_identity_keys(orig_comp):
                             changed = True
                     elif val and isinstance(val, list) and val != orig_comp:
+                        changed = True
+                elif f in {'start_time', 'end_time'}:
+                    # Stored times are "HH:MM" or "HH:MM:SS"; the same clock
+                    # time in the other format is not a change.
+                    if val and (_parse_clock(val) or val) != (_parse_clock(orig_comp) or orig_comp):
                         changed = True
                 else:
                     if val and str(val) != str(orig_comp):

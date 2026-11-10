@@ -34,6 +34,11 @@ func publicProjection() bson.M {
 		bson.M{"$eq": bson.A{"$$organizer.show_email_public", true}},
 	}}
 	organizer := bson.M{"show_email_public": emailConsent}
+	organizer["suggestion_redacted"] = bson.M{"$and": bson.A{
+		bson.M{"$ne": bson.A{emailConsent, true}},
+		bson.M{"$eq": bson.A{bson.M{"$type": "$$organizer.email"}, "string"}},
+		bson.M{"$ne": bson.A{"$$organizer.email", ""}},
+	}}
 	for _, field := range []string{"name", "website", "organization_id", "logo", "is_private", "show_name_public"} {
 		organizer[field] = "$$organizer." + field
 	}
@@ -266,7 +271,10 @@ func routeStops(value any) []string {
 		if json.Unmarshal([]byte(s), &stops) == nil {
 			return stringsOnly(stops)
 		}
-		return stringsOnly(strings.Split(s, ","))
+		if stops, ok := legacyRouteList(s); ok {
+			return stops
+		}
+		return stringsOnly(strings.FieldsFunc(s, func(character rune) bool { return character == ',' || character == '\n' }))
 	}
 	return stringsOnly(value)
 }

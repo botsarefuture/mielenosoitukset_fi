@@ -58,6 +58,41 @@ and notifies moderators, then redirects to the organization page. Adding social
 media rows needs JavaScript; the rest of the form works without it. Removing the
 rule restores the Flask page.
 
+### Demonstration change suggestions
+
+GET/HEAD `/suggest_change/<ObjectId>` is rendered by the standalone React host.
+It reads only Go `GET /api/demonstrations/<id>` for event data. The additive
+`suggestion` object contains original (not translated) form values, comma-joined
+tags and route stops, newline-joined public organizer display names, and
+`description_markdown`. Go mirrors Flask's `html_to_markdown` with the already
+installed `golang.org/x/net/html` tokenizer; no new dependency is needed.
+Missing/nonpublic events redirect home (302); API failures or an older Go
+response without `suggestion` return 503 with `Retry-After: 30`. The form is
+noindex and its bootstrap uses the same data for hydration.
+The returned ID must match the requested ObjectId: an alias resolved by the Go
+detail endpoint redirects home rather than editing another record.
+
+The public API's visibility and organizer-consent boundary remains authoritative:
+only approved, non-hidden, non-rejected events are readable, even though the old
+Flask GET looked up any known ObjectId. Unconsented organizer details never enter
+the response. If redaction makes an organizer list incomplete, the safe current
+names are shown separately and the editable list starts empty. An untouched form
+therefore cannot suggest a lossy replacement for that list. This is a deliberate
+privacy exception to exact legacy prefill parity.
+
+The plain HTML form still POSTs the same fields to Flask
+`/suggest_change/<id>` for comparison, moderation storage and notifications.
+It submits without JavaScript; JavaScript adds editable list rows and Markdown
+formatting/preview. Cancel is a red button targeting a separate GET form so no
+suggestion fields or reporter contact details enter the navigation URL.
+
+Rollout order: deploy Go first, build/deploy the host, verify the form and API,
+then activate the exact GET/HEAD Apache rule. Removing just that rule restores
+the untouched Flask GET/template; POST ownership and stored suggestions never
+change. Do not remove the Flask implementation in this migration. Visual
+acceptance remains BLOCKED until real application captures at 390px/1440px in
+both themes and independent reviewer SHIP are available.
+
 ### Contact page
 
 The Apache include routes GET/HEAD `/contact` to Node. The form posts to Flask

@@ -69,6 +69,25 @@ Recurring-parent *content* selection, organization enrichment and personalized
 follow/attendance state are intentionally not part of this initial contract.
 This is not a drop-in replacement for the authenticated Flask API.
 
+### Suggestion form prefills
+
+The detail endpoint additionally returns `suggestion` for the standalone React
+`/suggest_change/<id>` form. Its string fields are `title`, `date`, `start_time`,
+`end_time`, `city`, `address`, `facebook`, `tags`, `route`, `organizers` and
+`description_markdown`. These use original stored content, not the requested
+translation. Tags/routes use comma-space separation (including repeated stops),
+organizers use newlines and public name/contact display formatting. Empty values
+are empty strings. Markdown conversion mirrors Flask's existing editor using
+the installed Go HTML tokenizer, without accepting HTML as trusted UI markup.
+
+Visibility and organizer consent rules above apply unchanged. If redaction makes
+the organizer list incomplete, `organizers` is empty and optional
+`organizers_current` holds only the safe public display names. This prevents an
+untouched form from proposing replacement of a partially redacted list. Internal
+projection redaction flags are not serialized. No new database read, write,
+session scope, or Flask render dependency is introduced. This extension is only
+built for detail responses, not for listing or home cards.
+
 Invalid identifier/parameters:400; unknown or nonpublic event:404; identifier
 lookup or database failure:503, both with a bounded generic error. Responses are
 JSON and nosniff. Successful public responses follow the current shared-cache

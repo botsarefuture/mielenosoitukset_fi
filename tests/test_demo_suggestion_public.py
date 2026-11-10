@@ -1,3 +1,17 @@
+def test_suggest_change_host_routing_only_claims_exact_object_id_gets():
+    import re
+    from pathlib import Path
+
+    routing = Path("deploy/apache/react-ssr-routing.conf").read_text(encoding="utf-8")
+    pattern = r"^/suggest_change/[a-fA-F0-9]{24}$"
+    assert 'RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "' + pattern + '"' in routing
+    identifier = "66fa58601102367d5d52887f"
+    assert re.fullmatch(pattern, f"/suggest_change/{identifier}")
+    assert re.fullmatch(pattern, f"/suggest_change/{identifier.upper()}")
+    for path in ["/suggest_change/invalid", f"/suggest_change/{identifier}/", f"/suggest_change/{identifier}/extra"]:
+        assert not re.fullmatch(pattern, path)
+
+
 def test_suggest_change_get_shows_clean_route_and_markdown_description(client, db, seeded_data):
     demo_id = seeded_data["demo_id"]
     db.demonstrations.update_one(
@@ -96,3 +110,19 @@ def test_suggest_change_post_does_not_add_lossy_description_when_only_other_fiel
     assert suggestion is not None
     assert suggestion["suggested_fields"]["address"] == "Uusi osoite 5"
     assert "description" not in suggestion["suggested_fields"]
+
+
+def test_suggest_change_post_ignores_same_time_in_other_format(client, db, seeded_data):
+    demo_id = seeded_data["demo_id"]
+    db.demonstrations.update_one({"_id": demo_id}, {"$set": {"start_time": "12:00:00", "end_time": "14:00"}})
+    response = client.post(
+        f"/suggest_change/{demo_id}",
+        data={"start_time": "12:00", "end_time": "14:00:00", "reporter_comment": "Vain kommentti."},
+    )
+    assert response.status_code == 302
+    suggestion = db.demo_suggestions.find_one({"reporter_comment": "Vain kommentti."})
+    assert suggestion["suggested_fields"] == {}
+
+    client.post(f"/suggest_change/{demo_id}", data={"start_time": "13:30", "reporter_comment": "Aika muuttui."})
+    changed = db.demo_suggestions.find_one({"reporter_comment": "Aika muuttui."})
+    assert changed["suggested_fields"] == {"start_time": "13:30"}

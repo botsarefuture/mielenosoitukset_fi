@@ -4,6 +4,9 @@
 
 ## UNRELEASED
 
+- Move the demonstration change form (`/suggest_change/<id>`) to the standalone React SSR host with Go-read prefills, editable lists and Markdown preview. The plain form still posts to Flask for review; cancel stays a red button. Keep the public API's visibility and organizer privacy rules, without submitting redacted organizer lists as replacements.
+- Stop demonstration change suggestions from listing an unchanged start or end time as a change when the stored time and the form use different formats (`12:00` and `12:00:00`).
+
 - Show cancel actions as red buttons (`detail-button--danger`) instead of links, and give `.detail-button` the standard 3 px focus ring on every public page.
 - Remove the icons from section headings on the about page (`/info`); the maintainer found plain headings cleaner.
 - Move the organization fill-in form (`/organization/<id>/fill`) to the standalone React host. It reads the organization from the Go API, keeps the same fields and copy, drops the label above the title, and still saves suggestions through Flask for review.

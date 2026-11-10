@@ -28,6 +28,8 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 
 ## Move APIs to Go
 
+Proposal: [Public write API migration contracts, approval questions and rollout order](docs/go-write-api-proposal.md).
+
 - [ ] Status checks omitted from `/api/status`: Flask's configured cache `set("_status_ping", True, timeout=5)` and initialized S3 client's `list_buckets()`. Go has no equivalent Flask-owned cache/storage client; do not call Flask during rendering or substitute Go response-cache health. Migrate their ownership before restoring these checks.
 
 Maintainer direction, 10 November 2026: when a page is redesigned or moved to React, its Flask endpoints move to the Go API too, in the same work or later. Still on Flask:

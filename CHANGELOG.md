@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
+
 - Privacy: stop storing volunteer confirmation tokens in page-view analytics (`/kampanja/confirm/<token>` now counts as `confirm`), and make recorded events honour Do Not Track and the site analytics switch like page views already did.
 - Set the fundraising period to 16.11.2026–16.2.2027 and store the collection account. Payment details stay hidden until the organizer, collection number and recipient are confirmed and the collection is opened.
 - Give Pride badges contrasting solid backgrounds with rainbow borders, keep Pride map city names readable above markers, and let admin table action menus escape horizontal-scroll clipping (#743).

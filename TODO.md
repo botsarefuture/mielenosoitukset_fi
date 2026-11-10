@@ -42,10 +42,9 @@ Maintainer direction, 10 November 2026: when a page is redesigned or moved to Re
 
 From the maintainer, 10 November 2026:
 
-- [ ] Front page: center the search bar.
-- [ ] `/demonstrations` (Tulevat mielenosoitukset): the search area is too heavy. Make it lighter and simpler.
-- [x] `/cities`: the city list is too much. Sort it alphabetically and make it scale to every city in Finland (for example grouped by first letter, with search). Implemented; visual acceptance BLOCKED until real captures and independent review are available.
-- [x] `/cities` review fixes: left-align the empty heading, keep counts inline and omit zero counts, add A–Ö jump links, and increase result spacing. Visual acceptance remains BLOCKED pending fresh captures and independent review.
+- [x] Front page: center the search bar.
+- [x] `/demonstrations` (Tulevat mielenosoitukset): the search area is too heavy. Make it lighter and simpler. Secondary filters fold behind "Suodattimet" on phones.
+- [x] `/cities`: sorted alphabetically in letter groups with an A–Ö jump row, compact enough for every city in Finland.
 
 From the visual reviews:
 

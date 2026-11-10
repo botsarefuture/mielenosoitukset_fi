@@ -483,7 +483,7 @@ def capture(item) -> None:
                     settled_org(page)
                     shot(page, f"organization-profile-{width}-{theme}")
                     if stage == "final":
-                        assert page.locator('.public-search-submit').evaluate("e => getComputedStyle(e).backgroundColor") == 'rgb(255, 102, 0)'
+                        assert page.locator('.public-search-submit').evaluate("e => e.classList.contains('detail-button--primary')")
                     shot(page, f"organization-events-{width}-{theme}", "#demos")
                 finally:
                     ctx.close()

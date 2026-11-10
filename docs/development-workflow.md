@@ -53,8 +53,8 @@ The maintainer decides what we build and why. Whoever implements decides how.
   read new review comments. Fix what is red or requested before starting new work.
 - Rebase or merge `main` into a branch that has fallen behind; resolve conflicts in the
   generated frontend assets by rebuilding, not by hand.
-- Merging and production activation follow the approval rules below. A green CI run is
-  not an approval.
+- Merging and production activation follow the approval rules below: green required
+  tests (plus SHIP for UI) are enough to merge.
 
 ## Choosing the next task
 
@@ -116,10 +116,13 @@ suite just to satisfy a visual review.
 - Production access goes through the established, approved route (see
   `docs/production-deployment.md` and `docs/react-ssr-app.md`). Credentials pasted into a
   chat are not an approved route.
-- Needs explicit maintainer approval each time: merging to `main`, production deployment
-  or routing activation, database index or schema changes, authentication and session
-  changes, changes to god, board or super-admin privileges, and anything that sends real
-  email to real people.
+- Merging to `main` and the deployment and routing activation that follow it need no
+  separate approval once the required tests pass and, for rendered UI, an independent
+  reviewer has given SHIP (maintainer decision, 10 November 2026). Watch the deploy and
+  fix or roll back anything it breaks.
+- Still needs explicit maintainer approval each time: production data changes, database
+  index or schema changes, authentication and session changes, changes to god, board or
+  super-admin privileges, and anything that sends real email to real people.
 - Prepare and verify rollback before asking for activation.
 - Privileged-account and governance changes are never tested against real accounts without
   the account owner's say-so.

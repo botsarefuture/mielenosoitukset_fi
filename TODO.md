@@ -4,11 +4,11 @@ Everything still to do, in one list. Updated 10 November 2026.
 
 - **Sources:** `roadmap.md` (IDs like UI-06), open GitHub issues (`#123`), open pull requests, review follow-ups and `BLOCKERS.md` on `claude/vibrant-gates-syjhk4`.
 - **Where status lives:** priorities, owners and acceptance evidence stay in `roadmap.md`; this file is the checklist. When an item lands, tick it here and update the roadmap entry.
-- **Approval:** items marked *(approval)* need the maintainer's explicit go-ahead before merge or activation (see `docs/development-workflow.md`).
+- **Approval:** merging and deploying need no separate approval once tests pass (plus a visual SHIP for UI). Items marked *(approval)* touch data, authentication, sessions, privileges or real email and need the maintainer's go-ahead (see `docs/development-workflow.md`).
 
 ## Now
 
-- [ ] **Security dependency update:** Pillow 11.0.0 → 13.0.0, PyJWT 2.10.1 → 2.15.1, PyMongo 4.6.3 → 4.19.0. Pillow decodes uploaded images and has a critical advisory. Replaces #948, #527, #457 and #445. *(approval)*
+- [ ] **Security dependency update:** Pillow 11.0.0 → 13.0.0, PyJWT 2.10.1 → 2.15.1, PyMongo 4.6.3 → 4.19.0. Pillow decodes uploaded images and has a critical advisory. Replaces #948, #527, #457 and #445.
 - [ ] **#778 city admins and cases (P0):** #917 is merged and the issue says it was revalidated. Confirm on production that a city admin can open and act on their city's cases, then close the issue.
 - [ ] **#1029 far-future events:** the database holds events dated 2094–3100, so Helsinki shows 60,884 upcoming events. Find where they come from (recurring generation is the likely source), clean them up *(approval: data change)* and stop new ones.
 - [ ] **#984 support replies:** a reply is recorded as sent before the email is safely queued. Fix the order and error handling (DATA-04).

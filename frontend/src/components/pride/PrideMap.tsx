@@ -4,7 +4,7 @@ import type { Demonstration } from '../listings/types';
 
 type Point = [number, number];
 type MapInstance = {
-  fitBounds(points: Point[], options: { padding: Point; maxZoom: number }): void;
+  fitBounds(points: Point[], options: { paddingTopLeft: Point; paddingBottomRight: Point; maxZoom: number }): void;
   setView(point: Point, zoom: number): void;
   invalidateSize(): void;
   remove(): void;
@@ -181,7 +181,8 @@ export function PrideMap(props: PrideMapProps) {
           }
           bounds.push(point);
         });
-        if (bounds.length) map.fitBounds(bounds, { padding: [24, 24], maxZoom: 13 });
+        // City labels sit to the right of their markers; keep room for them.
+        if (bounds.length) map.fitBounds(bounds, { paddingTopLeft: [24, 24], paddingBottomRight: [120, 24], maxZoom: 13 });
         else map.setView(INITIAL_CENTER, 5);
         frame = requestAnimationFrame(() => { if (!disposed) map.invalidateSize(); });
         setLoaded({ events: rows, cities: cities.size, mapped: bounds.length });

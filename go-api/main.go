@@ -187,7 +187,7 @@ func (a *API) getDemonstration(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 503, "service unavailable")
 		return
 	}
-	writeJSON(w, 200, publicPayload(doc, lang))
+	writeJSON(w, 200, demonstrationPayload(doc, lang))
 }
 func (a *API) health(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second)

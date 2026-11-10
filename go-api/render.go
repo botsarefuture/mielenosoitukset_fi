@@ -32,7 +32,7 @@ type detailJSONStore interface {
 // renderDemonstration builds the final response bytes for one language. The
 // cache runs it once per entry per language and memoizes the result.
 func renderDemonstration(doc bson.M, lang string) ([]byte, error) {
-	data, err := json.Marshal(publicPayload(doc, lang))
+	data, err := json.Marshal(demonstrationPayload(doc, lang))
 	if err != nil {
 		return nil, err
 	}

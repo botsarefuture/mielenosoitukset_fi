@@ -29,6 +29,8 @@ import CampaignScreen from './CampaignScreen';
 import FundraisingScreen from './FundraisingScreen';
 import ContactScreen from './ContactScreen';
 import OrganizationFillScreen from './OrganizationFillScreen';
+import SuggestChangeScreen from './SuggestChangeScreen';
+import { loadSuggestion, suggestionTitle, suggestionLead, type SuggestionDemo } from './suggest-change';
 import { helsinkiToday } from './fundraising';
 export { fundraisingDetails } from './fundraising';
 import { campaignPath, loadCampaignPublication } from './campaign-route';
@@ -67,7 +69,7 @@ export type RenderInput = {
   headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; organizationFill?: string; pride?: string; information?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; organizationFill?: string; suggestChange?: string; pride?: string; information?: string };
 
 export type RenderResult = {
   status: number;
@@ -357,6 +359,21 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   }
 
   let organizationFill: PublicOrganization | undefined;
+  let suggestionDemo: SuggestionDemo | undefined;
+  if (route.name === 'suggest-change') {
+    const loaded = await loadSuggestion(readBase, route.id);
+    if (loaded.status === 'not-found') return { status: 302, html: '', redirect: config.urls.home };
+    if (loaded.status === 'unavailable') {
+      return { status: 503, html: unavailableDocument(), headers: { 'Cache-Control': 'no-store', 'Retry-After': '30' } };
+    }
+    suggestionDemo = loaded.demo;
+    meta = { title: `${suggestionTitle} | Mielenosoitukset.fi`, description: suggestionLead,
+      canonical: null, robots: 'noindex, follow' };
+    extraHead = (assets.suggestChange ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<SuggestChangeScreen demo={suggestionDemo} />} />);
+  }
   if (route.name === 'organization-fill') {
     const loaded = await organizationRead!;
     if (loaded.status === 'not-found') return { status: 302, html: '', redirect: config.urls.home };
@@ -650,6 +667,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   const bootstrap = serialize({ config, session, path: input.path, route, ...(today ? { today } : {}),
     ...(campaignVisible !== undefined ? { campaignVisible } : {}),
     ...(organizationFill ? { organizationFill } : {}),
+    ...(suggestionDemo ? { suggestionDemo } : {}),
     ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}),
     ...(listing ? { listing } : {}), ...(organization ? { organization } : {}), ...(cities !== undefined ? { cities } : {}),
     ...(submission ? { submission } : {}), ...(calendar ? { calendar } : {}) });

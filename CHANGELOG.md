@@ -4,6 +4,9 @@
 
 ## UNRELEASED
 
+- Move the demonstration change form (`/suggest_change/<id>`) to the standalone React SSR host with Go-read prefills, editable lists and Markdown preview. The plain form still posts to Flask for review; cancel stays a red button. Keep the public API's visibility and organizer privacy rules, without submitting redacted organizer lists as replacements.
+- Stop demonstration change suggestions from listing an unchanged start or end time as a change when the stored time and the form use different formats (`12:00` and `12:00:00`).
+
 - Let production deploys use an application virtual environment. `deploy/production_deploy.sh` reads an optional root-owned `/etc/mielenosoitukset-fi/deploy.env` naming the Python interpreter and its install record, and refuses unsafe files. `docs/production-venv-migration.md` describes moving Flask and its workers onto the venv, with rollback, so dependency security updates can deploy again.
 - Polish the contact page: hide the "Yhteydenottolomake" option card when the form cannot be used, make the topic select as tall as the text fields, and use the design system's primary button for "Lähetä".
 - Show cancel actions as red buttons (`detail-button--danger`) instead of links, and give `.detail-button` the standard 3 px focus ring on every public page.

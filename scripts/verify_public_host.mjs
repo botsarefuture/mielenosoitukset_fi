@@ -325,6 +325,10 @@ function createApi(log) {
     if (identifier === 'slow') return; // never answers; the host must give up
     if (identifier === 'broken') { res.writeHead(503); res.end('{}'); return; }
     if (identifier === 'nonpublic') return send(404, { error: 'demonstration not found' });
+    if (identifier === '66fa58601102367d5d528090') return send(404, { error: 'demonstration not found' });
+    if (identifier === '66fa58601102367d5d528091') return send(503, {});
+    if (identifier === '66fa58601102367d5d528092') return send(200, { _id: identifier });
+    if (identifier === '66fa58601102367d5d528093') return;
     const child = children[identifier];
     if (child) {
       return send(200, { _id: child.id, title: 'Test occurrence', description: 'Kuvaus',
@@ -338,7 +342,16 @@ function createApi(log) {
       running_number: 4242, date: identifier === 'far-future' ? day(900) : '2026-12-01',
       start_time: '14:00', end_time: '15:00', cancelled: false,
       city: 'Helsinki', address: 'Mannerheimintie 1', preview_image: null, parent: null,
+      suggestion: { title: 'Alkuperäinen <otsikko>', date: '2026-12-01', start_time: '14:00', end_time: '',
+        city: 'Helsinki', address: 'Mannerheimintie 1', facebook: '', tags: 'rauha, ilmasto', route: 'Tori, Katu, Tori',
+        organizers: 'Järjestö (public@example.test, https://example.test)\nToinen',
+        description_markdown: 'Ensimmäinen kappale.\n\n**Tärkeä** lisätieto.\n\n<script>alert(1)</script>' },
     };
+    if (identifier === '66fa58601102367d5d528094') {
+      doc._id = identifier;
+      doc.suggestion.organizers = '';
+      doc.suggestion.organizers_current = 'Public organizer';
+    }
     send(200, doc);
   });
 }
@@ -611,6 +624,51 @@ try {
   assert.match(fill.html, /<meta name="robots" content="noindex, follow" \/>/);
   const missingFill = await detailPage({ path: '/organization/66fa58601102367d5d528098/fill' });
   assert.equal(missingFill.status, 302); assert.equal(missingFill.redirect, '/');
+  const suggestion = await detailPage({ path: `/suggest_change/${detailId}` });
+  assert.equal(suggestion.status, 200);
+  const suggestionBody = suggestion.html.split('<body>')[1].split('<script type="application/json"')[0];
+  for (const name of ['title', 'date', 'start_time', 'end_time', 'city', 'address', 'facebook', 'tags', 'route',
+    'organizers', 'description_markdown', 'reporter_email', 'reporter_comment']) {
+    assert(suggestionBody.includes(`name="${name}"`), `SSR form field ${name}`);
+  }
+  for (const text of [`action="/suggest_change/${detailId}"`, 'method="post"', 'Alkuperäinen &lt;otsikko&gt;',
+    'Tori, Katu, Tori', 'Järjestö (public@example.test, https://example.test)\nToinen', '**Tärkeä** lisätieto.',
+    'detail-button--primary', 'detail-button--danger', 'form="suggest-change-cancel"', 'Esikatselu']) {
+    assert(suggestionBody.includes(text), text);
+  }
+  assert.match(suggestion.html, /<meta name="robots" content="noindex, follow" \/>/);
+  assert.match(suggestion.html, /public-detail\.css/);
+  assert(!suggestionBody.includes('<script>alert(1)</script>'));
+  assert(!suggestionBody.includes('value="None"') && !suggestionBody.includes('value="null"'));
+  assert(!suggestionBody.includes('<noscript>'), 'The SSR form itself works without JavaScript');
+  const cancelForm = suggestionBody.match(/<form id="suggest-change-cancel"[^>]*><\/form>/)?.[0];
+  assert(cancelForm?.includes('method="get"') && cancelForm.includes(`action="/demonstration/${detailId}"`));
+  assert.equal(bootstrap(suggestion.html).suggestionDemo.fields.end_time, '');
+  assert.equal((await detailPage({ path: `/suggest_change/${detailId}`, headOnly: true })).status, 200);
+  assert.equal((await detailPage({ path: `/suggest_change/${detailId.toUpperCase()}` })).status, 200);
+  const redactedSuggestion = await detailPage({ path: '/suggest_change/66fa58601102367d5d528094' });
+  assert.equal(redactedSuggestion.status, 200);
+  assert.equal(bootstrap(redactedSuggestion.html).suggestionDemo.fields.organizers, '');
+  assert.equal(bootstrap(redactedSuggestion.html).suggestionDemo.organizersCurrent, 'Public organizer');
+  const missingSuggestion = await detailPage({ path: '/suggest_change/66fa58601102367d5d528090' });
+  assert.equal(missingSuggestion.status, 302); assert.equal(missingSuggestion.redirect, '/');
+  const aliasSuggestion = await detailPage({ path: '/suggest_change/66fa58601102367d5d528095' });
+  assert.equal(aliasSuggestion.status, 302); assert.equal(aliasSuggestion.redirect, '/', 'Unlike detail pages, suggestions require the exact stored id');
+  for (const id of ['66fa58601102367d5d528091', '66fa58601102367d5d528092']) {
+    const failed = await detailPage({ path: `/suggest_change/${id}` });
+    assert.equal(failed.status, 503); assert.equal(failed.headers['Retry-After'], '30');
+  }
+  const suggestionStarted = performance.now();
+  assert.equal((await detailPage({ path: '/suggest_change/66fa58601102367d5d528093' })).status, 503);
+  assert(performance.now() - suggestionStarted < 2500, 'Suggestion API timeout is bounded');
+  const suggestionReads = localReads.length;
+  for (const path of ['/suggest_change/no-id', `/suggest_change/${detailId}/`, `/suggest_change/${detailId}/extra`]) {
+    assert.equal((await detailPage({ path })).status, 404);
+  }
+  assert.equal(localReads.length, suggestionReads, 'Only exact suggestion routes query Go');
+  const apacheRouting = readFileSync(`${root}/deploy/apache/react-ssr-routing.conf`, 'utf8');
+  assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/suggest_change/[a-fA-F0-9]{24}$"'));
+  console.log('PASS: suggestion SSR fields, Markdown, privacy-safe prefills, no-JS POST, cancel, bootstrap, noindex and failures');
   console.log('PASS: organization cache/coalescing, public projection, private scoped sessions, fixed event scope and missing organizations and the fill-in form');
 } finally {
   publicApi.closeAllConnections?.();

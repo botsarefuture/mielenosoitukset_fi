@@ -50,13 +50,11 @@ From the maintainer, 10 November 2026:
 
 From the visual reviews:
 
-- [ ] `/contact`: hide the "Yhteydenottolomake" card while the form is switched off.
 - [ ] Shared inline success message: more space above than below (`.flash-message--inline`).
 - [ ] Charcoal "Poista suodattimet" secondary button and the pale grey light secondary button.
 - [ ] Underline next to the invite "+" on event cards.
 - [ ] Organizer guide: step titles are centred at 390 px.
 - [ ] Campaign page: on phones the form's error message is below the fold after an empty submit.
-- [ ] Contact form: the subject select is 6 px shorter than the text fields.
 - [ ] Fundraising, open state: the MobilePay links sit far apart.
 - [ ] Card times use `12:00 – 14:00` instead of `12.00–14.00`; the PRIDE badge text has weak contrast; map markers cover city labels.
 - [ ] Keep action menus outside the scroll viewport (#743).

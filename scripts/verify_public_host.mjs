@@ -161,6 +161,7 @@ try {
     contactMode = 'disabled';
     const disabled = await contact();
     assert(disabled.html.includes('tilapäisesti poissa käytöstä') && !disabled.html.includes('id="contact-form"'));
+    assert(!disabled.html.includes('href="#contact-form-section"'), 'Disabled contact form must not have an option card');
     contactMode = 'down';
     const down = await contact();
     assert.equal(down.status, 200);

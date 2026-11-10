@@ -124,6 +124,7 @@ type API struct{ store Store }
 
 func (a *API) handler() http.Handler {
 	mux := http.NewServeMux()
+	mux.Handle("GET /api/status", serviceStatusHandler(a.store.Ping))
 	mux.HandleFunc("GET /api/demonstrations", a.getListing)
 	mux.HandleFunc("GET /api/cities", a.getCities)
 	mux.HandleFunc("GET /api/calendar/{year}/{month}", a.getCalendar)

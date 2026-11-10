@@ -365,6 +365,14 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 The repository programme is complete only when each in-scope requirement has evidence, the per-test reviews are recorded, relevant checks pass, trackers match merged state, and release claims have actual deployment evidence. Do not equate this roadmap's creation with completion of the work.
 
 
+### UI-06 status slice — 10 November 2026
+
+Codex: `/status` now has React SSR/hydration, read-only Go `/api/status`, a
+one-second MongoDB ping cached for 60 seconds, and exact GET/HEAD routing prepared.
+Failures keep HTTP 200/noindex. Flask cache and initialized S3-client checks are
+omitted and tracked in TODO. Flask rollback remains intact. No production changes;
+socket smoke tests and independent visual acceptance are BLOCKED in this sandbox.
+
 ### UI-06 public React inventory — header slice, 27 October 2026
 
 | Surface | Current owner / state | Remaining regions and next slice |

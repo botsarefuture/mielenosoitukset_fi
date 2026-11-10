@@ -28,7 +28,7 @@ func publicAvailability(next http.Handler, read func(context.Context) (bool, err
 	var locked bool
 	var readErr error
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/health" {
+		if r.URL.Path == "/health" || r.URL.Path == "/api/status" {
 			next.ServeHTTP(w, r)
 			return
 		}

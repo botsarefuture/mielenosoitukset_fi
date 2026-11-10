@@ -18,7 +18,7 @@ Everything still to do, in one list. Updated 10 November 2026.
 Already on the React host: home, listings (all, city, tag, today), detail and series, calendar, cities, submit, organization profile, information pages, Pride, campaign, fundraising and contact.
 
 - [ ] `/report` error report form. It needs a session-scope token like `/contact`. *(approval: session change)*
-- [ ] `/status` service status page. It needs a JSON endpoint for the health checks.
+- [x] `/status`: React SSR with read-only Go `/api/status`, bounded cached database check and HTTP 200 on dependency/API failure. Routing prepared; visual acceptance BLOCKED (no socket/browser captures in this sandbox).
 - [ ] Token pages: `/cancel_demonstration/<token>`, `/confirm/<token>`, `/confirm_email/<token>`, `/accept_invite`.
 - [ ] Account pages: login, register and next steps, settings, password reset, forced password and identity change, MFA verification, public profile `/<username>`. *(approval: authentication flows)*
 - [ ] Secondary tools: `/developer`, `/api-docs/`, demo material download.
@@ -26,6 +26,8 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 - [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).
 
 ## Move APIs to Go
+
+- [ ] Status checks omitted from `/api/status`: Flask's configured cache `set("_status_ping", True, timeout=5)` and initialized S3 client's `list_buckets()`. Go has no equivalent Flask-owned cache/storage client; do not call Flask during rendering or substitute Go response-cache health. Migrate their ownership before restoring these checks.
 
 Maintainer direction, 10 November 2026: when a page is redesigned or moved to React, its Flask endpoints move to the Go API too, in the same work or later. Still on Flask:
 

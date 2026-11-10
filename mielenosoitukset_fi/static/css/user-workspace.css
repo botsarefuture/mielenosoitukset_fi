@@ -120,6 +120,30 @@ html.dark {
   --user-radius-small: 0.5em;
 }
 
+/* Short pages show the root canvas below the footer. The legacy style.css
+   paints html with its own colour (!important), which shows as an off-token
+   strip in dark mode; match the footer instead. body is left as it is. */
+html,
+html.light,
+html.dark {
+  background: var(--product-surface) !important;
+}
+
+/* React host shell: fill the viewport so the footer sits at the bottom of
+   short pages instead of leaving the legacy body colour below it. Only with
+   scripting on, because the no-JS fallback is rendered after #app. */
+@media (scripting: enabled) {
+  #app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  #app > main {
+    flex: 1 0 auto;
+  }
+}
+
 body {
   background: var(--product-surface-muted);
   color: var(--product-text);

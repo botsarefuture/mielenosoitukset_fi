@@ -47,7 +47,11 @@ if (container) {
     if (!bootstrap) throw new Error('Missing app bootstrap');
     const props = JSON.parse(bootstrap) as Bootstrap;
     const route = routeForPath(props.path);
-    if (route?.name === 'information') {
+    if (route?.name === 'status') {
+      void import('./StatusScreen').then(({ default: StatusScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<StatusScreen status={props.serviceStatus ?? null} />} />);
+      }).catch(error => console.error('Could not start the status page', error));
+    } else if (route?.name === 'information') {
       void import('./InformationScreen').then(({ default: InformationScreen }) => {
         hydrateRoot(container, <Root {...props} serverPage={<InformationScreen page={route.page} session={props.session} campaign={props.campaignVisible} />} />);
       }).catch(error => console.error('Could not start information page controls', error));

@@ -1619,6 +1619,8 @@ h1 {
 }
 
 #notif-btn {
+  /* Page button styles (e.g. on profiles) may clip overflow; the badge sits outside the button. */
+  overflow: visible;
   width: 44px;
   height: 44px;
   display: inline-flex;

@@ -203,7 +203,7 @@ ${options.jsonLd ? `<script type="application/ld+json">${serialize(options.jsonL
 <noscript><link rel="stylesheet" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" crossorigin></noscript>
 <link rel="stylesheet" href="/static/css/home.css">
 <link rel="stylesheet" href="/static/css/product-tokens.css?v=20261027-product-tokens-1">
-<link rel="stylesheet" href="/static/css/user-workspace.css?v=20261109-user-workspace-3">
+<link rel="stylesheet" href="/static/css/user-workspace.css?v=20261110-user-workspace-4">
 <link rel="stylesheet" href="/static/css/public-header.css?v=20261027-react-header-1">
 <link rel="stylesheet" href="/static/css/flash.css?v=20260928-campaign-feedback-1">
 <link rel="stylesheet" href="/static/css/public_hero.css?v=20261015-hero-width-1">

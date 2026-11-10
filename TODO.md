@@ -29,6 +29,15 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 
 ## UI follow-ups from reviews
 
+From the maintainer, 10 November 2026:
+
+- [ ] Profile page: the red notification count sits under the bell instead of on top of it. Other pages look right.
+- [ ] Front page: center the search bar.
+- [ ] `/demonstrations` (Tulevat mielenosoitukset): the search area is too heavy. Make it lighter and simpler.
+- [ ] `/cities`: the city list is too much. Sort it alphabetically and make it scale to every city in Finland (for example grouped by first letter, with search).
+
+From the visual reviews:
+
 - [ ] `/contact`: hide the "Yhteydenottolomake" card while the form is switched off.
 - [ ] Shared inline success message: more space above than below (`.flash-message--inline`).
 - [ ] Charcoal "Poista suodattimet" secondary button and the pale grey light secondary button.
@@ -92,6 +101,8 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 
 ## Product ideas (after core work)
 
+- [ ] Front page as a list of upcoming demonstrations.
+- [ ] Demonstration categories with preset options (for example Palestiina, ilmasto, ihmisoikeudet) so people can filter by topic. Decide how they relate to the existing free-form tags first.
 - [ ] **ENGAGE-01:** optional newsletter of relevant upcoming events.
 - [ ] **ENGAGE-02:** optional email digest of a user's own notifications.
 - [ ] **PRODUCT-01:** broader societal events (#583), following tags (#117), city and tag email subscriptions (#121).

@@ -190,8 +190,14 @@
     align-items: flex-start;
   }
 
+  .org-fill-socials {
+    gap: 1rem;
+  }
+
   .org-fill-social {
     grid-template-columns: minmax(0, 1fr) 44px;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--product-border);
   }
 
   .org-fill-social select {

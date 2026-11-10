@@ -80,7 +80,8 @@ def test_api_documentation_build_preserves_flask_markdown():
     ).replace("</table></div>", "</table>")
 
     assert unwrapped == expected
-    assert compiled["toc"] == document.toc
+    # The host only adds <wbr> after "/" and "_" in TOC links so long paths wrap cleanly.
+    assert compiled["toc"].replace("<wbr>", "") == document.toc
     assert len(re.findall(r'<pre tabindex="0">', compiled["html"])) > 0
     assert '<table>' in compiled["html"]
 

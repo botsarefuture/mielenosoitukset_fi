@@ -37,9 +37,8 @@ rollback: deploy the app bundle and static CSS before enabling the exact Apache
 rule; removing only that rule restores the previous page. No data migration or
 API contract change is involved.
 
-Visual acceptance for this migration remains **BLOCKED** until the real page is
-captured at 390px and 1440px in both themes and independently reviewed. Technical
-checks alone do not certify mobile layout or visual acceptance.
+Visual acceptance: independent reviewer SHIP on 10 November 2026 (#1068), from
+real application captures at 390px and 1440px in both themes, including no-JS.
 
 ## Rendering split
 
@@ -121,8 +120,8 @@ Rollout order: deploy Go first, build/deploy the host, verify the form and API,
 then activate the exact GET/HEAD Apache rule. Removing just that rule restores
 the untouched Flask GET/template; POST ownership and stored suggestions never
 change. Do not remove the Flask implementation in this migration. Visual
-acceptance remains BLOCKED until real application captures at 390px/1440px in
-both themes and independent reviewer SHIP are available.
+acceptance: independent reviewer SHIP on 10 November 2026 (#1060), from real
+application captures at 390px/1440px in both themes.
 
 ### Contact page
 

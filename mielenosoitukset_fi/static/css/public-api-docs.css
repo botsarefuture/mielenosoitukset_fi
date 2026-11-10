@@ -1,0 +1,87 @@
+#api-docs-page {
+  min-width: 0;
+}
+
+#api-docs-page .public-page-header {
+  color: var(--product-text);
+  background: var(--product-surface);
+  border: 1px solid var(--product-border);
+}
+
+#api-docs-page .public-page-header__description {
+  color: var(--product-text-muted);
+}
+
+#api-docs-page .public-page-header__meta > span {
+  color: var(--product-text);
+  background: var(--product-surface-muted);
+  border-color: var(--product-border);
+}
+
+#api-docs-page .public-page-header__meta a {
+  color: var(--product-primary);
+}
+
+#api-docs-page .public-page-header,
+#api-docs-page .api-docs-sidebar,
+#api-docs-page .api-docs-content {
+  border-radius: 12px;
+}
+
+#api-docs-page .public-page-header__title,
+#api-docs-page .api-docs-content :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--product-text);
+  text-align: left;
+  overflow-wrap: anywhere;
+  scroll-margin-top: 6rem;
+}
+
+#api-docs-page .api-docs-sidebar h2 {
+  color: var(--product-text);
+  font-size: 1rem;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+#api-docs-page .api-docs-sidebar {
+  max-height: calc(100dvh - 7rem);
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+
+#api-docs-page .api-docs-sidebar ul ul {
+  padding-left: 0.75rem;
+}
+
+#api-docs-page .api-docs-content {
+  overflow-wrap: anywhere;
+  overflow-x: visible;
+}
+
+#api-docs-page .api-docs-content pre,
+#api-docs-page .api-docs-table {
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+#api-docs-page .api-docs-content pre {
+  white-space: pre;
+  overflow-wrap: normal;
+}
+
+#api-docs-page .api-docs-content code {
+  border-radius: 8px;
+}
+
+#api-docs-page :is(a, pre, .api-docs-table):focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 56.25rem) {
+  #api-docs-page .api-docs-sidebar {
+    max-height: none;
+  }
+}

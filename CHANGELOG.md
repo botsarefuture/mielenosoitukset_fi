@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Move `/api-docs/` to the React SSR host with build-time Markdown, existing heading links and keyboard-reachable scrolling code blocks; retain Flask's OpenAPI download and slash redirect.
+
 - Confirm support replies are persisted in the email queue before recording a correlated queued reply and audit entries. Unconfirmed queue or case writes now show a safe warning instead of claiming delivery or retrying silently (#984).
 
 - Restore visible listing search focus rings and compact filled secondary fields; collapse mobile filters after hydration, opening active filters automatically. Centre the whole front-page introduction while preserving search URLs and no-JavaScript forms.

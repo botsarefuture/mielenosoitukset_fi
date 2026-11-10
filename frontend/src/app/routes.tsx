@@ -24,6 +24,7 @@ export type AppRoute =
   | { name: 'pride' }
   | { name: 'information'; page: InformationPage }
   | { name: 'contact' }
+  | { name: 'api-docs' }
   | { name: 'campaign' }
   | { name: 'fundraising' }
   | { name: 'cities' }
@@ -66,6 +67,7 @@ export function routeForPath(path: string): AppRoute | null {
   if (informationPage) return { name: 'information', page: informationPage };
   if (path === '/auth/god') return { name: 'god-auth' };
   if (path === contactPath) return { name: 'contact' };
+  if (path === '/api-docs/') return { name: 'api-docs' };
   if (path === campaignPath) return { name: 'campaign' };
   if (path === '/keräys' || path === '/ker%C3%A4ys' || path === '/ker%c3%a4ys') return { name: 'fundraising' };
   const calendar = /^\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
@@ -123,6 +125,11 @@ export function routeForPath(path: string): AppRoute | null {
  * metadata from one projected API read.
  */
 export function routeMeta(route: AppRoute, config: AppConfig, text: Catalog): RouteMeta {
+  if (route.name === 'api-docs') {
+    return { title: 'API-dokumentaatio | Mielenosoitukset.fi',
+      description: 'Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa.',
+      robots: 'index, follow', canonical: null };
+  }
   if (route.name === 'contact') {
     return { title: `${contactCopy.title} | Mielenosoitukset.fi`, description: contactCopy.description,
       robots: 'index, follow', canonical: config.origin + contactPath };

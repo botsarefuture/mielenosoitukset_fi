@@ -16,11 +16,16 @@ Manual build of a reviewed commit with the repository's Node 22.12+ toolchain:
 
 ```sh
 npm ci
+python3 -m pip install "$(sed -n '/^Markdown==/p' requirements.txt)"
 npm run app:build
 node scripts/verify_public_host.mjs
 tar -czf /tmp/app.tar.gz frontend/server.mjs frontend/public-availability.mjs frontend/dist
 sha256sum /tmp/app.tar.gz
 ```
+
+Python-Markdown is used only while building API documentation, with its version
+reused from `requirements.txt`. Activate the project venv instead of installing
+it separately when available. Python is not needed on the deployed Node host.
 
 The runtime bundle needs no `node_modules`, database credentials or Node compiler
 on the server. Install the Linux x64 Node 22 runtime from the official Node

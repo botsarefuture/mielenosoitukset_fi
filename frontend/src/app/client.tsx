@@ -23,7 +23,7 @@ function Root(props: Bootstrap) {
       }
       // Detail/series views keep their separate demonstration-view collection.
       const name = routeForPath(path)?.name;
-      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride', 'information', 'campaign', 'fundraising', 'contact', 'organization-fill', 'suggest-change'].includes(name)
+      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride', 'information', 'campaign', 'fundraising', 'contact', 'organization-fill', 'suggest-change', 'api-docs'].includes(name)
         || !session.siteAnalyticsEnabled || tracked.current) return;
       tracked.current = true;
       try {
@@ -47,7 +47,11 @@ if (container) {
     if (!bootstrap) throw new Error('Missing app bootstrap');
     const props = JSON.parse(bootstrap) as Bootstrap;
     const route = routeForPath(props.path);
-    if (route?.name === 'information') {
+    if (route?.name === 'api-docs') {
+      const html = document.getElementById('api-docs-page')?.innerHTML;
+      if (!html) throw new Error('Missing API documentation');
+      hydrateRoot(container, <Root {...props} serverPage={<div id="api-docs-page" dangerouslySetInnerHTML={{ __html: html }} />} />);
+    } else if (route?.name === 'information') {
       void import('./InformationScreen').then(({ default: InformationScreen }) => {
         hydrateRoot(container, <Root {...props} serverPage={<InformationScreen page={route.page} session={props.session} campaign={props.campaignVisible} />} />);
       }).catch(error => console.error('Could not start information page controls', error));

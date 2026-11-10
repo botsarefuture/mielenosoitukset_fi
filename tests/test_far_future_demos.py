@@ -72,4 +72,26 @@ def test_apply_backs_up_then_deletes_and_resets_the_series(db, tmp_path):
     assert sorted(doc["date"] for doc in saved) == ["2094-05-01", "3100-01-05"]
     remaining = sorted(doc["date"] for doc in db.demonstrations.find({}, {"date": 1}))
     assert remaining == ["2027-03-01", "2150-01-01", "2200-01-01", "ensi vuonna"]
-    assert db.recu_demos.find_one({"_id": parent_id})["created_until"] == "2026-11-10T00:00:00"
+    # The watermark returns to the last stored occurrence inside the cutoff,
+    # never to "today" and never to the kept frozen 2200 child.
+    assert db.recu_demos.find_one({"_id": parent_id})["created_until"] == "2027-03-01T00:00:00"
+
+
+def test_apply_keeps_the_series_anchor_when_only_near_events_remain(db, tmp_path):
+    db.demonstrations.delete_many({})
+    db.recu_demos.delete_many({})
+    parent_id = ObjectId()
+    db.recu_demos.insert_one({"_id": parent_id, "date": "2026-11-06", "created_until": "3100-01-01T00:00:00"})
+    db.demonstrations.insert_many([
+        {"_id": ObjectId(), "date": "2026-11-13", "parent": parent_id},
+        {"_id": ObjectId(), "date": "2027-11-12", "parent": parent_id},
+        {"_id": ObjectId(), "date": "2099-01-02", "parent": parent_id},
+    ])
+
+    code = far_future_demos.main(
+        ["--apply", "--backup", str(tmp_path / "b.jsonl"), "--expect", "1"], db=db, today=TODAY, out=io.StringIO()
+    )
+
+    assert code == 0
+    assert db.recu_demos.find_one({"_id": parent_id})["created_until"] == "2027-11-12T00:00:00"
+    assert sorted(d["date"] for d in db.demonstrations.find()) == ["2026-11-13", "2027-11-12"]

@@ -19,8 +19,9 @@ Only documents that match all of these are candidates:
 * the document has a ``parent`` (it is a generated occurrence, not a submission),
 * its id is not in the parent's ``freezed_children`` (hand-edited occurrences stay).
 
-After removal each affected series gets ``created_until`` reset to today, so the
-worker regenerates the coming year normally on its next run.
+After removal each affected series gets ``created_until`` moved back to its last
+remaining occurrence (or its own date if none remain), so the worker keeps the
+series' anchor and only generates what is missing within its horizon.
 """
 
 from __future__ import annotations
@@ -71,7 +72,7 @@ def report(candidates: list[dict], cutoff: str, out=sys.stdout) -> None:
     print("By decade: " + ", ".join(f"{decade} {count}" for decade, count in sorted(by_decade.items())), file=out)
 
 
-def apply(db, candidates: list[dict], backup_path: str, today: date) -> int:
+def apply(db, candidates: list[dict], backup_path: str, today: date, cutoff: str) -> int:
     with open(backup_path, "x", encoding="utf-8") as backup:
         for doc in candidates:
             backup.write(json_util.dumps(doc) + "\n")
@@ -80,10 +81,26 @@ def apply(db, candidates: list[dict], backup_path: str, today: date) -> int:
     for start in range(0, len(ids), 1000):
         deleted += db.demonstrations.delete_many({"_id": {"$in": ids[start:start + 1000]}}).deleted_count
     for parent_key in {str(doc["parent"]) for doc in candidates}:
-        if ObjectId.is_valid(parent_key):
+        if not ObjectId.is_valid(parent_key):
+            continue
+        parent_id = ObjectId(parent_key)
+        # Move the watermark back to the last occurrence that is still stored,
+        # never to today: the worker counts the schedule from this date and
+        # deletes unfrozen children after it, so any other value would re-anchor
+        # the series and touch events outside the reviewed set.
+        remaining = db.demonstrations.find_one(
+            {"parent": {"$in": [parent_id, parent_key]},
+             "date": {"$type": "string", "$regex": r"^\d{4}-\d{2}-\d{2}$", "$lte": cutoff}},
+            {"date": 1}, sort=[("date", -1)],
+        )
+        if remaining:
+            watermark = remaining["date"]
+        else:
+            parent = db.recu_demos.find_one({"_id": parent_id}, {"date": 1}) or {}
+            watermark = parent.get("date") if isinstance(parent.get("date"), str) else None
+        if watermark:
             db.recu_demos.update_one(
-                {"_id": ObjectId(parent_key)},
-                {"$set": {"created_until": datetime.combine(today, datetime.min.time()).isoformat()}},
+                {"_id": parent_id}, {"$set": {"created_until": f"{watermark}T00:00:00"}}
             )
     return deleted
 
@@ -113,7 +130,7 @@ def main(argv: list[str] | None = None, db=None, today: date | None = None, out=
     if args.expect != len(candidates):
         print(f"Refusing: --expect {args.expect} does not match the {len(candidates)} documents found.", file=out)
         return 2
-    deleted = apply(db, candidates, args.backup, today)
+    deleted = apply(db, candidates, args.backup, today, cutoff)
     print(f"Backed up {len(candidates)} documents to {args.backup}; deleted {deleted}.", file=out)
     return 0
 

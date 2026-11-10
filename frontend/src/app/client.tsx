@@ -51,6 +51,10 @@ if (container) {
       const html = document.getElementById('api-docs-page')?.innerHTML;
       if (!html) throw new Error('Missing API documentation');
       hydrateRoot(container, <Root {...props} serverPage={<div id="api-docs-page" dangerouslySetInnerHTML={{ __html: html }} />} />);
+    } else if (route?.name === 'status') {
+      void import('./StatusScreen').then(({ default: StatusScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<StatusScreen status={props.serviceStatus ?? null} />} />);
+      }).catch(error => console.error('Could not start the status page', error));
     } else if (route?.name === 'information') {
       void import('./InformationScreen').then(({ default: InformationScreen }) => {
         hydrateRoot(container, <Root {...props} serverPage={<InformationScreen page={route.page} session={props.session} campaign={props.campaignVisible} />} />);

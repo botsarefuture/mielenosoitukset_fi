@@ -61,6 +61,11 @@ func localDay(now time.Time) string {
 	return now.In(location).Format("2006-01-02")
 }
 
+// upcomingHorizonDays bounds open-ended "upcoming" reads. Recurring series
+// used to generate occurrences centuries ahead (#1029); nothing real is
+// announced more than two years in advance.
+const upcomingHorizonDays = 730
+
 func shiftDay(day string, days int) string {
 	parsed, err := time.Parse("2006-01-02", day)
 	if err != nil {

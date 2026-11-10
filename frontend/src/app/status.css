@@ -1,0 +1,59 @@
+.service-status {
+  max-width: 720px;
+  color: var(--product-text);
+}
+
+.service-status h1 {
+  margin: 0;
+  color: var(--product-text);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: left;
+}
+
+.service-status-header {
+  margin-bottom: 1.5rem;
+}
+
+.service-status-summary,
+.service-status-list > div {
+  padding: 1.25rem;
+  border: 1px solid var(--product-border);
+  border-radius: 12px;
+}
+
+.service-status-summary,
+.service-status-list dt {
+  font-weight: 650;
+}
+
+.service-status--ok {
+  color: var(--product-success);
+  background: var(--product-success-soft);
+}
+
+.service-status--err {
+  color: var(--product-danger);
+  background: var(--product-danger-soft);
+}
+
+.service-status-list > div {
+  background: var(--product-surface);
+}
+
+.service-status-list dd {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+.service-status-meta,
+.service-status-header p {
+  color: var(--product-text-muted);
+}
+
+.service-status a:focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: 3px;
+}

@@ -33,6 +33,8 @@ import OrganizationFillScreen from './OrganizationFillScreen';
 import SuggestChangeScreen from './SuggestChangeScreen';
 import ApiDocsScreen from './ApiDocsScreen';
 import apiDocs from 'virtual:api-docs';
+import StatusScreen from './StatusScreen';
+import { loadStatus, statusTitle, type ServiceStatus } from './status';
 import { loadSuggestion, suggestionTitle, suggestionLead, type SuggestionDemo } from './suggest-change';
 import { helsinkiToday } from './fundraising';
 export { fundraisingDetails } from './fundraising';
@@ -72,7 +74,7 @@ export type RenderInput = {
   headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; organizationFill?: string; suggestChange?: string; pride?: string; information?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; organizationFill?: string; suggestChange?: string; status?: string; pride?: string; information?: string };
 
 export type RenderResult = {
   status: number;
@@ -234,7 +236,7 @@ function unavailableDocument() {
 export async function renderPage(input: RenderInput, assets: RenderAssets): Promise<RenderResult> {
   const route = routeForPath(input.path);
   if (!route) return { status: 404, html: notFoundDocument() };
-  if (input.publicUnavailable && route.name !== 'god-auth') {
+  if (input.publicUnavailable && route.name !== 'god-auth' && route.name !== 'status') {
     return { status: 503, headers: { 'Retry-After': '60', 'X-Robots-Tag': 'noindex' },
       html: '<!DOCTYPE html><html lang="fi"><head>' + headMarkup({
         title: 'Palvelu on tilapäisesti suljettu | Mielenosoitukset.fi', description: '', robots: 'noindex',
@@ -369,6 +371,17 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
 
   let organizationFill: PublicOrganization | undefined;
   let suggestionDemo: SuggestionDemo | undefined;
+  let serviceStatus: ServiceStatus | null = null;
+  if (route.name === 'status') {
+    headers['X-Robots-Tag'] = 'noindex, follow';
+    serviceStatus = await loadStatus(readBase);
+    meta = { title: `${statusTitle} — Mielenosoitukset.fi`, description: 'Mielenosoitukset.fi-palvelun tila ja saatavuus.',
+      canonical: `${config.origin}/status`, robots: 'noindex, follow' };
+    extraHead = (assets.status ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<StatusScreen status={serviceStatus} />} />);
+  }
   if (route.name === 'suggest-change') {
     const loaded = await loadSuggestion(readBase, route.id);
     if (loaded.status === 'not-found') return { status: 302, html: '', redirect: config.urls.home };
@@ -678,6 +691,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     ...(campaignVisible !== undefined ? { campaignVisible } : {}),
     ...(organizationFill ? { organizationFill } : {}),
     ...(suggestionDemo ? { suggestionDemo } : {}),
+    ...(route.name === 'status' ? { serviceStatus } : {}),
     ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}),
     ...(listing ? { listing } : {}), ...(organization ? { organization } : {}), ...(cities !== undefined ? { cities } : {}),
     ...(submission ? { submission } : {}), ...(calendar ? { calendar } : {}) });

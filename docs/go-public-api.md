@@ -1,5 +1,40 @@
 # Public Go API: first read-only slice
 
+## Service status: `GET /api/status`
+
+Purpose: public status data for standalone React `GET /status`, without calling
+Flask for health checks. Authentication: none. GET and HEAD are read-only;
+OPTIONS is supported, writes return 405. Query parameters are ignored and cannot
+bypass the cache. The response is HTTP 200 even if the database is unavailable:
+
+```json
+{"overall_ok":true,"services":[{"name":"Tietokanta","status":"ok","message":"Yhteys kunnossa"}],"updated_at":"10.11.2026 12:00:00 UTC","latency_ms":0}
+```
+
+On failure the service has `status: "err"`, `message: "Ei vastaa"`, and
+`overall_ok: false`. `overall_ok` covers only the returned checks. `updated_at`
+is the response time in UTC and `latency_ms` is the request's elapsed time,
+including any probe/cache wait, as in Flask. No hostnames, connection strings,
+exception details or versions are returned. Browser/CDN caching is disabled.
+
+Database operations: one MongoDB ping, no collection reads or writes. Performance:
+a one-second probe context, no retries at this layer, and one process-local,
+mutex-coalesced result (including failures) for 60 seconds. Concurrent requests,
+cookies and arbitrary query strings share that result. No Redis response-cache
+dependency. The endpoint bypasses the public lockdown gate and its panic read,
+so database/lockdown failure cannot hide the status response.
+
+The former Flask view checked MongoDB `ping`, its configured cache's
+`set("_status_ping", True, timeout=5)` (success if it did not raise), and its
+initialized S3 client's `list_buckets()`. It showed the three names
+`Tietokanta`, `Välimuisti`, `Tiedostovarasto`; success messages `Yhteys kunnossa`
+or `Saavutettavissa`; failure `Ei vastaa`; overall state, UTC response timestamp
+and request latency. Its checks were cached for 60 seconds. Go retains the
+database probe, overall state and timing fields. The Flask-owned cache instance
+and initialized S3 client checks are omitted, not replaced with probes of
+different services. The page explicitly discloses this reduced coverage, and
+their ownership migration is recorded under “Move APIs to Go” in `TODO.md`.
+
 Current cache behavior: [public response caching](go-public-cache.md). The
 initial-slice and document-cache descriptions below are historical layer
 details, not a promise of per-request freshness through Redis or Cloudflare.
@@ -295,3 +330,12 @@ release is available; a pure React host uses the same response contract and
 public URL paths. Roll back via the existing atomic Go release switch and
 frontend source revert. Endpoint implementation alone is not a production
 deployment or evidence of improved response latency.
+
+## Upcoming-event horizon
+
+Open-ended "upcoming" reads stop two years ahead (`upcomingHorizonDays` in
+`go-api/series.go`): the listing (`GET /api/demonstrations` without `date_end`
+or `max_days_till`), the home batch and the city event counts. An explicit
+`date_end`, a start/end range or `max_days_till` is used as given. The bound
+exists because recurring series once generated occurrences up to the year 3100
+(#1029); it also keeps listing totals and pagination meaningful.

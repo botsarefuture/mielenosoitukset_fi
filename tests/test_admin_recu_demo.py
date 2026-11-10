@@ -1,7 +1,10 @@
+import functools
 import io
+from datetime import date
 
 from bson import ObjectId
 from mielenosoitukset_fi.utils.classes import RecurringDemonstration
+from mielenosoitukset_fi.utils.recurrence import calculate_recurrence_dates
 
 
 def test_recurring_runner_normalizes_frozen_child_ids():
@@ -385,6 +388,13 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
     monkeypatch.setattr(repeat_v2, "recu_demos_collection", db.recu_demos)
     monkeypatch.setattr(repeat_v2, "stats_collection", db.recu_stats)
     monkeypatch.setattr(repeat_v2, "DRY_RUN", False)
+    # The fixture dates are in 2099; pin "today" so they sit inside the
+    # one-year scheduling horizon.
+    monkeypatch.setattr(
+        repeat_v2,
+        "calculate_recurrence_dates",
+        functools.partial(calculate_recurrence_dates, today=date(2099, 6, 25)),
+    )
     monkeypatch.setattr(repeat_v2, "FORCE_RECHECK", True)
     repeat_v2.runtime_actions.clear()
 
@@ -451,6 +461,13 @@ def test_background_job_repeat_main_creates_child_demos_without_stdin(
     monkeypatch.setattr(repeat_v2, "recu_demos_collection", db.recu_demos)
     monkeypatch.setattr(repeat_v2, "stats_collection", db.recu_stats)
     monkeypatch.setattr(repeat_v2, "DRY_RUN", False)
+    # The fixture dates are in 2099; pin "today" so they sit inside the
+    # one-year scheduling horizon.
+    monkeypatch.setattr(
+        repeat_v2,
+        "calculate_recurrence_dates",
+        functools.partial(calculate_recurrence_dates, today=date(2099, 6, 25)),
+    )
     repeat_v2.runtime_actions.clear()
 
     repeat_v2.main()

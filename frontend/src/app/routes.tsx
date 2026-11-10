@@ -19,6 +19,7 @@ import type { InformationPage } from './information';
  */
 export type AppRoute =
   | { name: 'home' }
+  | { name: 'status' }
   | { name: 'submit' }
   | { name: 'god-auth' }
   | { name: 'pride' }
@@ -63,6 +64,7 @@ function readIdentifier(raw: string): string | null {
 }
 
 export function routeForPath(path: string): AppRoute | null {
+  if (path === '/status') return { name: 'status' };
   const informationPage = informationPageForPath(path);
   if (informationPage) return { name: 'information', page: informationPage };
   if (path === '/auth/god') return { name: 'god-auth' };

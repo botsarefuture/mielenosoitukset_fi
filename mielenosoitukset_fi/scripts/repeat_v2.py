@@ -74,6 +74,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 MAX_NEW_DEMOS_PER_RUN = 1000
+# Occurrences are generated at most this far ahead (#1029).
+GENERATION_HORIZON_YEARS = 1
 
 # Database setup
 mongo_uri = Config.MONGO_URI or "mongodb://localhost:27017"
@@ -202,6 +204,7 @@ def calculate_next_dates(start_date: Union[datetime, date], schedule: RepeatSche
         schedule,
         _created_until,
         max_occurrences=MAX_NEW_DEMOS_PER_RUN,
+        horizon_years=GENERATION_HORIZON_YEARS,
     )
     logger.debug("Next dates: %s", [value.isoformat() for value in next_dates])
     return next_dates

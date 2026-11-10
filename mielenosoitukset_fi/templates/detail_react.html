@@ -24,7 +24,7 @@
     'address': {'@type': 'PostalAddress', 'streetAddress': metadata.get('address') or '', 'addressLocality': metadata.get('city') or '', 'addressCountry': 'FI'}}
 }|tojson }}</script>
 {% endblock %}
-{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/public-detail.css', v='20261101-react-detail-2') }}">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/public-detail.css', v='20261110-detail-buttons-1') }}">{% endblock %}
 {% block content %}
 <div data-react-island="demonstration-detail" data-props-id="demonstration-detail-props">
   <div class="public-detail public-detail-boot" role="status"><p>{{ props.messages.loading }}</p><a href="{{ props.urls.listing }}">{{ props.messages.allEvents }}</a></div>

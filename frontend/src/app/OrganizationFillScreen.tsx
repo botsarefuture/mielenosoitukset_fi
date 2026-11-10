@@ -87,7 +87,7 @@ export default function OrganizationFillScreen({ profile }: { profile: PublicOrg
           </fieldset>
           <div className="detail-actions org-fill-actions">
             <button type="submit" className="detail-button detail-button--primary"><i className="fa-solid fa-floppy-disk" aria-hidden="true" /> Tallenna ehdotus</button>
-            <a className="detail-button" href={orgPath}>Peruuta</a>
+            <a className="detail-button detail-button--danger" href={orgPath}>Peruuta</a>
           </div>
         </form>
       </section>

@@ -90,7 +90,7 @@ The extraction found places where existing screens solve the same problem differ
 | Topic | Found in the code | Canonical for new work |
 |---|---|---|
 | Focus ring | 2px `product-primary` (cards, chips, nav), 3px `product-primary` (calendar), **3px `product-accent`** (detail page and dialogs: 2.9:1 on white, below 3:1) | 3px `product-primary`, offset 3px, on light and dark surfaces; `product-on-action` on blue grounds |
-| Buttons | `.detail-button` (8px, 0.94rem/650), `.hero-button` (10px, 750), `.calendar-submit` (0.6rem), `.demo-card-action-btn` (0.5em), header link (10px) | The `Button` contract (`.detail-button`): 44px, `button-radius`, primary / default / quiet. On blue grounds, the hero's white-outline treatment |
+| Buttons | `.detail-button` (8px, 0.94rem/650), `.hero-button` (10px, 750), `.calendar-submit` (0.6rem), `.demo-card-action-btn` (0.5em), header link (10px) | The `Button` contract (`.detail-button`): 44px, `button-radius`, primary / default / quiet, and `--danger` (always red) for cancel. On blue grounds, the hero's white-outline treatment |
 | Radii | 6, 7, 8, 9, 10, 12, 14, 16 and 18px, 0.5em, 0.9rem, 1.1em, 1.2em | `tag-radius` 6px for small badges and tags · `button-radius` 8px for controls and cells · `section-radius` 12px for surfaces and dialogs · `site-hero-radius` 18px for heroes · `radius-pill` for status pills |
 | Tags | Card tag (0.5em radius, centred, hover fills) vs detail tag (6px, 0.35rem 0.65rem) | One tag: `product-primary` text on `product-primary-soft`, `tag-radius`, weight 600, `#`-prefixed |
 | Clock times | Cards show `17:00 – 19:00`, the detail page shows `17.00–19.00` | Finnish standard: `17.00–19.00` (dot, en dash, no spaces) and `13.00 alkaen` |

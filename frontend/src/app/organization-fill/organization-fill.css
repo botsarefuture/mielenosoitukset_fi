@@ -5,6 +5,16 @@
   min-width: 0;
 }
 
+.org-fill-header__identity .public-page-header__content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.org-fill-header__identity .public-page-header__title {
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
 .org-fill-logo {
   display: grid;
   flex: 0 0 5rem;

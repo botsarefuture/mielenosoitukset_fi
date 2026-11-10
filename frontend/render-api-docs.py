@@ -19,4 +19,11 @@ html = html.replace(
     '<div class="api-docs-table" tabindex="0" role="region" '
     'aria-label="API-dokumentaatio"><table>',
 ).replace("</table>", "</table></div>")
-print(json.dumps({"html": html, "toc": document.toc}))
+# Let long endpoint paths in the table of contents wrap only after "/" or "_",
+# never in the middle of a word.
+toc = re.sub(
+    r"(<a [^>]*>)([^<]*)(</a>)",
+    lambda m: m.group(1) + re.sub(r"([/_])", r"\1<wbr>", m.group(2)) + m.group(3),
+    document.toc,
+)
+print(json.dumps({"html": html, "toc": toc}))

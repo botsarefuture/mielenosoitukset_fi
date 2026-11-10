@@ -38,6 +38,7 @@
 
 #api-docs-page .api-docs-sidebar h2 {
   color: var(--product-text);
+  text-align: left;
   font-size: 1rem;
   letter-spacing: normal;
   text-transform: none;
@@ -46,7 +47,7 @@
 #api-docs-page .api-docs-sidebar {
   max-height: calc(100dvh - 7rem);
   overflow-y: auto;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 #api-docs-page .api-docs-sidebar ul ul {
@@ -73,6 +74,20 @@
 
 #api-docs-page .api-docs-content code {
   border-radius: 8px;
+}
+
+/* Heading permalinks stay available but only show on hover or focus. */
+#api-docs-page .api-docs-content .headerlink {
+  margin-left: 0.35rem;
+  color: var(--product-text-muted);
+  font-weight: 400;
+  text-decoration: none;
+  opacity: 0;
+}
+
+#api-docs-page .api-docs-content :is(h1, h2, h3, h4, h5, h6):hover .headerlink,
+#api-docs-page .api-docs-content .headerlink:focus-visible {
+  opacity: 1;
 }
 
 #api-docs-page :is(a, pre, .api-docs-table):focus-visible {

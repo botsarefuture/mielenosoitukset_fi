@@ -316,7 +316,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   let today: string | undefined;
   let campaignVisible: boolean | undefined;
   if (route.name === 'api-docs') {
-    extraHead = '<link rel="stylesheet" href="/static/css/public-api-docs.css?v=20261110-1">';
+    extraHead = '<link rel="stylesheet" href="/static/css/public-api-docs.css?v=20261110-2">';
     noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
       serverPage={<div id="api-docs-page" dangerouslySetInnerHTML={{ __html: renderToStaticMarkup(<ApiDocsScreen {...apiDocs} />) }} />} />);

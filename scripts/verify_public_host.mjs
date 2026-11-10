@@ -340,7 +340,7 @@ function createApi(log) {
         total: 21, total_pages: 2, result_start: 21, result_end: 21,
         results: [{ _id: detailId, title: 'Selected calendar event', date: url.searchParams.get('date_start'), detail_url: `/demonstration/${detailId}` }] });
       return send(200, { page: 1, per_page: 12, total: 1, total_pages: 1, result_start: 1, result_end: 1,
-        results: [{ _id: detailId, title: 'Test listing event' }] });
+        results: [{ _id: detailId, title: 'Test listing event', start_time: '12:00', end_time: '14:00' }] });
     }
     if (url.pathname.includes('/series/')) {
       if (identifier === orphanParent) return send(404, { error: 'series not found' });
@@ -537,6 +537,10 @@ try {
   const beforeListing = localReads.filter(read => read.startsWith('/api/demonstrations?')).length;
   const listings = await Promise.all(Array.from({ length: 8 }, () => detailPage({ path: '/demonstrations', search: '?utm_source=review' })));
   assert(listings.every(result => bootstrap(result.html).listing.page.results.length === 1));
+  assert(listings.every(result => {
+    const event = bootstrap(result.html).listing.page.results[0];
+    return event.start_time === '12:00' && event.end_time === '14:00';
+  }), 'Finnish display formatting must not change the API/bootstrap clock values');
   await detailPage({ path: '/demonstrations' });
   assert.equal(localReads.filter(read => read.startsWith('/api/demonstrations?')).length, beforeListing + 1,
     'Concurrent and warm listings coalesce and ignore campaign cache fragmentation');

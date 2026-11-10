@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
 type FieldName = 'name' | 'email' | 'phone' | 'city' | 'notes';
@@ -22,6 +22,19 @@ export function VolunteerForm({ endpoint, messages }: VolunteerFormProps) {
   const [pending, setPending] = useState(false);
   // State updates are batched: the ref also guards two submits in the same tick.
   const requestPending = useRef(false);
+  const message = useRef<HTMLDivElement>(null);
+  const focusMessage = useRef(false);
+  const revealMessage = useRef(false);
+  // Server results move focus to the message, which sits above the fields, so
+  // it is in view on a phone after the visitor taps the submit button below.
+  useEffect(() => {
+    if (feedback && focusMessage.current) message.current?.focus();
+    // A validation error keeps focus on the first invalid field but brings the
+    // message, which sits above the fields, into view below the sticky nav.
+    if (feedback && revealMessage.current) message.current?.scrollIntoView({ block: 'start' });
+    focusMessage.current = false;
+    revealMessage.current = false;
+  }, [feedback]);
 
   function clearInvalid(event: FormEvent<HTMLFormElement>) {
     const field = event.target;
@@ -40,8 +53,9 @@ export function VolunteerForm({ endpoint, messages }: VolunteerFormProps) {
     const invalidFields = fields.filter((field) => missing.includes(field) || !field.validity.valid);
     setInvalid(invalidFields.map((field) => field.id));
     if (invalidFields.length) {
+      revealMessage.current = true;
       setFeedback({ kind: 'error', message: missing.length ? messages.required : messages.invalid });
-      invalidFields[0].focus();
+      invalidFields[0].focus({ preventScroll: true });
       return;
     }
 
@@ -58,6 +72,7 @@ export function VolunteerForm({ endpoint, messages }: VolunteerFormProps) {
       });
       // Login redirects and non-JSON server errors are failures, never successful signups.
       const result = await response.json().catch(() => null);
+      focusMessage.current = true;
       if (response.ok && result?.success === true) {
         setFeedback({ kind: 'success', message: messages.success });
         form.reset();
@@ -68,6 +83,7 @@ export function VolunteerForm({ endpoint, messages }: VolunteerFormProps) {
         });
       }
     } catch {
+      focusMessage.current = true;
       setFeedback({ kind: 'error', message: messages.network });
     } finally {
       requestPending.current = false;
@@ -86,6 +102,13 @@ export function VolunteerForm({ endpoint, messages }: VolunteerFormProps) {
     <form id="volunteer-form" method="post" action={endpoint} noValidate
       aria-describedby="vol-help vol-msg" aria-busy={pending || undefined}
       onSubmit={submit} onInput={clearInvalid}>
+      <div id="vol-msg" ref={message} className={`flash-message flash-message--inline${feedback ? ` flash-${feedback.kind}` : ''}`}
+        role={feedback?.kind === 'error' ? 'alert' : 'status'} aria-live="polite" aria-atomic="true" tabIndex={-1} hidden={!feedback}>
+        <span className="flash-icon" aria-hidden="true">
+          <i className={`fa-solid ${feedback?.kind === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`} />
+        </span>
+        <span className="flash-content"><span id="vol-msg-text" className="flash-text">{feedback?.message}</span></span>
+      </div>
       <fieldset id="vol-fields" disabled={pending}>
         <legend className="visually-hidden">Ilmoittautumistiedot</legend>
         <div className="form-row">
@@ -118,13 +141,6 @@ export function VolunteerForm({ endpoint, messages }: VolunteerFormProps) {
           <span id="vol-submit-label">{pending ? messages.sending : 'Lähetä ilmoittautuminen'}</span>
         </button>
       </fieldset>
-      <div id="vol-msg" className={`flash-message flash-message--inline${feedback ? ` flash-${feedback.kind}` : ''}`}
-        role={feedback?.kind === 'error' ? 'alert' : 'status'} aria-live="polite" aria-atomic="true" tabIndex={-1} hidden={!feedback}>
-        <span className="flash-icon" aria-hidden="true">
-          <i className={`fa-solid ${feedback?.kind === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`} />
-        </span>
-        <span className="flash-content"><span id="vol-msg-text" className="flash-text">{feedback?.message}</span></span>
-      </div>
     </form>
   );
 }

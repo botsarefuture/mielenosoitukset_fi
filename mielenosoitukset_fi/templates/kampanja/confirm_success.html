@@ -4,7 +4,7 @@
 {% block title %}{{ 'Ilmoittautuminen vahvistettu' if status == 'success' else 'Ilmoittautumisen vahvistus' }} – Mielenosoitukset.fi{% endblock %}
 {% block robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/campaign.css', v='20261027-campaign-refresh-2') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/campaign.css', v='20261110-volunteer-message-1') }}">
 {% endblock %}
 {% block content %}
 {% set confirmation_props = {'status': status, 'urls': {'home': url_for('index'), 'campaign': url_for('campaign.index')}} %}

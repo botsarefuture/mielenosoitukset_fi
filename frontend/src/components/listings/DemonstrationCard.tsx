@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { clockLabel } from '../detail/content';
 import type { Demonstration, Friend, ListingProps } from './types';
 
 /** Server rendering has no location; the render entry supplies the public origin. */
@@ -12,7 +13,6 @@ export function internalHref(value: string) {
     return url.origin === pageOrigin() ? `${url.pathname}${url.search}${url.hash}` : '#';
   } catch { return '#'; }
 }
-function time(value?: string | null) { return typeof value === 'string' ? value.trim().split(':').slice(0, 2).join(':') : ''; }
 export function eventHref(event: Demonstration, props: Pick<ListingProps, 'seriesUrl' | 'detailUrl'>) {
   const fallback = event.parent ? props.seriesUrl.replace('__ID__', encodeURIComponent(event.parent))
     : props.detailUrl.replace('__ID__', encodeURIComponent(String(event.slug || event.running_number || event._id)));
@@ -36,9 +36,9 @@ export function DemonstrationCard({ event, props, friends }: {
   const pride = tags.some(tag => tag.toLowerCase() === 'pride');
   const cover = event.cover_picture || event.cover_image || event.preview_image || event.img;
   const href = eventHref(event, props);
-  const start = time(event.start_time_display) || time(event.start_time);
-  const end = time(event.end_time_display) || time(event.end_time);
-  const clock = start ? (end ? `${start} – ${end}` : `${start} ${text.startingFrom}`)
+  const start = clockLabel(event.start_time_display) || clockLabel(event.start_time);
+  const end = clockLabel(event.end_time_display) || clockLabel(event.end_time);
+  const clock = start ? (end ? `${start}–${end}` : `${start} ${text.startingFrom}`)
     : end ? `${text.endTime}: ${end}` : '';
   const today = new Date();
   const localDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;

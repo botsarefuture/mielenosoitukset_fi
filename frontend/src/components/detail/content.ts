@@ -37,6 +37,7 @@ export function dateLabel(value: string | null, locale: string): string {
   if (!Number.isFinite(date.getTime())) return value;
   return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Helsinki' }).format(date);
 }
-export function clockLabel(value: string | null): string {
-  return value && /^\d{2}:\d{2}(?::\d{2})?$/.test(value) ? value.slice(0, 5) : '';
+export function clockLabel(value: string | null | undefined): string {
+  const clock = typeof value === 'string' ? value.trim() : '';
+  return /^\d{2}:\d{2}(?::\d{2})?$/.test(clock) ? clock.slice(0, 5).replace(':', '.') : '';
 }

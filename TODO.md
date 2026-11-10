@@ -139,8 +139,8 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 ### Open pull requests to close or decide (CLEAN-03)
 
 - [ ] Close after the security update: #948, #527, #457, #445.
-- [ ] Close as already done on main: #351 (flask-cors 6.0.0), #293 (python-dateutil 2.9.0.post0), #477 (Docker setup, see #537), #570 (board approval, landed in other PRs), #585 (agent workflow hooks, now in `AGENTS.md`).
-- [ ] Close as outdated: #911 (CodeRabbit docs), #598 (email without TLS, testing only; thank the contributor).
+- [x] Closed as already done on main (10 November 2026): #351, #293, #477, #570, #585.
+- [x] Closed as outdated (10 November 2026): #911, #598 (thanked the contributor).
 - [ ] Decide: #440 (flask-limiter 4.0, a major version), #849 (project memory guidance), #617 (preview teardown; are previews still used?), #599 (`Config.reload` path, external contributor), #1011 (submit migration check; most of it is on main).
 
 ## Done recently

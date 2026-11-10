@@ -31,7 +31,7 @@ Mielenosoitukset.fi is a Finnish public calendar of demonstrations. The interfac
 - `product-accent` (orange) is used sparingly, for highlights, and text on it is `product-on-accent`, never white. Orange used as text is `product-accent-strong`.
 - Feedback uses `product-success` on `product-success-soft` and `product-danger` on `product-danger-soft`. Toasts use the `flash-*` set. A status always also carries a word or icon.
 - `product-border` is a decorative hairline only (1.3:1 light, 1.8:1 dark). Interactive controls also need a fill or a label to stand out.
-- The `pride-*` stops are reserved for Pride events (the badge and the card ring).
+- The `pride-*` stops are reserved for Pride events. Badges use `product-pride-gradient` only on the border, with `product-text` on solid `product-surface`; the card keeps its rainbow ring.
 - Page styles must not redefine the palette. Admin styles alias these tokens as `--admin-workspace-*`. Public styles never use the admin names.
 
 ## Theming

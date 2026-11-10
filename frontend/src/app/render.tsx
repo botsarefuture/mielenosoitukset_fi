@@ -206,8 +206,8 @@ ${options.jsonLd ? `<script type="application/ld+json">${serialize(options.jsonL
 <link rel="preload" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" as="style" crossorigin onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" crossorigin></noscript>
 <link rel="stylesheet" href="/static/css/home.css?v=20261110-centered-intro-2">
-<link rel="stylesheet" href="/static/css/product-tokens.css?v=20261027-product-tokens-1">
-<link rel="stylesheet" href="/static/css/user-workspace.css?v=20261110-user-workspace-5">
+<link rel="stylesheet" href="/static/css/product-tokens.css?v=20261110-pride-contrast-1">
+<link rel="stylesheet" href="/static/css/user-workspace.css?v=20261110-user-workspace-7">
 <link rel="stylesheet" href="/static/css/public-header.css?v=20261027-react-header-1">
 <link rel="stylesheet" href="/static/css/flash.css?v=20261110-inline-spacing-1">
 <link rel="stylesheet" href="/static/css/public_hero.css?v=20261015-hero-width-1">
@@ -623,7 +623,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       canonical: `${config.origin}${config.urls.pride}`, robots: input.search ? 'noindex, follow' : 'index, follow' };
     extraHead = '<link rel="stylesheet" href="/static/vendor/flatpickr/4.6.13/flatpickr.min.css">'
       + '<link rel="stylesheet" href="/static/leaflet/leaflet.css">'
-      + '<link rel="stylesheet" href="/static/css/pride.css?v=20261109-pride-noscript-4">'
+      + '<link rel="stylesheet" href="/static/css/pride.css?v=20261110-pride-labels-1">'
       + '<script src="/static/leaflet/leaflet.js" defer></script>'
       + (assets.pride ?? '');
     const prideProps = listingProps(prideRoute, config, session);

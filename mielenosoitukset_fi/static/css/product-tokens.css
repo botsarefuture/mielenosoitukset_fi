@@ -23,6 +23,7 @@
   --product-overlay: rgba(0, 0, 0, 0.65);
   --product-text: light-dark(#172033, #f2f5fa);
   --product-text-muted: light-dark(#647083, #b7c0ce);
+  --product-pride-gradient: linear-gradient(45deg, #e40303, #ff8c00, #ffed00, #008026, #24408e, #732982);
   --product-success: light-dark(#18794e, #6ee7a8);
   --product-success-soft: light-dark(#eaf8f0, #183328);
   --product-danger: light-dark(#b42318, #ff9b91);

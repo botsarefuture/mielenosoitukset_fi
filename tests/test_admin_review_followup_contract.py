@@ -55,3 +55,33 @@ def test_demo_review_regressions_keep_shared_interaction_contracts():
     assert "window.setTimeout(removeRow, 350)" in dashboard
     freeze_modal = dashboard.split('id="freezeModal"', 1)[1].split("</div>", 4)[0]
     assert "btn-close-white" not in freeze_modal
+
+
+def test_pride_badge_uses_contrasting_solid_product_surface():
+    tokens = Path("mielenosoitukset_fi/static/css/product-tokens.css").read_text()
+    foregrounds = re.search(
+        r"--product-text: light-dark\((#[0-9a-f]+), (#[0-9a-f]+)\)", tokens
+    ).groups()
+    backgrounds = re.search(
+        r"--product-surface: light-dark\((#[0-9a-f]+), (#[0-9a-f]+)\)", tokens
+    ).groups()
+    assert all(_contrast(text, surface) >= 4.5 for text, surface in zip(foregrounds, backgrounds))
+    for filename in ("user-workspace.css", "v2/list.css"):
+        css = Path(f"mielenosoitukset_fi/static/css/{filename}").read_text()
+        badge = re.search(r"\.pride-badge\s*\{([^}]+)\}", css).group(1)
+        assert "color: var(--product-text)" in badge
+        assert "linear-gradient(var(--product-surface), var(--product-surface)) padding-box" in badge
+        assert "var(--product-pride-gradient) border-box" in badge
+
+
+def test_table_dropdowns_use_fixed_popper_without_mobile_override():
+    script = Path("mielenosoitukset_fi/static/js/admin_workspace.js").read_text()
+    assert '.admin-data-view__viewport [data-bs-toggle="dropdown"]' in script
+    assert 'setAttribute("data-bs-boundary", "viewport")' in script
+    assert '"strategy":"fixed"' in script
+    # Bootstrap's delegated handlers capture on document; ours must run first,
+    # and must also cover tables replaced after load (user list search/paging).
+    assert 'window.addEventListener("click", useFixedTableDropdown, true)' in script
+    css = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text()
+    assert ".admin-data-view__table .dropdown-menu.show" not in css
+    assert "overflow-x: auto" in css

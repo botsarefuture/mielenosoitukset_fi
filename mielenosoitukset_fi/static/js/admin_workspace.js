@@ -34,6 +34,23 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-admin-boolean]").forEach(updateAdminBooleanStatus);
 });
 
+// Table viewports scroll horizontally, which would clip their action menus.
+// Configure each toggle when it is first used, before Bootstrap creates its
+// dropdown, so tables replaced later, such as by the user list's
+// search and paging, get the same fixed positioning.
+const TABLE_DROPDOWN = '.admin-data-view__viewport [data-bs-toggle="dropdown"]';
+function useFixedTableDropdown(event) {
+  const toggle = event.target instanceof Element ? event.target.closest(TABLE_DROPDOWN) : null;
+  if (!toggle || toggle.hasAttribute("data-bs-popper-config")) return;
+  // Bootstrap reads these data attributes when it creates the dropdown.
+  toggle.setAttribute("data-bs-boundary", "viewport");
+  toggle.setAttribute("data-bs-popper-config", '{"strategy":"fixed"}');
+}
+// Bootstrap's own delegated handlers listen on document in the capture phase,
+// so listen on window to run before them.
+window.addEventListener("click", useFixedTableDropdown, true);
+window.addEventListener("keydown", useFixedTableDropdown, true);
+
 document.addEventListener("change", (event) => {
   if (event.target.matches("[data-admin-boolean]")) {
     updateAdminBooleanStatus(event.target);

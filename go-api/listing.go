@@ -213,6 +213,11 @@ func listingDates(q listingQuery) bson.M {
 			dates["$lte"] = q.End
 		}
 	}
+	// An open-ended upcoming read stops at the horizon; an explicit end date
+	// or range from the visitor is honoured as given.
+	if _, bounded := dates["$lte"]; !bounded {
+		dates["$lte"] = shiftDay(q.Day, upcomingHorizonDays)
+	}
 	return dates
 }
 

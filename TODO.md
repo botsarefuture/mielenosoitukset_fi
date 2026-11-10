@@ -10,7 +10,7 @@ Everything still to do, in one list. Updated 10 November 2026.
 
 - [ ] **Production virtual environment, then the security dependency update.** Pillow 11.0.0 → 13.0.0, PyJWT 2.10.1 → 2.15.1 and PyMongo 4.6.3 → 4.19.0 (#1053) merged but could not deploy: Flask runs on the read-only system Python, and `deploy/install_dependencies.py` only installs into an app-owned venv (see `docs/production-deployment.md`). The pins were reverted to unblock deploys. Next: create the venv, point Gunicorn and `PRODUCTION_PYTHON` at it, verify, then re-apply #1053. Pillow decodes uploaded images and has a critical advisory. *(approval: production infrastructure)*
 - [ ] **#778 city admins and cases (P0):** #917 is merged and the issue says it was revalidated. Confirm on production that a city admin can open and act on their city's cases, then close the issue.
-- [ ] **#1029 far-future events:** the database holds events dated 2094–3100, so Helsinki shows 60,884 upcoming events. Find where they come from (recurring generation is the likely source), clean them up *(approval: data change)* and stop new ones.
+- [ ] **#1029 far-future events, cleanup:** the cause is fixed (the recurring worker stops one year ahead, and public reads stop two years ahead). Still to do on production: run `python -m mielenosoitukset_fi.scripts.far_future_demos` for the report, review it, then run it with `--apply --backup FILE --expect COUNT`. *(approval: data change)*
 - [x] **#984 support replies:** acknowledge queue persistence before recording the queued reply and audit receipt; redact unconfirmed outcomes (DATA-04).
 
 ## Public site in React (UI-06, due January 2027)

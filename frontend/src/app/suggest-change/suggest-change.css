@@ -11,6 +11,10 @@
   border-radius: 12px;
 }
 
+.suggest-change-page > .flash-message {
+  margin-top: 1.5rem;
+}
+
 .suggest-change-page :is(h1, h2, h3, h4, h5, h6) {
   text-align: left;
 }
@@ -39,10 +43,34 @@
   border-bottom: 1px solid var(--product-border);
 }
 
-.suggest-change-form legend {
+.suggest-change-form legend,
+.suggest-change-summary h2 {
+  margin: 0 0 0.5rem;
   color: var(--product-text);
+  font-family: inherit;
   font-size: 1.2rem;
   font-weight: 700;
+  line-height: 1.3;
+}
+
+.suggest-change-preview > h3:first-child {
+  margin: 0 0 0.5rem;
+  color: var(--product-text-muted);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.suggest-change-add .detail-button,
+.suggest-change-items .detail-button {
+  flex: 0 0 5.5rem;
+  justify-content: center;
+}
+
+.suggest-change-add input,
+.suggest-change-items input {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .suggest-change-grid {

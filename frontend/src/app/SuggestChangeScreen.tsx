@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { suggestionLead, suggestionTitle, type SuggestionDemo } from './suggest-change';
 import ListEditor from './suggest-change/ListEditor';
 import MarkdownPreview from './suggest-change/MarkdownPreview';
@@ -7,6 +7,25 @@ import './suggest-change/suggest-change.css';
 
 export default function SuggestChangeScreen({ demo }: { demo: SuggestionDemo }) {
   const [description, setDescription] = useState(demo.fields.description_markdown);
+  const [notices, setNotices] = useState<{ category: string; message: string }[]>([]);
+  useEffect(() => {
+    // Flask redirects back here with a flashed error when a submission is empty or fails.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    void fetch('/get_flash_messages', { credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
+      headers: { Accept: 'application/json' } }).then(async response => {
+      if (!response.ok) return;
+      const value = await response.json() as { messages?: unknown };
+      if (!Array.isArray(value.messages)) return;
+      setNotices(value.messages.filter((item): item is { category?: unknown; message: string } => !!item
+        && typeof item === 'object' && typeof (item as { message?: unknown }).message === 'string')
+        .slice(0, 5).map(item => ({
+          category: typeof item.category === 'string' && ['success', 'error', 'warning', 'info'].includes(item.category) ? item.category : 'info',
+          message: item.message,
+        })));
+    }).catch(() => {}).finally(() => clearTimeout(timer));
+    return () => { controller.abort(); clearTimeout(timer); };
+  }, []);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const displayDate = /^\d{4}-\d{2}-\d{2}$/.test(demo.fields.date)
     ? demo.fields.date.split('-').reverse().map(Number).join('.') : demo.fields.date;
@@ -31,6 +50,8 @@ export default function SuggestChangeScreen({ demo }: { demo: SuggestionDemo }) 
       <h1 className="public-page-header__title" id="suggest-change-title">{suggestionTitle}</h1>
       <p className="public-page-header__description">{suggestionLead}</p>
     </div></header>
+    {notices.map((notice, index) => <div key={index} className={`flash-message flash-message--inline flash-${notice.category}`}
+      role={notice.category === 'error' ? 'alert' : 'status'}><span className="flash-text">{notice.message}</span></div>)}
     <section className="public-prose-card suggest-change-summary">
       <h2>Mielenosoitus, jota olet päivittämässä</h2><p>{demo.fields.title}</p>
       <p>{[displayDate, displayTime, demo.fields.city].filter(Boolean).join(' · ')}</p>
@@ -58,7 +79,7 @@ export default function SuggestChangeScreen({ demo }: { demo: SuggestionDemo }) 
           help="Kirjoita tagit ilman #-merkkiä. Jos lisäät sen, poistamme sen automaattisesti." />
       </fieldset>
       <fieldset><legend>Järjestäjät</legend><p>Kerro kuka tai ketkä mielenosoituksen järjestävät.</p>
-        {demo.organizersCurrent !== undefined && <p className="suggest-change-current">{demo.organizersCurrent}</p>}
+        {demo.organizersCurrent !== undefined && <p className="suggest-change-current"><strong>Nykyiset järjestäjät:</strong> {demo.organizersCurrent}</p>}
         <ListEditor name="organizers" label="Järjestäjät" initial={demo.fields.organizers} placeholder="Kirjoita järjestäjä ja paina Enter"
           help="Kirjoita järjestäjän nimi. Halutessasi lisää sähköposti tai kotisivu sulkuihin: Yhdistys (yhdistys@example.fi, https://yhdistys.fi)." />
       </fieldset>

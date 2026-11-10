@@ -23,7 +23,7 @@ function Root(props: Bootstrap) {
       }
       // Detail/series views keep their separate demonstration-view collection.
       const name = routeForPath(path)?.name;
-      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride', 'information', 'campaign', 'fundraising', 'contact'].includes(name)
+      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride', 'information', 'campaign', 'fundraising', 'contact', 'organization-fill'].includes(name)
         || !session.siteAnalyticsEnabled || tracked.current) return;
       tracked.current = true;
       try {
@@ -51,6 +51,11 @@ if (container) {
       void import('./InformationScreen').then(({ default: InformationScreen }) => {
         hydrateRoot(container, <Root {...props} serverPage={<InformationScreen page={route.page} session={props.session} campaign={props.campaignVisible} />} />);
       }).catch(error => console.error('Could not start information page controls', error));
+    } else if (route?.name === 'organization-fill' && props.organizationFill) {
+      const profile = props.organizationFill;
+      void import('./OrganizationFillScreen').then(({ default: OrganizationFillScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<OrganizationFillScreen profile={profile} />} />);
+      }).catch(error => console.error('Could not start the organization fill-in form', error));
     } else if (route?.name === 'contact') {
       void import('./ContactScreen').then(({ default: ContactScreen }) => {
         hydrateRoot(container, <Root {...props} serverPage={<ContactScreen session={props.session} />} />);

@@ -3523,6 +3523,9 @@ def init_routes(app):
             original_values = {}
             for f in candidate_fields:
                 val = (request.form.get(f) or '').strip()
+                if val.lower() in {'none', 'null'}:
+                    # A missing value printed into the form must not become a suggestion.
+                    val = ''
                 # normalize tags as list if provided
                 if f == 'tags' and val:
                     val = _normalize_tag_list(val.split(','))

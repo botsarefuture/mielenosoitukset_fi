@@ -47,6 +47,17 @@ continue to run. Deploy the Flask contract and app build before activating
 the reviewed Apache rules. Removing these rules restores the existing Flask
 pages.
 
+### Organization fill-in form
+
+The Apache include routes GET/HEAD `/organization/<id>/fill` to Node. Node reads
+the organization from the existing Go `/api/organizations/<id>` profile and
+renders the form; a missing organization redirects home and an unavailable API
+returns 503. The form posts to Flask's existing
+`/organization/<id>/save_suggestion`, which stores the suggestion, opens a case
+and notifies moderators, then redirects to the organization page. Adding social
+media rows needs JavaScript; the rest of the form works without it. Removing the
+rule restores the Flask page.
+
 ### Contact page
 
 The Apache include routes GET/HEAD `/contact` to Node. The form posts to Flask

@@ -295,3 +295,12 @@ release is available; a pure React host uses the same response contract and
 public URL paths. Roll back via the existing atomic Go release switch and
 frontend source revert. Endpoint implementation alone is not a production
 deployment or evidence of improved response latency.
+
+## Upcoming-event horizon
+
+Open-ended "upcoming" reads stop two years ahead (`upcomingHorizonDays` in
+`go-api/series.go`): the listing (`GET /api/demonstrations` without `date_end`
+or `max_days_till`), the home batch and the city event counts. An explicit
+`date_end`, a start/end range or `max_days_till` is used as given. The bound
+exists because recurring series once generated occurrences up to the year 3100
+(#1029); it also keeps listing totals and pagination meaningful.

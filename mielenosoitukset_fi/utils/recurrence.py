@@ -53,6 +53,11 @@ def calculate_recurrence_dates(
         except ValueError:
             end_date = current_date + relativedelta(years=1)
 
+    # Never schedule further than one rolling year ahead, whatever end date the
+    # series carries. An end date centuries away used to add up to
+    # max_occurrences new events on every worker run (#1029).
+    end_date = min(end_date, current_date + relativedelta(years=1))
+
     if isinstance(start_date, datetime):
         start_date = start_date.date()
     if isinstance(created_until, datetime):

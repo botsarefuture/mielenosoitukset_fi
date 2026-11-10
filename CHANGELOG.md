@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Stop recurring series from generating events centuries ahead (#1029). The worker now schedules at most one rolling year ahead whatever end date a series has; before, a distant end date added up to 1000 occurrences on every run. Public listings, the front page and city counts ignore events more than two years ahead unless a visitor asks for a later end date, so Helsinki no longer shows tens of thousands of upcoming events. `mielenosoitukset_fi/scripts/far_future_demos.py` reports the stored occurrences and can remove them after review; it changes nothing by default.
 - Keep city links compact with inline event counts only when needed, add alphabetical jump links, and fix empty-state alignment and result spacing.
 
 - Make the city directory easier to scan with Finnish alphabetical letter groups, compact links in columns and the existing live search. Keep the full grouped list, event counts and city links available without JavaScript.

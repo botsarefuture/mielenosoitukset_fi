@@ -67,13 +67,16 @@
     ]
   },
   "src/entries/home.tsx": {
-    "file": "assets/home-gHdw0gqS.js",
+    "file": "assets/home-Cj823nth.js",
     "name": "home",
     "src": "src/entries/home.tsx",
     "isEntry": true,
     "imports": [
       "_mount-island-Bd8CA551.js",
       "_DemonstrationCard-Dq-wNDBh.js"
+    ],
+    "css": [
+      "assets/home-DZkY5NCy.css"
     ]
   },
   "src/entries/listing.tsx": {

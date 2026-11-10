@@ -1,3 +1,67 @@
+.public-react-list .public-list-tools {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.public-react-list .public-search-form {
+  gap: .75rem;
+}
+
+.public-react-list .public-search-form > .public-search-field:first-child {
+  flex-basis: 100%;
+}
+
+.public-react-list .public-search-field label {
+  margin-bottom: .25rem;
+  font-size: .875rem;
+  font-weight: 400;
+  color: var(--product-text-muted);
+}
+
+.public-react-list .public-search-form > .public-search-field:first-child label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--product-text);
+}
+
+.public-react-list .public-search-form .public-search-dates {
+  gap: .75rem;
+}
+
+.public-react-list .public-search-form .public-search-field input[type="text"] {
+  padding: .5rem .75rem;
+  border: 0;
+  border-bottom: 1px solid var(--product-border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.public-react-list .public-search-form #demo-search {
+  border: 1px solid var(--product-border);
+  border-radius: 8px;
+  background: var(--product-surface);
+}
+
+.public-react-list .public-list-tools .public-search-submit {
+  background: var(--product-action-bg);
+  color: var(--product-on-action);
+  border: 1px solid var(--product-action-bg);
+  border-radius: 8px;
+}
+
+.public-react-list .public-list-tools .public-search-submit:hover {
+  background: var(--product-action-hover);
+  border-color: var(--product-action-hover);
+}
+
+.public-react-list .public-search-form :focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
 .public-react-list .date-error:not([hidden]) {
   display: block;
 }

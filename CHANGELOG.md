@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Center the front-page search at a bounded width and lighten shared React listing filters: remove the outer panel, keep text search prominent and show secondary filters inline with quieter styling. Preserve existing filters, query parameters and fallback forms.
 - Move the demonstration change form (`/suggest_change/<id>`) to the standalone React SSR host with Go-read prefills, editable lists and Markdown preview. The plain form still posts to Flask for review; cancel stays a red button. Keep the public API's visibility and organizer privacy rules, without submitting redacted organizer lists as replacements.
 - Stop demonstration change suggestions from listing an unchanged start or end time as a change when the stored time and the form use different formats (`12:00` and `12:00:00`).
 

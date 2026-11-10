@@ -156,7 +156,7 @@ export function ReactSearchFilters({ props, values, change, submit, removeCity }
     <div className="date-error" id="date-error" role="alert" hidden={!invalid}>{text.dateError}</div>
     <input type="hidden" name="date_start" id="iso_date_start" value={isoDate(values.date_start) ?? ''} />
     <input type="hidden" name="date_end" id="iso_date_end" value={isoDate(values.date_end) ?? ''} />
-    <button type="submit" className="button button-primary public-search-submit">{text.submitSearch}</button>
+    <button type="submit" className="detail-button detail-button--primary public-search-submit">{text.submitSearch}</button>
     <div className="filters" id="filters" aria-live="polite">{!props.fixed.city && cities.map(city =>
       <div key={city} className="public-filter-chip"><span>{text.city}: {city}</span>
         <button type="button" className="public-filter-chip__remove" aria-label={`${text.removeFilter}: ${city}`}

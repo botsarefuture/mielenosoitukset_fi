@@ -77,8 +77,11 @@ def test_pride_badge_uses_contrasting_solid_product_surface():
 def test_table_dropdowns_use_fixed_popper_without_mobile_override():
     script = Path("mielenosoitukset_fi/static/js/admin_workspace.js").read_text()
     assert '.admin-data-view__viewport [data-bs-toggle="dropdown"]' in script
-    assert 'boundary: "viewport"' in script
-    assert 'strategy: "fixed"' in script
+    assert 'setAttribute("data-bs-boundary", "viewport")' in script
+    assert '"strategy":"fixed"' in script
+    # Bootstrap's delegated handlers capture on document; ours must run first,
+    # and must also cover tables replaced after load (user list search/paging).
+    assert 'window.addEventListener("click", useFixedTableDropdown, true)' in script
     css = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text()
     assert ".admin-data-view__table .dropdown-menu.show" not in css
     assert "overflow-x: auto" in css

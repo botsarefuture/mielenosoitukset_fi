@@ -292,7 +292,8 @@ function createApi(log) {
     }
     if (url.pathname === '/api/cities') {
       return send(200, { day: day(0), cities: [...cityCatalog].reverse().map(city => ({ ...city,
-        demo_count: 5, today_count: 2, upcoming_count: 3 })), private: 'DO-NOT-BOOTSTRAP' });
+        demo_count: 5, today_count: city.key === 'akaa' ? 0 : city.key === 'alajarvi' ? 1 : 2,
+        upcoming_count: city.key === 'akaa' ? 0 : city.key === 'alajarvi' ? 1 : 3 })), private: 'DO-NOT-BOOTSTRAP' });
     }
     if (url.pathname === '/api/calendar/2028/2') {
       return send(200, { year: 2028, month: 2, ...(url.searchParams.get('city') ? {city:url.searchParams.get('city')} : {}), total: 2, days: [{ date: '2028-02-29', count: 2 }] });
@@ -552,11 +553,18 @@ try {
   assert.deepEqual([...directoryFallback.matchAll(/data-city-key="([^"]+)"/g)].map(match => match[1]), sortedCities.map(city => city.key));
   assert.deepEqual([...directoryFallback.matchAll(/<h2[^>]*>([^<]+)<\/h2>/g)].map(match => match[1]),
     [...new Set(sortedCities.map(city => city.name.charAt(0).toLocaleUpperCase('fi')))]);
+  assert.deepEqual([...directoryFallback.matchAll(/href="#city-letter-([^"]+)"/g)].map(match => match[1]),
+    [...new Set(sortedCities.map(city => city.name.charAt(0).toLocaleUpperCase('fi')))]);
   for (const city of cityCatalog) {
     assert(directoryFallback.includes(`href="/city/${city.key}"`));
-    assert(directoryFallback.includes(`href="/city/${city.key}/tanaan"`));
+    assert.equal(directoryFallback.includes(`href="/city/${city.key}/tanaan"`), city.key !== 'akaa');
   }
   assert.match(directoryFallback, /3 tulevaa mielenosoitusta/);
+  assert.match(directoryFallback, /class="city-upcoming" aria-hidden="true">\(3\)<\/span>/);
+  assert(!directoryFallback.includes('Ei tulevia mielenosoituksia'));
+  assert.match(directoryFallback, /href="\/city\/akaa"><span class="city-name">Akaa<\/span><\/a>/);
+  assert.match(directoryFallback, /class="city-upcoming" aria-hidden="true">\(1\)<\/span>/);
+  assert.match(directoryFallback, /class="city-link-context"> 1 tuleva mielenosoitus<\/span>/);
   assert.match(directoryFallback, /Tänään 2 mielenosoitusta/);
   const filteredDirectory = await detailPage({ path: '/cities', search: '?q=Helsinki&today=1&utm_source=test' });
   assert.match(filteredDirectory.html, /<meta name="robots" content="noindex, follow"\s*\/?>/);

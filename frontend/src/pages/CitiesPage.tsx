@@ -71,7 +71,7 @@ export default function CitiesPage({ initialData, endpoint }: { initialData: Cit
     {failed && <section className="city-error" role="alert"><p>Kaupunkien lataaminen epäonnistui. Yritä uudelleen.</p>
       <button className="detail-button" type="button" disabled={loading} onClick={() => void retry()}>Yritä uudelleen</button></section>}
     {data && <><p className="city-result-count" role="status" aria-live="polite">{rows.length} {rows.length === 1 ? 'kaupunki' : 'kaupunkia'}</p>
-      <CityDirectory cities={rows} loading={loading} />
+      <CityDirectory cities={rows} loading={loading} showJumpLinks={!filter.search} />
       {!rows.length && <section className="city-empty"><h2>{filter.today ? 'Ei tapahtumia tänään näissä kaupungeissa' : 'Kaupunkia ei löytynyt'}</h2>
         <p>Kokeile toista hakua tai näytä kaikki kaupungit.</p><button className="detail-button" type="button" onClick={() => { change({ search: '', today: false }, true); searchInput.current?.focus(); }}>Näytä kaikki kaupungit</button></section>}
     </>}

@@ -13,6 +13,17 @@ export const findCity = (value: string) => byKey.get(cityKey(value));
 export const helsinkiDay = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Helsinki' }).format(new Date());
 export const dayLabel = (day: string) => new Intl.DateTimeFormat('fi-FI', { dateStyle: 'long', timeZone: 'Europe/Helsinki' }).format(new Date(`${day}T12:00:00Z`));
 
+export function groupCities(cities: CitySummary[]) {
+  const groups = new Map<string, CitySummary[]>();
+  for (const city of [...cities].sort((first, second) => first.name.localeCompare(second.name, 'fi'))) {
+    const letter = city.name.charAt(0).toLocaleUpperCase('fi');
+    const group = groups.get(letter);
+    if (group) group.push(city);
+    else groups.set(letter, [city]);
+  }
+  return [...groups].map(([letter, cities]) => ({ letter, cities }));
+}
+
 /** Only explicit public fields reach the host's bootstrap document. */
 export function readCities(value: unknown): CitiesData | null {
   if (!value || typeof value !== 'object') return null;

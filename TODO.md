@@ -46,7 +46,7 @@ From the maintainer, 10 November 2026:
 - [ ] Profile page: the red notification count sits under the bell instead of on top of it. Other pages look right.
 - [ ] Front page: center the search bar.
 - [ ] `/demonstrations` (Tulevat mielenosoitukset): the search area is too heavy. Make it lighter and simpler.
-- [ ] `/cities`: the city list is too much. Sort it alphabetically and make it scale to every city in Finland (for example grouped by first letter, with search).
+- [x] `/cities`: the city list is too much. Sort it alphabetically and make it scale to every city in Finland (for example grouped by first letter, with search). Implemented; visual acceptance BLOCKED until real captures and independent review are available.
 
 From the visual reviews:
 

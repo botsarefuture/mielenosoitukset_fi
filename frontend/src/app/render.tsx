@@ -19,6 +19,7 @@ import { loadOrganization } from './organization';
 import type { OrganizationBootstrap } from './organization';
 import { dayLabel, findCity, helsinkiDay, loadCities } from './cities';
 import type { CitiesData } from './cities';
+import { CityDirectory } from '../components/cities/CityDirectory';
 import { citiesMeta, todayMeta, cityItems, todayItems, discoveryStructuredData } from './discovery-meta';
 import { calendarPlace, dateForDay, loadCalendar, monthName, monthPath, selectedDay } from './calendar';
 import { CalendarFallback } from './CalendarFallback';
@@ -558,10 +559,11 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     meta = citiesMeta(config, cities, Boolean(filters.get('q') || filters.get('today')));
     const items = cityItems(config, cities);
     jsonLd = discoveryStructuredData(meta, items);
-    extraHead = assets.cities ?? '';
-    noscript = `<noscript><article class="container-main-content"><h1>Kaupungit</h1><p>${escapeHtml(meta.description)}</p>`
-      + `<a href="/mielenosoitukset-tanaan">Mielenosoitukset tänään</a><ul>`
-      + items.map(item => `<li><a href="${escapeHtml(item.url)}">${escapeHtml(item.name)}</a></li>`).join('') + '</ul></article></noscript>';
+    extraHead = (assets.cities ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    noscript = `<noscript><article class="container-main-content"><p>Sivu toimii parhaiten, kun JavaScript on käytössä.</p><h1>Kaupungit</h1><p>${escapeHtml(meta.description)}</p>`
+      + '<a href="/mielenosoitukset-tanaan">Mielenosoitukset tänään</a>'
+      + renderToStaticMarkup(<CityDirectory cities={cities?.cities ?? []} />)
+      + '<a href="/demonstrations">Kaikki mielenosoitukset</a></article></noscript>';
     if (!cities) { status = 503; headers['Retry-After'] = '30'; headers['X-Robots-Tag'] = 'noindex, follow'; }
   }
   if (route.name === 'today') {

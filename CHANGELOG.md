@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Polish the contact page: hide the "Yhteydenottolomake" option card when the form cannot be used, make the topic select as tall as the text fields, and use the design system's primary button for "Lähetä".
 - Show cancel actions as red buttons (`detail-button--danger`) instead of links, and give `.detail-button` the standard 3 px focus ring on every public page.
 - Remove the icons from section headings on the about page (`/info`); the maintainer found plain headings cleaner.
 - Move the organization fill-in form (`/organization/<id>/fill`) to the standalone React host. It reads the organization from the Go API, keeps the same fields and copy, drops the label above the title, and still saves suggestions through Flask for review.

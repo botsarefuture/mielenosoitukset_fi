@@ -133,7 +133,10 @@ def test_unlinked_case_and_global_tools_remain_outside_city_scope(app, db, seede
     assert client.get("/admin/case/blocklist/").status_code == 403
 
 
-def test_city_case_reply_and_close_reopen_are_scoped_and_persisted(app, db, seeded_data):
+def test_city_case_reply_and_close_reopen_are_scoped_and_persisted(app, db, seeded_data, monkeypatch):
+    from mielenosoitukset_fi.emailer.EmailSender import EmailSender
+
+    monkeypatch.setattr(EmailSender, "queue_email", lambda self, **kwargs: ObjectId())
     client, _actor, own, _foreign, _demo = _city_cases(app, db, seeded_data)
     db.cases.update_one({"_id": own}, {"$set": {
         "type": "support_ticket", "submitter": {"submitter_email": "alice@example.test"},

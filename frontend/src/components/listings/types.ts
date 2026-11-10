@@ -12,7 +12,7 @@ export type ListingMessages = {
   dateError: string; year: string; month: string; submitSearch: string; removeFilter: string;
   loading: string; loadMore: string; loadingMore: string; previous: string; summary: string;
   loadError: string; retry: string; emptyTitle: string; empty: string; filteredEmpty: string;
-  clearFilters: string; submitEvent: string; cancelled: string; today: string; startingFrom: string;
+  filters: string; clearFilters: string; submitEvent: string; cancelled: string; today: string; startingFrom: string;
   loginPrompt: string; attendingSuffix: string; loadingFriends: string; invite: string; allEvents: string; endTime: string;
 };
 export type ListingProps = {

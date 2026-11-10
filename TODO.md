@@ -11,7 +11,7 @@ Everything still to do, in one list. Updated 10 November 2026.
 - [ ] **Production virtual environment, then the security dependency update.** Pillow 11.0.0 → 13.0.0, PyJWT 2.10.1 → 2.15.1 and PyMongo 4.6.3 → 4.19.0 (#1053) merged but could not deploy: Flask runs on the read-only system Python, and `deploy/install_dependencies.py` only installs into an app-owned venv (see `docs/production-deployment.md`). The pins were reverted to unblock deploys. Next: create the venv, point Gunicorn and `PRODUCTION_PYTHON` at it, verify, then re-apply #1053. Pillow decodes uploaded images and has a critical advisory. *(approval: production infrastructure)*
 - [ ] **#778 city admins and cases (P0):** #917 is merged and the issue says it was revalidated. Confirm on production that a city admin can open and act on their city's cases, then close the issue.
 - [ ] **#1029 far-future events:** the database holds events dated 2094–3100, so Helsinki shows 60,884 upcoming events. Find where they come from (recurring generation is the likely source), clean them up *(approval: data change)* and stop new ones.
-- [ ] **#984 support replies:** a reply is recorded as sent before the email is safely queued. Fix the order and error handling (DATA-04).
+- [x] **#984 support replies:** acknowledge queue persistence before recording the queued reply and audit receipt; redact unconfirmed outcomes (DATA-04).
 
 ## Public site in React (UI-06, due January 2027)
 
@@ -44,10 +44,9 @@ Maintainer direction, 10 November 2026: when a page is redesigned or moved to Re
 
 From the maintainer, 10 November 2026:
 
-- [ ] Front page: center the search bar.
-- [ ] `/demonstrations` (Tulevat mielenosoitukset): the search area is too heavy. Make it lighter and simpler.
-- [x] `/cities`: the city list is too much. Sort it alphabetically and make it scale to every city in Finland (for example grouped by first letter, with search). Implemented; visual acceptance BLOCKED until real captures and independent review are available.
-- [x] `/cities` review fixes: left-align the empty heading, keep counts inline and omit zero counts, add A–Ö jump links, and increase result spacing. Visual acceptance remains BLOCKED pending fresh captures and independent review.
+- [x] Front page: center the search bar.
+- [x] `/demonstrations` (Tulevat mielenosoitukset): the search area is too heavy. Make it lighter and simpler. Secondary filters fold behind "Suodattimet" on phones.
+- [x] `/cities`: sorted alphabetically in letter groups with an A–Ö jump row, compact enough for every city in Finland.
 
 From the visual reviews:
 
@@ -76,6 +75,7 @@ From the visual reviews:
 - [ ] **DATA-02:** fence analytics workers and coordinate rebuild pruning (#908).
 - [ ] **DATA-03:** analytics correctness, access and pagination (#551); `demonstrations` COLLSCAN slow queries; the admin overview rendering 28,604 rows.
 - [ ] **DATA-04:** email queue retries and idempotency, case reply history (#771), job leadership, database error handling (#176).
+  - [x] #984: acknowledged support reply enqueue and correlated case receipt, without strict-mode retries.
 - [ ] **DATA-05:** preview images failing (#579), Cloudflare rate limiting on normal use (#580), Socket.IO reconnect storm (#640).
 - [ ] **DATA-06:** module TODO issues (#391–#394), settings and configuration (#196, #226), creating users from invites (#387).
 - [ ] **DATA-07:** multi-day demonstrations as their own duration, separate from recurring series.

@@ -126,7 +126,7 @@ func (s mongoStore) cityEventCounts(ctx context.Context, day string, upcoming bo
 	filter := publicDatedFilter()
 	filter["city"] = bson.M{"$type": "string", "$ne": ""}
 	if upcoming {
-		filter["date"] = bson.M{"$gte": day}
+		filter["date"] = bson.M{"$gte": day, "$lte": shiftDay(day, upcomingHorizonDays)}
 		filter["cancelled"] = bson.M{"$ne": true}
 	}
 	group := bson.M{"_id": bson.M{"city_key": "$city_key", "city": "$city"}, "count": bson.M{"$sum": 1},

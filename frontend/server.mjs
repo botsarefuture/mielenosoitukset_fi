@@ -76,6 +76,7 @@ function assetTags(manifest) {
     contact: routeAssets('src/app/ContactScreen.tsx'),
     organizationFill: routeAssets('src/app/OrganizationFillScreen.tsx'),
     suggestChange: routeAssets('src/app/SuggestChangeScreen.tsx'),
+    status: routeAssets('src/app/StatusScreen.tsx'),
     head: [...css].map((file) => `<link rel="stylesheet" href="/app-assets/${file}">`)
       .concat([...modules].filter((file) => file.endsWith('.js'))
         .map((file) => `<link rel="modulepreload" href="/app-assets/${file}">`)).join('\n'),
@@ -173,7 +174,7 @@ const server = createServer(async (request, response) => {
       clientIp,
       cloudflareIp,
       doNotTrack: request.headers.dnt === '1',
-      publicUnavailable: url.pathname === '/auth/god' ? false : !await publicAvailable(),
+      publicUnavailable: ['/auth/god', '/status'].includes(url.pathname) ? false : !await publicAvailable(),
     }, assets);
     if (result.redirect) {
       // A site-relative preview target stays on the same public origin; the web

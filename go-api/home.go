@@ -69,7 +69,8 @@ func (s mongoStore) FindHome(ctx context.Context, lang string) (bson.M, error) {
 		return nil, err
 	}
 	filter := publicDatedFilter()
-	filter["date"] = bson.M{"$gte": time.Now().In(location).Format("2006-01-02")}
+	today := time.Now().In(location).Format("2006-01-02")
+	filter["date"] = bson.M{"$gte": today, "$lte": shiftDay(today, upcomingHorizonDays)}
 	filter["cancelled"] = bson.M{"$ne": true}
 	ids, ranks, err := s.homeRecommendations(ctx)
 	if err != nil {

@@ -31,6 +31,10 @@ import FundraisingScreen from './FundraisingScreen';
 import ContactScreen from './ContactScreen';
 import OrganizationFillScreen from './OrganizationFillScreen';
 import SuggestChangeScreen from './SuggestChangeScreen';
+import ApiDocsScreen from './ApiDocsScreen';
+import apiDocs from 'virtual:api-docs';
+import StatusScreen from './StatusScreen';
+import { loadStatus, statusTitle, type ServiceStatus } from './status';
 import { loadSuggestion, suggestionTitle, suggestionLead, type SuggestionDemo } from './suggest-change';
 import { helsinkiToday } from './fundraising';
 export { fundraisingDetails } from './fundraising';
@@ -70,7 +74,7 @@ export type RenderInput = {
   headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; organizationFill?: string; suggestChange?: string; pride?: string; information?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; organizationFill?: string; suggestChange?: string; status?: string; pride?: string; information?: string };
 
 export type RenderResult = {
   status: number;
@@ -203,7 +207,7 @@ ${options.jsonLd ? `<script type="application/ld+json">${serialize(options.jsonL
 <noscript><link rel="stylesheet" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" crossorigin></noscript>
 <link rel="stylesheet" href="/static/css/home.css?v=20261110-centered-intro-2">
 <link rel="stylesheet" href="/static/css/product-tokens.css?v=20261110-pride-contrast-1">
-<link rel="stylesheet" href="/static/css/user-workspace.css?v=20261110-user-workspace-6">
+<link rel="stylesheet" href="/static/css/user-workspace.css?v=20261110-user-workspace-7">
 <link rel="stylesheet" href="/static/css/public-header.css?v=20261027-react-header-1">
 <link rel="stylesheet" href="/static/css/flash.css?v=20261110-inline-spacing-1">
 <link rel="stylesheet" href="/static/css/public_hero.css?v=20261015-hero-width-1">
@@ -232,7 +236,7 @@ function unavailableDocument() {
 export async function renderPage(input: RenderInput, assets: RenderAssets): Promise<RenderResult> {
   const route = routeForPath(input.path);
   if (!route) return { status: 404, html: notFoundDocument() };
-  if (input.publicUnavailable && route.name !== 'god-auth') {
+  if (input.publicUnavailable && route.name !== 'god-auth' && route.name !== 'status') {
     return { status: 503, headers: { 'Retry-After': '60', 'X-Robots-Tag': 'noindex' },
       html: '<!DOCTYPE html><html lang="fi"><head>' + headMarkup({
         title: 'Palvelu on tilapäisesti suljettu | Mielenosoitukset.fi', description: '', robots: 'noindex',
@@ -313,6 +317,12 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   let appMarkup = '';
   let today: string | undefined;
   let campaignVisible: boolean | undefined;
+  if (route.name === 'api-docs') {
+    extraHead = '<link rel="stylesheet" href="/static/css/public-api-docs.css?v=20261110-2">';
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<div id="api-docs-page" dangerouslySetInnerHTML={{ __html: renderToStaticMarkup(<ApiDocsScreen {...apiDocs} />) }} />} />);
+  }
   if (route.name === 'information') {
     if (route.page === 'info') {
       // Anonymous visitors would land on a login page while the campaign is private.
@@ -361,6 +371,17 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
 
   let organizationFill: PublicOrganization | undefined;
   let suggestionDemo: SuggestionDemo | undefined;
+  let serviceStatus: ServiceStatus | null = null;
+  if (route.name === 'status') {
+    headers['X-Robots-Tag'] = 'noindex, follow';
+    serviceStatus = await loadStatus(readBase);
+    meta = { title: `${statusTitle} — Mielenosoitukset.fi`, description: 'Mielenosoitukset.fi-palvelun tila ja saatavuus.',
+      canonical: `${config.origin}/status`, robots: 'noindex, follow' };
+    extraHead = (assets.status ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<StatusScreen status={serviceStatus} />} />);
+  }
   if (route.name === 'suggest-change') {
     const loaded = await loadSuggestion(readBase, route.id);
     if (loaded.status === 'not-found') return { status: 302, html: '', redirect: config.urls.home };
@@ -670,6 +691,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     ...(campaignVisible !== undefined ? { campaignVisible } : {}),
     ...(organizationFill ? { organizationFill } : {}),
     ...(suggestionDemo ? { suggestionDemo } : {}),
+    ...(route.name === 'status' ? { serviceStatus } : {}),
     ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}),
     ...(listing ? { listing } : {}), ...(organization ? { organization } : {}), ...(cities !== undefined ? { cities } : {}),
     ...(submission ? { submission } : {}), ...(calendar ? { calendar } : {}) });

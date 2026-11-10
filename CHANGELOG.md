@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Confirm support replies are persisted in the email queue before recording a correlated queued reply and audit entries. Unconfirmed queue or case writes now show a safe warning instead of claiming delivery or retrying silently (#984).
+
 - Restore visible listing search focus rings and compact filled secondary fields; collapse mobile filters after hydration, opening active filters automatically. Centre the whole front-page introduction while preserving search URLs and no-JavaScript forms.
 - Center the front-page search at a bounded width and lighten shared React listing filters: remove the outer panel, keep text search prominent and show secondary filters inline with quieter styling. Preserve existing filters, query parameters and fallback forms.
 - Keep city links compact with inline event counts only when needed, add alphabetical jump links, and fix empty-state alignment and result spacing.

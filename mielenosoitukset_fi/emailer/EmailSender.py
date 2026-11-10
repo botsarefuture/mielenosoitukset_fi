@@ -395,9 +395,10 @@ class EmailSender:
 
     def queue_email(
         self, template_name, subject, recipients, context,
-        sender=None, attachments=None, extra_headers=None, plain_body=None
+        sender=None, attachments=None, extra_headers=None, plain_body=None,
+        require_acknowledged=False,
     ):
-        """Queue an email for this instance"""
+        """Queue an email; strict callers require an insert receipt without retries."""
         template = self._env.get_template(template_name)
         html_body = template.render(context)
         email_job = EmailJob(
@@ -410,6 +411,12 @@ class EmailSender:
             extra_headers=extra_headers,
             instance_id=self._instance_id,
         )
+        if require_acknowledged:
+            result = self._queue_collection.insert_one(email_job.to_dict())
+            if not result.acknowledged:
+                raise RuntimeError("Email queue insert was not acknowledged")
+            return result.inserted_id
+
         retry_attempts = 3
 
         def attempt_insert(attempt):

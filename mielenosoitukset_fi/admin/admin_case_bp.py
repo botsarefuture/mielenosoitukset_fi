@@ -699,42 +699,6 @@ def reply_to_ticket(case_id):
 
     admin_label = getattr(current_user, "username", None) or str(current_user)
 
-    # Record the audit trail and action log *before* queueing the reply, and
-    # use targeted $-updates rather than Case._touch() (which rewrites the
-    # whole document from stale in-memory state). This ordering + targeted
-    # writes guarantee queue_admin_reply's $push to suggestion.messages and
-    # $addToSet to meta.ticket.reply_message_ids can't be wiped afterwards.
-    now = utcnow()
-    mongo.cases.update_one(
-        {"_id": case._id},
-        {
-            "$set": {"updated_at": now},
-            "$push": {
-                "case_history": {
-                    "timestamp": now,
-                    "action": "Support ticket reply sent",
-                    "user": current_user.username,
-                    "mech_action": "reply_to_ticket",
-                    "metadata": {"to": submitter},
-                }
-            },
-        },
-    )
-    mongo.cases.update_one(
-        {"_id": case._id},
-        {
-            "$set": {"updated_at": now},
-            "$push": {
-                "action_logs": {
-                    "timestamp": now,
-                    "admin": current_user.username,
-                    "action_type": "reply_to_ticket",
-                    "note": _("Lähetetty vastaus tukipyyntöön."),
-                }
-            },
-        },
-    )
-
     try:
         queue_admin_reply(
             email_sender,
@@ -743,14 +707,15 @@ def reply_to_ticket(case_id):
             reply_to=submitter,
             message=message,
             admin_label=admin_label,
+            require_acknowledged=True,
         )
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to queue support ticket reply for case %s", case_id)
-        flash_message(_("Vastauksen lähetys epäonnistui: %(error)s") % {"error": str(exc)}, "error")
+        flash_message(_("Vastauksen jonotusta tai kirjausta ei voitu vahvistaa. Älä lähetä vastausta uudelleen ennen kuin jonon ja tukipyynnön tila on tarkistettu."), "warning")
         return redirect(url_for("admin_case.single_case", case_id=case_id))
 
-    log_admin_action_V2(f"{current_user.username} lähetti vastauksen tukipyyntöön {case.running_num} ({submitter})", case_id)
-    flash_message(_("Vastaus lisätty lähetysjonoon; se toimitetaan hetken kuluttua."), "success")
+    log_admin_action_V2(f"{current_user.username} lisäsi vastauksen tukipyynnön {case.running_num} lähetysjonoon ({submitter})", case_id)
+    flash_message(_("Vastaus lisätty lähetysjonoon. Toimitusta ei ole vielä vahvistettu."), "success")
     return redirect(url_for("admin_case.single_case", case_id=case_id))
 
 

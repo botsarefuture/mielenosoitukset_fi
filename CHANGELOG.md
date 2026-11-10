@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Fix the admin demonstration edit page returning a 500 error when a demonstration's start or end time was saved as the text "None"; such times are now treated as empty.
 - Revert the Pillow, PyJWT and PyMongo update for now: production runs Flask on the read-only system Python, so the deploy could not install the new versions and every later deploy was blocked. The update returns once production has an application-owned virtual environment.
 - Stop deploys from briefly closing the site or rolling back routing. A failed lockdown status read no longer closes public pages for up to 30 seconds after the last successful "open" answer; an actual lockdown still applies at once. Host deploys wait for a rendered page, and routing activation retries each page check before rolling back.
 - Give the about page (`/info`) a richer layout again without changing its text: key facts as tiles, the campaign as a highlighted card, a two-column layout on wide screens and contact options as cards. The campaign card appears only when the campaign is public or the visitor can preview it, so anonymous visitors are no longer sent to a login page.

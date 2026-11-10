@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Let production deploys use an application virtual environment. `deploy/production_deploy.sh` reads an optional root-owned `/etc/mielenosoitukset-fi/deploy.env` naming the Python interpreter and its install record, and refuses unsafe files. `docs/production-venv-migration.md` describes moving Flask and its workers onto the venv, with rollback, so dependency security updates can deploy again.
 - Security: update Pillow 11.0.0 → 13.0.0, PyJWT 2.10.1 → 2.15.1 and PyMongo 4.6.3 → 4.19.0. Pillow decodes uploaded images and had a critical heap overflow advisory (GHSA-5x8w-8jj5-q52h) plus several high ones; the PyJWT and PyMongo pins also had critical or high advisories.
 - Stop deploys from briefly closing the site or rolling back routing. A failed lockdown status read no longer closes public pages for up to 30 seconds after the last successful "open" answer; an actual lockdown still applies at once. Host deploys wait for a rendered page, and routing activation retries each page check before rolling back.
 - Give the about page (`/info`) a richer layout again without changing its text: key facts as tiles, the campaign as a highlighted card, a two-column layout on wide screens and contact options as cards. The campaign card appears only when the campaign is public or the visitor can preview it, so anonymous visitors are no longer sent to a login page.

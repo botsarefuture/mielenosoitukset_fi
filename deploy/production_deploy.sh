@@ -7,8 +7,48 @@ service_name="${PRODUCTION_SERVICE_NAME:-mielenosoitukset_fi}"
 health_url="${PRODUCTION_HEALTH_URL:-http://mielenosoitukset.fi/health}"
 health_socket="${PRODUCTION_HEALTH_SOCKET:-${repo_dir}/mielenosoitus.sock}"
 build_sha_file="${PRODUCTION_BUILD_SHA_FILE:-${repo_dir}/.deploy-build-sha}"
-production_python="${PRODUCTION_PYTHON:-python3}"
-dependency_receipt="${PRODUCTION_DEPENDENCY_RECEIPT:-/var/lib/mielenosoitukset-fi-deploy/dependencies.json}"
+deploy_env="${PRODUCTION_DEPLOY_ENV:-/etc/mielenosoitukset-fi/deploy.env}"
+
+# load_deploy_env FILE: optional root-owned settings for this host, such as the
+# application virtual environment. The file is parsed, never sourced, and only
+# PRODUCTION_PYTHON and PRODUCTION_DEPENDENCY_RECEIPT are accepted. Variables
+# already set in the environment win. Prints the two values, one per line.
+load_deploy_env() {
+  local file=$1 python=${PRODUCTION_PYTHON:-} receipt=${PRODUCTION_DEPENDENCY_RECEIPT:-} key value line
+  local file_python="" file_receipt=""
+  if [[ -e $file ]]; then
+    if [[ ! -f $file || -L $file || ! -O $file ]]; then
+      echo "production_deploy.sh: $file must be a regular file owned by the deploying user" >&2
+      return 2
+    fi
+    if [[ -n $(find "$file" -maxdepth 0 \( -perm -020 -o -perm -002 \)) ]]; then
+      echo "production_deploy.sh: $file must not be group- or world-writable" >&2
+      return 2
+    fi
+    while IFS= read -r line || [[ -n $line ]]; do
+      [[ $line =~ ^[[:space:]]*(#|$) ]] && continue
+      if [[ ! $line =~ ^([A-Z_]+)=(/[A-Za-z0-9._/-]+)$ ]]; then
+        echo "production_deploy.sh: unsupported line in $file" >&2
+        return 2
+      fi
+      key=${BASH_REMATCH[1]} value=${BASH_REMATCH[2]}
+      case $key in
+        PRODUCTION_PYTHON) file_python=$value ;;
+        PRODUCTION_DEPENDENCY_RECEIPT) file_receipt=$value ;;
+        *) echo "production_deploy.sh: unsupported setting $key in $file" >&2; return 2 ;;
+      esac
+    done < "$file"
+    if [[ -n $file_python && ! -x $file_python ]]; then
+      echo "production_deploy.sh: PRODUCTION_PYTHON in $file is not executable" >&2
+      return 2
+    fi
+  fi
+  printf '%s\n%s\n' "${python:-${file_python:-python3}}" \
+    "${receipt:-${file_receipt:-/var/lib/mielenosoitukset-fi-deploy/dependencies.json}}"
+}
+
+{ read -r production_python && read -r dependency_receipt; } < <(load_deploy_env "$deploy_env") || exit 2
+[[ -n ${production_python:-} && -n ${dependency_receipt:-} ]] || exit 2
 routing=false
 skip_public=false
 expected_sha=""

@@ -1,0 +1,221 @@
+.org-fill-header__identity {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.org-fill-logo {
+  display: grid;
+  flex: 0 0 5rem;
+  width: 5rem;
+  height: 5rem;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: var(--product-surface);
+  color: var(--product-text-muted);
+  font-size: 1.75rem;
+}
+
+.org-fill-logo img {
+  width: 100%;
+  height: 100%;
+  padding: 0.6rem;
+  object-fit: contain;
+}
+
+.org-fill-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 1rem;
+  align-items: start;
+  margin-block: 1.5rem 2rem;
+}
+
+
+.org-fill-page .public-prose-card .org-fill-facts {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.org-fill-facts li {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  background: var(--product-surface-muted);
+  overflow-wrap: anywhere;
+}
+
+.org-fill-facts li + li {
+  margin-top: 0;
+}
+
+.org-fill-facts i {
+  color: var(--product-primary);
+}
+
+.org-fill-facts .is-missing {
+  color: var(--product-text-muted);
+}
+
+.org-fill-facts .is-missing i {
+  color: var(--product-accent-strong);
+}
+
+.org-fill-form fieldset {
+  margin: 1.25rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.org-fill-form legend {
+  margin-bottom: 0.5rem;
+  color: var(--product-text);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.org-fill-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+}
+
+.org-fill-grid label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--product-text);
+  font-weight: 600;
+}
+
+.org-fill-wide {
+  grid-column: 1 / -1;
+}
+
+.org-fill-form input,
+.org-fill-form select,
+.org-fill-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--product-text-muted);
+  border-radius: 8px;
+  background: var(--product-surface);
+  color: var(--product-text);
+  font: inherit;
+  font-weight: 400;
+}
+
+.org-fill-form textarea {
+  resize: vertical;
+}
+
+.org-fill-socials {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.org-fill-social {
+  display: grid;
+  grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr) 44px;
+  gap: 0.5rem;
+}
+
+.org-fill-remove {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid var(--product-border);
+  border-radius: 8px;
+  background: var(--product-surface-muted);
+  color: var(--product-text);
+  cursor: pointer;
+}
+
+.org-fill-remove:hover {
+  border-color: var(--product-danger);
+  color: var(--product-danger);
+}
+
+/* Match the save button's shape so the actions read as one group. */
+.org-fill-actions .button,
+.org-fill-form .org-fill-add {
+  min-height: 44px;
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+}
+
+.org-fill-form .org-fill-add {
+  min-height: 44px;
+  border: 0;
+  background: var(--product-primary-soft);
+  color: var(--product-primary);
+  box-shadow: none;
+}
+
+.org-fill-actions .org-fill-cancel {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--product-text-muted);
+  background: var(--product-surface);
+  color: var(--product-text);
+  text-decoration: none;
+  box-shadow: none;
+}
+
+.org-fill-actions .org-fill-cancel:hover {
+  border-color: var(--product-primary);
+  color: var(--product-primary);
+}
+
+.org-fill-form .org-fill-add:hover {
+  background: var(--product-action-hover);
+  color: var(--product-on-action);
+}
+
+.org-fill-actions {
+  margin-top: 1.5rem;
+}
+
+.org-fill-form input:focus-visible,
+.org-fill-form select:focus-visible,
+.org-fill-form textarea:focus-visible,
+.org-fill-form button:focus-visible,
+.org-fill-actions a:focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 860px) {
+  .org-fill-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .org-fill-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .org-fill-header__identity {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .org-fill-social {
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+
+  .org-fill-social select {
+    grid-column: 1 / -1;
+  }
+}

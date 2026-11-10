@@ -20,12 +20,23 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 
 - [ ] `/report` error report form. It needs a session-scope token like `/contact`. *(approval: session change)*
 - [ ] `/status` service status page. It needs a JSON endpoint for the health checks.
-- [ ] `/organization/<id>/fill` organization fill-in form.
 - [ ] Token pages: `/cancel_demonstration/<token>`, `/confirm/<token>`, `/confirm_email/<token>`, `/accept_invite`.
 - [ ] Account pages: login, register and next steps, settings, password reset, forced password and identity change, MFA verification, public profile `/<username>`. *(approval: authentication flows)*
 - [ ] Secondary tools: `/developer`, `/api-docs/`, demo material download.
 - [ ] Retire the Flask templates each migrated page leaves behind as rollback, once its React page has been stable for a while.
 - [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).
+
+## Move APIs to Go
+
+Maintainer direction, 10 November 2026: when a page is redesigned or moved to React, its Flask endpoints move to the Go API too, in the same work or later. Still on Flask:
+
+- [ ] `/api/session` and its scopes (`organization_id`, `translation_join`, `contact_form`). *(approval: session)*
+- [ ] `POST /contact`: rate limits, one-time token, honeypot, validation and email.
+- [ ] `POST /organization/<id>/save_suggestion`: stores the suggestion, opens a case and notifies moderators.
+- [ ] `POST /kampanja/api/volunteers` and `/kampanja/confirm/<token>`.
+- [ ] `POST /upcoming/translations/join`. *(approval: permissions)*
+- [ ] Analytics beacons `/api/analytics/pageview` and `/api/analytics/event`.
+- [ ] Fundraising details: today bundled from `fundraising.json` into the host; a Go endpoint would let it change without a host deploy.
 
 ## UI follow-ups from reviews
 

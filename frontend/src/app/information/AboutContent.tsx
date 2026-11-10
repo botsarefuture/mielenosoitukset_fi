@@ -30,13 +30,13 @@ export function AboutContent({ campaign = false }: { campaign?: boolean }) {
     <div className="about-grid">
       <div className="about-main">
         <section className="public-prose-card" aria-labelledby="about-what-title">
-          <h2 id="about-what-title"><i className="fa-solid fa-circle-info" aria-hidden="true" />Mikä on Mielenosoitukset.fi?</h2>
+          <h2 id="about-what-title">Mikä on Mielenosoitukset.fi?</h2>
           <p>Mielenosoitukset.fi on sivusto, joka kokoaa yhteen kaikki Suomessa järjestettävät mielenosoitukset ja yhteiskunnalliset tapahtumat. Tavoitteenamme on tarjota kattava ja ajankohtainen tietolähde, jossa voit seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi helposti ja nopeasti.</p>
           <p>Sivustomme toimii riippumattomana alustana, joka tarjoaa avoimen ja neutraalin paikan kaikille mielenosoituksille ja protesteille. Meidän tavoitteemme on auttaa löytämään tietoa, osallistumaan aktiivisesti yhteiskunnallisiin tapahtumiin ja edistämään vapaata mielipiteenilmaisua.</p>
           <div className="information-actions"><a className="button button-primary" href="/demonstrations">Selaa mielenosoituksia</a></div>
         </section>
         <section className="public-prose-card" aria-labelledby="about-submit-title">
-          <h2 id="about-submit-title"><i className="fa-solid fa-circle-plus" aria-hidden="true" />Kuinka ilmoitan mielenosoituksesta?</h2>
+          <h2 id="about-submit-title">Kuinka ilmoitan mielenosoituksesta?</h2>
           <p>Huomasitko, ettei jokin mielenosoitus vielä ole sivustolla? Voit ilmoittaa siitä itse! Täytä <a href="/submit">ilmoituslomake</a> ja varmista, että kaikki tiedot ovat oikein ja ajankohtaisia. Mielenosoitus näkyy sivustolla heti hyväksynnän jälkeen.</p>
           <div className="about-questions">
             <div>
@@ -57,7 +57,7 @@ export function AboutContent({ campaign = false }: { campaign?: boolean }) {
 
       <aside className="about-side" aria-label="Ylläpito ja yhteystiedot">
         <section className="public-prose-card" aria-labelledby="about-who-title">
-          <h2 id="about-who-title"><i className="fa-solid fa-users" aria-hidden="true" />Kuka ylläpitää sivustoa?</h2>
+          <h2 id="about-who-title">Kuka ylläpitää sivustoa?</h2>
           <p>Mielenosoitukset.fi ylläpidetään riippumattomana projektina vapaaehtoisten toimesta. Emme ole sidoksissa mihinkään poliittiseen puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan, joka tukee monimuotoista ja vapaata mielipiteenilmaisua kaikille.</p>
           <h3>Miten alusta rahoitetaan?</h3>
           <p>Mielenosoitukset.fi pyörii voittoa tavoittelemattomana ja riippumattomana projektina. Alustan infrakulut, kuten palvelinvuokrat ja verkkotunnus, rahoitetaan yksityishenkilöiden tuella.</p>
@@ -65,7 +65,7 @@ export function AboutContent({ campaign = false }: { campaign?: boolean }) {
           <p>Lisätietoa evästeiden käytöstä ja henkilötietojen käsittelystä löydät <a href="/privacy">tietosuojaselosteesta</a>.</p>
         </section>
         <section className="public-prose-card" aria-labelledby="about-contact-title">
-          <h2 id="about-contact-title"><i className="fa-solid fa-envelope" aria-hidden="true" />Yhteystiedot</h2>
+          <h2 id="about-contact-title">Yhteystiedot</h2>
           <p>Jos sinulla on kysyttävää tai ehdotuksia, voit ottaa yhteyttä ylläpitäjiin.</p>
           <div className="contact-options contact-options--stacked">
             <a className="contact-option" href="mailto:tuki@mielenosoitukset.fi">

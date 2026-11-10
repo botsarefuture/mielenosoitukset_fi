@@ -601,8 +601,16 @@ try {
   assert(scopedRead && !/parent_id|in_past|max_days_till/.test(scopedRead));
   const missingOrg = await detailPage({ path: '/organization/66fa58601102367d5d528098' });
   assert.equal(missingOrg.status, 302); assert.equal(missingOrg.redirect, '/');
-  assert.equal((await detailPage({ path: `/organization/${organizationId}/fill` })).status, 404);
-  console.log('PASS: organization cache/coalescing, public projection, private scoped sessions, fixed event scope and legacy missing/subpath behavior');
+  const fill = await detailPage({ path: `/organization/${organizationId}/fill` });
+  assert.equal(fill.status, 200);
+  const fillBody = fill.html.split('<body>')[1].split('<script type="application/json"')[0];
+  for (const text of ['Test Organization', `action="/organization/${organizationId}/save_suggestion"`, 'method="post"',
+    'name="logo"', 'Lisää alusta', 'Nykyiset tiedot', 'Tallenna ehdotus']) assert(fillBody.includes(text), text);
+  assert(!fillBody.includes('value="None"') && !fillBody.includes('org-fill-label'));
+  assert.match(fill.html, /<meta name="robots" content="noindex, follow" \/>/);
+  const missingFill = await detailPage({ path: '/organization/66fa58601102367d5d528098/fill' });
+  assert.equal(missingFill.status, 302); assert.equal(missingFill.redirect, '/');
+  console.log('PASS: organization cache/coalescing, public projection, private scoped sessions, fixed event scope and missing organizations and the fill-in form');
 } finally {
   publicApi.closeAllConnections?.();
   localApi.closeAllConnections?.();

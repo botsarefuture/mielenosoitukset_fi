@@ -196,10 +196,6 @@
   min-width: 0;
 }
 
-.information-page .public-prose-card h2 > i {
-  margin-right: 0.6rem;
-  color: var(--product-primary);
-}
 
 .about-questions {
   display: grid;

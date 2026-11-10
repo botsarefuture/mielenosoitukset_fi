@@ -74,6 +74,7 @@ function assetTags(manifest) {
     campaign: routeAssets('src/app/CampaignScreen.tsx'),
     fundraising: routeAssets('src/app/FundraisingScreen.tsx'),
     contact: routeAssets('src/app/ContactScreen.tsx'),
+    organizationFill: routeAssets('src/app/OrganizationFillScreen.tsx'),
     head: [...css].map((file) => `<link rel="stylesheet" href="/app-assets/${file}">`)
       .concat([...modules].filter((file) => file.endsWith('.js'))
         .map((file) => `<link rel="modulepreload" href="/app-assets/${file}">`)).join('\n'),

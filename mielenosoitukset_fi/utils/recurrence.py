@@ -37,6 +37,7 @@ def calculate_recurrence_dates(
     *,
     max_occurrences: int = 1000,
     today: Optional[date] = None,
+    horizon_years: Optional[int] = None,
 ) -> list[date]:
     """Return occurrence dates using the recurring-worker scheduling contract."""
     frequency = schedule.frequency
@@ -53,10 +54,11 @@ def calculate_recurrence_dates(
         except ValueError:
             end_date = current_date + relativedelta(years=1)
 
-    # Never schedule further than one rolling year ahead, whatever end date the
-    # series carries. An end date centuries away used to add up to
-    # max_occurrences new events on every worker run (#1029).
-    end_date = min(end_date, current_date + relativedelta(years=1))
+    # The worker passes horizon_years so a series never generates further than
+    # that many years ahead, whatever end date it carries. An end date centuries
+    # away used to add up to max_occurrences events on every run (#1029).
+    if horizon_years:
+        end_date = min(end_date, current_date + relativedelta(years=horizon_years))
 
     if isinstance(start_date, datetime):
         start_date = start_date.date()

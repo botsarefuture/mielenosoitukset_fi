@@ -17,7 +17,7 @@ def test_recurrence_dates_align_weekly_schedule_and_limit_output():
         date(2026, 1, 1),
         schedule,
         max_occurrences=4,
-        today=date(2025, 12, 1),
+        today=date(2025, 1, 1),
     )
 
     assert dates == [
@@ -40,7 +40,7 @@ def test_recurrence_dates_honor_selected_day_of_month():
     dates = calculate_recurrence_dates(
         date(2026, 1, 1),
         schedule,
-        today=date(2025, 12, 1),
+        today=date(2025, 1, 1),
     )
 
     assert dates == [date(2026, 1, 1), date(2026, 2, 15), date(2026, 3, 15)]
@@ -78,6 +78,7 @@ def test_recurrence_dates_stop_one_year_ahead_even_with_a_distant_end_date():
         schedule,
         max_occurrences=1000,
         today=date(2026, 11, 10),
+        horizon_years=1,
     )
 
     assert dates[0] == date(2026, 11, 13)
@@ -86,5 +87,10 @@ def test_recurrence_dates_stop_one_year_ahead_even_with_a_distant_end_date():
 
     # A worker that already ran past the horizon schedules nothing more.
     assert calculate_recurrence_dates(
-        date(2026, 11, 6), schedule, date(2094, 3, 1), today=date(2026, 11, 10)
+        date(2026, 11, 6), schedule, date(2094, 3, 1), today=date(2026, 11, 10), horizon_years=1
     ) == []
+
+    # Without a horizon (the admin preview) the series' own end date applies.
+    assert len(calculate_recurrence_dates(
+        date(2026, 11, 6), schedule, max_occurrences=200, today=date(2026, 11, 10)
+    )) == 200

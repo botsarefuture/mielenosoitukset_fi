@@ -59,6 +59,7 @@ From the visual reviews:
 - [ ] Fundraising, open state: the MobilePay links sit far apart.
 - [ ] Card times use `12:00 – 14:00` instead of `12.00–14.00`; the PRIDE badge text has weak contrast; map markers cover city labels.
 - [ ] Keep action menus outside the scroll viewport (#743).
+- [ ] Organization page: an anonymous visitor who sends a fill-in suggestion never sees the "Kiitos! Ehdotuksesi on tallennettu" message, because the React page only fetches flash messages for signed-in members of that organization. Needs the session endpoint to report pending messages for everyone (session change: maintainer approval).
 
 ## Security and permissions
 

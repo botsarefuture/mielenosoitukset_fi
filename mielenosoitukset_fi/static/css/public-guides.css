@@ -150,6 +150,7 @@
 .guide-steps { display: grid; gap: .9rem; margin: 0 0 1.5rem; padding: 0; list-style: none; }
 .guide-steps li { display: flex; gap: 1rem; padding: 1.25rem; border: 1px solid var(--guide-border); border-radius: 1rem; background: var(--guide-surface); }
 .guide-steps h3, .guide-troubleshooting h3, .guide-feature-grid h3 { margin: 0 0 .35rem; font-size: 1rem; }
+.guide-page .guide-steps h3 { text-align: left; }
 .guide-steps p, .guide-troubleshooting p, .guide-feature-grid p { margin: 0; color: var(--guide-text-muted); font-size: .93rem; }
 
 .guide-note {

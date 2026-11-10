@@ -53,9 +53,39 @@ def test_react_listing_filter_disclosure_preserves_plain_fields_and_focus():
     assert 'className="detail-button public-search-toggle"' in source
     assert '@media (max-width: 560px)' in stylesheet
     assert 'input[type="text"]:focus' in stylesheet
-    assert 'button:focus' in stylesheet
+    assert 'button:focus-visible' in stylesheet
+    assert 'a:focus-visible' in stylesheet
+    assert 'button:focus {' not in stylesheet
+    assert 'fa-chevron-${filtersOpen ? \'up\' : \'down\'}' in source
+    assert 'aria-hidden="true"' in source
     assert 'outline: 3px solid var(--product-primary)' in stylesheet
     assert 'outline-offset: 3px' in stylesheet
+
+
+def test_listing_secondary_actions_reuse_default_detail_buttons():
+    for name in ('PublicListingPage', 'DemonstrationListingPage'):
+        source = Path(f'frontend/src/pages/{name}.tsx').read_text()
+        assert 'id="clear-filters-btn" className="detail-button"' in source
+        assert 'button-secondary' not in source
+    tools = Path('frontend/src/components/listings/ListingTools.tsx').read_text()
+    assert 'className="detail-button public-list-all"' in tools
+    assert 'className="detail-button public-list-feed"' in tools
+    stylesheet = CSS_PATH.read_text()
+    assert '.button:focus {' not in stylesheet
+    assert '#load-more-btn.load-more {' not in stylesheet
+    invite_rule = stylesheet.split('.demo-card-no-friends {', 1)[1].split('}', 1)[0]
+    assert 'text-decoration: none' in invite_rule
+
+
+def test_card_clocks_reuse_the_detail_formatter_without_changing_raw_times():
+    source = Path('frontend/src/components/listings/DemonstrationCard.tsx').read_text()
+    assert "import { clockLabel } from '../detail/content'" in source
+    assert 'clockLabel(event.start_time_display) || clockLabel(event.start_time)' in source
+    assert 'clockLabel(event.end_time_display) || clockLabel(event.end_time)' in source
+    assert '`${start}–${end}`' in source
+    assert '`${start} ${text.startingFrom}`' in source
+    assert '`${text.endTime}: ${end}`' in source
+    assert 'function time(' not in source
 
 
 def test_public_list_runtime_uses_defined_localized_browser_contracts():

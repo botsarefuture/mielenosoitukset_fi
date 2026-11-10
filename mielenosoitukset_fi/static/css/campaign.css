@@ -117,3 +117,10 @@
 .campaign-fundraising-intro { padding-block: 2rem; }
 .campaign-page .campaign-fundraising-intro h1 { font-size: 2rem; margin: 0 0 1rem; }
 .campaign-fundraising-intro p { max-width: 72ch; }
+.campaign-mobilepay-links { display: flex; flex-wrap: wrap; gap: .75rem; }
+
+/* The volunteer form scrolls its message into view after a validation error;
+   keep it clear of the sticky main navigation. */
+#vol-msg {
+  scroll-margin-top: 6rem;
+}

@@ -68,7 +68,9 @@
 }
 
 .public-react-list .public-search-form input[type="text"]:focus,
-.public-react-list .public-search-form button:focus {
+.public-react-list button:focus-visible,
+.public-react-list a:focus-visible,
+.public-react-list [role="link"]:focus-visible {
   outline: 3px solid var(--product-primary);
   outline-offset: 3px;
   box-shadow: none;

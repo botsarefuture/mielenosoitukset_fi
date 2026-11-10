@@ -48,13 +48,19 @@ From the maintainer, 10 November 2026:
 
 From the visual reviews:
 
-- [ ] Shared inline success message: more space above than below (`.flash-message--inline`).
-- [ ] Charcoal "Poista suodattimet" secondary button and the pale grey light secondary button.
-- [ ] Underline next to the invite "+" on event cards.
-- [ ] Organizer guide: step titles are centred at 390 px.
-- [ ] Campaign page: on phones the form's error message is below the fold after an empty submit.
-- [ ] Fundraising, open state: the MobilePay links sit far apart.
-- [ ] Card times use `12:00 – 14:00` instead of `12.00–14.00`; the PRIDE badge text has weak contrast; map markers cover city labels.
+- [x] Shared inline success message: more space above than below (`.flash-message--inline`).
+- [x] Charcoal "Poista suodattimet" secondary button and the pale grey light secondary button.
+- [x] Underline next to the invite "+" on event cards.
+- [x] Organizer guide: step titles are centred at 390 px.
+- [x] Campaign page: on phones the form's error message is below the fold after an empty submit.
+- [x] Fundraising, open state: the MobilePay links sit far apart.
+- [x] Card times use `12:00 – 14:00` instead of `12.00–14.00` (reuse the detail clock helper; keep raw API clocks unchanged).
+- [ ] The PRIDE badge text has weak contrast; map markers cover city labels.
+- [x] Mobile "Suodattimet" toggle: show an open/closed chevron tied to `aria-expanded`.
+- [x] Listing buttons and links: use `:focus-visible`; text inputs retain `:focus`.
+
+The checked visual follow-ups above are implemented; visual acceptance remains **BLOCKED** until real captures and an independent reviewer SHIP are available. This checkout's sandbox cannot bind sockets, and captures were explicitly excluded from this task.
+
 - [ ] Keep action menus outside the scroll viewport (#743).
 - [ ] Organization page: an anonymous visitor who sends a fill-in suggestion never sees the "Kiitos! Ehdotuksesi on tallennettu" message, because the React page only fetches flash messages for signed-in members of that organization. Needs the session endpoint to report pending messages for everyone (session change: maintainer approval).
 

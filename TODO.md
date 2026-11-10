@@ -12,7 +12,6 @@ Everything still to do, in one list. Updated 10 November 2026.
 - [ ] **#778 city admins and cases (P0):** #917 is merged and the issue says it was revalidated. Confirm on production that a city admin can open and act on their city's cases, then close the issue.
 - [ ] **#1029 far-future events:** the database holds events dated 2094–3100, so Helsinki shows 60,884 upcoming events. Find where they come from (recurring generation is the likely source), clean them up *(approval: data change)* and stop new ones.
 - [ ] **#984 support replies:** a reply is recorded as sent before the email is safely queued. Fix the order and error handling (DATA-04).
-- [ ] **Panel host root password:** it was pasted in a Codex thread on 3 November. Rotate it; never use it.
 
 ## Public site in React (UI-06, due January 2027)
 
@@ -43,7 +42,6 @@ Maintainer direction, 10 November 2026: when a page is redesigned or moved to Re
 
 From the maintainer, 10 November 2026:
 
-- [ ] Profile page: the red notification count sits under the bell instead of on top of it. Other pages look right.
 - [ ] Front page: center the search bar.
 - [ ] `/demonstrations` (Tulevat mielenosoitukset): the search area is too heavy. Make it lighter and simpler.
 - [ ] `/cities`: the city list is too much. Sort it alphabetically and make it scale to every city in Finland (for example grouped by first letter, with search).

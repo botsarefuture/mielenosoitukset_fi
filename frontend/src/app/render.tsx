@@ -356,7 +356,8 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
 
   if (route.name === 'contact') {
     headers['Cache-Control'] = 'private, no-store';
-    extraHead = assets.contact ?? '';
+    // The form uses the shared .detail-button contract.
+    extraHead = (assets.contact ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
     // The form is plain HTML that posts to Flask, so it works without JavaScript.
     noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}

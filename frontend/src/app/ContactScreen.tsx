@@ -32,10 +32,10 @@ export default function ContactScreen({ session }: { session: SessionSummary }) 
             <i className="fa-solid fa-envelope" aria-hidden="true" />
             <span><strong>Sähköposti</strong>{supportEmail}</span>
           </a>
-          <a className="contact-option" href="#contact-form-section">
+          {form?.enabled && form.csrfToken ? <a className="contact-option" href="#contact-form-section">
             <i className="fa-solid fa-comment" aria-hidden="true" />
             <span><strong>Yhteydenottolomake</strong>Lähetä viesti suoraan</span>
-          </a>
+          </a> : null}
         </div>
       </section>
 
@@ -61,7 +61,7 @@ export default function ContactScreen({ session }: { session: SessionSummary }) 
             <label htmlFor="message">Viesti</label>
             <textarea id="message" name="message" rows={6} required minLength={limits.messageMin} maxLength={limits.messageMax}
               placeholder="Kirjoita viestisi tähän" />
-            <button type="submit" className="button button-primary">Lähetä</button>
+            <button type="submit" className="detail-button detail-button--primary">Lähetä</button>
           </form>
         </> : <p className="contact-unavailable">{form && !form.enabled
           ? 'Yhteydenottolomake on tilapäisesti poissa käytöstä. Voit lähettää sähköpostia tukeen: '

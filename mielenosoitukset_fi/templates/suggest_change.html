@@ -570,25 +570,25 @@
           <div class="form-grid">
             <div class="field-group">
               <label for="title">{{ _('Otsikko') }}</label>
-              <input type="text" id="title" name="title" value="{{ demo.title }}" />
+              <input type="text" id="title" name="title" value="{{ demo.title or '' }}" />
               <span class="field-help">{{ _('Esimerkiksi tapahtuman virallinen nimi.') }}</span>
             </div>
 
             <div class="field-group">
               <label for="date">{{ _('Päivämäärä') }}</label>
-              <input type="text" id="date" name="date" value="{{ demo.date }}" placeholder="vvvv-kk-pp" />
+              <input type="text" id="date" name="date" value="{{ demo.date or '' }}" placeholder="vvvv-kk-pp" />
               <span class="field-help">{{ _('Muoto: vvvv-kk-pp') }}</span>
             </div>
 
             <div class="field-group">
               <label for="start_time">{{ _('Alkamisaika') }}</label>
-              <input type="text" id="start_time" name="start_time" value="{{ demo.start_time }}" placeholder="14:00" />
+              <input type="text" id="start_time" name="start_time" value="{{ demo.start_time or '' }}" placeholder="14:00" />
               <span class="field-help">{{ _('Esimerkiksi 14:00') }}</span>
             </div>
 
             <div class="field-group">
               <label for="end_time">{{ _('Päättymisaika') }}</label>
-              <input type="text" id="end_time" name="end_time" value="{{ demo.end_time }}" placeholder="15:30" />
+              <input type="text" id="end_time" name="end_time" value="{{ demo.end_time or '' }}" placeholder="15:30" />
               <span class="field-help">{{ _('Valinnainen, jos tapahtuman loppuaika tiedetään.') }}</span>
             </div>
           </div>
@@ -602,18 +602,18 @@
           <div class="form-grid">
             <div class="field-group">
               <label for="city">{{ _('Kaupunki') }}</label>
-              <input type="text" id="city" name="city" value="{{ demo.city }}" />
+              <input type="text" id="city" name="city" value="{{ demo.city or '' }}" />
             </div>
 
             <div class="field-group">
               <label for="address">{{ _('Osoite') }}</label>
-              <input type="text" id="address" name="address" value="{{ demo.address }}" />
+              <input type="text" id="address" name="address" value="{{ demo.address or '' }}" />
               <span class="field-help">{{ _('Voit kirjoittaa esimerkiksi torin, puiston tai kokoontumispaikan osoitteen.') }}</span>
             </div>
 
             <div class="field-group full-width">
               <label for="facebook">{{ _('Facebook-tapahtuman URL') }}</label>
-              <input type="text" id="facebook" name="facebook" value="{{ demo.facebook }}" placeholder="https://facebook.com/events/..." />
+              <input type="text" id="facebook" name="facebook" value="{{ demo.facebook or '' }}" placeholder="https://facebook.com/events/..." />
               <span class="field-help">{{ _('Valinnainen linkki tapahtumasivulle tai lisätietoihin.') }}</span>
             </div>
           </div>

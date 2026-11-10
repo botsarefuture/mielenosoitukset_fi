@@ -31,7 +31,7 @@ const messages: ListingMessages = {
   loadError: 'Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen.', retry: 'Yritä uudelleen',
   emptyTitle: 'Ei löytynyt mielenosoituksia', empty: 'Tällä hetkellä ei ole mielenosoituksia. Tarkista myöhemmin.',
   filteredEmpty: 'Kokeile poistaa suodattimia tai hakea toisella sanalla.',
-  clearFilters: 'Poista suodattimet', submitEvent: 'Ilmoita uusi mielenosoitus', cancelled: 'Peruttu', today: 'Tänään',
+  filters: 'Suodattimet', clearFilters: 'Poista suodattimet', submitEvent: 'Ilmoita uusi mielenosoitus', cancelled: 'Peruttu', today: 'Tänään',
   startingFrom: 'alkaen', endTime: 'Päättymisaika', loginPrompt: 'Kirjaudu sisään käyttääksesi sosiaalisia toimintoja',
   attendingSuffix: 'osallistuu', loadingFriends: 'Ladataan kavereita...', invite: 'Kutsu kavereita',
   allEvents: 'Kaikki mielenosoitukset',

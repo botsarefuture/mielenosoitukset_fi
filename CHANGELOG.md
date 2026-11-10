@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Restore visible listing search focus rings and compact filled secondary fields; collapse mobile filters after hydration, opening active filters automatically. Centre the whole front-page introduction while preserving search URLs and no-JavaScript forms.
+- Center the front-page search at a bounded width and lighten shared React listing filters: remove the outer panel, keep text search prominent and show secondary filters inline with quieter styling. Preserve existing filters, query parameters and fallback forms.
 - Keep city links compact with inline event counts only when needed, add alphabetical jump links, and fix empty-state alignment and result spacing.
 
 - Make the city directory easier to scan with Finnish alphabetical letter groups, compact links in columns and the existing live search. Keep the full grouped list, event counts and city links available without JavaScript.

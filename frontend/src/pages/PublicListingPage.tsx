@@ -7,6 +7,7 @@ import type { ListingFilters } from '../components/listings/ReactSearchFilters';
 import type { ListingProps, ListParams, Page } from '../components/listings/types';
 import { FILTERS, listingQuery, QUERY_FILTERS } from '../components/listings/query';
 import '../components/listings/react-listing.css';
+import '../../../mielenosoitukset_fi/static/css/public-detail.css';
 
 export type PublicListingProps = ListingProps & {
   initialData?: Page | null;

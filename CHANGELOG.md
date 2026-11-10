@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
+
 - Give Pride badges contrasting solid backgrounds with rainbow borders, keep Pride map city names readable above markers, and let admin table action menus escape horizontal-scroll clipping (#743).
 - Move `/api-docs/` to the React SSR host with build-time Markdown, existing heading links and keyboard-reachable scrolling code blocks; retain Flask's OpenAPI download and slash redirect.
 - Stop recurring series from generating events centuries ahead (#1029). The worker now schedules at most one rolling year ahead whatever end date a series has; before, a distant end date added up to 1000 occurrences on every run. Public listings, the front page and city counts ignore events more than two years ahead unless a visitor asks for a later end date, so Helsinki no longer shows tens of thousands of upcoming events. `mielenosoitukset_fi/scripts/far_future_demos.py` reports the stored occurrences and can remove them after review; it changes nothing by default.

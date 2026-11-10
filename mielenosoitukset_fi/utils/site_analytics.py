@@ -388,6 +388,10 @@ def classify_path(path):
     if head in {"mielenosoitukset-tanaan"}:
         return {"page_type": "today", "resource_id": None}
     if head == "kampanja":
+        # /kampanja/confirm/<token> carries a volunteer's one-time token; never
+        # store it, only that a confirmation page was opened.
+        if len(segments) > 1 and segments[1].lower() == "confirm":
+            return {"page_type": "campaign", "resource_id": "confirm"}
         return {"page_type": "campaign", "resource_id": "/".join(segments[1:]) or None}
     if head == "pride-nakyvaksi":
         return {"page_type": "campaign", "resource_id": "pride-nakyvaksi"}
@@ -791,6 +795,12 @@ def record_event_for_request(event, resource_id=None, request=None):
             from flask import request as _request
 
             request = _request
+        from flask import current_app
+
+        # Same privacy rules as page views: honour the site switch and DNT.
+        if (not current_app.config.get("SITE_ANALYTICS_ENABLED", True)
+                or request.headers.get("DNT") == "1"):
+            return False
         device = classify_device(request.headers.get("User-Agent") or "")
         if device == BOT:
             return False

@@ -251,7 +251,7 @@ try {
     for (const text of ['Jotta mielenosoitukset löytyvät', '2 500 €', 'Valmistelussa', 'Lahjoittaminen ei ole vielä avoinna',
       'jatkuvuuden turvaamiseen', 'href="/contact"', 'MobilePay 1', 'MobilePay 2',
       '<article class="public-content campaign-page" lang="fi">']) assert(fundBody.includes(text), text);
-    assert.match(fundBody, /datetime="2026-11-15"[^]*datetime="2027-02-15"/i);
+    assert.match(fundBody, /datetime="2026-11-16"[^]*datetime="2027-02-16"/i);
     for (const text of ['Näin lahjoitat', 'Tilinumero (IBAN)', 'name="iban"', 'type="submit"']) assert(!fundBody.includes(text), text);
     assert(fundLive.html.includes('rel="canonical" href="https://example.test/ker%C3%A4ys"'));
     assert(fundLive.html.includes('/static/css/public-content.css'));

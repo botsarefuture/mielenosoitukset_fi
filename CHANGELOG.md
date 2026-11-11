@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Event cards no longer show a broken picture when an image is missing: they try the next stored image and otherwise drop the image area (#579). Three past events currently point to missing CDN previews.
 - Fix a recurring demonstration editor page-load error when the legacy modal overlay is absent.
 
 - Make the chat clients reconnect gently after a server restart (2 s first delay, backoff to 60 s, ±50 % jitter) so open tabs no longer reconnect in a burst that trips Apache's `mod_evasive` and blocks normal pages with 403 (#640).

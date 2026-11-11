@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { clockLabel } from '../detail/content';
 import type { Demonstration, Friend, ListingProps } from './types';
 
@@ -28,13 +28,30 @@ export type CardProps = Pick<ListingProps, 'seriesUrl' | 'detailUrl' | 'tagUrl' 
   messages: Pick<ListingProps['messages'], 'startingFrom' | 'endTime' | 'cancelled' | 'today' | 'loginPrompt' | 'loadingFriends' | 'attendingSuffix' | 'invite'>;
 };
 
+/** Card image that tries the next stored image when one fails and drops the
+ * image area when none load, instead of showing a broken picture (#579). */
+export function CardImage({ sources, alt }: { sources: string[]; alt: string }) {
+  const [index, setIndex] = useState(0);
+  const image = useRef<HTMLImageElement>(null);
+  const src = sources[index];
+  useEffect(() => {
+    // A server-rendered image may already have failed before hydration.
+    const element = image.current;
+    if (element && element.complete && element.naturalWidth === 0) setIndex(current => current + 1);
+  }, [src]);
+  if (!src) return null;
+  return <div className="demo-card-image"><img ref={image} src={src} alt={alt} loading="lazy"
+    onError={() => setIndex(current => current + 1)} /></div>;
+}
+
 export function DemonstrationCard({ event, props, friends }: {
   event: Demonstration; props: CardProps; friends: Friend[] | null;
 }) {
   const text = props.messages;
   const tags = Array.isArray(event.tags) ? event.tags.filter(tag => typeof tag === 'string') : [];
   const pride = tags.some(tag => tag.toLowerCase() === 'pride');
-  const cover = event.cover_picture || event.cover_image || event.preview_image || event.img;
+  const covers = [...new Set([event.cover_picture, event.cover_image, event.preview_image, event.img]
+    .filter((value): value is string => typeof value === 'string' && value.length > 0))];
   const href = eventHref(event, props);
   const start = clockLabel(event.start_time_display) || clockLabel(event.start_time);
   const end = clockLabel(event.end_time_display) || clockLabel(event.end_time);
@@ -53,7 +70,7 @@ export function DemonstrationCard({ event, props, friends }: {
       {event.date === localDate && <span className="demo-badge today-badge">{text.today}</span>}
       {pride && <span className="demo-badge pride-badge">Pride</span>}
     </div>
-    {cover && <div className="demo-card-image"><img src={cover} alt={event.title || ''} loading="lazy" /></div>}
+    {covers.length > 0 && <CardImage key={covers.join('\n')} sources={covers} alt={event.title || ''} />}
     <div className="demo-card-title"><a href={href}><span>{event.title}</span></a></div>
     <div className="demo-card-details">
       <div className="demo-card-date-time">

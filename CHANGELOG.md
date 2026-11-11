@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Event cards no longer show a broken picture when an image is missing: they try the next stored image and otherwise drop the image area (#579). Three past events currently point to missing CDN previews.
 - Explain on `/cities` that the list is not every Finnish municipality: it shows places that have had or will have demonstrations, and places where the service has been enabled, for example when a city admin is appointed.
 - Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
 

@@ -121,7 +121,8 @@
               {% endif %}
             </td>
             <td class="city-admin-coverage city-admin-coverage--{{ row.coverage }}">
-              {% if row.coverage == 'none' %}{{ _('Ei kaupunkiadminia') }}
+              {% if row.coverage == 'national' %}{{ _('Valtakunnallinen tiimi') }}
+              {% elif row.coverage == 'none' %}{{ _('Ei kaupunkiadminia') }}
               {% elif row.coverage == 'single' %}{{ _('Yksi, haetaan toista') }}
               {% else %}{{ _('Tiimi: %(count)s', count=row.admin_count) }}{% endif %}
             </td>
@@ -155,7 +156,7 @@ function filterCities() {
       (status === 'relevant' && row.dataset.relevant === 'true') ||
       (status === 'enabled' && enabled) ||
       (status === 'disabled' && !enabled) ||
-      (status === 'needs-admins' && row.dataset.relevant === 'true' && row.dataset.coverage !== 'team');
+      (status === 'needs-admins' && row.dataset.relevant === 'true' && (row.dataset.coverage === 'none' || row.dataset.coverage === 'single'));
     row.hidden = !(matchesName && matchesStatus);
     if (!row.hidden) shown += 1;
   });

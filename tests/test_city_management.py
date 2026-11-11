@@ -205,4 +205,5 @@ def test_admin_city_control_shows_admin_coverage_against_the_two_admin_target(ap
     assert "city-admin-coverage--single" in coverage_cell("Turku") and "Yksi, haetaan toista" in coverage_cell("Turku")
     assert "city-admin-coverage--none" in coverage_cell("Oulu") and "Ei kaupunkiadminia" in coverage_cell("Oulu")
     assert '<option value="needs-admins">' in page
+    assert "city-admin-coverage--national" in coverage_cell("Helsinki") and "Valtakunnallinen tiimi" in coverage_cell("Helsinki")
     assert "Tavoite on vähintään 2 aktiivista kaupunkiadminia" in page

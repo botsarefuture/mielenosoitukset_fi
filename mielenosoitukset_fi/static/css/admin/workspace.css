@@ -3359,6 +3359,7 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
   color: var(--product-danger);
 }
 
+.city-admin-shell .city-admin-coverage--national,
 .city-admin-shell .city-admin-coverage--team {
   color: var(--product-success);
 }

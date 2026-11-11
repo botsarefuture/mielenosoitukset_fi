@@ -61,6 +61,11 @@ def _grant_counts_by_city():
 # The organisational target: at least two active city admins per city. It is a
 # goal shown to administrators, never an enforced limit.
 CITY_ADMIN_TARGET = 2
+# Cities moderated by the national admin team rather than local city admins
+# (Helsinki: very high volume and a fragmented local scene). They are never
+# counted as needing admins. Keep in sync with nationallyManagedCities in
+# go-api/city_admin_status.go.
+NATIONALLY_MANAGED_CITIES = frozenset({"helsinki"})
 
 
 def _active_admin_counts_by_city():
@@ -96,7 +101,9 @@ def _active_admin_counts_by_city():
     return {city_key: len(users) for city_key, users in admins.items()}
 
 
-def _coverage(admin_count):
+def _coverage(city_key, admin_count):
+    if city_key in NATIONALLY_MANAGED_CITIES:
+        return "national"
     if admin_count <= 0:
         return "none"
     return "single" if admin_count < CITY_ADMIN_TARGET else "team"
@@ -138,7 +145,7 @@ def city_control():
             "demo_count": demo_counts.get(city_key, 0),
             "grant_count": grant_counts.get(city_key, 0),
             "admin_count": admin_counts.get(city_key, 0),
-            "coverage": _coverage(admin_counts.get(city_key, 0)),
+            "coverage": _coverage(city_key, admin_counts.get(city_key, 0)),
         }
         for city_key, name in sorted(CITY_KEY_TO_NAME.items(), key=lambda item: item[1])
     ]

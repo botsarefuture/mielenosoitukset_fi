@@ -40,7 +40,8 @@ Maintainer direction, 10 November 2026: when a page is redesigned or moved to Re
 - [ ] `POST /suggest_change/<demo_id>`: compares proposed fields and Markdown, stores a demonstration suggestion, opens a case and notifies moderators; GET/HEAD now belongs to the React host.
 - [ ] `POST /kampanja/api/volunteers` and `/kampanja/confirm/<token>`.
 - [ ] `POST /upcoming/translations/join`. *(approval: permissions)*
-- [ ] Analytics beacons `/api/analytics/pageview` and `/api/analytics/event`.
+- [ ] Analytics event `/api/analytics/event`: Go handler shipped dark (Flask still serves it). To activate: set `SITE_ANALYTICS_ENABLED=true` for the Go API on production, cross-check Go against Flask output, then add the POST rule; steps in `docs/go-public-api.md`. *(approval: production config)*
+- [ ] Analytics pageview `/api/analytics/pageview`: still Flask; visitor-secret/locale decisions remain prerequisites.
 - [ ] Fundraising details: today bundled from `fundraising.json` into the host; a Go endpoint would let it change without a host deploy.
 
 ## UI follow-ups from reviews
@@ -107,7 +108,7 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 
 ## Operations
 
-- [ ] **OPS-01:** backup coverage and freshness, failure alerts, recovery access and ownership.
+- [ ] **OPS-01:** backup coverage and freshness, failure alerts, recovery access and ownership. **Checked 11 Nov 2026: no database backup exists**; ready-to-install kit and runbook in `docs/backups.md`. *(approval: install on lc-main; choose off-site copy and alert channel)*
 - [ ] **OPS-02:** authorized recovery exercises with recorded RPO and RTO.
 - [ ] **OPS-03:** review Web Vitals once there are enough samples.
 - [ ] **OPS-04:** keep exact-build deployment, rollback and CDN contracts.

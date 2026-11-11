@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Make the chat clients reconnect gently after a server restart (2 s first delay, backoff to 60 s, ±50 % jitter) so open tabs no longer reconnect in a burst that trips Apache's `mod_evasive` and blocks normal pages with 403 (#640).
 - Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
 
 - Privacy: stop storing volunteer confirmation tokens in page-view analytics (`/kampanja/confirm/<token>` now counts as `confirm`), and make recorded events honour Do Not Track and the site analytics switch like page views already did.

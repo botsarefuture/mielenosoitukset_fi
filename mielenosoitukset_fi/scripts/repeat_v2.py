@@ -146,7 +146,10 @@ def mark_break_children_cancelled(parent_demo: dict) -> int:
             "cancelled": {"$ne": True},
         }
     )
+    frozen_child_ids = _frozen_child_ids(parent_demo)
     for child in children:
+        if str(child["_id"]) in frozen_child_ids:
+            continue
         update_doc = {
             "cancelled": True,
             "cancelled_at": utcnow(),

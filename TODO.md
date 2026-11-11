@@ -91,7 +91,7 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 - [ ] **CITY-01:** city review dashboard with an authoritative deadline countdown (#967).
 - [ ] **CITY-02:** urgent pending-event alerts to Telegram through a durable outbox (#963).
 - [ ] **CASE-01/02:** let submitters answer case questions and follow progress (#976).
-- [ ] Recurring demonstration cancellation breaks: #620 is useful but over 1,000 commits behind; rebase or redo it.
+- [x] Recurring demonstration cancellation breaks: #620 redone on current main with inclusive date ranges, validation and frozen-child protection.
 - [ ] Production performance and hosting review (#859).
 
 ## Privacy and audit logging

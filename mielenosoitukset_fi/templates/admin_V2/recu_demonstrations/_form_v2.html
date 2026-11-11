@@ -288,6 +288,23 @@
                     {% endif %}
                 </div>
                 <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-break-date">{{ _('Lisää taukopäivä') }}</button>
+                <label class="block font-medium mb-1 mt-4">{{ _('Taukojaksot') }}</label>
+                <p class="text-muted">{{ _('Alku- ja loppupäivä kuuluvat taukoon. Enintään 366 päivää. Tallennetut jaksot näkyvät taukopäivinä.') }}</p>
+                <div id="break-range-list" class="child-demo-list"></div>
+                <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-break-range">{{ _('Lisää taukojakso') }}</button>
+                <template id="break-range-template">
+                    <div class="admin-panel-inset">
+                        <div class="admin-form-grid">
+                            <label class="admin-field">{{ _('Alkupäivä') }}
+                                <input type="date" name="break_start_dates" class="form-control" required>
+                            </label>
+                            <label class="admin-field">{{ _('Loppupäivä') }}
+                                <input type="date" name="break_end_dates" class="form-control" required>
+                            </label>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm mt-2" data-remove-break-range>{{ _('Poista') }}</button>
+                    </div>
+                </template>
             </div>
 
             <section
@@ -345,6 +362,15 @@
                     `;
                     breakDateList.appendChild(row);
                     bindBreakDateRemove(row.querySelector('[data-remove-break-date]'));
+                });
+                document.getElementById('add-break-range').addEventListener('click', () => {
+                    const row = document.getElementById('break-range-template').content.cloneNode(true);
+                    row.querySelector('[data-remove-break-range]').addEventListener('click', (event) => {
+                        event.currentTarget.closest('.admin-panel-inset').remove();
+                    });
+                    const firstInput = row.querySelector('input');
+                    document.getElementById('break-range-list').appendChild(row);
+                    firstInput.focus();
                 });
             </script>
         </section>

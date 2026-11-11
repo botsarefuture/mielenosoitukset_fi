@@ -1,6 +1,8 @@
 import functools
 import io
-from datetime import date
+from datetime import date, timedelta
+
+import pytest
 
 from bson import ObjectId
 from mielenosoitukset_fi.utils.classes import RecurringDemonstration
@@ -285,7 +287,20 @@ def test_admin_can_bulk_cancel_selected_recurring_children(admin_client, db, see
     assert db.demo_edit_history.count_documents({"demo_id": str(selected_id)}) == 1
 
 
-def test_admin_recurring_break_date_cancels_existing_child(admin_client, db, seeded_data):
+@pytest.mark.parametrize("range_fields, expected_dates", [
+    ({}, ["2026-07-01"]),
+    (
+        {"break_start_dates": ["2026-06-30"], "break_end_dates": ["2026-07-02"]},
+        ["2026-06-30", "2026-07-01", "2026-07-02"],
+    ),
+    (
+        {"break_start_dates": ["2026-01-01"], "break_end_dates": ["2027-01-01"]},
+        [(date(2026, 1, 1) + timedelta(days=offset)).isoformat() for offset in range(366)],
+    ),
+])
+def test_admin_recurring_break_date_cancels_existing_child(
+    admin_client, db, seeded_data, range_fields, expected_dates
+):
     parent_id = seeded_data["recu_demo_id"]
     child_id = ObjectId()
     db.demonstrations.insert_one(
@@ -301,6 +316,15 @@ def test_admin_recurring_break_date_cancels_existing_child(admin_client, db, see
             "event_type": "STAY_STILL",
             "cancelled": False,
         }
+    )
+    child = db.demonstrations.find_one({"_id": child_id})
+    frozen_id = ObjectId()
+    frozen_child = {**child, "_id": frozen_id}
+    db.demonstrations.insert_one(frozen_child)
+    outside_id = ObjectId()
+    db.demonstrations.insert_one({**child, "_id": outside_id, "date": "2027-01-02"})
+    db.recu_demos.update_one(
+        {"_id": parent_id}, {"$set": {"freezed_children": [str(frozen_id)]}}
     )
 
     response = admin_client.post(
@@ -318,6 +342,7 @@ def test_admin_recurring_break_date_cancels_existing_child(admin_client, db, see
             "frequency_type": "weekly",
             "frequency_interval": "1",
             "break_dates": ["2026-07-01"],
+            **range_fields,
             "organizer_name_1": "Test Organization",
             "organizer_email_1": "bob@example.test",
             "organizer_id_1": str(ObjectId()),
@@ -328,18 +353,60 @@ def test_admin_recurring_break_date_cancels_existing_child(admin_client, db, see
     assert response.status_code == 302
     parent = db.recu_demos.find_one({"_id": parent_id})
     child = db.demonstrations.find_one({"_id": child_id})
-    assert parent["break_dates"] == ["2026-07-01"]
+    assert parent["break_dates"] == expected_dates
     assert child["cancelled"] is True
     assert child["cancellation_reason"] == "Toistuvan mielenosoituksen taukopäivä"
+    assert db.demonstrations.find_one({"_id": frozen_id}) == frozen_child
+    assert db.demonstrations.find_one({"_id": outside_id})["cancelled"] is False
+    page = admin_client.get(f"/admin/recu_demo/edit_recu_demo/{parent_id}").get_data(as_text=True)
+    for value in expected_dates:
+        assert f'name="break_dates" value="{value}"' in page
 
 
+@pytest.mark.parametrize("start, end, message", [
+    ("2026-07-02", "2026-07-01", "loppupäivä ei voi olla ennen"),
+    ("2026-02-30", "2026-03-01", "muodossa vvvv-kk-pp"),
+    ("invalid", "2026-03-01", "muodossa vvvv-kk-pp"),
+    ("2026-01-01", "2027-01-02", "enintään 366 päivää"),
+    ("2026-01-01", "", "Täytä tauon alku- ja loppupäivä"),
+    ("", "2026-01-01", "Täytä tauon alku- ja loppupäivä"),
+])
+def test_admin_rejects_invalid_break_range_without_writes(
+    admin_client, db, seeded_data, start, end, message
+):
+    parent_id = seeded_data["recu_demo_id"]
+    before = db.recu_demos.find_one({"_id": parent_id})
+    children_before = list(db.demonstrations.find({"parent": parent_id}))
+    response = admin_client.post(
+        f"/admin/recu_demo/edit_recu_demo/{parent_id}",
+        data={"break_start_dates": start, "break_end_dates": end},
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert message in response.get_data(as_text=True)
+    assert db.recu_demos.find_one({"_id": parent_id}) == before
+    assert list(db.demonstrations.find({"parent": parent_id})) == children_before
+
+
+@pytest.mark.parametrize("use_range", [False, True])
 def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
-    monkeypatch, db
+    monkeypatch, db, use_range
 ):
     from mielenosoitukset_fi.scripts import repeat_v2
+    from mielenosoitukset_fi.admin.admin_recu_demo_bp import _collect_break_dates
+    from werkzeug.datastructures import MultiDict
+
+    # Both parameter runs generate the same occurrence slugs; start clean.
+    db.recu_demos.delete_many({})
+    db.demonstrations.delete_many({})
 
     parent_id = ObjectId()
     break_child_id = ObjectId()
+    frozen_id = ObjectId()
+    break_dates = _collect_break_dates(MultiDict({
+        "break_start_dates": "2099-07-01",
+        "break_end_dates": "2099-07-08",
+    })) if use_range else ["2099-07-01"]
     parent = {
         "_id": parent_id,
         "title": "Runner break series",
@@ -364,8 +431,8 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
             "end_date": "2099-07-15",
         },
         "created_until": "2099-06-30T00:00:00",
-        "freezed_children": [],
-        "break_dates": ["2099-07-01"],
+        "freezed_children": [frozen_id],
+        "break_dates": break_dates,
         "organizers": [],
     }
     db.recu_demos.insert_one(parent)
@@ -385,6 +452,10 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
         }
     )
     monkeypatch.setattr(repeat_v2, "demonstrations_collection", db.demonstrations)
+    frozen_child = {
+        **db.demonstrations.find_one({"_id": break_child_id}), "_id": frozen_id
+    }
+    db.demonstrations.insert_one(frozen_child)
     monkeypatch.setattr(repeat_v2, "recu_demos_collection", db.recu_demos)
     monkeypatch.setattr(repeat_v2, "stats_collection", db.recu_stats)
     monkeypatch.setattr(repeat_v2, "DRY_RUN", False)
@@ -406,14 +477,16 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
         for doc in db.demonstrations.find({"parent": parent_id}, {"date": 1})
     }
     saved_parent = db.recu_demos.find_one({"_id": parent_id})
+    next_date = "2099-07-15" if use_range else "2099-07-08"
     generated_child = db.demonstrations.find_one(
-        {"parent": parent_id, "date": "2099-07-08"}
+        {"parent": parent_id, "date": next_date}
     )
     assert break_child["cancelled"] is True
     assert "2099-07-01" in created_dates
-    assert "2099-07-08" in created_dates
+    assert ("2099-07-08" in created_dates) == (not use_range)
     assert "2099-07-15" in created_dates
-    assert generated_child["slug"] == "runner-break-series-2099-07-08"
+    assert generated_child["slug"] == f"runner-break-series-{next_date}"
+    assert db.demonstrations.find_one({"_id": frozen_id}) == frozen_child
     assert generated_child["img"] == "/static/uploads/runner-source.jpg"
     assert generated_child["preview_image"] == "https://cdn.example.test/runner-preview.jpg"
     assert saved_parent["created_until"].startswith("2099-07-15")

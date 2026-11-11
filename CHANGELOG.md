@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Recurring demonstration admins can add inclusive breaks of up to 366 days alongside single break dates. Breaks exclude preview and generated dates and cancel existing children without touching frozen children (#620 redone).
+
 - Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
 
 - Privacy: stop storing volunteer confirmation tokens in page-view analytics (`/kampanja/confirm/<token>` now counts as `confirm`), and make recorded events honour Do Not Track and the site analytics switch like page views already did.

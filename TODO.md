@@ -107,7 +107,7 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 
 ## Operations
 
-- [ ] **OPS-01:** backup coverage and freshness, failure alerts, recovery access and ownership.
+- [ ] **OPS-01:** backup coverage and freshness, failure alerts, recovery access and ownership. **Checked 11 Nov 2026: no database backup exists**; ready-to-install kit and runbook in `docs/backups.md`. *(approval: install on lc-main; choose off-site copy and alert channel)*
 - [ ] **OPS-02:** authorized recovery exercises with recorded RPO and RTO.
 - [ ] **OPS-03:** review Web Vitals once there are enough samples.
 - [ ] **OPS-04:** keep exact-build deployment, rollback and CDN contracts.

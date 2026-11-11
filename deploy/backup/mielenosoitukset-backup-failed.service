@@ -1,0 +1,8 @@
+[Unit]
+Description=Report a failed mielenosoitukset.fi MongoDB backup
+
+[Service]
+Type=oneshot
+# Leaves an error-level entry that monitoring can match on. Replace or extend
+# with the team's alert channel once it is chosen (see docs/backups.md).
+ExecStart=/usr/bin/logger -p user.err -t mielenosoitukset-backup "MongoDB backup FAILED; check: journalctl -u mielenosoitukset-mongodb-backup"

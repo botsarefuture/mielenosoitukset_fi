@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Add a Go handler for the event analytics beacon (same aggregate counters, Do Not Track, default-disabled switch). It ships dark: Flask keeps serving both beacons until the documented activation steps are done.
+
 - Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
 
 - Privacy: stop storing volunteer confirmation tokens in page-view analytics (`/kampanja/confirm/<token>` now counts as `confirm`), and make recorded events honour Do Not Track and the site analytics switch like page views already did.

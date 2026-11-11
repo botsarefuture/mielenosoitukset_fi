@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- City listing pages ask visitors to volunteer when the city has no or only one active city admin (target two). Helsinki is moderated by the national admin team and never shows the note. The new Go endpoint `GET /api/cities/{key}/admin-status` exposes only a coverage band, never names or counts.
 - Explain on `/cities` that the list is not every Finnish municipality: it shows places that have had or will have demonstrations, and places where the service has been enabled, for example when a city admin is appointed.
 - Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
 

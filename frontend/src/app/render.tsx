@@ -13,7 +13,7 @@ import { loadDetailHead, loadSeries, selectOccurrence, seriesNavigation, seriesP
 import type { DetailBootstrap, DetailSeries } from './detail-route';
 import { catalog } from './i18n';
 import { ttlCache } from './server-cache';
-import { listingProps, listingQuery, loadListingPage } from './listing';
+import { listingProps, listingQuery, loadCityAdminStatus, loadListingPage } from './listing';
 import type { ListingBootstrap } from './listing';
 import { loadOrganization } from './organization';
 import type { OrganizationBootstrap } from './organization';
@@ -609,7 +609,12 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   if (route.name === 'listing') {
     const props = listingProps(route, config, session);
     const query = listingQuery(route, input.search ?? '', config.locale);
-    listing = { query: input.search ?? '', page: await loadListingPage(readBase, query) };
+    const recruitingCity = route.scope === 'city' ? findCity(route.value!)?.key : undefined;
+    const [page, cityAdminStatus] = await Promise.all([
+      loadListingPage(readBase, query),
+      recruitingCity ? loadCityAdminStatus(readBase, recruitingCity) : Promise.resolve(undefined),
+    ]);
+    listing = { query: input.search ?? '', page, ...(cityAdminStatus ? { cityAdminStatus } : {}) };
     meta = { title: `${props.title} | Mielenosoitukset.fi`, description: props.title,
       canonical: `${config.origin}${input.path}`, robots: 'index, follow' };
     extraHead = '<link rel="stylesheet" href="/static/vendor/flatpickr/4.6.13/flatpickr.min.css">'

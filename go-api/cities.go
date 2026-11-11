@@ -180,7 +180,7 @@ func (a *API) getCities(w http.ResponseWriter, r *http.Request) {
 	}
 	data, err := source.FindCitiesJSON(r.Context())
 	if err != nil {
-		log.Print("City directory read failed")
+		log.Printf("City directory read failed (%s)", dbErrorKind(err))
 		writeError(w, 503, "service unavailable")
 		return
 	}

@@ -70,7 +70,7 @@ func (a *API) getDemonstrationCached(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 404, "demonstration not found")
 		return
 	case err != nil:
-		log.Print("Demonstration identifier lookup failed")
+		log.Printf("Demonstration identifier lookup failed (%s)", dbErrorKind(err))
 		writeError(w, 503, "service unavailable") // stays no-store
 		return
 	}
@@ -83,7 +83,7 @@ func (a *API) getDemonstrationCached(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", notFoundCacheControl)
 		writeError(w, 404, "demonstration not found")
 	default:
-		log.Print("Demonstration database read failed")
+		log.Printf("Demonstration database read failed (%s)", dbErrorKind(err))
 		writeError(w, 503, "service unavailable") // stays no-store
 	}
 }
@@ -106,7 +106,7 @@ func (a *API) getHomeCached(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	data, err := cached.FindHomeJSON(ctx, lang)
 	if err != nil {
-		log.Print("Home database read failed")
+		log.Printf("Home database read failed (%s)", dbErrorKind(err))
 		writeError(w, 503, "service unavailable")
 		return
 	}

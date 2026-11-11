@@ -36,7 +36,9 @@ def test_every_dynamic_demo_card_consumer_includes_shared_card_contract():
         if "js/demo-card-render.js" in source
     }
 
-    assert consumers
+    # The last Flask consumer (list_legacy.html) is gone; React renders cards
+    # now. Any template that still loads the legacy renderer must include the
+    # shared card contract.
     for path, source in consumers.items():
         assert "_modals/_demo-card-template.html" in source, path
 

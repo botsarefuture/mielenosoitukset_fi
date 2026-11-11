@@ -50,6 +50,8 @@ func TestActiveAccountMatchesFlaskRules(t *testing.T) {
 		{bson.M{"confirmed": true, "active": false}, false},
 		{bson.M{"confirmed": true, "banned": true}, false},
 		{bson.M{"confirmed": true, "security_suspension": bson.M{"active": true}}, false},
+		{bson.M{"confirmed": true, "security_suspension": bson.D{{Key: "active", Value: true}}}, false},
+		{bson.M{"confirmed": true, "security_suspension": bson.D{{Key: "active", Value: false}}}, true},
 	}
 	for _, c := range cases {
 		if got := activeAccount(c.doc); got != c.want {

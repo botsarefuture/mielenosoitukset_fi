@@ -15,7 +15,13 @@ jobs:
     # MongoDB 8 rejects Linux 6.19–7.0.13 (SERVER-121912). The latest
     # Ubuntu 24 runner rolled onto kernel 7.0.0 and cannot start the test DB.
     # Keep the same DB/tests; revisit before Ubuntu 22 retires 2027-04-17.
-    runs-on: ubuntu-22.04
+    #
+    # Pushes and same-repository PRs run on the maintainer's self-hosted
+    # `moso-ci` runner, so CI no longer waits on stuck GitHub-hosted jobs.
+    # Fork PRs never run there: untrusted code stays on GitHub-hosted
+    # ubuntu-22.04. To fall back for everything, set the repository variable
+    # MOSO_CI_RUNS_ON to the JSON string "ubuntu-22.04" (with the quotes).
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && 'ubuntu-22.04' || fromJSON(vars.MOSO_CI_RUNS_ON || '["self-hosted","moso-ci"]') }}
     timeout-minutes: 30
 
     steps:

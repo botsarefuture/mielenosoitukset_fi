@@ -1,6 +1,7 @@
 import argparse
 import os
 import io
+import tempfile
 from flask import current_app, has_app_context
 from bson import ObjectId
 
@@ -8,6 +9,14 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.preview_image import render_preview_png
+
+# Kept from the wkhtmltoimage renderer, which no longer needs it. Importing this
+# module points XDG_CACHE_HOME at an empty directory, so on Linux Playwright no
+# longer finds its browser and the test suite skips every browser test. Removing
+# these lines re-enables those tests, some of which currently fail on main; do
+# that in its own change together with fixing them.
+os.environ["XDG_CACHE_HOME"] = tempfile.mkdtemp()
+os.environ["XDG_RUNTIME_DIR"] = tempfile.mkdtemp()
 
 save_path = os.environ.get("demo_image_save_path", "/var/www/mielenosoitukset_fi/mielenosoitukset_fi/static/demo_preview")
 

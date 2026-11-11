@@ -209,6 +209,14 @@ later without rewriting the record of what was decided.
   "kuka käsittelee" on pending events so two admins don't duplicate work.
 - **No hard limits:** the first applicant for a city can be approved alone.
   The city then shows "haetaan toista kaupunkiadminia".
+- **Nationally managed cities (maintainer, 11 November 2026):** Helsinki is
+  moderated by the national admin team, not by local city admins. It has a
+  very large amount of activism and a small but fragmented scene in which
+  people in different organisations may not cooperate because of conflicts,
+  so a local admin could not review everyone's events neutrally. Helsinki
+  therefore shows "Valtakunnallinen tiimi" in the coverage view, never asks
+  visitors to apply, and does not accept city admin applications. Drafts
+  #1086 and #1087 hardcode the list (`helsinki`) in Flask and Go.
 
 ## 9. Data and privacy *(approval)*
 
@@ -259,3 +267,6 @@ with the write handled by the backend.
 7. Should cities enabled by hand without admins stay enabled, or be disabled
    when they have no admin and no events? This affects which cities `/cities`
    shows.
+8. Should the nationally managed cities list stay hardcoded, or become a
+   `city_settings` flag that global admins can toggle (for example if another
+   large city needs the same treatment)?

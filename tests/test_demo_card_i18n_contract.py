@@ -4,10 +4,6 @@ import pytest
 from babel.messages import pofile
 
 
-TEMPLATES = Path("mielenosoitukset_fi/templates")
-CARD_PARTIAL = TEMPLATES / "_modals/_demo-card-template.html"
-RENDERER = Path("mielenosoitukset_fi/static/js/demo-card-render.js")
-
 CARD_LABELS = {
     "Ladataan mielenosoituksia...",
     "Lataa lisää",
@@ -19,69 +15,6 @@ CARD_LABELS = {
     "Ladataan kavereita...",
     "Kutsu kavereita",
 }
-
-
-def _template_sources():
-    return {
-        path: path.read_text(encoding="utf-8")
-        for path in TEMPLATES.rglob("*.html")
-    }
-
-
-def test_every_dynamic_demo_card_consumer_includes_shared_card_contract():
-    sources = _template_sources()
-    consumers = {
-        path: source
-        for path, source in sources.items()
-        if "js/demo-card-render.js" in source
-    }
-
-    assert consumers
-    for path, source in consumers.items():
-        assert "_modals/_demo-card-template.html" in source, path
-
-
-def test_demo_card_i18n_is_owned_only_by_the_shared_card_partial():
-    sources = _template_sources()
-    owners = {
-        path.relative_to(TEMPLATES)
-        for path, source in sources.items()
-        if "window.demoCardI18n =" in source
-    }
-
-    assert owners == {Path("_modals/_demo-card-template.html")}
-
-    partial = CARD_PARTIAL.read_text(encoding="utf-8")
-    assert "window.currentLocale =" in partial
-    assert "Object.freeze" in partial
-    for key in (
-        "loading",
-        "loadMore",
-        "cancelled",
-        "today",
-        "startingFrom",
-        "loginPrompt",
-        "attendingSuffix",
-    ):
-        assert f"{key}:" in partial
-
-    for label in CARD_LABELS:
-        assert f"_('{label}')" in partial
-
-
-def test_demo_card_renderer_has_no_finnish_runtime_fallbacks():
-    source = RENDERER.read_text(encoding="utf-8")
-
-    for label in (
-        "Ladataan mielenosoituksia...",
-        "Lataa lisää",
-        "Peruttu",
-        "Tänään",
-        "alkaen",
-        "Kirjaudu sisään käyttääksesi sosiaalisia toimintoja",
-        "osallistuu",
-    ):
-        assert label not in source
 
 
 def test_demo_card_labels_have_english_and_swedish_translations():

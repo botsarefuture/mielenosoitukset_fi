@@ -107,7 +107,7 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 
 ## Operations
 
-- [ ] **OPS-01:** backup coverage and freshness, failure alerts, recovery access and ownership.
+- [ ] **OPS-01:** backup coverage and freshness, failure alerts, recovery access and ownership. **Checked 11 Nov 2026: no database backup exists**; ready-to-install kit and runbook in `docs/backups.md`. *(approval: install on lc-main; choose off-site copy and alert channel)*
 - [ ] **OPS-02:** authorized recovery exercises with recorded RPO and RTO.
 - [ ] **OPS-03:** review Web Vitals once there are enough samples.
 - [ ] **OPS-04:** keep exact-build deployment, rollback and CDN contracts.
@@ -132,7 +132,8 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 
 ## Maintenance
 
-- [ ] **CLEAN-01:** remove orphaned `list_legacy.html`, template `submit.css` and tracked backups after checking references.
+- [x] **CLEAN-01:** removed the orphaned `list_legacy.html`, template `submit.css` and eleven tracked `.bak` stylesheets after checking every reference (intentional Flask rollback templates kept).
+- [ ] Retire the legacy card renderer `static/js/demo-card-render.js` and `_modals/_demo-card-template.html`: no template loads them since CLEAN-01; only tests do (`test_public_attendance_window`, `test_public_list_request_state`, `test_public_windowed_loading`, `test_demo_card_i18n_contract`).
 - [ ] **CLEAN-02:** consolidate legacy palettes and hero geometry.
 - [ ] **CLEAN-04:** keep a finite exception list for dynamic styles and a CSS cache contract.
 - [ ] Admin dashboard workflow: pagination, previews and clearer edit fields (#552); organization form UI (#178).

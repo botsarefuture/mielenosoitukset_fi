@@ -4,6 +4,7 @@ from flask_babel import _
 from flask_login import current_user, login_required
 
 from mielenosoitukset_fi.utils.cities import CITY_KEY_TO_NAME, normalize_city_key
+from mielenosoitukset_fi.utils.city_assignment import ESCALATION_PERMISSION
 from mielenosoitukset_fi.utils.city_settings import enabled_city_keys, upsert_city_setting
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.system_teams import active_account
@@ -57,7 +58,6 @@ def _grant_counts_by_city():
             counts[city_key] = counts.get(city_key, 0) + group["count"]
     return counts
 
-
 # The organisational target: at least two active city admins per city. It is a
 # goal shown to administrators, never an enforced limit.
 CITY_ADMIN_TARGET = 2
@@ -69,9 +69,15 @@ NATIONALLY_MANAGED_CITIES = frozenset({"helsinki"})
 
 
 def _active_admin_counts_by_city():
-    """Count distinct users with an unrevoked city grant whose account can act."""
+    """Count distinct users who can approve demonstrations in each city.
+
+    Same rule as ``active_city_admins_for_city``: an unrevoked city grant that
+    carries ``ACCEPT_DEMO``, held by an account that can act. View-only or
+    case-only grants are not moderation coverage.
+    """
     grants = list(mongo.admin_scope_grants.find(
-        {"scope_type": "city", "$or": [{"revoked_at": {"$exists": False}}, {"revoked_at": None}]},
+        {"scope_type": "city", "permissions": ESCALATION_PERMISSION,
+         "$or": [{"revoked_at": {"$exists": False}}, {"revoked_at": None}]},
         {"user_id": 1, "scope_keys": 1, "scope_key": 1},
     ))
     user_ids = {grant.get("user_id") for grant in grants if grant.get("user_id")}
@@ -91,10 +97,12 @@ def _active_admin_counts_by_city():
         user = str(grant.get("user_id"))
         if user not in active:
             continue
-        keys = grant.get("scope_keys")
-        if keys is None and grant.get("scope_key"):
-            keys = [grant.get("scope_key")]
-        for raw in keys or []:
+        # Grants may store a list or a single string, in either field.
+        keys = grant.get("scope_keys") or []
+        keys = [keys] if isinstance(keys, str) else list(keys)
+        if grant.get("scope_key"):
+            keys.append(grant["scope_key"])
+        for raw in keys:
             city_key = normalize_city_key(raw)
             if city_key in CITY_KEY_TO_NAME:
                 admins.setdefault(city_key, set()).add(user)

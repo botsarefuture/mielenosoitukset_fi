@@ -177,7 +177,7 @@ def test_admin_city_control_shows_admin_coverage_against_the_two_admin_target(ap
 
     db.admin_scope_grants.delete_many({})
     db.city_settings.update_many({}, {"$set": {"enabled": False}})
-    for key in ("tampere", "turku", "oulu"):
+    for key in ("tampere", "turku", "oulu", "kuopio"):
         db.city_settings.update_one({"city_key": key}, {"$set": {"enabled": True}}, upsert=True)
 
     def account(**fields):
@@ -187,10 +187,13 @@ def test_admin_city_control_shows_admin_coverage_against_the_two_admin_target(ap
 
     def grant(user_id, keys, **fields):
         db.admin_scope_grants.insert_one({"user_id": user_id, "scope_type": "city", "scope_keys": keys,
-                                          "permissions": ["LIST_DEMOS"], **fields})
+                                          "permissions": ["LIST_DEMOS", "ACCEPT_DEMO"], **fields})
 
     first, second, banned, revoked = account(), account(), account(banned=True), account()
+    viewer, scalar = account(), account()
     grant(first, ["tampere", "turku"])
+    grant(viewer, ["oulu"], permissions=["LIST_DEMOS", "VIEW_CASE"])  # cannot approve: not coverage
+    grant(scalar, "kuopio")                   # a single string scope still counts
     grant(str(second), ["tampere"])           # string user ids are still counted
     grant(banned, ["turku"])                  # inactive accounts are not coverage
     grant(revoked, ["oulu"], revoked_at=utcnow())
@@ -204,6 +207,7 @@ def test_admin_city_control_shows_admin_coverage_against_the_two_admin_target(ap
     assert "city-admin-coverage--team" in coverage_cell("Tampere") and "Tiimi: 2" in coverage_cell("Tampere")
     assert "city-admin-coverage--single" in coverage_cell("Turku") and "Yksi, haetaan toista" in coverage_cell("Turku")
     assert "city-admin-coverage--none" in coverage_cell("Oulu") and "Ei kaupunkiadminia" in coverage_cell("Oulu")
+    assert "city-admin-coverage--single" in coverage_cell("Kuopio")
     assert '<option value="needs-admins">' in page
     assert "city-admin-coverage--national" in coverage_cell("Helsinki") and "Valtakunnallinen tiimi" in coverage_cell("Helsinki")
     assert "Tavoite on vähintään 2 aktiivista kaupunkiadminia" in page

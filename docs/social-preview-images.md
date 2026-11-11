@@ -41,3 +41,17 @@ zeros, the site's dot clock with an en dash. A Finnish open-compound suffix
 All colours and the background live in `PreviewTheme`. A theme's `background`
 callable can return any image, so a future organizer-supplied template can
 reuse the text layout without changing the renderer.
+
+## Before and after
+
+Sample events rendered with the old template (left) and the new generator (right).
+Production images keep the old design until they are regenerated.
+
+![Feed crop: old square cropped to 1.91:1 vs new](social-preview-images/feed-crop.jpg)
+![Short title](social-preview-images/01-short.jpg)
+![Long title](social-preview-images/02-long-title.jpg)
+![Long address](social-preview-images/03-long-address.jpg)
+![Cancelled](social-preview-images/05-cancelled.jpg)
+![Finnish and Swedish letters](social-preview-images/07-finnish-chars.jpg)
+![Pride](social-preview-images/08-pride.jpg)
+![Overlong title](social-preview-images/09-overlong.jpg)

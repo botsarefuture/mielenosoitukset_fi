@@ -140,14 +140,13 @@ export default function CityAdminApplyScreen({ session }: { session: SessionSumm
         <p>Tavoitteena on vähintään kaksi kaupunkiadminia paikkakuntaa kohden. Helsingin ilmoitukset käsittelee valtakunnallinen ylläpitotiimi.</p>
       </section>
 
-      {result?.kind === 'success' ? null : <MyApplications applications={applications} />}
+      <MyApplications applications={applications} />
 
       <section className="public-prose-card" aria-labelledby="city-admin-form-title">
         <h2 id="city-admin-form-title">Hae kaupunkiadminiksi</h2>
         {result ? <div className={`flash-message flash-message--inline flash-${result.kind === 'success' ? 'success' : 'error'}`}
           role={result.kind === 'success' ? 'status' : 'alert'}><span className="flash-text">{result.message}</span></div> : null}
-        {result?.kind === 'success' ? <MyApplications applications={applications} /> : null}
-        {!session.authenticated ? <p>Hakeminen vaatii käyttäjätilin, jonka sähköpostiosoite on vahvistettu.{' '}
+        {result?.kind === 'success' ? null : !session.authenticated ? <p>Hakeminen vaatii käyttäjätilin, jonka sähköpostiosoite on vahvistettu.{' '}
           <a href={`/users/auth/login?next=${encodeURIComponent(cityAdminPath)}`}>Kirjaudu sisään</a> tai{' '}
           <a href="/users/auth/register">luo tili</a>.</p>
         : open ? <p>Sinulla on käsittelyssä oleva hakemus. Voit hakea uudelleen, kun se on käsitelty.</p>

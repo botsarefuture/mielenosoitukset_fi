@@ -18,12 +18,12 @@
   gap: 0.5rem;
 }
 
-.city-admin-picker__row input {
+.contact-form .city-admin-picker__row input {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.city-admin-picker__row button {
+.contact-form .city-admin-picker__row button {
   flex: 0 0 auto;
   margin-top: 0;
 }
@@ -58,7 +58,7 @@
   color: var(--product-text);
 }
 
-.city-admin-chips button {
+.contact-form .city-admin-chips button {
   display: inline-grid;
   place-items: center;
   width: 28px;

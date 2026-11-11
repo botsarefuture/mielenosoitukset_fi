@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Signed-in users can apply to become a city admin at `/kaupunkiadmin`. They choose cities, describe their activism and can name references. Each application becomes a review case for the national team. Local city admins can read and comment on applications for their own cities. Only global admins record decisions, and approving never grants rights on its own. City pages recruiting admins now link to the form.
 - City listing pages ask visitors to volunteer when the city has no or only one active city admin (target two). Cities without a city admin say that the national admin team reviews their events. Helsinki is moderated by the national admin team and never shows the note. The new Go endpoint `GET /api/cities/{key}/admin-status` exposes only a coverage band, never names or counts.
 - Explain on `/cities` that the list is not every Finnish municipality: it shows places that have had or will have demonstrations, and places where the service has been enabled, for example when a city admin is appointed.
 - Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.

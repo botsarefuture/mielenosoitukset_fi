@@ -265,7 +265,7 @@ func listingCard(doc bson.M, lang string) bson.M {
 	if day, valid := cardDate(payload["date"]); valid {
 		card["date_display"] = day
 	}
-	card["cover_image"] = firstCardImage(doc, "cover_picture", "cover_image", "preview_image", "img", "gallery_images", "images")
+	card["cover_image"] = cardImage(doc)
 	id, _ := payload["_id"].(string)
 	identifier := id
 	if slug, ok := payload["slug"].(string); ok && validIdentifier(slug) {

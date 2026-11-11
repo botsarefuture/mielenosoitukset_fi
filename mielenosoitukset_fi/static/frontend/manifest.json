@@ -1,10 +1,10 @@
 {
-  "_DemonstrationCard-DeuMfo6M.js": {
-    "file": "assets/DemonstrationCard-DeuMfo6M.js",
+  "_DemonstrationCard-sjlaHUwt.js": {
+    "file": "assets/DemonstrationCard-sjlaHUwt.js",
     "name": "DemonstrationCard",
     "imports": [
       "_mount-island-Bd8CA551.js",
-      "_content-tVgIKZNL.js"
+      "_event-image-DRs7xo9N.js"
     ]
   },
   "_VolunteerForm-C4ZyW9zS.js": {
@@ -14,9 +14,9 @@
       "_mount-island-Bd8CA551.js"
     ]
   },
-  "_content-tVgIKZNL.js": {
-    "file": "assets/content-tVgIKZNL.js",
-    "name": "content"
+  "_event-image-DRs7xo9N.js": {
+    "file": "assets/event-image-DRs7xo9N.js",
+    "name": "event-image"
   },
   "_mount-island-Bd8CA551.js": {
     "file": "assets/mount-island-Bd8CA551.js",
@@ -55,13 +55,13 @@
     ]
   },
   "src/entries/detail.tsx": {
-    "file": "assets/detail-Dq1G796D.js",
+    "file": "assets/detail-CVQgYiEN.js",
     "name": "detail",
     "src": "src/entries/detail.tsx",
     "isEntry": true,
     "imports": [
       "_mount-island-Bd8CA551.js",
-      "_content-tVgIKZNL.js"
+      "_event-image-DRs7xo9N.js"
     ],
     "dynamicImports": [
       "src/components/detail/DetailMap.tsx"
@@ -77,39 +77,39 @@
     ]
   },
   "src/entries/home.tsx": {
-    "file": "assets/home-ELlCJyuu.js",
+    "file": "assets/home-R74foOZd.js",
     "name": "home",
     "src": "src/entries/home.tsx",
     "isEntry": true,
     "imports": [
       "_mount-island-Bd8CA551.js",
-      "_DemonstrationCard-DeuMfo6M.js"
+      "_DemonstrationCard-sjlaHUwt.js"
     ],
     "css": [
       "assets/public-detail-DZkY5NCy.css"
     ]
   },
   "src/entries/listing.tsx": {
-    "file": "assets/listing-BJ40tq27.js",
+    "file": "assets/listing-C_91XOf_.js",
     "name": "listing",
     "src": "src/entries/listing.tsx",
     "isEntry": true,
     "imports": [
       "_mount-island-Bd8CA551.js",
-      "_DemonstrationCard-DeuMfo6M.js"
+      "_DemonstrationCard-sjlaHUwt.js"
     ],
     "css": [
       "assets/public-detail-DZkY5NCy.css"
     ]
   },
   "src/entries/pride.tsx": {
-    "file": "assets/pride-B5Ux0ZBY.js",
+    "file": "assets/pride-Cs4FFJaE.js",
     "name": "pride",
     "src": "src/entries/pride.tsx",
     "isEntry": true,
     "imports": [
       "_mount-island-Bd8CA551.js",
-      "_DemonstrationCard-DeuMfo6M.js"
+      "_DemonstrationCard-sjlaHUwt.js"
     ]
   },
   "src/entries/submit-react.tsx": {

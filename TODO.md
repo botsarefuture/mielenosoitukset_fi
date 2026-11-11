@@ -130,6 +130,11 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 - [ ] **PRODUCT-01:** broader societal events (#583), following tags (#117), city and tag email subscriptions (#121).
 - [ ] Count visitors who browse without JavaScript (a `<noscript>` pixel; filter bots) to decide how much the no-JS fallback matters.
 - [ ] **FUND-01:** fill in the official fundraising details when they are confirmed, then open donations.
+- [ ] **PREVIEW-02: organizer design templates for preview images.** Let organizations upload their own template for a demo's preview image:
+  - Formats: InDesign, Photoshop and Illustrator, or the open-source alternatives the maintainer named ("design craft, photo craft, vector craft"). Decide which formats can be rendered server-side and how much of the file to support, for example named text layers for title, date and place.
+  - Save templates in the organization panel. Organizers pick one when they submit a new demonstration, and it applies automatically to that organization's recurring demonstrations.
+  - Global admins can upload templates for a specific recurring series, for example a weekly "Loppu kansanmurhalle" demonstration.
+  - Open questions: file size limits and malware scanning for uploads, a fallback to the default generated preview, and who may edit a shared template.
 
 ## Maintenance
 

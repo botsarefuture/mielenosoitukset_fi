@@ -248,6 +248,7 @@ func main() {
 	}
 	handler := publicSubmissionHandler(publicResponseCache(a.handler(), shared), client.Database(database), submissionConfig)
 	handler = cityAdminApplicationHandler(handler, client.Database(database), submissionConfig)
+	handler = analyticsEventHandler(handler, analyticsEnabledFromEnv(), incrementAnalyticsEvent(client.Database(database)))
 	handler = campaignPublication(handler, readCampaignPublication(client.Database(database)))
 	handler = publicAvailability(handler, readPublicLockdown(client.Database(database)))
 	if submissionConfig.Origin != "" {

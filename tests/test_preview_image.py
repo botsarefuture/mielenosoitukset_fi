@@ -177,8 +177,16 @@ def test_long_address_is_shortened_but_city_is_kept():
     address = "Pohjoisesplanadi 11–13, Kauppatorin laidalla vastapäätä Presidentinlinnaa"
     text = fit_place(address, "Helsinki", font, 700)
 
-    assert text.endswith("…, Helsinki")
+    assert text == "Pohjoisesplanadi 11–13, Helsinki"
     assert font.getlength(text) <= 700
+
+
+def test_address_without_commas_is_ellipsized_before_city():
+    font = preview._font(preview.BODY_FONT, 36)
+    text = fit_place("Pohjoisesplanadin ja Unioninkadun kulmauksessa oleva aukio", "Helsinki", font, 600)
+
+    assert text.endswith("…, Helsinki")
+    assert font.getlength(text) <= 600
 
 
 def test_finnish_and_swedish_letters_have_glyphs():
@@ -209,6 +217,9 @@ def test_pride_event_uses_rainbow_accent():
     assert plain.getpixel((10, y)) == (0xFF, 0x66, 0x00)
     assert pride.getpixel((10, y)) == (0xE4, 0x03, 0x03)
     assert pride.getpixel((WIDTH - 10, y)) == (0x73, 0x29, 0x82)
+    # A white hairline separates the stripes from the blue hero.
+    gap_y = preview.BAND_TOP - preview.PRIDE_EXTRA - 1
+    assert pride.getpixel((900, gap_y)) == (0xFF, 0xFF, 0xFF)
 
 
 def test_missing_fields_still_render():

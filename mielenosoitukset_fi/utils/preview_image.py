@@ -352,7 +352,13 @@ def fit_title(title: str, max_width: float, max_height: float) -> TitleLayout:
 
 
 def fit_place(place: str, city: str, font, max_width: float) -> str:
-    """Join address and city, shortening the address first so the city stays."""
+    """Join address and city, shortening the address first so the city stays.
+
+    A long address drops its trailing comma-separated parts first
+    (``Pohjoisesplanadi 11–13, Kauppatorin laidalla`` → ``Pohjoisesplanadi
+    11–13``), so the line never reads ``…, Helsinki`` unless even the first
+    part is too long.
+    """
     if not place:
         return ellipsize(city, font, max_width)
     if not city:
@@ -364,7 +370,12 @@ def fit_place(place: str, city: str, font, max_width: float) -> str:
     room = max_width - _text_width(font, suffix)
     if room < _text_width(font, "Xxxxx…"):
         return ellipsize(full, font, max_width)
-    return ellipsize(place, font, room) + suffix
+    parts = [part.strip() for part in place.split(",") if part.strip()]
+    for count in range(len(parts) - 1, 0, -1):
+        shorter = ", ".join(parts[:count])
+        if _text_width(font, shorter) <= room:
+            return shorter + suffix
+    return ellipsize(parts[0] if parts else place, font, room) + suffix
 
 
 # ---------------------------------------------------------------------------
@@ -375,6 +386,8 @@ PAD_X = 72
 HEADER_Y = 52
 BAND_TOP = 456
 ACCENT_HEIGHT = 8
+PRIDE_EXTRA = 6  # Pride stripes: 14px in all
+PRIDE_GAP = 3
 TITLE_TOP = 124
 TITLE_BOTTOM = BAND_TOP - 32
 
@@ -433,10 +446,15 @@ def render_preview(demo, theme: PreviewTheme = DEFAULT_THEME) -> Image.Image:
 
     # Accent rule and information band.
     if content.pride:
+        # A white hairline above the stripes keeps the blue and violet stripes
+        # from merging into the blue hero; the stripes are taller than the
+        # orange rule so each colour reads at feed size.
+        top = BAND_TOP - PRIDE_EXTRA
+        draw.rectangle((0, top - PRIDE_GAP, WIDTH, top - 1), fill=theme.band)
         stripe = WIDTH / len(theme.pride_stripes)
         for index, colour in enumerate(theme.pride_stripes):
             draw.rectangle(
-                (round(index * stripe), BAND_TOP, round((index + 1) * stripe) - 1, BAND_TOP + ACCENT_HEIGHT - 1),
+                (round(index * stripe), top, round((index + 1) * stripe) - 1, BAND_TOP + ACCENT_HEIGHT - 1),
                 fill=colour,
             )
     else:

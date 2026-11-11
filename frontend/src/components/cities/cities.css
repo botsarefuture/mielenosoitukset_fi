@@ -3,6 +3,7 @@
 .city-discovery .city-intro { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin: .5rem 0 2rem; }
 .city-discovery h1 { margin: 0 0 .6rem; font-size: clamp(1.8rem, 3vw, 2.7rem); font-weight: 800; color: var(--product-text); line-height: 1.15; letter-spacing: -.025em; text-align: left; }
 .city-discovery .city-intro p { margin: 0; color: var(--product-text-muted); max-width: 48rem; }
+.city-discovery .city-intro .city-scope-note { margin-top: .5rem; font-size: .9rem; }
 .city-discovery .city-search-panel { margin-bottom: 1.5rem; }
 .city-discovery .city-search-label { display: block; margin-bottom: .5rem; font-weight: 700; }
 .city-discovery .city-search-row { display: flex; gap: .75rem; }

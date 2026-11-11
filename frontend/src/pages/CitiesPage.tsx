@@ -52,7 +52,8 @@ export default function CitiesPage({ initialData, endpoint }: { initialData: Cit
   const todayCities = available.filter(city => city.today_count > 0).length;
   return <article className="city-discovery">
     <header className="city-intro"><div><h1>Kaupungit</h1>
-      <p>Valitse kaupunki ja löydä tulevat mielenosoitukset. Tänään järjestettävät tapahtumat näet yhdellä painalluksella.</p></div>
+      <p>Valitse kaupunki ja löydä tulevat mielenosoitukset. Tänään järjestettävät tapahtumat näet yhdellä painalluksella.</p>
+      <p className="city-scope-note">Lista ei kata kaikkia Suomen kuntia. Siinä näkyvät paikkakunnat, joilla on ollut tai on tulossa mielenosoituksia, sekä paikkakunnat, joilla palvelu on otettu käyttöön, esimerkiksi kun paikkakunnalle on nimetty kaupunkiadmin.</p></div>
       <a className="detail-button" href="/mielenosoitukset-tanaan">Mielenosoitukset tänään <span aria-hidden="true">→</span></a>
     </header>
     <section className="city-search-panel" aria-label="Etsi kaupunki">

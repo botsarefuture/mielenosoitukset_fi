@@ -578,6 +578,8 @@ try {
   assert.match(directory.html, /href="\/static\/css\/public-detail.css/);
   const directoryFallback = directory.html.match(/<noscript>(<article[^]*?)<\/noscript>/)[1];
   assert.match(directoryFallback, /Sivu toimii parhaiten, kun JavaScript on käytössä/);
+  assert.match(directory.html, /Lista ei kata kaikkia Suomen kuntia/);
+  assert.match(directoryFallback, /Lista ei kata kaikkia Suomen kuntia/);
   assert.match(directoryFallback, /href="\/demonstrations"/);
   const sortedCities = [...cityCatalog].sort((first, second) => first.name.localeCompare(second.name, 'fi'));
   assert.deepEqual([...directoryFallback.matchAll(/data-city-key="([^"]+)"/g)].map(match => match[1]), sortedCities.map(city => city.key));

@@ -1,4 +1,5 @@
 /** City admin applications (docs/city-admin-applications.md, phase 2). */
+/** Must equal config.urls.cityAdmin. */
 export const cityAdminPath = '/kaupunkiadmin';
 /** Same-origin POST target that Apache routes to the Go API. */
 export const cityAdminSubmitPath = '/kaupunkiadmin';

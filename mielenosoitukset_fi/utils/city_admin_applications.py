@@ -32,12 +32,18 @@ def city_names(keys):
 
 
 def _notify_national_team(db, application, case_id):
-    """Idempotent inbox notices; a stable ID never re-marks a read notice unread."""
+    """Idempotent inbox notices; a stable ID never re-marks a read notice unread.
+
+    Returns False when the configured national team has no eligible members,
+    so delivery stays pending and the next job run retries. Without a
+    configured team (the support-mailbox compatibility mode) there is nobody
+    to notify in the inbox; the case list is then the record.
+    """
     try:
         recipients = national_recipients(db)
     except RuntimeError:
         logger.warning("No national team recipients for city admin application %s", application["_id"])
-        return
+        return False
     payload = {"case_id": case_id, "cities": city_names(application.get("city_keys"))}
     for recipient in recipients:
         user_id = recipient.get("user_id")
@@ -52,6 +58,7 @@ def _notify_national_team(db, application, case_id):
             }},
             upsert=True,
         )
+    return True
 
 
 def deliver_pending(db, limit=50):
@@ -72,7 +79,9 @@ def deliver_pending(db, limit=50):
                 _id=case_id,
             )
             db.cases.update_one({"_id": case_id}, {"$setOnInsert": case.to_dict()}, upsert=True)
-        _notify_national_team(db, application, case_id)
+        if not _notify_national_team(db, application, case_id):
+            # The case exists (stable ID); only the notices are retried.
+            continue
         db.city_admin_applications.update_one(
             {"_id": application["_id"]},
             {"$set": {"case_pending": False, "case_id": case_id, "updated_at": utcnow()}},

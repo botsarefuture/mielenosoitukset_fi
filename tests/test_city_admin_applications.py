@@ -73,3 +73,23 @@ def test_global_admin_decision_closes_the_case_without_granting_rights(admin_cli
     bad = admin_client.post(f"/admin/case/{application}/application_status/", data={"status": "withdrawn"})
     assert bad.status_code == 302
     assert db.city_admin_applications.find_one({"_id": application})["status"] == "approved"
+
+
+def test_delivery_stays_pending_while_the_national_team_has_nobody_to_notify(db, seeded_data, monkeypatch):
+    from mielenosoitukset_fi.utils import city_admin_applications as module
+
+    def unavailable(_db):
+        raise RuntimeError("National administration team has no eligible recipients")
+
+    monkeypatch.setattr(module, "national_recipients", unavailable)
+    application = _application(db, seeded_data["user_id"], ["tampere"])
+    assert deliver_pending(db) == 0
+    assert db.cases.find_one({"_id": application})  # the case itself exists
+    assert db.city_admin_applications.find_one({"_id": application})["case_pending"] is True
+
+    admin = seeded_data["admin_id"]
+    monkeypatch.setattr(module, "national_recipients", lambda _db: [{"user_id": str(admin), "email": "a@example.org"}])
+    assert deliver_pending(db) == 1
+    notice = db.notifications.find_one({"_id": f"city-admin-application:{application}:{admin}"})
+    from mielenosoitukset_fi.utils.notifications import serialize_notification
+    assert serialize_notification(notice)["message"] == "Uusi kaupunkiadminhakemus: Tampere"

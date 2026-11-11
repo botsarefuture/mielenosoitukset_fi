@@ -74,18 +74,31 @@ func activeAccount(doc bson.M) bool {
 	if banned, ok := doc["banned"]; ok && banned != false {
 		return false
 	}
-	if suspension, ok := doc["security_suspension"].(bson.M); ok && suspension["active"] == true {
-		return false
+	// The driver decodes nested documents as bson.D unless told otherwise.
+	switch suspension := doc["security_suspension"].(type) {
+	case bson.M:
+		if suspension["active"] == true {
+			return false
+		}
+	case bson.D:
+		for _, field := range suspension {
+			if field.Key == "active" && field.Value == true {
+				return false
+			}
+		}
 	}
 	return doc["confirmed"] == true
 }
 
-// CountCityAdmins counts distinct users with an unrevoked city grant for key
-// whose account is usable. It reads only ids and status flags.
+// CountCityAdmins counts distinct users who can approve demonstrations in the
+// city: an unrevoked grant with ACCEPT_DEMO (the rule of Flask's
+// active_city_admins_for_city) held by a usable account. It reads only ids and
+// status flags.
 func (s mongoStore) CountCityAdmins(ctx context.Context, key string) (int, error) {
 	db := s.collection.Database()
 	cursor, err := db.Collection("admin_scope_grants").Find(ctx, bson.M{
-		"scope_type": "city",
+		"scope_type":  "city",
+		"permissions": "ACCEPT_DEMO",
 		"$and": bson.A{
 			bson.M{"$or": bson.A{bson.M{"scope_keys": key}, bson.M{"scope_key": key}}},
 			bson.M{"$or": bson.A{bson.M{"revoked_at": bson.M{"$exists": false}}, bson.M{"revoked_at": nil}}},

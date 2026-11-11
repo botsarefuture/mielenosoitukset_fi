@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Add a reproducible route-by-route localization inventory and translator worklist; English and Swedish translations remain with human translators.
+
 - Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
 
 - Privacy: stop storing volunteer confirmation tokens in page-view analytics (`/kampanja/confirm/<token>` now counts as `confirm`), and make recorded events honour Do Not Track and the site analytics switch like page views already did.

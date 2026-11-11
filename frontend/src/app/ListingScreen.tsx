@@ -26,7 +26,7 @@ export default function ListingScreen({ route, config, session, listing }: {
 function CityAdminRecruiting({ status }: { status: 'none' | 'single' }) {
   return <aside className="city-admin-recruiting" aria-label="Kaupunkiadminit">
     <p>{status === 'none'
-      ? 'Paikkakunnalla ei vielä ole kaupunkiadminia, joka tarkistaisi ilmoitukset. Haluatko auttaa?'
+      ? 'Paikkakunnalla ei vielä ole omaa kaupunkiadminia, joten valtakunnallinen ylläpitotiimi tarkistaa täkäläiset ilmoitukset. Haluatko auttaa?'
       : 'Paikkakunnalle haetaan toista kaupunkiadminia. Kiinnostaako?'}{' '}
       <a href="/contact">Ota yhteyttä</a></p>
   </aside>;

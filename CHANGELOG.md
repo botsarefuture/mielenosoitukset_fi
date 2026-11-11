@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Make the chat clients reconnect gently after a server restart (2 s first delay, backoff to 60 s, ±50 % jitter) so open tabs no longer reconnect in a burst that trips Apache's `mod_evasive` and blocks normal pages with 403 (#640).
 - Add a Go handler for the event analytics beacon (same aggregate counters, Do Not Track, default-disabled switch). It ships dark: Flask keeps serving both beacons until the documented activation steps are done.
 - Add a proposal for city admin applications, a proportionate trust model, activism profiles and teams of at least two admins per city (`docs/city-admin-applications.md`). Nothing is implemented yet.
 - Add a ready-to-install nightly MongoDB backup (`deploy/backup/`) with a restore check and 14-day retention, and document the current backup state in `docs/backups.md`. Production has no database backup yet; installing this needs the maintainer's go-ahead.

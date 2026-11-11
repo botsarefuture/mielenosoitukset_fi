@@ -4,7 +4,8 @@ type Friend = { _id: string; username: string; displayname: string; profile_pict
 type Message = { _id: string; sender_id: string; recipient_id: string; type: string; content?: string; read: boolean; extra?: { media_url?: string; demo_id?: string; demo_title?: string } };
 type Events = { connect: undefined; connect_error: unknown; disconnect: unknown; error: unknown; friends_list: { friends: Friend[] }; chat_history: { messages: Message[] }; new_message: { message: Message }; message_read: { message_id: string } };
 type Socket = { on<K extends keyof Events>(event: K, callback: (data: Events[K]) => void): void; emit(event: string, data?: unknown): void; disconnect(): void };
-type SocketWindow = Window & { io?: (options: { withCredentials: boolean }) => Socket };
+type SocketOptions = { withCredentials: boolean; reconnectionDelay?: number; reconnectionDelayMax?: number; randomizationFactor?: number };
+type SocketWindow = Window & { io?: (options: SocketOptions) => Socket };
 
 let client: Promise<NonNullable<SocketWindow['io']>> | undefined;
 function loadClient() {
@@ -84,7 +85,9 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
     timer.current = window.setTimeout(failure, 12000);
     void loadClient().then(io => {
       if (stopped) return;
-      const connection = io({ withCredentials: true }); socket.current = connection;
+      // Gentle, jittered reconnects: after a server restart every open tab would
+      // otherwise reconnect at once and trip Apache's mod_evasive limits (#640).
+      const connection = io({ withCredentials: true, reconnectionDelay: 2000, reconnectionDelayMax: 60000, randomizationFactor: 0.5 }); socket.current = connection;
       connection.on('connect', () => { connection.emit('get_friends'); });
       connection.on('connect_error', failure);
       connection.on('disconnect', failure);

@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Retire the unused Flask event-card renderer and template; public event cards continue to use React.
+
 - Event cards no longer show a broken picture when an image is missing: they try the next stored image and otherwise drop the image area (#579). Three past events currently point to missing CDN previews.
 - Fix a recurring demonstration editor page-load error when the legacy modal overlay is absent.
 

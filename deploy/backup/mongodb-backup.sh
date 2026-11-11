@@ -35,8 +35,9 @@ partial=""
 trap 'rm -rf "$work"; [[ -n "$partial" && -e "$partial" ]] && rm -f "$partial"' EXIT
 
 # Read MONGO_URI and MONGO_DBNAME without echoing them.
-"$python" - "$app_config" "$work/tools.yaml" "$work/dbname" <<'PY'
+"$python" - "$app_config" "$work/tools.yaml" "$work/dbname" "$work/authdb" <<'PY'
 import sys, yaml
+from urllib.parse import parse_qs, urlsplit
 config = yaml.safe_load(open(sys.argv[1], encoding="utf-8")) or {}
 uri, db = config.get("MONGO_URI"), config.get("MONGO_DBNAME")
 if not uri or not db:
@@ -45,9 +46,17 @@ with open(sys.argv[2], "w", encoding="utf-8") as handle:
     handle.write("uri: " + yaml.safe_dump(uri, default_style='"').strip() + "\n")
 with open(sys.argv[3], "w", encoding="utf-8") as handle:
     handle.write(db)
+# Authenticate where the app does. PyMongo uses authSource, else the database
+# in the URI path, else "admin"; the Mongo tools would otherwise use --db.
+parts = urlsplit(uri)
+auth = (parse_qs(parts.query).get("authSource") or [parts.path.lstrip("/") or "admin"])[0]
+with open(sys.argv[4], "w", encoding="utf-8") as handle:
+    handle.write(auth)
 PY
 dbname="$(cat "$work/dbname")"
 [[ "$dbname" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "mongodb-backup: unexpected database name" >&2; exit 2; }
+authdb="$(cat "$work/authdb")"
+[[ "$authdb" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "mongodb-backup: unexpected authentication database" >&2; exit 2; }
 
 install -d -m 0700 "$backup_dir"
 # Clear leftovers from runs that were killed before their own cleanup ran.
@@ -56,12 +65,13 @@ stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 target="$backup_dir/${dbname}-${stamp}.archive.gz"
 partial="$target.partial"
 
-"$mongodump" --config="$work/tools.yaml" --db="$dbname" --archive="$partial" --gzip --quiet
+# No --quiet: on failure mongodump's reason must reach the journal.
+"$mongodump" --config="$work/tools.yaml" --authenticationDatabase="$authdb" --db="$dbname" --archive="$partial" --gzip
 [[ -s "$partial" ]] || { echo "mongodb-backup: dump is empty" >&2; exit 1; }
 # --dryRun alone stops before reading collection data, so first prove the whole
 # gzip stream decompresses and its checksum matches.
 gzip -t "$partial" || { echo "mongodb-backup: archive failed its gzip integrity check" >&2; exit 1; }
-"$mongorestore" --config="$work/tools.yaml" --archive="$partial" --gzip --dryRun --quiet \
+"$mongorestore" --config="$work/tools.yaml" --authenticationDatabase="$authdb" --archive="$partial" --gzip --dryRun --quiet \
   --nsFrom="${dbname}.*" --nsTo="restorecheck_${dbname}.*"
 mv "$partial" "$target"
 partial=""

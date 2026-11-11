@@ -2,7 +2,8 @@
 Generate and upload preview images for demonstrations.
 
 This script queries demonstration records from the MongoDB database,
-creates preview images (screenshots), uploads them to S3, and updates
+renders 1200×630 social preview images (see
+``mielenosoitukset_fi.utils.preview_image``), uploads them to S3, and updates
 the database records with the generated preview URLs.
 
 It supports optional force-regeneration and limiting the demonstrations
@@ -96,7 +97,7 @@ def run(force: bool = False, till: int = 0) -> None:
         if not force and demo.get("preview_image"):
             continue
 
-        # Generate screenshot as bytes
+        # Render the preview image as PNG bytes
         png_bytes = create_screenshot(demo, return_bytes=True)
         if not png_bytes:
             logger.warning(f"Failed to render screenshot for demo {demo_id}")

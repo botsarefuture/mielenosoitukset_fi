@@ -1298,6 +1298,20 @@ def test_demo_editor_static_geometry_uses_shared_form_components():
     assert "var(--admin-workspace-surface-muted)" in workspace
 
 
+def test_recurring_editor_legacy_modal_listener_allows_missing_overlay():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html"
+    ).read_text(encoding="utf-8")
+    base = Path("mielenosoitukset_fi/templates/admin_base.html").read_text(
+        encoding="utf-8"
+    )
+    script = Path("mielenosoitukset_fi/static/js/modal.js").read_text(encoding="utf-8")
+
+    assert "filename='js/modal.js'" in template
+    assert 'id="overlay"' not in template + base
+    assert 'overlay?.addEventListener("click", closeModal)' in script
+
+
 def test_recurring_editor_static_geometry_uses_shared_form_components():
     template = Path(
         "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html"

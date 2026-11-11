@@ -371,3 +371,32 @@ def test_actual_api_image_fields_load_in_react_cards(client, db, seeded_data, li
     browser_page.wait_for_function('(selector) => {const image=document.querySelector(selector); return image?.complete && image.naturalWidth > 0;}', arg=f'[data-demo-id="{seeded_data["demo_id"]}"] .demo-card-image img')
     assert picture.evaluate("e => getComputedStyle(e).objectFit") == 'contain'
     assert picture.bounding_box()['width'] <= browser_page.locator(f'[data-demo-id="{seeded_data["demo_id"]}"]').bounding_box()['width']
+
+
+PIXEL = ('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
+         'YAAAAAYAAjCB0C8AAAAASUVORK5CYII=')
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
+def test_card_images_fall_back_and_hide_when_every_image_fails(live_server, browser_page):
+    """#579: a missing CDN image must not leave a broken picture on the card."""
+    page = browser_page
+    rows = [
+        {'_id': 'fallback', 'title': 'Fallback image', 'date': '2099-01-01', 'city': 'Helsinki', 'tags': [],
+         'cover_picture': f'{live_server}/missing-cover.jpg', 'preview_image': PIXEL},
+        {'_id': 'none-load', 'title': 'No image loads', 'date': '2099-01-02', 'city': 'Helsinki', 'tags': [],
+         'preview_image': f'{live_server}/missing-preview.jpg'},
+        {'_id': 'healthy', 'title': 'Healthy image', 'date': '2099-01-03', 'city': 'Helsinki', 'tags': [],
+         'preview_image': PIXEL},
+    ]
+    page.route('**/missing-*.jpg', lambda route: route.fulfill(status=404, body='missing'))
+    page.route('**/api/demonstrations?*', lambda route: route.fulfill(
+        content_type='application/json', body=json.dumps(result(1, size=3, total_pages=1, rows=rows))))
+    page.goto(live_server + '/demonstrations', wait_until='domcontentloaded')
+    cards = page.locator('.demo-card')
+    expect(cards).to_have_count(3)
+
+    expect(cards.nth(0).locator('.demo-card-image img')).to_have_attribute('src', PIXEL)
+    expect(cards.nth(1).locator('.demo-card-image')).to_have_count(0)
+    expect(cards.nth(2).locator('.demo-card-image img')).to_have_attribute('src', PIXEL)

@@ -578,6 +578,8 @@ try {
   assert.match(directory.html, /href="\/static\/css\/public-detail.css/);
   const directoryFallback = directory.html.match(/<noscript>(<article[^]*?)<\/noscript>/)[1];
   assert.match(directoryFallback, /Sivu toimii parhaiten, kun JavaScript on käytössä/);
+  assert.match(directory.html, /Lista ei kata kaikkia Suomen kuntia/);
+  assert.match(directoryFallback, /Lista ei kata kaikkia Suomen kuntia/);
   assert.match(directoryFallback, /href="\/demonstrations"/);
   const sortedCities = [...cityCatalog].sort((first, second) => first.name.localeCompare(second.name, 'fi'));
   assert.deepEqual([...directoryFallback.matchAll(/data-city-key="([^"]+)"/g)].map(match => match[1]), sortedCities.map(city => city.key));
@@ -724,6 +726,8 @@ try {
   }
   assert.equal(localReads.length, suggestionReads, 'Only exact suggestion routes query Go');
   const apacheRouting = readFileSync(`${root}/deploy/apache/react-ssr-routing.conf`, 'utf8');
+  // The Go event endpoint ships dark: Flask keeps both analytics beacons until activation.
+  assert(!apacheRouting.includes('/api/analytics/'), 'Analytics beacons stay in Flask until the Go endpoint is activated');
   assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/suggest_change/[a-fA-F0-9]{24}$"'));
   console.log('PASS: suggestion SSR fields, Markdown, privacy-safe prefills, no-JS POST, cancel, bootstrap, noindex and failures');
 

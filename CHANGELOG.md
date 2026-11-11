@@ -6,6 +6,12 @@
 
 - Recurring demonstration admins can add inclusive breaks of up to 366 days alongside single break dates. Breaks exclude preview and generated dates and cancel existing children without touching frozen children (#620 redone).
 
+- Add a Go handler for the event analytics beacon (same aggregate counters, Do Not Track, default-disabled switch). It ships dark: Flask keeps serving both beacons until the documented activation steps are done.
+- Add a proposal for city admin applications, a proportionate trust model, activism profiles and teams of at least two admins per city (`docs/city-admin-applications.md`). Nothing is implemented yet.
+- Add a ready-to-install nightly MongoDB backup (`deploy/backup/`) with a restore check and 14-day retention, and document the current backup state in `docs/backups.md`. Production has no database backup yet; installing this needs the maintainer's go-ahead.
+- Remove the orphaned `list_legacy.html`, the unused template-level submission stylesheet and eleven unreferenced CSS backups; live stylesheets and Flask rollback templates are kept.
+
+- Explain on `/cities` that the list is not every Finnish municipality: it shows places that have had or will have demonstrations, and places where the service has been enabled, for example when a city admin is appointed.
 - Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
 
 - Privacy: stop storing volunteer confirmation tokens in page-view analytics (`/kampanja/confirm/<token>` now counts as `confirm`), and make recorded events honour Do Not Track and the site analytics switch like page views already did.

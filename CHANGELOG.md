@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Split MongoDB backups into a nightly core dump without the two audit-log collections (most of the database) and a weekly full dump, so nightly runs stay short and light on lc-db.
 - Fix the nightly MongoDB backup failing to authenticate in production: the Mongo tools now use the same authentication database as the app (the URI's `authSource`, else its path, else `admin`) and log mongodump's error to the journal.
 - Let the test workflow switch to the maintainer's self-hosted `moso-ci` runner without a code change: setting the repository variable `MOSO_CI_RUNS_ON` to `["self-hosted","moso-ci"]` moves pushes and same-repository pull requests there when GitHub-hosted jobs hang, and deleting it moves them back. GitHub-hosted `ubuntu-22.04` stays the default, so CI does not depend on the homelab, and pull requests from forks always run on GitHub-hosted runners.
 - Go API: event pages and recurring-series pages no longer depend on a fast database answer. A public event ID resolves from the API's in-memory list without a database read; slugs, running numbers and series lists are reused from memory and refreshed in the background, and a known answer up to a day old is served when the database fails instead of a "temporarily unavailable" page. A lookup the React host gives up on (after 1.5 s) still completes and is cached for the next request.

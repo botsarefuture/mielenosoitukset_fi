@@ -132,7 +132,8 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 
 ## Maintenance
 
-- [ ] **CLEAN-01:** remove orphaned `list_legacy.html`, template `submit.css` and tracked backups after checking references.
+- [x] **CLEAN-01:** removed the orphaned `list_legacy.html`, template `submit.css` and eleven tracked `.bak` stylesheets after checking every reference (intentional Flask rollback templates kept).
+- [ ] Retire the legacy card renderer `static/js/demo-card-render.js` and `_modals/_demo-card-template.html`: no template loads them since CLEAN-01; only tests do (`test_public_attendance_window`, `test_public_list_request_state`, `test_public_windowed_loading`, `test_demo_card_i18n_contract`).
 - [ ] **CLEAN-02:** consolidate legacy palettes and hero geometry.
 - [ ] **CLEAN-04:** keep a finite exception list for dynamic styles and a CSS cache contract.
 - [ ] Admin dashboard workflow: pagination, previews and clearer edit fields (#552); organization form UI (#178).

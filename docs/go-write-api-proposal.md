@@ -1,8 +1,8 @@
 # Public write APIs: Flask to Go proposal
 
-Status: proposal for maintainer review, 10 November 2026. Documentation only;
-no implementation, session change, schema/index migration, email delivery or
-production activation is authorized here.
+Status: analytics-event step 1 implemented (shipped dark, not routed) on 11 November 2026 at the
+maintainer's request; remaining steps are proposals. No session change,
+schema/index migration, email delivery or production activation was performed.
 
 ## Scope and evidence
 
@@ -17,7 +17,11 @@ References are repository-relative `file:line` locations; line numbers refer to
 the inspected source. **Proposed** sections are recommendations, and **Approval
 questions** are unresolved decisions. No live database, index catalog, proxy,
 session secret, SMTP service or performance baseline was inspected. Tests below
-were read, not executed; their presence is not a claim that they pass today.
+were initially read, not executed; their presence is not a claim that they
+pass today. For event step 1, focused Go and routing tests, Go vet, TypeScript
+checking and the client/SSR builds passed locally. Full socket-based suites
+and live MongoDB checks remain blocked by the sandbox; Mongo integration is
+opt-in via `TEST_MONGODB_URI`.
 
 Two important corrections to the task inventory:
 
@@ -751,9 +755,9 @@ require explicit maintainer approval.
   events. Unlike pageview this is a hostname comparison, not full origin.
   demo_search additionally requires resource length ≥2, migrated listing path,
   exact scheme/netloc and no cross-site Fetch Metadata. Bots are skipped.
-  **Difference:** event recording does not check SITE_ANALYTICS_ENABLED or DNT
-  server-side, unlike pageview. Browser callers may gate themselves; this is
-  not equivalent to an enforced server policy
+  **Updated since #1072:** event recording enforces SITE_ANALYTICS_ENABLED and
+  DNT server-side, like pageview. Go retains those privacy rules, with an
+  explicit default-disabled environment switch for Flask's YAML-only setting
   (`mielenosoitukset_fi/utils/site_analytics.py:781`,
   `mielenosoitukset_fi/utils/site_analytics.py:810`).
 - The shared JS sends map interaction once per page load with pathname, external
@@ -799,8 +803,8 @@ existing allowlists, dimensions, Helsinki/DST boundaries and exclusions before
 considering route coverage expansion. Keep the pageview 1,024-byte ceiling and
 60 requests/minute limit. Propose an event 1,024-byte body bound and 60/minute per-IP limit plus
 shared default ceilings; approve the behavior change (including 429) first.
-Honor disabled analytics and DNT for **both** routes as an explicit privacy fix,
-not purported parity. Do not add cookies, durable event IDs, raw URL/IP storage
+Disabled analytics and DNT are now enforced for **both** Flask routes since
+#1072; event step 1 preserves this. Do not add cookies, durable event IDs, raw URL/IP storage
 or a queue to this hot path.
 
 Each received signal increments once; repeated browser requests remain repeated
@@ -949,9 +953,13 @@ behavior that resubmits a write after a Go timeout.
 
 ## Recommended order: easiest and safest first
 
-1. **Analytics event.** One best-effort counter write, no account authority,
-   mail or business-state transition. First approve the DNT/origin/body-limit
-   differences; keep its own exact rollback rule.
+1. **Analytics event — DONE (implementation).** Go best-effort counter writer,
+   privacy/validation/aggregate-key tests and exact Apache POST rule; Flask
+   remains the rollback path. Contract and activation prerequisites are in
+   `docs/go-public-api.md`. Existing prefetch behavior and absence of an event
+   body cap/rate limit are preserved, not replaced by the proposed tightening.
+   Finnish-only locale is retained without sharing Flask signing keys.
+   Production activation and live Mongo/Apache checks remain operational work.
 2. **Analytics pageview.** Still non-business data and easy routing rollback,
    but only after language, visitor-secret/privacy and campaign/hash fixture
    decisions. Do not bypass those gates to meet this ordering.

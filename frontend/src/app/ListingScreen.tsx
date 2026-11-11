@@ -1,3 +1,4 @@
+import { cityAdminPath } from './city-admin-route';
 import { PublicListingPage } from '../pages/PublicListingPage';
 import type { AppConfig } from './config';
 import { listingProps } from './listing';
@@ -12,7 +13,7 @@ export default function ListingScreen({ route, config, session, listing }: {
   const status = route.scope === 'city' ? listing?.cityAdminStatus : undefined;
   const recruiting = status === 'none' || status === 'single' ? status : undefined;
   return <PublicListingPage {...listingProps(route, config, session)}
-    notice={recruiting ? <CityAdminRecruiting status={recruiting} /> : undefined}
+    notice={recruiting ? <CityAdminRecruiting status={recruiting} city={route.scope === 'city' ? route.value ?? '' : ''} /> : undefined}
     initialData={listing?.page ?? undefined} initialSearch={listing?.query}
     onSearch={search => {
       if (!session.siteAnalyticsEnabled || navigator.doNotTrack === '1') return;
@@ -23,11 +24,11 @@ export default function ListingScreen({ route, config, session, listing }: {
 }
 
 /** A quiet invitation where a city has fewer than two active city admins. */
-function CityAdminRecruiting({ status }: { status: 'none' | 'single' }) {
+function CityAdminRecruiting({ status, city }: { status: 'none' | 'single'; city: string }) {
   return <aside className="city-admin-recruiting" aria-label="Kaupunkiadminit">
     <p>{status === 'none'
       ? 'Paikkakunnalla ei vielä ole kaupunkiadminia, joka tarkistaisi ilmoitukset. Haluatko auttaa?'
       : 'Paikkakunnalle haetaan toista kaupunkiadminia. Kiinnostaako?'}{' '}
-      <a href="/contact">Ota yhteyttä</a></p>
+      <a href={`${cityAdminPath}?city=${encodeURIComponent(city)}`}>Hae kaupunkiadminiksi</a></p>
   </aside>;
 }

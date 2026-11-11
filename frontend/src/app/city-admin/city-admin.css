@@ -1,0 +1,152 @@
+.city-admin-page .public-prose-card ul {
+  padding-inline-start: 1.25rem;
+}
+
+.city-admin-hint {
+  margin: 0;
+  color: var(--product-text-muted);
+  font-size: 0.9rem;
+}
+
+.city-admin-picker {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.city-admin-picker__row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.city-admin-picker__row input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.city-admin-picker__row button {
+  flex: 0 0 auto;
+  margin-top: 0;
+}
+
+.city-admin-field-error {
+  margin: 0;
+  color: var(--product-danger);
+  font-size: 0.9rem;
+}
+
+.city-admin-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.city-admin-page .public-prose-card .city-admin-chips {
+  padding-inline-start: 0;
+}
+
+.city-admin-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.25rem 0.2rem 0.7rem;
+  border: 1px solid var(--product-border);
+  border-radius: 999px;
+  background: var(--product-surface);
+  color: var(--product-text);
+}
+
+.city-admin-chips button {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--product-text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.city-admin-chips button:hover {
+  background: var(--product-border);
+  color: var(--product-text);
+}
+
+.city-admin-chips button:focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: 1px;
+}
+
+.city-admin-fieldset {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1rem 0 0;
+  padding: 0.25rem 1rem 1rem;
+  border: 1px solid var(--product-border);
+  border-radius: 8px;
+}
+
+.city-admin-fieldset legend {
+  padding: 0 0.35rem;
+  color: var(--product-text);
+  font-weight: 700;
+}
+
+.contact-form .city-admin-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-weight: 400;
+}
+
+.contact-form .city-admin-consent input {
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  min-height: 0;
+  margin-top: 0.2rem;
+  padding: 0;
+}
+
+.city-admin-applications {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  list-style: none;
+}
+
+.city-admin-page .public-prose-card .city-admin-applications {
+  padding-inline-start: 0;
+}
+
+.city-admin-applications li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--product-border);
+  border-radius: 8px;
+}
+
+.city-admin-applications li > span:first-child {
+  flex: 1 1 12rem;
+  font-weight: 600;
+}
+
+.city-admin-status {
+  color: var(--product-primary);
+  font-weight: 600;
+}
+
+.city-admin-date {
+  color: var(--product-text-muted);
+  font-size: 0.9rem;
+}

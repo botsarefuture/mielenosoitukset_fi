@@ -6,6 +6,7 @@ import { findCity } from './cities';
 import { informationPageForPath, informationPages } from './information';
 import { contactCopy, contactPath } from './contact-route';
 import { campaignCopy, campaignPath } from './campaign-route';
+import { cityAdminCopy, cityAdminPath } from './city-admin-route';
 import type { InformationPage } from './information';
 
 /**
@@ -25,6 +26,7 @@ export type AppRoute =
   | { name: 'pride' }
   | { name: 'information'; page: InformationPage }
   | { name: 'contact' }
+  | { name: 'city-admin' }
   | { name: 'api-docs' }
   | { name: 'campaign' }
   | { name: 'fundraising' }
@@ -69,6 +71,7 @@ export function routeForPath(path: string): AppRoute | null {
   if (informationPage) return { name: 'information', page: informationPage };
   if (path === '/auth/god') return { name: 'god-auth' };
   if (path === contactPath) return { name: 'contact' };
+  if (path === cityAdminPath) return { name: 'city-admin' };
   if (path === '/api-docs/') return { name: 'api-docs' };
   if (path === campaignPath) return { name: 'campaign' };
   if (path === '/keräys' || path === '/ker%C3%A4ys' || path === '/ker%c3%a4ys') return { name: 'fundraising' };
@@ -131,6 +134,10 @@ export function routeMeta(route: AppRoute, config: AppConfig, text: Catalog): Ro
     return { title: 'API-dokumentaatio | Mielenosoitukset.fi',
       description: 'Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa.',
       robots: 'index, follow', canonical: null };
+  }
+  if (route.name === 'city-admin') {
+    return { title: `${cityAdminCopy.title} | Mielenosoitukset.fi`, description: cityAdminCopy.description,
+      robots: 'index, follow', canonical: config.origin + cityAdminPath };
   }
   if (route.name === 'contact') {
     return { title: `${contactCopy.title} | Mielenosoitukset.fi`, description: contactCopy.description,

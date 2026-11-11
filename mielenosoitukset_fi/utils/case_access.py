@@ -24,13 +24,17 @@ def case_scope_query(user, permission):
         {"city_key": {"$in": [None, ""]},
          "city": {"$in": [CITY_KEY_TO_NAME[key] for key in keys if key in CITY_KEY_TO_NAME]}},
     ]}))
-    return {
+    demo_cases = {
         "demo_id": {"$in": demo_ids + [str(value) for value in demo_ids]},
         "type": {"$in": [
             "new_demo", "demo_error_report", "demo_cancellation_request",
             "demo_cancelled", "support_ticket",
         ]},
     }
+    # Local admins see applications for their own cities so they can vouch in
+    # the case notes. Decisions stay with global admins (admin_case_bp).
+    applications = {"type": "city_admin_application", "meta.city_keys": {"$in": list(keys)}}
+    return {"$or": [demo_cases, applications]}
 
 
 def can_access_case(user, permission, case_id):

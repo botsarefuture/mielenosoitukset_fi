@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Remove the orphaned `list_legacy.html`, the unused template-level submission stylesheet and eleven unreferenced CSS backups; live stylesheets and Flask rollback templates are kept.
+
 - Explain on `/cities` that the list is not every Finnish municipality: it shows places that have had or will have demonstrations, and places where the service has been enabled, for example when a city admin is appointed.
 - Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
 

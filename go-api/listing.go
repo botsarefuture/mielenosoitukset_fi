@@ -324,10 +324,12 @@ func (a *API) getListing(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 400, "invalid listing parameters")
 		return
 	}
+	var readErr error
 	if source, ok := a.store.(interface {
 		FindListingJSON(context.Context, listingQuery) ([]byte, bool, error)
 	}); ok {
 		data, stale, err := source.FindListingJSON(r.Context(), query)
+		readErr = err
 		if err == nil {
 			if !stale {
 				w.Header().Set("Cache-Control", "public, max-age=30, s-maxage=30")
@@ -339,12 +341,13 @@ func (a *API) getListing(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 		result, err := source.FindListing(ctx, query)
+		readErr = err
 		if err == nil {
 			w.Header().Set("Cache-Control", "public, max-age=30, s-maxage=30")
 			writeJSON(w, 200, result)
 			return
 		}
 	}
-	log.Print("Listing database read failed")
+	log.Printf("Listing database read failed (%s)", dbErrorKind(readErr))
 	writeError(w, 503, "service unavailable")
 }

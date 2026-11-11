@@ -1,5 +1,78 @@
 # Public Go API: first read-only slice
 
+## Event beacon: `POST /api/analytics/event`
+
+Step 1 of the write migration. The existing JSON Blob callers are
+`frontend/src/app/ListingScreen.tsx`, `OrganizationScreen.tsx`, `PrideScreen.tsx`
+and the Flask base template's `static/js/site_analytics.js`. Requests use
+`{event, resource_id?}`; form mappings remain supported, unknown keys ignored.
+Only `map_interaction`, `external_link` and `demo_search` are accepted. Values
+are string-coerced and stripped; resources are truncated to 200 Unicode
+characters and omitted if empty. There is deliberately no new 1,024-byte body
+cap or dedicated rate limit: those proposal changes are not part of parity.
+
+Missing Referer is allowed for map/external events. A present hostname must
+match the request hostname, case-insensitively, ignoring port and scheme.
+Search requires at least two resource characters, exact scheme/netloc Referer,
+no `Sec-Fetch-Site: cross-site`, and a listing path: `/demonstrations`, `/cities`,
+`/mielenosoitukset-tanaan`, `/submit`, `/city/<city>` (optionally `/tanaan`),
+`/tag/<tag>` or `/organization/<24-hex-id>`. Pride search remains excluded.
+Origin/fetch metadata do not add restrictions to map/external events. Bot and
+device regexes match Flask, mobile before tablet before desktop, otherwise
+`other`. Unlike pageviews, event prefetch headers do **not** suppress counting.
+
+Privacy: `DNT: 1` suppresses every event. Inspection of `config.py` shows
+`SITE_ANALYTICS_ENABLED` comes only from `config.yaml`, not MongoDB. Go's
+public-status/lockdown reader reads MongoDB `panic`, so it cannot supply this
+switch. Set Go environment `SITE_ANALYTICS_ENABLED=true` **only** when the
+Flask YAML switch is enabled; unset, false and invalid values disable Go writes.
+This is a startup setting: restart Go after changing it, and keep both settings
+aligned during mixed-version operation and rollback. Never infer enablement
+from a browser payload. No secrets, IPs, user agents, cookies or visitor hashes
+are stored. The current public locale policy is Finnish-only
+(`BABEL.PUBLIC_LOCALES: [fi]`); Go writes `language: fi` without decoding Flask
+sessions. Expanding public locales requires revisiting this policy before
+cutover, not silently merging language buckets.
+
+Each accepted signal performs one best-effort, one-second MongoDB upsert into
+`site_analytics`, using the complete filter `{date, hour, event, language,
+device, referrer, resource_id?}` and `{$inc: {count: 1}}`. Date/hour use
+Europe/Helsinki, including DST; referrer is `internal` or `direct` after the
+host guard. No timestamps, visitor documents, pageview fields or extra
+collections are added. Repeated beacons count repeatedly. There is no retry
+after an ambiguous write and no index/schema migration. Storage failures are
+logged without request data and do not change the acknowledgement.
+
+All processed POSTs, including discarded bodies, disabled analytics, DNT,
+bots and write errors, return HTTP 200 `{"ok":true}` plus a newline, JSON
+content type, `Cache-Control: no-store`, and no wildcard write CORS.
+The existing outer Go lockdown gate still applies (503 on lockdown or a
+failed closed gate). Other methods are not claimed by the event middleware.
+Flask's optional shared limiter remains Flask-owned; deployments enforcing it
+need equivalent edge protection before routing activation.
+
+Apache's existing catch-all sends `/api/*` to Flask; the React host uses
+`PUBLIC_API_LOCAL` for its own Go reads, not as a blanket browser API proxy.
+**Status: shipped dark.** The routing include does not claim this path yet, so
+Flask still handles every analytics beacon. To activate:
+
+1. Set `SITE_ANALYTICS_ENABLED=true` in the Go API service environment on the
+   production host (matching Flask's `config.yaml`), and restart it.
+2. Cross-check: send the same few events to Flask and Go in a scratch database
+   and compare the resulting `site_analytics` documents field by field.
+3. Add exactly this rule to `deploy/apache/react-ssr-routing.conf`, using the
+   existing submission upstream `127.0.0.1:8091` and preserved host:
+
+   ```apache
+   RewriteCond %{REQUEST_METHOD} "^POST$"
+   RewriteRule "^/api/analytics/event$" "http://127.0.0.1:8091/api/analytics/event" [P,L]
+   ```
+
+Only a loopback proxy can supply forwarded host/proto for Go's origin check.
+GET/HEAD/OPTIONS, trailing or nested paths, pageview and vitals stay with Flask.
+Roll back by removing that one rule: the unchanged Flask handler writes the same
+counter documents. Do not dual-write or replay beacons.
+
 ## Service status: `GET /api/status`
 
 Purpose: public status data for standalone React `GET /status`, without calling

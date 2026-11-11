@@ -726,8 +726,9 @@ try {
   }
   assert.equal(localReads.length, suggestionReads, 'Only exact suggestion routes query Go');
   const apacheRouting = readFileSync(`${root}/deploy/apache/react-ssr-routing.conf`, 'utf8');
-  // The Go event endpoint ships dark: Flask keeps both analytics beacons until activation.
-  assert(!apacheRouting.includes('/api/analytics/'), 'Analytics beacons stay in Flask until the Go endpoint is activated');
+  // Only the event beacon POST goes to Go; pageviews, vitals and other methods stay in Flask.
+  assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^POST$"\nRewriteRule "^/api/analytics/event$" "http://127.0.0.1:8091/api/analytics/event" [P,L]'));
+  assert.equal(apacheRouting.match(/\/api\/analytics\//g).length, 2, 'No other analytics path is routed');
   assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/suggest_change/[a-fA-F0-9]{24}$"'));
   console.log('PASS: suggestion SSR fields, Markdown, privacy-safe prefills, no-JS POST, cancel, bootstrap, noindex and failures');
 

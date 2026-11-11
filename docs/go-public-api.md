@@ -53,8 +53,12 @@ need equivalent edge protection before routing activation.
 
 Apache's existing catch-all sends `/api/*` to Flask; the React host uses
 `PUBLIC_API_LOCAL` for its own Go reads, not as a blanket browser API proxy.
-**Status: shipped dark.** The routing include does not claim this path yet, so
-Flask still handles every analytics beacon. To activate:
+**Status: active since 11 November 2026.** `SITE_ANALYTICS_ENABLED=true` is set
+in the production Go environment (`/etc/mielenosoitukset-api/environment`;
+the previous file is kept as `environment.bak-before-analytics-20261111`). A
+cross-check event written by Go had exactly the same fields as Flask's
+`demo_search` documents, and the test document was then deleted. The routing
+include claims the POST path. The activation steps, kept for reference:
 
 1. Set `SITE_ANALYTICS_ENABLED=true` in the Go API service environment on the
    production host (matching Flask's `config.yaml`), and restart it.

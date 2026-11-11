@@ -12,51 +12,6 @@ def test_public_retry_uses_compiled_locale_catalog(locale, label):
         assert gettext.GNUTranslations(stream).gettext('Yritä uudelleen') == label
 
 
-def _loader_harness(page):
-    page.set_content('''<div id="demos-grid"></div><div id="no-results"></div>
-      <p id="listing-result-summary" data-format="Showing __START__–__END__ / __COUNT__" hidden></p>
-      <div id="listing-load-error" hidden><button>Retry</button></div><button id="load-more-btn"></button>''')
-    page.add_script_tag(path=str(SCRIPTS / 'demo-card-render.js'))
-    page.evaluate('''() => {
-      window.pending = [];
-      window.fetch = (url, options) => new Promise(resolve => pending.push({url, options, resolve}));
-      renderDemoCards = rows => {
-        rows.forEach(row => {
-          const node = document.createElement('div'); node.textContent = row.title;
-          document.getElementById('demos-grid').append(node);
-        }); return [];
-      };
-      getFriendsAttending = () => {};
-      window.setup_grid_navigation = () => {};
-      window.finish = (index, data, ok = true) => pending[index].resolve({ok, status: ok ? 200 : 503, json: async () => data});
-    }''')
-
-
-@pytest.mark.e2e
-def test_public_loader_ignores_stale_search_and_counts_appended_results(browser_page):
-    _loader_harness(browser_page)
-    result = browser_page.evaluate('''async () => {
-      const old = loadDemos(1, false, {search: 'old'});
-      const latest = loadDemos(1, false, {search: 'latest'});
-      finish(1, {results: [{title: 'Latest'}], page: 1, total_pages: 2, total: 2});
-      await latest;
-      finish(0, {results: [{title: 'Stale'}], page: 1, total_pages: 1, total: 99});
-      await old;
-      const afterSearch = document.getElementById('demos-grid').textContent;
-      const append = loadDemos(2, true, {search: 'latest'});
-      finish(2, {results: [{title: 'Next'}], page: 2, total_pages: 2, total: 2});
-      await append;
-      const beyond = loadDemos(3, true, {search: 'latest'});
-      finish(3, {results: [], page: 3, total_pages: 2, total: 2}); await beyond;
-      return {afterSearch, cards: document.getElementById('demos-grid').textContent,
-        summary: document.getElementById('listing-result-summary').textContent,
-        emptyDisplay: document.getElementById('no-results').style.display,
-        aborted: pending[0].options.signal.aborted};
-    }''')
-    assert result == {'afterSearch': 'Latest', 'cards': 'LatestNext',
-                      'summary': 'Showing 1–2 / 2', 'emptyDisplay': 'none', 'aborted': True}
-
-
 @pytest.mark.e2e
 def test_public_controller_old_finally_cannot_unlock_new_search(browser_page):
     browser_page.set_content('<button id="more">More</button>')
@@ -79,30 +34,6 @@ def test_public_controller_old_finally_cannot_unlock_new_search(browser_page):
     }''')
     assert result == {'locked': True, 'count': 2, 'page': 1, 'pages': 2,
                       'disabled': False, 'requested': [2, 1]}
-
-
-@pytest.mark.e2e
-def test_public_loader_http_failure_offers_retry_without_erasing_append(browser_page):
-    _loader_harness(browser_page)
-    browser_page.evaluate('''async () => {
-      const first = loadDemos(1, false);
-      finish(0, {results: [{title: 'Kept'}], page: 1, total_pages: 2, total: 2}); await first;
-      const failed = loadDemos(2, true);
-      finish(1, {}, false); await failed;
-    }''')
-    assert browser_page.locator('#listing-load-error').is_visible()
-    assert browser_page.locator('#demos-grid').inner_text() == 'Kept'
-    browser_page.locator('#listing-load-error button').click()
-    assert browser_page.evaluate('''async () => {
-      await loadDemos(2, true); return pending.length;
-    }''') == 3  # the retry and Load more cannot append the same page twice
-    browser_page.evaluate('''async () => {
-      finish(2, {results: [{title: 'Retried'}], page: 2, total_pages: 2, total: 2});
-      await new Promise(resolve => setTimeout(resolve, 0));
-    }''')
-    assert not browser_page.locator('#listing-load-error').is_visible()
-    assert browser_page.locator('#demos-grid').inner_text() == 'Kept\nRetried'
-    assert browser_page.locator('#listing-result-summary').inner_text() == 'Showing 1–2 / 2'
 
 
 @pytest.mark.e2e

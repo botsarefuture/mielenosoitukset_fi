@@ -1,0 +1,18 @@
+[Unit]
+Description=Weekly full MongoDB backup for mielenosoitukset.fi (including audit logs)
+After=network-online.target
+Wants=network-online.target
+OnFailure=mielenosoitukset-backup-failed.service
+
+[Service]
+Type=oneshot
+Environment=BACKUP_MODE=full
+Environment=KEEP_DAYS=35
+ExecStart=/var/www/mielenosoitukset_fi/deploy/backup/mongodb-backup.sh
+Nice=10
+IOSchedulingClass=idle
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/backups/mielenosoitukset
+ReadOnlyPaths=/var/www/mielenosoitukset_fi

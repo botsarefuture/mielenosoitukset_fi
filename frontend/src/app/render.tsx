@@ -417,7 +417,8 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   if (route.name === 'city-admin') {
     headers['Cache-Control'] = 'private, no-store';
     extraHead = (assets.cityAdmin ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
-    noscript = '<noscript><p>Hakulomake vaatii JavaScriptin. Voit myös <a href="/contact">ottaa yhteyttä</a>.</p></noscript>';
+    // The page renders its own no-JavaScript fallback inside the form card.
+    noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
       serverPage={<CityAdminApplyScreen session={session} />} />);
   }

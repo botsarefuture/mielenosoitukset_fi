@@ -3,7 +3,7 @@
 }
 
 .city-admin-hint {
-  margin: 0;
+  margin: -0.2rem 0 0;
   color: var(--product-text-muted);
   font-size: 0.9rem;
 }
@@ -36,6 +36,7 @@
 
 .city-admin-chips {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 0.4rem;
   margin: 0.25rem 0 0;
@@ -47,11 +48,17 @@
   padding-inline-start: 0;
 }
 
+/* The prose card spaces sibling list items; these lists use gap instead. */
+.city-admin-page .public-prose-card .city-admin-chips li,
+.city-admin-page .public-prose-card .city-admin-applications li {
+  margin: 0;
+}
+
 .city-admin-chips li {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.2rem 0.25rem 0.2rem 0.7rem;
+  gap: 0.4rem;
+  padding: 0.15rem 0.2rem 0.15rem 0.75rem;
   border: 1px solid var(--product-border);
   border-radius: 999px;
   background: var(--product-surface);
@@ -61,8 +68,8 @@
 .contact-form .city-admin-chips button {
   display: inline-grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   margin: 0;
   padding: 0;
   border: 0;
@@ -79,9 +86,9 @@
   color: var(--product-text);
 }
 
-.city-admin-chips button:focus-visible {
+.contact-form .city-admin-chips button:focus-visible {
   outline: 3px solid var(--product-primary);
-  outline-offset: 1px;
+  outline-offset: -3px;
 }
 
 .city-admin-fieldset {
@@ -129,21 +136,39 @@
 .city-admin-applications li {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  align-items: baseline;
+  gap: 0.4rem 0.75rem;
+  align-items: center;
   padding: 0.6rem 0.85rem;
   border: 1px solid var(--product-border);
   border-radius: 8px;
 }
 
 .city-admin-applications li > span:first-child {
-  flex: 1 1 12rem;
+  flex: 1 1 100%;
   font-weight: 600;
 }
 
 .city-admin-status {
-  color: var(--product-primary);
+  padding: 0.1rem 0.6rem;
+  border: 1px solid var(--product-border);
+  border-radius: 999px;
+  color: var(--product-text);
+  font-size: 0.9rem;
   font-weight: 600;
+}
+
+.city-admin-status--declined,
+.city-admin-status--withdrawn {
+  border-color: currentColor;
+  color: var(--product-danger);
+}
+
+.city-admin-nojs {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--product-border);
+  border-radius: 8px;
+  background: var(--product-surface-muted);
+  color: var(--product-text);
 }
 
 .city-admin-date {

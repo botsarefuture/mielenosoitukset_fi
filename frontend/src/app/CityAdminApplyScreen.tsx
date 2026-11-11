@@ -63,7 +63,7 @@ function MyApplications({ applications }: { applications: Application[] }) {
     <ul className="city-admin-applications">
       {applications.map(item => <li key={item.id}>
         <span>{item.city_keys.map(cityName).join(', ')}</span>
-        <span className="city-admin-status">{applicationStatusLabels[item.status] ?? item.status}</span>
+        <span className={`city-admin-status city-admin-status--${item.status}`}>{applicationStatusLabels[item.status] ?? item.status}</span>
         <span className="city-admin-date">{new Date(item.created_at).toLocaleDateString('fi-FI')}</span>
       </li>)}
     </ul>
@@ -77,9 +77,12 @@ export default function CityAdminApplyScreen({ session }: { session: SessionSumm
   const [applications, setApplications] = useState<Application[]>([]);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<Result>(null);
+  // The form only works with JavaScript, so the server renders a fallback instead of an inert form.
+  const [ready, setReady] = useState(false);
   const open = applications.some(item => item.status === 'received' || item.status === 'in_review');
 
   useEffect(() => {
+    setReady(true);
     const preset = findCity(new URLSearchParams(window.location.search).get('city') ?? '');
     if (preset && !nationallyManagedCities.has(preset.key)) setCities([preset.key]);
     if (!session.authenticated) return;
@@ -149,6 +152,7 @@ export default function CityAdminApplyScreen({ session }: { session: SessionSumm
         {result?.kind === 'success' ? null : !session.authenticated ? <p>Hakeminen vaatii käyttäjätilin, jonka sähköpostiosoite on vahvistettu.{' '}
           <a href={`/users/auth/login?next=${encodeURIComponent(cityAdminPath)}`}>Kirjaudu sisään</a> tai{' '}
           <a href="/users/auth/register">luo tili</a>.</p>
+        : !ready ? <p className="city-admin-nojs">Hakulomake vaatii JavaScriptin. Jos se ei ole käytössä, voit <a href="/contact">ottaa yhteyttä</a> ja kertoa, millä paikkakunnalla haluaisit auttaa.</p>
         : open ? <p>Sinulla on käsittelyssä oleva hakemus. Voit hakea uudelleen, kun se on käsitelty.</p>
         : <form className="contact-form city-admin-form" onSubmit={submit} noValidate={false}>
           <CityPicker id="city-admin-cities" label="Paikkakunnat, joilla haluat toimia" hint="1–5 paikkakuntaa."
@@ -173,7 +177,7 @@ export default function CityAdminApplyScreen({ session }: { session: SessionSumm
             <textarea id="city-admin-experience-details" name="experience_details" rows={3} maxLength={2000} />
           </fieldset>
           <label htmlFor="city-admin-references">Suosittelijat (vapaaehtoinen)</label>
-          <textarea id="city-admin-references" name="references" rows={2} maxLength={1000}
+          <textarea id="city-admin-references" name="references" rows={3} maxLength={1000}
             placeholder="Esimerkiksi paikallinen aktiivi tai sivuston käyttäjä, joka voi suositella sinua." />
           <label className="city-admin-consent">
             <input type="checkbox" name="consent" required />

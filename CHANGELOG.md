@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Add a proposal for city admin applications, a proportionate trust model, activism profiles and teams of at least two admins per city (`docs/city-admin-applications.md`). Nothing is implemented yet.
 - Add a ready-to-install nightly MongoDB backup (`deploy/backup/`) with a restore check and 14-day retention, and document the current backup state in `docs/backups.md`. Production has no database backup yet; installing this needs the maintainer's go-ahead.
 - Remove the orphaned `list_legacy.html`, the unused template-level submission stylesheet and eleven unreferenced CSS backups; live stylesheets and Flask rollback templates are kept.
 

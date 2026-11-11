@@ -25,8 +25,10 @@ The archives therefore live on a different machine from the database.
 
 - `mongodb-backup.sh`:
   - writes `/var/backups/mielenosoitukset/<db>-<UTC time>.archive.gz`;
-  - checks every archive with `mongorestore --dryRun` into a throwaway
-    namespace;
+  - checks every archive's full gzip stream (CRC over every byte) and that
+    `mongorestore --dryRun` can parse it. The dry run alone does not read
+    collection data, so the restore drill below remains the real proof;
+  - removes unfinished `.partial` files from failed or killed runs;
   - keeps 14 days of archives.
   - The URI is passed through a mode-0600 temporary config file, never on the
     command line.

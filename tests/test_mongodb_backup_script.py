@@ -1,5 +1,6 @@
 """The nightly MongoDB backup script, run against stand-in Mongo tools."""
 
+import gzip
 import os
 import subprocess
 import sys
@@ -19,7 +20,9 @@ for arg in "$@"; do
   esac
 done
 if [[ "$(basename "$0")" == mongodump ]]; then
-  [[ -n "${EMPTY_DUMP:-}" ]] && : > "$archive" || printf 'dump-bytes' > "$archive"
+  if [[ -n "${EMPTY_DUMP:-}" ]]; then : > "$archive"
+  elif [[ -n "${CORRUPT_DUMP:-}" ]]; then printf 'dump-bytes' | gzip | head -c 20 > "$archive"
+  else printf 'dump-bytes' | gzip > "$archive"; fi
 fi
 exit "${FAKE_EXIT:-0}"
 """
@@ -51,7 +54,7 @@ def test_backup_writes_a_verified_archive_without_exposing_the_password(tmp_path
 
     assert result.returncode == 0, result.stderr
     archives = list(backups.glob("mielenosoitukset-*.archive.gz"))
-    assert len(archives) == 1 and archives[0].read_text() == "dump-bytes"
+    assert len(archives) == 1 and gzip.decompress(archives[0].read_bytes()) == b"dump-bytes"
     assert oct(backups.stat().st_mode & 0o777) == "0o700"
     argv = (tmp_path / "argv.log").read_text()
     assert SECRET not in argv and SECRET not in result.stdout + result.stderr
@@ -63,6 +66,7 @@ def test_failed_or_empty_dump_leaves_no_archive(tmp_path):
     result, backups = _run(tmp_path, EMPTY_DUMP="1")
     assert result.returncode != 0
     assert not list(backups.glob("*.archive.gz"))
+    assert not list(backups.glob("*.partial"))
 
     result, backups = _run(tmp_path, FAKE_EXIT="1")
     assert result.returncode != 0
@@ -91,3 +95,25 @@ def test_retention_keeps_recent_archives_and_ignores_other_files(tmp_path):
 def test_rejects_bad_keep_days(tmp_path):
     result, _ = _run(tmp_path, KEEP_DAYS="0")
     assert result.returncode == 2
+
+
+def test_truncated_archive_is_rejected_and_cleaned_up(tmp_path):
+    result, backups = _run(tmp_path, CORRUPT_DUMP="1")
+
+    assert result.returncode != 0
+    assert "gzip integrity" in result.stderr
+    assert not list(backups.glob("*.archive.gz")) and not list(backups.glob("*.partial"))
+    # The parse check never ran on a corrupt archive.
+    assert "--dryRun" not in (tmp_path / "argv.log").read_text()
+
+
+def test_leftover_partials_from_killed_runs_are_removed(tmp_path):
+    backups = tmp_path / "backups"
+    backups.mkdir(mode=0o700)
+    stale = backups / "mielenosoitukset-20261101T000000Z.archive.gz.partial"
+    stale.write_text("half a dump")
+
+    result, _ = _run(tmp_path)
+
+    assert result.returncode == 0, result.stderr
+    assert not stale.exists()

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Nightly MongoDB backup for mielenosoitukset.fi (OPS-01).
 #
-# Writes one gzip archive per run, proves it can be read back with a
-# mongorestore dry run, then keeps the newest $KEEP_DAYS days of archives.
+# Writes one gzip archive per run, checks the whole compressed stream is intact
+# (gzip CRC over every byte) and that mongorestore can parse it, then keeps the
+# newest $KEEP_DAYS days of archives. A periodic restore drill (docs/backups.md)
+# is still the real proof that a backup restores.
 # The database URI is read from the Flask config and handed to the Mongo tools
 # through a private config file, so the password never appears in argv or ps.
 #
@@ -27,7 +29,10 @@ python="${PYTHON:-python3}"
 [[ -r "$app_config" ]] || { echo "mongodb-backup: cannot read $app_config" >&2; exit 2; }
 
 work="$(mktemp -d)"
-trap 'rm -rf "$work"' EXIT
+partial=""
+# On any exit remove the temp config, and the unfinished archive if this run
+# did not complete.
+trap 'rm -rf "$work"; [[ -n "$partial" && -e "$partial" ]] && rm -f "$partial"' EXIT
 
 # Read MONGO_URI and MONGO_DBNAME without echoing them.
 "$python" - "$app_config" "$work/tools.yaml" "$work/dbname" <<'PY'
@@ -45,19 +50,24 @@ dbname="$(cat "$work/dbname")"
 [[ "$dbname" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "mongodb-backup: unexpected database name" >&2; exit 2; }
 
 install -d -m 0700 "$backup_dir"
+# Clear leftovers from runs that were killed before their own cleanup ran.
+find "$backup_dir" -maxdepth 1 -type f -name "*.partial" -print -delete
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 target="$backup_dir/${dbname}-${stamp}.archive.gz"
 partial="$target.partial"
 
 "$mongodump" --config="$work/tools.yaml" --db="$dbname" --archive="$partial" --gzip --quiet
-[[ -s "$partial" ]] || { echo "mongodb-backup: dump is empty" >&2; rm -f "$partial"; exit 1; }
+[[ -s "$partial" ]] || { echo "mongodb-backup: dump is empty" >&2; exit 1; }
+# --dryRun alone stops before reading collection data, so first prove the whole
+# gzip stream decompresses and its checksum matches.
+gzip -t "$partial" || { echo "mongodb-backup: archive failed its gzip integrity check" >&2; exit 1; }
 "$mongorestore" --config="$work/tools.yaml" --archive="$partial" --gzip --dryRun --quiet \
   --nsFrom="${dbname}.*" --nsTo="restorecheck_${dbname}.*"
 mv "$partial" "$target"
+partial=""
 
 # Retention: only ever delete our own finished archives, never the newest one.
 find "$backup_dir" -maxdepth 1 -type f -name "${dbname}-*.archive.gz" -mtime "+$((keep_days - 1))" \
   ! -newer "$target" ! -samefile "$target" -print -delete
-find "$backup_dir" -maxdepth 1 -type f -name "*.partial" -mmin +720 -print -delete
 
 echo "mongodb-backup: wrote $target ($(du -h "$target" | cut -f1))"

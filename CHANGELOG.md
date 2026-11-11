@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Show city admin coverage in Kaupunkihallinta: active admins per city (no admin, one admin, or a team), counts of cities below the two-admin target, and a filter for cities that need admins. Only usable accounts count.
 - Explain on `/cities` that the list is not every Finnish municipality: it shows places that have had or will have demonstrations, and places where the service has been enabled, for example when a city admin is appointed.
 - Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
 

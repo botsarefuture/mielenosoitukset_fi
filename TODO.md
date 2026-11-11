@@ -139,7 +139,8 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 ## Maintenance
 
 - [x] **CLEAN-01:** removed the orphaned `list_legacy.html`, template `submit.css` and eleven tracked `.bak` stylesheets after checking every reference (intentional Flask rollback templates kept).
-- [ ] Retire the legacy card renderer `static/js/demo-card-render.js` and `_modals/_demo-card-template.html`: no template loads them since CLEAN-01; only tests do (`test_public_attendance_window`, `test_public_list_request_state`, `test_public_windowed_loading`, `test_demo_card_i18n_contract`).
+- [x] Retire the legacy card renderer `static/js/demo-card-render.js` and `_modals/_demo-card-template.html`: no template loaded them since CLEAN-01; their renderer-only tests were removed.
+- [ ] Check that the React listing tests cover what the removed legacy loader tests checked: slow attendance requests surviving append and cancelled on eviction or search; stale search responses ignored; HTTP failure offering retry without erasing appended results; delayed append keeping keyboard focus and not restoring old filter pages.
 - [ ] **CLEAN-02:** consolidate legacy palettes and hero geometry.
 - [ ] **CLEAN-04:** keep a finite exception list for dynamic styles and a CSS cache contract.
 - [ ] Admin dashboard workflow: pagination, previews and clearer edit fields (#552); organization form UI (#178).

@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Add a ready-to-install nightly MongoDB backup (`deploy/backup/`) with a restore check and 14-day retention, and document the current backup state in `docs/backups.md`. Production has no database backup yet; installing this needs the maintainer's go-ahead.
 - Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
 
 - Privacy: stop storing volunteer confirmation tokens in page-view analytics (`/kampanja/confirm/<token>` now counts as `confirm`), and make recorded events honour Do Not Track and the site analytics switch like page views already did.

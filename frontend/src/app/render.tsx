@@ -582,6 +582,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     jsonLd = discoveryStructuredData(meta, items);
     extraHead = (assets.cities ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
     noscript = `<noscript><article class="container-main-content"><p>Sivu toimii parhaiten, kun JavaScript on käytössä.</p><h1>Kaupungit</h1><p>${escapeHtml(meta.description)}</p>`
+      + `<p>Lista ei kata kaikkia Suomen kuntia. Siinä näkyvät paikkakunnat, joilla on ollut tai on tulossa mielenosoituksia, sekä paikkakunnat, joilla palvelu on otettu käyttöön, esimerkiksi kun paikkakunnalle on nimetty kaupunkiadmin.</p>`
       + '<a href="/mielenosoitukset-tanaan">Mielenosoitukset tänään</a>'
       + renderToStaticMarkup(<CityDirectory cities={cities?.cities ?? []} />)
       + '<a href="/demonstrations">Kaikki mielenosoitukset</a></article></noscript>';

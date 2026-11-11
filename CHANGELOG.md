@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 - Add a proposal for city admin applications, a proportionate trust model, activism profiles and teams of at least two admins per city (`docs/city-admin-applications.md`). Nothing is implemented yet.
+- Explain on `/cities` that the list is not every Finnish municipality: it shows places that have had or will have demonstrations, and places where the service has been enabled, for example when a city admin is appointed.
 - Document the proposed public Flask write API migration to Go, including compatibility contracts, approval gates and rollback plans.
 
 - Privacy: stop storing volunteer confirmation tokens in page-view analytics (`/kampanja/confirm/<token>` now counts as `confirm`), and make recorded events honour Do Not Track and the site analytics switch like page views already did.

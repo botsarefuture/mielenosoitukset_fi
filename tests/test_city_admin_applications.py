@@ -126,3 +126,16 @@ def test_retention_job_is_off_by_default(db, monkeypatch):
     from mielenosoitukset_fi.scripts.purge_city_admin_applications import main
     monkeypatch.delenv("CITY_ADMIN_APPLICATION_RETENTION_ENABLED", raising=False)
     assert main(db) == {"enabled": False, "purged": 0}
+
+
+def test_duplicate_check_pipeline_is_read_only_and_groups_open_per_user():
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "scripts" / "check_city_admin_application_duplicates.py"
+    spec = importlib.util.spec_from_file_location("dup_check", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    stages = [next(iter(stage)) for stage in module.PIPELINE]
+    assert stages == ["$match", "$group", "$match", "$sort"]
+    assert module.OPEN_STATUSES == ["received", "in_review"]

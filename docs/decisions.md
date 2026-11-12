@@ -86,8 +86,12 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
     decide. Approving never grants rights; the role is granted in the accounts
     dashboard.
   - A user can have only one open application.
-  - Open: whether to add a unique index against simultaneous submissions.
-  - Retention and privacy notice: see the next entry (proposed).
+  - Retention and privacy notice: see the entry after this one.
+  - **Unique index against simultaneous submissions (proposed, awaiting maintainer
+    approval).** Partial unique index on `user_id` for open applications; a
+    duplicate key returns 409 `APPLY_OPEN_EXISTS`. Not created yet. Details, the
+    pre-check script and rollback are in
+    [city-admin-applications.md](city-admin-applications.md#duplicate-submissions-proposed-awaiting-maintainer-approval).
 - **Application retention and privacy notice (2026-11-12, approved by the
   maintainer 2026-11-12).** Open applications are kept until decided. After a
   decision, the free text (`about`, `activism`, `references`, `consent_at`) is erased

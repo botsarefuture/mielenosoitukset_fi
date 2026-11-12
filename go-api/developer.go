@@ -139,8 +139,9 @@ func (s mongoDeveloperStore) App(ctx context.Context, owner, id bson.ObjectID) (
 func (s mongoDeveloperStore) Tokens(ctx context.Context, owner, appID bson.ObjectID) ([]developerToken, error) {
 	filter := bson.M{"user_id": owner, "category": "user"}
 	if !appID.IsZero() {
-		// The app is already known to belong to the caller.
-		filter = bson.M{"app_id": appID}
+		// The caller's ownership of the app was checked; the user filter keeps
+		// this query safe even if that check is ever moved.
+		filter = bson.M{"app_id": appID, "user_id": owner}
 	}
 	cursor, err := s.db.Collection("api_tokens").Find(ctx, filter, options.Find().SetLimit(developerMaxItems).
 		SetSort(bson.M{"created_at": -1}).

@@ -82,3 +82,23 @@ func TestApplicationHandlerGuardsBeforeTouchingTheDatabase(t *testing.T) {
 		}
 	}
 }
+
+// Applying must not depend on a city having demonstrations or being enabled:
+// every catalog city except the nationally managed ones is a valid target.
+func TestApplicationAcceptsEveryCatalogCityExceptNationalOnes(t *testing.T) {
+	if len(cityCatalog) < 300 {
+		t.Fatalf("catalog unexpectedly small: %d", len(cityCatalog))
+	}
+	for key := range cityCatalog {
+		_, err := applicationCities([]string{key}, 1, 5, false)
+		if nationallyManagedCities[key] {
+			if err == nil {
+				t.Fatalf("%s must be rejected", key)
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatalf("%s rejected: %v", key, err)
+		}
+	}
+}

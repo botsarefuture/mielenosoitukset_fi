@@ -77,6 +77,7 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   (`team`), so applicants see where help is needed. Go serves all bands in one
   cached read, `GET /api/cities/admin-status`; still only the band, never names or
   counts.
+  Cities with a full team stay selectable: backups are needed and admins rotate.
 - **Applications (2026-11-11, #1091).** Signed-in users with a confirmed account
   apply at `/kaupunkiadmin`.
   - Go stores the application. A Flask job turns it into a `city_admin_application`

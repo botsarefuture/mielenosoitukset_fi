@@ -22,10 +22,10 @@ export const cityAdminApplyCopy = {
   choose: 'Valitse paikkakunta',
   groupNone: 'Tarvitsemme adminia',
   groupSingle: 'Tarvitsemme lisää admineja',
-  groupTeam: 'Admintiimi on jo olemassa',
+  groupTeam: 'Admintiimi on jo, varahenkilöt tervetulleita',
   chipNone: 'tarvitsee adminia',
   chipSingle: 'tarvitsee lisää admineja',
-  coverageHint: 'Listan alussa ovat paikkakunnat, joilla ei vielä ole kaupunkiadminia. Voit hakea mille tahansa paikkakunnalle.',
+  coverageHint: 'Listan alussa ovat paikkakunnat, joilla ei vielä ole kaupunkiadminia. Voit hakea myös paikkakunnalle, jolla on jo admineja: tarvitsemme varahenkilöitä ja kierrätämme tehtäviä.',
 };
 
 export type Catalog = {

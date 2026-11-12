@@ -181,7 +181,7 @@ export default function CityAdminApplyScreen({ session, apiBase }: { session: Se
           <li>Korjaa virheitä ja peruutuksia, ja vastaa ilmoittajien kysymyksiin.</li>
           <li>Toimii yhdessä paikkakunnan toisen kaupunkiadminin ja valtakunnallisen ylläpidon kanssa.</li>
         </ul>
-        <p>Tavoitteena on vähintään kaksi kaupunkiadminia paikkakuntaa kohden. Helsingin ilmoitukset käsittelee valtakunnallinen ylläpitotiimi.</p>
+        <p>Tavoitteena on vähintään kaksi kaupunkiadminia paikkakuntaa kohden. Otamme hakemuksia myös paikkakunnilta, joilla on jo admineja, sillä tarvitsemme varahenkilöitä ja kierrätämme tehtäviä. Helsingin ilmoitukset käsittelee valtakunnallinen ylläpitotiimi.</p>
       </section>
 
       <MyApplications applications={applications} />

@@ -214,3 +214,32 @@ its matching interpreter/receipt and verified application revision. Do not point
 an old code revision at unverified newly installed dependencies. This helper is
 implemented/tested on the branch; actual production receipt adoption and venv
 migration remain unverified until performed and recorded separately.
+
+## Production virtual environment (12 November 2026)
+
+Flask no longer has to run on the read-only system Python. Production uses an
+application-owned virtual environment at `/opt/mielenosoitukset-fi/venv`, created
+by `deploy/create_production_venv.sh` (run once, as root). It is created with
+`--system-site-packages`, so Gunicorn, eventlet and other system packages that
+are not in `requirements.txt` keep working; the pinned packages are installed
+inside the venv and take precedence over the system copies. Root owns the venv;
+the `www-data` workers only read it.
+
+Wiring:
+
+- `mielenosoitukset_fi.service` starts Gunicorn as
+  `/opt/mielenosoitukset-fi/venv/bin/python -m gunicorn ...`.
+- `/etc/mielenosoitukset-fi/deploy.env` (root-owned, mode 0644 or stricter) sets
+  `PRODUCTION_PYTHON=/opt/mielenosoitukset-fi/venv/bin/python` and a new
+  `PRODUCTION_DEPENDENCY_RECEIPT` path, because a receipt from the system runtime
+  is rejected by design.
+- The first deploy after the switch installs and verifies the full manifest in
+  the venv, then writes the new receipt.
+
+Rollback: the previous unit and receipt are kept on the host in
+`/root/venv-migration-20261112/`. Restore the unit file from there,
+`systemctl daemon-reload`, restart the service, and remove
+`/etc/mielenosoitukset-fi/deploy.env`. The system Python was never modified, so
+this returns to the earlier state, except that the system copies of Pillow,
+PyJWT and PyMongo are the older versions. Revert the pins in `requirements.txt`
+only together with that rollback.

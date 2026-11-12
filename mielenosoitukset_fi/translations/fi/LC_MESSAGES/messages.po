@@ -204,7 +204,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/settings.html:392
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:216
 msgid "Peruuta"
-msgstr ""
+msgstr "Peruuta"
 
 #: mielenosoitukset_fi/templates/admin_base.html:345
 msgid "Kirjaudu ulos nyt"
@@ -229,7 +229,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_base.html:364
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:229
 msgid "Kyllä"
-msgstr ""
+msgstr "Kyllä"
 
 #: mielenosoitukset_fi/templates/base.html:233
 msgid "Tietoa sivustosta"
@@ -302,7 +302,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/tag_list.html:753
 #: mielenosoitukset_fi/templates/users/auth/settings.html:99
 msgid "Kaupunki"
-msgstr ""
+msgstr "Kaupunki"
 
 #: mielenosoitukset_fi/templates/city.html:41
 #: mielenosoitukset_fi/templates/city.html:723
@@ -373,7 +373,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/list.html:416
 #: mielenosoitukset_fi/templates/tag_list.html:467
 msgid "Hae mielenosoituksia"
-msgstr ""
+msgstr "Hae mielenosoituksia"
 
 #: mielenosoitukset_fi/templates/city.html:728
 #: mielenosoitukset_fi/templates/city.html:729
@@ -382,7 +382,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/tag_list.html:473
 #: mielenosoitukset_fi/templates/tag_list.html:474
 msgid "Alkupäivä (pp.mm.vvvv)"
-msgstr ""
+msgstr "Alkupäivä (pp.kk.vvvv)"
 
 #: mielenosoitukset_fi/templates/city.html:731
 #: mielenosoitukset_fi/templates/city.html:732
@@ -391,13 +391,13 @@ msgstr ""
 #: mielenosoitukset_fi/templates/tag_list.html:476
 #: mielenosoitukset_fi/templates/tag_list.html:477
 msgid "Loppupäivä (pp.mm.vvvv)"
-msgstr ""
+msgstr "Loppupäivä (pp.kk.vvvv)"
 
 #: mielenosoitukset_fi/templates/city.html:734
 #: mielenosoitukset_fi/templates/list.html:428
 #: mielenosoitukset_fi/templates/tag_list.html:479
 msgid "Valitse kelvollinen päivämääräväli tulevaisuudesta"
-msgstr ""
+msgstr "Valitse kelvollinen päivämääräväli tulevaisuudesta"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:165
 #: mielenosoitukset_fi/templates/admin_V2/organizations/dashboard.html:36
@@ -1430,12 +1430,12 @@ msgstr ""
 #: mielenosoitukset_fi/templates/users/auth/login.html:12
 #: mielenosoitukset_fi/users/templates/login.html:10
 msgid "Käyttäjänimi"
-msgstr ""
+msgstr "Käyttäjänimi"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:187
 #: mielenosoitukset_fi/templates/users/auth/settings.html:93
 msgid "Näyttönimi"
-msgstr ""
+msgstr "Näyttönimi"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:191
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:492
@@ -1456,7 +1456,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/organizations/view.html:351
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:164
 msgid "Rooli"
-msgstr ""
+msgstr "Rooli"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:197
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:25
@@ -1506,7 +1506,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:31
 msgid "Aktiivinen"
-msgstr ""
+msgstr "Aktiivinen"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:33
 msgid "Ei aktiivinen"
@@ -1527,7 +1527,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:64
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:136
 msgid "Muokkaa käyttäjää"
-msgstr ""
+msgstr "Muokkaa käyttäjää"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:74
 msgid "Pakota käyttäjä vaihtamaan salasanan seuraavan kirjautumisen yhteydessä"
@@ -1633,7 +1633,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/organizations/view.html:299
 #: mielenosoitukset_fi/templates/admin_V2/user/list.html:54
 msgid "Käyttäjät"
-msgstr ""
+msgstr "Käyttäjät"
 
 #: mielenosoitukset_fi/templates/admin_V2/dashboard.html:135
 msgid "Hallitse käyttäjiä ja heidän tietojaan."
@@ -1916,7 +1916,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:158
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:230
 msgid "Ei"
-msgstr ""
+msgstr "Ei"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:177
 msgid "Näytä menneet mielenosoitukset:"
@@ -2756,7 +2756,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:185
 msgid "Globaalit oikeudet"
-msgstr ""
+msgstr "Globaalit oikeudet"
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:186
 msgid "Globaalit oikeudet ovat vain superkäyttäjille."
@@ -3829,6 +3829,25 @@ msgstr "Hakuteksti on liian pitkä."
 
 #~ msgid "Seuraa"
 #~ msgstr ""
+
+# Recurring series occurrence chooser
+msgid "Valitse ajankohta nähdäksesi sen tarkat tiedot."
+msgstr "Valitse ajankohta nähdäksesi sen tarkat tiedot."
+
+msgid "Ei tulevia ajankohtia. Näytetään sarjan viimeisin tapahtuma."
+msgstr "Ei tulevia ajankohtia. Näytetään sarjan viimeisin tapahtuma."
+
+msgid "Valittu"
+msgstr "Valittu"
+
+msgid "Aiemmat ajankohdat"
+msgstr "Aiemmat ajankohdat"
+
+msgid "Ei tulevia ajankohtia"
+msgstr "Ei tulevia ajankohtia"
+
+msgid "Tälle toistuvalle tapahtumalle ei ole vielä julkaistu ajankohtia."
+msgstr "Tälle toistuvalle tapahtumalle ei ole vielä julkaistu ajankohtia."
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/confirm_delete.html:7
 msgid "Tarkista poistettava mielenosoitus ennen peruuttamatonta toimintoa."
 msgstr "Tarkista poistettava mielenosoitus ennen peruuttamatonta toimintoa."
@@ -4343,7 +4362,7 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_case_bp.py:204
 #: mielenosoitukset_fi/admin/admin_case_bp.py:378
 msgid "Ei tiedossa"
-msgstr ""
+msgstr "Ei tiedossa"
 
 #: mielenosoitukset_fi/admin/admin_case_bp.py:208
 #: mielenosoitukset_fi/templates/admin_V2/cases/all.html:63
@@ -4748,6 +4767,9 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:153
 msgid "Vuosi"
 msgstr "Vuosi"
+
+msgid "Kuukausi"
+msgstr "Kuukausi"
 
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:1858
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:119
@@ -5595,7 +5617,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/header.html:883
 #: mielenosoitukset_fi/templates/header.html:885
 msgid "Kaupungit"
-msgstr ""
+msgstr "Kaupungit"
 
 #: mielenosoitukset_fi/templates/cities.html:421
 msgid "Paikalliset mielenosoitukset"
@@ -6147,6 +6169,9 @@ msgstr ""
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:154
 msgid "Ladataan mielenosoituksia..."
 msgstr ""
+
+msgid "Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen."
+msgstr "Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen."
 
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:155
 msgid "Lataa lisää"
@@ -6874,7 +6899,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:213
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/editor.html:83
 msgid "Lähettäjä"
-msgstr ""
+msgstr "Lähettäjä"
 
 #: mielenosoitukset_fi/templates/admin/suggestion_view.html:412
 msgid "Luontiaika"
@@ -7063,7 +7088,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:54
 #: mielenosoitukset_fi/templates/admin_V2/user/list.html:11
 msgid "Käyttäjähallinta"
-msgstr ""
+msgstr "Käyttäjähallinta"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:186
 msgid "Superkäyttäjäroolia ei voi myöntää tästä lomakkeesta."
@@ -7165,7 +7190,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:85
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:39
 msgid "Epäonnistui"
-msgstr ""
+msgstr "Epäonnistui"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:339
 msgid "Ei lisätietoa"
@@ -7802,7 +7827,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/governance/dashboard.html:49
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:31
 msgid "Tekijä"
-msgstr ""
+msgstr "Tekijä"
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:32
 #: mielenosoitukset_fi/templates/admin_V2/user/list.html:26
@@ -7925,7 +7950,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:100
 msgid "Kohde"
-msgstr ""
+msgstr "Kohde"
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:104
 msgid "Näytä liittyvät tapahtumat"
@@ -8265,7 +8290,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_dashboard.html:88
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:66
 msgid "Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta"
-msgstr ""
+msgstr "Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:114
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:70
@@ -8377,7 +8402,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/blocklist.html:33
 msgid "Estetty"
-msgstr ""
+msgstr "Estetty"
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/blocklist.html:35
 msgid "Verkkotunnus"
@@ -8464,7 +8489,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:86
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:39
 msgid "Jonossa"
-msgstr ""
+msgstr "Jonossa"
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:99
 msgid "Vastaa lähettäjälle"
@@ -9308,7 +9333,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:264
 #: mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html:8
 msgid "Lähetetty"
-msgstr ""
+msgstr "Lähetetty"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:267
 msgid "Ei ilmoittajatietoja."
@@ -11659,7 +11684,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:82
 msgid "Sähköpostiosoite on vahvistettu"
-msgstr ""
+msgstr "Sähköpostiosoite on vahvistettu"
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:83
 msgid "Vaikuttaa siihen, pidetäänkö tiliä käyttövalmiina."
@@ -11667,7 +11692,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:90
 msgid "Pakota käyttäjänimen ja näyttönimen vaihto"
-msgstr ""
+msgstr "Pakota käyttäjänimen ja näyttönimen vaihto"
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:98
 msgid "Rooli antaa oletusoikeudet. Erilliset oikeudet määritellään alempana."
@@ -13511,3 +13536,230 @@ msgstr "Luonnos palautettiin tästä selaimesta. Se poistuu automaattisesti 24 t
 #: mielenosoitukset_fi/templates/submit.html
 msgid "Poista luonnos ja aloita alusta"
 msgstr "Poista luonnos ja aloita alusta"
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Kirjautumisvahvistus on vanhentunut. Syötä käyttäjänimi ja salasana uudelleen."
+msgstr "Kirjautumisvahvistus on vanhentunut. Syötä käyttäjänimi ja salasana uudelleen."
+
+#: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/users/BPs/passkeys.py
+msgid "Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon."
+msgstr "Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon."
+
+msgid "Käyttäjän käyttötila"
+msgstr "Käyttäjän käyttötila"
+
+msgid "Käyttötila"
+msgstr "Käyttötila"
+
+msgctxt "account-status"
+msgid "Estetty"
+msgstr "Estetty"
+
+msgctxt "account-status"
+msgid "Suljettu"
+msgstr "Suljettu"
+
+msgctxt "account-status"
+msgid "Aktiivinen"
+msgstr "Aktiivinen"
+
+msgid "Aktivoi käyttäjä"
+msgstr "Aktivoi käyttäjä"
+
+msgid "Sulje käyttäjätili"
+msgstr "Sulje käyttäjätili"
+
+msgid "Vahvista kirjautumisoikeuden muutos."
+msgstr "Vahvista kirjautumisoikeuden muutos."
+
+msgid "Käyttäjän käyttötila päivitetty."
+msgstr "Käyttäjän käyttötila päivitetty."
+
+msgid "Aktivointi sallii kirjautumisen ja poistaa mahdollisen käyttöeston. Rooli ja käyttöoikeudet säilyvät ennallaan."
+msgstr "Aktivointi sallii kirjautumisen ja poistaa mahdollisen käyttöeston. Rooli ja käyttöoikeudet säilyvät ennallaan."
+
+msgid "Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta."
+msgstr "Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta."
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Rajaa kuva"
+msgstr "Rajaa kuva"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Käytä rajausta"
+msgstr "Käytä rajausta"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Rajausalue"
+msgstr "Rajausalue"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Ladataan kuvaa…"
+msgstr "Ladataan kuvaa…"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Siirrä tai muuta rajausalueen kokoa. Voit siirtää aluetta nuolinäppäimillä."
+msgstr "Siirrä tai muuta rajausalueen kokoa. Voit siirtää aluetta nuolinäppäimillä."
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+msgstr "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/demo_diff.html
+msgid "Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan."
+msgstr "Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan."
+
+# User account status and change history
+msgid "Muutoshistoria"
+msgstr "Muutoshistoria"
+
+msgid "Käyttäjän kirjatut ylläpitomuutokset, tekijät ja ajankohdat."
+msgstr "Käyttäjän kirjatut ylläpitomuutokset, tekijät ja ajankohdat."
+
+msgid "Historia näyttää kirjatut ylläpitomuutokset. Vanhoista muutoksista ei välttämättä ole kenttäkohtaista tietoa."
+msgstr "Historia näyttää kirjatut ylläpitomuutokset. Vanhoista muutoksista ei välttämättä ole kenttäkohtaista tietoa."
+
+msgid "Muutoshistorian sivutus"
+msgstr "Muutoshistorian sivutus"
+
+msgid "Tarkista muutos ennen vahvistamista."
+msgstr "Tarkista muutos ennen vahvistamista."
+
+msgid "Käyttötilan muutos"
+msgstr "Käyttötilan muutos"
+
+msgid "Nykyinen tila"
+msgstr "Nykyinen tila"
+
+msgid "Muutoksen jälkeen"
+msgstr "Muutoksen jälkeen"
+
+msgid "Mitä muuttuu?"
+msgstr "Mitä muuttuu?"
+
+msgid "Muutos kirjataan käyttäjän historiaan tekijän ja ajankohdan kanssa."
+msgstr "Muutos kirjataan käyttäjän historiaan tekijän ja ajankohdan kanssa."
+
+msgid "Viimeisimmät muutokset"
+msgstr "Viimeisimmät muutokset"
+
+msgid "Näytä koko muutoshistoria"
+msgstr "Näytä koko muutoshistoria"
+
+msgid "Muutoksia ei vielä ole kirjattu."
+msgstr "Muutoksia ei vielä ole kirjattu."
+
+msgid "Kenttäkohtaista erittelyä ei ole saatavilla."
+msgstr "Kenttäkohtaista erittelyä ei ole saatavilla."
+
+msgid "Ennen"
+msgstr "Ennen"
+
+msgid "Jälkeen"
+msgstr "Jälkeen"
+
+msgid "Tuntematon tekijä"
+msgstr "Tuntematon tekijä"
+
+msgid "Aika ei saatavilla"
+msgstr "Aika ei saatavilla"
+
+msgid "Käyttäjän tiedot päivitetty"
+msgstr "Käyttäjän tiedot päivitetty"
+
+msgid "Käyttötila muutettu"
+msgstr "Käyttötila muutettu"
+
+msgid "Käyttäjä luotu"
+msgstr "Käyttäjä luotu"
+
+msgid "Salasanan vaihto vaaditaan"
+msgstr "Salasanan vaihto vaaditaan"
+
+msgid "Kaupunkiadminin oikeudet"
+msgstr "Kaupunkiadminin oikeudet"
+
+msgid "Käyttäjän tiedot"
+msgstr "Käyttäjän tiedot"
+
+# User account status and change history
+msgid "Ei kenttämuutoksia."
+msgstr "Ei kenttämuutoksia."
+
+# User deletion history-delivery feedback
+msgid "Muutoshistorian välitys on kesken. Tämä poistoyritys ei onnistunut. Yritä myöhemmin uudelleen ja vahvista henkilöllisyytesi."
+msgstr "Muutoshistorian välitys on kesken. Tämä poistoyritys ei onnistunut. Yritä myöhemmin uudelleen ja vahvista henkilöllisyytesi."
+
+# User deletion history-delivery feedback
+msgid "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."
+msgstr "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."
+
+# Demo deletion conflict and uncertain-outcome feedback
+msgid "Mielenosoitusta muutettiin samanaikaisesti. Päivitä sivu ja yritä uudelleen."
+msgstr "Mielenosoitusta muutettiin samanaikaisesti. Päivitä sivu ja yritä uudelleen."
+
+msgid "Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä."
+msgstr "Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä."
+
+# Scoped city review dashboard
+msgid "Kaupunkiadminin käsittelyjono"
+msgstr "Kaupunkiadminin käsittelyjono"
+
+msgid "Sinulle näkyvien kaupunkien odottavat ilmoitukset. Määräaika perustuu palvelimelle tallennettuun käsittelyaikaan."
+msgstr "Sinulle näkyvien kaupunkien odottavat ilmoitukset. Määräaika perustuu palvelimelle tallennettuun käsittelyaikaan."
+
+msgid "Käsittelyjono"
+msgstr "Käsittelyjono"
+
+msgid "Määräaika päättynyt – odottaa siirtoa kansalliselle tiimille"
+msgstr "Määräaika päättynyt – odottaa siirtoa kansalliselle tiimille"
+
+msgid "Käsittelyaikaa jäljellä"
+msgstr "Käsittelyaikaa jäljellä"
+
+msgid "Näytetään %(first)s–%(last)s / %(total)s"
+msgstr "Näytetään %(first)s–%(last)s / %(total)s"
+
+msgid "Kaupunkiesi ilmoitukset aikaisimman käsittelymääräajan mukaan"
+msgstr "Kaupunkiesi ilmoitukset aikaisimman käsittelymääräajan mukaan"
+
+msgid "Käsittelyn määräaika"
+msgstr "Käsittelyn määräaika"
+
+msgid "Siirretty kansalliselle tiimille"
+msgstr "Siirretty kansalliselle tiimille"
+
+msgid "Määräaika vaatii tarkistuksen"
+msgstr "Määräaika vaatii tarkistuksen"
+
+msgid "Käsittele"
+msgstr "Käsittele"
+
+msgid "Ei käsittelyä odottavia ilmoituksia"
+msgstr "Ei käsittelyä odottavia ilmoituksia"
+
+msgid "Jono sisältää vain ilmoitukset, joihin sinulla on käyttöoikeus."
+msgstr "Jono sisältää vain ilmoitukset, joihin sinulla on käyttöoikeus."
+
+msgid "Sivu %(page)s / %(pages)s"
+msgstr "Sivu %(page)s / %(pages)s"
+
+msgid "Sivutus"
+msgstr "Sivutus"
+
+msgid "Lähetetyt vastaukset"
+msgstr "Lähetetyt vastaukset"
+
+msgid "Vastaanottaja"
+msgstr "Vastaanottaja"
+
+msgid "Lisätty jonoon"
+msgstr "Lisätty jonoon"
+
+msgid "Ei vielä vastauksia."
+msgstr "Ei vielä vastauksia."
+
+
+#: templates/_layouts/demonstration-list.html
+msgid "Lista avautuu JavaScriptillä. Jos se ei lataudu, päivitä sivu."
+msgstr "Lista avautuu JavaScriptillä. Jos se ei lataudu, päivitä sivu."

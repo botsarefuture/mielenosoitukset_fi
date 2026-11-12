@@ -1,4 +1,4 @@
-@import url("container.css");
+@import url("container.css?v=20261015-heading-1");
 /* @import url("form.css"); */
 @import url("buttons.css");
 @import url("table.css");
@@ -456,14 +456,6 @@ span i,
 
 .button:hover {
   background: var(--primary_button_hover_color);
-}
-
-enosoitukset_fi/mielenosoitukset_fi/database_manager.py", line 90, in _init_client
-
-
-.full-width {
-  width: 100%;
-  box-sizing: border-box;
 }
 
 .mb-4 {

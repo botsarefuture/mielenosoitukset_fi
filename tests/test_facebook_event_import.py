@@ -1,6 +1,7 @@
 """Tests for the Facebook event import (Apify-backed form prefill)."""
 
 import sys
+import re
 
 import pytest
 import requests
@@ -508,5 +509,6 @@ class TestSubmitWizardChooser:
         resp = client.get("/submit")
         assert resp.status_code == 200
         page = resp.get_data(as_text=True)
-        assert page.count('class="progress-step"') == 6
+        assert len(re.findall(r'<li\b[^>]*class="progress-step(?: active| completed)?"', page)) == 6
+        assert 'aria-current="step"' in page
         assert "Aloitus" in page

@@ -78,17 +78,11 @@
               {% for followup in support_ticket.followups %}
               <div class="note-box">
                 <div><strong>
-                  {%- if followup.direction == 'out' %}<span class="admin-status-badge admin-status-badge--info">→ {{ _('Lähtevä') }}</span>{% else %}<span class="admin-status-badge admin-status-badge--secondary">← {{ _('Saapuva') }}</span>{% endif %}
+                  <span class="admin-status-badge admin-status-badge--secondary">← {{ _('Saapuva') }}</span>
                   {{ followup.from_name or followup.from_email }}</strong> <span class="muted">{{ followup.timestamp|datetimeformat("%d.%m.%Y %H:%M") if followup.timestamp else '' }}</span>
-                  {%- if followup.direction == 'out' and followup.status %}
-                    {%- if followup.status == 'sent' %}<span class="admin-status-badge admin-status-badge--success" title="{{ _('Sähköposti on toimitettu vastaanottajalle') }}">✓ {{ _('Toimitettu') }}</span>
-                    {%- elif followup.status == 'failed' %}<span class="admin-status-badge admin-status-badge--danger" title="{{ _('Sähköpostin toimitus epäonnistui') }}{% if followup.error %}: {{ followup.error }}{% endif %}">✗ {{ _('Epäonnistui') }}</span>
-                    {%- else %}<span class="admin-status-badge admin-status-badge--warning">{{ _('Jonossa') }}</span>
-                    {%- endif %}
-                  {%- endif %}
                 </div>
                 {% if followup.subject %}<div class="muted">{{ followup.subject }}</div>{% endif %}
-                <div>{{ followup.message }}</div>
+                <div class="admin-message-body">{{ followup.message }}</div>
               </div>
               {% endfor %}
             </div>
@@ -97,12 +91,14 @@
           {% if support_ticket.submitter_email %}
           <div class="detail-item">
             <strong>{{ _('Vastaa lähettäjälle') }}</strong>
+{% if can_edit_case %}
             <form method="POST" action="{{ url_for('admin_case.reply_to_ticket', case_id=case._id) }}" class="admin-reply-form">
               <div class="muted mb-1">{{ support_ticket.submitter_email }}</div>
               <textarea id="reply_message" name="reply_message" class="form-control" rows="4" required aria-describedby="reply_message_help" placeholder="{{ _('Kirjoita vastaus...') }}"></textarea>
               <p id="reply_message_help" class="admin-field__help">{{ _('Voit käyttää Markdown-muotoiluja, kuten lihavointia, otsikoita, listoja ja linkkejä.') }}</p>
               <button type="submit" class="btn btn-sm btn-primary mt-1">{{ _('Lähetä vastaus sähköpostitse') }}</button>
             </form>
+{% endif %}
           </div>
           {% endif %}
           <div class="detail-item">
@@ -118,12 +114,15 @@
                 {% if case_data.demo._id %}
                 <a class="btn btn-sm btn-outline-primary mt-1" href="{{ url_for('admin_demo.demo_command_center', demo_id=case_data.demo._id) }}" target="_blank" rel="noopener noreferrer">{{ _('Avaa hallintapaneelissa') }}</a>
                 {% endif %}
+{% if global_case_controls %}
                 <form method="POST" action="{{ url_for('admin_case.unlink_demo', case_id=case._id) }}" class="d-inline">
                   <button type="submit" class="btn btn-sm btn-outline-danger mt-1">{{ _('Poista linkki') }}</button>
                 </form>
+{% endif %}
               </div>
               {% else %}
               <div class="note-box">
+{% if can_edit_case %}
                 <form method="POST" action="{{ url_for('admin_case.link_demo', case_id=case._id) }}" class="admin-link-form" data-link-type="demo">
                   <label class="muted">{{ _('Liitä olemassa oleva mielenosoitus') }}</label>
                   <div class="admin-link-search">
@@ -133,6 +132,7 @@
                   </div>
                   <div class="admin-link-results"></div>
                 </form>
+{% endif %}
               </div>
               {% endif %}
 
@@ -142,12 +142,15 @@
                   <span class="admin-status-badge admin-status-badge--info">Org</span>
                   <strong>{{ case_data.organization.name }}</strong>
                 </div>
+{% if global_case_controls %}
                 <form method="POST" action="{{ url_for('admin_case.unlink_org', case_id=case._id) }}" class="d-inline">
                   <button type="submit" class="btn btn-sm btn-outline-danger mt-1">{{ _('Poista linkki') }}</button>
                 </form>
+{% endif %}
               </div>
               {% else %}
               <div class="note-box">
+{% if global_case_controls %}
                 <form method="POST" action="{{ url_for('admin_case.link_org', case_id=case._id) }}" class="admin-link-form" data-link-type="org">
                   <label class="muted">{{ _('Liitä olemassa oleva organisaatio') }}</label>
                   <div class="admin-link-search">
@@ -157,6 +160,7 @@
                   </div>
                   <div class="admin-link-results"></div>
                 </form>
+{% endif %}
               </div>
               {% endif %}
             </div>
@@ -226,16 +230,22 @@
           </div>
 
           <div class="admin-row-actions">
+{% if global_case_controls %}
             <button class="btn btn-success" type="button" onclick="sendDemoAction('accept')" {% if case.meta.superior_needed and current_user.role != 'global_admin' %}disabled{% endif %}>
               <i class="fa-solid fa-check me-1"></i>{{ _('Hyvaksy mielenosoitus') }}
             </button>
+{% endif %}
+{% if global_case_controls %}
             <button class="btn btn-danger" type="button" onclick="rejectDemo()" {% if case.meta.superior_needed and current_user.role != 'global_admin' %}disabled{% endif %}>
               <i class="fa-solid fa-xmark me-1"></i>{{ _('Hylkaa mielenosoitus') }}
             </button>
+{% endif %}
             {% if not case.meta.superior_needed %}
+{% if global_case_controls %}
             <button class="btn btn-secondary" type="button" onclick="escalateDemo()">
               <i class="fa-solid fa-arrow-up-right-dots me-1"></i>{{ _('Eskaloi esihenkilolle') }}
             </button>
+{% endif %}
             {% endif %}
           </div>
           {% elif case.case_type in ["demo_cancellation_request", "demo_cancelled"] %}
@@ -253,9 +263,11 @@
           </div>
           {% if not cancellation.cancelled %}
           <div class="admin-row-actions">
+{% if global_case_controls %}
             <button class="btn btn-danger" type="button" onclick="approveCancellation()">
               <i class="fa-solid fa-ban me-1"></i>{{ _('Hyvaksy peruutus') }}
             </button>
+{% endif %}
           </div>
           {% endif %}
           {% elif case.case_type == "demo_error_report" %}
@@ -296,11 +308,48 @@
         </div>
       </section>
 
+      {% if case.case_type == "support_ticket" %}
+      <section class="admin-section-card" id="outgoing-replies" aria-labelledby="outgoing-replies-heading">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2 id="outgoing-replies-heading">{{ _('Lähetetyt vastaukset') }}</h2></div>
+          <span class="admin-status-badge">{{ case_data.support_ticket.outgoing_replies|length }}</span>
+        </div>
+        <div class="admin-section-card__body admin-stack">
+          {% for reply in case_data.support_ticket.outgoing_replies %}
+          <article class="note-box admin-stack">
+            <div class="admin-row-actions">
+              {% if reply.status == 'sent' %}
+              <span class="admin-status-badge admin-status-badge--success">{{ _('Lähetetty') }}</span>
+              {% elif reply.status == 'failed' %}
+              <span class="admin-status-badge admin-status-badge--danger">{{ _('Epäonnistui') }}</span>
+              {% elif reply.status == 'queued' %}
+              <span class="admin-status-badge admin-status-badge--warning">{{ _('Jonossa') }}</span>
+              {% else %}
+              <span class="admin-status-badge">{{ _('Ei tiedossa') }}</span>
+              {% endif %}
+            </div>
+            <dl class="admin-message-meta">
+              <div><dt>{{ _('Lähettäjä') }}</dt><dd>{{ reply.from_name or reply.from_email or _('Ei tiedossa') }}</dd></div>
+              <div><dt>{{ _('Vastaanottaja') }}</dt><dd>{{ reply.to_email or _('Ei tiedossa') }}</dd></div>
+              <div><dt>{{ _('Lisätty jonoon') }}</dt><dd>{{ reply.timestamp|datetimeformat("%d.%m.%Y %H:%M") if reply.timestamp else _('Ei tiedossa') }}</dd></div>
+              {% if reply.sent_at %}<div><dt>{{ _('Lähetetty') }}</dt><dd>{{ reply.sent_at|datetimeformat("%d.%m.%Y %H:%M") }}</dd></div>{% endif %}
+            </dl>
+            {% if reply.subject %}<p class="fw-semibold mb-0">{{ reply.subject }}</p>{% endif %}
+            <div class="admin-message-body">{{ reply.message or '' }}</div>
+          </article>
+          {% else %}
+          <div class="admin-empty-state">{{ _('Ei vielä vastauksia.') }}</div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+
       <section class="admin-section-card">
         <div class="admin-section-card__header">
           <div class="admin-section-card__title"><h2>{{ _('Sisaiset muistiinpanot') }}</h2></div>
         </div>
         <div class="admin-section-card__body">
+{% if can_edit_case %}
           <form class="form-stack admin-stack" method="POST" action="{{ url_for('admin_case.add_action', case_id=case._id) }}">
             <label>
               {{ _('Merkinnan tyyppi') }}
@@ -320,6 +369,7 @@
               </button>
             </div>
           </form>
+{% endif %}
         </div>
       </section>
     </div>
@@ -340,16 +390,22 @@
             {% endif %}
           </div>
           <div class="admin-row-actions">
+{% if can_edit_case %}
             <button class="btn btn-outline-secondary" type="button" onclick="promptCaseAction('close')" {% if case.meta.closed %}disabled{% endif %}>
               <i class="fa-solid fa-folder-closed me-1"></i>{{ _('Sulje tapaus') }}
             </button>
+{% endif %}
+{% if can_edit_case %}
             <button class="btn btn-outline-secondary" type="button" onclick="promptCaseAction('reopen')" {% if not case.meta.closed %}disabled{% endif %}>
               <i class="fa-solid fa-folder-open me-1"></i>{{ _('Avaa uudelleen') }}
             </button>
+{% endif %}
             {% if case.meta.superior_needed and current_user.role == "global_admin" %}
+{% if global_case_controls %}
             <button class="btn btn-outline-primary" type="button" onclick="deescalateCase()">
               <i class="fa-solid fa-arrow-down me-1"></i>{{ _('Poista eskalointi') }}
             </button>
+{% endif %}
             {% endif %}
           </div>
         </div>

@@ -1,0 +1,8 @@
+<script>
+  if (window.opener) {
+    window.opener.location.reload();
+    window.close();
+  } else {
+    window.location = {{ next_url | tojson }};
+  }
+</script>

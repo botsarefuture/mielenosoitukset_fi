@@ -81,6 +81,9 @@ from mielenosoitukset_fi.demonstrations.audit import (
     log_super_audit,
 )
 from mielenosoitukset_fi.demonstrations.decisions import apply_demo_decision
+from mielenosoitukset_fi.demonstrations.rollback import (
+    PENDING_ROLLBACK_HISTORY, commit_rollback, flush_rollback_history, restore_merge_conflict,
+)
 from .pagination import build_admin_pagination, parse_admin_pagination
 
 
@@ -468,11 +471,12 @@ def _apply_demo_decision(demo_id, decision, source, used_token_id=None):
     """Route adapter for the shared idempotent moderation service."""
     actor = capture_actor_context()
     if source == "token":
-        actor = {
-            **actor,
-            "username": "magic-link",
-            "role": "token",
-        }
+        registered = mongo[MAGIC_COLLECTION].find_one({"_id": used_token_id}) or {}
+        recipient = registered.get("intended_recipient")
+        actor = {**actor, "link_recipient": recipient, "authentication": "session" if actor.get("user_id") else "bearer_link"}
+        if not actor.get("user_id"):
+            actor["username"] = f"Linkki lähetetty: {recipient.get('username') or recipient.get('email')}" if recipient else "magic-link"
+            actor["role"] = "token"
     return apply_demo_decision(
         mongo,
         demo_id,
@@ -712,6 +716,8 @@ def demo_edit_history(demo_id):
         return redirect(url_for("admin_demo.demo_control"))
     _abort_if_demo_forbidden(demo_data["_id"], "EDIT_DEMO")
 
+    if not flush_rollback_history(mongo, demo_data["_id"]):
+        abort(503)
     history_query = {"demo_id": str(demo_data["_id"])}
     page, per_page = parse_admin_pagination(request.args)
     total_count = mongo.demo_edit_history.count_documents(history_query)
@@ -919,6 +925,8 @@ def suggestion_apply(suggestion_id):
     update = {}
     for f in selected:
         if f in suggested:
+            if isinstance(suggested[f], str) and suggested[f].strip().lower() in {'none', 'null'}:
+                continue
             update[f] = suggested[f]
 
     if not update:
@@ -1112,8 +1120,13 @@ def view_demo_diff(history_id):
     )
     changed_count = sum(1 for diff in diffs.values() if diff["changed"])
 
+    rollback_csrf_token = session.get("demo_rollback_csrf_token")
+    if not rollback_csrf_token:
+        rollback_csrf_token = secrets.token_urlsafe(32)
+        session["demo_rollback_csrf_token"] = rollback_csrf_token
     return render_template(
         "admin/demonstrations/demo_diff.html",
+        rollback_csrf_token=rollback_csrf_token,
         diffs=diffs,
         changed_count=changed_count,
         unchanged_count=len(diffs) - changed_count,
@@ -1129,46 +1142,77 @@ def view_demo_diff(history_id):
 @admin_required
 @permission_required("EDIT_DEMO")
 def rollback_demo(history_id):
-    """
-    Roll back a demonstration to a previous state from edit history.
-    Tracks the rollback for easy future undo.
-    """
-   
-
-    hist = mongo.demo_edit_history.find_one({"_id": BsonObjectId(history_id)})
+    """Restore recorded content, never permissions or moderation decisions."""
+    history_oid = _normalize_objectid(history_id)
+    if history_oid is None:
+        abort(404)
+    hist = mongo.demo_edit_history.find_one({"_id": history_oid})
     if not hist:
         abort(404)
 
-    _abort_if_demo_forbidden(hist.get("demo_id"), "EDIT_DEMO")
-
-    demo_id = hist.get("demo_id")
+    demo_id = _normalize_objectid(hist.get("demo_id"))
+    if demo_id is None:
+        abort(404)
+    current_demo = mongo.demonstrations.find_one({"_id": demo_id})
+    if current_demo is None:
+        abort(404)
+    _abort_if_demo_forbidden(demo_id, "EDIT_DEMO")
+    expected = session.get("demo_rollback_csrf_token", "")
+    provided = request.form.get("csrf_token", "")
+    if not expected or not provided or not hmac.compare_digest(
+        expected.encode("utf-8"), provided.encode("utf-8")
+    ):
+        abort(400)
+    if not flush_rollback_history(mongo, demo_id):
+        abort(503)
+    current_demo.pop(PENDING_ROLLBACK_HISTORY, None)
     old_data = hist.get("old_demo")
-    if not demo_id or not old_data:
+    if not isinstance(old_data, dict) or not old_data:
         flash_message("Rollback epäonnistui: historia ei sisällä tietoja.", "error")
         return redirect(url_for("admin_demo.demo_edit_history", demo_id=demo_id))
 
-    # Fetch current demo
-    current_demo = mongo.demonstrations.find_one({"_id": BsonObjectId(demo_id)})
-    if not current_demo:
-        abort(404)
+    # Histories can be sparse or predate newer server-owned fields. Only restore
+    # represented content; city/organizer/editor scope, slugs, series linkage,
+    # visibility/cancellation and approval require their own validated workflows.
+    content_fields = {
+        "title", "description", "date", "start_time", "end_time", "address",
+        "latitude", "longitude", "img", "cover_source", "event_type",
+        "route", "type", "tags", "facebook", "cover_picture", "preview_image",
+        "gallery_images", "translations", "default_language",
+    }
+    changes = {
+        key: deepcopy(old_data[key]) for key in content_fields
+        if key in old_data and (
+            key not in current_demo or current_demo[key] != old_data[key]
+        )
+    }
+    if not changes:
+        return redirect(url_for("admin_demo.demo_edit_history", demo_id=demo_id))
 
-    # Merge old data into current to avoid losing fields
-#    restored_data = _deep_merge(current_demo, old_data)
-
-
-    # Save rollback in history with rollback origin
-    mongo.demo_edit_history.insert_one({
-        "demo_id": demo_id,
+    # Fail closed if content or authorization scope changes before the write.
+    # Unrelated metadata can advance independently; the returned pre-image
+    # captures it accurately without overwriting it with the earlier read.
+    guarded_fields = content_fields | {
+        "city", "city_key", "organizers", "editors", "last_modified",
+    }
+    guard = [
+        {key: {"$eq": current_demo[key]}}
+        for key in guarded_fields if key in current_demo
+    ]
+    guard.extend({key: {"$exists": False}} for key in guarded_fields - current_demo.keys())
+    changes["last_modified"] = utcnow()
+    metadata = {
+        "demo_id": str(demo_id),
         "edited_by": str(getattr(current_user, "_id", "unknown")),
         "edited_at": utcnow(),
-        "old_demo": current_demo,
-        "new_demo": old_data,
-        "diff": None,  # can compute later
-        "rollbacked_from": BsonObjectId(history_id),  # track origin
-    })
-
-    # Replace current demo
-    mongo.demonstrations.replace_one({"_id": BsonObjectId(demo_id)}, old_data)
+        "diff": None,
+        "rollbacked_from": history_oid,
+    }
+    previous = commit_rollback(mongo, {"_id": demo_id, "$and": guard}, changes, metadata)
+    if previous is None:
+        abort(409)
+    if not flush_rollback_history(mongo, demo_id):
+        abort(503)
 
     flash_message("Mielenosoitus palautettu valittuun versioon.", "success")
     return redirect(url_for("admin_demo.demo_edit_history", demo_id=demo_id))
@@ -1199,6 +1243,7 @@ EDIT_LINK_DURATION_SECONDS = {
 }
 EDIT_LINK_MAX_AGE_SECONDS = max(EDIT_LINK_DURATION_SECONDS.values())
 EDIT_LINK_CSRF_SESSION_KEY = "demo_edit_link_csrf_token"
+MAGIC_TOKEN_CSRF_SESSION_KEY = "admin_magic_token_csrf"
 
 # Recommended: create TTL index (run once on startup/migration)
 # mongo[MAGIC_COLLECTION].create_index("expires_at", expireAfterSeconds=0)
@@ -1260,6 +1305,7 @@ def _token_payload(doc: dict | None) -> dict:
         "created_user_agent": doc.get("created_user_agent"),
         "created_process": doc.get("created_process"),
         "created_actor": doc.get("created_actor"),
+        "intended_recipient": doc.get("intended_recipient"),
         "bound_ip": doc.get("bound_ip"),
         "first_seen_at": doc.get("first_seen_at"),
         "ua_first": doc.get("ua_first"),
@@ -1327,6 +1373,7 @@ def _registry_upsert_initial(
     demo_id: str,
     creator: str | None = None,
     ttl_seconds: int = MAGIC_TTL_SECONDS,
+    recipient: dict | None = None,
 ):
     """
     Create registry doc if missing. Do not bind IP yet (bind on first GET).
@@ -1363,6 +1410,7 @@ def _registry_upsert_initial(
                 "created_user_agent": req_ctx.get("user_agent") if req_ctx else None,
                 "created_process": proc_ctx,
                 "created_actor": actor_ctx,
+                "intended_recipient": recipient,
             }
         },
         upsert=True,
@@ -1399,8 +1447,9 @@ def _check_and_bind(action: str, token: str) -> dict:
         flash_message("Linkki on virheellinen.", "error")
         abort(400)
 
-    # payload is the demo_id (string). You could also sign a dict with jti if you want.
-    demo_id = str(payload)
+    # Old links remain valid; new personalized links carry only an opaque jti,
+    # never the recipient's email address in the signed public URL.
+    demo_id = str(payload.get("demo_id")) if isinstance(payload, dict) else str(payload)
     token_hash = _hash_token(token)
     doc = mongo[MAGIC_COLLECTION].find_one_and_update(
         {"token_hash": token_hash},
@@ -1426,7 +1475,8 @@ def _check_and_bind(action: str, token: str) -> dict:
 
     # TTL / revoked / used checks
     now = _now_utc()
-    if doc.get("revoked"):
+    from mielenosoitukset_fi.utils.security_cases import link_suspended
+    if doc.get("revoked") or link_suspended(mongo, doc):
         flash_message("Linkki on mitätöity.", "error")
         abort(403)
     
@@ -1517,11 +1567,11 @@ def _load_demo_or_bust(demo_id: str):
 # GENERATION HELPERS (call these when creating links)
 # ------------------------------------------------------------------------------
 
-def generate_demo_preview_link(demo_id: str) -> str:
+def generate_demo_preview_link(demo_id: str, *, recipient: dict | None = None) -> str:
     # Create signed token and registry doc
-    token = serializer.dumps(str(demo_id), salt="preview-demo")
+    token = serializer.dumps({"demo_id": str(demo_id), "jti": secrets.token_urlsafe(24)} if recipient else str(demo_id), salt="preview-demo")
     actor = _get_actor_label()
-    _registry_upsert_initial(_hash_token(token), "preview", str(demo_id), actor)
+    _registry_upsert_initial(_hash_token(token), "preview", str(demo_id), actor, recipient=recipient)
     demo = _load_demo_or_bust(demo_id)
     log_demo_audit_entry(
         demo_id,
@@ -1531,10 +1581,10 @@ def generate_demo_preview_link(demo_id: str) -> str:
     )
     return url_for("admin_demo.preview_demo_with_token", token=token, _external=True)
 
-def generate_demo_approve_link(demo_id: str) -> str:
-    token = serializer.dumps(str(demo_id), salt="approve-demo")
+def generate_demo_approve_link(demo_id: str, *, recipient: dict | None = None) -> str:
+    token = serializer.dumps({"demo_id": str(demo_id), "jti": secrets.token_urlsafe(24)} if recipient else str(demo_id), salt="approve-demo")
     actor = _get_actor_label()
-    _registry_upsert_initial(_hash_token(token), "approve", str(demo_id), actor)
+    _registry_upsert_initial(_hash_token(token), "approve", str(demo_id), actor, recipient=recipient)
     demo = _load_demo_or_bust(demo_id)
     log_demo_audit_entry(
         demo_id,
@@ -1544,10 +1594,10 @@ def generate_demo_approve_link(demo_id: str) -> str:
     )
     return url_for("admin_demo.approve_demo_with_token", token=token, _external=True)
 
-def generate_demo_reject_link(demo_id: str) -> str:
-    token = serializer.dumps(str(demo_id), salt="reject-demo")
+def generate_demo_reject_link(demo_id: str, *, recipient: dict | None = None) -> str:
+    token = serializer.dumps({"demo_id": str(demo_id), "jti": secrets.token_urlsafe(24)} if recipient else str(demo_id), salt="reject-demo")
     actor = _get_actor_label()
-    _registry_upsert_initial(_hash_token(token), "reject", str(demo_id), actor)
+    _registry_upsert_initial(_hash_token(token), "reject", str(demo_id), actor, recipient=recipient)
     demo = _load_demo_or_bust(demo_id)
     log_demo_audit_entry(
         demo_id,
@@ -1617,7 +1667,8 @@ def _resolve_demo_edit_link(token: str):
         or token_doc.get("demo_id") != demo_id
     ):
         return None, "invalid", 400
-    if token_doc.get("revoked"):
+    from mielenosoitukset_fi.utils.security_cases import link_suspended
+    if token_doc.get("revoked") or link_suspended(mongo, token_doc):
         return None, "revoked", 403
 
     expires_at = _utc_datetime(token_doc.get("expires_at"))
@@ -2682,6 +2733,12 @@ def merge_demos():
         flash_message(_("Valitse ainakin yksi yhdistettävä mielenosoitus."), "error")
         return redirect(url_for("admin_demo.demo_control"))
 
+    for document in docs:
+        _abort_if_demo_forbidden(document["_id"], "EDIT_DEMO")
+        if not flush_rollback_history(mongo, document["_id"]):
+            abort(503)
+        document.pop(PENDING_ROLLBACK_HISTORY, None)
+
     primary_doc = doc_map[primary_id]
     merged_doc = deepcopy(primary_doc)
     original_primary = deepcopy(primary_doc)
@@ -2702,30 +2759,102 @@ def merge_demos():
     merged_doc["merged_into"] = None
     merged_doc["last_modified"] = utcnow()
 
-    mongo.demonstrations.replace_one({"_id": primary_doc["_id"]}, merged_doc)
-
-    if secondary_ids:
-        mongo.demonstrations.delete_many({"_id": {"$in": [ObjectId(d) for d in secondary_ids]}})
-
+    # Persist recovery data before any destructive write. Cross-document
+    # merge remains non-transactional; failures retain an incomplete backup.
     backup_payload = {
         "primary_demo_id": primary_id,
         "secondary_demo_ids": secondary_ids,
         "selected_demo_ids": selected_ids,
         "created_at": utcnow(),
+        "state": "incomplete",
+        # Until a later milestone is confirmed, writes may have started.
+        "phase": "operation_pending",
         "actor": {
             "user_id": str(getattr(current_user, "id", "")),
             "username": getattr(current_user, "username", None),
             "email": getattr(current_user, "email", None),
         },
-        "demos": {demo_id: deepcopy(doc_map.get(demo_id)) for demo_id in selected_ids if demo_id in doc_map},
+        "demos": {demo_id: deepcopy(doc_map[demo_id]) for demo_id in selected_ids},
     }
-    backup_result = mongo.demo_merge_backups.insert_one(backup_payload)
-    backup_id = str(backup_result.inserted_id) if backup_result.inserted_id else None
+    try:
+        backup_result = mongo.demo_merge_backups.insert_one(backup_payload)
+    except Exception as error:
+        logger.warning("Merge backup unavailable (%s)", type(error).__name__)
+        abort(503)
+    backup_id = str(backup_result.inserted_id)
+
+    removed = []
+
+    def set_merge_phase(phase, **values):
+        try:
+            result = mongo.demo_merge_backups.update_one(
+                {"_id": backup_result.inserted_id}, {"$set": {"phase": phase, **values}},
+            )
+            return result.matched_count == 1
+        except Exception as error:
+            logger.warning("Merge backup phase pending (%s)", type(error).__name__)
+            return False
+
+    def recover_merge(phase, status):
+        restored = restore_merge_conflict(mongo, original_primary, merged_doc, removed)
+        # A timed-out delete may have committed without returning its pre-image.
+        # Do not claim full recovery when any selected source is still missing.
+        try:
+            restored = restored and mongo.demonstrations.count_documents({
+                "_id": {"$in": [ObjectId(value) for value in selected_ids]},
+            }) == len(selected_ids)
+        except Exception:
+            restored = False
+        if not set_merge_phase(
+            phase if restored else "recovery_pending",
+            state="restored" if restored else "incomplete",
+            deleted_count=len(removed),
+            removed_ids=[str(document["_id"]) for document in removed],
+        ):
+            abort(503)
+        abort(status if restored else 503)
+
+    try:
+        merged = mongo.demonstrations.replace_one({
+            "_id": primary_doc["_id"], PENDING_ROLLBACK_HISTORY: {"$exists": False},
+            "$expr": {"$eq": ["$$ROOT", {"$literal": original_primary}]},
+        }, merged_doc)
+    except Exception:
+        recover_merge("primary_error", 503)
+    if not merged.matched_count:
+        set_merge_phase("primary_conflict", state="not_applied")
+        abort(409)
+
+    conflict = False
+    try:
+        for secondary_id in secondary_ids:
+            previous = mongo.demonstrations.find_one_and_delete({
+                "_id": ObjectId(secondary_id),
+                PENDING_ROLLBACK_HISTORY: {"$exists": False},
+                "$expr": {"$eq": ["$$ROOT", {"$literal": doc_map[secondary_id]}]},
+            })
+            if previous is None:
+                conflict = True
+                break
+            removed.append(previous)
+    except Exception:
+        recover_merge("secondary_error", 503)
+    if conflict:
+        recover_merge("secondary_conflict", 409)
+    if not set_merge_phase(
+        "sources_removed", deleted_count=len(removed),
+        removed_ids=[str(document["_id"]) for document in removed],
+    ):
+        recover_merge("phase_write_failed", 503)
 
     recommendation_source = request.form.get("recommendation_source")
-    _apply_recommendation_choice(primary_id, secondary_ids, recommendation_source)
-    _repoint_related_demo_data(primary_id, secondary_ids)
-    _handle_cases_after_merge(primary_id, secondary_ids, doc_map)
+    try:
+        _apply_recommendation_choice(primary_id, secondary_ids, recommendation_source)
+        _repoint_related_demo_data(primary_id, secondary_ids)
+        _handle_cases_after_merge(primary_id, secondary_ids, doc_map)
+    except Exception as error:
+        set_merge_phase("followup_failed", error_type=type(error).__name__)
+        abort(503)
 
     merge_links = [
         {
@@ -2738,14 +2867,22 @@ def merge_demos():
         for demo_id in secondary_ids
     ]
 
-    record_demo_change(
-        primary_id,
-        original_primary,
-        merged_doc,
-        action="merge_demo",
-        message=_("%(user)s yhdisti mielenosoituksia") % {"user": _get_actor_label()},
-        extra_details={"merged_from": merge_links, "backup_id": backup_id},
-    )
+    try:
+        history_id = record_demo_change(
+            primary_id,
+            original_primary,
+            merged_doc,
+            action="merge_demo",
+            message=_("%(user)s yhdisti mielenosoituksia") % {"user": _get_actor_label()},
+            extra_details={"merged_from": merge_links, "backup_id": backup_id},
+        )
+    except Exception:
+        history_id = None
+    if history_id is None:
+        set_merge_phase("history_pending")
+        abort(503)
+    if not set_merge_phase("completed", state="completed", history_id=history_id):
+        abort(503)
 
     flash_message(_("Mielenosoitukset yhdistettiin onnistuneesti."), "success")
     return redirect(url_for("admin_demo.edit_demo", demo_id=primary_id))
@@ -3120,6 +3257,40 @@ def edit_demo(demo_id):
         translation_language_names=_translation_language_names(),
         default_demo_language=demonstration.default_language or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
     )
+
+@admin_demo_bp.route("/review/<demo_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+@permission_required("ACCEPT_DEMO", _type="DEMONSTRATION")
+def review_demo(demo_id):
+    """Review submitted content without granting editor/analytics access."""
+    if not ObjectId.is_valid(demo_id):
+        abort(400)
+    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_data:
+        abort(404)
+    _abort_if_demo_forbidden(demo_data["_id"], "ACCEPT_DEMO")
+    if request.method == "POST":
+        if not _valid_edit_link_csrf():
+            abort(403)
+        decision = request.form.get("decision")
+        if decision not in {"approved", "rejected"}:
+            abort(400)
+        if demo_data.get("cancelled"):
+            abort(409)
+        _apply_demo_decision(str(demo_data["_id"]), decision, source="admin_review")
+        return redirect(url_for("admin_demo.review_demo", demo_id=str(demo_data["_id"])))
+    # Explicit content projection: no submitter, analytics, tokens or raw HTML.
+    content = {key: demo_data.get(key) or "" for key in (
+        "title", "city", "date", "start_time", "end_time", "address", "description",
+    )}
+    state = next((state for state in ("cancelled", "approved", "rejected")
+                  if demo_data.get(state)), "pending")
+    return render_template(
+        "admin_V2/demonstrations/review.html", demo=content, state=state,
+        review_csrf_token=_edit_link_csrf_token(),
+    )
+
 
 @admin_demo_bp.route("/command-center/<demo_id>")
 @login_required
@@ -3949,7 +4120,6 @@ def handle_demo_form(
                 merged_data = _deep_merge(prev_demo, demonstration_data)
                 demo = Demonstration.from_dict(merged_data)
                 demo.save()
-                touch_city_assignment(mongo, demo_id)
                 hist_id = record_demo_change(
                     demo_id,
                     prev_demo,
@@ -4515,6 +4685,17 @@ def delete_demo():
     """Delete a demonstration from the database."""
     json_mode = request.headers.get("Content-Type") == "application/json"
 
+    def fail_deletion(status):
+        """Keep the caller's response contract without claiming a safe retry."""
+        if json_mode:
+            message = (
+                _("Mielenosoitusta muutettiin samanaikaisesti. Päivitä sivu ja yritä uudelleen.")
+                if status == 409 else
+                _("Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä.")
+            )
+            return jsonify({"status": "ERROR", "message": message}), status
+        abort(status)
+
     # Extract demo_id from either form data or JSON body
     demo_id = request.form.get("demo_id")
     if not demo_id and json_mode and request.json:
@@ -4540,16 +4721,65 @@ def delete_demo():
             return redirect(url_for("admin_demo.demo_control"))
     _abort_if_demo_forbidden(demo_data["_id"], "DELETE_DEMO")
 
-    record_demo_change(
-        demo_id,
-        demo_data,
-        {},
-        action="delete_demo",
-        message=_("%(user)s poisti mielenosoituksen") % {"user": _get_actor_label()},
-    )
+    if not flush_rollback_history(mongo, demo_data["_id"]):
+        return fail_deletion(503)
+    demo_data.pop(PENDING_ROLLBACK_HISTORY, None)
 
-    # Perform deletion
-    mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
+    # Preserve a recovery copy before deletion. The complete-snapshot guard
+    # ensures this is also the actual pre-image if the delete is applied.
+    try:
+        backup_id = mongo.demo_delete_backups.insert_one({
+            "demo_id": str(demo_id), "created_at": utcnow(),
+            "actor_id": str(getattr(current_user, "_id", "unknown")),
+            "state": "incomplete", "phase": "outcome_unknown",
+            "preimage": deepcopy(demo_data),
+        }).inserted_id
+    except Exception as error:
+        logger.warning("Deletion backup unavailable (%s)", type(error).__name__)
+        return fail_deletion(503)
+
+    def set_delete_phase(phase, **values):
+        update = {"$set": {"phase": phase, **values}}
+        if phase in {"completed", "conflict"}:
+            # History acknowledges the pre-image, or deletion did not apply.
+            # Confirm that outcome and minimize its redundant copy together.
+            update["$unset"] = {"preimage": ""}
+        try:
+            result = mongo.demo_delete_backups.update_one(
+                {"_id": backup_id}, update,
+            )
+            return result.matched_count == 1
+        except Exception as error:
+            logger.warning("Deletion recovery status pending (%s)", type(error).__name__)
+            return False
+
+    try:
+        deleted = mongo.demonstrations.find_one_and_delete({
+            "_id": ObjectId(demo_id), PENDING_ROLLBACK_HISTORY: {"$exists": False},
+            "$expr": {"$eq": ["$$ROOT", {"$literal": demo_data}]},
+        })
+    except Exception:
+        # The server may have applied the write before an acknowledgement was
+        # lost. Retain the pre-write copy and leave the outcome explicitly unknown.
+        return fail_deletion(503)
+    if deleted is None:
+        set_delete_phase("conflict", state="not_applied")
+        return fail_deletion(409)
+    try:
+        history_id = record_demo_change(
+            demo_id,
+            deleted,
+            {},
+            action="delete_demo",
+            message=_("%(user)s poisti mielenosoituksen") % {"user": _get_actor_label()},
+        )
+    except Exception:
+        history_id = None
+    if history_id is None:
+        set_delete_phase("history_pending")
+        return fail_deletion(503)
+    if not set_delete_phase("completed", state="completed", history_id=history_id):
+        return fail_deletion(503)
 
     success_message = "Mielenosoitus poistettu onnistuneesti."
     if json_mode:
@@ -4788,6 +5018,12 @@ def manage_magic_tokens():
         abort(403)
 
     if request.method == "POST":
+        expected = session.get(MAGIC_TOKEN_CSRF_SESSION_KEY, "")
+        provided = request.form.get("csrf_token", "")
+        if not (expected and provided and hmac.compare_digest(
+            expected.encode("utf-8"), provided.encode("utf-8")
+        )):
+            abort(403)
         if request.form.get("revoke_all") == "1":
             revoke_filter = {
                 "revoked": {"$ne": True},
@@ -4936,8 +5172,14 @@ def manage_magic_tokens():
             }
         )
 
+    csrf_token = session.get(MAGIC_TOKEN_CSRF_SESSION_KEY)
+    if not csrf_token:
+        csrf_token = secrets.token_urlsafe(32)
+        session[MAGIC_TOKEN_CSRF_SESSION_KEY] = csrf_token
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/magic_tokens.html",
+        csrf_token=csrf_token,
         tokens=tokens,
         filters=filters,
         actions=distinct_actions,

@@ -32,6 +32,7 @@ from html import unescape
 from typing import Any, Dict, List, Optional, Tuple
 
 from markupsafe import Markup
+from flask_babel import _
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailJob import Sender
@@ -243,6 +244,9 @@ def _parse_message(raw: bytes, keyword: str) -> Dict[str, Any]:
 
     wrapper_sender = _extract_sender_from_body(msg, html, plain)
     header_sender = _extract_from_header(from_value)
+    request_id = (msg.get("X-MF-Request-ID") or "").strip().lower()
+    if not re.fullmatch(r"[a-f0-9]{32}", request_id):
+        request_id = None
 
     # Prefer the human sender from the contact-form wrapper; fall back to the
     # From header. Never auto-reply to the no-reply wrapper account.
@@ -266,6 +270,7 @@ def _parse_message(raw: bytes, keyword: str) -> Dict[str, Any]:
         "html_body": html,
         "urgent": _contains_urgent([subject, plain, html], keyword),
         "from_wrapper": bool(wrapper_sender),
+        "request_id": request_id,
     }
 
 
@@ -366,6 +371,7 @@ def _process_email(raw: bytes, mongo, email_sender, config, blocklist: Optional[
             "subject": parsed["subject"],
             "from_header": parsed["from_header"],
             "from_wrapper": parsed["from_wrapper"],
+            "request_id": parsed.get("request_id"),
         },
         "urgent": urgent,
     }
@@ -387,13 +393,25 @@ def _process_email(raw: bytes, mongo, email_sender, config, blocklist: Optional[
         meta=meta,
     )
 
-    # Auto-reply with the ticket id + SLA note. The reply goes to the real
-    # human sender only. Its Message-ID is kept so the user's reply can be
-    # threaded back onto this ticket.
+    # Auto-reply with the ticket id + SLA note. During incident containment,
+    # acknowledgements are disabled for every ingress path because an
+    # unauthenticated sender address cannot be trusted as a reply target.
     ticket_label = f"#{case.running_num}"
-    auto_reply_msg_id = _queue_auto_reply(
-        email_sender, config, sender_email, ticket_label, parsed["subject"], in_reply_to=message_id
-    )
+    auto_reply_msg_id = None
+    if _should_queue_auto_reply(config):
+        auto_reply_msg_id = _queue_auto_reply(
+            email_sender,
+            config,
+            sender_email,
+            ticket_label,
+            parsed["subject"],
+            in_reply_to=message_id,
+        )
+    else:
+        logger.warning(
+            "Suppressed automatic acknowledgement for support ticket %s",
+            ticket_label,
+        )
 
     urgent_msg_id = None
     if urgent:
@@ -470,6 +488,16 @@ def _new_outbound_message_id() -> str:
     return f"<{uuid.uuid4()}@mielenosoitukset.fi>"
 
 
+def _should_queue_auto_reply(config) -> bool:
+    """Return whether a new support ticket may receive an automatic reply.
+
+    All support ingress paths accept an unauthenticated sender address. Keep
+    acknowledgements disabled by default until trusted recipient provenance is
+    implemented and verified, with an explicit opt-in for rollback.
+    """
+    return bool(getattr(config, "TICKET_AUTO_REPLY_ENABLED", False))
+
+
 def _queue_auto_reply(email_sender, config, reply_to: str, ticket_label: str, original_subject: str, in_reply_to: Optional[str] = None) -> str:
     sla_hours = getattr(config, "TICKET_SLA_HOURS", 48)
     keyword = getattr(config, "TICKET_URGENT_KEYWORD", "URGENT")
@@ -516,7 +544,7 @@ def _queue_urgent_alert(email_sender, config, sender_email: str, ticket_label: s
     return message_id
 
 
-def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, admin_label: str = "") -> str:
+def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, admin_label: str = "", require_acknowledged: bool = False) -> str:
     """Queue an admin reply to a support ticket and record it in the case.
 
     The outbound Message-ID is stored on the ticket so the user's next reply
@@ -524,6 +552,9 @@ def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, a
     ``suggestion.messages`` (direction ``out``) so it shows in the admin UI.
 
     ``case`` is the support-ticket document (dict) from MongoDB.
+
+    Strict callers require queue acknowledgement before one targeted case
+    receipt containing the reply, threading ID and correlated audit entries.
 
     Returns the generated Message-ID.
     """
@@ -553,7 +584,8 @@ def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, a
         "Mielenosoitukset.fi"
     )
 
-    email_sender.queue_email(
+    queue_options = {"require_acknowledged": True} if require_acknowledged else {}
+    queue_id = email_sender.queue_email(
         template_name="customer_support/ticket_admin_reply.html",
         subject=subject,
         recipients=[reply_to],
@@ -565,32 +597,54 @@ def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, a
             "message_html": message_html,
             "admin_name": admin_label,
         },
+        **queue_options,
     )
 
+    if require_acknowledged and queue_id is None:
+        raise RuntimeError("Email queue receipt is missing")
+
     now = utcnow()
-    mongo.cases.update_one(
-        {"_id": case["_id"]},
-        {
-            "$push": {
-                "suggestion.messages": {
-                    "timestamp": now,
-                    "message_id": message_id,
-                    "from_email": _config_value(
-                        config,
-                        "TICKET_SENDER",
-                        _config_value(config, "TICKET_IMAP_USERNAME", ""),
-                    ),
-                    "from_name": admin_label,
-                    "direction": "out",
-                    "subject": subject,
-                    "message": message,
-                    "status": "queued",
-                }
-            },
-            "$addToSet": {"meta.ticket.reply_message_ids": message_id},
-            "$set": {"updated_at": now},
+    update = {
+        "$push": {
+            "suggestion.messages": {
+                "timestamp": now,
+                "message_id": message_id,
+                "from_email": _config_value(
+                    config,
+                    "TICKET_SENDER",
+                    _config_value(config, "TICKET_IMAP_USERNAME", ""),
+                ),
+                "from_name": admin_label,
+                "to_email": reply_to,
+                "direction": "out",
+                "subject": subject,
+                "message": message,
+                "status": "queued",
+            }
         },
-    )
+        "$addToSet": {"meta.ticket.reply_message_ids": message_id},
+        "$set": {"updated_at": now},
+    }
+    if require_acknowledged:
+        correlation = {"message_id": message_id, "queue_id": queue_id}
+        update["$push"]["suggestion.messages"].update(correlation)
+        update["$push"]["case_history"] = {
+            "timestamp": now,
+            "action": _("Vastaus lisätty lähetysjonoon."),
+            "user": admin_label,
+            "mech_action": "reply_to_ticket",
+            "metadata": {"to": reply_to, **correlation},
+        }
+        update["$push"]["action_logs"] = {
+            "timestamp": now,
+            "admin": admin_label,
+            "action_type": "reply_to_ticket",
+            "note": _("Vastaus lisätty lähetysjonoon."),
+            **correlation,
+        }
+    result = mongo.cases.update_one({"_id": case["_id"]}, update)
+    if require_acknowledged and (not result.acknowledged or result.matched_count != 1):
+        raise RuntimeError("Support reply case receipt was not confirmed")
     logger.info("Queued admin reply to %s (%s)", reply_to, ticket_label)
     return message_id
 

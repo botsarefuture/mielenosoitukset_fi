@@ -303,9 +303,11 @@ def test_explicit_object_id_editor_can_open_scoped_audit_views(app, db, seeded_d
     assert detail.status_code == 200
     detail_page = detail.get_data(as_text=True)
     assert f"/admin/demo/command-center/{demo_id}" in detail_page
-    assert f"/admin/demo/edit_demo/{demo_id}" not in detail_page
     assert client.get(f"/admin/demo/command-center/{demo_id}").status_code == 200
-    assert client.get(f"/admin/demo/edit_demo/{demo_id}").status_code == 403
+    # Explicit editors already pass has_demo_permission(EDIT_DEMO). Opening a
+    # normalized model in an audit view must not erase that existing grant.
+    assert db.demonstrations.find_one({"_id": demo_id})["editors"] == [scoped_user_id]
+    assert client.get(f"/admin/demo/edit_demo/{demo_id}").status_code == 200
 
 
 def test_string_organization_id_is_included_in_scoped_audit_query(
@@ -648,7 +650,7 @@ def test_city_admin_can_invite_to_unverified_organization(
     assert "allowed-invite@example.test" in refreshed.get("invitations", [])
 
 
-def test_city_admin_dashboard_redirects_to_scoped_demo_view(app, db):
+def test_city_admin_dashboard_uses_scoped_review_queue(app, db):
     scoped_user_id = _create_scoped_admin(
         db,
         ["helsinki"],
@@ -658,8 +660,8 @@ def test_city_admin_dashboard_redirects_to_scoped_demo_view(app, db):
 
     response = client.get("/admin/dashboard")
 
-    assert response.status_code == 302
-    assert response.headers["Location"].endswith("/admin/demo/")
+    assert response.status_code == 200
+    assert "Kaupunkiadminin käsittelyjono" in response.get_data(as_text=True)
 
     assert client.get("/admin/dashboard/data").status_code == 403
     assert client.get("/admin/dashboard/login-feed").status_code == 403

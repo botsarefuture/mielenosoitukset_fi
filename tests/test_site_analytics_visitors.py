@@ -15,6 +15,13 @@ from mielenosoitukset_fi.utils import site_analytics
 from mielenosoitukset_fi.utils.time_utils import utcnow
 
 
+def _helsinki_today():
+    """Interpret the project's naive ``utcnow`` value explicitly as UTC."""
+    return utcnow().replace(tzinfo=timezone.utc).astimezone(
+        site_analytics.HELSINKI_TZ
+    ).date()
+
+
 @pytest.fixture(autouse=True)
 def _clear_visitor_collections(db):
     db[site_analytics.SITE_ANALYTICS_COLLECTION].delete_many({})
@@ -109,7 +116,7 @@ def test_record_visitor_creates_document(db, app):
             _FakeRequest("192.0.2.10"), device="desktop"
         )
 
-    today = utcnow().astimezone(site_analytics.HELSINKI_TZ).strftime("%Y-%m-%d")
+    today = _helsinki_today().strftime("%Y-%m-%d")
     doc = db[site_analytics.SITE_ANALYTICS_VISITORS_COLLECTION].find_one({"date": today})
     assert doc is not None
     assert doc["pageviews"] == 1
@@ -122,7 +129,7 @@ def test_record_visitor_same_ip_same_day_increments_pageviews(db, app):
         site_analytics.record_visitor_for_request(_FakeRequest("192.0.2.11"), device="desktop")
         site_analytics.record_visitor_for_request(_FakeRequest("192.0.2.11"), device="desktop")
 
-    today = utcnow().astimezone(site_analytics.HELSINKI_TZ).strftime("%Y-%m-%d")
+    today = _helsinki_today().strftime("%Y-%m-%d")
     doc = db[site_analytics.SITE_ANALYTICS_VISITORS_COLLECTION].find_one({"date": today})
     assert doc["pageviews"] == 2
 
@@ -132,7 +139,7 @@ def test_record_visitor_different_ips_are_distinct(db, app):
         site_analytics.record_visitor_for_request(_FakeRequest("192.0.2.20"), device="desktop")
         site_analytics.record_visitor_for_request(_FakeRequest("192.0.2.21"), device="desktop")
 
-    today = utcnow().astimezone(site_analytics.HELSINKI_TZ).strftime("%Y-%m-%d")
+    today = _helsinki_today().strftime("%Y-%m-%d")
     count = db[site_analytics.SITE_ANALYTICS_VISITORS_COLLECTION].count_documents({"date": today})
     assert count == 2
 
@@ -142,7 +149,7 @@ def test_record_visitor_different_device_buckets_are_distinct(db, app):
         site_analytics.record_visitor_for_request(_FakeRequest("192.0.2.30"), device="desktop")
         site_analytics.record_visitor_for_request(_FakeRequest("192.0.2.30"), device="mobile")
 
-    today = utcnow().astimezone(site_analytics.HELSINKI_TZ).strftime("%Y-%m-%d")
+    today = _helsinki_today().strftime("%Y-%m-%d")
     count = db[site_analytics.SITE_ANALYTICS_VISITORS_COLLECTION].count_documents({"date": today})
     assert count == 2
 
@@ -152,7 +159,7 @@ def test_record_visitor_unknown_addresses_ignored(db, app):
         site_analytics.record_visitor_for_request(_FakeRequest("0.0.0.0"), device="desktop")
         site_analytics.record_visitor_for_request(_FakeRequest("::"), device="desktop")
 
-    today = utcnow().astimezone(site_analytics.HELSINKI_TZ).strftime("%Y-%m-%d")
+    today = _helsinki_today().strftime("%Y-%m-%d")
     count = db[site_analytics.SITE_ANALYTICS_VISITORS_COLLECTION].count_documents({"date": today})
     assert count == 0
 
@@ -160,7 +167,7 @@ def test_record_visitor_unknown_addresses_ignored(db, app):
 def test_record_visitor_disabled_flag(db, app):
     with app.app_context():
         site_analytics.record_visitor_for_request(_FakeRequest("192.0.2.40"), device="desktop")
-    today = utcnow().astimezone(site_analytics.HELSINKI_TZ).strftime("%Y-%m-%d")
+    today = _helsinki_today().strftime("%Y-%m-%d")
     count = db[site_analytics.SITE_ANALYTICS_VISITORS_COLLECTION].count_documents({"date": today})
     assert count == 1
 
@@ -178,7 +185,7 @@ def test_record_visitor_disabled_flag(db, app):
 
 
 def test_visitor_total_counts_distinct_hashes(db):
-    today = utcnow().astimezone(site_analytics.HELSINKI_TZ).date()
+    today = _helsinki_today()
     db[site_analytics.SITE_ANALYTICS_VISITORS_COLLECTION].insert_many([
         {"date": today.strftime("%Y-%m-%d"), "visitor_hash": "aaa", "bucket": 1, "pageviews": 2, "expires_at": utcnow()},
         {"date": today.strftime("%Y-%m-%d"), "visitor_hash": "bbb", "bucket": 1, "pageviews": 1, "expires_at": utcnow()},
@@ -188,12 +195,12 @@ def test_visitor_total_counts_distinct_hashes(db):
 
 
 def test_visitor_total_zero_when_no_docs(db):
-    today = utcnow().astimezone(site_analytics.HELSINKI_TZ).date()
+    today = _helsinki_today()
     assert site_analytics._visitor_total(today, today) == 0
 
 
 def test_get_visitor_overview_structure(db):
-    today = utcnow().astimezone(site_analytics.HELSINKI_TZ).date()
+    today = _helsinki_today()
     db[site_analytics.SITE_ANALYTICS_VISITORS_COLLECTION].insert_one({
         "date": today.strftime("%Y-%m-%d"), "visitor_hash": "h1", "bucket": 1, "pageviews": 1, "expires_at": utcnow()
     })

@@ -1,0 +1,124 @@
+.public-react-list .public-list-tools {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.public-react-list .public-search-form {
+  gap: .75rem;
+}
+
+.public-react-list .public-search-form > .public-search-field:first-child {
+  flex-basis: 100%;
+}
+
+.public-search-secondary {
+  display: contents;
+}
+
+.public-react-list .public-search-toggle {
+  display: none;
+}
+
+.public-react-list .public-search-field label {
+  margin-bottom: .25rem;
+  font-size: .875rem;
+  font-weight: 400;
+  color: var(--product-text);
+}
+
+.public-react-list .public-search-form > .public-search-field:first-child label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--product-text);
+}
+
+.public-react-list .public-search-form .public-search-dates {
+  gap: .75rem;
+}
+
+.public-react-list .public-search-form .public-search-field input[type="text"] {
+  padding: .5rem .75rem;
+  min-height: 44px;
+  font-size: .875rem;
+  border: 1px solid var(--product-border);
+  border-radius: 8px;
+  background: var(--product-surface);
+}
+
+.public-react-list .public-search-form #demo-search {
+  min-height: 52px;
+  font-size: 1rem;
+  border: 1px solid var(--product-border);
+  border-radius: 8px;
+  background: var(--product-surface);
+}
+
+.public-react-list .public-list-tools .public-search-submit {
+  background: var(--product-action-bg);
+  color: var(--product-on-action);
+  border: 1px solid var(--product-action-bg);
+  border-radius: 8px;
+}
+
+.public-react-list .public-list-tools .public-search-submit:hover {
+  background: var(--product-action-hover);
+  border-color: var(--product-action-hover);
+}
+
+.public-react-list .public-search-form input[type="text"]:focus,
+.public-react-list button:focus-visible,
+.public-react-list a:focus-visible,
+.public-react-list [role="link"]:focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+@media (max-width: 560px) {
+  .public-react-list .public-search-toggle {
+    display: inline-flex;
+    flex-basis: 100%;
+  }
+
+  .public-react-list .public-search-secondary {
+    display: flex;
+    flex-wrap: wrap;
+    flex-basis: 100%;
+    gap: .75rem;
+    min-width: 0;
+  }
+
+  .public-react-list .public-search-secondary[data-collapsed="true"] {
+    display: none;
+  }
+}
+
+.public-react-list .date-error:not([hidden]) {
+  display: block;
+}
+
+/* The vendor stylesheet also sets this surface; keep theme tokens authoritative. */
+.public-date-calendar.flatpickr-calendar {
+  background: var(--product-surface);
+  color: var(--product-text);
+  border: 1px solid var(--product-border);
+  box-shadow: var(--product-shadow);
+}
+
+.public-date-calendar .flatpickr-monthDropdown-months option {
+  background: var(--product-surface);
+  color: var(--product-text);
+}
+
+.public-date-calendar.flatpickr-calendar .flatpickr-current-month,
+.public-date-calendar.flatpickr-calendar input.cur-year {
+  color: var(--product-text);
+}
+
+.public-date-calendar.flatpickr-calendar .flatpickr-day:not(.selected):focus {
+  background: var(--product-surface-muted);
+  border-color: var(--product-border);
+  color: var(--product-text);
+}

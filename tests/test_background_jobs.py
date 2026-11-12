@@ -1,5 +1,6 @@
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, timedelta
+import smtplib
 
 from bson import ObjectId
 from pymongo import DeleteMany, DeleteOne, InsertOne, ReplaceOne, UpdateMany, UpdateOne
@@ -40,6 +41,7 @@ def _audit_actions_for_demo(db, demo_id):
 @pytest.mark.integration
 @pytest.mark.jobs
 def test_background_job_manager_executes_prep_job_and_records_audit(app, seeded_data, db):
+    """Verify the prep job saves view counts and records a successful run."""
     job_manager = app.extensions["job_manager"]
     job_manager._ensure_job_documents()
 
@@ -54,6 +56,10 @@ def test_background_job_manager_executes_prep_job_and_records_audit(app, seeded_
         seeded_data["demo_id"],
         seeded_data["pending_demo_id"],
     }
+
+    counts = {doc["demo_id"]: doc["views"] for doc in prepped}
+    assert counts[seeded_data["demo_id"]] == 2
+    assert counts[seeded_data["pending_demo_id"]] == 1
 
     job_doc = db.background_jobs.find_one({"_id": "prep"})
     assert job_doc["last_run_status"] == "success"
@@ -475,7 +481,7 @@ def test_process_submit_notifications_marks_job_error_when_delivery_fails(db, mo
     )
 
     def fake_send_email(email_job, raise_on_error=False):
-        raise RuntimeError("smtp down")
+        raise smtplib.SMTPConnectError(421, "smtp down: private@example.test /token/secret")
 
     monkeypatch.setattr(script.email_sender, "send_email", fake_send_email)
     monkeypatch.setattr(script, "merge_duplicate_submissions", lambda db, max_groups=25: 0)
@@ -485,7 +491,10 @@ def test_process_submit_notifications_marks_job_error_when_delivery_fails(db, mo
 
     queue_job = db.demo_notifications_queue.find_one({"_id": job_id})
     assert queue_job["status"] == "error"
-    assert "smtp down" in queue_job["error"]
+    assert queue_job["error"] == "SMTPConnectError"
+    assert queue_job["attempts"] == 1
+    assert queue_job["next_attempt_at"] > queue_job["updated_at"]
+    assert "sending_index" not in queue_job
 
     demo = db.demonstrations.find_one({"_id": demo_id})
     assert demo.get("admin_notification_last_sent_at") is None
@@ -493,7 +502,7 @@ def test_process_submit_notifications_marks_job_error_when_delivery_fails(db, mo
 
 @pytest.mark.integration
 @pytest.mark.jobs
-def test_admin_pending_reminder_ignores_old_completed_notifications(db, monkeypatch):
+def test_admin_pending_reminder_ignores_old_completed_notifications(app, db, monkeypatch):
     from mielenosoitukset_fi.scripts import process_submission_notifications as script
 
     db.demonstrations.delete_many({})
@@ -549,7 +558,8 @@ def test_admin_pending_reminder_ignores_old_completed_notifications(db, monkeypa
         lambda demo_id: f"https://example.test/{demo_id}/reject",
     )
 
-    script._enqueue_admin_reminders(db)
+    with app.app_context():
+        script._enqueue_admin_reminders(db)
 
     reminder = db.demo_notifications_queue.find_one(
         {"demo_id": demo_id, "notification_type": "admin_pending_reminder"}

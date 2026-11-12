@@ -42,7 +42,7 @@
             <ul>
                 {% for demo in month_demos.get(day) %}
                 <li>
-                    <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="demo-cell"
+                    <a href="{% if demo.parent %}{{ url_for('siblings_meeting', parent=demo.parent) }}{% else %}{{ url_for('demonstration_detail', demo_id=demo._id) }}{% endif %}" class="demo-cell"
                         data-title="{{ demo.title|e or _('Ei otsikkoa') }}" data-desc="{{ demo.description|e or '' }}"
                         data-img="{{ demo.preview_image|e or demo.img|e }}">
                         {{ demo.title|e or _('Ei otsikkoa') }}
@@ -100,7 +100,7 @@
         </div>
 
         {% for demo in month_demos.get(day) %}
-        <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="mobile-demo-item">
+        <a href="{% if demo.parent %}{{ url_for('siblings_meeting', parent=demo.parent) }}{% else %}{{ url_for('demonstration_detail', demo_id=demo._id) }}{% endif %}" class="mobile-demo-item">
             <div class="mobile-demo-title">{{ demo.title|e or _('Ei otsikkoa') }}</div>
             {% if demo.description %}
             {% set plain_description = demo.description|striptags|trim %}

@@ -3,7 +3,6 @@ from pathlib import Path
 
 FOLLOW_TEMPLATES = (
     Path("mielenosoitukset_fi/templates/detail.html"),
-    Path("mielenosoitukset_fi/templates/siblings.html"),
     Path("mielenosoitukset_fi/templates/organizations/details.html"),
 )
 

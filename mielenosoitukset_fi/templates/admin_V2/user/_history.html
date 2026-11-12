@@ -1,0 +1,35 @@
+{% macro user_identity(user) %}
+<section class="admin-section-card">
+  <div class="admin-section-card__body admin-identity">
+    <span class="admin-identity__avatar" aria-hidden="true">{{ (user.displayname or user.username or '?')[:1]|upper }}</span>
+    <div><h2>{{ user.displayname or user.username }}</h2><p>@{{ user.username }}</p><p>{{ user.email }}</p></div>
+  </div>
+</section>
+{% endmacro %}
+
+{% macro change_history(entries, compact=false) %}
+{% if entries %}
+<ol class="admin-change-history">
+  {% for entry in entries %}
+  <li class="admin-change-history__entry">
+    <div class="admin-change-history__meta"><time datetime="{{ entry.timestamp }}">{{ entry.timestamp_display }}</time><span>{{ _('Tekijä') }}: {{ entry.actor }}</span></div>
+    {% if compact %}<h3>{{ entry.title }}</h3>{% else %}
+    <details open>
+      <summary>{{ entry.title }}</summary>
+      {% if entry.changes %}
+      <dl class="admin-change-diff">
+        {% for change in entry.changes %}
+        <div><dt>{{ change.label }}</dt><dd><span><small>{{ _('Ennen') }}</small>{{ change.before }}</span><span><small>{{ _('Jälkeen') }}</small>{{ change.after }}</span></dd></div>
+        {% endfor %}
+      </dl>
+      {% elif entry.unchanged %}<p>{{ _('Ei kenttämuutoksia.') }}</p>
+      {% else %}<p>{{ _('Kenttäkohtaista erittelyä ei ole saatavilla.') }}</p>{% endif %}
+    </details>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<p class="admin-profile-copy admin-profile-copy--muted">{{ _('Muutoksia ei vielä ole kirjattu.') }}</p>
+{% endif %}
+{% endmacro %}

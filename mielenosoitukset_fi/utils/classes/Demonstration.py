@@ -799,6 +799,10 @@ class Demonstration(BaseModel):
         already exists in the database. If it does, the existing entry is updated.
         Otherwise, a new entry is inserted.
 
+        Existing entries retain fields not represented by this content model.
+        Server-owned moderation metadata must not disappear during normalization
+        or content editing. Owning workflows must explicitly unset retired fields.
+
         Parameters
         ----------
 
@@ -827,8 +831,13 @@ class Demonstration(BaseModel):
         # Check if the demonstration already exists in the database
         db = _get_db()
         if db["demonstrations"].find_one({"_id": self._id}):
-            # Update existing entry
-            result = db["demonstrations"].replace_one({"_id": self._id}, data)
+            # Persist modeled fields without deleting server-owned fields that
+            # this model does not serialize (moderation identity, rejected, etc.).
+            # Approval decisions and their side effects belong to the domain
+            # service, not to replacement of a content-edit snapshot.
+            result = db["demonstrations"].update_one(
+                {"_id": self._id}, {"$set": data}
+            )
             if result.modified_count:
                 print(
                     "Demonstration updated successfully."
@@ -903,7 +912,7 @@ class Demonstration(BaseModel):
         raise ValueError(f"Demonstration with id/slug/number '{demo_id}' not found.")
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data, *, save_on_normalize=True):
         """
         Create a Demonstration instance from a dictionary.
 
@@ -911,6 +920,9 @@ class Demonstration(BaseModel):
         ----------
         data : dict
             Dictionary containing demonstration data.
+        save_on_normalize : bool, optional
+            Preserve the normal automatic normalization writes by default.
+            Set to False when a caller must validate the whole object before saving.
 
         Returns
         -------
@@ -983,6 +995,7 @@ class Demonstration(BaseModel):
             cancelled=get("cancelled", False),
             cancelled_at=get("cancelled_at"),
             cancelled_by=get("cancelled_by"),
+            _dont_override=not save_on_normalize,
         )
 
 
@@ -1081,7 +1094,10 @@ def is_none(s):
     if s is None:
         return True
     
-    if isinstance(s, str) and not s.strip():
+    if isinstance(s, str) and (
+        not s.strip() or s.strip().lower() in {"none", "null"}
+    ):
+        # Legacy rows stored the literal text "None" for a missing value.
         return True
     
     return False

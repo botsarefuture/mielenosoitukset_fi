@@ -1,0 +1,255 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http/httptest"
+	"os"
+	"sort"
+	"strings"
+	"testing"
+	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+)
+
+// fakeSeriesStore satisfies Store so it can be handed to API, and seriesStore so
+// the series handler reads from it.
+type fakeSeriesStore struct {
+	payload seriesPayload
+	err     error
+	calls   int
+	lastID  bson.ObjectID
+}
+
+func (s *fakeSeriesStore) FindPublic(context.Context, bson.ObjectID) (bson.M, error) {
+	return nil, mongo.ErrNoDocuments
+}
+func (s *fakeSeriesStore) ResolvePublicID(context.Context, string) (bson.ObjectID, error) {
+	return bson.NilObjectID, errInvalidIdentifier
+}
+func (s *fakeSeriesStore) Ping(context.Context) error { return nil }
+func (s *fakeSeriesStore) FindSeries(ctx context.Context, parent bson.ObjectID) (seriesPayload, error) {
+	if _, ok := ctx.Deadline(); !ok {
+		panic("missing query deadline")
+	}
+	s.calls++
+	s.lastID = parent
+	return s.payload, s.err
+}
+
+func TestSeriesHTTPContract(t *testing.T) {
+	parent := bson.NewObjectID()
+	payload := seriesPayload{ID: parent.Hex(), Occurrences: []seriesOccurrence{
+		{ID: "66fa58601102367d5d52887f", Slug: "first", Date: "2026-12-01", StartTime: "14:00", EndTime: "15:00"},
+		{ID: "66fa58601102367d5d52888a", Date: "2026-12-08", StartTime: "14:00", Cancelled: true},
+	}}
+	for _, tc := range []struct {
+		name      string
+		method    string
+		path      string
+		err       error
+		status    int
+		calls     int
+		bodyMatch []string
+	}{
+		{"public series", "GET", "/api/series/" + parent.Hex(), nil, 200, 1,
+			[]string{parent.Hex(), `"slug":"first"`, `"cancelled":true`, "2026-12-08"}},
+		{"unknown or nonpublic series", "GET", "/api/series/" + parent.Hex(), mongo.ErrNoDocuments, 404, 1, nil},
+		{"database failure", "GET", "/api/series/" + parent.Hex(), errors.New("mongodb://secret"), 503, 1, nil},
+		{"invalid parent", "GET", "/api/series/not-an-id", nil, 404, 0, nil},
+		{"unknown parameter", "GET", "/api/series/" + parent.Hex() + "?lang=en&page=2", nil, 400, 0, nil},
+		{"duplicate language", "GET", "/api/series/" + parent.Hex() + "?lang=en&lang=sv", nil, 400, 0, nil},
+		{"post", "POST", "/api/series/" + parent.Hex(), nil, 405, 0, nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &fakeSeriesStore{payload: payload, err: tc.err}
+			// A payload for the parent under test, even when the request is rejected.
+			store.payload.ID = parent.Hex()
+			w := httptest.NewRecorder()
+			(&API{store}).handler().ServeHTTP(w, httptest.NewRequest(tc.method, tc.path, nil))
+			if w.Code != tc.status || store.calls != tc.calls {
+				t.Fatalf("status=%d calls=%d body=%s", w.Code, store.calls, w.Body.String())
+			}
+			if strings.Contains(w.Body.String(), "secret") {
+				t.Fatalf("driver detail leaked: %s", w.Body.String())
+			}
+			if tc.status == 200 {
+				for _, match := range tc.bodyMatch {
+					if !strings.Contains(w.Body.String(), match) {
+						t.Fatalf("missing %q in %s", match, w.Body.String())
+					}
+				}
+				if store.lastID != parent {
+					t.Fatalf("series queried for %s", store.lastID)
+				}
+				var decoded seriesPayload
+				if err := json.Unmarshal(w.Body.Bytes(), &decoded); err != nil {
+					t.Fatal(err)
+				}
+				if len(decoded.Occurrences) != len(payload.Occurrences) {
+					t.Fatalf("occurrences lost: %+v", decoded)
+				}
+				if w.Header().Get("Cache-Control") != "no-store" || w.Header().Get("Content-Type") != "application/json; charset=utf-8" {
+					t.Fatalf("unexpected headers: %v", w.Header())
+				}
+			}
+		})
+	}
+}
+
+// The handler is the only place that decides 404 versus 503, so an unimplemented
+// store must not look like a public series with no occurrences.
+func TestSeriesWithoutStoreFailsClosed(t *testing.T) {
+	w := httptest.NewRecorder()
+	(&API{&fakeStore{}}).handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/series/"+demoID, nil))
+	if w.Code != 503 {
+		t.Fatalf("status=%d body=%s", w.Code, w.Body.String())
+	}
+}
+
+// The display order is a product rule, not a Mongo accident, so it is checked
+// without a database as well as through the integration test below.
+func TestSeriesOccurrenceOrder(t *testing.T) {
+	entry := func(id, date, clock string, cancelled bool) seriesOccurrence {
+		return seriesOccurrence{ID: id, Date: date, StartTime: clock, Cancelled: cancelled}
+	}
+	past := entry("a", "2026-10-01", "09:00", false)
+	todayUntimed := entry("b", "2026-11-01", "", true)
+	todayTimed := entry("c", "2026-11-01", "14:00", false)
+	sameClock := entry("d", "2026-11-01", "14:00", false)
+	later := entry("e", "2026-11-08", "10:00", false)
+
+	want := []seriesOccurrence{past, todayTimed, sameClock, todayUntimed, later}
+	got := []seriesOccurrence{later, todayUntimed, sameClock, past, todayTimed}
+	sort.Slice(got, func(i, j int) bool { return lessOccurrence(got[i], got[j]) })
+	if len(got) != len(want) {
+		t.Fatalf("length %d", len(got))
+	}
+	for index := range want {
+		if got[index].ID != want[index].ID {
+			t.Fatalf("order=%v want %v", got, want)
+		}
+	}
+	// A known clock must sort before an unknown one on the same date, in either
+	// input order.
+	if lessOccurrence(todayUntimed, todayTimed) || !lessOccurrence(todayTimed, todayUntimed) {
+		t.Fatal("untimed occurrence did not sort last")
+	}
+}
+
+// Integration coverage for the queries the unit tests cannot reach.
+func TestMongoFindSeries(t *testing.T) {
+	uri := os.Getenv("TEST_MONGODB_URI")
+	if uri == "" {
+		t.Skip("set TEST_MONGODB_URI for isolated MongoDB integration")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(options.Client().ApplyURI(uri))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Disconnect(context.Background())
+	db := client.Database("moso_go_series_test_" + bson.NewObjectID().Hex())
+	defer db.Drop(context.Background())
+	collection := db.Collection("demonstrations")
+	store := mongoStore{collection, client}
+
+	parent, hiddenParent, otherParent := bson.NewObjectID(), bson.NewObjectID(), bson.NewObjectID()
+	today := localDay(time.Now())
+	upcoming, later, past, cancelled := bson.NewObjectID(), bson.NewObjectID(), bson.NewObjectID(), bson.NewObjectID()
+	tooFar, unapproved, foreign := bson.NewObjectID(), bson.NewObjectID(), bson.NewObjectID()
+	for _, doc := range []bson.M{
+		{"_id": parent, "approved": true},
+		{"_id": hiddenParent, "approved": true, "hide": true},
+		{"_id": otherParent, "approved": true},
+		// One occurrence stores the parent as a string, as older records do.
+		{"_id": upcoming, "approved": true, "parent": parent.Hex(), "slug": "upcoming", "date": today, "start_time": "14:00"},
+		{"_id": later, "approved": true, "parent": parent, "date": shiftDay(today, 7), "start_time": "10:00"},
+		{"_id": past, "approved": true, "parent": parent, "date": shiftDay(today, -7)},
+		{"_id": cancelled, "approved": true, "parent": parent, "date": today, "cancelled": true},
+		{"_id": tooFar, "approved": true, "parent": parent, "date": shiftDay(today, seriesWindowDays+10)},
+		{"_id": unapproved, "approved": false, "parent": parent, "date": today},
+		{"_id": foreign, "approved": true, "parent": otherParent, "date": today},
+	} {
+		if _, err := collection.InsertOne(ctx, doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, doc := range []bson.M{
+		{"_id": parent, "approved": true},
+		{"_id": hiddenParent, "approved": true, "hide": true},
+		{"_id": otherParent, "approved": true},
+	} {
+		if _, err := db.Collection("recu_demos").InsertOne(ctx, doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	series, err := store.FindSeries(ctx, parent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, occurrence := range series.Occurrences {
+		got = append(got, occurrence.ID)
+	}
+	want := []string{past.Hex(), upcoming.Hex(), cancelled.Hex(), later.Hex()}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Fatalf("occurrences=%v want %v", got, want)
+	}
+	if series.Occurrences[1].Slug != "upcoming" || !series.Occurrences[2].Cancelled {
+		t.Fatalf("fields lost: %+v", series.Occurrences)
+	}
+
+	if _, err := store.FindSeries(ctx, hiddenParent); !errors.Is(err, mongo.ErrNoDocuments) {
+		t.Fatalf("hidden parent resolved: %v", err)
+	}
+	// An unapproved parent without children (6aaffa51911f6142a87c1a73 in
+	// production) is a 404, not a database failure.
+	pending := bson.NewObjectID()
+	if _, err := db.Collection("recu_demos").InsertOne(ctx, bson.M{"_id": pending, "approved": false}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.FindSeries(ctx, pending); !errors.Is(err, mongo.ErrNoDocuments) {
+		t.Fatalf("unapproved parent resolved: %v", err)
+	}
+	for _, field := range []string{"hide", "rejected"} {
+		for _, value := range []any{"true", bson.A{true}, nil} {
+			_, err := db.Collection("recu_demos").UpdateByID(ctx, hiddenParent,
+				bson.M{"$set": bson.M{"hide": false, "rejected": false, field: value}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := store.FindSeries(ctx, hiddenParent); !errors.Is(err, mongo.ErrNoDocuments) {
+				t.Fatalf("malformed parent %s=%v resolved: %v", field, value, err)
+			}
+		}
+	}
+	if _, err := store.FindSeries(ctx, bson.NewObjectID()); !errors.Is(err, mongo.ErrNoDocuments) {
+		t.Fatalf("missing parent resolved: %v", err)
+	}
+}
+
+// Occurrences generated by the newer recurrence code store null slug,
+// running_number and end_time (series 6aaffaf8e738c7e2e237aaf7 in production).
+// They must still produce an entry rather than failing the series.
+func TestSeriesEntryAcceptsNullGeneratedFields(t *testing.T) {
+	id := bson.NewObjectID()
+	entry, ok := seriesEntry(bson.M{
+		"_id": id, "slug": nil, "running_number": nil, "date": "2026-11-20",
+		"start_time": "17:00", "end_time": nil, "cancelled": false,
+	})
+	if !ok || entry.ID != id.Hex() || entry.Slug != "" || entry.RunningNumber != 0 ||
+		entry.Date != "2026-11-20" || entry.StartTime != "17:00" || entry.EndTime != "" || entry.Cancelled {
+		t.Fatalf("entry=%+v ok=%v", entry, ok)
+	}
+	body, err := json.Marshal(entry)
+	if err != nil || strings.Contains(string(body), "null") {
+		t.Fatalf("body=%s err=%v", body, err)
+	}
+}

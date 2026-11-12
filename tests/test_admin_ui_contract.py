@@ -934,7 +934,10 @@ def test_case_views_use_shared_workspace_components_without_inline_css():
     assert "card.hidden = !visible" in case_list
     assert "admin-detail-layout" in case_detail
     assert case_detail.count("admin-section-card") >= 5
-    assert case_detail.count('class="admin-section-card__title"') == 5
+    card_count = case_detail.count('<section class="admin-section-card"')
+    assert card_count >= 6
+    assert case_detail.count('class="admin-section-card__title"') == card_count
+    assert 'id="outgoing-replies"' in case_detail
     assert "admin-row-actions" in case_detail
 
 
@@ -1077,9 +1080,15 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
         assert "import admin_page_hero" in source, str(template)
         assert "admin_page_hero(" in source, str(template)
 
-    # Exact inventory ratchet: after the retired two-page media workspace was
-    # removed, 51 routed full-page admin templates remain.
-    assert len(pages) == 51
+    # Account status, scoped history and approval-only review add three pages
+    # to the 51-page baseline after the media workspace was retired, and the
+    # security incident screen adds one more.
+    assert Path('mielenosoitukset_fi/templates/admin_V2/user/account_status.html') in pages
+    assert Path('mielenosoitukset_fi/templates/admin_V2/user/history.html') in pages
+    assert Path('mielenosoitukset_fi/templates/admin_V2/demonstrations/review.html') in pages
+    assert Path('mielenosoitukset_fi/templates/admin_V2/cities/review_dashboard.html') in pages
+    assert Path('mielenosoitukset_fi/templates/admin_V2/governance/security.html') in pages
+    assert len(pages) == 56
     for locale in ("en", "fi", "sv"):
         catalog = Path(
             f"mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.po"
@@ -1287,6 +1296,20 @@ def test_demo_editor_static_geometry_uses_shared_form_components():
     assert ':not([type="hidden"]):not(.admin-token-input__field), select, textarea):focus' in workspace
     assert ".access-panel-card .list-group-item" in workspace
     assert "var(--admin-workspace-surface-muted)" in workspace
+
+
+def test_recurring_editor_legacy_modal_listener_allows_missing_overlay():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html"
+    ).read_text(encoding="utf-8")
+    base = Path("mielenosoitukset_fi/templates/admin_base.html").read_text(
+        encoding="utf-8"
+    )
+    script = Path("mielenosoitukset_fi/static/js/modal.js").read_text(encoding="utf-8")
+
+    assert "filename='js/modal.js'" in template
+    assert 'id="overlay"' not in template + base
+    assert 'overlay?.addEventListener("click", closeModal)' in script
 
 
 def test_recurring_editor_static_geometry_uses_shared_form_components():

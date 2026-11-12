@@ -4,11 +4,12 @@ from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, timedelta
 
 # Third-party
-from flask import render_template, jsonify, request
+from flask import render_template, jsonify, request, make_response
 from flask_babel import _
 
 # Local imports
 from . import campaign_bp
+from mielenosoitukset_fi.utils.campaign_publication import campaign_preview_required
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 
@@ -19,12 +20,14 @@ mongo = db_manager.get_db()
 
 
 @campaign_bp.route("/")
+@campaign_preview_required
 def index():
     """Serve the main campaign page."""
     return render_template("kampanja/index.html")
 
 
 @campaign_bp.route("/api/volunteers", methods=["POST"])
+@campaign_preview_required(api=True)
 def add_volunteer():
     """Handle volunteer signups."""
     data = request.get_json()
@@ -75,19 +78,28 @@ def add_volunteer():
     return jsonify({"success": True}), 201
 
 
+def _confirmation_response(status, code=200):
+    response = make_response(render_template(
+        "kampanja/confirm_success.html", confirmation_status=status,
+    ), code)
+    response.headers["Cache-Control"] = "private, no-store"
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
+
 @campaign_bp.route("/confirm/<token>", methods=["GET"])
 def confirm_volunteer(token):
     """Confirm volunteer email using token."""
     volunteer = mongo.volunteers.find_one({"confirmation_token": token})
     if not volunteer:
-        return "Virheellinen tai vanhentunut vahvistuslinkki.", 400
+        return _confirmation_response("invalid", 400)
 
     if volunteer["confirmation_expires"] < utcnow():
-        return "Vahvistusaika on umpeutunut.", 400
+        return _confirmation_response("expired", 400)
 
     mongo.volunteers.update_one(
         {"_id": volunteer["_id"]},
         {"$set": {"confirmed": True}, "$unset": {"confirmation_token": "", "confirmation_expires": ""}}
     )
 
-    return render_template("kampanja/confirm_success.html", name=volunteer["name"])
+    return _confirmation_response("success")

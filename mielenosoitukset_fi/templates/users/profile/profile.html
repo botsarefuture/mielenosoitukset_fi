@@ -736,7 +736,7 @@ Voimme myös lisätä toisemme ystäviksi!</textarea>
                   src="{{ person.profile_picture or 'https://cdn2.mielenosoitukset.fi/default-pfp.jpg' }}"
                   alt="{{ person.displayname }}n profiilikuva"
                   loading="lazy"
-                  onerror="this.src='https://cdn2.mielenosoitukset.fi/default-pfp.jpg'">
+                  onerror="this.onerror=null;this.src='https://cdn2.mielenosoitukset.fi/default-pfp.jpg'">
                 <span class="follow-list-name">
                   <span class="follow-list-display">{{ person.displayname }}</span>
                   <span class="follow-list-username">@{{ person.username }}</span>
@@ -769,7 +769,7 @@ Voimme myös lisätä toisemme ystäviksi!</textarea>
       <div class="profile-avatar-wrapper">
         <img src="{{ user.profile_picture or 'https://cdn2.mielenosoitukset.fi/default-pfp.jpg' }}"
              class="profile-avatar" alt="{{ user.displayname or user.username }}n profiilikuva"
-             onerror="this.src='https://cdn2.mielenosoitukset.fi/default-pfp.jpg'">
+             onerror="this.onerror=null;this.src='https://cdn2.mielenosoitukset.fi/default-pfp.jpg'">
       </div>
 
       <div class="profile-details">

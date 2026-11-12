@@ -44,6 +44,7 @@
     </span>
   {% else %}
     <form method="post" action="{{ url_for('translations_join.join') }}" style="margin: 0;">
+      <input type="hidden" name="csrf_token" value="{{ translation_join_csrf_token }}">
       <button type="submit" class="button button-primary" aria-label="{{ _('Liity kääntäjäksi') }}">
         <i class="fa-solid fa-language"></i> {{ _('Liity kääntäjäksi') }}
       </button>

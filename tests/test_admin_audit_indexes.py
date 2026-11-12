@@ -14,3 +14,4 @@ def test_audit_collections_index_the_deterministic_pagination_order(db):
 
     assert expected in _index_keys(db.admin_logs)
     assert expected in _index_keys(db.super_audit_logs)
+    assert (("entity_type", 1), ("entity_id", 1), ("timestamp", -1), ("_id", -1)) in _index_keys(db.admin_logs)

@@ -18,6 +18,7 @@ volume/
 config.compose.dev.yaml
 .playwright-cli
 .codex
+.artifacts/visual-qa/
 **/.DS_Store
 .backup_pre_perf
 .deploy-build-sha
@@ -26,3 +27,8 @@ data/mailpit.db
 data/mailpit.db-shm
 data/mailpit.db-wal
 **/mailpit*
+
+# Frontend dependencies (compiled static/frontend assets are intentionally tracked)
+node_modules/
+# Standalone public app build output (built by `npm run app:build`).
+frontend/dist/

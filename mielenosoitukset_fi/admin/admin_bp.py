@@ -44,8 +44,10 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.city_assignment import NOT_ESCALATED_ASSIGNMENT_CLAUSE, CITY_ASSIGNMENT_FIELD
 from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.variables import CITY_LIST
-from mielenosoitukset_fi.utils.analytics import get_demo_views
+from mielenosoitukset_fi.utils.analytics import count_views_per_demo
+from mielenosoitukset_fi.utils.aggregate_analytics import bucket_keys
 from mielenosoitukset_fi.utils.cache import cache
+from mielenosoitukset_fi.utils.operational_metrics import collect_operational_metrics
 from mielenosoitukset_fi.utils.ui_translation_catalog import (
     entry_state,
     get_catalog_entry,
@@ -923,20 +925,19 @@ def _rollup_demo_analytics_on_demand(demo_id: ObjectId):
         ev_id = ev.get("_id")
         if ev_id is not None:
             max_event_id = ev_id if max_event_id is None else max(max_event_id, ev_id)
-        ts = ev.get("timestamp")
-        if not ts:
+        keys = bucket_keys(ev.get("timestamp"), ev_id)
+        if keys is None:
             continue
-        if ts.tzinfo is None:
-            ts = ts.replace(tzinfo=timezone.utc)
-        ts_hel = ts.astimezone(HELSINKI_TZ)
-        day_key = ts_hel.strftime("%Y-%m-%d")
-        hour_key = f"{ts_hel.hour:02d}"
-        minute_key = f"{ts_hel.minute:02d}"
+        day_key, hour_key, minute_key = keys
         day_bucket = rolled.setdefault(day_key, {})
         hour_bucket = day_bucket.setdefault(hour_key, {})
         hour_bucket[minute_key] = hour_bucket.get(minute_key, 0) + 1
 
     doc = {"_id": demo_id, "analytics": rolled}
+    if max_event_id is not None:
+        # Recorded so the live rollup skips the range this rebuild already
+        # counted instead of adding it a second time.
+        doc["last_event_id"] = max_event_id
     mongo["d_analytics"].replace_one({"_id": demo_id}, doc, upsert=True)
     if max_event_id is not None:
         mongo["_meta"].update_one(
@@ -982,7 +983,16 @@ def load_user(user_id):
 def admin_dashboard():
     """Render the admin dashboard (role-filtered for all authenticated users)."""
     if _is_limited_city_admin(current_user):
-        return redirect(url_for("admin_demo.demo_control"))
+        from datetime import timezone
+        from mielenosoitukset_fi.utils.city_review_dashboard import city_review_queue
+
+        now = utcnow().replace(tzinfo=timezone.utc)
+        queue = city_review_queue(mongo, current_user, request.args.get("page", 1), now)
+        return render_template(
+            f"{_ADMIN_TEMPLATE_FOLDER}cities/review_dashboard.html",
+            queue=queue, server_now=now.isoformat(),
+            can_list_demos=bool(current_user.scoped_city_keys_for("LIST_DEMOS")),
+        )
     # Load current panic mode
     panic = mongo.panic.find_one({"name": "global"})
     panic_mode = panic.get("panic", False) if panic else False
@@ -1002,15 +1012,9 @@ def admin_dashboard():
 @admin_required
 def activate_panic():
     """Activate global panic mode."""
+    # Keep the old URL, but never retain an unreviewed single-super-admin bypass.
     _require_global_admin_surface()
-    mongo.panic.update_one(
-        {"name": "global"},
-        {"$set": {"panic": True}},
-        upsert=True
-    )
-    _log_admin_event("panic_mode_update", panic_mode=True)
-    flash_message("Hätätila otettiin käyttöön.", "success")
-    return redirect(url_for("admin.admin_dashboard"))
+    return redirect(url_for("admin_governance.security"), code=303)
 
 
 # Route to deactivate panic mode
@@ -1020,14 +1024,7 @@ def activate_panic():
 def deactivate_panic():
     """Deactivate global panic mode."""
     _require_global_admin_surface()
-    mongo.panic.update_one(
-        {"name": "global"},
-        {"$set": {"panic": False}},
-        upsert=True
-    )
-    _log_admin_event("panic_mode_update", panic_mode=False)
-    flash_message("Hätätila poistettiin käytöstä.", "success")
-    return redirect(url_for("admin.admin_dashboard"))
+    return redirect(url_for("admin_governance.security"), code=303)
 
 
 # Optional: route to get current status as JSON (useful for AJAX)
@@ -2121,6 +2118,11 @@ def admin_status():
     counts = _collect_collection_counts()
     recent_errors = _collect_recent_errors()
     dashboard = _calculate_dashboard_snapshot()
+    try:
+        operations = collect_operational_metrics(mongo)
+    except Exception:
+        logger.exception("Failed to collect operational status metrics")
+        operations = None
 
     latency_ms = round((_time.monotonic() - start) * 1000)
     now = _utcnow().replace(tzinfo=timezone.utc).strftime("%d.%m.%Y %H:%M:%S UTC")
@@ -2134,6 +2136,7 @@ def admin_status():
         counts=counts,
         recent_errors=recent_errors,
         dashboard=dashboard,
+        operations=operations,
         updated_at=now,
         latency_ms=latency_ms,
     )
@@ -2284,9 +2287,11 @@ def admin_analytics():
 
 
 def render_analytics_overview():
-    """ """
-    data = get_demo_views()
-    data = count_per_demo(data)
+    """Render the admin analytics overview with aggregated per-demo view counts."""
+    data = [
+        DemoViewCount(row["demo_id"], row["views"])
+        for row in count_views_per_demo()
+    ]
 
     return render_template(f"{_ADMIN_TEMPLATE_FOLDER}analytics.html", data=data)
 

@@ -63,12 +63,16 @@ never create a visitor.
 
 import hashlib
 import hmac
+import math
 import re
+from bisect import bisect_left
 from datetime import date, datetime, time, timedelta, timezone
 from ipaddress import ip_address
-from urllib.parse import urlsplit
+from types import SimpleNamespace
+from urllib.parse import parse_qsl, urlsplit
 
 import pytz
+from werkzeug.datastructures import Headers, MultiDict
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.request_ip import get_client_ip
@@ -82,6 +86,27 @@ SITE_ANALYTICS_COLLECTION = "site_analytics"
 # MongoDB collection used for distinct-visitor counting. Kept separate from the
 # pageview counters so existing pageview queries and numbers cannot change.
 SITE_ANALYTICS_VISITORS_COLLECTION = "site_analytics_visitors"
+
+# Daily, anonymous Web Vitals histograms. Documents contain aggregate bucket
+# counts only; no visitor, session, URL, metric-instance, or element identifier
+# is stored.
+WEB_VITALS_COLLECTION = "web_vitals_daily"
+WEB_VITALS_RETENTION_DAYS = 400
+WEB_VITAL_NAMES = {"CLS", "INP", "LCP", "TTFB"}
+
+# Fixed buckets keep storage cardinality bounded even when the public endpoint
+# receives hostile or unusual values. Millisecond metrics retain 50 ms
+# resolution through 5 seconds and 250 ms through 10 seconds. CLS retains 0.01
+# resolution through 1.0 and 0.1 through the hard 5.0 validation ceiling.
+_WEB_VITAL_MS_BUCKETS = tuple(
+    list(range(50, 5001, 50))
+    + list(range(5250, 10001, 250))
+    + [15000, 30000, 60000]
+)
+_WEB_VITAL_CLS_BUCKETS = tuple(
+    [round(value / 100, 2) for value in range(1, 101)]
+    + [round(value / 10, 1) for value in range(11, 51)]
+)
 
 # Maximum stored length for resource identifiers (demo ids, search terms,
 # external hostnames). Anything longer is truncated — analytics counters do
@@ -110,11 +135,15 @@ _UNKNOWN_CLIENT_ADDRESSES = {"0.0.0.0", "::", ""}
 # Events accepted from the browser beacon. Deliberately tiny: these are the
 # only browser-side signals with a real dashboard use case. Everything else
 # is recorded server-side from actual application actions.
-BEACON_EVENT_ALLOWLIST = {"map_interaction", "external_link"}
+BEACON_EVENT_ALLOWLIST = {"map_interaction", "external_link", "demo_search"}
 
 # Friendly labels for the dashboard events table. Unknown events are shown
 # as their raw names.
 EVENT_LABELS = {
+    "campaign_view": "Kampanjan sivunäytöt",
+    "rss_fetch": "RSS: syötehaut (ei tilaajamäärä)",
+    "rss_not_modified": "RSS: muuttumattoman syötteen tarkistukset",
+    "rss_reader_day": "RSS: aktiiviset lukijapäivät (arvio)",
     "language_change": "Kielenvaihdot",
     "demo_submitted": "Ilmoitetut mielenosoitukset",
     "reminder_subscribe": "Muistutusilmoitukset",
@@ -227,6 +256,17 @@ PAGE_TYPE_LABELS = {
     PAGE_TYPE_GENERIC: "Muu sivu",
 }
 
+# URI families already represented by the stored page_type dimension.
+PAGE_TYPE_PATHS = {
+    "index": "/", "demonstrations": "/demonstrations",
+    "demonstration": "/demonstration/<id>", "organization": "/organization/<id>",
+    "city": "/city/<city>", "cities": "/cities", "tag": "/tag/<tag>",
+    "calendar": "/calendar/*", "today": "/mielenosoitukset-tanaan",
+    "submit": "/submit", "search": "/search_organizations",
+    "campaign": "/kampanja/*, /pride-nakyvaksi", "page": None,
+}
+
+
 
 def _mongo():
     """Database handle resolved lazily so tests can rebind modules cleanly."""
@@ -239,6 +279,10 @@ def _collection():
 
 def _visitor_collection():
     return _mongo()[SITE_ANALYTICS_VISITORS_COLLECTION]
+
+
+def _web_vitals_collection():
+    return _mongo()[WEB_VITALS_COLLECTION]
 
 
 # ---------------------------------------------------------------------------
@@ -258,7 +302,10 @@ def classify_request(request):
     is read or stored.
     """
     method = (request.method or "GET").upper()
-    if method not in {"GET", "HEAD"}:
+    if method != "GET":
+        return None
+
+    if "prefetch" in (request.headers.get("Sec-Purpose", "") + request.headers.get("Purpose", "")).lower():
         return None
 
     user_agent = request.headers.get("User-Agent") or ""
@@ -341,6 +388,10 @@ def classify_path(path):
     if head in {"mielenosoitukset-tanaan"}:
         return {"page_type": "today", "resource_id": None}
     if head == "kampanja":
+        # /kampanja/confirm/<token> carries a volunteer's one-time token; never
+        # store it, only that a confirmation page was opened.
+        if len(segments) > 1 and segments[1].lower() == "confirm":
+            return {"page_type": "campaign", "resource_id": "confirm"}
         return {"page_type": "campaign", "resource_id": "/".join(segments[1:]) or None}
     if head == "pride-nakyvaksi":
         return {"page_type": "campaign", "resource_id": "pride-nakyvaksi"}
@@ -362,7 +413,7 @@ def should_count_response(response):
     if response is None:
         return False
     status = response.status_code or 0
-    if status < 200 or status >= 400:
+    if status < 200 or status >= 300:
         return False
     content_type = (response.headers.get("Content-Type") or "").lower()
     if "text/html" not in content_type:
@@ -456,6 +507,14 @@ def record_pageview_from_request(request, response):
         classified = classify_request(request)
         if not classified:
             return False
+        return _record_classified_pageview(request, classified)
+    except Exception:
+        return False
+
+
+def _record_classified_pageview(request, classified):
+    """Share the existing aggregate writes between HTML and React page views."""
+    try:
         increment_counter(
             page_type=classified.get("page_type"),
             resource_id=classified.get("resource_id"),
@@ -466,6 +525,13 @@ def record_pageview_from_request(request, response):
     except Exception:
         return False
 
+    # Tagged landing-page views use a separate aggregate event, never a second pageview.
+    try:
+        from mielenosoitukset_fi.utils.campaign_analytics import record_campaign_pageview
+        record_campaign_pageview(request, classified=classified)
+    except Exception:
+        pass
+
     # Counted separately so a visitor-storage failure can never roll back or
     # delay the pageview counter above.
     try:
@@ -473,6 +539,62 @@ def record_pageview_from_request(request, response):
     except Exception:
         return False
     return True
+
+
+def _public_app_listing_path(path):
+    return path in {"/demonstrations", "/cities", "/mielenosoitukset-tanaan", "/submit"} or bool(re.fullmatch(
+        r"/city/[^/]+(?:/tanaan)?|/tag/[^/]+|/organization/[a-f\d]{24}", path, re.IGNORECASE
+    ))
+
+
+def record_public_app_pageview(payload, request):
+    """Record a displayed migrated page from a bounded, same-origin beacon.
+
+    Only explicitly migrated home, directory and listing routes are accepted. Legacy Flask pages must not
+    send this beacon, since their HTML responses already record their views.
+    The page location comes from the same-origin Referer, never a payload URL.
+    Raw locations and referrers are reduced to existing aggregate dimensions.
+    """
+    try:
+        from flask import current_app
+
+        if (not current_app.config.get("SITE_ANALYTICS_ENABLED", True)
+                or request.headers.get("DNT") == "1"):
+            return False
+        if not isinstance(payload, dict) or set(payload) - {"referrer"}:
+            return False
+        original_referrer = payload.get("referrer", "")
+        if not isinstance(original_referrer, str) or len(original_referrer) > 2048:
+            return False
+        landing = urlsplit(request.headers.get("Referer") or "")
+        origin = urlsplit(request.host_url)
+        if (landing.scheme not in {"http", "https"}
+                or (landing.scheme.lower(), landing.netloc.lower())
+                != (origin.scheme.lower(), origin.netloc.lower())
+                or not (landing.path == "/" or _public_app_listing_path(landing.path))
+                or landing.username or landing.password):
+            return False
+        supplied_origin = request.headers.get("Origin")
+        if supplied_origin and supplied_origin.rstrip("/") != request.host_url.rstrip("/"):
+            return False
+        if request.headers.get("Sec-Fetch-Site") == "cross-site":
+            return False
+
+        # This is a browser page signal, not a fabricated HTTP response. Keep
+        # the actual request's trusted peer/proxy headers for visitor hashing.
+        headers = Headers(request.headers)
+        headers["Referer"] = original_referrer
+        signal = SimpleNamespace(
+            method="GET", path=landing.path, host=request.host,
+            headers=headers, environ=request.environ,
+            args=MultiDict(parse_qsl(landing.query, keep_blank_values=True, max_num_fields=32)),
+        )
+        classified = classify_request(signal)
+        return bool(classified and _record_classified_pageview(signal, classified))
+    except (TypeError, ValueError):
+        return False
+    except Exception:
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -673,6 +795,12 @@ def record_event_for_request(event, resource_id=None, request=None):
             from flask import request as _request
 
             request = _request
+        from flask import current_app
+
+        # Same privacy rules as page views: honour the site switch and DNT.
+        if (not current_app.config.get("SITE_ANALYTICS_ENABLED", True)
+                or request.headers.get("DNT") == "1"):
+            return False
         device = classify_device(request.headers.get("User-Agent") or "")
         if device == BOT:
             return False
@@ -719,9 +847,221 @@ def record_beacon_event(payload, request=None):
             return False
 
         resource_id = str(payload.get("resource_id") or "").strip()[:MAX_RESOURCE_LENGTH]
+        if event == "demo_search":
+            landing = urlsplit(request.headers.get("Referer") or "")
+            origin = urlsplit(request.host_url)
+            if (len(resource_id) < 2 or not _public_app_listing_path(landing.path)
+                    or (landing.scheme, landing.netloc) != (origin.scheme, origin.netloc)
+                    or request.headers.get("Sec-Fetch-Site") == "cross-site"):
+                return False
         return record_event_for_request(event, resource_id or None, request=request)
     except Exception:
         return False
+
+
+def _web_vital_buckets(metric):
+    return _WEB_VITAL_CLS_BUCKETS if metric == "CLS" else _WEB_VITAL_MS_BUCKETS
+
+
+def record_web_vital(payload, request=None, when=None):
+    """Add one anonymous browser metric to a bounded daily histogram.
+
+    The route family comes from a same-origin ``Referer`` and the device is the
+    existing coarse user-agent bucket. The client cannot choose either stored
+    dimension, and no raw path, visitor, session, metric id, or DOM target is
+    retained. Invalid input and storage failures are intentionally invisible
+    to the page.
+    """
+    try:
+        if not isinstance(payload, dict):
+            return False
+        metric = str(payload.get("metric") or "").strip().upper()
+        if metric not in WEB_VITAL_NAMES:
+            return False
+        value = float(payload.get("value"))
+        maximum = 5.0 if metric == "CLS" else 60000.0
+        if not math.isfinite(value) or value < 0 or value > maximum:
+            return False
+
+        if request is None:
+            from flask import request as _request
+
+            request = _request
+        try:
+            referrer = urlsplit(request.headers.get("Referer") or "")
+        except ValueError:
+            return False
+        current_host = (request.host or "").split(":")[0].lower()
+        if not referrer.hostname or referrer.hostname.lower() != current_host:
+            return False
+        classified = classify_path(referrer.path or "/")
+        if not classified:
+            return False
+        device = classify_device(request.headers.get("User-Agent") or "")
+        if device == BOT:
+            return False
+
+        moment = when or utcnow()
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=timezone.utc)
+        local = moment.astimezone(HELSINKI_TZ)
+        expires_at = local.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
+            days=WEB_VITALS_RETENTION_DAYS
+        )
+        boundaries = _web_vital_buckets(metric)
+        bucket_index = bisect_left(boundaries, value)
+        bucket_key = f"b{bucket_index:03d}"
+        dimensions = {
+            "date": local.strftime("%Y-%m-%d"),
+            "page_type": classified["page_type"],
+            "device": device,
+            "metric": metric,
+        }
+        _web_vitals_collection().update_one(
+            dimensions,
+            {
+                "$inc": {
+                    "count": 1,
+                    "sum": value,
+                    f"histogram.{bucket_key}": 1,
+                },
+                "$min": {"min": value},
+                "$max": {"max": value},
+                "$set": {"last_seen_at": moment.astimezone(timezone.utc)},
+                "$setOnInsert": {
+                    **dimensions,
+                    "expires_at": expires_at.astimezone(timezone.utc),
+                },
+            },
+            upsert=True,
+        )
+        return True
+    except (TypeError, ValueError):
+        return False
+    except Exception:
+        return False
+
+
+def _histogram_percentile(histogram, count, boundaries, percentile):
+    """Return the fixed-bucket upper bound for a nearest-rank percentile."""
+    if count <= 0:
+        return None
+    target = math.ceil(count * percentile)
+    seen = 0
+    for index, boundary in enumerate(boundaries):
+        seen += int(histogram.get(f"b{index:03d}", 0) or 0)
+        if seen >= target:
+            return boundary
+    return boundaries[-1]
+
+
+def get_web_vitals_summary(days=30, minimum_samples=10, page_type=None):
+    """Summarize browser histograms site-wide or for one known page family."""
+    match, _start, _end = _match_window(days=days)
+    if page_type is not None:
+        if page_type not in PAGE_TYPE_LABELS:
+            raise ValueError("Unknown Web Vitals page type")
+        match["page_type"] = page_type
+    documents = _web_vitals_collection().find(match)
+    combined = {
+        metric: {"count": 0, "sum": 0.0, "histogram": {}}
+        for metric in sorted(WEB_VITAL_NAMES)
+    }
+    for document in documents:
+        metric = document.get("metric")
+        if metric not in combined:
+            continue
+        target = combined[metric]
+        target["count"] += int(document.get("count", 0) or 0)
+        target["sum"] += float(document.get("sum", 0) or 0)
+        for bucket, bucket_count in (document.get("histogram") or {}).items():
+            target["histogram"][bucket] = (
+                target["histogram"].get(bucket, 0) + int(bucket_count or 0)
+            )
+
+    result = []
+    for metric in ("LCP", "INP", "CLS", "TTFB"):
+        values = combined[metric]
+        count = values["count"]
+        boundaries = _web_vital_buckets(metric)
+        sufficient = count >= minimum_samples
+        row = {
+            "metric": metric,
+            "count": count,
+            "sufficient": sufficient,
+            "average": (values["sum"] / count) if count else None,
+        }
+        for label, percentile in (("p50", 0.50), ("p75", 0.75), ("p95", 0.95), ("p99", 0.99)):
+            row[label] = (
+                _histogram_percentile(
+                    values["histogram"], count, boundaries, percentile
+                )
+                if sufficient
+                else None
+            )
+        result.append(row)
+    return result
+
+
+def get_web_vitals_explorer(days=30, metric="TTFB", minimum_samples=10):
+    """Compare page groups and sample-weighted daily averages in one metric.
+
+    Missing or undersampled days remain None instead of zero-duration results.
+    One projected read supplies every page group in the chosen metric/window.
+    """
+    if metric not in WEB_VITAL_NAMES:
+        raise ValueError("Unknown Web Vitals metric")
+    match, start, end = _match_window(days=max(1, min(int(days), 90)))
+    match["metric"] = metric
+    match["page_type"] = {"$in": list(PAGE_TYPE_LABELS)}
+    labels = []
+    day = start
+    while day <= end:
+        labels.append(day.strftime("%Y-%m-%d"))
+        day += timedelta(days=1)
+    scopes = {key: {"count": 0, "sum": 0.0, "histogram": {}, "days": {}}
+              for key in ("", *PAGE_TYPE_LABELS)}
+    for document in _web_vitals_collection().find(match, {
+        "page_type": 1, "date": 1, "count": 1, "sum": 1, "histogram": 1,
+    }):
+        page = document.get("page_type")
+        date_key = document.get("date")
+        if page not in PAGE_TYPE_LABELS or date_key not in labels:
+            continue
+        count = int(document.get("count", 0) or 0)
+        total = float(document.get("sum", 0) or 0)
+        if count <= 0 or not math.isfinite(total) or total < 0:
+            continue
+        for key in ("", page):
+            target = scopes[key]
+            target["count"] += count
+            target["sum"] += total
+            daily = target["days"].setdefault(date_key, {"count": 0, "sum": 0.0})
+            daily["count"] += count
+            daily["sum"] += total
+            for bucket, number in (document.get("histogram") or {}).items():
+                target["histogram"][bucket] = target["histogram"].get(bucket, 0) + int(number or 0)
+    rows = []
+    series = {}
+    boundaries = _web_vital_buckets(metric)
+    for key, values in scopes.items():
+        count = values["count"]
+        sufficient = count >= minimum_samples
+        row = {"page_type": key, "metric": metric, "uri": PAGE_TYPE_PATHS.get(key),
+               "count": count, "sufficient": sufficient,
+               "average": values["sum"] / count if sufficient else None}
+        for name, quantile in (("p50", 0.50), ("p95", 0.95), ("p99", 0.99)):
+            row[name] = (_histogram_percentile(values["histogram"], count, boundaries, quantile)
+                         if sufficient else None)
+        rows.append(row)
+        series[key] = {
+            "values": [round(values["days"][date_key]["sum"] / values["days"][date_key]["count"], 3)
+                       if values["days"].get(date_key, {}).get("count", 0) >= minimum_samples else None
+                       for date_key in labels],
+            "counts": [values["days"].get(date_key, {}).get("count", 0) for date_key in labels],
+        }
+    rows[1:] = sorted(rows[1:], key=lambda row: (-row["count"], row["page_type"]))
+    return {"metric": metric, "labels": labels, "rows": rows, "series": series}
 
 
 # ---------------------------------------------------------------------------
@@ -762,7 +1102,7 @@ def get_overview(days=30, start=None, end=None):
 
     def _range_total(a, b):
         pipeline = [
-            {"$match": {"date": {"$gte": a.strftime(_DATE_FMT), "$lte": b.strftime(_DATE_FMT)}}},
+            {"$match": {"page_type": {"$exists": True, "$nin": [None, ""]}, "date": {"$gte": a.strftime(_DATE_FMT), "$lte": b.strftime(_DATE_FMT)}}},
             {"$group": {"_id": None, "count": {"$sum": "$count"}}},
         ]
         rows = list(_collection().aggregate(pipeline))
@@ -903,6 +1243,7 @@ def get_visitor_series(days=30, start=None, end=None):
 def get_traffic_series(days=30, start=None, end=None):
     """Pageviews per day between two Helsinki-local dates (oldest first)."""
     match, start, end = _match_window(days=days, start=start, end=end)
+    match["page_type"] = {"$exists": True, "$nin": [None, ""]}
     pipeline = [
         {"$match": match},
         {"$group": {"_id": "$date", "count": {"$sum": "$count"}}},
@@ -962,6 +1303,7 @@ def get_top_pages(page_type=None, days=30, start=None, end=None, limit=10,
 def get_breakdown(field, days=30, start=None, end=None, limit=12):
     """Aggregate pageviews grouped by ``language``/``device``/``referrer``."""
     match, _, _ = _match_window(days=days, start=start, end=end)
+    match["page_type"] = {"$exists": True, "$nin": [None, ""]}
     pipeline = [
         {"$match": match},
         {"$group": {"_id": f"${field}", "count": {"$sum": "$count"}}},

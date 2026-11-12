@@ -47,7 +47,7 @@
 
         <div class="details">
             <p><strong>Otsikko:</strong> {{ title }}</p>
-            <p><strong>Päivämäärä:</strong> {{ date }}</p>
+            <p><strong>Päivämäärä:</strong> {% if date is string and date|length == 10 and date[4] == '-' and date[7] == '-' %}{{ date[8:10]|int }}.{{ date[5:7]|int }}.{{ date[0:4] }}{% else %}{{ date }}{% endif %}</p>
             <p><strong>Kaupunki:</strong> {{ city }}</p>
             <p><strong>Osoite:</strong> {{ address }}</p>
         </div>

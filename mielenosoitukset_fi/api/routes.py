@@ -15,6 +15,9 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.users.BPs.chat_ws import serialize_message
 from mielenosoitukset_fi.utils.classes import Demonstration
 from mielenosoitukset_fi.utils.database import stringify_object_ids
+from mielenosoitukset_fi.utils.public_pagination import (
+    PUBLIC_DEMONSTRATION_ORDER, public_page_args, public_page_metadata,
+)
 from mielenosoitukset_fi.utils.notifications import create_notification    # NEW
 from mielenosoitukset_fi.utils.analytics import get_prepped_data
 from mielenosoitukset_fi.utils.demo_localization import (
@@ -142,11 +145,15 @@ import hashlib
 import json
 from flask import request
 
-def make_cache_key():
+def make_cache_key(requested_language=None):
     params = request.args.to_dict(flat=True)
+    page, per_page = public_page_args(request.args)
+    params.update(page=str(page), per_page=str(per_page))
+    params['_resolved_language'] = requested_language or ''
     # sort keys to make order irrelevant
     params_str = json.dumps(params, sort_keys=True)
-    return "demonstrations:" + hashlib.md5(params_str.encode("utf-8")).hexdigest()
+    # Old unbounded cached payloads must not bypass the new server limit.
+    return "demonstrations:page-v3:" + hashlib.md5(params_str.encode("utf-8")).hexdigest()
 
 
 def _case_insensitive_contains(value):
@@ -277,7 +284,7 @@ def list_demonstrations():
     include_translations = (
         request.args.get("include_translations", "").strip().lower() == "true"
     )
-    cache_key = make_cache_key()
+    cache_key = make_cache_key(requested_language)
     use_cache = bool(cache) and not should_skip_cache(public_only=False)
 
     cached_response = cache.get(cache_key) if use_cache else None
@@ -332,11 +339,7 @@ def list_demonstrations():
             pass
 
     # --- Pagination ---
-    try:
-        page = max(int(request.args.get("page", 1)), 1)
-        per_page = max(int(request.args.get("per_page", 20)), 1)
-    except ValueError:
-        page, per_page = 1, 20
+    page, per_page = public_page_args(request.args)
 
     # --- Prepare date ranges ---
     today = datetime.now().date()
@@ -423,11 +426,11 @@ def list_demonstrations():
         )
         for demo in (
             mongo.demonstrations.find(query, PUBLIC_DEMONSTRATION_LIST_PROJECTION)
-            .sort("date", 1)
+            .sort(PUBLIC_DEMONSTRATION_ORDER)
             .skip((page - 1) * per_page)
             .limit(per_page)
         )
-    ]
+    ] if total and page <= total_pages else []
 
     # --- Navigation URLs ---
     from urllib.parse import urlencode
@@ -454,10 +457,7 @@ def list_demonstrations():
 
     # --- Response object to cache ---
     response_data = {
-        "page": page,
-        "per_page": per_page,
-        "total": total,
-        "total_pages": total_pages,
+        **public_page_metadata(page, per_page, total, len(paginated)),
         "next_url": next_url,
         "prev_url": prev_url,
         "results": paginated,
@@ -645,7 +645,9 @@ def get_unapproved_demonstrations():
 @api_bp.route("/admin/demonstrations/<demo_id>", methods=["GET"])
 @_token_or_session_required(required_scopes=["admin"], required_perms=["VIEW_DEMO"])
 def admin_get_demo_info(demo_id):
-    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    demo = mongo.demonstrations.find_one(
+        {"_id": ObjectId(demo_id)}, {"_pending_rollback_history": 0},
+    )
     if not demo:
         raise ApiException(Message("Demonstration not found", "demo_not_found"), 404)
     return jsonify(stringify_object_ids(demo)), 200

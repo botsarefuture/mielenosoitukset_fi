@@ -1,7 +1,11 @@
 from bson.objectid import ObjectId, InvalidId
 from pymongo.errors import DuplicateKeyError
-from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify
+from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify, current_app, abort
+from itsdangerous import URLSafeTimedSerializer, BadSignature
+import secrets
+from types import SimpleNamespace
 from flask_login import current_user, login_required
+from markupsafe import Markup
 import math
 import re
 
@@ -28,6 +32,10 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 
 from .utils import get_org_name, mongo, _ADMIN_TEMPLATE_FOLDER
 from .board_compliance import has_board_clearance
+from .user_history import (
+    FIELDS, PENDING_HISTORY, MAX_PENDING_HISTORY, commit_history_change,
+    flush_user_history, history_event, history_query, present_history, user_snapshot,
+)
 from flask_babel import _
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
@@ -36,19 +44,47 @@ from datetime import datetime
 email_sender = EmailSender()
 admin_user_bp = Blueprint("admin_user", __name__, url_prefix="/admin/user")
 
-from .utils import AdminActParser, log_admin_action_V2
+from .utils import log_admin_action_V2
 from flask_login import current_user
 
 
 @admin_user_bp.before_request
 def log_request_info():
-    """Log request information before handling it."""
-    log_admin_action_V2(
-        AdminActParser().log_request_info(request.__dict__, current_user)
-    )
+    """Check explicit global capability and audit metadata without payloads."""
+    permissions = {
+        "user_control": "LIST_USERS", "edit_user": "EDIT_USER",
+        "save_user": "EDIT_USER", "account_status": "EDIT_USER", "user_history": "EDIT_USER",
+        "create_user": "CREATE_USER", "delete_user": "DELETE_USER",
+        "api_force_password_change": "FORCE_PASSWORD_CHANGE",
+        "api_user_login_history": "VIEW_USER",
+        "check_clearance": "MANAGE_CLEARANCE",
+    }
+    capability = permissions.get((request.endpoint or "").rsplit(".", 1)[-1])
+    if current_user.is_authenticated and capability and not (
+        current_user.has_full_permissions() or capability in current_user.global_permissions
+    ):
+        log_admin_action_V2({
+            "event": "admin_user_forbidden", "endpoint": request.endpoint,
+            "actor": {"id": str(current_user.id)}, "required_permission": capability,
+        })
+        abort(403)
+    log_admin_action_V2({
+        "event": ("user_account_status_request" if request.endpoint == "admin_user.account_status"
+                  else "admin_user_request"), "method": request.method,
+        "endpoint": request.endpoint,
+        "actor": {"id": str(current_user.id) if current_user.is_authenticated else None},
+    })
 
 
 # User control panel with pagination
+@admin_user_bp.after_request
+def protect_user_history_response(response):
+    if request.endpoint in {"admin_user.user_history", "admin_user.account_status"}:
+        response.cache_control.private = True
+        response.cache_control.no_store = True
+    return response
+
+
 @admin_user_bp.route("/")
 @login_required
 @admin_required
@@ -136,6 +172,10 @@ def user_control():
     for user in users:
         if user.get("role") in {None, "user"} and str(user["_id"]) in scoped_user_ids:
             user["role"] = "city_admin"
+        user["can_change_status"] = can_change_account_status(
+            current_user, SimpleNamespace(_id=user["_id"], role=user.get("role") or "user",
+                                          global_admin=user.get("global_admin", False))
+        )
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}user/list.html",
@@ -159,6 +199,7 @@ def user_control():
 
 
 USER_ACCESS_LEVELS = {
+    "superuser": 5,
     "god": 5,
     "global_admin": 4,
     "admin": 3,
@@ -183,6 +224,9 @@ CITY_ADMIN_PERMISSIONS = [
     "ACCEPT_DEMO",
     "CREATE_DEMO",
     "GENERATE_EDIT_LINK",
+]
+CITY_ADMIN_AVAILABLE_PERMISSIONS = CITY_ADMIN_PERMISSIONS + [
+    "LIST_CASES", "VIEW_CASE", "EDIT_CASE",
 ]
 
 
@@ -209,7 +253,7 @@ def _city_scope_grant_for_user(user_id: ObjectId) -> dict:
         scope_keys = [grant.get("scope_key")]
     grant["scope_keys"] = [normalize_city_key(key) for key in scope_keys or [] if normalize_city_key(key)]
     grant["permissions"] = [
-        permission for permission in grant.get("permissions", []) if permission in CITY_ADMIN_PERMISSIONS
+        permission for permission in grant.get("permissions", []) if permission in CITY_ADMIN_AVAILABLE_PERMISSIONS
     ]
     return grant
 
@@ -233,8 +277,9 @@ def _auto_activate_granted_cities(city_keys: list[str]) -> None:
 
 
 def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions: list[str]) -> None:
+    """Audit each scope mutation in its own document's atomic outbox."""
     city_keys = sorted({normalize_city_key(key) for key in city_keys if normalize_city_key(key) in CITY_KEY_TO_NAME})
-    permissions = sorted({permission for permission in permissions if permission in CITY_ADMIN_PERMISSIONS})
+    permissions = sorted({permission for permission in permissions if permission in CITY_ADMIN_AVAILABLE_PERMISSIONS})
     if city_keys and permissions:
         permissions = sorted(set(permissions) | {"LIST_DEMOS", "VIEW_DEMO"})
         _auto_activate_granted_cities(city_keys)
@@ -245,15 +290,30 @@ def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions:
         "$or": [{"revoked_at": {"$exists": False}}, {"revoked_at": None}],
     }
 
+    flush_user_history(mongo, user_id)
+
+    def snapshot(grant):
+        keys = grant.get("scope_keys")
+        if keys is None:
+            keys = [grant["scope_key"]] if grant.get("scope_key") else []
+        return {"city_scope_keys": sorted(set(keys)),
+                "city_scope_permissions": sorted(set(grant.get("permissions", [])))}
+
+    def update_grant(grant, payload, after):
+        entry = history_event(user_id, snapshot(grant), after, _history_actor())
+        if commit_history_change(mongo.admin_scope_grants, grant, payload, entry, {
+            "user_id", "scope_type", "scope_keys", "scope_key", "permissions", "revoked_at",
+        }) is None:
+            abort(409)
+
     if not city_keys or not permissions:
-        mongo.admin_scope_grants.update_many(
-            query,
-            {"$set": {"revoked_at": utcnow(), "revoked_by": str(current_user._id)}},
-        )
-        mongo.users.update_one(
-            {"_id": user_id, "role": "city_admin"},
-            {"$set": {"role": "user"}},
-        )
+        for grant in mongo.admin_scope_grants.find(query):
+            update_grant(grant, {"revoked_at": utcnow(), "revoked_by": str(current_user._id)},
+                         {"city_scope_keys": [], "city_scope_permissions": []})
+        document = mongo.users.find_one({"_id": user_id})
+        if document and document.get("role") == "city_admin":
+            _commit_profile_change(document, {"role": "user"})
+        flush_user_history(mongo, user_id)
         return
 
     existing = mongo.admin_scope_grants.find_one(query)
@@ -267,46 +327,66 @@ def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions:
         "updated_by": str(current_user._id),
         "revoked_at": None,
     }
+    after = {"city_scope_keys": city_keys, "city_scope_permissions": permissions}
     if existing:
-        mongo.admin_scope_grants.update_one({"_id": existing["_id"]}, {"$set": payload})
+        update_grant(existing, payload, after)
     else:
+        payload["_id"] = ObjectId()
         payload["created_at"] = utcnow()
         payload["granted_by"] = str(current_user._id)
+        payload[PENDING_HISTORY] = [history_event(
+            user_id, {"city_scope_keys": [], "city_scope_permissions": []}, after, _history_actor(),
+        )]
         mongo.admin_scope_grants.insert_one(payload)
-    mongo.users.update_one(
-        {"_id": user_id, "role": {"$nin": ["admin", "global_admin", "god"]}},
-        {"$set": {"role": "city_admin"}},
-    )
+    document = mongo.users.find_one({"_id": user_id})
+    if document and document.get("role") not in {"admin", "global_admin", "god", "city_admin"}:
+        _commit_profile_change(document, {"role": "city_admin"})
+    flush_user_history(mongo, user_id)
 
 
-def compare_user_levels(user1, user2):  # Check if the user1 is higher than user2
-    """Compare the access levels of two users.
-
-    Parameters
-    ----------
-    user1 :
-        An object representing the first user, which must have a 'role' attribute.
-    user2 :
-        raises ValueError: If either user1 or user2 has an invalid role not present in USER_ACCESS_LEVELS.
-
-    Returns
-    -------
-
-
-    """
+def compare_user_levels(user1, user2):
+    """Require a strictly higher declared role; unknown roles fail closed."""
     if user1.role not in USER_ACCESS_LEVELS or user2.role not in USER_ACCESS_LEVELS:
-        if user2.role not in USER_ACCESS_LEVELS:
-            user2.role = "user"
-        else:
-            raise ValueError("Invalid user role")
-    
-    if user1._id == ObjectId("66c25768dad432ad39ce38d5"):
-        return True
-
-    if user1.role == user2.role and not user1._id == ObjectId("66c25768dad432ad39ce38d5"): # HARD CODED EXCEPTION FOR EMILIA
         return False
+    full_roles = {"god", "global_admin", "superuser"}
+    actor_full = bool(getattr(user1, "global_admin", False)) or user1.role in full_roles
+    target_full = bool(getattr(user2, "global_admin", False)) or user2.role in full_roles
+    if target_full and not actor_full:
+        return False
+    actor_level = USER_ACCESS_LEVELS["global_admin"] if "national" in getattr(user1, "system_team_access", ()) and user1.role != "god" else USER_ACCESS_LEVELS[user1.role]
+    target_level = USER_ACCESS_LEVELS["global_admin"] if "national" in getattr(user2, "system_team_access", ()) and user2.role != "god" else USER_ACCESS_LEVELS[user2.role]
+    return user1._id != user2._id and actor_level > target_level
 
-    return USER_ACCESS_LEVELS[user1.role] > USER_ACCESS_LEVELS[user2.role]
+
+def _check_user_target(actor, target, *, allow_self=False):
+    """Enforce the same target hierarchy on every privileged entrypoint."""
+    from mielenosoitukset_fi.utils.security_cases import protected_account
+    if request.method != "GET" and protected_account(mongo, mongo.users.find_one({"_id": target._id})):
+        abort(403, "Hallituksen ja god-tilien turvamuutokset tehdään hallinnon turvatapauksessa.")
+    if allow_self and actor._id == target._id:
+        return
+    if not compare_user_levels(actor, target):
+        abort(403)
+
+
+def _check_user_assignment(actor, role, permissions, target=None):
+    """Reject hidden-role escalation and undelegated global permission grants."""
+    allowed = {"user", "translator", "city_admin", "admin", "global_admin"}
+    if target is not None:
+        allowed.add(target.role)
+    if not isinstance(role, str) or role not in allowed:
+        abort(403)
+    if not actor.has_full_permissions() and USER_ACCESS_LEVELS.get(role, 99) > USER_ACCESS_LEVELS.get(actor.role, 0):
+        abort(403)
+    existing = set(target.global_permissions) if target else set()
+    added = set(permissions) - existing
+    registered = {permission["name"] for group in PERMISSIONS_GROUPS.values() for permission in group}
+    if not added <= registered:
+        abort(403)
+    if target and actor._id == target._id and role != target.role:
+        abort(403)
+    if not actor.has_full_permissions() and not added <= set(actor.global_permissions):
+        abort(403)
 
 def safe_redirect(target):
     """Redirect safely with redi_count check to prevent loops."""
@@ -317,6 +397,147 @@ def safe_redirect(target):
         flash_message("Liian monta uudelleenohjausta, palaa käyttäjälistaukseen.", "error")
         return redirect(url_for("admin_user.user_control"))
     return redirect(target)
+
+
+def can_change_account_status(actor, target):
+    """Share status-action visibility with the authoritative target hierarchy."""
+    from mielenosoitukset_fi.utils.security_cases import protected_account
+    if protected_account(mongo, mongo.users.find_one({"_id": target._id})):
+        return False
+    return ((actor.has_full_permissions() or "EDIT_USER" in actor.global_permissions)
+            and actor._id != target._id
+            and compare_user_levels(actor, target))
+
+
+def _history_actor():
+    """Capture attribution now, never from a later projection request."""
+    return {"id": str(current_user._id), "username": current_user.username,
+            "role": current_user.role}
+
+
+def _profile_snapshot(document):
+    """User fields only; scope grants have their own atomic mutation events."""
+    return {key: value for key, value in user_snapshot(document, {}).items()
+            if not key.startswith("city_scope_")}
+
+
+def _commit_profile_change(document, updates, event="user_details_changed", *, always_record=False):
+    """CAS profile state and its outbox together, then try audit projection."""
+    user_id = document["_id"]
+    flush_user_history(mongo, user_id)
+    entry = history_event(user_id, _profile_snapshot(document),
+                          _profile_snapshot({**document, **updates}),
+                          _history_actor(), event, always_record=always_record)
+    guard_fields = (set(FIELDS) - {"city_scope_keys", "city_scope_permissions"}) | {
+        "global_admin", "username_canonical", "email_canonical",
+    } | set(updates)
+    result = commit_history_change(mongo.users, document, updates, entry, guard_fields)
+    if result is None:
+        abort(409)
+    flush_user_history(mongo, user_id)
+    return result
+
+
+@admin_user_bp.route("/history/<user_id>")
+@login_required
+@admin_required
+@permission_required("EDIT_USER")
+def user_history(user_id):
+    if not ObjectId.is_valid(user_id):
+        abort(404)
+    document = mongo.users.find_one({"_id": ObjectId(user_id)})
+    if not document:
+        abort(404)
+    target = User.from_db(document)
+    _check_user_target(current_user, target, allow_self=True)
+    flush_user_history(mongo, target._id)
+    query = history_query(target._id)
+    total = mongo.admin_logs.count_documents(query)
+    pages = max(1, math.ceil(total / 20))
+    page = min(max(request.args.get("page", 1, type=int) or 1, 1), pages)
+    entries = mongo.admin_logs.find(query).sort([("timestamp", -1), ("_id", -1)]).skip((page - 1) * 20).limit(20)
+    return render_template(
+        "admin_V2/user/history.html", user=target, history=[present_history(entry) for entry in entries],
+        total=total, current_page=page, total_pages=pages,
+        visible_pages=[{"number": number, "url": url_for("admin_user.user_history", user_id=user_id, page=number)}
+                       for number in range(max(1, page - 2), min(pages, page + 2) + 1)],
+    )
+
+
+@admin_user_bp.route("/account_status/<user_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_USER")
+def account_status(user_id):
+    """Confirm a permission-checked status change with scoped CSRF protection."""
+    try:
+        target_id = ObjectId(user_id)
+    except (InvalidId, TypeError):
+        abort(404)
+    doc = mongo.users.find_one({"_id": target_id})
+    if not doc:
+        abort(404)
+    target = User.from_db(doc)
+    if not can_change_account_status(current_user, target):
+        abort(403)
+    flush_user_history(mongo, target_id)
+
+    serializer = URLSafeTimedSerializer(current_app.secret_key, salt="admin-account-status")
+    snapshot = {
+        "active": bool(doc.get("active", True)), "banned": bool(doc.get("banned", False)),
+        "version": doc.get("account_status_version", 0),
+    }
+    if request.method == "POST":
+        try:
+            proof = serializer.loads(request.form.get("status_token", ""), max_age=900)
+        except BadSignature:
+            abort(400)
+        if (
+            proof.get("actor") != str(current_user._id)
+            or proof.get("target") != user_id
+            or proof.get("nonce") not in session.get("account_status_nonces", [])
+        ):
+            abort(400)
+        if proof["snapshot"] != snapshot:
+            abort(409)
+        # Versioning stops saved-cookie/form replay after disable/enable cycles.
+        predicates = [
+            {field: doc[field]} if field in doc else {field: {"$exists": False}}
+            for field in ("active", "banned", "role", "account_status_version")
+        ]
+        enabled = proof["enable"]
+        status_updates = {"active": enabled, "banned": False if enabled else snapshot["banned"]}
+        entry = history_event(target_id, snapshot, status_updates,
+                              _history_actor(), "user_account_status_changed")
+        predicates.append({f"{PENDING_HISTORY}.{MAX_PENDING_HISTORY - 1}": {"$exists": False}})
+        result = mongo.users.update_one(
+            {"_id": target_id, "$and": predicates},
+            {"$set": status_updates, "$push": {PENDING_HISTORY: entry},
+             "$inc": {"account_status_version": 1}},
+        )
+        if result.modified_count != 1:
+            abort(409)
+        session["account_status_nonces"] = [
+            nonce for nonce in session.get("account_status_nonces", [])
+            if nonce != proof["nonce"]
+        ]
+        flush_user_history(mongo, target_id)
+        flash_message("Käyttäjän käyttötila päivitetty.", "success")
+        return redirect(url_for("admin_user.user_control"))
+
+    nonce = secrets.token_urlsafe(32)
+    # Bound cookie growth while allowing independent confirmation tabs.
+    session["account_status_nonces"] = (session.get("account_status_nonces", []) + [nonce])[-8:]
+    enable = not target.is_active
+    token = serializer.dumps({
+        "actor": str(current_user._id), "target": user_id, "nonce": nonce,
+        "snapshot": snapshot, "enable": enable,
+    })
+    return render_template(
+        "admin_V2/user/account_status.html", user=target, enable=enable, status_token=token,
+        history=[present_history(entry) for entry in mongo.admin_logs.find(history_query(target_id))
+                 .sort([("timestamp", -1), ("_id", -1)]).limit(3)],
+    )
 
 
 @admin_user_bp.route("/edit_user/<user_id>", methods=["GET", "POST"])
@@ -333,9 +554,7 @@ def edit_user(user_id):
     user = User.from_db(user_doc)
 
     # ─── permission gate ───────────────────────────────────────────────────────
-    if user != current_user and not compare_user_levels(current_user, user):
-        flash_message("Et voi muokata käyttäjää, jolla on korkeampi käyttöoikeustaso kuin sinulla.", "error")
-        return safe_redirect(request.referrer or url_for("admin_user.user_control"))
+    _check_user_target(current_user, user, allow_self=True)
     # ───────────────────────────────────────────────────────────────────────────
 
     if request.method == "POST":
@@ -363,6 +582,7 @@ def edit_user(user_id):
             ),
             "forced_identity_change": request.form.get("forced_identity_change") == "on",
         }
+        _check_user_assignment(current_user, incoming["role"], incoming["global_permissions"], user)
 
         # ─── validoinnit ────────────────────────────────────────────────────────
         if not incoming["username"] or not incoming["email"]:
@@ -436,7 +656,7 @@ def edit_user(user_id):
         # 4️⃣ Päivitä vain jos on muutoksia
         if changes:
             try:
-                mongo.users.update_one({"_id": ObjectId(user_id)}, {"$set": changes})
+                _commit_profile_change(user_doc, changes)
             except DuplicateKeyError:
                 flash_message("Käyttäjänimi tai sähköpostiosoite on jo käytössä.", "error")
                 return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
@@ -460,12 +680,13 @@ def edit_user(user_id):
         user=user,
         PERMISSIONS_GROUPS=PERMISSIONS_GROUPS,
         global_permissions=user.global_permissions,
+        can_change_status=can_change_account_status(current_user, user),
         can_manage_scope_grants=_can_manage_scope_grants(current_user),
         city_list=CITY_LIST,
         enabled_city_list=enabled_city_names(mongo),
         city_name_to_key=CITY_NAME_TO_KEY,
         city_scope_grant=city_scope_grant,
-        city_admin_permissions=CITY_ADMIN_PERMISSIONS,
+        city_admin_permissions=CITY_ADMIN_AVAILABLE_PERMISSIONS,
     )
 
 
@@ -529,7 +750,9 @@ def save_user(user_id):
         flash_message("Käyttäjää ei löydy.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
 
-    user = User.from_db(user)
+    user_document = user
+    user = User.from_db(user_document)
+    _check_user_target(current_user, user, allow_self=True)
 
     # Get form data
     username = normalize_username(request.form.get("username"))
@@ -539,16 +762,17 @@ def save_user(user_id):
     confirmed = request.form.get("confirmed") == "on"
     global_permissions = _normalize_role_permissions(role, request.form.getlist("permissions[global][]"))
     forced_identity_change = request.form.get("forced_identity_change") == "on"
+    _check_user_assignment(current_user, role, global_permissions, user)
 
     # Prevent role escalation
-    if current_user._id == user_id and role != current_user.role:
+    if current_user._id == user._id and role != current_user.role:
         flash_message("Et voi muuttaa omaa rooliasi.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
     # Prevent global admins from lowering their role
     if (
         user.role == "global_admin"
-        and current_user._id == user_id
+        and current_user._id == user._id
         and role != "global_admin"
     ):
         flash_message("Et voi alentaa omaa rooliasi globaalina ylläpitäjänä.", "error")
@@ -616,10 +840,21 @@ def save_user(user_id):
 
 
     try:
-        user.save()
+        _commit_profile_change(user_document, {
+            "username": username, "username_canonical": username,
+            "displayname": displayname, "email": email, "email_canonical": email,
+            "role": role, "confirmed": confirmed,
+            "global_permissions": global_permissions, "forced_identity_change": forced_identity_change,
+        })
     except DuplicateKeyError:
         flash_message("Käyttäjänimi tai sähköpostiosoite on jo käytössä.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
+
+    if _can_manage_scope_grants(current_user):
+        _sync_city_scope_grant(
+            user._id, request.form.getlist("admin_scope_cities[]"),
+            request.form.getlist("admin_scope_permissions[city][]"),
+        )
 
     if forced_identity_change and not identity_change_was_forced:
         email_sender.queue_email(
@@ -633,11 +868,6 @@ def save_user(user_id):
             },
             extra_headers={"reply-to": "tuki@mielenosoitukset.fi"},
         )
-
-    if _can_manage_scope_grants(current_user):
-        city_scope_keys = request.form.getlist("admin_scope_cities[]")
-        city_scope_permissions = request.form.getlist("admin_scope_permissions[city][]")
-        _sync_city_scope_grant(user._id, city_scope_keys, city_scope_permissions)
 
     # Build email summary
     permission_summary_html = "<p>Sinulla on seuraavat oikeudet:</p>"
@@ -662,7 +892,10 @@ def save_user(user_id):
             "role": role,
             "action": "päivitetty",
             "updated_email": email,
-            "permissions_summary": permission_summary_html,
+            # This fragment is assembled exclusively from the static
+            # permission registry above. Mark it trusted at the source while
+            # every user-controlled email value remains autoescaped.
+            "permissions_summary": Markup(permission_summary_html),
             "login_link": url_for("users.auth.login", _external=True),
             "support_contact": "tuki@mielenosoitukset.fi",
         },
@@ -682,6 +915,12 @@ import warnings
 @permission_required("MANAGE_CLEARANCE")
 def check_clearance(user_id):
     """Compatibility endpoint for checking global-admin board approval."""
+    if not ObjectId.is_valid(user_id):
+        abort(404)
+    user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
+    if not user_doc:
+        abort(404)
+    _check_user_target(current_user, User.from_db(user_doc))
     return jsonify({"has_clearance": has_board_clearance(user_id)})
 
 
@@ -763,8 +1002,19 @@ def delete_user():
             flash_message(error_message, "error")
             return redirect(request.referrer or url_for("admin_user.user_control"))
 
-    # Perform deletion
-    mongo.users.delete_one({"_id": ObjectId(user_id)})
+    # Never delete the only durable copy of an undelivered history event.
+    # The existing fresh per-target step-up guard above remains authoritative.
+    if not flush_user_history(mongo, target_user._id):
+        if json_mode:
+            return jsonify({"status": "ERROR", "message": _("Muutoshistorian välitys on kesken. Tämä poistoyritys ei onnistunut. Yritä myöhemmin uudelleen ja vahvista henkilöllisyytesi.")}), 503
+        abort(503)
+    deleted = mongo.users.delete_one({
+        "_id": target_user._id, f"{PENDING_HISTORY}.0": {"$exists": False},
+    })
+    if deleted.deleted_count != 1:
+        if json_mode:
+            return jsonify({"status": "ERROR", "message": _("Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä.")}), 409
+        abort(409)
 
     success_message = "Käyttäjä poistettu onnistuneesti."
     if json_mode:
@@ -823,6 +1073,11 @@ def create_user():
     if role not in ["user", "translator", "city_admin", "admin", "global_admin"]:
         flash_message("Rooli ei ole kelvollinen.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
+    _check_user_assignment(current_user, role, _normalize_role_permissions(role, []))
+    # Clearance is subject-specific; create the ordinary account first, then
+    # use the existing clearance-checked promotion flow.
+    if role == "global_admin":
+        abort(403)
 
     if request.is_json:
         city_scope_keys = data.get("admin_scope_cities", []) or []
@@ -865,6 +1120,7 @@ def create_user():
 
     # Create user document
     user_doc = {
+        "_id": ObjectId(),
         "email": email,
         "email_canonical": email,
         "username": username,
@@ -876,7 +1132,11 @@ def create_user():
         "banned": False,
         "password_hash": password_hash,
         "global_permissions": _normalize_role_permissions(role, []),
+        "forced_pwd_reset": True,
     }
+    user_doc[PENDING_HISTORY] = [history_event(
+        user_doc["_id"], {}, _profile_snapshot(user_doc), _history_actor(), "user_created",
+    )]
     
     try:
         result = mongo.users.insert_one(user_doc)
@@ -890,11 +1150,11 @@ def create_user():
     inserted_user = mongo.users.find_one({"_id": result.inserted_id})
     user = User.from_db(inserted_user)
 
-    user.forced_pwd_reset = True # We want to force password reset on first login
-    user.save()
+    flush_user_history(mongo, user._id)
 
     if role == "city_admin":
         _sync_city_scope_grant(user._id, city_scope_keys, CITY_ADMIN_PERMISSIONS)
+
 
     # Send credentials via email
     email_sender.queue_email(
@@ -936,20 +1196,24 @@ def api_force_password_change():
     flask.Response
         JSON response indicating success or failure.
     """
-    data = request.get_json()
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"status": "ERROR", "message": _("Virheellinen pyyntö.")}), 400
     user_id = data.get("user_id")
 
     if not user_id:
         return jsonify({"status": "ERROR", "message": "Käyttäjä ID puuttuu."}), 400
 
+    if not isinstance(user_id, str) or not ObjectId.is_valid(user_id):
+        return jsonify({"status": "ERROR", "message": _("Virheellinen käyttäjän tunniste.")}), 400
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if not user:
         return jsonify({"status": "ERROR", "message": "Käyttäjää ei löytynyt."}), 404
 
     user_ = User.from_db(user)
-    
-    user_.forced_pwd_reset = True
-    user_.save()
+    _check_user_target(current_user, user_)
+    _commit_profile_change(user, {"forced_pwd_reset": True},
+                           event="user_password_reset_required", always_record=True)
     
     return jsonify({"status": "OK", "message": "Salasanan vaihto pakotettu onnistuneesti."})
 
@@ -981,6 +1245,7 @@ def api_user_login_history(user_id):
     user_doc = mongo.users.find_one({"_id": object_id})
     if not user_doc:
         return jsonify({"status": "ERROR", "message": "Käyttäjää ei löytynyt."}), 404
+    _check_user_target(current_user, User.from_db(user_doc), allow_self=True)
 
     raw_limit = request.args.get("limit", 25)
     try:

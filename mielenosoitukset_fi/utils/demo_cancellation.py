@@ -61,14 +61,15 @@ def _is_verified_official_contact(organizer: dict) -> bool:
     return bool(org_email and organizer_email and org_email == organizer_email)
 
 
-def queue_cancellation_links_for_demo(demo_doc: dict) -> None:
-    """Send cancellation links to all organiser emails for a demonstration."""
+def cancellation_link_messages(demo_doc: dict) -> list:
+    """Build trusted cancellation messages without sending or queueing mail."""
 
     if not demo_doc:
-        return
+        return []
 
     demo_id = _object_id(demo_doc.get("_id"))
     seen_emails = set()
+    messages = []
 
     for organizer in demo_doc.get("organizers", []):
         email = (organizer.get("email") or "").strip()
@@ -106,23 +107,30 @@ def queue_cancellation_links_for_demo(demo_doc: dict) -> None:
             logger.exception("Failed to build cancellation link for demo %s", demo_id)
             continue
 
-        try:
-            email_sender.queue_email(
-                template_name="demo_cancellation_link.html",
-                subject="Mielenosoituksen peruminen",
-                recipients=[email],
-                context={
+        messages.append({
+                "template_name": "demo_cancellation_link.html",
+                "subject": "Mielenosoituksen peruminen",
+                "recipients": [email],
+                "context": {
                     "title": demo_doc.get("title", ""),
                     "date": demo_doc.get("date", ""),
                     "city": demo_doc.get("city", ""),
                     "cancellation_link": cancellation_link,
                     "official_contact": official_contact,
                 },
-            )
-        except Exception:
-            logger.exception("Failed to queue cancellation email to %s", email)
+        })
 
         seen_emails.add(email_key)
+    return messages
+
+
+def queue_cancellation_links_for_demo(demo_doc: dict) -> None:
+    """Keep the existing Flask submission caller's queueing contract."""
+    for message in cancellation_link_messages(demo_doc):
+        try:
+            email_sender.queue_email(**message)
+        except Exception:
+            logger.exception("Failed to queue cancellation email for demonstration")
 
 
 def fetch_cancellation_token(token: str) -> Optional[dict]:

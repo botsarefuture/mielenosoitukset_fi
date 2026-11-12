@@ -1,14 +1,18 @@
 import hmac
 import secrets
+from datetime import timedelta
 
 from flask import Blueprint, request, jsonify, redirect, session, url_for
 from flask_login import current_user, login_required
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.utils.time_utils import utcnow
-from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
+from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required, global_permission_required
 
 from .utils import mongo
 from .board_audit import log_board_action
+from mielenosoitukset_fi.utils.system_teams import board_ids, clearance_approved, clearance_record_approved
+from mielenosoitukset_fi.utils.team_governance import cast_vote, cast_joint_override, request_state, GovernanceConflict
+from mielenosoitukset_fi.utils.god_appointments import appointment_roster, required_voters, can_vote, cast_appointment_vote
 
 board_bp = Blueprint("board_compliance", __name__, url_prefix="/board")
 GOVERNANCE_CSRF_SESSION_KEY = "governance_csrf_token"
@@ -33,7 +37,9 @@ def _serialize_clearance(clearance, iso_timestamp=True):
         return {"approved": False}
     timestamp = clearance.get("timestamp")
     return {
-        "approved": bool(clearance.get("approved")),
+        "approved": clearance_record_approved(clearance),
+        "approval_count": len(clearance.get("approvals") or {}),
+        "approvers": [value.get("username", "") for value in (clearance.get("approvals") or {}).values()],
         "granted_by": clearance.get("granted_by"),
         "timestamp": (
             timestamp.isoformat()
@@ -51,18 +57,46 @@ def clearance_rows():
         if doc.get("user_id")
     }
     rows = []
+    board = board_ids(mongo)
+    def visible_request(record, kind):
+        state = dict(request_state(record, kind))
+        state['override_votes'] = {key: value for key, value in (state.get('override_votes') or {}).items()
+                                   if value.get('at') and value['at'] > utcnow() - timedelta(minutes=10)}
+        return state
     for user_doc in mongo.users.find().sort([("username", 1), ("_id", 1)]):
         user_id = str(user_doc["_id"])
         clearance = _serialize_clearance(
             clearances.get(user_id),
             iso_timestamp=False,
         )
+        god_request = request_state(clearances.get(user_id), "god")
+        god_roster = appointment_roster(mongo, user_id) if user_doc.get("god_candidate") else {}
+        current = god_request.get("roster") == god_roster
+        god_votes = (god_request.get("votes") or {}) if current else {}
+        veto_voters = set(god_request.get("veto_voters") or []) if current else set()
         rows.append(
             {
                 "id": user_id,
                 "username": user_doc.get("username"),
                 "role": user_doc.get("role"),
                 **clearance,
+                "approval_count": clearance.get("approval_count",0),
+                "my_vote": str(current_user.id) in ((clearances.get(user_id) or {}).get("approvals") or {}),
+                "board_member": user_id in board,
+                "board_request": visible_request(clearances.get(user_id),"board"),
+                "national_request": visible_request(clearances.get(user_id),"national"),
+                "god_candidate": user_doc.get("god_candidate") is True,
+                "god_approval_count": len(god_votes),
+                "god_required": (god_request.get("required") if current and god_request.get("required")
+                                 else len(required_voters(god_roster))),
+                "my_god_vote": str(current_user.id) in god_votes,
+                "god_phase": god_request.get("phase") if current else None,
+                "god_chamber": god_request.get("chamber") if current else None,
+                "god_window_ends_at": god_request.get("window_ends_at") if current else None,
+                "god_veto": str(current_user.id) in veto_voters and god_request.get("phase") == "window",
+                "god_vetoed": str(current_user.id) in ((god_request.get("vetoes") or {}) if current else {}),
+                "can_god_vote": can_vote(mongo, current_user, user_id) if user_doc.get("god_candidate") else False,
+                "emergency": request_state(clearances.get(user_id), "god_emergency"),
             }
         )
     return rows
@@ -73,6 +107,7 @@ def clearance_rows():
 @login_required
 @admin_required
 @permission_required("MANAGE_CLEARANCE")
+@global_permission_required("MANAGE_CLEARANCE")
 def get_clearance(user_id):
     """
     Get the board clearance status for a user.
@@ -85,6 +120,7 @@ def get_clearance(user_id):
 @login_required
 @admin_required
 @permission_required("MANAGE_CLEARANCE")
+@global_permission_required("MANAGE_CLEARANCE")
 def set_clearance(user_id):
     """
     Grant or revoke board clearance for global_admin role.
@@ -95,7 +131,9 @@ def set_clearance(user_id):
         return jsonify({"status": "ERROR", "message": "Istunnon turvatarkistus epäonnistui."}), 403
 
     data = request.get_json(silent=True) or {}
-    approved = bool(data.get("approved", False))
+    if not isinstance(data, dict):
+        return jsonify(status="ERROR", message="Virheellinen pyyntö."), 400
+    approved = data.get("approved", False)
 
     if not ObjectId.is_valid(user_id):
         return jsonify({"status": "ERROR", "message": "Virheellinen käyttäjätunniste."}), 400
@@ -104,34 +142,30 @@ def set_clearance(user_id):
     if not user_doc:
         return jsonify({"status": "ERROR", "message": "Käyttäjää ei löytynyt."}), 404
 
-    timestamp = utcnow()
-    mongo.board_clearances.update_one(
-        {"user_id": user_id},
-        {
-            "$set": {
-                "approved": approved,
-                "granted_by": current_user.username,
-                "granted_by_id": str(current_user.id),
-                "timestamp": timestamp,
-            },
-            "$setOnInsert": {"created_at": timestamp},
-        },
-        upsert=True,
-    )
-
-    action = "myönnetty" if approved else "peruttu"
-
-    log_board_action(user_id, action, current_user.username)
-
-    return jsonify(
-        {
-            "status": "OK",
-            "message": (
-                f"Hallinnollinen hyväksyntä {action} käyttäjälle "
-                f"{user_doc.get('username')}."
-            ),
-        }
-    )
+    try:
+        kind = data.get("kind","national")
+        if kind == "god_emergency":
+            from mielenosoitukset_fi.utils.god_emergency import open_request, act
+            if data.get("command") == "open":
+                result = open_request(mongo, user_id, current_user, data.get("ticket"))
+            else:
+                result = act(mongo, user_id, current_user, data.get("request_id"), data.get("command"), data.get("proof"))
+            return jsonify(status="OK", emergency=result)
+        if kind == "god":
+            if data.get("override"):
+                raise PermissionError("Tavallinen yhteinen ohitus ei korvaa god-tilin kaikkia hyväksyntöjä.")
+            result = cast_appointment_vote(mongo, user_id, current_user, approved)
+        else:
+            result = cast_joint_override(mongo,user_id,current_user,kind) if data.get("override") is True else cast_vote(mongo,user_id,current_user.id,kind,approved)
+    except PermissionError as exc:
+        return jsonify(status="ERROR",message=str(exc)),403
+    except GovernanceConflict as exc:
+        return jsonify(status="ERROR",message=str(exc)),409
+    except ValueError as exc:
+        return jsonify(status="ERROR",message=str(exc)),400
+    count = len(result.get("votes") or {})
+    return jsonify(status="OK",approved=result["approved"],approval_count=count,required=result["required"],
+                   message="Hyväksyntä valmis." if result["approved"] else "Hyväksyntä kirjattu. Muut hyväksynnät tarvitaan vielä.")
 
 
 # ────────────── LIST ALL CLEARANCES ──────────────
@@ -139,6 +173,7 @@ def set_clearance(user_id):
 @login_required
 @admin_required
 @permission_required("MANAGE_CLEARANCE")
+@global_permission_required("MANAGE_CLEARANCE")
 def list_clearances():
     """
     List all users with board clearance info.
@@ -161,17 +196,14 @@ def list_clearances():
 # ────────────── FRONTEND UTILITY ──────────────
 def has_board_clearance(user_id):
     """Check if a user has board clearance."""
-    clearance = mongo.board_clearances.find_one(
-        {"user_id": str(user_id)},
-        {"approved": 1},
-    )
-    return bool(clearance and clearance.get("approved"))
+    return clearance_approved(mongo,user_id)
 
 
 @board_bp.route("/ui")
 @login_required
 @admin_required
 @permission_required("MANAGE_CLEARANCE")
+@global_permission_required("MANAGE_CLEARANCE")
 def clearance_ui():
     """Redirect the legacy board UI into the unified admin panel."""
     return redirect(url_for("admin_governance.clearances"))

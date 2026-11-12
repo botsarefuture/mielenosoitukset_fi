@@ -1,6 +1,6 @@
 # Mielenosoitukset.fi
 
-Mielenosoitukset.fi is an open-source platform for discovering and submitting demonstrations in Finland. Users can browse upcoming events, submit new demonstrations, and administrators can manage and approve submissions. The project is actively maintained and welcomes new contributors — see the Contributing section below for how to help.
+Mielenosoitukset.fi is an open-source platform for discovering and submitting demonstrations in Finland. Users can browse upcoming events, submit new demonstrations, and administrators can manage and moderate submissions.
 
 > ⚠️ **Documentation notice**
 >
@@ -10,7 +10,6 @@ Mielenosoitukset.fi is an open-source platform for discovering and submitting de
 > 👉 https://deepwiki.com/botsarefuture/mielenosoitukset_fi/
 >
 > The DeepWiki documentation reflects the current codebase and should be considered the source of truth.
-
 
 ---
 
@@ -23,7 +22,6 @@ Mielenosoitukset.fi is an open-source platform for discovering and submitting de
 - [Translating](#translating)
 
 ---
-
 
 ## Features
 
@@ -77,7 +75,6 @@ To run this project locally you'll typically need:
     pip install -r requirements.txt
     ```
 
-
 4. Configure your environment variables. The project uses `config.py` and `config.yaml` for configuration; a simple example would be:
 
     ```python
@@ -105,6 +102,15 @@ To run this project locally you'll typically need:
 6. Open your browser and navigate to [http://127.0.0.1:5000/](http://127.0.0.1:5000/) to start using the platform.
 
 ---
+
+## Public React components
+
+The volunteer form uses React inside the existing Flask/Jinja campaign page.
+Built assets are included in the repository; Python-only runs need no Node.
+For frontend work, use Node 22.12+, run `npm ci` and `npm run dev`, and refresh
+the Flask page after changes. Run `npm run build` before committing.
+See [the React migration guide](docs/react-frontend.md) for entry points,
+translations, fallback behavior and deployment.
 
 ## Testing
 
@@ -152,7 +158,7 @@ The suite now includes:
 ### Searching for Demonstrations
 
 1. Use the search bar on the homepage to search for upcoming demonstrations by title, topic, or location.
-   
+
 ### Admin Features
 
 1. Admins can log in to access the admin dashboard and manage submissions.
@@ -179,13 +185,13 @@ We welcome contributions to Mielenosoitukset.fi! Please follow these steps to co
 
 We will review and merge your changes after testing.
 
-> [!NOTE](Contributing)
+> [!NOTE]
 > We're actively looking for new contributors!
 >
 > If you'd like to help — whether with code, translations, documentation, testing, design, or moderation — please get in touch. You can:
 >
 > - Open an issue or a pull request on GitHub to start a discussion.
-- Reach out directly to Olivia at olivia@mielenosoitukset.fi to talk about ways to contribute or to be added to the contributor channels.
+> - Reach out directly to Olivia at olivia@mielenosoitukset.fi to talk about ways to contribute or to be added to the contributor channels.
 
 Suggested first tasks:
 
@@ -225,3 +231,11 @@ We appreciate your input and support!
 ## Changelog
 
 See the [CHANGELOG.md](CHANGELOG.md) file for details on the latest updates and changes to the project.
+
+## Modernization direction
+
+Follow the [maintainer's context](docs/modernization-context.txt) and the
+[assessment and migration order](docs/modernization-assessment.md). Reuse the
+[existing React integration](docs/react-frontend.md): shared header first,
+then demonstration listings and event/recurring-series pages. Backend technology
+and infrastructure changes remain separate decisions.

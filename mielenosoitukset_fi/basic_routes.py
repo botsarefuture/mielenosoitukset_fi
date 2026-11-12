@@ -1,14 +1,20 @@
 import copy
 import ast
+import json
 import os
 import re
+import hmac
+import secrets
 import threading
 import time
 import uuid
 import hashlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
+from mielenosoitukset_fi.utils.demo_seo import _parse_clock
+from mielenosoitukset_fi.utils.fundraising import fundraising_details
+from mielenosoitukset_fi.utils.campaign_publication import campaign_pages_public, campaign_preview_required
 from datetime import datetime, date, timedelta, timezone
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import parse_qs, urlencode, urlsplit
 from flask_babel import _, refresh, format_date, get_locale
 from babel.dates import format_date as babel_format_date, get_day_names
 from flask import (
@@ -20,6 +26,8 @@ from flask import (
     url_for,
     request,
     abort,
+    g,
+    has_app_context,
     jsonify,
     session,
     current_app,
@@ -41,10 +49,15 @@ from mielenosoitukset_fi.utils.city_assignment import (
 from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
+from mielenosoitukset_fi.utils.public_pagination import (
+    PUBLIC_DEMONSTRATION_ORDER, public_page_args, public_page_metadata,
+)
 from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.site_analytics import (
     record_beacon_event,
+    record_public_app_pageview,
     record_event_for_request,
+    record_web_vital,
 )
 from mielenosoitukset_fi.utils.wrappers import (
     depracated_endpoint,
@@ -54,6 +67,7 @@ from mielenosoitukset_fi.utils.wrappers import (
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.utils.request_ip import get_client_ip
+from mielenosoitukset_fi.utils.validators import normalize_email, valid_email
 from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
 from pymongo import ASCENDING, DESCENDING
@@ -91,6 +105,8 @@ from mielenosoitukset_fi.utils.demo_seo import (
     demo_date_is_in_sitemap_window,
     demo_is_beyond_future_horizon,
     demo_sitemap_priority,
+    occurrence_end_at,
+    select_relevant_occurrence,
     sitemap_date_window,
 )
 
@@ -122,6 +138,12 @@ submission_tokens_collection.create_index("token", unique=True, background=True)
 submission_tokens_collection.create_index(
     [("fingerprint", ASCENDING), ("created_at", DESCENDING)], background=True
 )
+contact_form_tokens_collection = mongo["contact_form_tokens"]
+contact_form_tokens_collection.create_index(
+    "expires_at",
+    expireAfterSeconds=0,
+    background=True,
+)
 demo_notifications_queue = mongo["demo_notifications_queue"]
 demo_notifications_queue.create_index("status", background=True)
 demo_notifications_queue.create_index("created_at", background=True)
@@ -143,6 +165,10 @@ mongo["super_audit_logs"].create_index("timestamp", background=True)
 
 def ensure_audit_pagination_indexes(database):
     """Create the indexes used by deterministic audit-log pagination."""
+    database.admin_logs.create_index(
+        [("entity_type", ASCENDING), ("entity_id", ASCENDING), ("timestamp", DESCENDING), ("_id", DESCENDING)],
+        name="entity_history_order", background=True,
+    )
     for collection_name in ("admin_logs", "super_audit_logs"):
         database[collection_name].create_index(
             [("timestamp", DESCENDING), ("_id", DESCENDING)],
@@ -235,6 +261,39 @@ def _city_inessive_phrase(city_name):
 
 def _demo_detail_identifier(demo):
     return demo.get("slug") or demo.get("running_number") or str(demo.get("_id"))
+
+
+def _parent_series_publicly_visible(parent_id):
+    """Whether the recurring parent series is publicly visible (sitemap rule)."""
+    if not parent_id or not ObjectId.is_valid(str(parent_id)):
+        return False
+
+    parent_oid = ObjectId(str(parent_id))
+    cache = None
+    if has_app_context():
+        cache = getattr(g, "_series_visibility_cache", None)
+        if cache is None:
+            cache = g._series_visibility_cache = {}
+        elif str(parent_oid) in cache:
+            return cache[str(parent_oid)]
+
+    visible = bool(
+        mongo.recu_demos.find_one({"_id": parent_oid, **DEMO_FILTER}, {"_id": 1})
+    )
+    if cache is not None:
+        cache[str(parent_oid)] = visible
+    return visible
+
+
+def _demo_public_path(demo):
+    """Return the canonical public path for a standalone demo or recurring series."""
+    parent_id = demo.get("parent")
+    if parent_id and _parent_series_publicly_visible(parent_id):
+        return url_for("siblings_meeting", parent=str(parent_id))
+    return url_for(
+        "demonstration_detail",
+        demo_id=_demo_detail_identifier(demo),
+    )
 
 
 def _today_demo_query(city_name=None):
@@ -744,6 +803,8 @@ def format_demo_for_api(demo, language=None):
 
     return {
         "_id": str(localized_demo.get("_id")),
+        "parent": str(localized_demo.get("parent") or ""),
+        "detail_url": _demo_public_path(localized_demo),
         "title": localized_demo.get("title", ""),
         "default_language": localized_demo.get("default_language", "fi"),
         "resolved_language": localized_demo.get("resolved_language"),
@@ -950,8 +1011,7 @@ def get_api_pagination_args():
     dict
         Contains page, per_page, search, city, location, date_start, date_end, tag.
     """
-    page = int(request.args.get("page", 1))
-    per_page = int(request.args.get("per_page", 20) or 20)
+    page, per_page = public_page_args(request.args)
     search_query = request.args.get("search", "").lower()
     city_query = parse_city_query(request.args.get("city", ""))
     location_query = request.args.get("location", "").lower()
@@ -1030,7 +1090,7 @@ def add_api_routes(app):
         # searches). City/tag filtering is intentionally not recorded here:
         # city pages load the API with city params on every view, so those
         # are already covered by the pageview counters.
-        if page == 1:
+        if page == 1 and request.args.get("history_restore") != "1":
             search_term = str(args.get("search_query") or "").strip()
             if len(search_term) >= 2:
                 record_event_for_request(
@@ -1042,12 +1102,15 @@ def add_api_routes(app):
         total_pages = max((total + per_page - 1) // per_page, 1)
         demos_cursor = (
             demonstrations_collection.find(query)
-            .sort("date", ASCENDING)
+            .sort(PUBLIC_DEMONSTRATION_ORDER)
             .skip((page - 1) * per_page)
             .limit(per_page)
-        )
+        ) if total and page <= total_pages else []
         result = [format_demo_for_api(demo, requested_language) for demo in demos_cursor]
-        return jsonify(demonstrations=result, total_pages=total_pages)
+        return jsonify(
+            demonstrations=result,
+            **public_page_metadata(page, per_page, total, len(result)),
+        )
 
     @app.route("/api/v1/check_demo_conflict", methods=["GET"])
     def api_check_demo_conflict():
@@ -1093,9 +1156,27 @@ def add_api_routes(app):
 def init_routes(app):
     """Register public routes, request hooks, and template context processors."""
     from mielenosoitukset_fi.utils.cache import cache
-    
-    
-    
+
+    limiter_extensions = app.extensions.get("limiter") or ()
+    route_limiter = next(iter(limiter_extensions), None)
+
+    def _optional_limit(value, **kwargs):
+        """Apply a route limit when Flask-Limiter is enabled for this app."""
+        if route_limiter is None:
+            return lambda function: function
+        return route_limiter.limit(value, override_defaults=False, **kwargs)
+
+    def _optional_shared_limit(value, scope, **kwargs):
+        """Apply a shared endpoint limit when Flask-Limiter is enabled."""
+        if route_limiter is None:
+            return lambda function: function
+        return route_limiter.shared_limit(
+            value,
+            scope=scope,
+            override_defaults=False,
+            **kwargs,
+        )
+
     # register genereate_demo_sentence function
     @app.context_processor
     def inject_demo_sentence():
@@ -1176,12 +1257,14 @@ def init_routes(app):
 
     @app.route("/robots.txt")
     def robots_txt():
-        txt = """User-agent: *
-    Disallow: /admin/
-    Disallow: /users/auth/login/
-    Disallow: /users/auth/register/
-    Disallow: /users/auth/forgot/
-    """
+        txt = (
+            "User-agent: *\n"
+            "    Disallow: /admin/\n"
+            "    Disallow: /users/auth/login/\n"
+            "    Disallow: /users/auth/register/\n"
+            "    Disallow: /users/auth/forgot/\n"
+            "Sitemap: https://mielenosoitukset.fi/sitemap.xml\n"
+        )
         return Response(txt, mimetype="text/plain")
 
     @app.route("/api/analytics/track_view", methods=["POST"])
@@ -1215,6 +1298,53 @@ def init_routes(app):
         if payload is None:
             payload = request.form.to_dict()
         record_beacon_event(payload)
+        return jsonify({"ok": True})
+
+    @app.route("/api/analytics/pageview", methods=["POST"])
+    @_optional_limit("60 per minute")
+    def track_public_app_pageview():
+        """Receive anonymous display signals only for migrated React pages."""
+        if request.content_length is not None and request.content_length > 1024:
+            return jsonify({"ok": True})
+        raw_payload = request.stream.read(1025)
+        if len(raw_payload) > 1024:
+            return jsonify({"ok": True})
+        try:
+            payload = json.loads(raw_payload.decode("utf-8")) if request.is_json else None
+        except (UnicodeDecodeError, ValueError):
+            payload = None
+        record_public_app_pageview(payload, request)
+        return jsonify({"ok": True})
+
+    @app.route("/api/analytics/vitals", methods=["POST"])
+    @_optional_limit("120 per minute")
+    def track_web_vital():
+        """Add an anonymous metric to a bounded aggregate histogram.
+
+        Accepted and validation-rejected beacons receive a small successful
+        response; Flask-Limiter still returns HTTP 429 when a client exceeds
+        the endpoint or shared application limits, and that request is not
+        recorded.
+        """
+        if request.content_length is not None and request.content_length > 512:
+            return jsonify({"ok": True})
+        raw_payload = request.stream.read(513)
+        if len(raw_payload) > 512:
+            return jsonify({"ok": True})
+        payload = None
+        try:
+            if request.is_json:
+                payload = json.loads(raw_payload.decode("utf-8"))
+            elif request.mimetype == "application/x-www-form-urlencoded":
+                payload = {
+                    key: values[-1]
+                    for key, values in parse_qs(
+                        raw_payload.decode("utf-8"), keep_blank_values=True
+                    ).items()
+                }
+        except (UnicodeDecodeError, ValueError):
+            payload = None
+        record_web_vital(payload)
         return jsonify({"ok": True})
 
     @app.route("/api-docs/")
@@ -1310,8 +1440,10 @@ def init_routes(app):
                 {"loc": "contact"},
                 {"loc": "api_docs"},
                 {"loc": "pride_nakyvaksi"},
-                {"loc": "campaign.index"},
             ]
+
+            if campaign_pages_public():
+                static_routes.extend([{"loc": "campaign.index"}, {"loc": "fundraising"}])
 
             # Helper to add url + optional alternate links
             def _add_url_with_alternates(parent, endpoint, lastmod=None, **values):
@@ -1493,12 +1625,54 @@ def init_routes(app):
                 if tag_name:
                     _add_url_with_alternates(urlset, "tag_detail", tag_name=tag_name)
 
+            sitemap_demos = []
             for demo in demonstrations_collection.find(query_filter):
                 if not demo_date_is_in_sitemap_window(
                     demo.get("date"),
                     reference_date=seo_reference_date,
                 ):
                     continue
+                sitemap_demos.append(demo)
+
+            recurring_parent_ids = set()
+            for demo in sitemap_demos:
+                raw_parent_id = demo.get("parent")
+                if isinstance(raw_parent_id, ObjectId):
+                    recurring_parent_ids.add(raw_parent_id)
+                elif ObjectId.is_valid(str(raw_parent_id or "")):
+                    recurring_parent_ids.add(ObjectId(str(raw_parent_id)))
+            visible_recurring_parents = {
+                parent_doc["_id"]
+                for parent_doc in mongo.recu_demos.find(
+                    {**DEMO_FILTER, "_id": {"$in": list(recurring_parent_ids)}},
+                    {"_id": 1},
+                )
+            }
+            recurring_groups = {}
+            standalone_demos = []
+            for demo in sitemap_demos:
+                raw_parent_id = demo.get("parent")
+                parent_id = (
+                    raw_parent_id
+                    if isinstance(raw_parent_id, ObjectId)
+                    else ObjectId(str(raw_parent_id))
+                    if ObjectId.is_valid(str(raw_parent_id or ""))
+                    else None
+                )
+                if parent_id in visible_recurring_parents:
+                    recurring_groups.setdefault(parent_id, []).append(demo)
+                else:
+                    standalone_demos.append(demo)
+
+            sitemap_entries = [(None, demo) for demo in standalone_demos]
+            local_timezone = current_app.config["LOCAL_TIMEZONE"]
+            local_now = datetime.now(local_timezone)
+            for parent_id, occurrences in recurring_groups.items():
+                selected = select_relevant_occurrence(occurrences, local_now)
+                if selected:
+                    sitemap_entries.append((parent_id, selected))
+
+            for recurring_parent_id, demo in sitemap_entries:
                 demo_identifier = (
                     demo.get("slug")
                     or demo.get("running_number")
@@ -1506,9 +1680,13 @@ def init_routes(app):
                 )
                 url_el = ET.SubElement(urlset, "url")
                 loc_el = ET.SubElement(url_el, "loc")
-                loc_el.text = url_for(
-                    "demonstration_detail", demo_id=demo_identifier, _external=True
+                endpoint = "siblings_meeting" if recurring_parent_id else "demonstration_detail"
+                endpoint_values = (
+                    {"parent": str(recurring_parent_id)}
+                    if recurring_parent_id
+                    else {"demo_id": demo_identifier}
                 )
+                loc_el.text = url_for(endpoint, _external=True, **endpoint_values)
 
                 # lastmod for the demonstration if available
                 lastmod_val = _format_lastmod_for_doc(demo)
@@ -1529,10 +1707,10 @@ def init_routes(app):
                                 "rel": "alternate",
                                 "hreflang": lang,
                                 "href": url_for(
-                                    "demonstration_detail",
-                                    demo_id=demo_identifier,
+                                    endpoint,
                                     lang_code=lang,
                                     _external=True,
+                                    **endpoint_values,
                                 ),
                             },
                         )
@@ -1540,6 +1718,7 @@ def init_routes(app):
             xml_bytes = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
             resp = Response(xml_bytes, mimetype="application/xml")
             resp.headers["Content-Type"] = "application/xml; charset=utf-8"
+            resp.headers["Cache-Control"] = "no-store"
             return resp
 
         except Exception:
@@ -1590,81 +1769,124 @@ def init_routes(app):
     
     @app.route("/")
     def index():
-        """
-        Render the index page with recommended and featured demonstrations.
-        Uses caching for recommended demos for performance.
-        """
-        today = date.today()
-
-        # --- Recommended demos (cached) ---
-        cache_key = "recommended_demos_v1"
-        recommended_demos = None
-
-        if hasattr(cache, "get") and callable(cache.get):
-            recommended_demos = cache.get(cache_key)
-
-        if recommended_demos is None:
-            # Get recommended demo_ids from the recommended_demos collection
-            recs = list(mongo.recommended_demos.find({}))
-            demo_ids = [ObjectId(rec["demo_id"]) for rec in recs if "demo_id" in rec]
-
-            # Fetch demos, filter for approved and not hidden
-            demos = list(
-                mongo.demonstrations.find({
-                    "_id": {"$in": demo_ids},
-                    "approved": True,
-                    "hide": {"$ne": True},
-                    "cancelled": {"$ne": True},
-                })
-            )
-
-            # Sort by recommend_till (or fallback to date)
-            def get_recommend_till(d):
-                rec = next((r for r in recs if str(r["demo_id"]) == str(d["_id"])), None)
-                return rec["recommend_till"] if rec else d.get("date", "9999-12-31")
-
-            demos.sort(key=get_recommend_till)
-
-            # Remove past demos
-            demos = [
-                d for d in demos
-                if datetime.strptime(d["date"], "%Y-%m-%d").date() >= today
-            ]
-
-            recommended_demos = demos
-
-            if hasattr(cache, "set") and callable(cache.set):
-                cache.set(cache_key, recommended_demos, timeout=60 * 10)  # Cache 10 min
-
-        # --- Featured / other demos ---
-        filtered_demonstrations = list(
-            demonstrations_collection.find(
-                _build_public_demo_query(today),
-            )
-            .sort("date", ASCENDING)
-            .limit(6)
-        )
-
-        locale = _current_demo_language()
-        localized_filtered_demonstrations = _localized_demo_list(
-            filtered_demonstrations, locale
-        )
-        localized_recommended_demos = _localized_demo_list(recommended_demos or [], locale)
-
+        """Return the portable React home shell without querying event data."""
         return render_template(
-            "index.html",
-            demonstrations=localized_filtered_demonstrations,
-            recommended_demos=localized_recommended_demos,
-            featured_demos_json=[
-                format_demo_for_api(demo, locale)
-                for demo in filtered_demonstrations[:6]
-            ],
-            recommended_demos_json=[
-                format_demo_for_api(demo, locale)
-                for demo in (recommended_demos or [])
-            ],
+            "index.html", home_locale=_current_demo_language(),
+            home_endpoint=app.config.get("PUBLIC_HOME_API_URL") or
+                app.config.get("PUBLIC_DEMONSTRATION_API_URL", "https://api.mielenosoitukset.fi/api/demonstrations").rsplit("/", 1)[0] + "/home",
         )
 
+
+    @app.route("/api/session")
+    def public_session_summary():
+        """Account summary for the standalone React public host.
+
+        The React host cannot read Flask's signed session cookie. It asks this
+        same-origin endpoint for the same header state the templates receive:
+        identity labels, role flags and the unread notification count. No
+        cookie value, email, permission list or private record is returned.
+        The translation page may request its existing session-bound form nonce.
+        The contact page requests a contact form token, for anonymous visitors
+        too; that response may set the session cookie and must never be shared.
+        """
+        organization_scope = request.args.getlist("organization_id")
+        if organization_scope and (len(organization_scope) != 1 or not ObjectId.is_valid(organization_scope[0])):
+            response = jsonify({"error": "invalid organization scope"})
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["Vary"] = "Cookie"
+            return response, 400
+        supported = current_app.config.get("BABEL_PUBLIC_LOCALES") or ["fi", "en", "sv"]
+        locale = session.get("locale", "fi")
+        if locale not in supported:
+            locale = "fi"
+        details = fundraising_details()
+        language_names = current_app.config.get("BABEL_LANGUAGES") or {}
+        try:
+            can_edit_demo = bool(current_user.is_authenticated and current_user.has_permission("EDIT_DEMO"))
+        except Exception:
+            can_edit_demo = False
+        payload = {
+            "authenticated": current_user.is_authenticated,
+            "locale": locale,
+            "locales": [
+                {"code": code, "name": language_names.get(code) or code.upper()}
+                for code in supported
+            ],
+            "role": "guest",
+            "name": None,
+            "picture": None,
+            "global_admin": False,
+            "has_admin_access": False,
+            "unread": 0,
+            "fundraising": bool(details.get("show_header_link"))
+            and (campaign_pages_public() or current_user.is_authenticated),
+            "site_analytics_enabled": bool(current_app.config.get("SITE_ANALYTICS_ENABLED", True)),
+            "matomo_enabled": bool(current_app.config.get("MATOMO_ENABLED", True)),
+            "submission": {
+                "locales": current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"],
+                "default_language": current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
+                "can_edit_demo": can_edit_demo,
+            },
+        }
+        if current_user.is_authenticated:
+            payload.update({
+                "role": getattr(current_user, "role", None) or "user",
+                "name": current_user.displayname or current_user.username,
+                "picture": current_user.profile_picture or None,
+                "global_admin": bool(getattr(current_user, "global_admin", False)),
+                "has_admin_access": bool(current_user.has_admin_access()),
+                "actor_id": str(current_user._id),
+            })
+            try:
+                payload["unread"] = sum(
+                    1 for item in fetch_notifications(current_user.id, limit=20)
+                    if not item.get("read")
+                )
+            except Exception:
+                # A notification read must never break the page shell.
+                payload["unread"] = 0
+            if request.args.get("translation_join") == "1":
+                from flask import get_flashed_messages
+                from mielenosoitukset_fi.translations_join_bp import translation_join_csrf_token
+
+                joined = current_user.has_permission("TRANSLATE_DEMO")
+                payload["translation_join"] = {
+                    "joined": joined,
+                    "csrf_token": None if joined else translation_join_csrf_token(),
+                    "messages": get_flashed_messages(with_categories=True),
+                }
+            if organization_scope:
+                org_oid = ObjectId(organization_scope[0])
+                payload["organization"] = {
+                    "id": str(org_oid),
+                    "following": str(org_oid) in getattr(current_user, "followed_organizations", []),
+                    "invited": bool(current_user.has_invite(org_oid)),
+                    "has_messages": bool(session.get("_flashes")),
+                    "permissions": {
+                        permission: bool(current_user.has_permission(permission, org_oid))
+                        for permission in (
+                            "VIEW_ORGANIZATION", "EDIT_ORGANIZATION", "DELETE_ORGANIZATION", "INVITE_TO_ORGANIZATION"
+                        )
+                    },
+                }
+        if request.args.get("contact_form") == "1":
+            from flask import get_flashed_messages
+
+            payload["contact_form"] = {
+                "enabled": bool(app.config.get("CONTACT_FORM_ENABLED", True)),
+                "csrf_token": _new_contact_form_token(),
+                "messages": get_flashed_messages(with_categories=True),
+                "limits": {
+                    "name_max": app.config.get("CONTACT_NAME_MAX_LENGTH", 120),
+                    "email_max": app.config.get("CONTACT_EMAIL_MAX_LENGTH", 254),
+                    "message_min": app.config.get("CONTACT_MESSAGE_MIN_LENGTH", 10),
+                    "message_max": app.config.get("CONTACT_MESSAGE_MAX_LENGTH", 5000),
+                },
+            }
+        response = jsonify(payload)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Vary"] = "Cookie"
+        return response
 
     @app.route("/terms")
     def terms():
@@ -1747,14 +1969,7 @@ def init_routes(app):
         Returns JSON: { organizations: [ { id, name, email, website,
         description, verified, logo } ... ], total_pages }
         """
-        try:
-            page = max(int(request.args.get("page", 1)), 1)
-        except (TypeError, ValueError):
-            page = 1
-        try:
-            per_page = max(int(request.args.get("per_page", 20) or 20), 1)
-        except (TypeError, ValueError):
-            per_page = 20
+        page, per_page = public_page_args(request.args)
         search = (request.args.get("search") or "").strip()
 
         query = {}
@@ -1776,7 +1991,7 @@ def init_routes(app):
             .sort("name", 1)
             .skip((page - 1) * per_page)
             .limit(per_page)
-        )
+        ) if total and page <= total_pages else []
         organizations = [
             {
                 "id": str(org["_id"]),
@@ -2196,6 +2411,9 @@ def init_routes(app):
                         city_admins,
                         template_name="admin_demo_city_assignment.html",
                         subject=f"Uusi mielenosoitus odottaa hyväksyntää: {city}",
+                        escalate_after_hours=current_app.config.get(
+                            "CITY_ASSIGNMENT_ESCALATION_HOURS", 24
+                        ),
                         context={
                             "title": title,
                             "date": date,
@@ -2247,6 +2465,8 @@ def init_routes(app):
 
             if notification_messages:
                 try:
+                    from mielenosoitukset_fi.utils.moderation_mail import personalize_moderation_messages
+                    notification_messages = personalize_moderation_messages(mongo, demo_id, notification_messages, national=not bool(assignment_email))
                     demo_notifications_queue.insert_one(
                         {
                             "demo_id": demo_id,
@@ -2290,9 +2510,15 @@ def init_routes(app):
         except Exception:
             can_edit_demo = False
 
-        # GET — render submission form
+        # GET — render submission form. The React page is opt-in and rollback is a
+        # config flip; both templates receive the same server context.
+        submit_template = (
+            "submit_react.html"
+            if current_app.config.get("PUBLIC_SUBMIT_REACT_ENABLED", False)
+            else "submit.html"
+        )
         return render_template(
-            "submit.html",
+            submit_template,
             city_list=CITY_LIST,
             test_mode_allowed=test_mode_allowed,
             can_edit_demo=can_edit_demo,
@@ -2455,6 +2681,16 @@ def init_routes(app):
         except Exception:
             demo_oid = None
 
+        wants_json = request.method == "POST" and request.accept_mimetypes.best == "application/json"
+        if wants_json:
+            if not error or not error.strip() or len(error) > 10000 or _type != "demonstration" or demo_oid is None:
+                return jsonify({"status": "ERROR", "message": _("Täytä ilmoituksen tiedot.")}), 400
+            from mielenosoitukset_fi.utils.react_detail import public_metadata_query
+            if not mongo.demonstrations.find_one(public_metadata_query({"_id": demo_oid}), {"_id": 1}):
+                return jsonify({"status": "ERROR", "message": _("Tapahtumaa ei löydy tai se ei ole julkinen.")}), 404
+            if reporter_email and not valid_email(reporter_email):
+                return jsonify({"status": "ERROR", "message": _("Sähköpostiosoite ei ole kelvollinen.")}), 400
+
         if _type:
             if _type == "demonstration":
                 report_doc = {
@@ -2526,6 +2762,9 @@ def init_routes(app):
                     "reporter_email": reporter_email,
                 }
             )
+
+        if wants_json:
+            return jsonify({"status": "OK", "message": _("Virhe ilmoitettu onnistuneesti! Kiitos ilmoituksestasi.")})
 
         flash_message(
             "Virhe ilmoitettu onnistuneesti! Kiitos ilmoituksestasi.", "success"
@@ -2628,6 +2867,7 @@ def init_routes(app):
         demos = list(demonstrations_collection.find(query).sort("start_time", ASCENDING))
         for demo in demos:
             demo["detail_identifier"] = _demo_detail_identifier(demo)
+            demo["detail_url"] = _demo_public_path(demo)
 
         today_value = date.today()
         if city_name:
@@ -2783,7 +3023,7 @@ def init_routes(app):
         return False
 
     @app.route("/demonstration/<demo_id>")
-    def demonstration_detail(demo_id):
+    def demonstration_detail(demo_id, recurring_context=None):
         """
         Display demonstration detail with a cached HTML response and a reliable X-Cache header.
 
@@ -2793,6 +3033,14 @@ def init_routes(app):
         - the requester is authenticated
         - flash messages are pending for the session/request
         """
+        # The public React shell does only a projected metadata/visibility read.
+        # API content is fetched directly by the browser, never before Flask TTFB.
+        if current_app.config.get("PUBLIC_DETAIL_REACT_ENABLED", False):
+            from mielenosoitukset_fi.utils.react_detail import render_public_detail
+            response = render_public_detail(mongo, demo_id, _current_demo_language(), recurring_context)
+            if response is not None:
+                return response
+
         # Load demonstration and permission checks first (so we don't serve cached 401/404)
         try:
             demo_obj = Demonstration.load_by_id(demo_id)
@@ -2804,6 +3052,37 @@ def init_routes(app):
         if (not demo_obj.approved and not current_user.has_permission("VIEW_DEMO")) or \
             (demo_obj.hide and not current_user.has_permission("VIEW_DEMO")):
             abort(401)
+
+        recurring_parent_id = getattr(demo_obj, "parent", None)
+        recurring_parent = None
+        if recurring_parent_id and ObjectId.is_valid(str(recurring_parent_id)):
+            recurring_parent = mongo.recu_demos.find_one(
+                {"_id": ObjectId(str(recurring_parent_id))},
+                {"approved": 1, "hide": 1, "rejected": 1},
+            )
+        recurring_parent_is_accessible = bool(
+            recurring_parent
+            and (
+                (
+                    recurring_parent.get("approved")
+                    and not recurring_parent.get("hide")
+                    and not recurring_parent.get("rejected")
+                )
+                or current_user.has_permission("VIEW_DEMO")
+            )
+        )
+        if (
+            recurring_context is None
+            and recurring_parent_is_accessible
+        ):
+            return redirect(
+                url_for(
+                    "siblings_meeting",
+                    parent=str(recurring_parent_id),
+                    occurrence=getattr(demo_obj, "slug", None) or str(demo_obj._id),
+                ),
+                code=301,
+            )
 
         requested_layout = request.args.get("detail_layout")
         if "detail_layout" in request.args:
@@ -2839,10 +3118,17 @@ def init_routes(app):
         # Resolve locale once and reuse the exact same value for rendering and caching.
         locale = _current_demo_language()
         seo_reference_date = date.today()
-        seo_noindex = demo_is_beyond_future_horizon(
-            demo_obj.date,
-            reference_date=seo_reference_date,
-        )
+        if recurring_context is not None and "series_indexable" in recurring_context:
+            # Series pages are indexed at the series level: the sitemap lists the
+            # clean series URL whenever any occurrence sits in the discovery
+            # window, so indexability must not depend on which occurrence the
+            # selector happened to render.
+            seo_noindex = not recurring_context["series_indexable"]
+        else:
+            seo_noindex = demo_is_beyond_future_horizon(
+                demo_obj.date,
+                reference_date=seo_reference_date,
+            )
 
         # Build a cache key that is stable for public users; include locale so localized pages differ
         viewer_segment = "anon"
@@ -2854,7 +3140,8 @@ def init_routes(app):
         cache_key = (
             f"demonstration_detail:v2:{demo_id}:locale={locale}:"
             f"viewer={viewer_segment}:layout={detail_layout}:"
-            f"seo-day={seo_reference_date.isoformat()}:seo-state={'noindex' if seo_noindex else 'index'}"
+            f"seo-day={seo_reference_date.isoformat()}:seo-state={'noindex' if seo_noindex else 'index'}:"
+            f"series={recurring_context['parent_id'] if recurring_context else 'none'}"
         )
 
         # Try to serve from cache if allowed
@@ -3115,6 +3402,16 @@ def init_routes(app):
                 available_demo_languages=available_demo_languages,
                 detail_layout=detail_layout,
                 seo_noindex=seo_noindex,
+                recurring_context=recurring_context,
+                detail_canonical_url=(
+                    recurring_context["canonical_url"]
+                    if recurring_context
+                    else url_for(
+                        "demonstration_detail",
+                        demo_id=(demo.get("slug") or demo.get("running_number") or demo["_id"]),
+                        _external=True,
+                    )
+                ),
                 toolbox_demo_permissions={
                     permission: has_demo_permission(
                         current_user, demo_obj._id, permission
@@ -3227,6 +3524,9 @@ def init_routes(app):
             original_values = {}
             for f in candidate_fields:
                 val = (request.form.get(f) or '').strip()
+                if val.lower() in {'none', 'null'}:
+                    # A missing value printed into the form must not become a suggestion.
+                    val = ''
                 # normalize tags as list if provided
                 if f == 'tags' and val:
                     val = _normalize_tag_list(val.split(','))
@@ -3256,6 +3556,11 @@ def init_routes(app):
                         if val and _organizer_identity_keys(val) != _organizer_identity_keys(orig_comp):
                             changed = True
                     elif val and isinstance(val, list) and val != orig_comp:
+                        changed = True
+                elif f in {'start_time', 'end_time'}:
+                    # Stored times are "HH:MM" or "HH:MM:SS"; the same clock
+                    # time in the other format is not a change.
+                    if val and (_parse_clock(val) or val) != (_parse_clock(orig_comp) or orig_comp):
                         changed = True
                 else:
                     if val and str(val) != str(orig_comp):
@@ -3465,27 +3770,133 @@ def init_routes(app):
 
     @app.route("/demonstration/<parent>/children", methods=["GET"])
     def siblings_meeting(parent):
-        parent_demo = RecurringDemonstration.from_id(parent)
+        """Render the chosen series occurrence or a noindex page for an empty series."""
+        if not ObjectId.is_valid(parent):
+            abort(404)
+        parent_id = ObjectId(parent)
+        parent_doc = mongo.recu_demos.find_one({"_id": parent_id})
+        if not parent_doc:
+            abort(404)
+        if (
+            not parent_doc.get("approved")
+            or parent_doc.get("hide")
+            or parent_doc.get("rejected")
+        ) and not current_user.has_permission("VIEW_DEMO"):
+            abort(401)
 
-        
-        # Fetch precomputed stats
-        stats = mongo.recu_stats.find_one({"parent": ObjectId(parent)}) or {}
-        total_count = stats.get("total_count", 0)
-        future_count = stats.get("future_count", 0)
-        past_count = stats.get("past_count", 0)
-        recurring_target_id = str(parent_demo._id)
-        recurring_following = recurring_target_id in _get_followed_recurring_ids()
-
-        return render_template(
-            "siblings.html",
-            parent_demo=parent_demo,
-            total_count=total_count,
-            future_count=future_count,
-            past_count=past_count,
-            parent_id=parent,
-            recurring_target_id=recurring_target_id,
-            recurring_following=recurring_following,
+        # Share visibility checks with explicit selection, but keep date/size
+        # limits on the chooser independent of the requested occurrence.
+        visible_children = {
+            "parent": {"$in": [parent_id, str(parent_id)]},
+            "approved": True,
+            "$and": DEMO_FILTER["$and"],
+        }
+        today = date.today().isoformat()
+        window_end = (date.today() + timedelta(days=90)).isoformat()
+        occurrence_order = [("date", ASCENDING), ("start_time", ASCENDING), ("_id", ASCENDING)]
+        active_children = {**visible_children, "cancelled": {"$ne": True}}
+        occurrences = list(
+            mongo.demonstrations.find({
+                **active_children,
+                "date": {"$gte": today, "$lte": window_end},
+            }).sort(occurrence_order).limit(16)
         )
+        past_occurrences = list(
+            mongo.demonstrations.find({
+                **active_children, "date": {"$lt": today},
+            }).sort([(field, -direction) for field, direction in occurrence_order]).limit(16)
+        )
+        cancelled_occurrences = list(
+            mongo.demonstrations.find({
+                **visible_children,
+                "cancelled": True,
+                "date": {
+                    "$gte": (date.today() - timedelta(days=90)).isoformat(),
+                    "$lte": window_end,
+                },
+            }).sort(occurrence_order).limit(16)
+        )
+        local_timezone = current_app.config["LOCAL_TIMEZONE"]
+        local_now = datetime.now(local_timezone)
+        default_selected = select_relevant_occurrence(
+            occurrences + past_occurrences, local_now
+        )
+        selected = default_selected
+
+        requested_occurrence = request.args.get("occurrence", "").strip()
+        if requested_occurrence:
+            identifiers = [{"slug": requested_occurrence}]
+            if ObjectId.is_valid(requested_occurrence):
+                identifiers.append({"_id": ObjectId(requested_occurrence)})
+            if requested_occurrence.isascii() and requested_occurrence.isdigit() and len(requested_occurrence) <= 18:
+                identifiers.append({"running_number": int(requested_occurrence)})
+            requested = mongo.demonstrations.find_one({
+                **visible_children, "$or": identifiers,
+            })
+            if requested:
+                selected = requested
+
+        canonical_url = url_for("siblings_meeting", parent=parent, _external=True)
+        occurrence_items = []
+        for occurrence in occurrences + past_occurrences + cancelled_occurrences:
+            end_at = occurrence_end_at(occurrence, local_timezone)
+            identifier = occurrence.get("slug") or str(occurrence["_id"])
+            occurrence_items.append(
+                {
+                    "id": str(occurrence["_id"]),
+                    "date": occurrence.get("date"),
+                    "start_time": occurrence.get("start_time"),
+                    "end_time": occurrence.get("end_time"),
+                    "cancelled": bool(occurrence.get("cancelled")),
+                    "is_past": bool(end_at and end_at < local_now),
+                    "is_selected": bool(selected and occurrence["_id"] == selected["_id"]),
+                    "url": url_for(
+                        "siblings_meeting",
+                        parent=parent,
+                        occurrence=identifier,
+                    ),
+                }
+            )
+
+        upcoming_items = [
+            item for item in occurrence_items if not item["is_past"] and not item["cancelled"]
+        ]
+        past_items = sorted(
+            (item for item in occurrence_items if item["is_past"] or item["cancelled"]),
+            key=lambda item: (item["date"], item["start_time"] or "", item["id"]),
+            reverse=True,
+        )
+        if not selected:
+            response = make_response(
+                render_template(
+                    "siblings.html",
+                    parent_demo=_localized_demo_copy(parent_doc),
+                    canonical_url=canonical_url,
+                    occurrences=upcoming_items,
+                    past_occurrences=past_items,
+                )
+            )
+            response.headers["X-Robots-Tag"] = "noindex, follow"
+            return response
+
+        recurring_context = {
+            "parent_id": parent,
+            "canonical_url": canonical_url,
+            "occurrences": upcoming_items,
+            "past_occurrences": past_items,
+            "series_indexable": any(
+                demo_date_is_in_sitemap_window(occurrence.get("date"))
+                for occurrence in occurrences + past_occurrences
+            ),
+            "has_upcoming": any(
+                not item["cancelled"] and not item["is_past"]
+                for item in occurrence_items
+            ),
+            "selected_is_default": bool(
+                default_selected and default_selected["_id"] == selected["_id"]
+            ),
+        }
+        return demonstration_detail(str(selected["_id"]), recurring_context)
 
     @app.route("/ohjeet/")
     @app.route("/ohjeet")
@@ -3497,22 +3908,201 @@ def init_routes(app):
     def info():
         return render_template("info.html")
 
+    @app.route("/keräys")
+    @campaign_preview_required
+    def fundraising():
+        return render_template("fundraising.html", fundraising=fundraising_details())
+
+    @app.context_processor
+    def inject_fundraising_campaign():
+        details = fundraising_details()
+        details["show_header_link"] = details["show_header_link"] and (
+            campaign_pages_public() or current_user.is_authenticated
+        )
+        return {"fundraising_campaign": details}
+
     @app.route("/privacy")
     def privacy():
         return render_template("privacy.html")
 
+    contact_subjects = frozenset(
+        {"Tuki", "Yleinen kysymys", "Palautetta", "Muu"}
+    )
+
+    def _new_contact_form_token():
+        """Issue a signed-session token whose use is tracked server-side."""
+        token = secrets.token_urlsafe(32)
+        issued_at = int(time.time())
+        max_age = app.config.get("CONTACT_FORM_TOKEN_MAX_AGE_SECONDS", 7200)
+        max_tokens = max(
+            1,
+            app.config.get("CONTACT_FORM_MAX_OUTSTANDING_TOKENS", 5),
+        )
+        outstanding = [
+            entry
+            for entry in session.get("contact_form_tokens", [])
+            if isinstance(entry, dict)
+            and isinstance(entry.get("issued_at"), int)
+            and issued_at - entry["issued_at"] <= max_age
+            and isinstance(entry.get("token"), str)
+        ]
+        outstanding.append({"token": token, "issued_at": issued_at})
+        session["contact_form_tokens"] = outstanding[-max_tokens:]
+        return token
+
+    def _take_contact_form_token(supplied_token):
+        """Remove and return one matching outstanding token from the session."""
+        outstanding = session.get("contact_form_tokens", [])
+        matched = None
+        remaining = []
+        for entry in outstanding:
+            candidate = entry.get("token", "") if isinstance(entry, dict) else ""
+            if (
+                matched is None
+                and supplied_token
+                and candidate
+                and hmac.compare_digest(candidate, supplied_token)
+            ):
+                matched = entry
+            else:
+                remaining.append(entry)
+        session["contact_form_tokens"] = remaining
+        return matched or {}
+
+    def _consume_contact_form_token(token):
+        """Atomically consume a token hash so restored cookies cannot replay it."""
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        max_age = app.config.get("CONTACT_FORM_TOKEN_MAX_AGE_SECONDS", 7200)
+        try:
+            contact_form_tokens_collection.insert_one(
+                {
+                    "_id": token_hash,
+                    "expires_at": datetime.now(timezone.utc)
+                    + timedelta(seconds=max_age),
+                }
+            )
+        except DuplicateKeyError:
+            return False
+        return True
+
+    def _contact_redirect(category, message, request_id=None):
+        """Return a no-store redirect with an optional correlation ID."""
+        flash_message(message, category)
+        response = redirect(url_for("contact"))
+        if request_id:
+            response.headers["X-MF-Request-ID"] = request_id
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
     @app.route("/contact", methods=["GET", "POST"])
+    @_optional_limit(
+        app.config.get("CONTACT_PER_IP_LIMIT", "3 per 10 minutes; 10 per day"),
+        methods=["POST"],
+    )
+    @_optional_shared_limit(
+        app.config.get("CONTACT_GLOBAL_LIMIT", "25 per 10 minutes; 100 per day"),
+        scope="public-contact-ingress",
+        key_func=lambda: "global",
+        methods=["POST"],
+    )
     def contact():
         if request.method == "POST":
-            name = request.form.get("name")
-            email = request.form.get("email")
-            subject = request.form.get("subject")
-            message = request.form.get("message")
-            
-            if not name or not email or not message:
-                flash_message("Kaikki kentät ovat pakollisia!", "error")
-                return redirect(url_for("contact"))
-            
+            request_id = uuid.uuid4().hex
+            if not app.config.get("CONTACT_FORM_ENABLED", True):
+                logger.warning(
+                    "Contact form disabled request_id=%s",
+                    request_id,
+                )
+                return _contact_redirect(
+                    "warning",
+                    "Yhteydenottolomake on tilapäisesti poissa käytöstä. Voit lähettää sähköpostia tukeen.",
+                    request_id,
+                )
+
+            max_request_bytes = app.config.get("CONTACT_MAX_REQUEST_BYTES", 16384)
+            request.max_content_length = max_request_bytes
+            content_length = request.content_length or 0
+            if content_length > max_request_bytes:
+                logger.warning(
+                    "Rejected oversized contact form request_id=%s bytes=%s",
+                    request_id,
+                    content_length,
+                )
+                abort(413)
+            if not request.content_length:
+                streamed_body = request.get_data(cache=True)
+                if len(streamed_body) >= max_request_bytes:
+                    logger.warning(
+                        "Rejected bounded streamed contact form request_id=%s bytes>=%s",
+                        request_id,
+                        max_request_bytes,
+                    )
+                    abort(413)
+
+            supplied_token = request.form.get("csrf_token", "")
+            token_entry = _take_contact_form_token(supplied_token)
+            expected_token = token_entry.get("token", "")
+            issued_at = token_entry.get("issued_at", 0)
+            now = int(time.time())
+            token_age = now - issued_at if isinstance(issued_at, int) else -1
+            token_valid = bool(
+                expected_token
+                and supplied_token
+                and hmac.compare_digest(expected_token, supplied_token)
+                and token_age >= app.config.get("CONTACT_MIN_FORM_SECONDS", 2)
+                and token_age
+                <= app.config.get("CONTACT_FORM_TOKEN_MAX_AGE_SECONDS", 7200)
+            )
+            if token_valid:
+                token_valid = _consume_contact_form_token(supplied_token)
+            if not token_valid:
+                logger.warning(
+                    "Rejected contact form token request_id=%s",
+                    request_id,
+                )
+                abort(400)
+
+            if request.form.get("website", "").strip():
+                logger.warning(
+                    "Suppressed contact form honeypot request_id=%s",
+                    request_id,
+                )
+                return _contact_redirect(
+                    "success",
+                    "Yhteydenottopyyntö välitetty onnistuneesti!",
+                    request_id,
+                )
+
+            name = request.form.get("name", "").strip()
+            email = normalize_email(request.form.get("email", ""))
+            subject = request.form.get("subject", "").strip()
+            message = request.form.get("message", "").strip()
+
+            valid_fields = all(
+                (
+                    name,
+                    email,
+                    message,
+                    len(name) <= app.config.get("CONTACT_NAME_MAX_LENGTH", 120),
+                    len(email) <= app.config.get("CONTACT_EMAIL_MAX_LENGTH", 254),
+                    valid_email(email),
+                    subject in contact_subjects,
+                    app.config.get("CONTACT_MESSAGE_MIN_LENGTH", 10)
+                    <= len(message)
+                    <= app.config.get("CONTACT_MESSAGE_MAX_LENGTH", 5000),
+                )
+            )
+            if not valid_fields:
+                logger.warning(
+                    "Rejected invalid contact form request_id=%s",
+                    request_id,
+                )
+                return _contact_redirect(
+                    "error",
+                    "Tarkista lomakkeen tiedot ja yritä uudelleen.",
+                    request_id,
+                )
+
             email_sender.queue_email(
                 template_name="customer_support/new_ticket.html",
                 subject="Uusi tukipyyntö!",
@@ -3522,19 +4112,34 @@ def init_routes(app):
                     "email": email,
                     "subject": subject,
                     "message": message,
+                    "request_id": request_id,
                 },
+                extra_headers={"X-MF-Request-ID": request_id},
             )
-            
-            flash_message("Yhteydenottopyyntö välitetty onnistuneesti!", "success")
+
+            logger.info("Accepted contact form request_id=%s", request_id)
             record_event_for_request("contact_message")
-            return redirect(url_for("contact"))
-        return render_template("contact.html")
+            return _contact_redirect(
+                "success",
+                "Yhteydenottopyyntö välitetty onnistuneesti!",
+                request_id,
+            )
+        return render_template(
+            "contact.html",
+            csrf_token=_new_contact_form_token(),
+            contact_name_max_length=app.config.get("CONTACT_NAME_MAX_LENGTH", 120),
+            contact_email_max_length=app.config.get("CONTACT_EMAIL_MAX_LENGTH", 254),
+            contact_message_min_length=app.config.get("CONTACT_MESSAGE_MIN_LENGTH", 10),
+            contact_message_max_length=app.config.get("CONTACT_MESSAGE_MAX_LENGTH", 5000),
+        )
 
 
     DEMOS_PER_PAGE = 6  # adjust how many demos per page
 
     @app.route("/organization/<org_id>")
     def org(org_id):
+        if not ObjectId.is_valid(org_id):
+            abort(404)
         _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
         if _org is None:
             flash_message("Organisaatiota ei löytynyt.", "error")
@@ -3554,6 +4159,11 @@ def init_routes(app):
             org=_org,
             org_id=str(org_id),
             is_following_org=is_following_org,
+            listing_title=_("Mielenosoitukset"),
+            listing_fixed={"organization_id": str(_org._id)},
+            listing_heading_level=2,
+            listing_empty_title=_("Ei tulevia mielenosoituksia"),
+            listing_empty=_("Tämä järjestäjä ei ole vielä ilmoittanut tulevia mielenosoituksia."),
             toolbox_org_permissions={
                 permission: current_user.has_permission(permission, _org._id)
                 for permission in (
@@ -3679,14 +4289,13 @@ def init_routes(app):
     def tag_detail(tag_name):
         tag_regex = re.compile(f"^{re.escape(tag_name)}$", re.IGNORECASE)
         demonstrations_query = {"tags": tag_regex, **DEMO_FILTER}
-        page = int(request.args.get("page", 1))
-        per_page = int(request.args.get("per_page", 10) or 10)
+        page, per_page = public_page_args(request.args, default_per_page=10)
         total_demos = mongo.demonstrations.count_documents(demonstrations_query)
         total_pages = (total_demos + per_page - 1) // per_page
         demonstrations_cursor = mongo.demonstrations.find(demonstrations_query)
         paginated_demos = demonstrations_cursor.skip((page - 1) * per_page).limit(
             per_page
-        )
+        ) if total_demos and page <= total_pages else []
         paginated_demos_list = list(paginated_demos)
         return render_template(
             "tag_list.html",
@@ -3709,13 +4318,13 @@ def init_routes(app):
         )
 
         messages = get_flashed_messages(with_categories=True)
-        if not messages:
-            return jsonify(messages=[])
-
         flash_message_data = [
             {"category": category, "message": message} for category, message in messages
         ]
-        return jsonify(messages=flash_message_data)
+        response = jsonify(messages=flash_message_data)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Vary"] = "Cookie"
+        return response
 
     
     @app.route("/set_language/<lang>")
@@ -3961,97 +4570,11 @@ def init_routes(app):
         )
     
     add_api_routes(app)
-    import xml.etree.ElementTree as ET
-    from flask import Response, url_for
-    from datetime import datetime
-    from email.utils import format_datetime
-    from bson import ObjectId
-    import html
-
-
-    def create_rss_feed(demonstrations):
-        """
-        Build an RSS 2.0 feed for demonstrations.
-        """
-        feed = ET.Element("rss", version="2.0")
-        channel = ET.SubElement(feed, "channel")
-
-        # Channel metadata
-        ET.SubElement(channel, "title").text = "Mielenosoitukset"
-        ET.SubElement(channel, "link").text = url_for("index", _external=True)
-        ET.SubElement(channel, "description").text = "Viimeisimmät mielenosoitukset."
-        ET.SubElement(channel, "language").text = "fi-fi"
-
-        now = utcnow()
-        ET.SubElement(channel, "pubDate").text = format_datetime(now)
-        ET.SubElement(channel, "lastBuildDate").text = format_datetime(now)
-        ET.SubElement(channel, "copyright").text = "© 2025 Mielenosoitukset.fi"
-        for demo in demonstrations:
-            item = ET.SubElement(channel, "item")
-
-            demo_id = str(demo.get("_id", ""))
-            demo_title = demo.get("title", "Tuntematon tapahtuma")
-            demo_date = demo.get("formatted_date", "Tuntematon päivämäärä")
-            demo_description = demo.get("description") or "Ei kuvausta."
-
-            # Title
-            ET.SubElement(item, "title").text = f"{demo_title} – {demo_date}"
-
-            # Link + GUID
-            link_url = url_for("demonstration_detail", demo_id=demo_id, _external=True)
-            ET.SubElement(item, "link").text = link_url
-            ET.SubElement(item, "guid", isPermaLink="true").text = link_url
-
-            # Description (safe fallback)
-            ET.SubElement(item, "description").text = html.escape(str(demo_description))
-
-            # pubDate
-            if "date" in demo and isinstance(demo["date"], datetime):
-                ET.SubElement(item, "pubDate").text = format_datetime(demo["date"])
-
-        # Return pretty UTF-8 XML string
-        return ET.tostring(feed, encoding="utf-8", xml_declaration=True)
-
-    from flask import Response, url_for, request
-    from datetime import datetime
-    import hashlib
-
     @app.route("/demonstrations.rss")
-    @cache.cached(timeout=300, unless=skip_cache_public_only)  # cache for 5 minutes
     def demonstrations_rss():
-        """
-        Serve the RSS feed for demonstrations.
-        Cached heavily to reduce DB load.
-        """
-        demonstrations = list(
-            demonstrations_collection.find().sort("date", -1).limit(50)
-        )
+        from mielenosoitukset_fi.utils.rss_feed import demonstration_feed
+        return demonstration_feed(demonstrations_collection, _demo_public_path)
 
-        # Normalize ObjectId → str
-        for demo in demonstrations:
-            if "_id" in demo and isinstance(demo["_id"], ObjectId):
-                demo["_id"] = str(demo["_id"])
-
-        feed_xml = create_rss_feed(demonstrations)
-
-        # Create ETag for conditional GET
-        etag = hashlib.md5(feed_xml).hexdigest()
-        last_modified = utcnow()
-
-        # Check if client already has this version
-        if request.headers.get("If-None-Match") == etag:
-            return Response(status=304)
-
-        return Response(
-            feed_xml,
-            mimetype="application/rss+xml",
-            headers={
-                "Cache-Control": "public, max-age=300, must-revalidate",
-                "ETag": etag,
-                "Last-Modified": last_modified.strftime("%a, %d %b %Y %H:%M:%S GMT"),
-                "Content-Type": "application/rss+xml; charset=utf-8",
-            },
-        )
     from datetime import datetime, date
     from collections import defaultdict
     import calendar
@@ -4252,10 +4775,20 @@ def init_routes(app):
     
     @app.route("/upcoming/translations/")
     def upcoming_translations():
-        return render_template("upcoming/translations.html")
+        from mielenosoitukset_fi.translations_join_bp import translation_join_csrf_token
+
+        token = (
+            translation_join_csrf_token()
+            if current_user.is_authenticated and not current_user.has_permission("TRANSLATE_DEMO")
+            else None
+        )
+        return render_template("upcoming/translations.html", translation_join_csrf_token=token)
     
     @app.before_request
     def _check_panic_mode():
-        if not request.path.startswith("/admin") and not request.path.startswith("/users/auth") and not request.path.startswith("/static"):
-            if PANIC_MODE:
-                return render_template("heavy.html")
+        # Administration, authentication and diagnostics remain available for
+        # recovery. Read current shared state rather than a worker-local flag.
+        if request.path.startswith(("/admin", "/board", "/users/auth", "/auth/god", "/static", "/health")):
+            return None
+        if mongo.panic.find_one({"name": {"$in": ["global", "security"]}, "panic": True}, {"_id": 1}):
+            return render_template("heavy.html"), 503, {"Cache-Control": "no-store", "Retry-After": "60", "X-Robots-Tag": "noindex"}

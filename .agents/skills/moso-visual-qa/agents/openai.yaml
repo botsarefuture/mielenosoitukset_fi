@@ -1,0 +1,6 @@
+interface:
+  display_name: "Moso visual QA"
+  short_description: "Screenshots and independent UI acceptance for Moso"
+  default_prompt: "Use $moso-visual-qa to capture and independently review this UI change before shipping."
+policy:
+  allow_implicit_invocation: true

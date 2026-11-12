@@ -275,7 +275,8 @@ def test_non_html_responses_are_not_recorded(app, db, monkeypatch):
 
     _clear(db)
     client.get("/demonstrations.rss")
-    assert _counts(db) == []
+    assert _total(db, page_type={"$exists": True}) == 0
+    assert _total(db, event="rss_fetch") == 1
 
 
 def test_analytics_failure_does_not_break_page(app, db, monkeypatch):
@@ -367,7 +368,9 @@ def test_admin_overview_documents_limits(admin_client, db):
     response = admin_client.get("/admin/analytics/")
     assert response.status_code == 200
     page = response.get_data(as_text=True)
-    assert "Laskuriin kirjataan vain julkiset" in page
+    assert "HTML-sivujen onnistuneet GET-vastaukset" in page
+    assert "React-sivujen sivunäyttösignaalit" in page
+    assert "estetty tai epäonnistunut signaali jää laskematta" in page
 
 
 def test_overview_period_math(admin_client, db, app):
@@ -508,6 +511,16 @@ def test_demo_search_pagination_does_not_record(app, db):
     docs = [doc for doc in _counts(db) if doc.get("event") == "demo_search"]
     assert len(docs) == 1
     assert docs[0]["count"] == 1
+
+
+def test_demo_search_history_restoration_does_not_count_as_new_search(app, db):
+    _clear(db)
+    client = app.test_client()
+    assert client.get('/api/v1/demonstrations?search=climate&page=1').status_code == 200
+    for _ in range(2):
+        assert client.get('/api/v1/demonstrations?search=climate&page=1&history_restore=1').status_code == 200
+    docs = [doc for doc in _counts(db) if doc.get('event') == 'demo_search']
+    assert len(docs) == 1 and docs[0]['count'] == 1
 
 
 def test_plain_list_loads_do_not_record_search(app, db):
@@ -678,3 +691,32 @@ class patch_classification:
 
         sa.classify_request = self._originals["classify"]
         return False
+
+
+def test_campaign_confirmation_tokens_are_never_stored():
+    from mielenosoitukset_fi.utils.site_analytics import classify_path
+
+    assert classify_path("/kampanja/confirm/9e4bQz-secret-token") == {"page_type": "campaign", "resource_id": "confirm"}
+    assert classify_path("/kampanja/Confirm/abc/") == {"page_type": "campaign", "resource_id": "confirm"}
+    assert classify_path("/kampanja/") == {"page_type": "campaign", "resource_id": None}
+
+
+def test_events_honour_dnt_and_the_site_switch(app, db):
+    from mielenosoitukset_fi.utils import site_analytics
+
+    calls = []
+    original = site_analytics.record_event
+    site_analytics.record_event = lambda **kwargs: calls.append(kwargs) or True
+    try:
+        with app.test_request_context("/demonstrations", headers={"DNT": "1", "User-Agent": "Mozilla/5.0"}):
+            assert site_analytics.record_event_for_request("demo_search") is False
+        app.config["SITE_ANALYTICS_ENABLED"] = False
+        with app.test_request_context("/demonstrations", headers={"User-Agent": "Mozilla/5.0"}):
+            assert site_analytics.record_event_for_request("demo_search") is False
+        app.config["SITE_ANALYTICS_ENABLED"] = True
+        with app.test_request_context("/demonstrations", headers={"User-Agent": "Mozilla/5.0"}):
+            assert site_analytics.record_event_for_request("demo_search") is True
+    finally:
+        site_analytics.record_event = original
+        app.config["SITE_ANALYTICS_ENABLED"] = True
+    assert len(calls) == 1

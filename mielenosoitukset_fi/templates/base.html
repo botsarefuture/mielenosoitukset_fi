@@ -8,7 +8,10 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn2.mielenosoitukset.fi" crossorigin>
+  {% block body_font_styles %}
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  {% endblock %}
 
   <!-- Apply the theme before first paint to avoid a dark/light flash.
        Mirrors static/js/theme.js (saved pref -> cached user pref -> system). -->
@@ -30,11 +33,14 @@
     })();
   </script>
 
+  <link rel="alternate" type="application/rss+xml" title="Mielenosoitukset.fi: RSS" href="{{ url_for('demonstrations_rss', _external=True) }}">
+
   <!-- Primary Meta Tags -->
   <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
-  <meta name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa." />
+  <meta name="description" content="{% block meta_description %}Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa.{% endblock %}" />
   <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
   {% block robots %}<meta name="robots" content="index, follow" />{% endblock %}
+  {% block canonical %}{% endblock %}
   <meta name="author" content="Mielenosoitukset.fi" />
   <meta name="theme-color" content="#007bff" />
 
@@ -57,7 +63,7 @@
   <meta property="og:description"
     content="{% block og_description %}Tietoa mielenosoituksista Suomessa.{% endblock %}" />
   <meta property="og:image" content="{% block og_image %}/static/images/og-default.jpg{% endblock %}" />
-  <meta property="og:url" content="{{ request.url }}" />
+  <meta property="og:url" content="{% block og_url %}{{ request.base_url }}{% endblock %}" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Mielenosoitukset.fi" />
   <meta property="og:locale" content="{{ session.get('locale', 'fi') }}_FI" />
@@ -90,15 +96,15 @@
 
   <!-- Stylesheets (non-blocking where safe) -->
   <!-- Preload critical CSS then apply via onload; provide noscript fallback for browsers without JS -->
-  <link rel="preload" href="{{ url_for('static', filename='css/style.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></noscript>
+  <link rel="preload" href="{{ url_for('static', filename='css/style.css', v='20261015-heading-1') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20261015-heading-1') }}"></noscript>
   <!-- Font-awesome: preload then stylesheet -->
   <link rel="preload" href="{{ url_for('static', filename='fa/css/all.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}"></noscript>
 
   <!-- External vendor CSS: preload + onload to avoid blocking. Keep a noscript fallback. -->
-  <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"></noscript>
+  <link rel="preload" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" as="style" crossorigin onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" crossorigin></noscript>
 
   <style>
     /* Global modal overrides: center & ensure on top */
@@ -119,15 +125,12 @@
     }
   </style>
 
-  <link rel="preload" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css"></noscript>
-
   {% block styles %}{% endblock %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/product-tokens.css', v='20260924-product-tokens-1') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20261004-user-workspace-15') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/public-header.css', v='20261002-public-header-4') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/product-tokens.css', v='20261110-pride-contrast-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20261110-user-workspace-7') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/public-header.css', v='20261027-react-header-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css', v='20260928-campaign-feedback-1') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/public_hero.css', v='20260907-centered-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/public_hero.css', v='20261015-hero-width-1') }}">
 
   <!-- Scripts moved to the end of the document and loaded with defer/async where appropriate to avoid blocking render -->
 
@@ -575,7 +578,7 @@ body.banner-closed {
   <!--{% include "update_notice.html" %}-->
 
   <!-- Main Content Area -->
-  <main class="container-main-content" id="main-content">
+  <main class="container-main-content {% block main_class %}{% endblock %}" id="main-content">
     {% block content %}
     <!-- The content from child templates will be injected here -->
     {% endblock %}
@@ -742,13 +745,17 @@ body.banner-closed {
   {# Legacy client-side Matomo tracker. Built-in server-side analytics now cover basic pageviews; disable MATOMO_ENABLED in config to stop double-counting. #}
   <script src="{{ url_for('static', filename='js/matomo.js') }}" async></script>
   {% endif %}
-  {% if config.get('SITE_ANALYTICS_ENABLED', true) %}
-  {# Built-in analytics beacon: map interactions and external link clicks only; pageviews are recorded server-side. #}
+  {% if config.get('SITE_ANALYTICS_ENABLED', true)
+        and not request.path.startswith('/admin')
+        and not request.path.startswith('/users')
+        and not request.path.startswith('/board')
+        and not request.path.startswith('/developer') %}
+  {# Pinned first-party Web Vitals plus anonymous aggregate analytics beacons; pageviews are recorded server-side. #}
+  <script src="https://cdn2.mielenosoitukset.fi/vendor/web-vitals/6.2.2/web-vitals.iife.js" integrity="sha256-Hl6bmva41xz+9QjlqGnFO0zyu8ytjJtaxmTDTpP2FRo=" defer crossorigin="anonymous"></script>
   <script src="{{ url_for('static', filename='js/site_analytics.js') }}" defer></script>
   {% endif %}
   <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
-  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js" defer></script>
+  <script src="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.bundle.min.js" defer crossorigin></script>
 
   <script src="{{ url_for('static', filename='js/theme.js', v='20261003-theme-1') }}"></script>
   <script>

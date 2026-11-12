@@ -1,5 +1,5 @@
 /**
- * Built-in analytics: tiny beacon for browser-only signals.
+ * Built-in analytics: tiny beacons for browser-only signals.
  *
  * Basic pageviews are recorded server-side; this script only reports the few
  * interactions that cannot be seen from requests at all, and it is strictly
@@ -9,15 +9,24 @@
  *   - external_link: visitor clicked a link to another site (recorded with
  *     the target *hostname* only, so counters stay small and useful)
  *
- * No identifiers, no cookies, no storage — each event is a single fire-and-
- * forget beacon. Admin and account areas are skipped entirely.
+ * Web Vitals are also submitted as metric name + numeric value only. The
+ * server derives a coarse route family and device bucket, then updates a
+ * bounded daily histogram. No metric id, URL, DOM target, visitor, cookie or
+ * browser storage is sent. Admin and account areas are skipped entirely.
  */
 (function () {
   "use strict";
   if (typeof navigator === "undefined" || !navigator.sendBeacon) return;
 
   var path = window.location.pathname || "/";
-  if (path.indexOf("/admin") === 0 || path.indexOf("/users") === 0) return;
+  if (
+    path.indexOf("/admin") === 0 ||
+    path.indexOf("/users") === 0 ||
+    path.indexOf("/board") === 0 ||
+    path.indexOf("/developer") === 0
+  ) return;
+  var sentVitals = Object.create(null);
+  var pendingVitals = Object.create(null);
 
   function send(event, resourceId) {
     try {
@@ -31,6 +40,54 @@
       /* analytics must never break the page */
     }
   }
+
+  function sendVital(metric) {
+    if (!metric || ["CLS", "INP", "LCP", "TTFB"].indexOf(metric.name) === -1) return;
+    if (typeof metric.value !== "number" || !isFinite(metric.value) || metric.value < 0) return;
+    if (sentVitals[metric.name]) return;
+    pendingVitals[metric.name] = metric.value;
+  }
+
+  function flushVitals() {
+    ["CLS", "INP", "LCP", "TTFB"].forEach(function (name) {
+      if (!Object.prototype.hasOwnProperty.call(pendingVitals, name) || sentVitals[name]) return;
+      try {
+        var queued = navigator.sendBeacon(
+          "/api/analytics/vitals",
+          new Blob([JSON.stringify({ metric: name, value: pendingVitals[name] })], {
+            type: "application/json",
+          })
+        );
+        if (queued) sentVitals[name] = true;
+      } catch (err) {
+        /* analytics must never break the page */
+      }
+    });
+  }
+
+  // The pinned, self-hosted web-vitals library is deferred before this file.
+  // Unsupported browsers or a failed optional library download simply omit
+  // these metrics without affecting the page or the other analytics beacons.
+  if (window.webVitals) {
+    window.webVitals.onCLS(sendVital, { reportAllChanges: true });
+    window.webVitals.onINP(sendVital, { reportAllChanges: true });
+    window.webVitals.onLCP(sendVital, { reportAllChanges: true });
+    window.webVitals.onTTFB(sendVital);
+  }
+
+  window.addEventListener("pagehide", flushVitals);
+
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") flushVitals();
+  });
+
+  window.addEventListener("pageshow", function (event) {
+    if (!event.persisted) return;
+    // web-vitals starts fresh metric instances for a restored bfcache visit.
+    // Clear the previous visit only after it has been flushed while hidden.
+    sentVitals = Object.create(null);
+    pendingVitals = Object.create(null);
+  });
 
   // Map interaction — at most one event per page load.
   function bindMap() {

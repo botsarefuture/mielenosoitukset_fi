@@ -1,0 +1,54 @@
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% block title %}{{ _('Kaupunkiadminin käsittelyjono') }}{% endblock %}
+{% block main_content %}
+<section class="admin-page admin-workspace admin-stack" data-admin-deadlines data-server-now="{{ server_now }}"
+         data-expired-label="{{ _('Määräaika päättynyt – odottaa siirtoa kansalliselle tiimille') }}"
+         data-remaining-label="{{ _('Käsittelyaikaa jäljellä') }}">
+  {% call admin_page_hero(
+    _('Kaupunkiadminin käsittelyjono'),
+    _('Sinulle näkyvien kaupunkien odottavat ilmoitukset. Määräaika perustuu palvelimelle tallennettuun käsittelyaikaan.'),
+    _('Admin-paneeli'),
+    [(_('Etusivu'), url_for('index')), (_('Käsittelyjono'), none)],
+    back_url=url_for('index'), back_label=_('Etusivu')
+  ) %}
+    {% if can_list_demos %}<a class="admin-page-hero__action" href="{{ url_for('admin_demo.demo_control') }}">{{ _('Kaikki mielenosoitukset') }}</a>{% endif %}
+  {% endcall %}
+  <div class="admin-data-view">
+    <header class="admin-data-view__header admin-result-summary">
+      <h2>{{ _('Odottaa käsittelyä') }}</h2>
+      <span>{{ _('Näytetään %(first)s–%(last)s / %(total)s', first=queue.first, last=queue.last, total=queue.total) }}</span>
+    </header>
+    {% if queue.rows %}
+    <div class="admin-data-view__viewport">
+      <table class="table admin-data-view__table admin-data-view__table--stacked">
+        <caption class="visually-hidden">{{ _('Kaupunkiesi ilmoitukset aikaisimman käsittelymääräajan mukaan') }}</caption>
+        <thead><tr><th scope="col">{{ _('Mielenosoitus') }}</th><th scope="col">{{ _('Kaupunki') }}</th><th scope="col">{{ _('Käsittelyn määräaika') }}</th><th scope="col">{{ _('Toiminnot') }}</th></tr></thead>
+        <tbody>{% for row in queue.rows %}
+          <tr>
+            <th scope="row">{{ row.title }}</th><td><span class="admin-table-cell-label" aria-hidden="true">{{ _('Kaupunki') }}</span>{{ row.city }}</td>
+            <td>
+              <span class="admin-table-cell-label" aria-hidden="true">{{ _('Käsittelyn määräaika') }}</span>
+              {% if row.deadline_iso %}<time datetime="{{ row.deadline_iso }}">{{ row.deadline_label }}</time>{% endif %}
+              {% if row.state == 'escalated' %}<p class="admin-status-badge">{{ _('Siirretty kansalliselle tiimille') }}</p>
+              {% elif row.state == 'unknown' %}<p class="admin-status-badge admin-status-badge--warning">{{ _('Määräaika vaatii tarkistuksen') }}</p>
+              {% elif row.state == 'overdue' %}<p class="admin-status-badge admin-status-badge--warning">{{ _('Määräaika päättynyt – odottaa siirtoa kansalliselle tiimille') }}</p>
+              {% else %}<p class="admin-field__help" data-deadline="{{ row.deadline_iso }}" aria-hidden="true">{{ _('Käsittelyaikaa jäljellä') }}: {{ row.remaining_minutes // 60 }} h {{ row.remaining_minutes % 60 }} min</p>{% endif %}
+            </td>
+            <td><span class="admin-table-cell-label" aria-hidden="true">{{ _('Toiminnot') }}</span>{% if row.can_review %}<a class="btn btn-primary" href="{{ url_for('admin_demo.review_demo', demo_id=row.id) }}">{{ _('Käsittele') }}</a>
+            {% elif row.can_view %}<a class="btn btn-outline-primary" href="{{ url_for('admin_demo.demo_command_center', demo_id=row.id) }}">{{ _('Näytä') }}</a>{% else %}—{% endif %}</td>
+          </tr>
+        {% endfor %}</tbody>
+      </table>
+    </div>
+    {% else %}<div class="admin-empty-state"><strong>{{ _('Ei käsittelyä odottavia ilmoituksia') }}</strong><p>{{ _('Jono sisältää vain ilmoitukset, joihin sinulla on käyttöoikeus.') }}</p></div>{% endif %}
+    {% if queue.pages > 1 %}
+    <nav class="admin-pagination" aria-label="{{ _('Sivutus') }}">
+      {% if queue.page > 1 %}<a class="btn btn-outline-secondary" href="{{ url_for('admin.admin_dashboard', page=queue.page - 1) }}">{{ _('Edellinen') }}</a>{% endif %}
+      <span>{{ _('Sivu %(page)s / %(pages)s', page=queue.page, pages=queue.pages) }}</span>
+      {% if queue.page < queue.pages %}<a class="btn btn-outline-secondary" href="{{ url_for('admin.admin_dashboard', page=queue.page + 1) }}">{{ _('Seuraava') }}</a>{% endif %}
+    </nav>{% endif %}
+  </div>
+</section>
+<script src="{{ url_for('static', filename='js/admin_deadlines.js', v='20261024-1') }}" defer></script>
+{% endblock %}

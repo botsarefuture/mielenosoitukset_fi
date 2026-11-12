@@ -183,7 +183,11 @@ def capture_request_context() -> dict | None:
             "method": request.method,
             "remote_addr": get_client_ip(),
             "ip": get_client_ip(),
-            "args": request.args.to_dict(flat=False),
+            # User-management requests may contain sensitive query values.
+            # Keep keys for diagnostics, including secondary action audits.
+            "args": ({key: [] for key in request.args}
+                     if request.blueprint == "admin_user"
+                     else request.args.to_dict(flat=False)),
             "form_keys": list(request.form.keys()),
             "json_keys": list((request.get_json(silent=True) or {}).keys()),
             "user_agent": getattr(request.user_agent, "string", str(request.user_agent)),

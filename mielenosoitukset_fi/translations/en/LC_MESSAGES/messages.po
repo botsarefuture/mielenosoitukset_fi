@@ -309,7 +309,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/list.html:527 mielenosoitukset_fi/templates/list.html:528
 #: mielenosoitukset_fi/templates/tag_list.html:559 mielenosoitukset_fi/templates/tag_list.html:560
 msgid "Kopioi linkki"
-msgstr ""
+msgstr "Copy link"
 
 #: mielenosoitukset_fi/templates/city.html:162 mielenosoitukset_fi/templates/city.html:164
 #: mielenosoitukset_fi/templates/tag_list.html:669 mielenosoitukset_fi/templates/tag_list.html:671
@@ -344,21 +344,19 @@ msgstr "Search for demonstrations"
 #: mielenosoitukset_fi/templates/city.html:728 mielenosoitukset_fi/templates/city.html:729
 #: mielenosoitukset_fi/templates/list.html:422 mielenosoitukset_fi/templates/list.html:423
 #: mielenosoitukset_fi/templates/tag_list.html:473 mielenosoitukset_fi/templates/tag_list.html:474
-#, fuzzy
 msgid "Alkupäivä (pp.mm.vvvv)"
-msgstr "Date (pp.kk.vvvv)"
+msgstr "Start date (dd.mm.yyyy)"
 
 #: mielenosoitukset_fi/templates/city.html:731 mielenosoitukset_fi/templates/city.html:732
 #: mielenosoitukset_fi/templates/list.html:425 mielenosoitukset_fi/templates/list.html:426
 #: mielenosoitukset_fi/templates/tag_list.html:476 mielenosoitukset_fi/templates/tag_list.html:477
-#, fuzzy
 msgid "Loppupäivä (pp.mm.vvvv)"
-msgstr "Date (pp.kk.vvvv)"
+msgstr "End date (dd.mm.yyyy)"
 
 #: mielenosoitukset_fi/templates/city.html:734 mielenosoitukset_fi/templates/list.html:428
 #: mielenosoitukset_fi/templates/tag_list.html:479
 msgid "Valitse kelvollinen päivämääräväli tulevaisuudesta"
-msgstr ""
+msgstr "Choose a valid future date range"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:165
 #: mielenosoitukset_fi/templates/admin_V2/organizations/dashboard.html:36
@@ -444,9 +442,8 @@ msgid "Lähetä"
 msgstr "Submit"
 
 #: mielenosoitukset_fi/templates/detail.html:462
-#, fuzzy
 msgid "Ilmoita virheestä"
-msgstr "Submit a demonstration"
+msgstr "Report an error"
 
 #: mielenosoitukset_fi/templates/detail.html:482 mielenosoitukset_fi/templates/detail.html:484
 msgid "klo"
@@ -483,7 +480,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/detail.html:522 mielenosoitukset_fi/templates/detail.html:1130
 #: mielenosoitukset_fi/templates/detail.html:1132
 msgid "Osallistun"
-msgstr ""
+msgstr "I’m attending"
 
 #: mielenosoitukset_fi/templates/detail.html:529
 #, fuzzy
@@ -507,9 +504,8 @@ msgid "Lisätiedot"
 msgstr "Details"
 
 #: mielenosoitukset_fi/templates/detail.html:644
-#, fuzzy
 msgid "Facebook-tapahtuma"
-msgstr "Facebook-eventlink (optional)"
+msgstr "Facebook event"
 
 #: mielenosoitukset_fi/templates/detail.html:653
 #, fuzzy
@@ -1379,12 +1375,11 @@ msgstr "Users"
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:183 mielenosoitukset_fi/templates/admin_V2/user/edit.html:145
 #: mielenosoitukset_fi/templates/users/auth/login.html:12 mielenosoitukset_fi/users/templates/login.html:10
 msgid "Käyttäjänimi"
-msgstr ""
+msgstr "Username"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:187 mielenosoitukset_fi/templates/users/auth/settings.html:93
-#, fuzzy
 msgid "Näyttönimi"
-msgstr "User activity"
+msgstr "Display name"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:191
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:492
@@ -1402,7 +1397,6 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:493
 #: mielenosoitukset_fi/templates/admin_V2/organizations/view.html:351
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:164
-#, fuzzy
 msgid "Rooli"
 msgstr "Role"
 
@@ -1446,7 +1440,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/organizations/view.html:352
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:120
 msgid "Toiminnot"
-msgstr ""
+msgstr "Actions"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:23
 #, fuzzy
@@ -1455,7 +1449,7 @@ msgstr "Users"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:31
 msgid "Aktiivinen"
-msgstr ""
+msgstr "Active"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:33
 msgid "Ei aktiivinen"
@@ -1475,9 +1469,8 @@ msgid "Ei kirjautunut"
 msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:64 mielenosoitukset_fi/templates/admin_V2/user/edit.html:136
-#, fuzzy
 msgid "Muokkaa käyttäjää"
-msgstr "Users"
+msgstr "Edit user"
 
 #: mielenosoitukset_fi/templates/admin_V2/_users_table.html:74
 msgid "Pakota käyttäjä vaihtamaan salasanan seuraavan kirjautumisen yhteydessä"
@@ -1883,7 +1876,7 @@ msgstr "Display all demonstrations"
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:158
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:230
 msgid "Ei"
-msgstr ""
+msgstr "No"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:177
 #, fuzzy
@@ -2091,7 +2084,6 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/organizations/view.html:259
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:216
 #: mielenosoitukset_fi/templates/partials/toistuva_form_fields.html:14
-#, fuzzy
 msgid "Kuvaus"
 msgstr "Description"
 
@@ -2787,7 +2779,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:185
 msgid "Globaalit oikeudet"
-msgstr ""
+msgstr "Global permissions"
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:186
 msgid "Globaalit oikeudet ovat vain superkäyttäjille."
@@ -3192,9 +3184,8 @@ msgid "Ei aktiivisia tokeneita."
 msgstr "No active tokens."
 
 #: mielenosoitukset_fi/templates/users/auth/token_ui.html:215
-#, fuzzy
 msgid "Näytä"
-msgstr "Users"
+msgstr "View"
 
 #: mielenosoitukset_fi/templates/users/auth/verify_mfa.html:12
 msgid "MFA-koodi"
@@ -3956,7 +3947,7 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_case_bp.py:65
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:45
 msgid "Odottaa käsittelyä"
-msgstr ""
+msgstr "Awaiting review"
 
 #: mielenosoitukset_fi/admin/admin_case_bp.py:71 mielenosoitukset_fi/admin/admin_case_bp.py:179
 msgid "Virheilmoitus"
@@ -4036,7 +4027,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/admin/admin_case_bp.py:204 mielenosoitukset_fi/admin/admin_case_bp.py:378
 msgid "Ei tiedossa"
-msgstr ""
+msgstr "Unknown"
 
 #: mielenosoitukset_fi/admin/admin_case_bp.py:208 mielenosoitukset_fi/templates/admin_V2/cases/all.html:63
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:28 mielenosoitukset_fi/templates/admin_V2/cases/case.html:334
@@ -4217,7 +4208,7 @@ msgstr "Event type"
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:169
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:959
 msgid "Reitti"
-msgstr ""
+msgstr "Route"
 
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:107 mielenosoitukset_fi/templates/admin_V2/cases/case.html:189
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:183
@@ -4424,6 +4415,9 @@ msgstr ""
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:1857 mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html:153
 msgid "Vuosi"
 msgstr "Year"
+
+msgid "Kuukausi"
+msgstr "Month"
 
 #: mielenosoitukset_fi/admin/admin_demo_bp.py:1858 mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html:119
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html:963
@@ -4949,7 +4943,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/dashboard.html:10
 #: mielenosoitukset_fi/templates/admin_V2/governance/dashboard.html:12 mielenosoitukset_fi/templates/admin_base.html:176
 msgid "Admin-paneeli"
-msgstr ""
+msgstr "Admin panel"
 
 #: mielenosoitukset_fi/templates/admin_base.html:177
 msgid "Avaa admin-valikko"
@@ -5237,7 +5231,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/governance/_tabs.html:17 mielenosoitukset_fi/templates/cities.html:3
 #: mielenosoitukset_fi/templates/header.html:883 mielenosoitukset_fi/templates/header.html:885
 msgid "Kaupungit"
-msgstr ""
+msgstr "Cities"
 
 #: mielenosoitukset_fi/templates/cities.html:421
 msgid "Paikalliset mielenosoitukset"
@@ -5378,11 +5372,11 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:1507
 msgid "Edellinen kuva"
-msgstr ""
+msgstr "Previous image"
 
 #: mielenosoitukset_fi/templates/detail.html:1508
 msgid "Seuraava kuva"
-msgstr ""
+msgstr "Next image"
 
 #: mielenosoitukset_fi/templates/detail.html:1515
 #, python-format
@@ -5391,7 +5385,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:1525
 msgid "Tämä mielenosoitus on peruttu."
-msgstr ""
+msgstr "This demonstration has been cancelled."
 
 #: mielenosoitukset_fi/templates/detail.html:1540
 msgid "Muistutukset eivät ole saatavilla perutulle tapahtumalle"
@@ -5403,7 +5397,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:1545 mielenosoitukset_fi/templates/detail.html:1555
 msgid "Lisää kalenteriin (.ics)"
-msgstr ""
+msgstr "Add to calendar (.ics)"
 
 #: mielenosoitukset_fi/templates/_modals/reminder-modal.html:21 mielenosoitukset_fi/templates/detail.html:1551
 msgid "Tilaa muistutus"
@@ -5413,7 +5407,7 @@ msgstr "Subscribe to reminder"
 #: mielenosoitukset_fi/templates/detail.html:1579 mielenosoitukset_fi/templates/siblings.html:728
 #: mielenosoitukset_fi/templates/siblings.html:735
 msgid "Seuraa sarjaa"
-msgstr ""
+msgstr "Follow series"
 
 #: mielenosoitukset_fi/templates/detail.html:1565 mielenosoitukset_fi/templates/detail.html:1569
 #: mielenosoitukset_fi/templates/siblings.html:729 mielenosoitukset_fi/templates/siblings.html:733
@@ -5426,11 +5420,11 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:1598
 msgid "Jaa Mastodonissa"
-msgstr ""
+msgstr "Share on Mastodon"
 
 #: mielenosoitukset_fi/templates/detail.html:1603
 msgid "Jaa X:ssä"
-msgstr ""
+msgstr "Share on X"
 
 #: mielenosoitukset_fi/templates/detail.html:1613
 msgid "Kutsut eivät ole saatavilla perutuille tapahtumille"
@@ -5488,7 +5482,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:1796
 msgid "Yksityishenkilö (nimi piilotettu)"
-msgstr ""
+msgstr "Private individual (name hidden)"
 
 #: mielenosoitukset_fi/templates/detail.html:1798 mielenosoitukset_fi/templates/detail.html:1805
 msgid "Yksityishenkilö"
@@ -5516,11 +5510,11 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:1822 mielenosoitukset_fi/templates/organizations/details.html:790
 msgid "Seuraa"
-msgstr ""
+msgstr "Follow"
 
 #: mielenosoitukset_fi/templates/detail.html:1823 mielenosoitukset_fi/templates/organizations/details.html:791
 msgid "Seurataan"
-msgstr ""
+msgstr "Following"
 
 #: mielenosoitukset_fi/templates/detail.html:1831
 msgid "Seuraa organisaatiota"
@@ -5549,7 +5543,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/detail.html:1895
 msgid "Organisaation profiili"
-msgstr ""
+msgstr "Organization profile"
 
 #: mielenosoitukset_fi/templates/detail.html:1916
 msgid "Järjestäjätietoja ei ole saatavilla."
@@ -5570,7 +5564,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:51 mielenosoitukset_fi/templates/detail.html:1971
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:68
 msgid "Kaikki mielenosoitukset"
-msgstr ""
+msgstr "All demonstrations"
 
 #: mielenosoitukset_fi/templates/header.html:21 mielenosoitukset_fi/templates/header.html:30
 #: mielenosoitukset_fi/templates/notifications/all.html:2 mielenosoitukset_fi/templates/notifications/all.html:9
@@ -5671,7 +5665,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/index.html:710
 msgid "Ilmoita Pride-mielenosoitus"
-msgstr ""
+msgstr "Submit a Pride demonstration"
 
 #: mielenosoitukset_fi/templates/info.html:48
 msgid "Tietoa palvelusta"
@@ -5763,6 +5757,9 @@ msgstr "Submit a new demonstration"
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:154
 msgid "Ladataan mielenosoituksia..."
 msgstr "Loading demonstrations..."
+
+msgid "Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen."
+msgstr "Could not load demonstrations. Please try again."
 
 #: ⁨mielenosoitukset_fi/templates/list copy.html⁩:155
 msgid "Lataa lisää"
@@ -5890,7 +5887,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/siblings.html:777
 msgid "Kaikki tapahtuman ajankohdat"
-msgstr ""
+msgstr "All event dates"
 
 #: mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html:136
 #: mielenosoitukset_fi/templates/siblings.html:785
@@ -6087,7 +6084,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/submit.html:2683
 msgid "Lähetä ilmoitus"
-msgstr ""
+msgstr "Send report"
 
 #: mielenosoitukset_fi/templates/submit.html:2694
 msgid "Kiitos ilmoituksestasi!"
@@ -6440,7 +6437,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/_modals/report-error-modal.html:702
 msgid "Sähköposti (valinnainen)"
-msgstr ""
+msgstr "Email (optional)"
 
 #: mielenosoitukset_fi/templates/_modals/report-error-modal.html:872
 msgid "Peruutushavainto lähetettiin ylläpidolle tarkistettavaksi."
@@ -6481,7 +6478,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:213
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/editor.html:83
 msgid "Lähettäjä"
-msgstr ""
+msgstr "Sender"
 
 #: mielenosoitukset_fi/templates/admin/suggestion_view.html:412
 msgid "Luontiaika"
@@ -6666,7 +6663,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/user/confirm.html:8 mielenosoitukset_fi/templates/admin_V2/user/edit.html:54
 #: mielenosoitukset_fi/templates/admin_V2/user/list.html:11
 msgid "Käyttäjähallinta"
-msgstr ""
+msgstr "User management"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:186
 msgid "Superkäyttäjäroolia ei voi myöntää tästä lomakkeesta."
@@ -6743,7 +6740,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:323
 msgid "Yritä uudelleen"
-msgstr ""
+msgstr "Try again"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:334
 msgid "Haetaan kirjautumisia..."
@@ -6764,7 +6761,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:338 mielenosoitukset_fi/templates/admin_V2/cases/case.html:85
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:39
 msgid "Epäonnistui"
-msgstr ""
+msgstr "Failed"
 
 #: mielenosoitukset_fi/templates/admin_V2/_modals_users.html:339
 msgid "Ei lisätietoa"
@@ -7387,7 +7384,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/governance/audit.html:61
 #: mielenosoitukset_fi/templates/admin_V2/governance/dashboard.html:49 mielenosoitukset_fi/templates/admin_V2/logs.html:31
 msgid "Tekijä"
-msgstr ""
+msgstr "Actor"
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:32 mielenosoitukset_fi/templates/admin_V2/user/list.html:26
 msgid "Kaikki käyttäjät"
@@ -7500,7 +7497,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:100
 msgid "Kohde"
-msgstr ""
+msgstr "Target"
 
 #: mielenosoitukset_fi/templates/admin_V2/logs.html:104
 msgid "Näytä liittyvät tapahtumat"
@@ -7845,7 +7842,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:66
 #, python-format
 msgid "Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta"
-msgstr ""
+msgstr "Showing %(start)s–%(end)s of %(count)s demonstrations"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:114
 #: mielenosoitukset_fi/templates/admin_V2/stats.html:70
@@ -7952,7 +7949,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/blocklist.html:33
 msgid "Estetty"
-msgstr ""
+msgstr "Blocked"
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/blocklist.html:35
 msgid "Verkkotunnus"
@@ -8038,7 +8035,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:86
 #: mielenosoitukset_fi/templates/admin_V2/ui_translations/sync_dashboard.html:39
 msgid "Jonossa"
-msgstr ""
+msgstr "Queued"
 
 #: mielenosoitukset_fi/templates/admin_V2/cases/case.html:99
 msgid "Vastaa lähettäjälle"
@@ -8866,7 +8863,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:264
 #: mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html:8
 msgid "Lähetetty"
-msgstr ""
+msgstr "Sent"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html:267
 msgid "Ei ilmoittajatietoja."
@@ -9792,7 +9789,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:160
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:182
 msgid "Lähde"
-msgstr ""
+msgstr "Source"
 
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:152
 #: mielenosoitukset_fi/templates/admin_V2/demonstrations/translations_editor.html:165
@@ -10183,7 +10180,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/kampanja/list.html:493
 msgid "Tallennettu"
-msgstr ""
+msgstr "Saved"
 
 #: mielenosoitukset_fi/templates/admin_V2/organizations/dashboard.html:9
 #: mielenosoitukset_fi/templates/admin_V2/organizations/form.html:10
@@ -10445,7 +10442,7 @@ msgstr ""
 #: mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html:25
 #: mielenosoitukset_fi/templates/organizations/fill_info.html:588
 msgid "Verkkosivusto"
-msgstr ""
+msgstr "Website"
 
 #: mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html:44
 msgid "Ehdotettu logo"
@@ -11232,7 +11229,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:82
 msgid "Sähköpostiosoite on vahvistettu"
-msgstr ""
+msgstr "Email address is verified"
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:83
 msgid "Vaikuttaa siihen, pidetäänkö tiliä käyttövalmiina."
@@ -11240,7 +11237,7 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:90
 msgid "Pakota käyttäjänimen ja näyttönimen vaihto"
-msgstr ""
+msgstr "Require a username and display name change"
 
 #: mielenosoitukset_fi/templates/admin_V2/user/edit.html:98
 msgid "Rooli antaa oletusoikeudet. Erilliset oikeudet määritellään alempana."
@@ -11349,11 +11346,11 @@ msgstr ""
 
 #: mielenosoitukset_fi/templates/organizations/details.html:1398
 msgid "Ei tulevia mielenosoituksia"
-msgstr ""
+msgstr "No upcoming demonstrations"
 
 #: mielenosoitukset_fi/templates/organizations/details.html:1399
 msgid "Tämä järjestäjä ei ole vielä ilmoittanut tulevia mielenosoituksia."
-msgstr ""
+msgstr "This organizer has not announced any upcoming demonstrations yet."
 
 #: mielenosoitukset_fi/templates/organizations/fill_info.html:3
 #: mielenosoitukset_fi/templates/organizations/fill_info.html:569
@@ -12104,7 +12101,7 @@ msgstr ""
 #: ⁨mielenosoitukset_fi/templates/users/profile/profile copy.html⁩:818
 #: mielenosoitukset_fi/templates/users/profile/profile.html:923
 msgid "Avaa mielenosoitus"
-msgstr ""
+msgstr "Open demonstration"
 
 #: ⁨mielenosoitukset_fi/templates/users/profile/profile copy.html⁩:829
 #: mielenosoitukset_fi/templates/users/profile/profile.html:934
@@ -13421,3 +13418,546 @@ msgstr "The search text is too long."
 #~ msgid "Seuraa"
 #~ msgstr ""
 
+# Recurring series occurrence chooser
+msgid "Valitse ajankohta nähdäksesi sen tarkat tiedot."
+msgstr "Choose a date to view its full details."
+
+msgid "Ei tulevia ajankohtia. Näytetään sarjan viimeisin tapahtuma."
+msgstr "There are no upcoming dates. Showing the latest event in the series."
+
+msgid "Valittu"
+msgstr "Selected"
+
+msgid "Aiemmat ajankohdat"
+msgstr "Previous dates"
+
+msgid "Ei tulevia ajankohtia"
+msgstr "No upcoming dates"
+
+msgid "Tälle toistuvalle tapahtumalle ei ole vielä julkaistu ajankohtia."
+msgstr "No dates have been published for this recurring event yet."
+
+#: mielenosoitukset_fi/users/BPs/auth.py
+msgid "Kirjautumisvahvistus on vanhentunut. Syötä käyttäjänimi ja salasana uudelleen."
+msgstr "The sign-in confirmation has expired. Enter your username and password again."
+
+#: mielenosoitukset_fi/users/BPs/auth.py mielenosoitukset_fi/users/BPs/passkeys.py
+msgid "Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon."
+msgstr "This account is disabled. Contact the site administrators."
+
+msgid "Käyttäjän käyttötila"
+msgstr "User account status"
+
+msgid "Käyttötila"
+msgstr "Account status"
+
+msgctxt "account-status"
+msgid "Estetty"
+msgstr "Banned"
+
+msgctxt "account-status"
+msgid "Suljettu"
+msgstr "Disabled"
+
+msgctxt "account-status"
+msgid "Aktiivinen"
+msgstr "Active"
+
+msgid "Aktivoi käyttäjä"
+msgstr "Activate user"
+
+msgid "Sulje käyttäjätili"
+msgstr "Disable account"
+
+msgid "Vahvista kirjautumisoikeuden muutos."
+msgstr "Confirm the change to sign-in access."
+
+msgid "Käyttäjän käyttötila päivitetty."
+msgstr "User account status updated."
+
+msgid "Aktivointi sallii kirjautumisen ja poistaa mahdollisen käyttöeston. Rooli ja käyttöoikeudet säilyvät ennallaan."
+msgstr "Activation allows sign-in and removes any account ban. The role and permissions stay unchanged."
+
+msgid "Sulkeminen estää kirjautumisen ja suojattujen sivujen käytön nykyisillä sessioilla. Käyttäjän tietoja ei poisteta."
+msgstr "Disabling blocks sign-in and access to protected pages through existing sessions. User data is not deleted."
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Rajaa kuva"
+msgstr "Crop image"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Käytä rajausta"
+msgstr "Use crop"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Rajausalue"
+msgstr "Crop area"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Ladataan kuvaa…"
+msgstr "Loading image…"
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Siirrä tai muuta rajausalueen kokoa. Voit siirtää aluetta nuolinäppäimillä."
+msgstr "Move or resize the crop area. Use the arrow keys to move it."
+
+#: mielenosoitukset_fi/templates/cropper-modal.html
+msgid "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+msgstr "Could not crop the image. Try again or choose another image."
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/demo_diff.html
+msgid "Palautus koskee vain versioon tallennettua tapahtumasisältöä. Hyväksyntä, peruutus, näkyvyys, kaupunki, järjestäjät ja käyttöoikeudet säilyvät ennallaan. Toteutunut muutos tallennetaan historiaan."
+msgstr "Only event content recorded in this version is restored. Approval, cancellation, visibility, city, organizers and permissions remain unchanged. The applied change is recorded in history."
+
+# User account status and change history
+msgid "Muutoshistoria"
+msgstr "Change history"
+
+msgid "Käyttäjän kirjatut ylläpitomuutokset, tekijät ja ajankohdat."
+msgstr "Recorded administrative changes, who made them and when."
+
+msgid "Historia näyttää kirjatut ylläpitomuutokset. Vanhoista muutoksista ei välttämättä ole kenttäkohtaista tietoa."
+msgstr "History shows recorded administrative changes. Older changes may not include field-level details."
+
+msgid "Muutoshistorian sivutus"
+msgstr "Change history pagination"
+
+msgid "Tarkista muutos ennen vahvistamista."
+msgstr "Review the change before confirming."
+
+msgid "Käyttötilan muutos"
+msgstr "Account status change"
+
+msgid "Nykyinen tila"
+msgstr "Current status"
+
+msgid "Muutoksen jälkeen"
+msgstr "After the change"
+
+msgid "Mitä muuttuu?"
+msgstr "What changes?"
+
+msgid "Muutos kirjataan käyttäjän historiaan tekijän ja ajankohdan kanssa."
+msgstr "The change is recorded in the user history with who made it and when."
+
+msgid "Viimeisimmät muutokset"
+msgstr "Recent changes"
+
+msgid "Näytä koko muutoshistoria"
+msgstr "View full change history"
+
+msgid "Muutoksia ei vielä ole kirjattu."
+msgstr "No changes have been recorded yet."
+
+msgid "Kenttäkohtaista erittelyä ei ole saatavilla."
+msgstr "Field-level details are unavailable."
+
+msgid "Ennen"
+msgstr "Before"
+
+msgid "Jälkeen"
+msgstr "After"
+
+msgid "Tuntematon tekijä"
+msgstr "Unknown actor"
+
+msgid "Aika ei saatavilla"
+msgstr "Time unavailable"
+
+msgid "Käyttäjän tiedot päivitetty"
+msgstr "User details updated"
+
+msgid "Käyttötila muutettu"
+msgstr "Account status changed"
+
+msgid "Käyttäjä luotu"
+msgstr "User created"
+
+msgid "Salasanan vaihto vaaditaan"
+msgstr "Password change required"
+
+msgid "Kaupunkiadminin oikeudet"
+msgstr "City admin permissions"
+
+msgid "Käyttäjän tiedot"
+msgstr "User details"
+
+# User account status and change history
+msgid "Ei kenttämuutoksia."
+msgstr "No field changes."
+
+# User deletion history-delivery feedback
+msgid "Muutoshistorian välitys on kesken. Tämä poistoyritys ei onnistunut. Yritä myöhemmin uudelleen ja vahvista henkilöllisyytesi."
+msgstr "Change history delivery is pending. This deletion attempt did not succeed. Try again later and verify your identity again."
+
+# User deletion history-delivery feedback
+msgid "Käyttäjää muutettiin samanaikaisesti. Tämä poistoyritys ei onnistunut. Vahvista henkilöllisyytesi ennen uutta yritystä."
+msgstr "The user was changed concurrently. This deletion attempt did not succeed. Verify your identity before trying again."
+
+# Demo deletion conflict and uncertain-outcome feedback
+msgid "Mielenosoitusta muutettiin samanaikaisesti. Päivitä sivu ja yritä uudelleen."
+msgstr "The demonstration changed concurrently. Refresh the page and try again."
+
+msgid "Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä."
+msgstr "The deletion outcome could not be confirmed. Check the demonstration's status before trying again."
+
+# Scoped city review dashboard
+msgid "Kaupunkiadminin käsittelyjono"
+msgstr "City review queue"
+
+msgid "Sinulle näkyvien kaupunkien odottavat ilmoitukset. Määräaika perustuu palvelimelle tallennettuun käsittelyaikaan."
+msgstr "Pending submissions for your cities. The deadline follows the review period stored on the server."
+
+msgid "Käsittelyjono"
+msgstr "Review queue"
+
+msgid "Määräaika päättynyt – odottaa siirtoa kansalliselle tiimille"
+msgstr "Deadline passed – awaiting escalation to the national team"
+
+msgid "Käsittelyaikaa jäljellä"
+msgstr "Review time remaining"
+
+msgid "Näytetään %(first)s–%(last)s / %(total)s"
+msgstr "Showing %(first)s–%(last)s of %(total)s"
+
+msgid "Kaupunkiesi ilmoitukset aikaisimman käsittelymääräajan mukaan"
+msgstr "Submissions for your cities, earliest review deadline first"
+
+msgid "Käsittelyn määräaika"
+msgstr "Review deadline"
+
+msgid "Siirretty kansalliselle tiimille"
+msgstr "Escalated to the national team"
+
+msgid "Määräaika vaatii tarkistuksen"
+msgstr "Review deadline needs checking"
+
+msgid "Käsittele"
+msgstr "Review"
+
+msgid "Ei käsittelyä odottavia ilmoituksia"
+msgstr "No submissions awaiting review"
+
+msgid "Jono sisältää vain ilmoitukset, joihin sinulla on käyttöoikeus."
+msgstr "The queue only includes submissions you are allowed to access."
+
+msgid "Sivu %(page)s / %(pages)s"
+msgstr "Page %(page)s of %(pages)s"
+
+msgid "Sivutus"
+msgstr "Pagination"
+
+msgid "Lähetetyt vastaukset"
+msgstr "Sent replies"
+
+msgid "Vastaanottaja"
+msgstr "Recipient"
+
+msgid "Lisätty jonoon"
+msgstr "Queued at"
+
+msgid "Ei vielä vastauksia."
+msgstr "No replies yet."
+
+
+#: templates/_layouts/demonstration-list.html
+msgid "Lista avautuu JavaScriptillä. Jos se ei lataudu, päivitä sivu."
+msgstr "The list requires JavaScript. If it does not load, refresh the page."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Löydä tulevat Pride-aiheiset mielenosoitukset eri puolilta Suomea ja ilmoita oma tapahtumasi mukaan."
+msgstr "Find upcoming Pride demonstrations across Finland and add your own event."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Katso mielenosoitukset"
+msgstr "View demonstrations"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Ilmoita mielenosoitus"
+msgstr "Submit a demonstration"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Pride-kartta"
+msgstr "Pride map"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Kartalla näkyvät kaikki tulevat Pride-mielenosoitukset. Listan haku ei rajaa karttaa."
+msgstr "The map shows all upcoming Pride demonstrations. Search filters apply only to the list."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Pride-kartta avautuu JavaScriptillä. Jos kartta ei lataudu, päivitä sivu."
+msgstr "The Pride map requires JavaScript. If the map does not load, refresh the page."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Ladataan Pride-karttaa..."
+msgstr "Loading the Pride map..."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Pride-kartan lataaminen epäonnistui. Yritä uudelleen."
+msgstr "The Pride map could not be loaded. Try again."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Kartalla ei vielä ole tulevia Pride-mielenosoituksia."
+msgstr "There are no upcoming Pride demonstrations on the map yet."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Tapahtumille ei ole karttasijaintia. Löydät ne mielenosoituslistasta."
+msgstr "The events have no map location. Find them in the demonstration list."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Karttapohjan lataaminen epäonnistui. Tapahtumat löytyvät myös listasta."
+msgstr "The map background could not be loaded. Events are also available in the list."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+#, python-format
+msgid "Pride-mielenosoituksia: %(events)s. Paikkakuntia: %(cities)s. Kartalla: %(mapped)s."
+msgstr "Pride demonstrations: %(events)s. Cities: %(cities)s. On the map: %(mapped)s."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Lähennä"
+msgstr "Zoom in"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Loitonna"
+msgstr "Zoom out"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Pride-mielenosoitukset kartalla"
+msgstr "Pride demonstrations on the map"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Pride-mielenosoitukset"
+msgstr "Pride demonstrations"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Meille ei vielä ole ilmoitettu tulevia Pride-mielenosoituksia."
+msgstr "No upcoming Pride demonstrations have been submitted yet."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Miksi Pride näkyväksi?"
+msgstr "Why Pride näkyväksi?"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Pride näkyväksi kokoaa Pride-aiheiset mielenosoitukset yhteen paikkaan. Näkyvyys auttaa osallistujia löytämään tapahtumat ja tukee yhdenvertaisuutta."
+msgstr "Pride näkyväksi brings Pride demonstrations together in one place. Visibility helps participants find events and supports equality."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Jokaisella on oikeus olla oma itsensä ja osallistua ilman syrjintää."
+msgstr "Everyone has the right to be themselves and participate without discrimination."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Avaa ilmoituslomake"
+msgstr "Open the submission form"
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Kerro tapahtuman nimi, ajankohta, paikka ja kuvaus."
+msgstr "Enter the event name, time, location and description."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Lisää tageihin pride, jotta tapahtuma löytyy tältä sivulta."
+msgstr "Add pride to the tags so the event appears on this page."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Tarkista tiedot ja lähetä ilmoitus. Ilmoitukset tarkistetaan ennen julkaisua."
+msgstr "Check the details and submit the event. Submissions are reviewed before publication."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Ilmoitus ei saa sisältää syrjintää tai vihapuhetta."
+msgstr "A submission must not contain discrimination or hate speech."
+
+#: mielenosoitukset_fi/templates/pride-nakyvaksi/index.html
+msgid "Lue käyttöehdot"
+msgstr "Read the terms of use"
+
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Avainsana"
+msgstr "Keyword"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Ei vielä kirjattuja kampanjalinkkien sivunäyttöjä tällä aikavälillä."
+msgstr "No campaign-link pageviews have been recorded for this period yet."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Esimerkki kampanjalinkin parametreista:"
+msgstr "Example campaign-link parameters:"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanja"
+msgstr "Campaign"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanjalinkit"
+msgstr "Campaign links"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanjan tunnus"
+msgstr "Campaign ID"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanjaraporttia ei voitu ladata. Tämä ei tarkoita, että kampanjaliikennettä olisi nolla. Yritä päivittää sivu."
+msgstr "The campaign report could not be loaded. This does not mean campaign traffic is zero. Try refreshing the page."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kampanjatietoja kerätään tunnisteellisista linkeistä tästä toiminnosta alkaen. Vanhaa liikennettä ei voida päätellä jälkikäteen kampanjoiksi."
+msgstr "Campaign data is collected from tagged links once this feature is available. Earlier traffic cannot be attributed to campaigns retrospectively."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kanava"
+msgstr "Medium"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarvio"
+msgstr "Estimated visitors"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarvio jätetään tyhjäksi päiviltä, joilta tunnistetietoja ei ole kerätty."
+msgstr "The visitor estimate is left blank for days when identifier data was not collected."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarvio perustuu IP-osoitteesta ja karkeasta laitetyypistä laskettuihin tunnisteisiin, ei tunnistettuihin henkilöihin. Jaettu osoite voi yhdistää eri ihmisiä, ja vaihtuva osoite tai laite voi jakaa saman ihmisen useaksi arvioksi. Tunnisteen avain vaihtuu seitsemän päivän välein, eikä vaihtumisraja välttämättä osu kalenteriviikon alkuun. Sama ihminen voi siksi tulla lasketuksi useammin kuin kerran valitulla aikavälillä. Tämä laskenta ei käytä evästeitä eikä tallenna raakaa IP-osoitetta."
+msgstr "The visitor estimate uses identifiers derived from IP addresses and coarse device types, not identified people. A shared address can combine different people, while a changing address or device can split one person into several estimates. The identifier key rotates every seven days, and its rotation does not necessarily coincide with the start of a calendar week. The same person may therefore be counted more than once during the selected period. This count uses no cookies and does not store raw IP addresses."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarvioita on kerätty %(date)s alkaen. Vanhempien jaksojen arviota ei ole saatavilla."
+msgstr "Visitor estimates have been collected since %(date)s. Estimates for earlier periods are unavailable."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarviot ja sivunäytöt"
+msgstr "Estimated visitors and pageviews"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Kävijäarviot ja sivunäytöt päivittäin"
+msgstr "Daily visitor estimates and pageviews"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Laskuriin kirjataan vain julkiset, onnistuneet HTML-sivujen GET-vastaukset. Hallintapaneeli, käyttäjien oma alue, rajapinnat, RSS, staattiset tiedostot, HEAD-pyynnöt, uudelleenohjaukset, esilataukset ja tunnistetut botit eivät kuulu sivunäyttöihin. Tapahtumalaskureita ei lisätä sivunäyttöihin. Kampanjalinkkien sivunäytöt näytetään lisäksi omassa raportissaan. Kaikkea automaattista liikennettä ei voida tunnistaa."
+msgstr "Only successful GET responses containing public HTML pages are counted. Admin and account pages, APIs, RSS, static files, HEAD requests, redirects, prefetches and recognized bots are excluded from pageviews. Event counters are not added to pageviews. Campaign-link pageviews are also shown in their own report. Not all automated traffic can be recognized."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Päivittäiset sivunäytöt ja kävijäarviot viivakaaviona"
+msgstr "Line chart of daily pageviews and visitor estimates"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Ryhmä"
+msgstr "Group"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Sijoittelu"
+msgstr "Placement"
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Sivunäytöt ovat laskettujen sivuvastausten määrä. Kävijäarvio kuvaa saman päivän aikana erillisinä pidettyjä tunnisteita, ei henkilömäärää."
+msgstr "Pageviews count the page responses recorded. The visitor estimate represents identifiers treated as distinct during the same day, not a number of people."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Tässä näkymässä käytetään palvelimen laskureita. Sivunäytöt ja kävijäarviot ovat eri mittareita, eivätkä ne vastaa suoraan Matomon käyntejä."
+msgstr "This dashboard uses server-side counters. Pageviews and estimated visitors are different metrics and do not directly correspond to Matomo visits."
+
+#: mielenosoitukset_fi/templates/admin_V2/site_analytics.html
+msgid "Valitun aikavälin enintään 20 yleisintä kampanjalinkkiä sivunäyttöjen mukaan. Luvut eivät ole yksilöllisiä käyntejä, henkilöitä tai konversioita. Sivun päivitys voi kasvattaa lukua."
+msgstr "Up to the 20 most common campaign links during the selected period, ranked by pageviews. These figures are not unique visits, people or conversions. Refreshing a page can increase the count."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Ladataan tapahtuman tietoja..."
+msgstr "Loading event details..."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Tapahtuman tietoja ei voitu ladata."
+msgstr "Could not load event details."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Tapahtumaa ei löydy tai se ei ole julkinen."
+msgstr "The event could not be found or is not public."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Jaa tapahtuma"
+msgstr "Share event"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Linkki kopioitu"
+msgstr "Link copied"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kaikki toiminnot ja yhteystiedot"
+msgstr "All actions and contact details"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kellonaikaa ei ole ilmoitettu"
+msgstr "Time not provided"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Tapahtuman kuvat"
+msgstr "Event images"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Näytä kartta"
+msgstr "Show map"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kartta"
+msgstr "Map"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Karttaa ei voitu ladata."
+msgstr "Could not load the map."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Avaa reittiohjeet"
+msgstr "Open directions"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Tapahtumalle ei ole lisätty kuvausta."
+msgstr "No description has been added for this event."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Järjestäjätietoja ei ole ilmoitettu"
+msgstr "Organizer information not provided"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Avaa kuva"
+msgstr "Open image"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kuvaa ei voitu ladata."
+msgstr "Could not load the image."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Ladataan karttaa..."
+msgstr "Loading map..."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kirjaudu sisään ilmoittaaksesi osallistumisestasi."
+msgstr "Sign in to mark yourself as attending."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Linkkiä ei voitu kopioida."
+msgstr "Could not copy the link."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kaverien lataaminen epäonnistui."
+msgstr "Could not load friends."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Kerro virheestä"
+msgstr "Describe the error"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Lähetetään..."
+msgstr "Sending..."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Peru osallistuminen"
+msgstr "Cancel attendance"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Tapahtuma on peruttu"
+msgstr "The event has been cancelled"
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Toiminto epäonnistui. Yritä uudelleen."
+msgstr "The action failed. Please try again."
+
+#: mielenosoitukset_fi/utils/react_detail.py
+msgid "Täytä ilmoituksen tiedot."
+msgstr "Fill in the report details."

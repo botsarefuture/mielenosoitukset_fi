@@ -4,7 +4,7 @@ import smtplib
 from datetime import datetime, timezone, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from .EmailJob import EmailJob
 import time
@@ -46,7 +46,11 @@ class EmailSender:
         self._queue_collection = self._db["email_queue"]
         self._cases_collection = self._db["cases"]
         self._env = Environment(
-            loader=FileSystemLoader("mielenosoitukset_fi/templates/emails")
+            loader=FileSystemLoader("mielenosoitukset_fi/templates/emails"),
+            autoescape=select_autoescape(
+                enabled_extensions=("html", "htm", "xml"),
+                default_for_string=True,
+            ),
         )
         self._logger = logger
         self._mailer_name = getattr(self._config, "MAILER_NAME", "MielenosoituksetMail")
@@ -391,9 +395,10 @@ class EmailSender:
 
     def queue_email(
         self, template_name, subject, recipients, context,
-        sender=None, attachments=None, extra_headers=None, plain_body=None
+        sender=None, attachments=None, extra_headers=None, plain_body=None,
+        require_acknowledged=False,
     ):
-        """Queue an email for this instance"""
+        """Queue an email; strict callers require an insert receipt without retries."""
         template = self._env.get_template(template_name)
         html_body = template.render(context)
         email_job = EmailJob(
@@ -406,6 +411,12 @@ class EmailSender:
             extra_headers=extra_headers,
             instance_id=self._instance_id,
         )
+        if require_acknowledged:
+            result = self._queue_collection.insert_one(email_job.to_dict())
+            if not result.acknowledged:
+                raise RuntimeError("Email queue insert was not acknowledged")
+            return result.inserted_id
+
         retry_attempts = 3
 
         def attempt_insert(attempt):

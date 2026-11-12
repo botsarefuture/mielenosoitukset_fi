@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% from '_macros/_public_search.html' import public_demo_search, public_search_styles, public_search_scripts with context %}
+{% from '_macros/frontend.html' import frontend_entry with context %}
+{% block title %}{{ listing_title }}{% endblock %}
+{% block main_class %}public-layout-wide{% endblock %}
+{% block styles %}{{ public_search_styles() }}{% endblock %}
+{% block content %}
+{% include '_partials/demonstration-listing.html' %}
+{% endblock %}
+{% block scripts %}
+{# These localized, tested widgets own only their documented DOM boundaries. #}
+<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261027-continuous-grid-1') }}"></script>
+{{ public_search_scripts() }}
+{{ frontend_entry('src/entries/listing.tsx') }}
+{% endblock %}

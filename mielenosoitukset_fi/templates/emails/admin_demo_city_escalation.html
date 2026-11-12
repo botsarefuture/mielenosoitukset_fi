@@ -54,7 +54,10 @@
 
 <div class="meta">
     <p>
-        Mielenosoitus on merkitty eskaloiduksi kaupungin adminien 24 tunnin vastausikkunan ylittymisen vuoksi.
+        Mielenosoitus on merkitty eskaloiduksi kaupungin adminien {{ escalate_after_hours }} tunnin vastausikkunan ylittymisen vuoksi.
+        {% if review_deadline_at %}
+        Käsittelyn määräaika oli {{ review_deadline_at.strftime('%Y-%m-%d %H:%M UTC') }}.
+        {% endif %}
         Päätöksen jälkeen ylläpidon yleiset ilmoitukset jatkuvat normaalisti.
     </p>
 </div>

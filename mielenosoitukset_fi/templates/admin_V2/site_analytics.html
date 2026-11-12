@@ -30,11 +30,21 @@
   {% endif %}
 {% endmacro %}
 
+{% macro web_vital_value(row, key) %}
+  {%- if not row.sufficient -%}
+    <span aria-label="{{ _('Ei riittävästi otoksia') }}">-</span>
+  {%- elif row.metric == 'CLS' -%}
+    {{ row[key] | round(2) }}
+  {%- else -%}
+    {{ row[key] | round | int }}&nbsp;ms
+  {%- endif -%}
+{% endmacro %}
+
 {% block main_content %}
 <section class="admin-page admin-site-analytics">
   {{ admin_page_hero(
     _('Palvelun analytiikka'),
-    _('Luvut kerätään palvelimella. Analytiikkaa varten ei käytetä evästeitä eikä kolmannen osapuolen palveluita, ja kävijät lasketaan anonyymisti arviona.'),
+    _('Tässä näkymässä käytetään palvelimen laskureita. Sivunäytöt ja kävijäarviot ovat eri mittareita, eivätkä ne vastaa suoraan Matomon käyntejä.'),
     _('Analytiikka'),
     [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Palvelun analytiikka'), none)],
     metric_value=overview.today.current,
@@ -42,6 +52,8 @@
   ) }}
 
   <form method="get" class="admin-filter-bar" aria-label="{{ _('Aikavälin valinta') }}">
+    <input type="hidden" name="vitals_page" value="{{ vitals_page }}" data-vitals-page-input>
+    <input type="hidden" name="vitals_metric" value="{{ vitals_metric }}">
     <div class="admin-field">
       <label for="site-analytics-range">{{ _('Aikaväli') }}</label>
       <select class="form-select" id="site-analytics-range" name="range" onchange="this.form.submit()">
@@ -52,10 +64,8 @@
     </div>
   </form>
 
-{# Both metrics are always shown side by side: "kävijät" is the number of
-   distinct anonymous visitors in the period, "sivunäytöt" is the total number
-   of public pages viewed. One visitor viewing ten pages is 1 + 10. #}
-<section class="admin-workspace-summary admin-site-analytics__summary" aria-label="{{ _('Kävijät ja sivunäytöt') }}">
+{# Keep counted public HTML responses distinct from estimated visitor identifiers. #}
+<section class="admin-workspace-summary admin-site-analytics__summary" aria-label="{{ _('Kävijäarviot ja sivunäytöt') }}">
   {% for card in [
     {'key': 'today', 'icon': 'fa-calendar-day', 'label': _('Tänään'),
      'previous_label': _('eilen %(count)s sivunäyttöä', count=overview.yesterday),
@@ -75,7 +85,7 @@
     <div>
       <span>{{ card.label }}</span>
       <div class="admin-site-analytics__metric">
-        <span class="admin-site-analytics__metric-name">{{ _('Kävijät') }}</span>
+        <span class="admin-site-analytics__metric-name">{{ _('Kävijäarvio') }}</span>
         {{ metric_value(card.visitors.current) }}
         {{ period_badge(card.visitors) }}
       </div>
@@ -92,33 +102,97 @@
 
 <p class="admin-site-analytics__limits">
   <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-  {{ _('Laskuriin kirjataan vain julkiset sivunäytöt: hallintapaneelin, käyttäjien oma alue, rajapinnat, staattiset tiedostot ja botit on jätetty tarkoituksella pois, eivätkä ne kasvata kävijämäärää.') }}
+  {{ _('Laskuriin kirjataan julkisten HTML-sivujen onnistuneet GET-vastaukset sekä selaimessa avattujen React-sivujen sivunäyttösignaalit. React-sivujen laskenta edellyttää JavaScriptiä ja signaalin toimitusta; estetty tai epäonnistunut signaali jää laskematta. Hallintapaneeli, käyttäjien oma alue, rajapinnat, RSS, staattiset tiedostot, HEAD-pyynnöt, uudelleenohjaukset, esilataukset ja tunnistetut botit eivät kuulu sivunäyttöihin. Tapahtumalaskureita ei lisätä sivunäyttöihin. Kampanjalinkkien sivunäytöt näytetään lisäksi omassa raportissaan. Kaikkea automaattista liikennettä ei voida tunnistaa.') }}
 </p>
 
 <p class="admin-site-analytics__limits">
   <i class="fa-solid fa-user-secret" aria-hidden="true"></i>
-  {{ _('Kävijät ovat arvio, eivätkä laskettuja henkilöitä. Kävijä tunnistetaan palvelimella IP-osoitteen ja laitteen perusteella, ja tunnisteeseen sekoitetaan viikoittain vaihtuva avain, jotta samaa ihmistä ei voi yhdistää eri viikkojen välillä. Tunniste on lyhyt ja anonyymi: sitä ei voi palauttaa IP-osoitteeksi, eikä kävijälle muodostu pysyvää profiilia. Evästeitä ei käytetä eikä kolmannen osapuolen analytiikkapalveluita ole mukana. Sama henkilö voi näyttää useita kerroja esimerkiksi jaetun verkon, vaihtuvan IP-osoitteen tai eri laitteiden vuoksi. Kävijät lasketaan uudelleen joka viikko, joten viikon mittaisella jaksolla sama kävijä voidaan laskea kerran viikossa.') }}
+  {{ _('Kävijäarvio perustuu IP-osoitteesta ja karkeasta laitetyypistä laskettuihin tunnisteisiin, ei tunnistettuihin henkilöihin. Jaettu osoite voi yhdistää eri ihmisiä, ja vaihtuva osoite tai laite voi jakaa saman ihmisen useaksi arvioksi. Tunnisteen avain vaihtuu seitsemän päivän välein, eikä vaihtumisraja välttämättä osu kalenteriviikon alkuun. Sama ihminen voi siksi tulla lasketuksi useammin kuin kerran valitulla aikavälillä. Tämä laskenta ei käytä evästeitä eikä tallenna raakaa IP-osoitetta.') }}
   {% if visitors.tracked_from %}
   <br>
-  {{ _('Kävijätietoja on kerätty %(date)s alkaen, joten sitä vanhemmat jaksot näytetään viivalla —.', date=visitors.tracked_from) }}
+  {{ _('Kävijäarvioita on kerätty %(date)s alkaen. Vanhempien jaksojen arviota ei ole saatavilla.', date=visitors.tracked_from) }}
   {% endif %}
 </p>
+
+  <section class="admin-section-card" aria-labelledby="site-web-vitals-title">
+    <header class="admin-section-card__header">
+      <div class="admin-section-card__title">
+        <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
+        <div>
+          <h2 id="site-web-vitals-title">Core Web Vitals</h2>
+          <p>{{ _('Käyttäjien selaimissa mitatut suorituskykyarvot valitulta aikaväliltä.') }}</p>
+        </div>
+      </div>
+    </header>
+    <div class="admin-section-card__body">
+      <form method="get" action="{{ url_for('admin_site_analytics.site_overview') }}#site-web-vitals-title" class="admin-filter-bar" aria-label="{{ _('Suorituskykymittarin valinta') }}">
+        <input type="hidden" name="range" value="{{ range_days }}">
+        <input type="hidden" name="vitals_page" value="{{ vitals_page }}" data-vitals-page-input>
+        <div class="admin-field">
+          <label for="vitals-metric">{{ _('Mittari') }}</label>
+          <select id="vitals-metric" name="vitals_metric" class="form-select">
+            {% for metric in ['TTFB', 'LCP', 'INP', 'CLS'] %}
+            <option value="{{ metric }}" {% if vitals_metric == metric %}selected{% endif %}>{{ metric }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit">{{ _('Näytä') }}</button>
+        <a class="btn btn-secondary" href="{{ url_for('admin_site_analytics.site_overview', range=range_days, vitals_metric=vitals_metric) }}#site-web-vitals-title" data-vitals-page="">{{ _('Koko sivusto') }}</a>
+      </form>
+      {% if vitals_explorer %}
+      {% set scope_name = _(page_type_labels[vitals_page]) if vitals_page else _('Koko sivusto') %}
+      {% set scope_row = vitals_explorer.rows|selectattr('page_type', 'equalto', vitals_page)|first %}
+      <h3 id="vitals-chart-title">{{ scope_name }}{% if scope_row.uri %} ({{ scope_row.uri }}){% endif %}: {{ vitals_metric }}</h3>
+      <p class="admin-analytics__description">{{ vitals_explorer.labels[0] }} - {{ vitals_explorer.labels[-1] }}</p>
+      <div class="admin-analytics__chart-frame">
+        <canvas id="sitePerformanceChart" role="img" aria-label="{{ _('Päivittäinen suorituskyvyn keskiarvo valitulta aikaväliltä') }}"></canvas>
+      </div>
+      <p id="vitals-chart-empty" class="admin-analytics__description" {% if vitals_explorer.series[vitals_page]['values']|reject('none')|list %}hidden{% endif %}>{{ _('Valitulle sivulle ei ole vielä riittävästi päiväkohtaisia otoksia.') }}</p>
+      <p class="admin-analytics__description">{{ _('Käyrä näyttää päiväkohtaisen keskiarvon valitulta aikaväliltä. Päivä jää tyhjäksi, jos sillä on alle kymmenen otosta. Valitse taulukosta sivu vaihtaaksesi käyrää; aluksi näytetään koko sivusto.') }}</p>
+      <div class="admin-data-view__viewport" tabindex="0" role="region" aria-label="{{ _('Sivujen suorituskyky') }}">
+        <table class="admin-data-view__table" id="vitals-pages-table">
+          <thead><tr>
+            <th scope="col">{{ _('Sivu') }}</th><th scope="col">{{ _('Keskiarvo') }}</th>
+            <th scope="col">p50</th><th scope="col">p95</th><th scope="col">p99</th><th scope="col">{{ _('Otokset') }}</th>
+          </tr></thead>
+          <tbody>
+            {% for row in vitals_explorer.rows %}
+            <tr>
+              <th scope="row">
+                <a href="{{ url_for('admin_site_analytics.site_overview', range=range_days, vitals_page=row.page_type, vitals_metric=vitals_metric) }}#site-web-vitals-title" data-vitals-page="{{ row.page_type }}" data-vitals-name="{{ _(page_type_labels[row.page_type]) if row.page_type else _('Koko sivusto') }}{% if row.uri %} ({{ row.uri }}){% endif %}" {% if row.page_type == vitals_page %}aria-current="true"{% endif %}>{{ _(page_type_labels[row.page_type]) if row.page_type else _('Koko sivusto') }}</a>
+                {% if row.uri %}<div><code class="text-lowercase">{{ row.uri }}</code></div>{% endif %}
+              </th>
+              <td>{{ web_vital_value(row, 'average') }}</td><td>{{ web_vital_value(row, 'p50') }}</td>
+              <td>{{ web_vital_value(row, 'p95') }}</td><td>{{ web_vital_value(row, 'p99') }}</td><td>{{ row.count }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <script id="site-performance-data" type="application/json">{{ {'report': vitals_explorer, 'page': vitals_page}|tojson }}</script>
+      {% else %}
+      <p role="alert">{{ _('Suorituskykytietoja ei voitu ladata. Yritä uudelleen.') }}</p>
+      {% endif %}
+      <p class="admin-analytics__description">{{ _('Sivujen yksittäiset tunnisteet on yhdistetty URI-ryhmiksi. Osa historiallisista reiteistä kuuluu samaan sivutyyppiin. Keskiarvo painotetaan otosmäärällä. Prosenttipisteet ovat histogrammirajojen ylärajoja, ja luvut näytetään vähintään kymmenestä otoksesta. CLS on yksikötön; muut arvot ovat millisekunteja.') }}</p>
+
+    </div>
+  </section>
 
   <section class="admin-section-card" aria-labelledby="site-traffic-title">
     <header class="admin-section-card__header">
       <div class="admin-section-card__title">
         <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
         <div>
-          <h2 id="site-traffic-title">{{ _('Kävijät ja sivunäytöt päivittäin') }}</h2>
-          <p>{{ _('Sivunäytöt ovat katsottujen sivujen määrä, kävijät saman päivän aikana erillisinä pidettyjen kävijöiden määrä.') }}</p>
+          <h2 id="site-traffic-title">{{ _('Kävijäarviot ja sivunäytöt päivittäin') }}</h2>
+          <p>{{ _('Sivunäytöt ovat laskettujen sivuvastausten määrä. Kävijäarvio kuvaa saman päivän aikana erillisinä pidettyjä tunnisteita, ei henkilömäärää.') }}</p>
         </div>
       </div>
     </header>
     <div class="admin-section-card__body">
       <div class="admin-analytics__chart-frame">
-        <canvas id="siteTrafficChart" role="img" aria-label="{{ _('Päivittäiset sivunäytöt ja kävijät viivakaaviona') }}"></canvas>
+        <canvas id="siteTrafficChart" role="img" aria-label="{{ _('Päivittäiset sivunäytöt ja kävijäarviot viivakaaviona') }}"></canvas>
       </div>
-      <p class="admin-analytics__description">{{ _('Kävijäsarja loppuu päivään, jolloin kävijätietoja ei ole vielä kerätty.') }}</p>
+      <p class="admin-analytics__description">{{ _('Kävijäarvio jätetään tyhjäksi päiviltä, joilta tunnistetietoja ei ole kerätty.') }}</p>
     </div>
   </section>
 
@@ -196,6 +270,56 @@
       </div>
     </section>
   </div>
+
+  <section class="admin-data-view" aria-labelledby="site-campaigns-title">
+    <header class="admin-data-view__header">
+      <div>
+        <h2 id="site-campaigns-title">{{ _('Kampanjalinkit') }}</h2>
+        <p>{{ _('Valitun aikavälin enintään 20 yleisintä kampanjalinkkiä sivunäyttöjen mukaan. Luvut eivät ole yksilöllisiä käyntejä, henkilöitä tai konversioita. Sivun päivitys voi kasvattaa lukua.') }}</p>
+      </div>
+    </header>
+    <p class="admin-analytics__description">{{ _('Esimerkki kampanjalinkin parametreista:') }} <code class="text-break">?mtm_campaign=pride2026&amp;mtm_source=instagram&amp;mtm_medium=social</code></p>
+    {% if campaign_error %}
+    <div class="alert alert-warning" role="alert">{{ _('Kampanjaraporttia ei voitu ladata. Tämä ei tarkoita, että kampanjaliikennettä olisi nolla. Yritä päivittää sivu.') }}</div>
+    {% elif campaigns %}
+    <div class="admin-data-view__viewport" tabindex="0" role="region" aria-labelledby="site-campaigns-title">
+      <table class="admin-data-view__table">
+        <thead>
+          <tr>
+            <th scope="col">{{ _('Kampanja') }}</th>
+            <th scope="col">{{ _('Lähde') }}</th>
+            <th scope="col">{{ _('Kanava') }}</th>
+            <th scope="col">{{ _('Avainsana') }}</th>
+            <th scope="col">{{ _('Sisältö') }}</th>
+            <th scope="col">{{ _('Sivunäytöt') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in campaigns %}
+          <tr>
+            <th scope="row">
+              {{ row.campaign.name }}
+              {% if row.campaign.get('id') %}<small class="d-block">{{ _('Kampanjan tunnus') }}: {{ row.campaign.id }}</small>{% endif %}
+              {% if row.campaign.get('group') %}<small class="d-block">{{ _('Ryhmä') }}: {{ row.campaign.group }}</small>{% endif %}
+              {% if row.campaign.get('placement') %}<small class="d-block">{{ _('Sijoittelu') }}: {{ row.campaign.placement }}</small>{% endif %}
+            </th>
+            <td>{{ row.campaign.get('source') or '-' }}</td>
+            <td>{{ row.campaign.get('medium') or '-' }}</td>
+            <td>{{ row.campaign.get('keyword') or '-' }}</td>
+            <td>{{ row.campaign.get('content') or '-' }}</td>
+            <td>{{ row.count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="admin-empty-state">
+      <strong>{{ _('Ei vielä kirjattuja kampanjalinkkien sivunäyttöjä tällä aikavälillä.') }}</strong>
+      <p>{{ _('Kampanjatietoja kerätään tunnisteellisista linkeistä tästä toiminnosta alkaen. Vanhaa liikennettä ei voida päätellä jälkikäteen kampanjoiksi.') }}</p>
+    </div>
+    {% endif %}
+  </section>
 
   <div class="admin-site-analytics__grid">
     <section class="admin-section-card" aria-labelledby="site-events-title">
@@ -323,6 +447,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script defer src="{{ url_for('static', filename='js/admin_performance_explorer.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   (function () {
@@ -360,7 +485,7 @@
             backgroundColor: chartColors.primary + '33'
           },
           {
-            label: {{ _('Kävijät') | tojson }},
+            label: {{ _('Kävijäarvio') | tojson }},
             data: visitorValues,
             fill: false,
             tension: 0.3,

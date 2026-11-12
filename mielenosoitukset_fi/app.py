@@ -3,7 +3,8 @@ from datetime import datetime, date, time
 import time as process_time
 from flask import Flask, redirect, request, session, g, url_for
 from flask_babel import Babel
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager, current_user, user_logged_in
+import hashlib
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.background_jobs import JOB_DEFINITIONS, init_background_jobs
 
@@ -65,13 +66,23 @@ def create_app(config_overrides=None) -> Flask:
     """Create and configure the Flask application."""
 
     app = Flask(__name__)
+    from mielenosoitukset_fi.utils.frontend import frontend_assets
+
+    app.jinja_env.globals["frontend_assets"] = frontend_assets
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
     if config_overrides:
         app.config.update(config_overrides)
-    # Keep the allowed WebAuthn origins in sync when only the primary origin is
-    # overridden (e.g. in tests), unless explicitly overridden as well.
-    if "WEBAUTHN_ALLOWED_ORIGINS" not in (config_overrides or {}):
-        app.config["WEBAUTHN_ALLOWED_ORIGINS"] = [app.config["WEBAUTHN_ORIGIN"]]
+    # Config already resolves WEBAUTHN_ALLOWED_ORIGINS from configuration, falling
+    # back to WEBAUTHN_ORIGIN, so a configured list (for example the apex and the
+    # www host) must survive app creation. Only re-derive it when a caller
+    # overrides the primary origin without also overriding the allowed list, as
+    # the test suite does.
+    overrides = config_overrides or {}
+    if "WEBAUTHN_ALLOWED_ORIGINS" not in overrides:
+        if "WEBAUTHN_ORIGIN" in overrides or not app.config.get(
+            "WEBAUTHN_ALLOWED_ORIGINS"
+        ):
+            app.config["WEBAUTHN_ALLOWED_ORIGINS"] = [app.config["WEBAUTHN_ORIGIN"]]
     app.config.setdefault("BUILD_SHA", resolve_build_sha())
 
     # Keep translation catalogs separate from languages that are ready to be
@@ -158,13 +169,33 @@ def create_app(config_overrides=None) -> Flask:
     
     login_manager.anonymous_user = AnonymousUser
 
+    @user_logged_in.connect_via(app)
+    def clear_old_mfa_binding(sender, user, **extra):
+        """A new sign-in replaces any prior MFA credential binding."""
+        session.pop("mfa_credential_version", None)
+        session.pop("god_login_receipt", None)
+        session["auth_epoch"] = getattr(user, "auth_epoch", 0)
+
     # User Loader function
     @login_manager.user_loader
     def load_user(user_id):
         user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
         if user_doc:
+            if (user_doc.get("security_suspension") or {}).get("active") or session.get("auth_epoch", 0) != user_doc.get("auth_epoch", 0):
+                return None
+            if user_doc.get("role") == "god":
+                from mielenosoitukset_fi.users.god_auth import valid_god_session
+                if not valid_god_session(mongo, user_doc):
+                    return None
+            bound_version = session.get("mfa_credential_version")
+            current_version = hashlib.sha256(user_doc["password_hash"].encode("utf-8")).hexdigest()
+            if bound_version is not None and bound_version != current_version:
+                return None
+            user = User.from_db(user_doc)
+            if not user.is_active:
+                return None
             logger.info(f"User loaded: {user_doc.get('username')}")
-            return User.from_db(user_doc)
+            return user
         logger.warning(f"User not found with id: {user_id}")
         return None
 

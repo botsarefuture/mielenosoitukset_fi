@@ -165,6 +165,18 @@ def passkey_login_verify():
         return jsonify({"status": "error", "message": "Käyttäjätiliä ei löytynyt."}), 403
 
     user = User.from_db(user_doc)
+    if user.role == "god":
+        return jsonify({"status": "error", "message": "God-tili vaatii kaikki kirjautumisvaiheet.", "redirect": "/auth/god"}), 403
+    if not user.is_active:
+        log_login_attempt(
+            user.username, False, get_client_ip(),
+            user_agent=request.headers.get("User-Agent", ""),
+            reason="Account disabled", user_id=user._id,
+        )
+        return jsonify({
+            "status": "error",
+            "message": _("Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon."),
+        }), 403
     if not user.confirmed:
         log_login_attempt(
             user.username,

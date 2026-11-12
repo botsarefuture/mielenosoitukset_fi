@@ -1,22 +1,21 @@
-from jinja2 import Environment, FileSystemLoader, select_autoescape
 import argparse
 import os
-import tempfile
-import threading
 import io
-from flask import current_app, has_app_context, render_template, url_for
-import imgkit
+import tempfile
+from flask import current_app, has_app_context
 from bson import ObjectId
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 
 from mielenosoitukset_fi.utils.logger import logger
-from mielenosoitukset_fi.utils import _CUR_DIR
-from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
+from mielenosoitukset_fi.utils.preview_image import render_preview_png
 
-# Set XDG_CACHE_HOME to a writable directory
+# Kept from the wkhtmltoimage renderer, which no longer needs it. Importing this
+# module points XDG_CACHE_HOME at an empty directory, so on Linux Playwright no
+# longer finds its browser and the test suite skips every browser test. Removing
+# these lines re-enables those tests, some of which currently fail on main; do
+# that in its own change together with fixing them.
 os.environ["XDG_CACHE_HOME"] = tempfile.mkdtemp()
-# Set XDG_RUNTIME_DIR to a writable directory
 os.environ["XDG_RUNTIME_DIR"] = tempfile.mkdtemp()
 
 save_path = os.environ.get("demo_image_save_path", "/var/www/mielenosoitukset_fi/mielenosoitukset_fi/static/demo_preview")
@@ -24,14 +23,18 @@ save_path = os.environ.get("demo_image_save_path", "/var/www/mielenosoitukset_fi
 
 def create_screenshot(demo_data, output_path=save_path, return_bytes=False):
     """
-    Create a PNG screenshot from the preview template.
+    Render the 1200×630 social preview image for a demonstration.
+
+    The image is drawn with Pillow by
+    :func:`mielenosoitukset_fi.utils.preview_image.render_preview_png`; no
+    browser or network access is needed.
 
     Parameters
     ----------
-    demo_data : dict
-        Dictionary containing the demonstration data.
+    demo_data : dict or Demonstration
+        The demonstration to render.
     output_path : str, optional
-        Directory path where the screenshot PNG will be saved if return_bytes is False.
+        Directory path where the PNG will be saved if return_bytes is False.
     return_bytes : bool, optional
         If True, return PNG bytes instead of writing to disk.
 
@@ -42,119 +45,33 @@ def create_screenshot(demo_data, output_path=save_path, return_bytes=False):
         If return_bytes is True: returns PNG bytes or None on failure.
     """
     try:
-        # Ensure we have a Flask application context. If none exists (e.g. running
-        # from a script), try to create one from the application's factory.
-        app_ctx = None
-        created_app = None
-        if not has_app_context():
-            try:
-                # Import here to avoid circular imports at module import time
-                from mielenosoitukset_fi.app import create_app
-
-                created_app = create_app()
-                app_ctx = created_app.app_context()
-                app_ctx.push()
-                logger.info("Pushed a new Flask app context for screenshot rendering.")
-            except Exception as e:
-                logger.error(f"Failed to create Flask app context: {e}")
-                raise ValueError("No Flask application context found and auto-creation failed.")
-
         if not isinstance(demo_data, dict):
             if hasattr(demo_data, "to_dict"):
                 demo_data = demo_data.to_dict(True)
             else:
                 raise ValueError("Invalid demonstration data provided.")
 
-        try:
-            # Prepare a copy of the demo data for the template to avoid mutating the source
-            demo_for_template = dict(demo_data)
-            # Format date to Finnish format DD.MM.YYYY if possible
-            try:
-                if demo_for_template.get("date"):
-                    from datetime import datetime as _dt
-
-                    try:
-                        parsed = _dt.strptime(demo_for_template["date"], "%Y-%m-%d")
-                        demo_for_template["date"] = parsed.strftime("%d.%m.%Y")
-                    except Exception:
-                        # leave date as-is if it can't be parsed
-                        pass
-                # Format start_time and end_time to HH:MM if present
-                for tkey in ("start_time", "end_time"):
-                    tval = demo_for_template.get(tkey)
-                    if tval:
-                        try:
-                            # Try HH:MM:SS then HH:MM
-                            try:
-                                parsed_t = _dt.strptime(tval, "%H:%M:%S")
-                            except Exception:
-                                parsed_t = _dt.strptime(tval, "%H:%M")
-                            demo_for_template[tkey] = parsed_t.strftime("%H:%M")
-                        except Exception:
-                            # leave as-is on failure
-                            pass
-            except Exception:
-                pass
-
-            env = Environment(
-                loader=FileSystemLoader(os.path.join(_CUR_DIR, '../templates')),
-                autoescape=select_autoescape(['html', 'xml'])
-            )
-            template = env.get_template("preview.html")
-            html_content = template.render(demo=demo_for_template)
-        except Exception as e:
-            logger.error(f"Failed to render HTML content: {e}")
-            return None
-        finally:
-            # Pop the context if we pushed one earlier. Don't pop if the current
-            # running app supplied the context.
-            if app_ctx is not None:
-                try:
-                    app_ctx.pop()
-                    logger.info("Popped the Flask app context used for screenshot rendering.")
-                except Exception:
-                    # Non-fatal: just log and continue
-                    logger.exception("Error while popping the Flask app context")
-
-
-        config = imgkit.config()
         filename = f"{demo_data['_id']}.png"
 
-        # If caller wants bytes, render into an in-memory buffer
+        if not return_bytes:
+            os.makedirs(output_path, exist_ok=True)
+            full_path = os.path.join(output_path, filename)
+            if os.path.exists(full_path):
+                return f"/static/demo_preview/{filename}"
+
+        png_bytes = render_preview_png(demo_data)
+
         if return_bytes:
-            try:
-                # Ask imgkit to return the result as bytes by passing False as output_path
-                data = imgkit.from_string(html_content, False, config=config)
-                if not data:
-                    logger.error("No data produced when rendering screenshot to bytes.")
-                    return None
-                logger.info(f"Screenshot rendered to bytes for: {demo_data['_id']}")
-                return data
-            except Exception as e:
-                logger.error(f"Failed to render screenshot to bytes: {e}")
-                return None
+            logger.info(f"Preview image rendered to bytes for: {demo_data['_id']}")
+            return png_bytes
 
-        # Otherwise, write to disk (backwards compatible)
-        os.makedirs(output_path, exist_ok=True)
-        full_path = os.path.join(output_path, filename)
-
-        if os.path.exists(full_path):
-            return f"/static/demo_preview/{filename}"
-
-        try:
-            success = imgkit.from_string(html_content, full_path, config=config)
-            if not success:
-                logger.error("Failed to create screenshot.")
-                return None
-        except Exception as e:
-            logger.error(f"Failed to create screenshot: {e}")
-            return None
-
-        logger.info(f"Screenshot created at: {full_path}")
+        with open(full_path, "wb") as handle:
+            handle.write(png_bytes)
+        logger.info(f"Preview image created at: {full_path}")
         return full_path.replace("/var/www/mielenosoitukset_fi/mielenosoitukset_fi/", "").replace("../", "/")
 
     except Exception as e:
-        logger.error(f"Failed to create screenshot: {e}")
+        logger.error(f"Failed to create preview image: {e}")
         return None
 
 import threading

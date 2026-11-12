@@ -57,7 +57,7 @@
                         <ul class="calendar-day-events">
                             {% for demo in year_demos[month]['days'][day] %}
                             <li>
-                                <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" 
+                                <a href="{% if demo.parent %}{{ url_for('siblings_meeting', parent=demo.parent) }}{% else %}{{ url_for('demonstration_detail', demo_id=demo._id) }}{% endif %}"
                                    class="demo-cell"
                                    data-title="{{ demo.title|e or _('Ei otsikkoa') }}"
                                    data-desc="{{ demo.description|e or '' }}"
@@ -121,7 +121,7 @@
         {% if month_demos_list %}
             <div class="mobile-events-grid">
                 {% for day, demo in month_demos_list %}
-                    <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="mobile-event-card">
+                    <a href="{% if demo.parent %}{{ url_for('siblings_meeting', parent=demo.parent) }}{% else %}{{ url_for('demonstration_detail', demo_id=demo._id) }}{% endif %}" class="mobile-event-card">
                         <div class="mobile-event-date">{{ day }}. {{ month_names[month] }} {{ year }}</div>
                         <div class="mobile-event-title">{{ demo.title|e or _('Ei otsikkoa') }}</div>
                         {% if demo.description %}

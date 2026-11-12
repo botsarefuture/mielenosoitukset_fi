@@ -93,6 +93,8 @@ from mielenosoitukset_fi.utils.demo_cancellation import (
     cancel_demo,
     fetch_cancellation_token,
     mark_token_used,
+    claim_cancellation_token,
+    release_cancellation_token,
     queue_cancellation_links_for_demo,
     request_cancellation_case,
 )
@@ -180,6 +182,14 @@ def ensure_audit_pagination_indexes(database):
 ensure_audit_pagination_indexes(mongo)
 mongo["magic_links"].create_index("token_hash", unique=True, background=True)
 mongo["magic_links"].create_index("demo_id", background=True)
+# Additive. Revert: db.used_password_change_tokens.dropIndex("token_hash_unique")
+mongo["used_password_change_tokens"].create_index(
+    "token_hash",
+    unique=True,
+    partialFilterExpression={"token_hash": {"$type": "string"}},
+    name="token_hash_unique",
+    background=True,
+)
 mongo["cases"].create_index([("demo_id", ASCENDING), ("created_at", DESCENDING)], background=True)
 mongo["demo_attending"].create_index("demo_id", background=True)
 mongo["demo_invites"].create_index("demo_id", background=True)
@@ -3690,6 +3700,12 @@ def init_routes(app):
                 if request.method == "POST" and not token_error:
                     reason = (request.form.get("reason") or "").strip() or None
 
+                    # Claim the link atomically so two simultaneous submissions
+                    # cannot both act. Released again if the action fails.
+                    if not claim_cancellation_token(token_doc.get("_id")):
+                        token_error = _("Peruutuslinkki on jo käytetty.")
+
+                if request.method == "POST" and not token_error:
                     try:
                         if can_cancel_directly:
                             cancel_demo(
@@ -3715,6 +3731,7 @@ def init_routes(app):
                         mark_token_used(token_doc.get("_id"), reason or "submitted")
                         return redirect(url_for("demonstration_detail", demo_id=token_doc.get("demo_id")))
                     except Exception:
+                        release_cancellation_token(token_doc.get("_id"))
                         logger.exception("Failed to handle cancellation from token")
                         flash_message(_("Peruutusta ei voitu käsitellä."), "error")
 

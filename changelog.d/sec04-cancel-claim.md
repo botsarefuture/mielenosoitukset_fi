@@ -1,0 +1,1 @@
+- An organizer's cancellation link now works exactly once even when it is submitted twice at the same moment; a failed attempt leaves the link usable.

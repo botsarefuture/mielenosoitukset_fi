@@ -53,6 +53,7 @@ def _generate_token(data, expiration):
     return jwt.encode(
         {
             **data,
+            "iat": utcnow(),
             "exp": utcnow() + datetime.timedelta(seconds=expiration),
         },
         current_app.config["SECRET_KEY"],
@@ -92,7 +93,9 @@ def _verify_token(token: str) -> Tuple[Optional[dict], int]:
         If the token is invalid.
     """
     try:
-        data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
+        data = jwt.decode(
+            token, current_app.config["SECRET_KEY"], algorithms=["HS256"], leeway=10
+        )
         return data, 1
 
     except jwt.ExpiredSignatureError:
@@ -102,6 +105,16 @@ def _verify_token(token: str) -> Tuple[Optional[dict], int]:
     except jwt.InvalidTokenError:
         current_app.logger.warning("Invalid token.")
         return None, 0
+
+
+def _purpose_allows(data, purpose: str) -> bool:
+    """Reject a token minted for another purpose.
+
+    Links issued before the ``purpose`` claim existed carry none and stay valid
+    until they expire (one hour), so deploying this breaks no pending email.
+    """
+    claimed = (data or {}).get("purpose")
+    return claimed is None or claimed == purpose
 
 
 def generate_reset_token(email: str) -> str:
@@ -118,7 +131,7 @@ def generate_reset_token(email: str) -> str:
     str
         The generated JWT token.
     """
-    return _generate_token({"email": email}, 3600)
+    return _generate_token({"email": email, "purpose": "password_reset"}, 3600)
 
 
 def verify_reset_token(token: str) -> Optional[str]:
@@ -136,7 +149,7 @@ def verify_reset_token(token: str) -> Optional[str]:
         The email address if the token is valid, None otherwise.
     """
     data, status = _verify_token(token)
-    if status == 1:
+    if status == 1 and _purpose_allows(data, "password_reset"):
         return data.get("email")
     return None
 
@@ -156,7 +169,7 @@ def generate_confirmation_token(email: str) -> str:
         The generated JWT token.
     """
     # Use 3600 seconds (1 hour) for expiration, as _generate_token expects seconds (int)
-    return _generate_token({"email": email}, 3600)
+    return _generate_token({"email": email, "purpose": "email_confirmation"}, 3600)
 
 
 def verify_confirmation_token(token: str) -> Optional[str]:
@@ -174,6 +187,40 @@ def verify_confirmation_token(token: str) -> Optional[str]:
         The email address associated with the token if the token is valid, otherwise None.
     """
     data, status = _verify_token(token)
-    if status == 1 and data and isinstance(data, dict):
+    if status == 1 and data and isinstance(data, dict) and _purpose_allows(data, "email_confirmation"):
         return data.get("email")
     return None
+
+
+def reset_invalidation_enabled() -> bool:
+    """Whether a password reset also ends sessions and older reset links.
+
+    Off unless ``INVALIDATE_ON_PASSWORD_RESET`` is set in the app config or the
+    environment. Turning it off again (unset, restart) is the whole revert.
+    """
+    import os
+
+    value = current_app.config.get("INVALIDATE_ON_PASSWORD_RESET")
+    if value is None:
+        value = os.environ.get("INVALIDATE_ON_PASSWORD_RESET", "")
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def token_issued_before(token: str, moment) -> bool:
+    """True if a signed token was issued before ``moment``.
+
+    Tokens minted before the ``iat`` claim existed are dated one hour before
+    their expiry, which is the lifetime they were given.
+    """
+    try:
+        data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
+    except jwt.InvalidTokenError:
+        return False
+    issued = data.get("iat")
+    if issued is None and data.get("exp") is not None:
+        issued = data["exp"] - 3600
+    if issued is None or moment is None:
+        return False
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=datetime.timezone.utc)
+    return datetime.datetime.fromtimestamp(issued, datetime.timezone.utc) < moment

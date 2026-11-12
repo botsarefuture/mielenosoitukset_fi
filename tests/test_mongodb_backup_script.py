@@ -153,3 +153,20 @@ def test_core_mode_skips_audit_logs_and_full_mode_keeps_everything(tmp_path):
 def test_rejects_unknown_mode_and_unsafe_collection_names(tmp_path):
     assert _run(tmp_path, BACKUP_MODE="partial")[0].returncode == 2
     assert _run(tmp_path, EXCLUDE_COLLECTIONS="logs;rm")[0].returncode == 2
+
+
+def test_core_run_expires_archives_named_before_modes_existed(tmp_path):
+    backups = tmp_path / "backups"
+    backups.mkdir(mode=0o700)
+    legacy_old = backups / "mielenosoitukset-20260101T000000Z.archive.gz"
+    legacy_recent = backups / "mielenosoitukset-20261105T000000Z.archive.gz"
+    for path, age_days in ((legacy_old, 30), (legacy_recent, 3)):
+        path.write_text("x")
+        stamp = time.time() - age_days * 86400
+        os.utime(path, (stamp, stamp))
+
+    result, _ = _run(tmp_path, KEEP_DAYS="14")
+
+    assert result.returncode == 0, result.stderr
+    assert not legacy_old.exists()
+    assert legacy_recent.exists()

@@ -74,6 +74,12 @@ authdb="$(cat "$work/authdb")"
 [[ "$authdb" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "mongodb-backup: unexpected authentication database" >&2; exit 2; }
 
 install -d -m 0700 "$backup_dir"
+# Core and full runs share one directory; serialize them so one run never
+# deletes the other's unfinished archive. Held until this process exits.
+if command -v flock >/dev/null 2>&1; then
+  exec 9>"$backup_dir/.backup.lock"
+  flock 9
+fi
 # Clear leftovers from runs that were killed before their own cleanup ran.
 find "$backup_dir" -maxdepth 1 -type f -name "*.partial" -print -delete
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -94,5 +100,12 @@ partial=""
 # Retention: only ever delete our own finished archives, never the newest one.
 find "$backup_dir" -maxdepth 1 -type f -name "${dbname}-${mode}-*.archive.gz" -mtime "+$((keep_days - 1))" \
   ! -newer "$target" ! -samefile "$target" -print -delete
+
+# Archives written before the mode was part of the name (<db>-<time>.archive.gz)
+# were full dumps. Expire them with the core retention so they do not pile up.
+if [[ "$mode" == core ]]; then
+  find "$backup_dir" -maxdepth 1 -type f -name "${dbname}-[0-9]*T[0-9]*Z.archive.gz" -mtime "+$((keep_days - 1))" \
+    ! -newer "$target" ! -samefile "$target" -print -delete
+fi
 
 echo "mongodb-backup: wrote $target ($(du -h "$target" | cut -f1))"

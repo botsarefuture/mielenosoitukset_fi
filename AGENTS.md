@@ -175,3 +175,21 @@ project. The coordinator stays thin so it stays cheap:
   session in flight the new coordinator's id (or the notes file path) and tells it to
   report there. The hand-over note lists those ids so the new coordinator can check
   each one.
+
+### Traffic light for the merge queue
+
+Merging many pull requests can loop: each merge makes the next one conflict or fall
+behind, and each retry costs a CI run and a long context. Use three states:
+
+- **Green:** normal flow, one pull request at a time, merging `main` in first.
+- **Yellow:** the same pull request fails or conflicts twice in a row, or the same
+  failure shows up on two pull requests. Stop retrying. Read the cause once, fix it at
+  the source (for example a shared file, a stale manifest, a flaky test), then continue.
+- **Red:** a third repeat, or any failure whose cause is unclear. Freeze the queue, do not
+  push or merge anything more, write what happened to the notes folder, and ask the
+  maintainer with a suggested answer.
+
+The coordinator also always uses the caveman style in chat, and gives every session the
+cheapest model that can do the job (read-only work on the smallest model, routine work
+on a mid-size one, only hard design or security work on the largest) with a lower
+reasoning effort for mechanical work.

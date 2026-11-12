@@ -1854,16 +1854,16 @@ def password_reset(token):
 
         try:
             user._change_password(password)
+            if reset_invalidation_enabled():
+                # Existing sessions carry the old epoch and are dropped by the
+                # user loader; the cookie format is unchanged.
+                mongo.users.update_one({"_id": user_doc["_id"]}, {"$inc": {"auth_epoch": 1}})
             log_entry["changed"] = True
             mongo.password_changes.insert_one(log_entry)
             mongo.used_password_change_tokens.update_one(
                 {"token_hash": token_hash},
                 {"$set": {"password_change_success": True}},
             )
-            if reset_invalidation_enabled():
-                # Existing sessions carry the old epoch and are dropped by the
-                # user loader; the cookie format is unchanged.
-                mongo.users.update_one({"_id": user_doc["_id"]}, {"$inc": {"auth_epoch": 1}})
         except Exception as e:
             # Release the claim so the link can be retried after a failure.
             mongo.used_password_change_tokens.delete_one(

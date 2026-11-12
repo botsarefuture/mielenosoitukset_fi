@@ -93,7 +93,9 @@ def _verify_token(token: str) -> Tuple[Optional[dict], int]:
         If the token is invalid.
     """
     try:
-        data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
+        data = jwt.decode(
+            token, current_app.config["SECRET_KEY"], algorithms=["HS256"], leeway=10
+        )
         return data, 1
 
     except jwt.ExpiredSignatureError:

@@ -2,6 +2,8 @@
 
 This repository often gets help from external agents (human or AI). Follow these rules every time you touch the codebase:
 
+Before starting, read [the decisions log](docs/decisions.md): it records maintainer decisions and their reasons, so they don't need to be rediscovered from history. When the maintainer decides something new, add it there in the same PR.
+
 1. **Always update the changelog**  
    - Add an entry to `CHANGELOG.md` for every user-facing change (features, fixes, refactors that matter).  
    - If a change launches immediately, put it under the latest released version. Otherwise, log it under `## UNRELEASED`.  

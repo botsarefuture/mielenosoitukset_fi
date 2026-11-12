@@ -9,7 +9,7 @@
 export type AppLocale = 'fi' | 'en' | 'sv';
 
 export type AppUrls = {
-  home: string; demonstrations: string; cities: string; submit: string; calendar: string;
+  home: string; demonstrations: string; today: string; cities: string; submit: string; calendar: string;
   info: string; pride: string; privacy: string; contact: string; cityAdmin: string; guides: string; developer: string;
   login: string; register: string; logout: string; profile: string; settings: string; admin: string;
   notifications: { list: string; markRead: string; all: string };
@@ -35,7 +35,7 @@ export function isLocale(value: unknown): value is AppLocale {
 
 /** Existing public route paths. Changing one here must change the route too. */
 const ROUTES = {
-  home: '/', demonstrations: '/demonstrations', cities: '/cities', submit: '/submit',
+  home: '/', demonstrations: '/demonstrations', today: '/mielenosoitukset-tanaan', cities: '/cities', submit: '/submit',
   calendar: '/calendar/', info: '/info', pride: '/pride-nakyvaksi', privacy: '/privacy',
   contact: '/contact', cityAdmin: '/kaupunkiadmin', guides: '/ohjeet', developer: '/developer', fundraising: '/keräys',
   login: '/users/auth/login', register: '/users/auth/register', logout: '/users/auth/logout',
@@ -71,7 +71,7 @@ export function appConfig(options: {
       href: `/set_language/${item.code}?next=${encodeURIComponent(next)}`,
     })),
     urls: {
-      home: ROUTES.home, demonstrations: ROUTES.demonstrations, cities: ROUTES.cities,
+      home: ROUTES.home, demonstrations: ROUTES.demonstrations, today: ROUTES.today, cities: ROUTES.cities,
       submit: ROUTES.submit, calendar: ROUTES.calendar, info: ROUTES.info, pride: ROUTES.pride,
       privacy: ROUTES.privacy, contact: ROUTES.contact, cityAdmin: ROUTES.cityAdmin, guides: ROUTES.guides,
       developer: ROUTES.developer, fundraising: ROUTES.fundraising,

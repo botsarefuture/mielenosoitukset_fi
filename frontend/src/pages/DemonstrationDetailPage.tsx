@@ -7,6 +7,7 @@ import { DetailGallery } from '../components/detail/DetailGallery';
 import { clockLabel, dateLabel, safeHref, sanitizeDescription } from '../components/detail/content';
 import { useDemonstration } from '../components/detail/useDemonstration';
 import type { DetailEvent, DetailProps } from '../components/detail/types';
+import { isGeneratedPreview } from '../lib/event-image';
 export type { DetailProps, DetailMessages } from '../components/detail/types';
 const DetailMap = lazy(() => import('../components/detail/DetailMap'));
 
@@ -100,7 +101,8 @@ function EventContent({ event, props }: { event: DetailEvent; props: DetailProps
   const time = [clockLabel(event.start_time), clockLabel(event.end_time)].filter(Boolean).join('–');
   const location = [event.address, event.city].filter(Boolean).join(', ');
   const source = (event.cover_source ?? '').toLowerCase();
-  const manualCover = !['auto', 'automatic'].includes(source) && (source || event.cover_picture !== event.preview_image) ? event.cover_picture : null;
+  const manualCover = !['auto', 'automatic'].includes(source) && !isGeneratedPreview(event.cover_picture)
+    && (source || event.cover_picture !== event.preview_image) ? event.cover_picture : null;
   const images = event.gallery_images.length ? event.gallery_images : [event.img || manualCover].filter((value): value is string => Boolean(value));
   const externalEvent = safeHref(event.facebook);
   const directions = event.latitude !== null && event.longitude !== null

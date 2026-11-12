@@ -205,7 +205,7 @@ ${options.jsonLd ? `<script type="application/ld+json">${serialize(options.jsonL
 <noscript><link rel="stylesheet" href="/static/fa/css/all.css"></noscript>
 <link rel="preload" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" as="style" crossorigin onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" crossorigin></noscript>
-<link rel="stylesheet" href="/static/css/home.css?v=20261110-centered-intro-2">
+<link rel="stylesheet" href="/static/css/home.css?v=20261111-continuation-2">
 <link rel="stylesheet" href="/static/css/product-tokens.css?v=20261110-pride-contrast-1">
 <link rel="stylesheet" href="/static/css/user-workspace.css?v=20261110-user-workspace-7">
 <link rel="stylesheet" href="/static/css/public-header.css?v=20261027-react-header-1">

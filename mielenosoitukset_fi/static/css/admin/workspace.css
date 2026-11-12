@@ -3350,6 +3350,24 @@ main.flex-grow-1 .btn-primary[aria-busy="true"],
   text-align: center;
 }
 
+.city-admin-shell .city-admin-coverage {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.city-admin-shell .city-admin-coverage--none {
+  color: var(--product-danger);
+}
+
+.city-admin-shell .city-admin-coverage--national,
+.city-admin-shell .city-admin-coverage--team {
+  color: var(--product-success);
+}
+
+.city-admin-shell .city-admin-target-note {
+  margin: -.25rem 0 1rem;
+}
+
 .city-admin-shell .city-admin-toggle-column .form-check-input {
   display: block;
   float: none;

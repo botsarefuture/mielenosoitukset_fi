@@ -1,0 +1,1 @@
+- Add a reproducible route-by-route localization inventory and translator worklist; English and Swedish translations remain with human translators.

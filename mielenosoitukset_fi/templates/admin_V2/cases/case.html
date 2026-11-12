@@ -302,6 +302,38 @@
             <div class="empty-state">{{ _('Ei muutoksia vertailtavaksi.') }}</div>
             {% endif %}
           </div>
+          {% elif case.case_type == "city_admin_application" %}
+          {% set application = case_data.application if case_data.application is defined else none %}
+          {% if application %}
+          <div class="detail-grid">
+            <div class="detail-item"><strong>{{ _('Hakija') }}</strong><span>{% if application.user_id %}<a href="{{ url_for('admin_user.edit_user', user_id=application.user_id) }}">{{ case_data.submitter_label }}</a>{% else %}{{ case_data.submitter_label }}{% endif %}</span></div>
+            <div class="detail-item"><strong>{{ _('Haetut paikkakunnat') }}</strong><span>{{ application.cities|join(', ') or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Tila') }}</strong><span>{{ application.status_label }}</span></div>
+            <div class="detail-item"><strong>{{ _('Vastaanotettu') }}</strong><span>{% if application.created_at %}{{ application.created_at|datetimeformat("%d.%m.%Y %H:%M") }}{% else %}-{% endif %}</span></div>
+            <div class="detail-item"><strong>{{ _('Aktiivinen paikkakunnilla') }}</strong><span>{{ application.active_cities|join(', ') or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Järjestämiskokemus') }}</strong><span>{{ application.experience }}</span></div>
+          </div>
+          <div class="detail-item"><strong>{{ _('Hakijasta ja motivaatiosta') }}</strong><div class="note-box">{{ application.about }}</div></div>
+          <div class="detail-item"><strong>{{ _('Ryhmät ja järjestöt') }}</strong><div class="note-box">{{ application.organizations or _('Ei ilmoitettu') }}</div></div>
+          {% if application.experience_details %}
+          <div class="detail-item"><strong>{{ _('Kokemuksen kuvaus') }}</strong><div class="note-box">{{ application.experience_details }}</div></div>
+          {% endif %}
+          <div class="detail-item"><strong>{{ _('Suosittelijat') }}</strong><div class="note-box">{{ application.references or _('Ei suosittelijoita') }}</div></div>
+          {% if global_case_controls and application.status not in ['approved', 'declined', 'withdrawn'] %}
+          <form method="POST" action="{{ url_for('admin_case.set_application_status', case_id=case._id) }}" class="admin-stack">
+            <p class="muted">{{ _('Hyväksyminen ei anna oikeuksia. Myönnä kaupunkiadminin rooli käyttäjän tilin kautta.') }}</p>
+            <div class="d-flex gap-2 flex-wrap">
+              {% for key, label in application.decision_statuses %}
+              {% if key != application.status %}
+              <button class="btn {{ 'btn-success' if key == 'approved' else 'btn-danger' if key == 'declined' else 'btn-outline-primary' }}" type="submit" name="status" value="{{ key }}">{{ label }}</button>
+              {% endif %}
+              {% endfor %}
+            </div>
+          </form>
+          {% endif %}
+          {% else %}
+          <div class="empty-state">{{ _('Hakemusta ei löytynyt.') }}</div>
+          {% endif %}
           {% else %}
           <div class="empty-state">{{ _('Talle tapaukselle ei ole viela omaa tarkempaa esitystapaa.') }}</div>
           {% endif %}

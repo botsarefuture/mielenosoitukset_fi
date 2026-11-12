@@ -1,0 +1,220 @@
+name: Deploy production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      routing:
+        description: Activate Apache routing after deployment and health checks
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out the merged commit
+        uses: actions/checkout@v4
+
+      - name: Set up frontend build tools
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go-api/go.mod
+          cache-dependency-path: go-api/go.sum
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Set up documentation build tools
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the existing Markdown compiler
+        run: python3 -m pip install "$(sed -n '/^Markdown==/p' requirements.txt)"
+
+      - name: Build and verify the React public host
+        run: |
+          set -euo pipefail
+          npm run app:build
+          node scripts/verify_public_host.mjs
+
+      - name: Pack the React host bundle
+        run: |
+          set -euo pipefail
+          tar -czf "$RUNNER_TEMP/app.tar.gz" frontend/server.mjs frontend/public-availability.mjs frontend/dist
+
+      - name: Build the Go public API
+        run: |
+          set -euo pipefail
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go -C go-api build -trimpath \
+              -ldflags="-s -w -X main.buildSHA=${GITHUB_SHA}" \
+              -o "$RUNNER_TEMP/api" .
+
+      - name: Record the source tree
+        id: tree
+        run: echo "sha=$(git rev-parse HEAD^{tree})" >> "$GITHUB_OUTPUT"
+
+      - name: Write the release manifest
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          output = Path(os.environ["RUNNER_TEMP"])
+          assets = {}
+          for name in ("api", "app.tar.gz"):
+              data = (output / name).read_bytes()
+              assets[name] = {
+                  "sha256": hashlib.sha256(data).hexdigest(),
+                  "size": len(data),
+              }
+          manifest = {
+              "schema": 1,
+              "commit": os.environ["GITHUB_SHA"],
+              "tree": os.environ["TREE_SHA"],
+              "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "assets": assets,
+          }
+          (output / "release.json").write_text(
+              json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          PY
+          cat "$RUNNER_TEMP/release.json"
+        env:
+          TREE_SHA: ${{ steps.tree.outputs.sha }}
+
+      - name: Publish the release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: release-${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" \
+              --target "$GITHUB_SHA" \
+              --title "Production release ${GITHUB_SHA:0:12}" \
+              --notes "CI-built artifacts for ${GITHUB_SHA}. Deployed by the Deploy production workflow."
+          fi
+          gh release upload "$TAG" \
+            "$RUNNER_TEMP/api" \
+            "$RUNNER_TEMP/app.tar.gz" \
+            "$RUNNER_TEMP/release.json" \
+            --clobber
+
+  deploy:
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: production
+
+    env:
+      PRODUCTION_SSH_HOST: ${{ vars.PRODUCTION_SSH_HOST }}
+      PRODUCTION_SSH_USER: ${{ vars.PRODUCTION_SSH_USER }}
+      SSH_OPTIONS: -o BatchMode=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=5
+
+    steps:
+      - name: Check out deployment verifier
+        uses: actions/checkout@v4
+
+      - name: Validate deployment configuration
+        run: |
+          set -euo pipefail
+          test -n "$PRODUCTION_SSH_HOST"
+          test -n "$PRODUCTION_SSH_USER"
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+
+      - name: Trust production host
+        env:
+          PRODUCTION_SSH_KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$PRODUCTION_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0600 ~/.ssh/known_hosts
+
+      - name: Deploy Flask, the React host and the Go API
+        id: deploy_origin
+        run: |
+          set -euo pipefail
+          ssh $SSH_OPTIONS "$PRODUCTION_SSH_USER@$PRODUCTION_SSH_HOST" \
+            "deploy $GITHUB_SHA"
+          # The SSH command verifies every service it started and the exact
+          # build SHA before returning success.
+          echo "verified_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Verify public health endpoint
+        run: |
+          set -euo pipefail
+          python3 deploy/verify_health_sha.py \
+            "$GITHUB_SHA" "https://mielenosoitukset.fi/health" \
+            --origin-verified-sha "${{ steps.deploy_origin.outputs.verified_sha }}" \
+            --attempts 15 --delay 2 --timeout 10
+
+      - name: Verify public API endpoint
+        run: |
+          set -euo pipefail
+          python3 deploy/verify_health_sha.py \
+            "$GITHUB_SHA" "https://api.mielenosoitukset.fi/health" \
+            --attempts 15 --delay 2 --timeout 10
+
+  routing:
+    needs: deploy
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.routing)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    env:
+      PRODUCTION_SSH_HOST: ${{ vars.PRODUCTION_SSH_HOST }}
+      PRODUCTION_SSH_USER: ${{ vars.PRODUCTION_SSH_USER }}
+      SSH_OPTIONS: -o BatchMode=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=5
+
+    steps:
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+
+      - name: Trust production host
+        env:
+          PRODUCTION_SSH_KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$PRODUCTION_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0600 ~/.ssh/known_hosts
+
+      - name: Activate the reviewed Apache routing include
+        run: |
+          set -euo pipefail
+          ssh $SSH_OPTIONS "$PRODUCTION_SSH_USER@$PRODUCTION_SSH_HOST" \
+            "deploy-routing $GITHUB_SHA"

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URGENT tukipyyntö</title>
+    <style>
+        body {
+            background: #f4f4f4;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            background: #ffffff;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            padding: 15px 10px;
+            background: #B00020;
+            color: #ffffff;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            margin: 20px;
+        }
+        .box {
+            margin: 15px 0;
+            padding: 12px;
+            background: #fdf2f2;
+            border-left: 4px solid #B00020;
+            border-radius: 4px;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #888888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ URGENT tukipyyntö {{ ticket_id }}</h1>
+        </div>
+        <div class="content">
+            <p>Kiireellinen tukipyyntö on saapunut ja odottaa huomiotasi:</p>
+            <div class="box">
+                <p><strong>Lähettäjä:</strong> {{ from_email }}</p>
+                <p><strong>Aihe:</strong> {{ subject }}</p>
+                <p><strong>Viesti:</strong></p>
+                <p>{{ message }}</p>
+            </div>
+            <p>Tarkista tukipyyntö hallintapaneelista ja vastaa mahdollisimman pian.</p>
+        </div>
+        <div class="footer">
+            <p>Tämä on automaattinen viesti mielenosoitukset.fi tukijärjestelmästä.</p>
+        </div>
+    </div>
+</body>
+</html>

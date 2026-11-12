@@ -1,0 +1,40 @@
+{% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+
+{% block main_content %}
+{% set action_labels = {
+    'preview': _('Esikatselulinkki'),
+    'approve': _('Hyväksyntälinkki'),
+    'reject': _('Hylkäyslinkki')
+  } %}
+{% set page_title = _('%(link_type)s on jo käytetty', link_type=action_labels.get(action, _('Linkki'))) %}
+{% call admin_page_hero(
+  page_title,
+  _('Tämä kertakäyttöinen linkki ei ole enää käytettävissä.'),
+  _('Mielenosoitukset'),
+  [(_('Etusivu'), url_for('index')), (page_title, none)],
+  back_url=url_for('index'),
+  back_label=_('Etusivu'),
+  actions_visible=true
+) %}
+  <a href="{{ url_for('admin_demo.demo_control') }}" class="admin-page-hero__action"><i class="fa-solid fa-gauge" aria-hidden="true"></i>{{ _('Hallintapaneeli') }}</a>
+{% endcall %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow border-0">
+        <div class="card-body text-center p-5">
+          <div class="display-3 text-warning mb-4">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <h2 class="fw-bold mb-3">{{ page_title }}</h2>
+          <p class="text-muted mb-4">
+            Tämä kertakäyttöinen linkki on jo vahvistettu tai esikatseltu aiemmin. Jos tarvitset uuden linkin,
+            pyydä se ylläpidolta tai käytä hallintapaneelia.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -38,19 +38,27 @@ Modification Notes
 """
 
 import copy
-import os
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pymongo import MongoClient, UpdateOne
 from datetime import datetime, date, timedelta
 import argparse
 from typing import Union, Optional
-from dateutil.relativedelta import relativedelta, weekday
 from config import Config
 from mielenosoitukset_fi.utils.classes import Demonstration, RecurringDemonstration
 from traceback import format_exc
 from mielenosoitukset_fi.utils import VERSION
 from mielenosoitukset_fi.utils.classes.RepeatSchedule import RepeatSchedule
+from mielenosoitukset_fi.utils.demo_slugs import recurring_child_slug
+from mielenosoitukset_fi.utils.time_utils import utcnow
+from mielenosoitukset_fi.demonstrations.rollback import (
+    PENDING_ROLLBACK_HISTORY, flush_rollback_history,
+)
+from mielenosoitukset_fi.utils.recurrence import (
+    WEEKDAY_MAP,
+    calculate_recurrence_dates,
+    next_weekday,
+)
 
 # Dry-run flag (can be overridden from CLI)
 DRY_RUN = False
@@ -60,61 +68,106 @@ FORCE_RECHECK = False
 RECHECK_FIX = False
 
 # Helper: map weekday names to index and a weekly alignment helper
-WEEKDAY_MAP = {
-    "monday": 0,
-    "tuesday": 1,
-    "wednesday": 2,
-    "thursday": 3,
-    "friday": 4,
-    "saturday": 5,
-    "sunday": 6,
-}
-
-def next_weekday(dt: date, target_weekday: str, interval: int = 1) -> date:
-    """
-    Advance `dt` to the next `target_weekday`, respecting weekly `interval`.
-
-    Parameters
-    ----------
-    dt : date
-        Starting date
-    target_weekday : str
-        Weekday name (e.g., 'friday')
-    interval : int
-        Number of weeks between repeats (1 means every week)
-
-    Returns
-    -------
-    date
-        Next date that falls on the target weekday according to interval
-    """
-    target_wd = WEEKDAY_MAP[target_weekday.lower()]
-    current_wd = dt.weekday()
-
-    days_until = (target_wd - current_wd) % 7
-    if days_until == 0:
-        days_until = 7 * interval
-    else:
-        days_until += 7 * (interval - 1)
-
-    return dt + timedelta(days=days_until)
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 MAX_NEW_DEMOS_PER_RUN = 1000
+# Occurrences are generated at most this far ahead (#1029).
+GENERATION_HORIZON_YEARS = 1
 
 # Database setup
-client = MongoClient(os.getenv("MONGO_URI", Config.MONGO_URI))
-db = client["mielenosoitukset"]
+mongo_uri = Config.MONGO_URI or "mongodb://localhost:27017"
+db_name = Config.MONGO_DBNAME or "testdb"
+client = MongoClient(mongo_uri)
+db = client[db_name]
 recu_demos_collection = db["recu_demos"]
 demonstrations_collection = db["demonstrations"]
 runtime_log_collection = db["runtime_log"]
 runtimes_collection = db["runtimes"]
 runtime_actions = []
 stats_collection = db["recu_stats"]
+
+
+def _frozen_child_ids(parent_demo: dict) -> set[str]:
+    """Return frozen child IDs in the canonical comparison format."""
+    return {str(child_id) for child_id in parent_demo.get("freezed_children", [])}
+
+
+def _break_date_strings(parent_demo: dict) -> set[str]:
+    """Return recurring break dates in ISO date-string form."""
+    dates = set()
+    for raw_date in parent_demo.get("break_dates", []) or []:
+        if isinstance(raw_date, datetime):
+            dates.add(raw_date.date().isoformat())
+        elif isinstance(raw_date, date):
+            dates.add(raw_date.isoformat())
+        elif raw_date:
+            try:
+                dates.add(datetime.strptime(str(raw_date), "%Y-%m-%d").date().isoformat())
+            except Exception:
+                logger.warning("Skipping invalid recurring break date %r", raw_date)
+    return dates
+
+
+def _recurring_occurrence_slug(parent_demo: dict, occurrence_date: str):
+    """Return a stable slug that cannot collide with another series."""
+    base_slug = recurring_child_slug(parent_demo.get("slug"), occurrence_date)
+    if not base_slug:
+        return None
+
+    parent_id = parent_demo["_id"]
+    candidate = base_slug
+    suffix = str(parent_id)[-6:]
+    sequence = 1
+    while demonstrations_collection.find_one(
+        {"slug": candidate, "parent": {"$ne": parent_id}},
+        {"_id": 1},
+    ):
+        sequence += 1
+        candidate = f"{base_slug}-{suffix}"
+        if sequence > 2:
+            candidate = f"{candidate}-{sequence}"
+    return candidate
+
+
+def mark_break_children_cancelled(parent_demo: dict) -> int:
+    """Cancel existing child demos whose dates are configured as series breaks."""
+    break_dates = _break_date_strings(parent_demo)
+    if not break_dates:
+        return 0
+
+    cancelled_count = 0
+    children = demonstrations_collection.find(
+        {
+            "parent": parent_demo["_id"],
+            "date": {"$in": sorted(break_dates)},
+            "cancelled": {"$ne": True},
+        }
+    )
+    for child in children:
+        update_doc = {
+            "cancelled": True,
+            "cancelled_at": utcnow(),
+            "cancelled_by": {"source": "recurring_break", "user_id": None},
+            "cancellation_requested": False,
+            "cancellation_reason": "Toistuvan mielenosoituksen taukopäivä",
+        }
+        runtime_actions.append({
+            "action": "cancel",
+            "document": child,
+            "reason": "recurring break date",
+            "timestamp": datetime.now(),
+            "executed_by": "system",
+        })
+        if DRY_RUN:
+            logger.info("DRY RUN: would cancel child demo %s for recurring break", child["_id"])
+        else:
+            demonstrations_collection.update_one({"_id": child["_id"]}, {"$set": update_doc})
+            logger.info("Cancelled child demo %s for recurring break", child["_id"])
+        cancelled_count += 1
+    return cancelled_count
 
 
 
@@ -145,94 +198,15 @@ RUNTIME_ID = _get_runtime_id()
 
 
 def calculate_next_dates(start_date: Union[datetime, date], schedule: RepeatSchedule, _created_until: Optional[Union[datetime, date]] = None):
-    """
-    Generate next dates, respecting created_until and limiting to MAX_NEW_DEMOS_PER_RUN.
-
-    Notes
-    -----
-    This function operates on date-only values (datetime.date) to avoid
-    time-of-day and timezone related off-by-one issues where a date at
-    midnight could be considered "previous day" depending on server time.
-    """
-    frequency = schedule.frequency
-    interval = schedule.interval or 1
-    # Use date-only comparisons to avoid time-of-day issues
-    current_date = datetime.now().date()
-    next_dates = []
-
-    # Normalize end_date
-    end_date = schedule.end_date
-    if not end_date or end_date == "":
-        end_date = (datetime.now() + relativedelta(years=1)).date()
-    elif isinstance(end_date, str):
-        try:
-            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-        except Exception:
-            end_date = (datetime.now() + relativedelta(years=1)).date()
-
-    # Convert start_date and created_until to date objects if needed
-    if isinstance(start_date, datetime):
-        start_date = start_date.date()
-    if isinstance(_created_until, datetime):
-        _created_until = _created_until.date()
-
-    # Adjust start_date if before created_until
-    if _created_until and _created_until > start_date:
-        start_date = _created_until
-
-    date = start_date
-    new_demos_count = 0
-    max_iterations = 10000  # hard safety cap
-    iterations = 0
-
-    while date <= end_date and new_demos_count < MAX_NEW_DEMOS_PER_RUN and iterations < max_iterations:
-        if date >= current_date and (not _created_until or date > _created_until):
-            next_dates.append(date)
-            new_demos_count += 1
-
-        # Advance
-        try:
-            if frequency == "daily":
-                date = date + timedelta(days=interval)
-            elif frequency == "weekly":
-                # If a weekday is specified in the schedule, align using next_weekday
-                if getattr(schedule, "weekday", None):
-                    try:
-                        date = next_weekday(date, str(schedule.weekday), interval=schedule.interval or 1)
-                    except Exception:
-                        # Fallback to simple week increment
-                        date = date + timedelta(weeks=interval)
-                else:
-                    date = date + timedelta(weeks=interval)
-            elif frequency == "monthly":
-                if schedule.monthly_option == "day_of_month":
-                    date = date + relativedelta(months=interval)
-                elif schedule.monthly_option == "nth_weekday":
-                    nth = schedule.nth_weekday
-                    weekday_of_month = schedule.weekday_of_month
-                    if nth and weekday_of_month:
-                        # move to first day of the target month
-                        date = (date + relativedelta(months=interval)).replace(day=1)
-                        w_map = {"monday":0,"tuesday":1,"wednesday":2,"thursday":3,"friday":4,"saturday":5,"sunday":6}
-                        n_map = {"first":1,"second":2,"third":3,"fourth":4,"last":-1}
-                        wday = w_map[weekday_of_month]
-                        n = n_map[nth]
-                        if n == -1:
-                            date = date + relativedelta(day=31, weekday=weekday(wday, -1))
-                        else:
-                            date = date + relativedelta(weekday=weekday(wday, n))
-            elif frequency == "yearly":
-                date = date + relativedelta(years=interval)
-            else:
-                logger.warning(f"Unknown frequency '{frequency}'")
-                break
-        except OverflowError:
-            logger.warning(f"Date overflow reached: {date}")
-            break
-
-        iterations += 1
-
-    logger.debug(f"Next dates: {[d.strftime('%Y-%m-%d') for d in next_dates]}")
+    """Generate worker dates through the shared recurrence calculator."""
+    next_dates = calculate_recurrence_dates(
+        start_date,
+        schedule,
+        _created_until,
+        max_occurrences=MAX_NEW_DEMOS_PER_RUN,
+        horizon_years=GENERATION_HORIZON_YEARS,
+    )
+    logger.debug("Next dates: %s", [value.isoformat() for value in next_dates])
     return next_dates
 
 def update_parent_stats(parent_id):
@@ -269,11 +243,12 @@ def remove_invalid_child_demonstrations(parent_demo: dict, valid_dates: list[dat
     """
     # Ensure valid_dates are date objects (they may have been produced by calculate_next_dates)
     valid_date_strings = {d.strftime("%Y-%m-%d") for d in valid_dates}
+    break_date_strings = _break_date_strings(parent_demo)
     child_demos = demonstrations_collection.find({"parent": parent_demo["_id"]})
-    freezed_children = set(parent_demo.get("freezed_children", []))
+    freezed_children = _frozen_child_ids(parent_demo)
 
     for demo in child_demos:
-        if demo["_id"] in freezed_children:
+        if str(demo["_id"]) in freezed_children:
             runtime_actions.append({
                 "action": "frozen_skip",
                 "document": demo,
@@ -290,22 +265,39 @@ def remove_invalid_child_demonstrations(parent_demo: dict, valid_dates: list[dat
             logger.warning(f"Invalid date format for child demo {demo['_id']}: {demo['date']}")
             continue
 
+        if demo["date"] in break_date_strings and demo.get("cancelled") is True:
+            runtime_actions.append({
+                "action": "break_skip",
+                "document": demo,
+                "reason": "recurring break date",
+                "timestamp": datetime.now(),
+                "executed_by": "system"
+            })
+            continue
+
         # Normalize _created_until to date if datetime passed
         created_until_date = _created_until.date() if isinstance(_created_until, datetime) else _created_until
 
         if demo["date"] not in valid_date_strings and (not created_until_date or demo_date_dt > created_until_date):
-            runtime_actions.append({
+            action = {
                 "action": "delete",
                 "document": demo,
                 "reason": "invalid",
                 "timestamp": datetime.now(),
                 "executed_by": "system"
-            })
+            }
             if DRY_RUN:
+                runtime_actions.append(action)
                 logger.info(f"DRY RUN: would delete invalid child demo {demo['_id']}")
             else:
-                demonstrations_collection.delete_one({"_id": demo["_id"]})
-                logger.info(f"Deleted invalid child demo {demo['_id']}")
+                if not flush_rollback_history(db, demo["_id"]):
+                    continue
+                result = demonstrations_collection.delete_one({
+                    "_id": demo["_id"], PENDING_ROLLBACK_HISTORY: {"$exists": False},
+                })
+                if result.deleted_count:
+                    runtime_actions.append(action)
+                    logger.info(f"Deleted invalid child demo {demo['_id']}")
 
 def get(obj: dict, key: str, default=None):
     """
@@ -342,11 +334,18 @@ def process_demo(demo: dict, only_calculate: bool = False):
         # Normalize demo_date and created_until to date objects for consistent comparisons
         demo_date = datetime.strptime(_demo.date, "%Y-%m-%d").date()
         created_until_date = created_until.date() if isinstance(created_until, datetime) else created_until
-        next_dates = calculate_next_dates(demo_date, schedule, created_until_date)
+        scheduled_dates = calculate_next_dates(demo_date, schedule, created_until_date)
+        break_dates = _break_date_strings(demo)
+        next_dates = [
+            next_date
+            for next_date in scheduled_dates
+            if next_date.strftime("%Y-%m-%d") not in break_dates
+        ]
+        mark_break_children_cancelled(demo)
         
         # Only calculate stats if requested
         if only_calculate:
-            remove_invalid_child_demonstrations(demo, next_dates, created_until_date)
+            remove_invalid_child_demonstrations(demo, scheduled_dates, created_until_date)
             update_parent_stats(demo["_id"])
             return
         
@@ -354,7 +353,7 @@ def process_demo(demo: dict, only_calculate: bool = False):
         if FORCE_RECHECK:
             child_demos = list(demonstrations_collection.find({"parent": demo["_id"]}))
             for child in child_demos:
-                if child["_id"] in set(demo.get("freezed_children", [])):
+                if str(child["_id"]) in _frozen_child_ids(demo):
                     continue
                 try:
                     child_date = datetime.strptime(child["date"], "%Y-%m-%d").date()
@@ -415,10 +414,10 @@ def process_demo(demo: dict, only_calculate: bool = False):
                                 logger.warning(msg + " and cannot set that day for this month")
 
         # Continue with standard invalid child cleanup
-        remove_invalid_child_demonstrations(demo, next_dates, created_until_date)
+        remove_invalid_child_demonstrations(demo, scheduled_dates, created_until_date)
 
         bulk_ops = []
-        freezed_children = set(demo.get("freezed_children", []))
+        freezed_children = _frozen_child_ids(demo)
 
         for next_date in next_dates:
             if created_until and next_date <= created_until_date:
@@ -428,7 +427,7 @@ def process_demo(demo: dict, only_calculate: bool = False):
             next_date_str = next_date.strftime("%Y-%m-%d")
             existing_demo = demonstrations_collection.find_one({"date": next_date_str, "parent": demo["_id"]})
 
-            if existing_demo and existing_demo["_id"] in freezed_children:
+            if existing_demo and str(existing_demo["_id"]) in freezed_children:
                 runtime_actions.append({"action":"frozen_skip","document":existing_demo,"reason":"frozen","timestamp":datetime.now(),"executed_by":"system"})
                 continue
 
@@ -442,6 +441,11 @@ def process_demo(demo: dict, only_calculate: bool = False):
                 new_demo_data = demo.copy()
                 new_demo_data.update({"date": next_date_str,"parent":demo["_id"],"recurring":True})
                 new_demo_data.pop("_id", None)
+                child_slug = _recurring_occurrence_slug(demo, next_date_str)
+                if child_slug:
+                    new_demo_data["slug"] = child_slug
+                else:
+                    new_demo_data.pop("slug", None)
                 new_demo = Demonstration.from_dict(new_demo_data)
                 bulk_ops.append(UpdateOne({"date": next_date_str,"parent":demo["_id"]},{"$setOnInsert": new_demo.to_dict()}, upsert=True))
                 runtime_actions.append({"action":"create","document":new_demo.to_dict(),"reason":"create new","timestamp":datetime.now(),"executed_by":"system"})
@@ -454,10 +458,10 @@ def process_demo(demo: dict, only_calculate: bool = False):
                 logger.info(f"Processed {result.upserted_count} demos for parent {demo['_id']}")
 
         # Update created_until
-        if next_dates:
+        if scheduled_dates:
             d = RecurringDemonstration.from_dict(demo)
             old_created_until = d.created_until
-            d.created_until = next_dates[-1]
+            d.created_until = scheduled_dates[-1]
             if DRY_RUN:
                 logger.info(f"DRY RUN: would update created_until for parent {demo['_id']} from {old_created_until} to {d.created_until}")
                 runtime_actions.append({"action":"update","document":d.to_dict(),"old_document":RecurringDemonstration.from_dict(demo).to_dict(),"reason":f"DRY_RUN created_until would be updated from {old_created_until} to {d.created_until}","timestamp":datetime.now(),"executed_by":"system"})
@@ -531,31 +535,28 @@ def process_runtime_actions():
 
 
 
-def main():
+def main(dry_run: bool = False, only_calculate: bool = False) -> None:
     """
     Entry point for processing recurring demonstrations.
+
+    Unlike the CLI entry point, this function never prompts for input or
+    reads ``sys.argv``, so it is safe to invoke from the background job
+    manager (which has no interactive stdin).
+
+    Parameters
+    ----------
+    dry_run : bool, optional
+        When True, do not write any changes to the database; only simulate.
+    only_calculate : bool, optional
+        When True, only calculate next occurrences without creating or
+        deleting demos.
 
     Returns
     -------
     None
     """
     global DRY_RUN
-    parser = argparse.ArgumentParser(description="Process recurring demonstrations")
-    parser.add_argument("--dry-run", action="store_true", help="Do not write changes to the database; only simulate")
-    parser.add_argument("--only-calculate", action="store_true", help="Only calculate next occurrences without creating or deleting demos")
-    # Ignore the first two arguments passed to the process (drop argv[0] and argv[1])
-    import sys
-    args_to_parse = sys.argv[3:]
-    args = parser.parse_args(args_to_parse)
-    
-    print(f"DRY RUN: {args.dry_run}, want to continue? (y/n)")
-    answer = input().strip().lower()
-    if answer != 'y':
-        logger.info("Aborting demonstration processing.")
-        return
-    
-    DRY_RUN = bool(args.dry_run)
-    only_calculate = bool(args.only_calculate)
+    DRY_RUN = bool(dry_run)
 
     logger.info(f"Starting demonstration processing. DRY_RUN={DRY_RUN}, ONLY_CALCULATE={only_calculate}")
     handle_repeating_demonstrations(only_calculate=only_calculate)
@@ -568,6 +569,27 @@ def main():
         logger.info("ONLY_CALCULATE flag set: skipped creation, deletion, and merge.")
 
 
-if __name__ == "__main__":
-    main()
+def _cli_main() -> None:
+    """
+    Command-line entry point with an interactive dry-run confirmation prompt.
 
+    This is only used when the script is executed directly
+    (``python repeat_v2.py``), never from the background job manager.
+    """
+    parser = argparse.ArgumentParser(description="Process recurring demonstrations")
+    parser.add_argument("--dry-run", action="store_true", help="Do not write changes to the database; only simulate")
+    parser.add_argument("--only-calculate", action="store_true", help="Only calculate next occurrences without creating or deleting demos")
+    args = parser.parse_args()
+
+    if args.dry_run:
+        print(f"DRY RUN: {args.dry_run}, want to continue? (y/n)")
+        answer = input().strip().lower()
+        if answer != 'y':
+            logger.info("Aborting demonstration processing.")
+            return
+
+    main(dry_run=args.dry_run, only_calculate=args.only_calculate)
+
+
+if __name__ == "__main__":
+    _cli_main()

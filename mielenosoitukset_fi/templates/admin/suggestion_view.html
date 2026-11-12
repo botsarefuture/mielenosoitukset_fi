@@ -1,0 +1,119 @@
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+
+{% block title %}{{ _('Ehdotuksen tarkastelu') }}{% endblock %}
+
+{% block main_content %}
+{% macro render_organizers(entries) -%}
+{%- if not entries -%}—
+{%- else -%}
+{%- for org in entries %}{% if org is mapping %}{{ org.get('name') or '' }}{% set org_bits = [] %}{% if org.get('email') %}{% set _ = org_bits.append(org.get('email')) %}{% endif %}{% if org.get('website') %}{% set _ = org_bits.append(org.get('website')) %}{% endif %}{% if org_bits %} ({{ org_bits | join(', ') }}){% endif %}{% else %}{{ org }}{% endif %}{{ '; ' if not loop.last }}{% endfor %}
+{%- endif -%}
+{%- endmacro %}
+<div class="admin-form-page admin-page">
+  {% if suggestion %}
+    {% set normalized_status = (suggestion.status or 'pending')|lower %}
+    {% call admin_page_hero(
+      suggestion.original_values.get('title', _('Mielenosoituksen muutosehdotus')),
+      _('Vertaa nykyisiä ja ehdotettuja arvoja ja valitse vain ne muutokset, jotka haluat julkaista.'),
+      _('Ehdotuksen tarkastelu'),
+      [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (_('Ehdotukset'), url_for('admin_demo.suggestions_list')), (_('Tarkastelu'), none)],
+      back_url=url_for('admin_demo.suggestions_list'),
+      back_label=_('Ehdotukset')
+    ) %}
+      {% if normalized_status in ('new', 'pending') %}<span class="admin-status-badge admin-status-badge--info"><i class="fas fa-star" aria-hidden="true"></i>{{ _('Uusi') }}</span>
+      {% elif normalized_status == 'applied' %}<span class="admin-status-badge admin-status-badge--success"><i class="fas fa-check" aria-hidden="true"></i>{{ _('Hyväksytty') }}</span>
+      {% elif normalized_status == 'rejected' %}<span class="admin-status-badge admin-status-badge--danger"><i class="fas fa-xmark" aria-hidden="true"></i>{{ _('Hylätty') }}</span>
+      {% else %}<span class="admin-status-badge admin-status-badge--warning">{{ suggestion.status }}</span>{% endif %}
+    {% endcall %}
+
+    <section class="admin-workspace-summary" aria-label="{{ _('Ehdotuksen tiedot') }}">
+      <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-hashtag" aria-hidden="true"></i></span><div><span>{{ _('Mielenosoitus') }}</span><strong><a href="{{ url_for('demonstration_detail', demo_id=suggestion.demo_id) }}" target="_blank" rel="noopener noreferrer">{{ suggestion.demo_id[:12] }}{% if suggestion.demo_id|length > 12 %}…{% endif %}</a></strong></div></article>
+      <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-envelope" aria-hidden="true"></i></span><div><span>{{ _('Lähettäjä') }}</span><strong>{{ suggestion.reporter_email or (suggestion.suggested_by or {}).get('email') or _('Tuntematon') }}</strong></div></article>
+      <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-calendar" aria-hidden="true"></i></span><div><span>{{ _('Luontiaika') }}</span><strong>{{ suggestion.created_at.strftime('%d.%m.%Y %H:%M') if suggestion.created_at else '—' }}</strong></div></article>
+      <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-code-compare" aria-hidden="true"></i></span><div><span>{{ _('Muutoksia') }}</span><strong>{{ suggestion.suggested_fields|length if suggestion.suggested_fields else 0 }}</strong></div></article>
+    </section>
+
+    {% if suggestion.suggested_fields %}
+    <form class="admin-form admin-workspace-form" method="post" action="{{ url_for('admin_demo.suggestion_apply', suggestion_id=suggestion._id) }}" id="demo-suggestion-form">
+      <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="changes-title">
+        <div class="admin-data-view__header admin-selection-status" aria-live="polite"><div><strong id="changes-title">{{ _('Ehdotetut muutokset') }}</strong><span class="d-block text-muted" id="selection-count">{{ _('Valitse kentät, jotka haluat päivittää') }}</span></div></div>
+        <div class="admin-data-view__viewport">
+          <table class="admin-data-view__table">
+            <thead><tr><th>{{ _('Kenttä') }}</th><th>{{ _('Nykyinen arvo') }}</th><th>{{ _('Ehdotettu arvo') }}</th><th class="admin-selection-column">{{ _('Valitse') }}</th></tr></thead>
+            <tbody>
+              {% for key, proposed_value in suggestion.suggested_fields.items() %}
+              <tr>
+                <td><strong class="admin-data-label">{{ key }}</strong></td>
+                <td><div class="admin-data-value {% if not suggestion.original_values.get(key) %}admin-data-value--empty{% endif %}">{% set current_value = suggestion.original_values.get(key, '') %}{% if key == 'tags' and current_value is iterable and current_value is not string %}{{ current_value|join(', ') }}{% elif key == 'organizers' and current_value is iterable and current_value is not string %}{{ render_organizers(current_value) }}{% else %}{{ current_value or _('Ei asetettu') }}{% endif %}</div></td>
+                <td><div class="admin-data-value admin-data-value--success">{% if key == 'tags' and proposed_value is iterable and proposed_value is not string %}{{ proposed_value|join(', ') }}{% elif key == 'organizers' and proposed_value is iterable and proposed_value is not string %}{{ render_organizers(proposed_value) }}{% else %}{{ proposed_value }}{% endif %}</div></td>
+                <td class="admin-selection-column"><input class="form-check-input admin-selection-checkbox field-checkbox" type="checkbox" name="apply_field" value="{{ key }}" checked aria-label="{{ _('Hyväksy kentän muutos') }}: {{ key }}"></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <div class="admin-sticky-actions">
+        <div class="admin-sticky-actions__copy"><strong>{{ _('Tarkista valinnat ennen päivittämistä') }}</strong><span>{{ _('Vain valitut kentät korvaavat mielenosoituksen nykyiset tiedot.') }}</span></div>
+        <div class="admin-sticky-actions__buttons"><button type="button" class="btn btn-outline-primary" id="select-all-btn" aria-pressed="true"><i class="fas fa-check-double" aria-hidden="true"></i><span id="select-all-label">{{ _('Poista valinnat') }}</span></button><a href="{{ url_for('admin_demo.suggestions_list') }}" class="btn btn-outline-secondary">{{ _('Peruuta') }}</a><button type="submit" class="btn btn-primary" id="apply-btn"><i class="fas fa-check-circle" aria-hidden="true"></i><span id="apply-label">{{ _('Päivitä valitut kentät') }}</span></button></div>
+      </div>
+    </form>
+    {% else %}
+    <section class="admin-section-card"><div class="admin-section-card__header"><div class="admin-section-card__title"><i class="fas fa-message" aria-hidden="true"></i><h2>{{ _('Ehdotus') }}</h2></div></div><div class="admin-section-card__body"><p class="mb-0">{{ suggestion.suggestion or _('Ei strukturoituja ehdotuksia.') }}</p></div></section>
+    {% endif %}
+
+    {% if suggestion.reporter_comment %}<section class="admin-section-card"><div class="admin-section-card__header"><div class="admin-section-card__title"><i class="fas fa-comment" aria-hidden="true"></i><h2>{{ _('Lähettäjän kommentti') }}</h2></div></div><div class="admin-section-card__body"><p class="mb-0">{{ suggestion.reporter_comment }}</p></div></section>{% endif %}
+
+    <section class="admin-form-section" aria-labelledby="reject-heading">
+      <div class="admin-form-section__header"><span class="admin-form-section__icon"><i class="fas fa-ban" aria-hidden="true"></i></span><div><h2 id="reject-heading">{{ _('Hylkää ehdotus') }}</h2><p>{{ _('Ehdotettuja muutoksia ei julkaista.') }}</p></div></div>
+      <div class="admin-form-section__body"><button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectSuggestionModal"><i class="fas fa-ban" aria-hidden="true"></i>{{ _('Hylkää ehdotus') }}</button></div>
+    </section>
+
+    <div class="modal fade admin-modal" id="rejectSuggestionModal" tabindex="-1" aria-labelledby="rejectSuggestionTitle" aria-describedby="rejectSuggestionDescription" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title" id="rejectSuggestionTitle">{{ _('Hylkää ehdotus') }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div><div class="modal-body"><p id="rejectSuggestionDescription">{{ _('Haluatko varmasti hylätä ehdotuksen? Ehdotettuja muutoksia ei julkaista.') }}</p></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button><form method="post" action="{{ url_for('admin_demo.suggestion_status_update', suggestion_id=suggestion._id) }}"><input type="hidden" name="status" value="rejected"><button type="submit" class="btn btn-danger"><i class="fas fa-ban" aria-hidden="true"></i>{{ _('Hylkää ehdotus') }}</button></form></div></div></div>
+    </div>
+  {% else %}
+    {{ admin_page_hero(_('Ehdotusta ei löytynyt'), _('Pyydetty ehdotus ei ole olemassa tai se on poistettu.'), _('Ehdotuksen tarkastelu'), [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Ehdotukset'), url_for('admin_demo.suggestions_list')), (_('Ei löytynyt'), none)], back_url=url_for('admin_demo.suggestions_list'), back_label=_('Ehdotukset')) }}
+    <div class="admin-empty-state"><span class="admin-empty-state__icon"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></span><h2 class="admin-empty-state__title">{{ _('Ehdotusta ei löytynyt') }}</h2><p>{{ _('Pyydetty ehdotus ei ole olemassa tai se on poistettu.') }}</p></div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if suggestion and suggestion.suggested_fields %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const checkboxes = [...document.querySelectorAll('.field-checkbox')];
+  const selectAllButton = document.getElementById('select-all-btn');
+  const selectAllLabel = document.getElementById('select-all-label');
+  const selectionCount = document.getElementById('selection-count');
+  const applyButton = document.getElementById('apply-btn');
+  const applyLabel = document.getElementById('apply-label');
+
+  function updateSelection() {
+    const selected = checkboxes.filter((checkbox) => checkbox.checked).length;
+    const allSelected = selected === checkboxes.length && checkboxes.length > 0;
+    selectionCount.textContent = `${selected} / ${checkboxes.length} {{ _('kenttää valittu') }}`;
+    applyButton.disabled = selected === 0;
+    selectAllButton.setAttribute('aria-pressed', allSelected ? 'true' : 'false');
+    selectAllLabel.textContent = allSelected ? '{{ _('Poista valinnat') }}' : '{{ _('Valitse kaikki') }}';
+    checkboxes.forEach((checkbox) => checkbox.closest('tr')?.setAttribute('aria-selected', checkbox.checked ? 'true' : 'false'));
+  }
+
+  selectAllButton.addEventListener('click', () => {
+    const allSelected = checkboxes.every((checkbox) => checkbox.checked);
+    checkboxes.forEach((checkbox) => { checkbox.checked = !allSelected; });
+    updateSelection();
+  });
+  checkboxes.forEach((checkbox) => checkbox.addEventListener('change', updateSelection));
+  document.getElementById('demo-suggestion-form').addEventListener('submit', () => {
+    applyButton.disabled = true;
+    applyButton.setAttribute('aria-busy', 'true');
+    applyLabel.textContent = '{{ _('Päivitetään...') }}';
+  });
+  updateSelection();
+});
+</script>
+{% endif %}
+{% endblock %}

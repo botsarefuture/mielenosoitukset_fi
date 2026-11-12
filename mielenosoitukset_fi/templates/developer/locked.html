@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Kehittäjäpaneeli lukittu{% endblock %}
+
+{% block styles %}
+<style>
+  .lock-wrap { max-width: 640px; margin: 4rem auto; text-align: center; }
+  .lock-card { background: #fff; border: 1px solid #e9ecef; border-radius: 12px; padding: 2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lock-wrap">
+  <div class="lock-card">
+    <div class="mb-3" style="font-size:48px; color:#0d6efd;"><i class="fa-solid fa-lock"></i></div>
+    <h2 class="mb-2">Kehittäjäpaneeli on lukittu</h2>
+    <p class="text-muted">Pyydä käyttöoikeus perustelemalla, mihin tarvitset API-avaimet ja kehittäjäpaneelin.</p>
+    <form action="{{ url_for('developer.request_access') }}" method="post" class="text-start mt-3">
+      <div class="mb-3">
+        <label class="form-label">Perustelu</label>
+        <textarea class="form-control" name="reason" rows="3" required placeholder="Kuvaile käyttötapaus ja miksi tarvitset pääsyn"></textarea>
+      </div>
+      <button class="btn btn-primary" type="submit">Lähetä pyyntö</button>
+      <a class="btn btn-outline-secondary ms-2" href="{{ url_for('users.auth.settings') }}">Takaisin</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

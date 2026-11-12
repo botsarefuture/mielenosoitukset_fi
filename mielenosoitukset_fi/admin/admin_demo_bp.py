@@ -1,40 +1,95 @@
 import sys
+import re
+import hmac
+import secrets
 from flask import abort, current_app
-"""
-Edit History and Diff Views
-"""
-# ...existing code...
+from copy import deepcopy
 
-# --- Edit History and Diff Views ---
-# These must be placed after all imports and after admin_demo_bp is defined
-
-
-# Approve demo with token (magic link for admins)
-
-from datetime import date, datetime
+from mielenosoitukset_fi.utils.time_utils import utcnow
+from datetime import date, datetime, timedelta, timezone
 from bson.objectid import ObjectId
 import logging
-from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+    make_response,
+    g,
+    abort,
+    has_request_context,
+    has_app_context,
+    session,
+)
 from flask_login import current_user, login_required
+from pymongo import DESCENDING, ReturnDocument
 
-from flask_babel import _
+from flask_babel import _, force_locale, gettext as babel_gettext
+from urllib.parse import quote_plus
 
-from mielenosoitukset_fi.utils.classes import Demonstration, Organizer
+from mielenosoitukset_fi.utils.classes import Demonstration, MemberShip, Case
+from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo, queue_cancellation_links_for_demo
+from mielenosoitukset_fi.utils.demo_slugs import (
+    demo_slug_is_available,
+    normalize_demo_slug,
+)
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
+from mielenosoitukset_fi.utils.admin.organizers import (
+    collect_admin_organizers,
+    linkable_admin_organization_ids,
+)
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
+from mielenosoitukset_fi.utils.demo_translation_cache import (
+    demo_is_translation_candidate,
+    get_cached_deepl_suggestion_for_demo,
+    get_or_create_deepl_suggestions_for_demo,
+)
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.variables import CITY_LIST
-from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
-from .utils import mongo, log_admin_action_V2, AdminActParser, _ADMIN_TEMPLATE_FOLDER
+from mielenosoitukset_fi.utils.cities import CITY_NAME_TO_KEY, normalize_city_key
+from mielenosoitukset_fi.utils.city_assignment import touch_city_assignment
+from mielenosoitukset_fi.utils.city_settings import enabled_city_names
+from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
+from mielenosoitukset_fi.utils.geocode import geocode_address as geocode_address_lookup
+from mielenosoitukset_fi.utils.wrappers import (
+    admin_required,
+    has_demo_approval_permission,
+    has_demo_permission,
+    permission_required,
+)
+from mielenosoitukset_fi.users.models import User
+from .utils import (
+    mongo,
+    log_admin_action_V2,
+    AdminActParser,
+    _ADMIN_TEMPLATE_FOLDER,
+    capture_actor_context,
+    capture_request_context,
+    capture_process_context,
+)
 
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+from mielenosoitukset_fi.demonstrations.audit import (
+    record_demo_change,
+    log_demo_audit_entry,
+    save_demo_history,
+    log_super_audit,
+)
+from mielenosoitukset_fi.demonstrations.decisions import apply_demo_decision
+from mielenosoitukset_fi.demonstrations.rollback import (
+    PENDING_ROLLBACK_HISTORY, commit_rollback, flush_rollback_history, restore_merge_conflict,
+)
+from .pagination import build_admin_pagination, parse_admin_pagination
 
 
 # Secret key for generating tokens
 SECRET_KEY = "your_secret_key"
+
 serializer = URLSafeTimedSerializer(SECRET_KEY)
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 
@@ -44,12 +99,507 @@ from mielenosoitukset_fi.utils.logger import logger
 
 email_sender = EmailSender()
 
+MERGE_FIELD_DEFINITIONS = [
+    {"key": "title", "label": _("Otsikko"), "type": "text"},
+    {"key": "description", "label": _("Kuvaus"), "type": "longtext"},
+    {"key": "date", "label": _("Päivämäärä"), "type": "text"},
+    {"key": "start_time", "label": _("Alkuaika"), "type": "text"},
+    {"key": "end_time", "label": _("Loppuaika"), "type": "text"},
+    {"key": "city", "label": _("Kaupunki"), "type": "text"},
+    {"key": "address", "label": _("Osoite"), "type": "text"},
+    {"key": "type", "label": _("Tapahtumatyyppi"), "type": "text"},
+    {"key": "route", "label": _("Reitti"), "type": "list"},
+    {"key": "organizers", "label": _("Järjestäjät"), "type": "organizers"},
+    {"key": "tags", "label": _("Tunnisteet"), "type": "list"},
+    {"key": "facebook", "label": _("Facebook-linkki"), "type": "text"},
+    {"key": "cover_picture", "label": _("Kansikuva"), "type": "text"},
+    {"key": "approved", "label": _("Hyväksytty"), "type": "bool"},
+    {"key": "hide", "label": _("Piilotettu"), "type": "bool"},
+    {"key": "slug", "label": _("Lyhytlinkki"), "type": "text"},
+    {"key": "parent", "label": _("Toistuvan demon vanhempi"), "type": "objectid"},
+    {"key": "recurs", "label": _("Merkitty toistuvaksi"), "type": "bool"},
+]
+
+MERGE_BOOL_FIELDS = {"recurs", "approved", "hide"}
+
+
+MAX_MERGE_COUNT = 10
+
+
+def _safe_translate(message: str, **kwargs) -> str:
+    if has_request_context():
+        return _(message) % kwargs
+    if has_app_context():
+        default_locale = current_app.config.get("BABEL_DEFAULT_LOCALE")
+        if default_locale:
+            try:
+                with force_locale(default_locale):
+                    return babel_gettext(message) % kwargs
+            except Exception:
+                pass
+    return message % kwargs
+
+
+def _value_is_empty(value):
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return not value.strip()
+    if isinstance(value, (list, tuple, set, dict)):
+        return len(value) == 0
+    return False
+
+
+def _normalize_datetime(value):
+    if isinstance(value, datetime):
+        return value
+    return datetime.min
+
+
+def _score_demo_for_guided(doc, submitter=None):
+    created = _normalize_datetime(doc.get("created_datetime"))
+    if created is datetime.min:
+        try:
+            created = doc.get("_id").generation_time
+        except Exception:
+            created = datetime.min
+    submitter_score = 0
+    if submitter:
+        if submitter.get("submitter_email"):
+            submitter_score = 2
+        elif submitter.get("submitter_name"):
+            submitter_score = 1
+    return (
+        1 if doc.get("approved") else 0,
+        1 if not doc.get("rejected") else 0,
+        1 if not doc.get("cancelled") else 0,
+        1 if not doc.get("hide") else 0,
+        submitter_score,
+        created.timestamp(),
+    )
+
+
+def _demo_status_meta(doc):
+    if doc.get("approved"):
+        return _("Hyväksytty"), "success", _("Tämä mielenosoitus on jo hyväksytty ja näkyy julkisesti.")
+    if doc.get("rejected"):
+        return _("Hylätty"), "danger", _("Tämä mielenosoitus on hylätty.")
+    if doc.get("cancelled"):
+        return _("Peruttu"), "warning", _("Tämä mielenosoitus on merkitty perutuksi.")
+    if doc.get("hide"):
+        return _("Piilotettu"), "secondary", _("Tämä mielenosoitus on piilotettu listauksista.")
+    return _("Kesken"), "info", _("Tämä mielenosoitus odottaa käsittelyä.")
+
+
+TRANSLATION_EDITABLE_FIELDS = ("title", "description", "tags")
+
+
+def _default_demo_language():
+    return current_app.config.get("BABEL_DEFAULT_LOCALE", "fi")
+
+
+def _supported_translation_locales(demo_doc=None):
+    configured = current_app.config.get("BABEL_SUPPORTED_LOCALES", ["fi"])
+    default_language = (
+        (demo_doc or {}).get("default_language")
+        or _default_demo_language()
+    )
+    locales = []
+    for locale in configured:
+        if locale == default_language:
+            continue
+        locales.append(locale)
+    return locales
+
+
+def _translation_language_names():
+    return current_app.config.get("BABEL_LANGUAGES", {})
+
+
+def _demo_source_language(demo_doc):
+    return demo_doc.get("default_language") or _default_demo_language()
+
+
+def _demo_translation_payload(demo_doc, language):
+    return ((demo_doc.get("translations") or {}).get(language) or {})
+
+
+def _demo_translation_proposal(demo_doc, language):
+    return ((demo_doc.get("translation_proposals") or {}).get(language) or {})
+
+
+def _translation_summary_rows(demo_doc):
+    rows = []
+    language_names = _translation_language_names()
+    supported_locales = _supported_translation_locales(demo_doc)
+    approved = demo_doc.get("translations") or {}
+    proposals = demo_doc.get("translation_proposals") or {}
+    for locale in supported_locales:
+        proposal = proposals.get(locale) or {}
+        approved_translation = approved.get(locale) or {}
+        rows.append(
+            {
+                "locale": locale,
+                "label": language_names.get(locale, locale),
+                "approved": approved_translation,
+                "proposal": proposal,
+                "proposal_status": proposal.get("status"),
+            }
+        )
+    return rows
+
+
+def _can_translate_demos(user):
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    if getattr(user, "role", None) in {"admin", "translator"}:
+        return True
+    return user.has_permission("TRANSLATE_DEMO")
+
+
+def _can_review_demo_translations(user):
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    if getattr(user, "role", None) in {"admin", "global_admin"}:
+        return True
+    return user.has_permission("REVIEW_DEMO_TRANSLATIONS")
+
+
+def _filter_redundant_recurring_children(demos):
+    parent_ids = {
+        parent_id
+        for demo in demos
+        if (parent_id := _normalize_objectid(demo.get("parent")))
+    }
+    if not parent_ids:
+        return demos
+
+    projection = {"description": 1}
+    parent_docs = list(mongo.recu_demos.find({"_id": {"$in": list(parent_ids)}}, projection))
+    found_parent_ids = {doc["_id"] for doc in parent_docs}
+    missing_parent_ids = parent_ids - found_parent_ids
+    if missing_parent_ids:
+        parent_docs.extend(
+            mongo.demonstrations.find(
+                {"_id": {"$in": list(missing_parent_ids)}},
+                projection,
+            )
+        )
+    parent_descriptions = {
+        doc["_id"]: html_to_markdown(doc.get("description"))
+        for doc in parent_docs
+    }
+
+    return [
+        demo
+        for demo in demos
+        if not (
+            (parent_id := _normalize_objectid(demo.get("parent")))
+            and parent_id in parent_descriptions
+            and html_to_markdown(demo.get("description")) == parent_descriptions[parent_id]
+        )
+    ]
+
+
+def _find_translation_source(demo_id):
+    """Return a translatable one-off or recurring parent and its collection."""
+    object_id = ObjectId(demo_id)
+    demo_doc = mongo.demonstrations.find_one({"_id": object_id})
+    if demo_doc:
+        return demo_doc, mongo.demonstrations, False
+
+    recurring_doc = mongo.recu_demos.find_one({"_id": object_id})
+    if not recurring_doc:
+        return None, None, False
+
+    # Active recurring parents can have an old series start date. Use the next
+    # generated occurrence for translation-candidate and DeepL eligibility checks.
+    recurring_doc = dict(recurring_doc)
+    next_child = mongo.demonstrations.find_one(
+        {
+            "parent": object_id,
+            "date": {"$gte": date.today().isoformat()},
+        },
+        {"date": 1},
+        sort=[("date", 1)],
+    )
+    if next_child:
+        recurring_doc["date"] = next_child.get("date")
+    return recurring_doc, mongo.recu_demos, True
+
+
+def _collect_translation_proposal_form(language):
+    tags_raw = request.form.get("translated_tags", "")
+    tags = [tag.strip() for tag in tags_raw.split(",") if tag.strip()]
+    proposal = {
+        "language": language,
+        "title": (request.form.get("translated_title") or "").strip(),
+        "description": markdown_to_html(request.form.get("translated_description")),
+        "tags": tags,
+    }
+    provider = (request.form.get("suggestion_provider") or "").strip()
+    source_hash = (request.form.get("suggestion_source_hash") or "").strip()
+    auto_generated = (request.form.get("suggestion_auto_generated") or "").strip().lower() == "true"
+    if provider:
+        proposal["_meta"] = {
+            "provider": provider,
+            "source_hash": source_hash or None,
+            "auto_generated": auto_generated,
+        }
+    return proposal
+
+
+def _proposal_has_content(proposal):
+    return any(
+        bool(proposal.get(field))
+        for field in TRANSLATION_EDITABLE_FIELDS
+    )
+
+
+def _case_admin_username():
+    try:
+        return getattr(current_user, "username", None) or "system"
+    except Exception:
+        return "system"
+
+
+def _add_case_log(case_doc, action_type, note=None, close_case=False, new_demo_id=None, close_reason=None, metadata=None):
+    if not case_doc:
+        return
+    case_id = case_doc["_id"] if isinstance(case_doc, dict) else case_doc
+    now = utcnow()
+    log_entry = {
+        "timestamp": now,
+        "admin": _case_admin_username(),
+        "action_type": action_type,
+        "note": note,
+    }
+    history_entry = {
+        "timestamp": now,
+        "action": action_type,
+        "user": _case_admin_username(),
+        "metadata": metadata or {},
+    }
+    set_fields = {"updated_at": now}
+    if new_demo_id:
+        try:
+            set_fields["demo_id"] = ObjectId(new_demo_id)
+        except Exception:
+            pass
+    if close_case:
+        set_fields["meta.closed"] = True
+        set_fields["meta.closed_at"] = now
+        if close_reason:
+            set_fields["meta.closed_reason"] = close_reason
+    update_doc = {
+        "$push": {
+            "action_logs": log_entry,
+            "case_history": history_entry,
+        },
+        "$set": set_fields,
+    }
+    mongo.cases.update_one({"_id": case_id}, update_doc)
+
+
+def _handle_cases_after_merge(primary_id, secondary_ids, doc_map):
+    try:
+        all_obj_ids = [ObjectId(primary_id)] + [ObjectId(sec_id) for sec_id in secondary_ids]
+    except Exception:
+        return
+    case_docs = list(mongo.cases.find({"demo_id": {"$in": all_obj_ids}}))
+    if not case_docs:
+        return
+
+    def _case_sort_key(doc):
+        return doc.get("created_at") or getattr(doc.get("_id"), "generation_time", utcnow())
+
+    open_cases = [doc for doc in case_docs if not ((doc.get("meta") or {}).get("closed"))]
+    keep_case = min(open_cases, key=_case_sort_key) if open_cases else min(case_docs, key=_case_sort_key)
+
+    primary_title = doc_map.get(primary_id, {}).get("title") or _("tuntematon")
+    closed_case_labels = []
+
+    for case_doc in case_docs:
+        case_id = case_doc["_id"]
+        if case_id == keep_case["_id"]:
+            note = _(
+                "Mielenosoitukset yhdistettiin. Tämä tapaus jatkaa päämielenosoituksen %(title)s (%(id)s) käsittelyä."
+            ) % {"title": primary_title, "id": primary_id}
+            _add_case_log(
+                case_doc,
+                "merge_demo",
+                note=note,
+                close_case=False,
+                new_demo_id=primary_id,
+                metadata={"primary_demo_id": primary_id},
+            )
+            continue
+
+        note = _(
+            "Tapaus suljettiin, koska siihen liittyvä mielenosoitus yhdistettiin päämielenosoitukseen %(title)s (%(id)s)."
+        ) % {"title": primary_title, "id": primary_id}
+        _add_case_log(
+            case_doc,
+            "merge_demo_close",
+            note=note,
+            close_case=True,
+            close_reason="merged_demo",
+            metadata={"primary_demo_id": primary_id},
+        )
+        label = case_doc.get("running_num") or str(case_id)
+        closed_case_labels.append(str(label))
+
+    if closed_case_labels:
+        summary_note = _(
+            "Seuraavat tapaukset suljettiin ja linkitettiin tähän: %(cases)s."
+        ) % {"cases": ", ".join(closed_case_labels)}
+        _add_case_log(
+            keep_case,
+            "merge_demo_summary",
+            note=summary_note,
+            close_case=False,
+            new_demo_id=primary_id,
+            metadata={"closed_cases": closed_case_labels},
+        )
+
+
+def _apply_demo_decision(demo_id, decision, source, used_token_id=None):
+    """Route adapter for the shared idempotent moderation service."""
+    actor = capture_actor_context()
+    if source == "token":
+        registered = mongo[MAGIC_COLLECTION].find_one({"_id": used_token_id}) or {}
+        recipient = registered.get("intended_recipient")
+        actor = {**actor, "link_recipient": recipient, "authentication": "session" if actor.get("user_id") else "bearer_link"}
+        if not actor.get("user_id"):
+            actor["username"] = f"Linkki lähetetty: {recipient.get('username') or recipient.get('email')}" if recipient else "magic-link"
+            actor["role"] = "token"
+    return apply_demo_decision(
+        mongo,
+        demo_id,
+        decision,
+        actor=actor,
+        source=source,
+        email_sender=email_sender,
+        public_url=url_for(
+            "demonstration_detail", demo_id=str(demo_id), _external=True
+        ),
+        used_token_id=used_token_id,
+    )
+
+
+def _split_demo_ids(raw_ids):
+    if not raw_ids:
+        return []
+    ids = []
+    for part in str(raw_ids).split(","):
+        clean = part.strip()
+        if clean and clean not in ids:
+            ids.append(clean)
+    return ids
+
+
+def _normalize_objectid(value):
+    if isinstance(value, ObjectId):
+        return value
+    try:
+        if value and ObjectId.is_valid(str(value)):
+            return ObjectId(str(value))
+    except Exception:
+        return None
+    return None
+
+
+def _find_demo_with_alias_support(demo_id):
+    if not demo_id:
+        return None
+    oid = None
+    if ObjectId.is_valid(str(demo_id)):
+        oid = ObjectId(str(demo_id))
+        demo = mongo.demonstrations.find_one({"_id": oid})
+        if demo:
+            return demo
+        alias_demo = mongo.demonstrations.find_one({"aliases": {"$in": [oid]}})
+        if alias_demo:
+            return alias_demo
+    return None
+
+
+def _deduplicate_demos(demo_list):
+    seen = set()
+    unique = []
+    for demo in demo_list:
+        demo_id = str(demo.get("_id"))
+        if not demo_id or demo_id in seen:
+            continue
+        seen.add(demo_id)
+        unique.append(demo)
+    return unique
+
+
+def _split_admin_filter_tokens(raw_value: str) -> list[str]:
+    tokens = []
+    for part in re.split(r"[,\s]+", raw_value or ""):
+        token = part.strip().lstrip("#")
+        if token:
+            tokens.append(token)
+    return tokens
+
+
+def _tag_exact_filter(tag: str):
+    return {"$regex": rf"^#?{re.escape(tag)}$", "$options": "i"}
+
+
+def _demo_text_search_clause(search_query: str):
+    escaped_query = re.escape(search_query)
+    regex_filter = {"$regex": escaped_query, "$options": "i"}
+    return {
+        "$or": [
+            {"title": regex_filter},
+            {"city": regex_filter},
+            {"address": regex_filter},
+            {"description": regex_filter},
+            {"tags": regex_filter},
+        ]
+    }
+
+
+def _json_safe(value):
+    if isinstance(value, dict):
+        return {k: _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return type(value)(_json_safe(v) for v in value)
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
+
 @admin_demo_bp.before_request
 def log_request_info():
-    """Log request information before handling it."""
-    log_admin_action_V2(
-        AdminActParser().log_request_info(request.__dict__, current_user)
-    )
+    """Log request information before handling it (non-blocking)."""
+    import threading
+
+    g.audit_timeline_url = url_for("admin_demo.audit_timeline")
+
+    # The edit URL contains a bearer credential in its path. Token lifecycle
+    # events are audited separately using only the registry id/hash metadata,
+    # so never hand the raw URL to the generic request logger.
+    if request.endpoint and request.endpoint.endswith("_with_token"):
+        return
+
+    def _log_async():
+        try:
+            log_admin_action_V2(
+                AdminActParser().log_request_info(request.__dict__, current_user)
+            )
+        except Exception:
+            pass
+
+    threading.Thread(target=_log_async, daemon=True).start()
 
 @admin_demo_bp.route("/recommend_demo/<demo_id>", methods=["POST"])
 @login_required
@@ -89,13 +639,63 @@ def recommend_demo(demo_id):
         {"$set": {"demo_id": str(demo_id), "recommend_till": recommend_till}},
         upsert=True
     )
+    annotated_demo = deepcopy(demo_data)
+    annotated_demo["_audit_note"] = {
+        "action": "recommend_demo",
+        "recommend_till": recommend_till,
+        "timestamp": utcnow(),
+        "user": _get_actor_label(),
+    }
+    hist_id = save_demo_history(
+        str(demo_id),
+        demo_data,
+        annotated_demo,
+    )
+    log_demo_audit_entry(
+        demo_id,
+        action="recommend_demo",
+        message=_("%(user)s suositteli mielenosoituksen") % {"user": _get_actor_label()},
+        details={"recommend_till": recommend_till, "history_id": str(hist_id) if hist_id else None},
+    )
     return jsonify({"status": "OK", "message": _(u"Mielenosoitus suositeltu.")})
+
+
+@admin_demo_bp.route("/unrecommend_demo/<demo_id>", methods=["POST"])
+@login_required
+@admin_required
+def unrecommend_demo(demo_id):
+    """Remove a recommendation from a demonstration."""
+    if not getattr(current_user, "global_admin", False):
+        return jsonify({"status": "ERROR", "message": _(u"Vain ylläpitäjät voivat poistaa suosituksia.")}), 403
+
+    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_data:
+        return jsonify({"status": "ERROR", "message": _(u"Mielenosoitusta ei löytynyt.")}), 404
+
+    result = mongo.recommended_demos.delete_one({"demo_id": str(demo_id)})
+    if result.deleted_count == 0:
+        return jsonify({"status": "ERROR", "message": _(u"Mielenosoitus ei ole suositeltu.")}), 400
+
+    annotated_demo = deepcopy(demo_data)
+    annotated_demo["_audit_note"] = {
+        "action": "unrecommend_demo",
+        "timestamp": utcnow(),
+        "user": _get_actor_label(),
+    }
+    hist_id = save_demo_history(str(demo_id), demo_data, annotated_demo)
+    log_demo_audit_entry(
+        demo_id,
+        action="unrecommend_demo",
+        message=_("%(user)s poisti mielenosoituksen suosituksen") % {"user": _get_actor_label()},
+        details={"history_id": str(hist_id) if hist_id else None},
+    )
+    return jsonify({"status": "OK", "message": _(u"Suositus poistettu.")})
 
 
 @admin_demo_bp.route("/edit_history/<demo_id>", methods=["GET"])
 @login_required
 @admin_required
-@permission_required("EDIT_DEMO")
+@permission_required("EDIT_DEMO", _type="DEMONSTRATION")
 def demo_edit_history(demo_id):
     """
     View the edit history for a demonstration.
@@ -110,27 +710,289 @@ def demo_edit_history(demo_id):
     flask.Response
         Renders the edit history page.
     """
-    history = list(mongo.demo_edit_history.find({"demo_id": str(demo_id)}).sort("edited_at", -1))
-    demo = Demonstration.load_by_id(ObjectId(demo_id))
+    demo_data = _find_demo_with_alias_support(demo_id)
+    if not demo_data:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_control"))
+    _abort_if_demo_forbidden(demo_data["_id"], "EDIT_DEMO")
+
+    if not flush_rollback_history(mongo, demo_data["_id"]):
+        abort(503)
+    history_query = {"demo_id": str(demo_data["_id"])}
+    page, per_page = parse_admin_pagination(request.args)
+    total_count = mongo.demo_edit_history.count_documents(history_query)
+    pagination = build_admin_pagination(
+        "admin_demo.demo_edit_history",
+        total_count=total_count,
+        page=page,
+        per_page=per_page,
+        query_args={"demo_id": str(demo_data["_id"])},
+    )
+    history = list(
+        mongo.demo_edit_history.find(history_query)
+        .sort([("edited_at", -1), ("_id", -1)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
+    )
+    demo = Demonstration.from_dict(demo_data)
     demo_name = demo.title
-    current_demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
-    
     return render_template(
         "admin/demonstrations/edit_history.html",
         history=history,
-        demo_id=demo_id,
+        demo_id=str(demo_data["_id"]),
         demo_name=demo_name,
-    current_demo_data=current_demo_data  # <-- pass current demo JSON   
-        
+        current_demo_data=demo_data,
+        total_count=total_count,
+        **pagination,
     )
+
+
+@admin_demo_bp.route('/suggestions')
+@login_required
+@admin_required
+@permission_required('EDIT_DEMO')
+def suggestions_list():
+    """
+    List incoming demo suggestions for admin review.
+    """
+    status_filter = (request.args.get("status") or "all").strip().lower()
+    if status_filter not in {"all", "new", "pending", "applied", "rejected"}:
+        status_filter = "all"
+    page, per_page = parse_admin_pagination(request.args)
+
+    # Suggestions inherit the demonstration's EDIT_DEMO scope. Resolve that
+    # scope at the query level (mirroring demo_control's permission filters) so
+    # city/organization administrators never receive global rows or counts.
+    # Global admins and holders of a global EDIT_DEMO grant skip the restriction
+    # exactly like the per-suggestion access check they replace.
+    demo_id_filter = None
+    if not _user_has_global_demo_permission("EDIT_DEMO"):
+        permission_scope = current_user._perm_in("EDIT_DEMO")
+        organization_ids = [
+            ObjectId(scope)
+            for scope in permission_scope
+            if str(scope) != "global" and ObjectId.is_valid(str(scope))
+        ]
+        city_keys = (
+            current_user.scoped_city_keys_for("EDIT_DEMO")
+            if hasattr(current_user, "scoped_city_keys_for")
+            else []
+        )
+        city_names = [
+            city for city in CITY_LIST if normalize_city_key(city) in city_keys
+        ]
+        permission_filters = [{"editors": current_user.id}]
+        if organization_ids:
+            permission_filters.append(
+                {
+                    "organizers": {
+                        "$elemMatch": {"organization_id": {"$in": organization_ids}}
+                    }
+                }
+            )
+        if city_keys:
+            permission_filters.append(
+                {
+                    "$or": [
+                        {"city_key": {"$in": city_keys}},
+                        {"city": {"$in": city_names}},
+                    ]
+                }
+            )
+        if "global" not in permission_scope:
+            accessible_demo_ids = [
+                str(demo["_id"])
+                for demo in mongo.demonstrations.find(
+                    {"$or": permission_filters}, {"_id": 1}
+                )
+            ]
+            demo_id_filter = {"demo_id": {"$in": accessible_demo_ids}}
+
+    if status_filter != "all":
+        # Mirror the Python-side fallback (missing/empty status counts as
+        # "pending") so the database filter matches the previous behaviour.
+        status_clause = (
+            {
+                "$or": [
+                    {"status": {"$in": ["new", "pending", ""]}},
+                    {"status": None},
+                    {"status": {"$exists": False}},
+                ]
+            }
+            if status_filter in {"new", "pending"}
+            else {"status": status_filter}
+        )
+    else:
+        status_clause = None
+
+    def query_from(clauses):
+        clauses = [clause for clause in clauses if clause]
+        if not clauses:
+            return {}
+        if len(clauses) == 1:
+            return clauses[0]
+        return {"$and": clauses}
+
+    base_query = query_from([demo_id_filter, status_clause])
+    total_count = mongo.demo_suggestions.count_documents(
+        query_from([demo_id_filter])
+    )
+    filtered_count = mongo.demo_suggestions.count_documents(base_query)
+    pagination = build_admin_pagination(
+        "admin_demo.suggestions_list",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args={"status": status_filter if status_filter != "all" else ""},
+    )
+    suggestions = list(
+        mongo.demo_suggestions.find(base_query)
+        .sort([("created_at", -1), ("_id", -1)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
+    )
+    return render_template(
+        "admin/suggestions_list.html",
+        suggestions=suggestions,
+        status_filter=status_filter,
+        total_count=total_count,
+        filtered_count=filtered_count,
+        has_active_filters=status_filter != "all",
+        clear_filters_url=url_for("admin_demo.suggestions_list", per_page=per_page),
+        **pagination,
+    )
+
+
+@admin_demo_bp.route('/suggestions/<suggestion_id>')
+@login_required
+@admin_required
+@permission_required('EDIT_DEMO')
+def suggestion_view(suggestion_id):
+    """
+    View a single suggestion and offer apply/reject actions.
+    """
+    try:
+        s = mongo.demo_suggestions.find_one({'_id': ObjectId(suggestion_id)})
+    except Exception:
+        s = None
+    if not s:
+        flash_message('Ehdotusta ei löytynyt.', 'error')
+        return redirect(url_for('admin_demo.suggestions_list'))
+
+    _abort_if_demo_forbidden(s.get('demo_id'), "EDIT_DEMO")
+
+    demo = None
+    try:
+        demo = mongo.demonstrations.find_one({'_id': ObjectId(s.get('demo_id'))})
+    except Exception:
+        demo = None
+
+    return render_template('admin/suggestion_view.html', suggestion=s, demo=demo)
+
+
+@admin_demo_bp.route('/suggestions/<suggestion_id>/apply', methods=['POST'])
+@login_required
+@admin_required
+@permission_required('EDIT_DEMO')
+def suggestion_apply(suggestion_id):
+    """
+    Apply selected suggested fields from a suggestion to the demo.
+    Expects form input 'apply_field' (multiple) naming the fields to apply.
+    """
+    try:
+        s = mongo.demo_suggestions.find_one({'_id': ObjectId(suggestion_id)})
+    except Exception:
+        s = None
+    if not s:
+        flash_message('Ehdotusta ei löytynyt.', 'error')
+        return redirect(url_for('admin_demo.suggestions_list'))
+
+    _abort_if_demo_forbidden(s.get('demo_id'), "EDIT_DEMO")
+
+    demo_id = s.get('demo_id')
+    try:
+        demo_doc = mongo.demonstrations.find_one({'_id': ObjectId(demo_id)})
+    except Exception:
+        demo_doc = None
+
+    if not demo_doc:
+        flash_message('Mielenosoitusta ei löytynyt.', 'error')
+        return redirect(url_for('admin_demo.suggestions_list'))
+
+    # fields selected by admin
+    selected = request.form.getlist('apply_field') or []
+    suggested = s.get('suggested_fields', {})
+    update = {}
+    for f in selected:
+        if f in suggested:
+            if isinstance(suggested[f], str) and suggested[f].strip().lower() in {'none', 'null'}:
+                continue
+            update[f] = suggested[f]
+
+    if not update:
+        flash_message('Valitse vähintään yksi kenttä päivitettäväksi.', 'error')
+        return redirect(url_for('admin_demo.suggestion_view', suggestion_id=suggestion_id))
+
+    # Save edit history
+    try:
+        mongo.demo_edit_history.insert_one({
+            'demo_id': demo_id,
+            'edited_by': str(getattr(current_user, '_id', 'unknown')),
+            'edited_at': utcnow(),
+            'old_demo': demo_doc,
+            'new_demo': {**demo_doc, **update},
+        })
+    except Exception:
+        logger.exception('Failed to write demo_edit_history for suggestion apply')
+
+    # Apply update
+    try:
+        mongo.demonstrations.update_one({'_id': ObjectId(demo_id)}, {'$set': update})
+        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': 'applied', 'applied_fields': selected, 'applied_by': str(getattr(current_user, '_id', 'unknown')), 'applied_at': utcnow()}})
+        flash_message('Ehdotuksen valitut kentät on päivitetty.', 'success')
+    except Exception:
+        logger.exception('Failed to apply suggestion to demo')
+        flash_message('Päivitys epäonnistui.', 'error')
+
+    return redirect(url_for('admin_demo.suggestions_list'))
+
+
+@admin_demo_bp.route('/suggestions/<suggestion_id>/status', methods=['POST'])
+@login_required
+@admin_required
+@permission_required('EDIT_DEMO')
+def suggestion_status_update(suggestion_id):
+    """
+    Update suggestion status (e.g., reject). Expects form 'status' param.
+    """
+    status = request.form.get('status')
+    if status not in ('rejected', 'closed'):
+        flash_message('Tuntematon tila.', 'error')
+        return redirect(url_for('admin_demo.suggestion_view', suggestion_id=suggestion_id))
+
+    try:
+        s_for_check = mongo.demo_suggestions.find_one({'_id': ObjectId(suggestion_id)})
+    except Exception:
+        s_for_check = None
+    if s_for_check:
+        _abort_if_demo_forbidden(s_for_check.get('demo_id'), "EDIT_DEMO")
+
+    try:
+        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': status, 'reviewed_by': str(getattr(current_user, '_id', 'unknown')), 'reviewed_at': utcnow()}})
+        flash_message('Ehdotuksen tila päivitetty.', 'success')
+    except Exception:
+        logger.exception('Failed to update suggestion status')
+        flash_message('Tilapäivitys epäonnistui.', 'error')
+    return redirect(url_for('admin_demo.suggestions_list'))
     
 @admin_demo_bp.route("/trigger_screenshot/<demo_id>")
 @login_required
 @admin_required
-@permission_required("EDIT_DEMO")
+@permission_required("EDIT_DEMO", _type="DEMONSTRATION")
 def trigger_ss(demo_id):
     from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
-    success, msg = trigger_screenshot(demo_id)
+    with current_app.app_context():
+        success, msg = trigger_screenshot(demo_id, force=True)
 
     if success:
         return jsonify({"status": "ok", "message": msg}), 200
@@ -160,9 +1022,13 @@ def view_demo_diff(history_id):
     from markupsafe import Markup
 
     # Fetch the history entry
+    if not BsonObjectId.is_valid(history_id):
+        abort(404)
     hist = mongo.demo_edit_history.find_one({"_id": BsonObjectId(history_id)})
     if not hist:
         abort(404)
+
+    _abort_if_demo_forbidden(hist.get("demo_id"), "EDIT_DEMO")
 
     old = hist.get("old_demo", {})
     new = hist.get("new_demo", {})
@@ -194,7 +1060,9 @@ def view_demo_diff(history_id):
         for tag, i1, i2, j1, j2 in sm.get_opcodes():
             if tag == "equal":
                 for line in a_lines[i1:i2]:
-                    html.append(f'<span class="diff-unchanged">{line}</span>')
+                    html.append(
+                        f'<span class="diff-unchanged">{Markup.escape(line)}</span>'
+                    )
             elif tag == "replace":
                 if (i2 - i1) == (j2 - j1):
                     for idx in range(i2 - i1):
@@ -203,81 +1071,148 @@ def view_demo_diff(history_id):
                         html.append('</span>')
                 else:
                     for line in a_lines[i1:i2]:
-                        html.append(f'<span class="diff-remove">{line}</span>')
+                        html.append(
+                            f'<span class="diff-remove">{Markup.escape(line)}</span>'
+                        )
                     for line in b_lines[j1:j2]:
-                        html.append(f'<span class="diff-add">{line}</span>')
+                        html.append(
+                            f'<span class="diff-add">{Markup.escape(line)}</span>'
+                        )
             elif tag == "delete":
                 for line in a_lines[i1:i2]:
-                    html.append(f'<span class="diff-remove">{line}</span>')
+                    html.append(
+                        f'<span class="diff-remove">{Markup.escape(line)}</span>'
+                    )
             elif tag == "insert":
                 for line in b_lines[j1:j2]:
-                    html.append(f'<span class="diff-add">{line}</span>')
+                    html.append(
+                        f'<span class="diff-add">{Markup.escape(line)}</span>'
+                    )
         return Markup("".join(html))
 
     # Compute diffs for each field
     diffs = {}
     all_fields = set(old.keys()) | set(new.keys())
-    for field in all_fields:
+    for field in sorted(all_fields):
         old_val = old.get(field, "")
         new_val = new.get(field, "")
-        if old_val != new_val:
-            diffs[field] = {
-                "old": old_val,
-                "new": new_val,
-                "diff_html": html_diff(old_val, new_val)
-            }
+        changed = old_val != new_val
+        diffs[field] = {
+            "old": old_val,
+            "new": new_val,
+            "changed": changed,
+            "diff_html": (
+                html_diff(old_val, new_val)
+                if changed
+                else Markup(
+                    f'<span class="diff-unchanged">'
+                    f'{Markup.escape(str(new_val))}</span>'
+                )
+            ),
+        }
 
+    demo_data = _find_demo_with_alias_support(hist.get("demo_id")) or {}
+    demo_name = (
+        demo_data.get("title")
+        or new.get("title")
+        or old.get("title")
+        or _("Mielenosoitus")
+    )
+    changed_count = sum(1 for diff in diffs.values() if diff["changed"])
+
+    rollback_csrf_token = session.get("demo_rollback_csrf_token")
+    if not rollback_csrf_token:
+        rollback_csrf_token = secrets.token_urlsafe(32)
+        session["demo_rollback_csrf_token"] = rollback_csrf_token
     return render_template(
         "admin/demonstrations/demo_diff.html",
+        rollback_csrf_token=rollback_csrf_token,
         diffs=diffs,
+        changed_count=changed_count,
+        unchanged_count=len(diffs) - changed_count,
         edited_by=hist.get("edited_by"),
         edited_at=hist.get("edited_at"),
         demo_id=hist.get("demo_id"),
-        history_id=history_id
+        demo_name=demo_name,
+        history_id=history_id,
+        rollbacked=bool(hist.get("rollbacked_from")),
     )
 @admin_demo_bp.route("/rollback_demo/<history_id>", methods=["POST"])
 @login_required
 @admin_required
 @permission_required("EDIT_DEMO")
 def rollback_demo(history_id):
-    """
-    Roll back a demonstration to a previous state from edit history.
-    Tracks the rollback for easy future undo.
-    """
-   
-
-    hist = mongo.demo_edit_history.find_one({"_id": BsonObjectId(history_id)})
+    """Restore recorded content, never permissions or moderation decisions."""
+    history_oid = _normalize_objectid(history_id)
+    if history_oid is None:
+        abort(404)
+    hist = mongo.demo_edit_history.find_one({"_id": history_oid})
     if not hist:
         abort(404)
 
-    demo_id = hist.get("demo_id")
+    demo_id = _normalize_objectid(hist.get("demo_id"))
+    if demo_id is None:
+        abort(404)
+    current_demo = mongo.demonstrations.find_one({"_id": demo_id})
+    if current_demo is None:
+        abort(404)
+    _abort_if_demo_forbidden(demo_id, "EDIT_DEMO")
+    expected = session.get("demo_rollback_csrf_token", "")
+    provided = request.form.get("csrf_token", "")
+    if not expected or not provided or not hmac.compare_digest(
+        expected.encode("utf-8"), provided.encode("utf-8")
+    ):
+        abort(400)
+    if not flush_rollback_history(mongo, demo_id):
+        abort(503)
+    current_demo.pop(PENDING_ROLLBACK_HISTORY, None)
     old_data = hist.get("old_demo")
-    if not demo_id or not old_data:
+    if not isinstance(old_data, dict) or not old_data:
         flash_message("Rollback epäonnistui: historia ei sisällä tietoja.", "error")
         return redirect(url_for("admin_demo.demo_edit_history", demo_id=demo_id))
 
-    # Fetch current demo
-    current_demo = mongo.demonstrations.find_one({"_id": BsonObjectId(demo_id)})
-    if not current_demo:
-        abort(404)
+    # Histories can be sparse or predate newer server-owned fields. Only restore
+    # represented content; city/organizer/editor scope, slugs, series linkage,
+    # visibility/cancellation and approval require their own validated workflows.
+    content_fields = {
+        "title", "description", "date", "start_time", "end_time", "address",
+        "latitude", "longitude", "img", "cover_source", "event_type",
+        "route", "type", "tags", "facebook", "cover_picture", "preview_image",
+        "gallery_images", "translations", "default_language",
+    }
+    changes = {
+        key: deepcopy(old_data[key]) for key in content_fields
+        if key in old_data and (
+            key not in current_demo or current_demo[key] != old_data[key]
+        )
+    }
+    if not changes:
+        return redirect(url_for("admin_demo.demo_edit_history", demo_id=demo_id))
 
-    # Merge old data into current to avoid losing fields
-#    restored_data = _deep_merge(current_demo, old_data)
-
-
-    # Save rollback in history with rollback origin
-    mongo.demo_edit_history.insert_one({
-        "demo_id": demo_id,
+    # Fail closed if content or authorization scope changes before the write.
+    # Unrelated metadata can advance independently; the returned pre-image
+    # captures it accurately without overwriting it with the earlier read.
+    guarded_fields = content_fields | {
+        "city", "city_key", "organizers", "editors", "last_modified",
+    }
+    guard = [
+        {key: {"$eq": current_demo[key]}}
+        for key in guarded_fields if key in current_demo
+    ]
+    guard.extend({key: {"$exists": False}} for key in guarded_fields - current_demo.keys())
+    changes["last_modified"] = utcnow()
+    metadata = {
+        "demo_id": str(demo_id),
         "edited_by": str(getattr(current_user, "_id", "unknown")),
-        "edited_at": datetime.utcnow(),
-        "old_demo": current_demo,
-        "new_demo": old_data,
-        "diff": None,  # can compute later
-        "rollbacked_from": BsonObjectId(history_id),  # track origin
-    })
-
-    # Replace current demo
-    mongo.demonstrations.replace_one({"_id": BsonObjectId(demo_id)}, old_data)
+        "edited_at": utcnow(),
+        "diff": None,
+        "rollbacked_from": history_oid,
+    }
+    previous = commit_rollback(mongo, {"_id": demo_id, "$and": guard}, changes, metadata)
+    if previous is None:
+        abort(409)
+    if not flush_rollback_history(mongo, demo_id):
+        abort(503)
 
     flash_message("Mielenosoitus palautettu valittuun versioon.", "success")
     return redirect(url_for("admin_demo.demo_edit_history", demo_id=demo_id))
@@ -301,6 +1236,14 @@ from bson.objectid import ObjectId
 
 MAGIC_TTL_SECONDS = 86400  # 24h, make configurable
 MAGIC_COLLECTION = "magic_links"  # central registry
+EDIT_LINK_DURATION_SECONDS = {
+    "1h": 60 * 60,
+    "24h": 24 * 60 * 60,
+    "7d": 7 * 24 * 60 * 60,
+}
+EDIT_LINK_MAX_AGE_SECONDS = max(EDIT_LINK_DURATION_SECONDS.values())
+EDIT_LINK_CSRF_SESSION_KEY = "demo_edit_link_csrf_token"
+MAGIC_TOKEN_CSRF_SESSION_KEY = "admin_magic_token_csrf"
 
 # Recommended: create TTL index (run once on startup/migration)
 # mongo[MAGIC_COLLECTION].create_index("expires_at", expireAfterSeconds=0)
@@ -312,17 +1255,109 @@ def _now_utc():
 def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
+
+def _edit_link_duration(value: str | None) -> tuple[str, int]:
+    duration_key = (value or "24h").strip().lower()
+    if duration_key not in EDIT_LINK_DURATION_SECONDS:
+        raise ValueError("Unsupported edit-link duration")
+    return duration_key, EDIT_LINK_DURATION_SECONDS[duration_key]
+
+
+def _edit_link_csrf_token() -> str:
+    token = session.get(EDIT_LINK_CSRF_SESSION_KEY)
+    if not token:
+        token = secrets.token_urlsafe(32)
+        session[EDIT_LINK_CSRF_SESSION_KEY] = token
+    return token
+
+
+def _valid_edit_link_csrf() -> bool:
+    expected = session.get(EDIT_LINK_CSRF_SESSION_KEY, "")
+    provided = request.headers.get("X-CSRF-Token") or request.form.get("csrf_token", "")
+    return bool(expected and provided and hmac.compare_digest(expected, provided))
+
+
+def _utc_datetime(value):
+    if not isinstance(value, datetime):
+        return None
+    return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
+
+def _token_payload(doc: dict | None) -> dict:
+    if not doc:
+        return {}
+    payload = {
+        "token_id": str(doc.get("_id")) if doc.get("_id") else None,
+        "token_hash": doc.get("token_hash"),
+        "action": doc.get("action"),
+        "demo_id": doc.get("demo_id"),
+        "created_at": doc.get("created_at"),
+        "expires_at": doc.get("expires_at"),
+        "duration_seconds": doc.get("duration_seconds"),
+        "created_by": doc.get("created_by"),
+        "created_by_id": doc.get("created_by_id"),
+        "created_by_role": doc.get("created_by_role"),
+        "created_global_admin": doc.get("created_global_admin"),
+        "created_permissions": doc.get("created_permissions"),
+        "created_remote_addr": doc.get("created_remote_addr"),
+        "created_request_path": doc.get("created_request_path"),
+        "created_request_method": doc.get("created_request_method"),
+        "created_user_agent": doc.get("created_user_agent"),
+        "created_process": doc.get("created_process"),
+        "created_actor": doc.get("created_actor"),
+        "intended_recipient": doc.get("intended_recipient"),
+        "bound_ip": doc.get("bound_ip"),
+        "first_seen_at": doc.get("first_seen_at"),
+        "ua_first": doc.get("ua_first"),
+        "ua_last": doc.get("ua_last"),
+        "used_at": doc.get("used_at"),
+        "revoked": doc.get("revoked"),
+        "revoked_at": doc.get("revoked_at"),
+    }
+    return {k: v for k, v in payload.items() if v is not None}
+
+
+def _log_token_event(
+    doc: dict | None,
+    event: str,
+    *,
+    message: str | None = None,
+    extra: dict | None = None,
+    include_demo: bool = True,
+    demo_action: str | None = None,
+):
+    if not doc:
+        return
+    payload = _token_payload(doc)
+    if extra:
+        payload.update(_json_safe(extra))
+    demo_id = payload.get("demo_id")
+    tags = ["token"]
+    if doc.get("action"):
+        tags.append(str(doc.get("action")))
+    if demo_id:
+        tags.append(f"demo:{demo_id}")
+
+    log_super_audit(
+        event_type=f"token:{event}",
+        payload=payload,
+        entity={"type": "token", "id": payload.get("token_id"), "demo_id": demo_id},
+        tags=tags,
+    )
+
+    if include_demo and demo_id:
+        log_demo_audit_entry(
+            demo_id,
+            action=demo_action or f"token_{event}",
+            message=message or f"Token {doc.get('action')} event '{event}'",
+            details=_json_safe(payload),
+        )
+
 def _client_ip() -> str:
-    """
-    Get the best-effort client IP.
-    If behind a trusted proxy, prefer X-Forwarded-For first value.
-    """
-    # If you terminate TLS behind a proxy/load balancer, make sure you trust only known proxies
-    xff = request.headers.get("X-Forwarded-For")
-    if xff:
-        # XFF may be a list "client, proxy1, proxy2"
-        return xff.split(",")[0].strip()
-    return request.remote_addr or "0.0.0.0"
+    """Return the trusted real-client IP for token auditing."""
+    from mielenosoitukset_fi.utils.request_ip import get_client_ip
+
+    return get_client_ip("0.0.0.0")
 
 def _user_agent() -> str:
     return request.headers.get("User-Agent", "")[:512]
@@ -332,11 +1367,23 @@ def _require_valid_objectid(oid: str) -> ObjectId:
         abort(400, "Invalid id")
     return ObjectId(oid)
 
-def _registry_upsert_initial(token_hash: str, action: str, demo_id: str):
+def _registry_upsert_initial(
+    token_hash: str,
+    action: str,
+    demo_id: str,
+    creator: str | None = None,
+    ttl_seconds: int = MAGIC_TTL_SECONDS,
+    recipient: dict | None = None,
+):
     """
     Create registry doc if missing. Do not bind IP yet (bind on first GET).
     """
     now = _now_utc()
+    actor_ctx = capture_actor_context()
+    req_ctx = capture_request_context() if has_request_context() else None
+    proc_ctx = capture_process_context()
+    if not creator:
+        creator = actor_ctx.get("username") or actor_ctx.get("email") or actor_ctx.get("user_id") or "[system]"
     mongo[MAGIC_COLLECTION].update_one(
         {"token_hash": token_hash},
         {
@@ -344,17 +1391,47 @@ def _registry_upsert_initial(token_hash: str, action: str, demo_id: str):
                 "action": action,                # "preview" | "approve" | "reject"
                 "demo_id": str(demo_id),
                 "created_at": now,
-                "expires_at": now + timedelta(seconds=MAGIC_TTL_SECONDS),
+                "expires_at": now + timedelta(seconds=ttl_seconds),
+                "duration_seconds": ttl_seconds,
                 "bound_ip": None,
                 "first_seen_at": None,
                 "used_at": None,
                 "revoked": False,
                 "ua_first": None,
                 "ua_last": None,
+                "created_by": creator,
+                "created_by_id": actor_ctx.get("user_id"),
+                "created_by_role": actor_ctx.get("role"),
+                "created_global_admin": actor_ctx.get("global_admin"),
+                "created_permissions": actor_ctx.get("global_permissions"),
+                "created_remote_addr": req_ctx.get("remote_addr") if req_ctx else None,
+                "created_request_path": req_ctx.get("path") if req_ctx else None,
+                "created_request_method": req_ctx.get("method") if req_ctx else None,
+                "created_user_agent": req_ctx.get("user_agent") if req_ctx else None,
+                "created_process": proc_ctx,
+                "created_actor": actor_ctx,
+                "intended_recipient": recipient,
             }
         },
         upsert=True,
     )
+    details = {
+        "token_hash": token_hash,
+        "action": action,
+        "demo_id": str(demo_id),
+        "created_by": creator,
+        "actor": actor_ctx,
+        "request": req_ctx,
+        "process": proc_ctx,
+    }
+    log_super_audit(
+        "token:create",
+        details,
+        actor=actor_ctx,
+        entity={"type": "token", "id": token_hash, "demo_id": str(demo_id)},
+        tags=["token", action],
+    )
+    return mongo[MAGIC_COLLECTION].find_one({"token_hash": token_hash})
 
 def _check_and_bind(action: str, token: str) -> dict:
     """
@@ -370,10 +1447,21 @@ def _check_and_bind(action: str, token: str) -> dict:
         flash_message("Linkki on virheellinen.", "error")
         abort(400)
 
-    # payload is the demo_id (string). You could also sign a dict with jti if you want.
-    demo_id = str(payload)
+    # Old links remain valid; new personalized links carry only an opaque jti,
+    # never the recipient's email address in the signed public URL.
+    demo_id = str(payload.get("demo_id")) if isinstance(payload, dict) else str(payload)
     token_hash = _hash_token(token)
-    doc = mongo[MAGIC_COLLECTION].find_one({"token_hash": token_hash})
+    doc = mongo[MAGIC_COLLECTION].find_one_and_update(
+        {"token_hash": token_hash},
+        {
+            "$set": {
+                "last_accessed_at": _now_utc(),
+                "last_accessed_ip": _client_ip(),
+                "last_accessed_ua": _user_agent(),
+            }
+        },
+        return_document=ReturnDocument.AFTER,
+    )
 
     if not doc:
         # If missing (e.g., never inserted), reject: we require DB presence to prevent forged tokens.
@@ -387,7 +1475,8 @@ def _check_and_bind(action: str, token: str) -> dict:
 
     # TTL / revoked / used checks
     now = _now_utc()
-    if doc.get("revoked"):
+    from mielenosoitukset_fi.utils.security_cases import link_suspended
+    if doc.get("revoked") or link_suspended(mongo, doc):
         flash_message("Linkki on mitätöity.", "error")
         abort(403)
     
@@ -398,8 +1487,32 @@ def _check_and_bind(action: str, token: str) -> dict:
             abort(410)
 
     if doc.get("used_at") is not None:
-        flash_message("Linkki on jo käytetty.", "warning")
-        abort(409)
+        client_ip = _client_ip()
+        log_admin_action_V2({
+            "event": "token_reuse_attempt",
+            "action": action,
+            "demo_id": doc.get("demo_id"),
+            "token_hash": doc.get("token_hash", ""),
+            "ip": client_ip,
+            "endpoint": request.path,
+        })
+        _log_token_event(
+            doc,
+            "reuse_attempt",
+            message=_("Kertakäyttölinkkiä (%(action)s) yritettiin käyttää uudelleen IP-osoitteesta %(ip)s.")
+            % {"action": action, "ip": client_ip or "unknown"},
+            extra={
+                "ip": client_ip,
+                "endpoint": request.path,
+                "reason": "already_used",
+            },
+            demo_action="token_reuse_attempt",
+        )
+        response = make_response(
+            render_template("admin_V2/cc/link_already_used.html", action=action),
+            200,
+        )
+        abort(response)
 
     # IP bind on first open
     ip = _client_ip()
@@ -416,11 +1529,32 @@ def _check_and_bind(action: str, token: str) -> dict:
 
     # Touch doc
     mongo[MAGIC_COLLECTION].update_one({"_id": doc["_id"]}, updates)
-    # Refresh & return latest
-    return mongo[MAGIC_COLLECTION].find_one({"_id": doc["_id"]})
+    refreshed = mongo[MAGIC_COLLECTION].find_one({"_id": doc["_id"]})
+    if refreshed:
+        event = "bound" if "bound_ip" in updates["$set"] else "touch"
+        _log_token_event(
+            refreshed,
+            event,
+            message=_("Kertakäyttölinkki käytettiin ensimmäisen kerran") if event == "bound" else None,
+            demo_action="token_bound" if event == "bound" else None,
+        )
+    return refreshed
 
 def _mark_used(doc_id):
-    mongo[MAGIC_COLLECTION].update_one({"_id": doc_id}, {"$set": {"used_at": _now_utc()}})
+    updated = mongo[MAGIC_COLLECTION].find_one_and_update(
+        {"_id": doc_id},
+        {
+            "$set": {
+                "used_at": _now_utc(),
+                "used_by_ip": _client_ip() if has_request_context() else None,
+                "used_user_agent": _user_agent() if has_request_context() else None,
+            }
+        },
+        return_document=ReturnDocument.AFTER,
+    )
+    if updated:
+        _log_token_event(updated, "used", message=_("Kertakäyttölinkki käytettiin"))
+
 
 def _load_demo_or_bust(demo_id: str):
     demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
@@ -433,21 +1567,155 @@ def _load_demo_or_bust(demo_id: str):
 # GENERATION HELPERS (call these when creating links)
 # ------------------------------------------------------------------------------
 
-def generate_demo_preview_link(demo_id: str) -> str:
+def generate_demo_preview_link(demo_id: str, *, recipient: dict | None = None) -> str:
     # Create signed token and registry doc
-    token = serializer.dumps(str(demo_id), salt="preview-demo")
-    _registry_upsert_initial(_hash_token(token), "preview", str(demo_id))
+    token = serializer.dumps({"demo_id": str(demo_id), "jti": secrets.token_urlsafe(24)} if recipient else str(demo_id), salt="preview-demo")
+    actor = _get_actor_label()
+    _registry_upsert_initial(_hash_token(token), "preview", str(demo_id), actor, recipient=recipient)
+    demo = _load_demo_or_bust(demo_id)
+    log_demo_audit_entry(
+        demo_id,
+        action="token_created",
+        message=_safe_translate("%(user)s loi esikatselulinkin", user=actor),
+        details={"token_type": "preview", "demo_date": demo.get("date"), "demo_city": demo.get("city")},
+    )
     return url_for("admin_demo.preview_demo_with_token", token=token, _external=True)
 
-def generate_demo_approve_link(demo_id: str) -> str:
-    token = serializer.dumps(str(demo_id), salt="approve-demo")
-    _registry_upsert_initial(_hash_token(token), "approve", str(demo_id))
+def generate_demo_approve_link(demo_id: str, *, recipient: dict | None = None) -> str:
+    token = serializer.dumps({"demo_id": str(demo_id), "jti": secrets.token_urlsafe(24)} if recipient else str(demo_id), salt="approve-demo")
+    actor = _get_actor_label()
+    _registry_upsert_initial(_hash_token(token), "approve", str(demo_id), actor, recipient=recipient)
+    demo = _load_demo_or_bust(demo_id)
+    log_demo_audit_entry(
+        demo_id,
+        action="token_created",
+        message=_safe_translate("%(user)s loi hyväksyntälinkin", user=actor),
+        details={"token_type": "approve", "demo_date": demo.get("date"), "demo_city": demo.get("city")},
+    )
     return url_for("admin_demo.approve_demo_with_token", token=token, _external=True)
 
-def generate_demo_reject_link(demo_id: str) -> str:
-    token = serializer.dumps(str(demo_id), salt="reject-demo")
-    _registry_upsert_initial(_hash_token(token), "reject", str(demo_id))
+def generate_demo_reject_link(demo_id: str, *, recipient: dict | None = None) -> str:
+    token = serializer.dumps({"demo_id": str(demo_id), "jti": secrets.token_urlsafe(24)} if recipient else str(demo_id), salt="reject-demo")
+    actor = _get_actor_label()
+    _registry_upsert_initial(_hash_token(token), "reject", str(demo_id), actor, recipient=recipient)
+    demo = _load_demo_or_bust(demo_id)
+    log_demo_audit_entry(
+        demo_id,
+        action="token_created",
+        message=_safe_translate("%(user)s loi hylkäyslinkin", user=actor),
+        details={"token_type": "reject", "demo_date": demo.get("date"), "demo_city": demo.get("city")},
+    )
     return url_for("admin_demo.reject_demo_with_token", token=token, _external=True)
+
+def _create_demo_edit_link(demo_id: str, duration_key: str = "24h"):
+    duration_key, duration_seconds = _edit_link_duration(duration_key)
+    demo = _load_demo_or_bust(demo_id)
+    token = serializer.dumps(
+        {"demo_id": str(demo_id), "jti": secrets.token_urlsafe(16)},
+        salt="edit-demo",
+    )
+    actor = _get_actor_label()
+    token_doc = _registry_upsert_initial(
+        _hash_token(token),
+        "edit",
+        str(demo_id),
+        actor,
+        ttl_seconds=duration_seconds,
+    )
+    log_demo_audit_entry(
+        demo_id,
+        action="token_created",
+        message=_safe_translate("%(user)s loi muokkauslinkin", user=actor),
+        details={
+            "token_type": "edit",
+            "duration": duration_key,
+            "expires_at": token_doc.get("expires_at") if token_doc else None,
+            "demo_date": demo.get("date"),
+            "demo_city": demo.get("city"),
+        },
+    )
+    return (
+        url_for("admin_demo.edit_demo_with_token", token=token, _external=True),
+        token_doc,
+    )
+
+
+def generate_demo_edit_link_token(demo_id: str, duration_key: str = "24h") -> str:
+    """Create an edit link while keeping the historical string return contract."""
+    edit_link, _ = _create_demo_edit_link(demo_id, duration_key)
+    return edit_link
+
+
+def _resolve_demo_edit_link(token: str):
+    """Resolve an edit bearer token against both its signature and registry state."""
+    try:
+        payload = serializer.loads(
+            token,
+            salt="edit-demo",
+            max_age=EDIT_LINK_MAX_AGE_SECONDS,
+        )
+        demo_id = str(payload.get("demo_id")) if isinstance(payload, dict) else str(payload)
+    except SignatureExpired:
+        return None, "expired", 410
+    except BadSignature:
+        return None, "invalid", 400
+
+    token_doc = mongo[MAGIC_COLLECTION].find_one({"token_hash": _hash_token(token)})
+    if (
+        not token_doc
+        or token_doc.get("action") != "edit"
+        or token_doc.get("demo_id") != demo_id
+    ):
+        return None, "invalid", 400
+    from mielenosoitukset_fi.utils.security_cases import link_suspended
+    if token_doc.get("revoked") or link_suspended(mongo, token_doc):
+        return None, "revoked", 403
+
+    expires_at = _utc_datetime(token_doc.get("expires_at"))
+    if not expires_at or _now_utc() >= expires_at:
+        return None, "expired", 410
+
+    mongo[MAGIC_COLLECTION].update_one(
+        {"_id": token_doc["_id"]},
+        {
+            "$set": {
+                "last_accessed_at": _now_utc(),
+                "last_accessed_ip": _client_ip(),
+                "last_accessed_ua": _user_agent(),
+            }
+        },
+    )
+    return token_doc, None, 200
+
+
+def _demo_edit_link_rows(demo_id: str):
+    now = _now_utc()
+    rows = []
+    for token_doc in (
+        mongo[MAGIC_COLLECTION]
+        .find({"action": "edit", "demo_id": str(demo_id)})
+        .sort("created_at", -1)
+        .limit(30)
+    ):
+        expires_at = _utc_datetime(token_doc.get("expires_at"))
+        if token_doc.get("revoked"):
+            status = "revoked"
+        elif not expires_at or expires_at <= now:
+            status = "expired"
+        else:
+            status = "active"
+        rows.append(
+            {
+                "id": str(token_doc["_id"]),
+                "status": status,
+                "created_by": token_doc.get("created_by") or "-",
+                "created_at": token_doc.get("created_at"),
+                "expires_at": token_doc.get("expires_at"),
+                "last_accessed_at": token_doc.get("last_accessed_at"),
+                "duration_seconds": token_doc.get("duration_seconds"),
+            }
+        )
+    return rows
 
 # ------------------------------------------------------------------------------
 # PREVIEW (read-only) – allow via GET (single-use still enforced & IP-bound)
@@ -493,41 +1761,27 @@ def approve_demo_with_token(token):
     # POST
     doc = _check_and_bind("approve", token)  # re-check before state change
     demo_id = doc["demo_id"]
-
-    demo = _load_demo_or_bust(demo_id)
-    if demo.get("approved"):
-        flash_message("Mielenosoitus on jo hyväksytty.", "info")
-        _mark_used(doc["_id"])  # still burn token
-        return redirect(url_for("admin_demo.demo_control"))
-
-    mongo.demonstrations.update_one(
-        {"_id": _require_valid_objectid(demo_id)},
-        {"$set": {"approved": True, "rejected": False}}
-    )
-
-    demo_url = url_for("demonstration_detail", demo_id=demo_id, _external=True)
-
-    
-    # Notify submitter
-    submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
-    if submitter and submitter.get("submitter_email"):
-        email_sender.queue_email(
-            template_name="demo_submitter_approved.html",
-            subject="Mielenosoituksesi on hyväksytty",
-            recipients=[submitter["submitter_email"]],
-            context={
-                "title": demo.get("title", ""),
-                "date": demo.get("date", ""),
-                "city": demo.get("city", ""),
-                "address": demo.get("address", ""),
-                "url": demo_url
-            },
+    try:
+        result = _apply_demo_decision(
+            demo_id,
+            "approved",
+            source="token",
+            used_token_id=doc["_id"],
         )
-
+    except Exception:
+        logger.exception("Failed to approve demo %s via token %s", demo_id, doc.get("_id"))
+        flash_message("Hyväksyntä epäonnistui. Yritä uudelleen.", "error")
+        return redirect(url_for("admin_demo.approve_demo_with_token", token=token))
     _mark_used(doc["_id"])
-    flash_message("Mielenosoitus hyväksyttiin onnistuneesti!", "success")
-    
-    return redirect(demo_url)
+    flash_message(
+        "Mielenosoitus hyväksyttiin onnistuneesti!"
+        if result.changed
+        else "Mielenosoitus oli jo hyväksytty.",
+        "success" if result.changed else "info",
+    )
+    return redirect(
+        url_for("demonstration_detail", demo_id=demo_id, _external=True)
+    )
 
 
 @admin_demo_bp.route("/reject_demo_with_token/<token>", methods=["GET", "POST"])
@@ -548,35 +1802,24 @@ def reject_demo_with_token(token):
     # POST
     doc = _check_and_bind("reject", token)  # re-check before state change
     demo_id = doc["demo_id"]
-
-    demo = _load_demo_or_bust(demo_id)
-    if demo.get("approved") is False and demo.get("rejected") is True:
-        flash_message("Mielenosoitus on jo hylätty.", "info")
-        _mark_used(doc["_id"])  # still burn token
-        return redirect(url_for("admin_demo.demo_control"))
-
-    mongo.demonstrations.update_one(
-        {"_id": _require_valid_objectid(demo_id)},
-        {"$set": {"approved": False, "rejected": True}}
-    )
-
-    # Notify submitter
-    submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
-    if submitter and submitter.get("submitter_email"):
-        email_sender.queue_email(
-            template_name="demo_submitter_rejected.html",
-            subject="Mielenosoituksesi on hylätty",
-            recipients=[submitter["submitter_email"]],
-            context={
-                "title": demo.get("title", ""),
-                "date": demo.get("date", ""),
-                "city": demo.get("city", ""),
-                "address": demo.get("address", ""),
-            },
+    try:
+        result = _apply_demo_decision(
+            demo_id,
+            "rejected",
+            source="token",
+            used_token_id=doc["_id"],
         )
-
+    except Exception:
+        logger.exception("Failed to reject demo %s via token %s", demo_id, doc.get("_id"))
+        flash_message("Hylkäys epäonnistui. Yritä uudelleen.", "error")
+        return redirect(url_for("admin_demo.reject_demo_with_token", token=token))
     _mark_used(doc["_id"])
-    flash_message("Mielenosoitus hylättiin onnistuneesti!", "success")
+    flash_message(
+        "Mielenosoitus hylättiin onnistuneesti!"
+        if result.changed
+        else "Mielenosoitus oli jo hylätty.",
+        "success" if result.changed else "info",
+    )
     return redirect(url_for("index"))
 from flask import request, render_template
 from flask_login import login_required, current_user
@@ -607,60 +1850,654 @@ from bson.objectid import ObjectId as BsonObjectId
 @permission_required("LIST_DEMOS")
 def demo_control():
     # --- Query parameters ---
-    search_query = request.args.get("search", "").lower()
-    approved_only = request.args.get("approved", "false").lower() == "true"
-    show_hidden = request.args.get("show_hidden", "false").lower() == "true"
-    show_past = request.args.get("show_past", "false").lower() == "true"
-    per_page = int(request.args.get("per_page", 20))
-    page = int(request.args.get("page", 1))  # page numbers start at 1
+    search_query = (request.args.get("search") or "").strip()
+    city_filter = (request.args.get("city") or "").strip()
+    year_filter = (request.args.get("year") or "").strip()
+    tag_filter = (request.args.get("tag") or "").strip()
+    missing_tag_filter = (request.args.get("missing_tag") or "").strip()
+    approval_filter = (request.args.get("approved") or "all").lower()
+    if approval_filter == "true":
+        approval_filter = "approved"
+    elif approval_filter == "false" or approval_filter not in {"all", "approved", "pending"}:
+        approval_filter = "all"
+    recurring_filter = (request.args.get("recurring") or "all").lower()
+    if recurring_filter not in {"all", "true", "false"}:
+        recurring_filter = "all"
+    sort_filter = (request.args.get("sort") or "priority").lower()
+    if sort_filter not in {"priority", "date_asc", "date_desc", "title_asc"}:
+        sort_filter = "priority"
+    show_hidden = (request.args.get("show_hidden") or "false").lower() == "true"
+    show_past_param = (request.args.get("show_past") or "all").lower()
+    show_cancelled = (request.args.get("show_cancelled") or "false").lower() == "true"
+    try:
+        requested_per_page = int(request.args.get("per_page", 20))
+    except (TypeError, ValueError):
+        requested_per_page = 20
+    per_page = requested_per_page if requested_per_page in {20, 50, 100} else 20
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
 
-    # --- Build filter ---
-    filter_query = DEMO_FILTER.copy()
-    filter_query.pop("approved", None)
+    # Determine how we treat past demonstrations based on the filter value
+    if show_past_param not in {"true", "false"}:
+        show_past_filter = "all"
+    else:
+        show_past_filter = show_past_param
 
-    if approved_only:
-        filter_query["approved"] = True
-    if not show_hidden:
-        filter_query["$or"] = [{"hide": False}, {"hide": {"$exists": False}}]
-    
-    # Permissions
+    # --- Build filter clauses ---
+    scope_clauses = [
+        {"$or": [{"rejected": {"$exists": False}}, {"rejected": False}]},
+    ]
+
+    # Permission scope is part of the base query. Counts and result rows always
+    # derive from this exact query so scoped users never see global totals.
     if not current_user.global_admin:
-        _where = current_user._perm_in("EDIT_DEMO")
-        filter_query["$or"] = [
-            {"organizers": {"$elemMatch": {"organization_id": {"$in": [BsonObjectId(org) for org in _where]}}}},
-            {"editors": current_user.id}
+        _where = current_user._perm_in("LIST_DEMOS")
+        org_scope_ids = [
+            BsonObjectId(org)
+            for org in _where
+            if str(org) != "global" and BsonObjectId.is_valid(str(org))
         ]
+        city_scope_keys = (
+            current_user.scoped_city_keys_for("LIST_DEMOS")
+            if hasattr(current_user, "scoped_city_keys_for")
+            else []
+        )
+        city_scope_names = [city for city in CITY_LIST if normalize_city_key(city) in city_scope_keys]
+        permission_filters = [{"editors": current_user.id}]
+        if org_scope_ids:
+            permission_filters.append(
+                {"organizers": {"$elemMatch": {"organization_id": {"$in": org_scope_ids}}}}
+            )
+        if city_scope_keys:
+            permission_filters.append(
+                {"$or": [{"city_key": {"$in": city_scope_keys}}, {"city": {"$in": city_scope_names}}]}
+            )
+        if "global" not in _where:
+            scope_clauses.append({"$or": permission_filters})
+
+    def query_from(clauses):
+        if not clauses:
+            return {}
+        if len(clauses) == 1:
+            return clauses[0]
+        return {"$and": clauses}
+
+    scope_query = query_from(scope_clauses)
+    filter_clauses = list(scope_clauses)
+
+    if not show_cancelled:
+        filter_clauses.append({"cancelled": {"$ne": True}})
+
+    if not show_hidden:
+        filter_clauses.append({"$or": [{"hide": {"$exists": False}}, {"hide": False}]})
+
+    if show_past_filter == "false":
+        filter_clauses.append({"$or": [{"in_past": {"$exists": False}}, {"in_past": False}]})
+
+    if approval_filter == "approved":
+        filter_clauses.append({"approved": True})
+    elif approval_filter == "pending":
+        filter_clauses.append({"approved": False})
+
+    if recurring_filter != "all":
+        filter_clauses.append({"recurs": True} if recurring_filter == "true" else {"recurs": {"$ne": True}})
+
+    if city_filter:
+        city_key = normalize_city_key(city_filter)
+        matching_names = [city for city in CITY_LIST if normalize_city_key(city) == city_key]
+        filter_clauses.append({"$or": [{"city_key": city_key}, {"city": {"$in": matching_names}}]})
+
+    if search_query:
+        filter_clauses.append(_demo_text_search_clause(search_query))
+
+    if year_filter:
+        if year_filter.isdigit() and len(year_filter) == 4:
+            filter_clauses.append({"date": {"$regex": f"^{re.escape(year_filter)}-"}})
+        else:
+            flash_message(_("Vuosisuodatin jätettiin huomiotta, koska sen pitää olla muodossa VVVV."), "warning")
+            year_filter = ""
+
+    for required_tag in _split_admin_filter_tokens(tag_filter):
+        filter_clauses.append({"tags": {"$elemMatch": _tag_exact_filter(required_tag)}})
+
+    for excluded_tag in _split_admin_filter_tokens(missing_tag_filter):
+        filter_clauses.append(
+            {"tags": {"$not": {"$elemMatch": _tag_exact_filter(excluded_tag)}}}
+        )
+
+    filter_query = query_from(filter_clauses)
 
     # --- Count total documents ---
-    total_count = mongo.demonstrations.count_documents(filter_query)
-    total_pages = (total_count + per_page - 1) // per_page  # ceil division
-
+    total_count = mongo.demonstrations.count_documents(scope_query)
+    filtered_count = mongo.demonstrations.count_documents(filter_query)
+    pending_count = mongo.demonstrations.count_documents(query_from(filter_clauses + [{"approved": False}]))
+    approved_count = mongo.demonstrations.count_documents(query_from(filter_clauses + [{"approved": True}]))
+    recurring_count = mongo.demonstrations.count_documents(query_from(filter_clauses + [{"recurs": True}]))
+    total_pages = max(1, (filtered_count + per_page - 1) // per_page)
+    page = min(page, total_pages)
     # --- Fetch current page ---
     skip_count = (page - 1) * per_page
-    demos_cursor = mongo.demonstrations.find(filter_query).sort([("date", 1), ("_id", 1)]).skip(skip_count).limit(per_page)
-    demos = list(demos_cursor)
+
+    # Use aggregation to sort unapproved demos first, then approved, all within MongoDB
+    # (avoids loading entire collection into Python memory)
+    sort_key_stage = {
+        "$addFields": {
+            "_sort_priority": {
+                "$cond": [{"$eq": ["$approved", False]}, 0, 1]
+            }
+        }
+    }
+    sort_specs = {
+        "priority": {"_sort_priority": 1, "date": 1, "_id": 1},
+        "date_asc": {"date": 1, "_id": 1},
+        "date_desc": {"date": -1, "_id": -1},
+        "title_asc": {"title": 1, "_id": 1},
+    }
+    sort_stage = {"$sort": sort_specs[sort_filter]}
+    project_stage = {"$project": {"_sort_priority": 0}}
+
+    pipeline = [
+        {"$match": filter_query},
+        sort_key_stage,
+        sort_stage,
+        {"$skip": skip_count},
+        {"$limit": per_page},
+        project_stage,
+    ]
+
+    demos = list(mongo.demonstrations.aggregate(pipeline))
+
+    recommended_lookup = {
+        doc.get("demo_id"): True for doc in mongo.recommended_demos.find({}, {"demo_id": 1})
+    }
+
+    for demo in demos:
+        demo["is_recommended"] = recommended_lookup.get(str(demo.get("_id")), False)
+
+    # Compute per-demo action grants so the UI hides actions city admins
+    # cannot perform (mirrors the backend permission checks).
+    demo_actions = {}
+    for demo in demos:
+        demo_id = demo.get("_id")
+        demo_actions[str(demo_id)] = {
+            permission
+            for permission in ("VIEW_DEMO", "EDIT_DEMO", "ACCEPT_DEMO", "GENERATE_EDIT_LINK", "CREATE_DEMO")
+            if _user_can_access_demo(demo_id, permission)
+        }
+    can_generate_edit_link = any(
+        "GENERATE_EDIT_LINK" in permissions
+        for permissions in demo_actions.values()
+    )
 
     # --- Determine next/previous pages ---
     prev_page = page - 1 if page > 1 else None
     next_page = page + 1 if page < total_pages else None
 
+    preserved_args = {
+        key: value for key, value in request.args.items()
+        if key != "page" and value not in {None, ""}
+    }
+    preserved_args["per_page"] = str(per_page)
+
+    def page_url(target_page):
+        return url_for("admin_demo.demo_control", **preserved_args, page=target_page)
+
+    approval_label = {
+        "approved": _("Hyväksytty"),
+        "pending": _("Odottaa hyväksyntää"),
+    }.get(approval_filter, "")
+    recurring_label = {
+        "true": _("Vain toistuvat"),
+        "false": _("Vain yksittäiset"),
+    }.get(recurring_filter, "")
+    sort_label = {
+        "date_asc": _("Päivämäärä, vanhin ensin"),
+        "date_desc": _("Päivämäärä, uusin ensin"),
+        "title_asc": _("Otsikko A–Ö"),
+    }.get(sort_filter, "")
+    active_filter_specs = [
+        ("search", _("Haku"), search_query),
+        ("city", _("Kaupunki"), city_filter),
+        ("year", _("Vuosi"), year_filter),
+        ("approved", _("Hyväksyntä"), approval_label),
+        ("tag", _("Sisältää tunnisteen"), tag_filter),
+        ("missing_tag", _("Puuttuva tunniste"), missing_tag_filter),
+        ("show_past", _("Menneet"), show_past_filter if show_past_filter != "all" else ""),
+        ("show_hidden", _("Piilotetut"), _("Kyllä") if show_hidden else ""),
+        ("show_cancelled", _("Perutut"), _("Kyllä") if show_cancelled else ""),
+        ("recurring", _("Toistuvat"), recurring_label),
+        ("sort", _("Järjestys"), sort_label),
+    ]
+    active_filters = []
+    for key, label, value in active_filter_specs:
+        if not value:
+            continue
+        remove_args = dict(preserved_args)
+        remove_args.pop(key, None)
+        active_filters.append({"label": label, "value": value, "remove_url": url_for("admin_demo.demo_control", **remove_args)})
+
+    range_start = (page - 1) * per_page + 1 if filtered_count else 0
+    range_end = min(page * per_page, filtered_count)
+
+    page_window_start = max(1, page - 2)
+    page_window_end = min(total_pages, page + 2)
+    visible_pages = [
+        {"number": page_number, "url": page_url(page_number)}
+        for page_number in range(page_window_start, page_window_end + 1)
+    ]
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/dashboard.html",
         demonstrations=demos,
+        demo_actions=demo_actions,
+        can_generate_edit_link=can_generate_edit_link,
+        edit_link_csrf_token=(
+            _edit_link_csrf_token() if can_generate_edit_link else None
+        ),
+        can_create_demo=_user_can_create_demo_in_city(None),
+        can_create_recurring_demo=_user_can_create_recurring_demo(),
         search_query=search_query,
-        approved_status=approved_only,
+        city_filter=city_filter,
+        city_options=enabled_city_names(mongo),
+        city_name_to_key=CITY_NAME_TO_KEY,
+        year_filter=year_filter,
+        tag_filter=tag_filter,
+        missing_tag_filter=missing_tag_filter,
+        approval_filter=approval_filter,
+        recurring_filter=recurring_filter,
+        sort_filter=sort_filter,
         show_hidden=show_hidden,
+        show_cancelled=show_cancelled,
+        show_past_filter=show_past_filter,
         per_page=per_page,
         current_page=page,
         total_pages=total_pages,
+        total_count=total_count,
+        filtered_count=filtered_count,
+        range_start=range_start,
+        range_end=range_end,
+        pending_count=pending_count,
+        approved_count=approved_count,
+        recurring_count=recurring_count,
+        active_filters=active_filters,
+        clear_filters_url=url_for("admin_demo.demo_control", per_page=per_page),
         prev_page=prev_page,
-        next_page=next_page
+        next_page=next_page,
+        prev_url=page_url(prev_page) if prev_page else None,
+        next_url=page_url(next_page) if next_page else None,
+        visible_pages=visible_pages,
+        first_page_url=page_url(1),
+        last_page_url=page_url(total_pages),
     )
+
+
+@admin_demo_bp.route("/translations", methods=["GET"])
+@login_required
+def demo_translation_dashboard():
+    if not (_can_translate_demos(current_user) or _can_review_demo_translations(current_user)):
+        abort(403)
+
+    search_query = (request.args.get("search") or "").strip()
+    page, per_page = parse_admin_pagination(request.args)
+    query = {
+        "$or": [{"rejected": {"$exists": False}}, {"rejected": False}],
+        "date": {"$gte": date.today().strftime("%Y-%m-%d")},
+    }
+
+    demo_docs = list(
+        mongo.demonstrations.find(
+            query,
+            {
+                "title": 1,
+                "description": 1,
+                "parent": 1,
+                "default_language": 1,
+                "translations": 1,
+                "translation_proposals": 1,
+            },
+        )
+        .sort([("date", 1), ("_id", 1)])
+    )
+    recurring_parent_ids = {
+        parent_id
+        for demo in demo_docs
+        if (parent_id := _normalize_objectid(demo.get("parent")))
+    }
+    recurring_parents = list(
+        mongo.recu_demos.find(
+            {"_id": {"$in": list(recurring_parent_ids)}},
+            {
+                "title": 1,
+                "description": 1,
+                "default_language": 1,
+                "translations": 1,
+                "translation_proposals": 1,
+            },
+        )
+    )
+    first_child_dates = {}
+    for child in demo_docs:
+        parent_id = _normalize_objectid(child.get("parent"))
+        if parent_id and parent_id not in first_child_dates:
+            first_child_dates[parent_id] = child.get("date")
+    for parent in recurring_parents:
+        parent["is_recurring_translation_source"] = True
+        parent["date"] = first_child_dates.get(parent["_id"], "")
+
+    all_demos = recurring_parents + _filter_redundant_recurring_children(demo_docs)
+    all_demos.sort(key=lambda demo: (demo.get("date") or "", str(demo.get("_id"))))
+    total_count = len(all_demos)
+    if search_query:
+        normalized_search = search_query.casefold()
+        all_demos = [
+            demo
+            for demo in all_demos
+            if normalized_search in (demo.get("title") or "").casefold()
+        ]
+    filtered_count = len(all_demos)
+    pagination = build_admin_pagination(
+        "admin_demo.demo_translation_dashboard",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args={"search": search_query},
+    )
+    demos = all_demos[pagination["slice_start"] : pagination["slice_end"]]
+
+    pending_items = []
+    if _can_review_demo_translations(current_user):
+        for demo in all_demos:
+            for locale, proposal in (demo.get("translation_proposals") or {}).items():
+                if proposal.get("status") != "pending":
+                    continue
+                pending_items.append(
+                    {
+                        "demo_id": str(demo["_id"]),
+                        "demo_title": demo.get("title") or _("Nimetön mielenosoitus"),
+                        "language": locale,
+                        "language_label": _translation_language_names().get(locale, locale),
+                        "submitted_at": proposal.get("submitted_at"),
+                        "submitted_by": proposal.get("submitted_by_name") or proposal.get("submitted_by"),
+                        "proposal": proposal,
+                    }
+                )
+        pending_items.sort(
+            key=lambda item: (
+                str(item.get("submitted_at") or ""),
+                item.get("demo_title") or "",
+                item.get("language") or "",
+            ),
+            reverse=True,
+        )
+    pending_total = len(pending_items)
+    pending_items = pending_items[:10]
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/translations_dashboard.html",
+        demos=demos,
+        pending_items=pending_items,
+        search_query=search_query,
+        can_review_demo_translations=_can_review_demo_translations(current_user),
+        can_translate_demos=_can_translate_demos(current_user),
+        translation_language_names=_translation_language_names(),
+        total_count=total_count,
+        filtered_count=filtered_count,
+        pending_total=pending_total,
+        **pagination,
+    )
+
+
+@admin_demo_bp.route("/<demo_id>/translations", methods=["GET", "POST"])
+@login_required
+def edit_demo_translations(demo_id):
+    if not (_can_translate_demos(current_user) or _can_review_demo_translations(current_user)):
+        abort(403)
+
+    demo_doc, demo_collection, is_recurring_source = _find_translation_source(demo_id)
+    if not demo_doc:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_translation_dashboard"))
+
+    if request.method == "POST":
+        if not _can_translate_demos(current_user):
+            abort(403)
+        language = (request.form.get("language") or "").strip()
+        if language not in _supported_translation_locales(demo_doc):
+            flash_message(_("Valittu kieli ei ole sallittu käännöskieli."), "error")
+            return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id))
+        proposal_fields = _collect_translation_proposal_form(language)
+        if not _proposal_has_content(proposal_fields):
+            flash_message(_("Syötä ainakin otsikko, kuvaus tai tunnisteet käännösehdotukseen."), "error")
+            return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+        proposal_doc = {
+            **proposal_fields,
+            "status": "pending",
+            "submitted_at": datetime.utcnow(),
+            "submitted_by": str(getattr(current_user, "_id", "")),
+            "submitted_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+            "reviewed_at": None,
+            "reviewed_by": None,
+            "reviewed_by_name": None,
+            "review_notes": "",
+        }
+        demo_collection.update_one(
+            {"_id": ObjectId(demo_id)},
+            {
+                "$set": {
+                    f"translation_proposals.{language}": proposal_doc,
+                    "default_language": _demo_source_language(demo_doc),
+                }
+            },
+        )
+        log_demo_audit_entry(
+            demo_id,
+            action="submit_translation_proposal",
+            message=_("%(actor)s lähetti käännösehdotuksen kielelle %(language)s.") % {
+                "actor": _get_actor_label(),
+                "language": _translation_language_names().get(language, language),
+            },
+            details={"language": language},
+        )
+        flash_message(_("Käännösehdotus tallennettiin ja lähetettiin tarkistettavaksi."), "success")
+        return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+    selected_language = (request.args.get("language") or "").strip()
+    prefill_mode = (request.args.get("prefill") or "").strip().lower()
+    supported_locales = _supported_translation_locales(demo_doc)
+    if selected_language not in supported_locales and supported_locales:
+        selected_language = supported_locales[0]
+
+    deepl_suggestion_payload = (
+        get_cached_deepl_suggestion_for_demo(demo_doc, selected_language)
+        if selected_language
+        else None
+    )
+    deepl_suggestion = (
+        (deepl_suggestion_payload or {}).get("suggestion") or {}
+    )
+    form_seed_translation = (
+        _demo_translation_proposal(demo_doc, selected_language)
+        if selected_language
+        else {}
+    )
+    approved_translation = (
+        _demo_translation_payload(demo_doc, selected_language)
+        if selected_language
+        else {}
+    )
+    if not form_seed_translation:
+        if prefill_mode == "deepl" and deepl_suggestion:
+            form_seed_translation = deepl_suggestion
+        else:
+            form_seed_translation = approved_translation
+    form_seed_description_markdown = html_to_markdown(
+        form_seed_translation.get("description")
+    )
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/translations_editor.html",
+        demo=demo_doc,
+        selected_language=selected_language,
+        translation_locales=supported_locales,
+        translation_language_names=_translation_language_names(),
+        source_language=_demo_source_language(demo_doc),
+        approved_translation=approved_translation,
+        translation_proposal=_demo_translation_proposal(demo_doc, selected_language) if selected_language else {},
+        deepl_suggestion=deepl_suggestion,
+        deepl_suggestion_payload=deepl_suggestion_payload or {},
+        deepl_prefill_active=bool(prefill_mode == "deepl" and deepl_suggestion),
+        form_seed_translation=form_seed_translation,
+        form_seed_description_markdown=form_seed_description_markdown,
+        source_description_markdown=html_to_markdown(demo_doc.get("description")),
+        is_translation_candidate=demo_is_translation_candidate(demo_doc),
+        translation_rows=_translation_summary_rows(demo_doc),
+        can_review_demo_translations=_can_review_demo_translations(current_user),
+        can_translate_demos=_can_translate_demos(current_user),
+        is_recurring_source=is_recurring_source,
+    )
+
+
+@admin_demo_bp.route("/<demo_id>/translations/<language>/suggest", methods=["POST"])
+@login_required
+def generate_demo_translation_suggestion(demo_id, language):
+    if not _can_translate_demos(current_user):
+        abort(403)
+
+    demo_doc, _demo_collection, _is_recurring_source = _find_translation_source(demo_id)
+    if not demo_doc:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_translation_dashboard"))
+
+    if language not in _supported_translation_locales(demo_doc):
+        flash_message(_("Valittu kieli ei ole sallittu käännöskieli."), "error")
+        return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id))
+
+    result = get_or_create_deepl_suggestions_for_demo(
+        demo_doc,
+        [language],
+        force_refresh=(request.form.get("force_refresh") or "").strip().lower() == "true",
+    )
+
+    if result.get("skipped"):
+        flash_message(
+            _("Automaattisia käännösehdotuksia ei luoda menneille mielenosoituksille oletuksena."),
+            "info",
+        )
+        return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+    if result.get("cached"):
+        flash_message(_("Valmis DeepL-ehdotus löytyi välimuistista."), "success")
+    else:
+        flash_message(_("DeepL-ehdotus luotiin lähdesisällöstä."), "success")
+
+    return redirect(
+        url_for(
+            "admin_demo.edit_demo_translations",
+            demo_id=demo_id,
+            language=language,
+            prefill="deepl",
+        )
+    )
+
+
+@admin_demo_bp.route("/<demo_id>/translations/<language>/approve", methods=["POST"])
+@login_required
+def approve_demo_translation(demo_id, language):
+    if not _can_review_demo_translations(current_user):
+        abort(403)
+
+    demo_doc, demo_collection, _is_recurring_source = _find_translation_source(demo_id)
+    if not demo_doc:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_translation_dashboard"))
+
+    proposal = _demo_translation_proposal(demo_doc, language)
+    if proposal.get("status") != "pending":
+        flash_message(_("Tälle kielelle ei ole odottavaa käännösehdotusta."), "error")
+        return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+    review_notes = (request.form.get("review_notes") or "").strip()
+    approved_translation = {
+        "title": proposal.get("title", ""),
+        "description": proposal.get("description", ""),
+        "tags": proposal.get("tags", []),
+    }
+    demo_collection.update_one(
+        {"_id": ObjectId(demo_id)},
+        {
+            "$set": {
+                f"translations.{language}": approved_translation,
+                f"translation_proposals.{language}.status": "approved",
+                f"translation_proposals.{language}.reviewed_at": datetime.utcnow(),
+                f"translation_proposals.{language}.reviewed_by": str(getattr(current_user, "_id", "")),
+                f"translation_proposals.{language}.reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                f"translation_proposals.{language}.review_notes": review_notes,
+                "default_language": _demo_source_language(demo_doc),
+            }
+        },
+    )
+    log_demo_audit_entry(
+        demo_id,
+        action="approve_translation_proposal",
+        message=_("%(actor)s hyväksyi käännösehdotuksen kielelle %(language)s.") % {
+            "actor": _get_actor_label(),
+            "language": _translation_language_names().get(language, language),
+        },
+        details={"language": language},
+    )
+    flash_message(_("Käännösehdotus hyväksyttiin."), "success")
+    return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+
+@admin_demo_bp.route("/<demo_id>/translations/<language>/reject", methods=["POST"])
+@login_required
+def reject_demo_translation(demo_id, language):
+    if not _can_review_demo_translations(current_user):
+        abort(403)
+
+    demo_doc, demo_collection, _is_recurring_source = _find_translation_source(demo_id)
+    if not demo_doc:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_translation_dashboard"))
+
+    proposal = _demo_translation_proposal(demo_doc, language)
+    if proposal.get("status") != "pending":
+        flash_message(_("Tälle kielelle ei ole odottavaa käännösehdotusta."), "error")
+        return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+    review_notes = (request.form.get("review_notes") or "").strip()
+    demo_collection.update_one(
+        {"_id": ObjectId(demo_id)},
+        {
+            "$set": {
+                f"translation_proposals.{language}.status": "rejected",
+                f"translation_proposals.{language}.reviewed_at": datetime.utcnow(),
+                f"translation_proposals.{language}.reviewed_by": str(getattr(current_user, "_id", "")),
+                f"translation_proposals.{language}.reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                f"translation_proposals.{language}.review_notes": review_notes,
+                "default_language": _demo_source_language(demo_doc),
+            }
+        },
+    )
+    log_demo_audit_entry(
+        demo_id,
+        action="reject_translation_proposal",
+        message=_("%(actor)s hylkäsi käännösehdotuksen kielelle %(language)s.") % {
+            "actor": _get_actor_label(),
+            "language": _translation_language_names().get(language, language),
+        },
+        details={"language": language},
+    )
+    flash_message(_("Käännösehdotus hylättiin."), "success")
+    return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
 
 @admin_demo_bp.route("/duplicate/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("CREATE_DEMO")
+@permission_required("CREATE_DEMO", _type="DEMONSTRATION")
 def duplicate_demo(demo_id):
     """
     Duplicate a demonstration. The duplicate will have 'approved' set to False.
@@ -685,15 +2522,584 @@ def duplicate_demo(demo_id):
     demo_data["approved"] = False
     demo_data["title"] = f"{demo_data['title']} (Kopio)"
     # Set created_datetime to current time for the new demo
-    demo_data["created_datetime"] = datetime.utcnow()
+    demo_data["created_datetime"] = utcnow()
+
+        
+    # If it was a recurring demo, turn it into a non-recurring one
+    if demo_data.get("recurs", False):
+        demo_data["recurs"] = False
 
     # Optionally, clear other fields (like editors, submitters, etc.) if needed
 
     new_demo = Demonstration.from_dict(demo_data)
     new_demo.save()
 
+    log_demo_audit_entry(
+        new_demo._id,
+        action="duplicate_demo",
+        message=_("%(user)s kopioi mielenosoituksen") % {"user": _get_actor_label()},
+        details={"source_demo_id": demo_id},
+    )
+
     return jsonify({"status": "OK", "new_demo_id": str(new_demo._id)})
 
+
+@admin_demo_bp.route("/merge", methods=["GET", "POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_DEMO")
+def merge_demos():
+    if not getattr(current_user, "global_admin", False):
+        flash_message(_("Vain pääylläpitäjät voivat yhdistää mielenosoituksia."), "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    if request.method == "GET":
+        selected_ids = _split_demo_ids(request.args.get("ids"))
+        if len(selected_ids) < 2:
+            flash_message(_("Valitse vähintään kaksi mielenosoitusta yhdistämistä varten."), "warning")
+            return redirect(url_for("admin_demo.demo_control"))
+        if len(selected_ids) > MAX_MERGE_COUNT:
+            flash_message(
+                _("Voit yhdistää kerrallaan enintään %(count)s mielenosoitusta.", count=MAX_MERGE_COUNT),
+                "warning",
+            )
+            return redirect(url_for("admin_demo.demo_control"))
+
+        invalid = [demo_id for demo_id in selected_ids if not ObjectId.is_valid(demo_id)]
+        if invalid:
+            flash_message(_("Tuntematon mielenosoituksen tunniste: %(id)s", id=invalid[0]), "error")
+            return redirect(url_for("admin_demo.demo_control"))
+
+        docs = list(mongo.demonstrations.find({"_id": {"$in": [ObjectId(d) for d in selected_ids]}}))
+        doc_map = {str(doc["_id"]): doc for doc in docs}
+        ordered_docs = [doc_map[demo_id] for demo_id in selected_ids if demo_id in doc_map]
+        if len(ordered_docs) < 2:
+            flash_message(_("Kaikkia valittuja mielenosoituksia ei löytynyt."), "error")
+            return redirect(url_for("admin_demo.demo_control"))
+
+        recommended_map = {
+            doc.get("demo_id"): doc
+            for doc in mongo.recommended_demos.find({"demo_id": {"$in": selected_ids}})
+        }
+
+        submitter_docs = {
+            str(doc.get("demonstration_id")): doc
+            for doc in mongo.submitters.find(
+                {"demonstration_id": {"$in": [ObjectId(d) for d in selected_ids]}}
+            )
+        }
+        display_demos = []
+        for doc in ordered_docs:
+            serialized = stringify_object_ids(doc)
+            serialized["id"] = str(doc["_id"])
+            serialized["is_recommended"] = serialized["id"] in recommended_map
+            rec_doc = recommended_map.get(serialized["id"])
+            serialized["recommendation"] = stringify_object_ids(rec_doc) if rec_doc else None
+            status_label, status_variant, status_hint = _demo_status_meta(doc)
+            serialized["status_label"] = status_label
+            serialized["status_variant"] = status_variant
+            serialized["status_hint"] = status_hint
+            submitter_info = submitter_docs.get(serialized["id"])
+            if submitter_info:
+                serialized["submitter"] = stringify_object_ids(
+                    {
+                        "name": submitter_info.get("submitter_name"),
+                        "email": submitter_info.get("submitter_email"),
+                        "role": submitter_info.get("submitter_role"),
+                        "submitted_at": submitter_info.get("submitted_at"),
+                    }
+                )
+            else:
+                serialized["submitter"] = None
+            display_demos.append(serialized)
+
+        score_order = sorted(
+            doc_map.keys(),
+            key=lambda did: _score_demo_for_guided(doc_map[did], submitter_docs.get(did)),
+            reverse=True,
+        )
+        recommended_primary_id = score_order[0] if score_order else display_demos[0]["id"]
+
+        guided_sources = {}
+        for field in MERGE_FIELD_DEFINITIONS:
+            chosen = recommended_primary_id
+            for demo_id in score_order:
+                doc = doc_map.get(demo_id)
+                if doc is None:
+                    continue
+                value = doc.get(field["key"])
+                if not _value_is_empty(value):
+                    chosen = demo_id
+                    break
+            guided_sources[field["key"]] = chosen
+
+        guided_recommendation = next(
+            (demo_id for demo_id in score_order if recommended_map.get(demo_id)),
+            "none",
+        )
+
+        merge_warnings = []
+        if any(doc.get("approved") for doc in ordered_docs) and not all(doc.get("approved") for doc in ordered_docs):
+            merge_warnings.append(
+                _("Osa valituista mielenosoituksista on jo hyväksytty. Suosittelemme käyttämään hyväksyttyä mielenosoitusta päätapahtumana.")
+            )
+        if any(doc.get("rejected") for doc in ordered_docs):
+            merge_warnings.append(_("Mukana on hylättyjä mielenosoituksia. Varmista, ettet vahingossa palauta niitä julkisiksi."))
+        if len({doc.get("city") for doc in ordered_docs if doc.get("city")}) > 1:
+            merge_warnings.append(_("Valitut mielenosoitukset sijaitsevat eri kaupungeissa. Varmista, että yhdistäminen on tarkoituksellista."))
+        if len({doc.get("date") for doc in ordered_docs if doc.get("date")}) > 1:
+            merge_warnings.append(_("Mielenosoituksilla on eri päivämäärät. Tarkista, kumpi tieto halutaan säilyttää."))
+
+        field_summary_keys = {"title", "date", "start_time", "address", "description", "organizers"}
+        guided_field_summary = []
+        for field in MERGE_FIELD_DEFINITIONS:
+            if field["key"] not in field_summary_keys:
+                continue
+            source_id = guided_sources.get(field["key"], recommended_primary_id)
+            guided_field_summary.append(
+                {
+                    "key": field["key"],
+                    "label": field["label"],
+                    "source_id": source_id,
+                    "source_title": doc_map.get(source_id, {}).get("title"),
+                }
+            )
+
+        demo_lookup = {demo["id"]: demo for demo in display_demos}
+
+        submitter_groups = {}
+        for demo_id, info in submitter_docs.items():
+            key = info.get("submitter_email") or info.get("submitter_name") or _("Tuntematon ilmoittaja")
+            submitter_groups.setdefault(key, []).append(demo_id)
+        if len(submitter_groups) > 1:
+            merge_warnings.append(_("Valituilla mielenosoituksilla on eri ilmoittajat. Tarkista, etteivät nämä ole toisistaan riippumattomia tapahtumia."))
+        elif not submitter_groups:
+            merge_warnings.append(_("Ilmoittajatietoja ei löytynyt kaikille mielenosoituksille. Varmista, että yhdistät oikeat tapahtumat."))
+
+        submitter_summary = [
+            {
+                "label": label,
+                "count": len(ids),
+                "demo_titles": [doc_map.get(did, {}).get("title") for did in ids],
+            }
+            for label, ids in submitter_groups.items()
+        ]
+
+        return render_template(
+            f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/merge.html",
+            demos=display_demos,
+            merge_fields=MERGE_FIELD_DEFINITIONS,
+            selected_ids=[demo["id"] for demo in display_demos],
+            default_primary=recommended_primary_id,
+            guided_recommendation=guided_recommendation,
+            guided_sources=guided_sources,
+            merge_warnings=merge_warnings,
+            guided_field_summary=guided_field_summary,
+            demo_lookup=demo_lookup,
+            submitter_summary=submitter_summary,
+        )
+
+    # POST
+    selected_ids = request.form.getlist("demo_ids")
+    selected_ids = [demo_id for demo_id in selected_ids if demo_id]
+    if len(selected_ids) < 2:
+        flash_message(_("Valitse vähintään kaksi mielenosoitusta."), "error")
+        return redirect(url_for("admin_demo.demo_control"))
+    if len(selected_ids) > MAX_MERGE_COUNT:
+        flash_message(
+            _("Voit yhdistää kerrallaan enintään %(count)s mielenosoitusta.", count=MAX_MERGE_COUNT),
+            "error",
+        )
+        return redirect(url_for("admin_demo.demo_control"))
+
+    invalid = [demo_id for demo_id in selected_ids if not ObjectId.is_valid(demo_id)]
+    if invalid:
+        flash_message(_("Tuntematon mielenosoituksen tunniste: %(id)s", id=invalid[0]), "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    docs = list(mongo.demonstrations.find({"_id": {"$in": [ObjectId(d) for d in selected_ids]}}))
+    doc_map = {str(doc["_id"]): doc for doc in docs}
+    if len(doc_map) < 2 or len(doc_map) < len(selected_ids):
+        flash_message(_("Kaikkia valittuja mielenosoituksia ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    primary_id = request.form.get("primary_demo_id")
+    if not primary_id or primary_id not in doc_map:
+        flash_message(_("Valitse päivitettävä päätapahtuma."), "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    secondary_ids = [demo_id for demo_id in selected_ids if demo_id != primary_id]
+    if not secondary_ids:
+        flash_message(_("Valitse ainakin yksi yhdistettävä mielenosoitus."), "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    for document in docs:
+        _abort_if_demo_forbidden(document["_id"], "EDIT_DEMO")
+        if not flush_rollback_history(mongo, document["_id"]):
+            abort(503)
+        document.pop(PENDING_ROLLBACK_HISTORY, None)
+
+    primary_doc = doc_map[primary_id]
+    merged_doc = deepcopy(primary_doc)
+    original_primary = deepcopy(primary_doc)
+
+    for field in MERGE_FIELD_DEFINITIONS:
+        key = field["key"]
+        source_id = request.form.get(f"field_source[{key}]") or primary_id
+        source_doc = doc_map.get(source_id)
+        if source_doc is None:
+            continue
+        value = deepcopy(source_doc.get(key))
+        if key in MERGE_BOOL_FIELDS:
+            value = bool(source_doc.get(key))
+        merged_doc[key] = value
+
+    alias_values = _build_merged_aliases(doc_map, primary_id)
+    merged_doc["aliases"] = alias_values
+    merged_doc["merged_into"] = None
+    merged_doc["last_modified"] = utcnow()
+
+    # Persist recovery data before any destructive write. Cross-document
+    # merge remains non-transactional; failures retain an incomplete backup.
+    backup_payload = {
+        "primary_demo_id": primary_id,
+        "secondary_demo_ids": secondary_ids,
+        "selected_demo_ids": selected_ids,
+        "created_at": utcnow(),
+        "state": "incomplete",
+        # Until a later milestone is confirmed, writes may have started.
+        "phase": "operation_pending",
+        "actor": {
+            "user_id": str(getattr(current_user, "id", "")),
+            "username": getattr(current_user, "username", None),
+            "email": getattr(current_user, "email", None),
+        },
+        "demos": {demo_id: deepcopy(doc_map[demo_id]) for demo_id in selected_ids},
+    }
+    try:
+        backup_result = mongo.demo_merge_backups.insert_one(backup_payload)
+    except Exception as error:
+        logger.warning("Merge backup unavailable (%s)", type(error).__name__)
+        abort(503)
+    backup_id = str(backup_result.inserted_id)
+
+    removed = []
+
+    def set_merge_phase(phase, **values):
+        try:
+            result = mongo.demo_merge_backups.update_one(
+                {"_id": backup_result.inserted_id}, {"$set": {"phase": phase, **values}},
+            )
+            return result.matched_count == 1
+        except Exception as error:
+            logger.warning("Merge backup phase pending (%s)", type(error).__name__)
+            return False
+
+    def recover_merge(phase, status):
+        restored = restore_merge_conflict(mongo, original_primary, merged_doc, removed)
+        # A timed-out delete may have committed without returning its pre-image.
+        # Do not claim full recovery when any selected source is still missing.
+        try:
+            restored = restored and mongo.demonstrations.count_documents({
+                "_id": {"$in": [ObjectId(value) for value in selected_ids]},
+            }) == len(selected_ids)
+        except Exception:
+            restored = False
+        if not set_merge_phase(
+            phase if restored else "recovery_pending",
+            state="restored" if restored else "incomplete",
+            deleted_count=len(removed),
+            removed_ids=[str(document["_id"]) for document in removed],
+        ):
+            abort(503)
+        abort(status if restored else 503)
+
+    try:
+        merged = mongo.demonstrations.replace_one({
+            "_id": primary_doc["_id"], PENDING_ROLLBACK_HISTORY: {"$exists": False},
+            "$expr": {"$eq": ["$$ROOT", {"$literal": original_primary}]},
+        }, merged_doc)
+    except Exception:
+        recover_merge("primary_error", 503)
+    if not merged.matched_count:
+        set_merge_phase("primary_conflict", state="not_applied")
+        abort(409)
+
+    conflict = False
+    try:
+        for secondary_id in secondary_ids:
+            previous = mongo.demonstrations.find_one_and_delete({
+                "_id": ObjectId(secondary_id),
+                PENDING_ROLLBACK_HISTORY: {"$exists": False},
+                "$expr": {"$eq": ["$$ROOT", {"$literal": doc_map[secondary_id]}]},
+            })
+            if previous is None:
+                conflict = True
+                break
+            removed.append(previous)
+    except Exception:
+        recover_merge("secondary_error", 503)
+    if conflict:
+        recover_merge("secondary_conflict", 409)
+    if not set_merge_phase(
+        "sources_removed", deleted_count=len(removed),
+        removed_ids=[str(document["_id"]) for document in removed],
+    ):
+        recover_merge("phase_write_failed", 503)
+
+    recommendation_source = request.form.get("recommendation_source")
+    try:
+        _apply_recommendation_choice(primary_id, secondary_ids, recommendation_source)
+        _repoint_related_demo_data(primary_id, secondary_ids)
+        _handle_cases_after_merge(primary_id, secondary_ids, doc_map)
+    except Exception as error:
+        set_merge_phase("followup_failed", error_type=type(error).__name__)
+        abort(503)
+
+    merge_links = [
+        {
+            "demo_id": demo_id,
+            "title": doc_map.get(demo_id, {}).get("title"),
+            "slug": doc_map.get(demo_id, {}).get("slug"),
+            "edit_history_url": url_for("admin_demo.demo_edit_history", demo_id=demo_id),
+            "audit_log_url": url_for("admin_demo.view_demo_audit_log", demo_id=demo_id),
+        }
+        for demo_id in secondary_ids
+    ]
+
+    try:
+        history_id = record_demo_change(
+            primary_id,
+            original_primary,
+            merged_doc,
+            action="merge_demo",
+            message=_("%(user)s yhdisti mielenosoituksia") % {"user": _get_actor_label()},
+            extra_details={"merged_from": merge_links, "backup_id": backup_id},
+        )
+    except Exception:
+        history_id = None
+    if history_id is None:
+        set_merge_phase("history_pending")
+        abort(503)
+    if not set_merge_phase("completed", state="completed", history_id=history_id):
+        abort(503)
+
+    flash_message(_("Mielenosoitukset yhdistettiin onnistuneesti."), "success")
+    return redirect(url_for("admin_demo.edit_demo", demo_id=primary_id))
+
+
+def _build_merged_aliases(doc_map, primary_id):
+    primary_obj = ObjectId(primary_id)
+    alias_ids = set()
+    for doc in doc_map.values():
+        doc_id = _normalize_objectid(doc.get("_id"))
+        if doc_id and doc_id != primary_obj:
+            alias_ids.add(doc_id)
+        for alias in doc.get("aliases") or []:
+            alias_id = _normalize_objectid(alias)
+            if alias_id and alias_id != primary_obj:
+                alias_ids.add(alias_id)
+    return list(alias_ids)
+
+
+def _apply_recommendation_choice(primary_id, secondary_ids, selected_source):
+    secondary_ids = secondary_ids or []
+    mongo.recommended_demos.delete_many({"demo_id": {"$in": secondary_ids}})
+
+    if not selected_source or selected_source == "none":
+        mongo.recommended_demos.delete_one({"demo_id": primary_id})
+        return
+
+    source_doc = mongo.recommended_demos.find_one({"demo_id": selected_source})
+    if not source_doc:
+        if selected_source != primary_id:
+            mongo.recommended_demos.delete_one({"demo_id": primary_id})
+        return
+
+    mongo.recommended_demos.update_one(
+        {"demo_id": primary_id},
+        {"$set": {"demo_id": primary_id, "recommend_till": source_doc.get("recommend_till")}},
+        upsert=True,
+    )
+    if selected_source != primary_id:
+        mongo.recommended_demos.delete_one({"demo_id": selected_source})
+
+
+def _repoint_related_demo_data(primary_id, secondary_ids):
+    if not secondary_ids:
+        return
+
+    primary_obj = ObjectId(primary_id)
+    secondary_obj_ids = [
+        _normalize_objectid(demo_id) for demo_id in secondary_ids if ObjectId.is_valid(demo_id)
+    ]
+    secondary_obj_ids = [oid for oid in secondary_obj_ids if oid]
+
+    if secondary_obj_ids:
+        mongo.demo_attending.update_many(
+            {"demo_id": {"$in": secondary_obj_ids}},
+            {"$set": {"demo_id": primary_obj}},
+        )
+        mongo.demo_invites.update_many(
+            {"demo_id": {"$in": secondary_obj_ids}},
+            {"$set": {"demo_id": primary_obj}},
+        )
+        mongo.demo_likes.update_many(
+            {"demo_id": {"$in": secondary_obj_ids}},
+            {"$set": {"demo_id": primary_obj}},
+        )
+        mongo.demo_reminders.update_many(
+            {"demonstration_id": {"$in": secondary_obj_ids}},
+            {"$set": {"demonstration_id": primary_obj}},
+        )
+        mongo.submitters.update_many(
+            {"demonstration_id": {"$in": secondary_obj_ids}},
+            {"$set": {"demonstration_id": primary_obj}},
+        )
+        mongo.cases.update_many(
+            {"demo_id": {"$in": secondary_obj_ids}},
+            {"$set": {"demo_id": primary_obj}},
+        )
+
+    mongo.demo_edit_history.update_many(
+        {"demo_id": {"$in": secondary_ids}},
+        {"$set": {"demo_id": primary_id}},
+    )
+    mongo.demo_audit_logs.update_many(
+        {"demo_id": {"$in": secondary_ids}},
+        {"$set": {"demo_id": primary_id}},
+    )
+    mongo.posted_events.update_many(
+        {"demo_id": {"$in": secondary_ids}},
+        {"$set": {"demo_id": primary_id}},
+    )
+    _ensure_posted_event_link_aliases(primary_id)
+
+    for demo_id in secondary_ids:
+        mongo.notifications.update_many(
+            {"link": f"/demonstration/{demo_id}"},
+            {"$set": {"link": f"/demonstration/{primary_id}"}},
+        )
+        mongo.demo_invites.update_many(
+            {"extra.demo_id": demo_id},
+            {"$set": {"extra.demo_id": primary_id}},
+        )
+
+
+def _ensure_posted_event_link_aliases(primary_id: str) -> None:
+    canonical_links = _build_canonical_demo_links(primary_id)
+    if not canonical_links:
+        return
+
+    for doc in mongo.posted_events.find({"demo_id": primary_id}):
+        existing_aliases = set(doc.get("link_aliases") or [])
+        updated = False
+        for link in canonical_links:
+            if link not in existing_aliases and link != doc.get("link"):
+                existing_aliases.add(link)
+                updated = True
+        if updated:
+            mongo.posted_events.update_one(
+                {"_id": doc["_id"]},
+                {"$set": {"link_aliases": sorted(existing_aliases)}},
+            )
+
+
+def _build_canonical_demo_links(primary_id: str) -> list[str]:
+    identifiers = {str(primary_id)}
+    try:
+        primary_obj = ObjectId(primary_id)
+    except Exception:
+        primary_obj = None
+
+    if primary_obj:
+        demo_doc = mongo.demonstrations.find_one(
+            {"_id": primary_obj},
+            {"slug": 1},
+        )
+        slug_value = demo_doc.get("slug") if demo_doc else None
+        if slug_value:
+            identifiers.add(str(slug_value))
+
+    canonical_links = []
+    for identifier in identifiers:
+        link = None
+        try:
+            link = url_for("demonstration_detail", demo_id=identifier, _external=True)
+        except Exception:
+            link = f"https://mielenosoitukset.fi/demonstration/{identifier}"
+        if link:
+            canonical_links.append(link)
+    return canonical_links
+
+def _summarize_analytics_doc(analytics_doc: dict | None) -> dict:
+    """Return high-level counters from the aggregated analytics doc."""
+    summary = {"total": 0, "last_7d": 0, "last_24h": 0}
+    if not isinstance(analytics_doc, dict):
+        return summary
+
+    analytics_map = analytics_doc.get("analytics") or {}
+    if not isinstance(analytics_map, dict):
+        return summary
+
+    now = utcnow()
+    for day_str, hours in analytics_map.items():
+        if not isinstance(hours, dict):
+            continue
+        try:
+            day_base = datetime.strptime(day_str, "%Y-%m-%d")
+        except (TypeError, ValueError):
+            continue
+        for hour_str, minutes in hours.items():
+            if not isinstance(minutes, dict):
+                continue
+            try:
+                hour = int(hour_str)
+            except (TypeError, ValueError):
+                continue
+            for minute_str, count in minutes.items():
+                try:
+                    minute = int(minute_str)
+                    amount = int(count)
+                except (TypeError, ValueError):
+                    continue
+                summary["total"] += max(amount, 0)
+                stamp = day_base.replace(hour=hour, minute=minute)
+                delta = now - stamp
+                if timedelta(0) <= delta <= timedelta(days=1):
+                    summary["last_24h"] += amount
+                if timedelta(0) <= delta <= timedelta(days=7):
+                    summary["last_7d"] += amount
+    return summary
+
+def _coerce_datetime(value):
+    """Best-effort conversion of common date representations to datetime."""
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, date):
+        return datetime.combine(value, datetime.min.time())
+    if isinstance(value, str):
+        for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%fZ"):
+            try:
+                return datetime.strptime(value, fmt)
+            except ValueError:
+                continue
+    return None
+
+
+def _build_mastodon_status_url(status_id: str | None) -> str | None:
+    if not status_id:
+        return None
+    base_url = (
+        current_app.config.get("MASTODON_STATUS_BASE")
+        or current_app.config.get("MASTODON_WEB_BASE")
+        or current_app.config.get("MASTODON_API_BASE")
+        or "https://mastodon.social"
+    ).rstrip("/")
+    handle = current_app.config.get("MASTODON_ACCOUNT_HANDLE", "").lstrip("@")
+    if not handle:
+        handle = "mielenosoitukset"
+    return f"{base_url}/@{handle}/{status_id}"
 
 def filter_demonstrations(query, search_query, show_past, today):
     """Fetch and filter demonstrations based on search criteria.
@@ -766,25 +3172,30 @@ def create_demo():
         # Handle form submission for creating a new demonstration
         return handle_demo_form(request, is_edit=False)
 
-    # Fetch available organizations for the form
-    organizations = mongo.organizations.find()
+    organizations = _available_organizer_organizations("CREATE_DEMO")
 
     # Render the demonstration creation form
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/form.html",
-        organizations=organizations,
+        all_organizations=organizations,
         form_action=url_for("admin_demo.create_demo"),
         title="Luo mielenosoitus",
         submit_button_text="Luo",
         demo=None,
         city_list=CITY_LIST,
+        demo_edit_access={"explicit_editors": [], "organizations": []},
+        show_demo_access_panel=False,
+        can_approve_demo=has_demo_approval_permission(current_user),
+        translation_locales=_supported_demo_translation_locales(),
+        translation_language_names=_translation_language_names(),
+        default_demo_language=current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
     )
 
 
 @admin_demo_bp.route("/edit_demo/<demo_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
-@permission_required("EDIT_DEMO")
+@permission_required("EDIT_DEMO", _type="DEMONSTRATION")
 def edit_demo(demo_id):
     """Edit demonstration details.
 
@@ -805,28 +3216,344 @@ def edit_demo(demo_id):
     if not demo_data:
         flash_message("Mielenosoitusta ei löytynyt.", "error")
         return redirect(url_for("admin_demo.demo_control"))
+    _abort_if_demo_forbidden(demo_data["_id"], "EDIT_DEMO")
 
+    case_id = request.args.get("case_id") or None
+   
     if request.method == "POST":
         # Handle form submission for editing the demonstration
-        return handle_demo_form(request, is_edit=True, demo_id=demo_id)
+        return handle_demo_form(request, is_edit=True, demo_id=demo_id, case_id=case_id)
 
     # Convert demonstration data to a Demonstration object
     demonstration = Demonstration.from_dict(demo_data)
+    demo_edit_access = gather_demo_edit_access_info(demo_data)
+    show_demo_access_panel = _user_can_manage_demo_access(current_user, demo_data)
+    can_generate_edit_link = _user_can_access_demo(
+        demo_data["_id"], "GENERATE_EDIT_LINK"
+    )
+    
+        
     # Render the edit form with pre-filled demonstration details
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/form.html",
         demo=demonstration,
-        form_action=url_for("admin_demo.edit_demo", demo_id=demo_id),
+        form_action=url_for("admin_demo.edit_demo", demo_id=demo_id, case_id=case_id),
         title=_("Muokkaa mielenosoitusta"),
         submit_button_text=_("Tallenna muutokset"),
         city_list=CITY_LIST,
-        all_organizations=mongo.organizations.find(),
+        all_organizations=_available_organizer_organizations(
+            "EDIT_DEMO", existing_demo=demo_data
+        ),
+        case_id=case_id,
+        demo_edit_access=demo_edit_access,
+        show_demo_access_panel=show_demo_access_panel,
+        can_approve_demo=has_demo_approval_permission(current_user, demo_data),
+        can_generate_edit_link=can_generate_edit_link,
+        edit_link_rows=(
+            _demo_edit_link_rows(demo_id) if can_generate_edit_link else []
+        ),
+        edit_link_csrf_token=_edit_link_csrf_token(),
+        translation_locales=_supported_demo_translation_locales(),
+        translation_language_names=_translation_language_names(),
+        default_demo_language=demonstration.default_language or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
+    )
+
+@admin_demo_bp.route("/review/<demo_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+@permission_required("ACCEPT_DEMO", _type="DEMONSTRATION")
+def review_demo(demo_id):
+    """Review submitted content without granting editor/analytics access."""
+    if not ObjectId.is_valid(demo_id):
+        abort(400)
+    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_data:
+        abort(404)
+    _abort_if_demo_forbidden(demo_data["_id"], "ACCEPT_DEMO")
+    if request.method == "POST":
+        if not _valid_edit_link_csrf():
+            abort(403)
+        decision = request.form.get("decision")
+        if decision not in {"approved", "rejected"}:
+            abort(400)
+        if demo_data.get("cancelled"):
+            abort(409)
+        _apply_demo_decision(str(demo_data["_id"]), decision, source="admin_review")
+        return redirect(url_for("admin_demo.review_demo", demo_id=str(demo_data["_id"])))
+    # Explicit content projection: no submitter, analytics, tokens or raw HTML.
+    content = {key: demo_data.get(key) or "" for key in (
+        "title", "city", "date", "start_time", "end_time", "address", "description",
+    )}
+    state = next((state for state in ("cancelled", "approved", "rejected")
+                  if demo_data.get(state)), "pending")
+    return render_template(
+        "admin_V2/demonstrations/review.html", demo=content, state=state,
+        review_csrf_token=_edit_link_csrf_token(),
+    )
+
+
+@admin_demo_bp.route("/command-center/<demo_id>")
+@login_required
+@admin_required
+@permission_required("VIEW_DEMO", _type="DEMONSTRATION")
+def demo_command_center(demo_id):
+    """Unified view for inspecting and acting on a single demonstration."""
+    demo_data = _find_demo_with_alias_support(demo_id)
+    if not demo_data:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_control"))
+    _abort_if_demo_forbidden(demo_data["_id"], "VIEW_DEMO")
+
+    demo = Demonstration.from_dict(demo_data)
+    demo_id_str = str(demo_data["_id"])
+
+    submitter = mongo.submitters.find_one({"demonstration_id": demo_data["_id"]})
+    recommended_doc = mongo.recommended_demos.find_one({"demo_id": demo_id_str})
+    if recommended_doc:
+        coerced = _coerce_datetime(recommended_doc.get("recommend_till"))
+        if coerced:
+            recommended_doc["recommend_till"] = coerced
+    analytics_doc = mongo.d_analytics.find_one({"_id": demo_data["_id"]})
+    analytics_summary = _summarize_analytics_doc(analytics_doc)
+
+    stats = {
+        "attending": mongo.demo_attending.count_documents(
+            {"demo_id": demo_data["_id"], "attending": True}
+        ),
+        "invites": mongo.demo_invites.count_documents({"demo_id": demo_data["_id"]}),
+        "reminders": mongo.demo_reminders.count_documents(
+            {"demonstration_id": demo_data["_id"]}
+        ),
+        "cases": mongo.cases.count_documents({"demo_id": demo_data["_id"]}),
+        "children": mongo.demonstrations.count_documents({"parent": demo_data["_id"]}),
+        "analytics": analytics_summary,
+    }
+
+    open_cases_count = mongo.cases.count_documents(
+        {"demo_id": demo_data["_id"], "meta.closed": {"$ne": True}}
+    )
+    suggestion_filter = {"demo_id": demo_id_str}
+    active_suggestion_filter = {
+        "demo_id": demo_id_str,
+        "status": {"$nin": ["closed", "rejected"]},
+    }
+    active_suggestion_count = mongo.demo_suggestions.count_documents(
+        active_suggestion_filter
+    )
+    suggestions = list(
+        mongo.demo_suggestions.find(suggestion_filter)
+        .sort("created_at", -1)
+        .limit(5)
+    )
+
+    linked_cases = []
+    case_cursor = (
+        mongo.cases.find({"demo_id": demo_data["_id"]})
+        .sort("created_at", -1)
+        .limit(6)
+    )
+    for case_doc in case_cursor:
+        case = Case.from_dict(case_doc)
+        actions = list(case_doc.get("action_logs") or [])
+        linked_cases.append(
+            {
+                "id": str(case_doc["_id"]),
+                "running_num": case.running_num,
+                "type": case.case_type,
+                "created_at": case.created_at,
+                "updated_at": case.updated_at,
+                "closed": bool((case.meta or {}).get("closed")),
+                "urgency": (case.meta or {}).get("urgency"),
+                "latest_action": actions[-1] if actions else None,
+                "meta": case.meta or {},
+                "submitter": case.submitter,
+                "url": url_for("admin_case.single_case", case_id=str(case_doc["_id"])),
+            }
+        )
+
+    organizer_cards = []
+    for organizer in demo_data.get("organizers") or []:
+        if isinstance(organizer, dict):
+            org_dict = dict(organizer)
+        else:
+            try:
+                org_dict = organizer.to_dict()
+            except Exception:
+                org_dict = {}
+        if not org_dict:
+            continue
+        org_id = org_dict.get("organization_id")
+        org_obj_id = _normalize_objectid(org_id)
+        org_doc = mongo.organizations.find_one({"_id": org_obj_id}) if org_obj_id else None
+        organizer_cards.append(
+            {
+                "name": org_dict.get("name"),
+                "email": org_dict.get("email"),
+                "phone": org_dict.get("phone"),
+                "organization_id": str(org_obj_id) if org_obj_id else None,
+                "organization": org_doc,
+                "url": org_dict.get("url"),
+                "website": org_dict.get("website"),
+            }
+        )
+
+    audit_logs = list(
+        mongo.demo_audit_logs.find({"demo_id": demo_id_str}).sort("timestamp", -1).limit(15)
+    )
+    for entry in audit_logs:
+        entry["_id"] = str(entry.get("_id"))
+
+    history_entries = list(
+        mongo.demo_edit_history.find({"demo_id": demo_id_str})
+        .sort("edited_at", -1)
+        .limit(12)
+    )
+    for entry in history_entries:
+        entry["_id"] = str(entry.get("_id"))
+
+    posted_filters = [{"demo_id": demo_id_str}]
+    slug_value = demo_data.get("slug")
+    if slug_value:
+        posted_filters.append({"slug": slug_value})
+    posted_events = []
+    if posted_filters:
+        posted_events = list(
+            mongo.posted_events.find({"$or": posted_filters})
+            .sort("created_at", -1)
+            .limit(5)
+        )
+        for event in posted_events:
+            event["_id"] = str(event.get("_id"))
+            status_url = _build_mastodon_status_url(event.get("status_id"))
+            if status_url:
+                event["status_url"] = status_url
+
+    child_demos = []
+    child_cursor = (
+        mongo.demonstrations.find({"parent": demo_data["_id"]}, {"title": 1, "date": 1, "slug": 1})
+        .sort("date", 1)
+        .limit(5)
+    )
+    for child in child_cursor:
+        child_demos.append(
+            {
+                "id": str(child.get("_id")),
+                "title": child.get("title"),
+                "date": child.get("date"),
+                "slug": child.get("slug"),
+            }
+        )
+
+    parent_demo = None
+    parent_id = _normalize_objectid(demo_data.get("parent"))
+    if parent_id:
+        parent_doc = mongo.demonstrations.find_one(
+            {"_id": parent_id}, {"title": 1, "date": 1, "slug": 1}
+        )
+        if parent_doc:
+            parent_demo = {
+                "id": str(parent_id),
+                "title": parent_doc.get("title"),
+                "date": parent_doc.get("date"),
+                "slug": parent_doc.get("slug"),
+            }
+
+    aliases = [str(alias) for alias in demo_data.get("aliases") or []]
+    edit_access = gather_demo_edit_access_info(demo_data)
+    status_flags = {
+        "approved": bool(demo_data.get("approved")),
+        "rejected": bool(demo_data.get("rejected")),
+        "hidden": bool(demo_data.get("hide")),
+        "cancelled": bool(demo_data.get("cancelled")),
+        "recurring": bool(demo_data.get("recurs")),
+        "recommended": bool(recommended_doc),
+        "needs_review": not demo_data.get("approved") and not demo_data.get("rejected"),
+        "cancellation_requested": bool(demo_data.get("cancellation_requested")),
+    }
+
+    location_query = " ".join(
+        part for part in [demo.address, demo.city if getattr(demo, "city", None) else None] if part
+    )
+    map_url = (
+        f"https://www.google.com/maps/search/?api=1&query={quote_plus(location_query)}"
+        if location_query
+        else None
+    )
+
+    public_identifier = demo.slug or demo_id_str
+    public_url = url_for("demonstration_detail", demo_id=public_identifier)
+
+    action_endpoints = {
+        "approve": {"url": url_for("admin_demo_api.approve_demo", demo_id=demo_id_str), "method": "POST"},
+        "reject": {"url": url_for("admin_demo_api.reject_demo", demo_id=demo_id_str), "method": "POST"},
+        "cancel": {"url": url_for("admin_demo_api.admin_cancel_demo", demo_id=demo_id_str), "method": "POST"},
+        "recommend": {"url": url_for("admin_demo.recommend_demo", demo_id=demo_id_str), "method": "POST"},
+        "unrecommend": {"url": url_for("admin_demo.unrecommend_demo", demo_id=demo_id_str), "method": "POST"},
+        "duplicate": {"url": url_for("admin_demo.duplicate_demo", demo_id=demo_id_str), "method": "POST"},
+        "screenshot": {"url": url_for("admin_demo.trigger_ss", demo_id=demo_id_str), "method": "GET"},
+    }
+    links = {
+        "edit": url_for("admin_demo.edit_demo", demo_id=demo_id_str),
+        "history": url_for("admin_demo.demo_edit_history", demo_id=demo_id_str),
+        "audit": url_for("admin_demo.view_demo_audit_log", demo_id=demo_id_str),
+        "analytics": url_for("admin.demo_analytics", demo_id=demo_id_str),
+    }
+
+    permissions = {
+        "can_edit": _user_can_access_demo(demo_data["_id"], "EDIT_DEMO"),
+        "can_delete": _user_can_access_demo(demo_data["_id"], "DELETE_DEMO"),
+        "can_accept": _user_can_access_demo(demo_data["_id"], "ACCEPT_DEMO"),
+        "can_generate_link": _user_can_access_demo(demo_data["_id"], "GENERATE_EDIT_LINK"),
+        "can_recommend": getattr(current_user, "global_admin", False),
+        "can_view_analytics": current_user.has_permission("VIEW_ANALYTICS"),
+    }
+
+    cancellation_context = {
+        "requested": demo_data.get("cancellation_requested"),
+        "requested_at": demo_data.get("cancellation_requested_at"),
+        "reason": demo_data.get("cancellation_reason"),
+        "requested_by": demo_data.get("cancellation_requested_by"),
+        "cancelled_at": demo_data.get("cancelled_at"),
+        "cancelled_by": demo_data.get("cancelled_by"),
+    }
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/command_center.html",
+        demo=demo,
+        demo_raw=demo_data,
+        demo_id=demo_id_str,
+        submitter=submitter,
+        stats=stats,
+        analytics_doc=analytics_doc or {},
+        analytics_summary=analytics_summary,
+        audit_logs=audit_logs,
+        history_entries=history_entries,
+        linked_cases=linked_cases,
+        suggestions=suggestions,
+        recommended=recommended_doc,
+        organizer_cards=organizer_cards,
+        edit_access=edit_access,
+        show_access_panel=_user_can_manage_demo_access(current_user, demo_data),
+        posted_events=posted_events,
+        child_demos=child_demos,
+        parent_demo=parent_demo,
+        aliases=aliases,
+        action_endpoints=action_endpoints,
+        resource_links=links,
+        permissions=permissions,
+        status_flags=status_flags,
+        public_url=public_url,
+        map_url=map_url,
+        cancellation_context=cancellation_context,
+        open_cases_count=open_cases_count,
+        active_suggestion_count=active_suggestion_count,
+        public_identifier=public_identifier,
     )
 
 @admin_demo_bp.route("/send_edit_link_email/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("GENERATE_EDIT_LINK")
+@permission_required("GENERATE_EDIT_LINK", _type="DEMONSTRATION")
 def send_edit_link(demo_id):
     """
     Send a secure edit link via email for a demonstration.
@@ -845,25 +3572,47 @@ def send_edit_link(demo_id):
         JSON response containing the edit link if successful, or an error message otherwise.
     """
     try:
-        data = request.get_json() if request.is_json else request.form
-        email = data.get("email")
-        edit_link = data.get("edit_link")
-
-        if not email:
+        if not _valid_edit_link_csrf():
             return jsonify(
-                {"status": "ERROR", "message": "Email address is required."}
+                {"status": "ERROR", "message": _("Istunnon turvatarkistus epäonnistui.")}
+            ), 403
+
+        data = request.get_json(silent=True) if request.is_json else request.form
+        data = data or {}
+        email = (data.get("email") or "").strip()
+
+        if not email or "@" not in email:
+            return jsonify(
+                {"status": "ERROR", "message": _("Syötä kelvollinen sähköpostiosoite.")}
             ), 400
 
+        duration_key = _edit_link_duration(data.get("duration"))[0]
+        edit_link, token_doc = _create_demo_edit_link(demo_id, duration_key)
         demo = Demonstration.load_by_id(demo_id)
-        email_sender.queue_email(
+        # Bearer links must not be persisted in the Mongo-backed email queue.
+        # Render and send this one sensitive message directly instead.
+        email_sender.send_now(
             template_name="demo_edit_link.html",
             subject=f"Muokkauslinkki mielenosoitukseen: {demo.title}",
             context={"edit_link": edit_link, "demo_id": demo_id},
-            recipients=[email]
+            recipients=[email],
+            raise_on_error=True,
         )
+        touch_city_assignment(mongo, demo_id)
         logging.info("Sending edit link to email: %s", email)
 
-        return jsonify({"status": "OK", "message": "Email sent successfully."})
+        return jsonify(
+            {
+                "status": "OK",
+                "message": _("Muokkauslinkki lähetettiin."),
+                "expires_at": token_doc["expires_at"].isoformat(),
+            }
+        )
+
+    except ValueError:
+        return jsonify(
+            {"status": "ERROR", "message": _("Valitse sallittu voimassaoloaika.")}
+        ), 400
 
     except Exception as e:
         logging.error("Error sending edit link email: %s", str(e))
@@ -872,7 +3621,7 @@ def send_edit_link(demo_id):
 @admin_demo_bp.route("/generate_edit_link/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("GENERATE_EDIT_LINK")
+@permission_required("GENERATE_EDIT_LINK", _type="DEMONSTRATION")
 def generate_edit_link(demo_id):
     """Generate a secure edit link for a demonstration.
 
@@ -887,17 +3636,113 @@ def generate_edit_link(demo_id):
         JSON response containing the edit link or an error message.
     """
     try:
-        token = serializer.dumps(demo_id, salt="edit-demo")
-        edit_link = url_for(
-            "admin_demo.edit_demo_with_token", token=token, _external=True
+        if not _valid_edit_link_csrf():
+            return jsonify(
+                {"status": "ERROR", "message": _("Istunnon turvatarkistus epäonnistui.")}
+            ), 403
+        data = request.get_json(silent=True) or {}
+        duration_key = _edit_link_duration(data.get("duration"))[0]
+        edit_link, token_doc = _create_demo_edit_link(demo_id, duration_key)
+        return jsonify(
+            {
+                "status": "OK",
+                "edit_link": edit_link,
+                "expires_at": token_doc["expires_at"].isoformat(),
+                "duration": duration_key,
+            }
         )
-        return jsonify({"status": "OK", "edit_link": edit_link})
+    except ValueError:
+        return jsonify(
+            {"status": "ERROR", "message": _("Valitse sallittu voimassaoloaika.")}
+        ), 400
     except Exception as e:
         logging.error("An error occurred while generating the edit link: %s", str(e))
         return (
             jsonify({"status": "ERROR", "message": "An internal error has occurred."}),
             500,
         )
+
+
+@admin_demo_bp.route("/edit-links/<demo_id>/revoke/<token_id>", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("GENERATE_EDIT_LINK", _type="DEMONSTRATION")
+def revoke_demo_edit_link(demo_id, token_id):
+    if not _valid_edit_link_csrf():
+        abort(403)
+    if not ObjectId.is_valid(token_id):
+        abort(400)
+    token_doc = mongo[MAGIC_COLLECTION].find_one_and_update(
+        {
+            "_id": ObjectId(token_id),
+            "demo_id": str(demo_id),
+            "action": "edit",
+            "revoked": {"$ne": True},
+        },
+        {
+            "$set": {
+                "revoked": True,
+                "revoked_at": _now_utc(),
+                "revoked_by": _get_actor_label(),
+            }
+        },
+        return_document=ReturnDocument.AFTER,
+    )
+    if not token_doc:
+        abort(404)
+    _log_token_event(
+        token_doc,
+        "revoked",
+        message=_("Muokkauslinkki mitätöitiin."),
+        demo_action="token_revoked",
+    )
+    flash_message(_("Muokkauslinkki mitätöitiin."), "success")
+    return redirect(url_for("admin_demo.edit_demo", demo_id=demo_id))
+
+
+@admin_demo_bp.route("/edit-links/<demo_id>/revoke-all", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("GENERATE_EDIT_LINK", _type="DEMONSTRATION")
+def revoke_all_demo_edit_links(demo_id):
+    if not _valid_edit_link_csrf():
+        abort(403)
+    active_tokens = list(
+        mongo[MAGIC_COLLECTION].find(
+            {
+                "demo_id": str(demo_id),
+                "action": "edit",
+                "revoked": {"$ne": True},
+                "expires_at": {"$gt": _now_utc()},
+            }
+        )
+    )
+    if active_tokens:
+        now = _now_utc()
+        mongo[MAGIC_COLLECTION].update_many(
+            {"_id": {"$in": [doc["_id"] for doc in active_tokens]}},
+            {
+                "$set": {
+                    "revoked": True,
+                    "revoked_at": now,
+                    "revoked_by": _get_actor_label(),
+                }
+            },
+        )
+        for token_doc in active_tokens:
+            token_doc.update({"revoked": True, "revoked_at": now})
+            _log_token_event(
+                token_doc,
+                "revoked",
+                message=_("Demon aktiivinen muokkauslinkki mitätöitiin."),
+                demo_action="token_revoked",
+            )
+    flash_message(
+        _("%(count)s aktiivista muokkauslinkkiä mitätöitiin.")
+        % {"count": len(active_tokens)},
+        "success",
+    )
+    return redirect(url_for("admin_demo.edit_demo", demo_id=demo_id))
 
 
 @admin_demo_bp.route("/edit_demo_with_token/<token>", methods=["GET", "POST"])
@@ -914,12 +3759,16 @@ def edit_demo_with_token(token):
     response
         The rendered template or a redirect response.
     """
-    try:
-        demo_id = serializer.loads(token, salt="edit-demo", max_age=3600)
-    except SignatureExpired:
-        return jsonify({"status": "ERROR", "message": "The token has expired."}), 400
-    except BadSignature:
-        return jsonify({"status": "ERROR", "message": "Invalid token."}), 400
+    token_doc, unavailable_reason, status_code = _resolve_demo_edit_link(token)
+    if not token_doc:
+        return (
+            render_template(
+                "admin_V2/cc/edit_link_unavailable.html",
+                reason=unavailable_reason,
+            ),
+            status_code,
+        )
+    demo_id = token_doc["demo_id"]
 
     # Fetch demonstration data by ID
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
@@ -928,11 +3777,19 @@ def edit_demo_with_token(token):
         return redirect(url_for("admin_demo.demo_control"))
 
     if request.method == "POST":
+        if not _valid_edit_link_csrf():
+            abort(403)
         # Handle form submission for editing the demonstration
-        return handle_demo_form(request, is_edit=True, demo_id=demo_id)
+        return handle_demo_form(
+            request,
+            is_edit=True,
+            demo_id=demo_id,
+            token_edit=True,
+        )
 
     # Convert demonstration data to a Demonstration object
     demonstration = Demonstration.from_dict(demo_data)
+    demo_edit_access = gather_demo_edit_access_info(demo_data)
 
     # Render the edit form with pre-filled demonstration details
     return render_template(
@@ -942,8 +3799,19 @@ def edit_demo_with_token(token):
         title=_("Muokkaa mielenosoitusta"),
         submit_button_text=_("Tallenna muutokset"),
         city_list=CITY_LIST,
-        all_organizations=mongo.organizations.find(),
+        all_organizations=_available_organizer_organizations(
+            "EDIT_DEMO", existing_demo=demo_data, token_edit=True
+        ),
         edit_demo_with_token=True,
+        demo_edit_access=demo_edit_access,
+        show_demo_access_panel=False,
+        can_approve_demo=False,
+        can_generate_edit_link=False,
+        edit_link_rows=[],
+        edit_link_csrf_token=_edit_link_csrf_token(),
+        translation_locales=_supported_demo_translation_locales(),
+        translation_language_names=_translation_language_names(),
+        default_demo_language=demonstration.default_language or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
     )
 
 def _deep_merge(old: dict, new: dict) -> dict:
@@ -962,19 +3830,196 @@ def _deep_merge(old: dict, new: dict) -> dict:
     return merged
 
 
-def save_demo_history(demo_id, old_data, new_data):
-    mongo.demo_edit_history.insert_one({
-        "demo_id": demo_id,
-        "edited_by": str(getattr(current_user, "id", "unknown")),
-        "edited_at": datetime.utcnow(),
-        "old_demo": old_data,
-        "new_demo": new_data,
-        "diff": None,  # can be populated later by batch job,
-        "rollbacked_from": None
-    })
+def _get_actor_label():
+    return getattr(current_user, "username", None) or getattr(current_user, "email", None) or str(getattr(current_user, "id", "unknown"))
 
 
-def handle_demo_form(request, is_edit=False, demo_id=None):
+def _user_has_global_demo_permission(permission_name: str) -> bool:
+    if getattr(current_user, "global_admin", False):
+        return True
+    return permission_name in getattr(current_user, "global_permissions", [])
+
+
+def _demo_scope_query_for_permission(permission_name: str) -> dict:
+    """Return the demonstration query visible to the current permission scope."""
+    has_full_permissions = getattr(current_user, "has_full_permissions", None)
+    if _user_has_global_demo_permission(permission_name) or (
+        callable(has_full_permissions) and has_full_permissions()
+    ):
+        return {}
+
+    permission_scopes = list(
+        getattr(current_user, "_perm_in", lambda _permission: [])(permission_name)
+    )
+    if "global" in permission_scopes:
+        return {}
+
+    organization_identifiers = []
+    for scope in permission_scopes:
+        scope_value = str(scope)
+        if scope_value == "global" or not ObjectId.is_valid(scope_value):
+            continue
+        for identifier in (ObjectId(scope_value), scope_value):
+            if identifier not in organization_identifiers:
+                organization_identifiers.append(identifier)
+    city_keys = (
+        current_user.scoped_city_keys_for(permission_name)
+        if hasattr(current_user, "scoped_city_keys_for")
+        else []
+    )
+    city_names = [city for city in CITY_LIST if normalize_city_key(city) in city_keys]
+
+    editor_identifiers = []
+    for user_identifier in (
+        getattr(current_user, "id", None),
+        getattr(current_user, "_id", None),
+    ):
+        if user_identifier is None:
+            continue
+        for identifier in (user_identifier, str(user_identifier)):
+            if identifier not in editor_identifiers:
+                editor_identifiers.append(identifier)
+
+    permission_filters = []
+    if editor_identifiers:
+        permission_filters.append({"editors": {"$in": editor_identifiers}})
+    if organization_identifiers:
+        permission_filters.append(
+            {
+                "organizers": {
+                    "$elemMatch": {
+                        "organization_id": {"$in": organization_identifiers}
+                    }
+                }
+            }
+        )
+    if city_keys:
+        permission_filters.append(
+            {
+                "$or": [
+                    {"city_key": {"$in": city_keys}},
+                    {"city": {"$in": city_names}},
+                ]
+            }
+        )
+    if not permission_filters:
+        return {"_id": {"$exists": False}}
+    return {"$or": permission_filters}
+
+
+def _user_can_access_demo(demo_id, permission_name: str) -> bool:
+    if _user_has_global_demo_permission(permission_name):
+        return True
+    return has_demo_permission(current_user, demo_id, permission_name)
+
+
+def _abort_if_demo_forbidden(demo_id, permission_name: str):
+    if not _user_can_access_demo(demo_id, permission_name):
+        flash_message(_("Sinun käyttöoikeutesi eivät riitä tämän mielenosoituksen käsittelyyn."), "error")
+        abort(403)
+
+
+def _user_can_create_demo_in_city(city: str | None) -> bool:
+    if _user_has_global_demo_permission("CREATE_DEMO"):
+        return True
+    org_scopes = [
+        scope
+        for scope in getattr(current_user, "_perm_in", lambda _permission: [])("CREATE_DEMO")
+        if str(scope) != "global"
+    ]
+    if org_scopes:
+        return True
+    city_key = normalize_city_key(city)
+    if city_key:
+        return bool(
+            hasattr(current_user, "has_scoped_permission")
+            and current_user.has_scoped_permission(
+                "CREATE_DEMO",
+                scope_type="city",
+                scope_key=city_key,
+            )
+        )
+    # No specific city given: allow when the user can create in any managed city.
+    return bool(
+        hasattr(current_user, "scoped_city_keys_for")
+        and current_user.scoped_city_keys_for("CREATE_DEMO")
+    )
+
+
+def _user_can_create_recurring_demo() -> bool:
+    if _user_has_global_demo_permission("CREATE_RECURRING_DEMO"):
+        return True
+    org_scopes = [
+        scope
+        for scope in getattr(current_user, "_perm_in", lambda _permission: [])("CREATE_RECURRING_DEMO")
+        if str(scope) != "global"
+    ]
+    if org_scopes:
+        return True
+    return bool(
+        hasattr(current_user, "scoped_city_keys_for")
+        and current_user.scoped_city_keys_for("CREATE_RECURRING_DEMO")
+    )
+
+
+def _linkable_organization_ids(permission_name, *, existing_demo=None, token_edit=False):
+    """Return allowed organization ids, or ``None`` for unrestricted access.
+
+    Organization-scoped administrators may only add profiles in which they hold
+    the relevant demonstration permission. City-scoped and token editors may
+    preserve an existing linked organizer but cannot forge a new organization
+    relationship. Global administrators retain the existing unrestricted view.
+    """
+    return linkable_admin_organization_ids(
+        current_user,
+        permission_name,
+        existing_demo=existing_demo,
+        preserve_existing_only=token_edit,
+    )
+
+
+def _available_organizer_organizations(
+    permission_name, *, existing_demo=None, token_edit=False
+):
+    allowed_ids = _linkable_organization_ids(
+        permission_name,
+        existing_demo=existing_demo,
+        token_edit=token_edit,
+    )
+    query = {} if allowed_ids is None else {"_id": {"$in": list(allowed_ids)}}
+    return list(
+        mongo.organizations.find(
+            query, {"name": 1, "email": 1, "website": 1}
+        ).sort("name", 1)
+    )
+
+
+def _validate_organizer_organization_scope(
+    organizers, permission_name, *, existing_demo=None, token_edit=False
+):
+    allowed_ids = _linkable_organization_ids(
+        permission_name,
+        existing_demo=existing_demo,
+        token_edit=token_edit,
+    )
+    if allowed_ids is None:
+        return
+    submitted_ids = {
+        organizer.get("organization_id")
+        for organizer in organizers
+        if organizer.get("organization_id")
+    }
+    if not submitted_ids.issubset(allowed_ids):
+        abort(403)
+
+
+def handle_demo_form(
+    request,
+    is_edit=False,
+    demo_id=None,
+    case_id=None,
+    token_edit=False,
+):
     """Handle form submission for creating or editing a demonstration.
 
     Parameters
@@ -991,46 +4036,439 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
 
 
     """
-    # Collect demonstration data from the form
-    demonstration_data = collect_demo_data(request)
+    existing_demo = (
+        mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+        if is_edit and demo_id
+        else None
+    )
+    try:
+        demonstration_data = collect_demo_data(
+            request,
+            existing_organizers=(existing_demo or {}).get("organizers", []),
+        )
+    except ValueError as error:
+        flash_message("Virhe: %(error)s", "error", error=str(error))
+        return redirect(request.url)
+
+    _validate_organizer_organization_scope(
+        demonstration_data["organizers"],
+        "EDIT_DEMO" if is_edit else "CREATE_DEMO",
+        existing_demo=existing_demo,
+        token_edit=token_edit,
+    )
+    case_id = request.args.get("case_id") or None
+
+    # Older integrations may not submit the newly exposed editor fields. In
+    # that case an edit must preserve the stored values rather than clear them.
+    for optional_field in ("slug", "img", "preview_image"):
+        if optional_field not in request.form:
+            demonstration_data.pop(optional_field, None)
+
+    slug = demonstration_data.get("slug")
+    excluded_demo_id = ObjectId(demo_id) if is_edit and demo_id else None
+    if slug and not demo_slug_is_available(
+        mongo.demonstrations,
+        slug,
+        exclude_id=excluded_demo_id,
+    ):
+        flash_message(
+            "Lyhytlinkki '%(slug)s' on jo käytössä. Valitse toinen lyhytlinkki.",
+            "error",
+            slug=slug,
+        )
+        return redirect(request.url)
+  
 
     from mielenosoitukset_fi.utils.admin.demonstration import fix_organizers
 
     demonstration_data = fix_organizers(demonstration_data)
+
+    approval_scope_demo = demonstration_data
+    if is_edit and demo_id:
+        approval_scope_demo = existing_demo
+    can_change_approval = has_demo_approval_permission(
+        current_user, approval_scope_demo
+    )
+    requested_approval = bool(demonstration_data.get("approved"))
+    if not can_change_approval:
+        demonstration_data["approved"] = bool(
+            approval_scope_demo and approval_scope_demo.get("approved")
+        )
     
     if demo_id and demonstration_data.get("_id") is None:
         demonstration_data["_id"] = ObjectId(demo_id)
         
     try:
         if is_edit and demo_id:
-            # --- Save previous version to history ---
-            prev_demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+            prev_demo = existing_demo
             if prev_demo:
+                # The token route has already validated the signed bearer token,
+                # registry record, expiry and revocation state. Normal admin
+                # edits continue to require the scoped permission check.
+                if not token_edit:
+                    _abort_if_demo_forbidden(demo_id, "EDIT_DEMO")
+                previous_city_key = prev_demo.get("city_key") or normalize_city_key(prev_demo.get("city"))
+                incoming_city_key = demonstration_data.get("city_key") or normalize_city_key(demonstration_data.get("city"))
+                if incoming_city_key != previous_city_key and not _user_can_create_demo_in_city(demonstration_data.get("city")):
+                    flash_message(_("Sinulla ei ole oikeutta siirtää mielenosoitusta valittuun paikkakuntaan."), "error")
+                    abort(403)
+                approve_after_save = can_change_approval and requested_approval
+                if approve_after_save:
+                    # Keep the status unchanged during the ordinary field save;
+                    # the decision service owns approval and its side effects.
+                    demonstration_data["approved"] = bool(prev_demo.get("approved"))
                 merged_data = _deep_merge(prev_demo, demonstration_data)
-                save_demo_history(demo_id, prev_demo, merged_data)
                 demo = Demonstration.from_dict(merged_data)
                 demo.save()
+                hist_id = record_demo_change(
+                    demo_id,
+                    prev_demo,
+                    merged_data,
+                    action="edit_demo",
+                    message=_("%(user)s muokkasi mielenosoitusta") % {"user": _get_actor_label()},
+                    case_id=case_id,
+                )
+
+                if case_id and hist_id:
+                    from mielenosoitukset_fi.utils.classes import Case
+                    case = Case.from_dict(mongo.cases.find_one({"_id": ObjectId(case_id)}))
+                    case.add_action("edit_demo", current_user.username, note=f"More information can be found on history page: <a href='{url_for('admin_demo.view_demo_diff', history_id=hist_id)}'>link</a>")
+                    
+                    case._add_history_entry({
+                        "timestamp": utcnow(),
+                        "action": "Muokattu mielenosoitusta",
+                        "user": current_user.username,
+                        "mech_action": "edit_demo",
+                        "metadata": {
+                            "demo_id": demo_id,
+                            "history_id": str(hist_id),
+                            "reason": "Muokattu mielenosoitusta hallintapaneelista, lisätietoa: <a href='{}'>historia</a>".format(url_for('admin_demo.view_demo_diff', history_id=hist_id, _external=True))
+                        },
+                    })
+                if approve_after_save:
+                    _apply_demo_decision(
+                        demo_id,
+                        "approved",
+                        source="admin_form",
+                    )
             flash_message("Mielenosoitus päivitetty onnistuneesti.", "success")
         else:
+            if not _user_can_create_demo_in_city(demonstration_data.get("city")):
+                flash_message(_("Sinulla ei ole oikeutta luoda mielenosoitusta valittuun paikkakuntaan."), "error")
+                abort(403)
             # Insert a new demonstration
-            mongo.demonstrations.insert_one(demonstration_data)
+            insert_result = mongo.demonstrations.insert_one(demonstration_data)
+            try:
+                demo_doc = demonstration_data.copy()
+                demo_doc["_id"] = insert_result.inserted_id
+                queue_cancellation_links_for_demo(demo_doc)
+            except Exception:
+                logger.exception("Failed to queue cancellation links for demo %s", insert_result.inserted_id)
+            log_demo_audit_entry(
+                insert_result.inserted_id,
+                action="create_demo",
+                message=_("%(user)s loi mielenosoituksen") % {"user": _get_actor_label()},
+                details={"title": demonstration_data.get("title")}
+            )
             flash_message("Mielenosoitus luotu onnistuneesti.", "success")
 
         # Redirect to the demonstration control panel on success
         return redirect(url_for("admin_demo.demo_control"))
 
     except ValueError as e:
-        flash_message(f"Virhe: {str(e)}", "error")
+        flash_message("Virhe: %(error)s", "error", error=str(e))
 
         # Redirect to the edit or create form based on operation type
-        return redirect(
-            url_for("admin_demo.edit_demo", demo_id=demo_id)
-            if is_edit
-            else url_for("admin_demo.create_demo")
+    return redirect(
+        url_for("admin_demo.edit_demo", demo_id=demo_id)
+        if is_edit
+        else url_for("admin_demo.create_demo")
+    )
+
+def gather_demo_edit_access_info(demo_doc: dict) -> dict:
+    """Collect users who have edit permissions for a specific demo."""
+    explicit_editors = []
+    seen_explicit = set()
+
+    def _format_user(user_obj, **extra):
+        data = {
+            "id": str(user_obj._id),
+            "displayname": user_obj.displayname or user_obj.username,
+            "username": user_obj.username,
+            "email": user_obj.email,
+            "role": user_obj.role,
+        }
+        data.update(extra)
+        return data
+
+    def _resolve_editor_id(raw):
+        if isinstance(raw, dict):
+            if "$oid" in raw:
+                return raw["$oid"]
+            if "_id" in raw:
+                return raw["_id"]
+            if "id" in raw:
+                return raw["id"]
+        return raw
+
+    def _build_user(uid):
+        oid = _normalize_objectid(_resolve_editor_id(uid))
+        if not oid:
+            return None
+        try:
+            user = User.from_OID(oid)
+        except Exception:
+            return None
+        return user
+
+    editors = demo_doc.get("editors") or []
+    for editor in editors:
+        user = _build_user(editor)
+        if not user:
+            continue
+        user_id = str(user._id)
+        if user_id in seen_explicit:
+            continue
+        seen_explicit.add(user_id)
+        explicit_editors.append(_format_user(user))
+
+    organizations = []
+    seen_org_ids = set()
+    for organizer in demo_doc.get("organizers") or []:
+        org_id = None
+        if isinstance(organizer, dict):
+            org_id = organizer.get("organization_id")
+        else:
+            org_id = getattr(organizer, "organization_id", None)
+        oid = _normalize_objectid(org_id)
+        if not oid or str(oid) in seen_org_ids:
+            continue
+        seen_org_ids.add(str(oid))
+        org_doc = mongo.organizations.find_one({"_id": oid}, {"name": 1})
+        org_name = org_doc.get("name") if org_doc else str(oid)
+
+        members = []
+        seen_member_ids = set()
+        for membership in MemberShip.all_in_organization(oid):
+            if "EDIT_DEMO" not in membership.permissions:
+                continue
+            member_user = None
+            try:
+                member_user = User.from_OID(membership.user_id)
+            except Exception:
+                continue
+            member_id = str(member_user._id)
+            if member_id in seen_member_ids:
+                continue
+            seen_member_ids.add(member_id)
+            members.append(
+                _format_user(
+                    member_user,
+                    membership_role=membership.role,
+                    membership_permissions=membership.permissions,
+                )
+            )
+
+        if members:
+            organizations.append(
+                {
+                    "organization_id": str(oid),
+                    "name": org_name,
+                    "members": members,
+                }
+            )
+
+    return {"explicit_editors": explicit_editors, "organizations": organizations}
+
+
+def _user_can_manage_demo_access(user, demo_doc: dict) -> bool:
+    """Return True if user should see the access panel."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    for organizer in demo_doc.get("organizers") or []:
+        org_id = None
+        if isinstance(organizer, dict):
+            org_id = organizer.get("organization_id")
+        else:
+            org_id = getattr(organizer, "organization_id", None)
+        if not org_id:
+            continue
+        membership = user.membership_for(org_id)
+        if membership and membership.role == "owner":
+            return True
+    return False
+
+
+@admin_demo_bp.route("/<demo_id>/editors/add", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_DEMO", _type="DEMONSTRATION")
+def add_demo_editor(demo_id):
+    """Allow inviting an existing user to become an explicit demo editor."""
+    identifier = (request.form.get("identifier") or "").strip()
+    if not identifier:
+        flash_message(_("Syötä käyttäjänimi tai sähköpostiosoite."), "error")
+        return redirect(request.referrer or url_for("admin_demo.edit_demo", demo_id=demo_id))
+
+    demo_obj = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_obj:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(request.referrer or url_for("admin_demo.demo_control"))
+
+    user_doc = None
+    if ObjectId.is_valid(identifier):
+        user_doc = mongo.users.find_one({"_id": ObjectId(identifier)})
+    if not user_doc:
+        user_doc = mongo.users.find_one({"email": identifier})
+    if not user_doc:
+        user_doc = mongo.users.find_one({"username": identifier})
+    if not user_doc:
+        flash_message(_("Käyttäjää ei löytynyt."), "error")
+        return redirect(request.referrer or url_for("admin_demo.edit_demo", demo_id=demo_id))
+
+    user_id = str(user_doc["_id"])
+    result = mongo.demonstrations.update_one(
+        {"_id": ObjectId(demo_id)},
+        {"$addToSet": {"editors": user_id}}
+    )
+
+    if result.modified_count:
+        log_demo_audit_entry(
+            demo_id,
+            action="grant_editor",
+            message=_("%(actor)s antoi muokkausoikeuden käyttäjälle %(target)s vierailevan muokkaajan roolissa.") % {
+                "actor": _get_actor_label(),
+                "target": user_doc.get("username") or user_doc.get("email") or user_id,
+            },
+            details={"user_id": user_id},
         )
+        flash_message(_("Käyttäjä lisätty muokkaajaksi."), "success")
+    else:
+        flash_message(_("Käyttäjä on jo listalla."), "info")
+
+    return redirect(request.referrer or url_for("admin_demo.edit_demo", demo_id=demo_id))
 
 
-def collect_demo_data(request):
+@admin_demo_bp.route("/<demo_id>/editors/remove", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_DEMO", _type="DEMONSTRATION")
+def remove_demo_editor(demo_id):
+    demo_obj = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_obj:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(request.referrer or url_for("admin_demo.demo_control"))
+
+    if not _user_can_manage_demo_access(current_user, demo_obj):
+        flash_message(_("Sinulla ei ole oikeutta poistaa muokkaajia."), "error")
+        return redirect(request.referrer or url_for("admin_demo.edit_demo", demo_id=demo_id))
+
+    user_id = request.form.get("user_id")
+    if not user_id:
+        flash_message(_("Käyttäjän tunniste puuttuu."), "error")
+        return redirect(request.referrer or url_for("admin_demo.edit_demo", demo_id=demo_id))
+
+    result = mongo.demonstrations.update_one(
+        {"_id": ObjectId(demo_id)},
+        {"$pull": {"editors": user_id}}
+    )
+    if result.modified_count:
+        log_demo_audit_entry(
+            demo_id,
+            action="revoke_editor",
+            message=_("%(actor)s poisti muokkaajan %(target)s oikeudet.") % {
+                "actor": _get_actor_label(),
+                "target": user_id,
+            },
+            details={"user_id": user_id},
+        )
+        flash_message(_("Muokkaaja poistettu."), "success")
+    else:
+        flash_message(_("Käyttäjä ei ole muokkaajalistalla."), "info")
+
+    return redirect(request.referrer or url_for("admin_demo.edit_demo", demo_id=demo_id))
+
+from flask import jsonify
+
+# freeze a demo
+@admin_demo_bp.route("/demo/<demo_id>/freeze", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("CREATE_DEMO", _type="DEMONSTRATION")
+def freeze_demo(demo_id):
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo:
+        return jsonify({"status": "ERROR", "message": "Mielenosoitusta ei löytynyt."}), 404
+
+    parent = demo.get("parent")
+    if not parent:
+        return jsonify({"status": "ERROR", "message": "Vain alikokoukset voidaan jäädyttää."}), 400
+
+    parent_demo = mongo.recu_demos.find_one({"_id": ObjectId(parent)})
+    if not parent_demo:
+        return jsonify({"status": "ERROR", "message": "Emokokousta ei löytynyt; jäädytys epäonnistui."}), 404
+
+    mongo.recu_demos.update_one(
+        {"_id": ObjectId(parent)},
+        {"$addToSet": {"freezed_children": demo_id}}
+    )
+
+    return jsonify({"status": "OK", "message": "Mielenosoitus on nyt jäädytetty."})
+
+
+# check frozen status
+@admin_demo_bp.route("/demo/<demo_id>/is_frozen", methods=["GET"])
+@login_required
+@admin_required
+@permission_required("VIEW_DEMO", _type="DEMONSTRATION")
+def is_demo_frozen(demo_id):
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo:
+        return jsonify({"status": "ERROR", "message": "Mielenosoitusta ei löytynyt."}), 404
+
+    parent = demo.get("parent")
+    if not parent:
+        return jsonify({"status": "ERROR", "message": "Vain alikokoukset voidaan tarkistaa.", "MR_ERROR": "NO_RECUR"}), 400
+
+    parent_demo = mongo.recu_demos.find_one({"_id": ObjectId(parent)})
+    if not parent_demo:
+        return jsonify({"status": "ERROR", "message": "Emokokousta ei löytynyt."}), 404
+
+    is_frozen = demo_id in parent_demo.get("freezed_children", [])
+    return jsonify({"status": "OK", "is_frozen": is_frozen})
+
+
+# unfreeze a demo
+@admin_demo_bp.route("/demo/<demo_id>/unfreeze", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("CREATE_DEMO", _type="DEMONSTRATION")
+def unfreeze_demo(demo_id):
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo:
+        return jsonify({"status": "ERROR", "message": "Mielenosoitusta ei löytynyt."}), 404
+
+    parent = demo.get("parent")
+    if not parent:
+        return jsonify({"status": "ERROR", "message": "Vain alikokoukset voidaan jäädyttää tai vapauttaa."}), 400
+
+    parent_demo = mongo.recu_demos.find_one({"_id": ObjectId(parent)})
+    if not parent_demo:
+        return jsonify({"status": "ERROR", "message": "Emokokousta ei löytynyt; vapautus epäonnistui."}), 404
+
+    mongo.recu_demos.update_one(
+        {"_id": ObjectId(parent)},
+        {"$pull": {"freezed_children": demo_id}}
+    )
+
+    return jsonify({"status": "OK", "message": "Mielenosoitus on nyt vapautettu jäädytyksestä."})
+
+
+
+
+def collect_demo_data(request, existing_organizers=None):
     """
     Collect demonstration data from the request form, including cover picture support.
 
@@ -1053,7 +4491,9 @@ def collect_demo_data(request):
     start_time = request.form.get("start_time")
     end_time = request.form.get("end_time")
     facebook = request.form.get("facebook")
+    slug = normalize_demo_slug(request.form.get("slug"))
     city = request.form.get("city")
+    city_key = normalize_city_key(city)
     address = request.form.get("address")
     event_type = request.form.get("type")
     # Handle route as a list (route[] in form-data)
@@ -1069,18 +4509,27 @@ def collect_demo_data(request):
         raise ValueError(_("Otsikko, päivämäärä ja kaupunki ovat pakollisia kenttiä."))
 
     # Process organizers and tags
-    organizers = collect_organizers(request)
+    organizers = collect_organizers(
+        request, existing_organizers=existing_organizers
+    )
     tags = collect_tags(request)
 
     description = request.form.get("description")
+    default_language = (
+        request.form.get("default_language")
+        or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi")
+    )
+    translations = collect_demo_translations(request, default_language)
     latitude = request.form.get("latitude")
     longitude = request.form.get("longitude")
 
     # Validate latitude and longitude if provided
     if latitude and not is_valid_latitude(latitude):
-        raise ValueError(_("Virheellinen leveysaste."))
+        latitude = None
+        flash_message(_("Virheellinen leveysaste. Asetetaan leveysasteeksi: None."))
     if longitude and not is_valid_longitude(longitude):
-        raise ValueError(_("Virheellinen pituusaste."))
+        longitude = None
+        flash_message(_("Virheellinen pituusaste.  Asetetaan pituusasteeksi: None."))
 
     # Handle cover picture (file upload or URL)
     cover_picture = request.form.get("cover_picture")
@@ -1098,24 +4547,86 @@ def collect_demo_data(request):
         else:
             logger.error("Failed to upload cover picture to S3; falling back to provided URL if any")
 
+    gallery_images_field = request.form.get("gallery_images")
+    gallery_images = parse_gallery_images_field(gallery_images_field)
+    img = (request.form.get("img") or "").strip() or None
+    preview_image = (request.form.get("preview_image") or "").strip() or None
+
     return {
         "title": title,
         "date": date,
         "start_time": start_time,
         "end_time": end_time,
         "facebook": facebook,
+        "slug": slug,
         "city": city,
+        "city_key": city_key,
         "address": address,
         "type": event_type,
         "route": route,
-        "organizers": [org.to_dict() for org in organizers],
+        "organizers": organizers,
         "approved": approved,
         "tags": tags,
         "description": description,
+        "default_language": default_language,
+        "translations": translations,
         "latitude": latitude,
         "longitude": longitude,
         "cover_picture": cover_picture,  # Add cover_picture to output
+        "img": img,
+        "preview_image": preview_image,
+        "gallery_images": gallery_images,
     }
+
+
+def _supported_demo_translation_locales():
+    return list(current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"])
+
+
+def _translation_language_names():
+    return dict(current_app.config.get("BABEL_LANGUAGES") or {})
+
+
+def collect_demo_translations(request, default_language):
+    supported_locales = _supported_demo_translation_locales()
+    normalized_default = (default_language or "fi").strip().lower()
+    translations = {}
+
+    for language in supported_locales:
+        normalized_language = (language or "").strip().lower()
+        if not normalized_language or normalized_language == normalized_default:
+            continue
+
+        title = (request.form.get(f"translation_{normalized_language}_title") or "").strip()
+        description = request.form.get(f"translation_{normalized_language}_description") or ""
+        description = description.strip()
+        raw_tags = (request.form.get(f"translation_{normalized_language}_tags") or "").strip()
+        tags = [tag.strip().lstrip("#") for tag in raw_tags.split(",") if tag.strip()]
+
+        entry = {}
+        if title:
+            entry["title"] = title
+        if description:
+            entry["description"] = description
+        if tags:
+            entry["tags"] = tags
+
+        if entry:
+            translations[normalized_language] = entry
+
+    return translations
+
+
+def parse_gallery_images_field(raw_value):
+    """Convert textarea input into a clean list of gallery image URLs."""
+    if not raw_value:
+        return []
+    entries = []
+    for line in raw_value.replace("\r", "").splitlines():
+        url = line.strip()
+        if url:
+            entries.append(url)
+    return entries
 
 
 def is_valid_latitude(lat):
@@ -1158,58 +4669,12 @@ def is_valid_longitude(lon):
         return False
 
 
-def collect_organizers(request):
-    """Collect organizer data from the request form.
+def collect_organizers(request, existing_organizers=None):
+    """Compatibility wrapper for callers that pass the Flask request object."""
+    return collect_admin_organizers(
+        request.form, existing_organizers=existing_organizers
+    )
 
-    This function extracts multiple organizers' information from the form and returns a list
-    of Organizer objects.
-
-    Parameters
-    ----------
-    request :
-        The incoming request object containing form data.
-
-    Returns
-    -------
-
-
-    """
-    organizers = []
-    i = 1
-
-    while True:
-        # Extract data for each organizer using a dynamic field naming pattern
-        name = request.form.get(f"organizer_name_{i}")
-        website = request.form.get(f"organizer_website_{i}")
-        email = request.form.get(f"organizer_email_{i}")
-        organizer_id = request.form.get(f"organizer_id_{i}")
-
-        # Stop when no name and no organization ID is provided (end of organizers)
-        if not name and not organizer_id:
-            break
-
-        # Create an Organizer object and append to the list
-        if organizer_id:
-            organizers.append(
-                Organizer(
-                    name=name.strip() if name else "",
-                    email=email.strip() if email else "",
-                    website=website.strip() if website else "",
-                    organization_id=ObjectId(organizer_id),
-                )
-            )
-        else:
-            organizers.append(
-                Organizer(
-                    name=name.strip() if name else "",
-                    email=email.strip() if email else "",
-                    website=website.strip() if website else "",
-                )
-            )
-
-        i += 1  # Move to the next organizer field
-
-    return organizers
 
 
 @admin_demo_bp.route("/delete_demo", methods=["POST"])
@@ -1219,6 +4684,17 @@ def collect_organizers(request):
 def delete_demo():
     """Delete a demonstration from the database."""
     json_mode = request.headers.get("Content-Type") == "application/json"
+
+    def fail_deletion(status):
+        """Keep the caller's response contract without claiming a safe retry."""
+        if json_mode:
+            message = (
+                _("Mielenosoitusta muutettiin samanaikaisesti. Päivitä sivu ja yritä uudelleen.")
+                if status == 409 else
+                _("Poiston tulosta ei voitu varmistaa. Tarkista mielenosoituksen tila ennen uutta yritystä.")
+            )
+            return jsonify({"status": "ERROR", "message": message}), status
+        abort(status)
 
     # Extract demo_id from either form data or JSON body
     demo_id = request.form.get("demo_id")
@@ -1243,9 +4719,67 @@ def delete_demo():
         else:
             flash_message(error_message)
             return redirect(url_for("admin_demo.demo_control"))
+    _abort_if_demo_forbidden(demo_data["_id"], "DELETE_DEMO")
 
-    # Perform deletion
-    mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
+    if not flush_rollback_history(mongo, demo_data["_id"]):
+        return fail_deletion(503)
+    demo_data.pop(PENDING_ROLLBACK_HISTORY, None)
+
+    # Preserve a recovery copy before deletion. The complete-snapshot guard
+    # ensures this is also the actual pre-image if the delete is applied.
+    try:
+        backup_id = mongo.demo_delete_backups.insert_one({
+            "demo_id": str(demo_id), "created_at": utcnow(),
+            "actor_id": str(getattr(current_user, "_id", "unknown")),
+            "state": "incomplete", "phase": "outcome_unknown",
+            "preimage": deepcopy(demo_data),
+        }).inserted_id
+    except Exception as error:
+        logger.warning("Deletion backup unavailable (%s)", type(error).__name__)
+        return fail_deletion(503)
+
+    def set_delete_phase(phase, **values):
+        update = {"$set": {"phase": phase, **values}}
+        if phase in {"completed", "conflict"}:
+            # History acknowledges the pre-image, or deletion did not apply.
+            # Confirm that outcome and minimize its redundant copy together.
+            update["$unset"] = {"preimage": ""}
+        try:
+            result = mongo.demo_delete_backups.update_one(
+                {"_id": backup_id}, update,
+            )
+            return result.matched_count == 1
+        except Exception as error:
+            logger.warning("Deletion recovery status pending (%s)", type(error).__name__)
+            return False
+
+    try:
+        deleted = mongo.demonstrations.find_one_and_delete({
+            "_id": ObjectId(demo_id), PENDING_ROLLBACK_HISTORY: {"$exists": False},
+            "$expr": {"$eq": ["$$ROOT", {"$literal": demo_data}]},
+        })
+    except Exception:
+        # The server may have applied the write before an acknowledgement was
+        # lost. Retain the pre-write copy and leave the outcome explicitly unknown.
+        return fail_deletion(503)
+    if deleted is None:
+        set_delete_phase("conflict", state="not_applied")
+        return fail_deletion(409)
+    try:
+        history_id = record_demo_change(
+            demo_id,
+            deleted,
+            {},
+            action="delete_demo",
+            message=_("%(user)s poisti mielenosoituksen") % {"user": _get_actor_label()},
+        )
+    except Exception:
+        history_id = None
+    if history_id is None:
+        set_delete_phase("history_pending")
+        return fail_deletion(503)
+    if not set_delete_phase("completed", state="completed", history_id=history_id):
+        return fail_deletion(503)
 
     success_message = "Mielenosoitus poistettu onnistuneesti."
     if json_mode:
@@ -1258,7 +4792,7 @@ def delete_demo():
 @admin_demo_bp.route("/confirm_delete_demo/<demo_id>", methods=["GET"])
 @login_required
 @admin_required
-@permission_required("DELETE_DEMO")
+@permission_required("DELETE_DEMO", _type="DEMONSTRATION")
 def confirm_delete_demo(demo_id):
     """Render a confirmation page before deleting a demonstration.
 
@@ -1278,6 +4812,7 @@ def confirm_delete_demo(demo_id):
     if not demo_data:
         flash_message("Mielenosoitusta ei löytynyt.")
         return redirect(url_for("admin_demo.demo_control"))
+    _abort_if_demo_forbidden(demo_data["_id"], "DELETE_DEMO")
 
     # Create a Demonstration instance from the fetched data
     demonstration = Demonstration.from_dict(demo_data)
@@ -1288,10 +4823,446 @@ def confirm_delete_demo(demo_id):
     )
 
 
+@admin_demo_bp.route("/<demo_id>/audit_log", methods=["GET"])
+@login_required
+@admin_required
+@permission_required("VIEW_DEMO", _type="DEMONSTRATION")
+def view_demo_audit_log(demo_id):
+    demo = _find_demo_with_alias_support(demo_id)
+    if not demo:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_control"))
+    _abort_if_demo_forbidden(demo["_id"], "VIEW_DEMO")
+
+    audit_query = {"demo_id": str(demo["_id"])}
+    page, per_page = parse_admin_pagination(request.args)
+    total_count = mongo.demo_audit_logs.count_documents(audit_query)
+    pagination = build_admin_pagination(
+        "admin_demo.view_demo_audit_log",
+        total_count=total_count,
+        page=page,
+        per_page=per_page,
+        query_args={"demo_id": str(demo["_id"])},
+    )
+    entries = list(
+        mongo.demo_audit_logs.find(audit_query)
+        .sort([("timestamp", DESCENDING), ("_id", DESCENDING)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
+    )
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/audit_log.html",
+        demo=demo,
+        entries=entries,
+        total_count=total_count,
+        **pagination,
+    )
+
+
+@admin_demo_bp.route("/audit/logs", methods=["GET"])
+@login_required
+@admin_required
+@permission_required("VIEW_DEMO")
+def audit_timeline():
+    """Central timeline view for latest demo audit log entries."""
+    default_per_page = 20
+    if not request.args.get("per_page"):
+        try:
+            legacy_limit = int(request.args.get("limit", default_per_page))
+        except (TypeError, ValueError):
+            legacy_limit = default_per_page
+        default_per_page = (
+            20 if legacy_limit <= 20 else 50 if legacy_limit <= 50 else 100
+        )
+    page, per_page = parse_admin_pagination(
+        request.args, default_per_page=default_per_page
+    )
+    demo_filter = (request.args.get("demo_id") or "").strip()
+    automatic = (request.args.get("automatic") or "all").lower()
+    if automatic not in {"all", "manual", "auto"}:
+        automatic = "all"
+
+    demo_scope_query = _demo_scope_query_for_permission("VIEW_DEMO")
+    scope_clauses = []
+    if demo_scope_query:
+        accessible_demo_ids = [
+            str(doc["_id"])
+            for doc in mongo.demonstrations.find(demo_scope_query, {"_id": 1})
+        ]
+        scope_clauses.append({"demo_id": {"$in": accessible_demo_ids}})
+
+    filter_clauses = list(scope_clauses)
+    if demo_filter:
+        filter_clauses.append(
+            {"demo_id": str(ObjectId(demo_filter))}
+            if ObjectId.is_valid(demo_filter)
+            else {"demo_id": demo_filter}
+        )
+
+    automatic_clauses = [
+        {"automatic": True},
+        {"details.automatic": True},
+        {"username": {"$regex": r"^\[JOB\]"}},
+        {"actor.username": {"$regex": r"^\[JOB\]"}},
+    ]
+    if automatic == "auto":
+        filter_clauses.append({"$or": automatic_clauses})
+    elif automatic == "manual":
+        filter_clauses.append({"$nor": automatic_clauses})
+
+    def _combine(clauses):
+        if not clauses:
+            return {}
+        if len(clauses) == 1:
+            return clauses[0]
+        return {"$and": clauses}
+
+    scope_query = _combine(scope_clauses)
+    query = _combine(filter_clauses)
+    total_count = mongo.demo_audit_logs.count_documents(scope_query)
+    filtered_count = mongo.demo_audit_logs.count_documents(query)
+    selected = {
+        "demo_id": demo_filter,
+        "automatic": automatic if automatic != "all" else "",
+    }
+    pagination = build_admin_pagination(
+        "admin_demo.audit_timeline",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args=selected,
+    )
+    entries = list(
+        mongo.demo_audit_logs.find(query)
+        .sort([("timestamp", DESCENDING), ("_id", DESCENDING)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
+    )
+
+    def _is_automatic(entry):
+        if entry.get("automatic"):
+            return True
+        details = entry.get("details") or {}
+        if details.get("automatic"):
+            return True
+        username = (entry.get("username") or "").strip()
+        if username.startswith("[JOB]"):
+            return True
+        actor = entry.get("actor") or {}
+        actor_name = (actor.get("username") or "").strip()
+        return actor_name.startswith("[JOB]")
+
+    # Attach demo details for quick reference
+    demo_map = {}
+    demo_ids = {entry.get("demo_id") for entry in entries if entry.get("demo_id")}
+    obj_ids = []
+    for did in demo_ids:
+        if ObjectId.is_valid(did):
+            obj_ids.append(ObjectId(did))
+    if obj_ids:
+        for doc in mongo.demonstrations.find({"_id": {"$in": obj_ids}}, {"title": 1, "city": 1, "date": 1}):
+            demo_map[str(doc["_id"])] = doc
+
+    for entry in entries:
+        info = demo_map.get(entry.get("demo_id"))
+        if info:
+            entry["demo_title"] = info.get("title")
+            entry["demo_city"] = info.get("city")
+            entry["demo_date"] = info.get("date")
+        entry["is_automatic"] = _is_automatic(entry)
+
+    active_filters = []
+    filter_labels = {
+        "demo_id": _("Mielenosoituksen ID"),
+        "automatic": _("Toimintotyyppi"),
+    }
+    filter_values = {
+        "demo_id": demo_filter,
+        "automatic": {
+            "manual": _("Vain manuaaliset"),
+            "auto": _("Vain automaattiset"),
+        }.get(automatic, ""),
+    }
+    for key, value in filter_values.items():
+        if not value:
+            continue
+        remaining = dict(selected)
+        remaining.pop(key, None)
+        remaining["per_page"] = per_page
+        active_filters.append(
+            {
+                "label": filter_labels[key],
+                "value": value,
+                "remove_url": url_for("admin_demo.audit_timeline", **remaining),
+            }
+        )
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/audit_timeline.html",
+        entries=entries,
+        filter_demo_id=demo_filter,
+        automatic_filter=automatic,
+        active_filters=active_filters,
+        clear_filters_url=url_for("admin_demo.audit_timeline", per_page=per_page),
+        total_count=total_count,
+        filtered_count=filtered_count,
+        **pagination,
+    )
+
+
+@admin_demo_bp.route("/tokens", methods=["GET", "POST"])
+@login_required
+@admin_required
+def manage_magic_tokens():
+    if not getattr(current_user, "global_admin", False):
+        abort(403)
+
+    if request.method == "POST":
+        expected = session.get(MAGIC_TOKEN_CSRF_SESSION_KEY, "")
+        provided = request.form.get("csrf_token", "")
+        if not (expected and provided and hmac.compare_digest(
+            expected.encode("utf-8"), provided.encode("utf-8")
+        )):
+            abort(403)
+        if request.form.get("revoke_all") == "1":
+            revoke_filter = {
+                "revoked": {"$ne": True},
+                "$or": [
+                    {"used_at": {"$exists": False}},
+                    {"used_at": None},
+                ],
+            }
+            tokens_to_revoke = list(
+                mongo[MAGIC_COLLECTION].find(
+                    revoke_filter, {"demo_id": 1, "action": 1}
+                )
+            )
+            result = mongo[MAGIC_COLLECTION].update_many(
+                revoke_filter,
+                {"$set": {"revoked": True, "revoked_at": _now_utc()}},
+            )
+            flash_message(_("{} linkkiä mitätöitiin.").format(result.modified_count), "success")
+            actor = _get_actor_label()
+            for token in tokens_to_revoke:
+                log_demo_audit_entry(
+                    token.get("demo_id"),
+                    action="token_revoked",
+                    message=_("%(user)s mitätöi linkin massatoiminnolla").format(user=actor),
+                    details={
+                        "token_id": str(token.get("_id")),
+                        "token_type": token.get("action"),
+                        "mass_action": True,
+                    },
+                )
+        else:
+            token_id = request.form.get("token_id")
+            if token_id and ObjectId.is_valid(token_id):
+                token_doc = mongo[MAGIC_COLLECTION].find_one_and_update(
+                    {"_id": ObjectId(token_id)},
+                    {"$set": {"revoked": True, "revoked_at": _now_utc()}},
+                    return_document=True,
+                )
+                flash_message(_("Linkki mitätöitiin."), "success")
+                if token_doc:
+                    log_demo_audit_entry(
+                        token_doc.get("demo_id"),
+                        action="token_revoked",
+                        message=_("%(user)s mitätöi yksittäisen linkin").format(user=_get_actor_label()),
+                        details={"token_id": token_id, "token_type": token_doc.get("action")},
+                    )
+        return redirect(url_for("admin_demo.manage_magic_tokens"))
+
+    filters = {
+        "action": (request.args.get("action") or "").strip(),
+        "demo_id": (request.args.get("demo_id") or "").strip(),
+        "status": (request.args.get("status") or "").strip(),
+    }
+    page, per_page = parse_admin_pagination(request.args)
+
+    query = {}
+    if filters["action"]:
+        query["action"] = filters["action"]
+    if filters["demo_id"]:
+        query["demo_id"] = filters["demo_id"]
+    if filters["status"] == "active":
+        query["revoked"] = {"$ne": True}
+        query["used_at"] = None
+        query["expires_at"] = {"$gt": _now_utc()}
+    elif filters["status"] == "revoked":
+        query["revoked"] = True
+    elif filters["status"] == "used":
+        query["used_at"] = {"$ne": None}
+
+    total_count = mongo[MAGIC_COLLECTION].count_documents({})
+    filtered_count = mongo[MAGIC_COLLECTION].count_documents(query)
+    pagination = build_admin_pagination(
+        "admin_demo.manage_magic_tokens",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args=filters,
+    )
+    tokens = list(
+        mongo[MAGIC_COLLECTION]
+        .find(query)
+        .sort([("created_at", DESCENDING), ("_id", DESCENDING)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
+    )
+
+    summary_pipeline = []
+    if query:
+        summary_pipeline.append({"$match": query})
+    summary_pipeline.append({"$group": {"_id": "$action", "count": {"$sum": 1}}})
+    action_counts = {
+        doc["_id"] or "unknown": doc.get("count", 0)
+        for doc in mongo[MAGIC_COLLECTION].aggregate(summary_pipeline)
+    }
+
+    demo_map = {}
+    demo_ids = {t.get("demo_id") for t in tokens if t.get("demo_id")}
+    obj_ids = [ObjectId(d) for d in demo_ids if ObjectId.is_valid(d)]
+    if obj_ids:
+        for doc in mongo.demonstrations.find({"_id": {"$in": obj_ids}}, {"title": 1, "date": 1, "city": 1}):
+            demo_map[str(doc["_id"])] = doc
+
+    def _fmt(dt):
+        if isinstance(dt, datetime):
+            return dt.strftime("%d.%m.%Y %H:%M")
+        return "-"
+
+    for token in tokens:
+        token["_id"] = str(token["_id"])
+        demo_info = demo_map.get(token.get("demo_id"))
+        if demo_info:
+            token["demo_title"] = demo_info.get("title")
+            token["demo_date"] = demo_info.get("date")
+            token["demo_city"] = demo_info.get("city")
+        token["created_by_display"] = token.get("created_by") or "-"
+        token["created_at_display"] = _fmt(token.get("created_at"))
+        token["expires_at_display"] = _fmt(token.get("expires_at"))
+        token["first_seen_display"] = _fmt(token.get("first_seen_at"))
+        token["used_at_display"] = _fmt(token.get("used_at"))
+        token["revoked_at_display"] = _fmt(token.get("revoked_at"))
+        token["ua_first_display"] = token.get("ua_first")
+        token["ua_last_display"] = token.get("ua_last")
+
+    distinct_actions = sorted(mongo[MAGIC_COLLECTION].distinct("action"))
+
+    active_filters = []
+    filter_labels = {
+        "action": _("Toiminto"),
+        "demo_id": _("Mielenosoituksen ID"),
+        "status": _("Tila"),
+    }
+    status_labels = {
+        "active": _("Aktiivinen"),
+        "revoked": _("Mitätöity"),
+        "used": _("Käytetty"),
+    }
+    for key, value in filters.items():
+        if not value:
+            continue
+        remaining = {**filters, key: "", "per_page": per_page, "page": 1}
+        active_filters.append(
+            {
+                "label": filter_labels[key],
+                "value": status_labels.get(value, value),
+                "remove_url": url_for("admin_demo.manage_magic_tokens", **remaining),
+            }
+        )
+
+    csrf_token = session.get(MAGIC_TOKEN_CSRF_SESSION_KEY)
+    if not csrf_token:
+        csrf_token = secrets.token_urlsafe(32)
+        session[MAGIC_TOKEN_CSRF_SESSION_KEY] = csrf_token
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/magic_tokens.html",
+        csrf_token=csrf_token,
+        tokens=tokens,
+        filters=filters,
+        actions=distinct_actions,
+        action_counts=action_counts,
+        active_filters=active_filters,
+        clear_filters_url=url_for(
+            "admin_demo.manage_magic_tokens", per_page=per_page
+        ),
+        total_count=total_count,
+        filtered_count=filtered_count,
+        filters_active=bool(active_filters),
+        **pagination,
+    )
+
+
+@admin_demo_bp.route("/super_audit/logs", methods=["GET"])
+@login_required
+@admin_required
+def view_super_audit_logs():
+    if not getattr(current_user, "global_admin", False):
+        abort(403)
+
+    args = request.args
+    page, per_page = parse_admin_pagination(args)
+    query = {}
+    event = (args.get("event") or "").strip()
+    if event:
+        query["event"] = event
+    path = (args.get("path") or "").strip()
+    if path:
+        query["request.path"] = {"$regex": re.escape(path), "$options": "i"}
+    method = (args.get("method") or "").strip().upper()
+    if method:
+        query["request.method"] = method
+    search_text = (args.get("q") or "").strip()
+    if search_text:
+        query["payload"] = {"$regex": re.escape(search_text), "$options": "i"}
+
+    total_count = mongo.super_audit_logs.count_documents(query)
+    pagination = build_admin_pagination(
+        "admin_demo.view_super_audit_logs",
+        total_count=total_count,
+        page=page,
+        per_page=per_page,
+        query_args={
+            "event": event,
+            "path": path,
+            "method": method,
+            "q": search_text,
+        },
+    )
+    entries = list(
+        mongo.super_audit_logs.find(query)
+        .sort([("timestamp", -1), ("_id", -1)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
+    )
+    for entry in entries:
+        entry["_id"] = str(entry.get("_id"))
+        ts = entry.get("timestamp")
+        entry["timestamp_str"] = ts.strftime("%d.%m.%Y %H:%M:%S") if isinstance(ts, datetime) else "-"
+        entry["payload"] = _json_safe(entry.get("payload"))
+        if entry.get("request"):
+            entry["request"] = _json_safe(entry.get("request"))
+        if entry.get("entity"):
+            entry["entity"] = _json_safe(entry.get("entity"))
+
+    distinct_events = sorted(mongo.super_audit_logs.distinct("event"))
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}super_audit/logs.html",
+        entries=entries,
+        events=distinct_events,
+        filters={"event": event, "path": path, "method": method, "q": search_text},
+        total_count=total_count,
+        **pagination,
+    )
+
+
 @admin_demo_bp.route("/accept_demo/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("ACCEPT_DEMO")
+@permission_required("ACCEPT_DEMO", _type="DEMONSTRATION")
 def accept_demo(demo_id):
     """Accept an existing demonstration by updating its status.
 
@@ -1324,29 +5295,17 @@ def accept_demo(demo_id):
     if not demo_data:
         error_msg = _("Demonstration not found.")
         return jsonify({"status": "ERROR", "message": error_msg}), 404
-
-    demo = Demonstration.from_dict(demo_data)
+    _abort_if_demo_forbidden(demo_data["_id"], "ACCEPT_DEMO")
 
     try:
-        demo.approved = True
-        demo.save()
-
-        # Notify submitter if possible (always, even if already approved)
-        submitter = mongo.submitters.find_one({"demonstration_id": ObjectId(demo_id)})
-        if submitter and submitter.get("submitter_email"):
-            email_sender.queue_email(
-                template_name="demo_submitter_approved.html",
-                subject="Mielenosoituksesi on hyväksytty",
-                recipients=[submitter["submitter_email"]],
-                context={
-                    "title": demo.title,
-                    "date": demo.date,
-                    "city": demo.city,
-                    "address": demo.address,
-                },
-            )
-
-        return jsonify({"status": "OK", "message": "Demonstration accepted successfully."}), 200
+        result = _apply_demo_decision(demo_id, "approved", source="legacy_api")
+        return jsonify(
+            {
+                "status": "OK",
+                "changed": result.changed,
+                "message": "Demonstration accepted successfully.",
+            }
+        ), 200
     except Exception as e:
         logging.error("An error occurred while accepting the demonstration: %s", str(e))
         return jsonify({"status": "ERROR", "message": "An internal error has occurred."}), 500
@@ -1354,7 +5313,7 @@ def accept_demo(demo_id):
 @admin_demo_bp.route("/get_submitter_info/<demo_id>", methods=["GET"])
 @login_required
 @admin_required
-@permission_required("VIEW_DEMO")
+@permission_required("VIEW_DEMO", _type="DEMONSTRATION")
 def get_submitter_info(demo_id):
     """
     Get submitter information for a demonstration.
@@ -1382,10 +5341,179 @@ def get_submitter_info(demo_id):
     }
     return jsonify({"status": "OK", "submitter": submitter_info})
 
+
+@admin_demo_bp.route("/submission_errors", methods=["GET"])
+@login_required
+@admin_required
+@permission_required("VIEW_LOGS")
+def submission_errors_dashboard():
+    args = request.args
+    filters = []
+    selected = {}
+
+    error_code = (args.get("error_code") or "").strip()
+    if error_code:
+        filters.append({"error_code": error_code})
+        selected["error_code"] = error_code
+
+    status_raw = (args.get("status") or "").strip()
+    if status_raw:
+        try:
+            status_value = int(status_raw)
+            filters.append({"status": status_value})
+            selected["status"] = status_raw
+        except ValueError:
+            pass
+
+    ip_value = (args.get("ip") or "").strip()
+    if ip_value:
+        filters.append({"ip": ip_value})
+        selected["ip"] = ip_value
+
+    user_id = (args.get("user_id") or "").strip()
+    if user_id:
+        filters.append({"user.id": user_id})
+        selected["user_id"] = user_id
+
+    request_path = (args.get("path") or "").strip()
+    if request_path:
+        filters.append({"request_path": {"$regex": re.escape(request_path), "$options": "i"}})
+        selected["path"] = request_path
+
+    query_text = (args.get("q") or "").strip()
+    if query_text:
+        filters.append({"message": {"$regex": re.escape(query_text), "$options": "i"}})
+        selected["q"] = query_text
+
+    created_bounds = {}
+    start_date_raw = (args.get("start_date") or "").strip()
+    if start_date_raw:
+        try:
+            created_bounds["$gte"] = datetime.strptime(start_date_raw, "%Y-%m-%d")
+            selected["start_date"] = start_date_raw
+        except ValueError:
+            pass
+
+    end_date_raw = (args.get("end_date") or "").strip()
+    if end_date_raw:
+        try:
+            created_bounds["$lt"] = datetime.strptime(end_date_raw, "%Y-%m-%d") + timedelta(days=1)
+            selected["end_date"] = end_date_raw
+        except ValueError:
+            pass
+
+    if created_bounds:
+        filters.append({"created_at": created_bounds})
+
+    query = {"$and": filters} if filters else {}
+
+    page, per_page = parse_admin_pagination(args)
+    filtered_count = mongo.demo_submission_errors.count_documents(query)
+    total_count = mongo.demo_submission_errors.count_documents({})
+    pagination = build_admin_pagination(
+        "admin_demo.submission_errors_dashboard",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args=selected,
+    )
+
+    logs_cursor = (
+        mongo.demo_submission_errors.find(query)
+        .sort([("created_at", DESCENDING), ("_id", DESCENDING)])
+        .skip(pagination["slice_start"])
+        .limit(per_page)
+    )
+
+    logs = []
+    for log in logs_cursor:
+        log["_id"] = str(log.get("_id"))
+        log["extra"] = log.get("extra") or {}
+        log["form_snapshot"] = log.get("form_snapshot") or {}
+        for request_field in (
+            "request_path",
+            "request_method",
+            "query_args",
+            "referer",
+            "user_agent",
+        ):
+            log[request_field] = log.get(request_field)
+        created = log.get("created_at")
+        if isinstance(created, datetime):
+            log["created_at_str"] = created.strftime("%d.%m.%Y %H:%M:%S")
+        else:
+            log["created_at_str"] = "-"
+        logs.append(log)
+
+    pipeline = []
+    if query:
+        pipeline.append({"$match": query})
+    pipeline.extend(
+        [
+            {"$group": {"_id": "$error_code", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+            {"$limit": 5},
+        ]
+    )
+    error_stats = list(mongo.demo_submission_errors.aggregate(pipeline))
+    error_stats = [
+        {"code": stat.get("_id") or _("Tuntematon"), "count": stat.get("count", 0)}
+        for stat in error_stats
+    ]
+
+    error_codes = sorted(
+        [code for code in mongo.demo_submission_errors.distinct("error_code") if code]
+    )
+    status_options = sorted(
+        [status for status in mongo.demo_submission_errors.distinct("status") if status is not None]
+    )
+
+    filter_labels = {
+        "error_code": _("Virhekoodi"),
+        "status": _("HTTP-status"),
+        "q": _("Viesti"),
+        "start_date": _("Alkaen"),
+        "end_date": _("Päättyen"),
+        "ip": _("IP-osoite"),
+        "user_id": _("Käyttäjän ID"),
+        "path": _("Polku"),
+    }
+    active_filters = []
+    for key, value in selected.items():
+        remaining = dict(selected)
+        remaining.pop(key, None)
+        remaining["per_page"] = per_page
+        active_filters.append(
+            {
+                "label": filter_labels[key],
+                "value": value,
+                "remove_url": url_for(
+                    "admin_demo.submission_errors_dashboard", **remaining
+                ),
+            }
+        )
+
+    return render_template(
+        "admin_V2/demonstrations/submission_errors.html",
+        logs=logs,
+        filters=selected,
+        filters_active=bool(active_filters),
+        active_filters=active_filters,
+        clear_filters_url=url_for(
+            "admin_demo.submission_errors_dashboard", per_page=per_page
+        ),
+        error_codes=error_codes,
+        status_options=status_options,
+        total_count=total_count,
+        filtered_count=filtered_count,
+        error_stats=error_stats,
+        **pagination,
+    )
+
 from flask import Blueprint, request, jsonify
 from bson import ObjectId
 
-admin_demo_api_bp = Blueprint("admin_demo_api", __name__)
+admin_demo_api_bp = Blueprint("admin_demo_api", __name__) #URL: /api/admin/demo/
 
 def _require_valid_objectid(id_str):
     # Validate ObjectId
@@ -1394,66 +5522,250 @@ def _require_valid_objectid(id_str):
     except:
         raise ValueError("Invalid ID")
 
+
+@admin_demo_api_bp.route("/geocode", methods=["POST"])
+@login_required
+def geocode_address():
+    """
+    Accepts JSON: { "address": "...", "city": "..." }
+    Returns JSON: { "latitude": "...", "longitude": "..." } or error
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON payload"}), 400
+
+    address = data.get("address")
+    city = data.get("city")
+
+    if not address or not city:
+        return jsonify({"error": "Missing 'address' or 'city'"}), 400
+
+    coordinates = geocode_address_lookup(address, city)
+    if not coordinates:
+        return jsonify({"error": "No coordinates found"}), 404
+
+    latitude, longitude = coordinates
+    return jsonify({"latitude": latitude, "longitude": longitude})
+
 @admin_demo_api_bp.route("/<demo_id>/approve", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("ACCEPT_DEMO", _type="DEMONSTRATION")
 def approve_demo(demo_id):
     demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
     if not demo:
         return jsonify({"success": False, "error": "Mielenosoitus ei löytynyt"}), 404
+    _abort_if_demo_forbidden(demo["_id"], "ACCEPT_DEMO")
 
-    if demo.get("approved"):
-        return jsonify({"success": False, "message": "Mielenosoitus on jo hyväksytty"}), 200
-
-    mongo.demonstrations.update_one(
-        {"_id": _require_valid_objectid(demo_id)},
-        {"$set": {"approved": True, "rejected": False}}
+    result = _apply_demo_decision(demo_id, "approved", source="admin_api")
+    return jsonify(
+        {
+            "success": True,
+            "changed": result.changed,
+            "message": (
+                "Mielenosoitus hyväksyttiin!"
+                if result.changed
+                else "Mielenosoitus on jo hyväksytty"
+            ),
+        }
     )
 
-    # Notify submitter
-    submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
-    if submitter and submitter.get("submitter_email"):
-        demo_url = url_for("demonstration_detail", demo_id=demo_id, _external=True)
-        email_sender.queue_email(
-            template_name="demo_submitter_approved.html",
-            subject="Mielenosoituksesi on hyväksytty",
-            recipients=[submitter["submitter_email"]],
-            context={
-                "title": demo.get("title", ""),
-                "date": demo.get("date", ""),
-                "city": demo.get("city", ""),
-                "address": demo.get("address", ""),
-                "url": demo_url
-            },
-        )
-
-    return jsonify({"success": True, "message": "Mielenosoitus hyväksyttiin!"})
-
 @admin_demo_api_bp.route("/<demo_id>/deny", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("ACCEPT_DEMO", _type="DEMONSTRATION")
 def reject_demo(demo_id):
     demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
     if not demo:
         return jsonify({"success": False, "error": "Mielenosoitus ei löytynyt"}), 404
+    _abort_if_demo_forbidden(demo["_id"], "ACCEPT_DEMO")
 
-    if demo.get("approved") is False and demo.get("rejected") is True:
-        return jsonify({"success": False, "message": "Mielenosoitus on jo hylätty"}), 200
-
-    mongo.demonstrations.update_one(
-        {"_id": _require_valid_objectid(demo_id)},
-        {"$set": {"approved": False, "rejected": True}}
+    result = _apply_demo_decision(demo_id, "rejected", source="admin_api")
+    return jsonify(
+        {
+            "success": True,
+            "changed": result.changed,
+            "message": (
+                "Mielenosoitus hylättiin!"
+                if result.changed
+                else "Mielenosoitus on jo hylätty"
+            ),
+        }
     )
 
-    # Notify submitter
-    submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
-    if submitter and submitter.get("submitter_email"):
-        email_sender.queue_email(
-            template_name="demo_submitter_rejected.html",
-            subject="Mielenosoituksesi on hylätty",
-            recipients=[submitter["submitter_email"]],
-            context={
-                "title": demo.get("title", ""),
-                "date": demo.get("date", ""),
-                "city": demo.get("city", ""),
-                "address": demo.get("address", ""),
+
+@admin_demo_api_bp.route("/bulk_decide", methods=["POST"])
+@login_required
+@admin_required
+def bulk_decide_demos():
+    if not _valid_edit_link_csrf():
+        return jsonify({"success": False, "error": "Istunnon turvatarkistus epäonnistui."}), 403
+    payload = request.get_json(silent=True) or {}
+    demo_ids = payload.get("demo_ids") or []
+    decision = payload.get("decision")
+    if decision not in {"approved", "rejected"}:
+        return jsonify({"success": False, "error": "Virheellinen päätös"}), 400
+    if not isinstance(demo_ids, list) or not demo_ids or len(demo_ids) > 100:
+        return jsonify(
+            {
+                "success": False,
+                "error": "Valitse 1–100 mielenosoitusta.",
+            }
+        ), 400
+
+    results = []
+    changed_count = 0
+    for raw_id in dict.fromkeys(str(value) for value in demo_ids):
+        entry = {"demo_id": raw_id}
+        if not ObjectId.is_valid(raw_id):
+            entry["status"] = "invalid_id"
+        elif not mongo.demonstrations.find_one({"_id": ObjectId(raw_id)}, {"_id": 1}):
+            entry["status"] = "not_found"
+        elif not _user_can_access_demo(raw_id, "ACCEPT_DEMO"):
+            entry["status"] = "forbidden"
+        else:
+            result = _apply_demo_decision(
+                raw_id,
+                decision,
+                source="admin_bulk",
+            )
+            entry["status"] = "changed" if result.changed else "unchanged"
+            changed_count += int(result.changed)
+        results.append(entry)
+
+    return jsonify(
+        {
+            "success": True,
+            "decision": decision,
+            "changed_count": changed_count,
+            "results": results,
+        }
+    )
+
+
+@admin_demo_api_bp.route("/<demo_id>/cancel", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_DEMO", _type="DEMONSTRATION")
+def admin_cancel_demo(demo_id):
+    try:
+        demo_oid = _require_valid_objectid(demo_id)
+    except ValueError:
+        return jsonify({"success": False, "error": "Virheellinen tunniste"}), 400
+
+    demo = mongo.demonstrations.find_one({"_id": demo_oid})
+    if not demo:
+        return jsonify({"success": False, "error": "Mielenosoitus ei löytynyt"}), 404
+    _abort_if_demo_forbidden(demo["_id"], "EDIT_DEMO")
+
+    reason = None
+    if request.is_json:
+        reason = request.json.get("reason")
+    else:
+        reason = request.form.get("reason")
+
+    cancelled = cancel_demo(
+        demo,
+        cancelled_by={
+            "user_id": str(current_user.id),
+            "source": "admin_api",
+            "username": getattr(current_user, "username", None),
+        },
+        reason=reason,
+    )
+
+    if not cancelled:
+        return jsonify({"success": False, "message": "Mielenosoitus on jo merkitty perutuksi."}), 200
+
+    updated_demo = mongo.demonstrations.find_one({"_id": demo_oid}) or demo
+    record_demo_change(
+        demo_id,
+        demo,
+        updated_demo,
+        action="cancel_demo",
+        message=_("%(user)s perui mielenosoituksen") % {"user": _get_actor_label()},
+        extra_details={"reason": reason} if reason else None,
+    )
+
+    return jsonify({"success": True, "message": "Mielenosoitus merkitty perutuksi."})
+
+
+@admin_demo_api_bp.route("/bulk_cancel", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_DEMO")
+def bulk_cancel_demos():
+    payload = request.get_json(silent=True) or {}
+    demo_ids = payload.get("demo_ids") or []
+    reason = payload.get("reason")
+
+    if not isinstance(demo_ids, list) or not demo_ids:
+        return jsonify({"success": False, "error": _(u"Valitse vähintään yksi mielenosoitus.")}), 400
+
+    results = []
+    cancelled_count = 0
+
+    for raw_id in demo_ids:
+        entry = {"demo_id": raw_id}
+        try:
+            demo_oid = _require_valid_objectid(raw_id)
+        except ValueError:
+            entry["status"] = "invalid_id"
+            entry["message"] = _(u"Virheellinen tunniste.")
+            results.append(entry)
+            continue
+
+        demo = mongo.demonstrations.find_one({"_id": demo_oid})
+        if not demo:
+            entry["status"] = "not_found"
+            entry["message"] = _(u"Mielenosoitusta ei löytynyt.")
+            results.append(entry)
+            continue
+        if not _user_can_access_demo(demo["_id"], "EDIT_DEMO"):
+            entry["status"] = "forbidden"
+            entry["message"] = _(u"Ei oikeutta käsitellä tätä mielenosoitusta.")
+            results.append(entry)
+            continue
+
+        cancelled = cancel_demo(
+            demo,
+            cancelled_by={
+                "user_id": str(current_user.id),
+                "source": "admin_bulk",
+                "username": getattr(current_user, "username", None),
             },
+            reason=reason,
         )
 
-    return jsonify({"success": True, "message": "Mielenosoitus hylättiin!"})
+        if cancelled:
+            entry["status"] = "cancelled"
+            entry["message"] = _(u"Merkitty perutuksi.")
+            cancelled_count += 1
+            updated_demo = mongo.demonstrations.find_one({"_id": demo_oid}) or demo
+            record_demo_change(
+                raw_id,
+                demo,
+                updated_demo,
+                action="cancel_demo",
+                message=_("%(user)s perui mielenosoituksen (bulk)") % {"user": _get_actor_label()},
+                extra_details={"reason": reason, "bulk": True},
+            )
+        else:
+            entry["status"] = "already_cancelled"
+            entry["message"] = _(u"Mielenosoitus on jo merkitty perutuksi.")
+            log_demo_audit_entry(
+                raw_id,
+                action="cancel_demo_attempt",
+                message=_("%(user)s yritti perua jo perutun mielenosoituksen") % {"user": _get_actor_label()},
+                details={"reason": reason, "bulk": True},
+            )
+
+        results.append(entry)
+
+    return jsonify(
+        {
+            "success": cancelled_count > 0,
+            "cancelled_count": cancelled_count,
+            "results": results,
+        }
+    )

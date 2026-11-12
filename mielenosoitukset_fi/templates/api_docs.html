@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('API-dokumentaatio') }} | Mielenosoitukset.fi{% endblock %}
+
+{% block content %}
+<div class="api-docs-wrap public-page-shell">
+  <header class="public-page-header">
+    <div class="public-page-header__content">
+      <p class="public-page-header__kicker">{{ _('Kehittäjille') }}</p>
+      <h1 class="public-page-header__title">{{ _('API-dokumentaatio') }}</h1>
+      <p class="public-page-header__description">{{ _('Ihmisluettava dokumentaatio julkiselle API:lle.') }}</p>
+    </div>
+    <div class="public-page-header__meta api-docs-meta" aria-label="{{ _('API:n perustiedot') }}">
+      <span>{{ _('OpenAPI-määrittely') }}: <a href="{{ openapi_url }}">openapi.yaml</a></span>
+      <span>{{ _('Perusosoite') }}: <code>/api</code></span>
+    </div>
+  </header>
+  <div class="api-docs-layout">
+    <aside class="api-docs-sidebar" aria-labelledby="api-docs-contents-title">
+      <h2 id="api-docs-contents-title">{{ _('Sisältö') }}</h2>
+      {{ api_toc | safe }}
+    </aside>
+    <div class="api-docs-content">{{ api_doc | safe }}</div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block subject %}Mielenosoitukset.fi - Ilmoitus ylläpidolle{% endblock %}</title>
+    <style>
+        :root {
+            color-scheme: light;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5fb;
+            color: #1f2937;
+        }
+        .email-wrapper {
+            width: 100%;
+            padding: 32px 16px;
+            box-sizing: border-box;
+        }
+        .email-card {
+            max-width: 640px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+            padding: 32px;
+        }
+        .eyebrow {
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 11px;
+            color: #64748b;
+            margin: 0 0 8px 0;
+        }
+        h1 {
+            margin: 0 0 16px 0;
+            font-size: 22px;
+            color: #0f172a;
+        }
+        p {
+            margin: 0 0 16px 0;
+            line-height: 1.6;
+            color: #1f2937;
+        }
+        .data-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 16px 0;
+        }
+        .data-list li {
+            margin-bottom: 10px;
+            padding: 10px 12px;
+            background-color: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+        .data-list strong {
+            display: block;
+            font-size: 13px;
+            letter-spacing: 0.02em;
+            color: #475569;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .change-value {
+            margin-top: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .change-value span {
+            display: block;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+        .change-value--new {
+            border-left: 3px solid #22c55e;
+            padding-left: 10px;
+        }
+        .change-value--original {
+            border-left: 3px solid #94a3b8;
+            padding-left: 10px;
+            color: #475569;
+        }
+        .btn-group {
+            margin: 12px 0 16px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 11px 18px;
+            font-weight: 600;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: #ffffff !important;
+        }
+        .btn-danger {
+            background-color: #dc2626;
+            color: #ffffff !important;
+        }
+        .btn-muted {
+            background-color: #e2e8f0;
+            color: #1f2937 !important;
+        }
+        .meta {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 13px;
+            color: #475569;
+        }
+        .footer {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 12px;
+            margin-top: 16px;
+        }
+        @media (max-width: 600px) {
+            .email-card {
+                padding: 24px;
+            }
+            .btn-group {
+                display: flex;
+                flex-direction: column;
+            }
+            .btn {
+                margin-right: 0;
+                margin-bottom: 10px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-card">
+            <p class="eyebrow">{{ eyebrow|default("Ylläpitoilmoitus") }}</p>
+            <h1>{{ heading|default("Tärkeä ilmoitus ylläpidolle") }}</h1>
+            {% block body %}{% endblock %}
+        </div>
+        <p class="footer">Mielenosoitukset.fi ylläpito</p>
+    </div>
+</body>
+</html>

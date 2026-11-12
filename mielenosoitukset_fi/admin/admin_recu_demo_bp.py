@@ -1,22 +1,71 @@
+import re
+from copy import deepcopy
 from datetime import datetime, date
 
 from bson.objectid import ObjectId
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_login import login_required
+from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.utils.flashing import flash_message
 
-from mielenosoitukset_fi.utils.classes import RecurringDemonstration, Organizer
+from mielenosoitukset_fi.utils.classes import (
+    RecurringDemonstration,
+    RepeatSchedule,
+)
+from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.variables import CITY_LIST
-from mielenosoitukset_fi.utils.wrappers import permission_required, admin_required
+from mielenosoitukset_fi.utils.wrappers import (
+    admin_required,
+    has_demo_approval_permission,
+    permission_required,
+)
 
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
+from mielenosoitukset_fi.utils.admin.organizers import (
+    collect_admin_organizers,
+    linkable_admin_organization_ids,
+)
+from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo
+from mielenosoitukset_fi.utils.demo_slugs import (
+    demo_slug_is_available,
+    normalize_demo_slug,
+)
+from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
+from mielenosoitukset_fi.utils.recurrence import collect_recurrence_preview_dates
+from mielenosoitukset_fi.demonstrations.audit import record_demo_change
 from .utils import mongo, _ADMIN_TEMPLATE_FOLDER
-
-from mielenosoitukset_fi.utils.classes import RecurringDemonstration
 
 admin_recu_demo_bp = Blueprint(
     "admin_recu_demo", __name__, url_prefix="/admin/recu_demo"
 )
+
+CHILD_BULK_FIELD_MAP = {
+    "title": ("title",),
+    "description": ("description",),
+    "times": ("start_time", "end_time"),
+    "location": ("city", "city_key", "address", "latitude", "longitude"),
+    "type": ("event_type",),
+    "route": ("route",),
+    "organizers": ("organizers",),
+    "tags": ("tags",),
+    "links_and_images": (
+        "facebook",
+        "cover_picture",
+        "img",
+        "preview_image",
+        "gallery_images",
+    ),
+    "approved": ("approved",),
+}
 
 from .utils import AdminActParser, log_admin_action_V2
 from flask_login import current_user
@@ -30,45 +79,488 @@ def log_request_info():
     )
 
 
+def _linkable_organization_ids(permission_name, *, existing_demo=None):
+    """Return recurring-editor organization ids allowed for the current user."""
+    return linkable_admin_organization_ids(
+        current_user,
+        permission_name,
+        existing_demo=existing_demo,
+    )
+
+
+def _available_organizer_organizations(permission_name, *, existing_demo=None):
+    allowed_ids = _linkable_organization_ids(
+        permission_name, existing_demo=existing_demo
+    )
+    query = {} if allowed_ids is None else {"_id": {"$in": list(allowed_ids)}}
+    return list(
+        mongo.organizations.find(
+            query, {"name": 1, "email": 1, "website": 1}
+        ).sort("name", 1)
+    )
+
+
+def _validate_organizer_organization_scope(
+    organizers, permission_name, *, existing_demo=None
+):
+    allowed_ids = _linkable_organization_ids(
+        permission_name, existing_demo=existing_demo
+    )
+    if allowed_ids is None:
+        return
+    submitted_ids = {
+        organizer.get("organization_id")
+        for organizer in organizers
+        if organizer.get("organization_id")
+    }
+    if not submitted_ids.issubset(allowed_ids):
+        abort(403)
+
+
+def _render_recu_demo_form(
+    *,
+    form_action,
+    title,
+    submit_button_text,
+    organizer_permission,
+    demo=None,
+    organizer_existing_demo=None,
+):
+    """Render the shared recurring-demonstration form."""
+    child_demos = []
+    child_counts = {"total": 0, "future": 0, "shown": 0}
+    frozen_child_ids = set()
+    if demo and demo._id:
+        parent_id = ObjectId(demo._id)
+        today_string = date.today().isoformat()
+        frozen_child_ids = {str(child_id) for child_id in demo.freezed_children}
+        child_counts["total"] = mongo.demonstrations.count_documents({"parent": parent_id})
+        child_counts["future"] = mongo.demonstrations.count_documents(
+            {"parent": parent_id, "date": {"$gte": today_string}}
+        )
+        child_demos = list(
+            mongo.demonstrations.find(
+                {"parent": parent_id, "date": {"$gte": today_string}},
+                {
+                    "title": 1,
+                    "date": 1,
+                    "start_time": 1,
+                    "city": 1,
+                    "approved": 1,
+                    "cancelled": 1,
+                    "cancellation_reason": 1,
+                },
+            )
+            .sort("date", 1)
+            .limit(200)
+        )
+        child_counts["shown"] = len(child_demos)
+        for child in child_demos:
+            child["is_frozen"] = str(child["_id"]) in frozen_child_ids
+            child["is_break"] = child.get("date") in (demo.break_dates or [])
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/_form_v2.html",
+        demo=demo,
+        form_action=form_action,
+        title=title,
+        submit_button_text=submit_button_text,
+        city_list=CITY_LIST,
+        all_organizations=_available_organizer_organizations(
+            organizer_permission,
+            existing_demo=organizer_existing_demo,
+        ),
+        translation_locales=_supported_demo_translation_locales(),
+        translation_language_names=_translation_language_names(),
+        default_demo_language=(
+            getattr(demo, "default_language", None) or "fi"
+        ),
+        child_demos=child_demos,
+        child_counts=child_counts,
+        frozen_child_ids=frozen_child_ids,
+        today=date.today().isoformat(),
+        can_approve_demo=has_demo_approval_permission(current_user, demo),
+    )
+
+
+def _get_repeat_frequency(form):
+    """Support both legacy and current recurrence field names."""
+    raw_frequency = form.get("frequency_type") or form.get("recurrence_type") or "none"
+    return raw_frequency.lower()
+
+
+def _get_repeat_interval(form, frequency):
+    """Normalize repeat interval so `none` schedules always serialize safely."""
+    if frequency == "none":
+        return 0
+
+    raw_interval = (
+        form.get("frequency_interval") or form.get("recurrence_interval") or "1"
+    )
+    try:
+        interval = int(raw_interval)
+    except (TypeError, ValueError):
+        interval = 1
+    return max(interval, 1)
+
+
+def _get_route_points(form):
+    """Collect route points from both pill-based and legacy text inputs."""
+    route_points = [
+        point.strip() for point in form.getlist("route[]") if point and point.strip()
+    ]
+    if route_points:
+        return route_points
+
+    legacy_route = form.get("route")
+    if not legacy_route:
+        return []
+
+    return [point.strip() for point in legacy_route.split(",") if point.strip()]
+
+
+def _collect_break_dates(form):
+    """Collect unique recurring-series break dates from repeated date inputs."""
+    dates = []
+    seen = set()
+    for raw_date in form.getlist("break_dates"):
+        value = (raw_date or "").strip()
+        if not value:
+            continue
+        try:
+            normalized = datetime.strptime(value, "%Y-%m-%d").date().isoformat()
+        except ValueError:
+            continue
+        if normalized not in seen:
+            dates.append(normalized)
+            seen.add(normalized)
+    return sorted(dates)
+
+
+def _parse_recurrence_preview_date(value):
+    """Accept the ISO and Finnish date formats supported by the form."""
+    for date_format in ("%Y-%m-%d", "%d.%m.%Y"):
+        try:
+            return datetime.strptime((value or "").strip(), date_format).date()
+        except ValueError:
+            continue
+    return None
+
+
+@admin_recu_demo_bp.route("/preview-dates")
+@login_required
+@admin_required
+def preview_recurrence_dates():
+    """Preview upcoming dates without persisting or generating child demos."""
+    if not (
+        current_user.has_permission("CREATE_RECURRING_DEMO")
+        or current_user.has_permission("EDIT_RECURRING_DEMO")
+    ):
+        return jsonify({"message": "Käyttöoikeutesi eivät riitä esikatseluun."}), 403
+
+    start_date = _parse_recurrence_preview_date(request.args.get("date"))
+    if not start_date:
+        return jsonify({"message": "Täytä ensin kelvollinen alkupäivä."}), 400
+
+    frequency = _get_repeat_frequency(request.args)
+    interval = _get_repeat_interval(request.args, frequency)
+    monthly_option = request.args.get("monthly_option") if frequency == "monthly" else None
+    day_of_month = None
+    if monthly_option == "day_of_month":
+        try:
+            day_of_month = int(request.args.get("day_of_month") or start_date.day)
+        except (TypeError, ValueError):
+            day_of_month = None
+
+    try:
+        schedule = RepeatSchedule(
+            frequency=frequency,
+            interval=interval,
+            weekday=request.args.get("weekday") if frequency == "weekly" else None,
+            monthly_option=monthly_option,
+            day_of_month=day_of_month,
+            nth_weekday=request.args.get("nth_weekday")
+            if monthly_option == "nth_weekday"
+            else None,
+            weekday_of_month=request.args.get("weekday_of_month")
+            if monthly_option == "nth_weekday"
+            else None,
+            end_date=(request.args.get("end_date") or "").strip() or None,
+        )
+    except (TypeError, ValueError):
+        return jsonify(
+            {"message": "Tarkista, että kaikki toistuvuusasetukset ovat kelvollisia."}
+        ), 400
+
+    break_dates = set(_collect_break_dates(request.args))
+    dates, has_more, excluded_count = collect_recurrence_preview_dates(
+        start_date,
+        schedule,
+        break_dates,
+        limit=12,
+    )
+    return jsonify(
+        {
+            "dates": [value.isoformat() for value in dates],
+            "has_more": has_more,
+            "excluded_break_dates": excluded_count,
+        }
+    )
+
+
+def _is_valid_latitude(value):
+    try:
+        latitude = float(value)
+        return -90 <= latitude <= 90
+    except (TypeError, ValueError):
+        return False
+
+
+def _is_valid_longitude(value):
+    try:
+        longitude = float(value)
+        return -180 <= longitude <= 180
+    except (TypeError, ValueError):
+        return False
+
+
+def _current_admin_actor(source):
+    return {
+        "user_id": str(current_user.id),
+        "source": source,
+        "username": getattr(current_user, "username", None),
+    }
+
+
+def _cancel_recurring_children(parent_id, child_query, reason, action, message):
+    """Cancel children scoped to a recurring parent and record per-child audit history."""
+    cancelled_count = 0
+    matched_count = 0
+    for child in mongo.demonstrations.find(child_query):
+        matched_count += 1
+        old_child = deepcopy(child)
+        cancelled = cancel_demo(
+            child,
+            cancelled_by=_current_admin_actor("admin_recurring"),
+            reason=reason,
+        )
+        updated_child = mongo.demonstrations.find_one({"_id": child["_id"]}) or child
+        if cancelled:
+            cancelled_count += 1
+            record_demo_change(
+                child["_id"],
+                old_child,
+                updated_child,
+                action=action,
+                message=message,
+                extra_details={
+                    "parent_id": str(parent_id),
+                    "reason": reason,
+                },
+            )
+    return matched_count, cancelled_count
+
+
+def _cancel_children_for_break_dates(parent_id, break_dates):
+    """Mark already-created children on break dates as cancelled."""
+    if not break_dates:
+        return 0, 0
+    return _cancel_recurring_children(
+        parent_id,
+        {"parent": parent_id, "date": {"$in": break_dates}},
+        "Toistuvan mielenosoituksen taukopäivä",
+        "cancel_recurring_child_break",
+        "Lapsimielenosoitus peruttiin sarjan taukopäivän vuoksi",
+    )
+
+
+def _collect_organizers(form, existing_organizers=None):
+    """Collect organizer cards through the shared admin form contract."""
+    return collect_admin_organizers(
+        form, existing_organizers=existing_organizers
+    )
+
+
+def _renderable_recu_demo_guard():
+    """Return a Mongo filter that skips records the dashboard cannot render.
+
+    `RecurringDemonstration.from_dict` raises on malformed ``repeat_schedule``
+    or ``created_until`` values, so the control panel silently omits those rows.
+    This guard keeps the scoped counts and the paginated cursor consistent with
+    the rows that are actually rendered.
+    """
+    return {
+        "$and": [
+            {
+                "$or": [
+                    {"created_until": {"$exists": False}},
+                    {"created_until": None},
+                    {"created_until": {"$regex": r"^\d{4}-\d{2}-\d{2}"}},
+                ]
+            },
+            {
+                "$or": [
+                    {"repeat_schedule": {"$exists": False}},
+                    {"repeat_schedule": None},
+                    {
+                        "$and": [
+                            {"repeat_schedule": {"$type": "object"}},
+                            {"repeat_schedule.frequency": {"$exists": True}},
+                            {"repeat_schedule.interval": {"$exists": True}},
+                        ]
+                    },
+                ]
+            },
+        ]
+    }
+
+
 @admin_recu_demo_bp.route("/")
 @login_required
 @admin_required
 @permission_required("LIST_RECURRING_DEMOS")
 def recu_demo_control():
     """Render the recurring demonstration control panel with a list of recurring demonstrations."""
-    search_query = request.args.get("search", "")
-    approved_status = request.args.get("approved", "false").lower() == "true"
-    # show_past = request.args.get("show_past", "false").lower() == "true"
-    today = date.today()
+    search_query = (request.args.get("search") or "").strip()
+    approved_status = request.args.get("approved", "all").lower()
+    if approved_status not in {"all", "true", "false"}:
+        approved_status = "all"
+    try:
+        requested_per_page = int(request.args.get("per_page", 20))
+    except (TypeError, ValueError):
+        requested_per_page = 20
+    per_page = requested_per_page if requested_per_page in {20, 50, 100} else 20
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
 
-    # Construct query based on approval status
-    query = {"approved": approved_status} if approved_status else {}
-    recurring_demos = [
-        RecurringDemonstration.from_dict(recudemo)
-        for recudemo in list(mongo.recu_demos.find(query))
-    ]  #  .recu_demos.find(query)
+    scope_clauses = []
+    if not current_user.global_admin:
+        permission_scope = current_user._perm_in("LIST_RECURRING_DEMOS")
+        organization_ids = [
+            ObjectId(scope)
+            for scope in permission_scope
+            if str(scope) != "global" and ObjectId.is_valid(str(scope))
+        ]
+        city_keys = current_user.scoped_city_keys_for("LIST_RECURRING_DEMOS")
+        city_names = [
+            city for city in CITY_LIST if normalize_city_key(city) in city_keys
+        ]
+        permission_filters = [{"editors": current_user.id}]
+        if organization_ids:
+            permission_filters.append(
+                {
+                    "organizers": {
+                        "$elemMatch": {"organization_id": {"$in": organization_ids}}
+                    }
+                }
+            )
+        if city_keys:
+            permission_filters.append(
+                {
+                    "$or": [
+                        {"city_key": {"$in": city_keys}},
+                        {"city": {"$in": city_names}},
+                    ]
+                }
+            )
+        if "global" not in permission_scope:
+            scope_clauses.append({"$or": permission_filters})
 
-    # Filter based on search query and date
-    filtered_recurring_demos = [
-        demo
-        for demo in recurring_demos
-        if (
-            search_query.lower() in demo.title.lower()
-            or search_query.lower() in demo.city.lower()
-            or search_query.lower() in demo.address.lower()
+    scope_clauses.append(_renderable_recu_demo_guard())
+
+    def query_from(clauses):
+        if not clauses:
+            return {}
+        if len(clauses) == 1:
+            return clauses[0]
+        return {"$and": clauses}
+
+    scope_query = query_from(scope_clauses)
+    filter_clauses = list(scope_clauses)
+    if approved_status != "all":
+        filter_clauses.append({"approved": approved_status == "true"})
+    if search_query:
+        search_pattern = re.escape(search_query)
+        filter_clauses.append(
+            {
+                "$or": [
+                    {"title": {"$regex": search_pattern, "$options": "i"}},
+                    {"city": {"$regex": search_pattern, "$options": "i"}},
+                    {"address": {"$regex": search_pattern, "$options": "i"}},
+                ]
+            }
         )
-    ]
 
-    # Sort the filtered recurring demonstrations by date
-    filtered_recurring_demos.sort(
-        key=lambda x: datetime.strptime(x.date, "%Y-%m-%d").date()
+    filter_query = query_from(filter_clauses)
+    total_count = mongo.recu_demos.count_documents(scope_query)
+    filtered_count = mongo.recu_demos.count_documents(filter_query)
+    total_pages = max(1, (filtered_count + per_page - 1) // per_page)
+    page = min(page, total_pages)
+
+    recurring_demos = []
+    cursor = (
+        mongo.recu_demos.find(filter_query)
+        .sort([("date", 1), ("_id", 1)])
+        .skip((page - 1) * per_page)
+        .limit(per_page)
     )
+    for recudemo in cursor:
+        try:
+            recurring_demos.append(RecurringDemonstration.from_dict(recudemo))
+        except Exception:
+            continue
+
+    preserved_args = {
+        key: value
+        for key, value in request.args.items()
+        if key != "page" and value not in {None, ""}
+    }
+    preserved_args["per_page"] = str(per_page)
+
+    def page_url(target_page):
+        return url_for(
+            "admin_recu_demo.recu_demo_control",
+            **preserved_args,
+            page=target_page,
+        )
+
+    visible_start = max(1, page - 2)
+    visible_end = min(total_pages, page + 2)
+    visible_pages = [
+        {"number": number, "url": page_url(number)}
+        for number in range(visible_start, visible_end + 1)
+    ]
+    prev_page = page - 1 if page > 1 else None
+    next_page = page + 1 if page < total_pages else None
+    range_start = (page - 1) * per_page + 1 if filtered_count else 0
+    range_end = min(page * per_page, filtered_count)
+    has_active_filters = bool(search_query or approved_status != "all")
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/dashboard.html",
-        recurring_demos=filtered_recurring_demos,
+        recurring_demos=recurring_demos,
         search_query=search_query,
         approved_status=approved_status,
+        per_page=per_page,
+        current_page=page,
+        total_pages=total_pages,
+        total_count=total_count,
+        filtered_count=filtered_count,
+        range_start=range_start,
+        range_end=range_end,
+        has_active_filters=has_active_filters,
+        clear_filters_url=url_for(
+            "admin_recu_demo.recu_demo_control", per_page=per_page
+        ),
+        visible_pages=visible_pages,
+        first_page_url=page_url(1),
+        last_page_url=page_url(total_pages),
+        prev_page=prev_page,
+        next_page=next_page,
+        prev_page_url=page_url(prev_page) if prev_page else None,
+        next_page_url=page_url(next_page) if next_page else None,
     )
 
 
@@ -81,13 +573,11 @@ def create_recu_demo():
     if request.method == "POST":
         return handle_recu_demo_form(request, is_edit=False)
 
-    return render_template(
-        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/form.html",
+    return _render_recu_demo_form(
         form_action=url_for("admin_recu_demo.create_recu_demo"),
         title="Luo toistuva mielenosoitus",
         submit_button_text="Luo",
-        city_list=CITY_LIST,
-        all_organizations=list(mongo.organizations.find()),
+        organizer_permission="CREATE_RECURRING_DEMO",
     )
 
 
@@ -123,50 +613,106 @@ def edit_recu_demo(demo_id):
         return handle_recu_demo_form(request, is_edit=True, demo_id=demo_id)
 
     recurring_demo = RecurringDemonstration.from_dict(demo_data)
-    return render_template(
-        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/_form_v2.html",
+    return _render_recu_demo_form(
         demo=recurring_demo,
         form_action=url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id),
         title="Muokkaa toistuvaa mielenosoitusta",
         submit_button_text="Vahvista muokkaus",
-        city_list=CITY_LIST,
+        organizer_permission="EDIT_RECURRING_DEMO",
+        organizer_existing_demo=demo_data,
     )
+
+
 def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     """Handle form submission for creating or editing a recurring demonstration."""
+    existing_demo = (
+        mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
+        if is_edit and demo_id
+        else None
+    )
 
     # Basic info
     title = request.form.get("title")
+    description = request.form.get("description")
+    default_language = (
+        request.form.get("default_language")
+        or "fi"
+    )
     date = request.form.get("date")
     start_time = request.form.get("start_time")
     end_time = request.form.get("end_time")
     facebook = request.form.get("facebook")
-    city = request.form.get("city")
+    slug = (
+        normalize_demo_slug(request.form.get("slug"))
+        if "slug" in request.form
+        else (existing_demo or {}).get("slug")
+    )
+    city = request.form.get("city") or ""
     address = request.form.get("address")
+    latitude = request.form.get("latitude")
+    longitude = request.form.get("longitude")
     event_type = request.form.get("type")
-    route = request.form.get("route")
+    route = _get_route_points(request.form)
     approved = request.form.get("approved") == "on"
 
     tags = collect_tags(request)
-
-    # Process organizers dynamically
-    organizers = []
-    index = 1
-    while True:
-        name = request.form.get(f"organizer_name_{index}")
-        _id = request.form.get(f"organizer_id_{index}")
-        if not name and not _id:
-            break
-        website = request.form.get(f"organizer_website_{index}")
-        email = request.form.get(f"organizer_email_{index}")
-        organizers.append(
-            Organizer(name=name, email=email, website=website, organization_id=_id).to_dict()
+    translations = collect_demo_translations(request, default_language)
+    cover_picture = request.form.get("cover_picture")
+    cover_picture_file = request.files.get("cover_picture_file")
+    if cover_picture_file and cover_picture_file.filename:
+        filename = secure_filename(cover_picture_file.filename)
+        uploaded_url = upload_image_fileobj(
+            current_app.config.get("S3_BUCKET"),
+            cover_picture_file.stream,
+            filename,
+            "demo_preview",
         )
-        index += 1
+        if uploaded_url:
+            cover_picture = uploaded_url
+    img = (
+        (request.form.get("img") or "").strip() or None
+        if "img" in request.form
+        else (existing_demo or {}).get("img")
+    )
+    preview_image = (
+        (request.form.get("preview_image") or "").strip() or None
+        if "preview_image" in request.form
+        else (existing_demo or {}).get("preview_image")
+    )
+    gallery_images = parse_gallery_images_field(request.form.get("gallery_images"))
+
+    excluded_demo_id = ObjectId(demo_id) if is_edit and demo_id else None
+    if slug and not demo_slug_is_available(
+        mongo.recu_demos,
+        slug,
+        exclude_id=excluded_demo_id,
+    ):
+        flash_message(
+            "Lyhytlinkki '%(slug)s' on jo käytössä. Valitse toinen lyhytlinkki.",
+            "error",
+            slug=slug,
+        )
+        return redirect(request.url)
+
+    try:
+        organizers = _collect_organizers(
+            request.form,
+            existing_organizers=(existing_demo or {}).get("organizers", []),
+        )
+    except ValueError as error:
+        flash_message("Virhe: %(error)s", "error", error=str(error))
+        return redirect(request.url)
+
+    _validate_organizer_organization_scope(
+        organizers,
+        "EDIT_RECURRING_DEMO" if is_edit else "CREATE_RECURRING_DEMO",
+        existing_demo=existing_demo,
+    )
 
     # Recurrence / repeat schedule
-    freq = request.form.get("frequency_type", "none")
-    interval = int(request.form.get("frequency_interval", 1))
-    end_date = request.form.get("end_date")
+    freq = _get_repeat_frequency(request.form)
+    interval = _get_repeat_interval(request.form, freq)
+    end_date = request.form.get("end_date") or request.form.get("recurrence_end_date")
 
     # Weekly
     weekday = None
@@ -190,63 +736,335 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
             nth_weekday = request.form.get("nth_weekday")
             weekday_of_month = request.form.get("weekday_of_month")
 
-    repeat_schedule = {
-        "frequency": freq,
-        "interval": interval,
-        "weekday": weekday,
-        "monthly_option": monthly_option,
-        "day_of_month": day_of_month,
-        "nth_weekday": nth_weekday,
-        "weekday_of_month": weekday_of_month,
-        "end_date": end_date,
-    }
+    repeat_schedule = RepeatSchedule(
+        frequency=freq,
+        interval=interval,
+        weekday=weekday,
+        monthly_option=monthly_option,
+        day_of_month=day_of_month,
+        nth_weekday=nth_weekday,
+        weekday_of_month=weekday_of_month,
+        end_date=end_date,
+    ).to_dict()
+    break_dates = _collect_break_dates(request.form)
+
+    if existing_demo:
+        for field_name, submitted_value in (
+            ("start_time", start_time),
+            ("end_time", end_time),
+        ):
+            existing_value = existing_demo.get(field_name)
+            if (
+                existing_value
+                and submitted_value
+                and str(existing_value)[:5] == str(submitted_value)[:5]
+            ):
+                if field_name == "start_time":
+                    start_time = existing_value
+                else:
+                    end_time = existing_value
+
+        if not route and existing_demo.get("route") is None:
+            route = None
+        if not gallery_images and existing_demo.get("gallery_images") is None:
+            gallery_images = None
+        for field_name, value in (
+            ("description", description),
+            ("facebook", facebook),
+            ("cover_picture", cover_picture),
+            ("img", img),
+            ("preview_image", preview_image),
+        ):
+            if value == "" and existing_demo.get(field_name) is None:
+                if field_name == "description":
+                    description = None
+                elif field_name == "facebook":
+                    facebook = None
+                elif field_name == "cover_picture":
+                    cover_picture = None
+                elif field_name == "img":
+                    img = None
+                else:
+                    preview_image = None
+
+    if latitude and not _is_valid_latitude(latitude):
+        latitude = None
+        flash_message("Virheellinen leveysaste. Asetetaan leveysasteeksi: None.")
+    if longitude and not _is_valid_longitude(longitude):
+        longitude = None
+        flash_message("Virheellinen pituusaste. Asetetaan pituusasteeksi: None.")
 
     # Assemble demonstration data
     demonstration_data = {
         "title": title,
+        "description": description,
+        "default_language": default_language,
+        "translations": translations,
         "date": date,
         "start_time": start_time,
         "end_time": end_time,
         "tags": tags,
         "facebook": facebook,
+        "slug": slug,
         "city": city,
+        "city_key": normalize_city_key(city),
         "address": address,
+        "latitude": latitude,
+        "longitude": longitude,
         "event_type": event_type,
         "route": route,
         "approved": approved,
+        "cover_picture": cover_picture,
+        "img": img,
+        "preview_image": preview_image,
+        "gallery_images": gallery_images,
         "repeat_schedule": repeat_schedule,
+        "break_dates": break_dates,
         "recurs": freq != "none",
         "organizers": organizers,
     }
 
-    # Ensure organizer IDs are ObjectId if present
-    for org in demonstration_data["organizers"]:
-        if org.get("organization_id"):
-            try:
-                org["organization_id"] = ObjectId(org["organization_id"])
-            except Exception:
-                org["organization_id"] = None
+    approval_scope_demo = existing_demo if existing_demo else demonstration_data
+    if not has_demo_approval_permission(current_user, approval_scope_demo):
+        demonstration_data["approved"] = bool(
+            existing_demo and existing_demo.get("approved")
+        )
 
     try:
         if is_edit:
             mongo.recu_demos.update_one(
                 {"_id": ObjectId(demo_id)}, {"$set": demonstration_data}
             )
-            flash_message("Toistuva mielenosoitus päivitetty onnistuneesti.")
+            _, cancelled_count = _cancel_children_for_break_dates(
+                ObjectId(demo_id), break_dates
+            )
+            if cancelled_count:
+                flash_message(
+                    "Toistuva mielenosoitus päivitettiin. Peruttiin %(count)s taukopäivälle osuvaa lapsimielenosoitusta.",
+                    count=cancelled_count,
+                )
+            else:
+                flash_message("Toistuva mielenosoitus päivitettiin onnistuneesti.")
         else:
             mongo.recu_demos.insert_one(demonstration_data)
             flash_message("Toistuva mielenosoitus luotu onnistuneesti.")
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
     except Exception as e:
         import logging
+
         logging.error(f"An error occurred: {str(e)}")
-        flash_message(f"Virhe: {str(e)}")
+        flash_message("Virhe: %(error)s", error=str(e))
         return redirect(
             url_for(
-                "admin_recu_demo.edit_recu_demo" if is_edit else "admin_recu_demo.create_recu_demo",
+                (
+                    "admin_recu_demo.edit_recu_demo"
+                    if is_edit
+                    else "admin_recu_demo.create_recu_demo"
+                ),
                 demo_id=demo_id,
             )
         )
+
+
+def _supported_demo_translation_locales():
+    from flask import current_app
+
+    return list(current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"])
+
+
+def _translation_language_names():
+    from flask import current_app
+
+    return dict(current_app.config.get("BABEL_LANGUAGES") or {})
+
+
+def collect_demo_translations(request, default_language):
+    supported_locales = _supported_demo_translation_locales()
+    normalized_default = (default_language or "fi").strip().lower()
+    translations = {}
+
+    for language in supported_locales:
+        normalized_language = (language or "").strip().lower()
+        if not normalized_language or normalized_language == normalized_default:
+            continue
+
+        title = (request.form.get(f"translation_{normalized_language}_title") or "").strip()
+        description = (request.form.get(f"translation_{normalized_language}_description") or "").strip()
+        raw_tags = (request.form.get(f"translation_{normalized_language}_tags") or "").strip()
+        tags = [tag.strip().lstrip("#") for tag in raw_tags.split(",") if tag.strip()]
+
+        entry = {}
+        if title:
+            entry["title"] = title
+        if description:
+            entry["description"] = description
+        if tags:
+            entry["tags"] = tags
+
+        if entry:
+            translations[normalized_language] = entry
+
+    return translations
+
+
+@admin_recu_demo_bp.route("/<demo_id>/bulk-update-children", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_RECURRING_DEMO")
+@permission_required("EDIT_DEMO")
+def bulk_update_children(demo_id):
+    """Copy selected recurring-parent fields to selected generated children."""
+    try:
+        parent_id = ObjectId(demo_id)
+    except Exception:
+        flash_message("Virheellinen toistuvan mielenosoituksen tunniste.", "error")
+        return redirect(url_for("admin_recu_demo.recu_demo_control"))
+
+    parent = mongo.recu_demos.find_one({"_id": parent_id})
+    if not parent:
+        flash_message("Toistuvaa mielenosoitusta ei löytynyt.", "error")
+        return redirect(url_for("admin_recu_demo.recu_demo_control"))
+
+    requested_fields = [
+        field for field in request.form.getlist("fields") if field in CHILD_BULK_FIELD_MAP
+    ]
+    child_scope = request.form.get("child_scope", "selected")
+    requested_child_ids = set(request.form.getlist("child_ids"))
+    if not requested_fields or (child_scope == "selected" and not requested_child_ids):
+        flash_message("Valitse vähintään yksi päivitettävä kenttä ja lapsimielenosoitus.", "error")
+        return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
+
+    child_query = {"parent": parent_id}
+    if child_scope == "all_future":
+        child_query["date"] = {"$gte": date.today().isoformat()}
+    else:
+        child_ids = []
+        for child_id in requested_child_ids:
+            try:
+                child_ids.append(ObjectId(child_id))
+            except Exception:
+                continue
+        child_query["_id"] = {"$in": child_ids}
+
+    children = mongo.demonstrations.find(child_query)
+    update_fields = {}
+    for field_group in requested_fields:
+        for child_field in CHILD_BULK_FIELD_MAP[field_group]:
+            if child_field == "event_type":
+                value = parent.get("event_type") or parent.get("type")
+            elif child_field == "city_key":
+                value = parent.get("city_key") or normalize_city_key(parent.get("city"))
+            else:
+                value = parent.get(child_field)
+            update_fields[child_field] = deepcopy(value)
+
+    updated_ids = []
+    updated_count = 0
+    for child in children:
+        new_child = deepcopy(child)
+        new_child.update(deepcopy(update_fields))
+        mongo.demonstrations.update_one(
+            {"_id": child["_id"], "parent": parent_id},
+            {"$set": deepcopy(update_fields)},
+        )
+        record_demo_change(
+            child["_id"],
+            child,
+            new_child,
+            action="bulk_update_recurring_child",
+            message="Toistuvan mielenosoituksen tiedot kopioitiin lapsimielenosoitukseen",
+            extra_details={
+                "parent_id": demo_id,
+                "field_groups": requested_fields,
+            },
+        )
+        updated_ids.append(str(child["_id"]))
+        updated_count += 1
+
+    if request.form.get("freeze_after_update") == "on" and updated_ids:
+        mongo.recu_demos.update_one(
+            {"_id": parent_id},
+            {"$addToSet": {"freezed_children": {"$each": updated_ids}}},
+        )
+
+    flash_message(
+        "Päivitettiin %(count)s lapsimielenosoitusta.",
+        "success",
+        count=updated_count,
+    )
+    return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
+
+
+@admin_recu_demo_bp.route("/<demo_id>/bulk-cancel-children", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_RECURRING_DEMO")
+@permission_required("EDIT_DEMO")
+def bulk_cancel_children(demo_id):
+    """Mark selected or all future generated children from a recurring parent cancelled."""
+    try:
+        parent_id = ObjectId(demo_id)
+    except Exception:
+        flash_message("Virheellinen toistuvan mielenosoituksen tunniste.", "error")
+        return redirect(url_for("admin_recu_demo.recu_demo_control"))
+
+    parent = mongo.recu_demos.find_one({"_id": parent_id})
+    if not parent:
+        flash_message("Toistuvaa mielenosoitusta ei löytynyt.", "error")
+        return redirect(url_for("admin_recu_demo.recu_demo_control"))
+
+    child_scope = request.form.get("child_scope", "selected")
+    requested_child_ids = set(request.form.getlist("child_ids"))
+    if child_scope == "selected" and not requested_child_ids:
+        flash_message("Valitse vähintään yksi peruttava lapsimielenosoitus.", "error")
+        return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
+
+    child_query = {"parent": parent_id}
+    if child_scope == "all_future":
+        child_query["date"] = {"$gte": date.today().isoformat()}
+    else:
+        child_ids = []
+        for child_id in requested_child_ids:
+            try:
+                child_ids.append(ObjectId(child_id))
+            except Exception:
+                continue
+        child_query["_id"] = {"$in": child_ids}
+
+    reason = (
+        request.form.get("cancellation_reason")
+        or "Peruttu toistuvan mielenosoituksen sarjahallinnasta"
+    )
+    matched_count, cancelled_count = _cancel_recurring_children(
+        parent_id,
+        child_query,
+        reason,
+        "bulk_cancel_recurring_child",
+        "Lapsimielenosoitus peruttiin toistuvan sarjan hallinnasta",
+    )
+    if matched_count == 0:
+        flash_message("Valittuja lapsimielenosoituksia ei löytynyt.", "error")
+    elif cancelled_count == 0:
+        flash_message("Valitut lapsimielenosoitukset olivat jo peruttuja.", "info")
+    else:
+        flash_message(
+            "Peruttiin %(count)s lapsimielenosoitusta.",
+            "success",
+            count=cancelled_count,
+        )
+    return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
+
+
+def parse_gallery_images_field(raw_value):
+    """Convert textarea input into a clean list of gallery image URLs."""
+    if not raw_value:
+        return []
+    entries = []
+    for line in raw_value.replace("\r", "").splitlines():
+        url = line.strip()
+        if url:
+            entries.append(url)
+    return entries
 
 
 @admin_recu_demo_bp.route("/delete_recu_demo/<demo_id>", methods=["POST"])
@@ -256,6 +1074,10 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
 def delete_recu_demo(demo_id):
     """Delete a recurring demonstration from the database.
 
+    Accepts both the classic confirmation form (``confirm_delete`` field) and
+    the JSON contract the dashboard delete modal uses so users granted only
+    ``DELETE_RECURRING_DEMO`` can actually complete the delete.
+
     Parameters
     ----------
     demo_id :
@@ -264,20 +1086,33 @@ def delete_recu_demo(demo_id):
     Returns
     -------
 
-
     """
-    demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
+    json_mode = request.headers.get("Content-Type") == "application/json"
 
+    demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
     if not demo_data:
-        flash_message("Toistuvaa mielenosoitusta ei löytynyt.")
+        error_message = "Toistuvaa mielenosoitusta ei löytynyt."
+        if json_mode:
+            return jsonify({"status": "ERROR", "message": error_message})
+        flash_message(error_message)
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
-    if "confirm_delete" in request.form:
-        mongo.recu_demos.delete_one({"_id": ObjectId(demo_id)})
-        flash_message("Toistuva mielenosoitus poistettu onnistuneesti.")
-    else:
-        flash_message("Et vahvistanut toistuvan mielenosoituksen poistoa.")
+    confirmed = "confirm_delete" in request.form
+    if json_mode:
+        confirmed = bool(request.json and request.json.get("confirm_delete"))
 
+    if not confirmed:
+        error_message = "Et vahvistanut toistuvan mielenosoituksen poistoa."
+        if json_mode:
+            return jsonify({"status": "ERROR", "message": error_message})
+        flash_message(error_message)
+        return redirect(url_for("admin_recu_demo.recu_demo_control"))
+
+    mongo.recu_demos.delete_one({"_id": ObjectId(demo_id)})
+    success_message = "Toistuva mielenosoitus poistettu onnistuneesti."
+    if json_mode:
+        return jsonify({"status": "OK", "message": success_message})
+    flash_message(success_message)
     return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
 

@@ -14,6 +14,7 @@ Attributes:
 
 from flask import Blueprint
 from .auth import auth_bp
+from .passkeys import passkeys_bp
 from .orgs import user_orgs_bp
 from .profile import profile_bp
 
@@ -22,6 +23,7 @@ def create_user_blueprint():
     """Create and configure the main user Blueprint, registering sub-Blueprints."""
     user_bp = Blueprint("users", __name__, template_folder="templates")
     user_bp.register_blueprint(auth_bp)
+    user_bp.register_blueprint(passkeys_bp)
     user_bp.register_blueprint(user_orgs_bp)
     user_bp.register_blueprint(profile_bp)
 

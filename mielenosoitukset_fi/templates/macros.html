@@ -1,6 +1,8 @@
 {% macro demo_card(demo, recommended=False) %}
-<article class="grid-item demo-card{% if recommended %} demo-card-recommended{% endif %}"
-  data-href="{{ url_for('demonstration_detail', demo_id=demo.slug or demo.running_number or demo._id) }}"
+{% set tags = demo.get('tags') or [] %}
+{% set is_pride = 'pride' in (tags|map('lower')|list) %}
+<article class="grid-item demo-card{% if recommended %} demo-card-recommended{% endif %}{% if is_pride %} demo-card-pride{% endif %}"
+  data-href="{% if demo.parent %}{{ url_for('siblings_meeting', parent=demo.parent) }}{% else %}{{ url_for('demonstration_detail', demo_id=demo.slug or demo.running_number or demo._id) }}{% endif %}"
   aria-label="Demonstration card">
 
   {% if recommended %}
@@ -8,7 +10,7 @@
   {% endif %}
 
   {# --- Card Image --- #}
-  {% set image_url = attr_or_get(demo, 'img', 'cover_image', 'preview_image') %}
+  {% set image_url = get_demo_cover_image(demo) %}
   {% if image_url %}
   <div class="demo-card-image">
     <img src="{{ image_url }}" alt="{{ demo['title'] }}">
@@ -22,27 +24,36 @@
   <div class="demo-card-details">
     <div class="demo-card-date-time">
       <span><i class="fa-regular fa-calendar"></i> {{ demo['date'] | date('%d.%m.%Y') }}</span>
-      <span><i class="fa-regular fa-clock"></i> {{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] |
-        time('%H:%M') }}</span>
+      <span><i class="fa-regular fa-clock"></i> 
+        {% if demo.start_time and not demo.end_time %}
+        {{ demo['start_time'] | time('%H:%M') }} alkaen
+        {% elif demo.start_time and demo.end_time %}
+        {{ demo['start_time'] | time('%H:%M') }}
+        - {{ demo['end_time'] |time('%H:%M') }}
+        {% endif %}
+      </span>
+
     </div>
 
-    {# --- Tags / Topics --- #}
+
+
+    {# --- Location --- #}
+    <div class="demo-card-location-row">
+      <span><i class="fa-solid fa-city"></i> {{ demo['city'] }}</span>
+      <span><i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}</span>
+    </div>
+
+        {# --- Tags / Topics --- #}
     <div class="demo-card-topics">
       <ul>
-        {% if demo['tags'] %}
-        {% for tag in demo['tags'] %}
+        {% if tags %}
+        {% for tag in tags %}
         <li><a href="{{ url_for('tag_detail', tag_name=tag) }}"><span class="demo-card-tag">#{{ tag }}</span></a></li>
         {% endfor %}
         {% else %}
         <li><span class="demo-card-tag">#{{ _('EiAiheita') }}</span></li>
         {% endif %}
       </ul>
-    </div>
-
-    {# --- Location --- #}
-    <div class="demo-card-location-row">
-      <span><i class="fa-solid fa-city"></i> {{ demo['city'] }}</span>
-      <span><i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}</span>
     </div>
   </div>
 </article>
@@ -64,6 +75,26 @@
   .demo-card:hover {
     transform: translateY(-4px);
     box-shadow: var(--color-shadow-hover);
+  }
+
+  .demo-card-pride {
+    border: 1px solid transparent;
+    background: var(--color-card-bg);
+    isolation: isolate;
+    box-shadow: 0 0 0 1px rgba(115, 41, 130, 0.18), 0 8px 22px rgba(115, 41, 130, 0.14), var(--color-shadow);
+  }
+
+  .demo-card-pride::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 3px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, #e40303, #ff8c00, #ffed00, #008026, #24408e, #732982);
+    pointer-events: none;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
   }
 
 

@@ -1,40 +1,60 @@
-{% macro render_table(items, config) %}
-    {% if items %}
-    <div class="table-container" style="background: none;">
-        <table>
-            <thead>
-                <tr>
-                    {% for column in config.columns %}
-                        <th>{{ column.label }}</th>
-                    {% endfor %}
-                    <th class="actions-cell-header">Toiminnot</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    {% for column in config.columns %}
-                        <td>{{ item[column.key] }}</td>
-                    {% endfor %}
-                    <td class="actions-cell">
-                        <td class="actions-cell">
-                            {% for action in config.actions %}
-                                <a href="{{ url_for(action.url, demo_id=item['_id']) }}" class="button {{ action.label | lower }}-button">
-                                    <i class="fas fa-{{ action.icon }}"></i>{{ action.label }}
-                                </a>
-                            {% endfor %}
-                        </td>
-                        
-                    </td>
-                    
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+{% macro admin_pagination(current_page, total_pages, per_page=none, prev_page=none, next_page=none, prev_page_url=none, next_page_url=none, visible_pages=none, first_page_url=none, last_page_url=none, aria_label=none, client_side=false) %}
+<nav class="admin-data-view__footer admin-pagination"{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if client_side %} data-admin-pagination{% endif %}>
+  {% if per_page %}<label class="admin-page-size" for="page-size">{{ _('Rivejä sivulla') }}
+    <select id="page-size" aria-label="{{ _('Rivejä sivulla') }}">{% for size in [20, 50, 100] %}<option value="{{ size }}" {% if per_page == size %}selected{% endif %}>{{ size }}</option>{% endfor %}</select>
+  </label>
+  {% endif %}
+  <div class="admin-pagination__info">{% if client_side %}{{ _('Sivu') }} <span data-admin-pagination-current>1</span> / <span data-admin-pagination-total>{{ total_pages }}</span>{% else %}{{ _('Sivu') }} {{ current_page }} / {{ total_pages }}{% endif %}</div>
+  <ul class="pagination">
+    <li class="page-item {% if not prev_page %}disabled{% endif %}" data-direction="prev"><a class="page-link" href="{{ prev_page_url or '#' }}"><i class="fas fa-angle-left" aria-hidden="true"></i><span class="admin-pagination__label">{{ _('Edellinen') }}</span></a></li>
+    {% if client_side %}
+    {# page-number links are built by the client-side pagination script #}
     {% else %}
-    <div class="no-orgs">
-        <p>{{ config.name }} ei löytynyt.</p>
+    {% if visible_pages and visible_pages[0].number > 1 %}<li class="page-item"><a class="page-link" href="{{ first_page_url }}">1</a></li>{% if visible_pages[0].number > 2 %}<li class="page-item disabled"><span class="admin-pagination__ellipsis">…</span></li>{% endif %}{% endif %}
+    {% for pagination_page in visible_pages %}<li class="page-item {% if pagination_page.number == current_page %}active{% endif %}"><a class="page-link" href="{{ pagination_page.url }}" {% if pagination_page.number == current_page %}aria-current="page"{% endif %}>{{ pagination_page.number }}</a></li>{% endfor %}
+    {% if visible_pages and visible_pages[-1].number < total_pages %}{% if visible_pages[-1].number < total_pages - 1 %}<li class="page-item disabled"><span class="admin-pagination__ellipsis">…</span></li>{% endif %}<li class="page-item"><a class="page-link" href="{{ last_page_url }}">{{ total_pages }}</a></li>{% endif %}
+    {% endif %}
+    <li class="page-item {% if not next_page %}disabled{% endif %}" data-direction="next"><a class="page-link" href="{{ next_page_url or '#' }}"><span class="admin-pagination__label">{{ _('Seuraava') }}</span><i class="fas fa-angle-right" aria-hidden="true"></i></a></li>
+  </ul>
+</nav>
+{% endmacro %}
+
+{% macro admin_page_hero(title, description, kicker, breadcrumbs=(), back_url=none, back_label=none, actions_visible=true, sections=(), title_id=none, variant='', metric_value=none, metric_label=none, metric_id=none) %}
+{% set allowed_variants = ('admin-page-hero--stacked',) %}
+{% set resolved_variant = variant if variant in allowed_variants else '' %}
+<header class="admin-page-hero{% if resolved_variant %} {{ resolved_variant }}{% endif %}">
+    <div class="admin-page-hero__content">
+        {% if breadcrumbs %}
+        <nav class="admin-breadcrumbs" aria-label="{{ _('Murupolku') }}">
+            <ol>
+                {% for item in breadcrumbs %}
+                <li>
+                    {% if item[1] %}<a href="{{ item[1] }}">{{ item[0] }}</a>{% else %}<span aria-current="page">{{ item[0] }}</span>{% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </nav>
+        {% endif %}
+        <p class="admin-page-hero__kicker">{{ kicker }}</p>
+        <h1{% if title_id %} id="{{ title_id }}"{% endif %}>{{ title }}</h1>
+        <p>{{ description }}</p>
+    </div>
+    {% if back_url or (caller is defined and actions_visible) %}
+    <div class="admin-page-hero__actions">
+        {% if back_url %}<a class="admin-page-hero__action admin-page-hero__back" href="{{ back_url }}"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ back_label or _('Takaisin') }}</a>{% endif %}
+        {% if caller is defined and actions_visible %}{{ caller() }}{% endif %}
     </div>
     {% endif %}
+    {% if metric_value is not none %}
+    <div class="admin-page-hero__metric">
+        <strong{% if metric_id %} id="{{ metric_id }}"{% endif %}>{{ metric_value }}</strong>
+        {% if metric_label %}<span>{{ metric_label }}</span>{% endif %}
+    </div>
+    {% endif %}
+    {% if sections %}
+    <nav class="admin-page-hero__nav editor-section-nav" aria-label="{{ _('Sivun osiot') }}">
+        {% for section in sections %}<a href="#{{ section[0] }}">{{ section[1] }}</a>{% endfor %}
+    </nav>
+    {% endif %}
+</header>
 {% endmacro %}

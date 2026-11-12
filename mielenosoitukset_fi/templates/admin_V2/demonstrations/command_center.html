@@ -1,0 +1,700 @@
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demonstrations.css', v='20260914-admin-ui-51') }}">{% endblock %}
+
+{% block main_content %}
+<div class="demo-command-center admin-page admin-workspace">
+  {% call admin_page_hero(
+    demo.title,
+    demo.date ~ ((' · ' ~ demo.start_time ~ ((' – ' ~ demo.end_time) if demo.end_time else '')) if demo.start_time else '') ~ ((' · ' ~ demo.city) if demo.city else '') ~ ((' · ' ~ demo.address) if demo.address else ''),
+    _('Mielenosoitukset'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (demo.title, none)],
+    back_url=url_for('admin_demo.demo_control'),
+    back_label=_('Mielenosoitukset'),
+    variant='admin-page-hero--stacked'
+  ) %}
+        <a href="{{ public_url }}" class="admin-page-hero__action" target="_blank" rel="noopener noreferrer">
+          <i class="fa-solid fa-arrow-up-right-from-square me-2"></i>{{ _('Avaa julkinen sivu') }}
+        </a>
+        {% if map_url %}
+        <a href="{{ map_url }}" class="admin-page-hero__action" target="_blank" rel="noopener noreferrer">
+          <i class="fa-solid fa-map-location-dot me-2"></i>{{ _('Näytä kartalla') }}
+        </a>
+        {% endif %}
+        <a href="{{ resource_links.edit }}" class="admin-page-hero__action">
+          <i class="fa-solid fa-pen-to-square me-2"></i>{{ _('Muokkaa lomakkeella') }}
+        </a>
+        <a href="{{ resource_links.history }}" class="admin-page-hero__action">
+          <i class="fa-solid fa-clock-rotate-left me-2"></i>{{ _('Muokkaushistoria') }}
+        </a>
+        <a href="{{ resource_links.audit }}" class="admin-page-hero__action">
+          <i class="fa-solid fa-clipboard-list me-2"></i>{{ _('Audit-loki') }}
+        </a>
+        {% if permissions.can_view_analytics %}
+        <a href="{{ resource_links.analytics }}" class="admin-page-hero__action">
+          <i class="fa-solid fa-chart-line me-2"></i>{{ _('Analytiikka') }}
+        </a>
+        {% endif %}
+  {% endcall %}
+
+  <div class="status-badges admin-row-actions" aria-label="{{ _('Mielenosoituksen tila') }}">
+    {% if status_flags.approved %}
+    <span class="status-badge admin-status-badge admin-status-badge--success"><i class="fa-solid fa-check"></i> {{ _('Hyväksytty') }}</span>
+    {% elif status_flags.needs_review %}
+    <span class="status-badge admin-status-badge admin-status-badge--warning"><i class="fa-solid fa-hourglass-half"></i> {{ _('Odottaa käsittelyä') }}</span>
+    {% endif %}
+    {% if status_flags.rejected %}<span class="status-badge admin-status-badge admin-status-badge--danger"><i class="fa-solid fa-xmark"></i> {{ _('Hylätty') }}</span>{% endif %}
+    {% if status_flags.hidden %}<span class="status-badge admin-status-badge"><i class="fa-solid fa-eye-slash"></i> {{ _('Piilotettu') }}</span>{% endif %}
+    {% if status_flags.recurring %}<span class="status-badge admin-status-badge"><i class="fa-solid fa-rotate"></i> {{ _('Toistuva') }}</span>{% endif %}
+    {% if status_flags.recommended %}<span class="status-badge admin-status-badge admin-status-badge--success"><i class="fa-solid fa-star"></i> {{ _('Suositeltu') }}</span>{% endif %}
+    {% if status_flags.cancelled %}
+    <span class="status-badge admin-status-badge admin-status-badge--danger"><i class="fa-solid fa-ban"></i> {{ _('Peruttu') }}</span>
+    {% elif status_flags.cancellation_requested %}
+    <span class="status-badge admin-status-badge admin-status-badge--warning"><i class="fa-solid fa-triangle-exclamation"></i> {{ _('Peruutuspyyntö') }}</span>
+    {% endif %}
+  </div>
+
+  <div class="hero-metadata" aria-label="{{ _('Tekniset tiedot') }}">
+      <div class="meta-item">
+        <span>{{ _('Mongo ID') }}</span>
+        {{ demo_id }}
+      </div>
+      <div class="meta-item">
+        <span>{{ _('Lyhytlinkki / slug') }}</span>
+        {{ demo.slug or '-' }}
+      </div>
+      <div class="meta-item">
+        <span>{{ _('Juokseva numero') }}</span>
+        {{ demo_raw.get('running_number') or '-' }}
+      </div>
+      <div class="meta-item">
+        <span>{{ _('Luotu') }}</span>
+        {{ demo_raw.get('created_datetime')|datetimeformat("%d.%m.%Y %H:%M") if demo_raw.get('created_datetime') else '-' }}
+      </div>
+      <div class="meta-item">
+        <span>{{ _('Muokattu viimeksi') }}</span>
+        {{ demo_raw.get('last_modified')|datetimeformat("%d.%m.%Y %H:%M") if demo_raw.get('last_modified') else '-' }}
+      </div>
+  </div>
+
+  <div class="command-grid">
+    <div class="primary-column">
+      <section class="info-card admin-section-card">
+        <h3>{{ _('Kokonaiskuva') }}</h3>
+        <div class="stat-grid">
+          <div class="stat-pill">
+            <span>{{ _('Ilmoittautuneet') }}</span>
+            <strong>{{ stats.attending }}</strong>
+          </div>
+          <div class="stat-pill">
+            <span>{{ _('Kutsut lähetetty') }}</span>
+            <strong>{{ stats.invites }}</strong>
+          </div>
+          <div class="stat-pill">
+            <span>{{ _('Muistutuslistalla') }}</span>
+            <strong>{{ stats.reminders }}</strong>
+          </div>
+          <div class="stat-pill">
+            <span>{{ _('Tapaukset') }}</span>
+            <strong>{{ stats.cases }}</strong>
+            <div class="text-muted small">{{ _('Avoimia: %(count)s', count=open_cases_count) }}</div>
+          </div>
+          <div class="stat-pill">
+            <span>{{ _('Suosituspyynnöt') }}</span>
+            <strong>{{ active_suggestion_count }}</strong>
+          </div>
+        </div>
+        <div class="stat-grid mt-3">
+          <div class="stat-pill">
+            <span>{{ _('Näkymät yhteensä') }}</span>
+            <strong>{{ analytics_summary.total }}</strong>
+          </div>
+          <div class="stat-pill">
+            <span>{{ _('Viimeiset 24 h') }}</span>
+            <strong>{{ analytics_summary.last_24h }}</strong>
+          </div>
+          <div class="stat-pill">
+            <span>{{ _('Viimeiset 7 päivää') }}</span>
+            <strong>{{ analytics_summary.last_7d }}</strong>
+          </div>
+          <div class="stat-pill">
+            <span>{{ _('Toistuvat lapset') }}</span>
+            <strong>{{ stats.children }}</strong>
+          </div>
+        </div>
+        {% if permissions.can_view_analytics %}
+        <a class="btn btn-secondary btn-sm mt-2" href="{{ url_for('admin_site_analytics.site_demo_analytics', demo_id=demo_id) }}">
+          <i class="fa-solid fa-chart-simple me-1" aria-hidden="true"></i>{{ _('Sivunäyttöanalytiikka') }}
+        </a>
+        {% endif %}
+      </section>
+
+      <section class="info-card admin-section-card">
+        <h3>{{ _('Aikataulu ja sijainti') }}</h3>
+        <dl class="definition-list">
+          <div>
+            <dt>{{ _('Päivä') }}</dt>
+            <dd>{{ demo.date }}</dd>
+          </div>
+          <div>
+            <dt>{{ _('Aika') }}</dt>
+            <dd>
+              {% if demo.start_time %}
+                {{ demo.start_time }}{% if demo.end_time %} – {{ demo.end_time }}{% endif %}
+              {% else %}
+                -
+              {% endif %}
+            </dd>
+          </div>
+          <div>
+            <dt>{{ _('Kaupunki') }}</dt>
+            <dd>{{ demo.city or '-' }}</dd>
+          </div>
+          <div>
+            <dt>{{ _('Osoite') }}</dt>
+            <dd>{{ demo.address or '-' }}</dd>
+          </div>
+          <div>
+            <dt>{{ _('Koordinaatit') }}</dt>
+            <dd>
+              {% if demo.latitude and demo.longitude %}
+                {{ demo.latitude }}, {{ demo.longitude }}
+              {% else %}
+                -
+              {% endif %}
+            </dd>
+          </div>
+          <div>
+            <dt>{{ _('Reitti') }}</dt>
+            <dd>{{ demo.route or '-' }}</dd>
+          </div>
+        </dl>
+        {% if parent_demo or child_demos %}
+        <div class="mt-3">
+          {% if parent_demo %}
+          <div class="linked-item">
+            <strong>{{ _('Vanhempi toistuva demo') }}:</strong>
+            <a href="{{ url_for('admin_demo.demo_command_center', demo_id=parent_demo.id) }}">
+              {{ parent_demo.title or parent_demo.id }} ({{ parent_demo.date or '-' }})
+            </a>
+          </div>
+          {% endif %}
+          {% if child_demos %}
+          <div class="linked-item">
+            <strong>{{ _('Lapsitapahtumat') }}:</strong>
+            <ul class="mb-0 mt-2">
+              {% for child in child_demos %}
+              <li>
+                <a href="{{ url_for('admin_demo.demo_command_center', demo_id=child.id) }}">
+                  {{ child.title or child.id }} ({{ child.date or '-' }})
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% if aliases %}
+        <div class="mt-3">
+          <strong>{{ _('Aliakset / yhdistetyt ID:t') }}:</strong>
+          <div class="tag-list mt-2">
+            {% for alias in aliases %}
+            <span class="tag-chip">{{ alias }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% if recommended %}
+        <div class="alert alert-success mt-3 mb-0">
+          <i class="fa-solid fa-star me-2"></i>
+          {{ _('Suositus voimassa') }}
+          {% if recommended.recommend_till %}– {{ recommended.recommend_till.strftime('%d.%m.%Y') }}{% endif %}
+        </div>
+        {% endif %}
+        {% if cancellation_context.requested or status_flags.cancelled %}
+        <div class="alert {{ 'alert-danger' if status_flags.cancelled else 'alert-warning' }} mt-3 mb-0">
+          <strong>{{ _('Peruutustilanne') }}:</strong>
+          {% if status_flags.cancelled %}
+            {{ _('Merkitty perutuksi') }}
+            {% if cancellation_context.cancelled_at %}
+              · {{ cancellation_context.cancelled_at|datetimeformat("%d.%m.%Y %H:%M") }}
+            {% endif %}
+          {% elif cancellation_context.requested %}
+            {{ _('Peruutuspyyntö vastaanotettu') }}
+            {% if cancellation_context.requested_at %}
+              · {{ cancellation_context.requested_at|datetimeformat("%d.%m.%Y %H:%M") }}
+            {% endif %}
+          {% endif %}
+          {% if cancellation_context.reason %}
+            <div class="mt-2">{{ cancellation_context.reason }}</div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </section>
+
+      <section class="info-card admin-section-card">
+        <h3>{{ _('Sisältö ja tagit') }}</h3>
+        {% if demo.description %}
+        <div class="mb-3">{{ demo.description|safe }}</div>
+        {% else %}
+        <p class="text-muted">{{ _('Ei kuvausta.') }}</p>
+        {% endif %}
+        {% if demo.tags %}
+        <div class="tag-list">
+          {% for tag in demo.tags %}
+          <span class="tag-chip">#{{ tag }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </section>
+
+      <section class="info-card admin-section-card">
+        <h3>{{ _('Yhteystiedot ja järjestäjät') }}</h3>
+        <div class="grid-two">
+          <div>
+            <h5 class="mb-2">{{ _('Ilmoittaja') }}</h5>
+            {% if submitter %}
+            <ul class="list-unstyled mb-0">
+              <li><strong>{{ _('Nimi') }}:</strong> {{ submitter.submitter_name or '-' }}</li>
+              <li><strong>{{ _('Sähköposti') }}:</strong> {{ submitter.submitter_email or '-' }}</li>
+              <li><strong>{{ _('Rooli') }}:</strong> {{ submitter.submitter_role or '-' }}</li>
+              <li><strong>{{ _('Hyväksyi ehdot') }}:</strong> {{ _('Kyllä') if submitter.accept_terms else _('Ei') }}</li>
+              <li><strong>{{ _('Lähetetty') }}:</strong> {{ submitter.submitted_at or '-' }}</li>
+            </ul>
+            {% else %}
+            <p class="text-muted mb-0">{{ _('Ei ilmoittajatietoja.') }}</p>
+            {% endif %}
+          </div>
+          <div>
+            <h5 class="mb-2">{{ _('Järjestäjät') }}</h5>
+            {% if organizer_cards %}
+            <ul class="list-with-icons">
+              {% for organizer in organizer_cards %}
+              <li>
+                <span class="icon"><i class="fa-solid fa-user"></i></span>
+                <div>
+                  <strong>{{ organizer.name or _('Nimetön') }}</strong>
+                  {% if organizer.organization %}
+                    <div>
+                      <a href="{{ url_for('admin_org.view_organization', org_id=organizer.organization._id) }}">
+                        {{ organizer.organization.name or organizer.organization._id }}
+                      </a>
+                    </div>
+                  {% endif %}
+                  {% if organizer.email %}
+                  <div class="text-muted small">{{ organizer.email }}</div>
+                  {% endif %}
+                  {% if organizer.website %}
+                  <div><a href="{{ organizer.website }}" target="_blank" rel="noopener noreferrer">{{ organizer.website }}</a></div>
+                  {% endif %}
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted mb-0">{{ _('Ei järjestäjätietoja.') }}</p>
+            {% endif %}
+          </div>
+        </div>
+        {% if show_access_panel %}
+        <div class="mt-3">
+          <h5>{{ _('Muokkausoikeudet') }}</h5>
+          <div class="grid-two">
+            <div>
+              <strong>{{ _('Yksittäiset käyttäjät') }}</strong>
+              {% if edit_access.explicit_editors %}
+              <ul class="mt-2">
+                {% for editor in edit_access.explicit_editors %}
+                <li>{{ editor.displayname or editor.username }} · {{ editor.email }}</li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p class="text-muted">{{ _('Ei nimettyjä muokkaajia.') }}</p>
+              {% endif %}
+            </div>
+            <div>
+              <strong>{{ _('Organisaatioihin sidotut') }}</strong>
+              {% if edit_access.organizations %}
+              {% for org in edit_access.organizations %}
+              <div class="linked-item">
+                <div class="fw-semibold">{{ org.name }}</div>
+                {% if org.members %}
+                <ul class="list-unstyled small mt-2 mb-0">
+                  {% for member in org.members %}
+                  <li class="mb-1">
+                    <strong>{{ member.displayname or member.username }}</strong>
+                    {% if member.email %}
+                    <span class="text-muted">· {{ member.email }}</span>
+                    {% endif %}
+                    {% if member.membership_role %}
+                    <span class="badge bg-secondary ms-2">{{ member.membership_role }}</span>
+                    {% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% else %}
+                <div class="small text-muted">{{ _('Ei jäseniä, joilla muokkausoikeuksia.') }}</div>
+                {% endif %}
+              </div>
+              {% endfor %}
+              {% else %}
+              <p class="text-muted">{{ _('Ei organisaatiokohtaisia oikeuksia.') }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </section>
+
+      <section class="info-card admin-section-card">
+        <h3>{{ _('Tapaukset ja pyynnöt') }}</h3>
+        <div class="grid-two">
+          <div>
+            <h5>{{ _('Hallintatapaukset') }}</h5>
+            {% if linked_cases %}
+            <div class="d-flex flex-column gap-3">
+              {% for case in linked_cases %}
+              <div class="case-card">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <strong>#{{ case.running_num }}</strong>
+                  <span class="badge bg-secondary text-uppercase">{{ case.type }}</span>
+                </div>
+                <div class="text-muted small mb-1">
+                  {{ case.created_at|datetimeformat("%d.%m.%Y %H:%M") if case.created_at else '-' }}
+                </div>
+                <div class="mb-2">
+                  {% if case.closed %}
+                    <span class="badge bg-success">{{ _('Suljettu') }}</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark">{{ _('Avoin') }}</span>
+                  {% endif %}
+                  {% if case.urgency %}
+                  <span class="badge bg-info ms-1">{{ _(case.urgency|capitalize) }}</span>
+                  {% endif %}
+                </div>
+                {% if case.latest_action %}
+                <div class="small text-muted mb-2">
+                  {{ case.latest_action.timestamp|datetimeformat("%d.%m.%Y %H:%M") if case.latest_action.timestamp else '' }} · {{ case.latest_action.action_type }}
+                </div>
+                {% endif %}
+                <a class="btn btn-sm btn-outline-primary w-100" href="{{ case.url }}">
+                  {{ _('Avaa tapaus') }}
+                </a>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">{{ _('Ei tapauksia tälle mielenosoitukselle.') }}</p>
+            {% endif %}
+          </div>
+          <div>
+            <h5>{{ _('Saapuneet ehdotukset') }}</h5>
+            {% if suggestions %}
+            <ul class="list-unstyled mb-0">
+              {% for suggestion in suggestions %}
+              {% set suggestion_title = suggestion.get('suggested_fields', {}).get('title') or suggestion.get('title') %}
+              <li class="linked-item">
+                <div class="fw-semibold">
+                  {{ suggestion_title or _('Ehdotus') ~ ' #' ~ loop.index }}
+                </div>
+                <div class="small text-muted">
+                  {{ suggestion.created_at|datetimeformat("%d.%m.%Y %H:%M") if suggestion.created_at else '-' }}
+                  · {{ suggestion.status or 'open' }}
+                </div>
+                <a href="{{ url_for('admin_demo.suggestion_view', suggestion_id=suggestion._id) }}">
+                  {{ _('Avaa') }}
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted">{{ _('Ei avoimia ehdotuksia.') }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+      <section class="info-card admin-section-card">
+        <h3>{{ _('Lokit ja historia') }}</h3>
+        <div class="grid-two">
+          <div>
+            <h5>{{ _('Audit-loki') }}</h5>
+            {% if audit_logs %}
+            <div class="timeline">
+              {% for entry in audit_logs %}
+              <div class="timeline-entry">
+                <h5>{{ entry.message or entry.action }}</h5>
+                <small>
+                  {{ entry.timestamp|datetimeformat("%d.%m.%Y %H:%M") if entry.timestamp else '-' }}
+                  · {{ entry.username or entry.actor.username or _('Järjestelmä') }}
+                </small>
+                {% if entry.details and entry.details.changed_fields %}
+                <div class="small text-muted">{{ _('Muokatut kentät:') }} {{ entry.details.changed_fields|join(', ') }}</div>
+                {% endif %}
+                {% if entry.details and entry.details.history_id %}
+                <div class="mt-1">
+                  <a href="{{ url_for('admin_demo.view_demo_diff', history_id=entry.details.history_id) }}" class="link-primary">
+                    {{ _('Näytä muutos') }}
+                  </a>
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">{{ _('Ei audit-lokin merkintöjä.') }}</p>
+            {% endif %}
+          </div>
+          <div>
+            <h5>{{ _('Muokkaushistoria') }}</h5>
+            {% if history_entries %}
+            <div class="timeline">
+              {% for history in history_entries %}
+              <div class="timeline-entry">
+                <h5>{{ _('Muokkaus') }} #{{ loop.index }}</h5>
+                <small>
+                  {{ history.edited_at|datetimeformat("%d.%m.%Y %H:%M") if history.edited_at else '-' }}
+                  · {{ history.actor.username if history.actor else history.edited_by }}
+                </small>
+                {% if history.case_id %}
+                <div class="small text-muted">{{ _('Tapaus') }}: {{ history.case_id }}</div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">{{ _('Ei muokkaushistoriaa.') }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+      <section class="info-card admin-section-card">
+        <h3>{{ _('Julkaisut ja näkyvyys') }}</h3>
+        {% if posted_events %}
+        <ul class="list-unstyled mb-0">
+          {% for event in posted_events %}
+          <li class="linked-item">
+            <div class="fw-semibold">{{ event.post_type|capitalize if event.post_type else _('Julkaisu') }}</div>
+            <div class="small text-muted">
+              {{ event.created_at|datetimeformat("%d.%m.%Y %H:%M") if event.created_at else '-' }}
+              {% if event.status_id %}· ID {{ event.status_id }}{% endif %}
+            </div>
+            {% if event.link %}
+            <a href="{{ event.link }}" target="_blank" rel="noopener noreferrer">{{ event.link }}</a>
+            {% endif %}
+            {% if event.status_url %}
+            <div>
+              <a href="{{ event.status_url }}" target="_blank" rel="noopener noreferrer">{{ _('Avaa Mastodonissa') }}</a>
+            </div>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted mb-0">{{ _('Ei julkaistu Mastodonissa tai muissa kanavissa.') }}</p>
+        {% endif %}
+      </section>
+
+      <section class="info-card admin-section-card">
+        <h3>{{ _('Linkit ja media') }}</h3>
+        <div class="media-links">
+          {% if demo.facebook %}
+          <a href="{{ demo.facebook }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook"></i> Facebook</a>
+          {% endif %}
+          {% if demo.facebook_import %}
+          <div class="mt-2 fb-import-provenance">
+            <i class="fa-solid fa-circle-check"></i>
+            <strong>{{ _('Tuotu Facebookista') }}</strong>
+            <p class="mb-0 text-muted">
+              {{ _('Ilmoittaja täytti lomakkeen Facebook-tuonnilla') }}
+              {% if demo.facebook_import.get('url') %}
+              — <a href="{{ demo.facebook_import.get('url') }}" target="_blank" rel="noopener noreferrer">{{ demo.facebook_import.get('url') }}</a>
+              {% endif %}
+              {% if demo.facebook_import.get('imported_at') %}
+              <small>({{ demo.facebook_import.get('imported_at') }})</small>
+              {% endif %}
+            </p>
+          </div>
+          {% endif %}
+          {% if demo.cover_picture %}
+          <a href="{{ demo.cover_picture }}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-image"></i> {{ _('Kansikuva') }}</a>
+          {% endif %}
+          {% if demo.preview_image %}
+          <a href="{{ demo.preview_image }}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-clone"></i> {{ _('Esikatselu') }}</a>
+          {% endif %}
+          {% if demo.img %}
+          <a href="{{ demo.img }}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-photo-film"></i> {{ _('Kuva') }}</a>
+          {% endif %}
+        </div>
+        {% if demo_raw.get('external_links') %}
+        <div class="mt-2">
+          {% for link in demo_raw.get('external_links') %}
+          <a href="{{ link }}" target="_blank" rel="noopener noreferrer">{{ link }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </section>
+    </div>
+
+    <aside class="action-sidebar">
+      <div class="action-card admin-section-card">
+        <h3>{{ _('Pikatoiminnot') }}</h3>
+        <div class="action-grid">
+          {% if permissions.can_accept and not status_flags.approved %}
+          <button type="button" class="action-btn btn btn-success js-command" data-command="approve">
+            {{ _('Hyväksy mielenosoitus') }}
+            <i class="fa-solid fa-check"></i>
+          </button>
+          <button type="button" class="action-btn btn btn-outline-secondary js-command" data-command="reject">
+            {{ _('Hylkää mielenosoitus') }}
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          {% endif %}
+          {% if permissions.can_edit %}
+          <button type="button" class="action-btn btn btn-danger js-command" data-command="cancel" data-requires-reason="true">
+            {{ _('Merkitse perutuksi') }}
+            <i class="fa-solid fa-ban"></i>
+          </button>
+          <button type="button" class="action-btn btn btn-outline-secondary js-command" data-command="duplicate">
+            {{ _('Kopioi pohjaksi') }}
+            <i class="fa-solid fa-copy"></i>
+          </button>
+          {% endif %}
+          <button type="button" class="action-btn btn btn-outline-secondary js-command" data-command="screenshot">
+            {{ _('Luo esikatselukuva') }}
+            <i class="fa-solid fa-camera"></i>
+          </button>
+          {% if permissions.can_recommend %}
+          <button type="button" class="action-btn btn btn-outline-secondary js-command" data-command="toggle-recommend" data-active="{{ 'true' if status_flags.recommended else 'false' }}">
+            {% if status_flags.recommended %}
+              {{ _('Poista suositus') }}
+            {% else %}
+              {{ _('Suosittele etusivulle') }}
+            {% endif %}
+            <i class="fa-solid fa-star"></i>
+          </button>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="action-card admin-section-card">
+        <h3>{{ _('Työkalut') }}</h3>
+        <ul class="resources-list">
+          <li><a href="{{ resource_links.edit }}"><i class="fa-solid fa-pen me-2"></i>{{ _('Avaa muokkauslomake') }}</a></li>
+          <li><a href="{{ resource_links.history }}"><i class="fa-solid fa-clock-rotate-left me-2"></i>{{ _('Muokkaushistoria') }}</a></li>
+          <li><a href="{{ resource_links.audit }}"><i class="fa-solid fa-clipboard-list me-2"></i>{{ _('Audit-loki') }}</a></li>
+          {% if permissions.can_view_analytics %}
+          <li><a href="{{ resource_links.analytics }}"><i class="fa-solid fa-chart-line me-2"></i>{{ _('Analytiikka') }}</a></li>
+          {% endif %}
+          <li><a href="{{ public_url }}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-external-link me-2"></i>{{ _('Näytä julkinen sivu') }}</a></li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const COMMAND_ENDPOINTS = {{ action_endpoints|tojson }};
+
+  async function runCommand(actionKey, { payload = {}, successMessage = "{{ _('Toiminto suoritettu') }}", failureMessage = "{{ _('Toiminto epäonnistui') }}", refresh = true } = {}) {
+    const config = COMMAND_ENDPOINTS[actionKey];
+    if (!config) {
+      showToast("{{ _('Tuntematon toiminto') }}", "danger");
+      return;
+    }
+
+    try {
+      const response = await fetch(config.url, {
+        method: config.method || "POST",
+        headers: { "Content-Type": "application/json" },
+        body: config.method === "GET" ? undefined : JSON.stringify(payload),
+      });
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (_) {
+        // ignore JSON parsing errors
+      }
+
+      const ok = response.ok && (data.status === "OK" || data.success === true || (!data.status && !data.error));
+      if (!ok) {
+        throw new Error(data.message || data.error || failureMessage);
+      }
+
+      showToast(data.message || successMessage, "success");
+      if (actionKey === "duplicate" && data.new_demo_id) {
+        window.open(`/admin/demo/edit_demo/${data.new_demo_id}`, "_blank");
+      }
+      if (refresh && actionKey !== "duplicate") {
+        setTimeout(() => window.location.reload(), 800);
+      }
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || failureMessage, "danger");
+    }
+  }
+
+  document.querySelectorAll(".js-command").forEach(button => {
+    button.addEventListener("click", async () => {
+      const command = button.dataset.command;
+      if (!command) {
+        return;
+      }
+
+      if (command === "toggle-recommend") {
+        const active = button.dataset.active === "true";
+        await runCommand(active ? "unrecommend" : "recommend", {
+          successMessage: active
+            ? "{{ _('Suositus poistettiin.') }}"
+            : "{{ _('Mielenosoitus suositeltu.') }}",
+        });
+        return;
+      }
+
+      if (command === "cancel") {
+        const reason = prompt("{{ _('Peruuta: anna lyhyt selite (valinnainen)') }}");
+        await runCommand("cancel", {
+          payload: reason ? { reason } : {},
+          successMessage: "{{ _('Mielenosoitus merkitty perutuksi') }}",
+        });
+        return;
+      }
+
+      if (command === "screenshot") {
+        await runCommand("screenshot", {
+          refresh: false,
+          successMessage: "{{ _('Esikatselukuvan luonti käynnistetty.') }}",
+        });
+        return;
+      }
+
+      if (command === "approve") {
+        await runCommand("approve", { successMessage: "{{ _('Hyväksytty!') }}" });
+        return;
+      }
+      if (command === "reject") {
+        const confirmReject = confirm("{{ _('Haluatko varmasti hylätä tämän mielenosoituksen?') }}");
+        if (confirmReject) {
+          await runCommand("reject", { successMessage: "{{ _('Hylätty!') }}" });
+        }
+        return;
+      }
+
+      if (command === "duplicate") {
+        await runCommand("duplicate", {
+          successMessage: "{{ _('Kopio luotu. Avataan uusi muokkauslomake.') }}",
+          refresh: false,
+        });
+        return;
+      }
+
+      await runCommand(command);
+    });
+  });
+</script>
+{% endblock %}

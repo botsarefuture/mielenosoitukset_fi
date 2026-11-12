@@ -1,0 +1,103 @@
+{% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+
+{% block main_content %}
+<div class="admin-form-page admin-page">
+  {{ admin_page_hero(
+    _('Muokkauspyyntö') ~ ': ' ~ org.name,
+    _('Vertaa nykyisiä ja ehdotettuja arvoja ja valitse hyväksyttävät muutokset.') ~ ' ' ~ _('Lähetetty') ~ ' ' ~ suggestion.timestamp.strftime('%d.%m.%Y %H:%M') ~ '.',
+    _('Organisaatiohallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Organisaatiot'), url_for('admin_org.organization_control')), (org.name, url_for('admin_org.view_organization', org_id=org._id)), (_('Muokkauspyyntö'), none)],
+    back_url=url_for('admin_org.view_organization', org_id=org._id),
+    back_label=_('Organisaation yhteenveto')
+  ) }}
+
+  <form class="admin-form admin-workspace-form" method="post" action="{{ url_for('admin_org.apply_suggestion', org_id=org._id, suggestion_id=suggestion._id) }}" id="suggestion-form">
+    <div class="admin-data-view">
+      <div class="admin-data-view__header admin-selection-status" aria-live="polite">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        <span id="selection-count">{{ _('Valitse kentät, jotka haluat päivittää') }}</span>
+      </div>
+      <div class="admin-data-view__viewport">
+        <table class="admin-data-view__table">
+          <thead><tr><th>{{ _('Kenttä') }}</th><th>{{ _('Nykyinen arvo') }}</th><th>{{ _('Ehdotettu arvo') }}</th><th class="admin-selection-column">{{ _('Valitse') }}</th></tr></thead>
+          <tbody>
+            {% set field_labels = {"name": _("Nimi"), "description": _("Kuvaus"), "website": _("Verkkosivusto"), "email": _("Sähköposti"), "logo": _("Logo"), "social_media_links": _("Sosiaalinen media")} %}
+            {% set field_icons = {"name": "fa-building", "description": "fa-align-left", "website": "fa-globe", "email": "fa-envelope", "logo": "fa-image", "social_media_links": "fa-share-nodes"} %}
+            {% for key, new_value in suggestion.fields.items() %}
+            <tr>
+              <td><strong class="admin-data-label"><i class="fa-solid {{ field_icons.get(key, 'fa-tag') }}" aria-hidden="true"></i>{{ field_labels.get(key, key) }}</strong></td>
+              <td>
+                <div class="admin-data-value {% if not org.to_dict().get(key) %}admin-data-value--empty{% endif %}">
+                  {% if org.to_dict().get(key) %}
+                    {% if key == "logo" %}
+                      <div class="admin-data-media"><img src="{{ org.to_dict().get(key) }}" alt="{{ _('Nykyinen logo') }}" loading="lazy" referrerpolicy="no-referrer"><a href="{{ org.to_dict().get(key) }}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">{{ org.to_dict().get(key) }}</a></div>
+                    {% elif key == "social_media_links" and org.to_dict().get(key) is mapping %}
+                      <div class="admin-data-list">{% for platform, url in org.to_dict().get(key).items() %}<span><strong>{{ platform }}:</strong> <a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ url }}</a></span>{% endfor %}</div>
+                    {% else %}<span class="admin-value-badge">{{ org.to_dict().get(key) }}</span>{% endif %}
+                  {% else %}<span class="admin-value-badge admin-value-badge--muted">{{ _('Ei asetettu') }}</span>{% endif %}
+                </div>
+              </td>
+              <td>
+                <div class="admin-data-value admin-data-value--success">
+                  {% if key == "logo" %}
+                    <div class="admin-data-media"><img src="{{ new_value }}" alt="{{ _('Ehdotettu logo') }}" loading="lazy" referrerpolicy="no-referrer"><a href="{{ new_value }}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">{{ new_value }}</a></div>
+                  {% elif key == "social_media_links" and new_value is mapping %}
+                    <div class="admin-data-list">{% for platform, url in new_value.items() %}<span><strong>{{ platform }}:</strong> <a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ url }}</a></span>{% endfor %}</div>
+                  {% else %}<span class="admin-value-badge admin-value-badge--success">{{ new_value }}</span>{% endif %}
+                </div>
+              </td>
+              <td class="admin-selection-column"><input type="checkbox" name="apply_fields" value="{{ key }}" class="form-check-input admin-selection-checkbox field-checkbox" aria-label="{{ _('Hyväksy kentän muutos') }}: {{ field_labels.get(key, key) }}"></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="admin-sticky-actions">
+      <div class="admin-sticky-actions__copy"><strong>{{ _('Tarkista valinnat ennen päivittämistä') }}</strong><span>{{ _('Vain valitut kentät korvaavat organisaation nykyiset tiedot.') }}</span></div>
+      <div class="admin-sticky-actions__buttons">
+        <button type="button" class="btn btn-outline-primary" id="select-all-btn" aria-pressed="false"><i class="fa-solid fa-check-double" aria-hidden="true"></i><span id="select-all-label">{{ _('Valitse kaikki') }}</span></button>
+        <a href="{{ request.referrer or url_for('index') }}" class="btn btn-outline-secondary"><i class="fa-solid fa-xmark" aria-hidden="true"></i>{{ _('Peruuta') }}</a>
+        <button type="submit" class="btn btn-primary" id="apply-btn"><i class="fa-solid fa-check-circle" aria-hidden="true"></i><span id="apply-label">{{ _('Päivitä valitut kentät') }}</span></button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const checkboxes = [...document.querySelectorAll('.field-checkbox')];
+  const selectAllBtn = document.getElementById('select-all-btn');
+  const selectAllLabel = document.getElementById('select-all-label');
+  const selectionCount = document.getElementById('selection-count');
+  const applyBtn = document.getElementById('apply-btn');
+  const applyLabel = document.getElementById('apply-label');
+
+  function updateSelectionCount() {
+    const selected = checkboxes.filter((checkbox) => checkbox.checked).length;
+    const total = checkboxes.length;
+    selectionCount.textContent = selected === 0 ? '{{ _("Valitse kentät, jotka haluat päivittää") }}' : `${selected} / ${total} {{ _("kenttää valittu") }}`;
+    applyBtn.disabled = selected === 0;
+    selectAllBtn.setAttribute('aria-pressed', selected === total && total > 0 ? 'true' : 'false');
+    selectAllLabel.textContent = selected === total && total > 0 ? '{{ _("Poista valinnat") }}' : '{{ _("Valitse kaikki") }}';
+    checkboxes.forEach((checkbox) => checkbox.closest('tr')?.setAttribute('aria-selected', checkbox.checked ? 'true' : 'false'));
+  }
+
+  selectAllBtn.addEventListener('click', () => {
+    const allChecked = checkboxes.length > 0 && checkboxes.every((checkbox) => checkbox.checked);
+    checkboxes.forEach((checkbox) => { checkbox.checked = !allChecked; });
+    updateSelectionCount();
+  });
+  checkboxes.forEach((checkbox) => checkbox.addEventListener('change', updateSelectionCount));
+  updateSelectionCount();
+  document.getElementById('suggestion-form').addEventListener('submit', () => {
+    applyBtn.disabled = true;
+    applyBtn.setAttribute('aria-busy', 'true');
+    applyLabel.textContent = '{{ _("Päivitetään...") }}';
+  });
+});
+</script>
+{% endblock %}

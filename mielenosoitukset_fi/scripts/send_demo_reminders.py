@@ -287,6 +287,8 @@ def send_reminders_scheduled(override_email=None, force_all=False):
         demo = demos.find_one({"_id": reminder["demonstration_id"]})
         if not demo:
             continue
+        if demo.get("cancelled"):
+            continue
         demo_obj = Demonstration.from_dict(demo)
         demo_date = datetime.strptime(demo_obj.date, "%Y-%m-%d").date()
         demo_time = parse_time_string(demo_obj.start_time)

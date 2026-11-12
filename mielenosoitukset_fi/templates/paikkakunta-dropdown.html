@@ -40,7 +40,9 @@
   function selectCity(city) {
     var dropbtn = document.querySelector(".dropbtn");
     dropbtn.textContent = city;
-    document.getElementById("selected-city").value = city;
+    var selectedCity = document.getElementById("selected-city");
+    selectedCity.value = city;
+    selectedCity.dispatchEvent(new Event("change", { bubbles: true }));
     document.getElementById("dropdown-content").style.display = "none";
     dropbtn.setAttribute("aria-expanded", "false");
   }

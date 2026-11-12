@@ -1,11 +1,41 @@
 ## Translating
 
+Translation catalogs and published languages are configured separately. Keep
+unfinished catalogs in `SUPPORTED_LOCALES`, but list only completed languages in
+`PUBLIC_LOCALES`. Production should keep English hidden until its catalog has
+been reviewed:
+
+```yaml
+BABEL:
+  DEFAULT_LOCALE: "fi"
+  SUPPORTED_LOCALES: ["fi", "en", "sv"]
+  PUBLIC_LOCALES: ["fi"]
+```
+
+To preview unfinished translations locally, add the language temporarily to
+`PUBLIC_LOCALES` in your local configuration. Do not publish that configuration
+to production before the translation is complete.
+
 ### Extracting Strings to Translate
 
-To extract the translatable strings from your code, run the following command:
+Use the repository script so both ordinary `_()` calls and the first argument
+of `flash_message()` are extracted consistently:
 
 ```bash
-pybabel extract -F babel.cfg -o messages.pot .
+./scripts/extract_translations.sh
+```
+
+`flash_message()` translates its message internally. Callers should therefore
+pass a literal source message without wrapping it in `_()`. For messages with
+runtime values, use named placeholders so the literal remains extractable and
+translations can reorder the values:
+
+```python
+flash_message(
+    "Toiminto epäonnistui: %(error)s",
+    "error",
+    error=str(error),
+)
 ```
 
 ### Initializing Language Translation Files

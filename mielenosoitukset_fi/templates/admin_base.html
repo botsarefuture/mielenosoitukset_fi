@@ -2,73 +2,34 @@
 {% import 'admin_V2/organizations/macros.html' as org_macros %}
 
 <!DOCTYPE html>
-<html lang="{{ session.get('locale', 'fi') }}" class="dark">
+<html lang="{{ session.get('locale', 'fi') }}" class="dark" data-bs-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Admin – Mielenosoitukset.fi{% endblock %}</title>
+    <script>
+      /* Apply the saved admin theme before styles are painted. This prevents
+         light mode from briefly rendering with the dark palette. */
+      (() => {
+        const theme = localStorage.getItem('theme') === 'light' ? 'light' : 'dark';
+        document.documentElement.className = theme;
+        document.documentElement.dataset.bsTheme = theme;
+      })();
+    </script>
 
     <!-- Bootstrap & icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/bootstrap/5.3.3/bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}">
-    <!--<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/sidebar_v2.css') }}">-->
-    <!-- Your sidebar / container styles -->
-    <!--<link rel="stylesheet" href="{{ url_for('static', filename='css/container.css') }}">-->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/variables.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_v2.css')}}">
-    <!-- Page-specific styles -->
-    <style>
-      @media screen and (max-width: 768px) {
-        aside#sidebar {
-          display: none !important;
-          width: 0px !important;
-        }
-
-        main {
-          margin-left: 0 !important; /*reset the margin set in the sidebar_V2.css*/
-        }
-      }
-
-  /* Sidebar nav links hover */
-  #sidebar .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1); /* subtle light overlay */
-    border-radius: 0.375rem; /* same as btn rounded */
-  }
-
-  /* Sidebar card hover for task items */
-  #sidebar .list-group-item:hover {
-    background-color: rgba(0, 123, 255, 0.1); /* light blue overlay */
-    cursor: pointer;
-  }
-
-  /* Buttons hover (logout etc.) */
-  #sidebar .btn:hover {
-    opacity: 0.9;
-  }
-
-  #sidebar .card-body::-webkit-scrollbar {
-  width: 6px;
-}
-#sidebar .card-body::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.3);
-  border-radius: 3px;
-}
-
-.modal-backdrop { z-index: 1000001 !important; }
-.modal { z-index: 1000002 !important; }
-/*.modal * { z-index: 1000002 !important; }*/
-/* all modal texts with light theme supporting text */
-.modal-content, .modal-header, .modal-body, .modal-footer {
-  color: #000;
-}
-    </style>
     {% block styles %}{% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/product-tokens.css', v='20261110-pride-contrast-1') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/workspace.css', v='20261110-admin-ui-85') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/analytics.css', v='20261001-analytics-58') }}">
 </head>
 
 <body class="min-vh-100 d-flex flex-column bg-body-tertiary">
 <!-- Toast container -->
-<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+<div class="admin-toast-layer position-fixed top-0 end-0 p-3">
   <div id="toast-container"></div>
 </div>
 <script>
@@ -96,23 +57,26 @@
   toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 </script>
+    <div class="admin-mobile-bar d-flex d-md-none align-items-center justify-content-between gap-3 p-2 sticky-top bg-body border-bottom">
+      <strong><i class="fas fa-toolbox me-2" aria-hidden="true"></i>{{ _('Admin-paneeli') }}</strong>
+      <button class="btn btn-outline-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="{{ _('Avaa admin-valikko') }}">
+        <i class="fas fa-bars" aria-hidden="true"></i>
+      </button>
+    </div>
     {# ==== SIDEBAR + CONTENT WRAPPER ==== #}
-    <div class="d-flex flex-grow-1">
+    <div class="admin-layout d-flex flex-grow-1">
 
-        {# ---------- Sidebar (desktop) ---------- #}
-<aside id="sidebar" class="d-flex flex-column flex-shrink-0 bg-dark text-light p-3"
-       style="width: 280px; position: sticky; top: 0; height: 100vh; overflow-y: auto;">
-  <!-- Toggle button (mobile) -->
+        {# ---------- Responsive sidebar ---------- #}
+<aside id="sidebar" class="admin-sidebar offcanvas-md offcanvas-start flex-shrink-0 p-3" tabindex="-1" aria-labelledby="admin-sidebar-title">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h5 mb-0 text-center flex-grow-1">
+    <h2 class="h5 mb-0 text-center flex-grow-1" id="admin-sidebar-title">
       <i class="fas fa-toolbox me-2"></i>      {{ _('Työkalupakki') }}
     </h2>
-    <button class="btn btn-outline-light d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
-      &#9776;
+    <button class="btn-close d-md-none" type="button" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="{{ _('Sulje admin-valikko') }}">
     </button>
   </div>
 <!-- Tasks widget -->
-<div class="card bg-dark-subtle text-dark mb-3">
+<div class="card admin-sidebar-card mb-3">
   <div class="card-header d-flex justify-content-between align-items-center">
     <span class="d-flex align-items-center">
       <i class="fas fa-tasks me-2"></i>{{ _('Tehtävät') }}
@@ -127,33 +91,34 @@
   {% if tasks %}
   <div class="card-body p-2">
 
-    <!-- Next task (Bootstrap card inside card) -->
     {% set next_task = tasks[0] %}
     <div class="card mb-2 border rounded bg-body-tertiary">
       <div class="card-body p-2 d-flex justify-content-between align-items-center">
-        <a href="{{ url_for('admin_demo.edit_demo', demo_id=next_task._id) }}" class="text-decoration-none fw-bold flex-grow-1 me-2 text-truncate">
+        <a href="{{ next_task.link }}" class="text-decoration-none fw-bold flex-grow-1 me-2 text-truncate">          {% if next_task.type == 'demo' %}
+            <i class="fas fa-bullhorn text-primary me-1"></i>
+          {% elif next_task.type == 'org_suggestion' %}
+            <i class="fas fa-building text-warning me-1"></i>
+          {% endif %}
           {{ next_task.title }}
         </a>
-        <div class="btn-group btn-group-sm" role="group">
-          <button type="button" class="btn btn-success" onclick="confirmAction('approve', '{{ next_task._id }}')">
-            <i class="fas fa-check"></i>
-          </button>
-          <button type="button" class="btn btn-danger" onclick="confirmAction('deny', '{{ next_task._id }}')">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
+        <span class="badge bg-secondary text-uppercase">{{ next_task.status }}</span>
       </div>
     </div>
 
-    <!-- Collapsible full task list -->
+    <!-- Collapsible list -->
     <div class="collapse" id="allTasksList">
       <ul class="list-group list-group-flush small">
         {% for task in tasks %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
-          <a href="{{ url_for('admin_demo.edit_demo', demo_id=task._id) }}" class="text-decoration-none text-truncate" style="max-width: 70%;">
+          <a href="{{ task.link }}" class="admin-sidebar-task-link text-decoration-none text-truncate">
+            {% if task.type == 'demo' %}
+              <i class="fas fa-bullhorn text-primary me-1"></i>
+            {% elif task.type == 'org_suggestion' %}
+              <i class="fas fa-building text-warning me-1"></i>
+            {% endif %}
             {{ task.title }}
           </a>
-          <span class="badge bg-secondary rounded-pill">{{ loop.index }}</span>
+          <span class="badge bg-secondary">{{ task.status }}</span>
         </li>
         {% endfor %}
       </ul>
@@ -165,9 +130,22 @@
     <i class="fas fa-check-circle text-success fs-3 mb-1"></i>
     <p class="small mb-0">{{ _('Ei tehtäviä – hyvä sinä!') }}</p>
   </div>
-  {% endif %}
+{% endif %}
 </div>
 
+<!-- Quick access -->
+{% if current_user.global_admin %}
+<div class="card admin-sidebar-card mb-3">
+  <div class="card-body d-grid gap-2">
+    <a href="{{ url_for('admin.logs') }}" class="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center">
+      <i class="fa-solid fa-list-check me-2"></i>{{ _('Lokit ja tapahtumat') }}
+    </a>
+    <a href="{{ url_for('admin_demo.manage_magic_tokens') }}" class="btn btn-outline-light btn-sm d-flex align-items-center justify-content-center">
+      <i class="fa-solid fa-link-slash me-2"></i>{{ _('Tokenit') }}
+    </a>
+  </div>
+</div>
+{% endif %}
 
 
 <script>
@@ -197,57 +175,162 @@ function confirmAction(action, taskId) {
 
 
   <!-- Navigation -->
-  <nav id="sidebarMenu" class="flex-grow-1 collapse d-md-block">
+  {% set admin_endpoint = request.endpoint or '' %}
+  <nav id="sidebarMenu" class="flex-grow-1">
     <ul class="nav nav-pills flex-column mb-3">
-      {% if current_user.global_admin %}
+      {% if current_user.is_authenticated %}
+        <li class="admin-sidebar-heading">{{ _('Yleiskuva') }}</li>
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin.admin_dashboard') }}">
-            <i class="fas fa-book me-2"></i>{{ _('Superkäyttäjän käsikirja') }}
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin.admin_dashboard' %}active{% endif %}" href="{{ url_for('admin.admin_dashboard') }}" {% if admin_endpoint == 'admin.admin_dashboard' %}aria-current="page"{% endif %}>
+            <i class="fas fa-house me-2"></i>{{ _('Hallintapaneeli') }}
+          </a>
+        </li>
+      {% endif %}
+      {% if current_user.is_authenticated and current_user.has_city_admin_scope_grants() %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.demo_control') }}">
+            <i class="fas fa-location-dot me-2"></i>{{ _('Kaupunkiadminin näkymä') }}
           </a>
         </li>
       {% endif %}
 
-      {% if current_user.has_permission("LIST_USERS") %}
-        <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin_user.user_control') }}">
-            <i class="fas fa-users me-2"></i>{{ _('Käyttäjien hallinta') }}
-          </a>
-        </li>
-      {% endif %}
-
-      {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
-        <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin_org.organization_control') }}">
-            <i class="fas fa-building me-2"></i>{{ _('Organisaatioiden hallinta') }}
-          </a>
-        </li>
+      {% if current_user.has_permission("LIST_DEMOS") or current_user.has_permission("LIST_RECURRING_DEMOS") or current_user.has_permission("LIST_ORGANIZATIONS") or current_user.has_permission("EDIT_DEMO") or current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission("TRANSLATE_DEMO") or current_user.has_permission("REVIEW_DEMO_TRANSLATIONS") or current_user.has_permission("TRANSLATE_UI") or current_user.has_permission("REVIEW_UI_TRANSLATIONS") %}
+      <li class="admin-sidebar-heading">{{ _('Sisältö') }}</li>
       {% endif %}
 
       {% if current_user.has_permission("LIST_DEMOS") %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin_demo.demo_control') }}">
-            <i class="fas fa-bullhorn me-2"></i>{{ _('Mielenosoitusten hallinta') }}
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin_demo.demo_control' or admin_endpoint == 'admin_demo.demo_command_center' %}active{% endif %}" href="{{ url_for('admin_demo.demo_control') }}">
+            <i class="fas fa-bullhorn me-2"></i>{{ _('Mielenosoitukset') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission("TRANSLATE_DEMO") or current_user.has_permission("REVIEW_DEMO_TRANSLATIONS") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint in ['admin_demo.demo_translation_dashboard', 'admin_demo.edit_demo_translations'] %}active{% endif %}" href="{{ url_for('admin_demo.demo_translation_dashboard') }}">
+            <i class="fas fa-language me-2"></i>{{ _('Käännöstyöjono') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission("TRANSLATE_UI") or current_user.has_permission("REVIEW_UI_TRANSLATIONS") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint in ['admin.ui_translation_dashboard', 'admin.ui_translation_editor', 'admin.ui_translation_sync_dashboard'] %}active{% endif %}" href="{{ url_for('admin.ui_translation_dashboard') }}">
+            <i class="fas fa-globe me-2"></i>{{ _('Käyttöliittymäkäännökset') }}
           </a>
         </li>
       {% endif %}
 
       {% if current_user.has_permission("LIST_RECURRING_DEMOS") %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin_recu_demo.recu_demo_control') }}">
-            <i class="fas fa-redo-alt me-2"></i>{{ _('Toistuvien mielenosoitusten hallinta') }}
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint.startswith('admin_recu_demo.') %}active{% endif %}" href="{{ url_for('admin_recu_demo.recu_demo_control') }}">
+            <i class="fas fa-redo-alt me-2"></i>{{ _('Toistuvat mielenosoitukset') }}
           </a>
         </li>
       {% endif %}
 
+      {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint.startswith('admin_org.') %}active{% endif %}" href="{{ url_for('admin_org.organization_control') }}">
+            <i class="fas fa-building me-2"></i>{{ _('Organisaatiot') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.has_permission("EDIT_DEMO") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin_demo.suggestions_list' %}active{% endif %}" href="{{ url_for('admin_demo.suggestions_list') }}">
+            <i class="fas fa-comment-dots me-2"></i>{{ _('Ehdotukset') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.has_permission("VIEW_LOGS") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin_demo.submission_errors_dashboard' %}active{% endif %}" href="{{ url_for('admin_demo.submission_errors_dashboard') }}">
+            <i class="fas fa-triangle-exclamation me-2"></i>{{ _('Ilmoitusvirheet') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.has_permission("LIST_USERS") or current_user.has_permission("LIST_CASES") or current_user.global_admin or current_user.has_permission("MANAGE_CLEARANCE") or current_user.has_permission("VIEW_CLEARANCE_AUDIT") or current_user.has_permission("MANAGE_CITIES") %}
+      <li class="admin-sidebar-heading">{{ _('Käyttäjät ja hallinto') }}</li>
+      {% endif %}
+
+      {% if current_user.has_permission("LIST_USERS") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint.startswith('admin_user.') %}active{% endif %}" href="{{ url_for('admin_user.user_control') }}">
+            <i class="fas fa-users me-2"></i>{{ _('Käyttäjät') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.has_permission("LIST_CASES") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint.startswith('admin_case.') %}active{% endif %}" href="{{ url_for('admin_case.cases') }}">
+            <i class="fas fa-briefcase me-2"></i>{{ _('Tapaukset') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.global_admin or current_user.has_permission("MANAGE_CLEARANCE") or current_user.has_permission("VIEW_CLEARANCE_AUDIT") or current_user.has_permission("MANAGE_CITIES") %}
+      <li class="nav-item">
+        <a class="nav-link admin-sidebar-link {% if admin_endpoint.startswith('admin_governance.') or admin_endpoint.startswith('admin_city.') %}active{% endif %}" href="{{ url_for('admin_governance.dashboard') }}">
+          <i class="fas fa-landmark me-2"></i>{{ _('Hallinto') }}
+        </a>
+      </li>
+      {% endif %}
+
+      {% if current_user.has_permission("VIEW_ANALYTICS") or current_user.has_permission("VIEW_BACKGROUND_JOBS") or current_user.has_permission("VIEW_LOGS") or current_user.has_permission("EDIT_USER") %}
+      <li class="admin-sidebar-heading">{{ _('Järjestelmä') }}</li>
+      {% endif %}
+
       {% if current_user.has_permission("VIEW_ANALYTICS") %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin.stats') }}">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin.stats' %}active{% endif %}" href="{{ url_for('admin.stats') }}">
             <i class="fas fa-chart-line me-2"></i>{{ _('Tilastot') }}
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint in ['admin_site_analytics.site_overview', 'admin_site_analytics.site_demo_analytics'] %}active{% endif %}" href="{{ url_for('admin_site_analytics.site_overview') }}">
+            <i class="fas fa-chart-simple me-2"></i>{{ _('Palvelun analytiikka') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.has_permission("VIEW_BACKGROUND_JOBS") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin.background_jobs' %}active{% endif %}" href="{{ url_for('admin.background_jobs') }}">
+            <i class="fas fa-gears me-2"></i>{{ _('Taustatyöt') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.has_permission("VIEW_LOGS") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint in ['admin.logs', 'admin.api_logs'] or admin_endpoint in ['admin_demo.audit_timeline', 'admin_demo.view_super_audit_logs'] or admin_endpoint == 'admin_governance.audit_log' %}active{% endif %}" href="{{ url_for('admin.logs') }}" {% if admin_endpoint == 'admin.logs' %}aria-current="page"{% endif %}>
+            <i class="fas fa-list-check me-2"></i>{{ _('Lokit ja tapahtumat') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.has_permission("EDIT_USER") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint.startswith('admin_dev.') %}active{% endif %}" href="{{ url_for('admin_dev.list_requests') }}">
+            <i class="fas fa-key me-2"></i>{{ _('Kehittäjähallinta') }}
           </a>
         </li>
       {% endif %}
     </ul>
   </nav>
+
+  <!-- Theme toggle -->
+  <div class="admin-theme-control">
+    <button id="theme-toggle" class="btn admin-theme-toggle w-100" title="{{ _('Vaihtele teema') }}">
+      <i class="fas fa-moon me-2"></i><span id="theme-label">{{ _('Tumma tila') }}</span>
+    </button>
+  </div>
 
   <!-- Logout -->
   <div class="mt-auto">
@@ -256,10 +339,25 @@ function confirmAction(action, taskId) {
     </button>
   </div>
 
-  <!-- Super admin info -->
-  <div class="alert alert-warning text-center mt-3 mb-0 py-1 small">
-    <i class="fas fa-exclamation-triangle me-1"></i>{{ _('Olet superkäyttäjätilassa.') }}
+  {% if admin_actor_context %}
+  <div class="admin-scope-context admin-scope-context--{{ admin_actor_context.kind }}" aria-label="{{ _('Aktiivinen ylläpitorooli') }}">
+    <i class="fas {{ 'fa-shield-halved' if admin_actor_context.kind == 'global' else ('fa-city' if admin_actor_context.kind == 'city' else ('fa-building' if admin_actor_context.kind == 'organization' else ('fa-language' if admin_actor_context.kind == 'translator' else 'fa-user-lock'))) }}" aria-hidden="true"></i>
+    <div>
+      <strong>
+        {% if admin_actor_context.kind == 'global' %}{{ _('Globaali ylläpito') }}
+        {% elif admin_actor_context.kind == 'city' %}{{ _('Kaupunkiadmin') }}
+        {% elif admin_actor_context.kind == 'organization' %}{{ _('Organisaatioylläpitäjä') }}
+        {% elif admin_actor_context.kind == 'translator' %}{{ _('Kääntäjä') }}
+        {% else %}{{ _('Rajattu ylläpito') }}{% endif %}
+      </strong>
+      {% if admin_actor_context.kind == 'city' %}<span>{{ admin_actor_context.city_names|join(', ') }}</span>
+      {% elif admin_actor_context.kind == 'organization' %}<span>{{ _('%(count)s organisaatiota', count=admin_actor_context.organization_count) }}</span>
+      {% elif admin_actor_context.kind == 'translator' %}<span>{{ _('Käännöstyökalut') }}</span>
+      {% elif admin_actor_context.kind == 'global' %}<span>{{ _('Kaikki ylläpito-oikeudet') }}</span>
+      {% else %}<span>{{ _('Vain myönnetyt toiminnot') }}</span>{% endif %}
+    </div>
   </div>
+  {% endif %}
 </aside>
 
         {# ---------- Main content area ---------- #}
@@ -277,14 +375,16 @@ function confirmAction(action, taskId) {
             {% endif %}
             {% endwith %}
 
-            {% block main_content %}{% endblock %}
+            <div class="admin-content">
+              {% block main_content %}{% endblock %}
+            </div>
         </main>
     </div>
 
     {# ==== FOOTER ==== #}
-    <footer class="bg-dark text-light text-center py-3 small mt-auto">
-        &copy; 2025 Mielenosoitukset.fi — {{ _('Kaikki oikeudet pidätetään.') }}
-        <p class="version">V4.0.0</p>
+    <footer class="admin-footer text-center py-3 small mt-auto">
+        &copy; 2026 Mielenosoitukset.fi — {{ _('Kaikki oikeudet pidätetään.') }}
+        <p class="admin-footer__version">{{ app_version }}</p>
     </footer>
 
     <!-- Bootstrap bundle (+Popper) -->
@@ -292,20 +392,65 @@ function confirmAction(action, taskId) {
     <!-- Your sidebar toggling logic -->
 
     <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeLabel = document.getElementById('theme-label');
+        const htmlElement = document.documentElement;
+
+        function applyTheme(theme, { persist = true } = {}) {
+            const normalizedTheme = theme === 'light' ? 'light' : 'dark';
+            htmlElement.classList.remove('light', 'dark');
+            htmlElement.classList.add(normalizedTheme);
+            htmlElement.setAttribute('data-bs-theme', normalizedTheme);
+            if (persist) {
+                localStorage.setItem('theme', normalizedTheme);
+            }
+            updateThemeToggleUI(normalizedTheme);
+            document.dispatchEvent(new CustomEvent('admin:themechange', {
+                detail: { theme: normalizedTheme }
+            }));
+        }
+
+        // Load theme preference from localStorage
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            applyTheme(savedTheme, { persist: false });
+        }
+
+        function updateThemeToggleUI(theme) {
+            const icon = themeToggle.querySelector('i');
+            if (theme === 'dark') {
+                icon.className = 'fas fa-moon me-2';
+                themeLabel.textContent = '{{ _("Tumma tila") }}';
+            } else {
+                icon.className = 'fas fa-sun me-2';
+                themeLabel.textContent = '{{ _("Vaalea tila") }}';
+            }
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.classList.contains('dark') ? 'dark' : 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
+        });
+
+        // Initialize theme on page load
+        initializeTheme();
+
         const sidebar = document.querySelector('.container-sidebar');
         const toggleBtn = document.getElementById('maintoggle');
 
-        toggleBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            document.querySelector('main').classList.toggle('collapsed');
-        });
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                document.querySelector('main').classList.toggle('collapsed');
+            });
+        }
 
     </script>
     <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const logoutLink = document.getElementById("logoutLink");
   const logoutModalEl = document.getElementById("logoutConfirmModal");
-  const logoutModal = new bootstrap.Modal(logoutModalEl);
   const countdownEl = document.getElementById("countdown");
   const confirmLogoutBtn = document.getElementById("confirmLogoutBtn");
   const cancelBtn = document.getElementById("cancelLogoutBtn");
@@ -333,17 +478,14 @@ document.addEventListener("DOMContentLoaded", () => {
     clearInterval(countdownTimer);
   }
 
-  logoutLink.addEventListener("click", (e) => {
-    e.preventDefault();
-    logoutModal.show();
-    startCountdown();
-  });
+  // Bootstrap's data API opens the modal from the sidebar button.
+  logoutModalEl.addEventListener("show.bs.modal", startCountdown);
 
   cancelBtn.addEventListener("click", () => {
     stopCountdown();
   });
 
-  logoutModalEl.addEventListener("hidden.bs.modal", () => {
+  logoutModalEl.addEventListener("hide.bs.modal", () => {
     stopCountdown();
   });
 
@@ -354,6 +496,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
     </script>
+    <script src="{{ url_for('static', filename='js/admin_workspace.js', v='20261110-admin-dropdowns-4') }}" defer></script>
     {% block scripts %}{% endblock %}
     <!-- Logout confirmation modal -->
 <div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmLabel" aria-hidden="true">
@@ -377,6 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </div>
 
 <!-- Confirmation modal -->
+
 <div class="modal fade" id="taskConfirmModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">

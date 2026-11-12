@@ -2,6 +2,7 @@ from flask import Blueprint, current_app, render_template, request, redirect, ur
 from flask_login import current_user, login_required
 from urllib.parse import urlparse
 from bson.objectid import ObjectId
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
@@ -9,8 +10,47 @@ from mielenosoitukset_fi.utils.database import stringify_object_ids
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 
-mongo = DatabaseManager().get_instance().get_db()
+def _get_mongo():
+    """Return the current database handle."""
+    return DatabaseManager().get_instance().get_db()
+
+
+def _profile_user_summaries(mongo, user_ids):
+    """Return public profile details for a list of followed/follower IDs."""
+    object_ids = []
+    for user_id in user_ids or []:
+        try:
+            object_ids.append(ObjectId(user_id))
+        except Exception:
+            continue
+
+    if not object_ids:
+        return []
+
+    users_by_id = {
+        doc["_id"]: doc
+        for doc in mongo.users.find(
+            {"_id": {"$in": object_ids}},
+            {"username": 1, "displayname": 1, "profile_picture": 1},
+        )
+    }
+
+    summaries = []
+    for object_id in object_ids:
+        doc = users_by_id.get(object_id)
+        if not doc or not doc.get("username"):
+            continue
+        summaries.append(
+            {
+                "username": doc["username"],
+                "displayname": doc.get("displayname") or doc["username"],
+                "profile_picture": doc.get("profile_picture"),
+                "url": url_for("users.profile.profile", username=doc["username"]),
+            }
+        )
+    return summaries
 
 profile_bp = Blueprint(
     "profile", __name__, template_folder="/users/profile/", url_prefix="/profile"
@@ -39,12 +79,49 @@ def profile(username=None):
         else:
             return abort(404)
 
+    mongo = _get_mongo()
     user_data = mongo.users.find_one({"username": username})
     if user_data:
         user_obj = User.from_db(user_data)
         user_obj.followers_count = len(user_obj.followers)
         user_obj.following_count = len(user_obj.following)
-        return render_template("users/profile/profile.html", user=user_obj)
+        followers = _profile_user_summaries(mongo, user_obj.followers)
+        following = _profile_user_summaries(mongo, user_obj.following)
+
+        followed_orgs = []
+        followed_recurring = []
+        if current_user.is_authenticated and current_user.username == user_obj.username:
+            org_ids = [org_id for org_id in user_obj.followed_organizations or [] if org_id]
+            if org_ids:
+                org_cursor = mongo.organizations.find({"_id": {"$in": [ObjectId(oid) for oid in org_ids]}})
+                for doc in org_cursor:
+                    doc["id"] = str(doc.get("_id"))
+                    followed_orgs.append(doc)
+
+            recurring_ids = [rid for rid in user_obj.followed_recurring_demos or [] if rid]
+            if recurring_ids:
+                valid_object_ids = []
+                for rid in recurring_ids:
+                    try:
+                        valid_object_ids.append(ObjectId(rid))
+                    except Exception:
+                        continue
+                if valid_object_ids:
+                    cursor = mongo.recu_demos.find({"_id": {"$in": valid_object_ids}})
+                    for doc in cursor:
+                        canonical_id = str(doc.get("_id"))
+                        doc["id"] = canonical_id
+                        doc["link"] = url_for("siblings_meeting", parent=canonical_id)
+                        followed_recurring.append(doc)
+
+        return render_template(
+            "users/profile/profile.html",
+            user=user_obj,
+            followers=followers,
+            following=following,
+            followed_orgs=followed_orgs,
+            followed_recurring=followed_recurring,
+        )
     else:
         flash_message("Käyttäjäprofiilia ei löytynyt.", "warning")
         return redirect(url_for("index"))
@@ -81,7 +158,7 @@ def api_is_following():
     if not username:
         return {"error": "Username is required"}, 400
 
-    user_data = mongo.users.find_one({"username": username})
+    user_data = _get_mongo().users.find_one({"username": username})
     if not user_data:
         return {"error": "User not found"}, 404
 
@@ -108,7 +185,7 @@ def api_is_friends():
     if not username:
         return {"error": "Username is required"}, 400
 
-    user_data = mongo.users.find_one({"username": username})
+    user_data = _get_mongo().users.find_one({"username": username})
     if not user_data:
         return {"error": "User not found"}, 404
 
@@ -136,7 +213,11 @@ def follow_user():
     if not username:
         return {"error": "Username required"}, 400
 
-    user_obj = User.from_db(mongo.users.find_one({"username": username}))
+    user_data = _get_mongo().users.find_one({"username": username})
+    if not user_data:
+        return {"error": "User not found"}, 404
+
+    user_obj = User.from_db(user_data)
     if not user_obj:
         return {"error": "User not found"}, 404
 
@@ -167,7 +248,11 @@ def unfollow_user():
     if not username:
         return {"error": "Username required"}, 400
 
-    user_obj = User.from_db(mongo.users.find_one({"username": username}))
+    user_data = _get_mongo().users.find_one({"username": username})
+    if not user_data:
+        return {"error": "User not found"}, 404
+
+    user_obj = User.from_db(user_data)
     if not user_obj:
         return {"error": "User not found"}, 404
 
@@ -202,7 +287,7 @@ def send_friend_request():
     if not username:
         return {"error": "Username required"}, 400
 
-    other_data = mongo.users.find_one({"username": username})
+    other_data = _get_mongo().users.find_one({"username": username})
     if not other_data:
         return {"error": "User not found"}, 404
 
@@ -218,8 +303,8 @@ def send_friend_request():
 
     other.friend_requests.append({
         "sent_by": current_user._id,
-        "sent_at": datetime.utcnow(),
-        "sent_ip": request.remote_addr
+        "sent_at": utcnow(),
+        "sent_ip": get_client_ip()
     })
     other.save()
     return {"success": True, "status": "request_sent"}, 200
@@ -247,7 +332,7 @@ def accept_friend_request():
     if not username:
         return {"error": "Username required"}, 400
 
-    other_data = mongo.users.find_one({"username": username})
+    other_data = _get_mongo().users.find_one({"username": username})
     if not other_data:
         return {"error": "User not found"}, 404
 
@@ -258,8 +343,8 @@ def accept_friend_request():
         return {"error": "No friend request from this user"}, 400
 
     current_user.friend_requests = [r for r in current_user.friend_requests if r["sent_by"] != other._id]
-    current_user.friends.append({"user_id": other._id, "last_updated": datetime.utcnow()})
-    other.friends.append({"user_id": current_user._id, "last_updated": datetime.utcnow()})
+    current_user.friends.append({"user_id": other._id, "last_updated": utcnow()})
+    other.friends.append({"user_id": current_user._id, "last_updated": utcnow()})
 
     current_user.save()
     other.save()
@@ -288,7 +373,7 @@ def reject_friend_request():
     if not username:
         return {"error": "Username required"}, 400
 
-    other_data = mongo.users.find_one({"username": username})
+    other_data = _get_mongo().users.find_one({"username": username})
     if not other_data:
         return {"error": "User not found"}, 404
 
@@ -321,7 +406,7 @@ def friend_state():
     if not username:
         return {"error": "Username required"}, 400
 
-    other_data = mongo.users.find_one({"username": username})
+    other_data = _get_mongo().users.find_one({"username": username})
     if not other_data:
         return {"error": "User not found"}, 404
 
@@ -360,7 +445,7 @@ def api_friends_list():
     friends = []
     for friend in current_user.friends:
         fid = friend.get("user_id")
-        f_data = mongo.users.find_one({"_id": fid})
+        f_data = _get_mongo().users.find_one({"_id": fid})
         if f_data:
             f_user = User.from_db(f_data)
             friends.append({
@@ -386,6 +471,7 @@ def api_unread_count():
     counts = {}
     for f in current_user.friends:
         fid = f.get("user_id")
+        mongo = _get_mongo()
         msgs = mongo.messages.count_documents({
             "sender_id": fid,
             "recipient_id": current_user._id,
@@ -415,6 +501,7 @@ def api_messages_with(friend_username):
         Each dict has keys: "sender_id", "recipient_id", "content", "created_at", "read",
         or error message with HTTP code.
     """
+    mongo = _get_mongo()
     friend_data = mongo.users.find_one({"username": friend_username})
     if not friend_data:
         return {"error": "Friend not found"}, 404
@@ -469,6 +556,7 @@ def api_get_messages():
         except Exception:
             return {"error": "Invalid recipient id"}, 400
 
+    mongo = _get_mongo()
     msgs = list(mongo.messages.find(query).sort("created_at", -1))
 
     for msg in msgs:
@@ -482,7 +570,7 @@ def api_get_messages():
         msg["created_at"] = msg["created_at"].isoformat()
         msg["read"] = msg.get("read", False)
 
-    return msgs, 200
+    return stringify_object_ids(msgs), 200
 
 
 @profile_bp.route("/api/messages/send/", methods=["POST"])
@@ -511,7 +599,11 @@ def send_message():
     if not recipient_name or not content:
         return {"error": "Recipient and content required"}, 400
 
-    recipient = User.from_db(mongo.users.find_one({"username": recipient_name}))
+    recipient_data = _get_mongo().users.find_one({"username": recipient_name})
+    if not recipient_data:
+        return {"error": "Recipient not found"}, 404
+
+    recipient = User.from_db(recipient_data)
     if not recipient:
         return {"error": "Recipient not found"}, 404
 
@@ -519,10 +611,10 @@ def send_message():
         "sender_id": current_user._id,
         "recipient_id": recipient._id,
         "content": content,
-        "created_at": datetime.utcnow(),
+        "created_at": utcnow(),
         "read": False
     }
-    mongo.messages.insert_one(message)
+    _get_mongo().messages.insert_one(message)
     return {"success": True}, 200
 
 
@@ -547,7 +639,7 @@ def mark_read():
     if not message_id:
         return {"error": "Message ID required"}, 400
 
-    mongo.messages.update_one(
+    _get_mongo().messages.update_one(
         {"_id": ObjectId(message_id), "recipient_id": current_user._id},
         {"$set": {"read": True}}
     )

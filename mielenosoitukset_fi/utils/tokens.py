@@ -5,31 +5,94 @@ from bson.objectid import ObjectId
 
 from mielenosoitukset_fi.utils.database import get_database_manager
 
-mongo = get_database_manager()
+# Durations
+SHORT_HOURS = 48  # short-lived user/app tokens
+LONG_DAYS = 90    # long-lived tokens
+SESSION_HOURS = 168  # session tokens (7 days)
 
-TOKENS_COLLECTION = mongo["api_tokens"]
-TOKEN_USAGE_LOGS = mongo["api_usage"]
+# Supported scopes
+SUPPORTED_SCOPES = {
+    "read",
+    "write",
+    "admin",
+    "mcp.admin",
+    "submit_demonstrations",
+}
+PRIVILEGED_SCOPES = {"admin", "mcp.admin"}
+
+
+def tokens_collection():
+    """Return the token collection from the currently active database."""
+    return get_database_manager()["api_tokens"]
+
+
+def token_usage_logs_collection():
+    """Return the usage-log collection from the currently active database."""
+    return get_database_manager()["api_usage"]
+
 
 def _hash_token(token: str) -> str:
     """Deterministic hash for token storage and verification."""
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def create_token(user_id=None, token_type="short", scopes=None, system=False):
-    token = secrets.token_urlsafe(32)
-    
+def _expiry_for_type(token_type: str) -> datetime:
+    now = datetime.now(timezone.utc)
     if token_type == "short":
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=2)
-    elif token_type == "long":
-        expires_at = datetime.now(timezone.utc) + timedelta(days=90)
-    else:
-        raise ValueError("Invalid token_type")
-    
-    TOKENS_COLLECTION.insert_one({
+        return now + timedelta(hours=SHORT_HOURS)
+    if token_type == "long":
+        return now + timedelta(days=LONG_DAYS)
+    if token_type == "session":
+        return now + timedelta(hours=SESSION_HOURS)
+    raise ValueError("Invalid token_type")
+
+
+def create_token(
+    user_id=None,
+    token_type="short",
+    scopes=None,
+    system=False,
+    *,
+    category="user",
+    app_id=None,
+    session_id=None,
+):
+    """
+    Create a token with category support.
+
+    Categories: user, app, system, session.
+    token_type: short (48h), long (90d), session (7d). Long is typically created via exchange.
+    """
+    if user_id:
+        user = get_database_manager()["users"].find_one({"_id": ObjectId(user_id)})
+        if user and ((user.get("security_suspension") or {}).get("active") or not user.get("active", True) or user.get("banned")):
+            raise ValueError("Keskeytetylle käyttäjätilille ei luoda API-tokenia.")
+        if user and user.get("role") == "god":
+            raise ValueError("God-tilille ei luoda kirjautumisvaiheet ohittavaa API-tokenia.")
+    if scopes is not None and (
+        not isinstance(scopes, (list, tuple, set))
+        or not all(isinstance(scope, str) for scope in scopes)
+    ):
+        raise ValueError("Token scopes must be a list of strings")
+
+    scopes = list(dict.fromkeys(scopes or ["read"]))
+    unsupported_scopes = set(scopes) - SUPPORTED_SCOPES
+    if unsupported_scopes:
+        raise ValueError(
+            f"Unsupported token scopes: {', '.join(sorted(unsupported_scopes))}"
+        )
+
+    token = secrets.token_urlsafe(32)
+    expires_at = _expiry_for_type(token_type)
+
+    tokens_collection().insert_one({
         "user_id": ObjectId(user_id) if user_id else None,
+        "app_id": ObjectId(app_id) if app_id else None,
+        "session_id": session_id,
         "token": _hash_token(token),
         "type": token_type,
-        "scopes": scopes or ["read"],
+        "category": category,
+        "scopes": scopes,
         "rate_limit": None if system else "100/minute",
         "system": system,
         "expires_at": expires_at,
@@ -45,25 +108,37 @@ def check_token(token: str):
     Raises ApiException if token is missing, invalid, or expired.
     """
     from mielenosoitukset_fi.api.exceptions import ApiException, Message
-    
+    from flask import request
+
     if not token:
         raise ApiException(Message("Missing token", "token_missing"), 401)
-    
+
     hashed = _hash_token(token)
-    record = TOKENS_COLLECTION.find_one({"token": hashed})
+    record = tokens_collection().find_one({"token": hashed})
     
     if not record:
         raise ApiException(Message("Invalid token", "token_invalid"), 401)
-    
+
     if token_expired(record):
         raise ApiException(Message("Token has expired", "token_expired"), 401)
-    
+    if record.get("revoked_at"):
+        raise ApiException(Message("Token revoked", "token_revoked"), 401)
+
+    if record.get("user_id"):
+        user = get_database_manager()["users"].find_one({"_id": ObjectId(record["user_id"])})
+        if not user or (user.get("security_suspension") or {}).get("active") or not user.get("active", True) or user.get("banned"):
+            raise ApiException(Message("Account access suspended", "account_suspended"), 403)
+        if user and user.get("role") == "god":
+            raise ApiException(Message("God accounts require the full interactive login", "god_interactive_required"), 403)
+
     return record
 
 
-from datetime import datetime, timezone
-
 def token_renewal_needed(token_record):
+    # Only long and session tokens can be renewed
+    if token_record.get("type") not in {"long", "session"}:
+        return False
+
     created_at = token_record['created_at']
     expires_at = token_record['expires_at']
 
@@ -78,7 +153,6 @@ def token_renewal_needed(token_record):
 
     return remaining.total_seconds() < lifetime.total_seconds() / 3
 
-from datetime import datetime, timezone
 
 def token_expired(token_record):
     expires_at = token_record.get("expires_at")

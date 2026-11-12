@@ -1,9 +1,13 @@
 import os
 import sys
+
+if sys.version_info < (3, 12):
+    raise RuntimeError("Mielenosoitukset.fi requires Python 3.12 or newer.")
+
 from mielenosoitukset_fi.app import create_app
 from mielenosoitukset_fi.scripts.send_demo_reminders import send_reminders_scheduled as send_reminders
 
-from pp import rollup_events
+from mielenosoitukset_fi.utils.aggregate_analytics import rollup_events
 
 import threading
 
@@ -24,16 +28,13 @@ def main():
     """
     The main entry point for the application.
 
-    This function retrieves configuration settings for the application,
-    updates the application's configuration to set the default language
-    to Finnish, and then runs the application.
+    This function retrieves configuration settings and runs the application.
+    Locale publication is controlled by the BABEL section in the active YAML
+    configuration.
 
     Configuration settings:
     - PORT: The port number on which the application will run. Defaults to 5000 if not set.
     - DEBUG: The debug mode for the application. Defaults to False if not set.
-
-    The application's configuration is updated to set the default locale to Finnish
-    and to support only the Finnish language.
 
     The application is then started with the specified debug mode and port number.
     """
@@ -45,24 +46,21 @@ def main():
 
     # Retrieve configurations with fallback defaults
     port = int(os.getenv("PORT", app.config.get("PORT", 5000)))
+    host = os.getenv("HOST", app.config.get("HOST", "127.0.0.1"))
     debug = os.getenv("DEBUG", str(app.config.get("DEBUG", False))).lower() in (
         "true",
         "1",
         "t",
     )
 
-    # Modify the current configuration
-    app.config.update(
-        BABEL={
-            "DEFAULT_LOCALE": "fi",
-            "SUPPORTED_LOCALES": ["fi"],
-            "LANGUAGES": {"fi": "Suomi"},
-        }
-    )  # Change the default language to Finnish
-    
-    run_rollup_in_thread()
+    # The analytics rollup must have exactly one writer: the production
+    # poller is the anal_aggregate.service systemd unit (run_aggregate.py).
+    # Starting a second poller here historically double-counted every event,
+    # so the in-app thread is opt-in for local development only.
+    if os.getenv("ROLLUP_IN_APP", "").lower() in ("1", "true", "yes"):
+        run_rollup_in_thread()
 
-    app.run(debug=debug, port=port)
+    app.run(host=host, debug=debug, port=port)
 
 
 if __name__ == "__main__":

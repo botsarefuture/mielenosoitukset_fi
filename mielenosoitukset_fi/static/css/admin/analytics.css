@@ -1,0 +1,289 @@
+/* Shared presentation for admin analytics pages. Data and chart behavior stay
+   in their templates; layout, theme and interaction states live here. */
+html.light {
+  --admin-chart-text: #647083;
+  --admin-chart-grid: rgba(28, 48, 82, .1);
+  --admin-chart-surface: #ffffff;
+  --admin-chart-primary: #0033a0;
+  --admin-chart-primary-soft: rgba(0, 51, 160, .18);
+  --admin-chart-secondary: #b54708;
+  --admin-chart-secondary-soft: rgba(181, 71, 8, .18);
+}
+
+html.dark {
+  --admin-chart-text: #d9e0ea;
+  --admin-chart-grid: rgba(255, 255, 255, .1);
+  --admin-chart-surface: #20252d;
+  --admin-chart-primary: #8bb1ff;
+  --admin-chart-primary-soft: rgba(139, 177, 255, .22);
+  --admin-chart-secondary: #ffad73;
+  --admin-chart-secondary-soft: rgba(255, 173, 115, .22);
+}
+
+.admin-analytics {
+  gap: 1rem;
+}
+
+.admin-analytics__split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(18rem, .55fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.admin-analytics__summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-analytics__actions {
+  padding: 1rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 1rem;
+  background: var(--admin-workspace-surface);
+  box-shadow: var(--admin-workspace-shadow);
+}
+
+.admin-analytics__chart-body {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-analytics__description {
+  margin: .25rem 0 0;
+  color: var(--admin-workspace-muted);
+  font-size: .8rem;
+  line-height: 1.5;
+}
+
+.admin-analytics__status {
+  min-height: 1.15rem;
+}
+
+.admin-analytics__chart-frame {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: 26rem;
+}
+
+.admin-analytics__chart-frame--compact {
+  height: 18rem;
+}
+
+.admin-analytics__chart-frame canvas {
+  max-width: 100%;
+}
+
+.admin-analytics__data-disclosure {
+  padding-top: .85rem;
+  border-top: 1px solid var(--admin-workspace-border);
+}
+
+.admin-analytics__data-disclosure > summary {
+  color: var(--admin-workspace-blue-dark);
+  font-size: .82rem;
+  font-weight: 750;
+}
+
+.admin-analytics__data-disclosure[open] > summary {
+  margin-bottom: .75rem;
+}
+
+.admin-analytics__data-scroll {
+  max-height: 20rem;
+  overflow: auto;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .75rem;
+}
+
+.admin-analytics .admin-data-view__table {
+  min-width: 25rem;
+}
+
+.admin-analytics .admin-data-view__table th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+}
+
+.admin-analytics .admin-data-view__table td:last-child {
+  color: var(--admin-workspace-blue-dark);
+  font-weight: 800;
+}
+
+@media (max-width: 1000px) {
+  .admin-analytics__split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-analytics__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-analytics__actions .btn {
+    flex: 1 1 14rem;
+  }
+
+  .admin-analytics__chart-frame {
+    height: 20rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-analytics__actions .btn {
+    width: 100%;
+  }
+
+  .admin-analytics__chart-frame,
+  .admin-analytics__chart-frame--compact {
+    height: 17rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-analytics canvas {
+    scroll-behavior: auto;
+  }
+}
+
+/* ---- Built-in site analytics (server-side pageviews) ------------------- */
+
+.admin-site-analytics__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+  /* Long labels/terms inside the mini tables must never widen the tracks. */
+  min-width: 0;
+}
+
+.admin-site-analytics__grid .admin-section-card {
+  min-width: 0;
+}
+
+/* Every card body on the analytics page scrolls internally rather than
+   stretching the page — including the full-width top-pages tables. */
+.admin-site-analytics .admin-section-card__body {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.admin-site-analytics .admin-data-view__table {
+  width: 100%;
+}
+
+.admin-site-analytics td {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .admin-site-analytics__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-site-analytics__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 600;
+  color: inherit;
+  opacity: 0.85;
+}
+
+.admin-site-analytics__delta--up {
+  color: var(--admin-status-success, #198754);
+}
+
+.admin-site-analytics__delta--down {
+  color: var(--admin-status-danger, #dc3545);
+}
+
+.admin-site-analytics__term {
+  max-width: 14rem;
+  overflow-wrap: anywhere;
+}
+
+/* Summary cards carry two metrics each (visitors and pageviews). Both are
+   labelled so the two numbers are never confused for each other. */
+.admin-site-analytics__metric {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.admin-site-analytics__metric + .admin-site-analytics__metric {
+  margin-top: 0.15rem;
+}
+
+.admin-site-analytics__metric-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+  color: var(--admin-workspace-muted, inherit);
+}
+
+/* An em dash marks a period that predates visitor tracking. */
+.admin-site-analytics__metric-unavailable {
+  color: var(--admin-workspace-muted, inherit);
+  font-weight: 400;
+}
+
+/* Compact label+value rows for breakdown cards: label left, count right,
+   always on one visible line — no horizontal scrolling inside the card. */
+.admin-site-analytics__stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-site-analytics__stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--admin-chart-surface, rgba(0, 0, 0, 0.03));
+}
+
+.admin-site-analytics__stat-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-site-analytics__stat-value {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.admin-site-analytics__limits {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px dashed var(--admin-chart-grid, rgba(0, 0, 0, 0.15));
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.admin-site-analytics__limits i {
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 900px) {
+  .admin-site-analytics__limits {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

@@ -1,0 +1,62 @@
+{% extends 'admin_base.html' %}
+{% set governance_tab = 'overview' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+
+{% block title %}{{ _('Hallinto') }} – Mielenosoitukset.fi{% endblock %}
+
+{% block main_content %}
+<section class="admin-page admin-workspace">
+  {{ admin_page_hero(
+    _('Hallinto ja käyttöoikeudet'),
+    _('Hallitse luottamuspäätöksiä, niiden tapahtumalokia sekä kaupunkien julkaisu- ja ylläpitoasetuksia yhdestä paikasta.'),
+    _('Admin-paneeli'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Hallinto ja käyttöoikeudet'), none)],
+  ) }}
+
+  {% include 'admin_V2/governance/_tabs.html' %}
+
+  <section class="admin-workspace-summary" aria-label="{{ _('Hallinnon yhteenveto') }}">
+    {% if permissions.clearances %}
+    <a class="admin-workspace-summary-card" href="{{ url_for('admin_governance.clearances') }}">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-user-shield" aria-hidden="true"></i></span>
+      <div><span>{{ _('Superkäyttäjäroolin hyväksynnät') }}</span><strong>{{ clearance_count }}</strong><small>{{ _('voimassa olevaa hyväksyntää') }}</small></div>
+    </a>
+    {% endif %}
+
+    {% if permissions.cities %}
+    <a class="admin-workspace-summary-card" href="{{ url_for('admin_city.city_control') }}">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></span>
+      <div><span>{{ _('Kaupunkihallinta') }}</span><strong>{{ active_city_count }}</strong><small>{{ _('kaupunkia julkisessa näkymässä') }}</small></div>
+    </a>
+    {% endif %}
+
+    {% if permissions.audit %}
+    <a class="admin-workspace-summary-card" href="{{ url_for('admin_governance.audit_log') }}">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i></span>
+      <div><span>{{ _('Tapahtumaloki') }}</span><strong>{{ recent_events|length }}</strong><small>{{ _('viimeisintä hallintotapahtumaa') }}</small></div>
+    </a>
+    {% endif %}
+  </section>
+
+  {% if permissions.audit %}
+  <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="recent-governance-events-heading">
+    <div class="admin-data-view__header admin-result-summary">
+      <strong id="recent-governance-events-heading">{{ _('Viimeisimmät hallintotapahtumat') }}</strong>
+      {% if recent_events %}<a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_governance.audit_log') }}">{{ _('Näytä koko tapahtumaloki') }}</a>{% endif %}
+    </div>
+    <div class="admin-data-view__viewport">
+      <table class="admin-data-view__table">
+        <thead><tr><th>{{ _('Käyttäjä') }}</th><th>{{ _('Toiminto') }}</th><th>{{ _('Tekijä') }}</th><th>{{ _('Aika') }}</th></tr></thead>
+        <tbody>
+          {% for event in recent_events %}
+          <tr><td><strong>{{ event.username }}</strong></td><td>{{ event.action }}</td><td>{{ event.granted_by }}</td><td>{{ event.timestamp|datetimeformat('%d.%m.%Y %H:%M') }}</td></tr>
+          {% else %}
+          <tr><td colspan="4"><div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-clock-rotate-left" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Hallintotapahtumia ei ole vielä kirjattu') }}</strong><span>{{ _('Myönnetyt ja perutut hyväksynnät näkyvät tässä.') }}</span></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}

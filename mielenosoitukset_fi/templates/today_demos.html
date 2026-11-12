@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - Mielenosoitukset.fi{% endblock %}
+
+{% block meta %}
+<meta name="description" content="{{ page_description }}" />
+<meta name="robots" content="index, follow" />
+{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/today-demos.css', v='20260930-today-demos-2') }}">
+{% endblock %}
+
+{% block content %}
+<div class="today-page public-page-shell">
+  <header class="public-page-header">
+    <div class="public-page-header__content">
+      <p class="public-page-header__kicker">
+        <i class="fa-solid fa-calendar-day" aria-hidden="true"></i>
+        {{ date_label }}
+      </p>
+      <h1 class="public-page-header__title">{{ page_title }}</h1>
+      <p class="public-page-header__description">{{ page_description }}</p>
+    </div>
+    <div class="public-page-header__meta today-actions" aria-label="{{ _('Sivun toiminnot') }}">
+      {% if city_name %}
+      <a class="button" href="{{ url_for('city_demos', city=city_name|lower) }}">
+        <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+        {{ _('Kaikki tulevat') }} {{ city_phrase }}
+      </a>
+      <a class="button today-button--secondary" href="{{ url_for('today_demos') }}">
+        <i class="fa-solid fa-map" aria-hidden="true"></i>
+        {{ _('Koko Suomi tänään') }}
+      </a>
+      {% else %}
+      <a class="button" href="{{ url_for('cities') }}">
+        <i class="fa-solid fa-city" aria-hidden="true"></i>
+        {{ _('Selaa kaupunkeja') }}
+      </a>
+      <a class="button today-button--secondary" href="{{ url_for('demonstrations') }}">
+        <i class="fa-solid fa-list" aria-hidden="true"></i>
+        {{ _('Kaikki tulevat mielenosoitukset') }}
+      </a>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="today-content" aria-label="{{ _('Tämän päivän mielenosoitukset') }}">
+    {% if demonstrations %}
+    <div class="today-list-head">
+      <h2>{{ _('Tänään') }}</h2>
+      <span class="today-count">{{ demonstrations|length }} {{ _('mielenosoitusta') }}</span>
+    </div>
+    <div class="today-list">
+      {% for demo in demonstrations %}
+      <a class="today-demo" href="{{ demo.detail_url }}">
+        <div class="today-time">
+          {{ demo.start_time or _('Aika avoin') }}
+          <span>{{ demo.end_time or '' }}</span>
+        </div>
+        <div>
+          <h3>{{ demo.title }}</h3>
+          <div class="today-meta">
+            <span><i class="fa-solid fa-city" aria-hidden="true"></i>{{ demo.city }}</span>
+            {% if demo.address %}<span><i class="fa-solid fa-location-dot" aria-hidden="true"></i>{{ demo.address }}</span>{% endif %}
+          </div>
+          {% if demo.tags %}
+          <div class="today-tags" aria-label="{{ _('Tunnisteet') }}">
+            {% for tag in demo.tags %}<span class="today-tag">#{{ tag }}</span>{% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="today-empty">
+      <i class="fa-regular fa-calendar-xmark" aria-hidden="true"></i>
+      {% if city_name %}
+      <h2>{{ _('Ei mielenosoituksia tänään') }} {{ city_phrase }}</h2>
+      <p>{{ _('Tälle päivälle ei löytynyt hyväksyttyjä mielenosoituksia tästä kaupungista. Voit silti katsoa kaikki kaupungin tulevat tapahtumat tai palata kaupunkilistaan.') }}</p>
+      <div class="today-empty__actions">
+        <a class="button" href="{{ url_for('city_demos', city=city_name|lower) }}">{{ _('Katso kaupungin tulevat') }}</a>
+        <a class="button today-action--outline" href="{{ url_for('cities') }}">{{ _('Muut kaupungit') }}</a>
+      </div>
+      {% else %}
+      <h2>{{ _('Ei mielenosoituksia tänään') }}</h2>
+      <p>{{ _('Tälle päivälle ei löytynyt hyväksyttyjä mielenosoituksia. Voit katsoa kaikki tulevat mielenosoitukset tai selata tapahtumia kaupungeittain.') }}</p>
+      <div class="today-empty__actions">
+        <a class="button" href="{{ url_for('demonstrations') }}">{{ _('Kaikki tulevat mielenosoitukset') }}</a>
+        <a class="button today-action--outline" href="{{ url_for('cities') }}">{{ _('Selaa kaupunkeja') }}</a>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,669 @@
+import functools
+import io
+from datetime import date
+
+from bson import ObjectId
+from mielenosoitukset_fi.utils.classes import RecurringDemonstration
+from mielenosoitukset_fi.utils.recurrence import calculate_recurrence_dates
+
+
+def test_recurring_runner_normalizes_frozen_child_ids():
+    from mielenosoitukset_fi.scripts.repeat_v2 import _frozen_child_ids
+
+    object_id = ObjectId()
+
+    assert _frozen_child_ids({"freezed_children": [object_id, str(object_id)]}) == {
+        str(object_id)
+    }
+
+
+def test_recurring_child_slug_gets_stable_series_suffix_on_collision(
+    monkeypatch, db
+):
+    from mielenosoitukset_fi.scripts import repeat_v2
+
+    parent_id = ObjectId()
+    db.demonstrations.insert_one(
+        {
+            "_id": ObjectId(),
+            "parent": ObjectId(),
+            "slug": "weekly-march-2026-12-01",
+        }
+    )
+    monkeypatch.setattr(repeat_v2, "demonstrations_collection", db.demonstrations)
+
+    assert repeat_v2._recurring_occurrence_slug(
+        {"_id": parent_id, "slug": "weekly-march"},
+        "2026-12-01",
+    ) == f"weekly-march-2026-12-01-{str(parent_id)[-6:]}"
+
+
+def test_recurring_demo_from_dict_accepts_city_key(seeded_data, db):
+    recu_demo = db.recu_demos.find_one({"_id": seeded_data["recu_demo_id"]})
+    recu_demo["city_key"] = "helsinki"
+
+    parsed = RecurringDemonstration.from_dict(recu_demo)
+
+    assert parsed.city == "Helsinki"
+
+
+def test_admin_can_create_recurring_demo_with_create_form_fields(admin_client, db):
+    response = admin_client.post(
+        "/admin/recu_demo/create_recu_demo",
+        data={
+            "title": "Weekly recurring demo",
+            "description": "Created through the admin create form.",
+            "date": "2026-05-01",
+            "start_time": "12:00",
+            "end_time": "13:00",
+            "city": "Helsinki",
+            "address": "Testikatu 1",
+            "latitude": "60.192059",
+            "longitude": "24.945831",
+            "type": "MARCH",
+            "approved": "on",
+            "organizer_name_1": "Test Org",
+            "organizer_id_1": str(ObjectId()),
+            "recurrence_type": "WEEKLY",
+            "recurrence_interval": "2",
+            "recurrence_end_date": "2026-06-01",
+            "route[]": ["Senate Square", "Railway Station", "Senate Square"],
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/admin/recu_demo/")
+
+    created = db.recu_demos.find_one({"title": "Weekly recurring demo"})
+    assert created is not None
+    assert created["city"] == "Helsinki"
+    assert created["latitude"] == "60.192059"
+    assert created["longitude"] == "24.945831"
+    assert created["route"] == ["Senate Square", "Railway Station", "Senate Square"]
+    assert created["recurs"] is True
+    assert created["repeat_schedule"]["frequency"] == "weekly"
+    assert created["repeat_schedule"]["interval"] == 2
+    assert created["repeat_schedule"]["end_date"] == "2026-06-01"
+
+
+def test_admin_can_create_recurring_demo_with_sparse_organizer_indexes(admin_client, db):
+    kept_org_id = ObjectId()
+
+    response = admin_client.post(
+        "/admin/recu_demo/create_recu_demo",
+        data={
+            "title": "Sparse organizer recurring demo",
+            "description": "Organizer indexes should not need to be contiguous.",
+            "date": "2026-05-02",
+            "start_time": "14:00",
+            "end_time": "15:00",
+            "city": "Helsinki",
+            "address": "Testikatu 2",
+            "type": "STAY_STILL",
+            "organizer_name_2": "Existing Organization",
+            "organizer_id_2": str(kept_org_id),
+            "frequency_type": "none",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+
+    created = db.recu_demos.find_one({"title": "Sparse organizer recurring demo"})
+    assert created is not None
+    assert len(created["organizers"]) == 1
+    assert created["organizers"][0]["name"] == "Existing Organization"
+    assert created["organizers"][0]["organization_id"] == kept_org_id
+
+
+def test_editor_without_accept_permission_cannot_change_recurring_approval(
+    friend_client, db, seeded_data
+):
+    db.users.update_one(
+        {"_id": seeded_data["friend_id"]},
+        {
+            "$set": {
+                "role": "admin",
+                "global_permissions": ["EDIT_RECURRING_DEMO"],
+            }
+        },
+    )
+
+    edit_page = friend_client.get(
+        f"/admin/recu_demo/edit_recu_demo/{seeded_data['recu_demo_id']}"
+    )
+    assert edit_page.status_code == 200
+    assert 'id="approval-container"' not in edit_page.get_data(as_text=True)
+
+    response = friend_client.post(
+        f"/admin/recu_demo/edit_recu_demo/{seeded_data['recu_demo_id']}",
+        data={
+            "title": "Recurring Test Series",
+            "date": "2026-05-08",
+            "city": "Helsinki",
+            "recurrence_type": "weekly",
+            "recurrence_interval": "1",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    updated = db.recu_demos.find_one({"_id": seeded_data["recu_demo_id"]})
+    assert updated["approved"] is True
+
+
+def test_admin_can_bulk_update_selected_recurring_children(admin_client, db, seeded_data):
+    parent_id = seeded_data["recu_demo_id"]
+    db.recu_demos.update_one(
+        {"_id": parent_id},
+        {
+            "$set": {
+                "event_type": "STAY_STILL",
+                "latitude": "60.171944",
+                "longitude": "24.941389",
+            }
+        },
+    )
+    selected_id = ObjectId()
+    untouched_id = ObjectId()
+    outsider_id = ObjectId()
+    db.demonstrations.insert_many(
+        [
+            {
+                "_id": selected_id,
+                "parent": parent_id,
+                "title": "Old selected title",
+                "date": "2026-07-01",
+                "start_time": "10:00",
+                "end_time": "11:00",
+                "city": "Espoo",
+                "city_key": "espoo",
+                "address": "Old address",
+                "tags": ["old"],
+                "event_type": "MARCH",
+            },
+            {
+                "_id": untouched_id,
+                "parent": parent_id,
+                "title": "Untouched child",
+                "date": "2026-07-08",
+                "city": "Espoo",
+                "tags": ["old"],
+            },
+            {
+                "_id": outsider_id,
+                "parent": ObjectId(),
+                "title": "Outsider child",
+                "date": "2026-07-08",
+                "city": "Espoo",
+                "tags": ["old"],
+            },
+        ]
+    )
+
+    response = admin_client.post(
+        f"/admin/recu_demo/{parent_id}/bulk-update-children",
+        data={
+            "child_ids": [str(selected_id), str(outsider_id)],
+            "fields": ["title", "location", "tags", "type"],
+            "freeze_after_update": "on",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    selected = db.demonstrations.find_one({"_id": selected_id})
+    untouched = db.demonstrations.find_one({"_id": untouched_id})
+    outsider = db.demonstrations.find_one({"_id": outsider_id})
+    parent = db.recu_demos.find_one({"_id": parent_id})
+
+    assert selected["title"] == "Recurring Test Series"
+    assert selected["city"] == "Helsinki"
+    assert selected["address"] == "Kaivokatu 1, Helsinki"
+    assert selected["latitude"] == "60.171944"
+    assert selected["longitude"] == "24.941389"
+    assert selected["tags"] == ["test-tag"]
+    assert selected["event_type"] == "STAY_STILL"
+    assert "type" not in selected
+    assert untouched["title"] == "Untouched child"
+    assert outsider["title"] == "Outsider child"
+    assert str(selected_id) in parent["freezed_children"]
+    assert db.demo_edit_history.count_documents({"demo_id": str(selected_id)}) == 1
+
+
+def test_admin_can_bulk_cancel_selected_recurring_children(admin_client, db, seeded_data):
+    parent_id = seeded_data["recu_demo_id"]
+    selected_id = ObjectId()
+    untouched_id = ObjectId()
+    db.demonstrations.insert_many(
+        [
+            {
+                "_id": selected_id,
+                "parent": parent_id,
+                "title": "Cancel this child",
+                "date": "2026-07-01",
+                "start_time": "10:00",
+                "end_time": "11:00",
+                "city": "Helsinki",
+                "address": "Testikatu 1",
+                "event_type": "STAY_STILL",
+                "cancelled": False,
+            },
+            {
+                "_id": untouched_id,
+                "parent": parent_id,
+                "title": "Keep this child",
+                "date": "2026-07-08",
+                "start_time": "10:00",
+                "end_time": "11:00",
+                "city": "Helsinki",
+                "address": "Testikatu 1",
+                "event_type": "STAY_STILL",
+                "cancelled": False,
+            },
+        ]
+    )
+
+    response = admin_client.post(
+        f"/admin/recu_demo/{parent_id}/bulk-cancel-children",
+        data={
+            "child_scope": "selected",
+            "child_ids": [str(selected_id)],
+            "cancellation_reason": "Organizer requested a summer break.",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    selected = db.demonstrations.find_one({"_id": selected_id})
+    untouched = db.demonstrations.find_one({"_id": untouched_id})
+    assert selected["cancelled"] is True
+    assert selected["cancellation_reason"] == "Organizer requested a summer break."
+    assert selected["cancelled_by"]["source"] == "admin_recurring"
+    assert untouched["cancelled"] is False
+    assert db.demo_edit_history.count_documents({"demo_id": str(selected_id)}) == 1
+
+
+def test_admin_recurring_break_date_cancels_existing_child(admin_client, db, seeded_data):
+    parent_id = seeded_data["recu_demo_id"]
+    child_id = ObjectId()
+    db.demonstrations.insert_one(
+        {
+            "_id": child_id,
+            "parent": parent_id,
+            "title": "Break date child",
+            "date": "2026-07-01",
+            "start_time": "18:00",
+            "end_time": "20:00",
+            "city": "Helsinki",
+            "address": "Kaivokatu 1, Helsinki",
+            "event_type": "STAY_STILL",
+            "cancelled": False,
+        }
+    )
+
+    response = admin_client.post(
+        f"/admin/recu_demo/edit_recu_demo/{parent_id}",
+        data={
+            "title": "Recurring Test Series",
+            "description": "Series used in smoke tests.",
+            "date": "2026-05-08",
+            "start_time": "18:00",
+            "end_time": "20:00",
+            "city": "Helsinki",
+            "address": "Kaivokatu 1, Helsinki",
+            "type": "STAY_STILL",
+            "approved": "on",
+            "frequency_type": "weekly",
+            "frequency_interval": "1",
+            "break_dates": ["2026-07-01"],
+            "organizer_name_1": "Test Organization",
+            "organizer_email_1": "bob@example.test",
+            "organizer_id_1": str(ObjectId()),
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    parent = db.recu_demos.find_one({"_id": parent_id})
+    child = db.demonstrations.find_one({"_id": child_id})
+    assert parent["break_dates"] == ["2026-07-01"]
+    assert child["cancelled"] is True
+    assert child["cancellation_reason"] == "Toistuvan mielenosoituksen taukopäivä"
+
+
+def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
+    monkeypatch, db
+):
+    from mielenosoitukset_fi.scripts import repeat_v2
+
+    parent_id = ObjectId()
+    break_child_id = ObjectId()
+    parent = {
+        "_id": parent_id,
+        "title": "Runner break series",
+        "description": "Created by recurring runner test.",
+        "date": "2099-06-24",
+        "start_time": "12:00",
+        "end_time": "13:00",
+        "city": "Helsinki",
+        "address": "Testikatu 1",
+        "approved": True,
+        "hide": False,
+        "event_type": "STAY_STILL",
+        "tags": [],
+        "route": [],
+        "slug": "runner-break-series",
+        "img": "/static/uploads/runner-source.jpg",
+        "preview_image": "https://cdn.example.test/runner-preview.jpg",
+        "repeat_schedule": {
+            "frequency": "weekly",
+            "interval": 1,
+            "weekday": "wednesday",
+            "end_date": "2099-07-15",
+        },
+        "created_until": "2099-06-30T00:00:00",
+        "freezed_children": [],
+        "break_dates": ["2099-07-01"],
+        "organizers": [],
+    }
+    db.recu_demos.insert_one(parent)
+    db.demonstrations.insert_one(
+        {
+            "_id": break_child_id,
+            "parent": parent_id,
+            "title": "Existing break child",
+            "date": "2099-07-01",
+            "start_time": "12:00",
+            "end_time": "13:00",
+            "city": "Helsinki",
+            "address": "Testikatu 1",
+            "event_type": "STAY_STILL",
+            "cancelled": False,
+            "hide": False,
+        }
+    )
+    monkeypatch.setattr(repeat_v2, "demonstrations_collection", db.demonstrations)
+    monkeypatch.setattr(repeat_v2, "recu_demos_collection", db.recu_demos)
+    monkeypatch.setattr(repeat_v2, "stats_collection", db.recu_stats)
+    monkeypatch.setattr(repeat_v2, "DRY_RUN", False)
+    # The fixture dates are in 2099; pin "today" so they sit inside the
+    # one-year scheduling horizon.
+    monkeypatch.setattr(
+        repeat_v2,
+        "calculate_recurrence_dates",
+        functools.partial(calculate_recurrence_dates, today=date(2099, 6, 25)),
+    )
+    monkeypatch.setattr(repeat_v2, "FORCE_RECHECK", True)
+    repeat_v2.runtime_actions.clear()
+
+    repeat_v2.process_demo(parent)
+
+    break_child = db.demonstrations.find_one({"_id": break_child_id})
+    created_dates = {
+        doc["date"]
+        for doc in db.demonstrations.find({"parent": parent_id}, {"date": 1})
+    }
+    saved_parent = db.recu_demos.find_one({"_id": parent_id})
+    generated_child = db.demonstrations.find_one(
+        {"parent": parent_id, "date": "2099-07-08"}
+    )
+    assert break_child["cancelled"] is True
+    assert "2099-07-01" in created_dates
+    assert "2099-07-08" in created_dates
+    assert "2099-07-15" in created_dates
+    assert generated_child["slug"] == "runner-break-series-2099-07-08"
+    assert generated_child["img"] == "/static/uploads/runner-source.jpg"
+    assert generated_child["preview_image"] == "https://cdn.example.test/runner-preview.jpg"
+    assert saved_parent["created_until"].startswith("2099-07-15")
+
+
+def test_background_job_repeat_main_creates_child_demos_without_stdin(
+    monkeypatch, db
+):
+    from mielenosoitukset_fi.scripts import repeat_v2
+
+    db.recu_demos.delete_many({})
+    db.demonstrations.delete_many({})
+
+    parent_id = ObjectId()
+    parent = {
+        "_id": parent_id,
+        "title": "Runner main series",
+        "description": "Created by background job repeat_main test.",
+        "date": "2099-06-24",
+        "start_time": "12:00",
+        "end_time": "13:00",
+        "city": "Helsinki",
+        "address": "Testikatu 1",
+        "approved": True,
+        "hide": False,
+        "event_type": "STAY_STILL",
+        "tags": [],
+        "route": [],
+        "slug": "runner-main-series",
+        "img": "/static/uploads/runner-main-source.jpg",
+        "preview_image": "https://cdn.example.test/runner-main-preview.jpg",
+        "repeat_schedule": {
+            "frequency": "weekly",
+            "interval": 1,
+            "weekday": "wednesday",
+            "end_date": "2099-07-15",
+        },
+        "created_until": "2099-06-30T00:00:00",
+        "freezed_children": [],
+        "break_dates": [],
+        "organizers": [],
+    }
+    db.recu_demos.insert_one(parent)
+    monkeypatch.setattr(repeat_v2, "demonstrations_collection", db.demonstrations)
+    monkeypatch.setattr(repeat_v2, "recu_demos_collection", db.recu_demos)
+    monkeypatch.setattr(repeat_v2, "stats_collection", db.recu_stats)
+    monkeypatch.setattr(repeat_v2, "DRY_RUN", False)
+    # The fixture dates are in 2099; pin "today" so they sit inside the
+    # one-year scheduling horizon.
+    monkeypatch.setattr(
+        repeat_v2,
+        "calculate_recurrence_dates",
+        functools.partial(calculate_recurrence_dates, today=date(2099, 6, 25)),
+    )
+    repeat_v2.runtime_actions.clear()
+
+    repeat_v2.main()
+
+    created_dates = {
+        doc["date"]
+        for doc in db.demonstrations.find({"parent": parent_id}, {"date": 1})
+    }
+    assert "2099-07-08" in created_dates
+    assert "2099-07-15" in created_dates
+    saved_parent = db.recu_demos.find_one({"_id": parent_id})
+    assert saved_parent["created_until"].startswith("2099-07-15")
+
+
+def test_recurring_demo_no_change_save_preserves_schedule_and_nullable_values(
+    admin_client, db, seeded_data
+):
+    recu_demo_id = seeded_data["recu_demo_id"]
+    organizer_id = ObjectId()
+    db.recu_demos.update_one(
+        {"_id": recu_demo_id},
+        {
+            "$set": {
+                "start_time": "18:00:00",
+                "end_time": "20:00:00",
+                "description": None,
+                "facebook": None,
+                "cover_picture": None,
+                "gallery_images": None,
+                "route": None,
+                "repeat_schedule": {
+                    "frequency": "weekly",
+                    "interval": 2,
+                    "weekday": "friday",
+                    "monthly_option": None,
+                    "day_of_month": None,
+                    "nth_weekday": None,
+                    "weekday_of_month": None,
+                    "end_date": "9999-12-31",
+                    "as_string": "every 2 weeks on Friday",
+                },
+                "organizers": [
+                    {
+                        "_id": organizer_id,
+                        "name": "Stored organizer",
+                        "email": "stored@example.test",
+                        "website": "",
+                        "organization_id": None,
+                        "url": "/stored-organizer",
+                        "is_private": True,
+                        "show_name_public": True,
+                        "show_email_public": False,
+                    }
+                ],
+            }
+        },
+    )
+
+    response = admin_client.post(
+        f"/admin/recu_demo/edit_recu_demo/{recu_demo_id}",
+        data={
+            "title": "Recurring Test Series",
+            "description": "",
+            "date": "2026-05-08",
+            "start_time": "18:00",
+            "end_time": "20:00",
+            "facebook": "",
+            "city": "Helsinki",
+            "address": "Kaivokatu 1, Helsinki",
+            "type": "STAY_STILL",
+            "approved": "on",
+            "cover_picture": "",
+            "gallery_images": "",
+            "frequency_type": "weekly",
+            "frequency_interval": "2",
+            "weekday": "friday",
+            "end_date": "9999-12-31",
+            "organizer_name_1": "Stored organizer",
+            "organizer_record_id_1": str(organizer_id),
+            "organizer_email_1": "stored@example.test",
+            "organizer_website_1": "",
+            "organizer_is_private_1": "on",
+            "organizer_show_name_1": "on",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    saved = db.recu_demos.find_one({"_id": recu_demo_id})
+    assert saved["start_time"] == "18:00:00"
+    assert saved["end_time"] == "20:00:00"
+    assert saved["description"] is None
+    assert saved["facebook"] is None
+    assert saved["cover_picture"] is None
+    assert saved["gallery_images"] is None
+    assert saved["route"] is None
+    assert saved["repeat_schedule"]["frequency"] == "weekly"
+    assert saved["repeat_schedule"]["interval"] == 2
+    assert saved["repeat_schedule"]["weekday"] == "friday"
+    assert saved["repeat_schedule"]["end_date"] == "9999-12-31"
+    assert saved["organizers"][0]["_id"] == organizer_id
+    assert saved["organizers"][0]["url"] == "/stored-organizer"
+    assert saved["organizers"][0]["is_private"] is True
+    assert saved["organizers"][0]["show_email_public"] is False
+
+
+def test_admin_can_create_recurring_demo_with_translations(admin_client, db):
+    response = admin_client.post(
+        "/admin/recu_demo/create_recu_demo",
+        data={
+            "title": "Weekly recurring demo translated",
+            "description": "Finnish base description.",
+            "default_language": "fi",
+            "translation_en_title": "Weekly recurring demo in English",
+            "translation_en_description": "English recurring description.",
+            "translation_en_tags": "peace, weekly",
+            "date": "2026-09-03",
+            "start_time": "12:00",
+            "end_time": "13:00",
+            "city": "Helsinki",
+            "address": "Testikatu 3",
+            "type": "MARCH",
+            "approved": "on",
+            "organizer_name_1": "Test Org",
+            "organizer_id_1": str(ObjectId()),
+            "frequency_type": "none",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    created = db.recu_demos.find_one({"title": "Weekly recurring demo translated"})
+    assert created["default_language"] == "fi"
+    assert created["translations"]["en"]["title"] == "Weekly recurring demo in English"
+    assert created["translations"]["en"]["description"] == "English recurring description."
+    assert created["translations"]["en"]["tags"] == ["peace", "weekly"]
+
+
+def test_admin_can_create_recurring_demo_with_slug_and_all_image_assets(
+    admin_client, db
+):
+    response = admin_client.post(
+        "/admin/recu_demo/create_recu_demo",
+        data={
+            "title": "Weekly image series",
+            "description": "Recurring media fixture.",
+            "date": "2026-11-05",
+            "start_time": "12:00",
+            "end_time": "13:00",
+            "city": "Helsinki",
+            "address": "Testikatu 4",
+            "type": "MARCH",
+            "slug": "Viikoittainen kuvamarssi",
+            "cover_picture": "https://cdn.example.test/series-cover.jpg",
+            "img": "/static/uploads/series-original.jpg",
+            "preview_image": "https://cdn.example.test/series-preview.jpg",
+            "gallery_images": "https://cdn.example.test/series-gallery.jpg",
+            "frequency_type": "weekly",
+            "frequency_interval": "1",
+            "weekday": "thursday",
+            "end_date": "2026-12-31",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    created = db.recu_demos.find_one({"title": "Weekly image series"})
+    assert created["slug"] == "viikoittainen-kuvamarssi"
+    assert created["cover_picture"] == "https://cdn.example.test/series-cover.jpg"
+    assert created["img"] == "/static/uploads/series-original.jpg"
+    assert created["preview_image"] == "https://cdn.example.test/series-preview.jpg"
+    assert created["gallery_images"] == [
+        "https://cdn.example.test/series-gallery.jpg"
+    ]
+
+
+def test_recurring_demo_cover_upload_overrides_the_url(admin_client, db):
+    response = admin_client.post(
+        "/admin/recu_demo/create_recu_demo",
+        data={
+            "title": "Uploaded recurring cover",
+            "date": "2026-11-12",
+            "start_time": "12:00",
+            "end_time": "13:00",
+            "city": "Helsinki",
+            "address": "Testikatu 5",
+            "type": "STAY_STILL",
+            "cover_picture": "https://cdn.example.test/old-cover.jpg",
+            "cover_picture_file": (io.BytesIO(b"test image"), "uusi kansi.jpg"),
+            "frequency_type": "none",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    created = db.recu_demos.find_one({"title": "Uploaded recurring cover"})
+    assert created["cover_picture"] == (
+        "https://cdn.example.test/uploads/demo_preview/uusi_kansi.jpg"
+    )

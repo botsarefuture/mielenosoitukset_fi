@@ -1,182 +1,112 @@
 {% extends 'admin_base.html' %}
-
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
 
 {% block main_content %}
-<section class="dashboard-container">
-    <!-- Intro card -->
-    <div class="introduction">
-        <h1 id="tabletitle">{{ _('Organisaatiot') }}</h1>
-        <p class="muted">
-            {{ _('Täältä voit hallita organisaatioita, joihin sinulla on käyttöoikeus.') }}<br>
-            {{ _('Lisätietoja hallinnoimisesta löydät hallinnoijan käsikirjasta, kappaleesta 2.1: Organisaatioiden
-            hallintapaneeli, etusivu.') }}
-        </p>
+<div class="admin-page admin-workspace">
+  {% call admin_page_hero(
+    _('Organisaatiot'),
+    _('Etsi organisaatioita, tarkista profiilien tiedot ja hoida jäsenyyksien tärkeimmät ylläpitotoimet.'),
+    _('Organisaatiohallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Organisaatiot'), none)],
+    actions_visible=current_user.has_permission("CREATE_ORGANIZATION", strict=true)
+  ) %}
+      <a href="{{ url_for('admin_org.create_organization') }}" class="admin-page-hero__action"><i class="fas fa-plus" aria-hidden="true"></i>{{ _('Luo uusi organisaatio') }}</a>
+  {% endcall %}
+
+  <section class="admin-workspace-summary" aria-label="{{ _('Organisaatioiden yhteenveto') }}">
+    <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-building" aria-hidden="true"></i></span><div><span>{{ _('Kaikki organisaatiot') }}</span><strong>{{ organization_summary.all }}</strong></div></article>
+    <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span><div><span>{{ _('Vahvistetut profiilit') }}</span><strong>{{ organization_summary.verified }}</strong></div></article>
+    <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-user-group" aria-hidden="true"></i></span><div><span>{{ _('Jäsenyyksiä') }}</span><strong>{{ organization_summary.memberships }}</strong></div></article>
+    <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-link-slash" aria-hidden="true"></i></span><div><span>{{ _('Verkkosivu puuttuu') }}</span><strong>{{ organization_summary.missing_website }}</strong></div></article>
+  </section>
+
+  <section class="admin-filter-bar">
+    <form class="admin-filter-bar__primary admin-filter-bar__primary--search" method="get" action="{{ url_for('admin_org.organization_control') }}">
+      <div class="admin-field">
+        <label for="search">{{ _('Hae organisaatioita') }}</label>
+        <input type="search" id="search" name="search" class="form-control" placeholder="{{ _('Nimi, kuvaus tai yhteystieto') }}" value="{{ search_query }}">
+      </div>
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <button type="submit" class="btn btn-primary"><i class="fas fa-search" aria-hidden="true"></i>{{ _('Hae') }}</button>
+      {% if search_query %}<a href="{{ url_for('admin_org.organization_control', per_page=per_page) }}" class="btn btn-outline-secondary">{{ _('Tyhjennä haku') }}</a>{% endif %}
+    </form>
+  </section>
+
+  <section class="admin-data-view">
+    <div class="admin-data-view__header admin-result-summary">
+      <span><strong>{{ total_count }}</strong> {{ _('organisaatiota löytyi') }}</span>
+      {% if search_query %}<span>{{ _('Haku') }}: “{{ search_query }}”</span>{% endif %}
+      <span id="selected-count" class="admin-selection-status" aria-live="polite">{{ _('0 organisaatiota valittu') }}</span>
     </div>
-
-    <!-- Action panel -->
-    <div class="dashboard-panel">
-
-        <div class="flex justify-center mb-4">
-            {% if current_user.has_permission("CREATE_ORGANIZATION", strict=true) %}
-            <a href="{{ url_for('admin_org.create_organization') }}" class="btn new-item">
-                <i class="fas fa-plus"></i>{{ _('Luo uusi organisaatio') }}
-            </a>
-            {% else %}
-            <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta"><i class="fas fa-ban"></i> {{ _('Luo uusi
-                organisaatio') }}</a>
-            {% endif %}
-        </div>
-
-        <!-- Client‑side search (no backend round‑trip) -->
-        <div class="search-bar">
-            <label for="search" class="sr-only">{{ _('Hae organisaatioita:') }}</label>
-            <input type="search" id="search" class="search-input" placeholder="{{ _('Hae organisaatioita...') }}"
-                aria-label="{{ _('Hae organisaatioita') }}">
-            <button type="button" id="search-btn" class="search-button">
-                <i class="fas fa-search"></i>{{ _('Hae') }}
-            </button>
-        </div>
-    </div>
-
-    <!-- Table of organisations -->
     {% if organizations %}
-    <div class="table-container" style="background:none;">
-        <table id="org-table">
-            <thead>
-                <tr>
-                    <th class="cbox-cell"><input type="checkbox" id="select-all" /></th>
-                    <th>{{ _('Nimi') }}</th>
-                    <th>{{ _('Kuvaus') }}</th>
-                    <th>{{ _('Sähköpostiosoite') }}</th>
-                    <th>{{ _('Verkkosivu') }}</th>
-                    <th class="actions-cell-header">{{ _('Toiminnot') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for org in organizations %}
-                <tr>
-                    <td class="cbox-cell"><input type="checkbox" name="selected_orgs" value="{{ org._id }}"></td>
-                    <td>{{ org.name }}</td>
-                    <td>{{ org.description }}</td>
-                    <td>{{ org.email }}</td>
-                    <td><a href="{{ org.website }}" target="_blank" class="link">{{ org.website }}</a></td>
-                    <td class="actions-cell">
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                id="actionsDropdown-{{ org._id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa-solid fa-ellipsis-vertical"></i> {{ _('Toiminnot') }}
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ org._id }}">
-                                {% if current_user.has_permission("EDIT_ORGANIZATION", org._id) %}
-                                <li>
-                                    <a class="dropdown-item"
-                                        href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}">
-                                        <i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}
-                                    </a>
-                                </li>
-                                {% else %}
-                                <li>
-                                    <span class="dropdown-item disabled" data-tooltip="Ei käyttöoikeutta">
-                                        <i class="fas fa-ban me-2"></i>{{ _('Muokkaa') }}
-                                    </span>
-                                </li>
-                                {% endif %}
-
-                                {% if current_user.has_permission("DELETE_ORGANIZATION", org._id) %}
-                                <li>
-                                    <a class="dropdown-item text-danger"
-                                        href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}">
-                                        <i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}
-                                    </a>
-                                </li>
-                                {% else %}
-                                <li>
-                                    <span class="dropdown-item disabled" data-tooltip="Ei käyttöoikeutta">
-                                        <i class="fas fa-ban me-2"></i>{{ _('Poista') }}
-                                    </span>
-                                </li>
-                                {% endif %}
-
-                                {% if current_user.has_permission("VIEW_ORGANIZATION", org._id) %}
-                                <li>
-                                    <a class="dropdown-item"
-                                        href="{{ url_for('admin_org.view_organization', org_id=org._id) }}">
-                                        <i class="fa-solid fa-eye me-2"></i>{{ _('Yhteenveto') }}
-                                    </a>
-                                </li>
-                                {% else %}
-                                <li>
-                                    <span class="dropdown-item disabled" data-tooltip="Ei käyttöoikeutta">
-                                        <i class="fas fa-ban me-2"></i>{{ _('Yhteenveto') }}
-                                    </span>
-                                </li>
-                                {% endif %}
-
-                                <!-- Always visible link to public org page -->
-                                <li>
-                                    <a class="dropdown-item" href="{{ url_for('org', org_id=org._id) }}">
-                                        <i class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </td>
-
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="admin-data-view__viewport">
+      <table class="admin-data-view__table" id="org-table">
+        <thead><tr><th class="admin-selection-column"><input class="form-check-input admin-selection-checkbox" type="checkbox" id="select-all" aria-label="{{ _('Valitse kaikki') }}"></th><th>{{ _('Organisaatio') }}</th><th>{{ _('Kuvaus') }}</th><th>{{ _('Yhteystiedot') }}</th><th>{{ _('Tila') }}</th><th>{{ _('Toiminnot') }}</th></tr></thead>
+        <tbody>
+          {% for org in organizations %}
+          <tr>
+            <td class="admin-selection-column"><input class="form-check-input admin-selection-checkbox" type="checkbox" name="selected_orgs" value="{{ org._id }}" aria-label="{{ _('Valitse organisaatio') }} {{ org.name }}"></td>
+            <td><div class="admin-entity-identity"><span class="admin-entity-avatar">{{ (org.name or '?')[:1] }}</span><div class="admin-entity-identity__copy"><strong>{{ org.name }}</strong><span>{{ org.email or _('Ei sähköpostia') }}</span></div></div></td>
+            <td><div class="admin-entity-description">{{ org.description or _('Ei kuvausta.') }}</div></td>
+            <td><div class="admin-entity-contact">{% if org.website %}<a href="{{ org.website }}" target="_blank" rel="noopener noreferrer">{{ org.website }}</a>{% else %}{{ _('Ei verkkosivua') }}{% endif %}</div></td>
+            <td>{% if org.verified %}<span class="admin-status-badge admin-status-badge--success"><i class="fas fa-check" aria-hidden="true"></i>{{ _('Vahvistettu') }}</span>{% else %}<span class="admin-status-badge"><i class="fas fa-clock" aria-hidden="true"></i>{{ _('Vahvistamaton') }}</span>{% endif %}</td>
+            <td>
+              <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="actionsDropdown-{{ org._id }}" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i>{{ _('Toiminnot') }}</button>
+                <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ org._id }}">
+                  {% if org._id|string in editable_org_ids %}<li><a class="dropdown-item" href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}"><i class="fas fa-edit me-2" aria-hidden="true"></i>{{ _('Muokkaa') }}</a></li>{% endif %}
+                  {% if current_user.has_permission("VIEW_ORGANIZATION", org._id) %}<li><a class="dropdown-item" href="{{ url_for('admin_org.view_organization', org_id=org._id) }}"><i class="fa-solid fa-chart-simple me-2" aria-hidden="true"></i>{{ _('Yhteenveto') }}</a></li>{% endif %}
+                  <li><a class="dropdown-item" href="{{ url_for('org', org_id=org._id) }}"><i class="fa-solid fa-arrow-up-right-from-square me-2" aria-hidden="true"></i>{{ _('Julkinen sivu') }}</a></li>
+                  {% if current_user.has_permission("DELETE_ORGANIZATION", org._id) %}<li><a class="dropdown-item text-danger" href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}"><i class="fas fa-trash-alt me-2" aria-hidden="true"></i>{{ _('Poista') }}</a></li>{% endif %}
+                </ul>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {{ admin_pagination(
+      current_page,
+      total_pages,
+      per_page=per_page,
+      prev_page=prev_page,
+      next_page=next_page,
+      prev_page_url=prev_page_url,
+      next_page_url=next_page_url,
+      visible_pages=visible_pages,
+      first_page_url=first_page_url,
+      last_page_url=last_page_url,
+      aria_label=_('Organisaatioiden sivutus'),
+    ) }}
     {% else %}
-    <div class="no-orgs">
-        <p>{{ _('Organisaatioita ei löytynyt.') }}</p>
-    </div>
+    <div class="admin-empty-state"><i class="fas fa-building-circle-xmark fs-2 mb-3" aria-hidden="true"></i><h3>{{ _('Organisaatioita ei löytynyt.') }}</h3><p class="mb-0">{{ _('Kokeile toista hakusanaa.') }}</p></div>
     {% endif %}
-</section>
+  </section>
+</div>
 {% endblock %}
-
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const selectAll = document.getElementById('select-all');
-        const checkBoxes = document.querySelectorAll("input[name='selected_orgs']");
-
-        selectAll?.addEventListener('change', () => {
-            checkBoxes.forEach(cb => {
-                cb.checked = selectAll.checked;
-                cb.closest('tr').classList.toggle('selected', cb.checked);
-            });
-        });
-
-        checkBoxes.forEach(cb => {
-            cb.addEventListener('change', () => {
-                cb.closest('tr').classList.toggle('selected', cb.checked);
-            });
-        });
-
-        const searchInput = document.getElementById('search');
-        const searchBtn = document.getElementById('search-btn');
-        const rows = document.querySelectorAll('#org-table tbody tr');
-
-        const filterRows = () => {
-            const term = searchInput.value.trim().toLowerCase();
-            rows.forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
-            });
-        };
-
-        searchInput.addEventListener('input', filterRows);
-        searchBtn.addEventListener('click', filterRows);
-    });
+document.addEventListener('DOMContentLoaded', () => {
+  const selectAll = document.getElementById('select-all');
+  const checkboxes = [...document.querySelectorAll("input[name='selected_orgs']")];
+  const selectedCount = document.getElementById('selected-count');
+  function updateRow(checkbox) {
+    checkbox.closest('tr')?.setAttribute('aria-selected', checkbox.checked ? 'true' : 'false');
+  }
+  function updateSelectAll() {
+    const selected = checkboxes.filter((checkbox) => checkbox.checked).length;
+    selectAll.checked = checkboxes.length > 0 && selected === checkboxes.length;
+    selectAll.indeterminate = selected > 0 && selected < checkboxes.length;
+    selectedCount.textContent = `${selected} {{ _('organisaatiota valittu') }}`;
+  }
+  selectAll?.addEventListener('change', () => {
+    checkboxes.forEach((checkbox) => { checkbox.checked = selectAll.checked; updateRow(checkbox); });
+    updateSelectAll();
+  });
+  checkboxes.forEach((checkbox) => checkbox.addEventListener('change', () => { updateRow(checkbox); updateSelectAll(); }));
+  updateSelectAll();
+});
 </script>
-{% endblock %}
-
-{% block extra_buttons %}
-<div class="extra-buttons">
-    <a href="{{ url_for('admin_org.invite_to_organization') }}" class="button invite-button"><i
-            class="fas fa-user-plus"></i>{{ _('Kutsu henkilö') }}</a>
-    <a href="{{ url_for('admin_org.manage_roles') }}" class="button manage-roles-button"><i
-            class="fas fa-user-cog"></i>{{ _('Hallitse rooleja') }}</a>
-</div>
 {% endblock %}

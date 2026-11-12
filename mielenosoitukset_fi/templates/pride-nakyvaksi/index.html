@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% from '_macros/_public_search.html' import public_search_styles, public_search_scripts with context %}
+{% from '_macros/frontend.html' import frontend_entry with context %}
+{% block title %}Pride näkyväksi - mielenosoitukset.fi{% endblock %}
+{% block main_class %}public-layout-wide{% endblock %}
+{% block styles %}
+{{ public_search_styles() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pride.css', v='20261110-pride-labels-1') }}">
+{% endblock %}
+{% block content %}
+{% set pride_locale = current_locale if current_locale is defined and current_locale in get_supported_locales() else session.get('locale', 'fi') %}
+{% set pride_locale = pride_locale if pride_locale in get_supported_locales() else 'fi' %}
+<div class="pride-page">
+  <section class="pride-intro" aria-labelledby="pride-title">
+    <h1 id="pride-title">Pride näkyväksi</h1>
+    <p class="pride-intro__lead">{{ _('Löydä tulevat Pride-aiheiset mielenosoitukset eri puolilta Suomea ja ilmoita oma tapahtumasi mukaan.') }}</p>
+    <div class="pride-actions">
+      <a class="button button-primary" href="#demos">{{ _('Katso mielenosoitukset') }}</a>
+      <a class="button button-secondary" href="{{ url_for('submit') }}">{{ _('Ilmoita mielenosoitus') }}</a>
+    </div>
+  </section>
+
+  <section class="pride-map-section" id="pride-map-section" aria-labelledby="pride-map-title">
+    <header class="pride-section-header">
+      <h2 id="pride-map-title">{{ _('Pride-kartta') }}</h2>
+      <p>{{ _('Kartalla näkyvät kaikki tulevat Pride-mielenosoitukset. Listan haku ei rajaa karttaa.') }}</p>
+    </header>
+    <div data-react-island="pride-map" data-props-id="pride-map-props">
+      <p class="pride-map-fallback" role="status">{{ _('Pride-kartta avautuu JavaScriptillä. Jos kartta ei lataudu, päivitä sivu.') }}</p>
+    </div>
+    <script id="pride-map-props" type="application/json">{{ {
+      'endpoint': url_for('api.list_demonstrations'),
+      'detailUrl': url_for('demonstration_detail', demo_id='__ID__'),
+      'seriesUrl': url_for('siblings_meeting', parent='__ID__'),
+      'locale': pride_locale,
+      'tag': 'pride',
+      'messages': {
+        'title': _('Pride-kartta'),
+        'loading': _('Ladataan Pride-karttaa...'),
+        'error': _('Pride-kartan lataaminen epäonnistui. Yritä uudelleen.'),
+        'retry': _('Yritä uudelleen'),
+        'empty': _('Kartalla ei vielä ole tulevia Pride-mielenosoituksia.'),
+        'noCoordinates': _('Tapahtumille ei ole karttasijaintia. Löydät ne mielenosoituslistasta.'),
+        'tileError': _('Karttapohjan lataaminen epäonnistui. Tapahtumat löytyvät myös listasta.'),
+        'popupDetails': _('Avaa mielenosoitus'),
+        'summary': _('Pride-mielenosoituksia: %(events)s. Paikkakuntia: %(cities)s. Kartalla: %(mapped)s.', events='__EVENTS__', cities='__CITIES__', mapped='__MAPPED__'),
+        'zoomIn': _('Lähennä'), 'zoomOut': _('Loitonna'),
+        'mapLabel': _('Pride-mielenosoitukset kartalla')
+      }
+    }|tojson }}</script>
+  </section>
+
+  <section id="demos" aria-label="{{ _('Pride-mielenosoitukset') }}">
+    {% set listing_title = _('Pride-mielenosoitukset') %}
+    {% set listing_fixed = {'tag': 'pride'} %}
+    {% set listing_heading_level = 2 %}
+    {% set listing_empty = _('Meille ei vielä ole ilmoitettu tulevia Pride-mielenosoituksia.') %}
+    {% include '_partials/demonstration-listing.html' %}
+  </section>
+
+  <section class="pride-information" aria-labelledby="pride-about-title">
+    <h2 id="pride-about-title">{{ _('Miksi Pride näkyväksi?') }}</h2>
+    <p>{{ _('Pride näkyväksi kokoaa Pride-aiheiset mielenosoitukset yhteen paikkaan. Näkyvyys auttaa osallistujia löytämään tapahtumat ja tukee yhdenvertaisuutta.') }}</p>
+    <p>{{ _('Jokaisella on oikeus olla oma itsensä ja osallistua ilman syrjintää.') }}</p>
+  </section>
+
+  <section class="pride-guidelines" id="demo-guidelines" aria-labelledby="pride-guidelines-title">
+    <h2 id="pride-guidelines-title">{{ _('Ilmoita Pride-mielenosoitus') }}</h2>
+    <ol>
+      <li><a href="{{ url_for('submit') }}">{{ _('Avaa ilmoituslomake') }}</a>. {{ _('Kerro tapahtuman nimi, ajankohta, paikka ja kuvaus.') }}</li>
+      <li>{{ _('Lisää tageihin pride, jotta tapahtuma löytyy tältä sivulta.') }}</li>
+      <li>{{ _('Tarkista tiedot ja lähetä ilmoitus. Ilmoitukset tarkistetaan ennen julkaisua.') }}</li>
+    </ol>
+    <p>{{ _('Ilmoitus ei saa sisältää syrjintää tai vihapuhetta.') }} <a href="{{ url_for('terms') }}">{{ _('Lue käyttöehdot') }}</a>.</p>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
+<script src="{{ url_for('static', filename='js/user-pagination.js', v='20261027-continuous-grid-1') }}"></script>
+{{ public_search_scripts() }}
+{{ frontend_entry('src/entries/pride.tsx') }}
+{{ frontend_entry('src/entries/listing.tsx') }}
+{% endblock %}

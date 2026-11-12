@@ -1,0 +1,79 @@
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
+
+{% block title %}{{ _('Ehdotukset') }}{% endblock %}
+
+{% block main_content %}
+<div class="admin-page admin-workspace">
+  {{ admin_page_hero(
+    _('Ehdotukset'),
+    _('Tarkista käyttäjien ehdottamat korjaukset ja pidä tapahtumatiedot ajan tasalla.'),
+    _('Ylläpidon työjono'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (_('Ehdotukset'), none)],
+    back_url=url_for('admin_demo.demo_control'),
+    back_label=_('Mielenosoitukset'),
+    metric_value=total_count,
+    metric_label=_('sinulle näkyvää ehdotusta')
+  ) }}
+
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Suodata ehdotuksia') }}">
+    <form method="get" class="admin-filter-bar">
+      <div class="admin-filter-bar__primary">
+        <input type="hidden" name="page" value="1">
+        <input type="hidden" name="per_page" value="{{ per_page }}">
+        <div class="admin-field">
+          <label for="status">{{ _('Tila') }}</label>
+          <select class="form-select" id="status" name="status">
+            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>{{ _('Kaikki tilat') }}</option>
+            <option value="pending" {% if status_filter in ('new', 'pending') %}selected{% endif %}>{{ _('Uudet') }}</option>
+            <option value="applied" {% if status_filter == 'applied' %}selected{% endif %}>{{ _('Hyväksytyt') }}</option>
+            <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>{{ _('Hylätyt') }}</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="fas fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+        {% if has_active_filters %}<a class="btn btn-outline-secondary" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a>{% endif %}
+      </div>
+    </form>
+    {% if has_active_filters %}<div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}"><a class="admin-filter-chip" href="{{ clear_filters_url }}"><span>{{ _('Tila') }}: {{ _('Uudet') if status_filter in ('new', 'pending') else (_('Hyväksytyt') if status_filter == 'applied' else _('Hylätyt')) }}</span><i class="fas fa-xmark" aria-hidden="true"></i></a></div>{% endif %}
+  </section>
+
+  <section class="admin-data-view admin-data-view--scrollable" aria-label="{{ _('Mielenosoitusten muutosehdotukset') }}">
+    <div class="admin-data-view__header admin-result-summary" aria-live="polite">
+      {% if has_active_filters %}
+        <strong>{{ _('%(count)s osumaa', count=filtered_count) }}</strong>
+        <span>{{ _('yhteensä %(count)s sinulle näkyvää ehdotusta', count=total_count) }}</span>
+      {% else %}
+        <span>{{ _('Näytetään %(start)s–%(end)s / %(count)s ehdotuksesta', start=range_start, end=range_end, count=filtered_count) }}</span>
+      {% endif %}
+    </div>
+    {% if suggestions %}
+    <div class="admin-data-view__viewport">
+      <table class="admin-data-view__table">
+        <thead><tr><th>{{ _('Mielenosoitus') }}</th><th>{{ _('Tila') }}</th><th>{{ _('Lähetetty') }}</th><th>{{ _('Lähettäjä') }}</th><th>{{ _('Muutokset') }}</th><th class="actions-cell-header">{{ _('Toiminnot') }}</th></tr></thead>
+        <tbody>
+          {% for suggestion in suggestions %}
+          {% set normalized_status = (suggestion.status or 'pending')|lower %}
+          <tr>
+            <td><strong>{{ suggestion.original_values.get('title', _('Tuntematon mielenosoitus')) }}</strong><small class="d-block text-muted">#{{ suggestion.demo_id[:12] }}{% if suggestion.demo_id|length > 12 %}…{% endif %}</small></td>
+            <td>
+              {% if normalized_status in ('new', 'pending') %}<span class="admin-status-badge admin-status-badge--info"><i class="fas fa-star" aria-hidden="true"></i>{{ _('Uusi') }}</span>
+              {% elif normalized_status == 'applied' %}<span class="admin-status-badge admin-status-badge--success"><i class="fas fa-check" aria-hidden="true"></i>{{ _('Hyväksytty') }}</span>
+              {% elif normalized_status == 'rejected' %}<span class="admin-status-badge admin-status-badge--danger"><i class="fas fa-xmark" aria-hidden="true"></i>{{ _('Hylätty') }}</span>
+              {% else %}<span class="admin-status-badge admin-status-badge--warning">{{ suggestion.status }}</span>{% endif %}
+            </td>
+            <td>{{ suggestion.created_at.strftime('%d.%m.%Y %H:%M') if suggestion.created_at else '—' }}</td>
+            <td>{{ suggestion.reporter_email or (suggestion.suggested_by or {}).get('email') or '—' }}</td>
+            <td>{% if suggestion.suggested_fields %}<strong>{{ suggestion.suggested_fields|length }}</strong><small class="d-block text-muted">{{ suggestion.suggested_fields.keys()|join(', ') }}</small>{% else %}—{% endif %}</td>
+            <td class="actions-cell"><div class="admin-row-actions"><a href="{{ url_for('admin_demo.suggestion_view', suggestion_id=suggestion._id) }}" class="btn btn-sm btn-primary"><i class="fas fa-eye" aria-hidden="true"></i>{{ _('Tarkastele') }}</a><a href="{{ url_for('demonstration_detail', demo_id=suggestion.demo_id) }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>{{ _('Mielenosoitus') }}</a></div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {{ admin_pagination(current_page, total_pages, per_page, prev_page, next_page, prev_page_url, next_page_url, visible_pages, first_page_url, last_page_url, _('Ehdotusten sivutus')) }}
+    {% else %}
+    <div class="admin-empty-state"><span class="admin-empty-state__icon"><i class="fas fa-inbox" aria-hidden="true"></i></span><h2 class="admin-empty-state__title">{{ _('Ei ehdotuksia') }}</h2><p>{{ _('Valituilla suodattimilla ei löytynyt käsiteltäviä ehdotuksia.') if has_active_filters else _('Kaikki ehdotukset on käsitelty tai uusia ehdotuksia ei ole vielä saapunut.') }}</p>{% if has_active_filters %}<a class="btn btn-outline-secondary" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a>{% endif %}</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

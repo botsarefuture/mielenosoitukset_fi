@@ -1,149 +1,223 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/users.css') }}">
-<style>
-  /* Toasts */
-  #toast-container {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1055;
-  }
-
-  .toast {
-    min-width: 250px;
-  }
-
-  /* Table enhancements */
-  .table-hover tbody tr:hover {
-    background-color: #f1f3f5;
-    cursor: pointer;
-  }
-
-  .badge-role {
-    text-transform: capitalize;
-  }
-
-  /* Sortable column indicators */
-  th.sortable {
-    cursor: pointer;
-    position: relative;
-  }
-
-  th.sortable::after {
-    content: '⬍';
-    font-size: 0.7em;
-    position: absolute;
-    right: 8px;
-    color: #888;
-  }
-
-  th.sortable.asc::after {
-    content: '⬆';
-  }
-
-  th.sortable.desc::after {
-    content: '⬇';
-  }
-</style>
-{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/users.css', v='20261002-admin-ui-55') }}">{% endblock %}
 
 {% block main_content %}
-<div class="container-fluid">
-  <h2 class="mb-4">{{ _('Käyttäjät') }}</h2>
+<div class="admin-page admin-workspace">
+  {% call admin_page_hero(
+    _('Käyttäjät'),
+    _('Etsi käyttäjiä, tarkista käyttöoikeudet ja hoida käyttäjätilien tärkeimmät ylläpitotoimet.'),
+    _('Käyttäjähallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttäjät'), none)],
+  ) %}
+      <a href="{{ url_for('admin.manual_page', page='users') }}" target="_blank" rel="noopener noreferrer" class="admin-page-hero__action">
+        <i class="fa-solid fa-book-open" aria-hidden="true"></i>{{ _('Käyttöohje') }}
+      </a>
+      <a href="{{ url_for('admin_dev.list_requests') }}" class="admin-page-hero__action">
+        <i class="fa-solid fa-key" aria-hidden="true"></i>{{ _('API-avainpyynnöt') }}
+        {% if pending_token_requests %}<span class="users-request-count">{{ pending_token_requests }}</span>{% endif %}
+      </a>
+  {% endcall %}
 
-  <!-- User Manual Link -->
-  <div class="mb-3">
-    <a href="{{ url_for('admin.manual_page', page='users') }}" target="_blank" class="btn btn-info">
-      <i class="fa-solid fa-book me-1"></i> Käyttöohje
-    </a>
-  </div>
+  <section class="users-summary admin-workspace-summary" aria-label="{{ _('Käyttäjätilien yhteenveto') }}">
+    <article class="users-summary-card admin-workspace-summary-card">
+      <span class="users-summary-icon admin-workspace-summary-icon"><i class="fas fa-users" aria-hidden="true"></i></span>
+      <div><span>{{ _('Kaikki käyttäjät') }}</span><strong>{{ user_summary.all }}</strong></div>
+    </article>
+    <article class="users-summary-card admin-workspace-summary-card">
+      <span class="users-summary-icon admin-workspace-summary-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span>
+      <div><span>{{ _('Vahvistetut tilit') }}</span><strong>{{ user_summary.confirmed }}</strong></div>
+    </article>
+    <article class="users-summary-card admin-workspace-summary-card">
+      <span class="users-summary-icon admin-workspace-summary-icon"><i class="fas fa-shield-halved" aria-hidden="true"></i></span>
+      <div><span>{{ _('Ylläpitäjät') }}</span><strong>{{ user_summary.admins }}</strong></div>
+    </article>
+    <article class="users-summary-card admin-workspace-summary-card">
+      <span class="users-summary-icon admin-workspace-summary-icon"><i class="fas fa-door-open" aria-hidden="true"></i></span>
+      <div><span>{{ _('Ei vielä kirjautunut') }}</span><strong>{{ user_summary.never_logged_in }}</strong></div>
+    </article>
+  </section>
 
-
-  <!-- Search + Create -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <input type="text" id="userSearch" class="form-control me-2" placeholder="{{ _('Hae käyttäjiä...') }}"
-      value="{{ search_query }}">
-
+  <section class="users-toolbar admin-section-card">
+    <label class="users-search" for="userSearch">
+      <i class="fas fa-search users-search-icon" aria-hidden="true"></i>
+      <input class="form-control" type="search" id="userSearch" placeholder="{{ _('Hae nimellä, käyttäjänimellä tai sähköpostilla...') }}" value="{{ search_query }}">
+    </label>
+    <label class="users-search users-city-filter" for="userCityFilter">
+      <i class="fas fa-city users-search-icon" aria-hidden="true"></i>
+      <select class="form-select form-select-sm" id="userCityFilter">
+        <option value="">{{ _('Kaikki kaupungit') }}</option>
+        {% for city in city_list|sort %}
+          {% set ckey = city_name_to_key[city] %}
+          <option value="{{ ckey }}" {% if city_filter and city_filter.key == ckey %}selected{% endif %}>{{ city }}</option>
+        {% endfor %}
+      </select>
+    </label>
     {% if current_user.has_permission("CREATE_USER") %}
-    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createUserModal">
-      <i class="fas fa-user-plus me-1"></i>{{ _('Luo uusi käyttäjä') }}
-    </button>
+      <button type="button" class="users-create btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+        <i class="fas fa-user-plus" aria-hidden="true"></i>{{ _('Luo uusi käyttäjä') }}
+      </button>
     {% endif %}
-  </div>
+  </section>
 
-  <div id="usersTableContainer">
+  <div id="usersTableContainer" class="admin-data-view users-table-shell">
     {% include 'admin_V2/_users_table.html' %}
   </div>
 </div>
 
-<!-- Toasts -->
 <div id="toast-container"></div>
-
-<!-- Include Modals -->
 {% include 'admin_V2/_modals_users.html' %}
 {% endblock %}
 
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-
 <script>
-  // ======== Toast Helper ========
   function showToast(message, type = 'success') {
     const toastContainer = $('#toast-container');
-    const toastEl = $(`
-      <div class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-          <div class="toast-body">${message}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-      </div>`);
+    const toastEl = $(`<div class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true"><div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div></div>`);
     toastContainer.append(toastEl);
     const toast = new bootstrap.Toast(toastEl[0], { delay: 4000 });
     toast.show();
     toastEl.on('hidden.bs.toast', () => toastEl.remove());
   }
 
-  // ======== Live Search ========
+  function loadUserTable(url) {
+    $.get(url, function (html) {
+      const newTable = $(html).find('#usersTableContainer').html();
+      $('#usersTableContainer').html(newTable);
+      initUserTableEnhancements($('#usersTableContainer'));
+    });
+  }
+
+  function buildUserListUrl(extras) {
+    const base = {{ url_for('admin_user.user_control')|tojson }};
+    const params = new URLSearchParams();
+    params.set('page', '1');
+    params.set('per_page', {{ per_page|tojson }});
+    const search = $('#userSearch').val() || '';
+    if (search) params.set('search', search);
+    const city = $('#userCityFilter').val() || '';
+    if (city) params.set('city', city);
+    for (const [k, v] of Object.entries(extras || {})) {
+      if (v !== null && v !== undefined && v !== '') params.set(k, v);
+    }
+    return `${base}?${params.toString()}`;
+  }
+
   let searchTimeout;
   $('#userSearch').on('input', function () {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-      const query = encodeURIComponent($(this).val());
-      $.get(`{{ url_for('admin_user.user_control') }}?search=${query}`, function (html) {
-        // Extract only the table part from the returned HTML
-        const newTable = $(html).find('#usersTableContainer').html();
-        $('#usersTableContainer').html(newTable);
-      });
+      loadUserTable(buildUserListUrl());
     }, 300);
   });
 
-  // ======== Sortable Table Columns ========
+  $('#userCityFilter').on('change', function () {
+    loadUserTable(buildUserListUrl());
+  });
+
+  $(document).on('click', '#usersTableContainer .pagination a.page-link', function (event) {
+    event.preventDefault();
+    loadUserTable(this.href);
+  });
+
+  function initUserTableEnhancements(scope = $(document)) {
+    scope.find('[data-bs-toggle="tooltip"]').each(function () {
+      bootstrap.Tooltip.getOrCreateInstance(this);
+    });
+  }
+
+  initUserTableEnhancements();
+
   $(document).on('click', 'th.sortable', function () {
     const table = $(this).closest('table');
     const tbody = table.find('tbody');
     const index = $(this).index();
     const asc = !$(this).hasClass('asc');
-
-    // Reset classes
     table.find('th.sortable').removeClass('asc desc');
     $(this).addClass(asc ? 'asc' : 'desc');
-
     const rows = tbody.find('tr').get();
     rows.sort((a, b) => {
-      const A = $(a).children('td').eq(index).text().toUpperCase();
-      const B = $(b).children('td').eq(index).text().toUpperCase();
-      if ($.isNumeric(A) && $.isNumeric(B)) {
-        return asc ? A - B : B - A;
-      } else {
-        return asc ? A.localeCompare(B) : B.localeCompare(A);
-      }
+      const A = $(a).children('td').eq(index).text().trim().toUpperCase();
+      const B = $(b).children('td').eq(index).text().trim().toUpperCase();
+      return asc ? A.localeCompare(B) : B.localeCompare(A);
     });
     $.each(rows, (_, row) => tbody.append(row));
   });
+
+  const createUserForm = document.getElementById('createUserForm');
+  const createUserModal = document.getElementById('createUserModal');
+  const createUserEmail = document.getElementById('create-user-email');
+  const createUserUsername = document.getElementById('create-user-username');
+  const createUserDisplayname = document.getElementById('create-user-displayname');
+  const createUserRole = document.getElementById('create-user-role');
+  const createUserRoleHelp = document.getElementById('create-user-role-help');
+  const createUserCityScope = document.getElementById('create-user-city-scope');
+  const createUserCities = document.getElementById('create-user-cities');
+  const createUserStatus = document.getElementById('create-user-status');
+  const createUserSubmit = document.getElementById('create-user-submit');
+  let usernameWasEdited = false;
+  let displaynameWasEdited = false;
+
+  function suggestUsername(email) {
+    return (email.split('@')[0] || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '')
+      .toLowerCase();
+  }
+
+  createUserUsername?.addEventListener('input', () => { usernameWasEdited = true; });
+  createUserDisplayname?.addEventListener('input', () => { displaynameWasEdited = true; });
+
+  createUserEmail?.addEventListener('input', () => {
+    const suggested = suggestUsername(createUserEmail.value);
+    if (!usernameWasEdited) createUserUsername.value = suggested;
+    if (!displaynameWasEdited) createUserDisplayname.value = suggested;
+  });
+
+  createUserRole?.addEventListener('change', () => {
+    const roleHelp = {
+      admin: "{{ _('Admin voi käyttää ylläpitotoimintoja myönnettyjen oikeuksien mukaan.') }}",
+      translator: "{{ _('Kääntäjä saa mielenosoitusten ja käyttöliittymän käännösoikeudet.') }}",
+      city_admin: "{{ _('Kaupunkiadmin voi käsitellä valittujen paikkakuntien mielenosoituksia.') }}",
+      user: "{{ _('Tavallinen käyttäjä saa perustilin ilman ylläpito-oikeuksia.') }}",
+    };
+    createUserRoleHelp.textContent = roleHelp[createUserRole.value] || roleHelp.user;
+    const cityAdminSelected = createUserRole.value === 'city_admin';
+    createUserCityScope?.classList.toggle('d-none', !cityAdminSelected);
+    if (createUserCities) createUserCities.required = cityAdminSelected;
+  });
+
+  createUserForm?.addEventListener('submit', (event) => {
+    const requiredFields = [createUserEmail, createUserUsername, createUserRole];
+    requiredFields.forEach((field) => field?.classList.toggle('is-invalid', !field.value.trim()));
+    if (!createUserForm.checkValidity()) {
+      event.preventDefault();
+      createUserStatus.textContent = "{{ _('Tarkista puuttuvat tai virheelliset tiedot.') }}";
+      createUserStatus.classList.add('error');
+      createUserForm.reportValidity();
+      return;
+    }
+    createUserStatus.textContent = "{{ _('Luodaan käyttäjää ja valmistellaan tunnusviestiä...') }}";
+    createUserStatus.classList.remove('error');
+    createUserSubmit.disabled = true;
+    createUserSubmit.innerHTML = '<i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>{{ _("Luodaan...") }}';
+  });
+
+  createUserModal?.addEventListener('hidden.bs.modal', () => {
+    createUserForm.reset();
+    createUserCityScope?.classList.add('d-none');
+    if (createUserCities) createUserCities.required = false;
+    createUserRoleHelp.textContent = "{{ _('Tavallinen käyttäjä saa perustilin ilman ylläpito-oikeuksia.') }}";
+    createUserForm.querySelectorAll('.is-invalid').forEach((field) => field.classList.remove('is-invalid'));
+    createUserStatus.textContent = '';
+    createUserStatus.classList.remove('error');
+    createUserSubmit.disabled = false;
+    createUserSubmit.innerHTML = '<i class="fas fa-user-plus" aria-hidden="true"></i>{{ _("Luo käyttäjä") }}';
+    usernameWasEdited = false;
+    displaynameWasEdited = false;
+  });
 </script>
-
-
-<script src="{{ url_for('static', filename='js/admin/users_modals.js') }}"></script>
 {% endblock %}

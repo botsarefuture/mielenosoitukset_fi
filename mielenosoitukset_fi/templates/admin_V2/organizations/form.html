@@ -1,369 +1,184 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/organizations/macros.html' import invite_modal %}
 
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
+{% block main_content %}
+<div class="admin-form-page admin-page">
+  {% call admin_page_hero(
+    _('Muokkaa organisaatiota') if organization else _('Uusi organisaatio'),
+    _('Pidä organisaation profiili selkeänä, ajantasaisena ja helposti tunnistettavana.') if organization else _('Luo organisaatiolle selkeä profiili, jonka tiedot ovat valmiina julkaisemista ja jäsenhallintaa varten.'),
+    _('Organisaatiohallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Organisaatiot'), url_for('admin_org.organization_control')), ((_('Muokkaa') if organization else _('Uusi organisaatio')), none)],
+    back_url=url_for('admin_org.organization_control'),
+    back_label=_('Organisaatiot')
+  ) %}
+      {% if organization %}<a class="admin-page-hero__action" href="{{ url_for('admin_org.view_organization', org_id=organization._id) }}"><i class="fas fa-chart-simple" aria-hidden="true"></i>{{ _('Yhteenveto') }}</a>{% endif %}
+      {% if organization and can_invite_members %}<button class="admin-page-hero__action" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal"><i class="fas fa-user-plus" aria-hidden="true"></i>{{ _('Kutsu käyttäjä') }}</button>{% endif %}
+  {% endcall %}
 
-<style>
-    /* ---------- Card wrapper ---------- */
-    .container {
-        /* background-color and color vars are covered in .dashboard-container */
-        border-radius: 16px;
-        padding: 2rem 2.5rem;
-        max-width: 1000px;
-        margin: 2rem auto;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, .08);
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
+  <form id="organization-form" class="admin-form admin-workspace-form" method="POST" enctype="multipart/form-data" action="{{ url_for('admin_org.create_organization' if not organization else 'admin_org.edit_organization', org_id=organization._id if organization else None) }}">
+    <div class="admin-form-layout">
+      <div class="admin-form-stack">
+        <section class="admin-form-section">
+          <div class="admin-form-section__header"><span class="admin-form-section__icon"><i class="fas fa-building" aria-hidden="true"></i></span><div><h2>{{ _('Perustiedot') }}</h2><p>{{ _('Nämä tiedot näkyvät organisaation profiilissa.') }}</p></div></div>
+          <div class="admin-form-section__body">
+            <div class="admin-form-grid">
+              <div class="admin-field admin-field--full">
+                <label class="form-label" for="name">{{ _('Nimi') }} <span class="admin-required">*</span></label>
+                <input id="name" name="name" class="form-control" required autocomplete="organization" value="{{ organization.name if organization else '' }}" placeholder="{{ _('Organisaation nimi') }}">
+              </div>
+              <div class="admin-field admin-field--full">
+                <label class="form-label" for="description">{{ _('Kuvaus') }} <span class="admin-required">*</span></label>
+                <textarea id="description" name="description" class="form-control" required placeholder="{{ _('Kerro lyhyesti organisaation toiminnasta ja tavoitteista.') }}">{{ organization.description if organization else '' }}</textarea>
+                <p class="admin-field__help">{{ _('Selkeä, lyhyt kuvaus auttaa ylläpitäjiä ja kävijöitä tunnistamaan organisaation.') }}</p>
+              </div>
+              <div class="admin-field">
+                <label class="form-label" for="email">{{ _('Sähköpostiosoite') }} <span class="admin-required">*</span></label>
+                <input type="email" id="email" name="email" class="form-control" required autocomplete="email" value="{{ organization.email if organization else '' }}" placeholder="yhteys@example.fi">
+              </div>
+              <div class="admin-field">
+                <label class="form-label" for="website">{{ _('Verkkosivu') }}</label>
+                <input type="url" id="website" name="website" class="form-control" value="{{ organization.website if organization else '' }}" placeholder="https://example.fi">
+              </div>
+              {% if organization and can_verify_organization %}
+              <div class="admin-field admin-field--full">
+                <label class="admin-check-row" for="verified"><input class="form-check-input" type="checkbox" id="verified" name="verified" {% if organization.verified %}checked{% endif %}><span class="admin-check-row__content"><strong class="admin-check-row__label">{{ _('Vahvistettu organisaatio') }}</strong><span class="admin-check-row__help">{{ _('Vahvistettu tila näkyy organisaation yhteydessä ylläpidossa.') }}</span></span></label>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </section>
 
-    .form-title {
-        font-size: 2rem;
-        font-weight: 700;
-        /* color var already defined for primary */
-        text-shadow: 0 1px 3px rgba(0, 0, 0, .05);
-        margin-bottom: 1.5rem;
-    }
+        <section class="admin-form-section">
+          <div class="admin-form-section__header"><span class="admin-form-section__icon"><i class="fas fa-image" aria-hidden="true"></i></span><div><h2>{{ _('Logo') }}</h2><p>{{ _('Lisää tunnistettava logo kuvalinkillä tai lataamalla tiedosto.') }}</p></div></div>
+          <div class="admin-form-section__body">
+            <div class="admin-form-grid">
+              <div class="admin-field">
+                <label class="form-label" for="logo_url">{{ _('Logon URL') }}</label>
+                <input type="url" id="logo_url" name="logo_url" class="form-control" placeholder="https://example.fi/logo.png" value="{{ organization.logo if organization and organization.logo else '' }}">
+                <p class="admin-field__help">{{ _('Käytä tätä, jos logo on jo verkossa.') }}</p>
+              </div>
+              <div class="admin-field">
+                <label class="form-label" for="logo_file">{{ _('Lataa logo tiedostona') }}</label>
+                <input type="file" id="logo_file" name="logo_file" class="form-control" accept="image/*">
+                <p class="admin-field__help">{{ _('Ladattu tiedosto korvaa URL-osoitteen tallennettaessa.') }}</p>
+              </div>
+              {% if organization and organization.logo %}
+              <div class="admin-field admin-field--full">
+                <div class="admin-inset admin-media-preview">
+                  <img src="{{ organization.logo }}" alt="{{ _('Nykyinen logo: %(name)s', name=organization.name) }}" loading="lazy" referrerpolicy="no-referrer">
+                  <div class="admin-media-preview__content"><strong>{{ _('Nykyinen logo') }}</strong><span>{{ _('Voit vaihtaa logon yllä olevilla kentillä tai poistaa sen tallennuksen yhteydessä.') }}</span><div class="admin-media-preview__actions"><a class="btn btn-outline-secondary" href="{{ organization.logo }}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>{{ _('Avaa logo') }}</a><label class="admin-danger-check"><input class="form-check-input" type="checkbox" name="remove_logo">{{ _('Poista tallennettaessa') }}</label></div></div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </section>
 
-    /* ---------- Generic form controls ---------- */
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: .5rem;
-    }
+        <section class="admin-form-section">
+          <div class="admin-form-section__header"><span class="admin-form-section__icon"><i class="fas fa-hashtag" aria-hidden="true"></i></span><div><h2>{{ _('Sosiaalinen media') }}</h2><p>{{ _('Lisää vain profiilit, joita organisaatio käyttää aktiivisesti.') }}</p></div></div>
+          <div class="admin-form-section__body">
+            <div id="social-media-list" class="admin-repeater"></div>
+            <button type="button" id="add-social-media" class="btn btn-outline-primary"><i class="fas fa-plus" aria-hidden="true"></i>{{ _('Lisää some-linkki') }}</button>
+          </div>
+        </section>
+      </div>
 
-    .form-group label {
-        font-weight: 600;
-        /* color var for text already defined */
-    }
+      <aside class="admin-form-stack">
+        <section class="admin-form-section">
+          <div class="admin-form-section__header"><span class="admin-form-section__icon"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i></span><div><h2>{{ _('Ennen julkaisua') if not organization else _('Hyvä profiili') }}</h2><p>{{ _('Luo hyvä pohja heti ensimmäisellä tallennuksella.') if not organization else _('Pieni tarkistus ennen tallentamista.') }}</p></div></div>
+          <div class="admin-form-section__body admin-guidance-list">
+            {% if not organization %}<div class="admin-guidance-item"><span class="admin-guidance-item__icon"><i class="fas fa-seedling" aria-hidden="true"></i></span><div class="admin-guidance-item__content"><strong>{{ _('Aloita perustiedoista') }}</strong><span>{{ _('Nimi, kuvaus ja sähköposti riittävät uuden organisaation luomiseen. Loput voi täydentää myöhemmin.') }}</span></div></div>{% endif %}
+            <div class="admin-guidance-item"><span class="admin-guidance-item__icon"><i class="fas fa-align-left" aria-hidden="true"></i></span><div class="admin-guidance-item__content"><strong>{{ _('Kerro olennainen') }}</strong><span>{{ _('Kuvaa toiminta ymmärrettävästi ilman pitkää esittelytekstiä.') }}</span></div></div>
+            <div class="admin-guidance-item"><span class="admin-guidance-item__icon"><i class="fas fa-link" aria-hidden="true"></i></span><div class="admin-guidance-item__content"><strong>{{ _('Tarkista linkit') }}</strong><span>{{ _('Käytä kokonaisia https-osoitteita verkkosivulle, logolle ja some-profiileille.') }}</span></div></div>
+            <div class="admin-guidance-item"><span class="admin-guidance-item__icon"><i class="fas fa-envelope" aria-hidden="true"></i></span><div class="admin-guidance-item__content"><strong>{{ _('Pidä yhteystieto ajan tasalla') }}</strong><span>{{ _('Yhteyssähköpostin tulisi tavoittaa organisaation aktiivinen ylläpitäjä.') }}</span></div></div>
+          </div>
+        </section>
+      </aside>
+    </div>
 
-    .form-control {
-        background-color: var(--input-bg);
-        color: var(--input-text);
-        border: 1px solid var(--input-border);
-        border-radius: 8px;
-        padding: .6rem 1rem;
-        font-size: .95rem;
-        width: 100%;
-    }
+    <div class="admin-sticky-actions">
+      <div class="admin-sticky-actions__copy"><strong>{{ _('Valmis luomaan organisaation?') if not organization else _('Valmis tallentamaan?') }}</strong><span>{{ _('Pakolliset kentät on merkitty oranssilla tähdellä.') }}</span></div>
+      <div class="admin-sticky-actions__buttons"><a href="{{ url_for('admin_org.view_organization', org_id=organization._id) if organization else url_for('admin_org.organization_control') }}" class="btn btn-outline-secondary">{{ _('Peruuta') }}</a><button type="submit" class="btn btn-primary"><i class="fas fa-check" aria-hidden="true"></i>{{ _('Tallenna muutokset') if organization else _('Luo organisaatio') }}</button></div>
+    </div>
+  </form>
 
-    input.form-control::placeholder {
-        color: light-dark(#1a1a1a, #ccc);
-    }
-
-    /* ---------- Social media section ---------- */
-    .social-media-container {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 0.75rem;
-        flex-wrap: wrap;
-        flex: 1;
-    }
-
-    .custom-dropdown {
-        position: relative;
-        flex: 0 0 auto;
-        min-width: 160px;
-        max-width: 200px;
-    }
-
-    .dropdown-selected {
-        background-color: var(--input-bg);
-        color: var(--input-text);
-        border: 1px solid var(--input-border);
-        border-radius: 8px;
-        padding: 0.5rem 0.75rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-        font-size: 0.9rem;
-    }
-
-    .dropdown-selected i {
-        margin-left: 0.5rem;
-    }
-
-    .dropdown-list {
-        display: none;
-        position: absolute;
-        top: calc(100% + 0.2rem);
-        left: 0;
-        width: 100%;
-        background-color: var(--input-bg);
-        border: 1px solid var(--input-border);
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        z-index: 10;
-        overflow: hidden;
-    }
-
-    .dropdown-list div {
-        padding: 0.5rem 1rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        font-size: 0.9rem;
-        gap: 0.5rem;
-        transition: background-color 0.2s;
-    }
-
-    .dropdown-list div:hover {
-        background-color: var(--row-hover);
-    }
-
-    .social-media-container input[type="url"] {
-        flex-grow: 1;
-        min-width: 150px;
-        background-color: var(--input-bg);
-        color: var(--input-text);
-        border: 1px solid var(--input-border);
-        border-radius: 8px;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.9rem;
-    }
-
-    .remove-btn {
-        color: var(--danger);
-        font-size: 1.2rem;
-        cursor: pointer;
-        padding: 0.4rem;
-        transition: color 0.2s ease;
-    }
-
-    .remove-btn:hover {
-        color: var(--primary-hover);
-    }
-
-    /* Button inside social media group */
-    #add-social-media {
-        margin-top: 0.5rem;
-        background-color: var(--primary);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.6rem 1.2rem;
-        font-weight: 500;
-        font-size: 0.95rem;
-        cursor: pointer;
-        transition: background-color 0.2s ease-in-out;
-    }
-
-    #add-social-media:hover {
-        background-color: var(--primary-hover);
-    }
-
-    /* Remove button top right corner in dashboard-panel */
-    .dashboard-panel .remove-btn {
-        position: relative;
-        top: 8px;
-        left: 8px;
-        background: transparent;
-        border-radius: 50%;
-        transition: color 0.2s ease;
-        z-index: 5;
-        user-select: none;
-    }
-
-    .dashboard-panel .remove-btn:hover {
-        color: var(--danger-dark, #a00);
-        background-color: rgba(255, 0, 0, 0.1);
-    }
-
-    #social-media-list {
-        display: flex;
-        gap: 0.5em;
-        /*! flex-basis: max-content; */
-        flex-flow: row;
-        flex-wrap: wrap;
-    }
-</style>
+  {% if organization and can_invite_members %}
+  {{ invite_modal(organization) }}
+  {% endif %}
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // ---------- Dropdown helpers ----------
-    function toggleDropdown(sel) {
-        const list = sel.nextElementSibling;
-        list.style.display = list.style.display === 'block' ? 'none' : 'block';
+  document.addEventListener('DOMContentLoaded', () => {
+    const list = document.getElementById('social-media-list');
+    const platforms = [
+      ['facebook', 'Facebook'], ['twitter', 'Twitter'], ['mastodon', 'Mastodon'],
+      ['instagram', 'Instagram'], ['linkedin', 'LinkedIn'], ['tiktok', 'TikTok'],
+      ['youtube', 'YouTube'], ['snapchat', 'Snapchat']
+    ];
+
+    function updateEmptyState() {
+      const empty = list.querySelector('.admin-empty-state');
+      const hasRows = Boolean(list.querySelector('.admin-repeater__row'));
+      if (hasRows && empty) empty.remove();
+      if (!hasRows && !empty) {
+        const element = document.createElement('div');
+        element.className = 'admin-empty-state';
+        element.innerHTML = '<i class="fas fa-link" aria-hidden="true"></i><strong>{{ _("Ei vielä some-linkkejä") }}</strong><span>{{ _("Lisää ensimmäinen profiili alla olevasta painikkeesta.") }}</span>';
+        list.appendChild(element);
+      }
     }
 
-    document.addEventListener('click', e => {
-        const opt = e.target.closest('.dropdown-list div');
-        if (opt) {
-            const value = opt.dataset.value;
-            const text = opt.innerHTML;
-            const dropdown = opt.closest('.custom-dropdown');
-            dropdown.querySelector('.dropdown-selected').innerHTML = text + ' <i class="fas fa-caret-down"></i>';
-            dropdown.querySelector('input[type="hidden"]').value = value;
-            dropdown.querySelector('.dropdown-list').style.display = 'none';
-        }
-        if (!e.target.closest('.custom-dropdown')) {
-            document.querySelectorAll('.dropdown-list').forEach(dl => dl.style.display = 'none');
-        }
-    });
-
-    // ---------- Social media entry factory ----------
     function createSocial(platform = '', url = '') {
-        const list = document.getElementById('social-media-list');
-        const panel = document.createElement('div');
-        panel.className = 'dashboard-panel';
+      const row = document.createElement('div');
+      row.className = 'admin-repeater__row';
 
-        const wrap = document.createElement('div');
-        wrap.className = 'social-media-container';
+      const select = document.createElement('select');
+      select.className = 'form-select';
+      select.name = 'social_media_platform[]';
+      select.setAttribute('aria-label', '{{ _("Sosiaalisen median alusta") }}');
+      platforms.forEach(([value, label]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        option.selected = value === platform;
+        select.appendChild(option);
+      });
 
-        wrap.innerHTML = `
-  <div class="custom-dropdown">
-    <div class="dropdown-selected" onclick="toggleDropdown(this)">{{ _('Valitse alusta') }} <i class="fas fa-caret-down"></i></div>
-    <div class="dropdown-list">
-      <div data-value="facebook"><i class="fab fa-facebook"></i> Facebook</div>
-      <div data-value="twitter"><i class="fab fa-twitter"></i> Twitter</div>
-      <div data-value="instagram"><i class="fab fa-instagram"></i> Instagram</div>
-      <div data-value="linkedin"><i class="fab fa-linkedin"></i> LinkedIn</div>
-      <div data-value="tiktok"><i class="fab fa-tiktok"></i> TikTok</div>
-      <div data-value="youtube"><i class="fab fa-youtube"></i> YouTube</div>
-      <div data-value="snapchat"><i class="fab fa-snapchat"></i> Snapchat</div>
-    </div>
-    <input type="hidden" name="social_media_platform[]">
-  </div>
-  <input type="url" name="social_media_url[]" placeholder="{{ _('Syötä URL') }}" class="form-control flex-grow" />
-`;
+      const input = document.createElement('input');
+      input.className = 'form-control';
+      input.type = 'url';
+      input.name = 'social_media_url[]';
+      input.placeholder = 'https://...';
+      input.value = url;
+      input.required = true;
+      input.setAttribute('aria-label', '{{ _("Sosiaalisen median URL") }}');
 
-        const removeBtn = document.createElement('span');
-        removeBtn.className = 'remove-btn';
-        removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-        removeBtn.title = "{{ _('Poista') }}";
-        removeBtn.onclick = () => panel.remove();
+      const remove = document.createElement('button');
+      remove.className = 'btn btn-outline-danger admin-repeater__remove';
+      remove.type = 'button';
+      remove.title = '{{ _("Poista") }}';
+      remove.setAttribute('aria-label', '{{ _("Poista some-linkki") }}');
+      remove.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i>';
+      remove.addEventListener('click', () => {
+        row.remove();
+        updateEmptyState();
+      });
 
-        panel.appendChild(removeBtn);
-        panel.appendChild(wrap);
-        list.appendChild(panel);
-
-        // Set initial values if given
-        if (platform) {
-            wrap.querySelector('input[type="hidden"]').value = platform;
-            wrap.querySelector('.dropdown-selected').innerHTML = `<i class="fab fa-${platform}"></i> ${platform.charAt(0).toUpperCase() + platform.slice(1)} <i class="fas fa-caret-down"></i>`;
-        }
-        if (url) {
-            wrap.querySelector('input[type="url"]').value = url;
-        }
-
+      row.append(select, input, remove);
+      list.appendChild(row);
+      updateEmptyState();
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('add-social-media').addEventListener('click', () => createSocial());
-        {% if organization %}
-        {% for p, u in organization.get('social_media_links', {}).items() %} createSocial('{{p}}', '{{u}}'); {% endfor %}
-        {% endif %}
-    });
-</script>
-{% endblock %}
-
-{% block main_content %}
-<div class="dashboard-container" id="org-form">
-    <!-- Intro card -->
-    <div class="introduction">
-        <h1 id="tabletitle">{{ _('Muokkaa organisaatiota') if organization else _('Uusi organisaatio') }}</h1>
-        <p class="muted">
-            {{ _('Tällä lomakkeella voit luoda tai muokata organisaatioita, joihin sinulla on käyttöoikeus.') }}<br>
-            {% if organization %}
-            {{ _('Lisätietoja hallinnoimisesta löydät hallinnoijan käsikirjasta, kappaleesta 2.3: Organisaation
-            muokkaaminen.') }}
-            {% else %}
-            {{ _('Lisätietoja hallinnoimisesta löydät hallinnoijan käsikirjasta, kappaleesta 2.2: Uuden organisaation
-            luominen.') }}
-            {% endif %}
-        </p>
-    </div>
-
-
-    <form method="POST"
-        action="{{ url_for('admin_org.create_organization' if not organization else 'admin_org.edit_organization', org_id=organization._id if organization else None) }}">
-
-        <div class="form-group">
-            <label for="name">{{ _('Nimi') }} <span class="required">*</span></label>
-            <input id="name" name="name" class="form-control" required
-                value="{{ organization.name if organization else '' }}">
-        </div>
-
-        <div class="form-group">
-            <label for="description">{{ _('Kuvaus') }} <span class="required">*</span></label>
-            <textarea id="description" name="description" class="form-control"
-                required>{{ organization.description if organization else '' }}</textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="email">{{ _('Sähköpostiosoite') }} <span class="required">*</span></label>
-            <input type="email" id="email" name="email" class="form-control" required
-                value="{{ organization.email if organization else '' }}">
-        </div>
-
-        <div class="form-group">
-            <label for="website">{{ _('Verkkosivu') }}</label>
-            <input type="url" id="website" name="website" class="form-control"
-                value="{{ organization.website if organization else '' }}">
-        </div>
-
-        {% if organization %}
-        <div class="form-group">
-            <label for="verified">{{ _('Onko organisaatio vahvistettu?') }}</label>
-            <input type="checkbox" id="verified" name="verified" {% if organization.verified %}checked{% endif %}>
-        </div>
-        {% endif %}
-
-        <div class="form-group">
-            <label>{{ _('Sosiaalinen media') }}</label>
-            <div id="social-media-list"></div>
-            <button type="button" id="add-social-media" class="button">{{ _('Lisää sosiaalisen median alusta')
-                }}</button>
-        </div>
-
-        <div class="form-buttons">
-            <button type="submit" class="button save-button">{% if organization %}{{ _('Tallenna muutokset') }}{% else %}{{
-                _('Luo') }}{% endif %}</button>
-            <a href="{{ url_for('admin_org.organization_control') }}" class="button cancel-button">{{ _('Peruuta') }}</a>
-        </div>
-    </form>
-
+    document.getElementById('add-social-media').addEventListener('click', () => createSocial());
     {% if organization %}
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inviteModal">
-        {{ _('Kutsu käyttäjiä') }}
-    </button>
-    <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm"> {# You can use modal-md or modal-lg if needed #}
-            <div class="modal-content shadow rounded-4 border-0"
-                style="background-color: var(--container-bg); color: var(--text);">
-
-                <form method="POST"
-                    action="{{ url_for('admin_org.invite', org_id=organization._id if organization else None) }}">
-                    <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title" id="inviteModalLabel">{{ _('Kutsu käyttäjiä') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="{{ _('Sulje') }}"></button>
-                    </div>
-
-                    <div class="modal-body">
-                        <div class="form-group mb-3">
-                            <label for="invitee_email" class="form-label">
-                                {{ _('Kutsuttavan sähköpostiosoite') }} <span class="required">*</span>
-                            </label>
-                            <input type="email" id="invitee_email" name="invitee_email" class="form-control" required
-                                placeholder="sähköposti@domain.fi">
-                        </div>
-                        <input type="hidden" id="organization_id" name="organization_id" value="{{ organization._id }}">
-                    </div>
-
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta')
-                            }}</button>
-                        <button type="submit" class="btn btn-primary">{{ _('Lähetä kutsu') }}</button>
-                    </div>
-                </form>
-
-            </div>
-        </div>
-    </div>
+    {% for platform, url in organization.get('social_media_links', {}).items() %}
+    createSocial({{ platform|tojson }}, {{ url|tojson }});
+    {% endfor %}
     {% endif %}
-</div>
+    updateEmptyState();
+  });
+</script>
 {% endblock %}

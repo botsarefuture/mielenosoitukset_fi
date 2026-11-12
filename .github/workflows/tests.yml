@@ -1,0 +1,157 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  python-tests:
+    # MongoDB 8 rejects Linux 6.19–7.0.13 (SERVER-121912). The latest
+    # Ubuntu 24 runner rolled onto kernel 7.0.0 and cannot start the test DB.
+    # Keep the same DB/tests; revisit before Ubuntu 22 retires 2027-04-17.
+    #
+    # GitHub-hosted ubuntu-22.04 stays the default so CI never depends on
+    # the maintainer's homelab. When hosted jobs hang, set the repository
+    # variable MOSO_CI_RUNS_ON to ["self-hosted","moso-ci"] to move pushes
+    # and same-repository PRs to the self-hosted runner; delete the variable
+    # to move back. Fork PRs always stay on GitHub-hosted runners, so
+    # untrusted code never reaches the self-hosted host.
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && 'ubuntu-22.04' || fromJSON(vars.MOSO_CI_RUNS_ON || '"ubuntu-22.04"') }}
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Set up Go public API tools
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go-api/go.mod
+          cache-dependency-path: go-api/go.sum
+
+      - name: Set up frontend build tools
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Verify frontend types and committed build
+        run: |
+          npm ci
+          npm run build
+          git diff --exit-code -- mielenosoitukset_fi/static/frontend mielenosoitukset_fi/templates/kampanja/_*_fallback.html
+          test -z "$(git ls-files --others --exclude-standard -- mielenosoitukset_fi/static/frontend mielenosoitukset_fi/templates/kampanja/_*_fallback.html)"
+
+      - name: Verify the React public host build
+        run: |
+          python3 -m pip install "$(sed -n '/^Markdown==/p' requirements.txt)"
+          npm run app:build
+          node scripts/verify_public_host.mjs
+
+      - name: Install dependencies
+        run: |
+          bash deploy/bootstrap_python_trust.sh python
+          python -m pip install -r requirements-dev.txt
+
+      - name: Install Chromium for Playwright
+        run: python -m playwright install --with-deps chromium
+
+      - name: Start disposable test services
+        run: docker compose -f compose.test.yml up -d mongo redis mailpit localstack
+
+      - name: Debug service startup
+        run: docker compose -f compose.test.yml ps
+
+      - name: Wait for test services
+        run: |
+          python - <<'PY'
+          import socket
+          import time
+          import urllib.request
+
+          checks = [
+              ("mongo", "socket", ("127.0.0.1", 27017), 2),
+              ("redis", "socket", ("127.0.0.1", 6379), 2),
+              ("mailpit", "http", "http://127.0.0.1:8025/api/v1/info", 2),
+              ("localstack", "http", "http://127.0.0.1:4566/_localstack/health", 5),
+          ]
+
+          deadline = time.time() + 240
+          pending = list(checks)
+
+          while pending and time.time() < deadline:
+              remaining = []
+
+              for name, check_type, target, timeout in pending:
+                  try:
+                      if check_type == "socket":
+                          with socket.create_connection(target, timeout=timeout):
+                              print(f"✓ {name} is ready")
+                      else:
+                          with urllib.request.urlopen(target, timeout=timeout) as response:
+                              if response.status >= 400:
+                                  raise RuntimeError(f"{name} returned {response.status}")
+                              print(f"✓ {name} is ready")
+                  except Exception as e:
+                      print(f"… {name} not ready yet: {e}")
+                      remaining.append((name, check_type, target, timeout))
+
+              pending = remaining
+              if not pending:
+                  break
+
+              time.sleep(2)
+
+          if pending:
+              names = ", ".join(name for name, _, _, _ in pending)
+              raise SystemExit(f"⚠ Timed out waiting for: {names}")
+          PY
+
+      - name: Show service logs if health checks failed
+        if: failure()
+        run: docker compose -f compose.test.yml logs --no-color --tail=50
+
+
+
+      - name: Verify Go public API and MongoDB boundaries
+        working-directory: go-api
+        env:
+          TEST_MONGODB_URI: mongodb://127.0.0.1:27017
+        run: |
+          test -z "$(gofmt -l .)"
+          go vet ./...
+          go test -race -count=1 ./...
+
+      - name: Run test suite
+        env:
+          TEST_MONGO_URI: mongodb://127.0.0.1:27017
+          TEST_REDIS_HOST: 127.0.0.1
+          TEST_REDIS_PORT: "6379"
+          TEST_MAIL_HOST: 127.0.0.1
+          TEST_MAIL_PORT: "1025"
+          TEST_S3_ENDPOINT: http://127.0.0.1:4566
+        # Override pytest.ini's quiet flag so stalled runs retain each test ID.
+        # Keep every test and the 30-minute job limit. Bound each test including
+        # fixture setup/teardown; thread mode also exits on an uninterruptible
+        # lock wait and prints thread stacks before failing the job.
+        run: python -u -m pytest -o addopts='' -v --tb=short --durations=25 --timeout=180 --timeout-method=thread -o faulthandler_timeout=120
+
+      - name: Dump test service logs on test failure
+        if: failure()
+        run: docker compose -f compose.test.yml logs --no-color
+
+      - name: Tear down test services
+        if: always()
+        run: docker compose -f compose.test.yml down -v

@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Rekisteröidy') }}{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css', v='20261004-auth-trust-mobile-1') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="auth-icon"><i class="fa-solid fa-user-plus"></i></div>
+            <h1>{{ _('Kiitos rekisteröitymisestäsi!') }}</h1>
+            <p class="auth-subtitle">{{ _('Alla lisätietoa seuraavista vaiheista') }}</p>
+        </div>
+
+        <div id="error-message" class="hidden"></div>
+        <div class="user-step-list">
+            <div class="user-step user-step--complete">
+                <div class="user-step__icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="user-step__content">
+                    <h4>{{ _('Tili luotu') }}</h4>
+                    <p>{{ _('Tilisi on luotu onnistuneesti.') }}</p>
+                </div>
+            </div>
+            <div class="user-step user-step--active" aria-current="step">
+                <div class="user-step__icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="user-step__content">
+                    <h4>{{ _('Vahvista sähköpostiosoitteesi') }}</h4>
+                    <p>
+                        {{ _('Olemme lähettäneet sinulle vahvistussähköpostin. Avaa viesti ja klikkaa siinä olevaa
+                        linkkiä aktivoidaksesi tilisi.') }}
+                    </p>
+                    {% if email_found %}
+                    <p class="muted">
+                        {{ _('Vahvistus lähetetty osoitteeseen:') }}
+                        <strong>{{ email }}</strong>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="user-step">
+                <div class="user-step__icon">
+                    <i class="fas fa-flag-checkered"></i>
+                </div>
+                <div class="user-step__content">
+                    <h4>{{ _('Valmis') }}</h4>
+                    <p>
+                        {{ _('Sähköpostisi on vahvistettu. Voit nyt') }} <a href="{{ url_for('users.auth.login') }}">{{ _('kirjautua sisään') }}</a> {{ _('ja aloittaa palvelun käytön') }}.
+                    </p>
+                </div>
+            </div>
+            <div class="user-step">
+                <div class="user-step__icon">
+                    <i class="fas fa-user-gear"></i>
+                </div>
+                <div class="user-step__content">
+                    <h4>{{ _('Voit nyt halutessasi viimeistellä profiilisi') }}</h4>
+                    <p>
+                        {{ _('Voit täydentää profiilisi tietoja myöhemmin. Tämä ei ole pakollista palvelun käytön
+                        aloittamiseksi.') }}
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="auth-support">
+            <h2 class="auth-support__title">{{ _('Tarvitsetko apua?') }}</h2>
+            <p>
+                {{ _('Jos et saanut vahvistussähköpostia muutaman minuutin kuluessa, tarkista roskapostikansiosi tai
+                lähetä viesti uudelleen.') }}
+            </p>
+             {% if email_found %}
+            <form method="POST" action="{{ url_for('users.auth.resend_confirmation') }}" id="resend_form">
+               
+                <input type="hidden" name="email_or_username" value="{{ email }}">
+                <button type="submit" class="auth-secondary-action auth-secondary-action--tertiary" id="resend-confirmation-button">
+                    <span>{{ _('Lähetä vahvistussähköposti uudelleen') }}</span>
+                    <span class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
+                </button>
+            </form>
+            {% else %}
+            <p class="muted">
+                {{ _('Emme löytäneet sähköpostiosoitetta. Emme voi lähettää vahvistussähköpostia uudelleen. Tarkista kuitenkin sähköpostisi.') }}
+            </p>
+            {% endif %}
+        </div>
+
+        <div class="auth-footer">
+            <p class="help-text">
+                <i class="fa-solid fa-circle-question"></i>
+                <span>{{ _('Tarvitsetko apua?') }}</span>
+            </p>
+            <div class="auth-secondary-actions auth-secondary-actions--single">
+                <a href="{{ url_for('contact') }}" class="auth-secondary-action auth-secondary-action--secondary">
+                    {{ _('Ota yhteyttä tukeen') }}
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/toaster.js')}}"></script>
+<script>
+    // in real time update the step status based on email verification
+    // This is a placeholder for actual implementation
+
+    const resendForm = document.getElementById('resend_form');
+    if (resendForm) {
+        const resendButton = document.getElementById('resend-confirmation-button');
+        const resendSpinner = resendButton.querySelector('.spinner-border');
+        resendForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            resendButton.disabled = true;
+            resendButton.setAttribute('aria-busy', 'true');
+            resendSpinner.classList.remove('d-none');
+            try {
+                const response = await fetch(resendForm.action, {
+                    method: 'POST',
+                    body: new FormData(resendForm),
+                    headers: {'X-Requested-With': 'XMLHttpRequest'}
+                });
+                const data = await response.json();
+                showToast(
+                    data.message || "{{ _('Vahvistusviestin lähetys epäonnistui.') }}",
+                    response.ok && data.status === 'success' ? 'success' : 'error'
+                );
+            } catch (error) {
+                console.error(error);
+                showToast("{{ _('Verkkovirhe, yritä uudelleen') }}", 'warning');
+            } finally {
+                resendButton.disabled = false;
+                resendButton.setAttribute('aria-busy', 'false');
+                resendSpinner.classList.add('d-none');
+            }
+        });
+    }
+
+    const verificationEmail = {{ email|tojson }};
+    const loopCheck = Boolean(verificationEmail);
+
+    // Every 5 seconds, check whether the address has been verified.
+    let verificationTimer = null;
+    if (loopCheck) {
+        verificationTimer = window.setInterval(() => {
+            fetch('{{ url_for("users.auth.check_email_verified") }}', {
+                method: 'POST',
+                body: JSON.stringify({ email: verificationEmail }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(response => response.json())
+                .then(data => {
+                    if (data.verified) {
+                        const steps = document.querySelectorAll('.user-step');
+                        steps[1].classList.remove('user-step--active');
+                        steps[1].classList.add('user-step--complete');
+                        steps[1].removeAttribute('aria-current');
+                        steps[2].classList.add('user-step--active');
+                        steps[2].setAttribute('aria-current', 'step');
+                        window.clearInterval(verificationTimer);
+                        showToast('{{ _("Sähköpostisi on vahvistettu!") }}', 'success');
+                    }
+                }).catch(() => {
+                    console.log('Verkkovirhe tarkistettaessa sähköpostin vahvistusta');
+                });
+        }, 5000);
+    }
+</script>
+{% endblock %}

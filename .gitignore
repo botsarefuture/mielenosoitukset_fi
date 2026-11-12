@@ -6,3 +6,29 @@ config.yaml
 */uploads/*
 temps/*
 venv/
+.idea
+.env
+# all .env files
+*.env
+mielenosoitukset_fi/scripts/.env
+posted_events.txt
+mielenosoitukset_fi/scripts/posted_events.txt
+volume/
+.volume/
+config.compose.dev.yaml
+.playwright-cli
+.codex
+.artifacts/visual-qa/
+**/.DS_Store
+.backup_pre_perf
+.deploy-build-sha
+**mailpit**
+data/mailpit.db
+data/mailpit.db-shm
+data/mailpit.db-wal
+**/mailpit*
+
+# Frontend dependencies (compiled static/frontend assets are intentionally tracked)
+node_modules/
+# Standalone public app build output (built by `npm run app:build`).
+frontend/dist/

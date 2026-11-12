@@ -1,4 +1,9 @@
 import json
+import posixpath
+import re
+import hashlib
+import secrets
+from datetime import timedelta
 from flask import (
     Blueprint,
     render_template,
@@ -8,8 +13,10 @@ from flask import (
     current_app,
     session,
 )
-from urllib.parse import urlparse
 from flask_login import login_user, logout_user, login_required, current_user
+from flask_babel import gettext as _
+
+from config import Config
 from mielenosoitukset_fi.users.models import MFAToken, PendingMFA, User, UserMFA
 from mielenosoitukset_fi.utils.auth import (
     generate_confirmation_token,
@@ -19,15 +26,25 @@ from mielenosoitukset_fi.utils.auth import (
 )
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.helpers import is_strong_password
-from mielenosoitukset_fi.utils.s3 import upload_image, upload_image_fileobj
+from mielenosoitukset_fi.utils.validators import (
+    is_reserved_identity_name,
+    normalize_email,
+    normalize_username,
+    valid_email,
+    validate_username,
+)
+from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 from mielenosoitukset_fi.database_manager import DatabaseManager
-from mielenosoitukset_fi.utils.classes import Organization
 from bson.objectid import ObjectId
+from pymongo.errors import DuplicateKeyError
+from pymongo import ReturnDocument
 from werkzeug.utils import secure_filename
 import importlib
-import os
-import jwt
+from mielenosoitukset_fi.utils.time_utils import utcnow
 import datetime
+import smtplib
+from email.mime.text import MIMEText
 
 # import stuff needed for qr code generation
 import pyqrcode
@@ -35,7 +52,132 @@ import base64
 from io import BytesIO
 from flask import jsonify
 
-from mielenosoitukset_fi.utils.tokens import TOKEN_USAGE_LOGS, TOKENS_COLLECTION, create_token
+from mielenosoitukset_fi.utils.tokens import (
+    PRIVILEGED_SCOPES,
+    SUPPORTED_SCOPES,
+    create_token,
+    token_usage_logs_collection,
+    tokens_collection,
+)
+from mielenosoitukset_fi.utils.step_up import clear_elevation, is_elevated, sudo_required
+
+
+MFA_PENDING_LOGIN_KEY = "mfa_pending_login"
+MFA_PENDING_LOGIN_TTL_SECONDS = 5 * 60
+MFA_PENDING_LOGIN_MAX_ATTEMPTS = 5
+
+
+def _pending_mfa_collection():
+    """Resolve challenges through the active database, including in tests."""
+    return _get_mongo()["mfa_login_challenges"]
+
+
+def _pending_mfa_digest(value):
+    """Store a digest rather than a bearer challenge or password hash."""
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _clear_pending_mfa_login():
+    """Revoke this browser's pending first factor and remove its handle."""
+    challenge = session.pop(MFA_PENDING_LOGIN_KEY, None)
+    if isinstance(challenge, str):
+        _pending_mfa_collection().delete_one(
+            {"_id": _pending_mfa_digest(challenge)}
+        )
+    session.modified = True
+
+
+def _set_pending_mfa_login(user):
+    """Remember a verified first factor without retaining its password."""
+    challenge = secrets.token_urlsafe(32)
+    now = utcnow()
+    collection = _pending_mfa_collection()
+    # Expiry is enforced on every read/consume even before physical cleanup.
+    collection.delete_many({"expires_at": {"$lte": now}})
+    collection.insert_one({
+        "_id": _pending_mfa_digest(challenge),
+        "user_id": user._id,
+        "credential_version": _pending_mfa_digest(user.password_hash),
+        "expires_at": now + timedelta(seconds=MFA_PENDING_LOGIN_TTL_SECONDS),
+        "attempts": 0,
+        "used": False,
+    })
+    session[MFA_PENDING_LOGIN_KEY] = challenge
+    session.modified = True
+
+
+def _get_pending_mfa_user():
+    """Reserve one bounded verification attempt on a live server-held proof."""
+    challenge = session.get(MFA_PENDING_LOGIN_KEY)
+    if not isinstance(challenge, str):
+        _clear_pending_mfa_login()
+        return None
+    pending = _pending_mfa_collection().find_one_and_update(
+        {
+            "_id": _pending_mfa_digest(challenge),
+            "used": False,
+            "expires_at": {"$gt": utcnow()},
+            "attempts": {"$lt": MFA_PENDING_LOGIN_MAX_ATTEMPTS},
+        },
+        {"$inc": {"attempts": 1}},
+    )
+    if not pending:
+        _clear_pending_mfa_login()
+        return None
+    user_doc = _get_mongo().users.find_one({"_id": pending["user_id"]})
+    if not user_doc:
+        _clear_pending_mfa_login()
+        return None
+
+    user = User.from_db(user_doc)
+    if (
+        not user.confirmed
+        or not user.mfa_enabled
+        or not user.active
+        or user.banned
+        or pending["credential_version"] != _pending_mfa_digest(user.password_hash)
+    ):
+        _clear_pending_mfa_login()
+        return None
+    return user
+
+
+def _consume_pending_mfa_login(user):
+    """Consume once, then authorize against persisted credentials atomically."""
+    challenge = session.get(MFA_PENDING_LOGIN_KEY)
+    if not isinstance(challenge, str):
+        return None
+    proof = _pending_mfa_collection().find_one_and_update(
+        {
+            "_id": _pending_mfa_digest(challenge),
+            "user_id": user._id,
+            "used": False,
+            "expires_at": {"$gt": utcnow()},
+            "attempts": {"$lte": MFA_PENDING_LOGIN_MAX_ATTEMPTS},
+        },
+        {"$set": {"used": True}},
+    )
+    if not proof:
+        return None
+    users = _get_mongo().users
+    current = users.find_one({"_id": proof["user_id"]})
+    if not current or proof["credential_version"] != _pending_mfa_digest(current["password_hash"]):
+        return None
+    # Password changes write this same document. If a reset wins before this
+    # compare-and-set, authorization fails; the already-used proof stays burned.
+    authorized = users.find_one_and_update(
+        {
+            "_id": proof["user_id"],
+            "password_hash": current["password_hash"],
+            "confirmed": True,
+            "mfa_enabled": True,
+            "banned": {"$ne": True},
+            "$or": [{"active": True}, {"active": {"$exists": False}}],
+        },
+        {"$set": {"last_mfa_login_at": utcnow()}},
+        return_document=ReturnDocument.AFTER,
+    )
+    return User.from_db(authorized) if authorized else None
 
 
 def generate_qr(url: str) -> str:
@@ -78,7 +220,111 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 login_logs = mongo["login_logs"]
 
-from datetime import datetime
+token_access_requests = mongo["api_token_requests"]
+
+
+def _get_mongo():
+    """Return the active database handle."""
+    return DatabaseManager.get_instance().get_db()
+
+
+def _find_user_by_username(username: str):
+    """Find a user by canonical username, falling back to legacy casing."""
+    username = normalize_username(username)
+    if not username:
+        return None
+
+    users = _get_mongo().users
+    user = users.find_one({"username_canonical": username})
+    if user:
+        return user
+
+    case_insensitive_username = {
+        "$regex": f"^{re.escape(username)}$",
+        "$options": "i",
+    }
+    return users.find_one({"username": case_insensitive_username})
+
+
+def _find_user_by_email(email: str):
+    """Find a user by canonical email, falling back to legacy casing."""
+    email = normalize_email(email)
+    if not email:
+        return None
+
+    users = _get_mongo().users
+    user = users.find_one({"email_canonical": email})
+    if user:
+        return user
+    return users.find_one({
+        "email": {"$regex": f"^{re.escape(email)}$", "$options": "i"},
+    })
+
+
+def _username_exists(username: str) -> bool:
+    """Check canonical usernames while remaining compatible with older user documents."""
+    return _find_user_by_username(username) is not None
+
+
+def _username_taken_by_other(username: str, user_id: ObjectId) -> bool:
+    """Return whether another account owns the canonical username."""
+    username = normalize_username(username)
+    if not username:
+        return False
+    query = {
+        "_id": {"$ne": ObjectId(user_id)},
+        "$or": [
+            {"username_canonical": username},
+            {"username": {"$regex": f"^{re.escape(username)}$", "$options": "i"}},
+        ],
+    }
+    return _get_mongo().users.find_one(query, {"_id": 1}) is not None
+
+
+@auth_bp.before_app_request
+def enforce_required_identity_change():
+    """Keep flagged accounts in the identity-change flow until it is complete."""
+    if not current_user.is_authenticated or not getattr(current_user, "forced_identity_change", False):
+        return None
+
+    allowed_endpoints = {
+        "static",
+        "users.auth.forced_identity_change",
+        "users.auth.forced_pwd_reset",
+        "users.auth.logout",
+    }
+    if request.endpoint in allowed_endpoints:
+        return None
+
+    target = url_for("users.auth.forced_identity_change")
+    if request.path.startswith("/api/") or request.path.startswith("/users/auth/api/"):
+        return jsonify({
+            "status": "error",
+            "message": "Käyttäjänimi ja näyttönimi on vaihdettava ennen palvelun käyttöä.",
+            "redirect": target,
+        }), 428
+    return redirect(target)
+
+
+def _fresh_user_doc():
+    return _get_mongo().users.find_one({"_id": current_user._id}) or {}
+
+
+def _notify_admin(subject, body, to=None):
+    to = to or ["emilia@mielenosoitukset.fi"]
+    try:
+        msg = MIMEText(body, "plain", "utf-8")
+        msg["Subject"] = subject
+        msg["From"] = Config.MAIL_DEFAULT_SENDER
+        msg["To"] = ", ".join(to)
+        with smtplib.SMTP(Config.MAIL_SERVER, Config.MAIL_PORT) as server:
+            if Config.MAIL_USE_TLS:
+                server.starttls()
+            if Config.MAIL_USERNAME and Config.MAIL_PASSWORD:
+                server.login(Config.MAIL_USERNAME, Config.MAIL_PASSWORD)
+            server.sendmail(Config.MAIL_DEFAULT_SENDER, to, msg.as_string())
+    except Exception:
+        current_app.logger.exception("Failed to send admin email")
 
 def log_login_attempt(username, success, ip, user_agent=None, reason=None, user_id=None):
     """
@@ -103,7 +349,7 @@ def log_login_attempt(username, success, ip, user_agent=None, reason=None, user_
             if user:
                 mongo.users.update_one(
                     {"_id": ObjectId(user["_id"])},
-                    {"$set": {"last_login": datetime.utcnow()}}
+                    {"$set": {"last_login": utcnow()}}
                 )
                 
         except Exception as e:
@@ -117,7 +363,7 @@ def log_login_attempt(username, success, ip, user_agent=None, reason=None, user_
         "ip": ip,
         "user_agent": user_agent,
         "reason": reason,
-        "timestamp": datetime.utcnow(),
+        "timestamp": utcnow(),
     })
 
 
@@ -150,22 +396,39 @@ def verify_emailer(email, username):
 def register():
     """ """
     if request.method == "POST":
-        username = request.form.get("username")
+        username = normalize_username(request.form.get("username"))
         password = request.form.get("password")
-        email = request.form.get("email")
+        email = normalize_email(request.form.get("email"))
 
-        if not username or not password or len(username) < 3 or not is_strong_password(password):
+        username_valid, username_error = validate_username(username)
+        if not username_valid:
+            flash_message(username_error, "error")
+            return redirect(url_for("users.auth.register"))
+
+        password_is_strong = False
+        if password:
+            password_is_strong, _password_error = is_strong_password(
+                password,
+                username,
+                email,
+            )
+        if not password_is_strong:
             flash_message(
-                "Virheellinen syöte. Käyttäjänimen tulee olla vähintään 3 merkkiä pitkä ja salasanan vähintään 6 merkkiä pitkä.",
+                "Virheellinen salasana.",
                 "error",
             )
             return redirect(url_for("users.auth.register"))
 
-        if mongo.users.find_one({"username": username}):
+        if not valid_email(email):
+            flash_message("Virheellinen sähköpostiosoite.", "error")
+            return redirect(url_for("users.auth.register"))
+
+        if _username_exists(username):
             flash_message("Käyttäjänimi on jo käytössä.", "warning")
             return redirect(url_for("users.auth.register"))
 
-        if mongo.users.find_one({"email": email}):
+        mongo = _get_mongo()
+        if _find_user_by_email(email):
             flash_message(
                 "Sähköpostiosoite on jo rekisteröity. Kirjaudu sisään sen sijaan.",
                 "warning",
@@ -173,7 +436,11 @@ def register():
             return redirect(url_for("users.auth.login"))
 
         user_data = User.create_user(username, password, email)
-        mongo.users.insert_one(user_data)
+        try:
+            mongo.users.insert_one(user_data)
+        except DuplicateKeyError:
+            flash_message("Käyttäjänimi tai sähköpostiosoite on jo käytössä.", "warning")
+            return redirect(url_for("users.auth.register"))
 
         try:
             verify_emailer(email, username)
@@ -184,10 +451,21 @@ def register():
         except Exception as e:
             flash_message(f"Virhe vahvistusviestin lähettämisessä: {e}", "error")
 
-        return redirect(url_for("users.auth.login"))
+        # Keep the address across the redirect to the next-steps page.
+        session["registration_email"] = email
+        return redirect(url_for("users.auth.register_next_steps"))
 
     return render_template("users/auth/register.html")
 
+
+@auth_bp.route("/register/next_steps")
+def register_next_steps():
+    email = session.get("registration_email", "")
+    return render_template(
+        "users/auth/register_next_steps.html",
+        email=email,
+        email_found=bool(email),
+    )
 
 
 # ------------------------
@@ -198,23 +476,72 @@ def register():
 def generate_api_token():
     data = request.get_json() or {}
     token_type = data.get("type", "short")
-    scopes = data.get("scopes", ["read"])
+    requested_scopes = data.get("scopes", ["read"])
+    if (
+        not isinstance(requested_scopes, list)
+        or not all(isinstance(scope, str) for scope in requested_scopes)
+    ):
+        return jsonify({
+            "status": "error",
+            "error": _("Tokenin käyttöoikeuksien pitää olla merkkijonolista."),
+        }), 400
+    scopes = list(dict.fromkeys(requested_scopes))
 
-    # Admin scope check
-    if "admin" in scopes and not (current_user.global_admin or current_user.role in ["admin", "superuser"]):
-        scopes.remove("admin")
-        TOKEN_USAGE_LOGS.insert_one({
+    # Require admin approval for API token usage
+    user_doc = _fresh_user_doc()
+    if not user_doc.get("api_tokens_enabled", False):
+        return jsonify({
+            "status": "error",
+            "error": _(
+                "API-tokenien käyttö on lukittu. Pyydä käyttöoikeutta ylläpidolta."
+            )
+        }), 403
+
+    unsupported_scopes = set(scopes) - SUPPORTED_SCOPES
+    if unsupported_scopes:
+        return jsonify({
+            "status": "error",
+            "error": _("Tuntemattomat token-oikeudet: %(scopes)s") % {
+                "scopes": ", ".join(sorted(unsupported_scopes))
+            },
+        }), 400
+
+    requested_privileged_scopes = set(scopes) & PRIVILEGED_SCOPES
+    can_issue_privileged_scopes = current_user.has_full_permissions()
+    if requested_privileged_scopes and not can_issue_privileged_scopes:
+        token_usage_logs_collection().insert_one({
             "user_id": current_user._id,
             "username": current_user.username,
-            "action": "attempted admin scope request",
+            "action": "attempted privileged scope request",
             "requested_scopes": data.get("scopes", []),
-            "allowed_scopes": scopes,
-            "ip_address": request.remote_addr,
+            "denied_scopes": sorted(requested_privileged_scopes),
+            "ip_address": get_client_ip(),
             "timestamp": datetime.now()
         })
+        return jsonify({
+            "status": "error",
+            "error": _(
+                "Etuoikeutetut token-oikeudet vaativat globaalin ylläpitäjän."
+            ),
+        }), 403
+
+    # Privileged scopes are destructive — require a recent step-up.
+    if requested_privileged_scopes and not is_elevated():
+        return jsonify({
+            "status": "error",
+            "error": "step_up_required",
+            "message": _(
+                "Vahvista henkilöllisyytesi uudelleen ennen etuoikeutettujen avainten luontia."
+            ),
+        }), 403
 
     try:
-        token, expires_at = create_token(user_id=current_user._id, token_type=token_type, scopes=scopes)
+        token, expires_at = create_token(
+            user_id=current_user._id,
+            token_type=token_type,
+            scopes=scopes,
+            category="user",
+        )
         return jsonify({
             "status": "success",
             "token": token,          # raw token (showed only once)
@@ -222,8 +549,14 @@ def generate_api_token():
             "scopes": scopes,
             "type": token_type
         })
-    except ValueError as e:
-        return jsonify({"status": "error", "error": str(e)}), 400
+    except ValueError:
+        current_app.logger.warning(
+            "Rejected API token creation for user %s", current_user.id
+        )
+        return jsonify({
+            "status": "error",
+            "error": _("Tokenia ei voitu luoda annetuilla tiedoilla."),
+        }), 400
     
 
 # ------------------------
@@ -232,7 +565,7 @@ def generate_api_token():
 @auth_bp.route("/api_tokens/list")
 @login_required
 def list_tokens():
-    tokens = list(TOKENS_COLLECTION.find({"user_id": current_user._id}))
+    tokens = list(tokens_collection().find({"user_id": current_user._id}))
     # We never send hashed token back
     token_list = []
     for t in tokens:
@@ -253,24 +586,103 @@ def revoke_token():
     data = request.get_json() or {}
     token_id = data.get("token_id")
     if not token_id:
-        return jsonify({"status": "error", "message": "token_id required"}), 400
+        return jsonify({
+            "status": "error",
+            "message": _("Peruutettavan tokenin tunniste puuttuu."),
+        }), 400
 
-    result = TOKENS_COLLECTION.delete_one({"_id": ObjectId(token_id), "user_id": current_user._id})
+    try:
+        token_object_id = ObjectId(token_id)
+    except Exception:
+        return jsonify({
+            "status": "error",
+            "message": _("Tokenin tunniste on virheellinen."),
+        }), 400
+
+    result = tokens_collection().delete_one({
+        "_id": token_object_id,
+        "user_id": current_user._id,
+    })
     if result.deleted_count == 1:
-        return jsonify({"status": "success"})
-    return jsonify({"status": "error", "message": "Token not found"}), 404
+        return jsonify({
+            "status": "success",
+            "message": _("Token peruttu."),
+        })
+    return jsonify({
+        "status": "error",
+        "message": _("Tokenia ei löytynyt."),
+    }), 404
+
+
+# ------------------------
+# API token access status + request
+# ------------------------
+@auth_bp.route("/api_tokens/status", methods=["GET"])
+@login_required
+def api_token_status():
+    user_doc = _fresh_user_doc()
+    approved = bool(user_doc.get("api_tokens_enabled", False))
+    requested = bool(user_doc.get("api_token_request", None))
+    return jsonify({
+        "status": "success",
+        "approved": approved,
+        "requested": requested,
+        "requested_at": user_doc.get("api_token_request", None),
+    })
+
+
+@auth_bp.route("/api_tokens/request_access", methods=["POST"])
+@login_required
+def request_api_token_access():
+    user_doc = _fresh_user_doc()
+    if user_doc.get("api_tokens_enabled", False):
+        return jsonify({"status": "success", "message": "Access already approved."})
+
+    if user_doc.get("api_token_request", None):
+        return jsonify({"status": "success", "message": "Request already sent."})
+
+    reason = (request.get_json() or {}).get("reason") or ""
+    reason = reason.strip()
+    timestamp = utcnow().isoformat()
+    try:
+        mongo.users.update_one(
+            {"_id": current_user._id},
+            {"$set": {"api_token_request": timestamp, "api_token_request_reason": reason}},
+        )
+        token_access_requests.insert_one({
+            "user_id": current_user._id,
+            "username": current_user.username,
+            "requested_at": timestamp,
+            "status": "pending",
+            "reason": reason,
+        })
+        _notify_admin(
+            "API token -käyttöoikeuspyyntö",
+            f"Käyttäjä {current_user.username} pyytää API-avainten käyttöönottoa.\nAika: {timestamp}\nPerustelu: {reason}",
+        )
+    except Exception as e:
+        current_app.logger.exception("Failed to record API token request")
+        return jsonify({"status": "error", "message": "Request failed"}), 500
+
+    return jsonify({
+        "status": "success",
+        "message": "Request sent. An admin must approve API tokens for your account.",
+        "requested_at": timestamp
+    })
 
 @auth_bp.route("/ui/tokens")
+@login_required
 def tokens_ui():
     return render_template("users/auth/token_ui.html")
 
 @auth_bp.route("/api/username_free", methods=["GET"])
 def api_username_free():
-    username = request.args.get("username", "").strip()
-    if not username:
-        return jsonify({"available": False, "error": "Username is required."}), 400
+    username = normalize_username(request.args.get("username"))
+    username_valid, username_error = validate_username(username)
+    if not username_valid:
+        return jsonify({"available": False, "error": username_error}), 400
 
-    is_taken = mongo.users.find_one({"username": username}) is not None
+    is_taken = _username_exists(username)
     return jsonify({"available": not is_taken})
 
 @auth_bp.route("/confirm_email/<token>")
@@ -289,9 +701,10 @@ def confirm_email(token):
     """
     email = verify_confirmation_token(token)
     if email:
-        user = mongo.users.find_one({"email": email})
+        session.pop("registration_email", None)
+        user = _find_user_by_email(email)
         if user:
-            mongo.users.update_one({"email": email}, {"$set": {"confirmed": True}})
+            mongo.users.update_one({"_id": user["_id"]}, {"$set": {"confirmed": True}})
             flash_message(
                 "Sähköpostiosoitteesi on vahvistettu. Voit nyt kirjautua sisään.",
                 "info",
@@ -303,6 +716,92 @@ def confirm_email(token):
 
     return redirect(url_for("users.auth.login"))
 
+
+@auth_bp.route("/resend_confirmation", methods=["POST"])
+def resend_confirmation():
+    email_or_username = (request.form.get("email_or_username") or "").strip()
+    
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        # AJAX request
+        if not email_or_username:
+            return jsonify(
+                {
+                    "status": "error",
+                    "message": _("Syötä sähköposti tai käyttäjänimi."),
+                }
+            ), 400
+
+        user_doc = (
+            _find_user_by_email(email_or_username)
+            if "@" in email_or_username
+            else _find_user_by_username(email_or_username)
+        )
+
+        if user_doc:
+            user = User.from_db(user_doc)
+            if not user.confirmed:
+                try:
+                    verify_emailer(user.email, user.username)
+                except Exception:
+                    current_app.logger.exception(
+                        "Failed to resend confirmation for user %s", user.id
+                    )
+                    return jsonify(
+                        {
+                            "status": "error",
+                            "message": _("Vahvistusviestin lähetys epäonnistui."),
+                        }
+                    ), 500
+
+        return jsonify({
+            "status": "success",
+            "message": _(
+                "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin."
+            )
+        })
+    # Non-AJAX request
+    if not email_or_username:
+        flash_message("Syötä sähköposti tai käyttäjänimi.", "warning")
+        return redirect(url_for("users.auth.login"))
+
+    user_doc = (
+        _find_user_by_email(email_or_username)
+        if "@" in email_or_username
+        else _find_user_by_username(email_or_username)
+    )
+
+    if user_doc:
+        user = User.from_db(user_doc)
+        if not user.confirmed:
+            try:
+                verify_emailer(user.email, user.username)
+            except Exception as e:
+                flash_message(f"Vahvistusviestin lähetys epäonnistui: {e}", "error")
+                return redirect(url_for("users.auth.login"))
+
+    flash_message(
+        "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin.",
+        "info",
+    )
+    return redirect(url_for("users.auth.login"))
+
+
+@auth_bp.route("/check_email_verified", methods=["POST"])
+def check_email_verified():
+    """
+    Check if the user's email is verified.
+
+    Returns
+    -------
+    dict
+        A dictionary indicating whether the email is verified.
+    """
+    try:
+        user = _find_user_by_email(request.json.get("email"))
+        user = User.from_db(user)
+        return jsonify({"verified": user.confirmed})
+    except Exception as e:
+        return jsonify({"verified": False})
 
 @auth_bp.route("/2fa_check", methods=["POST"])
 def mfa_check():
@@ -316,55 +815,88 @@ def mfa_check():
     """
 
     try:
-        user = mongo.users.find_one({"username": request.form.get("username")})
+        _clear_pending_mfa_login()
+        username = normalize_username(request.form.get("username"))
+        user = _find_user_by_username(username)
         user = User.from_db(user)
         if not user.check_password(request.form.get("password")):
             return jsonify({"enabled": False, "valid": False})
+
+        if not user.is_active:
+            return jsonify({"enabled": False, "valid": False})
+
+        if not user.confirmed:
+            try:
+                verify_emailer(user.email, user.username)
+            except Exception:
+                pass
+            return jsonify({"enabled": False, "valid": False, "unverified": True})
+
+        if user.role == "god":
+            return jsonify({"enabled": False, "valid": True})
+        if user.mfa_enabled:
+            _set_pending_mfa_login(user)
+        else:
+            _clear_pending_mfa_login()
 
         return jsonify({"enabled": user.mfa_enabled, "valid": True})
 
     except Exception as e:
         return jsonify({"enabled": False, "valid": False})
 
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
+
+
+def _normalize_post_login_target(target: str | None) -> str:
+    # Require an unambiguous origin-relative URL. Do not repair backslashes or
+    # controls: browsers and URL parsers can interpret those differently.
+    if (not isinstance(target, str) or not target.startswith("/")
+            or target.startswith("//") or "\\" in target
+            or re.search(r"[\x00-\x1f\x7f]", target)):
+        return url_for("index")
+
+    candidate = target
+    parsed = urlparse(candidate)
+    if parsed.netloc or parsed.scheme:
+        return url_for("index")
+
+    # Compare effective paths, not queries/fragments or encoded dot/slash
+    # spelling, while retaining the original valid URL for the redirect.
+    decoded_path = unquote(parsed.path)
+    if decoded_path.startswith("//"):
+        return url_for("index")
+    path = posixpath.normpath(decoded_path)
+    if path == url_for("users.auth.login").rstrip("/"):
+        return url_for("index")
+
+    # Post-login redirects should land on human-facing pages, not raw APIs.
+    if path in {"/api", "/users/auth/api"} or path.startswith(("/api/", "/users/auth/api/")):
+        return url_for("index")
+
+    return candidate
+
 
 def _check(safe_next_page, request):
     
     # Check if this is a popup login request
     if request.args.get("popup") == "1":
-        # Return HTML that closes the popup and reloads opener
-        return f"""
-        <script>
-            if (window.opener) {{
-                window.opener.location.reload();
-                window.close();
-            }} else {{
-                window.location = "{safe_next_page}";
-            }}
-        </script>
-        """, True
+        # Jinja tojson escapes both JavaScript strings and HTML script endings.
+        return render_template("users/auth/_popup_complete.html", next_url=safe_next_page), True
     
     else:
         return None, False
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+    """Verify password or pending MFA proof, then establish the login session."""
+    if request.method == "POST" and request.is_json:
+        from mielenosoitukset_fi.users.god_auth import handle_action
+        response = current_app.make_response(handle_action(_get_mongo(), request.get_json(silent=True)))
+        response.headers["Cache-Control"] = "no-store"
+        return response
     # Get the next page from GET param or from session fallback
     next_page = request.args.get("next") or session.get("next_page") or ""
-
-    # Sanitize next_page: remove backslashes etc.
-    next_page = next_page.replace("\\", "")
-
-    # Check if next_page is a safe internal URL (no netloc, no scheme)
-    if next_page and (urlparse(next_page).netloc == "" and urlparse(next_page).scheme == ""):
-        safe_next_page = next_page
-    else:
-        # fallback default redirect page after login
-        safe_next_page = url_for("index")
-
-    # Prevent redirect back to login page itself to avoid loops
-    if safe_next_page == url_for("users.auth.login"):
-        safe_next_page = url_for("index")
+    safe_next_page = _normalize_post_login_target(next_page)
 
     # Save the safe next page to session in case of POST failures
     session["next_page"] = safe_next_page
@@ -374,49 +906,124 @@ def login():
         return redirect(safe_next_page)
 
     if request.method == "POST":
-        username = request.form.get("username")
+        username = normalize_username(request.form.get("username"))
         password = request.form.get("password")
+        mfa_code = (request.form.get("2fa_code") or request.form.get("token") or "").strip()
+        mfa_credential_version = None
 
-        if not username or not password:
-            flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
-            return redirect(url_for("users.auth.login", next=safe_next_page))
-
-        user_doc = mongo.users.find_one({"username": username})
-        
-        user_ip = request.remote_addr
+        user_ip = get_client_ip()
         user_agent = request.headers.get("User-Agent", "")
 
-        if not user_doc:
-            flash_message(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
-            log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="User not found")
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+        # JavaScript-assisted MFA posts only the one-time code. The password was
+        # already verified by /2fa_check and is never copied into the DOM.
+        if mfa_code and not username and not password:
+            user = _get_pending_mfa_user()
+            if not user:
+                flash_message(
+                    "Kirjautumisvahvistus on vanhentunut. Syötä käyttäjänimi ja salasana uudelleen.",
+                    "warning",
+                )
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        user = User.from_db(user_doc)
-        if not user.check_password(password):
-            flash_message("Käyttäjänimi tai salasana on väärin.", "error")
-            log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Invalid password", user_id=user.id)
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+            username = user.username
+            if not UserMFA(user._id).verify_token(mfa_code):
+                log_login_attempt(
+                    username,
+                    success=False,
+                    ip=user_ip,
+                    user_agent=user_agent,
+                    reason="MFA failed",
+                    user_id=user._id,
+                )
+                flash_message("Väärä MFA-koodi.", "error")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+            user = _consume_pending_mfa_login(user)
+            if not user:
+                _clear_pending_mfa_login()
+                flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+            mfa_credential_version = _pending_mfa_digest(user.password_hash)
+        else:
+            if not username or not password:
+                flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        if not user.confirmed:
-            flash_message("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi.")
-            verify_emailer(user.email, username)
-            log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Email not verified", user_id=user.id)
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+            user_doc = _find_user_by_username(username)
+            if not user_doc:
+                flash_message(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
+                log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="User not found")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        # MFA check (assuming your meow function does this)
-        if user.mfa_enabled and not meow(user):
-            log_login_attempt(username, success=False, ip=user_ip, user_agent=user_agent, reason="MFA failed", user_id=user._id)
-            return redirect(url_for("users.auth.login", next=safe_next_page))
+            user = User.from_db(user_doc)
+            if user.role == "god":
+                _clear_pending_mfa_login()
+                return redirect("/auth/god")
+            if not user.check_password(password):
+                flash_message("Käyttäjänimi tai salasana on väärin.", "error")
+                log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Invalid password", user_id=user.id)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
+            if not user.is_active:
+                flash_message("Käyttäjätili ei ole käytössä. Ota yhteyttä ylläpitoon.", "error")
+                log_login_attempt(
+                    username, False, user_ip, user_agent=user_agent,
+                    reason="Account disabled", user_id=user.id,
+                )
+                return redirect(url_for("users.auth.login", next=safe_next_page))
 
+            if not user.confirmed:
+                flash_message(
+                    "Kirjautuminen estetty: vahvista sähköpostiosoitteesi ennen kirjautumista. "
+                    "Tarkista sähköpostisi ja avaa vahvistuslinkki (lähetimme uuden linkin).",
+                    "warning",
+                )
+                verify_emailer(user.email, username)
+                log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Email not verified", user_id=user.id)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+
+            # Keep direct/no-JavaScript login compatible: credentials and an MFA
+            # code may still be submitted together in a single request.
+            if user.mfa_enabled and not mfa_code:
+                _clear_pending_mfa_login()
+                _set_pending_mfa_login(user)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+            if user.mfa_enabled and not meow(user):
+                log_login_attempt(username, success=False, ip=user_ip, user_agent=user_agent, reason="MFA failed", user_id=user._id)
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+            if user.mfa_enabled:
+                mfa_credential_version = _pending_mfa_digest(user.password_hash)
+
+        _clear_pending_mfa_login()
+
+        if mfa_credential_version is not None:
+            current = _get_mongo().users.find_one({
+                "_id": user._id, "password_hash": user.password_hash,
+            })
+            if not current:
+                flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
+                return redirect(url_for("users.auth.login", next=safe_next_page))
+            user = User.from_db(current)
+        # A legacy pending MFA proof must never bypass god's ordered flow.
+        if user.role == "god":
+            return redirect("/auth/god")
         # Everything good, log the user in
         login_user(user)
+        if mfa_credential_version is not None:
+            # A reset after the final read must also invalidate the response
+            # cookie before it can access any subsequent protected request.
+            session["mfa_credential_version"] = mfa_credential_version
+        session.permanent = True  # ~12h authenticated session (PERMANENT_SESSION_LIFETIME)
+        session.modified = True
         log_login_attempt(username, success=True, ip=user_ip, user_agent=user_agent, user_id=user._id)
 
         if user.forced_pwd_reset:
             # somehow lets keep the redirect page
             session["next_page"] = safe_next_page
             return redirect(url_for("users.auth.forced_pwd_reset"))
+
+        if user.forced_identity_change:
+            session["next_page"] = safe_next_page
+            return redirect(url_for("users.auth.forced_identity_change"))
 
         # Clear the stored next_page so it won't persist forever
         if "next_page" in session:
@@ -434,18 +1041,22 @@ def login():
         return redirect(safe_next_page)
 
     # GET request just renders login page
-    return render_template("users/auth/login.html", next=safe_next_page)
+    return render_template(
+        "users/auth/login.html",
+        next=safe_next_page,
+        pending_mfa=isinstance(session.get(MFA_PENDING_LOGIN_KEY), str),
+    )
 from datetime import datetime
 
 @auth_bp.route("/forced_pwd_reset/", methods=["GET", "POST"])
 @login_required
 def forced_pwd_reset():
-    ip = request.remote_addr
+    ip = get_client_ip()
     user_agent = request.headers.get("User-Agent", "")
 
     log_entry = {
         "user_id": str(current_user.id),
-        "datetime": datetime.utcnow(),
+        "datetime": utcnow(),
         "ip": ip,
         "user_agent": user_agent,
         "visit": True,
@@ -470,7 +1081,12 @@ def forced_pwd_reset():
             flash_message("Salasanat eivät täsmää.", "error")
             return redirect(url_for("users.auth.forced_pwd_reset"))
 
-        if not is_strong_password(new_password, username=current_user.username, email=current_user.email):
+        password_is_strong, _password_error = is_strong_password(
+            new_password,
+            username=current_user.username,
+            email=current_user.email,
+        )
+        if not password_is_strong:
             log_entry["error"] = "Password does not meet requirements"
             mongo.password_changes.insert_one(log_entry)
             flash_message("Salasana ei täytä vaatimuksia.", "warning")
@@ -488,6 +1104,9 @@ def forced_pwd_reset():
             mongo.password_changes.insert_one(log_entry)
             flash_message(f"Salasanan vaihto epäonnistui: {e}", "error")
             return redirect(url_for("users.auth.forced_pwd_reset"))
+
+        if getattr(current_user, "forced_identity_change", False):
+            return redirect(url_for("users.auth.forced_identity_change"))
 
         # ✅ Get safe next page from session, fallback to profile
         safe_next_page = session.pop("next_page", None) or url_for("users.profile.profile")
@@ -507,6 +1126,85 @@ def forced_pwd_reset():
     return render_template("users/auth/forced_pwd_reset.html")
 
 
+@auth_bp.route("/forced_identity_change/", methods=["GET", "POST"])
+@login_required
+def forced_identity_change():
+    """Require a flagged user to choose a unique, non-reserved public identity."""
+    if not getattr(current_user, "forced_identity_change", False):
+        return redirect(url_for("users.auth.settings"))
+
+    if request.method == "POST":
+        username = normalize_username(request.form.get("username"))
+        displayname = (request.form.get("displayname") or "").strip()
+        username_valid, username_error = validate_username(username)
+
+        if not username_valid:
+            flash_message(username_error, "error")
+            return redirect(url_for("users.auth.forced_identity_change"))
+        if is_reserved_identity_name(username) or is_reserved_identity_name(displayname):
+            flash_message("Admin-nimitys on varattu palvelun sisäiseen käyttöön.", "error")
+            return redirect(url_for("users.auth.forced_identity_change"))
+        if len(displayname) < 2 or len(displayname) > 80:
+            flash_message("Näyttönimen tulee olla 2–80 merkkiä pitkä.", "error")
+            return redirect(url_for("users.auth.forced_identity_change"))
+        if username == normalize_username(current_user.username) or displayname == (current_user.displayname or "").strip():
+            flash_message("Valitse sekä uusi käyttäjänimi että uusi näyttönimi.", "error")
+            return redirect(url_for("users.auth.forced_identity_change"))
+        if _username_taken_by_other(username, current_user._id):
+            flash_message("Käyttäjänimi on jo käytössä.", "error")
+            return redirect(url_for("users.auth.forced_identity_change"))
+
+        users = _get_mongo().users
+        update_result = users.update_one(
+            {"_id": current_user._id, "forced_identity_change": True},
+            {
+                "$set": {
+                    "username": username,
+                    "username_canonical": username,
+                    "displayname": displayname,
+                    "forced_identity_change": False,
+                },
+                "$unset": {
+                    "forced_identity_change_reason": "",
+                    "forced_identity_change_at": "",
+                },
+            },
+        )
+        if update_result.matched_count != 1:
+            flash_message("Nimien vaihtaminen epäonnistui. Yritä uudelleen.", "error")
+            return redirect(url_for("users.auth.forced_identity_change"))
+
+        mongo.user_settings.update_one(
+            {"user_id": current_user._id},
+            {"$set": {"display_name": displayname}},
+            upsert=True,
+        )
+        current_user.username = username
+        current_user.displayname = displayname
+        current_user.forced_identity_change = False
+
+        try:
+            email_sender.queue_email(
+                template_name="auth/settings_changed.html",
+                subject="Käyttäjätilisi tunnistetiedot on päivitetty",
+                recipients=[current_user.email],
+                context={
+                    "changed_fields": {
+                        "username": {"old": "väliaikainen tunnus", "new": username},
+                        "display_name": {"old": "väliaikainen nimi", "new": displayname},
+                    },
+                    "user_name": displayname,
+                },
+            )
+        except Exception:
+            current_app.logger.exception("Failed to queue identity-change confirmation")
+
+        flash_message("Käyttäjänimi ja näyttönimi on vaihdettu onnistuneesti.", "success")
+        return redirect(session.pop("next_page", None) or url_for("users.profile.profile"))
+
+    return render_template("users/auth/forced_identity_change.html", user=current_user)
+
+
 
 def meow(user):
     token = request.form.get("2fa_code")
@@ -523,46 +1221,15 @@ def meow(user):
 
 @auth_bp.route("/verify_mfa", methods=["GET", "POST"])
 def verify_mfa():
-    """ """
-    if not session.get("mfa_required"):
-        return redirect(url_for("users.auth.login"))
-
-    if request.method == "POST":
-        token = request.form.get("token")
-        next = request.args.get("next")
-        user = current_user
-
-        if UserMFA(user._id).verify_mfa(token):
-            
-            login_user(user)
-            
-            
-            session["mfa_required"] = False
-            session["modified"] = True
-            
-            # Check if this is a popup login request
-            if request.args.get("popup") == "1":
-                # Return HTML that closes the popup and reloads opener
-                return f"""
-                <script>
-                    if (window.opener) {{
-                        window.opener.location.reload();
-                        window.close();
-                    }} else {{
-                        window.location = "{safe_next_page}";
-                    }}
-                </script>
-                """
-
-            if user.forced_pwd_reset:
-                return redirect(url_for("users.auth.forced_pwd_reset"))
-
-            return redirect(next or url_for("index"))
-
-        flash_message("Väärä MFA-koodi", "error")
-        return redirect(url_for("users.auth.verify_mfa"))
-
-    return render_template("users/auth/verify_mfa.html")
+    """Route legacy MFA links through the same pending-proof login contract."""
+    return redirect(
+        url_for(
+            "users.auth.login",
+            next=_normalize_post_login_target(request.args.get("next")),
+            popup=request.args.get("popup", ""),
+        ),
+        code=307 if request.method == "POST" else 302,
+    )
 
 @auth_bp.route("/api/v1/settings/", methods=["POST"])
 @login_required
@@ -583,30 +1250,39 @@ def settings_api():
         A JSON response indicating whether settings were updated.
     """
     user = current_user
-    user_data = request.form.to_dict()
+    allowed_fields = {"city", "dark_mode", "language"}
+    submitted_data = request.form.to_dict()
+    rejected_fields = sorted(set(submitted_data) - allowed_fields)
+    if rejected_fields:
+        return jsonify({
+            "status": "error",
+            "message": "Asetus sisältää kenttiä, joita ei voi muuttaa tällä rajapinnalla.",
+            "rejected_fields": rejected_fields,
+        }), 400
+
+    user_data = {
+        field: value
+        for field, value in submitted_data.items()
+        if field in allowed_fields
+    }
     changed_fields = {}
 
     # Build current_user_data from attributes (use underscore field names)
     current_user_data = {
-        "username": getattr(user, "username", None),
-        "email": getattr(user, "email", None),
-        "mfa_enabled": getattr(user, "mfa_enabled", None),
         "language": getattr(user, "language", None),
         "dark_mode": getattr(user, "dark_mode", None),
         "city": getattr(user, "city", None),
-        # add other fields as needed
     }
 
     for field, new_value in user_data.items():
         current_value = current_user_data.get(field)
         if current_value is None or str(current_value) != str(new_value):
-            print(field)
             changed_fields[field] = {"old": current_value, "new": new_value}
             setattr(user, field, new_value)
 
     if changed_fields:
         # Update the user's document in the database
-        mongo.users.update_one({"_id": user._id}, {"$set": user_data})
+        _get_mongo().users.update_one({"_id": user._id}, {"$set": user_data})
 
         # Send an email notification about the changes
         try:
@@ -704,6 +1380,11 @@ def settings_api_v2():
         if field not in user_data:
             continue
         new_value = user_data[field]
+        if field == "display_name" and is_reserved_identity_name(new_value):
+            return jsonify({
+                "status": "error",
+                "message": "Admin-nimitys on varattu palvelun sisäiseen käyttöön.",
+            }), 400
         current_value = sett.get(field)
 
         # try parse JSON for structured fields
@@ -796,13 +1477,16 @@ def mfa_setup_api():
         if not code or not secret:
             return jsonify({"status": "error", "message": "Code or secret missing"}), 400
 
+        if secret not in PendingMFA.get(user._id, secret):
+            return jsonify({"status": "error", "message": "Invalid or expired MFA setup"}), 400
+
         mfa_token = MFAToken(secret)
         if mfa_token.verify(code):
             mongo.mfas.insert_one({
                 "user_id": user._id,
                 "secret": secret,
                 "device_name": device_name,
-                "created_at": datetime.datetime.utcnow()
+                "created_at": utcnow()
             })
             PendingMFA.delete(user._id, secret)
             user.mfa_enabled = True
@@ -828,10 +1512,11 @@ def mfa_status():
     user_mfa_records = mongo.mfas.find({"user_id": user._id})
     devices = []
     for rec in user_mfa_records:
+        created_at = rec.get("created_at")
         devices.append({
             "id": str(rec["_id"]),
             "name": rec.get("device_name", "Unknown device"),
-            "created_at": rec.get("created_at").strftime("%Y-%m-%d %H:%M")
+            "created_at": created_at.strftime("%Y-%m-%d %H:%M") if created_at else created_at
         })
     
     return jsonify({
@@ -843,28 +1528,68 @@ def mfa_status():
 # --- MFA Device Revoke Endpoint ---
 @auth_bp.route("/api/v2/mfa_device_revoke", methods=["POST"])
 @login_required
+@sudo_required()
 def mfa_device_revoke():
     """
     Removes a specific MFA device/secret for the user.
     """
     user = current_user
-    data = request.get_json(force=True)
+    data = request.get_json(silent=True) or {}
     device_id = data.get("device_id")
-    
-    if not device_id:
-        return jsonify({"status": "error", "message": "device_id is required"}), 400
 
-    result = mongo.mfas.delete_one({"_id": device_id, "user_id": user._id})
-    
+    if not device_id:
+        return jsonify({"status": "error", "message": _("Laitteen tunniste puuttuu.")}), 400
+
+    try:
+        device_oid = ObjectId(str(device_id))
+    except Exception:
+        return jsonify({"status": "error", "message": _("Virheellinen laitteen tunniste.")}), 400
+
+    result = mongo.mfas.delete_one({"_id": device_oid, "user_id": user._id})
+
     if result.deleted_count == 1:
         # Check if any devices remain, else disable MFA flag
         remaining = mongo.mfas.count_documents({"user_id": user._id})
         if remaining == 0:
             user.mfa_enabled = False
             user.save()
-        return jsonify({"status": "success", "message": "Device removed"})
+        return jsonify({"status": "success", "message": _("Laite poistettu.")})
     else:
-        return jsonify({"status": "error", "message": "Device not found"}), 404
+        return jsonify({"status": "error", "message": _("Laitetta ei löytynyt.")}), 404
+
+
+# --- MFA Device Rename Endpoint ---
+@auth_bp.route("/api/v2/mfa_device_rename", methods=["POST"])
+@login_required
+@sudo_required()
+def mfa_device_rename():
+    """
+    Renames a specific MFA device/secret for the user.
+    """
+    user = current_user
+    data = request.get_json(silent=True) or {}
+    device_id = data.get("device_id")
+    name = data.get("name")
+
+    if not device_id:
+        return jsonify({"status": "error", "message": _("Laitteen tunniste puuttuu.")}), 400
+    if not isinstance(name, str) or not name.strip():
+        return jsonify({"status": "error", "message": _("Anna laitteelle nimi.")}), 400
+    normalized_name = name.strip()[:60]
+
+    try:
+        device_oid = ObjectId(str(device_id))
+    except Exception:
+        return jsonify({"status": "error", "message": _("Virheellinen laitteen tunniste.")}), 400
+
+    result = mongo.mfas.update_one(
+        {"_id": device_oid, "user_id": user._id},
+        {"$set": {"device_name": normalized_name}},
+    )
+
+    if result.matched_count == 1:
+        return jsonify({"status": "success", "message": _("Laite uudelleennimetty.")})
+    return jsonify({"status": "error", "message": _("Laitetta ei löytynyt.")}), 404
 
 
 @auth_bp.route("/logout")
@@ -872,6 +1597,7 @@ def mfa_device_revoke():
 def logout():
     """ """
     logout_user()
+    clear_elevation()  # step-up state never outlives the session
     flash_message("Kirjauduit onnistuneesti ulos", "success")
     return redirect(url_for("users.auth.login"))
 
@@ -882,7 +1608,7 @@ def password_reset_request():
     Handles password reset requests without revealing whether an email exists.
     """
     if request.method == "POST":
-        email = request.form.get("email")
+        email = normalize_email(request.form.get("email"))
 
         # Always show the same response, regardless of whether the user exists
         flash_message(
@@ -891,7 +1617,7 @@ def password_reset_request():
             "info"
         )
 
-        user = mongo.users.find_one({"email": email})
+        user = _find_user_by_email(email)
         if user:
             token = generate_reset_token(email)
             reset_url = url_for(
@@ -912,7 +1638,10 @@ def password_reset_request():
         return redirect(url_for("users.auth.login"))
 
     return render_template("users/auth/password_reset_request.html")
+
+
 @auth_bp.route("/api/v2/user_profile", methods=["GET", "POST"])
+@login_required
 def user_profile():
     """
     JSON-only endpoint for user bio + profile picture updates.
@@ -925,7 +1654,11 @@ def user_profile():
     user = current_user
 
     if request.method == "POST":
-        data = request.get_json(force=True)
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify(
+                {"status": "error", "message": _("Virheellinen pyyntö.")}
+            ), 400
 
         # Update bio
         bio = data.get("bio")
@@ -945,7 +1678,7 @@ def user_profile():
                 bucket_name = current_app.config.get("S3_BUCKET")
                 import io
 
-                img_bytes = base64.b64decode(profile_picture_b64)
+                img_bytes = base64.b64decode(profile_picture_b64, validate=True)
                 img_stream = io.BytesIO(img_bytes)
              
                 photo_url = upload_image_fileobj(bucket_name, img_stream, filename, "profile_pics")
@@ -953,9 +1686,22 @@ def user_profile():
                 if photo_url:
                     user.profile_picture = photo_url
                 else:
-                    return jsonify({"status": "error", "message": "Error uploading image to S3"}), 500
-            except Exception as e:
-                return jsonify({"status": "error", "message": f"Invalid image data: {str(e)}"}), 400
+                    return jsonify(
+                        {
+                            "status": "error",
+                            "message": _("Profiilikuvan tallennus epäonnistui."),
+                        }
+                    ), 500
+            except Exception:
+                current_app.logger.warning(
+                    "Invalid profile image upload for user %s", user.id
+                )
+                return jsonify(
+                    {
+                        "status": "error",
+                        "message": _("Profiilikuvan tiedot ovat virheelliset."),
+                    }
+                ), 400
 
         # Save changes in Mongo
         mongo.users.update_one(
@@ -968,7 +1714,16 @@ def user_profile():
             },
         )
 
-        return jsonify({"status": "success", "message": "Profile updated successfully"})
+        return jsonify(
+            {
+                "status": "success",
+                "message": _("Profiili päivitetty."),
+                "data": {
+                    "bio": getattr(user, "bio", None),
+                    "profile_picture": getattr(user, "profile_picture", None),
+                },
+            }
+        )
 
     # GET request - return user profile data
     return jsonify({
@@ -985,7 +1740,7 @@ def password_reset(token):
     """
     Handle password reset using a token, with full logging and single-use token enforcement.
     """
-    ip = request.remote_addr
+    ip = get_client_ip()
     user_agent = request.headers.get("User-Agent", "")
     
     # Check if token has already been used
@@ -1000,7 +1755,7 @@ def password_reset(token):
     log_entry = {
         "token": token,
         "email": email or None,
-        "datetime": datetime.utcnow(),
+        "datetime": utcnow(),
         "ip": ip,
         "user_agent": user_agent,
         "visit": True,
@@ -1016,7 +1771,7 @@ def password_reset(token):
         )
         return redirect(url_for("users.auth.password_reset_request"))
 
-    user_doc = mongo.users.find_one({"email": email})
+    user_doc = _find_user_by_email(email)
     if not user_doc:
         log_entry["error"] = "User not found"
         mongo.password_changes.insert_one(log_entry)
@@ -1035,7 +1790,12 @@ def password_reset(token):
             flash_message("Salasanat eivät täsmää!", "warning")
             return redirect(url_for("users.auth.password_reset", token=token))
 
-        if not is_strong_password(password, username=user.username, email=email):
+        password_is_strong, _password_error = is_strong_password(
+            password,
+            username=user.username,
+            email=email,
+        )
+        if not password_is_strong:
             log_entry["error"] = "Password does not meet requirements"
             mongo.password_changes.insert_one(log_entry)
             flash_message("Salasana ei täytä vaatimuksia.", "warning")
@@ -1050,7 +1810,7 @@ def password_reset(token):
             mongo.used_password_change_tokens.insert_one({
                 "token": token,
                 "email": email,
-                "used_at": datetime.utcnow(),
+                "used_at": utcnow(),
                 "ip": ip,
                 "user_agent": user_agent,
                 "password_change_success": True
@@ -1122,3 +1882,93 @@ def user_info_api():
     }
 
     return jsonify({"status": "success", "user_info": user_info})
+
+
+# ── users/auth/api additions ──────────────────────────────────────────────────
+from datetime import datetime
+from werkzeug.security import check_password_hash
+
+# ── 1A.  Login-logs feed ─────────────────────────────────────────────────────
+@auth_bp.route("/api/v2/login_logs")
+@login_required
+def api_login_logs():
+    """
+    Return latest login attempts for the current user.
+      GET  /users/auth/api/v2/login_logs?limit=25
+    """
+    limit = int(request.args.get("limit", 20))
+    cursor = (mongo.login_logs
+                    .find({"user_id": current_user._id})
+                    .sort("timestamp", -1)
+                    .limit(limit))
+    logs = []
+    for row in cursor:
+        logs.append({
+            "time":   row["timestamp"].isoformat(),
+            "ip":     row.get("ip"),
+            "ua":     row.get("user_agent", "")[:120],
+            "ok":     row["success"],
+            "reason": row.get("reason", "")
+        })
+    return jsonify({"status": "success", "logs": logs})
+
+
+# ── 1B.  Change-password endpoint for Settings page ──────────────────────────
+@auth_bp.route("/api/v2/change_password", methods=["POST"])
+@login_required
+@sudo_required()
+def api_change_password():
+    """
+    JSON-only password change:
+    {
+      "current": "<current pw>",
+      "new":     "<new pw>",
+      "confirm": "<repeat>"
+    }
+    """
+    data = request.get_json(force=True)
+    cur, new, confirm = data.get("current"), data.get("new"), data.get("confirm")
+
+    if not all((cur, new, confirm)):
+        return jsonify({"status": "error",
+                        "message": _("Kaikki kentät ovat pakollisia.")}), 400
+    if new != confirm:
+        return jsonify({"status": "error",
+                        "message": _("Salasanat eivät täsmää.")}), 400
+    if not current_user.check_password(cur):
+        return jsonify({"status": "error",
+                        "message": _("Nykyinen salasana on väärä.")}), 400
+    password_is_strong, _password_error = is_strong_password(
+        new,
+        username=current_user.username,
+        email=current_user.email,
+    )
+    if not password_is_strong:
+        return jsonify({"status": "error",
+                        "message": _("Salasana ei täytä vaatimuksia.")}), 400
+
+    # actually change & log
+    current_user._change_password(new)
+    mongo.password_changes.insert_one({
+        "user_id": current_user._id,
+        "datetime": utcnow(),
+        "ip": get_client_ip(),
+        "user_agent": request.headers.get("User-Agent", ""),
+        "method": "settings_page",
+        "changed": True
+    })
+
+    # optional mail
+    try:
+        email_sender.queue_email(
+            template_name="auth/password_changed.html",
+            subject="Salasanasi on vaihdettu",
+            recipients=[current_user.email],
+            context={"user_name": current_user.displayname or current_user.username},
+        )
+    except Exception:
+        pass
+
+    return jsonify(
+        {"status": "success", "message": _("Salasana vaihdettu.")}
+    )

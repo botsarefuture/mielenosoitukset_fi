@@ -1,212 +1,496 @@
 {% extends 'base.html' %}
 
-{% block title %}Rekisteröidy{% endblock %}
+{% block title %}{{ _('Rekisteröidy') }}{% endblock %}
 
 {% block styles %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css', v='20261004-auth-trust-mobile-1') }}">
 {% endblock %}
 
 {% block content %}
 <div class="auth-wrapper">
+  <div class="auth-layout">
+    <aside class="auth-intro" aria-labelledby="register-intro-title">
+      <div>
+        <p class="auth-intro__eyebrow">Mielenosoitukset.fi</p>
+        <h1 id="register-intro-title">{{ _('Tervetuloa mukaan') }}</h1>
+        <p class="auth-intro__description">{{ _('Tilillä voit hallita ilmoituksiasi, seurata käsittelyä ja osallistua organisaatioiden toimintaan.') }}</p>
+      </div>
+      <ul class="auth-intro__points" aria-label="{{ _('Tilin edut') }}">
+        <li><i class="fa-solid fa-envelope-circle-check" aria-hidden="true"></i><span>{{ _('Vahvista sähköpostisi rekisteröitymisen jälkeen.') }}</span></li>
+        <li><i class="fa-solid fa-key" aria-hidden="true"></i><span>{{ _('Voit lisätä passkeyn turvallista kirjautumista varten tilin asetuksissa.') }}</span></li>
+      </ul>
+    </aside>
     <div class="auth-container">
         <div class="auth-header">
-            <div class="auth-icon">
-                <i class="fa-solid fa-user-plus"></i>
-            </div>
-            <h1>{{ _('Rekisteröidy') }}</h1>
-            <p class="auth-subtitle">{{ _('Luo uusi tili jatkaaksesi') }}</p>
+            <p class="auth-card__eyebrow">{{ _('Käyttäjätili') }}</p>
+            <h2>{{ _('Luo uusi tili') }}</h2>
+            <p class="auth-subtitle">{{ _('Täytä perustiedot ja valitse turvallinen salasana.') }}</p>
         </div>
 
+        <div id="error-message" class="hidden" role="alert"></div>
+
         <form id="register-form" action="{{ url_for('users.auth.register') }}" method="POST">
+
+            <section class="form-section" aria-labelledby="account-details-title">
+              <div class="form-section__header">
+                <h2 id="account-details-title">{{ _('Tilin tiedot') }}</h2>
+                <p>{{ _('Käyttäjänimi näkyy palvelussa. Sähköpostia käytetään tilin vahvistamiseen ja tärkeisiin viesteihin.') }}</p>
+              </div>
             <!-- Username -->
             <div class="form-group">
                 <label class="form-label" for="username">
-                    <i class="fa-solid fa-user"></i>
-                    {{ _('Käyttäjätunnus') }}
+                    <i class="fa-solid fa-user"></i>{{ _('Käyttäjätunnus') }}
                 </label>
                 <div class="form-input-wrapper">
                     <i class="fa-solid fa-user form-input-icon"></i>
-                    <input type="text" 
-                           id="username" 
-                           name="username" 
-                           required 
-                           minlength="3" 
-                           class="form-input"
-                           placeholder="{{ _('Syötä käyttäjätunnus') }}"
-                           autocomplete="username">
+                    <input type="text" id="username" name="username" required minlength="3" maxlength="30"
+                           pattern="[A-Za-z0-9](?:[A-Za-z0-9_-]*[A-Za-z0-9])?" class="form-input"
+                           placeholder="{{ _('Valitse käyttäjätunnus') }}" autocomplete="username">
                 </div>
-                <div id="username-status" class="password-match"></div>
+                <div id="username-status" class="password-match user-inline-status" aria-live="polite"></div>
+                <p class="form-hint user-field-hint--collapsible" id="sillyhint"><i class="fa-solid fa-circle-info"></i>{{ _('3–30 merkkiä; kirjaimia, numeroita, alaviivoja ja yhdysmerkkejä') }}</p>
             </div>
 
             <!-- Email -->
             <div class="form-group">
                 <label class="form-label" for="email">
-                    <i class="fa-solid fa-envelope"></i>
-                    {{ _('Sähköposti') }}
+                    <i class="fa-solid fa-envelope"></i>{{ _('Sähköposti') }}
                 </label>
                 <div class="form-input-wrapper">
                     <i class="fa-solid fa-envelope form-input-icon"></i>
-                    <input type="email" 
-                           id="email" 
-                           name="email" 
-                           required 
-                           class="form-input"
-                           placeholder="{{ _('Syötä sähköpostisi') }}"
-                           autocomplete="email">
+                    <input type="email" id="email" name="email" required class="form-input"
+                           placeholder="{{ _('nimi@esimerkki.fi') }}" autocomplete="email">
                 </div>
+                <p class="form-hint"><i class="fa-solid fa-circle-info"></i>{{ _('Käytämme sähköpostia tiliisi liittyvään viestintään') }}</p>
             </div>
+            </section>
 
+            <section class="form-section" aria-labelledby="password-details-title">
+              <div class="form-section__header">
+                <h2 id="password-details-title">{{ _('Suojaa tilisi') }}</h2>
+                <p>{{ _('Käytä vähintään 12 merkkiä ja kolmea eri merkkityyppiä.') }}</p>
+              </div>
             <!-- Password -->
             <div class="form-group">
                 <label class="form-label" for="password">
-                    <i class="fa-solid fa-lock"></i>
-                    {{ _('Salasana') }}
+                    <i class="fa-solid fa-lock"></i>{{ _('Salasana') }}
                 </label>
                 <div class="form-input-wrapper">
                     <i class="fa-solid fa-lock form-input-icon"></i>
-                    <input type="password" 
-                           id="password" 
-                           name="password" 
-                           required 
-                           minlength="12" 
-                           class="form-input"
-                           placeholder="{{ _('Syötä salasana') }}"
-                           autocomplete="new-password">
-                    <button type="button" 
-                            class="password-toggle" 
-                            onclick="togglePasswordField('password')"
-                            aria-label="{{ _('Näytä/piilota salasana') }}">
+                    <input type="password" id="password" name="password" required minlength="12" class="form-input"
+                           placeholder="{{ _('Luo vahva salasana') }}" autocomplete="new-password">
+                    <button type="button" class="password-toggle" id="password-toggle-button"
+                            aria-label="{{ _('Näytä salasana') }}" aria-pressed="false">
                         <i class="fa-solid fa-eye" id="password-toggle-icon"></i>
                     </button>
                 </div>
-                <div class="strength-meter">
-                    <div id="strength-fill" class="strength-meter-fill"></div>
-                </div>
-                <div id="pwd-now-missing" class="password-match"></div>
+                <div class="strength-meter"><div id="strength-fill" class="strength-meter-fill"></div></div>
+                <div id="pwd-now-missing" class="user-inline-status" aria-live="polite"></div>
             </div>
 
             <!-- Confirm Password -->
             <div class="form-group">
                 <label class="form-label" for="password_confirm">
-                    <i class="fa-solid fa-lock"></i>
-                    {{ _('Vahvista salasana') }}
+                    <i class="fa-solid fa-lock"></i>{{ _('Vahvista salasana') }}
                 </label>
                 <div class="form-input-wrapper">
                     <i class="fa-solid fa-lock form-input-icon"></i>
-                    <input type="password" 
-                           id="password_confirm" 
-                           name="password_confirm" 
-                           required 
-                           class="form-input"
-                           placeholder="{{ _('Vahvista salasana') }}"
-                           autocomplete="new-password">
-                    <button type="button" 
-                            class="password-toggle" 
-                            onclick="togglePasswordField('password_confirm')"
-                            aria-label="{{ _('Näytä/piilota salasana') }}">
+                    <input type="password" id="password_confirm" name="password_confirm" required class="form-input"
+                           placeholder="{{ _('Syötä salasana uudelleen') }}" autocomplete="new-password">
+                    <button type="button" class="password-toggle" id="password-confirm-toggle-button"
+                            aria-label="{{ _('Näytä salasana') }}" aria-pressed="false">
                         <i class="fa-solid fa-eye" id="password_confirm-toggle-icon"></i>
                     </button>
                 </div>
-                <div id="password-match-message" class="password-match">
-                    {{ _('Salasanat eivät täsmää') }}
+                <div id="password-match-message" class="password-match user-inline-status hidden" aria-live="polite">
+                    <i class="fa-solid fa-xmark"></i>
+                    <span>{{ _('Salasanat eivät täsmää') }}</span>
                 </div>
             </div>
 
-            <!-- Password requirements -->
+            <!-- Password Requirements -->
             <div class="password-requirements-container">
-                <p class="password-requirements">{{ _('Salasanan on täytettävä seuraavat vaatimukset:') }}</p>
+                <p>{{ _('Salasanan vaatimukset') }}</p>
                 <ul class="password-requirements">
-                    <li id="req-length">{{ _('Vähintään 12 merkkiä pitkä') }}</li>
-                    <li id="req-complex">{{ _('Sisältää vähintään 3 seuraavista: pieni kirjain, iso kirjain, numero, erikoismerkki') }}</li>
-                    <li id="req-no-username">{{ _('Ei saa sisältää käyttäjätunnusta tai sähköpostia') }}</li>
+                    <li id="req-length" class="invalid">{{ _('Vähintään 12 merkkiä pitkä') }}</li>
+                    <li id="req-categories" class="invalid">{{ _('Sisältää vähintään 3 seuraavista: pieni kirjain, iso kirjain, numero, erikoismerkki') }}</li>
+                    <li id="req-no-username" class="invalid">{{ _('Ei saa sisältää käyttäjätunnusta tai sähköpostia') }}</li>
                 </ul>
+                <details class="password-requirements-details">
+                  <summary>{{ _('Näytä merkkityyppien tilanne') }}</summary>
+                  <ul class="password-requirements password-requirements--details">
+                    <li id="req-lower" class="invalid">{{ _('Vähintään yksi pieni kirjain') }}</li>
+                    <li id="req-upper" class="invalid">{{ _('Vähintään yksi iso kirjain') }}</li>
+                    <li id="req-digit" class="invalid">{{ _('Vähintään yksi numero') }}</li>
+                    <li id="req-special" class="invalid">{{ _('Vähintään yksi erikoismerkki') }}</li>
+                  </ul>
+                </details>
             </div>
 
-            <button type="button" id="generate-password" class="btn btn-secondary mb-2">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>
-                {{ _('Luo salasana') }}
-            </button>
-            
-            <button type="submit" class="btn btn-primary">
-                <i class="fa-solid fa-user-plus"></i>
-                {{ _('Rekisteröidy') }}
-            </button>
+            <div class="auth-actions">
+              <button type="button" id="generate-password" class="btn btn-secondary">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>{{ _('Luo vahva salasana') }}
+              </button>
+              <button type="submit" class="btn btn-primary" id="submit-btn">
+                  <i class="fa-solid fa-user-plus"></i>{{ _('Luo tili') }}
+              </button>
+            </div>
+            </section>
         </form>
 
-        <div class="auth-divider">
-            <span>{{ _('tai') }}</span>
-        </div>
-
-        <div class="register-prompt">
+        <div class="auth-support">
             <p>{{ _('Onko sinulla jo tili?') }}</p>
-            <a href="{{ url_for('users.auth.login') }}" class="btn btn-secondary">
-                <i class="fa-solid fa-right-to-bracket"></i>
-                {{ _('Kirjaudu sisään') }}
-            </a>
+            <div class="auth-secondary-actions auth-secondary-actions--single">
+              <a href="{{ url_for('users.auth.login') }}" class="auth-secondary-action auth-secondary-action--secondary">{{ _('Kirjaudu sisään') }}</a>
+            </div>
+        </div>
+        <div class="auth-footer">
+            <p class="help-text"><i class="fa-solid fa-shield-halved"></i>{{ _('Luomalla tilin hyväksyt palvelumme käyttöehdot') }}</p>
         </div>
     </div>
+  </div>
 </div>
 
 <script>
-// Toggle individual password field visibility
-function togglePasswordField(fieldId) {
-    const input = document.getElementById(fieldId);
-    const icon = document.getElementById(fieldId + '-toggle-icon');
-    
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-    } else {
-        input.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
+document.addEventListener("DOMContentLoaded", () => {
+    const usernameInput = document.getElementById("username");
+    const emailInput = document.getElementById("email");
+    const usernameStatus = document.getElementById("username-status");
+    const passwordInput = document.getElementById("password");
+    const confirmInput = document.getElementById("password_confirm");
+    const strengthFill = document.getElementById("strength-fill");
+    const pwdNowMissing = document.getElementById("pwd-now-missing");
+    const matchMessage = document.getElementById("password-match-message");
+    const generateBtn = document.getElementById("generate-password");
+    const submitBtn = document.getElementById("submit-btn");
+    const errorDiv = document.getElementById("error-message");
+
+    const reqLength = document.getElementById("req-length");
+    const reqCategories = document.getElementById("req-categories");
+    const reqLower = document.getElementById("req-lower");
+    const reqUpper = document.getElementById("req-upper");
+    const reqDigit = document.getElementById("req-digit");
+    const reqSpecial = document.getElementById("req-special");
+    const reqNoUsername = document.getElementById("req-no-username");
+    const specialRegex = /[!@#$%^&*()\-\_=+\[\]{};:,.<>?]/;
+
+    const registerMessages = {
+        minLength: {{ _('Vähintään 12 merkkiä')|tojson }},
+        categories: {{ _('Sisältää vähintään 3 seuraavista: pieni kirjain, iso kirjain, numero, erikoismerkki')|tojson }},
+        noIdentity: {{ _('Ei saa sisältää käyttäjätunnusta tai sähköpostia')|tojson }},
+        requirementsComplete: {{ _('Kaikki vaatimukset täytetty!')|tojson }},
+        passwordsMismatch: {{ _('Salasanat eivät täsmää')|tojson }},
+        passwordsMatch: {{ _('Salasanat täsmäävät')|tojson }},
+        passwordGenerated: {{ _('Salasana luotu!')|tojson }},
+        generatePassword: {{ _('Luo vahva salasana')|tojson }},
+        usernameTooShort: {{ _('Käyttäjätunnus liian lyhyt')|tojson }},
+        checkingUsername: {{ _('Tarkistetaan saatavuutta…')|tojson }},
+        invalidUsername: {{ _('Käyttäjätunnus ei kelpaa')|tojson }},
+        usernameAvailable: {{ _('Käyttäjätunnus on vapaa')|tojson }},
+        usernameTaken: {{ _('Käyttäjätunnus on varattu')|tojson }},
+        usernameCheckFailed: {{ _('Tarkistuksessa tapahtui virhe')|tojson }},
+        correctErrors: {{ _('Korjaa virheet ennen kuin jatkat')|tojson }}
+    };
+
+    function statusContent(iconClass, message, { spin = false } = {}) {
+        const icon = document.createElement("i");
+        icon.classList.add("fa-solid", iconClass);
+        if (spin) icon.classList.add("fa-spin");
+        icon.setAttribute("aria-hidden", "true");
+        const text = document.createElement("span");
+        text.textContent = message;
+        return [icon, text];
     }
+
+    function showError(issues) {
+        errorDiv.className = "alert alert-error";
+        const icon = document.createElement("i");
+        icon.className = "fa-solid fa-triangle-exclamation";
+        icon.setAttribute("aria-hidden", "true");
+        const content = document.createElement("div");
+        const heading = document.createElement("strong");
+        heading.textContent = `${registerMessages.correctErrors}:`;
+        const list = document.createElement("ul");
+        issues.forEach((issue) => {
+            const item = document.createElement("li");
+            item.textContent = issue;
+            list.appendChild(item);
+        });
+        content.append(heading, list);
+        errorDiv.replaceChildren(icon, content);
+        errorDiv.classList.remove("hidden");
+        errorDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function hideError() {
+        errorDiv.classList.add("hidden");
+    }
+
+    // --- Password toggle ---
+    function setupToggle(inputId, buttonId, iconId) {
+        const input = document.getElementById(inputId);
+        const button = document.getElementById(buttonId);
+        const icon = document.getElementById(iconId);
+        if (!input || !button || !icon) return;
+        button.addEventListener("click", () => {
+            const showPassword = input.type === "password";
+            input.type = showPassword ? "text" : "password";
+            icon.classList.toggle("fa-eye");
+            icon.classList.toggle("fa-eye-slash");
+            button.setAttribute("aria-pressed", String(showPassword));
+            button.setAttribute("aria-label", showPassword ? {{ _('Piilota salasana')|tojson }} : {{ _('Näytä salasana')|tojson }});
+        });
+    }
+    setupToggle("password", "password-toggle-button", "password-toggle-icon");
+    setupToggle("password_confirm", "password-confirm-toggle-button", "password_confirm-toggle-icon");
+
+    // --- Password strength ---
+    function updateStrength() {
+        const pwd = passwordInput.value;
+        let score = 0;
+        if (pwd.length >= 12) score++;
+        if (/[a-z]/.test(pwd)) score++;
+        if (/[A-Z]/.test(pwd)) score++;
+        if (/\d/.test(pwd)) score++;
+        if (specialRegex.test(pwd)) score++;
+
+        if (score <= 2) {
+            strengthFill.className = "strength-meter-fill strength-weak";
+        } else if (score === 3) {
+            strengthFill.className = "strength-meter-fill strength-medium";
+        } else {
+            strengthFill.className = "strength-meter-fill strength-strong";
+        }
+    }
+
+    // --- Password requirements ---
+    function updateRequirements() {
+        const pwd = passwordInput.value;
+        const uname = usernameInput.value.trim().toLowerCase();
+        const email = emailInput.value.trim().toLowerCase();
+        let allValid = true;
+
+        // Length
+        if (pwd.length >= 12) reqLength.className = "valid"; else { reqLength.className = "invalid"; allValid=false; }
+        // The server accepts any three of these four character categories.
+        const categoryRequirements = [
+            [reqLower, /[a-z]/.test(pwd)],
+            [reqUpper, /[A-Z]/.test(pwd)],
+            [reqDigit, /\d/.test(pwd)],
+            [reqSpecial, specialRegex.test(pwd)]
+        ];
+        categoryRequirements.forEach(([element, met]) => {
+            element.className = met ? "valid" : "invalid";
+        });
+        const categoriesValid = categoryRequirements.filter(([, met]) => met).length >= 3;
+        reqCategories.className = categoriesValid ? "valid" : "invalid";
+        if (!categoriesValid) allValid = false;
+        // No username/email
+        const lowerPwd = pwd.toLowerCase();
+        const emailIdentity = email.includes("@") ? email.split("@", 1)[0] : email;
+        const includesIdentity =
+            (Boolean(uname) && lowerPwd.includes(uname)) ||
+            (Boolean(emailIdentity) && lowerPwd.includes(emailIdentity));
+        if (includesIdentity) { reqNoUsername.className="invalid"; allValid=false; }
+        else reqNoUsername.className="valid";
+
+        // Show missing
+        const missing = [];
+        if (reqLength.className==="invalid") missing.push(registerMessages.minLength);
+        if (!categoriesValid) missing.push(registerMessages.categories);
+        if (reqNoUsername.className==="invalid") missing.push(registerMessages.noIdentity);
+
+        if(missing.length===0){
+            pwdNowMissing.replaceChildren(
+                ...statusContent("fa-circle-check", registerMessages.requirementsComplete)
+            );
+            pwdNowMissing.classList.add("valid"); pwdNowMissing.classList.remove("invalid");
+        } else {
+            pwdNowMissing.replaceChildren(
+                ...statusContent("fa-circle-info", missing.join(", "))
+            );
+            pwdNowMissing.classList.add("invalid"); pwdNowMissing.classList.remove("valid");
+        }
+        return allValid;
+    }
+
+    // --- Password match ---
+    function checkMatch() {
+        const matchIcon = matchMessage.querySelector("i");
+        const matchText = matchMessage.querySelector("span");
+
+        if (!confirmInput.value) {
+            matchMessage.classList.add("hidden");
+            return false;
+        }
+        matchMessage.classList.remove("hidden");
+        if(passwordInput.value!==confirmInput.value){
+            matchIcon.className="fa-solid fa-xmark";
+            matchText.textContent=registerMessages.passwordsMismatch;
+            matchMessage.classList.remove("valid");
+            return false;
+        } else {
+            matchIcon.className="fa-solid fa-check";
+            matchText.textContent=registerMessages.passwordsMatch;
+            matchMessage.classList.add("valid");
+            return true;
+        }
+    }
+
+    // --- Generate password ---
+    function generatePassword(length=16){
+        const groups = [
+            "abcdefghijklmnopqrstuvwxyz",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            "0123456789",
+            "!@#$%^&*()-_=+[]{};:,.<>?"
+        ];
+        const chars = groups.join("");
+        const randomIndex = (limit) => crypto.getRandomValues(new Uint32Array(1))[0] % limit;
+        const password = groups.map((group) => group[randomIndex(group.length)]);
+        while (password.length < length) password.push(chars[randomIndex(chars.length)]);
+        for (let index = password.length - 1; index > 0; index--) {
+            const swapIndex = randomIndex(index + 1);
+            [password[index], password[swapIndex]] = [password[swapIndex], password[index]];
+        }
+        return password.join("");
+    }
+
+    generateBtn.addEventListener("click", ()=>{
+        const pwd = generatePassword();
+        passwordInput.value = confirmInput.value = pwd;
+        updateStrength(); updateRequirements(); checkMatch();
+        generateBtn.replaceChildren(
+            ...statusContent("fa-check", registerMessages.passwordGenerated)
+        );
+        generateBtn.classList.add("loading");
+        setTimeout(()=>{
+            generateBtn.replaceChildren(
+                ...statusContent("fa-wand-magic-sparkles", registerMessages.generatePassword)
+            );
+            generateBtn.classList.remove("loading");
+        },2000);
+    });// --- Username availability (debounced) ---
+let unameTimeout;
+const sillyhint = document.getElementById("sillyhint");
+
+const USERNAME_STATE = {
+    INVALID: "invalid",
+    CHECKING: "checking",
+    AVAILABLE: "available",
+    TAKEN: "taken",
+    ERROR: "error"
+};
+
+let usernameState = USERNAME_STATE.INVALID;
+let lastCheckValue = "";
+
+function setUsernameStatus(state, message, iconClass, { spin = false } = {}) {
+    usernameState = state;
+    usernameStatus.className = `password-match user-inline-status user-inline-status--${state}`;
+    usernameStatus.replaceChildren(
+        ...statusContent(iconClass, message, { spin })
+    );
 }
 
-// Toggle all password fields (legacy function for compatibility)
-function togglePassword() {
-    ['password', 'password_confirm'].forEach(id => {
-        togglePasswordField(id);
-    });
-}
+usernameInput.addEventListener("input", () => {
+    clearTimeout(unameTimeout);
+    const uname = usernameInput.value.trim();
 
-// Add smooth animations on form submission
-document.getElementById('register-form').addEventListener('submit', function(e) {
-    const submitBtn = this.querySelector('button[type="submit"]');
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
+    // Show/hide hint with fade
+    if (uname.length < 3) {
+        lastCheckValue = ""; // prevent stale availability responses from overwriting INVALID state
+        sillyhint.classList.remove("hidden"); // show hint
+        setUsernameStatus(
+            USERNAME_STATE.INVALID,
+            registerMessages.usernameTooShort,
+            "fa-circle-xmark"
+        );
+        return; // don’t check availability yet
+    } else {
+        sillyhint.classList.add("hidden"); // fade out hint
+        setUsernameStatus(
+            USERNAME_STATE.CHECKING,
+            registerMessages.checkingUsername,
+            "fa-spinner",
+            { spin: true }
+        );
+    }
+
+    // Debounced availability check
+    unameTimeout = setTimeout(async () => {
+        lastCheckValue = uname;
+        try {
+            const resp = await fetch(`/users/auth/api/username_free?username=${encodeURIComponent(uname)}`);
+            const data = await resp.json();
+            const currentUname = usernameInput.value.trim();
+            if (uname !== lastCheckValue || currentUname.length < 3 || currentUname !== uname) return; // ignore stale response or cleared input
+
+            if (!resp.ok || data.error) {
+                setUsernameStatus(
+                    USERNAME_STATE.INVALID,
+                    data.error || registerMessages.invalidUsername,
+                    "fa-circle-xmark"
+                );
+            } else if (data.available) {
+                setUsernameStatus(
+                    USERNAME_STATE.AVAILABLE,
+                    registerMessages.usernameAvailable,
+                    "fa-circle-check"
+                );
+            } else {
+                setUsernameStatus(
+                    USERNAME_STATE.TAKEN,
+                    registerMessages.usernameTaken,
+                    "fa-circle-xmark"
+                );
+            }
+        } catch {
+            setUsernameStatus(
+                USERNAME_STATE.ERROR,
+                registerMessages.usernameCheckFailed,
+                "fa-triangle-exclamation"
+            );
+        }
+    }, 500);
+
+    updateRequirements();
 });
 
-// Focus on first input on page load
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('username').focus();
-});
 
-// Add shake animation on invalid input
-document.querySelectorAll('.form-input').forEach(input => {
-    input.addEventListener('invalid', function() {
-        this.classList.add('error');
-        this.parentElement.style.animation = 'shake 0.5s';
-        setTimeout(() => {
-            this.classList.remove('error');
-            this.parentElement.style.animation = '';
-        }, 500);
-    });
-});
+    // --- Input events ---
+    passwordInput.addEventListener("input", ()=>{ updateStrength(); updateRequirements(); checkMatch(); });
+    confirmInput.addEventListener("input", checkMatch);
+    emailInput.addEventListener("input", updateRequirements);
 
-// Remove error class on input
-document.querySelectorAll('.form-input').forEach(input => {
-    input.addEventListener('input', function() {
-        this.classList.remove('error');
+    // --- Form submission ---
+    document.getElementById("register-form").addEventListener("submit", e=>{
+        hideError();
+
+        const requirementsMet = updateRequirements();
+        const passwordsMatch = checkMatch();
+        const unameInvalid = usernameState === USERNAME_STATE.INVALID;
+        const unameTaken = usernameState === USERNAME_STATE.TAKEN;
+        const unameChecking = usernameState === USERNAME_STATE.CHECKING;
+        const unameError = usernameState === USERNAME_STATE.ERROR;
+
+        if(!requirementsMet || !passwordsMatch || unameTaken || unameInvalid || unameChecking || unameError){
+            e.preventDefault();
+            const issues=[];
+            if(!requirementsMet) issues.push("{{ _('Salasanavaatimukset eivät täyty') }}");
+            if(!passwordsMatch) issues.push("{{ _('Salasanat eivät täsmää') }}");
+            if(unameInvalid) issues.push("{{ _('Käyttäjätunnuksen täytyy olla vähintään 3 merkkiä') }}");
+            if(unameChecking) issues.push("{{ _('Käyttäjätunnuksen saatavuutta tarkistetaan') }}");
+            if(unameTaken) issues.push("{{ _('Käyttäjätunnus on varattu') }}");
+            if(unameError) issues.push("{{ _('Käyttäjätunnuksen tarkistuksessa tapahtui virhe, yritä uudelleen') }}");
+
+            showError(issues);
+            return false;
+        }
+
+        submitBtn.classList.add("loading"); submitBtn.disabled=true;
     });
+
 });
 </script>
-
-<!-- Keep your existing JS for strength, matching, username check, generate password -->
-<script src="{{ url_for('static', filename='js/register.js') }}"></script>
 {% endblock %}

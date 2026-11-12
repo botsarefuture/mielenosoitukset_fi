@@ -1,15 +1,46 @@
 <!DOCTYPE html>
-<html lang="{{ session.get('locale', 'fi') }}" class="dark">
+{% set current_locale = session.get('locale') %}
+<html lang="{{ current_locale if current_locale in get_supported_locales() else 'fi' }}">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn2.mielenosoitukset.fi" crossorigin>
+  {% block body_font_styles %}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  {% endblock %}
+
+  <!-- Apply the theme before first paint to avoid a dark/light flash.
+       Mirrors static/js/theme.js (saved pref -> cached user pref -> system). -->
+  <script>
+    (function () {
+      let theme = null;
+      try { theme = localStorage.getItem('theme'); } catch (e) {}
+      if (!theme) {
+        try {
+          const user = JSON.parse(localStorage.getItem('current_user') || 'null');
+          if (user && typeof user.dark_mode === 'boolean') theme = user.dark_mode ? 'dark' : 'light';
+        } catch (e) {}
+      }
+      if (!theme) theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      const root = document.documentElement;
+      root.classList.add('js');
+      root.classList.toggle('dark', theme === 'dark');
+      root.classList.toggle('light', theme !== 'dark');
+    })();
+  </script>
+
+  <link rel="alternate" type="application/rss+xml" title="Mielenosoitukset.fi: RSS" href="{{ url_for('demonstrations_rss', _external=True) }}">
+
   <!-- Primary Meta Tags -->
   <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
-  <meta name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa." />
+  <meta name="description" content="{% block meta_description %}Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa.{% endblock %}" />
   <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
-  <meta name="robots" content="index, follow" />
+  {% block robots %}<meta name="robots" content="index, follow" />{% endblock %}
+  {% block canonical %}{% endblock %}
   <meta name="author" content="Mielenosoitukset.fi" />
   <meta name="theme-color" content="#007bff" />
 
@@ -32,7 +63,7 @@
   <meta property="og:description"
     content="{% block og_description %}Tietoa mielenosoituksista Suomessa.{% endblock %}" />
   <meta property="og:image" content="{% block og_image %}/static/images/og-default.jpg{% endblock %}" />
-  <meta property="og:url" content="{{ request.url }}" />
+  <meta property="og:url" content="{% block og_url %}{{ request.base_url }}{% endblock %}" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Mielenosoitukset.fi" />
   <meta property="og:locale" content="{{ session.get('locale', 'fi') }}_FI" />
@@ -63,97 +94,357 @@
 
   {% block meta %}{% endblock %}
 
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-  {% block styles %}{% endblock %}
+  <!-- Stylesheets (non-blocking where safe) -->
+  <!-- Preload critical CSS then apply via onload; provide noscript fallback for browsers without JS -->
+  <link rel="preload" href="{{ url_for('static', filename='css/style.css', v='20261015-heading-1') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20261015-heading-1') }}"></noscript>
+  <!-- Font-awesome: preload then stylesheet -->
+  <link rel="preload" href="{{ url_for('static', filename='fa/css/all.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}"></noscript>
 
-  <!-- Scripts -->
-  <script src="{{ url_for('static', filename='js/matomo.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+  <!-- External vendor CSS: preload + onload to avoid blocking. Keep a noscript fallback. -->
+  <link rel="preload" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" as="style" crossorigin onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" crossorigin></noscript>
+
+  <style>
+    /* Global modal overrides: center & ensure on top */
+    .modal.show {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal,
+    .modal.fade {
+      z-index: 20000;
+    }
+    .modal-backdrop {
+      z-index: 19999;
+    }
+    .modal-dialog {
+      margin: 0;
+    }
+  </style>
+
+  {% block styles %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/product-tokens.css', v='20261110-pride-contrast-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20261110-user-workspace-7') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/public-header.css', v='20261027-react-header-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css', v='20260928-campaign-feedback-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/public_hero.css', v='20261015-hero-width-1') }}">
+
+  <!-- Scripts moved to the end of the document and loaded with defer/async where appropriate to avoid blocking render -->
 
 </head>
 
 
 <body>
-  <!-- Top Announcement Banner -->
-   <!--
-<div id="top-banner" style="
+ <!--<div id="top-banner" class="top-banner">
+  <div class="banner-content">
+    <i class="fas fa-bullhorn banner-icon"></i>
+    <span class="banner-text">
+      Meillä on käynnissä mesenaattikampanja, rahoita tulevaa markkinointikampanjaamme jo tänään!
+    </span>
+    <div class="banner-buttons">
+      <a href="https://mesenaatti.me/4046/" class="banner-link banner-link-primary" target="_blank" rel="noopener noreferrer">
+        <i class="fas fa-heart"></i>
+        Rahoita kampanjaa
+        <i class="fas fa-external-link-alt"></i>
+      </a>
+      <a href="/kampanja/" class="banner-link banner-link-secondary">
+        <i class="fas fa-info-circle"></i>
+        Lisätietoja kampanjasta
+      </a>
+    </div>
+  </div>
+  <button id="top-banner-close" class="banner-close" aria-label="Sulje ilmoitus">
+    <i class="fas fa-times"></i>
+  </button>
+</div>
+
+<style>
+.top-banner {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: var(--color-primary);
-  color: #fff;
-  font-weight: 600;
-  padding: 0.8em 1em;
-  text-align: center;
-  font-size: 1em;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+  color: #ffffff;
+  padding: 1rem 1.5rem;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 2000;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-">
-  <span>
-    Markkinointikampanjamme alkaa 1.3.2026 – <a href="{{ url_for('campaign.index') }}" style="color:#fff; text-decoration: underline; font-weight:700;">Tutustu kampanjaan täällä</a>
-  </span>
-  <button id="top-banner-close" style="
-    margin-left: 1em;
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 1.2em;
-    cursor: pointer;
-  ">&times;</button>
-</div>
--->
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.banner-icon {
+  font-size: 1.25rem;
+  color: #ffffff;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+.banner-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.banner-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.banner-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.banner-link-primary {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.banner-link-primary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.banner-link-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.banner-link-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.banner-link:active {
+  transform: translateY(0);
+}
+
+.banner-link i:first-child {
+  font-size: 0.9rem;
+}
+
+.banner-link i:last-child {
+  font-size: 0.7rem;
+  transition: transform 0.3s ease;
+}
+
+.banner-link-primary:hover i:last-child {
+  transform: translate(2px, -2px);
+}
+
+.banner-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+.banner-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+.banner-close:active {
+  transform: rotate(90deg) scale(0.95);
+}
+
+.banner-close i {
+  font-size: 1.1rem;
+}
+
+/* Body padding adjustment */
+body {
+  padding-top: 70px !important;
+  transition: padding-top 0.3s ease;
+}
+
+body.banner-closed {
+  padding-top: 0 !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .top-banner {
+    padding: 0.875rem 1rem;
+  }
+
+  .top-banner .banner-icon {
+    margin: auto;
+  }
+  
+  .banner-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .banner-text {
+    font-size: 0.875rem;
+  }
+  
+  .banner-buttons {
+    width: 100%;
+  }
+  
+  .banner-link {
+    flex: 1;
+    justify-content: center;
+    font-size: 0.875rem;
+  }
+  
+  .banner-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 28px;
+    height: 28px;
+  }
+  
+  body {
+    padding-top: 110px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .banner-icon {
+    display: none;
+  }
+  
+  .banner-text {
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  
+  .banner-buttons {
+    flex-direction: column;
+  }
+  
+  .banner-link {
+    width: 100%;
+  }
+  
+  body {
+    padding-top: 140px !important;
+  }
+}
+
+/* Adjustment for flash messages */
+.top-banner.has-flash {
+  position: relative;
+  top: auto;
+}
+</style>-->
 
 <script>
-  // Sulje top banner
-document.getElementById('top-banner-close').addEventListener('click', function() {
-  document.getElementById('top-banner').style.display = 'none';
-  document.body.style.paddingTop = "0px";  // <- poistaa ylimääräisen paddingin
-});
-
-
-  // Puske yläbanneri alas, kun flash messages näkyy
+(function() {
+  /*const banner = document.getElementById('top-banner');
+  const closeBtn = document.getElementById('top-banner-close');
+  
+  // Check if banner was previously closed
+  const bannerClosed = sessionStorage.getItem('topBannerClosed');
+  if (bannerClosed === 'true') {
+    banner.style.display = 'none';
+    document.body.classList.add('banner-closed');
+  }
+  
+  // Close banner handler
+  closeBtn.addEventListener('click', function() {
+    banner.style.animation = 'slideUp 0.3s ease-out';
+    
+    setTimeout(() => {
+      banner.style.display = 'none';
+      document.body.classList.add('banner-closed');
+      sessionStorage.setItem('topBannerClosed', 'true');
+    }, 300);
+  });
+  
+  // Adjust for flash messages
   window.addEventListener('load', function() {
-    const banner = document.getElementById('top-banner');
     const flash = document.getElementById('flash-messages');
-    if(flash && flash.style.display !== 'none') {
+    if (flash && flash.offsetHeight > 0) {
+      banner.classList.add('has-flash');
       banner.style.top = flash.offsetHeight + 'px';
     }
-  });
-
-  document.logged_in = Boolean("{{ current_user.is_authenticated }}");
-
-</script>
-<script>
-    document.logged_in = {{ "true" if current_user.is_authenticated else "false" }};
+  });*/
+  
+  // Set logged in status (if needed)
+  document.logged_in = {{ (current_user.is_authenticated or False) | tojson }};
+})();
 </script>
 
 <style>
-  /* Siirrä main content alas bannerin alle */
-  body {
-    padding-top: 50px; /* Muokkaa tarvittaessa bannerin korkeuden mukaan */
+@keyframes slideUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
   }
-
-  @media (max-width: 600px) {
-    #top-banner { font-size: 0.9em; padding: 0.6em 0.8em; }
-    body { padding-top: 60px; }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
   }
+}
 </style>
-
-  <!-- Scrolling Marquee Message Section -->
-  <div class="marquee" style="display: none"></div>
-
   <!-- Navigation Bar -->
   {% include "header.html" %}
 
@@ -161,123 +452,133 @@ document.getElementById('top-banner-close').addEventListener('click', function()
   {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
   <div id="flash-messages" class="flash-messages">
-    <ul id="flash-message-list">
-      {% for category, message in messages %}
-      <li>
-        <div class="{{ category }}">
-          <button class="flash-close"><i class="fas fa-times"></i></button>
-          {{ message }}
-        </div>
-      </li>
-      {% endfor %}
-    </ul>
+    {% for category, message in messages %}
+    <div class="flash-message flash-{{ category }}" data-category="{{ category }}">
+      <div class="flash-icon">
+        {% if category in ['success'] %}
+        <i class="fa-solid fa-circle-check"></i>
+        {% elif category in ['error', 'danger'] %}
+        <i class="fa-solid fa-circle-exclamation"></i>
+        {% elif category in ['warning'] %}
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        {% elif category in ['info'] %}
+        <i class="fa-solid fa-circle-info"></i>
+        {% else %}
+        <i class="fa-solid fa-bell"></i>
+        {% endif %}
+      </div>
+      <div class="flash-content">
+        <div class="flash-text">{{ message }}</div>
+      </div>
+      <button class="flash-close" type="button" aria-label="{{ _('Sulje ilmoitus') }}">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="flash-progress"></div>
+    </div>
+    {% endfor %}
   </div>
   {% endif %}
   {% endwith %}
 
-  <!-- Inline Flash Messages Styles -->
-  <style>
-    .flash-messages {
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      padding: 1rem;
-      background-color: #f8d7da;
-      color: #721c24;
-      text-align: center;
-    }
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const flashMessages = document.querySelectorAll('.flash-message');
 
-    .flash-messages ul {
-      list-style-type: none;
-      padding: 0;
-    }
+      // if no flash messages hide the container
+      if (flashMessages.length === 0) {
+        const container = document.querySelector('.flash-messages');
+        if (container) container.style.display = 'none';
+        return;
+      }
 
-    .flash-messages li {
-      margin-bottom: 0.5rem;
-    }
+      // add listener so that if a flash appears inside the flash-messages container it becomes   visible
+      
 
-    .flash-messages .error,
-    .flash-messages .danger {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
+      flashMessages.forEach((message, index) => {
+        const progressBar = message.querySelector('.flash-progress');
+        const closeButton = message.querySelector('.flash-close');
 
-    .flash-messages .info {
-      background-color: #d1ecf1;
-      color: #0c5460;
-    }
+        let isHovered = false;
+        let animationEnded = false;
 
-    .flash-messages .success {
-      background-color: #d4edda;
-      color: #155724;
-    }
+        // Helper to actually remove the message with the outgoing animation
+        function removeMessage() {
+          if (!message || message.classList.contains('removing')) return;
+          message.classList.add('removing');
+          setTimeout(() => {
+            message.remove();
+            const container = document.querySelector('.flash-messages');
+            if (container && container.children.length === 0) container.remove();
+          }, 400); // match your slideOutRight duration
+        }
 
-    .flash-messages .warning {
-      background-color: #fff3cd;
-      color: #856404;
-    }
+        // Wire manual close button
+        if (closeButton) {
+          closeButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            removeMessage();
+          });
+        }
 
-    .flash-messages .flash-close {
-      background: none;
-      border: none;
-      color: inherit;
-      font-size: 1rem;
-      cursor: pointer;
-      position: absolute;
-      top: 0;
-      right: 0;
-      padding: 0.5rem;
-    }
+        // Hover behavior: pause/resume the progress animation and prevent removal while hovered
+        message.addEventListener('mouseenter', () => {
+          isHovered = true;
+          if (progressBar) progressBar.style.animationPlayState = 'paused';
+        });
 
-    .footer-links a:hover,
-    .social-media-links a:hover {
-      background: var(--primary_button_hover_color);
-      padding: 0.5em;
-      border-radius: 0.5em;
-    }
+        message.addEventListener('mouseleave', () => {
+          isHovered = false;
+          if (progressBar) progressBar.style.animationPlayState = 'running';
+          // If animation already ended while hovered, now we can remove
+          if (animationEnded && !isHovered) removeMessage();
+        });
 
-    .flash-messages .flash-close {
-      background: red;
-      height: 32px;
-      width: 32px;
-      line-height: 16px;
-      border-radius: 50%;
-    }
+        if (progressBar) {
+          // Ensure the progress animation is present and staggered
+          // Use inline delay so each message ends at (5000ms + index*500ms)
+          // Keep the CSS animation name/duration defined in your stylesheet (shrink 5s ...)
+          // here we only set the delay and ensure it runs.
+          progressBar.style.animationDelay = `${index * 500}ms`;
+          // Make sure animation is running (in case it's paused by default in CSS)
+          progressBar.style.animationPlayState = 'running';
 
-    .flash-messages {
-      background-color: unset;
-    }
+          // When progress finishes -> mark ended and remove if not hovered
+          const onAnimEnd = (ev) => {
+            // Only consider the intended animation (name may vary by browser)
+            animationEnded = true;
+            if (!isHovered) removeMessage();
+            // cleanup listener
+            progressBar.removeEventListener('animationend', onAnimEnd);
+          };
 
-    #flash-messages {
-      gap: 30px;
-      flex-direction: column;
-      gap: 20px;
-    }
+          progressBar.addEventListener('animationend', onAnimEnd, { once: true });
+        } else {
+          // Fallback if no progress bar exists: use a timeout similar to previous behavior
+          // Note: this fallback won't be pausable during hover (CSS-based progress is preferred)
+          const fallbackDelay = 5000 + (index * 500);
+          let fallbackTimeout = setTimeout(() => {
+            if (!isHovered) removeMessage();
+            else {
+              // if hovered when timeout fires, poll until mouse leaves
+              const checkLeave = () => {
+                if (!isHovered) removeMessage();
+                else setTimeout(checkLeave, 250);
+              };
+              checkLeave();
+            }
+          }, fallbackDelay);
 
-    #flash-messages ul {
-      display: inherit;
-      flex-direction: column;
-      gap: 10px;
-    }
+          // Clear if user hovers before the timeout fires to avoid double-runs
+          message.addEventListener('mouseenter', () => clearTimeout(fallbackTimeout));
+        }
+      });
+    });
+  </script>
 
-    #flash-messages div {
-      width: 100%;
-      padding: 1rem;
-    }
-
-    .flash-close:hover {
-      background: darkred;
-    }
-
-    * {
-      box-sizing: border-box;
-      /* ADDED to ensure consistent box-sizing */
-    }
-  </style>
+  <!--{% include "update_notice.html" %}-->
 
   <!-- Main Content Area -->
-  <main class="container-main-content">
+  <main class="container-main-content {% block main_class %}{% endblock %}" id="main-content">
     {% block content %}
     <!-- The content from child templates will be injected here -->
     {% endblock %}
@@ -294,46 +595,49 @@ document.getElementById('top-banner-close').addEventListener('click', function()
   {% endif %}
 
   <!-- Footer -->
-  <footer class="footer">
-    <div class="container-header-footer">
-      <p style="color: var(--secondary_color);">&copy; 2025 Mielenosoitukset.fi - {{ _('Kaikki oikeudet pidätetään.') }}
-      </p>
-      <ul class="footer-links">
+  <footer class="footer public-site-footer">
+    <div class="container-header-footer public-site-footer__inner">
+      <p class="public-site-footer__brand">&copy; 2026 Mielenosoitukset.fi · {{ _('Kaikki oikeudet pidätetään.') }}</p>
+      <nav aria-label="{{ _('Sivuston alatunniste') }}">
+      <ul class="footer-links public-site-footer__links">
         <li><a href="{{ url_for('info') }}">{{ _('Tietoa sivustosta') }}</a></li>
-        |
         <li><a href="{{ url_for('privacy') }}">{{ _('Tietosuojaseloste') }}</a></li>
-        |
         <li><a href="{{ url_for('contact') }}">{{ _('Ota yhteyttä') }}</a></li>
+        <li><a href="{{ url_for('public_guides') }}">{{ _('Ohjeet') }}</a></li>
+        <li><a href="{{ url_for('developer.dashboard') }}">{{ _('Kehittäjille') }}</a></li>
       </ul>
-      <ul class="social-media-links">
+      </nav>
+      <ul class="social-media-links public-site-footer__social" aria-label="{{ _('Mielenosoitukset.fi sosiaalisessa mediassa') }}">
         <li>
-          <a href="https://www.instagram.com/mielenosoitukset" target="_blank">
-            <i class="fab fa-instagram"></i> Instagram
+          <a href="https://www.instagram.com/mielenosoitukset" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-instagram" aria-hidden="true"></i> Instagram
           </a>
         </li>
         <li>
-          <a href="https://www.facebook.com/mielenosoitukset" target="_blank">
-            <i class="fab fa-facebook"></i> Facebook
+          <a href="https://www.facebook.com/mielenosoitukset" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-facebook" aria-hidden="true"></i> Facebook
           </a>
         </li>
         <li>
-          <a href="https://www.tiktok.com/@mielenosoitukset" target="_blank">
-            <i class="fab fa-tiktok"></i> TikTok
+          <a href="https://www.tiktok.com/@mielenosoitukset" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-tiktok" aria-hidden="true"></i> TikTok
+          </a>
+        </li>
+        <li>
+          <a href="https://mastodon.social/@mielenosoitukset" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-mastodon" aria-hidden="true"></i> Mastodon
           </a>
         </li>
 
       </ul>
       <!-- Authentication Links -->
-      <ul class="footer-links">
-        <div class="auth-buttons">
-          {% if not current_user.is_authenticated %}
-          <li><a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
-          <li><a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a></li>
-          {% else %}
-          <li><a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a></li>
-          {% endif %}
-        </div>
-
+      <ul class="footer-links auth-buttons public-site-footer__auth" aria-label="{{ _('Käyttäjätili') }}">
+        {% if not current_user.is_authenticated %}
+        <li><a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
+        <li><a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a></li>
+        {% else %}
+        <li><a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a></li>
+        {% endif %}
       </ul>
 
     </div>
@@ -341,19 +645,14 @@ document.getElementById('top-banner-close').addEventListener('click', function()
 
   <!-- Scripts -->
   <script>
-    document.querySelector(".dropdown-toggle").addEventListener("click", function (event) {
-      event.preventDefault();
-      const dropdownMenu = this.nextElementSibling;
-      const isOpen = dropdownMenu.classList.toggle("show");
-      this.setAttribute("aria-expanded", isOpen);
-    });
-
-    window.addEventListener("click", function (event) {
-      const dropdowns = document.querySelectorAll(".dropdown-menu");
-      dropdowns.forEach(function (dropdown) {
-        if (!dropdown.parentElement.contains(event.target)) {
-          dropdown.classList.remove("show");
-        }
+    // Generic dropdown helper for any template that uses `.dropdown-toggle`.
+    document.querySelectorAll(".dropdown-toggle").forEach(function (toggle) {
+      toggle.addEventListener("click", function (event) {
+        event.preventDefault();
+        const dropdownMenu = toggle.nextElementSibling;
+        if (!dropdownMenu || !dropdownMenu.classList) return;
+        const isOpen = dropdownMenu.classList.toggle("show");
+        toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
       });
     });
   </script>
@@ -365,39 +664,100 @@ document.getElementById('top-banner-close').addEventListener('click', function()
      * Parameters
      * ----------
      * category : str
-     *     The flash message category.
+     *     The flash message category (success, error, warning, info, ...).
      * message : str
      *     The message to display.
      */
     function displayFlashMessage(category, message) {
-      const flashMessages = document.getElementById("flash-messages");
-      const messageList = document.getElementById("flash-message-list");
+      let container = document.getElementById("flash-messages");
+      if (!container) {
+        container = document.createElement("div");
+        container.id = "flash-messages";
+        container.className = "flash-messages";
+        document.body.appendChild(container);
+      }
 
-      const newMessage = document.createElement("li");
-      newMessage.className = `flash-${category}`;
-      newMessage.textContent = message;
+      const messageEl = document.createElement("div");
+      messageEl.className = `flash-message flash-${category}`;
+      messageEl.setAttribute("data-category", category);
 
-      messageList.appendChild(newMessage);
-      flashMessages.style.display = "block";
+      const icon = document.createElement("div");
+      icon.className = "flash-icon";
+      const iconEl = document.createElement("i");
+      iconEl.setAttribute("aria-hidden", "true");
+      const iconMap = {
+        success: "fa-circle-check",
+        error: "fa-circle-exclamation",
+        danger: "fa-circle-exclamation",
+        warning: "fa-triangle-exclamation",
+        info: "fa-circle-info",
+      };
+      iconEl.className = `fa-solid ${iconMap[category] || "fa-bell"}`;
+      icon.appendChild(iconEl);
 
-      setTimeout(() => {
-        newMessage.remove();
-        if (messageList.childElementCount === 0) {
-          flashMessages.style.display = "none";
-        }
-      }, 10000);
+      const content = document.createElement("div");
+      content.className = "flash-content";
+      const text = document.createElement("div");
+      text.className = "flash-text";
+      text.textContent = message;
+      content.appendChild(text);
+
+      const progress = document.createElement("div");
+      progress.className = "flash-progress";
+
+      messageEl.appendChild(icon);
+      messageEl.appendChild(content);
+      messageEl.appendChild(progress);
+      container.appendChild(messageEl);
+      container.style.display = "flex";
+
+      const remove = () => {
+        if (messageEl.classList.contains("removing")) return;
+        messageEl.classList.add("removing");
+        setTimeout(() => {
+          messageEl.remove();
+          if (container.querySelectorAll(".flash-message").length === 0) {
+            container.remove();
+          }
+        }, 400);
+      };
+
+      setTimeout(remove, 10000);
+      messageEl.addEventListener("click", (event) => {
+        if (event.target.closest(".flash-close")) remove();
+      });
     }
   </script>
 
-  <script>
+  <!-- WE DO NOT KNOW WHAT THIS DOES -->
+  <!--
+<script>
     $(document).ready(function () {
       $(".flash-close").click(function () {
         $(this).parent().parent().hide();
       });
     });
   </script>
+-->
 
-  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <!-- Vendor scripts (deferred to avoid blocking initial render) -->
+  {% if config.get('MATOMO_ENABLED', true) %}
+  {# Legacy client-side Matomo tracker. Built-in server-side analytics now cover basic pageviews; disable MATOMO_ENABLED in config to stop double-counting. #}
+  <script src="{{ url_for('static', filename='js/matomo.js') }}" async></script>
+  {% endif %}
+  {% if config.get('SITE_ANALYTICS_ENABLED', true)
+        and not request.path.startswith('/admin')
+        and not request.path.startswith('/users')
+        and not request.path.startswith('/board')
+        and not request.path.startswith('/developer') %}
+  {# Pinned first-party Web Vitals plus anonymous aggregate analytics beacons; pageviews are recorded server-side. #}
+  <script src="https://cdn2.mielenosoitukset.fi/vendor/web-vitals/6.2.2/web-vitals.iife.js" integrity="sha256-Hl6bmva41xz+9QjlqGnFO0zyu8ytjJtaxmTDTpP2FRo=" defer crossorigin="anonymous"></script>
+  <script src="{{ url_for('static', filename='js/site_analytics.js') }}" defer></script>
+  {% endif %}
+  <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}" defer></script>
+  <script src="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.bundle.min.js" defer crossorigin></script>
+
+  <script src="{{ url_for('static', filename='js/theme.js', v='20261003-theme-1') }}"></script>
   <script>
     function toggleNavbar() {
       const nav_links = document.querySelector('.nav-links');
@@ -405,52 +765,49 @@ document.getElementById('top-banner-close').addEventListener('click', function()
     }
   </script>
 
-    <script>
-document.addEventListener("DOMContentLoaded", () => {
-  {% if current_user.is_authenticated %}
-  async function fetchAndStoreUserInfo() {
-    // Only fetch if not already in localStorage
-    if (!localStorage.getItem("current_user")) {
-      try {
-        const res = await fetch("/users/auth/api/v1/user_info", {
-          credentials: "include", // sends session cookie
-        });
-        if (!res.ok) throw new Error("Failed to fetch user info");
-        const data = await res.json();
-        if (data.status === "success" && data.user_info) {
-          localStorage.setItem("current_user", JSON.stringify(data.user_info));
-          console.log("User info loaded into localStorage ✅");
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      {% if current_user.is_authenticated %}
+      async function fetchAndStoreUserInfo() {
+        // Only fetch if not already in localStorage
+        if (!localStorage.getItem("current_user")) {
+          try {
+            const res = await fetch("/users/auth/api/v1/user_info", {
+              credentials: "include", // sends session cookie
+            });
+            if (!res.ok) throw new Error("Failed to fetch user info");
+            const data = await res.json();
+            if (data.status === "success" && data.user_info) {
+              localStorage.setItem("current_user", JSON.stringify(data.user_info));
+              console.log("User info loaded into localStorage ✅");
+            }
+          } catch (err) {
+            console.warn("Could not load user info:", err);
+          }
+        } else {
+          console.log("User info already in localStorage, skipping fetch.");
         }
-      } catch (err) {
-        console.warn("Could not load user info:", err);
       }
-    } else {
-      console.log("User info already in localStorage, skipping fetch.");
-    }
-  }
 
-  fetchAndStoreUserInfo();
-  {% else %}
-  // Clear user info on logout
-  localStorage.removeItem("current_user");
-  console.log("User logged out, cleared localStorage.");
-  localStorage.removeItem("user_role");
-  {% endif %}
+      fetchAndStoreUserInfo();
+      {% else %}
+      // Clear user info on logout
+      localStorage.removeItem("current_user");
+      console.log("User logged out, cleared localStorage.");
+      localStorage.removeItem("user_role");
+      {% endif %}
 
-});
-</script>
+    });
+  </script>
 
   <script>
     // Activators
     document.addEventListener("DOMContentLoaded", function () {
       applyPreferredTheme();  // Apply the preferred theme on page load
-      checkForNewMarqueeMessages();  // Initial check on page load
-      // Check for new marquee messages every 5 seconds
-      setInterval(checkForNewMarqueeMessages, 5000);
     });
   </script>
 
-  
+
 
   {% block scripts %} {% endblock %}
 

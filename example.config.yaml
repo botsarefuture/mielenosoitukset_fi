@@ -10,9 +10,69 @@ MAIL:
   PASSWORD: "example_password"  # SMTP password
   DEFAULT_SENDER: "example@example.com"  # Default sender email address
 
+# Public contact-form containment controls. Keep the global limit comfortably
+# above legitimate support traffic; CONTACT_FORM_ENABLED is the emergency
+# circuit breaker and leaves the published support email path available.
+CONTACT_FORM_ENABLED: true
+CONTACT_PER_IP_LIMIT: "3 per 10 minutes; 10 per day"
+CONTACT_GLOBAL_LIMIT: "25 per 10 minutes; 100 per day"
+CONTACT_MIN_FORM_SECONDS: 2
+CONTACT_FORM_TOKEN_MAX_AGE_SECONDS: 7200
+CONTACT_FORM_MAX_OUTSTANDING_TOKENS: 5
+CONTACT_MAX_REQUEST_BYTES: 16384
+CONTACT_NAME_MAX_LENGTH: 120
+CONTACT_EMAIL_MAX_LENGTH: 254
+CONTACT_MESSAGE_MIN_LENGTH: 10
+CONTACT_MESSAGE_MAX_LENGTH: 5000
+
+# Support ticket system (IMAP ingress)
+# Polls the tuki@ mailbox and creates support_ticket cases. Automatic external
+# acknowledgements remain disabled until a verified-recipient design exists.
+TICKET_INGRESS_ENABLED: true
+TICKET_AUTO_REPLY_ENABLED: false
+TICKET_IMAP_SERVER: "mail.luova.club"
+TICKET_IMAP_PORT: 993
+TICKET_IMAP_USE_SSL: true
+TICKET_IMAP_USERNAME: "tuki@mielenosoitukset.fi"  # IMAP login (mailbox owner)
+TICKET_IMAP_PASSWORD: "example_password"  # IMAP password for the tuki mailbox
+TICKET_IMAP_MAILBOX: "INBOX"
+TICKET_ESCALATION_EMAIL: "olivia@mielenosoitukset.fi"  # URGENT alerts go here
+TICKET_SLA_HOURS: 48
+TICKET_SENDER: "tuki@mielenosoitukset.fi"  # The In-Reply-To sender shown to submitters (also used to ignore outbound mail in ingress)
+# SMTP for outgoing ticket emails (defaults: server=TICKET_IMAP_SERVER, port=587, use TLS=true).
+# Credentials are reused from TICKET_IMAP_USERNAME / TICKET_IMAP_PASSWORD.
+TICKET_SMTP_SERVER: "mail.luova.club"
+TICKET_SMTP_PORT: 587
+TICKET_SMTP_USE_TLS: true
+TICKET_URGENT_KEYWORD: "URGENT"
+TICKET_POLL_SECONDS: 120
+TICKET_IGNORED_SENDERS: []  # Optional static fallback blocklist (admin UI manages the live list): e.g. "tiktok.com", "*@instagram.com", "user@example.org"
+
+# City-admin demo assignment
+# When a demo is submitted in a city with active city admins, it is assigned to
+# them (they get approve/reject links and the national team is not notified).
+# If no action is taken within this many hours, the demo is escalated to the
+# national team. Cities without city admins fall back to the national queue.
+CITY_ASSIGNMENT_ESCALATION_HOURS: 24
+
 # Optional configurations
 # SERVER_NAME: "www.example.com"  # Server name for the application
 # PREFERRED_URL_SCHEME: "https"  # URL scheme (e.g., https)
+
+# Geocoding API key (geocode.maps.co). Used to resolve demonstration address
+# coordinates for the "Laske koordinaatit" button. If omitted, the app falls
+# back to the legacy built-in key.
+# GEOCODE_API_KEY: "your_geocode_maps_co_key"
+
+# Facebook event import (Apify). Used by the submission form's
+# "Hae tiedot Facebookista" helper to fetch details for a public Facebook
+# event and prefill the form. Leave APIFY_API_TOKEN empty to disable the feature.
+# The token should be set from the environment in production:
+#   export APIFY_API_TOKEN="...your Apify API token..."
+APIFY_API_TOKEN: ""  # Apify API token (apify.com -> Settings -> Integrations)
+# APIFY_FACEBOOK_ACTOR_ID: "apify~facebook-events-scraper"
+# APIFY_API_BASE_URL: "https://api.apify.com/v2"
+# APIFY_SYNC_TIMEOUT_SECONDS: 120
 
 PORT: 5002  # Application port
 DEBUG: true  # Enable debugging mode for development
@@ -33,6 +93,9 @@ BABEL:
     - "fi"
     - "en"
     - "sv"
+  # Only these completed languages are visible and selectable in production.
+  PUBLIC_LOCALES:
+    - "fi"
   
   LANGUAGES:
     fi: "Suomi"

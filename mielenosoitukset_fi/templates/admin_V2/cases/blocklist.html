@@ -1,0 +1,58 @@
+{% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% block title %}{{ _('Tukilippujen estolista') }}{% endblock %}
+
+{% block main_content %}
+<div class="admin-page case-shell">
+  {{ admin_page_hero(
+    _('Tukilippujen estolista'),
+    _('Näistä lähettäjistä (sähköposti tai koko verkkotunnus aliverkkotunnuksineen) ei luoda tukilippua.'),
+    _('Käyttäjät ja hallinto'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Tapaukset'), url_for('admin_case.cases')), (_('Estolista'), none)],
+    back_url=url_for('admin_case.cases'),
+  ) }}
+
+  <div class="admin-section-card">
+    <div class="admin-section-card__body admin-stack">
+      <form method="POST" action="{{ url_for('admin_case.blocklist') }}" class="admin-link-search">
+        <input type="text" name="pattern" class="form-control" placeholder="{{ _('Esim. kayttaja@esimerkki.fi tai esimerkki.fi') }}" required autocomplete="off" />
+        <button type="submit" class="btn btn-primary">{{ _('Lisää esto') }}</button>
+      </form>
+      <p class="muted small">{{ _('Vinkki: lisää verkkotunnus kuten tiktok.com estääksesi kaikki viestit siltä ja sen aliverkkotunnuksilta (esim. m.tiktok.com).') }}</p>
+    </div>
+  </div>
+
+  <div class="admin-section-card">
+    <div class="admin-section-card__body admin-stack">
+      {% if blocked %}
+      <div class="case-list">
+        {% for item in blocked %}
+          <div class="case-card">
+            <div>
+              <div class="case-meta">
+                <span class="admin-status-badge admin-status-badge--danger">{{ _('Estetty') }}</span>
+                {% if item.pattern.startswith('*@') or '@' not in item.pattern %}
+                <span class="admin-status-badge admin-status-badge--warning">{{ _('Verkkotunnus') }}</span>
+                {% endif %}
+              </div>
+              <p class="case-title">{{ item.pattern }}</p>
+              <div class="case-footer">
+                <span><i class="far fa-user me-1"></i>{{ item.added_by or '-' }}</span>
+                <span><i class="far fa-clock me-1"></i>{{ item.added_at|datetimeformat("%d.%m.%Y %H:%M") if item.added_at else '' }}</span>
+              </div>
+            </div>
+            <div>
+              <form method="POST" action="{{ url_for('admin_case.blocklist_remove', block_id=item._id) }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">{{ _('Poista') }}</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="alert alert-info text-center">{{ _('Estolista on tyhjä.') }}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

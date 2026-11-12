@@ -1,0 +1,50 @@
+.contact-form {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 40rem;
+  margin-top: 1rem;
+}
+
+.contact-form label {
+  margin-top: 0.75rem;
+  color: var(--product-text);
+  font-weight: 600;
+}
+
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  height: calc(1lh + 1.3rem + 2px);
+  min-height: 44px;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--product-text-muted);
+  border-radius: 8px;
+  background: var(--product-surface);
+  color: var(--product-text);
+  font: inherit;
+}
+
+.contact-form textarea {
+  height: auto;
+  resize: vertical;
+}
+
+.contact-form button {
+  justify-self: start;
+  margin-top: 1rem;
+}
+
+.contact-option:focus-visible,
+.contact-form input:focus-visible,
+.contact-form select:focus-visible,
+.contact-form textarea:focus-visible,
+.contact-form button:focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: 3px;
+}
+
+.contact-unavailable {
+  color: var(--product-text);
+}

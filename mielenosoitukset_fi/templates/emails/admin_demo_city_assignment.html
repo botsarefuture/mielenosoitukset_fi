@@ -1,0 +1,79 @@
+{% extends "admin_email_base.html" %}
+{% set eyebrow = "Moderointipyyntö" %}
+{% set heading = "Uusi mielenosoitus odottaa käsittelyä" %}
+
+{% block subject %}Uusi mielenosoitus odottaa käsittelyä: {{ city }}{% endblock %}
+
+{% block body %}
+
+<p>
+    Kaupunkisi alueelle on ilmoitettu uusi mielenosoitus, joka odottaa hyväksyntääsi.
+</p>
+
+<p>
+    <strong>Tarkista ilmoitus ensin esikatselun kautta.</strong>
+    Varmista, että kaikki ilmoituksen tiedot ovat kunnossa ja näyttävät oikein.
+    Tarkista erityisesti tapahtuman perustiedot, ajankohta ja sijainti sekä ilmoittajan,
+    järjestäjän ja mahdollisten organisaatioiden tiedot. Varmista myös, ettei ilmoituksessa
+    ole selvästi virheellisiä, puutteellisia tai epäasiallisia tietoja.
+</p>
+
+<p>
+    Kun olet tarkistanut ilmoituksen ja kaikki näyttää olevan kunnossa, voit hyväksyä sen.
+    Mikäli ilmoituksessa on hyväksymisen estävä ongelma, voit hylätä sen.
+    Hyväksymiseen ja hylkäämiseen tarkoitetut linkit ovat kertakäyttöisiä, eikä niiden käyttö edellytä kirjautumista.
+</p>
+
+<ul class="data-list">
+    <li>
+        <strong>Otsikko</strong>
+        {{ title }}
+    </li>
+    <li>
+        <strong>Päivämäärä</strong>
+        {{ date }}
+    </li>
+    <li>
+        <strong>Kaupunki</strong>
+        {{ city }}
+    </li>
+    <li>
+        <strong>Osoite</strong>
+        {{ address }}
+    </li>
+</ul>
+
+<h2>Ilmoittajan tiedot</h2>
+<ul class="data-list">
+    <li>
+        <strong>Nimi</strong>
+        {{ submitter_name }}
+    </li>
+    <li>
+        <strong>Sähköposti</strong>
+        {{ submitter_email }}
+    </li>
+    <li>
+        <strong>Rooli</strong>
+        {{ submitter_role }}
+    </li>
+</ul>
+
+<div class="btn-group">
+    <a href="{{ preview_link }}" class="btn btn-muted">Esikatsele ilmoitusta</a>
+    <a href="{{ approve_link }}" class="btn btn-primary">Hyväksy mielenosoitus</a>
+    <a href="{{ reject_link }}" class="btn btn-danger">Hylkää mielenosoitus</a>
+</div>
+
+<div class="meta">
+    <p>
+        <strong>Huomio:</strong> Tarkista ilmoitus aina esikatselusta ennen hyväksymistä.
+        Mielenosoitusta ei käsitellä kansallisessa tiimissä automaattisesti.
+        Mikäli moderointipäätöstä ei ole tehty {{ escalate_after_hours }} tunnin kuluessa,
+        ilmoitus siirtyy kansallisen tiimin käsiteltäväksi.
+        {% if review_deadline_at %}
+        Käsittelyn määräaika: {{ review_deadline_at.strftime('%Y-%m-%d %H:%M UTC') }}.
+        {% endif %}
+    </p>
+</div>
+{% endblock %}

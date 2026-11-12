@@ -1,517 +1,128 @@
-<script>
-  function toggleNavbar() {
-    const navLinks = document.querySelector('.nav-links');
-    navLinks.classList.toggle('active');
+{% macro fallback_links() %}
+      {% for link in header_links %}
+      <li><a href="{{ link.href }}" class="nav-link{% if request.path == link.href %} active{% endif %}"
+             {% if request.path == link.href %}aria-current="page"{% endif %}>
+        <i class="fa-solid {{ link.icon }}" aria-hidden="true"></i><span>{{ link.label }}</span>
+      </a></li>
+      {% endfor %}
+      {% if header_account %}
+      <li><a class="nav-link" href="{{ header_props.notifications.all }}">{{ _('Ilmoitukset') }}</a></li>
+      <li class="user-dropdown">
+        <span class="user-toggle">{{ header_account.name }}</span>
+        <div class="dropdown-menu">
+          <ul>{% for link in header_account.links %}
+            <li><a href="{{ link.href }}"><i class="fa-solid {{ link.icon }}" aria-hidden="true"></i><span>{{ link.label }}</span></a></li>
+          {% endfor %}</ul>
+        </div>
+      </li>
+      {% endif %}
+{% endmacro %}
+{# Flask owns URLs, permissions and translated props; React owns the mounted header. #}
+{% set public_locales = get_supported_locales() %}
+{% set header_links = [
+  {'href': url_for('index'), 'label': _('Etusivu'), 'icon': 'fa-home'},
+  {'href': url_for('demonstrations'), 'label': _('Mielenosoitukset'), 'icon': 'fa-bullhorn'},
+  {'href': url_for('cities'), 'label': _('Kaupungit'), 'icon': 'fa-location-dot'},
+  {'href': url_for('submit'), 'label': _('Ilmoita mielenosoituksesta'), 'icon': 'fa-plus-circle'}
+] %}
+{% set language_options = namespace(items=[]) %}
+{% for code in public_locales %}
+  {% set language_options.items = language_options.items + [{
+    'code': code, 'name': get_lang_name(code) or code.upper(),
+    'href': url_for('set_language', lang=code, next=request.full_path if request.query_string else request.path),
+    'active': session.get('locale', 'fi') == code
+  }] %}
+{% endfor %}
+{% set header_account = none %}
+{% if current_user.is_authenticated %}
+  {% set account_links = [
+    {'href': url_for('users.profile.profile'), 'label': _('Profiili'), 'icon': 'fa-user'},
+    {'href': url_for('users.auth.settings'), 'label': _('Asetukset'), 'icon': 'fa-cog'}
+  ] %}
+  {% if current_user.has_admin_access() %}
+    {% set account_links = account_links + [{'href': url_for('admin.admin_dashboard'), 'label': _('Hallintapaneeli'), 'icon': 'fa-gauge'}] %}
+  {% endif %}
+  {% set account_links = account_links + [{'href': url_for('users.auth.logout'), 'label': _('Kirjaudu ulos'), 'icon': 'fa-sign-out-alt'}] %}
+  {% set header_account = {'name': current_user.displayname or current_user.username,
+    'picture': current_user.profile_picture or none, 'links': account_links,
+    'globalAdmin': true if current_user.global_admin else false} %}
+{% else %}
+  {% set header_links = header_links + [{'href': url_for('users.auth.login'), 'label': _('Kirjaudu sisään'), 'icon': 'fa-sign-in-alt'}] %}
+{% endif %}
+{% set header_props = {
+  'brand': _('Mielenosoitukset.fi'), 'home': url_for('index'), 'path': request.path,
+  'role': current_user.role if current_user.is_authenticated else 'guest',
+  'links': header_links, 'languages': language_options.items, 'account': header_account,
+  'fundraising': url_for('fundraising') if fundraising_campaign and fundraising_campaign.show_header_link else none,
+  'notifications': {
+    'list': url_for('notifications.list_notifications'), 'markRead': url_for('notifications.mark_all_read'),
+    'all': url_for('notifications.list_all_page'),
+    'unread': user_notifications|default([], true)|selectattr('read', 'equalto', false)|list|length
+  },
+  'messages': {
+    'skip': _('Siirry sisältöön'), 'home': _('Mielenosoitukset.fi - Etusivu'),
+    'navigation': _('Päävalikko'), 'languages': _('Kielivalinta'), 'changeLanguage': _('Vaihda kieleksi'),
+    'menu': _('Valikko'), 'openMenu': _('Avaa navigaatiovalikko'), 'closeMenu': _('Sulje navigaatiovalikko'),
+    'close': _('Sulje valikko'), 'userMenu': _('Käyttäjävalikko'), 'theme': _('Vaihda teemaa'),
+    'lightTheme': _('Vaihda vaaleaan teemaan'), 'darkTheme': _('Vaihda tummaan teemaan'),
+    'adminWarning': _('Olet mobiililaitteella. Siirry PC:lle admintoimintojen käyttöä varten'),
+    'notifications': _('Ilmoitukset'), 'markRead': _('Merkitse luetuiksi'), 'all': _('Näytä kaikki'),
+    'empty': _('Ei ilmoituksia'), 'loading': _('Ladataan…'), 'loadError': _('Virhe ladattaessa'),
+    'markError': _('Ilmoituksia ei voitu merkitä luetuiksi.')
   }
-</script>
-<style>
-  /* Element | http://127.0.0.1:5002/admin/recu_demo/ */
-
-  div.pc-only:nth-child(7)>li:nth-child(1)>button:nth-child(1) {
-    padding: 10px !important;
-    padding: 0 !important;
-    width: fit-content;
-    height: fit-content;
-    line-height: inherit;
-    background: unset;
-  }
-
-  /* Inline #19 | http://127.0.0.1:5002/admin/recu_demo/ */
-
-  element:hover {
-    scale: 1.5;
-  }
-
-  #darkmk:hover {
-    scale: 1.5;
-  }
-
-  /* Element | http://127.0.0.1:5002/admin/recu_demo/ */
-
-  #darkmk {
-    transition: all 1s;
-  }
-</style>
-<style>
-  /* Base Styles */
-  .navbar {
-    background: var(--primary_color);
-    padding: 10px 20px;
-    position: relative;
-    z-index: 1000000;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  }
-
-  .logo {
-    font-size: 1.5em;
-    color: white;
-    text-decoration: none;
-  }
-
-  .navbar-toggle {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.5em;
-    cursor: pointer;
-    display: none;
-  }
-
-  .nav-links {
-    display: flex;
-    align-items: center;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-  }
-
-  .nav-links li {
-    margin: 0 15px;
-  }
-
-  .nav-links a {
-    color: white;
-    text-decoration: none;
-    font-size: 1em;
-    transition: color 0.3s;
-  }
-
-  .nav-links a:hover {
-    color: #f2f2f2;
-  }
-
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .navbar .nav-links {
-      flex-direction: column;
-      width: 100vw;
-      height: calc(100vh - 83.5px);
-      position: fixed;
-      left: 0;
-      top: 83.5px;
-      background: var(--primary_color);
-      display: none;
-      z-index: 999999;
-      overflow-y: auto;
-    }
-
-    .navbar .nav-links.active {
-      display: flex;
-    }
-
-    .navbar .nav-links li {
-      margin: 20px 0;
-      text-align: center;
-    }
-
-    .navbar .nav-links a {
-      padding: 20px;
-      font-size: 1.5em;
-    }
-
-    .navbar-toggle {
-      display: block;
-      background: var(--red);
-      border-radius: 50%;
-      width: 2em;
-      height: 2em;
-      line-height: 1em;
-      font-size: 1em;
-    }
-
-    header .container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .language-buttons {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .language-buttons button {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.5em;
-      margin: 5px 0;
-      cursor: pointer;
-    }
-
-    .language-buttons button:hover {
-      color: #f2f2f2;
-    }
-
-    .navbar .logo {
-      font-size: 1.5em;
-      color: white;
-      text-decoration: none;
-      margin: 0;
-      text-align: center;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .navbar .nav-links {
-      height: calc(100vh - 73.5px);
-      top: 73.5px;
-    }
-
-    .navbar .logo {
-      font-size: 1.5em;
-    }
-
-    .navbar {
-      background: var(--primary_color);
-    }
-  }
-
-  /* Profile Picture Styles */
-  .profile-picture {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    margin-right: 5px;
-    object-fit: cover;
-  }
-
-  /* Dropdown Menu Styles */
-  .dropdown-menu {
-    display: none;
-    position: absolute;
-    background: #0033a0;
-    top: 100%;
-    padding: 10px 0;
-    z-index: 100000;
-    min-width: 150px;
-  }
-
-  .dropdown:hover .dropdown-menu {
-    display: block;
-  }
-
-  .dropdown-menu li {
-    margin: 0;
-  }
-
-  .dropdown-menu a {
-    display: block;
-    padding: 10px 20px;
-    color: white;
-    text-decoration: none;
-  }
-
-  .dropdown-menu a:hover {
-    background: #004cbf;
-  }
-
-  .dropdown-toggle {
-    cursor: pointer;
-    margin-left: 5px;
-  }
-
-  .dropdown-toggle:focus+.dropdown-menu,
-  .dropdown-menu:focus {
-    display: block;
-  }
-
-  @media (max-width: 769px) {
-
-    .navbar,
-    .container,
-    .nav-links {
-      margin: 0;
-    }
-  }
-
-  .profile-container {
-    display: flex;
-    align-items: center;
-  }
-
-  .profile-picture {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-right: 10px;
-    background: #cccccc;
-  }
-
-  @media (min-width: 720px) {
-    .mobile-admin-links {
-      visibility: hidden;
-      display: none;
-    }
-  }
-
-  .nav-links.active {
-    /*display: flex;*/
-  }
-
-  /* Styles for Top Header */
-  .top-header {
-    background: var(--container_background);
-    padding: 10px 20px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  }
-
-  .top-header .container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0;
-  }
-
-  .top-header .branding {
-    flex: 1;
-    text-align: left;
-  }
-
-  .top-header .language-buttons {
-    flex: 1;
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  @media screen and (max-width: 768px) {
-    .top-header .container {
-      flex-direction: column;
-    }
-
-    .top-header .branding {
-      margin-bottom: 10px;
-      font-size: 1.5em;
-    }
-
-    .top-header .logo {
-      color: var(--orange);
-      text-align: center;
-      margin: auto;
-      margin-bottom: 0.5em;
-      display: block;
-    }
-
-    .navbar .nav-links.active {
-      display: flex;
-      background: var(--blue);
-      height: 100vh;
-      top: 0;
-    }
-  }
-
-  @media screen and (max-width: 480px) {
-    .top-header .branding {
-      font-size: 1.5em;
-    }
-
-    .top-header .language-buttons {
-      flex-direction: row;
-    }
-  }
-
-  .top-header .language-buttons {
-    display: flex;
-  }
-
-  .top-header .language-buttons button {
-    background: none;
-    border: none;
-    color: var(--white);
-    font-size: 1em;
-    margin: 0 5px;
-    cursor: pointer;
-    transition: font-weight 0.3s, color 0.3s, height 0.3s, width 0.3s;
-    border-radius: 50%;
-    padding: 5px;
-    border: 2px solid var(--blue);
-    background: var(--blue);
-    height: 3em;
-    width: 3em;
-    text-align: center;
-    vertical-align: middle;
-  }
-
-  .top-header .language-buttons button:hover {
-    color: var(--orange);
-    font-weight: 700;
-    height: 4em;
-    width: 4em;
-  }
-
-  .top-header .language-buttons button.active,
-  .top-header .language-buttons button.active:hover {
-    font-weight: 900;
-    text-decoration: underline solid var(--orange);
-    color: var(--orange);
-  }
-</style>
+} %}
+<div data-react-island="site-header" data-props-id="site-header-props">
+<!-- Skip to Content Link -->
+<a href="#main-content" class="skip-link">{{ _('Siirry sisältöön') }}</a>
 
 <!-- Top Header -->
-<header class="top-header">
+<header class="top-header public-site-header{% if fundraising_campaign and fundraising_campaign.show_header_link %} public-site-header--fundraising{% endif %}" role="banner">
   <div class="container">
-    <!-- Branding Section -->
     <div class="branding">
-      <a href="{{ url_for('index') }}" class="logo" style="color: var(--orange);">{{ _('Mielenosoitukset.fi') }}</a>
+      <a href="{{ url_for('index') }}" class="logo" aria-label="{{ _('Mielenosoitukset.fi - Etusivu') }}">
+        {{ _('Mielenosoitukset.fi') }}
+      </a>
     </div>
-    <br class="mb-only">
-    <!-- Language Selection Section -->
-    <div class="language-buttons">
-      {% for lang_code in get_supported_locales() %}
-      <button {% if session.get('locale', 'fi' )==lang_code %}class="active" {% endif %}
-        onclick="location.href='{{ url_for('set_language', lang=lang_code) }}'">{{ lang_code.upper() }}</button>
+
+    {% if fundraising_campaign and fundraising_campaign.show_header_link %}
+    <a class="fundraising-header-link" href="{{ url_for('fundraising') }}" lang="fi">
+      <i class="fas fa-heart" aria-hidden="true"></i> Tutustu pienkeräykseen
+    </a>
+    {% endif %}
+    {% set public_locales = get_supported_locales() %}
+    {% if public_locales|length > 1 %}
+    <nav class="language-buttons" aria-label="{{ _('Kielivalinta') }}">
+      <i class="fa-solid fa-globe" aria-hidden="true"></i>
+      {% for lang_code in public_locales %}
+      <a class="language-button {% if session.get('locale', 'fi') == lang_code %}active{% endif %}"
+         href="{{ url_for('set_language', lang=lang_code, next=request.full_path if request.query_string else request.path) }}"
+         title="{{ get_lang_name(lang_code) or lang_code.upper() }}"
+         aria-label="{{ _('Vaihda kieleksi') }} {{ get_lang_name(lang_code) or lang_code.upper() }}"
+         {% if session.get('locale', 'fi') == lang_code %}aria-current="page"{% endif %}>
+        {{ lang_code.upper() }}
+      </a>
       {% endfor %}
-    </div>
+    </nav>
+    {% endif %}
   </div>
 </header>
 
-<!-- Navigation Bar -->
-<header>
-  <nav class="navbar">
-    <div class="container bg-header-footer" id="headerbar">
+<!-- Main Navigation -->
+<nav class="main-nav public-main-nav" role="navigation" aria-label="{{ _('Päävalikko') }}">
+  <div class="nav-container">
+    <ul class="nav-list header-fallback-desktop">{{ fallback_links() }}</ul>
+    <details class="header-fallback-mobile">
+      <summary class="header-fallback-toggle" aria-label="{{ _('Valikko') }}"><i class="fa-solid fa-bars" aria-hidden="true"></i></summary>
+      <ul class="nav-list">{{ fallback_links() }}</ul>
+    </details>
+  </div>
+</nav>
 
-      <!-- Toggle Button for Mobile Navigation, center it, and make it 0.5em radius -->
-      <button class="mb-only navbar-toggle" style="display: block; 
-      border-radius: 0.5em;
-      margin: 0 auto;
-      font-size: 2em;
-      background-color: unset;
-      " aria-label="{{ _('Avaa valikko') }}" onclick="toggleNavbar()">
-        <i class="fas fa-bars"></i>
-      </button>
+</div>
+<script id="site-header-props" type="application/json">{{ header_props|tojson }}</script>
+{% from '_macros/frontend.html' import frontend_entry with context %}
+{{ frontend_entry('src/entries/header.tsx') }}
 
-      <!-- Navigation Links -->
-      <ul class="nav-links">
-
-        <div class="mb-only">
-          <!-- here the header for this mobile menu -->
-          <div class="mb-only nav-header">
-            <style>
-              .nav-header {
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
-                width: 100vw;
-                background-color: var(--blue_darker);
-                margin: 0;
-                /* margin-top: 1.5em; */
-                padding: 0.5em;
-                margin-top: 0 !important;
-              }
-
-              .theme-button {
-                background-color: var(--primary_button_color);
-                color: var(--primary_button_text_color);
-                border: none;
-                /* padding: 10px 20px; */
-                border-radius: 50% !important;
-                cursor: pointer;
-                transition: background-color 0.3s ease;
-                text-decoration: none;
-                font-size: 1.5em !important;
-                line-height: 1em;
-                height: 3em;
-                width: 3em;
-                display: block;
-              }
-
-              .nav-links .mb-only .button {
-                border: none;
-                padding: 10px 20px;
-                border-radius: 50%;
-                cursor: pointer;
-                transition: background-color 0.3s ease;
-                text-decoration: none;
-                width: 3em;
-                height: 3em;
-                display: block;
-                line-height: 1em;
-                font-size: 1.5em;
-
-              }
-            </style>
-
-
-
-            <!-- theme change button here-->
-            <button class="button theme-button" style="font-size: 2em;" onclick="toggleDarkMode()">
-              <i class="fa-solid fa-moon theme-icon"></i>
-            </button>
-
-            <!-- close button here -->
-            <button class="button navbar-toggle" aria-label="{{ _('Sulje valikko') }}" onclick="toggleNavbar()">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-
-          <a href="{{ url_for('index') }}" class="logo">{{ _('Mielenosoitukset.fi') }}</a>
-
-        </div>
-
-
-        <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> {{ _('Etusivu') }}</a></li>
-        <li><a href="{{ url_for('demonstrations') }}"><i class="fas fa-bullhorn"></i> {{ _('Mielenosoitukset') }}</a>
-        </li>
-        <li><a href="{{ url_for('submit') }}"><i class="fas fa-plus-circle"></i> {{ _('Ilmoita mielenosoituksesta')
-            }}</a></li>
-
-        <!-- Conditional Links for Authenticated Users -->
-        {% if current_user.is_authenticated %}
-        <li class="pc-only dropdown"> <!-- Dropdown Menu for Authenticated Users -->
-          <a href="#" class="dropdown-toggle">
-            <span class="profile-container">
-              {% if current_user.profile_picture %}
-              <img src="{{ current_user.profile_picture }}" alt="{{ _('Profiilikuva') }}" class="profile-picture" />
-              {% endif %}
-              <span>{{ current_user.displayname if current_user.displayname else current_user.username }}</span>
-              <i style="margin-left: 5px;" class="fas fa-chevron-down"></i>
-            </span>
-          </a>
-          <ul class="dropdown-menu">
-            <li><a href="{{ url_for('users.profile.profile') }}"><i class="fas fa-user"></i> {{ _('Profiili') }}</a>
-            </li>
-            <li><a href="{{ url_for('users.auth.settings') }}"><i class="fas fa-cog"></i> {{ _('Asetukset') }}</a></li>
-            <li><a href="{{ url_for('users.auth.logout') }}"><i class="fas fa-sign-out-alt"></i> {{ _('Kirjaudu ulos')
-                }}</a></li>
-          </ul>
-        </li>
-        {% endif %}
-
-        <!-- Additional Links for Global Admins on Mobile -->
-        {% if current_user.global_admin %}
-        <li class="mb-only mobile-admin-links">
-          <a href="#">
-            <i class="fas fa-exclamation-circle" style="color: red; margin-right: 5px;"></i>
-            {{ _('Olet mobiililaitteella. Siirry PC:lle admintoimintojen käyttöä varten') }}
-          </a>
-        </li>
-        {% endif %}
-        <!-- Forcefully align the theme switcher to the other side of the screen -->
-        <div class="pc-only" style="margin-left: auto;">
-          <li>
-            <button class="button" style="font-size: 2em;" onclick="toggleDarkMode()">
-              <i class="fa-solid fa-moon theme-icon"></i>
-            </button>
-          </li>
-
-        </div>
-
-      </ul>
-    </div>
-  </nav>
-  <script>
-    var user_role = "{{ current_user.role }}";
-    console.log(user_role);
-    localStorage.setItem('user_role', user_role);
-
-  </script>
-
-
-</header>
-{% if current_user.role != "user" and current_user.is_authenticated %}
+{% if current_user.is_authenticated %}
 {% include "toolbar.html" %}
 {% endif %}

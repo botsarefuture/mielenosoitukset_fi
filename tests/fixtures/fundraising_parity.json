@@ -1,0 +1,1516 @@
+[
+ {
+  "name": "shipped file",
+  "input": {
+   "publication_state": "preparation",
+   "details_confirmed": false,
+   "show_header_link": false,
+   "start_date": "",
+   "end_date": "",
+   "organizer": "",
+   "collection_number": "",
+   "recipient": "",
+   "iban": "",
+   "reference": "",
+   "payment_url": "",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay 1",
+     "url": ""
+    },
+    {
+     "label": "MobilePay 2",
+     "url": ""
+    }
+   ],
+   "planned_start_date": "2026-11-15",
+   "planned_end_date": "2027-02-15"
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "",
+   "confirmed": false,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": null,
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay 1",
+     "url": ""
+    },
+    {
+     "label": "MobilePay 2",
+     "url": ""
+    }
+   ],
+   "organizer": "",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "",
+   "show_header_link": false,
+   "start_date": null
+  }
+ },
+ {
+  "name": "empty",
+  "input": {},
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": null,
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "",
+   "show_header_link": false,
+   "start_date": null
+  }
+ },
+ {
+  "name": "not an object",
+  "input": [],
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": null,
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "",
+   "show_header_link": false,
+   "start_date": null
+  }
+ },
+ {
+  "name": "open on first day",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-11-15",
+  "expected": {
+   "can_donate": true,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": false,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "open on last day",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2027-02-15",
+  "expected": {
+   "can_donate": true,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": false,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "before start",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-11-14",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": false,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "after end",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2027-02-16",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": false,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "preparation",
+  "input": {
+   "publication_state": "preparation",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "closed",
+  "input": {
+   "publication_state": "closed",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": false,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "unconfirmed",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": false,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "confirmed as string",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": "true",
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "no collection number",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "blank organizer",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "   ",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "organizer padded",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "  Example  ",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": true,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": false,
+   "mobilepay_links": [],
+   "organizer": "Example",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "organizer number",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": 5,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "invalid start",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "invalid",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": null,
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": null
+  }
+ },
+ {
+  "name": "impossible date",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-02-30",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": null,
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": null
+  }
+ },
+ {
+  "name": "end before start",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2026-10-01",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2026-10-01",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "payment url only",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "",
+   "payment_url": "https://example.test/donate",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": true,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": false,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "https://example.test/donate",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "recipient without iban",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": []
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "mobilepay only",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay 1",
+     "url": "https://qr.mobilepay.fi/box/example-one/pay-in"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": true,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": false,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay 1",
+     "url": "https://qr.mobilepay.fi/box/example-one/pay-in"
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "mobilepay blank label",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "  ",
+     "url": ""
+    },
+    {
+     "url": "https://qr.mobilepay.fi/box/x"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": true,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": false,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay 1",
+     "url": ""
+    },
+    {
+     "label": "MobilePay 2",
+     "url": "https://qr.mobilepay.fi/box/x"
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "mobilepay bad entries",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": [
+    5,
+    {
+     "label": 3,
+     "url": "https://a.test"
+    },
+    "x",
+    {
+     "label": "Ok",
+     "url": "https://a.test"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": true,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": false,
+   "mobilepay_links": [
+    {
+     "label": "Ok",
+     "url": "https://a.test"
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "mobilepay not a list",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": {
+    "label": "x"
+   }
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": true,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": false,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "planned dates only",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "",
+   "end_date": "",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "Example recipient",
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "payment_url": "",
+   "reference": "123",
+   "mobilepay_links": [],
+   "planned_start_date": "2026-11-15",
+   "planned_end_date": "2027-02-15"
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": null,
+   "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "Example recipient",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": null
+  }
+ },
+ {
+  "name": "header link true",
+  "input": {
+   "show_header_link": true
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": null,
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "",
+   "show_header_link": true,
+   "start_date": null
+  }
+ },
+ {
+  "name": "header link string",
+  "input": {
+   "show_header_link": "true"
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": null,
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [],
+   "organizer": "",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "",
+   "show_header_link": false,
+   "start_date": null
+  }
+ },
+ {
+  "name": "url 0: 'javascript:alert(1)'",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "javascript:alert(1)",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "javascript:alert(1)"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": ""
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "url 1: 'https://user:pass@example.test/pay'",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "https://user:pass@example.test/pay",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "https://user:pass@example.test/pay"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": ""
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "url 2: 'https://example.test:invalid/pay'",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "https://example.test:invalid/pay",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "https://example.test:invalid/pay"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": ""
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "url 3: 'https://example.test\\\\evil/pay'",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "https://example.test\\evil/pay",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "https://example.test\\evil/pay"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": ""
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "url 4: 'https://example.test/ pay'",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "https://example.test/ pay",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "https://example.test/ pay"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": ""
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "url 5: 'https://example.test/\\npay'",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "https://example.test/\npay",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "https://example.test/\npay"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": ""
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "url 6: 'http://example.test/pay'",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "http://example.test/pay",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "http://example.test/pay"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": ""
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "url 7: 'https:///pay'",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "https:///pay",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "https:///pay"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": ""
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "url 8: '  https://example.test/pay  '",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "  https://example.test/pay  ",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "  https://example.test/pay  "
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": true,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": false,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "https://example.test/pay"
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "https://example.test/pay",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "url 9: 'https://example.test:8443/pay'",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "https://example.test:8443/pay",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "https://example.test:8443/pay"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": true,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": false,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "https://example.test:8443/pay"
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "https://example.test:8443/pay",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "url 10: 'https://user@example.test/pay'",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "https://user@example.test/pay",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "https://user@example.test/pay"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": ""
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "url 11: 'HTTPS://Example.test/Pay'",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "HTTPS://Example.test/Pay",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "HTTPS://Example.test/Pay"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": true,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": true,
+   "display_end_date": "2027-02-15",
+   "display_start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": false,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "HTTPS://Example.test/Pay"
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "HTTPS://Example.test/Pay",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ },
+ {
+  "name": "url 12: 'https://exa\\tmple.test'",
+  "input": {
+   "publication_state": "active",
+   "details_confirmed": true,
+   "start_date": "2026-11-15",
+   "end_date": "2027-02-15",
+   "organizer": "Example organizer",
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "recipient": "",
+   "iban": "",
+   "payment_url": "https://exa\tmple.test",
+   "reference": "123",
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": "https://exa\tmple.test"
+    }
+   ]
+  },
+  "today": "2026-12-01",
+  "expected": {
+   "can_donate": false,
+   "collection_number": "EXAMPLE-NOT-REAL",
+   "confirmed": false,
+   "display_end_date": null,
+   "display_start_date": null,
+   "end_date": "2027-02-15",
+   "iban": "",
+   "is_preparation": true,
+   "mobilepay_links": [
+    {
+     "label": "MobilePay",
+     "url": ""
+    }
+   ],
+   "organizer": "Example organizer",
+   "payment_url": "",
+   "recipient": "",
+   "reference": "123",
+   "show_header_link": false,
+   "start_date": "2026-11-15"
+  }
+ }
+]

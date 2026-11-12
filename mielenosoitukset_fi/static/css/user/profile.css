@@ -24,6 +24,15 @@ main .profile-container { /* This change closes #163 */
   align-items: center;
 }
 
+.profile-bio {
+  color: var(--secondary_text_color);
+  margin: 0.75rem 0 0;
+  max-width: 70ch;
+  overflow-wrap: anywhere;
+  text-align: start;
+  white-space: pre-wrap;
+}
+
 .profile-details .profile-picture {
   margin-bottom: var(--profile_picture_margin_bottom, 20px);
   width: var(--profile_picture_size, 150px);

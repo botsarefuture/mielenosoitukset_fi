@@ -3,7 +3,11 @@ from .admin_demo_bp import admin_demo_bp, admin_demo_api_bp
 from .admin_org_bp import admin_org_bp
 from .admin_user_bp import admin_user_bp
 from .admin_recu_demo_bp import admin_recu_demo_bp
-from .admin_media_bp import admin_media_bp
 from .board_compliance import board_bp
 from .board_audit import audit_bp
 from .admin_kampanja_bp import admin_kampanja_bp
+from .admin_case_bp import admin_case_bp
+from .admin_dev_bp import admin_dev_bp
+from .admin_city_bp import admin_city_bp
+from .admin_governance_bp import admin_governance_bp
+from .admin_site_analytics_bp import admin_site_analytics_bp

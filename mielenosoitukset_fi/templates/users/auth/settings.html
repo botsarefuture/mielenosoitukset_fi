@@ -2,394 +2,615 @@
 
 {% block title %}{{ _('Asetukset') }}{% endblock %}
 
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/user/settings.css') }}">
-
-
-<style>
-  /* Spinner */
-  .spinner {
-    display: none;
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  /* Tabs styling */
-  #settings-tabs {
-    margin-top: 20px;
-  }
-
-  #settings-tabs .ui-tabs-nav {
-    background: var(--background, #f8f9fa);
-    border: none;
-    border-bottom: 2px solid #ddd;
-    padding-left: 0;
-  }
-
-  #settings-tabs .ui-tabs-nav li {
-    display: inline-block;
-    margin: 0 5px -2px 0;
-  }
-
-  #settings-tabs .ui-tabs-nav a {
-    padding: 10px 15px;
-    display: block;
-    text-decoration: none;
-    font-weight: 500;
-    color: var(--primary_text_color, #333);
-    border-radius: 5px 5px 0 0;
-  }
-
-  #settings-tabs .ui-tabs-nav .ui-tabs-active a {
-    background: var(--primary_color, #0d6efd);
-    color: #fff;
-  }
-
-  #settings-tabs .ui-tabs-panel {
-    padding: 20px;
-    background: var(--background, #fff);
-    border: 1px solid #ddd;
-    border-radius: 0 5px 5px 5px;
-    margin-top: -1px;
-  }
-
-  #settings-tabs .ui-tabs-nav a:hover {
-  background: var(--hover_bg_color, #e9ecef);
-  color: var(--primary_text_color, #333);
-}
-
-#settings-tabs .ui-tabs-active a:hover {
-  background: var(--primary_color, #0b5ed7);
-  color: #fff;
-}
-
-</style>
-{% endblock %}
+{% block styles %}{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <h1 class="mb-4"><i class="fas fa-cogs"></i> {{ _('Asetukset') }}</h1>
+<section class="container py-4 user-workspace-page user-settings-page" aria-labelledby="settings-page-title">
+  <header class="user-page-heading">
+    <div class="user-page-heading__content">
+      <span class="user-page-heading__icon" aria-hidden="true"><i class="fas fa-cogs"></i></span>
+      <div>
+        <h1 id="settings-page-title">{{ _('Asetukset') }}</h1>
+        <p>{{ _('Hallinnoi tilisi tietoja, turvallisuutta, profiilia ja API-avaimia yhdessä paikassa.') }}</p>
+      </div>
+    </div>
+  </header>
 
-  <div id="settings-tabs">
-    <ul>
-      <li><a href="#tab-general">{{ _('Yleinen') }}</a></li>
-      <li><a href="#tab-profile">{{ _('Profiili') }}</a></li>
+  <div class="user-form-feedback user-form-feedback--error" id="settings-message"
+       role="status" aria-live="polite" hidden></div>
+
+  <div class="user-settings-tabs" id="settings-tabs">
+    <ul class="user-settings-tabs__list" role="tablist" aria-label="{{ _('Asetusosiot') }}">
+      <li role="presentation"><a id="settings-tab-general" href="#tab-general" role="tab" aria-controls="tab-general" aria-selected="true">{{ _('Yleinen') }}</a></li>
+      <li role="presentation"><a id="settings-tab-security" href="#tab-security" role="tab" aria-controls="tab-security" aria-selected="false" tabindex="-1">{{ _('Turvallisuus') }}</a></li>
+      <li role="presentation"><a id="settings-tab-tokens" href="#tab-tokens" role="tab" aria-controls="tab-tokens" aria-selected="false" tabindex="-1">{{ _('API-avaimet') }}</a></li>
+      <li role="presentation"><a id="settings-tab-profile" href="#tab-profile" role="tab" aria-controls="tab-profile" aria-selected="false" tabindex="-1">{{ _('Profiili') }}</a></li>
     </ul>
 
     <!-- Yleinen Tab -->
-    <div id="tab-general">
-      <form id="settings-form">
-        <div class="mb-3">
-          <label for="display_name" class="form-label">{{ _('Näyttönimi') }}</label>
-          <input type="text" class="form-control" id="display_name" name="display_name">
+    <div class="user-settings-panel" id="tab-general" role="tabpanel" aria-labelledby="settings-tab-general">
+      <form class="user-form" id="settings-form">
+        <section class="user-form-section">
+          <header class="user-form-section__header">
+            <span class="user-form-section__icon" aria-hidden="true"><i class="fa-solid fa-sliders"></i></span>
+            <div>
+              <h2>{{ _('Yleiset asetukset') }}</h2>
+              <p>{{ _('Valitse profiilissa näkyvä nimi, kotikaupunki ja käyttöliittymän asetukset.') }}</p>
+            </div>
+          </header>
+          <div class="user-form-section__body user-form-grid">
+        <!-- Näyttönimi input -->
+        <div class="user-field user-field--full">
+          <label class="user-field__label" for="display_name">
+            <i class="fa-solid fa-id-card me-2"></i>{{ _('Näyttönimi') }}
+          </label>
+
+          <input class="user-field__control" id="display_name" name="display_name" type="text"
+                 placeholder="{{ _('Kirjoita haluamasi nimi, joka näkyy profiilissasi') }}" maxlength="40">
+
+          <div class="user-field__help">
+            <i class="fa-solid fa-circle-info me-1"></i>
+            {{ _('Näyttönimi näkyy muille käyttäjille profiilissasi ja
+            kommenteissa. Voit käyttää omaa nimeäsi tai
+            lempinimeä.') }}
+          </div>
         </div>
 
-        <!-- Kaupunki dropdown (your custom widget) -->
-        <div class="mb-3">
-          <label for="city" class="form-label">{{ _('Kaupunki') }}</label>
-          <!-- existing dropdown code -->
-          <div id="paikkakunta-drop" class="dropdown">
-            <button type="button" class="dropbtn" aria-haspopup="listbox" aria-expanded="false"
-              aria-label="{{ _('Open Paikkakunta dropdown') }}">{{ _('Paikkakunta') }}</button>
-            <div id="dropdown-content" class="dropdown-content" role="listbox" aria-labelledby="city">
-              <input type="text" placeholder="{{ _('Hae paikkakunta...') }}" id="searchInput" onkeyup="filterFunction()"
-                aria-label="{{ _('Search cities') }}" />
-              <!-- List of cities -->
+        <!-- Kaupunki dropdown -->
+        <div class="user-field user-field--full">
+          <label class="user-field__label" for="selected-city">
+            <i class="fa-solid fa-city me-2"></i>{{ _('Kaupunki') }}
+          </label>
+
+          <div class="user-city-picker" id="paikkakunta-drop">
+            <button class="user-field__control user-city-picker__trigger"
+                    type="button" aria-expanded="false" aria-haspopup="listbox"
+                    aria-controls="dropdown-content"
+                    aria-label="{{ _('Avaa paikkakuntavalikko') }}">
+              <span id="selected-city-text">{{ _('Valitse paikkakunta') }}</span>
+              <i class="fa-solid fa-chevron-down ms-2"></i>
+            </button>
+
+            <div class="user-city-picker__menu" id="dropdown-content" role="listbox"
+                 aria-labelledby="selected-city-text" hidden>
+
+              <div class="user-city-picker__search">
+                <i class="fa-solid fa-magnifying-glass me-2"></i>
+                <input class="user-field__control" id="searchInput" type="search"
+                       aria-label="{{ _('Hae kaupungeista') }}" onkeyup="filterFunction()"
+                       placeholder="{{ _('Hae paikkakunta...') }}">
+              </div>
+
               {% for city in city_list %}
-              <a href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;" {% if
-                demo is defined and demo.city==city %} class="selected" {% endif %}>
-                {{ city }}
+              <a class="user-city-picker__option {% if demo is defined and demo.city==city %}active{% endif %}"
+                 href="#" role="option" aria-selected="false" onclick='selectCity({{ city | tojson }}); return false;'>
+                <i class="fa-solid fa-location-dot me-2 text-muted"></i>{{ city }}
               </a>
               {% endfor %}
             </div>
           </div>
-          <input type="hidden" id="selected-city" name="city" 
-            required />
+
+          <input id="selected-city" name="city" type="hidden" required>
         </div>
 
+        <div class="user-field user-field--full">
+          <label class="user-field__label" for="language">
+            <i class="fa-solid fa-language me-2"></i>{{ _('Kieli') }}
+          </label>
+          <select class="user-field__control" id="language" name="language">
+            <option value="fi">{{ _('Suomi') }}</option>
+            <!-- <option value="en">{{ _('English') }}</option> -->
+          </select>
+
+          <div class="user-form-feedback user-form-feedback--warning">
+            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+            <div>
+              <h3>{{ _('Käännökset ovat vielä kesken') }}</h3>
+              <p>
+                {{ _('Sivusto on tällä hetkellä käytettävissä vain suomeksi,
+                mutta englannin ja ruotsin käännökset ovat
+                parhaillaan työn alla.') }}
+                {{ _('Voit seurata edistymistä ja halutessasi osallistua käännöstyöhön sivulla:') }}
+              </p>
+              <a class="btn btn-outline-dark btn-sm" href="https://mielenosoitukset.fi/upcoming/translations/"
+                 target="_blank" rel="noopener noreferrer">
+                <i class="fa-solid fa-globe me-2"></i>{{ _('Katso käännöshanke') }}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-check user-check-row user-field--full">
+          <input class="form-check-input" id="dark_mode" name="dark_mode" type="checkbox">
+          <label class="form-check-label" for="dark_mode">{{ _('Tumma tila') }}</label>
+        </div>
+
+        <div class="form-check user-check-row user-field--full" aria-hidden="true" hidden>
+          <input class="form-check-input" id="subscribe_newsletter" name="subscribe_newsletter" type="checkbox">
+          <label class="form-check-label" for="subscribe_newsletter">{{ _('Tilaa uutiskirje') }}</label>
+        </div>
+
+          </div>
+          <footer class="user-form-actions">
+        <button class="btn btn-primary" id="settings-submit" type="submit">
+          {{ _('Tallenna muutokset') }}
+          <span class="spinner user-button-spinner" id="spinner" aria-hidden="true" hidden></span>
+        </button>
+          </footer>
+        </section>
+      </form>
+    </div>
+
+    <!-- Turvallisuus Tab -->
+    <div class="user-settings-panel" id="tab-security" role="tabpanel" aria-labelledby="settings-tab-security" hidden>
+      <!-- icon and title -->
+      <header class="user-settings-intro">
+        <h2><i class="fas fa-shield-alt" aria-hidden="true"></i> {{ _('Turvallisuusasetukset') }}</h2>
+        <p>
+          {{ _('Hallinnoi tilisi turvallisuusasetuksia, kuten kaksivaiheista tunnistautumista (MFA).') }}
+        </p>
+      </header>
+
+      <section class="user-settings-card">
+        <h3><i class="fas fa-shield-alt" aria-hidden="true"></i> {{ _('Kaksivaiheinen tunnistus (MFA)') }}</h3>
+        <p>{{ _('Hallinnoi kaksivaiheista tunnistautumista ja MFA-laitteita.') }}</p>
+        <div class="user-settings-stack" id="mfa-section">
+          <div id="mfa-status-container">
+            <span class="text-success" id="mfa-status">{{ _('MFA ei käytössä') }}</span>
+          </div>
+          <button class="btn btn-warning" id="init-mfa-btn" type="button">
+            {{ _('Ota käyttöön MFA') }}
+          </button>
+          <button class="btn btn-secondary" id="add-mfa-device-btn" type="button" hidden>
+            {{ _('Lisää uusi laite') }}
+          </button>
+          <div class="user-data-list" id="mfa-devices-list" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- 🔒 Password change -->
+      <section class="user-settings-card">
+        <h3><i class="fas fa-key" aria-hidden="true"></i> {{ _('Vaihda salasana') }}</h3>
+        <form class="user-form user-form-grid" id="pw-form">
+          <div class="user-field">
+            <label class="user-field__label" for="current-password">{{ _('Nykyinen salasana') }}</label>
+            <input class="user-field__control" id="current-password" type="password"
+                   name="current" autocomplete="current-password" required>
+          </div>
+          <div class="user-field">
+            <label class="user-field__label" for="new-password">{{ _('Uusi salasana') }}</label>
+            <input class="user-field__control" id="new-password" type="password" name="new"
+                   minlength="12" autocomplete="new-password" aria-describedby="new-password-help" required>
+            <p class="user-field__help" id="new-password-help">
+              {{ _('Käytä vähintään 12 merkkiä ja vähintään kolmea näistä: pieni kirjain, iso kirjain, numero ja erikoismerkki.') }}
+            </p>
+          </div>
+          <div class="user-field">
+            <label class="user-field__label" for="confirm-password">{{ _('Toista uusi salasana') }}</label>
+            <input class="user-field__control" id="confirm-password" type="password" name="confirm"
+                   minlength="12" autocomplete="new-password" required>
+          </div>
+          <div class="user-form-actions user-field--full">
+            <button class="btn btn-primary" type="submit">
+              <i class="fa-solid fa-key me-1"></i> {{ _('Vaihda salasana') }}
+              <span class="spinner user-button-spinner" id="pw-spinner" aria-hidden="true" hidden></span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- 🔑 Passkeys -->
+      <section class="user-settings-card">
+        <h3><i class="fas fa-fingerprint" aria-hidden="true"></i> {{ _('Passkeyt') }}</h3>
+        <p>
+          {{ _('Kirjaudu ilman salasanaa puhelimen, tietokoneen tai turva-avaimen tunnistuksella.') }}
+        </p>
+        <button class="btn btn-primary mb-2" id="add-passkey-btn" type="button">
+          <i class="fa-solid fa-fingerprint me-1"></i> {{ _('Lisää passkey') }}
+        </button>
+        <div class="user-data-list" id="passkeys-list" aria-live="polite"></div>
+      </section>
+
+      <!-- 📜 Login history -->
+      <section class="user-settings-card">
+        <h3><i class="fas fa-history" aria-hidden="true"></i> {{ _('Kirjautumishistoria') }}</h3>
+        <div class="user-data-view__viewport" tabindex="0" aria-label="{{ _('Kirjautumishistoria') }}">
+          <table class="user-data-table" id="log-table">
+            <thead>
+              <tr>
+                <th>{{ _('Aika') }}</th>
+                <th>{{ _('IP-osoite') }}</th>
+                <th>{{ _('Selain') }}</th>
+                <th>{{ _('Tulos') }}</th>
+              </tr>
+            </thead>
+            <tbody><!-- populated by JS --></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Profiili Tab -->
+    <div class="user-settings-panel" id="tab-profile" role="tabpanel" aria-labelledby="settings-tab-profile" hidden>
+      <form class="user-form" id="profile-form" aria-labelledby="profile-form-title">
+        <section class="user-form-section">
+          <header class="user-form-section__header">
+            <span class="user-form-section__icon" aria-hidden="true">
+              <i class="fa-solid fa-user-pen"></i>
+            </span>
+            <div>
+              <h2 id="profile-form-title">{{ _('Profiili') }}</h2>
+              <p>{{ _('Päivitä julkisessa profiilissasi näkyvä esittelyteksti ja kuva.') }}</p>
+            </div>
+          </header>
+
+          <div class="user-form-section__body user-form-grid">
+            <div class="user-field user-field--full">
+              <label class="user-field__label" for="bio">{{ _('Esittelyteksti') }}</label>
+              <textarea class="user-field__control" id="bio" rows="5"
+                        aria-describedby="bio-help"></textarea>
+              <p class="user-field__help" id="bio-help">
+                {{ _('Kerro lyhyesti itsestäsi. Teksti näkyy julkisella profiilisivullasi.') }}
+              </p>
+            </div>
+
+            <div class="user-field user-field--full">
+              <label class="user-field__label" for="profile-pic">
+                {{ _('Profiilikuva') }}
+                <span class="user-field__optional">{{ _('Valinnainen') }}</span>
+              </label>
+              <input class="user-field__control user-field__control--file" id="profile-pic"
+                     type="file" accept="image/*" aria-describedby="profile-pic-help">
+              <p class="user-field__help" id="profile-pic-help">
+                {{ _('Jätä kenttä tyhjäksi, jos haluat säilyttää nykyisen profiilikuvasi.') }}
+              </p>
+              <div class="user-file-preview" id="profile-pic-preview"
+                   aria-live="polite" aria-label="{{ _('Profiilikuvan esikatselu') }}"></div>
+            </div>
+          </div>
+
+          <footer class="user-form-actions">
+            <button class="btn btn-primary" id="profile-submit" type="submit">
+              <span class="user-form-actions__label">{{ _('Tallenna profiili') }}</span>
+              <span class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
+            </button>
+          </footer>
+        </section>
+      </form>
+    </div>
+
+    <!-- API Tokens Tab -->
+    <div class="user-settings-panel" id="tab-tokens" role="tabpanel" aria-labelledby="settings-tab-tokens" hidden>
+      <header class="user-settings-intro">
+        <h2><i class="fa-solid fa-key" aria-hidden="true"></i> {{ _('API-avaimet') }}</h2>
+        <p>
+          {{ _('Luo ja hallitse API-avaimia integraatioita varten. Avaimet näytetään vain kerran, tallenna ne turvallisesti.') }}
+        </p>
+      </header>
+
+      <div class="user-form-feedback" id="token-message" role="status" aria-live="polite" hidden></div>
+
+      <section class="user-settings-card d-none" id="token-locked">
+        <h3>{{ _('API-avaimet lukittu') }}</h3>
+        <p>
+          {{ _('Tietoturvan vuoksi API-avaimet on avattava ylläpitäjän toimesta. Lähetä pyyntö alla.') }}
+        </p>
+        <button class="btn btn-secondary" id="token-request-btn" type="button">
+          <i class="fa-solid fa-unlock"></i> {{ _('Pyydä käyttöoikeutta') }}
+        </button>
+      </section>
+
+      <section class="user-settings-card">
+        <h3>{{ _('Luo uusi avain') }}</h3>
+          <div class="user-settings-card__actions">
+          <a class="btn btn-outline-primary btn-sm" href="{{ url_for('developer.apps_home') }}">
+            <i class="fa-solid fa-screwdriver-wrench"></i> {{ _('Kehittäjäpaneeli (sovellukset)') }}
+          </a>
+        </div>
+        <form class="user-form user-form-grid" id="token-form">
+          <div class="user-field">
+            <label class="user-field__label" for="token-type">{{ _('Tyyppi') }}</label>
+            <select class="user-field__control" id="token-type" name="type">
+              <option value="short">{{ _('Lyhytikäinen (2h)') }}</option>
+              <option value="long">{{ _('Pitkäikäinen (90 päivää)') }}</option>
+            </select>
+          </div>
+          <fieldset class="user-check-list">
+            <legend class="user-field__label">{{ _('Käyttöoikeudet') }}</legend>
+            <div class="user-settings-scope-grid">
+              <div class="form-check user-check-row">
+                <input class="form-check-input" id="scope-read" type="checkbox" value="read" checked>
+                <label class="form-check-label" for="scope-read">read</label>
+              </div>
+              <div class="form-check user-check-row">
+                <input class="form-check-input" id="scope-write" type="checkbox" value="write">
+                <label class="form-check-label" for="scope-write">write</label>
+              </div>
+              <div class="form-check user-check-row">
+                <input class="form-check-input" id="scope-admin" type="checkbox" value="admin">
+                <label class="form-check-label" for="scope-admin">admin</label>
+              </div>
+            </div>
+            <p class="user-field__help">{{ _('Admin-oikeudet myönnetään vain ylläpitäjille.') }}</p>
+          </fieldset>
+          <div class="user-form-actions user-field--full">
+            <button class="btn btn-primary" id="token-create-btn" type="submit">
+              <i class="fa-solid fa-plus"></i> {{ _('Luo avain') }}
+            </button>
+          </div>
+        </form>
+        <div id="token-result" class="mt-3 d-none">
+          <p class="user-field__label">{{ _('Uusi avain (näytetään vain kerran)') }}</p>
+          <code class="user-code-value" id="token-value"></code>
+        </div>
+      </section>
+
+      <section class="user-settings-card">
+        <h3>{{ _('Nykyiset avaimet') }}</h3>
+        <div class="user-data-view__viewport" tabindex="0" aria-label="{{ _('Nykyiset avaimet') }}">
+          <table class="user-data-table">
+            <thead>
+              <tr>
+                <th>{{ _('Tyyppi') }}</th>
+                <th>{{ _('Käyttöoikeudet') }}</th>
+                <th>{{ _('Voimassa') }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="token-list">
+              <tr><td colspan="4" class="text-muted text-center">{{ _('Ladataan...') }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
 
 <script>
-  // Paikkakunta dropdown functions
-  document.querySelector(".dropbtn").addEventListener("click", function (event) {
-    event.stopPropagation(); // Prevent click event from bubbling
-    var dropdownContent = document.getElementById("dropdown-content");
-    var expanded = this.getAttribute("aria-expanded") === "true" || false;
-    dropdownContent.style.display = expanded ? "none" : "block";
-    this.setAttribute("aria-expanded", !expanded);
-  });
+  function showSettingsMessage(message, type = 'error') {
+    const container = document.getElementById('settings-message');
+    if (!container) return;
 
-  window.onclick = function (event) {
-    if (!event.target.matches('.dropbtn') && !event.target.closest('.dropdown')) {
-      document.getElementById("dropdown-content").style.display = "none";
-      document.querySelector(".dropbtn").setAttribute("aria-expanded", "false");
-    }
-  };
-
-  function selectCity(city) {
-    var dropbtn = document.querySelector(".dropbtn");
-    dropbtn.textContent = city;
-    document.getElementById("selected-city").value = city;
-    document.getElementById("dropdown-content").style.display = "none";
-    dropbtn.setAttribute("aria-expanded", "false");
+    const icon = type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation';
+    container.className = `user-form-feedback user-form-feedback--${type === 'success' ? 'success' : 'error'}`;
+    const iconElement = document.createElement('i');
+    iconElement.classList.add('fa-solid', icon);
+    iconElement.setAttribute('aria-hidden', 'true');
+    const textElement = document.createElement('span');
+    textElement.textContent = String(message ?? '');
+    container.replaceChildren(iconElement, textElement);
+    container.hidden = false;
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  function filterFunction() {
-    let input = document.getElementById("searchInput");
-    let filter = input.value.toUpperCase();
-    let div = document.getElementById("dropdown-content");
-    let a = div.getElementsByTagName("a");
-
-    for (let i = 0; i < a.length; i++) {
-      let txtValue = a[i].textContent || a[i].innerText;
-      a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-    }
+  function hideSettingsMessage() {
+    const container = document.getElementById('settings-message');
+    if (container) container.hidden = true;
   }
 </script>
 
-<style>
-  .dropdown {
-    display: inline-block;
-    width: 100%;
-    max-width: 300px;
-  }
-
-  .dropdown-content {
-    display: none;
-    background: var(--input_background);
-    width: 100%;
-    max-height: 300px;
-    overflow-y: auto;
-    box-shadow: var(--box_shadow);
-    z-index: 1;
-    border-radius: 5px;
-    animation: fadeIn 0.3s ease-in-out;
-  }
-
-  .dropbtn {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--border_color);
-    background: var(--background);
-    cursor: pointer;
-    border-radius: 5px;
-    text-align: left;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .dropbtn::after {
-    content: '▼';
-    font-size: 12px;
-    margin-left: 10px;
-    color: var(--icon_color);
-  }
-
-  .dropdown-content input {
-    width: 100%;
-    padding: 8px;
-    box-sizing: border-box;
-    border: none;
-    border-bottom: 1px solid var(--border_color);
-    background: var(--input_background);
-    outline: none;
-  }
-
-  .dropdown-content a {
-    color: var(--primary_text_color);
-    padding: 10px;
-    text-decoration: none;
-    display: block;
-    transition: background 0.2s ease;
-    border-bottom: 1px solid var(--border_color);
-  }
-
-  .dropdown-content a:hover {
-    background: var(--hover_bg_color);
-  }
-
-  /* Highlight selected city */
-  .dropdown-content a.selected {
-    background: var(--selected_bg_color);
-    /* Optional: define a color for the selected city */
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-</style>
-
-
-    <div class="mb-3">
-      <label for="language" class="form-label">{{ _('Kieli') }}</label>
-      <select class="form-select" id="language" name="language">
-        <option value="fi">{{ _('Suomi') }}</option>
-        <option value="en">{{ _('English') }}</option>
-      </select>
-    </div>
-
-    <div class="form-check mb-3">
-      <input type="checkbox" class="form-check-input" id="dark_mode" name="dark_mode">
-      <label class="form-check-label" for="dark_mode">{{ _('Tumma tila') }}</label>
-    </div>
-
-    <div class="form-check mb-3">
-      <input type="checkbox" class="form-check-input" id="subscribe_newsletter" name="subscribe_newsletter">
-      <label class="form-check-label" for="subscribe_newsletter">{{ _('Tilaa uutiskirje') }}</label>
-    </div>
-
-    <button type="submit" class="btn btn-primary">
-      {{ _('Tallenna muutokset') }}
-      <div class="spinner" id="spinner"></div>
-    </button>
-    </form>
-
-    <!-- MFA Section -->
-    <div class="mb-3 mt-4">
-      <label for="mfa" class="form-label"><i class="fas fa-shield-alt"></i> {{ _('Kaksivaiheinen tunnistus (MFA)')
-        }}</label>
-      <div id="mfa-section" class="d-flex flex-column gap-2">
-        <div id="mfa-status-container">
-          <span id="mfa-status" class="text-success">{{ _('MFA ei käytössä') }}</span>
-        </div>
-        <button type="button" class="btn btn-warning" id="init-mfa-btn">{{ _('Ota käyttöön MFA') }}</button>
-        <button type="button" class="btn btn-secondary" id="add-mfa-device-btn" style="display:none;">{{ _('Lisää uusi
-          laite') }}</button>
-        <ul id="mfa-devices-list" class="list-group mt-2"></ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- Profiili Tab -->
-  <div id="tab-profile">
-    <p>{{ _('Tässä voit muokata profiilitietojasi.') }}</p>
-    <form id="profile-form">
-      <div class="mb-3">
-        <label for="bio" class="form-label">{{ _('Esittelyteksti') }}</label>
-        <textarea class="form-control" id="bio" rows="3"></textarea>
-      </div>
-      <div class="mb-3">
-        <label for="profile-pic" class="form-label">{{ _('Profiilikuva') }}</label>
-        <input type="file" class="form-control" id="profile-pic" accept="image/*">
-      </div>
-      <button type="submit" class="btn btn-primary">{{ _('Tallenna profiili') }}</button>
-    </form>
-  </div>
-</div>
-</div>
-
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", () => {
     const profileForm = document.getElementById("profile-form");
     const bioInput = document.getElementById("bio");
     const fileInput = document.getElementById("profile-pic");
     const previewContainer = document.getElementById("profile-pic-preview");
+    const submitButton = document.getElementById("profile-submit");
+    const submitLabel = submitButton.querySelector(".user-form-actions__label");
+    const submitSpinner = submitButton.querySelector(".spinner-border");
+    const submitText = submitLabel.textContent;
 
-    // Load current profile info
-    fetch("/users/auth/api/v2/user_profile")
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                bioInput.value = data.data.bio || "";
-                if (data.data.profile_picture) {
-                    showPreview(data.data.profile_picture);
-                }
-            }
-        });
+    function setSubmitting(isSubmitting) {
+      submitButton.disabled = isSubmitting;
+      submitButton.setAttribute("aria-busy", String(isSubmitting));
+      submitLabel.textContent = isSubmitting ? "{{ _('Tallennetaan…') }}" : submitText;
+      submitSpinner.classList.toggle("d-none", !isSubmitting);
+    }
 
-    // Form submit handler
-    profileForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
+    function showPreview(url) {
+      const img = document.createElement("img");
+      img.src = url;
+      img.className = "user-file-preview__image";
+      img.alt = "{{ _('Profiilikuvan esikatselu') }}";
+      previewContainer.replaceChildren(img);
+    }
 
-        let base64Image = null;
-        if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            base64Image = await toBase64(file);
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = (error) => reject(error);
+      });
+    }
+
+    async function loadProfile() {
+      try {
+        const res = await fetch("/users/auth/api/v2/user_profile");
+        const data = await res.json();
+        if (res.ok && data.status === "success") {
+          bioInput.value = data.data.bio || "";
+          if (data.data.profile_picture) {
+            showPreview(data.data.profile_picture);
+          }
+        } else {
+          showSettingsMessage(data.message || "{{ _('Profiilin lataus epäonnistui') }}");
         }
+      } catch (error) {
+        console.error(error);
+        showSettingsMessage("{{ _('Profiilin lataus epäonnistui') }}");
+      }
+    }
 
-        const payload = {
-            bio: bioInput.value,
-            profile_picture: base64Image // null if no file selected
-        };
+    profileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideSettingsMessage();
+      setSubmitting(true);
 
+      let base64Image = null;
+      if (fileInput.files.length > 0) {
+        try {
+          const file = fileInput.files[0];
+          base64Image = await toBase64(file);
+        } catch (error) {
+          console.error(error);
+          showSettingsMessage("{{ _('Kuvan lukeminen epäonnistui') }}");
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      const payload = {
+        bio: bioInput.value,
+        profile_picture: base64Image
+      };
+
+      try {
         const res = await fetch("/users/auth/api/v2/user_profile", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
 
         const data = await res.json();
-        if (data.status === "success") {
-            alert("Profiili päivitetty!");
-            if (base64Image) {
-                // Show new preview immediately
-                const dataUrl = "data:image/png;base64," + base64Image;
-                showPreview(dataUrl);
-            }
+        if (res.ok && data.status === "success") {
+          showSettingsMessage(data.message || "{{ _('Profiili päivitetty.') }}", 'success');
+          if (data.data && data.data.profile_picture) {
+            showPreview(data.data.profile_picture);
+          }
+          fileInput.value = "";
         } else {
-            alert("Virhe: " + (data.message || "Tuntematon virhe"));
+          showSettingsMessage(data.message || "{{ _('Profiilin tallennus epäonnistui') }}");
         }
+      } catch (error) {
+        console.error(error);
+        showSettingsMessage("{{ _('Profiilin tallennus epäonnistui') }}");
+      } finally {
+        setSubmitting(false);
+      }
     });
 
-    // Helper: convert file -> base64
-    function toBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result.split(",")[1]); // only base64 part
-            reader.onerror = error => reject(error);
-        });
-    }
-
-    // Helper: show image preview
-    function showPreview(url) {
-        previewContainer.innerHTML = "";
-        const img = document.createElement("img");
-        img.src = url;
-        img.className = "img-thumbnail";
-        img.style.maxWidth = "150px";
-        previewContainer.appendChild(img);
-    }
-});
+    loadProfile();
+  });
 </script>
 
-
-<!-- MFA QR Modal (unchanged) -->
-
 <!-- MFA QR Code Modal -->
-<div class="modal fade" id="mfaModal" tabindex="-1" aria-labelledby="mfaModalLabel" aria-hidden="true">
+<div class="modal fade user-modal" id="mfaModal" aria-hidden="true" aria-labelledby="mfaModalLabel" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="mfaModalLabel">{{ _('MFA QR Code') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Close') }}"></button>
       </div>
       <div class="modal-body text-center">
         <p>{{ _('Skannaa tämä QR-koodi MFA-sovelluksellasi ja syötä koodi vahvistaaksesi.') }}</p>
-        <img id="mfa-qr-code" src="" alt="MFA QR Code" class="img-fluid rounded mb-3">
-        <input type="text" id="mfa-token-input" class="form-control" placeholder="{{ _('Syötä sovelluksen antama koodi') }}">
+        <img class="img-fluid rounded mb-3" id="mfa-qr-code" src alt="MFA QR Code">
+        <input class="form-control" id="mfa-token-input" type="text"
+               placeholder="{{ _('Syötä sovelluksen antama koodi') }}">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="confirm-mfa-btn">{{ _('Vahvista MFA') }}</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+        <button class="btn btn-primary" id="confirm-mfa-btn" type="button">
+          {{ _('Vahvista MFA') }}
+        </button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
+          {{ _('Peruuta') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step-up (re-authentication) Modal -->
+<div class="modal fade user-modal" id="stepUpModal" aria-hidden="true" aria-labelledby="stepUpModalLabel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="stepUpModalLabel">
+          <i class="fa-solid fa-shield-halved me-1"></i>
+          {{ _('Vahvista henkilöllisyytesi') }}
+        </h5>
+        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">
+          {{ _('Tämä toiminto vaatii tuoreen tunnistautumisen. Vahvista alla.') }}
+        </p>
+        <div id="step-up-error" class="alert alert-danger d-none"></div>
+
+        <button class="btn btn-primary w-100 mb-3 d-none" id="step-up-webauthn-btn" type="button">
+          <i class="fa-solid fa-fingerprint me-1"></i>
+          {{ _('Vahvista passkeyllä') }}
+        </button>
+
+        <div id="step-up-password-form">
+          <label class="form-label" for="step-up-password-input">
+            {{ _('Salasana') }}
+          </label>
+          <input class="form-control mb-3" id="step-up-password-input" type="password"
+                 autocomplete="current-password" placeholder="{{ _('Kirjoita salasana') }}">
+          <div id="step-up-totp-group" class="mb-3 d-none">
+            <label class="form-label" for="step-up-totp-input">
+              {{ _('MFA-koodi') }}
+            </label>
+            <input class="form-control" id="step-up-totp-input" type="text" inputmode="numeric"
+                   maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code"
+                   placeholder="{{ _('6-numeroinen koodi') }}">
+          </div>
+          <button class="btn btn-secondary w-100" id="step-up-password-btn" type="button">
+            {{ _('Vahvista salasanalla') }}
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal" id="step-up-cancel-btn" type="button">
+          {{ _('Peruuta') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade user-modal" id="credentialRenameModal" aria-hidden="true"
+  aria-labelledby="credentialRenameModalLabel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content user-form" id="credential-rename-form" novalidate>
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="credentialRenameModalLabel"></h2>
+        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <label class="user-field__label" for="credential-rename-input">{{ _('Nimi') }}</label>
+        <input class="user-field__control" id="credential-rename-input" type="text" maxlength="60"
+          autocomplete="off" aria-describedby="credential-rename-error" required>
+        <div class="user-form-feedback user-form-feedback--error" id="credential-rename-error"
+          role="alert" aria-live="assertive" hidden>
+          <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+          <p>{{ _('Anna nimi ennen tallentamista.') }}</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">{{ _('Peruuta') }}</button>
+        <button class="btn btn-primary" id="credential-rename-submit" type="submit">{{ _('Tallenna') }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade user-modal" id="credentialRemovalModal" aria-hidden="true"
+  aria-labelledby="credentialRemovalModalLabel" aria-describedby="credential-removal-message" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="credentialRemovalModalLabel"></h2>
+        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p id="credential-removal-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="credential-removal-cancel" data-bs-dismiss="modal" type="button">{{ _('Peruuta') }}</button>
+        <button class="btn btn-danger" id="credential-removal-confirm" type="button">{{ _('Poista') }}</button>
       </div>
     </div>
   </div>
@@ -397,20 +618,163 @@ document.addEventListener("DOMContentLoaded", () => {
 {% endblock %}
 
 {% block scripts %}
-
 <script>
-  $(function () {
-  $("#settings-tabs").tabs({
-    show: { effect: "fadeIn", duration: 200 },
-    hide: { effect: "fadeOut", duration: 200 }
-  });
-});
+  const credentialRenameElement = document.getElementById('credentialRenameModal');
+  const credentialRenameForm = document.getElementById('credential-rename-form');
+  const credentialRenameTitle = document.getElementById('credentialRenameModalLabel');
+  const credentialRenameInput = document.getElementById('credential-rename-input');
+  const credentialRenameError = document.getElementById('credential-rename-error');
+  let credentialRenameResolve = null;
+  let credentialRenameValue = null;
+  let credentialRenameReturnFocus = null;
 
+  function credentialRenameModal() {
+    return bootstrap.Modal.getOrCreateInstance(credentialRenameElement);
+  }
+
+  function requestCredentialName(title, currentName) {
+    if (credentialRenameResolve) credentialRenameResolve(null);
+    credentialRenameReturnFocus = document.activeElement;
+    credentialRenameTitle.textContent = String(title || '');
+    credentialRenameInput.value = String(currentName || '');
+    credentialRenameError.hidden = true;
+    credentialRenameInput.removeAttribute('aria-invalid');
+    credentialRenameValue = null;
+
+    return new Promise(resolve => {
+      credentialRenameResolve = resolve;
+      credentialRenameModal().show();
+    });
+  }
+
+  credentialRenameForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const value = credentialRenameInput.value.trim();
+    if (!value) {
+      credentialRenameInput.setAttribute('aria-invalid', 'true');
+      credentialRenameError.hidden = false;
+      credentialRenameInput.focus();
+      return;
+    }
+    credentialRenameValue = value;
+    credentialRenameModal().hide();
+  });
+
+  credentialRenameInput.addEventListener('input', () => {
+    credentialRenameInput.removeAttribute('aria-invalid');
+    credentialRenameError.hidden = true;
+  });
+
+  credentialRenameElement.addEventListener('shown.bs.modal', () => {
+    credentialRenameInput.focus();
+    credentialRenameInput.select();
+  });
+
+  credentialRenameElement.addEventListener('hidden.bs.modal', () => {
+    const resolve = credentialRenameResolve;
+    const returnFocus = credentialRenameReturnFocus;
+    credentialRenameResolve = null;
+    credentialRenameReturnFocus = null;
+    if (resolve) resolve(credentialRenameValue);
+    credentialRenameValue = null;
+    if (returnFocus && returnFocus.isConnected) returnFocus.focus();
+  });
+
+  const credentialRemovalElement = document.getElementById('credentialRemovalModal');
+  const credentialRemovalTitle = document.getElementById('credentialRemovalModalLabel');
+  const credentialRemovalMessage = document.getElementById('credential-removal-message');
+  const credentialRemovalCancel = document.getElementById('credential-removal-cancel');
+  const credentialRemovalConfirm = document.getElementById('credential-removal-confirm');
+  let credentialRemovalResolve = null;
+  let credentialRemovalApproved = false;
+  let credentialRemovalReturnFocus = null;
+
+  function credentialRemovalModal() {
+    return bootstrap.Modal.getOrCreateInstance(credentialRemovalElement);
+  }
+
+  function confirmCredentialRemoval(title, message) {
+    if (credentialRemovalResolve) credentialRemovalResolve(false);
+    credentialRemovalReturnFocus = document.activeElement;
+    credentialRemovalTitle.textContent = String(title || '');
+    credentialRemovalMessage.textContent = String(message || '');
+    credentialRemovalApproved = false;
+
+    return new Promise(resolve => {
+      credentialRemovalResolve = resolve;
+      credentialRemovalModal().show();
+    });
+  }
+
+  credentialRemovalConfirm.addEventListener('click', () => {
+    credentialRemovalApproved = true;
+    credentialRemovalModal().hide();
+  });
+
+  credentialRemovalElement.addEventListener('shown.bs.modal', () => {
+    credentialRemovalCancel.focus();
+  });
+
+  credentialRemovalElement.addEventListener('hidden.bs.modal', () => {
+    const resolve = credentialRemovalResolve;
+    const returnFocus = credentialRemovalReturnFocus;
+    credentialRemovalResolve = null;
+    credentialRemovalReturnFocus = null;
+    if (resolve) resolve(credentialRemovalApproved);
+    credentialRemovalApproved = false;
+    if (returnFocus && returnFocus.isConnected) returnFocus.focus();
+  });
 </script>
 
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabsRoot = document.getElementById('settings-tabs');
+    const tabs = Array.from(tabsRoot.querySelectorAll('[role="tab"]'));
+    const panels = Array.from(tabsRoot.querySelectorAll('[role="tabpanel"]'));
+
+    function activateSettingsTab(tab, { moveFocus = false } = {}) {
+      tabs.forEach(candidate => {
+        const selected = candidate === tab;
+        candidate.setAttribute('aria-selected', String(selected));
+        candidate.tabIndex = selected ? 0 : -1;
+      });
+      panels.forEach(panel => {
+        panel.hidden = panel.id !== tab.getAttribute('aria-controls');
+      });
+      if (moveFocus) tab.focus();
+      history.replaceState(null, '', `#${tab.getAttribute('aria-controls')}`);
+      queueMicrotask(() => {
+        tabsRoot.dispatchEvent(new CustomEvent('settings-tab-activate', {
+          detail: { panelId: tab.getAttribute('aria-controls') }
+        }));
+      });
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', event => {
+        event.preventDefault();
+        activateSettingsTab(tab);
+      });
+      tab.addEventListener('keydown', event => {
+        let targetIndex = null;
+        if (event.key === 'ArrowRight') targetIndex = (index + 1) % tabs.length;
+        if (event.key === 'ArrowLeft') targetIndex = (index - 1 + tabs.length) % tabs.length;
+        if (event.key === 'Home') targetIndex = 0;
+        if (event.key === 'End') targetIndex = tabs.length - 1;
+        if (targetIndex === null) return;
+        event.preventDefault();
+        activateSettingsTab(tabs[targetIndex], { moveFocus: true });
+      });
+    });
+
+    const requestedPanel = window.location.hash.slice(1);
+    const initialTab = tabs.find(tab => tab.getAttribute('aria-controls') === requestedPanel) || tabs[0];
+    activateSettingsTab(initialTab);
+  });
+</script>
 
 <script>
-document.addEventListener("DOMContentLoaded", async () => {
+  document.addEventListener("DOMContentLoaded", async () => {
     const form = document.getElementById('settings-form');
     const spinner = document.getElementById('spinner');
 
@@ -424,50 +788,50 @@ document.addEventListener("DOMContentLoaded", async () => {
     const res = await fetch("/users/auth/api/v2/settings");
     const data = await res.json();
     if (data.status === "success") {
-        const settings = data.settings || {};
-        displayInput.value = settings.display_name || '';
-        if (settings.city !== null) {
-            selectCity(settings.city);
-            //cityInput.value = settings.city || '';
-        }
-        languageSelect.value = settings.language || 'fi';
-        darkModeCheckbox.checked = settings.dark_mode || false;
-        newsletterCheckbox.checked = settings.subscribe_newsletter || false;
+      const settings = data.settings || {};
+      displayInput.value = settings.display_name || '';
+      if (settings.city !== null) {
+        selectCity(settings.city);
+      }
+      languageSelect.value = settings.language || 'fi';
+      darkModeCheckbox.checked = settings.dark_mode || false;
+      newsletterCheckbox.checked = settings.subscribe_newsletter || false;
     }
 
     // Handle form submit
     form.addEventListener('submit', async e => {
-        e.preventDefault();
-        spinner.style.display = 'inline-block';
+      e.preventDefault();
+      hideSettingsMessage();
+      spinner.hidden = false;
 
-        const payload = {
-            display_name: displayInput.value,
-            city: cityInput.value,
-            language: languageSelect.value,
-            dark_mode: darkModeCheckbox.checked,
-            subscribe_newsletter: newsletterCheckbox.checked
-        };
+      const payload = {
+        display_name: displayInput.value,
+        city: cityInput.value,
+        language: languageSelect.value,
+        dark_mode: darkModeCheckbox.checked,
+        subscribe_newsletter: newsletterCheckbox.checked
+      };
 
-        const response = await fetch("/users/auth/api/v2/settings", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
+      const response = await fetch("/users/auth/api/v2/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-        const result = await response.json();
-        spinner.style.display = 'none';
+      const result = await response.json();
+      spinner.hidden = true;
 
-        if(result.status === "success") {
-            alert(result.message);
-        } else {
-            alert("Virhe asetusten tallennuksessa.");
-        }
+      if (result.status === "success") {
+        showSettingsMessage(result.message, 'success');
+      } else {
+        showSettingsMessage("{{ _('Virhe asetusten tallennuksessa.') }}");
+      }
     });
-});
+  });
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", () => {
     const mfaBtn = document.getElementById("init-mfa-btn");
     const addDeviceBtn = document.getElementById("add-mfa-device-btn");
     const mfaModal = new bootstrap.Modal(document.getElementById('mfaModal'));
@@ -477,69 +841,109 @@ document.addEventListener("DOMContentLoaded", () => {
     const mfaStatus = document.getElementById("mfa-status");
     const devicesList = document.getElementById("mfa-devices-list");
 
-    let currentStep = null;
     let pendingSecret = null;
 
     // Load existing MFA status & devices
     async function loadMFAStatus() {
-        try {
-            const res = await fetch("/users/auth/api/v2/mfa_status");
-            const data = await res.json();
-            if (data.status === "enabled") {
-                mfaStatus.textContent = "{{ _('MFA on käytössä') }}";
-                mfaBtn.style.display = "none";
-                addDeviceBtn.style.display = "inline-block";
-                devicesList.innerHTML = "";
-                data.devices.forEach(d => {
-                    const li = document.createElement("li");
-                    li.className = "list-group-item d-flex justify-content-between align-items-center";
-                    li.textContent = `${d.name} (${d.created_at})`;
-                    // Optional: add revoke button
-                    const revokeBtn = document.createElement("button");
-                    revokeBtn.className = "btn btn-sm btn-danger";
-                    revokeBtn.textContent = "Poista";
-                    revokeBtn.onclick = async () => {
-                        if(confirm("Haluatko poistaa tämän laitteen?")) {
-                            await fetch("/users/auth/api/v2/mfa_device_revoke", {
-                                method: "POST",
-                                headers: {"Content-Type": "application/json"},
-                                body: JSON.stringify({device_id: d.id})
-                            });
-                            loadMFAStatus();
-                        }
-                    };
-                    li.appendChild(revokeBtn);
-                    devicesList.appendChild(li);
-                });
-            }
-        } catch(e) {
-            console.error("Failed to load MFA status", e);
+      try {
+        const res = await fetch("/users/auth/api/v2/mfa_status");
+        const data = await res.json();
+        if (data.status === "enabled") {
+          mfaStatus.textContent = "{{ _('MFA on käytössä') }}";
+          mfaStatus.className = "text-success";
+          mfaBtn.hidden = true;
+          addDeviceBtn.hidden = false;
+          devicesList.replaceChildren();
+          data.devices.forEach(d => {
+            const card = document.createElement("div");
+            card.className = "user-data-card";
+            const content = document.createElement("div");
+            content.className = "user-data-card__content";
+            const name = document.createElement("strong");
+            name.textContent = String(d.name || {{ _('MFA-laite') | tojson }});
+            const created = document.createElement("p");
+            created.textContent = String(d.created_at || "");
+            content.append(name, created);
+            const actions = document.createElement("div");
+            actions.className = "user-data-card__actions";
+            const renameBtn = document.createElement("button");
+            renameBtn.className = "btn btn-sm btn-outline-secondary";
+            renameBtn.textContent = "{{ _('Nimeä') }}";
+            renameBtn.onclick = async () => {
+              const newName = await requestCredentialName(
+                {{ _('Uusi nimi laitteelle') | tojson }},
+                d.name
+              );
+              if (!newName) return;
+              const r = await fetchWithStepUp("/users/auth/api/v2/mfa_device_rename", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ device_id: d.id, name: newName })
+              });
+              if (!r) return;
+              const j = await r.json();
+              showSettingsMessage(j.message, j.status === "success" ? "success" : "error");
+              loadMFAStatus();
+            };
+            const revokeBtn = document.createElement("button");
+            revokeBtn.className = "btn btn-sm btn-danger";
+            revokeBtn.textContent = {{ _('Poista') | tojson }};
+            revokeBtn.onclick = async () => {
+              const confirmed = await confirmCredentialRemoval(
+                {{ _('Poista MFA-laite') | tojson }},
+                {{ _('Haluatko poistaa tämän laitteen?') | tojson }}
+              );
+              if (!confirmed) return;
+              const response = await fetchWithStepUp("/users/auth/api/v2/mfa_device_revoke", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ device_id: d.id })
+              });
+              if (response) {
+                const result = await response.json();
+                showSettingsMessage(result.message, result.status === "success" ? "success" : "error");
+                if (result.status === "success") loadMFAStatus();
+              }
+            };
+            actions.append(renameBtn, revokeBtn);
+            card.append(content, actions);
+            devicesList.appendChild(card);
+          });
+        } else {
+          mfaStatus.textContent = "{{ _('MFA ei käytössä') }}";
+          mfaStatus.className = "text-muted";
+          mfaBtn.hidden = false;
+          addDeviceBtn.hidden = true;
+          devicesList.replaceChildren();
         }
+      } catch (e) {
+        console.error("Failed to load MFA status", e);
+      }
     }
 
     loadMFAStatus();
 
-    // Initiate MFA (first setup or adding new device)
     async function initiateMFA() {
-        try {
-            const res = await fetch("/users/auth/api/v2/mfa", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ step: "request_activation" })
-            });
-            const data = await res.json();
-            if (data.status === "pending") {
-                pendingSecret = data.secret;
-                qrImg.src = data.qr_code;
-                tokenInput.value = "";
-                mfaModal.show();
-            } else {
-                alert("MFA-initiaatio epäonnistui: " + (data.message || ""));
-            }
-        } catch(e) {
-            console.error(e);
-            alert("Virhe MFA:n aloittamisessa");
+      hideSettingsMessage();
+      try {
+        const res = await fetch("/users/auth/api/v2/mfa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ step: "request_activation" })
+        });
+        const data = await res.json();
+        if (data.status === "pending") {
+          pendingSecret = data.secret;
+          qrImg.src = data.qr_code;
+          tokenInput.value = "";
+          mfaModal.show();
+        } else {
+          showSettingsMessage("{{ _('MFA-initiaatio epäonnistui: ') }}" + (data.message || ""));
         }
+      } catch (e) {
+        console.error(e);
+        showSettingsMessage('{{ _("Virhe MFA:n aloittamisessa") }}');
+      }
     }
 
     mfaBtn.addEventListener("click", initiateMFA);
@@ -547,77 +951,672 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Verify MFA code
     confirmBtn.addEventListener("click", async () => {
-        const token = tokenInput.value.trim();
-        if (!token) return alert("Syötä koodi!");
+      const token = tokenInput.value.trim();
+      if (!token) return showSettingsMessage("{{ _('Syötä koodi!') }}");
 
-        try {
-            const res = await fetch("/users/auth/api/v2/mfa", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ step: "verify_code", code: token, secret: pendingSecret })
-            });
-            const data = await res.json();
-            if (data.status === "success") {
-                mfaModal.hide();
-                loadMFAStatus();
-                alert(data.message);
-            } else {
-                alert("Virhe MFA:n vahvistamisessa: " + (data.message || ""));
-            }
-        } catch(e) {
-            console.error(e);
-            alert("Virhe MFA:n vahvistamisessa");
+      try {
+        const res = await fetch("/users/auth/api/v2/mfa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ step: "verify_code", code: token, secret: pendingSecret })
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+          mfaModal.hide();
+          loadMFAStatus();
+          showSettingsMessage(data.message, 'success');
+        } else {
+          showSettingsMessage('{{ _('Virhe MFA:n vahvistamisessa: ') }}' + (data.message || ""));
         }
+      } catch (e) {
+        console.error(e);
+        showSettingsMessage('{{ _('Virhe MFA:n vahvistamisessa') }}');
+      }
     });
-});
-
+  });
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const profileForm = document.getElementById("profile-form");
-    const bioInput = document.getElementById("bio");
-    const fileInput = document.getElementById("profile-pic");
+  // Paikkakunta dropdown functions
+  const cityPicker = document.getElementById("paikkakunta-drop");
+  const cityPickerButton = cityPicker.querySelector(".user-city-picker__trigger");
+  const cityPickerMenu = document.getElementById("dropdown-content");
 
-    profileForm.addEventListener("submit", async (e) => {
+  function closeCityPicker({ restoreFocus = false } = {}) {
+    cityPickerMenu.hidden = true;
+    cityPickerButton.setAttribute("aria-expanded", "false");
+    if (restoreFocus) cityPickerButton.focus();
+  }
+
+  cityPickerButton.addEventListener("click", function (event) {
+    event.stopPropagation();
+    const expanded = this.getAttribute("aria-expanded") === "true";
+    cityPickerMenu.hidden = expanded;
+    this.setAttribute("aria-expanded", String(!expanded));
+    if (!expanded) document.getElementById("searchInput").focus();
+  });
+
+  document.addEventListener("click", event => {
+    if (!event.target.closest("#paikkakunta-drop")) closeCityPicker();
+  });
+
+  cityPicker.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !cityPickerMenu.hidden) {
+      event.preventDefault();
+      closeCityPicker({ restoreFocus: true });
+    }
+  });
+
+  function selectCity(city) {
+    const selectedText = document.getElementById("selected-city-text");
+    selectedText.textContent = city;
+    document.getElementById("selected-city").value = city;
+    cityPickerMenu.querySelectorAll('[role="option"]').forEach(option => {
+      const selected = option.textContent.trim() === city;
+      option.setAttribute("aria-selected", String(selected));
+      option.classList.toggle("active", selected);
+    });
+    closeCityPicker({ restoreFocus: true });
+  }
+
+  function filterFunction() {
+    let input = document.getElementById("searchInput");
+    let filter = input.value.toUpperCase();
+    const options = cityPickerMenu.querySelectorAll('[role="option"]');
+
+    options.forEach(option => {
+      const text = option.textContent || "";
+      option.hidden = !text.toUpperCase().includes(filter);
+    });
+  }
+</script>
+
+<script>
+  /* helpers for login history + password change */
+  function timeFmt(iso) {
+    return new Date(iso).toLocaleString(document.documentElement.lang || 'fi', {
+      hour12: false
+    });
+  }
+
+  function appendEmptyTableRow(tbody, colspan, message) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = colspan;
+    cell.className = 'user-data-table__empty';
+    cell.textContent = message;
+    row.appendChild(cell);
+    tbody.replaceChildren(row);
+  }
+
+  async function loadLoginLogs() {
+    try {
+      const res = await fetch("/users/auth/api/v2/login_logs?limit=30");
+      const json = await res.json();
+      if (json.status !== "success") return;
+      const tbody = document.querySelector("#log-table tbody");
+      const logs = Array.isArray(json.logs) ? json.logs : [];
+      if (!logs.length) {
+        appendEmptyTableRow(tbody, 4, {{ _('Ei kirjautumisia') | tojson }});
+        return;
+      }
+
+      const rows = logs.map(log => {
+        const row = document.createElement('tr');
+        const timeCell = document.createElement('td');
+        const ipCell = document.createElement('td');
+        const browserCell = document.createElement('td');
+        const resultCell = document.createElement('td');
+        const status = document.createElement('span');
+        const userAgent = String(log.ua || '');
+
+        timeCell.textContent = timeFmt(log.time);
+        ipCell.textContent = String(log.ip || '');
+        browserCell.className = 'user-settings-browser-cell';
+        browserCell.title = userAgent;
+        browserCell.textContent = userAgent.slice(0, 60);
+        status.className = `user-status-badge user-status-badge--${log.ok ? 'success' : 'danger'}`;
+        status.textContent = log.ok ? 'OK' : 'FAIL';
+        resultCell.appendChild(status);
+        row.append(timeCell, ipCell, browserCell, resultCell);
+        return row;
+      });
+      tbody.replaceChildren(...rows);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const pwForm = document.getElementById("pw-form");
+    const pwSpinner = document.getElementById("pw-spinner");
+
+    if (pwForm) {
+      pwForm.addEventListener("submit", async e => {
         e.preventDefault();
+        hideSettingsMessage();
+        if (pwSpinner) pwSpinner.hidden = false;
 
-        let base64Image = null;
+        const fd = new FormData(e.target);
+        const payload = Object.fromEntries(fd.entries());
 
-        if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            base64Image = await toBase64(file); // helper fn below
-        }
-
-        const payload = {
-            bio: bioInput.value,
-            profile_picture: base64Image // null if no file chosen
-        };
-
-        const res = await fetch("/users/auth/api/v2/user_profile", {
+        try {
+          const res = await fetchWithStepUp("/users/auth/api/v2/change_password", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
-        });
+          });
+          if (!res) return;
+          const j = await res.json();
+          showSettingsMessage(j.message, j.status === "success" ? "success" : "error");
+          if (j.status === "success") e.target.reset();
+        } catch (err) {
+          console.error(err);
+          showSettingsMessage("{{ _('Salasanan vaihtaminen epäonnistui') }}");
+        } finally {
+          if (pwSpinner) pwSpinner.hidden = true;
+        }
+      });
+    }
+  });
 
+  document.getElementById('settings-tabs').addEventListener('settings-tab-activate', event => {
+    if (event.detail.panelId === 'tab-security') loadLoginLogs();
+  });
+
+  /* API token helpers */
+  document.addEventListener("DOMContentLoaded", () => {
+    const tokenForm = document.getElementById("token-form");
+    const tokenList = document.getElementById("token-list");
+    const tokenMsg = document.getElementById("token-message");
+    const tokenResult = document.getElementById("token-result");
+    const tokenValue = document.getElementById("token-value");
+    const requestBtn = document.getElementById("token-request-btn");
+    const lockedNotice = document.getElementById("token-locked");
+    let tokensLoaded = false;
+
+    function setTokenMessage(msg, type = "info") {
+      if (!tokenMsg) return;
+      const feedbackType = type === 'success'
+        ? 'success'
+        : type === 'warning'
+          ? 'warning'
+          : type === 'danger'
+            ? 'error'
+            : 'info';
+      tokenMsg.className = `user-form-feedback user-form-feedback--${feedbackType}`;
+      tokenMsg.textContent = msg;
+      tokenMsg.hidden = false;
+    }
+
+    function clearTokenMessage() {
+      if (tokenMsg) tokenMsg.hidden = true;
+    }
+
+    function showLocked() {
+      if (lockedNotice) lockedNotice.classList.remove("d-none");
+      if (tokenForm) tokenForm.classList.add("d-none");
+    }
+
+    function showUnlocked() {
+      if (lockedNotice) lockedNotice.classList.add("d-none");
+      if (tokenForm) tokenForm.classList.remove("d-none");
+    }
+
+    async function loadStatus() {
+      try {
+        const res = await fetch("/users/auth/api_tokens/status");
+        const data = await res.json();
+        const approved = !!data.approved;
+        const requested = !!data.requested;
+        if (approved) {
+          showUnlocked();
+          clearTokenMessage();
+          if (!tokensLoaded) loadTokens();
+        } else {
+          showLocked();
+          setTokenMessage(
+            requested
+              ? "{{ _('Pyyntö lähetetty. Ylläpitäjän täytyy hyväksyä API-avainten käyttö.') }}"
+              : "{{ _('API-avaimet ovat lukittuina. Pyydä käyttöoikeutta alla.') }}",
+            "warning"
+          );
+        }
+      } catch (err) {
+        console.error(err);
+        setTokenMessage("{{ _('Tilaa ei voitu tarkistaa') }}", "danger");
+      }
+    }
+
+    async function requestAccess() {
+      try {
+        const res = await fetch("/users/auth/api_tokens/request_access", {
+          method: "POST"
+        });
         const data = await res.json();
         if (data.status === "success") {
-            alert("Profiili päivitetty!");
+          setTokenMessage(data.message || "{{ _('Pyyntö lähetetty') }}", "success");
+          showLocked();
         } else {
-            alert("Virhe: " + (data.message || "Tuntematon virhe"));
+          setTokenMessage(data.message || "{{ _('Pyyntö epäonnistui') }}", "danger");
         }
-    });
-
-    // Convert file → base64 string
-    function toBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file); // returns like "data:image/png;base64,..."
-            reader.onload = () => resolve(reader.result.split(",")[1]); // only base64 part
-            reader.onerror = (error) => reject(error);
-        });
+      } catch (err) {
+        console.error(err);
+        setTokenMessage("{{ _('Pyyntö epäonnistui') }}", "danger");
+      }
     }
-});
+
+    async function loadTokens() {
+      if (!tokenList) return;
+      appendEmptyTableRow(tokenList, 4, {{ _('Ladataan...') | tojson }});
+      try {
+        const res = await fetch("/users/auth/api_tokens/list");
+        const data = await res.json();
+        if (data.status !== "success") {
+          setTokenMessage(data.error || {{ _('Avainten lataus epäonnistui') | tojson }}, "warning");
+          return;
+        }
+        const tokens = Array.isArray(data.tokens) ? data.tokens : [];
+        if (!tokens.length) {
+          appendEmptyTableRow(tokenList, 4, {{ _('Ei avaimia vielä') | tojson }});
+          tokensLoaded = true;
+          return;
+        }
+
+        const rows = tokens.map(token => {
+          const row = document.createElement('tr');
+          const typeCell = document.createElement('td');
+          const scopesCell = document.createElement('td');
+          const expiryCell = document.createElement('td');
+          const actionsCell = document.createElement('td');
+          const revokeButton = document.createElement('button');
+          const revokeIcon = document.createElement('i');
+
+          typeCell.textContent = String(token.type || '');
+          scopesCell.textContent = Array.isArray(token.scopes) && token.scopes.length
+            ? token.scopes.map(scope => String(scope)).join(', ')
+            : '-';
+          expiryCell.textContent = token.expires_at ? timeFmt(token.expires_at) : '—';
+          actionsCell.className = 'user-data-table__actions';
+          revokeButton.className = 'btn btn-sm btn-outline-danger token-revoke';
+          revokeButton.type = 'button';
+          revokeButton.dataset.id = String(token._id || '');
+          revokeIcon.className = 'fa-solid fa-trash';
+          revokeIcon.setAttribute('aria-hidden', 'true');
+          revokeButton.append(revokeIcon, document.createTextNode(` {{ _('Peruuta') }}`));
+          actionsCell.appendChild(revokeButton);
+          row.append(typeCell, scopesCell, expiryCell, actionsCell);
+          return row;
+        });
+        tokenList.replaceChildren(...rows);
+        tokensLoaded = true;
+      } catch (err) {
+        console.error(err);
+        setTokenMessage("{{ _('Avainten lataus epäonnistui') }}", "danger");
+      }
+    }
+
+    async function revokeToken(id) {
+      try {
+        const res = await fetch("/users/auth/api_tokens/revoke", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token_id: id })
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+          clearTokenMessage();
+          loadTokens();
+        } else {
+          setTokenMessage(data.message || {{ _('Peruutus epäonnistui') | tojson }}, "warning");
+        }
+      } catch (err) {
+        console.error(err);
+        setTokenMessage("{{ _('Peruutus epäonnistui') }}", "danger");
+      }
+    }
+
+    if (tokenList) {
+      tokenList.addEventListener("click", (e) => {
+        const btn = e.target.closest(".token-revoke");
+        if (btn) {
+          e.preventDefault();
+          revokeToken(btn.dataset.id);
+        }
+      });
+    }
+
+    if (tokenForm) {
+      tokenForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearTokenMessage();
+        if (tokenResult) tokenResult.classList.add("d-none");
+
+        const type = document.getElementById("token-type").value;
+        const scopes = ["scope-read", "scope-write", "scope-admin"]
+          .map(id => document.getElementById(id))
+          .filter(cb => cb && cb.checked)
+          .map(cb => cb.value);
+
+        const btn = document.getElementById("token-create-btn");
+        if (btn) btn.disabled = true;
+
+        try {
+          const res = await fetchWithStepUp("/users/auth/api_token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type, scopes })
+          });
+          if (!res) return;
+          const data = await res.json();
+          if (data.status === "success") {
+            if (tokenValue) tokenValue.textContent = data.token;
+            if (tokenResult) tokenResult.classList.remove("d-none");
+            setTokenMessage("{{ _('Avain luotu. Tallenna se heti, sitä ei näytetä uudelleen.') }}", "success");
+            loadTokens();
+          } else {
+            setTokenMessage(data.error || {{ _('Avaimen luonti epäonnistui') | tojson }}, "warning");
+          }
+        } catch (err) {
+          console.error(err);
+          setTokenMessage("{{ _('Avaimen luonti epäonnistui') }}", "danger");
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      });
+    }
+
+    if (requestBtn) {
+      requestBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        requestAccess();
+      });
+    }
+
+    document.getElementById('settings-tabs').addEventListener('settings-tab-activate', event => {
+      if (event.detail.panelId === 'tab-tokens') loadStatus();
+    });
+  });
 </script>
 
+<script src="{{ url_for('static', filename='js/webauthn.js', v='20261003-conditional-passkey-1') }}"></script>
+<script>
+  /* ------------------------------------------------------------------ *
+   * Step-up ("sudo") helper: retry a fetch after re-authenticating.    *
+   * ------------------------------------------------------------------ */
+  document.addEventListener("DOMContentLoaded", () => {
+  const stepUpEl = document.getElementById("stepUpModal");
+  const stepUpError = document.getElementById("step-up-error");
+  const stepUpWebAuthnBtn = document.getElementById("step-up-webauthn-btn");
+  const stepUpPwBtn = document.getElementById("step-up-password-btn");
+  const stepUpPwInput = document.getElementById("step-up-password-input");
+  const stepUpTotpGroup = document.getElementById("step-up-totp-group");
+  const stepUpTotpInput = document.getElementById("step-up-totp-input");
+
+  let stepUpResolve = null;
+  let stepUpModal = null;
+
+  // bootstrap.bundle.js is loaded with defer, so it is not available while
+  // this inline script parses. Build the Modal lazily on first use (which is
+  // always after the document is ready) to avoid a ReferenceError.
+  function getStepUpModal() {
+    if (!stepUpModal && window.bootstrap && stepUpEl) {
+      stepUpModal = new bootstrap.Modal(stepUpEl);
+    }
+    return stepUpModal;
+  }
+
+  function stepUpErrorMsg(msg) {
+    stepUpError.textContent = msg;
+    stepUpError.classList.remove("d-none");
+  }
+
+  async function stepUpViaWebAuthn() {
+    try {
+      const optionsRes = await fetch("/users/auth/api/v2/step-up/webauthn/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const optionsData = await optionsRes.json();
+      if (optionsData.status !== "success") {
+        stepUpErrorMsg(optionsData.message || "Passkey-tunnistautuminen epäonnistui");
+        return;
+      }
+      const assertion = await navigator.credentials.get({
+        publicKey: decodePublicKeyOptions(optionsData.options)
+      });
+      const res = await fetch("/users/auth/api/v2/step-up/webauthn/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: formatAssertionCredential(assertion) })
+      });
+      const data = await res.json();
+      if (data.status !== "success") {
+        stepUpErrorMsg(data.message || "Passkey-tunnistautuminen epäonnistui");
+        return;
+      }
+      getStepUpModal() && getStepUpModal().hide();
+      stepUpResolve && stepUpResolve(true);
+    } catch (err) {
+      console.error(err);
+      stepUpErrorMsg("Passkey-tunnistautuminen epäonnistui. Yritä salasanalla.");
+    }
+  }
+
+  async function stepUpViaPassword() {
+    const password = stepUpPwInput.value;
+    const totp_code = stepUpTotpInput.value.trim();
+    const payload = { password };
+    if (totp_code) payload.totp_code = totp_code;
+    try {
+      const res = await fetch("/users/auth/api/v2/step-up/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        getStepUpModal() && getStepUpModal().hide();
+        stepUpResolve && stepUpResolve(true);
+      } else {
+        stepUpErrorMsg(data.message || "Virheellinen salasana");
+      }
+    } catch (err) {
+      console.error(err);
+      stepUpErrorMsg("Tunnistautuminen epäonnistui");
+    }
+  }
+
+  async function requestStepUp() {
+    return new Promise((resolve) => {
+      stepUpResolve = resolve;
+      stepUpError.classList.add("d-none");
+      stepUpPwInput.value = "";
+      stepUpTotpInput.value = "";
+      stepUpTotpGroup.classList.add("d-none");
+      stepUpWebAuthnBtn.classList.add("d-none");
+
+      // reveal the methods the user can step up with
+      fetch("/users/auth/api/v2/step-up/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          const methods = data.methods || [];
+          const webauthn = methods.some((m) => m.type === "webauthn");
+          const requiresTotp = methods.some(
+            (m) => m.type === "password_totp" && m.requires_totp
+          );
+          if (webauthn && window.PublicKeyCredential) {
+            stepUpWebAuthnBtn.classList.remove("d-none");
+            if (methods[0] && methods[0].type === "webauthn") {
+              stepUpPwFormHint();
+            }
+          }
+          if (requiresTotp) stepUpTotpGroup.classList.remove("d-none");
+        });
+
+      getStepUpModal() && getStepUpModal().show();
+    });
+  }
+
+  function stepUpPwFormHint() {
+    // prefer the passkey button: place it above the password form (already so).
+  }
+
+  /**
+   * fetch() wrapper that transparently runs the step-up flow when a request is
+   * rejected with {"error":"step_up_required"} and then retries the request.
+   */
+  async function fetchWithStepUp(url, options) {
+    const res = await fetch(url, options || {});
+    if (res.status !== 403) return res;
+    let body = null;
+    try {
+      body = await res.clone().json();
+    } catch (e) {
+      /* non-JSON 403 */
+    }
+    if (!body || body.error !== "step_up_required") return res;
+
+    const ok = await requestStepUp();
+    if (!ok) return null;
+    return fetch(url, options || {});
+  }
+
+  stepUpWebAuthnBtn.addEventListener("click", stepUpViaWebAuthn);
+  stepUpPwBtn.addEventListener("click", stepUpViaPassword);
+  stepUpPwInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") stepUpViaPassword();
+  });
+  document.getElementById("step-up-cancel-btn").addEventListener("click", () => {
+    stepUpResolve && stepUpResolve(false);
+    stepUpResolve = null;
+  });
+  document.getElementById("stepUpModal").addEventListener("hidden.bs.modal", () => {
+    stepUpResolve && stepUpResolve(false);
+    stepUpResolve = null;
+  });
+
+  /* ------------------------------------------------------------------ *
+   * Passkey management                                                  *
+   * ------------------------------------------------------------------ */
+  const passkeysList = document.getElementById("passkeys-list");
+
+  async function loadPasskeys() {
+    try {
+      const res = await fetch("/users/auth/api/v2/passkeys");
+      const data = await res.json();
+      if (data.status !== "success") return;
+      passkeysList.replaceChildren();
+      if (!data.passkeys.length) {
+        const empty = document.createElement('p');
+        empty.className = 'user-data-list__empty';
+        empty.textContent = {{ _('Ei passkeyjä vielä.') | tojson }};
+        passkeysList.appendChild(empty);
+        return;
+      }
+      data.passkeys.forEach((pk) => {
+        const card = document.createElement("article");
+        card.className = "user-data-card";
+        card.dataset.passkeyId = String(pk.id || '');
+
+        const meta = document.createElement("div");
+        meta.className = 'user-data-card__content';
+        const name = document.createElement("span");
+        name.className = "user-data-card__title";
+        name.textContent = pk.name || {{ _('Todennuslaite') | tojson }};
+        const created = document.createElement("small");
+        created.className = "user-data-card__meta";
+        created.textContent = new Date(pk.created_at).toLocaleDateString(
+          document.documentElement.lang || 'fi'
+        );
+        meta.appendChild(name);
+        meta.appendChild(created);
+
+        const actions = document.createElement("div");
+        actions.className = 'user-data-card__actions';
+        const renameBtn = document.createElement("button");
+        renameBtn.className = "btn btn-sm btn-outline-secondary";
+        renameBtn.type = 'button';
+        renameBtn.textContent = "{{ _('Nimeä') }}";
+        renameBtn.onclick = async () => {
+          const newName = await requestCredentialName(
+            {{ _('Uusi nimi passkeylle') | tojson }},
+            pk.name
+          );
+          if (!newName) return;
+          const r = await fetchWithStepUp("/users/auth/api/v2/passkeys/rename", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: pk.id, name: newName })
+          });
+          if (!r) return;
+          const j = await r.json();
+          showSettingsMessage(j.message, j.status === "success" ? "success" : "error");
+          loadPasskeys();
+        };
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "btn btn-sm btn-danger";
+        deleteBtn.type = 'button';
+        deleteBtn.textContent = "{{ _('Poista') }}";
+        deleteBtn.onclick = async () => {
+          const confirmed = await confirmCredentialRemoval(
+            {{ _('Poista passkey') | tojson }},
+            {{ _('Haluatko poistaa tämän passkeyn?') | tojson }}
+          );
+          if (!confirmed) return;
+          const r = await fetchWithStepUp("/users/auth/api/v2/passkeys/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: pk.id })
+          });
+          if (!r) return;
+          const j = await r.json();
+          showSettingsMessage(j.message, j.status === "success" ? "success" : "error");
+          loadPasskeys();
+        };
+        actions.appendChild(renameBtn);
+        actions.appendChild(deleteBtn);
+
+        card.appendChild(meta);
+        card.appendChild(actions);
+        passkeysList.appendChild(card);
+      });
+    } catch (e) {
+      console.error("Failed to load passkeys", e);
+    }
+  }
+
+  document.getElementById("add-passkey-btn").addEventListener("click", async () => {
+    hideSettingsMessage();
+    if (!window.PublicKeyCredential) {
+      showSettingsMessage("{{ _('Selaimesi ei tue passkeyjä.') }}", "error");
+      return;
+    }
+    try {
+      const statusRes = await fetch("/users/auth/api/v2/step-up/status");
+      const status = await statusRes.json();
+      if (status.elevated !== true) {
+        const ok = await requestStepUp();
+        if (!ok) return;
+      }
+      const passkeys = await registerPasskey();
+      showSettingsMessage("{{ _('Passkey lisätty onnistuneesti.') }}", "success");
+      loadPasskeys();
+    } catch (err) {
+      showSettingsMessage(err.message, "error");
+    }
+  });
+
+  document.getElementById('settings-tabs').addEventListener('settings-tab-activate', event => {
+    if (event.detail.panelId === 'tab-security') loadPasskeys();
+  });
+
+  // Expose the step-up retry wrapper to the earlier-registered password
+  // change, MFA revoke, and API-token handlers.
+  window.fetchWithStepUp = fetchWithStepUp;
+  });
+</script>
 {% endblock %}

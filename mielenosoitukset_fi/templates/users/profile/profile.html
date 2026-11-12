@@ -1,293 +1,1016 @@
 {% extends "base.html" %}
-
 {% block title %}
-{{ user.displayname if user.displayname else user.username }}'n Profiili
+{{ user.displayname or user.username }}'n Profiili
 {% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/user/profile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user/profile.css', v='20260927-profile-bio-1') }}">
+
 <style>
-  :root {
-    --color-bg: light-dark(#f5f7fa, #0d1117);
-    --color-card-bg: light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.05));
-    --color-text: light-dark(#222, #e6edf3);
-    --color-text-secondary: light-dark(#555, #a0aec0);
-    --color-primary: light-dark(#2563eb, #4ea1ff);
-    --color-primary-dark: light-dark(#1e40af, #0056b3);
-    --glass-blur: blur(18px);
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--primary_text_color);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
+}
+
+.profile-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Profile Header Card */
+.profile-header-card {
+  background: var(--container_background);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: var(--box_shadow);
+  margin-bottom: 2rem;
+  border: 1px solid var(--border_color);
+}
+
+.profile-banner {
+  height: 200px;
+  background: linear-gradient(135deg, var(--primary_color), var(--blue_light));
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  animation: bannerShift 20s ease-in-out infinite;
+}
+
+@keyframes bannerShift {
+  0%, 100% { transform: translateX(0) scale(1); }
+  50% { transform: translateX(20px) scale(1.1); }
+}
+
+.profile-info-container {
+  padding: 0 2rem 2rem;
+  margin-top: -60px;
+  position: relative;
+}
+
+.profile-avatar-wrapper {
+  display: inline-block;
+  position: relative;
+}
+
+.profile-avatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 5px solid var(--container_background);
+  box-shadow: var(--box_shadow);
+  object-fit: cover;
+  transition: transform 0.3s ease;
+  background: var(--background_light);
+}
+
+.profile-avatar:hover {
+  transform: scale(1.05);
+}
+
+.profile-details {
+  margin-top: 1.5rem;
+}
+
+.profile-name {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary_text_color);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--orange), var(--red));
+  color: white;
+  padding: 0.375rem 1rem;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px var(--box_shadow_color);
+}
+
+/* Stats Section */
+.profile-stats {
+  display: flex;
+  gap: 2.5rem;
+  margin: 2rem 0;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--border_color);
+  border-bottom: 1px solid var(--border_color);
+}
+
+.stat-item {
+  text-align: center;
+  cursor: default;
+  transition: transform 0.2s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+}
+
+.stat-button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: block;
+  font: inherit;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+.stat-button:focus-visible {
+  border-radius: var(--border_radius);
+  outline: 3px solid var(--box_shadow_color);
+  outline-offset: 0.35rem;
+}
+
+.stat-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary_color), var(--blue_light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--secondary_text_color);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border_radius);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.btn:hover::before {
+  opacity: 1;
+}
+
+.btn-primary {
+  background: var(--primary_button_color);
+  color: var(--primary_button_text_color);
+  box-shadow: 0 4px 12px var(--box_shadow_color);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  background: var(--primary_button_hover_color);
+  box-shadow: 0 8px 20px var(--box_shadow_color);
+}
+
+.btn-secondary {
+  background: var(--background_light);
+  color: var(--primary_text_color);
+  border: 1px solid var(--border_color);
+}
+
+.btn-secondary:hover {
+  background: var(--hover_bg_color);
+  transform: translateY(-2px);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary_color);
+  border: 2px solid var(--primary_color);
+}
+
+.btn-outline:hover {
+  background: var(--primary_color);
+  color: white;
+}
+
+.btn-danger {
+  background: var(--error_color);
+  color: white;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Content Sections */
+.content-section {
+  background: var(--container_background);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border_color);
+  box-shadow: var(--box_shadow);
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+.content-section:nth-child(2) { animation-delay: 0.1s; }
+.content-section:nth-child(3) { animation-delay: 0.2s; }
+.content-section:nth-child(4) { animation-delay: 0.3s; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border_radius);
+  background: linear-gradient(135deg, var(--primary_color), var(--blue_light));
+  color: white;
+  font-size: 1.25rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary_text_color);
+}
+
+/* Post List */
+.post-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.post-item {
+  display: flex;
+  align-items: center;
+  padding: 1.25rem;
+  background: var(--background_light);
+  border-radius: var(--border_radius);
+  text-decoration: none;
+  color: var(--primary_text_color);
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.post-item:hover {
+  transform: translateX(8px);
+  background: var(--hover_bg_color);
+  border-color: var(--primary_color);
+  box-shadow: var(--box_shadow);
+}
+
+.post-content {
+  flex: 1;
+}
+
+.post-title {
+  font-weight: 600;
+  font-size: 1.0625rem;
+  margin-bottom: 0.25rem;
+  color: var(--primary_text_color);
+}
+
+.post-date {
+  font-size: 0.875rem;
+  color: var(--secondary_text_color);
+}
+
+.post-arrow {
+  color: var(--primary_color);
+  font-size: 1.25rem;
+  opacity: 0;
+  transition: all 0.3s ease;
+  transform: translateX(-10px);
+}
+
+.post-item:hover .post-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Card Grid */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.org-card {
+  background: var(--background_light);
+  border-radius: var(--border_radius);
+  padding: 1.5rem;
+  text-decoration: none;
+  color: var(--primary_text_color);
+  border: 1px solid var(--border_color);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.org-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, var(--primary_color), var(--blue_light));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.org-card:hover::before {
+  transform: scaleX(1);
+}
+
+.org-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--box_shadow);
+  border-color: var(--primary_color);
+}
+
+.org-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.org-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--border_radius);
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.org-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.org-avatar i {
+  font-size: 1.5rem;
+  color: var(--secondary_text_color);
+}
+
+.org-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.org-name {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--primary_text_color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.org-location {
+  font-size: 0.875rem;
+  color: var(--secondary_text_color);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.org-description {
+  font-size: 0.9375rem;
+  color: var(--secondary_text_color);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.org-link-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--link_color);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: gap 0.2s ease;
+}
+
+.org-card:hover .org-link-indicator {
+  gap: 0.75rem;
+  color: var(--link_hover_color);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  background: var(--background_light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: var(--secondary_text_color);
+}
+
+.empty-text {
+  font-size: 1.125rem;
+  color: var(--secondary_text_color);
+}
+
+/* Modal Improvements */
+.modal-content {
+  background: var(--container_background);
+  border: 1px solid var(--border_color);
+  border-radius: 20px;
+  box-shadow: var(--box_shadow);
+  color: var(--primary_text_color);
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--border_color);
+  padding: 1.5rem;
+}
+
+.modal-title {
+  font-weight: 700;
+  color: var(--primary_text_color);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  color: var(--primary_text_color);
+}
+
+.modal-footer {
+  border-top: 1px solid var(--border_color);
+  padding: 1.5rem;
+}
+
+.form-control, textarea {
+  background: var(--input_background);
+  border: 1px solid var(--border_color);
+  border-radius: var(--border_radius);
+  color: var(--primary_text_color);
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus, textarea:focus {
+  outline: none;
+  border-color: var(--focus_color);
+  box-shadow: 0 0 0 3px var(--box_shadow_color);
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--primary_text_color);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.follow-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.follow-list-item {
+  align-items: center;
+  background: var(--background_light);
+  border: 1px solid var(--border_color);
+  border-radius: var(--border_radius);
+  color: var(--primary_text_color);
+  display: flex;
+  gap: 0.85rem;
+  padding: 0.85rem;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.follow-list-item:hover,
+.follow-list-item:focus {
+  background: var(--hover_bg_color);
+  border-color: var(--primary_color);
+  color: var(--primary_text_color);
+  transform: translateY(-2px);
+}
+
+.follow-list-avatar {
+  border-radius: 50%;
+  flex: 0 0 44px;
+  height: 44px;
+  object-fit: cover;
+  width: 44px;
+}
+
+.follow-list-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.follow-list-display {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.follow-list-username {
+  color: var(--secondary_text_color);
+  font-size: 0.9rem;
+}
+
+/* Toast Notification */
+.custom-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: var(--green);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: var(--border_radius);
+  box-shadow: var(--box_shadow);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  animation: slideInRight 0.3s ease;
+  z-index: 9999;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-icon {
+  font-size: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-wrapper {
+    padding: 1rem 0.5rem;
   }
 
-  body {
-    background: var(--color-bg);
-    color: var(--color-text);
-    font-family: 'Inter', system-ui, sans-serif;
+  .profile-banner {
+    height: 150px;
   }
 
-  .profile-container {
-    background: var(--color-card-bg);
-    border-radius: 1.5em;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    padding: 2em 1.5em;
-    backdrop-filter: var(--glass-blur);
-    animation: fadeIn 0.6s ease-out;
+  .profile-info-container {
+    padding: 0 1rem 1.5rem;
+    margin-top: -50px;
   }
 
-  .profile-header {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    color: #fff;
-    border-radius: 1.3em;
-    padding: 2.2em 1.2em;
-    margin-bottom: 2em;
+  .profile-avatar {
+    width: 100px;
+    height: 100px;
   }
 
-  .profile-img {
-    width: 130px;
-    height: 130px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 4px solid #fff;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-    background: #fff;
-    transition: transform 0.3s ease;
+  .profile-name {
+    font-size: 1.5rem;
   }
 
-  .profile-img:hover {
-    transform: scale(1.05) rotate(2deg);
+  .profile-stats {
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
-  .user-name {
-    font-size: 2.4em;
-    font-weight: 900;
-    text-shadow: 0 3px 14px rgba(0, 0, 0, 0.25);
-    margin-bottom: 0.3em;
-    letter-spacing: 0.02em;
+  .stat-value {
+    font-size: 1.5rem;
   }
 
-  .badge-admin {
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-    font-weight: 700;
-    border-radius: 2em;
-    padding: 0.35em 1em;
-    font-size: 0.9em;
-    backdrop-filter: blur(6px);
-    display: inline-block;
-    margin-bottom: 0.6em;
+  .content-section {
+    padding: 1.5rem;
   }
 
-  .stat-number {
-    font-size: 1.4em;
-    font-weight: 800;
-    color: #fff;
+  .card-grid {
+    grid-template-columns: 1fr;
   }
 
-  .stat-label {
-    font-size: 0.9em;
-    color: #d1d5db;
+  .custom-toast {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
   }
-
-  .org-container {
-    background: var(--color-card-bg);
-    border-radius: 1em;
-    padding: 0.9em 1.2em;
-    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.08);
-    text-align: center;
-    transition: transform 0.25s ease;
-  }
-
-  .org-container:hover {
-    transform: translateY(-3px) scale(1.02);
-  }
-
-  .org-link {
-    color: var(--color-primary);
-    text-decoration: none;
-    font-weight: 600;
-  }
-
-  .org-link:hover {
-    color: var(--color-primary-dark);
-    text-decoration: underline;
-  }
-
-  .btn-custom {
-    border-radius: 2em;
-    font-weight: 700;
-    transition: all 0.25s ease;
-  }
-
-  .btn-follow {
-    background: var(--color-primary);
-    color: #fff;
-  }
-
-  .btn-follow:hover {
-    background: var(--color-primary-dark);
-  }
-
-  .btn-unfollow {
-    background: transparent;
-    color: #fff;
-    border: 2px solid #fff;
-  }
-
-  .btn-unfollow:hover {
-    background: #fff;
-    color: var(--color-primary-dark);
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(15px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+}
 </style>
 
-<div class="container my-4">
-  <div class="profile-container">
-    <div class="profile-header">
-      <div class="row align-items-center">
-        <!-- Profile picture -->
-        <div class="col-md-3 text-center mb-3 mb-md-0">
-          <img src="{{ user.profile_picture or 'https://cdn2.mielenosoitukset.fi/default-pfp.jpg' }}"
-            alt="{{ user.displayname if user.displayname else user.username }}n profiilikuva"
-            class="profile-img img-fluid"
-            onerror="this.onerror=null; this.src='https://cdn2.mielenosoitukset.fi/default-pfp.jpg';">
+<!-- Share Modal -->
+<div class="modal fade" id="shareProfileModal" tabindex="-1" aria-labelledby="shareProfileModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareProfileModalLabel">
+          <i class="fa-solid fa-share-nodes"></i> {{ _('Jaa profiilisi muille') }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1.5rem;">{{ _('Haluatko, että kaverit ja seuraajat löytävät sinut helpommin? Lähetä heille linkkisi ja valmiiksi kirjoitettu viesti:') }}</p>
+        <div class="mb-3">
+          <label class="form-label">{{ _('Profiililinkki') }}</label>
+          <input type="text" class="form-control" readonly 
+            value="{{ url_for('users.profile.profile', username=current_user.username, _external=True) }}">
         </div>
-
-        <!-- User info -->
-        <div class="col-md-9 text-center text-md-start">
-          <h1 class="user-name">{{ user.displayname if user.displayname else user.username }}</h1>
-
-          {% if user.global_admin %}
-          <span class="badge-admin">{{ _('Järjestelmävalvoja') }}</span>
-          {% endif %}
-
-          <!-- Stats -->
-          <div class="row justify-content-center my-3">
-            <div class="col-4 col-md-3 text-center">
-              <div class="stat-number">{{ user.posts_count or 0 }}</div>
-              <div class="stat-label">{{ _('Postaukset') }}</div>
-            </div>
-            <div class="col-4 col-md-3 text-center">
-              <div class="stat-number">{{ user.followers_count or 0 }}</div>
-              <div class="stat-label">{{ _('Seuraajat') }}</div>
-            </div>
-            <div class="col-4 col-md-3 text-center">
-              <div class="stat-number">{{ user.following_count or 0 }}</div>
-              <div class="stat-label">{{ _('Seuratut') }}</div>
-            </div>
-          </div>
-
-          <!-- Organizations -->
-          {% if user.organizations %}
-          <h2 class="h5 mt-3">{{ _('Organisaatiot') }}</h2>
-          <div class="row g-3">
-            {% for org in user.organizations %}
-            <div class="col-6 col-md-4">
-              <div class="org-container">
-                <p><strong>{{ get_org_name(org.org_id) }}</strong></p>
-                <a href="{{ url_for('org', org_id=org.org_id) }}" class="org-link">{{ _('Tutustu organisaatioon') }}</a>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-          {% endif %}
-
-          <!-- Action buttons container -->
-          <div id="action-buttons-container"
-            class="mt-4 d-flex flex-wrap gap-2 justify-content-center justify-content-md-start"
-            data-username="{{ user.username }}">
-            <!-- JS injects follow/friend/message buttons here -->
-          </div>
+        <div class="mb-3">
+          <label class="form-label">{{ _('Valmis viesti') }}</label>
+          <textarea class="form-control" rows="3" readonly>Hei! Tule seuraamaan profiiliani Mielenosoitukset.fi:ssä: https://mielenosoitukset.fi/users/profile/{{ current_user.username }}
+Voimme myös lisätä toisemme ystäviksi!</textarea>
         </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
+        <button class="btn btn-primary" id="copyShareTextBtn">
+          <i class="fa-solid fa-copy"></i> {{ _('Kopioi linkki ja viesti') }}
+        </button>
       </div>
     </div>
+  </div>
+</div>
 
-    <!-- User Posts -->
-    <div class="mt-4">
-      <h2 class="h4">{{ _('Postaukset') }}</h2>
-      {% if user.posts %}
-      <div class="list-group">
-        {% for post in user.posts %}
-        <a href="{{ url_for('posts.view', post_id=post.id) }}" class="list-group-item list-group-item-action">
-          <strong>{{ post.title }}</strong>
-          <small class="text-muted d-block">{{ post.created_at.strftime('%d.%m.%Y') }}</small>
-        </a>
-        {% endfor %}
+{% macro follow_list_modal(modal_id, title, people, empty_text) %}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ modal_id }}Label">
+          <i class="fa-solid fa-user-group"></i> {{ title }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
       </div>
-      {% else %}
-      <p class="text-muted">{{ _('Tällä käyttäjällä ei ole vielä postauksia.') }}</p>
-      {% endif %}
+      <div class="modal-body">
+        {% if people %}
+          <div class="follow-list">
+            {% for person in people %}
+              <a class="follow-list-item" href="{{ person.url }}">
+                <img class="follow-list-avatar"
+                  src="{{ person.profile_picture or 'https://cdn2.mielenosoitukset.fi/default-pfp.jpg' }}"
+                  alt="{{ person.displayname }}n profiilikuva"
+                  loading="lazy"
+                  onerror="this.onerror=null;this.src='https://cdn2.mielenosoitukset.fi/default-pfp.jpg'">
+                <span class="follow-list-name">
+                  <span class="follow-list-display">{{ person.displayname }}</span>
+                  <span class="follow-list-username">@{{ person.username }}</span>
+                </span>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon">
+              <i class="fa-solid fa-user-group"></i>
+            </div>
+            <div class="empty-text">{{ empty_text }}</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{{ follow_list_modal("followersModal", _("Seuraajat"), followers, _("Tällä käyttäjällä ei ole vielä seuraajia.")) }}
+{{ follow_list_modal("followingModal", _("Seuratut"), following, _("Tämä käyttäjä ei seuraa vielä ketään.")) }}
+
+<div class="profile-wrapper">
+  <!-- Profile Header -->
+  <div class="profile-header-card">
+    <div class="profile-banner"></div>
+    <div class="profile-info-container">
+      <div class="profile-avatar-wrapper">
+        <img src="{{ user.profile_picture or 'https://cdn2.mielenosoitukset.fi/default-pfp.jpg' }}"
+             class="profile-avatar" alt="{{ user.displayname or user.username }}n profiilikuva"
+             onerror="this.onerror=null;this.src='https://cdn2.mielenosoitukset.fi/default-pfp.jpg'">
+      </div>
+
+      <div class="profile-details">
+        <h1 class="profile-name">
+          {{ user.displayname or user.username }}
+          {% if user.global_admin %}
+            <span class="admin-badge">
+              <i class="fa-solid fa-shield-halved"></i>
+              {{ _('Järjestelmävalvoja') }}
+            </span>
+          {% endif %}
+        </h1>
+
+        {% if user.bio %}
+          <p class="profile-bio">{{ user.bio }}</p>
+        {% endif %}
+
+        <div class="profile-stats">
+          <div class="stat-item">
+            <span class="stat-value">{{ user.posts_count or 0 }}</span>
+            <span class="stat-label">{{ _('Postaukset') }}</span>
+          </div>
+          <div class="stat-item">
+            <button type="button" class="stat-button" data-bs-toggle="modal" data-bs-target="#followersModal">
+              <span class="stat-value">{{ user.followers_count or 0 }}</span>
+              <span class="stat-label">{{ _('Seuraajat') }}</span>
+            </button>
+          </div>
+          <div class="stat-item">
+            <button type="button" class="stat-button" data-bs-toggle="modal" data-bs-target="#followingModal">
+              <span class="stat-value">{{ user.following_count or 0 }}</span>
+              <span class="stat-label">{{ _('Seuratut') }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="action-buttons-container" class="action-buttons" data-username="{{ user.username }}"></div>
+      </div>
     </div>
   </div>
 
-</div><script>
+  <!-- Posts Section -->
+  <div class="content-section">
+    <div class="section-header">
+      <div class="section-icon">
+        <i class="fa-solid fa-newspaper"></i>
+      </div>
+      <h2 class="section-title">{{ _('Postaukset') }}</h2>
+    </div>
+
+    {% if user.posts %}
+      <div class="post-list">
+        {% for post in user.posts %}
+          <a href="{{ url_for('posts.view', post_id=post.id) }}" class="post-item">
+            <div class="post-content">
+              <div class="post-title">{{ post.title }}</div>
+              <div class="post-date">{{ post.created_at.strftime('%d.%m.%Y') }}</div>
+            </div>
+            <i class="fa-solid fa-arrow-right post-arrow"></i>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">
+          <i class="fa-solid fa-newspaper"></i>
+        </div>
+        <div class="empty-text">{{ _('Tällä käyttäjällä ei ole vielä postauksia.') }}</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Followed Organizations -->
+  {% if current_user.is_authenticated and current_user.username == user.username %}
+  <div class="content-section">
+    <div class="section-header">
+      <div class="section-icon">
+        <i class="fa-solid fa-building"></i>
+      </div>
+      <h2 class="section-title">{{ _('Seuraamani organisaatiot') }}</h2>
+    </div>
+
+    {% if followed_orgs %}
+      <div class="card-grid">
+        {% for org in followed_orgs %}
+        <a class="org-card" href="{{ url_for('org', org_id=org.id) }}">
+          <div class="org-header">
+            <div class="org-avatar">
+              {% if org.logo %}
+                <img src="{{ org.logo }}" alt="{{ org.name }}" loading="lazy" referrerpolicy="no-referrer">
+              {% else %}
+                <i class="fa-solid fa-building"></i>
+              {% endif %}
+            </div>
+            <div class="org-info">
+              <div class="org-name">{{ org.name }}</div>
+              {% if org.city %}
+                <div class="org-location">
+                  <i class="fa-solid fa-location-dot"></i>
+                  {{ org.city }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          {% if org.description %}
+            <p class="org-description">{{ org.description | truncate(120) }}</p>
+          {% endif %}
+          <span class="org-link-indicator">
+            {{ _('Näytä organisaatio') }}
+            <i class="fa-solid fa-arrow-right"></i>
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">
+          <i class="fa-solid fa-building"></i>
+        </div>
+        <div class="empty-text">{{ _('Et seuraa vielä yhtään organisaatiota.') }}</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Followed Recurring Demonstrations -->
+  <div class="content-section">
+    <div class="section-header">
+      <div class="section-icon">
+        <i class="fa-solid fa-calendar-days"></i>
+      </div>
+      <h2 class="section-title">{{ _('Seuraamani toistuvat mielenosoitukset') }}</h2>
+    </div>
+
+    {% if followed_recurring %}
+      <div class="card-grid">
+        {% for demo in followed_recurring %}
+        <a class="org-card" href="{{ demo.link }}">
+          <div class="org-header">
+            <div class="org-avatar">
+              <i class="fa-solid fa-bullhorn"></i>
+            </div>
+            <div class="org-info">
+              <div class="org-name">{{ demo.title }}</div>
+              <div class="org-location">
+                <i class="fa-solid fa-calendar"></i>
+                {{ demo.date }}
+              </div>
+            </div>
+          </div>
+          <p class="org-description">
+            <i class="fa-solid fa-location-dot"></i> {{ demo.city }}
+            {% if demo.address %} · {{ demo.address }}{% endif %}
+          </p>
+          <span class="org-link-indicator">
+            {{ _('Avaa mielenosoitus') }}
+            <i class="fa-solid fa-arrow-right"></i>
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">
+          <i class="fa-solid fa-calendar-days"></i>
+        </div>
+        <div class="empty-text">{{ _('Et seuraa vielä yhtään toistuvaa mielenosoitusta.') }}</div>
+      </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("action-buttons-container");
   if (!container) return;
 
   const username = container.dataset.username;
   const isSelf = "{{ current_user.username }}" === username;
-  const logged_in = {{ current_user.is_authenticated | tojson }};
-  const currentUrl = window.location.href;
+  const loggedIn = {{ current_user.is_authenticated | tojson }};
 
   if (isSelf) {
-    container.innerHTML = `<a href="{{ url_for('users.profile.edit_profile') }}" class="btn btn-light btn-custom">{{ _('Muokkaa profiilia') }}</a>`;
+    container.innerHTML = `
+      <a href="{{ url_for('users.profile.edit_profile') }}" class="btn btn-secondary">
+        <i class="fa-solid fa-pen-to-square"></i>
+        {{ _('Muokkaa profiilia') }}
+      </a>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#shareProfileModal">
+        <i class="fa-solid fa-share-nodes"></i>
+        {{ _('Jaa profiilisi') }}
+      </button>
+    `;
     return;
   }
 
   async function updateButtons() {
     try {
-      // Initial placeholder buttons
-      let html = `
-        <button id="follow-btn" class="btn btn-follow btn-custom me-2">Seuraa</button>
-        <button id="send-request-btn" class="btn btn-light btn-custom me-2">Lisää ystäväksi</button>
-        <button id="friend-btn" class="btn btn-light btn-custom me-2">Ystävä</button>
+      container.innerHTML = `
+        <button id="follow-btn" class="btn btn-primary">
+          <i class="fa-solid fa-user-plus"></i> Seuraa
+        </button>
+        <button id="send-request-btn" class="btn btn-secondary">
+          <i class="fa-solid fa-user-group"></i> Lisää ystäväksi
+        </button>
+        <button id="friend-btn" class="btn btn-secondary">
+          <i class="fa-solid fa-user-check"></i> Ystävä
+        </button>
       `;
-      container.innerHTML = html;
 
       const followBtn = document.getElementById("follow-btn");
       const sendBtn = document.getElementById("send-request-btn");
       const friendBtn = document.getElementById("friend-btn");
 
-      if (!logged_in) {
+      if (!loggedIn) {
         [followBtn, sendBtn, friendBtn].forEach(btn => {
-          btn.setAttribute("title", "Sinun tulee kirjautua sisään käyttääksesi tätä");
+          btn.title = "Sinun tulee kirjautua sisään käyttääksesi tätä";
           btn.addEventListener("click", () => {
-            const width = 500;
-            const height = 600;
-            const left = (screen.width / 2) - (width / 2);
-            const top = (screen.height / 2) - (height / 2);
-
+            const w = 500, h = 600;
+            const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
             window.open(
-                "{{ url_for('users.auth.login') }}?next=" + encodeURIComponent(currentUrl) + "&popup=1",
-                "LoginPopup",
-                `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
+              "{{ url_for('users.auth.login') }}?next=" + encodeURIComponent(location.href) + "&popup=1",
+              "LoginPopup",
+              `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`
             );
+          });
         });
-
-        });
-        return; // done for logged-out users
+        return;
       }
 
-      // Logged-in: fetch friend & follow state
       const [friendRes, followRes] = await Promise.all([
         fetch(`/users/profile/api/friend_state/?username=${encodeURIComponent(username)}`),
         fetch(`/users/profile/api/is_following/?username=${encodeURIComponent(username)}`)
       ]);
-
       const friendData = await friendRes.json();
       const followData = await followRes.json();
 
-      // Update follow button
-      followBtn.textContent = followData.is_following ? "Lopeta seuraaminen" : "Seuraa";
+      // Follow button
+      followBtn.innerHTML = followData.is_following 
+        ? '<i class="fa-solid fa-user-minus"></i> Lopeta seuraaminen' 
+        : '<i class="fa-solid fa-user-plus"></i> Seuraa';
+      followBtn.className = followData.is_following ? 'btn btn-outline' : 'btn btn-primary';
       followBtn.onclick = async () => {
         await fetch(`/users/profile/api/${followData.is_following ? 'unfollow' : 'follow'}/`, {
           method: "POST",
@@ -297,10 +1020,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateButtons();
       };
 
-      // Update friend button & send request button based on friend_state
+      // Friend logic
       switch (friendData.friend_state) {
         case "friends":
-          friendBtn.textContent = "Poista ystävä";
+          friendBtn.innerHTML = '<i class="fa-solid fa-user-xmark"></i> Poista ystävä';
+          friendBtn.className = 'btn btn-outline';
           friendBtn.onclick = async () => {
             await fetch("/users/profile/api/remove_friend/", {
               method: "POST",
@@ -309,12 +1033,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
             updateButtons();
           };
-          sendBtn.style.display = "none";
+          sendBtn.remove();
           break;
 
         case "incoming_request":
-          sendBtn.style.display = "none";
-          friendBtn.textContent = "Hyväksy pyyntö";
+          sendBtn.remove();
+          friendBtn.innerHTML = '<i class="fa-solid fa-check"></i> Hyväksy pyyntö';
+          friendBtn.className = 'btn btn-primary';
           friendBtn.onclick = async () => {
             await fetch("/users/profile/api/accept_friend_request/", {
               method: "POST",
@@ -323,11 +1048,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
             updateButtons();
           };
-
-          // Add a reject button
           const rejectBtn = document.createElement("button");
-          rejectBtn.className = "btn btn-danger btn-custom me-2";
-          rejectBtn.textContent = "Hylkää pyyntö";
+          rejectBtn.className = "btn btn-danger";
+          rejectBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Hylkää pyyntö';
           rejectBtn.onclick = async () => {
             await fetch("/users/profile/api/reject_friend_request/", {
               method: "POST",
@@ -340,14 +1063,15 @@ document.addEventListener("DOMContentLoaded", async () => {
           break;
 
         case "outgoing_request":
-          friendBtn.textContent = "Ystäväpyyntö lähetetty";
+          friendBtn.innerHTML = '<i class="fa-solid fa-clock"></i> Ystäväpyyntö lähetetty';
+          friendBtn.className = 'btn btn-secondary';
           friendBtn.disabled = true;
-          sendBtn.style.display = "none";
+          sendBtn.remove();
           break;
 
-        case "none":
         default:
-          sendBtn.textContent = "Lisää ystäväksi";
+          friendBtn.remove();
+          sendBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Lisää ystäväksi';
           sendBtn.onclick = async () => {
             await fetch("/users/profile/api/send_friend_request/", {
               method: "POST",
@@ -356,8 +1080,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
             updateButtons();
           };
-          friendBtn.style.display = "none";
-          break;
       }
     } catch (err) {
       console.error("Error updating buttons:", err);
@@ -366,7 +1088,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   updateButtons();
 });
+
+document.addEventListener("click", (e) => {
+  if (e.target.id === "copyShareTextBtn" || e.target.closest('#copyShareTextBtn')) {
+    const text = `Hei! Tule seuraamaan profiiliani Mielenosoitukset.fi:ssä: https://mielenosoitukset.fi/users/profile/{{ current_user.username }}\nVoimme myös lisätä toisemme ystäviksi!`;
+    navigator.clipboard.writeText(text).then(() => {
+      const toast = document.createElement("div");
+      toast.className = "custom-toast";
+      toast.innerHTML = `
+        <i class="fa-solid fa-check-circle toast-icon"></i>
+        <span>{{ _('Linkki ja viesti kopioitu leikepöydälle!') }}</span>
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.animation = 'slideInRight 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    });
+  }
+});
 </script>
-
-
 {% endblock %}

@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}{{ month_name }} {{ year }} | Mielenosoitukset.fi{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/public-calendar.css', v='20261003-calendar-theme-1') }}">
+{% endblock %}
+
+{% block content %}
+{% if noindex_nofollow %}
+<meta name="robots" content="noindex, nofollow">
+{% endif %}
+
+<div class="public-calendar public-calendar--legacy">
+
+
+
+<h1>{{ month_name|e }} {{ year }}</h1>
+
+<!-- Navigation -->
+<div class="calendar-nav">
+    <a id="prev-month-link" href="{{ url_for('calendar_month_view', year=prev_year, month=prev_month) }}">←
+        {{ _('Edellinen') }}</a>
+    <a id="year-view-btn" href="{{ url_for('calendar_year_view', year=year) }}">📅 {{ _('Vuosi') }} {{ year }}</a>
+    <a id="next-month-link" href="{{ url_for('calendar_month_view', year=next_year, month=next_month) }}">{{ _('Seuraava') }} →</a>
+</div>
+
+<!-- Desktop: Month Calendar Grid -->
+<table class="calendar-grid">
+    <tr>
+        {% for weekday_name in weekday_names %}
+        <th scope="col">{{ weekday_name }}</th>
+        {% endfor %}
+    </tr>
+    {% for week in month_days %}
+    <tr>
+        {% for day in week %}
+        <td>
+            {% if day != 0 %}
+            <strong>{{ day|e }}</strong>
+            {% if month_demos.get(day) %}
+            <ul>
+                {% for demo in month_demos.get(day) %}
+                <li>
+                    <a href="{% if demo.parent %}{{ url_for('siblings_meeting', parent=demo.parent) }}{% else %}{{ url_for('demonstration_detail', demo_id=demo._id) }}{% endif %}" class="demo-cell"
+                        data-title="{{ demo.title|e or _('Ei otsikkoa') }}" data-desc="{{ demo.description|e or '' }}"
+                        data-img="{{ demo.preview_image|e or demo.img|e }}">
+                        {{ demo.title|e or _('Ei otsikkoa') }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% endif %}
+        </td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+
+
+<!-- Mobile: Switch back to new calendar view -->
+<div class="mobile-new-view-switch mb-only">
+    <button id="return-new-btn">
+        <i class="fa-solid fa-rotate-right"></i>
+        {{ _('Palaa uuteen näkymään') }}
+    </button>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const returnButton = document.getElementById("return-new-btn");
+        if (!returnButton) return;
+
+        returnButton.addEventListener("click", function () {
+            document.cookie = "old-calendar-view=false; path=/; max-age=31536000";
+            location.reload();
+        });
+    });
+</script>
+
+
+<!-- Mobile: List View -->
+<div class="mobile-list-view">
+    {% set day_names = weekday_names %}
+    {% for week in month_days %}
+    {% for day_idx in range(week|length) %}
+    {% set day = week[day_idx] %}
+    {% if day != 0 and month_demos.get(day) %}
+    <div class="mobile-day-card">
+        <div class="mobile-day-header">
+            <div>
+                <div class="mobile-day-number">{{ day }}</div>
+                <div class="mobile-day-name">{{ day_names[day_idx] }}</div>
+            </div>
+            <div class="event-count">
+                {% set event_count = month_demos.get(day)|length %}
+                {{ event_count }} {{ _('tapahtuma') if event_count == 1 else _('tapahtumaa') }}
+            </div>
+        </div>
+
+        {% for demo in month_demos.get(day) %}
+        <a href="{% if demo.parent %}{{ url_for('siblings_meeting', parent=demo.parent) }}{% else %}{{ url_for('demonstration_detail', demo_id=demo._id) }}{% endif %}" class="mobile-demo-item">
+            <div class="mobile-demo-title">{{ demo.title|e or _('Ei otsikkoa') }}</div>
+            {% if demo.description %}
+            {% set plain_description = demo.description|striptags|trim %}
+            <div class="mobile-demo-desc">
+                {{ plain_description[:100] }}
+                {% if plain_description|length > 100 %}...{% endif %}
+            </div>
+            {% endif %}
+            {% if demo.preview_image or demo.img %}
+            <img src="{{ demo.preview_image|e or demo.img|e }}" alt="{{ demo.title|e }}" class="mobile-demo-image">
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% endfor %}
+
+    <!-- Empty state for mobile if no demos -->
+    {% if not month_demos or month_demos|length == 0 %}
+    <div class="mobile-day-card">
+        <div class="mobile-empty-day">
+            <p>📅 {{ _('Ei tapahtumia tässä kuussa') }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div id="demo-preview" aria-hidden="true"></div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="{{ url_for('static', filename='js/calendar-preview.js', v='20261004-calendar-preview-2') }}"></script>
+<script>
+    $(function () {
+        // Check if mobile view is being used
+        const isMobileView = window.matchMedia('(max-width: 768px)').matches;
+
+        if (isMobileView) {
+            // Mobile view is active, no hover preview needed
+            return;
+        }
+
+        // Desktop functionality
+        const preview = $('#demo-preview');
+        let hoverTimeout;
+
+        // --- Hover preview ---
+        $('.demo-cell').hover(function (e) {
+            const el = $(this);
+            hoverTimeout = setTimeout(function () {
+                const title = el.data('title');
+                const desc = el.data('desc');
+                const img = el.data('img');
+
+                window.CalendarPreview.render(preview[0], {
+                    title: title,
+                    description: desc,
+                    imageUrl: img,
+                });
+                preview.fadeIn(200);
+            }, 150);
+        }, function () {
+            clearTimeout(hoverTimeout);
+            preview.fadeOut(200);
+        });
+
+        $('.demo-cell').mousemove(function (e) {
+            const offset = 15;
+            const windowWidth = $(window).width();
+            const windowHeight = $(window).height();
+            const previewWidth = preview.outerWidth();
+            const previewHeight = preview.outerHeight();
+            let left = e.pageX + offset;
+            let top = e.pageY + offset;
+            if (left + previewWidth > windowWidth) left = e.pageX - previewWidth - offset;
+            if (top + previewHeight > windowHeight) top = e.pageY - previewHeight - offset;
+            preview.css({ top: top + 'px', left: left + 'px' });
+        });
+
+        // --- Prefetch prev/next months ---
+        const prevMonthURL = $('#prev-month-link').attr('href');
+        const nextMonthURL = $('#next-month-link').attr('href');
+        $('<link/>', { rel: 'prefetch', href: prevMonthURL }).appendTo('head');
+        $('<link/>', { rel: 'prefetch', href: nextMonthURL }).appendTo('head');
+
+        // Optional: cache HTML for instant transition
+        const cache = {};
+        [prevMonthURL, nextMonthURL].forEach(url => { $.get(url, data => cache[url] = data); });
+    });
+</script>
+</div>
+{% endblock %}

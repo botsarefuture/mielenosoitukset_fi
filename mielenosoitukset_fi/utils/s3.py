@@ -2,7 +2,7 @@ import os
 import io
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
-from PIL import Image
+from PIL import Image, ImageOps
 from config import Config  # Import your Config class
 from mielenosoitukset_fi.utils.logger import logger
 import time
@@ -58,7 +58,7 @@ def create_s3_client():
         return boto3.client(
             "s3",
             aws_access_key_id=Config.ACCESS_KEY,
-            aws_secret_access_key=Config.SECRET_KEY,
+            aws_secret_access_key=Config.S3_SECRET_KEY,
             endpoint_url=Config.ENDPOINT_URL,
         )
     except NoCredentialsError:
@@ -184,9 +184,16 @@ def convert_image_fileobj_to_jpeg_bytes(fileobj) -> bytes:
     try:
         fileobj.seek(0)
         with Image.open(fileobj) as img:
+            img = ImageOps.exif_transpose(img)
             img = img.convert("RGB")
             out = io.BytesIO()
-            img.save(out, format="JPEG")
+            img.save(
+                out,
+                format="JPEG",
+                quality=90,
+                optimize=True,
+                progressive=True,
+            )
             out.seek(0)
             return out.read()
     except Exception as e:
@@ -283,7 +290,8 @@ def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
             # Use put_object to upload bytes
             _s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=jpeg_bytes, ContentType="image/jpeg")
             # Return canonical CDN URL as requested
-            s3_file_path = f"https://cdn2.mielenosoitukset.fi/{object_key}"
+            cdn_base_url = Config.CDN_BASE_URL
+            s3_file_path = f"{cdn_base_url}/{object_key}"
             logger.info(f"Uploaded {image_path} to s3://{bucket_name}/{object_key}")
             return s3_file_path
     except Exception as e:
@@ -320,7 +328,8 @@ def upload_image_fileobj(bucket_name: str, fileobj, filename: str, image_type: s
             return None
         object_key = upload_path_gen(_id, image_type)
         _s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=jpeg_bytes, ContentType="image/jpeg")
-        s3_file_path = f"https://cdn2.mielenosoitukset.fi/{object_key}"
+        cdn_base_url = Config.CDN_BASE_URL
+        s3_file_path = f"{cdn_base_url}/{object_key}"
         logger.info(f"Uploaded in-memory file {filename} to s3://{bucket_name}/{object_key}")
         return s3_file_path
     except Exception as e:

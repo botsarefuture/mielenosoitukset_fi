@@ -514,6 +514,10 @@
     0 0 20px var(--box_shadow_color),
     0 0 20px var(--box_shadow_color)
   );
+  --footer_link_color: light-dark(
+    #ffffff,
+    #000
+  );
 }
 
 .light {
@@ -550,6 +554,11 @@
   --blue_dark: #000;
   --alert_text: #000;
   --danger_bg: #9e2631;
+
+  --footer_link_color: light-dark(
+    #ffffff,
+    #bbbbbb
+  );
 }
 
 

@@ -1,296 +1,111 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
 
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/stats.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/stats.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/activities.css') }}">
-
-<style>
-  .no-data {
-    color: var(--error_text, #721c24);
-    font-weight: 600;
-    background: var(--error_bg, #f8d7da);
-    padding: 1.5rem;
-    border: 1px dashed var(--error_border, #f5c6cb);
-    border-radius: 6px;
-    text-align: center;
-    margin: 2rem 0;
-  }
-
-  .back-button {
-    margin-top: 2rem;
-    text-align: left;
-  }
-
-  .analytics-container {
-    margin-top: 3rem;
-    background: var(--container_background);
-    border: 1px solid var(--border_color);
-    border-radius: 8px;
-    padding: 1.5rem;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    color: var(--text);
-  }
-
-  th, td {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--border_color);
-  }
-
-  th {
-    background: var(--bg_secondary);
-    text-align: left;
-  }
-
-  tbody tr:hover {
-    background-color: var(--bg_hover);
-  }
-
-  a.demo-link {
-    color: var(--primary_color);
-    text-decoration: none;
-    font-weight: 600;
-  }
-
-  a.demo-link:hover {
-    text-decoration: underline;
-  }
-</style>
-
-<style>
-  th.sortable {
-    cursor: pointer;
-    position: relative;
-  }
-  th.sortable::after {
-    content: "⬍"; /* up/down arrow */
-    font-size: 0.7em;
-    color: var(--text_muted, #888);
-    position: absolute;
-    right: 8px;
-  }
-  th.sortable.asc::after {
-    content: "⬆";
-  }
-  th.sortable.desc::after {
-    content: "⬇";
-  }
-</style>
-{% endblock %}
+{% block title %}{{ _('Tilastot') }}{% endblock %}
 
 {% block main_content %}
-<div class="dashboard-container">
-    <div class="introduction">
-    <h1 id="tabletitle">{{ _('Tilastot') }}</h1>
-    <p class="muted">
-      {{ _('Tässä osiossa voit tarkastella sivuston tilastoja.') }}
-    </p>
-  </div>
+<section class="admin-page admin-workspace">
+  {{ admin_page_hero(
+    _('Miten palvelulla menee?'),
+    _('Täältä näet palvelun tärkeimmät luvut ja sinulle näkyvien mielenosoitusten katselukerrat yhdessä paikassa.'),
+    _('Tilastot'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Tilastot'), none)],
+    metric_value=last_updated,
+    metric_label=_('Viimeisin päivitys')
+  ) }}
 
+  <section class="admin-workspace-summary" aria-label="{{ _('Tilastojen yhteenveto') }}">
+    {% if show_global_counts %}
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-user-group" aria-hidden="true"></i></span>
+      <div><span>{{ _('Käyttäjiä') }}</span><strong>{{ total_users }}</strong><small>{{ _('Kaikki tilit') }}</small></div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-building" aria-hidden="true"></i></span>
+      <div><span>{{ _('Organisaatioita') }}</span><strong>{{ total_organizations }}</strong><small>{{ _('Yhteisöä ja ryhmää') }}</small></div>
+    </article>
+    {% endif %}
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i></span>
+      <div>
+        <span>{{ _('Sinulle näkyviä mielenosoituksia') }}</span>
+        <strong>{{ visible_demo_count if include_past else future_demo_count }}</strong>
+        <small>{{ _('Kaikki ajankohdat') if include_past else _('Tulevat tapahtumat') }}</small>
+      </div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-eye" aria-hidden="true"></i></span>
+      <div><span>{{ _('Katselukerrat') }}</span><strong>{{ total_views }}</strong><small>{{ _('Keskimäärin %(count)s / mielenosoitus', count=avg_views) }}</small></div>
+    </article>
+  </section>
 
-  <div class="stats-overview">
-    <stats>
-      <stat>
-        <stitle>{{ _('Käyttäjiä') }}</stitle>
-        <snum>{{ total_users }}</snum>
-      </stat>
-      <stat>
-        <stitle>{{ _('Vahvistetut käyttäjät') }}</stitle>
-        <sdisc>{{ _('Käyttäjiä, jotka ovat vahvistaneet sähköpostiosoitteensa') }}</sdisc>
-        <snum>{{ active_users }}</snum>
-      </stat>
-      <stat>
-        <stitle>{{ _('Organisaatioita') }}</stitle>
-        <snum>{{ total_organizations }}</snum>
-      </stat>
-      <div style="width: 100%; background-color: transparent; height: 1px;"></div>
-      <stat>
-        <stitle>{{ _('Mielenosoituksia') }}</stitle>
-        <snum>{{ total_demos }}</snum>
-      </stat>
-      <stat>
-        <stitle>{{ _('Katselukerrat') }}</stitle>
-        <sdisc>{{ _('Kaikkien mielenosoitusten katselukerrat') }}</sdisc>
-        <snum>{{ total_views }}</snum>
-      </stat>
-      <stat>
-        <stitle>{{ _('Keskimääräinen katselukerrat') }}</stitle>
-        <sdisc>{{ _('Keskimääräinen katselukerrat mielenosoituksille') }}</sdisc>
-        <snum>{{ avg_views }}</snum>
-      </stat>
-      <last-updated>
-        <p>{{ _('Tilastot päivitetty viimeksi') }}: {{ last_updated }}</p>
-      </last-updated>
-    </stats>
-  </div>
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Tilastojen suodattimet') }}">
+    <form method="get" action="{{ url_for('admin.stats') }}" class="admin-filter-bar">
+      <input type="hidden" name="page" value="1">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="admin-filter-bar__primary">
+        <div class="admin-field">
+          <label for="stats-period">{{ _('Ajanjakso') }}</label>
+          <select id="stats-period" name="include_past">
+            <option value="0" {% if not include_past %}selected{% endif %}>{{ _('Tulevat mielenosoitukset') }}</option>
+            <option value="1" {% if include_past %}selected{% endif %}>{{ _('Kaikki mielenosoitukset') }}</option>
+          </select>
+          <small class="admin-field__help">{{ _('Ajanjakso vaikuttaa sekä listaan että katselulukuihin.') }}</small>
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+      </div>
+    </form>
+  </section>
 
-  <div class="analytics-container">
-    <h2>{{ _('Mielenosoitus analytiikka') }}</h2>
-<!-- 🆕 pretty 24 h overview button -->
-  <a href="{{ url_for('admin.analytics_overall_24h') }}"
-     class="btn btn-outline-primary btn-sm mb-3 d-inline-flex align-items-center gap-1">
-      <i class="fas fa-clock"></i>
-      {{ _('Yleiskatsaus • viimeiset 24 h') }}
-  </a>
-    {% if data %}
-   <table>
-  <thead>
-    <tr>
-      <th class="sortable" data-sort-key="id">{{ _('Mielenosoituksen ID') }}</th>
-      <th class="sortable" data-sort-key="views">{{ _('Katselukerrat') }}</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for demo in data %}
-    <tr>
-      <td>
-        <a href="{{ url_for('admin.demo_analytics', demo_id=demo.id) }}" class="demo-link" title="{{ _('Näytä analytiikka') }}">
-          {{ demo.id }}
-        </a>
-      </td>
-      <td>{{ demo.views }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-    {% else %}
-    <div class="no-data">
-      <p>{{ _('Ei tietoja saatavilla.') }}</p>
+  <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="stats-list-heading">
+    <div class="admin-data-view__header" aria-live="polite">
+      <div>
+        <strong id="stats-list-heading">{{ _('Mielenosoitusnäkymät') }}</strong>
+        <div class="admin-field__help">{{ _('Lista ja kokonaisluvut sisältävät vain mielenosoitukset, joiden analytiikkaan sinulla on käyttöoikeus.') }}</div>
+      </div>
+      <span class="admin-result-summary">{{ _('Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta', start=range_start, end=range_end, count=analytics_count) }}</span>
+      {% if show_global_counts %}
+      <div class="admin-form-actions">
+        <a href="{{ url_for('admin_site_analytics.site_overview') }}" class="btn btn-primary"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>{{ _('Palvelun analytiikka') }}</a>
+        <a href="{{ url_for('admin.analytics_overall_24h') }}" class="btn btn-primary"><i class="fa-solid fa-clock" aria-hidden="true"></i>{{ _('Viimeiset 24 h') }}</a>
+        <a href="{{ url_for('admin.analytics_overall_24h') }}" class="btn btn-secondary" id="matomo-link" data-live-url="{{ url_for('admin.stats_matomo_live') }}" data-unavailable-label="{{ _('Matomo ei saatavilla') }}" data-visitor-label="{{ _('kävijää') }}"><i class="fa-solid fa-chart-line" aria-hidden="true"></i><span data-matomo-label>{{ _('Matomo') }}</span></a>
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
-  </div>
-
-<nav aria-label="Demo pagination">
-  <ul class="pagination justify-content-center align-items-center">
-
-    {# --- Previous button --- #}
-    {% if page > 1 %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page - 1 }}&per_page={{ per_page }}" aria-label="Previous">
-          <i class="fas fa-angle-left"></i> {{ _('Edellinen') }}
-        </a>
-      </li>
-    {% else %}
-      <li class="page-item disabled">
-        <span class="page-link"><i class="fas fa-angle-left"></i> {{ _('Edellinen') }}</span>
-      </li>
-    {% endif %}
-
-    {# --- Numbered page links --- #}
-    {% set page_window = 2 %} {# number of pages to show on each side of current page #}
-    {% set start_page = page - page_window if page - page_window > 1 else 1 %}
-    {% set end_page = page + page_window if page + page_window < total_pages else total_pages %}
-
-    {% if start_page > 1 %}
-      <li class="page-item">
-        <a class="page-link" href="?page=1&per_page={{ per_page }}">1</a>
-      </li>
-      {% if start_page > 2 %}
-        <li class="page-item disabled"><span class="page-link">…</span></li>
-      {% endif %}
-    {% endif %}
-
-    {% for p in range(start_page, end_page + 1) %}
-      {% if p == page %}
-        <li class="page-item active"><span class="page-link">{{ p }}</span></li>
-      {% else %}
-        <li class="page-item"><a class="page-link" href="?page={{ p }}&per_page={{ per_page }}">{{ p }}</a></li>
-      {% endif %}
-    {% endfor %}
-
-    {% if end_page < total_pages %}
-      {% if end_page < total_pages - 1 %}
-        <li class="page-item disabled"><span class="page-link">…</span></li>
-      {% endif %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ total_pages }}&per_page={{ per_page }}">{{ total_pages }}</a>
-      </li>
-    {% endif %}
-
-    {# --- Next button --- #}
-    {% if page < total_pages %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page + 1 }}&per_page={{ per_page }}" aria-label="Next">
-          {{ _('Seuraava') }} <i class="fas fa-angle-right"></i>
-        </a>
-      </li>
-    {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">{{ _('Seuraava') }} <i class="fas fa-angle-right"></i></span>
-      </li>
-    {% endif %}
-
-  </ul>
-</nav>
-
-
-
-  <div class="back-button">
-    <a href="{{ url_for('admin.admin_dashboard') }}" class="button">
-      <i class="fas fa-arrow-left"></i> {{ _('Palaa hallintapaneeliin') }}
-    </a>
-  </div>
-</div>
+    <div class="admin-data-view__viewport">
+      <table class="admin-data-view__table">
+        <thead><tr><th>{{ _('Mielenosoitus') }}</th><th>{{ _('Päivämäärä') }}</th><th>{{ _('Katselukerrat') }}</th></tr></thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td><a href="{{ url_for('admin.demo_analytics', demo_id=row.id) }}"><strong>{{ row.title or row.id }}</strong></a><div class="admin-field__help"><code>{{ row.id }}</code></div></td>
+            <td>{{ row.date or '—' }}</td>
+            <td><span class="admin-status-badge admin-status-badge--info"><i class="fa-solid fa-eye" aria-hidden="true"></i>{{ row.views }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3"><div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-chart-column" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Katselutietoja ei löytynyt') }}</strong><span>{{ _('Valitulla ajanjaksolla ei ole sinulle näkyviä katselutietoja.') }}</span></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {{ admin_pagination(
+      current_page,
+      total_pages,
+      per_page=per_page,
+      prev_page=prev_page,
+      next_page=next_page,
+      prev_page_url=prev_page_url,
+      next_page_url=next_page_url,
+      visible_pages=visible_pages,
+      first_page_url=first_page_url,
+      last_page_url=last_page_url,
+      aria_label=_('Tilastolistan sivutus')
+    ) }}
+  </section>
+</section>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/activities.js') }}"></script>
-
-<script>
-  // Vanilla JS sorting for the demo analytics table
-  (() => {
-    const table = document.querySelector(".analytics-container table");
-    if (!table) return;
-
-    const tbody = table.querySelector("tbody");
-    const headers = table.querySelectorAll("th.sortable");
-    let sortOrder = {};  // track asc/desc per column
-
-    function sortTable(key, asc) {
-      const rows = Array.from(tbody.querySelectorAll("tr"));
-
-      rows.sort((a, b) => {
-        let aVal, bVal;
-
-        if (key === "id") {
-          // sort by text content of first td (demo id)
-          aVal = a.cells[0].textContent.trim();
-          bVal = b.cells[0].textContent.trim();
-          // natural string compare
-          return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-        } else if (key === "views") {
-          // sort by numeric views count (2nd td)
-          aVal = parseInt(a.cells[1].textContent.trim(), 10) || 0;
-          bVal = parseInt(b.cells[1].textContent.trim(), 10) || 0;
-          return asc ? aVal - bVal : bVal - aVal;
-        }
-      });
-
-      // clear and re-append rows in new order
-      tbody.innerHTML = "";
-      rows.forEach(row => tbody.appendChild(row));
-    }
-
-    headers.forEach(header => {
-      header.addEventListener("click", () => {
-        const key = header.getAttribute("data-sort-key");
-        // toggle order
-        const asc = !sortOrder[key];
-        sortOrder = {}; // reset others
-        sortOrder[key] = asc;
-
-        // reset all header classes
-        headers.forEach(h => h.classList.remove("asc", "desc"));
-        header.classList.add(asc ? "asc" : "desc");
-
-        sortTable(key, asc);
-      });
-    });
-  })();
-</script>
-
+{% if show_global_counts %}<script defer src="{{ url_for('static', filename='js/admin_stats.js', v='20260920-admin-ui-1') }}"></script>{% endif %}
+{% if config.get('MATOMO_ENABLED', true) %}<script defer src="{{ url_for('static', filename='js/matomo.js') }}"></script>{% endif %}
 {% endblock %}

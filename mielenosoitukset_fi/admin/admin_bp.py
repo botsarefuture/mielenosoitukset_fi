@@ -1,13 +1,19 @@
 import os
 import json
+import re
 import pytz
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from typing import Any, Dict
+from mielenosoitukset_fi.utils.time_utils import utcnow
+from datetime import datetime, timedelta, timezone, date
+import requests
+from flask_babel import _
 
 from bson.objectid import ObjectId
 from flask import (
     Blueprint,
     abort,
+    current_app,
     redirect,
     render_template,
     request,
@@ -15,7 +21,8 @@ from flask import (
     url_for,
     stream_template,
     stream_with_context,
-    jsonify
+    jsonify,
+    has_request_context,
 )
 from flask_login import (
     LoginManager,
@@ -28,13 +35,36 @@ from flask_login import (
 from mielenosoitukset_fi.users.models import User  # Import User model
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.logger import logger
-from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
+from mielenosoitukset_fi.utils.wrappers import (
+    admin_required,
+    has_admin_access,
+    permission_required,
+)
 from mielenosoitukset_fi.utils.flashing import flash_message
-from mielenosoitukset_fi.utils.analytics import get_demo_views
-from mielenosoitukset_fi.utils.classes import AdminActivity
+from mielenosoitukset_fi.utils.city_assignment import NOT_ESCALATED_ASSIGNMENT_CLAUSE, CITY_ASSIGNMENT_FIELD
+from mielenosoitukset_fi.utils.cities import normalize_city_key
+from mielenosoitukset_fi.utils.variables import CITY_LIST
+from mielenosoitukset_fi.utils.analytics import count_views_per_demo
+from mielenosoitukset_fi.utils.aggregate_analytics import bucket_keys
+from mielenosoitukset_fi.utils.cache import cache
+from mielenosoitukset_fi.utils.operational_metrics import collect_operational_metrics
+from mielenosoitukset_fi.utils.ui_translation_catalog import (
+    entry_state,
+    get_catalog_entry,
+    iter_catalog_entries,
+    proposal_key,
+    supported_ui_translation_locales,
+    update_catalog_entry,
+)
+from mielenosoitukset_fi.utils.ui_translation_git_sync import (
+    build_ui_translation_sync_branch_name,
+)
 
+from .pagination import build_admin_pagination, parse_admin_pagination
 from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
 
+# Timezone for rolling analytics into Helsinki-local buckets
+HELSINKI_TZ = pytz.timezone("Europe/Helsinki")
 # Constants
 LOG_FILE_PATH = "app.log"
 
@@ -47,11 +77,327 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 # Initialize MongoDB and Flask-Login
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
+ui_translation_proposals = mongo["ui_translation_proposals"]
 
 login_manager = LoginManager()
 login_manager.login_view = "users.auth.login"
 
 from .utils import AdminActParser, log_admin_action_V2
+
+
+def _get_job_manager_or_abort():
+    job_manager = current_app.extensions.get("job_manager")
+    if not job_manager:
+        abort(503, "Background jobs are not available in this deployment.")
+    return job_manager
+
+
+def _is_limited_city_admin(user) -> bool:
+    """Return whether the actor must stay in city-scoped admin surfaces."""
+    if getattr(user, "role", None) in {"admin", "global_admin", "god"}:
+        return False
+    return bool(
+        hasattr(user, "has_city_admin_scope_grants")
+        and user.has_city_admin_scope_grants()
+    )
+
+
+def _admin_actor_context(user) -> dict | None:
+    """Describe the authenticated actor's real administrative scope."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return None
+
+    role = getattr(user, "role", None)
+    full_permission_check = getattr(user, "has_full_permissions", None)
+    has_full_permissions = (
+        full_permission_check()
+        if callable(full_permission_check)
+        else bool(full_permission_check)
+    )
+    if has_full_permissions:
+        return {"kind": "global"}
+
+    city_keys = []
+    for grant in getattr(user, "admin_scope_grants", []) or []:
+        if grant.get("scope_type") != "city" or not grant.get("permissions"):
+            continue
+        raw_keys = grant.get("scope_keys") or [grant.get("scope_key")]
+        if isinstance(raw_keys, str):
+            raw_keys = [raw_keys]
+        city_keys.extend(
+            key for key in (normalize_city_key(value) for value in raw_keys) if key
+        )
+    city_keys = list(dict.fromkeys(city_keys))
+    if city_keys:
+        city_names_by_key = {normalize_city_key(city): city for city in CITY_LIST}
+        return {
+            "kind": "city",
+            "city_names": [
+                city_names_by_key.get(key, key.replace("-", " ").title())
+                for key in city_keys
+            ],
+        }
+
+    translation_permissions = {
+        "TRANSLATE_DEMO",
+        "REVIEW_DEMO_TRANSLATIONS",
+        "TRANSLATE_UI",
+        "REVIEW_UI_TRANSLATIONS",
+    }
+    global_permissions = set(getattr(user, "global_permissions", []) or [])
+    if role == "translator" or global_permissions.intersection(
+        translation_permissions
+    ):
+        return {"kind": "translator"}
+
+    organization_admin_memberships = [
+        membership
+        for membership in (getattr(user, "memberships", []) or [])
+        if getattr(membership, "role", None) in {"admin", "owner"}
+    ]
+    if organization_admin_memberships:
+        return {
+            "kind": "organization",
+            "organization_count": len(organization_admin_memberships),
+        }
+
+    return {"kind": "restricted"}
+
+
+def _is_admin_shell_request() -> bool:
+    """Return whether the current request serves the shared admin shell.
+
+    The ``admin_actor_context`` value is only consumed by templates that extend
+    the admin shell, and every admin shell route lives under the ``/admin`` URL
+    prefix. Guarding here keeps public-page renders free of the lazy
+    ``admin_scope_grants`` / ``memberships`` database lookups.
+    """
+    path = request.path
+    return path == "/admin" or path.startswith("/admin/")
+
+
+@admin_bp.app_context_processor
+def inject_admin_actor_context():
+    """Expose truthful role/scope context to the shared admin shell."""
+    if (
+        not has_request_context()
+        or not getattr(current_user, "is_authenticated", False)
+        or not _is_admin_shell_request()
+    ):
+        return {}
+    return {"admin_actor_context": _admin_actor_context(current_user)}
+
+
+def _require_global_admin_surface() -> None:
+    if _is_limited_city_admin(current_user):
+        abort(403)
+
+
+def _json_safe(value):
+    if isinstance(value, dict):
+        return {k: _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return type(value)(_json_safe(v) for v in value)
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
+
+
+def _log_admin_event(event: str, **details):
+    """Structured logging helper for admin blueprint actions."""
+    payload = {
+        "event": event,
+        "module": "admin_bp",
+    }
+    if has_request_context():
+        payload.update(
+            {
+                "path": request.path,
+                "method": request.method,
+                "endpoint": request.endpoint,
+            }
+        )
+
+    try:
+        actor_id = None
+        actor_username = None
+        actor_email = None
+        if current_user and not getattr(current_user, "is_anonymous", True):
+            actor_id = (
+                getattr(current_user, "id", None)
+                or getattr(current_user, "_id", None)
+                or (current_user.get_id() if hasattr(current_user, "get_id") else None)
+            )
+            actor_username = getattr(current_user, "username", None)
+            actor_email = getattr(current_user, "email", None)
+        payload["actor"] = {
+            "id": str(actor_id) if actor_id else None,
+            "username": actor_username,
+            "email": actor_email,
+        }
+    except Exception:
+        payload["actor"] = {"id": None, "username": None}
+
+    if details:
+        payload["details"] = _json_safe(details)
+
+    try:
+        log_admin_action_V2(payload)
+    except Exception:
+        logger.exception("Failed to log admin event: %s", event)
+
+
+def _can_translate_ui(user) -> bool:
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    if getattr(user, "role", None) in {"admin", "translator"}:
+        return True
+    return user.has_permission("TRANSLATE_UI")
+
+
+def _can_review_ui_translations(user) -> bool:
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    if getattr(user, "role", None) in {"admin", "global_admin"}:
+        return True
+    return user.has_permission("REVIEW_UI_TRANSLATIONS")
+
+
+def _ui_translation_language_names():
+    return current_app.config.get("BABEL_LANGUAGES", {})
+
+
+def _ui_translation_sync_enabled() -> bool:
+    return bool(current_app.config.get("UI_TRANSLATION_SYNC_ENABLED", False))
+
+
+def _redirect_ui_translation_action_target(locale: str, msgid: str = ""):
+    if msgid:
+        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+    return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+
+def _normalize_ui_translation_rows(locale: str, search_query: str = "", state_filter: str = "pending"):
+    normalized_search = (search_query or "").strip().casefold()
+    proposals = {
+        proposal["msgid"]: proposal
+        for proposal in ui_translation_proposals.find({"locale": locale})
+    }
+
+    rows = []
+    untranslated = 0
+    fuzzy = 0
+    translated = 0
+    pending = 0
+    for entry in iter_catalog_entries(locale):
+        catalog_state = entry_state(entry)
+        if catalog_state == "untranslated":
+            untranslated += 1
+        elif catalog_state == "fuzzy":
+            fuzzy += 1
+        else:
+            translated += 1
+
+        proposal = proposals.get(entry.msgid)
+        effective_state = "pending" if proposal and proposal.get("status") == "pending" else catalog_state
+        if effective_state == "pending":
+            pending += 1
+
+        if normalized_search and normalized_search not in entry.msgid.casefold() and normalized_search not in entry.msgstr.casefold():
+            continue
+        if state_filter not in {"all", "", None} and effective_state != state_filter:
+            continue
+
+        rows.append(
+            {
+                "msgid": entry.msgid,
+                "msgstr": entry.msgstr,
+                "flags": entry.flags,
+                "locations": entry.locations,
+                "catalog_state": catalog_state,
+                "effective_state": effective_state,
+                "proposal": proposal,
+                "github_sync": (proposal or {}).get("github_sync") or {},
+            }
+        )
+
+    return {
+        "rows": rows,
+        "counts": {
+            "total": untranslated + fuzzy + translated,
+            "untranslated": untranslated,
+            "fuzzy": fuzzy,
+            "translated": translated,
+            "pending": pending,
+        },
+    }
+
+
+def _normalize_ui_translation_sync_rows(
+    locale_filter: str = "",
+    sync_status_filter: str = "all",
+    merge_status_filter: str = "all",
+    search_query: str = "",
+):
+    normalized_search = (search_query or "").strip().casefold()
+    query: Dict[str, Any] = {"github_sync": {"$exists": True, "$ne": {}}}
+    if locale_filter:
+        query["locale"] = locale_filter
+    if sync_status_filter not in {"", "all", None}:
+        query["github_sync.status"] = sync_status_filter
+    if merge_status_filter not in {"", "all", None}:
+        query["github_sync.merge_status"] = merge_status_filter
+    if normalized_search:
+        query["$or"] = [
+            {"msgid": {"$regex": search_query, "$options": "i"}},
+            {"proposed_text": {"$regex": search_query, "$options": "i"}},
+            {"github_sync.branch_name": {"$regex": search_query, "$options": "i"}},
+        ]
+
+    rows = list(
+        ui_translation_proposals.find(query).sort(
+            [
+                ("github_sync.queued_at", -1),
+                ("reviewed_at", -1),
+                ("submitted_at", -1),
+                ("locale", 1),
+                ("msgid", 1),
+                ("_id", 1),
+            ]
+        )
+    )
+
+    status_counts = {
+        "queued": 0,
+        "running": 0,
+        "retry": 0,
+        "branch_pushed": 0,
+        "pr_opened": 0,
+        "committed_local_branch": 0,
+        "noop": 0,
+    }
+    retryable_count = 0
+    for row in rows:
+        sync_status = ((row.get("github_sync") or {}).get("status") or "").strip()
+        if sync_status in status_counts:
+            status_counts[sync_status] += 1
+        if sync_status in {"retry", "committed_local_branch"}:
+            retryable_count += 1
+
+    return {
+        "rows": rows,
+        "counts": {
+            "total": len(rows),
+            "retryable": retryable_count,
+            **status_counts,
+        },
+    }
 
 
 @admin_bp.before_request
@@ -69,11 +415,466 @@ def log_request_info():
         pass
 
 
+@admin_bp.route("/ui-translations")
+@login_required
+def ui_translation_dashboard():
+    if not (_can_translate_ui(current_user) or _can_review_ui_translations(current_user)):
+        abort(403)
+
+    locales = supported_ui_translation_locales()
+    selected_locale = (request.args.get("locale") or "").strip().lower()
+    if selected_locale not in locales and locales:
+        selected_locale = locales[0]
+
+    search_query = (request.args.get("search") or "").strip()
+    page, per_page = parse_admin_pagination(request.args)
+    default_state = "untranslated"
+    state_filter = (request.args.get("state") or default_state).strip().lower()
+    if state_filter not in {"pending", "untranslated", "fuzzy", "translated", "all"}:
+        state_filter = default_state
+
+    locale_summaries = []
+    selected_rows = []
+    selected_filtered_count = 0
+    selected_counts = {"total": 0, "untranslated": 0, "fuzzy": 0, "translated": 0, "pending": 0}
+    for locale in locales:
+        normalized = _normalize_ui_translation_rows(
+            locale,
+            search_query=search_query if locale == selected_locale else "",
+            state_filter=state_filter if locale == selected_locale else "all",
+        )
+        locale_summaries.append(
+            {
+                "locale": locale,
+                "label": _ui_translation_language_names().get(locale, locale),
+                **normalized["counts"],
+            }
+        )
+        if locale == selected_locale:
+            selected_rows = normalized["rows"]
+            selected_rows.sort(key=lambda row: row.get("msgid") or "")
+            selected_filtered_count = len(selected_rows)
+            selected_counts = normalized["counts"]
+
+    pagination = build_admin_pagination(
+        "admin.ui_translation_dashboard",
+        total_count=selected_filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args={
+            "locale": selected_locale,
+            "search": search_query,
+            "state": state_filter,
+        },
+    )
+    selected_rows = selected_rows[
+        pagination["slice_start"] : pagination["slice_end"]
+    ]
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/dashboard.html",
+        locales=locale_summaries,
+        selected_locale=selected_locale,
+        selected_rows=selected_rows,
+        selected_counts=selected_counts,
+        language_names=_ui_translation_language_names(),
+        search_query=search_query,
+        state_filter=state_filter,
+        can_translate_ui=_can_translate_ui(current_user),
+        can_review_ui_translations=_can_review_ui_translations(current_user),
+        ui_translation_sync_enabled=_ui_translation_sync_enabled(),
+        filtered_count=selected_filtered_count,
+        **pagination,
+    )
+
+
+@admin_bp.route("/ui-translations/sync")
+@login_required
+def ui_translation_sync_dashboard():
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+    if not _ui_translation_sync_enabled():
+        abort(404)
+
+    locales = supported_ui_translation_locales()
+    selected_locale = (request.args.get("locale") or "").strip().lower()
+    if selected_locale not in locales:
+        selected_locale = ""
+
+    sync_status = (request.args.get("sync_status") or "all").strip().lower()
+    if sync_status not in {"all", "queued", "running", "retry", "branch_pushed", "pr_opened", "committed_local_branch", "noop"}:
+        sync_status = "all"
+
+    merge_status = (request.args.get("merge_status") or "all").strip().lower()
+    if merge_status not in {"all", "merged", "merge_blocked", "not_configured", "merge_unknown"}:
+        merge_status = "all"
+
+    search_query = (request.args.get("search") or "").strip()
+    page, per_page = parse_admin_pagination(request.args)
+    normalized = _normalize_ui_translation_sync_rows(
+        locale_filter=selected_locale,
+        sync_status_filter=sync_status,
+        merge_status_filter=merge_status,
+        search_query=search_query,
+    )
+    filtered_count = len(normalized["rows"])
+    pagination = build_admin_pagination(
+        "admin.ui_translation_sync_dashboard",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args={
+            "locale": selected_locale,
+            "sync_status": sync_status,
+            "merge_status": merge_status,
+            "search": search_query,
+        },
+    )
+    sync_rows = normalized["rows"][
+        pagination["slice_start"] : pagination["slice_end"]
+    ]
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/sync_dashboard.html",
+        locales=locales,
+        language_names=_ui_translation_language_names(),
+        selected_locale=selected_locale,
+        sync_status=sync_status,
+        merge_status=merge_status,
+        search_query=search_query,
+        sync_rows=sync_rows,
+        sync_counts=normalized["counts"],
+        filtered_count=filtered_count,
+        **pagination,
+    )
+
+
+@admin_bp.route("/ui-translations/<locale>/edit")
+@login_required
+def ui_translation_editor(locale):
+    if not (_can_translate_ui(current_user) or _can_review_ui_translations(current_user)):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if locale not in supported_ui_translation_locales():
+        abort(404)
+
+    msgid = (request.args.get("msgid") or "").strip()
+    if not msgid:
+        flash_message(_("Valitse käyttöliittymätekstirivi listasta avataksesi editorin."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+    try:
+        entry = get_catalog_entry(locale, msgid)
+    except FileNotFoundError:
+        logger.exception("Missing UI translation catalog for locale %s.", locale)
+        flash_message(_("Tämän kielen käyttöliittymäkatalogia ei löytynyt."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+    except Exception:
+        logger.exception("Failed to load UI translation catalog entry for locale=%s msgid=%s", locale, msgid)
+        flash_message(_("Käyttöliittymäkäännösriviä ei voitu avata juuri nyt."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+    if entry is None:
+        flash_message(_("Pyydettyä käyttöliittymäkäännösriviä ei löytynyt tästä kielikatalogista."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+    proposal = ui_translation_proposals.find_one(
+        {"_id": proposal_key(locale, msgid)}
+    )
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/editor.html",
+        locale=locale,
+        locale_label=_ui_translation_language_names().get(locale, locale),
+        entry=entry,
+        proposal=proposal,
+        can_translate_ui=_can_translate_ui(current_user),
+        can_review_ui_translations=_can_review_ui_translations(current_user),
+        ui_translation_sync_enabled=_ui_translation_sync_enabled(),
+    )
+
+
+@admin_bp.route("/ui-translations/<locale>/propose", methods=["POST"])
+@login_required
+def submit_ui_translation_proposal(locale):
+    if not _can_translate_ui(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if locale not in supported_ui_translation_locales():
+        abort(404)
+
+    msgid = request.form.get("msgid") or ""
+    proposed_text = (request.form.get("proposed_text") or "").strip()
+    notes = (request.form.get("notes") or "").strip()
+
+    try:
+        entry = get_catalog_entry(locale, msgid)
+    except FileNotFoundError:
+        abort(404)
+    if entry is None:
+        abort(404)
+    if not proposed_text:
+        flash_message(_("Syötä käännösehdotus ennen lähettämistä."), "error")
+        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+
+    now = datetime.utcnow()
+    ui_translation_proposals.update_one(
+        {"_id": proposal_key(locale, msgid)},
+        {
+            "$set": {
+                "locale": locale,
+                "msgid": msgid,
+                "current_msgstr": entry.msgstr,
+                "proposed_text": proposed_text,
+                "notes": notes,
+                "status": "pending",
+                "submitted_at": now,
+                "submitted_by": str(getattr(current_user, "_id", "")),
+                "submitted_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                "reviewed_at": None,
+                "reviewed_by": None,
+                "reviewed_by_name": None,
+                "review_notes": "",
+                "locations": list(entry.locations),
+            }
+        },
+        upsert=True,
+    )
+    flash_message(_("Käyttöliittymäkäännösehdotus tallennettiin tarkistettavaksi."), "success")
+    return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+
+
+@admin_bp.route("/ui-translations/<locale>/approve", methods=["GET", "POST"])
+@login_required
+def approve_ui_translation_proposal(locale):
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if request.method == "GET":
+        flash_message(
+            _("Käyttöliittymäkäännöksen hyväksyntä tehdään lomakkeen kautta, ei suoralla linkillä."),
+            "error",
+        )
+        return _redirect_ui_translation_action_target(locale, request.args.get("msgid") or "")
+    msgid = request.form.get("msgid") or ""
+    review_notes = (request.form.get("review_notes") or "").strip()
+    proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
+    if not proposal or proposal.get("status") != "pending":
+        flash_message(_("Tälle käyttöliittymätekstille ei ole odottavaa käännösehdotusta."), "error")
+        return _redirect_ui_translation_action_target(locale, msgid)
+
+    sync_enabled = _ui_translation_sync_enabled()
+    if not sync_enabled:
+        update_catalog_entry(locale, msgid, proposal.get("proposed_text", ""))
+    sync_metadata = {
+        "status": "queued",
+        "queued_at": datetime.utcnow(),
+        "branch_name": build_ui_translation_sync_branch_name(locale, msgid),
+        "pr_url": None,
+        "pr_number": None,
+        "commit_sha": None,
+        "last_error": "",
+        "message": "",
+        "attempts": 0,
+    }
+    ui_translation_proposals.update_one(
+        {"_id": proposal["_id"]},
+        {
+            "$set": {
+                "status": "approved",
+                "reviewed_at": datetime.utcnow(),
+                "reviewed_by": str(getattr(current_user, "_id", "")),
+                "reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                "review_notes": review_notes,
+                "github_sync": sync_metadata if sync_enabled else {},
+            }
+        },
+    )
+    if sync_enabled:
+        flash_message(
+            _("Käyttöliittymäkäännös hyväksyttiin ja jonotettiin GitHub-synkkiä varten."),
+            "success",
+        )
+    else:
+        flash_message(
+            _("Käyttöliittymäkäännös hyväksyttiin ja kirjoitettiin kielikatalogiin."),
+            "success",
+        )
+    if sync_enabled:
+        job_manager = current_app.extensions.get("job_manager")
+        if job_manager is not None:
+            job_manager.run_job_now(
+                "process_ui_translation_sync",
+                triggered_by=f"admin:{current_user.get_id()}",
+                metadata={
+                    "proposal_id": str(proposal["_id"]),
+                    "locale": locale,
+                    "msgid": msgid,
+                },
+            )
+            flash_message(
+                _("Hyväksytty käännös jonotettiin GitHub-synkkiä varten."),
+                "info",
+            )
+    return _redirect_ui_translation_action_target(locale, msgid)
+
+
+@admin_bp.route("/ui-translations/<locale>/reject", methods=["GET", "POST"])
+@login_required
+def reject_ui_translation_proposal(locale):
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if request.method == "GET":
+        flash_message(
+            _("Käyttöliittymäkäännöksen hylkäys tehdään lomakkeen kautta, ei suoralla linkillä."),
+            "error",
+        )
+        return _redirect_ui_translation_action_target(locale, request.args.get("msgid") or "")
+    msgid = request.form.get("msgid") or ""
+    review_notes = (request.form.get("review_notes") or "").strip()
+    proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
+    if not proposal or proposal.get("status") != "pending":
+        flash_message(_("Tälle käyttöliittymätekstille ei ole odottavaa käännösehdotusta."), "error")
+        return _redirect_ui_translation_action_target(locale, msgid)
+
+    ui_translation_proposals.update_one(
+        {"_id": proposal["_id"]},
+        {
+            "$set": {
+                "status": "rejected",
+                "reviewed_at": datetime.utcnow(),
+                "reviewed_by": str(getattr(current_user, "_id", "")),
+                "reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                "review_notes": review_notes,
+            }
+        },
+    )
+    flash_message(_("Käyttöliittymäkäännösehdotus hylättiin."), "success")
+    return _redirect_ui_translation_action_target(locale, msgid)
+
+
+@admin_bp.route("/ui-translations/<locale>/requeue-sync", methods=["GET", "POST"])
+@login_required
+def requeue_ui_translation_sync(locale):
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if request.method == "GET":
+        flash_message(
+            _("GitHub-synkin uudelleenjonotus tehdään lomakkeen kautta, ei suoralla linkillä."),
+            "error",
+        )
+        return _redirect_ui_translation_action_target(locale, request.args.get("msgid") or "")
+    msgid = request.form.get("msgid") or ""
+    proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
+    if not proposal or proposal.get("status") != "approved":
+        flash_message(_("Tälle käyttöliittymätekstille ei ole hyväksyttyä käännöstä synkattavaksi."), "error")
+        return _redirect_ui_translation_action_target(locale, msgid)
+
+    ui_translation_proposals.update_one(
+        {"_id": proposal["_id"]},
+        {
+            "$set": {
+                "github_sync.status": "queued",
+                "github_sync.queued_at": datetime.utcnow(),
+                "github_sync.branch_name": build_ui_translation_sync_branch_name(locale, msgid),
+                "github_sync.last_error": "",
+                "github_sync.message": "",
+            }
+        },
+    )
+
+    job_manager = current_app.extensions.get("job_manager")
+    if job_manager is not None:
+        job_manager.run_job_now(
+            "process_ui_translation_sync",
+            triggered_by=f"admin:{current_user.get_id()}",
+            metadata={
+                "proposal_id": str(proposal["_id"]),
+                "locale": locale,
+                "msgid": msgid,
+                "requeued": True,
+            },
+        )
+
+    flash_message(_("GitHub-synkki jonotettiin uudelleen hyväksytylle käyttöliittymäkäännökselle."), "success")
+    return _redirect_ui_translation_action_target(locale, msgid)
+
+
+@admin_bp.route("/ui-translations/sync/requeue", methods=["POST"])
+@login_required
+def bulk_requeue_ui_translation_sync():
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+    if not _ui_translation_sync_enabled():
+        abort(404)
+
+    selected_ids = [value for value in request.form.getlist("proposal_ids") if value]
+    if not selected_ids:
+        flash_message(_("Valitse vähintään yksi käyttöliittymäkäännössynkki uudelleenjonotettavaksi."), "error")
+        return redirect(url_for("admin.ui_translation_sync_dashboard"))
+
+    updated = 0
+    requeued_ids = []
+    for proposal in ui_translation_proposals.find({"_id": {"$in": selected_ids}}):
+        github_sync = proposal.get("github_sync") or {}
+        sync_status = (github_sync.get("status") or "").strip()
+        merge_status = (github_sync.get("merge_status") or "").strip()
+        requeueable = sync_status in {"retry", "committed_local_branch"} or merge_status in {
+            "merge_blocked",
+            "merge_unknown",
+        }
+        if proposal.get("status") != "approved" or not requeueable:
+            continue
+        ui_translation_proposals.update_one(
+            {"_id": proposal["_id"]},
+            {
+                "$set": {
+                    "github_sync.status": "queued",
+                    "github_sync.queued_at": datetime.utcnow(),
+                    "github_sync.last_error": "",
+                    "github_sync.message": "",
+                }
+            },
+        )
+        updated += 1
+        requeued_ids.append(str(proposal["_id"]))
+
+    if updated:
+        job_manager = current_app.extensions.get("job_manager")
+        if job_manager is not None:
+            job_manager.run_job_now(
+                "process_ui_translation_sync",
+                triggered_by=f"admin:{current_user.get_id()}",
+                metadata={
+                    "proposal_ids": requeued_ids,
+                    "bulk_requeue": True,
+                },
+            )
+        flash_message(
+            _("Valitut käyttöliittymäkäännössynkit jonotettiin uudelleen GitHub-synkkiä varten."),
+            "success",
+        )
+    else:
+        flash_message(
+            _("Valituista riveistä yksikään ei ollut uudelleenjonotettavassa GitHub-synkin tilassa."),
+            "error",
+        )
+
+    return redirect(url_for("admin.ui_translation_sync_dashboard"))
+
+
 class DemoViewCount:
     """ """
 
     def __init__(self, demo_id, count):
-        self.id = demo_id
+        self.id = str(demo_id)
         self.views = count
 
     def __repr__(self):
@@ -109,10 +910,48 @@ def count_per_demo(data):
     ]
     return demo_count
 
+
+def _rollup_demo_analytics_on_demand(demo_id: ObjectId):
+    """Build d_analytics doc for a demo from raw analytics if missing."""
+    events = list(
+        mongo["analytics"].find({"demo_id": demo_id}, {"timestamp": 1})
+    )
+    if not events:
+        return None
+
+    rolled = {}
+    max_event_id = None
+    for ev in events:
+        ev_id = ev.get("_id")
+        if ev_id is not None:
+            max_event_id = ev_id if max_event_id is None else max(max_event_id, ev_id)
+        keys = bucket_keys(ev.get("timestamp"), ev_id)
+        if keys is None:
+            continue
+        day_key, hour_key, minute_key = keys
+        day_bucket = rolled.setdefault(day_key, {})
+        hour_bucket = day_bucket.setdefault(hour_key, {})
+        hour_bucket[minute_key] = hour_bucket.get(minute_key, 0) + 1
+
+    doc = {"_id": demo_id, "analytics": rolled}
+    if max_event_id is not None:
+        # Recorded so the live rollup skips the range this rebuild already
+        # counted instead of adding it a second time.
+        doc["last_event_id"] = max_event_id
+    mongo["d_analytics"].replace_one({"_id": demo_id}, doc, upsert=True)
+    if max_event_id is not None:
+        mongo["_meta"].update_one(
+            {"_id": "analytics_rollup"},
+            {"$max": {f"on_demand_max_ids.{str(demo_id)}": max_event_id}},
+            upsert=True,
+        )
+    return doc
+
 def get_per_demo_anal(demo_id):
     analytics = mongo["d_analytics"].find_one({"_id": ObjectId(demo_id)})
-    
-    return analytics
+    if analytics:
+        return analytics
+    return _rollup_demo_analytics_on_demand(ObjectId(demo_id))
 
 
 # User loader function
@@ -135,32 +974,672 @@ def load_user(user_id):
 
 
 # Admin dashboard
+
+# Route to view dashboard
+# Any authenticated user may open the dashboard; the template only renders
+# admin-only widgets for users with admin access (role-filtered view).
 @admin_bp.route("/dashboard")
 @login_required
-@admin_required
 def admin_dashboard():
-    """Render the admin dashboard."""
-    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}dashboard.html")
+    """Render the admin dashboard (role-filtered for all authenticated users)."""
+    if _is_limited_city_admin(current_user):
+        from datetime import timezone
+        from mielenosoitukset_fi.utils.city_review_dashboard import city_review_queue
+
+        now = utcnow().replace(tzinfo=timezone.utc)
+        queue = city_review_queue(mongo, current_user, request.args.get("page", 1), now)
+        return render_template(
+            f"{_ADMIN_TEMPLATE_FOLDER}cities/review_dashboard.html",
+            queue=queue, server_now=now.isoformat(),
+            can_list_demos=bool(current_user.scoped_city_keys_for("LIST_DEMOS")),
+        )
+    # Load current panic mode
+    panic = mongo.panic.find_one({"name": "global"})
+    panic_mode = panic.get("panic", False) if panic else False
+    is_admin_user = has_admin_access(current_user)
+    if is_admin_user:
+        _log_admin_event("dashboard_view", panic_mode=panic_mode)
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}dashboard.html",
+        panic_mode=panic_mode,
+        is_admin_user=is_admin_user,
+    )
 
 
-def get_admin_activity(page=1, per_page=20):
-    """Get the admin activity log with pagination.
+# Route to activate panic mode
+@admin_bp.route("/dashboard/panic/activate", methods=["POST"])
+@login_required
+@admin_required
+def activate_panic():
+    """Activate global panic mode."""
+    # Keep the old URL, but never retain an unreviewed single-super-admin bypass.
+    _require_global_admin_surface()
+    return redirect(url_for("admin_governance.security"), code=303)
 
-    Parameters
-    ----------
-    page : int, optional
-        The page number to retrieve, by default 1
-    per_page : int, optional
-        The number of items per page, by default 20
 
-    Returns
-    -------
-    list
-        A list of admin activity logs for the specified page
-    """
+# Route to deactivate panic mode
+@admin_bp.route("/dashboard/panic/deactivate", methods=["POST"])
+@login_required
+@admin_required
+def deactivate_panic():
+    """Deactivate global panic mode."""
+    _require_global_admin_surface()
+    return redirect(url_for("admin_governance.security"), code=303)
+
+
+# Optional: route to get current status as JSON (useful for AJAX)
+@admin_bp.route("/dashboard/panic/status", methods=["GET"])
+@login_required
+@admin_required
+def panic_status():
+    """Return current panic mode status as JSON."""
+    _require_global_admin_surface()
+    panic = mongo.panic.find_one({"name": "global"})
+    panic_mode = panic.get("panic", False) if panic else False
+    _log_admin_event("panic_status_requested", panic_mode=panic_mode)
+    return jsonify({"panic_mode": panic_mode})
+
+
+@admin_bp.route("/dashboard/cache/clear", methods=["POST"])
+@login_required
+@admin_required
+def clear_cache():
+    """Allow admins to purge the application cache from the dashboard."""
+    _require_global_admin_surface()
+    try:
+        cache.clear()
+        _log_admin_event("cache_cleared", status="success")
+        flash_message("Välimuisti tyhjennettiin.", "success")
+    except Exception as exc:
+        logger.exception("Failed to clear cache via admin dashboard")
+        _log_admin_event("cache_cleared", status="error", reason=str(exc))
+        flash_message("Välimuistin tyhjennys epäonnistui.", "danger")
+    return redirect(url_for("admin.admin_dashboard"))
+
+
+def _serialize_login_log(doc: dict) -> dict:
+    """Normalize a login log document for JSON responses."""
+    timestamp = doc.get("timestamp")
+    if isinstance(timestamp, datetime):
+        timestamp_str = timestamp.replace(tzinfo=timezone.utc).isoformat()
+        time_ago = utcnow() - timestamp
+        minutes_ago = max(int(time_ago.total_seconds() // 60), 0)
+    else:
+        timestamp_str = ""
+        minutes_ago = None
+
+    return {
+        "id": str(doc.get("_id")),
+        "username": doc.get("username") or "unknown",
+        "ip": doc.get("ip") or "—",
+        "user_agent": doc.get("user_agent") or "",
+        "reason": doc.get("reason") or "",
+        "success": bool(doc.get("success")),
+        "status": "success" if doc.get("success") else "failure",
+        "user_id": str(doc.get("user_id")) if doc.get("user_id") else None,
+        "timestamp": timestamp_str,
+        "minutes_ago": minutes_ago,
+    }
+
+
+def _calculate_dashboard_snapshot() -> dict:
+    """Aggregate lightweight metrics for the dashboard."""
+    now = utcnow()
+    last_hour = now - timedelta(hours=1)
+    last_day = now - timedelta(days=1)
+
+    login_coll = mongo.login_logs
+    demos_coll = mongo.demonstrations
+
+    total_users = mongo.users.count_documents({})
+    confirmed_users = mongo.users.count_documents({"confirmed": True})
+    pending_users = mongo.users.count_documents({"confirmed": False})
+    admin_users = mongo.users.count_documents({"role": {"$in": ["admin", "global_admin", "moderator"]}})
+
+    active_orgs = mongo.organizations.count_documents({"archived": {"$ne": True}})
+    cases_open = mongo.cases.count_documents({"$or": [{"meta.closed": {"$ne": True}}, {"meta": {"$exists": False}}]})
+
+    upcoming_demos = demos_coll.count_documents({"cancelled": {"$ne": True}, "hide": {"$ne": True}})
+    pending_demos = demos_coll.count_documents(
+        {"approved": {"$ne": True}, "hide": {"$ne": True}, **NOT_ESCALATED_ASSIGNMENT_CLAUSE}
+    )
+    city_pending = demos_coll.count_documents(
+        {
+            "approved": {"$ne": True},
+            "hide": {"$ne": True},
+            CITY_ASSIGNMENT_FIELD: {"$exists": True},
+            "city_assignment.escalated": {"$ne": True},
+        }
+    )
+    escalated_pending = demos_coll.count_documents(
+        {
+            "approved": {"$ne": True},
+            "hide": {"$ne": True},
+            CITY_ASSIGNMENT_FIELD: {"$exists": True},
+            "city_assignment.escalated": True,
+        }
+    )
+
+    logins_last_hour = login_coll.count_documents({"timestamp": {"$gte": last_hour}})
+    failed_logins_last_hour = login_coll.count_documents({"timestamp": {"$gte": last_hour}, "success": False})
+    logins_last_day = login_coll.count_documents({"timestamp": {"$gte": last_day}})
+
+    panic = mongo.panic.find_one({"name": "global"}) or {}
+
+    success_rate = 0
+    if logins_last_hour:
+        success_rate = round(((logins_last_hour - failed_logins_last_hour) / logins_last_hour) * 100)
+
+    return {
+        "users": {
+            "total": total_users,
+            "confirmed": confirmed_users,
+            "pending": pending_users,
+            "admins": admin_users,
+        },
+        "organizations": {"active": active_orgs},
+        "demos": {"live": upcoming_demos, "pending": pending_demos, "city_pending": city_pending, "escalated_pending": escalated_pending},
+        "cases": {"open": cases_open},
+        "logins": {
+            "last_hour": logins_last_hour,
+            "failed_last_hour": failed_logins_last_hour,
+            "last_day": logins_last_day,
+            "success_rate": success_rate,
+        },
+        "panic_mode": panic.get("panic", False),
+        "generated_at": now.replace(tzinfo=timezone.utc).isoformat(),
+    }
+
+
+@admin_bp.route("/dashboard/data")
+@login_required
+@admin_required
+def dashboard_data():
+    """Return aggregated dashboard metrics for polling."""
+    _require_global_admin_surface()
+    snapshot = _calculate_dashboard_snapshot()
+    _log_admin_event("dashboard_snapshot_requested")
+    return jsonify(snapshot)
+
+
+@admin_bp.route("/dashboard/login-feed")
+@login_required
+@admin_required
+def dashboard_login_feed():
+    """Return the most recent login attempts for the realtime feed."""
+    _require_global_admin_surface()
+    try:
+        limit = int(request.args.get("limit", 20))
+    except ValueError:
+        limit = 20
+
+    limit = max(5, min(limit, 100))
+
+    logs_cursor = mongo.login_logs.find({}).sort("_id", -1).limit(limit)
+    logs = [_serialize_login_log(doc) for doc in logs_cursor]
+    _log_admin_event("login_feed_requested", limit=limit, returned=len(logs))
+    return jsonify({"logs": logs})
+
+
+@admin_bp.route("/background-jobs")
+@login_required
+@admin_required
+@permission_required("VIEW_BACKGROUND_JOBS")
+def background_jobs():
+    """Dashboard for observing and controlling background jobs."""
+    job_manager = _get_job_manager_or_abort()
+    jobs = sorted(job_manager.list_jobs(), key=lambda job: job["name"].lower())
+    selected_job = request.args.get("job")
+    job_keys = {job["key"] for job in jobs}
+    if selected_job not in job_keys:
+        selected_job = None
+
+    try:
+        limit = min(max(int(request.args.get("limit", 50)), 10), 200)
+    except (TypeError, ValueError):
+        limit = 50
+
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
+
+    total_runs = job_manager.count_runs(selected_job)
+    total_pages = max(1, (total_runs + limit - 1) // limit)
+    page = min(page, total_pages)
+    skip = (page - 1) * limit
+    runs = job_manager.get_recent_runs(selected_job, limit=limit, skip=skip)
+    result_start = skip + 1 if total_runs else 0
+    result_end = skip + len(runs)
+
+    _log_admin_event(
+        "background_jobs_view",
+        selected_job=selected_job,
+        limit=limit,
+        page=page,
+        total_jobs=len(jobs),
+    )
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}background_jobs.html",
+        jobs=jobs,
+        runs=runs,
+        selected_job=selected_job,
+        limit=limit,
+        page=page,
+        total_pages=total_pages,
+        total_runs=total_runs,
+        result_start=result_start,
+        result_end=result_end,
+        scheduler_disabled=current_app.config.get("DISABLE_BACKGROUND_JOBS", False),
+        can_manage=current_user.has_permission("MANAGE_BACKGROUND_JOBS"),
+    )
+
+
+@admin_bp.route("/background-jobs/<job_key>")
+@login_required
+@admin_required
+@permission_required("VIEW_BACKGROUND_JOBS")
+def background_job_detail(job_key):
+    job_manager = _get_job_manager_or_abort()
+    try:
+        job = job_manager.get_job_info(job_key)
+    except KeyError:
+        abort(404)
+
+    total_runs = job_manager.count_runs(job_key)
+    selected_run_id = request.args.get("run_id")
+    pagination_args = request.args.copy()
+    if "per_page" not in pagination_args and pagination_args.get("limit"):
+        pagination_args["per_page"] = pagination_args["limit"]
+    page, per_page = parse_admin_pagination(
+        pagination_args, default_per_page=20
+    )
+    pagination = build_admin_pagination(
+        "admin.background_job_detail",
+        total_count=total_runs,
+        page=page,
+        per_page=per_page,
+        query_args={
+            "job_key": job_key,
+            "run_id": selected_run_id,
+        },
+    )
+    page = pagination["current_page"]
+    runs = job_manager.get_recent_runs(
+        job_key,
+        limit=per_page,
+        skip=pagination["slice_start"],
+    )
+    selected_run = None
+    if selected_run_id and not any(
+        run.get("id") == selected_run_id for run in runs
+    ):
+        selected_run = job_manager.get_run(job_key, selected_run_id)
+
+    changes_query: Dict[str, Any] = {"details.job_key": job_key}
+    if selected_run_id:
+        changes_query["details.job_run_id"] = selected_run_id
+
+    change_logs = list(
+        mongo.demo_audit_logs.find(changes_query)
+        .sort([("timestamp", -1), ("_id", -1)])
+        .limit(100)
+    )
+
+    _log_admin_event(
+        "background_job_detail_view",
+        job_key=job_key,
+        page=page,
+        limit=per_page,
+        selected_run_id=selected_run_id,
+    )
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}background_job_detail.html",
+        job=job,
+        runs=runs,
+        page=page,
+        limit=per_page,
+        total_runs=total_runs,
+        can_manage=current_user.has_permission("MANAGE_BACKGROUND_JOBS"),
+        change_logs=change_logs,
+        selected_run_id=selected_run_id,
+        selected_run=selected_run,
+        **pagination,
+    )
+
+
+@admin_bp.route("/background-jobs/<job_key>/run", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("MANAGE_BACKGROUND_JOBS")
+def run_background_job(job_key):
+    """Trigger a background job to run immediately."""
+    job_manager = _get_job_manager_or_abort()
+    job = job_manager.get_job(job_key)
+
+    if not job.get("allow_manual_trigger", True):
+        flash_message("Tätä taustatyötä ei voi suorittaa manuaalisesti.", "danger")
+        _log_admin_event("background_job_run_now", job_key=job_key, status="forbidden")
+        return redirect(url_for("admin.background_jobs", job=job_key))
+
+    triggered_by = f"admin:{current_user.get_id()}"
+    metadata = {
+        "user_id": str(getattr(current_user, "id", current_user.get_id())),
+        "username": getattr(current_user, "username", None),
+        "email": getattr(current_user, "email", None),
+    }
+    job_manager.run_job_now(job_key, triggered_by=triggered_by, metadata=metadata)
+    _log_admin_event(
+        "background_job_run_now",
+        job_key=job_key,
+        triggered_by=triggered_by,
+        status="queued",
+    )
+    flash_message("Taustatyö lisättiin suoritettavaksi jonoon.", "success")
+    return redirect(url_for("admin.background_jobs", job=job_key))
+
+
+@admin_bp.route("/background-jobs/<job_key>/toggle", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("MANAGE_BACKGROUND_JOBS")
+def toggle_background_job(job_key):
+    """Enable or disable a background job."""
+    job_manager = _get_job_manager_or_abort()
+    enabled = request.form.get("enabled") == "1"
+    job_manager.set_job_enabled(job_key, enabled)
+    _log_admin_event("background_job_toggle", job_key=job_key, enabled=enabled)
+    if enabled:
+        flash_message("Taustatyö otettiin käyttöön.", "success")
+    else:
+        flash_message("Taustatyö poistettiin käytöstä.", "success")
+    return redirect(url_for("admin.background_jobs", job=job_key))
+
+
+@admin_bp.route("/background-jobs/<job_key>/schedule", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("MANAGE_BACKGROUND_JOBS")
+def update_background_job_schedule(job_key):
+    """Update the interval schedule for a job."""
+    job_manager = _get_job_manager_or_abort()
+    interval_value = request.form.get("interval_value")
+    interval_unit = request.form.get("interval_unit")
+
+    try:
+        job_manager.update_interval(job_key, int(interval_value), interval_unit)
+        _log_admin_event(
+            "background_job_schedule_update",
+            job_key=job_key,
+            interval_value=interval_value,
+            interval_unit=interval_unit,
+            status="success",
+        )
+        flash_message("Taustatyön ajastus päivitettiin.", "success")
+    except Exception as exc:  # pragma: no cover - defensive
+        _log_admin_event(
+            "background_job_schedule_update",
+            job_key=job_key,
+            interval_value=interval_value,
+            interval_unit=interval_unit,
+            status="error",
+            reason=str(exc),
+        )
+        flash_message(
+            "Taustatyön ajastuksen päivitys epäonnistui: %(error)s",
+            "danger",
+            error=str(exc),
+        )
+
+    return redirect(url_for("admin.background_jobs", job=job_key))
+
+
+def _build_logs_query(filters: Dict[str, Any]) -> Dict[str, Any]:
+    """Construct a MongoDB query for admin logs based on filter parameters."""
+    clauses = []
+
+    user_filter = filters.get("user")
+    if user_filter:
+        try:
+            clauses.append({
+                "$or": [
+                    {"user._id": ObjectId(user_filter)},
+                    {"actor.id": user_filter},
+                    {"actor._id": user_filter},
+                ]
+            })
+        except Exception:
+            pass
+
+    timestamp_range = {}
+    start_date = filters.get("start_date")
+    if start_date:
+        try:
+            timestamp_range["$gte"] = datetime.strptime(start_date, "%Y-%m-%d")
+        except ValueError:
+            pass
+    end_date = filters.get("end_date")
+    if end_date:
+        try:
+            timestamp_range["$lt"] = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+        except ValueError:
+            pass
+    if timestamp_range:
+        clauses.append({"timestamp": timestamp_range})
+
+    action_type = filters.get("action_type")
+    if action_type:
+        clauses.append({
+            "$or": [
+                {"request.method": action_type},
+                {"action.method": action_type},
+            ]
+        })
+
+    category = filters.get("category")
+    if category == "read":
+        clauses.append({
+            "$or": [
+                {"request.method": "GET"},
+                {"action.method": "GET"},
+            ]
+        })
+    elif category == "change":
+        clauses.append({
+            "$or": [
+                {"request.method": {"$in": ["POST", "PUT", "PATCH", "DELETE"]}},
+                {"action.method": {"$in": ["POST", "PUT", "PATCH", "DELETE"]}},
+            ]
+        })
+    elif category == "security":
+        clauses.append({
+            "$or": [
+                {"event": {"$regex": "login|auth|permission|token|clearance|mfa|security", "$options": "i"}},
+                {"message": {"$regex": "login|auth|permission|token|clearance|mfa|security", "$options": "i"}},
+            ]
+        })
+
+    search = (filters.get("q") or "").strip()
+    if search:
+        pattern = re.escape(search)
+        clauses.append({
+            "$or": [
+                {"event": {"$regex": pattern, "$options": "i"}},
+                {"message": {"$regex": pattern, "$options": "i"}},
+                {"details": {"$regex": pattern, "$options": "i"}},
+                {"request.path": {"$regex": pattern, "$options": "i"}},
+                {"action.path": {"$regex": pattern, "$options": "i"}},
+                {"user.username": {"$regex": pattern, "$options": "i"}},
+                {"user.displayname": {"$regex": pattern, "$options": "i"}},
+                {"actor.username": {"$regex": pattern, "$options": "i"}},
+                {"entity_id": {"$regex": pattern, "$options": "i"}},
+                {"related_id": {"$regex": pattern, "$options": "i"}},
+            ]
+        })
+
+    if not clauses:
+        return {}
+    if len(clauses) == 1:
+        return clauses[0]
+    return {"$and": clauses}
+
+
+def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert a raw admin log entry into a UI friendly payload."""
+    request_data = doc.get("request") or doc.get("action") or {}
+    legacy_action = None
+    if not isinstance(request_data, dict):
+        legacy_action = str(request_data)
+        request_data = {}
+    environ = request_data.get("environ") or {}
+    headers = request_data.get("headers")
+
+    def _extract_user_agent():
+        ua = request_data.get("user_agent") or environ.get("HTTP_USER_AGENT")
+        if ua:
+            return ua
+        if isinstance(headers, dict):
+            return headers.get("User-Agent") or headers.get("user-agent")
+        if isinstance(headers, str) and "User-Agent" in headers:
+            try:
+                return headers.split("User-Agent:")[1].split("\\r")[0].strip()
+            except Exception:
+                return headers
+        return "—"
+
+    method = request_data.get("method") or environ.get("REQUEST_METHOD") or "—"
+    path = (
+        request_data.get("path")
+        or request_data.get("full_path")
+        or request_data.get("url")
+        or environ.get("PATH_INFO")
+        or "—"
+    )
+    if legacy_action and method == "—":
+        method = "ACTION"
+    if legacy_action and path == "—":
+        path = legacy_action
+    remote_addr = request_data.get("remote_addr") or environ.get("REMOTE_ADDR") or "—"
+
+    timestamp = doc.get("timestamp")
+    if isinstance(timestamp, datetime):
+        timestamp_display = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+        timestamp_iso = timestamp.replace(tzinfo=timezone.utc).isoformat()
+        rel_minutes = max(int((utcnow() - timestamp).total_seconds() // 60), 0)
+    else:
+        timestamp_display = str(timestamp) if timestamp else "—"
+        timestamp_iso = timestamp_display
+        rel_minutes = None
+
+    user_doc = doc.get("user") or doc.get("actor") or {}
+    if not isinstance(user_doc, dict):
+        user_doc = {"username": str(user_doc), "displayname": str(user_doc)}
+    by = {
+        "id": str(user_doc.get("_id") or user_doc.get("id")) if (user_doc.get("_id") or user_doc.get("id")) else None,
+        "username": user_doc.get("username") or _("Tuntematon"),
+        "displayname": user_doc.get("displayname") or user_doc.get("username") or _("Tuntematon"),
+        "profile_picture": user_doc.get("profile_picture"),
+        "email": user_doc.get("email"),
+    }
+
+    session_info = doc.get("session") or {}
+    session_id = (
+        session_info.get("sid")
+        or session_info.get("session_id")
+        or doc.get("session_id")
+        or "—"
+    )
+
+    sensitive_keys = ("password", "passwd", "token", "secret", "authorization", "cookie", "csrf")
+
+    def _redact_payload(value):
+        if isinstance(value, dict):
+            return {
+                key: "[REDACTED]" if any(part in str(key).lower() for part in sensitive_keys) else _redact_payload(item)
+                for key, item in value.items()
+            }
+        if isinstance(value, list):
+            return [_redact_payload(item) for item in value]
+        return value
+
+    def _stringify_payload(value):
+        if value in (None, "", {}, []):
+            return ""
+        value = _redact_payload(value)
+        if isinstance(value, (dict, list)):
+            try:
+                return json.dumps(value, ensure_ascii=False, default=str)
+            except Exception:
+                return str(value)
+        return str(value)
+
+    request_meta = {
+        "endpoint": request_data.get("endpoint") or request_data.get("url_rule"),
+        "blueprint": request_data.get("blueprint"),
+        "full_path": request_data.get("full_path") or request_data.get("url"),
+        "referrer": request_data.get("referrer")
+        or (headers.get("Referer") if isinstance(headers, dict) else None),
+        "view_args": _stringify_payload(request_data.get("view_args")),
+        "args": _stringify_payload(request_data.get("args")),
+        "form": _stringify_payload(request_data.get("form")),
+        "json": _stringify_payload(request_data.get("json")),
+    }
+
+    details_text = _redact_payload(doc.get("details"))
+    if isinstance(details_text, (dict, list)):
+        try:
+            details_text = json.dumps(details_text, ensure_ascii=False, default=str)
+        except Exception:
+            details_text = str(details_text)
+    elif details_text is not None:
+        details_text = str(details_text)
+
+    event = doc.get("event") or doc.get("message") or legacy_action or ""
+    event_lc = str(event).lower()
+    if any(term in event_lc for term in ("login", "auth", "permission", "token", "clearance", "mfa", "security")):
+        category = "security"
+    elif method in ("POST", "PUT", "PATCH", "DELETE"):
+        category = "change"
+    elif method == "GET":
+        category = "read"
+    else:
+        category = "system"
+
+    entity_doc = doc.get("entity") if isinstance(doc.get("entity"), dict) else {}
+
+    return {
+        "id": str(doc.get("_id")),
+        "timestamp": timestamp_display,
+        "timestamp_iso": timestamp_iso,
+        "relative_minutes": rel_minutes,
+        "event": str(event),
+        "category": category,
+        "action": {
+            "method": method,
+            "path": path,
+            "remote_addr": remote_addr,
+            "user_agent": _extract_user_agent(),
+        },
+        "by": by,
+        "session_id": session_id,
+        "details": details_text,
+        "request_meta": request_meta,
+        "entity": {
+            "type": doc.get("entity_type") or entity_doc.get("type"),
+            "id": doc.get("entity_id") or doc.get("demo_id") or doc.get("related_id") or entity_doc.get("id"),
+        },
+    }
+
+def get_admin_activity(page=1, per_page=20, query=None):
+    """Return formatted admin activity logs with pagination."""
     skip = (page - 1) * per_page
-    activity = mongo.admin_logs.find({}).sort("_id", -1).skip(skip).limit(per_page)
-    return [AdminActivity.from_dict(doc).to_dict(True) for doc in activity]
+    cursor = (
+        mongo.admin_logs.find(query or {})
+        .sort([("timestamp", -1), ("_id", -1)])
+        .skip(skip)
+        .limit(per_page)
+    )
+    return [_format_log_entry(doc) for doc in cursor]
 
 
 # Admin statistics page
@@ -170,61 +1649,569 @@ from flask import request, render_template
 @admin_bp.route("/stats")
 @login_required
 @admin_required
+@permission_required("VIEW_ANALYTICS")
 def stats():
     """Render statistics page with user, organization, and demo analytics."""
     try:
-        total_users = mongo.users.count_documents({})
-        active_users = mongo.users.count_documents({"confirmed": True})
-        total_organizations = mongo.organizations.count_documents({})
-
-        # Count users by role
-        role_counts = get_user_role_counts()
-
-        # Demo analytics data
-        data = get_demo_views()
-        data = count_per_demo(data)  # this returns a list of demo dicts
-
-        # --- Pagination ---
-        per_page = int(request.args.get("per_page", 20))
-        page = int(request.args.get("page", 1))
-        total_count = len(data)
-        total_pages = ceil(total_count / per_page)
-        start_idx = (page - 1) * per_page
-        end_idx = start_idx + per_page
-        data_page = data[start_idx:end_idx]
-
-        # Render template
-        return render_template(
-            f"{_ADMIN_TEMPLATE_FOLDER}stats.html",
-            total_users=total_users,
-            total_organizations=total_organizations,
-            role_counts=role_counts,
-            active_users=active_users,
-            data=data_page,
+        page, per_page = parse_admin_pagination(request.args)
+        include_past = (request.args.get("include_past") or "0").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        scope_query, has_global_scope = _analytics_demo_scope(current_user)
+        (
+            rows,
+            analytics_count,
+            total_views,
+            visible_demo_count,
+            future_demo_count,
+            page,
+        ) = _build_analytics_summary(
+            include_past,
+            page,
+            per_page,
+            scope_query=scope_query,
+        )
+        pagination = build_admin_pagination(
+            "admin.stats",
+            total_count=analytics_count,
             page=page,
             per_page=per_page,
-            total_pages=total_pages,
-            total_count=total_count
+            query_args={"include_past": "1" if include_past else ""},
+        )
+        _log_admin_event(
+            "stats_view",
+            page=page,
+            per_page=per_page,
+            include_past=include_past,
+        )
+        return render_template(
+            f"{_ADMIN_TEMPLATE_FOLDER}stats.html",
+            rows=rows,
+            analytics_count=analytics_count,
+            total_views=total_views,
+            avg_views=round(total_views / analytics_count, 2)
+            if analytics_count
+            else 0,
+            visible_demo_count=visible_demo_count,
+            future_demo_count=future_demo_count,
+            include_past=include_past,
+            show_global_counts=has_global_scope,
+            total_users=mongo.users.count_documents({}) if has_global_scope else None,
+            total_organizations=mongo.organizations.count_documents({})
+            if has_global_scope
+            else None,
+            last_updated=utcnow().strftime("%d.%m.%Y %H:%M"),
+            **pagination,
         )
     except Exception as e:
         logger.error(f"Error rendering stats page: {e}")
-        flash_message("An error occurred while loading statistics.", "danger")
+        _log_admin_event("stats_view_error", reason=str(e))
+        flash_message("Tilastojen lataaminen epäonnistui.", "danger")
         return redirect(url_for("admin.admin_dashboard"))
 
+
+def _parse_demo_date(value):
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, (date,)):
+        return value
+    if isinstance(value, str):
+        for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%fZ"):
+            try:
+                return datetime.strptime(value, fmt).date()
+            except ValueError:
+                continue
+    return None
+
+
+def _analytics_demo_scope(user) -> tuple[dict, bool]:
+    """Return the demonstrations visible to the current analytics viewer."""
+    has_full_permissions = getattr(user, "has_full_permissions", None)
+    if getattr(user, "global_admin", False) or (
+        callable(has_full_permissions) and has_full_permissions()
+    ):
+        return {}, True
+
+    permission_scopes = list(user._perm_in("VIEW_ANALYTICS"))
+    if "global" in {str(scope) for scope in permission_scopes}:
+        return {}, True
+
+    organization_ids = [
+        ObjectId(scope)
+        for scope in permission_scopes
+        if ObjectId.is_valid(str(scope))
+    ]
+    city_keys = (
+        user.scoped_city_keys_for("VIEW_ANALYTICS")
+        if hasattr(user, "scoped_city_keys_for")
+        else []
+    )
+    city_names = [
+        city for city in CITY_LIST if normalize_city_key(city) in city_keys
+    ]
+    editor_ids = [user.id]
+    if getattr(user, "_id", None) is not None:
+        editor_ids.append(user._id)
+    permission_filters = [{"editors": {"$in": editor_ids}}]
+    if organization_ids:
+        permission_filters.append(
+            {
+                "organizers": {
+                    "$elemMatch": {"organization_id": {"$in": organization_ids}}
+                }
+            }
+        )
+    if city_keys:
+        permission_filters.append(
+            {
+                "$or": [
+                    {"city_key": {"$in": city_keys}},
+                    {"city": {"$in": city_names}},
+                ]
+            }
+        )
+    return {"$or": permission_filters}, False
+
+
+def _future_demo_ids(scope_query=None) -> set[ObjectId]:
+    today = utcnow().date()
+    ids: set[ObjectId] = set()
+    cursor = mongo.demonstrations.find(
+        {
+            "$and": [scope_query or {}, {"date": {"$exists": True}}],
+        }
+        if scope_query
+        else {"date": {"$exists": True}},
+        {"_id": 1, "date": 1},
+    )
+    for doc in cursor:
+        parsed = _parse_demo_date(doc.get("date"))
+        if parsed and parsed >= today:
+            ids.add(doc["_id"])
+    return ids
+
+
+def _build_analytics_summary(
+    include_past: bool,
+    page: int,
+    per_page: int,
+    *,
+    scope_query=None,
+):
+    visible_ids = {
+        doc["_id"]
+        for doc in mongo.demonstrations.find(scope_query or {}, {"_id": 1})
+    }
+    future_ids = _future_demo_ids(scope_query)
+    selected_ids = visible_ids if include_past else future_ids
+    match_stage = {"demo_id": {"$in": list(selected_ids)}}
+
+    base_pipeline = [{"$match": match_stage}] if match_stage else []
+    count_pipeline = base_pipeline + [
+        {"$group": {"_id": "$demo_id"}},
+        {"$count": "total"},
+    ]
+    total_count_doc = list(mongo.analytics.aggregate(count_pipeline))
+    total_count = total_count_doc[0]["total"] if total_count_doc else 0
+    total_views_pipeline = base_pipeline + [{"$count": "total_views"}]
+    total_views_doc = list(mongo.analytics.aggregate(total_views_pipeline))
+    total_views = total_views_doc[0]["total_views"] if total_views_doc else 0
+
+    total_pages = max(1, (total_count + per_page - 1) // per_page)
+    page = min(max(page, 1), total_pages)
+    skip = (page - 1) * per_page
+    data_pipeline = base_pipeline + [
+        {"$group": {"_id": "$demo_id", "views": {"$sum": 1}}},
+        {"$sort": {"views": -1, "_id": 1}},
+        {"$skip": skip},
+        {"$limit": per_page},
+    ]
+    grouped = list(mongo.analytics.aggregate(data_pipeline))
+    demo_ids = [doc["_id"] for doc in grouped]
+    demo_map = {}
+    if demo_ids:
+        for doc in mongo.demonstrations.find(
+            {"_id": {"$in": demo_ids}}, {"title": 1, "date": 1}
+        ):
+            demo_map[doc["_id"]] = doc
+
+    rows = []
+    for doc in grouped:
+        did = doc["_id"]
+        views = int(doc.get("views", 0))
+        info = demo_map.get(did, {})
+        rows.append(
+            {
+                "id": str(did),
+                "views": views,
+                "title": info.get("title"),
+                "date": info.get("date"),
+            }
+        )
+    return (
+        rows,
+        total_count,
+        total_views,
+        len(visible_ids),
+        len(future_ids),
+        page,
+    )
+
+
+@admin_bp.route("/api/stats/summary")
+@login_required
+@admin_required
+@permission_required("VIEW_ANALYTICS")
+def stats_summary_api():
+    """Return stats payload for the admin dashboard."""
+    page, per_page = parse_admin_pagination(request.args)
+    include_past = (request.args.get("include_past") or "0").lower() in {"1", "true", "yes"}
+    scope_query, has_global_scope = _analytics_demo_scope(current_user)
+
+    (
+        rows,
+        total_count,
+        total_views,
+        visible_demo_count,
+        future_demo_count,
+        page,
+    ) = _build_analytics_summary(
+        include_past,
+        page,
+        per_page,
+        scope_query=scope_query,
+    )
+    total_pages = max(1, (total_count + per_page - 1) // per_page)
+    avg_views = round(total_views / total_count, 2) if total_count else 0
+
+    return jsonify(
+        {
+            "summary": {
+                "total_users": mongo.users.count_documents({})
+                if has_global_scope
+                else None,
+                "active_users": mongo.users.count_documents({"confirmed": True})
+                if has_global_scope
+                else None,
+                "total_organizations": mongo.organizations.count_documents({})
+                if has_global_scope
+                else None,
+                "total_demos": visible_demo_count,
+                "total_demos_future": future_demo_count,
+                "total_views": total_views,
+                "avg_views": avg_views,
+                "last_updated": utcnow().isoformat() + "Z",
+            },
+            "analytics": {
+                "rows": rows,
+                "page": page,
+                "per_page": per_page,
+                "total_pages": total_pages,
+                "total_count": total_count,
+                "include_past": include_past,
+            },
+        }
+    )
+
+
+def _matomo_config():
+    url = current_app.config.get("MATOMO_API_URL") or os.getenv("MATOMO_API_URL")
+    token = current_app.config.get("MATOMO_API_TOKEN") or os.getenv("MATOMO_API_TOKEN")
+    site_id = current_app.config.get("MATOMO_SITE_ID") or os.getenv("MATOMO_SITE_ID")
+    if url and token and site_id:
+        return {"url": url, "token": token, "site_id": site_id}
+    return None
+
+
+@admin_bp.route("/api/stats/matomo-live")
+@login_required
+@admin_required
+@permission_required("VIEW_ANALYTICS")
+def stats_matomo_live():
+    _, has_global_scope = _analytics_demo_scope(current_user)
+    if not has_global_scope:
+        abort(403)
+    cfg = _matomo_config()
+    if not cfg:
+        return jsonify({"enabled": False, "reason": "missing_config"})
+    params = {
+        "module": "API",
+        "method": "Live.getLastVisitsDetails",
+        "idSite": cfg["site_id"],
+        "period": "day",
+        "date": "today",
+        "format": "JSON",
+        "token_auth": cfg["token"],
+        "filter_limit": int(request.args.get("limit", 5)),
+    }
+    try:
+        resp = requests.get(cfg["url"], params=params, timeout=5)
+        resp.raise_for_status()
+        payload = resp.json()
+        visits = []
+        for visit in payload[: params["filter_limit"]]:
+            visits.append(
+                {
+                    "id": visit.get("idVisit"),
+                    "country": visit.get("country"),
+                    "visitLocalTime": visit.get("visitLocalTime"),
+                    "actions": len(visit.get("actionDetails", [])),
+                    "deviceType": visit.get("deviceType"),
+                }
+            )
+        return jsonify({"enabled": True, "visits": visits})
+    except Exception as exc:
+        logger.exception("Matomo live fetch failed")
+        return jsonify({"enabled": False, "reason": str(exc)})
+
+
+# ── Admin status dashboard ────────────────────────────────────────────────────
+
+def _collect_infra_health() -> dict:
+    """Collect infrastructure health checks."""
+    services = []
+
+    # MongoDB
+    try:
+        _t0 = __import__("time").monotonic()
+        mongo.command("ping")
+        ms = round((__import__("time").monotonic() - _t0) * 1000)
+        db_stats = mongo.command("dbStats")
+        services.append({
+            "name": "MongoDB",
+            "status": "ok",
+            "message": f"Ping {ms} ms · {db_stats.get('collections', '?')} kokoelmat · {round(db_stats.get('dataSize', 0) / 1048576, 1)} MB",
+        })
+    except Exception as exc:
+        services.append({"name": "MongoDB", "status": "err", "message": str(exc)})
+
+    # Redis / cache
+    try:
+        _t0 = __import__("time").monotonic()
+        cache.set("_admin_status_ping", True, timeout=5)
+        ms = round((__import__("time").monotonic() - _t0) * 1000)
+        services.append({"name": "Redis", "status": "ok", "message": f"Ping {ms} ms"})
+    except Exception as exc:
+        services.append({"name": "Redis", "status": "err", "message": str(exc)})
+
+    # S3
+    try:
+        from mielenosoitukset_fi.utils.s3 import _s3_client
+        if _s3_client is None:
+            raise RuntimeError("S3 client not initialised")
+        _s3_client.list_buckets()
+        services.append({"name": "S3 / Tiedostovarasto", "status": "ok", "message": "Saavutettavissa"})
+    except Exception as exc:
+        services.append({"name": "S3 / Tiedostovarasto", "status": "err", "message": str(exc)})
+
+    return {"services": services, "all_ok": all(s["status"] == "ok" for s in services)}
+
+
+def _collect_server_stats() -> dict:
+    """Collect OS-level and process stats."""
+    import os, time as _time
+
+    # Uptime
+    try:
+        uptime_s = _time.monotonic()
+        days = int(uptime_s // 86400)
+        hours = int((uptime_s % 86400) // 3600)
+        mins = int((uptime_s % 3600) // 60)
+        uptime_str = f"{days}d {hours}h {mins}m" if days else f"{hours}h {mins}m"
+    except Exception:
+        uptime_str = "—"
+
+    # Memory (from /proc if available)
+    mem = {"used_mb": 0, "total_mb": 0, "pct": 0}
+    try:
+        with open("/proc/self/status") as f:
+            for line in f:
+                if line.startswith("VmRSS:"):
+                    mem["used_mb"] = round(int(line.split()[1]) / 1024)
+    except Exception:
+        pass
+
+    # Disk
+    try:
+        st = os.statvfs("/var/www/mielenosoitukset_fi")
+        total_gb = round((st.f_blocks * st.f_frsize) / (1024 ** 3), 1)
+        free_gb  = round((st.f_bavail * st.f_frsize) / (1024 ** 3), 1)
+        used_pct = round(((st.f_blocks - st.f_bavail) / st.f_blocks) * 100)
+    except Exception:
+        total_gb, free_gb, used_pct = 0, 0, 0
+
+    # Gunicorn workers (count from filesystem)
+    workers = 0
+    try:
+        import glob as _glob
+        workers = len(_glob.glob("/tmp/gunicorn_*.pid"))
+    except Exception:
+        pass
+
+    return {
+        "uptime": uptime_str,
+        "memory": mem,
+        "disk": {"total_gb": total_gb, "free_gb": free_gb, "used_pct": used_pct},
+        "workers": workers,
+        "python": __import__("sys").version.split()[0],
+    }
+
+
+def _collect_collection_counts() -> dict:
+    """Get document counts for key collections."""
+    collections = {
+        "users": "users",
+        "organizations": "organizations",
+        "demonstrations": "demonstrations",
+        "cases": "cases",
+        "admin_logs": "admin_logs",
+        "login_logs": "login_logs",
+        "demo_suggestions": "demo_suggestions",
+    }
+    counts = {}
+    for label, coll_name in collections.items():
+        try:
+            counts[label] = mongo[coll_name].count_documents({})
+        except Exception:
+            counts[label] = "—"
+    return counts
+
+
+def _collect_recent_errors() -> list:
+    """Fetch recent error-level log entries."""
+    try:
+        cursor = (
+            mongo.admin_logs
+            .find({"level": "error"})
+            .sort("_id", -1)
+            .limit(10)
+        )
+        errors = []
+        for doc in cursor:
+            ts = doc.get("timestamp")
+            if hasattr(ts, "strftime"):
+                ts = ts.strftime("%d.%m %H:%M")
+            errors.append({
+                "timestamp": str(ts) if ts else "—",
+                "event": doc.get("event", "—"),
+                "message": (doc.get("details") or {}).get("error", "")[:120],
+            })
+        return errors
+    except Exception:
+        return []
+
+
+@admin_bp.route("/status")
+@login_required
+@admin_required
+def admin_status():
+    """Admin system status dashboard."""
+    from mielenosoitukset_fi.utils.time_utils import utcnow as _utcnow
+    import time as _time
+
+    start = _time.monotonic()
+
+    infra = _collect_infra_health()
+    server = _collect_server_stats()
+    counts = _collect_collection_counts()
+    recent_errors = _collect_recent_errors()
+    dashboard = _calculate_dashboard_snapshot()
+    try:
+        operations = collect_operational_metrics(mongo)
+    except Exception:
+        logger.exception("Failed to collect operational status metrics")
+        operations = None
+
+    latency_ms = round((_time.monotonic() - start) * 1000)
+    now = _utcnow().replace(tzinfo=timezone.utc).strftime("%d.%m.%Y %H:%M:%S UTC")
+
+    _log_admin_event("admin_status_view")
+
+    return render_template(
+        "admin_V2/status.html",
+        infra=infra,
+        server=server,
+        counts=counts,
+        recent_errors=recent_errors,
+        dashboard=dashboard,
+        operations=operations,
+        updated_at=now,
+        latency_ms=latency_ms,
+    )
+
+
 @admin_bp.route("/manual/")
+@login_required
 def manual():
-    return render_template("manuals/index.html")
+    _log_admin_event("manual_index_view")
+    return render_template("manuals/index.html", current_page="index")
 
 @admin_bp.route("/manual/<path:page>")
+@login_required
 def manual_page(page):
-    return render_template(f"manuals/{page}.html")
+    _log_admin_event("manual_page_view", page=page)
+    return render_template(f"manuals/{page}.html", current_page=page)
 
 @admin_bp.route("/logs")
 @login_required
 @admin_required
 @permission_required("VIEW_LOGS")
 def logs():
-    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}logs.html")
+    user_cursor = (
+        mongo.users.find({}, {"displayname": 1, "username": 1})
+        .sort([("username", 1), ("_id", 1)])
+    )
+    users = [
+        {
+            "id": str(doc["_id"]),
+            "name": doc.get("displayname") or doc.get("username") or _("Tuntematon"),
+        }
+        for doc in user_cursor
+    ]
+
+    method_set = set(filter(None, mongo.admin_logs.distinct("request.method")))
+    method_set.update(filter(None, mongo.admin_logs.distinct("action.method")))
+    action_types = sorted(method_set)
+
+    filters = {
+        "user": (request.args.get("user") or "").strip(),
+        "start_date": (request.args.get("start_date") or "").strip(),
+        "end_date": (request.args.get("end_date") or "").strip(),
+        "action_type": (request.args.get("action_type") or "").strip(),
+        "category": (request.args.get("category") or "").strip(),
+        "q": (request.args.get("q") or "").strip(),
+    }
+    query = _build_logs_query(filters)
+    total_count = mongo.admin_logs.count_documents({})
+    filtered_count = mongo.admin_logs.count_documents(query)
+    page, per_page = parse_admin_pagination(request.args)
+    pagination = build_admin_pagination(
+        "admin.logs",
+        total_count=filtered_count,
+        page=page,
+        per_page=per_page,
+        query_args=filters,
+    )
+    entries = get_admin_activity(
+        pagination["current_page"],
+        per_page,
+        query,
+    )
+
+    _log_admin_event("admin_logs_view")
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}logs.html",
+        users=users,
+        action_types=action_types,
+        entries=entries,
+        filters=filters,
+        total_count=total_count,
+        filtered_count=filtered_count,
+        clear_filters_url=url_for("admin.logs"),
+        **pagination,
+    )
 
 
 @admin_bp.route("/api/logs")
@@ -247,16 +2234,32 @@ def api_logs():
         A dictionary containing the logs and pagination info
     """
     try:
-        page = int(request.args.get("page", 1))
-        per_page = int(request.args.get("per_page", 20))
-        logs = get_admin_activity(page, per_page)
-        total_logs = mongo.admin_logs.count_documents({})
+        page = max(int(request.args.get("page", 1)), 1)
+        per_page = min(max(int(request.args.get("per_page", 20)), 1), 100)
+        filters = {
+            "user": request.args.get("user"),
+            "start_date": request.args.get("start_date"),
+            "end_date": request.args.get("end_date"),
+            "action_type": request.args.get("action_type"),
+            "category": request.args.get("category"),
+            "q": request.args.get("q"),
+        }
+        query = _build_logs_query(filters)
+        logs = get_admin_activity(page, per_page, query)
+        total_logs = mongo.admin_logs.count_documents(query)
         total_pages = (total_logs + per_page - 1) // per_page
 
     except Exception as e:
         logger.error(e)
+        _log_admin_event("admin_logs_api_error", reason=str(e))
         raise Exception from e
 
+    _log_admin_event(
+        "admin_logs_api",
+        page=page,
+        per_page=per_page,
+        filters=_json_safe(filters),
+    )
     return {
         "logs": logs,
         "page": page,
@@ -279,13 +2282,16 @@ def get_user_role_counts():
 @permission_required("VIEW_ANALYTICS")
 def admin_analytics():
     """ """
-    return demo_analytics()
+    _log_admin_event("analytics_overview_view")
+    return render_analytics_overview()
 
 
-def demo_analytics():
-    """ """
-    data = get_demo_views()
-    data = count_per_demo(data)
+def render_analytics_overview():
+    """Render the admin analytics overview with aggregated per-demo view counts."""
+    data = [
+        DemoViewCount(row["demo_id"], row["views"])
+        for row in count_views_per_demo()
+    ]
 
     return render_template(f"{_ADMIN_TEMPLATE_FOLDER}analytics.html", data=data)
 
@@ -293,15 +2299,20 @@ def demo_analytics():
 
 from datetime import timedelta
 @admin_bp.route("/per_demo_analytics/<demo_id>")
+@login_required
+@admin_required
+@permission_required("VIEW_ANALYTICS", _type="DEMONSTRATION")
 def demo_analytics(demo_id):
     from mielenosoitukset_fi.utils.classes import Demonstration
     try:
         demo_oid = ObjectId(demo_id)
     except Exception:
+        _log_admin_event("demo_analytics_detail_error", demo_id=demo_id, reason="invalid_id")
         abort(404, "Invalid demo ID")
 
     anal = get_per_demo_anal(demo_oid)
     if not anal:
+        _log_admin_event("demo_analytics_detail_error", demo_id=demo_id, reason="missing_data")
         abort(404, "No analytics data found")
 
     analytics = anal.get("analytics", {})
@@ -320,11 +2331,13 @@ def demo_analytics(demo_id):
     # --- Per minute today ---
     day_data = analytics.get(today_str, {})
     for hour in range(24):
-        hour_str = str(hour)
-        hour_data = day_data.get(hour_str, {})
+        hour_key = f"{hour:02d}"
+        hour_data = day_data.get(hour_key) or day_data.get(str(hour)) or {}
         for minute in range(60):
-            minute_str = str(minute)
-            count = hour_data.get(minute_str, 0)
+            minute_key = f"{minute:02d}"
+            count = hour_data.get(minute_key)
+            if count is None:
+                count = hour_data.get(str(minute), 0)
             total_views += count  # will sum all-time later
             views_today += count
             labels.append(f"{hour:02d}:{minute:02d}")
@@ -376,6 +2389,7 @@ def demo_analytics(demo_id):
         weekly_data.append(week_views)
 
     # --- Render template ---
+    _log_admin_event("demo_analytics_detail_view", demo_id=demo_id)
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}per_demo_analytics.html",
         analytics=anal,
@@ -474,6 +2488,7 @@ def api_demos_recommendations():
     Get demo recommendations for a user.
     """
     recommendations = recommend_demos_no_user()
+    _log_admin_event("recommendations_api_called", count=len(recommendations))
     return jsonify(recommendations)
 
 from flask import jsonify
@@ -535,6 +2550,7 @@ def api_demos_nousussa():
         demo_data = mongo["demonstrations"].find_one({"_id": ObjectId(d["demo_id"])}, {"title": 1})
         d["title"] = demo_data.get("title") if demo_data else "Unknown"
 
+    _log_admin_event("demos_nousussa_requested", limit=limit, returned=len(demo_views))
     return jsonify({
         "demos": demo_views,
         "generated_at": now_utc.isoformat(),
@@ -543,9 +2559,15 @@ def api_demos_nousussa():
 
 
 @admin_bp.route("/analytics/overall_24h")
+@login_required
+@admin_required
+@permission_required("VIEW_ANALYTICS")
 def analytics_overall_24h():
-    now        = datetime.now(timezone.utc).replace(second=0, microsecond=0)
-    yesterday  = now - timedelta(days=1)
+    _, has_global_scope = _analytics_demo_scope(current_user)
+    if not has_global_scope:
+        abort(403)
+    now = datetime.now(HELSINKI_TZ).replace(second=0, microsecond=0)
+    yesterday = now - timedelta(days=1)
 
     # ── 1️⃣  Interval from query string ──────────────────────────
     try:
@@ -580,7 +2602,8 @@ def analytics_overall_24h():
                     try:
                         ts = datetime.strptime(
                             f"{day_str} {hour_str}:{minute}", "%Y-%m-%d %H:%M"
-                        ).replace(tzinfo=timezone.utc)
+                        )
+                        ts = HELSINKI_TZ.localize(ts)
                     except ValueError:
                         continue
 
@@ -612,6 +2635,7 @@ def analytics_overall_24h():
     data   = [timeline[k] for k in sorted_keys]
 
 
+    _log_admin_event("analytics_overall_24h_view", interval=interval)
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}overall_24h_analytics.html",
         chart_labels = labels,
@@ -621,7 +2645,13 @@ def analytics_overall_24h():
 
 
 @admin_bp.route("/api/analytics/overall_24h")
+@login_required
+@admin_required
+@permission_required("VIEW_ANALYTICS")
 def analytics_overall_24h_api():
+    _, has_global_scope = _analytics_demo_scope(current_user)
+    if not has_global_scope:
+        abort(403)
     now_hel = datetime.now(HELSINKI_TZ).replace(second=0, microsecond=0)
     yesterday_hel = now_hel - timedelta(days=1)
 
@@ -673,6 +2703,7 @@ def analytics_overall_24h_api():
         labels.append(label)
         data.append(timeline[k])
 
+    _log_admin_event("analytics_overall_24h_api", interval=interval, data_points=len(labels))
     return jsonify({
         "labels": labels,
         "data": data,

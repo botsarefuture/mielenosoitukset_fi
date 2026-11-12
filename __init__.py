@@ -10,5 +10,20 @@ Example:
 """
 
 
-# Add the parent directory to the system path to allow for relative imports
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+INNER_PACKAGE_DIR = os.path.join(ROOT_DIR, "mielenosoitukset_fi")
+
+# Add the repository root to the system path to allow for relative imports.
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
+
+# Expose the nested application package as part of this package namespace so
+# importers consistently resolve `mielenosoitukset_fi.*` under both unittest
+# and pytest collection modes.
+package_path = globals().get("__path__")
+if (
+    package_path is not None
+    and os.path.isdir(INNER_PACKAGE_DIR)
+    and INNER_PACKAGE_DIR not in package_path
+):
+    package_path.append(INNER_PACKAGE_DIR)

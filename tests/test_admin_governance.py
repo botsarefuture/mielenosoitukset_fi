@@ -1,0 +1,264 @@
+import re
+
+from mielenosoitukset_fi.utils.time_utils import utcnow
+
+from tests.conftest import _client_for_user
+from tests.test_system_teams import teams
+
+
+def _governance_csrf_headers(client):
+    with client.session_transaction() as session:
+        session["governance_csrf_token"] = "governance-test-token"
+    return {"X-CSRF-Token": "governance-test-token"}
+
+
+def test_governance_dashboard_collects_admin_tools(app, db, seeded_data):
+    client = _client_for_user(app, seeded_data["admin_id"])
+
+    response = client.get("/admin/governance/")
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "Hallinto ja käyttöoikeudet" in page
+    assert "Superkäyttäjäroolin hyväksynnät" in page
+    assert "Kaupunkihallinta" in page
+    assert "Tapahtumaloki" in page
+    assert 'data-bs-target="#sidebar"' in page
+    assert "Avaa admin-valikko" in page
+
+
+def test_board_clearance_is_persisted_and_audited(app, db, seeded_data, teams):
+    client = _client_for_user(app, seeded_data["admin_id"])
+    user_id = str(seeded_data["user_id"])
+
+    response = client.post(
+        f"/board/api/clearance/{user_id}",
+        json={"approved": True},
+        headers=_governance_csrf_headers(client),
+    )
+
+    assert response.status_code == 200
+    assert response.json['approved'] is False
+    second = _client_for_user(app, seeded_data['friend_id'])
+    assert second.post(f"/board/api/clearance/{user_id}", json={'approved': True}, headers=_governance_csrf_headers(second)).json['approved'] is True
+    clearance = db.board_clearances.find_one({"user_id": user_id})
+    assert clearance["approved"] is True
+    assert clearance["granted_by"] == "bob"
+    assert db.board_audit_logs.find_one(
+        {"user_id": user_id, "action": "hyväksyntä"}
+    )
+
+    page = client.get("/admin/governance/clearances").get_data(as_text=True)
+    assert "alice" in page
+    assert "Hyväksytty" in page
+
+
+def test_legacy_board_pages_redirect_to_governance(app, seeded_data):
+    client = _client_for_user(app, seeded_data["admin_id"])
+
+    clearance_response = client.get("/board/ui")
+    audit_response = client.get("/board/audit/ui")
+
+    assert clearance_response.status_code == 302
+    assert clearance_response.headers["Location"].endswith(
+        "/admin/governance/clearances"
+    )
+    assert audit_response.status_code == 302
+    assert audit_response.headers["Location"].endswith("/admin/governance/audit")
+
+
+def test_city_management_explains_unsaved_and_risky_changes(app, seeded_data):
+    client = _client_for_user(app, seeded_data["admin_id"])
+
+    response = client.get("/admin/cities/")
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "Käytössä tai sisältöä" in page
+    assert "Vain käytössä olevat" in page
+    assert "Tallentamattomia muutoksia" in page
+    assert "Olet poistamassa käytöstä kaupunkeja" in page
+    assert "/admin/governance/" in page
+
+
+def test_admin_management_views_share_workspace_design(app, seeded_data):
+    client = _client_for_user(app, seeded_data["admin_id"])
+
+    demonstration_page = client.get("/admin/demo/").get_data(as_text=True)
+    city_page = client.get("/admin/cities/").get_data(as_text=True)
+
+    assert "css/admin/workspace.css" in demonstration_page
+    assert re.search(r"workspace\.css\?v=\d{8}-admin-ui-\d+", demonstration_page)
+    assert 'class="admin-page-hero"' in demonstration_page
+    assert demonstration_page.count("admin-workspace-summary-card") >= 4
+    assert 'class="admin-page-hero"' in city_page
+    assert "city-admin-header" not in city_page
+    assert city_page.count("admin-workspace-summary-card") >= 3
+    assert 'class="admin-workspace-summary city-admin-overview"' in city_page
+    assert city_page.count("city-admin-summary-copy") == 3
+    assert "city-admin-input-with-icon" in city_page
+    assert "city-admin-city-identity" in city_page
+    assert "admin-data-view admin-data-view--scrollable" in city_page
+    assert "admin-data-view__table" in city_page
+
+
+def test_clearance_collection_paginates_filtered_users(app, db, seeded_data):
+    client = _client_for_user(app, seeded_data["admin_id"])
+    inserted_ids = db.users.insert_many(
+        [
+            {
+                "username": f"governance-user-{index:02d}",
+                "email": f"governance-{index:02d}@example.test",
+                "role": "user",
+            }
+            for index in range(45)
+        ]
+    ).inserted_ids
+    db.board_clearances.insert_many(
+        [
+            {
+                "user_id": str(user_id),
+                "approved": True,
+                "granted_by": "admin",
+                "timestamp": utcnow(),
+            }
+            for index, user_id in enumerate(inserted_ids)
+            if index % 2 == 0
+        ]
+    )
+
+    response = client.get(
+        "/admin/governance/clearances?search=governance-user&approval=all&page=2&per_page=20"
+    )
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "governance-user-19" not in page
+    assert "governance-user-20" in page
+    assert "governance-user-39" in page
+    assert "governance-user-40" not in page
+    assert "Näytetään 21–40 / 45 käyttäjästä" in page
+    assert "search=governance-user" in page
+    assert "approval=all" in page
+    assert "per_page=20" in page
+
+
+def test_governance_audit_collection_paginates_with_stable_tie_breaker(
+    app, db, seeded_data
+):
+    client = _client_for_user(app, seeded_data["admin_id"])
+    timestamp = utcnow()
+    db.board_audit_logs.insert_many(
+        [
+            {
+                "user_id": "not-an-object-id",
+                "action": "myönnetty",
+                "granted_by": f"Audit actor {index:02d}",
+                "timestamp": timestamp,
+            }
+            for index in range(45)
+        ]
+    )
+
+    first = client.get(
+        "/admin/governance/audit?search=Audit+actor&action=my%C3%B6nnetty&page=1&per_page=20"
+    )
+    second = client.get(
+        "/admin/governance/audit?search=Audit+actor&action=my%C3%B6nnetty&page=2&per_page=20"
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    first_page = first.get_data(as_text=True)
+    second_page = second.get_data(as_text=True)
+    assert "Audit actor 44" in first_page
+    assert "Audit actor 25" in first_page
+    assert "Audit actor 24" not in first_page
+    assert "Audit actor 25" not in second_page
+    assert "Audit actor 24" in second_page
+    assert "Audit actor 05" in second_page
+    assert "Näytetään 21–40 / 45 tapahtumasta" not in second_page
+    assert "45 osumaa" in second_page
+    assert "search=Audit+actor" in second_page
+    assert "action=my%C3%B6nnetty" in second_page
+
+
+def test_governance_migration_preserves_existing_city_managers(db):
+    from mielenosoitukset_fi.utils.migrations.migration_004_admin_governance import (
+        migrate_admin_governance,
+    )
+
+    db.users.insert_one(
+        {
+            "username": "legacy-city-manager",
+            "global_permissions": ["EDIT_USER"],
+        }
+    )
+
+    result = migrate_admin_governance(db)
+
+    user = db.users.find_one({"username": "legacy-city-manager"})
+    assert "MANAGE_CITIES" in user["global_permissions"]
+    assert result["city_permissions_added"] == 1
+    assert "user_id_1" in db.board_clearances.index_information()
+
+
+def test_global_admin_promotion_requires_persistent_clearance(app, db, seeded_data, teams):
+    client = _client_for_user(app, seeded_data["admin_id"])
+    user_id = seeded_data["user_id"]
+    payload = {
+        "username": "alice",
+        "email": "alice@example.test",
+        "role": "global_admin",
+        "confirmed": "on",
+    }
+
+    blocked = client.post(f"/admin/user/save_user/{user_id}", data=payload)
+
+    assert blocked.status_code == 302
+    assert db.users.find_one({"_id": user_id})["role"] == "user"
+
+    client.post(
+        f"/board/api/clearance/{user_id}",
+        json={"approved": True},
+        headers=_governance_csrf_headers(client),
+    )
+    second = _client_for_user(app, seeded_data['friend_id'])
+    second.post(f"/board/api/clearance/{user_id}", json={'approved': True}, headers=_governance_csrf_headers(second))
+    from mielenosoitukset_fi.users.models import User
+    with app.app_context():
+        assert User.from_OID(user_id).has_full_permissions()
+    # Membership confers access directly, without persisting a permanent role.
+    assert db.users.find_one({"_id": user_id})["role"] == "user"
+
+
+def test_city_permission_is_independent_from_user_editing(app, db, seeded_data):
+    db.users.update_one(
+        {"_id": seeded_data["friend_id"]},
+        {
+            "$set": {
+                "role": "admin",
+                "global_admin": False,
+                "global_permissions": ["MANAGE_CITIES"],
+            }
+        },
+    )
+    client = _client_for_user(app, seeded_data["friend_id"])
+
+    response = client.get("/admin/cities/")
+
+    assert response.status_code == 200
+    assert "Kaupunkihallinta" in response.get_data(as_text=True)
+
+
+def test_clearance_change_rejects_missing_csrf_token(app, db, seeded_data):
+    client = _client_for_user(app, seeded_data["admin_id"])
+    user_id = str(seeded_data["user_id"])
+
+    response = client.post(
+        f"/board/api/clearance/{user_id}",
+        json={"approved": True},
+    )
+
+    assert response.status_code == 403
+    assert db.board_clearances.find_one({"user_id": user_id}) is None

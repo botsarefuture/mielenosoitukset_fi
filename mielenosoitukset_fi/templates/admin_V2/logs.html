@@ -1,188 +1,151 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
 
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/activities.css') }}" />
-<style>
-    .no-data {
-        color: #721c24;
-        font-weight: bold;
-        background: #f8d7da;
-        padding: 20px;
-        border: 1px dashed #f5c6cb;
-        border-radius: 5px;
-        text-align: center;
-        margin: 1rem 0;
-    }
-    .back-button {
-        margin-top: 2rem;
-        text-align: center;
-    }
-    .pagination {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        margin-top: 2rem;
-    }
-    .pagination a {
-        margin: 0 5px;
-        padding: 8px 14px;
-        border: 1px solid #ccc;
-        color: #007bff;
-        text-decoration: none;
-        border-radius: 4px;
-    }
-    .pagination a.active {
-        background-color: #007bff;
-        color: white;
-        font-weight: bold;
-    }
-    .filter-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    .filter-container select, 
-    .filter-container input,
-    .filter-container button {
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        min-width: 120px;
-    }
-</style>
-{% endblock %}
+{% block title %}{{ _('Hallinnan tapahtumaloki') }}{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/audit.css', v='20260920-admin-ui-58') }}">{% endblock %}
 
 {% block main_content %}
-<div class="table-container">
-    <header>
-        <h2>{{ _('Admin Logs') }}</h2>
-        <p>{{ _('Here you can view the admin activity logs and filter them by user, date, and action type.') }}</p>
-    </header>
+<section class="admin-page admin-workspace">
+  {{ admin_page_hero(
+    _('Hallinnan tapahtumaloki'),
+    _('Selvitä kuka teki mitä ja milloin. Lokin katselu kirjataan tietosuojan ja jäljitettävyyden vuoksi.'),
+    _('Lokit ja tietosuoja'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Hallinnan tapahtumaloki'), none)],
+    back_url=url_for('admin.admin_dashboard'),
+    back_label=_('Hallintapaneeli'),
+  ) }}
 
-    <section class="filter-container">
-        <form method="GET" action="{{ url_for('admin.logs') }}">
-            <select name="user">
-                <option value="">{{ _('All Users') }}</option>
-                {% for user in users %}
-                <option value="{{ user.id }}" {% if request.args.get('user') == user.id %}selected{% endif %}>
-                    {{ user.name }}
-                </option>
-                {% endfor %}
-            </select>
-            <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}">
-            <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}">
-            <select name="action_type">
-                <option value="">{{ _('All Actions') }}</option>
-                {% for action in action_types %}
-                <option value="{{ action }}" {% if request.args.get('action_type') == action %}selected{% endif %}>
-                    {{ action }}
-                </option>
-                {% endfor %}
-            </select>
-            <button type="submit">{{ _('Filter') }}</button>
-        </form>
-    </section>
+  <nav class="admin-section-tabs" aria-label="{{ _('Lokilähteet') }}">
+    <a href="{{ url_for('admin.logs') }}" aria-current="page"><i class="fa-solid fa-list-check" aria-hidden="true"></i>{{ _('Hallintatoiminnot') }}</a>
+    <a href="{{ url_for('admin_demo.audit_timeline') }}"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i>{{ _('Mielenosoitushistoria') }}</a>
+    {% if current_user.global_admin or current_user.has_permission('VIEW_CLEARANCE_AUDIT') %}<a href="{{ url_for('admin_governance.audit_log') }}"><i class="fa-solid fa-user-shield" aria-hidden="true"></i>{{ _('Käyttöoikeushistoria') }}</a>{% endif %}
+    {% if current_user.global_admin %}<a href="{{ url_for('admin_demo.view_super_audit_logs') }}"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>{{ _('Tekninen audit-loki') }}</a>{% endif %}
+  </nav>
 
-    <section class="logs-overview">
-        <h3 class="admin-section-title">{{ _('Recent Activities') }}</h3>
-        <activities></activities>
-    </section>
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Hallintalokin suodattimet') }}">
+    <form method="GET" action="{{ url_for('admin.logs') }}" class="admin-filter-bar">
+      <input type="hidden" name="page" value="1">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="admin-filter-bar__primary">
+        <div class="admin-field"><label for="log-search">{{ _('Haku') }}</label><input id="log-search" type="search" name="q" value="{{ filters.q }}" placeholder="{{ _('Hae tapahtumalla, polulla tai tunnisteella') }}"></div>
+        <div class="admin-field"><label for="log-user">{{ _('Tekijä') }}</label><select id="log-user" name="user">
+          <option value="">{{ _('Kaikki käyttäjät') }}</option>
+          {% for user in users %}<option value="{{ user.id }}" {% if filters.user == user.id %}selected{% endif %}>{{ user.name }}</option>{% endfor %}
+        </select></div>
+        <div class="admin-field"><label for="log-category">{{ _('Tapahtumalaji') }}</label><select id="log-category" name="category">
+          <option value="">{{ _('Kaikki tapahtumat') }}</option>
+          <option value="read" {% if filters.category == 'read' %}selected{% endif %}>{{ _('Katselut') }}</option>
+          <option value="change" {% if filters.category == 'change' %}selected{% endif %}>{{ _('Muutokset') }}</option>
+          <option value="security" {% if filters.category == 'security' %}selected{% endif %}>{{ _('Tietoturva ja oikeudet') }}</option>
+        </select></div>
+        <div class="admin-field"><label for="log-method">{{ _('HTTP-metodi') }}</label><select id="log-method" name="action_type">
+          <option value="">{{ _('Kaikki metodit') }}</option>
+          {% for action in action_types %}<option value="{{ action }}" {% if filters.action_type == action %}selected{% endif %}>{{ action }}</option>{% endfor %}
+        </select></div>
+        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+      </div>
 
-    <div class="pagination"></div>
+      <details class="admin-advanced-filters" {% if filters.start_date or filters.end_date %}open{% endif %}>
+        <summary>{{ _('Aikaväli') }}</summary>
+        <div class="admin-advanced-filters__grid">
+          <div class="admin-field"><label for="log-start">{{ _('Alkaen') }}</label><input id="log-start" type="date" name="start_date" value="{{ filters.start_date }}"></div>
+          <div class="admin-field"><label for="log-end">{{ _('Päättyen') }}</label><input id="log-end" type="date" name="end_date" value="{{ filters.end_date }}"></div>
+        </div>
+      </details>
+    </form>
 
-    <div class="back-button">
-        <a href="{{ url_for('admin.admin_dashboard') }}" class="button">
-            <i class="fas fa-arrow-left"></i> {{ _('Back to Dashboard') }}
-        </a>
+    {% if filters.q or filters.user or filters.category or filters.action_type or filters.start_date or filters.end_date %}
+    <div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">
+      {% if filters.q %}<span class="admin-filter-chip">{{ _('Haku') }}: {{ filters.q }}</span>{% endif %}
+      {% if filters.user %}<span class="admin-filter-chip">{{ _('Tekijä rajattu') }}</span>{% endif %}
+      {% if filters.category %}<span class="admin-filter-chip">{{ _('Tapahtumalaji') }}: {{ filters.category }}</span>{% endif %}
+      {% if filters.action_type %}<span class="admin-filter-chip">{{ _('Metodi') }}: {{ filters.action_type }}</span>{% endif %}
+      {% if filters.start_date %}<span class="admin-filter-chip">{{ _('Alkaen') }}: {{ filters.start_date }}</span>{% endif %}
+      {% if filters.end_date %}<span class="admin-filter-chip">{{ _('Päättyen') }}: {{ filters.end_date }}</span>{% endif %}
+      <a class="admin-clear-filters" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a>
     </div>
-</div>
-{% endblock %}
+    {% endif %}
+  </section>
 
-{% block scripts %}
-<script>
-    async function fetchLogs(page = 1) {
-        const res = await fetch(`{{ url_for("admin.api_logs") }}?page=${page}`);
-        const data = await res.json();
-        renderLogs(data.logs);
-        renderPagination(data.page, data.total_pages);
-    }
+  <section class="admin-data-view" aria-labelledby="admin-log-heading">
+    <div class="admin-data-view__header admin-result-summary" aria-live="polite">
+      <strong id="admin-log-heading">{{ _('Hallintatapahtumat') }}</strong>
+      {% if filters.q or filters.user or filters.category or filters.action_type or filters.start_date or filters.end_date %}
+      <span>{{ _('%(count)s osumaa', count=filtered_count) }} · {{ _('yhteensä %(count)s tapahtumaa', count=total_count) }}</span>
+      {% else %}
+      <span>{{ _('Näytetään %(start)s–%(end)s / %(count)s tapahtumasta', start=range_start, end=range_end, count=filtered_count) }}</span>
+      {% endif %}
+    </div>
 
-    function renderLogs(logs) {
-        const container = document.querySelector('activities');
-        container.innerHTML = '';
+    <div class="admin-data-view__viewport">
+      <div class="log-stream">
+        {% set category_labels = {'read': _('Katselu'), 'change': _('Muutos'), 'security': _('Tietoturva'), 'system': _('Järjestelmä')} %}
+        {% for log in entries %}
+        {% set event_name = log.event or log.request_meta.endpoint or (log.action.method ~ ' ' ~ log.action.path) %}
+        {% set related_value = log.entity.id or log.action.path or log.event %}
+        <article class="log-card admin-panel-inset">
+          <header class="log-card__head">
+            <span class="method-pill method-{{ log.action.method|lower }}">{{ log.action.method }}</span>
+            <div class="path-block">
+              <div class="log-event-title"><span class="category-pill {{ log.category }}">{{ category_labels.get(log.category, category_labels.system) }}</span>{{ event_name }}</div>
+              <div class="path">{{ log.action.path or '—' }}</div>
+              <div class="endpoint">{{ log.request_meta.endpoint or '—' }}</div>
+            </div>
+            <div class="timestamp"><time datetime="{{ log.timestamp_iso }}">{{ log.timestamp }}</time>{% if log.relative_minutes is not none %}<small>{{ log.relative_minutes }} {{ _('min sitten') }}</small>{% endif %}</div>
+          </header>
 
-        if (!logs.length) {
-            container.innerHTML = '<div class="no-data">{{ _("No activities yet.") }}</div>';
-            return;
-        }
+          <div class="log-card__meta">
+            <div class="meta-item"><span>{{ _('Käyttäjä') }}</span><strong>{{ log.by.displayname or log.by.username or '—' }}</strong></div>
+            <div class="meta-item"><span>{{ _('Sähköposti') }}</span><strong>{{ log.by.email or '—' }}</strong></div>
+            {% if log.entity.id %}<div class="meta-item"><span>{{ _('Kohde') }}</span><code>{{ log.entity.type or '' }} {{ log.entity.id }}</code></div>{% endif %}
+          </div>
 
-        logs.forEach(log => {
-            const activity = document.createElement('activity');
-            activity.setAttribute('data-activity', JSON.stringify(log));
-            activity.innerHTML = `
-                <activity-title><i class="fas fa-tasks"></i> ${log.action.method} ${log.action.path}</activity-title>
-                <activity-content>
-                    <aby>
-                        ${log.by.profile_picture 
-                            ? `<img src="${log.by.profile_picture}" alt="Profile" class="profile-pic">` 
-                            : '<i class="fas fa-user"></i>'}
-                        ${log.by.displayname || log.by.username}
-                    </aby>
-                    <atime><i class="fas fa-clock"></i> ${log.timestamp}</atime>
-                    <aaction onclick="expandAct(this)"><i class="fas fa-arrow-right"></i> {{ _('View More') }}</aaction>
-                </activity-content>
-                <activity-extra>
-                    <aip><i class="fas fa-globe"></i> {{ _('IP Address') }}: ${log.action.remote_addr}</aip>
-                    <asession><i class="fas fa-user-secret"></i> {{ _('Session') }}: ${log.session_id}</asession>
-                </activity-extra>
-            `;
-            container.appendChild(activity);
-        });
-    }
+          <div class="log-investigation-links">
+            <a class="log-investigation-link" href="{{ url_for('admin.logs', q=related_value) }}"><i class="fa-solid fa-link" aria-hidden="true"></i>{{ _('Näytä liittyvät tapahtumat') }}</a>
+            {% if log.by.id %}<a class="log-investigation-link" href="{{ url_for('admin.logs', user=log.by.id) }}"><i class="fa-solid fa-user-clock" aria-hidden="true"></i>{{ _('Näytä tekijän tapahtumat') }}</a>{% endif %}
+          </div>
 
-    function renderPagination(current, total) {
-        const pagination = document.querySelector('.pagination');
-        pagination.innerHTML = '';
+          {% if log.details %}<div class="log-note">{{ log.details }}</div>{% endif %}
 
-        const createPageLink = (text, page, isActive = false) => {
-            const a = document.createElement('a');
-            a.href = '#';
-            a.textContent = text;
-            if (isActive) a.classList.add('active');
-            a.onclick = e => {
-                e.preventDefault();
-                fetchLogs(page);
-            };
-            return a;
-        };
+          <details class="admin-disclosure log-details">
+            <summary>{{ _('Tekniset tiedot ja tietosuojan audit-data') }}</summary>
+            <div class="log-detail-list">
+              {% set detail_rows = [
+                (_('IP-osoite'), log.action.remote_addr),
+                (_('Istunto'), log.session_id),
+                (_('Selain ja laite'), log.action.user_agent),
+                (_('Endpoint'), log.request_meta.endpoint),
+                (_('Blueprint'), log.request_meta.blueprint),
+                (_('Koko polku'), log.request_meta.full_path),
+                (_('Viittaava sivu'), log.request_meta.referrer),
+                (_('Reittiparametrit'), log.request_meta.view_args),
+                (_('Kyselyparametrit'), log.request_meta.args),
+                (_('Lomakedata'), log.request_meta.form),
+                (_('JSON-data'), log.request_meta.json)
+              ] %}
+              {% for label, value in detail_rows if value %}<div class="detail-row"><span>{{ label }}</span><pre>{{ value }}</pre></div>{% else %}<div class="detail-row"><span>{{ _('Metadata') }}</span><code>—</code></div>{% endfor %}
+            </div>
+          </details>
+        </article>
+        {% else %}
+        <div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-magnifying-glass" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Tapahtumia ei löytynyt') }}</strong><span>{{ _('Kokeile muuttaa suodattimia tai tyhjennä ne.') }}</span></div>
+        {% endfor %}
+      </div>
+    </div>
 
-        if (current > 1) {
-            pagination.appendChild(createPageLink('« {{ _("Previous") }}', current - 1));
-        }
-
-        for (let i = 1; i <= total; i++) {
-            pagination.appendChild(createPageLink(i, i, i === current));
-        }
-
-        if (current < total) {
-            pagination.appendChild(createPageLink('{{ _("Next") }} »', current + 1));
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        fetchLogs();
-    });
-</script>
-
-<style>
-    .profile-pic {
-        width: 1.5em;
-        height: 1.5em;
-        border-radius: 50%;
-        margin-right: 0.5em;
-    }
-</style>
-
-<script src="{{ url_for('static', filename='js/activities.js') }}"></script>
+    {{ admin_pagination(
+      current_page,
+      total_pages,
+      per_page=per_page,
+      prev_page=prev_page,
+      next_page=next_page,
+      prev_page_url=prev_page_url,
+      next_page_url=next_page_url,
+      visible_pages=visible_pages,
+      first_page_url=first_page_url,
+      last_page_url=last_page_url,
+      aria_label=_('Hallintalokin sivutus')
+    ) }}
+  </section>
+</section>
 {% endblock %}

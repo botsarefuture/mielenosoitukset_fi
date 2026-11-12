@@ -50,12 +50,19 @@ def is_strong_password(password: str, username: str = "", email: str = "") -> (b
     if re.search(r"[a-z]", password): categories += 1
     if re.search(r"[A-Z]", password): categories += 1
     if re.search(r"\d", password): categories += 1
-    if re.search(r"[!@#$%^&*(),.?\":{}|<>]", password): categories += 1
+    if re.search(r"[!@#$%^&*()\-_+=\[\]{};:,.<>?]", password): categories += 1
     if categories < 3:
         return False, "Password must include at least 3 of the 4 categories: uppercase, lowercase, digit, special character."
 
     # Prevent personal info
-    if username.lower() in password.lower() or email.lower().split("@")[0] in password.lower():
+    normalized_password = password.lower()
+    normalized_username = (username or "").strip().lower()
+    email_identity = (email or "").strip().lower().split("@", 1)[0]
+    if (
+        normalized_username and normalized_username in normalized_password
+    ) or (
+        email_identity and email_identity in normalized_password
+    ):
         return False, "Password cannot contain your username or email."
 
     return True, "Password is strong."

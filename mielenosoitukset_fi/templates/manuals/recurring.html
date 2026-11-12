@@ -1,0 +1,39 @@
+{% extends 'manual_base.html' %}
+
+{% block content %}
+<div class="manual-breadcrumb">
+  <i class="fa-solid fa-house me-1"></i> <a href="{{ url_for('admin.manual_page', page='index') }}">Ohje</a> / Toistuvat mielenosoitukset
+</div>
+
+<section class="manual-section">
+  <h2><i class="fa-solid fa-repeat me-2"></i>Toistuvat mielenosoitukset</h2>
+  <p>
+    Toistuvat mielenosoitukset (recurring demos) ovat mielenosoituksia, jotka toistuvat säännöllisesti
+    (esim. viikoittain). Niitä hallitaan omassa näkymässään <strong>/admin/recu_demo</strong>.
+  </p>
+
+  <h3>Keskeiset toiminnot</h3>
+  <ul>
+    <li><strong>Lista:</strong> Näet kaikki toistuvat mielenosoitukset, voit hakea ja suodattaa niitä.</li>
+    <li><strong>Luo toistuva mielenosoitus</strong> (<code>CREATE_RECURRING_DEMO</code>) – määrittele perustiedot, toistoväli ja mahdolliset tauot.</li>
+    <li><strong>Muokkaa</strong> (<code>EDIT_RECURRING_DEMO</code>) toistuvan mielenosoituksen tietoja.</li>
+    <li><strong>Poista</strong> (<code>DELETE_RECURRING_DEMO</code>) – poisto vaatii vahvistussivun.</li>
+  </ul>
+
+  <h3>Massapäivitys ja massaperuutus</h3>
+  <p>
+    Toistuvasta mielenosoituksesta syntyy useita <strong>päivämäärien mukaan luotuja lapsimielenosoituksia</strong>.
+    Voit:
+  </p>
+  <ul>
+    <li><strong>Bulk-update:</strong> kopioida vanhemman kentät valittuihin (tai kaikkiin) tuleviin lapsimielenosoituksiin.</li>
+    <li><strong>Bulk-cancel:</strong> peruuttaa valitut tai kaikki tulevat lapsimielenosoitukset kerralla (edellyttää sekä <code>EDIT_RECURRING_DEMO</code>- että <code>EDIT_DEMO</code>-oikeutta).</li>
+  </ul>
+
+  <div class="manual-tip">
+    <i class="fa-solid fa-lightbulb me-2"></i>
+    <strong>Vinkki:</strong> Käytä massapäivitystä aina kun teet muutoksia toistuvan mielenosoituksen
+    tietoihin, jotta myös jo luodut lapsimielenosoitukset pysyvät ajan tasalla.
+  </div>
+</section>
+{% endblock %}

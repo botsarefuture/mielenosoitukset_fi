@@ -1,0 +1,134 @@
+{% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% block title %}{{ _('Tapaukset') }}{% endblock %}
+
+{% block main_content %}
+<div class="admin-page case-shell">
+  {{ admin_page_hero(
+    _('Tapaukset & eskaloinnit'),
+    _('Priorisoi avoimet tapaukset, sulje automaattisesti ratkaistut ja löydä esiin nostetut keissit nopeasti.'),
+    _('Käyttäjät ja hallinto'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Tapaukset'), none)]
+  ) }}
+
+  <div class="admin-row-actions admin-case-statuses" aria-label="{{ _('Tapausten yhteenveto') }}">
+    <span class="admin-status-badge"><i class="fas fa-robot" aria-hidden="true"></i>{{ _('Automaattisesti suljetut') }}: {{ auto_closed }}</span>
+    <span class="admin-status-badge admin-status-badge--warning"><i class="fas fa-layer-group" aria-hidden="true"></i>{{ _('Avoimet') }}: {{ open_count }}</span>
+    <span class="admin-status-badge admin-status-badge--success"><i class="fas fa-check" aria-hidden="true"></i>{{ _('Suljetut') }}: {{ closed_count }}</span>
+    <span class="admin-status-badge"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>{{ _('Eskaloinnit') }}: {{ escalated_count }}</span>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_case.blocklist') }}"><i class="fas fa-ban me-1" aria-hidden="true"></i>{{ _('Tukilippujen estolista') }}</a>
+  </div>
+  <div class="admin-active-filters admin-case-filters" aria-label="{{ _('Suodata tapauksia') }}">
+    <button type="button" class="admin-filter-chip active" data-filter="all" aria-pressed="true">{{ _('Kaikki') }}</button>
+    <button type="button" class="admin-filter-chip" data-filter="open" aria-pressed="false">{{ _('Avoimet') }}</button>
+    <button type="button" class="admin-filter-chip" data-filter="closed" aria-pressed="false">{{ _('Suljetut') }}</button>
+    <button type="button" class="admin-filter-chip" data-filter="high" aria-pressed="false">{{ _('Kriittiset') }}</button>
+    <button type="button" class="admin-filter-chip" data-filter="escalated" aria-pressed="false">{{ _('Eskaloinnit') }}</button>
+  </div>
+
+  <div class="admin-workspace-summary admin-case-summary">
+    <button type="button" class="admin-workspace-summary-card admin-case-summary__filter emphasis" data-filter="open" aria-pressed="false">
+      <span class="admin-workspace-summary-icon"><i class="fas fa-layer-group" aria-hidden="true"></i></span>
+      <div><span>{{ _('Avoimet tapaukset') }}</span><strong>{{ open_count }}</strong><small>{{ _('Keskity näihin ensin') }}</small></div>
+    </button>
+    <button type="button" class="admin-workspace-summary-card admin-case-summary__filter" data-filter="closed" aria-pressed="false">
+      <span class="admin-workspace-summary-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span>
+      <div><span>{{ _('Suljetut') }}</span><strong>{{ closed_count }}</strong><small>{{ _('Automaattisesti suljetut') }}: {{ auto_closed }}</small></div>
+    </button>
+    <button type="button" class="admin-workspace-summary-card admin-case-summary__filter" data-filter="escalated" aria-pressed="false">
+      <span class="admin-workspace-summary-icon"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></span>
+      <div><span>{{ _('Eskaloinnit') }}</span><strong>{{ escalated_count }}</strong><small>{{ _('Vaatii seniorin') }}</small></div>
+    </button>
+    <button type="button" class="admin-workspace-summary-card admin-case-summary__filter" data-filter="all" aria-pressed="true">
+      <span class="admin-workspace-summary-icon"><i class="fas fa-folder" aria-hidden="true"></i></span>
+      <div><span>{{ _('Kaikki tapaukset') }}</span><strong>{{ case_rows|length }}</strong><small>{{ _('Päivitetty') }}: {{ (case_rows[0].created_at if case_rows else none)|datetimeformat("%d.%m.%Y") }}</small></div>
+    </button>
+  </div>
+
+  {% if case_rows %}
+    <div class="case-list" id="case-list">
+      {% for case in case_rows %}
+        <a class="case-card"
+             data-status="{{ 'closed' if case.closed else 'open' }}"
+             data-urgency="{{ case.urgency or 'none' }}"
+             data-escalated="{{ '1' if case.escalated else '0' }}"
+             href="{{ url_for('admin_case.single_case', case_id=case.id) }}">
+          <div>
+            <div class="case-meta">
+              <span class="admin-status-badge">{{ case.type_label }}</span>
+              {% if case.urgency %}
+                <span class="admin-status-badge admin-status-badge--{% if case.urgency == 'high' %}danger{% elif case.urgency == 'medium' %}warning{% else %}info{% endif %}">{{ _(case.urgency|capitalize) }}</span>
+              {% endif %}
+              {% if case.closed %}
+                <span class="admin-status-badge admin-status-badge--success">{{ _('Suljettu') }}</span>
+              {% else %}
+                <span class="admin-status-badge admin-status-badge--info">{{ _('Avoin') }}</span>
+              {% endif %}
+              {% if case.escalated %}
+                <span class="admin-status-badge admin-status-badge--danger">{{ _('Eskalointi') }}</span>
+              {% endif %}
+            </div>
+            <p class="case-title">{{ case.title }}</p>
+            <p class="case-desc">{{ case.description }}</p>
+            <div class="case-footer">
+              <span><i class="far fa-clock me-1"></i>{{ case.created_at|datetimeformat("%d.%m.%Y %H:%M") }}</span>
+              {% if case.meta_line %}
+              <span><i class="far fa-map me-1"></i>{{ case.meta_line }}</span>
+              {% endif %}
+              <span><i class="far fa-user me-1"></i>{{ case.submitter_label }}</span>
+            </div>
+          </div>
+          <div>
+            <i class="fas fa-chevron-right text-muted"></i>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info text-center">{{ _('Ei tapauksia tällä hetkellä.') }}</div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const chips = document.querySelectorAll('.admin-case-filters [data-filter]');
+    const statFilters = document.querySelectorAll('.admin-case-summary__filter');
+    const cards = document.querySelectorAll('.case-card');
+
+    function applyFilter(filter) {
+      chips.forEach(chip => {
+        const active = chip.dataset.filter === filter;
+        chip.classList.toggle('active', active);
+        chip.setAttribute('aria-pressed', String(active));
+      });
+      statFilters.forEach(card => {
+        const active = card.dataset.filter === filter;
+        card.classList.toggle('active', active);
+        card.setAttribute('aria-pressed', String(active));
+      });
+
+      cards.forEach(card => {
+        const isClosed = card.dataset.status === 'closed';
+        const urgency = card.dataset.urgency;
+        const isEsc = card.dataset.escalated === '1';
+        let visible = true;
+        if (filter === 'open') visible = !isClosed;
+        if (filter === 'closed') visible = isClosed;
+        if (filter === 'high') visible = urgency === 'high';
+        if (filter === 'escalated') visible = isEsc;
+        card.hidden = !visible;
+      });
+    }
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => applyFilter(chip.dataset.filter));
+    });
+
+    statFilters.forEach(card => {
+      card.addEventListener('click', () => applyFilter(card.dataset.filter));
+    });
+
+    applyFilter('all');
+  </script>
+{% endblock %}

@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% from '_macros/frontend.html' import frontend_entry %}
+{% block main_class %}submit-workspace{% endblock %}
 
 {% block title %} {{_('Ilmoita mielenosoituksesta') }} {%endblock %}
 
@@ -7,694 +9,181 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css') }}" />
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/ck.css') }}" />
 <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- import jquery -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/gen.css', v='20260927-mobile-flow-1') }}" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn2.mielenosoitukset.fi/cropperjs/cropper.min.js"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css', v='20261028-submit-flow-2') }}" />
 
-<style>
-:root {
-  --color-bg: light-dark(#f8fafc, #0f1419);
-  --color-card-bg: light-dark(#ffffff, #1a1d23);
-  --color-text: light-dark(#1e293b, #e2e8f0);
-  --color-text-secondary: light-dark(#64748b, #94a3b8);
-  --color-primary: light-dark(#0052cc, #3b82f6);
-  --color-primary-hover: light-dark(#003d99, #2563eb);
-  --color-secondary: light-dark(#ff6b00, #f97316);
-  --color-secondary-hover: light-dark(#e55a00, #ea580c);
-  --color-accent: light-dark(#06b6d4, #0891b2);
-  --color-border: light-dark(#e2e8f0, #374151);
-  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
-  --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
-  --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
-  --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
-  --color-error: light-dark(#dc2626, #ef4444);
-  --color-success: light-dark(#16a34a, #22c55e);
-  --color-warning: light-dark(#d97706, #f59e0b);
-  --border-radius: 16px;
-  --border-radius-lg: 24px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dark:root {
-  --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-.form-control:focus {
-  color: var(--color-text);
-}
-
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  line-height: 1.7;
-  margin: 0;
-  font-feature-settings: 'liga' 1, 'kern' 1;
-}
-
-/* Container */
-.container-main-content {
-  max-width: 900px;
-  margin: 2rem auto;
-  padding: 0 2rem;
-}
-
-/* Hero Section */
-.hero-section {
-  background: var(--color-gradient-primary);
-  border-radius: var(--border-radius-lg);
-  padding: 4rem 2rem;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--color-shadow-lg);
-  margin-bottom: 3rem;
-}
-
-.hero-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 2;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.hero-section h1 {
-  color: white;
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
-  margin-bottom: 1rem;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-
-.hero-section .lead {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.2rem;
-  margin: 0;
-  line-height: 1.6;
-}
-
-/* Form Container */
-.container-form {
-  background: var(--color-card-bg);
-  border-radius: var(--border-radius-lg);
-  padding: 3rem 2.5rem;
-  box-shadow: var(--color-shadow);
-  border: 1px solid var(--color-border);
-  position: relative;
-  overflow: hidden;
-}
-
-.container-form::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--color-gradient-primary);
-  opacity: 1;
-}
-
-/* Form Groups */
-.form-group {
-  margin-bottom: 2rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.form-section {
-  background: var(--color-bg);
-  border-radius: var(--border-radius);
-  padding: 2rem;
-  margin-bottom: 2rem;
-  border: 1px solid var(--color-border);
-}
-
-.form-section h2 {
-  color: var(--color-primary);
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Labels */
-label {
-  display: block;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 0.75rem;
-  font-size: 1rem;
-}
-
-.required-asterisk {
-  color: var(--color-error);
-  margin-left: 0.25rem;
-  font-weight: 700;
-}
-
-/* Form Controls */
-input[type="text"],
-input[type="url"],
-input[type="email"],
-input[type="time"],
-input[type="file"],
-select,
-textarea {
-  width: 100%;
-  padding: 1rem 1.25rem;
-  border: 2px solid var(--color-border);
-  border-radius: var(--border-radius);
-  background: var(--color-card-bg);
-  color: var(--color-text);
-  font-size: 1rem;
-  font-family: inherit;
-  transition: var(--transition);
-  resize: vertical;
-}
-
-input[type="text"]:focus,
-input[type="url"]:focus,
-input[type="email"]:focus,
-input[type="time"]:focus,
-select:focus,
-textarea:focus {
-  border-color: var(--color-primary);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-input[type="file"] {
-  padding: 0.75rem;
-  border-style: dashed;
-  background: var(--color-bg);
-}
-
-textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-select {
-  cursor: pointer;
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  padding: 1rem 2rem;
-  border-radius: 50px;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-  font-family: inherit;
-}
-
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: var(--transition);
-}
-
-.btn:hover::before {
-  left: 100%;
-}
-
-.btn-primary {
-  background: var(--color-gradient-primary);
-  color: white;
-  box-shadow: var(--color-shadow);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow-lg);
-  color: white;
-}
-
-.btn-secondary {
-  background: var(--color-gradient-secondary);
-  color: white;
-  box-shadow: var(--color-shadow);
-}
-
-.btn-secondary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow-lg);
-  color: white;
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--color-primary);
-  border: 2px solid var(--color-border);
-}
-
-.btn-outline:hover {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Submit Button */
-.submit-button {
-  width: 100%;
-  background: var(--color-gradient-primary);
-  color: white;
-  padding: 1.25rem 2rem;
-  border: none;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: 700;
-  transition: var(--transition);
-  box-shadow: var(--color-shadow);
-  margin-top: 2rem;
-  font-family: inherit;
-}
-
-.submit-button:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--color-shadow-lg);
-}
-
-/* Add Organizer Button */
-.add-organizer-button {
-  background: var(--color-gradient-secondary);
-  color: white;
-  padding: 0.875rem 1.5rem;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 600;
-  transition: var(--transition);
-  box-shadow: var(--color-shadow);
-  margin-top: 1rem;
-  font-family: inherit;
-}
-
-.add-organizer-button:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow-lg);
-}
-
-/* Organizer Cards */
-.organizer {
-  background: var(--color-bg);
-  border-radius: var(--border-radius);
-  padding: 2rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--color-border);
-  position: relative;
-  transition: var(--transition);
-}
-
-.organizer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--color-gradient-secondary);
-}
-
-.organizer:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow);
-}
-
-.organizer-entry hr {
-  border: none;
-  height: 1px;
-  background: var(--color-border);
-  margin: 0 0 1.5rem 0;
-}
-
-.organizer-entry p {
-  color: var(--color-text-secondary);
-  font-weight: 500;
-  margin-bottom: 1.5rem;
-}
-
-/* Optional Sections */
-.optional-section {
-  display: none;
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    max-height: 200px;
-    transform: translateY(0);
-  }
-}
-
-/* Checkbox Styling */
-input[type="checkbox"] {
-  width: auto;
-  margin: 0;
-  transform: scale(1.2);
-  accent-color: var(--color-primary);
-}
-
-.checkbox-group {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin: 2rem 0;
-  padding: 1.5rem;
-  background: var(--color-bg);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--color-border);
-}
-
-.checkbox-group label {
-  font-weight: 400;
-  color: var(--color-text-secondary);
-  margin: 0;
-  line-height: 1.6;
-}
-
-.checkbox-group a {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 600;
-  transition: var(--transition);
-}
-
-.checkbox-group a:hover {
-  color: var(--color-secondary);
-  text-decoration: underline;
-}
-
-/* Editor Container */
-.editor-container {
-  border: 2px solid var(--color-border);
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  transition: var(--transition);
-  background: var(--color-card-bg);
-}
-
-.editor-container:focus-within {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Progress Indicator */
-.form-progress {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-  padding: 1rem 0;
-}
-
-.progress-step {
-  flex: 1;
-  text-align: center;
-  position: relative;
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.progress-step::after {
-  content: '';
-  position: absolute;
-  bottom: -0.5rem;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--color-border);
-}
-
-.progress-step.active {
-  color: var(--color-primary);
-  font-weight: 600;
-}
-
-.progress-step.active::after {
-  background: var(--color-gradient-primary);
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .container-main-content {
-    padding: 0 1rem;
-    margin: 1rem auto;
-  }
-
-  .hero-section {
-    padding: 3rem 1.5rem;
-  }
-
-  .hero-section h1 {
-    font-size: 2rem;
-  }
-
-  .container-form {
-    padding: 2rem 1.5rem;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .form-section {
-    padding: 1.5rem;
-  }
-
-  .checkbox-group {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .btn {
-    padding: 0.875rem 1.5rem;
-    font-size: 0.95rem;
-  }
-
-  .submit-button {
-    padding: 1.125rem 2rem;
-    font-size: 1rem;
-  }
-}
-
-/* Loading States */
-.btn.loading {
-  pointer-events: none;
-  opacity: 0.8;
-}
-
-.btn.loading::after {
-  content: '';
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-left: 8px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Success Messages */
-.success-message {
-  background: var(--color-success);
-  color: white;
-  padding: 1rem 1.5rem;
-  border-radius: var(--border-radius);
-  margin: 1rem 0;
-  display: none;
-}
-
-.success-message.show {
-  display: block;
-  animation: fadeInUp 0.5s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Focus States for Accessibility */
-input:focus,
-select:focus,
-textarea:focus,
-button:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-/* High Contrast Mode */
-@media (prefers-contrast: high) {
-  :root {
-    --color-border: light-dark(#000000, #ffffff);
-    --color-text: light-dark(#000000, #ffffff);
-    --color-primary: light-dark(#0000ff, #66aaff);
-  }
-}
-</style>
 {% endblock %}
 
 {% block scripts %}
-<script type="module">
-  import ClassicEditor from "ckeditor5-build-classic";
-  
-  let editor;
+{{ frontend_entry('src/entries/submit.tsx') }}
+<script>
 
-  ClassicEditor.create(document.querySelector("#editor"))
-    .then((newEditor) => {
-      editor = newEditor;
-    })
-    .catch((error) => {
-      console.error(error);
+  let currentPage = 1;
+  const totalPages = 6;
+  // Page Navigation
+  function showPage(pageNumber, { focus = false } = {}) {
+    document.querySelectorAll('.form-page').forEach(page => {
+      page.classList.remove('active');
     });
 
-  document.querySelector("#submit").addEventListener("click", async (event) => {
-    event.preventDefault();
-    
-    // Add loading state
-    const submitBtn = event.target;
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
+    const page = document.getElementById(`page-${pageNumber}`);
+    if (page) {
+      page.classList.add('active');
+      currentPage = pageNumber;
+      window.saveSubmitDraft?.();
 
-    const editorData = editor.getData();
-    document.getElementById("description").value = editorData;
-
-    const form = document.querySelector("form");
-    const formData = new FormData(form);
-
-    try {
-      const response = await fetch(form.action, {
-        method: form.method,
-        body: formData,
-        redirect: "manual",
-      });
-
-      if (response.status >= 300 && response.status < 400) {
-        const locationHeader = response.headers.get("location");
-        if (locationHeader) {
-          window.location.href = locationHeader;
-        } else {
-          alert("ERROR!");
+      updateProgressBar();
+      if (focus) {
+        const heading = page.querySelector('h2');
+        if (heading) {
+          heading.setAttribute('tabindex', '-1');
+          heading.focus({ preventScroll: true });
+          heading.scrollIntoView({ block: 'start', behavior: 'instant' });
         }
       }
-    } catch (e) {
-      console.error("Network error:", e);
-      alert("There was an issue submitting the form. Please try again.");
-    } finally {
-      // Remove loading state
-      submitBtn.classList.remove('loading');
-      submitBtn.disabled = false;
     }
-  });
-</script>
+  }
 
-<!-- Include Flatpickr JS -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+  function updateProgressBar() {
+    window.dispatchEvent(new Event('submit:stepchange'));
+    const progress = document.querySelector('[data-react-island="submit-progress"]');
+    // The server controls remain usable if the module fails to load or mount.
+    if (progress?.dataset.reactMounted === 'true') return;
+    document.querySelectorAll('.progress-step').forEach((step, index) => {
+      step.classList.toggle('active', index + 1 === currentPage);
+      step.classList.toggle('completed', index + 1 < currentPage);
+      if (index + 1 === currentPage) step.setAttribute('aria-current', 'step');
+      else step.removeAttribute('aria-current');
+    });
+    const status = progress?.querySelector('.submit-step-status');
+    if (status) {
+      status.querySelector('strong').textContent = progress.querySelector(`[data-page="${currentPage}"] .step-label`).textContent;
+      status.querySelector('span').textContent = `${currentPage} / ${totalPages}`;
+    }
+  }
 
-<script>
+  function nextPage() {
+    if (validateCurrentPage() && currentPage < totalPages) {
+      showPage(currentPage + 1, { focus: true });
+    }
+  }
+
+  function previousPage() {
+    if (currentPage > 1) {
+      showPage(currentPage - 1, { focus: true });
+    }
+  }
+
+  function chooseImport() {
+    showPage(2, { focus: true });
+    const facebookInput = document.getElementById('facebook');
+    if (facebookInput) {
+      facebookInput.focus();
+      const importBtn = document.getElementById('facebook-import-btn');
+      if (importBtn) {
+        importBtn.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }
+  }
+
+  function chooseManual() {
+    showPage(2, { focus: true });
+  }
+
+  function validateCurrentPage() {
+    const currentPageElement = document.getElementById(`page-${currentPage}`);
+    const invalidFields = collectInvalidFields(currentPageElement);
+
+    if (invalidFields.length) {
+      showInvalidFields(
+        invalidFields,
+        {{ _('Täytä kaikki pakolliset kentät ennen jatkamista.') | tojson }}
+      );
+      return false;
+    }
+
+    clearSubmitFeedback();
+    return true;
+  }
+
+  // Organizer Management
   let organizerCount = 0;
 
-  function addOrganizer() {
+  window.addOrganizer = function (persistDraft = true) {
     organizerCount++;
     const container = document.getElementById("organizers-container");
     const organizerDiv = document.createElement("div");
-    organizerDiv.className = "organizer";
+    organizerDiv.className = "organizer-card";
+    organizerDiv.id = `organizer-${organizerCount}`;
 
     organizerDiv.innerHTML = `
-      <div class="organizer-entry"> 
-        <hr>
-        <p><i class="fa-solid fa-building"></i> {{ _('Järjestäjätahon tiedot') }}</p>
-        <div class="form-group">
-          <label for="organizer_name_${organizerCount}">{{ _('Nimi') }}<span class="required-asterisk">*</span></label>
-          <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" placeholder="{{ _('Järjestäjän nimi') }}" required>
+      <div class="organizer-header">
+        <h3><i class="fa-solid fa-building"></i> {{ _('Järjestäjä') }} ${organizerCount}</h3>
+        <button type="button" class="btn-remove" onclick="removeOrganizer(${organizerCount})">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="form-group">
+        <label for="org_search_${organizerCount}">{{ _('Etsi olemassa olevaa organisaatiota') }}</label>
+        <div class="user-autocomplete">
+          <input type="search"
+                 class="user-autocomplete__control"
+                 id="org_search_${organizerCount}"
+                 placeholder="{{ _('Kirjoita organisaation nimi...') }}"
+                 autocomplete="off"
+                 maxlength="100"
+                 aria-expanded="false"
+                 aria-controls="org_search_results_${organizerCount}"
+                 aria-describedby="org_search_help_${organizerCount}">
+          <ul id="org_search_results_${organizerCount}"
+              class="user-autocomplete__results"
+              aria-label="{{ _('Organisaatiohaun tulokset') }}"
+              aria-live="polite"
+              hidden></ul>
         </div>
-
-        <div class="form-group">
-          <label for="organizer_website_${organizerCount}">{{ _('Verkkosivut') }}</label>
-          <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" placeholder="https://example.com">
-        </div>
-
-        <div class="form-group">
-          <label for="organizer_email_${organizerCount}">{{ _('Sähköpostiosoite') }}</label>
-          <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" placeholder="sähköposti@example.com">
-        </div>
+        <p class="user-autocomplete__help" id="org_search_help_${organizerCount}">{{ _('tai täytä tiedot alla manuaalisesti') }}</p>
+      </div>
+      
+      <div class="form-group">
+        <label for="organizer_name_${organizerCount}">{{ _('Nimi') }}<span class="required-asterisk">*</span></label>
+        <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" placeholder="{{ _('Järjestäjän nimi') }}" required>
+      </div>
+      <div class="form-group">
+        <label for="organizer_website_${organizerCount}">{{ _('Verkkosivut') }}</label>
+        <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" placeholder="https://example.com">
+      </div>
+      <div class="form-group">
+        <label for="organizer_email_${organizerCount}">{{ _('Sähköpostiosoite') }}</label>
+        <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" placeholder="email@example.com">
+      </div>
+      <div class="privacy-options">
+        <label class="privacy-checkbox">
+          <input type="checkbox" id="organizer_is_private_${organizerCount}" name="organizer_is_private_${organizerCount}" onchange="handlePrivateToggle(${organizerCount})">
+          {{ _('Olen yksityishenkilö enkä edusta organisaatiota') }}
+        </label>
+        <label class="privacy-checkbox">
+          <input type="checkbox" id="organizer_show_name_${organizerCount}" name="organizer_show_name_${organizerCount}" checked>
+          {{ _('Saa näyttää nimeni julkisesti') }}
+        </label>
+        <label class="privacy-checkbox">
+          <input type="checkbox" id="organizer_show_email_${organizerCount}" name="organizer_show_email_${organizerCount}" checked>
+          {{ _('Saa näyttää sähköpostiosoitteeni julkisesti') }}
+        </label>
+        <p class="privacy-hint">{{ _('Jos valitset yksityishenkilön, voit piilottaa nimesi ja sähköpostisi. Käytämme tietoja silti yhteydenottoja varten.') }}</p>
       </div>
     `;
 
     container.appendChild(organizerDiv);
-    
-    // Add animation
+    const searchInput = organizerDiv.querySelector(`#org_search_${organizerCount}`);
+    searchInput.addEventListener('input', () => searchOrganizations(organizerCount));
     organizerDiv.style.opacity = '0';
     organizerDiv.style.transform = 'translateY(20px)';
     setTimeout(() => {
@@ -702,10 +191,310 @@ button:focus {
       organizerDiv.style.opacity = '1';
       organizerDiv.style.transform = 'translateY(0)';
     }, 10);
+    if (persistDraft) {
+      window.saveSubmitDraft?.();
+    }
+  };
+
+  window.handlePrivateToggle = function (index) {
+    const privateToggle = document.getElementById(`organizer_is_private_${index}`);
+    const showNameToggle = document.getElementById(`organizer_show_name_${index}`);
+    const showEmailToggle = document.getElementById(`organizer_show_email_${index}`);
+    if (!privateToggle || !showNameToggle || !showEmailToggle) {
+      return;
+    }
+
+    if (privateToggle.checked) {
+      showEmailToggle.checked = false;
+    } else {
+      showNameToggle.checked = true;
+      showEmailToggle.checked = true;
+    }
+  };
+
+  const ORGANIZATION_SEARCH_EMPTY = {{ _('Organisaatiota ei löytynyt') | tojson }};
+  const ORGANIZATION_SEARCH_ERROR = {{ _('Organisaatiohaku ei onnistunut. Yritä uudelleen.') | tojson }};
+  const organizationSearchRequests = new Map();
+
+  function setOrganizationResultsVisible(searchInput, resultsContainer, visible) {
+    resultsContainer.hidden = !visible;
+    searchInput.setAttribute('aria-expanded', visible ? 'true' : 'false');
   }
 
+  function appendOrganizationSearchMessage(resultsContainer, message, isError = false) {
+    const item = document.createElement('li');
+    item.className = `user-autocomplete__message${isError ? ' user-autocomplete__message--error' : ''}`;
+    item.textContent = message;
+    resultsContainer.replaceChildren(item);
+  }
+
+  function buildOrganizationResult(organizerNum, organization) {
+    const item = document.createElement('li');
+    item.className = 'user-autocomplete__item';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'user-autocomplete__option';
+
+    const copy = document.createElement('span');
+    copy.className = 'user-autocomplete__copy';
+
+    const name = document.createElement('strong');
+    name.className = 'user-autocomplete__name';
+    name.textContent = organization.name || '';
+    copy.appendChild(name);
+
+    [organization.email, organization.description].forEach((value) => {
+      if (!value) return;
+      const detail = document.createElement('small');
+      detail.className = 'user-autocomplete__detail';
+      detail.textContent = value;
+      copy.appendChild(detail);
+    });
+
+    button.appendChild(copy);
+    button.addEventListener('click', () => {
+      selectOrganization(
+        organizerNum,
+        organization.name || '',
+        organization.email || '',
+        organization.website || ''
+      );
+    });
+    item.appendChild(button);
+    return item;
+  }
+
+  // Search organizations and populate results
+  window.searchOrganizations = async function(organizerNum) {
+    const searchInput = document.getElementById(`org_search_${organizerNum}`);
+    const resultsContainer = document.getElementById(`org_search_results_${organizerNum}`);
+    const query = searchInput.value.trim();
+    
+    if (query.length < 2) {
+      organizationSearchRequests.get(organizerNum)?.controller.abort();
+      organizationSearchRequests.delete(organizerNum);
+      resultsContainer.removeAttribute('aria-busy');
+      resultsContainer.replaceChildren();
+      setOrganizationResultsVisible(searchInput, resultsContainer, false);
+      return;
+    }
+
+    organizationSearchRequests.get(organizerNum)?.controller.abort();
+    const requestState = { controller: new AbortController() };
+    organizationSearchRequests.set(organizerNum, requestState);
+    
+    try {
+      resultsContainer.setAttribute('aria-busy', 'true');
+      const response = await fetch(
+        `/api/v1/search_organizations?q=${encodeURIComponent(query)}`,
+        { signal: requestState.controller.signal }
+      );
+      if (!response.ok) throw new Error(`Organization search failed (${response.status})`);
+      const results = await response.json();
+      if (!Array.isArray(results)) throw new Error('Organization search returned invalid data');
+
+      if (
+        organizationSearchRequests.get(organizerNum) !== requestState ||
+        searchInput.value.trim() !== query
+      ) return;
+      
+      if (results.length === 0) {
+        appendOrganizationSearchMessage(resultsContainer, ORGANIZATION_SEARCH_EMPTY);
+        setOrganizationResultsVisible(searchInput, resultsContainer, true);
+        return;
+      }
+      
+      resultsContainer.replaceChildren(
+        ...results.map((organization) => buildOrganizationResult(organizerNum, organization))
+      );
+      setOrganizationResultsVisible(searchInput, resultsContainer, true);
+    } catch (err) {
+      if (
+        err.name === 'AbortError' ||
+        organizationSearchRequests.get(organizerNum) !== requestState
+      ) return;
+      console.error('Error searching organizations:', err);
+      appendOrganizationSearchMessage(resultsContainer, ORGANIZATION_SEARCH_ERROR, true);
+      setOrganizationResultsVisible(searchInput, resultsContainer, true);
+    } finally {
+      if (organizationSearchRequests.get(organizerNum) === requestState) {
+        organizationSearchRequests.delete(organizerNum);
+        resultsContainer.removeAttribute('aria-busy');
+      }
+    }
+  };
+
+  // Select organization from search results
+  window.selectOrganization = function(organizerNum, name, email, website) {
+    document.getElementById(`organizer_name_${organizerNum}`).value = name;
+    document.getElementById(`organizer_email_${organizerNum}`).value = email;
+    document.getElementById(`organizer_website_${organizerNum}`).value = website;
+    const privateToggle = document.getElementById(`organizer_is_private_${organizerNum}`);
+    const showNameToggle = document.getElementById(`organizer_show_name_${organizerNum}`);
+    const showEmailToggle = document.getElementById(`organizer_show_email_${organizerNum}`);
+    if (privateToggle) privateToggle.checked = false;
+    if (showNameToggle) showNameToggle.checked = true;
+    if (showEmailToggle) showEmailToggle.checked = true;
+    const searchInput = document.getElementById(`org_search_${organizerNum}`);
+    const resultsContainer = document.getElementById(`org_search_results_${organizerNum}`);
+    searchInput.value = '';
+    resultsContainer.replaceChildren();
+    setOrganizationResultsVisible(searchInput, resultsContainer, false);
+  };
+
+  window.removeOrganizer = function (id) {
+    const organizer = document.getElementById(`organizer-${id}`);
+    if (organizer) {
+      organizer.style.opacity = '0';
+      organizer.style.transform = 'translateY(-20px)';
+      setTimeout(() => {
+        organizer.remove();
+        window.saveSubmitDraft?.();
+      }, 300);
+    }
+  };
+
+  const SUBMIT_ERROR_LABEL = {{ _('Virhekoodi') | tojson }};
+  const SUBMIT_CONFLICT_INTRO = {{ _('Samalle päivälle löytyi samankaltainen mielenosoitusilmoitus.') | tojson }};
+  const SUBMIT_CONFLICT_CANCELLED = {{ _('Lähetystä ei tehty vielä. Tarkista tiedot ja lähetä uudelleen, jos ilmoitus on oikea.') | tojson }};
+  const SUBMIT_CONFLICT_FORCE_FAILED = {{ _('Ilmoituksen lähetys ei onnistunut vahvistuksen jälkeen. Tarkista tiedot ja yritä uudelleen.') | tojson }};
+  const SUBMIT_RATE_LIMITED = {{ _('Lähetysyrityksiä on liian monta. Odota hetki ja yritä uudelleen.') | tojson }};
+  const SUBMIT_GENERIC_ERROR = {{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') | tojson }};
+  const SUBMIT_REQUIRED_ERROR = {{ _('Täytä kaikki pakolliset kentät ennen lähettämistä.') | tojson }};
+  const SUBMIT_TERMS_ERROR = {{ _('Sinun täytyy hyväksyä käyttöehdot ja tietosuojaseloste ennen lähettämistä.') | tojson }};
+
+  const submitFeedback = document.getElementById('submit-feedback');
+  const submitFeedbackText = document.getElementById('submit-feedback-text');
+  const submitFeedbackIcon = document.getElementById('submit-feedback-icon');
+
+  function clearSubmitFeedback() {
+    submitFeedback.hidden = true;
+    submitFeedback.classList.remove('user-form-feedback--error', 'user-form-feedback--warning', 'user-form-feedback--info');
+    submitFeedback.removeAttribute('role');
+    submitFeedback.setAttribute('aria-live', 'polite');
+    submitFeedbackText.textContent = '';
+  }
+
+  function showSubmitFeedback(message, category = 'error', { focus = false } = {}) {
+    const normalizedCategory = ['error', 'warning', 'info'].includes(category) ? category : 'error';
+    submitFeedback.hidden = false;
+    submitFeedback.classList.remove('user-form-feedback--error', 'user-form-feedback--warning', 'user-form-feedback--info');
+    submitFeedback.classList.add(`user-form-feedback--${normalizedCategory}`);
+    submitFeedback.setAttribute('role', normalizedCategory === 'error' ? 'alert' : 'status');
+    submitFeedback.setAttribute('aria-live', normalizedCategory === 'error' ? 'assertive' : 'polite');
+    submitFeedbackText.textContent = String(message || SUBMIT_GENERIC_ERROR);
+    submitFeedbackIcon.className = normalizedCategory === 'error'
+      ? 'fa-solid fa-circle-exclamation'
+      : normalizedCategory === 'warning'
+        ? 'fa-solid fa-triangle-exclamation'
+        : 'fa-solid fa-circle-info';
+    if (focus) {
+      submitFeedback.focus({ preventScroll: true });
+      submitFeedback.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
+  function collectInvalidFields(container) {
+    return Array.from(container.querySelectorAll('input, select, textarea')).filter(field => (
+      !field.disabled && field.willValidate && !field.checkValidity()
+    ));
+  }
+
+  function clearInvalidField(field) {
+    field.removeAttribute('aria-invalid');
+  }
+
+  function showInvalidFields(fields, message) {
+    const firstInvalid = fields[0];
+    fields.forEach(field => field.setAttribute('aria-invalid', 'true'));
+
+    const page = firstInvalid?.closest('.form-page');
+    if (page && page.id.startsWith('page-')) {
+      const pageNumber = Number(page.id.replace('page-', ''));
+      if (pageNumber && pageNumber !== currentPage) showPage(pageNumber);
+    }
+
+    showSubmitFeedback(message, 'error');
+    if (firstInvalid) {
+      firstInvalid.focus({ preventScroll: true });
+      firstInvalid.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
+  const submitForm = document.getElementById('myForm');
+  const clearDelegatedInvalidState = event => {
+    if (event.target.matches('input, select, textarea')) clearInvalidField(event.target);
+  };
+  submitForm.addEventListener('input', clearDelegatedInvalidState);
+  submitForm.addEventListener('change', clearDelegatedInvalidState);
+
+  function confirmConflictSubmission(conflictData) {
+    const modalElement = document.getElementById('submitConflictModal');
+    const messageElement = document.getElementById('submit-conflict-message');
+    const matchesElement = document.getElementById('submit-conflict-matches');
+    const confirmButton = document.getElementById('submit-conflict-confirm');
+    const cancelButton = document.getElementById('submit-conflict-cancel');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+
+    messageElement.textContent = conflictData?.message || SUBMIT_CONFLICT_INTRO;
+    matchesElement.replaceChildren();
+    const matches = Array.isArray(conflictData?.demos) ? conflictData.demos : [];
+    matches.slice(0, 5).forEach(demo => {
+      const item = document.createElement('li');
+      const parts = [demo?.title, demo?.date, demo?.address].filter(Boolean);
+      item.textContent = parts.join(' | ');
+      matchesElement.appendChild(item);
+    });
+    matchesElement.hidden = matchesElement.children.length === 0;
+
+    return new Promise(resolve => {
+      let confirmed = false;
+
+      const cleanup = () => {
+        confirmButton.removeEventListener('click', onConfirm);
+        modalElement.removeEventListener('hidden.bs.modal', onHidden);
+        modalElement.removeEventListener('shown.bs.modal', onShown);
+      };
+      const onConfirm = () => {
+        confirmed = true;
+        modal.hide();
+      };
+      const onShown = () => cancelButton.focus();
+      const onHidden = () => {
+        cleanup();
+        resolve(confirmed);
+      };
+
+      confirmButton.addEventListener('click', onConfirm);
+      modalElement.addEventListener('shown.bs.modal', onShown);
+      modalElement.addEventListener('hidden.bs.modal', onHidden);
+      modal.show();
+    });
+  }
+
+  async function showSubmitError(response, fallbackMessage) {
+    let message = response.status === 429 ? SUBMIT_RATE_LIMITED : (fallbackMessage || SUBMIT_GENERIC_ERROR);
+    try {
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await response.json();
+        if (response.status !== 429 && data && data.message) {
+          message = data.message;
+        }
+        if (data && data.error_code) {
+          message += ` (${SUBMIT_ERROR_LABEL}: ${data.error_code})`;
+        }
+      }
+    } catch (err) {
+      console.error('Error parsing server response', err);
+    }
+    showSubmitFeedback(message, 'error', { focus: true });
+  }
+
+  // Type change handler
   document.getElementById("type").addEventListener("change", function () {
-    var marchRouteContainer = document.getElementById("march-route-container");
+    const marchRouteContainer = document.getElementById("march-route-container");
     if (this.value === "marssi") {
       marchRouteContainer.style.display = "block";
     } else {
@@ -713,258 +502,1564 @@ button:focus {
     }
   });
 
-  // Form validation
-  document.querySelector("form").addEventListener("submit", function(e) {
-    var terms = document.getElementById("accept_terms");
-    if (!terms.checked) {
-      e.preventDefault();
-      terms.focus();
-      alert("{{ _('Sinun täytyy hyväksyä käyttöehdot ja tietosuojaseloste ennen lähettämistä.') }}");
+  // Only the explicit AJAX contract confirms delivery. HTML/redirects retain the draft.
+  async function submissionSucceeded(response) {
+    if (!response.ok || response.redirected || !(response.headers.get('content-type') || '').includes('application/json')) return false;
+    try {
+      const result = await response.clone().json();
+      return result?.success === true;
+    } catch (error) {
       return false;
+    }
+  }
+
+  // Form submission
+  let submittingDemo = false;
+  document.getElementById("myForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    // render the editor content to hidden input on form submit
+    // wait till quill is defined
+
+
+    if (!document.getElementById("accept_terms").checked) {
+      showInvalidFields([document.getElementById('accept_terms')], SUBMIT_TERMS_ERROR);
+      return;
+    }
+
+    const form = event.currentTarget;
+    const invalidFields = collectInvalidFields(form);
+
+    if (invalidFields.length) {
+      showInvalidFields(invalidFields, SUBMIT_REQUIRED_ERROR);
+      return;
+    }
+
+    if (submittingDemo) {
+      return;
+    }
+    submittingDemo = true;
+    clearSubmitFeedback();
+    const submitBtn = document.getElementById("submit-form");
+    submitBtn.classList.add('loading');
+    submitBtn.disabled = true;
+
+    // Safely read editor content. Use a function-scoped variable so finally sees the value.
+    let editorData = "";
+    try {
+      if (typeof quill !== 'undefined' && quill && quill.root) {
+        editorData = quill.root.innerHTML;
+      } else {
+        // fallback to existing description field value
+        editorData = document.getElementById("description").value || "";
+      }
+    } catch (err) {
+      console.error('Error reading editor content:', err);
+    }
+    document.getElementById("description").value = editorData;
+
+    const formData = new FormData(form);
+    // Ensure checkbox values are sent reliably (some browsers/forms omit unchecked inputs)
+    const acceptCheckbox = document.getElementById('accept_terms');
+    if (acceptCheckbox) {
+      // Use explicit value so backend can detect presence reliably
+      formData.set('accept_terms', acceptCheckbox.checked ? '1' : '');
+    }
+
+    try {
+      const response = await fetch(form.action, {
+        method: form.method,
+        body: formData,
+        // mark as AJAX so backend can return JSON instead of redirect
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+
+      if (await submissionSucceeded(response)) {
+        showPage(6, { focus: true });
+        window.clearSubmitDraft?.();
+      } else {
+        if (response.status === 409) {
+          let conflictData = null;
+          const contentType = response.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            try {
+              conflictData = await response.json();
+            } catch (err) {
+              console.error('Error parsing conflict response JSON', err);
+            }
+          }
+
+          if (conflictData && conflictData.conflict) {
+            const shouldForceSubmit = await confirmConflictSubmission(conflictData);
+            if (!shouldForceSubmit) {
+              showSubmitFeedback(SUBMIT_CONFLICT_CANCELLED, 'info', { focus: true });
+              return;
+            }
+
+            formData.set('force_submit', '1');
+            const response2 = await fetch(form.action, {
+              method: form.method,
+              body: formData,
+              headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (await submissionSucceeded(response2)) {
+              showPage(6, { focus: true });
+              window.clearSubmitDraft?.();
+              return;
+            } else {
+              await showSubmitError(response2, SUBMIT_CONFLICT_FORCE_FAILED);
+              return;
+            }
+          } else {
+            showSubmitFeedback(`${SUBMIT_GENERIC_ERROR} (${SUBMIT_ERROR_LABEL}: SUBMIT_CONFLICT)`, 'error', { focus: true });
+            return;
+          }
+        }
+
+        await showSubmitError(response);
+      }
+    } catch (e) {
+      console.error("Network error:", e);
+      showSubmitFeedback(SUBMIT_GENERIC_ERROR, 'error', { focus: true });
+    } finally {
+      submitBtn.classList.remove('loading');
+      submitBtn.disabled = false;
+      submittingDemo = false; // allow retries after failures or cancellations
     }
   });
 
-  // Add scroll animations
-  const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-  };
+  // Expose functions globally
+  window.showPage = showPage;
+  window.nextPage = nextPage;
+  window.previousPage = previousPage;
+  window.chooseImport = chooseImport;
+  window.chooseManual = chooseManual;
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.style.animationDelay = '0.1s';
-        entry.target.classList.add('animate-fade-in-up');
-      }
-    });
-  }, observerOptions);
-
+  // Initialize
   document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.form-section, .organizer').forEach(el => {
-      observer.observe(el);
-    });
+    showPage(1);
+    setTimeout(() => ['date', 'start_time', 'end_time'].forEach(id => {
+      document.getElementById(id)?._flatpickr?.calendarContainer.classList.add('public-date-calendar');
+    }), 0);
   });
+
+  // server-provided flag — only allow test-mode for authorized users
+  const __TEST_MODE_ALLOWED = {{ 'true' if test_mode_allowed else 'false' }};
+  const __CAN_EDIT = {{ 'true' if can_edit_demo else 'false' }};
+
+  // Autofill test data when visiting /submit?mode=test
+  function fillTestData() {
+    try {
+      // Helper to set value by selector (id or name)
+      const setById = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      };
+      const setByName = (name, val) => {
+        const el = document.querySelector(`[name="${name}"]`);
+        if (el) el.value = val;
+      };
+
+      const today = new Date();
+      const future = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const yyyy = future.getFullYear();
+      const mm = String(future.getMonth() + 1).padStart(2, '0');
+      const dd = String(future.getDate()).padStart(2, '0');
+      const isoDate = `${yyyy}-${mm}-${dd}`;
+
+      setById('name', 'Testi-ilmoitus — automatisoitu');
+      setById('tags', 'testi, automaattinen');
+      // set iso date — backend accepts string; flatpickr may reformat if enabled
+      setById('date', isoDate);
+      setById('start_time', '18:00');
+      setById('end_time', '20:00');
+      // city dropdown uses selectCity helper which also sets the hidden input
+      if (typeof selectCity === 'function') {
+        selectCity('Helsinki');
+      } else {
+        setById('selected-city', 'Helsinki');
+      }
+      setById('address', 'Testikatu 1, 00100 Helsinki');
+      setById('facebook', 'https://facebook.com/events/0000000000');
+
+      // Ensure at least one organizer exists; use provided helper if available
+      if (typeof addOrganizer === 'function') {
+        // add one more organizer to ensure predictable IDs (it may already add one by default)
+        addOrganizer();
+      }
+      // Fill organizer fields by name (organizer_name_1 etc.)
+      const orgName = document.querySelector('[name^="organizer_name_"]');
+      if (orgName) orgName.value = 'Testijärjestäjä';
+      const orgEmail = document.querySelector('[name^="organizer_email_"]');
+      if (orgEmail) orgEmail.value = 'organizer@example.com';
+      const orgWebsite = document.querySelector('[name^="organizer_website_"]');
+      if (orgWebsite) orgWebsite.value = 'https://example.org';
+
+      // Submitter
+      setById('submitter_role', 'järjestäjä');
+      setById('submitter_name', 'Testikäyttäjä');
+      setById('submitter_email', 'test@example.com');
+      const accept = document.getElementById('accept_terms');
+      if (accept) accept.checked = true;
+
+      // Description — quill editor
+      const descriptionHtml = '<p>Tämä on automaattisesti täytetty testi-ilmoitus. Poista ennen julkaisua.</p>';
+      if (typeof quill !== 'undefined' && quill && quill.root) {
+        quill.root.innerHTML = descriptionHtml;
+      }
+      setById('description', descriptionHtml);
+
+      // Show a small non-blocking notice (console + visual)
+      console.info('Test mode: form auto-filled');
+    } catch (err) {
+      console.error('Error applying test data:', err);
+    }
+  }
+
+  // Check URL param
+  (function () {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode') === 'test' && __TEST_MODE_ALLOWED) {
+          // show visible test-mode banner and autofill after load
+          (function showTestBanner() {
+            try {
+              const container = document.querySelector('.container-main-content') || document.body;
+              const existing = document.getElementById('testModeBanner');
+              if (existing) return;
+              const banner = document.createElement('div');
+              banner.id = 'testModeBanner';
+              banner.setAttribute('role', 'status');
+              banner.setAttribute('aria-live', 'polite');
+              banner.style.cssText = 'background: linear-gradient(90deg,#fff7ed,#ffedd5); border-left:4px solid #fb923c; padding:12px 16px; border-radius:8px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:12px;';
+              banner.innerHTML = `
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <strong style="color:#92400e">Test Mode</strong>
+                  <span style="color:#92400e">Automaattinen testidata täytetty lomakkeelle. Muista poistaa ennen julkaisua.</span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <button id="testModeClose" style="background:transparent;border:none;color:#92400e;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:6px">Sulje</button>
+                </div>
+              `;
+              // prepend so it's visible above the form
+              if (container.firstChild) container.insertBefore(banner, container.firstChild);
+              else container.appendChild(banner);
+              document.getElementById('testModeClose').addEventListener('click', function () { banner.remove(); });
+            } catch (e) { console.error('Could not show test banner', e); }
+          })();
+
+          // Wait a tick to ensure other DOM init code ran
+          window.addEventListener('load', () => setTimeout(fillTestData, 200));
+        }
+    } catch (e) {
+      // ignore
+    }
+  })();
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+
+<script>
+  // Real-time conflict checking (debounced)
+  (function () {
+    const debounce = (fn, wait) => {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), wait);
+      };
+    };
+
+    function createConflictBox() {
+      let box = document.getElementById('conflictBox');
+      if (box) return box;
+      box = document.createElement('div');
+      box.id = 'conflictBox';
+      box.style.cssText = `
+        background: var(--color-card-bg);
+        border: 2px solid var(--color-border);
+        border-left: 4px solid var(--color-secondary);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin: 1.5rem 0;
+        display: none;
+        box-Noneshadow: var(--color-shadow);
+      `;
+      const container = document.querySelector('.form-container') || document.querySelector('.container-main-content');
+      if (container) container.parentNode.insertBefore(box, container);
+      return box;
+    }
+
+    function renderConflict(matches) {
+      const box = createConflictBox();
+      if (!matches || matches.length === 0) {
+        box.style.display = 'none';
+        box.innerHTML = '';
+        return;
+      }
+      
+      let html = `
+        <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+          <div style="font-size: 1.5rem; min-width: 2rem;">⚠️</div>
+          <div>
+            <strong style="color: var(--color-text); font-size: 1.1rem; display: block; margin-bottom: 0.5rem;">
+              {{ _('Samankaltaisia mielenosoituksia löytyi') }}
+            </strong>
+            <p style="color: var(--color-text-secondary); margin: 0; font-size: 0.95rem;">
+              {{ _('Tarkista alla listatut mielenosoitukset varmistaaksesi, ettet luo päällekkäistä ilmoitusta.') }}
+            </p>
+          </div>
+        </div>
+        <ul style="margin: 1rem 0; padding: 0; list-style: none;">
+      `;
+      
+      matches.forEach((m, idx) => {
+        const url = `/demonstration/${m._id}`;
+        const dateStr = m.date ? new Date(m.date).toLocaleDateString('fi-FI') : '?';
+        html += `
+          <li style="
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            transition: var(--transition);
+          " onmouseover="this.style.boxShadow='var(--color-shadow)'" onmouseout="this.style.boxShadow='none'">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+              <div style="flex: 1;">
+                <a href="${url}" target="_blank" style="
+                  color: var(--color-primary);
+                  text-decoration: none;
+                  font-weight: 600;
+                  font-size: 1rem;
+                  transition: var(--transition);
+                " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                  ${m.title || '(ilman otsikkoa)'}
+                </a>
+                <p style="color: var(--color-text-secondary); margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                  📍 ${m.address || '?'} • 📅 ${dateStr}
+                </p>
+              </div>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                <a href="${url}" target="_blank" style="
+                  padding: 0.5rem 1rem;
+                  background: var(--color-primary);
+                  color: white;
+                  text-decoration: none;
+                  border-radius: 6px;
+                  font-size: 0.85rem;
+                  font-weight: 600;
+                  transition: var(--transition);
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 0.3rem;
+                " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                  <i class="fa-solid fa-eye"></i> {{ _('Katso') }}
+                </a>
+        `;
+        
+        if (__CAN_EDIT) {
+          html += `
+            <a href="/admin/demo/edit_demo/${m._id}" target="_blank" style="
+              padding: 0.5rem 1rem;
+              background: var(--color-secondary);
+              color: white;
+              text-decoration: none;
+              border-radius: 6px;
+              font-size: 0.85rem;
+              font-weight: 600;
+              transition: var(--transition);
+              display: inline-flex;
+              align-items: center;
+              gap: 0.3rem;
+            " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+              <i class="fa-solid fa-pen"></i> {{ _('Muokkaa') }}
+            </a>
+          `;
+        }
+        
+        html += `
+            <a href="/suggest_change/${m._id}" target="_blank" style="
+              padding: 0.5rem 1rem;
+              background: var(--color-success);
+              color: white;
+              text-decoration: none;
+              border-radius: 6px;
+              font-size: 0.85rem;
+              font-weight: 600;
+              transition: var(--transition);
+              display: inline-flex;
+              align-items: center;
+              gap: 0.3rem;
+            " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+              <i class="fa-solid fa-lightbulb"></i> {{ _('Ehdota') }}
+            </a>
+              </div>
+            </div>
+          </li>
+        `;
+      });
+      
+      html += `
+        </ul>
+        <div style="display: flex; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-border); margin-top: 1rem;">
+          <button id="conflictIgnore" class="btn btn-secondary" style="flex: 1;">
+            <i class="fa-solid fa-check-circle"></i> {{ _('Jatka silti') }}
+          </button>
+          <button id="conflictReview" class="btn btn-primary" style="flex: 1;">
+            <i class="fa-solid fa-arrow-up"></i> {{ _('Muokkaa tietoja') }}
+          </button>
+        </div>
+      `;
+      
+      box.innerHTML = html;
+      box.style.display = 'block';
+      
+      // Auto-scroll to conflict box when it appears
+      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
+      document.getElementById('conflictIgnore').addEventListener('click', () => { box.style.display = 'none'; });
+      document.getElementById('conflictReview').addEventListener('click', () => {
+        try {
+          if (__CAN_EDIT && matches && matches.length > 0) {
+            // If user can edit, open admin edit page for the first matched demo
+            window.location.href = `/admin/demo/edit_demo/${matches[0]._id}`;
+            return;
+          }
+          // Otherwise, bring user to the form to edit details: show page 1 and focus the title field
+          if (typeof showPage === 'function') showPage(2);
+          const field = document.getElementById('name');
+          if (field) {
+            field.focus();
+            const prev = field.style.boxShadow;
+            field.style.boxShadow = '0 0 0 4px rgba(250,180,60,0.35)';
+            setTimeout(() => { field.style.boxShadow = prev; }, 3000);
+          } else {
+            // Fallback to scrolling to the top of the form
+            window.scrollTo({ top: box.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+          }
+        } catch (e) {
+          console.error('Conflict review action failed', e);
+        }
+      });
+    }
+
+    async function checkConflictNow() {
+      try {
+        const title = (document.getElementById('name') || {}).value || '';
+        const date = (document.getElementById('date') || {}).value || '';
+        const city = (document.getElementById('selected-city') || {}).value || '';
+        const address = (document.getElementById('address') || {}).value || '';
+        if (!title || !date || !city) {
+          renderConflict([]);
+          return;
+        }
+        const params = new URLSearchParams({ title, date, city, address });
+        const res = await fetch(`/api/v1/check_demo_conflict?${params.toString()}`, { method: 'GET' });
+        if (!res.ok) { renderConflict([]); return; }
+        const data = await res.json();
+        renderConflict(data.matches || []);
+      } catch (e) {
+        console.error('Conflict check failed', e);
+      }
+    }
+
+    const debouncedCheck = debounce(checkConflictNow, 500);
+
+    // Wire inputs
+    ['name', 'date', 'address'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', debouncedCheck);
+    });
+
+    // selected-city is a hidden input; hook into selectCity if available or observe clicks
+    const cityInput = document.getElementById('selected-city');
+    if (cityInput) {
+      // If selectCity is defined by the paikkakunta dropdown, wrap it to emit a custom event
+      if (typeof window.selectCity === 'function') {
+        const _origSelectCity = window.selectCity;
+        window.selectCity = function (city) {
+          _origSelectCity(city);
+          try {
+            cityInput.dispatchEvent(new Event('citychanged'));
+          } catch (e) {}
+        };
+      }
+      cityInput.addEventListener('citychanged', debouncedCheck);
+      // attach click handlers to dropdown links as fallback
+      document.querySelectorAll('#dropdown-content a[role="option"]').forEach(a => a.addEventListener('click', debouncedCheck));
+      // also trigger on load if filled
+      if (cityInput.value) setTimeout(checkConflictNow, 300);
+    }
+
+    // initial check after page load if fields have values
+    window.addEventListener('load', () => setTimeout(checkConflictNow, 600));
+  })();
+</script>
+
 {% endblock %}
 
 {% block content %}
-<div class="container-main-content">
-  
-  <!-- Hero Section -->
-  <section class="hero-section">
-    <div class="hero-content">
+<div class="submit-page">
+
+  <!-- Page introduction -->
+  <section class="submit-intro">
+    <div class="submit-intro-content">
       <h1>{{ _('Ilmoita mielenosoituksesta') }}</h1>
       <p class="lead">
-        {{ _('Jaa tietoa mielenosoituksestasi ja auta muita löytämään tärkeät tapahtumat. Kaikki kentät joissa on punainen tähti (*) ovat pakollisia.') }}
+        {{ _('Ilmoittamalla mielenosoituksesta autat muita löytämään tietoa mielenosoituksista. Mitä useampia ja
+        kattavammin alustalla on mielenosoituksista tietoa, sitä useammille siitä on hyötyä.') }}
       </p>
+      <a class="hero-help-link" href="{{ url_for('public_guides') }}#submit-help">
+        <i class="fa-solid fa-circle-question"></i>
+        {{ _('Jos lähetys takkuaa, katso ohjeet') }}
+      </a>
     </div>
   </section>
 
-  <form method="POST" action="{{ url_for('submit') }}" class="container-form" enctype="multipart/form-data">
-    
-    <!-- Basic Information Section -->
-    <div class="form-section">
-      <h2>
-        <i class="fa-solid fa-info-circle"></i>
-        {{ _('Perustiedot') }}
-      </h2>
-      
-      <div class="form-group">
-        <label for="name" class="required">
-          {{ _('Mielenosoituksen nimi') }}<span class="required-asterisk">*</span>
-        </label>
-        <input type="text" id="name" name="title" placeholder="{{ _('Mielenosoituksen nimi') }}" required />
-      </div>
-      
-      <div class="form-group">
-        <label for="tags" class="required">
-          {{ _('Tagit (pilkuilla erotettuna)') }}<span class="required-asterisk">*</span>
-        </label>
-        <input type="text" id="tags" name="tags" placeholder="{{ _('esim. ilmasto, tasa-arvo, oikeudet')}}" required />
+  <div id="cacheNotice" class="cache-notice hidden" role="status">
+    {{ _('Luonnos palautettiin tästä selaimesta. Se poistuu automaattisesti 24 tunnin kuluttua.') }}
+    <button id="resetCacheBtn" type="button">{{ _('Poista luonnos ja aloita alusta') }}</button>
+  </div>
+
+
+  {% set submit_steps = [_('Aloitus'), _('Perustiedot'), _('Aika ja paikka'), _('Järjestäjät'), _('Yhteystiedot'), _('Valmis')] %}
+  <script type="application/json" id="submit-flow-props">{{ {
+    'steps': submit_steps, 'previous': _('Edellinen'), 'next': _('Seuraava'),
+    'importTitle': _('Tuo tiedot Facebookista'),
+    'importDescription': _('Liitä linkki julkiseen Facebook-tapahtumaan, niin täytämme lomakkeen puolestasi.'),
+    'manualTitle': _('Lisää tiedot itse'), 'manualDescription': _('Täytä lomake käsin alusta loppuun.')
+  } | tojson }}</script>
+  <aside class="progress-container" data-react-island="submit-progress" data-props-id="submit-flow-props">
+    <p class="submit-step-status" aria-live="polite" aria-atomic="true"><strong>{{ submit_steps[0] }}</strong><span>1 / 6</span></p>
+    <ol class="progress-steps">
+      {% for step in submit_steps %}
+      <li class="progress-step{% if loop.first %} active{% endif %}" data-page="{{ loop.index }}" {% if loop.first %}aria-current="step"{% endif %} aria-label="{{ step }}">
+        <span class="step-circle" aria-hidden="true">{{ loop.index }}</span><span class="step-label">{{ step }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </aside>
+
+  <!-- Form Container -->
+  <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" id="myForm" class="user-form" novalidate>
+    <input type="hidden" name="submission_token" value="{{ submission_token or '' }}">
+    <div class="form-container">
+      <details class="submit-help-card">
+        <summary>{{ _('Ennen lähetystä:') }}</summary>
+        <p>{{ _('tarkista nimi, päivämäärä, paikka ja sähköpostiosoite huolellisesti.') }}</p>
+        <p>{{ _('Jos järjestelmä ilmoittaa samankaltaisesta tapahtumasta tai lähetys ei mene heti läpi, lue toimintaohjeet tästä:') }}
+          <a href="{{ url_for('public_guides') }}#submit-help">{{ _('ohjeet ilmoituksen lähettämiseen') }}</a>.
+        </p>
+        <p>
+          {{ _('Jos tarvitset käännösapua, ota yhteyttä meihin:') }}
+          <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>.
+        </p>
+      </details>
+
+      <div id="submit-feedback" class="user-form-feedback" aria-live="polite" aria-atomic="true" tabindex="-1" hidden>
+        <i id="submit-feedback-icon" class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        <p id="submit-feedback-text"></p>
       </div>
 
-      <div class="form-group">
-        <label for="description">{{ _('Kuvausteksti') }}</label>
-        <div>
-          <div class="main-container">
-            <div class="editor-container editor-container_classic-editor editor-container_include-block-toolbar" id="editor-container">
-              <div class="editor-container__editor">
-                <div id="editor"></div>
-              </div>
+      <!-- Page 1: How to add the event -->
+      <div class="form-page active" id="page-1">
+        <div class="page-header">
+          <h2>
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            {{ _('Miten lisäät tapahtuman tiedot?') }}
+          </h2>
+          <p>{{ _('Tuotko tiedot julkisesta Facebook-tapahtumasta vai lisäätkö ne itse lomakkeelle?') }}</p>
+        </div>
+
+        <div class="import-choice-cards" data-react-island="submit-choice" data-props-id="submit-flow-props">
+          <button type="button" class="import-choice-card" onclick="chooseImport()">
+            <span class="import-choice-icon"><i class="fa-brands fa-facebook"></i></span>
+            <span class="import-choice-title">{{ _('Tuo tiedot Facebookista') }}</span>
+            <span class="import-choice-desc">{{ _('Liitä linkki julkiseen Facebook-tapahtumaan, niin täytämme lomakkeen puolestasi.') }}</span>
+          </button>
+          <button type="button" class="import-choice-card" onclick="chooseManual()">
+            <span class="import-choice-icon"><i class="fa-solid fa-pen"></i></span>
+            <span class="import-choice-title">{{ _('Lisää tiedot itse') }}</span>
+            <span class="import-choice-desc">{{ _('Täytä lomake käsin alusta loppuun.') }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Page 2: Basic Information -->
+      <div class="form-page" id="page-2">
+        <div class="page-header">
+          <h2>
+            <i class="fa-solid fa-info-circle"></i>
+            {{ _('Perustiedot') }}
+          </h2>
+          <p>{{ _('Kerro meille mielenosoituksesi tärkeimmät tiedot. Tämä auttaa ihmisiä löytämään tapahtumasi!') }}</p>
+        </div>
+
+        <div class="form-group">
+          <label for="facebook">{{ _('Facebook-tapahtumalinkki (valinnainen)') }}</label>
+          <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/events/..." />
+          <div class="helper-text">
+            <i class="fa-brands fa-facebook"></i>
+            {{ _('Linkitä Facebook-tapahtuma jos sellainen on') }}
+          </div>
+        </div>
+
+        <div class="form-group facebook-import-group">
+          <div class="facebook-import-row">
+            <button type="button" class="btn btn-secondary" id="facebook-import-btn">
+              <i class="fa-brands fa-facebook"></i>
+              {{ _('Hae tiedot Facebookista') }}
+            </button>
+            <div class="helper-text" style="margin: 0; flex: 1;">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              {{ _('Täyttää lomakkeen otsikko-, kuvaus-, aika-, paikka- ja järjestäjätiedot julkisesta Facebook-tapahtumasta, kun olet lisännyt linkin yläpuolella.') }}
             </div>
           </div>
-          <script type="importmap">
-            {
-              "imports": {
-                "ckeditor5": "https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.js",
-                "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.2.0/"
+          <div id="facebook-import-status" class="facebook-import-status" role="status" aria-live="polite" style="display: none;"></div>
+          <input type="hidden" id="facebook_imported" name="facebook_imported" value="" />
+          <input type="hidden" id="facebook_image_url" name="facebook_image_url" value="" />
+        </div>
+
+        <style>
+          .facebook-import-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+          }
+          .facebook-import-status {
+            margin-top: 0.75rem;
+            padding: 0.85rem 1rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: var(--color-card-bg, rgba(128, 128, 128, 0.08));
+            border-left: 4px solid var(--color-secondary, #6d28d9);
+          }
+          .facebook-import-status.success {
+            background: #e8f7ee;
+            border-left-color: #1e7e34;
+            color: #0f4d22;
+          }
+          .facebook-import-status.error {
+            background: #fdecec;
+            border-left-color: #c0392b;
+            color: #7b241c;
+          }
+          .facebook-import-status .fb-import-message {
+            margin-bottom: 0.35rem;
+          }
+          .facebook-import-status .fb-import-warnings {
+            background: #fdf6e3;
+            border-left: 3px solid #f1c40f;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+            color: #7a5c00;
+          }
+          .facebook-import-status .fb-import-fields {
+            margin-top: 0.4rem;
+          }
+          .facebook-import-status .fb-field-label {
+            background: rgba(0, 0, 0, 0.06);
+            border-radius: 4px;
+            padding: 1px 6px;
+            margin: 0 2px;
+            white-space: nowrap;
+          }
+        </style>
+
+        <script>
+        (function () {
+          const btn = document.getElementById('facebook-import-btn');
+          const statusEl = document.getElementById('facebook-import-status');
+          const facebookInput = document.getElementById('facebook');
+          const importedFlag = document.getElementById('facebook_imported');
+
+          function esc(str) {
+            return String(str == null ? '' : str)
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;');
+          }
+
+          function setImportStatus(html, kind) {
+            statusEl.className = 'facebook-import-status ' + (kind || '');
+            statusEl.innerHTML = html;
+            statusEl.style.display = 'block';
+          }
+
+          // Manual edits to the link invalidate the "imported" provenance flag.
+          facebookInput.addEventListener('input', function () {
+            importedFlag.value = '';
+          });
+
+          function buildSummaryHtml(data) {
+            const lines = [];
+            lines.push('<div class="fb-import-message"><i class="fa-solid fa-circle-check"></i> ' + esc(data.message) + '</div>');
+
+            if (data.warnings && data.warnings.length) {
+              lines.push('<div class="fb-import-warnings">');
+              data.warnings.forEach(function (w) { lines.push('<div>' + esc(w) + '</div>'); });
+              lines.push('</div>');
+            }
+
+            const imported = (data.fields_summary || []).filter(function (f) { return f.imported; });
+            const missing = (data.fields_summary || []).filter(function (f) {
+              return !f.imported && f.key !== 'end_date' && f.key !== 'end_time' && f.key !== 'image_url';
+            });
+
+            lines.push('<div class="fb-import-fields">');
+            if (imported.length) {
+              lines.push('{{ _('Tuotu:') }} '
+                + imported.map(function (f) { return '<span class="fb-field-label">' + esc(f.label) + '</span>'; }).join(' '));
+            }
+            if (missing.length) {
+              lines.push('<div style="margin-top:0.3rem;">{{ _('Täydennettävä:') }} '
+                + missing.map(function (f) { return '<span class="fb-field-label">' + esc(f.label) + '</span>'; }).join(' ')
+                + '</div>');
+            }
+            lines.push('</div>');
+            return lines.join('');
+          }
+
+          function applyImportedEvent(data) {
+            const e = data.event || {};
+            const set = function (id, val) {
+              const el = document.getElementById(id);
+              if (!el) return;
+              el.value = (val === undefined || val === null) ? '' : String(val);
+            };
+
+            set('name', e.title);
+
+            if (typeof quill !== 'undefined' && quill && quill.root) {
+              if (e.description_html) {
+                const importedDelta = quill.clipboard.convert(e.description_html);
+                quill.setContents(importedDelta, 'silent');
+                // Keep the hidden sync field aligned with Quill's normalized output.
+                const descEl = document.getElementById('description');
+                if (descEl) {
+                  descEl.value = quill.root.innerHTML;
+                }
+              }
+            } else {
+              set('description', e.description_html);
+            }
+
+            set('date', e.start_date);
+            set('start_time', e.start_time);
+            set('end_time', e.end_time);
+
+            if (e.city) {
+              if (typeof selectCity === 'function') {
+                selectCity(e.city);
+              } else {
+                set('selected-city', e.city);
               }
             }
+
+            set('address', e.address);
+
+            // Fill all organizers from the imported event
+            if (e.organizers && e.organizers.length > 0) {
+              // Fill first organizer
+              let orgInput = document.querySelector('[name="organizer_name_1"]');
+              if (!orgInput && typeof addOrganizer === 'function') {
+                addOrganizer(false);
+                orgInput = document.querySelector('[name="organizer_name_1"]');
+              }
+              if (orgInput) {
+                orgInput.value = e.organizers[0];
+              }
+              // Fill additional organizers
+              for (let i = 1; i < e.organizers.length; i++) {
+                if (typeof addOrganizer === 'function') {
+                  addOrganizer(false);
+                  const newInput = document.querySelector(`[name="organizer_name_${i + 1}"]`);
+                  if (newInput) {
+                    newInput.value = e.organizers[i];
+                  }
+                }
+              }
+            } else if (e.organizer) {
+              // Fallback: single organizer
+              let orgInput = document.querySelector('[name="organizer_name_1"]');
+              if (!orgInput && typeof addOrganizer === 'function') {
+                addOrganizer(false);
+                orgInput = document.querySelector('[name="organizer_name_1"]');
+              }
+              if (orgInput) {
+                orgInput.value = e.organizer;
+              }
+            }
+
+            // Handle imported cover image
+            if (e.image_url) {
+              const fbImageInput = document.getElementById('facebook_image_url');
+              if (fbImageInput) {
+                fbImageInput.value = e.image_url;
+              }
+              const preview = document.getElementById('image-preview');
+              if (preview) {
+                preview.src = e.image_url;
+                preview.style.display = 'block';
+              }
+            }
+
+            set('facebook', e.facebook_url);
+            importedFlag.value = '1';
+            window.saveSubmitDraft?.();
+          }
+
+          btn.addEventListener('click', async function () {
+            const url = (facebookInput.value || '').trim();
+            if (!url) {
+              setImportStatus('{{ _('Lisää Facebook-tapahtuman linkki ensin yllä olevaan kenttään.') }}', 'error');
+              return;
+            }
+
+            btn.disabled = true;
+            setImportStatus('{{ _('Haetaan tapahtuman tietoja...') }}', 'loading');
+
+            try {
+              const response = await fetch('{{ url_for('submit_facebook_import') }}', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                  'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: 'url=' + encodeURIComponent(url)
+              });
+
+              let data = null;
+              try { data = await response.json(); } catch (err) { /* non-JSON */ }
+
+              if (!response.ok || !data || !data.success) {
+                const message = (data && data.error) || '{{ _('Tietojen hakeminen epäonnistui. Yritä uudelleen tai täytä lomake käsin.') }}';
+                setImportStatus(esc(message), 'error');
+                return;
+              }
+
+              applyImportedEvent(data);
+              setImportStatus(buildSummaryHtml(data), 'success');
+            } catch (err) {
+              console.error('Facebook import failed:', err);
+              setImportStatus('{{ _('Tietojen hakeminen epäonnistui. Yritä uudelleen tai täytä lomake käsin.') }}', 'error');
+            } finally {
+              btn.disabled = false;
+            }
+          });
+        })();
+        </script>
+
+
+        <div class="form-group">
+          <label for="name">
+            {{ _('Mielenosoituksen nimi') }}<span class="required-asterisk">*</span>
+          </label>
+          <input type="text" id="name" name="title" placeholder="{{ _('esim. Ilmastonmuutoksen vastainen marssi') }}"
+            required />
+          <div class="helper-text">
+            <i class="fa-solid fa-lightbulb"></i>
+            {{ _('Valitse lyhyt ja kuvaava nimi') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="tags">
+            {{ _('Tagit (pilkuilla erotettuna)') }}<span class="required-asterisk">*</span>
+          </label>
+          <input type="text" id="tags" name="tags" placeholder="{{ _('esim. ilmasto, tasa-arvo, oikeudet') }}"
+            required />
+          <div class="helper-text">
+            <i class="fa-solid fa-tags"></i>
+            {{ _('Tagit auttavat ihmisiä löytämään tapahtumasi. Lisää ne ilman #-merkkiä.') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="default_language">
+            {{ _('Sisällön kieli') }}<span class="required-asterisk">*</span>
+          </label>
+          <select id="default_language" name="default_language" required>
+            {% for locale in translation_locales %}
+            <option value="{{ locale }}" {% if default_demo_language == locale %}selected{% endif %}>
+              {{ translation_language_names.get(locale, locale|upper) }}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="helper-text">
+            <i class="fa-solid fa-language"></i>
+            {{ _('Valitse millä kielellä kirjoitat otsikon, tagit ja kuvauksen. Varsinaiset käännökset voi lisätä myöhemmin.') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">{{ _('Kuvausteksti') }}</label>
+          <div class="editor-container">
+            <div id="editor"></div>
+          </div>
+          <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+          <!-- rest of the quil css-->
+          <link href="https://cdn.quilljs.com/1.3.6/quill.bubble.css" rel="stylesheet">
+          <link href="https://cdn.quilljs.com/1.3.6/quill.core.css" rel="stylesheet">
+
+          <!-- include quill library -->
+          <style>
+            .ql-editor {
+              /* use all the available height */
+              height: 100%;
+              min-height: 130px;
+            }
+          </style>
+          <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+          <script>
+            const quill = new Quill('#editor', {
+              modules: {
+                toolbar: [
+                  ['bold', 'italic'],
+                  ['link', 'blockquote'],
+                  [{ list: 'ordered' }, { list: 'bullet' }],
+                ],
+              },
+              theme: 'snow',
+            });
+
+            document.querySelector('form').onsubmit = function () {
+              document.querySelector('#description').value = quill.root.innerHTML;
+            };
+
+
+            // no matter where on the quill element we click, the same event should be as if we click the 
           </script>
-          <script type="module" src="{{ url_for('static', filename='js/ck.js') }}"></script>
+          <!-- import Quill -->
+          <input type="hidden" id="description" name="description" />
+          <div class="helper-text">
+            <i class="fa-solid fa-info-circle"></i>
+            {{ _('Kuvaile mielenosoituksen tarkoitus ja tavoitteet') }}
+          </div>
         </div>
-        <input type="hidden" id="description" name="description" />
-      </div>
 
-      <div class="form-group">
-        <label for="image">{{ _('Kuva (valinnainen)') }}</label>
-        <input type="file" id="image" name="image" accept="image/*" />
-      </div>
-      
-      <div class="form-group">
-        <label for="facebook">{{ _('Facebook-tapahtumalinkki (valinnainen)') }}</label>
-        <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/event" />
-      </div>
-    </div>
-
-    <!-- Date & Time Section -->
-    <div class="form-section">
-      <h2>
-        <i class="fa-solid fa-calendar-days"></i>
-        {{ _('Aika ja paikka') }}
-      </h2>
-      
-      <div class="form-row">
         <div class="form-group">
-          <label for="date" class="required">
-            {{ _('Päivämäärä (pp.kk.vvvv)') }}<span class="required-asterisk">*</span>
+          <label for="image">{{ _('Kuva (valinnainen)') }}</label>
+          <input type="file" id="image" name="image" accept="image/*" />
+          <div class="helper-text">
+            <i class="fa-solid fa-image"></i>
+            {{ _('Suositus: vaakakuva, vähintään 1200 × 675 px. Pieni kuva voi näyttää tapahtumasivulla pehmeältä.') }}
+          </div>
+          <div class="image-preview-container">
+            <img id="image-preview" style="max-width: 100%; display: none;" />
+          </div>
+          <!-- image remove button -->
+          <button type="button" class="btn btn-danger" id="removeImage" style="margin-top: 1rem;">
+            <i class="fa-solid fa-trash"></i> Poista kuva
+          </button>
+          <script>
+            // when loading from cache, show the preview if image is present
+            document.addEventListener('DOMContentLoaded', function () {
+              const imageInput = document.getElementById('image');
+              const preview = document.getElementById('image-preview');
+              if (imageInput.files.length > 0) {
+                const file = imageInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                  preview.src = e.target.result;
+                  preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+              }
+            });
+          </script>
+        </div>
+
+        {% include 'cropper-modal.html' %}
+
+        <!-- cropperjs -->
+
+        <!-- after image preview is shown -->
+        <!--<script>
+        let cropper;
+        document.addEventListener('DOMContentLoaded', function () {
+          const imagePreview = document.getElementById('image-preview');
+          imagePreview.addEventListener('load', function () {
+          if (imagePreview) {
+            cropper = Cropper(imagePreview, {
+              aspectRatio: 16 / 9,
+              viewMode: 1,
+            });
+          }
+        });
+        });
+      </script>-->
+        <!--
+<script type="module">
+import Cropper from 'https://cdn2.mielenosoitukset.fi/cropperjs/cropper.esm.min.js';
+
+let cropper;
+
+const fileInput = document.getElementById('image');
+
+fileInput.addEventListener('change', (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    let preview = document.getElementById('image-preview');
+
+    // Create preview element if missing
+    if (!preview) {
+      preview = document.createElement('img');
+      preview.id = 'image-preview';
+      preview.style.display = 'block';
+      preview.style.maxWidth = '100%';
+      preview.style.marginTop = '1rem';
+      event.target.parentNode.appendChild(preview);
+    }
+
+    preview.src = e.target.result;
+
+    preview.onload = () => {
+      if (cropper) cropper.destroy();
+
+      cropper = new Cropper(preview, {
+        template: `
+          <cropper-canvas style="width: max-content; height: auto; min-height:200px; margin: auto;">
+            <cropper-image style="width: 100%; height: auto;"  scalable  translatable ></cropper-image>
+            <cropper-shade hidden></cropper-shade>
+            <cropper-handle action="select" plain></cropper-handle>
+            <cropper-selection id="selection" initial-coverage="0.5" aspect-ratio="1.777777778" movable resizable @change="onCropperSelectionChange">
+              <cropper-grid role="grid" bordered covered></cropper-grid>
+              <cropper-crosshair centered></cropper-crosshair>
+              <cropper-handle action="move" theme-color="rgba(255,255,255,0.35)"></cropper-handle>
+              <cropper-handle action="n-resize"></cropper-handle>
+              <cropper-handle action="e-resize"></cropper-handle>
+              <cropper-handle action="s-resize"></cropper-handle>
+              <cropper-handle action="w-resize"></cropper-handle>
+              <cropper-handle action="ne-resize"></cropper-handle>
+              <cropper-handle action="nw-resize"></cropper-handle>
+              <cropper-handle action="se-resize"></cropper-handle>
+              <cropper-handle action="sw-resize"></cropper-handle>
+            </cropper-selection>
+          </cropper-canvas>
+        `
+      });
+
+      console.log(cropper);
+   
+      // make cropper global for testing
+      window.cropper = cropper;
+  //cropper.getCropperImage().$transform = (event) => this.onCropperImageTransform(event);
+
+  // Handle selection changes
+  cropper.getCropperImage().$ready(() => {
+    const selection = cropper.getCropperSelection();
+    if (selection) {
+      selection.addEventListener('change', onCropperSelectionChange);
+      //document.querySelector('#selection').addEventListener('change', function (event) {
+  //console.log(event);
+//});
+
+      //selection.$change = (event) => onCropperSelectionChange(event);
+    }
+  });
+
+  function clampSelection(selection, maxSelection) {
+  // Clamp X
+  if (selection.x < maxSelection.x) selection.x = maxSelection.x;
+  if (selection.x + selection.width > maxSelection.x + maxSelection.width) {
+    selection.x = maxSelection.x + maxSelection.width - selection.width;
+  }
+
+  // Clamp Y
+  if (selection.y < maxSelection.y) selection.y = maxSelection.y;
+  if (selection.y + selection.height > maxSelection.y + maxSelection.height) {
+    selection.y = maxSelection.y + maxSelection.height - selection.height;
+  }
+
+  // Optionally clamp width/height if bigger than max
+  if (selection.width > maxSelection.width) selection.width = maxSelection.width;
+  if (selection.height > maxSelection.height) selection.height = maxSelection.height;
+
+  return selection;
+}
+
+function onCropperSelectionChange(event) {
+  const cropperCanvas = cropper.getCropperCanvas();
+  const cropperImage = cropper.getCropperImage();
+  console.log(event);
+  const selection = event.detail; // <-- safe access
+  //const selection = cropper.e()?.getData();
+  console.log('Selection changed:', selection);
+
+  if (!selection) return; // nothing to do
+
+  const cropperImageRect = cropperImage.getBoundingClientRect();
+  const cropperCanvasRect = cropperCanvas.getBoundingClientRect();
+
+  const maxSelection = {
+    x: cropperImageRect.left - cropperCanvasRect.left,
+    y: cropperImageRect.top - cropperCanvasRect.top,
+    width: cropperImageRect.width,
+    height: cropperImageRect.height,
+  };
+
+
+  /* TODO: make this actually work, before it works, lets js use the original selection
+  
+  
+  se = clampSelection(selection, maxSelection);
+
+  // set the selection to clamped values
+  selection.x = se.x;
+  selection.y = se.y;
+  selection.width = se.width;
+  selection.height = se.height;*/
+  
+  if (inSelection(selection, maxSelection)) {
+    return; // all good
+  } else {
+    console.log('Selection out of bounds, preventing change');
+    event.preventDefault();
+  }
+}
+
+
+
+// Helper function to check if selection is within max bounds
+function inSelection(selection, maxSelection) {
+  return (
+    selection.x >= maxSelection.x &&
+    selection.y >= maxSelection.y &&
+    selection.x + selection.width <= maxSelection.x + maxSelection.width &&
+    selection.y + selection.height <= maxSelection.y + maxSelection.height
+  );
+}
+
+
+  const onCropperImageTransform = (event) => {
+    // javascript code
+      const cropperCanvas = this.$regs.cropperCanvas;
+
+      if (!cropperCanvas || this.imageFit === 'none') {
+        return;
+      }
+
+      const cropperImage = this.$refs.cropperImage;
+      const cropperCanvasRect = cropperCanvas.getBoundingClientRect();
+
+      // 1. Clone the cropper image.
+      const cropperImageClone = cropperImage.cloneNode();
+
+      // 2. Apply the new matrix to the cropper image clone.
+      cropperImageClone.style.transform = `matrix(${event.detail.matrix.join(', ')})`;
+
+      // 3. Make the cropper image clone invisible.
+      cropperImageClone.style.opacity = '0';
+
+      // 4. Append the cropper image clone to the cropper canvas.
+      cropperCanvas.appendChild(cropperImageClone);
+
+      // 5. Compute the boundaries of the cropper image clone.
+      const cropperImageRect = cropperImageClone.getBoundingClientRect();
+
+      // 6. Remove the cropper image clone.
+      cropperCanvas.removeChild(cropperImageClone);
+
+      if (
+        (this.imageFit === 'contain' && (
+          (
+            cropperImageRect.top > cropperCanvasRect.top
+            && cropperImageRect.right < cropperCanvasRect.right
+          )
+          || (
+            cropperImageRect.right < cropperCanvasRect.right
+            && cropperImageRect.bottom < cropperCanvasRect.bottom
+          )
+          || (
+            cropperImageRect.bottom < cropperCanvasRect.bottom
+            && cropperImageRect.left > cropperCanvasRect.left
+          )
+          || (
+            cropperImageRect.left > cropperCanvasRect.left
+            && cropperImageRect.top > cropperCanvasRect.top
+          )
+        ))
+        || (this.imageFit === 'cover' && (
+          cropperImageRect.top > cropperCanvasRect.top
+          || cropperImageRect.right < cropperCanvasRect.right
+          || cropperImageRect.bottom < cropperCanvasRect.bottom
+          || cropperImageRect.left > cropperCanvasRect.left
+        ))
+      ) {
+        event.preventDefault();
+      }
+  }; };
+  };
+
+
+  reader.readAsDataURL(file);
+});
+</script>
+
+<style scoped>
+.cropper-container {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  margin: 1rem 0;
+  padding: 1rem 1.25rem;
+}
+
+
+</style>
+-->
+
+        <div class="form-navigation" data-react-island="submit-navigation" data-props-id="submit-flow-props">
+          <button type="button" class="btn btn-secondary" onclick="previousPage()">
+            <i class="fa-solid fa-arrow-left"></i>
+            {{ _('Edellinen') }}
+          </button>
+          <div class="btn-nav-spacer"></div>
+          <button type="button" class="btn btn-primary" onclick="nextPage()">
+            {{ _('Seuraava') }}
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Page 3: Date & Location -->
+      <div class="form-page" id="page-3">
+        <div class="page-header">
+          <h2>
+            <i class="fa-solid fa-calendar"></i>
+            {{ _('Aika ja paikka') }}
+          </h2>
+          <p>{{ _('Milloin ja missä mielenosoitus järjestetään? Tarkat tiedot auttavat osallistujia löytämään perille!')
+            }}</p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label id="date-label" for="date">
+              {{ _('Päivämäärä') }}<span class="required-asterisk">*</span>
+            </label>
+            <input type="text" id="date" name="date" placeholder="{{ _('pp.kk.vvvv') }}" required
+              aria-labelledby="date-label" />
+          </div>
+
+          <div class="form-group">
+            <label for="start_time">
+              {{ _('Alkamisaika') }}<span class="required-asterisk">*</span>
+            </label>
+            <input type="time" id="start_time" name="start_time" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="end_time">{{ _('Päättymisaika (valinnainen)') }}</label>
+          <input type="time" id="end_time" name="end_time" />
+          <div class="helper-text">
+            <i class="fa-solid fa-clock"></i>
+            {{ _('Anna arvio tapahtuman kestosta') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="type">
+            {{ _('Mielenosoituksen tyyppi') }}<span class="required-asterisk">*</span>
           </label>
-          <input type="text" id="date" name="date" placeholder="{{ _('pp.kk.vvvv') }}" required />
+          <select id="type" name="type" required>
+            <option value="" disabled selected>{{ _('Mielenosoituksen tyyppi') }}</option>
+            <option value="paikallaan">{{ _('Paikallaan') }}</option>
+            <option value="marssi">{{ _('Marssi / kulkue') }}</option>
+            <option value="muut">{{ _('Muu') }}</option>
+          </select>
         </div>
-        
+        <div id="march-route-container" class="optional-section">
+          <div class="form-group">
+            <label for="route">{{ _('Marssin reitti') }}</label>
+            <textarea id="route" name="route"
+              placeholder="{{ _('Kuvaile marssin reitti pilkuilla eroteltuna, esim. Rautatientori, Mannerheimintie, Eduskuntatalo') }}"></textarea>
+            <div class="helper-text">
+              <i class="fa-solid fa-route"></i>
+              {{ _('Anna osallistujille käsitys marssin kulusta. Erota kadunnimet pilkulla (,) — näin voimme renderöidä
+              ne demo-sivulla.') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>{{ _('Reitin esikatselu') }}</label>
+            <div id="route-preview" class="editor-container" style="min-height:60px; padding:0.75rem;">
+              <em id="route-preview-empty" style="color:var(--color-text-secondary)">{{ _('Ei reittiä annettu') }}</em>
+              <ul id="route-preview-list" style="margin:0; padding-left:1.25rem; display:none;"></ul>
+            </div>
+            <div class="helper-text">
+              <i class="fa-solid fa-eye"></i>
+              {{ _('Tarkista että listaus näkyy tässä oikein, näin ne renderöityvät demo-sivulla.') }}
+            </div>
+          </div>
+
+          <script>
+            (function () {
+              const textarea = document.getElementById('route');
+              const list = document.getElementById('route-preview-list');
+              const empty = document.getElementById('route-preview-empty');
+
+              function escapeHtml(str) {
+                return str.replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;')
+                  .replace(/"/g, '&quot;')
+                  .replace(/'/g, '&#39;');
+              }
+
+              function renderPreview() {
+                const raw = textarea.value || '';
+                // somehow lets also include fullwidth commas and newlines as separators
+                const items = raw.split(/[,]+/).map(s => s.trim()).filter(Boolean);
+                if (items.length === 0) {
+                  list.style.display = 'none';
+                  empty.style.display = 'block';
+                } else {
+                  list.innerHTML = items.map(i => `<li>${escapeHtml(i)}</li>`).join('');
+                  list.style.display = 'block';
+                  empty.style.display = 'none';
+                }
+              }
+
+              textarea.addEventListener('input', renderPreview);
+              document.addEventListener('DOMContentLoaded', renderPreview);
+            })();
+          </script>
+        </div>
+
+        {% include "paikkakunta-dropdown.html" %}
+
         <div class="form-group">
-          <label for="start_time" class="required">
-            {{ _('Alkamisaika') }}<span class="required-asterisk">*</span>
+          <label for="address">
+            {{ _('Katuosoite / paikannimi') }}<span class="required-asterisk">*</span>
           </label>
-          <input type="time" id="start_time" name="start_time" required />
+          <input type="text" id="address" name="address"
+            placeholder="{{ _('esim. Mannerheimintie 1, 00100 tai Eduskuntatalo') }}" required
+            pattern="^.+(?:,\s*\d{3,5})?$"
+            title="{{ _('Muoto: esim. Mannerheimintie 1, 00100 tai paikka kuten Eduskuntatalo. Älä lisää paikkakuntaa.') }}" />
+          <div class="helper-text">
+            <i class="fa-solid fa-map-marker-alt"></i>
+            {{ _('Anna katuosoite tai pelkkä paikannimi (esim. "Eduskuntatalo"). Voit lisätä postinumeron pilkun
+            jälkeen, esim. "Mannerheimintie 1, 00100". Älä lisää paikkakuntaa, se lisätään automaattisesti
+            paikkakuntavalinnan perusteella.') }}
+          </div>
         </div>
-      </div>
-      
-      <div class="form-group">
-        <label for="end_time">{{ _('Päättymisaika') }}</label>
-        <input type="time" id="end_time" name="end_time" />
-      </div>
 
-      <div class="form-group">
-        <label for="type" class="required">
-          {{ _('Mielenosoituksen tyyppi') }}<span class="required-asterisk">*</span>
-        </label>
-        <select id="type" name="type" required>
-          <option value="" disabled selected>{{ _('Valitse mielenosoituksen tyyppi') }}</option>
-          <option value="paikallaan">{{ _('Paikallaan') }}</option>
-          <option value="marssi">{{ _('Marssi') }}</option>
-          <option value="muut">{{ _('Muut') }}</option>
-        </select>
-      </div>
-
-      <div id="march-route-container" class="optional-section">
-        <div class="form-group">
-          <label for="route">{{ _('Reitti (vain marssille, valinnainen)') }}</label>
-          <textarea id="route" name="route" placeholder="{{ _('Kuvaile marssin reitti...') }}"></textarea>
+        <div class="form-navigation" data-react-island="submit-navigation" data-props-id="submit-flow-props">
+          <button type="button" class="btn btn-secondary" onclick="previousPage()">
+            <i class="fa-solid fa-arrow-left"></i>
+            {{ _('Edellinen') }}
+          </button>
+          <div class="btn-nav-spacer"></div>
+          <button type="button" class="btn btn-primary" onclick="nextPage()">
+            {{ _('Seuraava') }}
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
         </div>
       </div>
 
-      <!-- Include Paikkakunta Dropdown -->
-      {% include "paikkakunta-dropdown.html" %}
+      <!-- Page 4: Organizers -->
+      <div class="form-page" id="page-4">
+        <div class="page-header">
+          <h2>
+            <i class="fa-solid fa-users-gear"></i>
+            {{ _('Järjestäjät') }}
+          </h2>
+          <p>{{ _('Kuka tai ketkä järjestävät tämän mielenosoituksen? Voit lisätä yhden tai useamman järjestäjän.') }}
+          </p>
+        </div>
 
-      <div class="form-group">
-        <label for="address" class="required">
-          {{ _('Katuosoite') }}<span class="required-asterisk">*</span>
-        </label>
-        <input type="text" id="address" name="address" placeholder="{{ _('Katuosoite') }}" required />
+        <div id="organizers-container" class="organizer-list">
+          <!-- Organizers will be added here -->
+        </div>
+
+        <button type="button" class="add-organizer-button" onclick="addOrganizer()">
+          <i class="fa-solid fa-plus-circle"></i>
+          {{ _('Lisää järjestäjä') }}
+        </button>
+
+        <div class="helper-text" style="margin-top: 1.5rem;">
+          <i class="fa-solid fa-heart"></i>
+          {{ _('Järjestäjätiedot auttavat osallistujia saamaan lisätietoja ja olemaan yhteydessä') }}
+        </div>
+
+        <div class="form-navigation" data-react-island="submit-navigation" data-props-id="submit-flow-props">
+          <button type="button" class="btn btn-secondary" onclick="previousPage()">
+            <i class="fa-solid fa-arrow-left"></i>
+            {{ _('Edellinen') }}
+          </button>
+          <div class="btn-nav-spacer"></div>
+          <button type="button" class="btn btn-primary" onclick="nextPage()">
+            {{ _('Seuraava') }}
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
       </div>
-    </div>
 
-    <!-- Organizers Section -->
-    <div class="form-section">
-      <h2>
-        <i class="fa-solid fa-users"></i>
-        {{ _('Järjestäjä(t)') }}
-      </h2>
-      
-      <div id="organizers-container"></div>
-      <button type="button" class="add-organizer-button" onclick="addOrganizer()">
-        <i class="fa-solid fa-plus"></i>
-        {{ _('Lisää järjestäjä') }}
-      </button>
-    </div>
+      <!-- by default at least one organizer -->
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          addOrganizer(false);
+        });
+      </script>
 
-    <!-- Submitter Information Section -->
-    <div class="form-section">
-      <h2>
-        <i class="fa-solid fa-user"></i>
-        {{ _('Ilmoittajan tiedot') }}
-      </h2>
-      
-      <div class="form-group">
-        <label for="submitter_role" class="required">
-          {{ _('Roolisi (esim. mielenosoituksen järjestäjä, osallistuja, tms.)') }}<span class="required-asterisk">*</span>
-        </label>
-        <input type="text" id="submitter_role" name="submitter_role" placeholder="{{ _('Roolisi') }}" required />
-      </div>
+      <!-- Page 5: Submitter Info & Terms -->
+      <div class="form-page" id="page-5">
+        <div class="page-header">
+          <h2>
+            <i class="fa-solid fa-user-check"></i>
+            {{ _('Yhteystietosi') }}
+          </h2>
+          <p>{{ _('Viimeinen askel! Kerro meille vielä omat yhteystietosi. Tietojasi käsitellään luottamuksellisesti.')
+            }}</p>
+        </div>
 
-      <div class="form-row">
         <div class="form-group">
-          <label for="submitter_email" class="required">
-            {{ _('Sähköpostiosoitteesi') }}<span class="required-asterisk">*</span>
+          <label for="submitter_role">
+            {{ _('Roolisi') }}<span class="required-asterisk">*</span>
           </label>
-          <input type="email" id="submitter_email" name="submitter_email" placeholder="esim. nimi@email.com" required />
+          <input type="text" id="submitter_role" name="submitter_role"
+            placeholder="{{ _('esim. järjestäjä, osallistuja, vapaaehtoinen') }}" required />
+          <div class="helper-text">
+            <i class="fa-solid fa-id-badge"></i>
+            {{ _('Mikä on suhteesi tapahtumaan?') }}
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="submitter_name" class="required">
-            {{ _('Nimesi tai nimimerkkisi') }}<span class="required-asterisk">*</span>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="submitter_name">
+              {{ _('Nimesi tai nimimerkkisi') }}<span class="required-asterisk">*</span>
+            </label>
+            <input type="text" id="submitter_name" name="submitter_name" placeholder="{{ _('Nimi') }}" required />
+          </div>
+
+          <div class="form-group">
+            <label for="submitter_email">
+              {{ _('Sähköpostiosoitteesi') }}<span class="required-asterisk">*</span>
+            </label>
+            <input type="email" id="submitter_email" name="submitter_email" placeholder="email@example.com" required />
+          </div>
+        </div>
+
+        <div class="helper-text" style="margin-bottom: 2rem;">
+          <i class="fa-solid fa-shield-halved"></i>
+          {{ _('Yhteystietojasi käytetään vain tarvittaessa yhteydenottoon liittyen ilmoitukseesi') }}
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="accept_terms" name="accept_terms" required />
+          <label for="accept_terms">
+            {{ _('Hyväksyn') }}
+            <a href="{{ url_for('terms') }}" target="_blank">{{ _('käyttöehdot') }}</a>
+            {{ _('ja olen lukenut') }}
+            <a href="{{ url_for('privacy') }}" target="_blank">{{ _('tietosuojaselosteen') }}</a>.
+            <span class="required-asterisk">*</span>
           </label>
-          <input type="text" id="submitter_name" name="submitter_name" placeholder="{{ _('Nimi tai nimimerkki') }}" required />
+        </div>
+
+        <div class="form-navigation">
+          <div class="submit-back-control" data-react-island="submit-back" data-props-id="submit-flow-props"><button type="button" class="btn btn-secondary" onclick="previousPage()">
+            <i class="fa-solid fa-arrow-left"></i>
+            {{ _('Edellinen') }}
+          </button></div>
+          <div class="btn-nav-spacer"></div>
+
+
+          <!-- submit btn -->
+          <button type="submit" id="submit-form" class="btn btn-success">
+            <i class="fa-solid fa-paper-plane"></i>
+            {{ _('Lähetä ilmoitus') }}
+          </button>
         </div>
       </div>
-    </div>
 
-    <!-- Terms and Privacy Agreement -->
-    <div class="checkbox-group">
-      <input type="checkbox" id="accept_terms" name="accept_terms" required />
-      <label for="accept_terms">
-        {{ _('Hyväksyn') }}
-        <a href="{{ url_for('terms') }}" target="_blank">{{ _('käyttöehdot') }}</a>
-        {{ _('ja olen lukenut') }}
-        <a href="{{ url_for('privacy') }}" target="_blank">{{ _('tietosuojaselosteen') }}</a>.
-        <span class="required-asterisk">*</span>
-      </label>
-    </div>
+      <!-- Page 6: Success -->
+      <div class="form-page" id="page-6">
+        <div class="success-page">
+          <div class="success-icon">
+            <i class="fa-solid fa-check"></i>
+          </div>
+          <h2>{{ _('Kiitos ilmoituksestasi!') }}</h2>
+          <p>
+            {{ _('Mielenosoitusilmoituksesi on vastaanotettu ja se käsitellään pian. Saat vahvistusviestin
+            sähköpostiisi.') }}
+          </p>
+          <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem;">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+              <i class="fa-solid fa-home"></i>
+              {{ _('Palaa etusivulle') }}
+            </a>
+            <a href="{{ url_for('submit') }}" class="btn btn-secondary">
+              <i class="fa-solid fa-plus"></i>
+              {{ _('Ilmoita uusi tapahtuma') }}
+            </a>
+          </div>
+        </div>
+      </div>
 
-    <!-- Submit Button -->
-    <button id="submit" type="submit" class="submit-button">
-      <i class="fa-solid fa-paper-plane"></i>
-      {{ _('Lähetä ilmoitus') }}
-    </button>
-    
-    <!-- Success Message -->
-    <div class="success-message" id="success-message">
-      <i class="fa-solid fa-check-circle"></i>
-      {{ _('Mielenosoitusilmoitus lähetetty onnistuneesti!') }}
     </div>
   </form>
 
+  <div class="modal fade user-modal" id="submitConflictModal" tabindex="-1"
+    aria-labelledby="submitConflictModalLabel" aria-describedby="submit-conflict-message" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="submitConflictModalLabel">{{ _('Löytyi mahdollinen päällekkäinen ilmoitus') }}</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+        </div>
+        <div class="modal-body">
+          <p id="submit-conflict-message"></p>
+          <p>{{ _('Tarkista osumat alta. Jos tämä on eri tapahtuma, valitse Lähetä silti. Jos kyse on vahingossa duplikaatista, voit palata korjaamaan tietoja.') }}</p>
+          <h3 class="h6">{{ _('Mahdolliset osumat') }}</h3>
+          <ol id="submit-conflict-matches" class="user-conflict-list"></ol>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="submit-conflict-cancel" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+          <button type="button" class="btn btn-primary" id="submit-conflict-confirm">{{ _('Lähetä silti') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Help Section -->
-  <div class="form-section" style="margin-top: 2rem;">
-    <h2>
-      <i class="fa-solid fa-question-circle"></i>
-      {{ _('Tarvitsetko apua?') }}
-    </h2>
-    <p style="color: var(--color-text-secondary); margin-bottom: 1.5rem;">
-      {{ _('Jos kohtaat ongelmia lomakkeen täyttämisessä tai sinulla on kysyttävää, älä epäröi ottaa yhteyttä.') }}
-    </p>
+  <div class="submit-support">
+    <div class="page-header">
+      <h2>
+        <i class="fa-solid fa-life-ring"></i>
+        {{ _('Tarvitsetko apua?') }}
+      </h2>
+      <p>{{ _('Olemme täällä auttamassa sinua! Jos sinulla on kysyttävää tai tarvitset tukea lomakkeen täyttämisessä.')
+        }}</p>
+    </div>
     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-      <a href="{{ url_for('contact') }}" class="btn btn-outline">
+      <a href="{{ url_for('contact') }}" class="btn btn-secondary">
         <i class="fa-solid fa-envelope"></i>
         {{ _('Ota yhteyttä') }}
       </a>
-      <a href="{{ url_for('info') }}" class="btn btn-outline">
-        <i class="fa-solid fa-info"></i>
+      <a href="{{ url_for('info') }}" class="btn btn-secondary">
+        <i class="fa-solid fa-circle-info"></i>
         {{ _('Lisätietoja') }}
       </a>
     </div>
   </div>
 </div>
 
+
+<script src="{{ url_for('static', filename='js/submit-draft.js', v='20261028-submit-draft-2') }}"></script>
 {% endblock %}

@@ -1,0 +1,302 @@
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% from 'admin_V2/_background_job_macros.html' import interval_text, job_status_badge %}
+
+{% block main_content %}
+<div class="jobs-container admin-page">
+    {% call admin_page_hero(
+      _('Taustatyöt'),
+      _('Seuraa ajoja, päivitä aikatauluja ja käynnistä tehtäviä käsin.'),
+      _('Järjestelmä'),
+      [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Taustatyöt'), none)]
+    ) %}
+      <a href="{{ url_for('admin.background_jobs') }}" class="admin-page-hero__action">
+        <i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ _('Päivitä') }}
+      </a>
+    {% endcall %}
+
+    {% if scheduler_disabled %}
+      <div class="admin-panel-inset admin-jobs__notice admin-jobs__notice--warning" role="status">
+        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+        <div>
+          <strong>{{ _('Ajastus pois päältä') }}</strong>
+          <p>{{ _('DISABLE_BACKGROUND_JOBS on käytössä, joten ajot eivät käynnisty automaattisesti.') }}</p>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="admin-jobs__layout">
+      <section aria-label="{{ _('Taustatyöt') }}">
+        <div class="admin-jobs__grid">
+          {% for job in jobs %}
+            {% set job_index = loop.index %}
+            {% set args = job.trigger_args or {} %}
+            {% set schedule_value = args.get('minutes') or args.get('hours') or args.get('days') %}
+            {% set current_unit = 'minutes' if args.get('minutes') else ('hours' if args.get('hours') else ('days' if args.get('days') else 'hours')) %}
+            
+            <article class="job-card admin-section-card {% if not job.enabled %}job-disabled{% endif %}">
+              <div class="job-header">
+                <div class="admin-jobs__identity">
+                  <h3 class="job-title">
+                    <i class="fa-solid fa-cube"></i>
+                    {{ job.name }}
+                  </h3>
+                  <p class="job-description">{{ job.description }}</p>
+                  <span class="job-key-badge">
+                    <i class="fa-solid fa-fingerprint"></i>
+                    {{ job.key }}
+                  </span>
+                </div>
+                {{ job_status_badge('enabled' if job.enabled else 'disabled', _('Käynnissä') if job.enabled else _('Pois')) }}
+              </div>
+
+              <div class="job-info">
+                <div class="info-row">
+                  <i class="fa-solid fa-clock"></i>
+                  <span class="info-label">{{ _('Ajoitus:') }}</span>
+                  <span class="info-value">{{ interval_text(job) }}</span>
+                </div>
+                <div class="info-row">
+                  <i class="fa-solid fa-calendar-days"></i>
+                  <span class="info-label">{{ _('Seuraava ajo:') }}</span>
+                  <span class="info-value">
+                    {% if job.next_run_at %}
+                      {{ job.next_run_at|datetimeformat('%d.%m.%Y %H:%M') }}
+                    {% else %}
+                      {{ _('Ei aikataulua') }}
+                    {% endif %}
+                  </span>
+                </div>
+                <div class="info-row">
+                  <i class="fa-solid fa-history"></i>
+                  <span class="info-label">{{ _('Viimeisin ajo:') }}</span>
+                  <span class="info-value">
+                    {% if job.last_run_started_at %}
+                      {{ job.last_run_started_at|datetimeformat('%d.%m.%Y %H:%M') }}
+                      · {{ job.last_run_triggered_by or _('Scheduler') }}
+                      {% if job.last_run_status %}
+                        {{ job_status_badge(job.last_run_status) }}
+                      {% endif %}
+                    {% else %}
+                      {{ _('Ei tietoa') }}
+                    {% endif %}
+                  </span>
+                </div>
+                {% if job.last_message %}
+                  <div class="info-row">
+                    <i class="fa-solid fa-message"></i>
+                    <span class="info-label">{{ _('Viesti:') }}</span>
+                    <span class="info-value">{{ job.last_message }}</span>
+                  </div>
+                {% endif %}
+              </div>
+
+              {% if can_manage %}
+                <div class="admin-row-actions admin-jobs__actions">
+                  <form class="admin-inline-form" method="post" action="{{ url_for('admin.run_background_job', job_key=job.key) }}">
+                    <button type="submit" class="btn btn-primary" {% if not job.allow_manual_trigger %}disabled{% endif %}>
+                      <i class="fa-solid fa-play"></i>
+                      {{ _('Aja nyt') }}
+                    </button>
+                  </form>
+                  <form class="admin-inline-form" method="post" action="{{ url_for('admin.toggle_background_job', job_key=job.key) }}">
+                    <input type="hidden" name="enabled" value="{{ 0 if job.enabled else 1 }}">
+                    <button type="submit" class="btn {{ 'btn-outline-danger' if job.enabled else 'btn-outline-success' }}">
+                      <i class="fa-solid {{ 'fa-power-off' if job.enabled else 'fa-play' }}"></i>
+                      {{ _('Poista käytöstä') if job.enabled else _('Ota käyttöön') }}
+                    </button>
+                  </form>
+                  <a class="btn btn-outline-primary" href="{{ url_for('admin.background_jobs', job=job.key) }}">
+                    <i class="fa-solid fa-list-ul"></i>
+                    {{ _('Lokit') }}
+                  </a>
+                  <a class="btn btn-outline-primary" href="{{ url_for('admin.background_job_detail', job_key=job.key) }}">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    {{ _('Yksityiskohtaiset lokit') }}
+                  </a>
+                </div>
+              {% else %}
+                <div class="admin-row-actions admin-jobs__actions">
+                  <a class="btn btn-outline-primary" href="{{ url_for('admin.background_jobs', job=job.key) }}">
+                    <i class="fa-solid fa-list-ul"></i>
+                    {{ _('Lokit') }}
+                  </a>
+                  <a class="btn btn-outline-primary" href="{{ url_for('admin.background_job_detail', job_key=job.key) }}">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    {{ _('Yksityiskohtaiset lokit') }}
+                  </a>
+                </div>
+                <div class="admin-panel-inset admin-jobs__notice">
+                  <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                  {{ _('Sinulla ei ole oikeuksia muokata tämän työn asetuksia.') }}
+                </div>
+              {% endif %}
+
+              {% if job.allow_interval_override and can_manage %}
+                <form class="admin-form admin-form-grid admin-jobs__schedule" method="post" action="{{ url_for('admin.update_background_job_schedule', job_key=job.key) }}">
+                  <div class="admin-field">
+                    <label class="form-label" for="intervalValue{{ job_index }}">
+                      <i class="fa-solid fa-hourglass-half"></i>
+                      {{ _('Väli') }}
+                    </label>
+                    <input type="number"
+                           id="intervalValue{{ job_index }}"
+                           class="form-control form-control-sm"
+                           min="1"
+                           name="interval_value"
+                           value="{{ schedule_value or 1 }}">
+                  </div>
+                  <div class="admin-field">
+                    <label class="form-label" for="intervalUnit{{ job_index }}">
+                      <i class="fa-solid fa-ruler"></i>
+                      {{ _('Yksikkö') }}
+                    </label>
+                    <select id="intervalUnit{{ job_index }}" name="interval_unit" class="form-select form-select-sm">
+                      <option value="minutes" {% if current_unit == 'minutes' %}selected{% endif %}>{{ _('Minuuttia') }}</option>
+                      <option value="hours" {% if current_unit == 'hours' %}selected{% endif %}>{{ _('Tuntia') }}</option>
+                      <option value="days" {% if current_unit == 'days' %}selected{% endif %}>{{ _('Päivää') }}</option>
+                    </select>
+                  </div>
+                  <div class="admin-jobs__schedule-action">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fa-solid fa-save"></i>
+                      {{ _('Tallenna') }}
+                    </button>
+                  </div>
+                </form>
+              {% elif job.allow_interval_override %}
+                <div class="admin-panel-inset admin-jobs__notice">
+                  <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                  {{ _('Aikataulua voi muuttaa vain käyttöoikeuden omaava käyttäjä.') }}
+                </div>
+              {% else %}
+                <div class="admin-panel-inset admin-jobs__notice">
+                  <i class="fa-solid fa-info-circle" aria-hidden="true"></i>
+                  {{ _('Aikataulua ei voi muuttaa käyttöliittymästä.') }}
+                </div>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="history-panel admin-data-view" aria-labelledby="jobHistoryTitle">
+          <header class="admin-data-view__header">
+            <h2 class="history-title">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <span id="jobHistoryTitle">{{ _('Suoritushistoria') }}</span>
+            </h2>
+            <span class="history-count">
+              {{ _('Näytetään') }} {{ result_start }}–{{ result_end }} / {{ total_runs }}
+            </span>
+          </header>
+          
+          <div class="history-body">
+            <form method="get" class="admin-filter-bar filter-form">
+              <div class="admin-filter-bar__primary admin-jobs__filters">
+                <div class="admin-field">
+                  <label class="form-label" for="jobHistoryFilter">
+                    <i class="fa-solid fa-filter"></i>
+                    {{ _('Rajaa työhön') }}
+                  </label>
+                  <select id="jobHistoryFilter" name="job" class="form-select form-select-sm">
+                    <option value="">{{ _('Kaikki työt') }}</option>
+                    {% for job in jobs %}
+                      <option value="{{ job.key }}" {% if selected_job == job.key %}selected{% endif %}>{{ job.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="admin-field">
+                  <label class="form-label" for="jobHistoryLimit">
+                    <i class="fa-solid fa-list-ol"></i>
+                    {{ _('Rivejä') }}
+                  </label>
+                  <input id="jobHistoryLimit" type="number" min="10" max="200" name="limit" class="form-control form-control-sm" value="{{ limit }}">
+                </div>
+                <div class="admin-jobs__filter-action">
+                  <button type="submit" class="btn btn-primary" aria-label="{{ _('Suodata suoritushistoria') }}">
+                    <i class="fa-solid fa-search"></i>
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {% if runs %}
+              {% for run in runs %}
+                <div class="history-item">
+                  <div class="history-item-header">
+                    <div>
+                      <div class="history-job-name">
+                        <i class="fa-solid fa-cube"></i>
+                        {{ run.job_name }}
+                      </div>
+                      <div class="history-meta">
+                        {% if run.started_at %}
+                          <i class="fa-solid fa-calendar"></i>
+                          {{ run.started_at|datetimeformat('%d.%m.%Y %H:%M') }}
+                        {% endif %}
+                        <i class="fa-solid fa-user"></i>
+                        {{ run.triggered_by or _('Scheduler') }}
+                      </div>
+                    </div>
+                    {{ job_status_badge(run.status|default('unknown')) }}
+                  </div>
+                  
+                  <div class="history-details">
+                    <div class="history-detail-item">
+                      <i class="fa-solid fa-stopwatch"></i>
+                      <strong>{{ _('Kesto:') }}</strong>
+                      {{ run.duration_seconds|default(0)|round(1) }}s
+                    </div>
+                  </div>
+
+                  {% if run.message %}
+                    <div class="history-message">
+                      <i class="fa-solid fa-comment-dots"></i>
+                      {{ run.message }}
+                    </div>
+                  {% endif %}
+                  
+                  {% if run.trace %}
+                    <details class="admin-disclosure error-details">
+                      <summary>
+                        <i class="fa-solid fa-bug"></i>
+                        {{ _('Virheen lisätiedot') }}
+                      </summary>
+                      <pre class="admin-code-block">{{ run.trace }}</pre>
+                    </details>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="admin-empty-state">
+                <i class="admin-empty-state__icon fa-solid fa-inbox" aria-hidden="true"></i>
+                <strong class="admin-empty-state__title">{{ _('Ei kirjauksia valitulla haulla.') }}</strong>
+                <p>{{ _('Kokeile muuttaa suodatusasetuksia.') }}</p>
+              </div>
+            {% endif %}
+          </div>
+          <nav class="admin-data-view__footer admin-pagination" aria-label="{{ _('Suoritushistorian sivutus') }}">
+            <div class="admin-pagination__info">{{ _('Sivu') }} {{ page }} / {{ total_pages }}</div>
+            <ul class="pagination">
+              <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.background_jobs', job=selected_job, limit=limit, page=page-1 if page > 1 else 1) }}">
+                  <i class="fas fa-angle-left" aria-hidden="true"></i>
+                  <span class="admin-pagination__label">{{ _('Edellinen') }}</span>
+                </a>
+              </li>
+              <li class="page-item active">
+                <span class="page-link" aria-current="page">{{ page }}</span>
+              </li>
+              <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.background_jobs', job=selected_job, limit=limit, page=page+1 if page < total_pages else total_pages) }}">
+                  <span class="admin-pagination__label">{{ _('Seuraava') }}</span>
+                  <i class="fas fa-angle-right" aria-hidden="true"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+      </section>
+    </div>
+</div>
+{% endblock %}

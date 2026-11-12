@@ -1,0 +1,30 @@
+[Unit]
+Description=Mielenosoitukset.fi public React host
+After=network-online.target mielenosoitukset_fi.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/mielenosoitukset-public/current
+EnvironmentFile=/etc/mielenosoitukset-public/environment
+ExecStart=/opt/mielenosoitukset-public/node/bin/node frontend/server.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+UMask=0077
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target

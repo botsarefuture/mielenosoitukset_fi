@@ -1,0 +1,579 @@
+# Mielenosoitukset.fi API
+
+Welcome! This is the **public API** used by the website and external clients. It covers all non-admin endpoints currently exposed under `/api`.
+
+If you are just getting started, read the **Quick start** and **Auth** sections first.
+
+---
+
+## Quick start
+
+Base URL:
+
+- Production: `https://mielenosoitukset.fi/api`
+- Local dev: `http://127.0.0.1:5000/api`
+
+Basic call:
+
+```bash
+curl "https://mielenosoitukset.fi/api/demonstrations?city=Helsinki"
+```
+
+---
+
+## Auth
+
+There are two ways to authenticate depending on the endpoint:
+
+1) **Token auth** (API tokens)
+   - Send `Authorization: Bearer <token>` header.
+   - Tokens have scopes: `read`, `write`, `admin`.
+   - Some endpoints require specific scopes.
+
+2) **Session auth** (browser login cookie)
+   - Used by endpoints that depend on a logged-in user (friends, invites, attending).
+
+If an endpoint requires auth, you will get HTTP 401 without it.
+
+---
+
+## Rate limits
+
+Default rate limits (global):
+
+- 10 requests / second
+- 3600 requests / hour
+- 86400 requests / day
+
+---
+
+## Error format
+
+Errors are returned in a consistent JSON shape:
+
+```json
+{
+  "error": {
+    "message": "Human readable message",
+    "code": "machine_readable_code"
+  },
+  "status_code": 401
+}
+```
+
+Common codes:
+
+- `token_missing`, `token_invalid`, `token_expired`
+- `demo_not_found`
+- `insufficient_permissions`
+- `auth_required`
+
+---
+
+## Date and time formats
+
+- Dates: `YYYY-MM-DD` (string)
+- Times: `HH:MM` or `HH:MM:SS` (string)
+
+---
+
+# Endpoints
+
+Everything below is **public API** (no admin-only endpoints included). Each endpoint explicitly lists its auth requirement so there is no guessing.
+
+---
+
+## Demonstrations
+
+### GET `/demonstrations`
+List demonstrations with filtering + pagination.
+
+Auth: **public (no auth required)**
+
+Query params:
+
+| Param | Type | Description |
+| --- | --- | --- |
+| `search` | string | Free text search in title |
+| `city` | string | City name or comma-separated list |
+| `title` | string | Title substring |
+| `tag` | string | Tag filter |
+| `in_past` | boolean | Include past events (`true` / `false`) |
+| `parent_id` | ObjectId | Filter by recurring parent |
+| `organization_id` | ObjectId | Filter by organizer org |
+| `include_cancelled` | boolean | Include cancelled events |
+| `max_days_till` | int | Events within N days |
+| `page` | int | Pagination page |
+| `per_page` | int | Page size |
+
+Response (pagination + `cached` flag):
+
+```json
+{
+  "page": 1,
+  "per_page": 20,
+  "total": 133,
+  "total_pages": 7,
+  "next_url": "...",
+  "prev_url": null,
+  "results": [ ... ],
+  "rendered_at": "2025-01-01T12:00:00Z",
+  "cached": false
+}
+```
+
+---
+
+### GET `/demonstrations/<demo_id>`
+Fetch a single approved demonstration.
+
+Auth: **token required** (scope: `read`)
+
+Response: demonstration object.
+
+---
+
+### GET `/demonstrations/<demo_id>/stats`
+Get analytics stats for a demo (views + likes).
+
+Auth: **token required** (scope: `read`)
+
+Response:
+
+```json
+{ "demo_id": "...", "views": 123, "likes": 10 }
+```
+
+---
+
+### POST `/demonstrations/<demo_id>/like`
+Increment likes. Also toggles attending as a temporary side-effect.
+
+Auth: **token** (scope: `write`) **OR** logged-in session
+
+Response:
+
+```json
+{ "likes": 11 }
+```
+
+---
+
+### POST `/demonstrations/<demo_id>/unlike`
+Decrement likes. Also toggles attending as a temporary side-effect.
+
+Auth: **token** (scope: `write`) **OR** logged-in session
+
+Response:
+
+```json
+{ "likes": 10 }
+```
+
+---
+
+### GET `/demonstrations/<demo_id>/likes`
+Get current like count.
+
+Auth: **public (no auth required)**
+
+Response:
+
+```json
+{ "likes": 10 }
+```
+
+---
+
+### GET `/demonstrations/<demo_id>/attending`
+Check if current user is attending.
+
+Auth: **logged-in session required**
+
+Response:
+
+```json
+{ "demo_id": "...", "attending": true }
+```
+
+---
+
+### POST `/demonstrations/<demo_id>/attending`
+Toggle or set attending status.
+
+Auth: **logged-in session required**
+
+Optional body:
+
+```json
+{ "attending": true }
+```
+
+Response:
+
+```json
+{ "demo_id": "...", "attending": true }
+```
+
+---
+
+### POST `/demonstrations/<demo_id>/invite`
+Invite friends to a demo. Sends bell notifications + chat messages.
+
+Auth: **logged-in session required**
+
+Body:
+
+```json
+{ "friend_ids": ["id1", "id2"] }
+```
+
+Response:
+
+```json
+{
+  "demo_id": "...",
+  "invited_friends": ["id1", "id2"],
+  "message": "Invited 2 friends; notifications + messages sent."
+}
+```
+
+---
+
+## Friends + attending
+
+### POST `/friends-attending`
+Return which friends are attending a list of demos.
+
+Auth: **logged-in session required** (not enforced in code, but required for meaningful results)
+
+Body:
+
+```json
+{ "demo_ids": ["id1", "id2"] }
+```
+
+Response:
+
+```json
+{
+  "id1": [ { "user_id": "...", "name": "...", "avatar": "..." } ]
+}
+```
+
+---
+
+### GET `/user/friends/`
+Redirect to the user friends API (used by the UI).
+
+Auth: **logged-in session required**
+
+---
+
+## Tokens (types & lifetimes)
+
+- **Short-lived**: 48 hours. Created directly.
+- **Long-lived**: 90 days. Must be created by exchanging a valid short token (`POST /api/token/long_lived`).
+- **Renewal**: Only long tokens (and session tokens, internal) are renewable. Short tokens are not.
+- **Categories**: User tokens (default), App tokens (created in Developer panel), System tokens (reserved), Session tokens (internal, session-bound, 7 days, renewable).
+- **Scopes**: `read` (fetch data), `write` (mutate/like/invite), `submit_demonstrations` (submit demos), `admin` (admin-only; granted only if your account has admin rights).
+  - App tokens can only include scopes that are allowed for the app (default: `read`; others must be approved via scope request).
+
+Developer access & apps
+-----------------------
+- The Developer panel (`/developer`) is locked by default. Request access via the lock screen with a justification; admins review/approve in Kehittäjähallinta.
+- New apps start with `read` scope only. Additional scopes (`write`, `submit_demonstrations`, `admin`) must be requested from the app page; admins approve/deny in Kehittäjähallinta.
+- Token creation UI enforces the app’s allowed scopes; tokens cannot include scopes that are not approved for that app.
+
+### POST `/token/renew`
+Renew a token if it is close to expiry.
+
+Auth: **token required**
+
+Response:
+
+```json
+{ "token": "...", "expires_at": "...", "message": "Token renewed successfully" }
+```
+
+---
+
+### POST `/token/long_lived`
+Exchange a short-lived token for a long-lived token.
+
+Auth: **token required** (must be short-lived)
+
+Response:
+
+```json
+{ "token": "...", "expires_at": "...", "message": "Long-lived token created successfully" }
+```
+
+---
+
+### How to get API tokens
+
+API keys are locked until an admin approves your account. Request access in the **Settings → API-avaimet** tab (or call the request endpoint below). Once approved, you can create/list/revoke keys in the same tab. App tokens can be managed in the Developer panel (`/developer/apps`).
+
+#### POST `/users/auth/api_token`
+Create a new token.
+
+Auth: **logged-in session required**
+
+Body:
+
+```json
+{ "type": "short", "scopes": ["read"] }
+```
+
+Notes:
+- `type` can be `short` or `long` (long is typically created via exchange; short = 48h, long = 90d).
+- `scopes` must be a JSON list containing supported scope names.
+- Supported scopes are `read`, `write`, `submit_demonstrations`, `admin`, and `mcp.admin`.
+- `admin` and `mcp.admin` are privileged scopes and are rejected unless the requesting user is a global administrator.
+- Admin MCP requires `mcp.admin`; ordinary `read`, `write`, or `admin` API tokens cannot connect to it.
+- The raw token is returned **only once**.
+
+Response:
+
+```json
+{
+  "status": "success",
+  "token": "...",
+  "expires_at": "2025-01-01T12:00:00",
+  "scopes": ["read"],
+  "type": "short"
+}
+```
+
+#### GET `/users/auth/api_tokens/list`
+List your existing tokens (hashed in DB; raw token is not returned again).
+
+Auth: **logged-in session required**
+
+Response:
+
+```json
+{
+  "status": "success",
+  "tokens": [
+    { "_id": "...", "type": "short", "scopes": ["read"], "expires_at": "..." }
+  ]
+}
+```
+
+#### POST `/users/auth/api_tokens/revoke`
+Revoke a token by its ID.
+
+Auth: **logged-in session required**
+
+Body:
+
+```json
+{ "token_id": "..." }
+```
+
+Response:
+
+```json
+{ "status": "success" }
+```
+
+#### POST `/users/auth/api_tokens/request_access`
+Ask an admin to unlock API tokens for your account.
+
+Auth: **logged-in session required**
+
+Response:
+
+```json
+{ "status": "success", "message": "Request sent. An admin must approve API tokens for your account." }
+```
+
+#### GET `/users/auth/api_tokens/status`
+Check whether API token access is approved, requested, or locked for your account.
+
+Auth: **logged-in session required**
+
+Response:
+
+```json
+{
+  "status": "success",
+  "approved": true,
+  "requested": false,
+  "requested_at": null
+}
+```
+
+Notes:
+- `approved` — whether token creation is unlocked for the account.
+- `requested` — whether an access request is pending admin review.
+- `requested_at` — timestamp of the last access request, or `null`.
+
+---
+
+## API v1
+
+Legacy helper endpoints registered outside the `/api` blueprint; public, no auth required.
+
+### GET `/v1/demonstrations`
+Paginated list of approved, upcoming demonstrations.
+
+Auth: none
+
+Query params:
+
+- `page` — page number (1-based, default 1)
+- `per_page` — items per page (default 20)
+- `search` — case-insensitive search term
+- `city` — city or comma-separated list of cities
+- `location` — free-text location filter
+- `date_start` — include demos from this date (YYYY-MM-DD)
+- `date_end` — include demos up to this date (YYYY-MM-DD)
+- `tag` — tag filter
+- `lang` — language for localized output (e.g. `fi`, `en`)
+
+Response:
+
+```json
+{
+  "demonstrations": [
+    {
+      "_id": "...",
+      "title": "...",
+      "default_language": "fi",
+      "resolved_language": "fi",
+      "available_languages": ["fi"],
+      "date_display": "01.01.2025",
+      "start_time_display": "12:00",
+      "end_time_display": null,
+      "city": "Helsinki",
+      "address": "...",
+      "tags": [],
+      "description": "...",
+      "cover_image": null,
+      "cancelled": false
+    }
+  ],
+  "total_pages": 7
+}
+```
+
+---
+
+### GET `/v1/check_demo_conflict`
+Find up to 5 approved, non-cancelled demonstrations in the same city/date matching a title or address.
+
+Auth: none
+
+Query params:
+
+- `title` — demonstration title (required)
+- `date` — date as YYYY-MM-DD (required)
+- `city` — city name (required)
+- `address` — address to match (optional)
+
+Response:
+
+```json
+{
+  "matches": [
+    { "_id": "...", "title": "...", "address": "...", "date": "2025-01-01" }
+  ]
+}
+```
+
+---
+
+### GET `/v1/search_organizations`
+Search organizations by name (case-insensitive substring).
+
+Auth: none
+
+Query params:
+
+- `q` — search query, minimum 2 characters
+
+Response:
+
+```json
+[
+  { "id": "...", "name": "...", "email": "...", "website": "...", "description": "..." }
+]
+```
+
+Returns an empty array when `q` is missing or shorter than 2 characters.
+
+---
+
+### GET `/v1/organizations`
+Paginated list of organizations sorted by name. Includes both verified and unverified organizations.
+
+Auth: none
+
+Query params:
+
+- `page` — page number (1-based, default 1)
+- `per_page` — items per page (default 20)
+- `search` — case-insensitive search on organization name or email
+
+Response:
+
+```json
+{
+  "organizations": [
+    {
+      "id": "...",
+      "name": "...",
+      "email": "...",
+      "website": "...",
+      "description": "...",
+      "verified": false,
+      "logo": null
+    }
+  ],
+  "total_pages": 3
+}
+```
+
+---
+
+## Notifications
+
+These are served by the notifications blueprint at `/api/notifications`.
+
+### GET `/notifications/`
+List recent notifications for the current user.
+
+Auth: **logged-in session required**
+
+---
+
+### POST `/notifications/mark-read`
+Mark all notifications as read.
+
+Auth: **logged-in session required**
+
+---
+
+### GET `/notifications/all`
+Full notifications page (HTML).
+
+Auth: **logged-in session required**
+
+---
+
+# Notes
+
+- Some endpoints use both session + token auth. If you are calling from a server, use tokens.
+- The OpenAPI spec is available at `/api-docs/openapi.yaml`.
+
+---
+
+# Contact
+
+Questions, bugs, or API access needs?
+
+- Support: `tuki@mielenosoitukset.fi`
+- Contributors: `emilia@mielenosoitukset.fi`

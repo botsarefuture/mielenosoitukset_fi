@@ -1,7 +1,9 @@
+import ast
 import copy
 import string
 
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.cities import normalize_city_key
 from .BaseModel import BaseModel
 from .Organizer import Organizer
 from mielenosoitukset_fi.utils.database import get_database_manager
@@ -12,16 +14,20 @@ from mielenosoitukset_fi.utils.validators import (
 )
 from .RepeatSchedule import RepeatSchedule
 from bson import ObjectId
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime  # Added import for datetime
 
 
-DB = get_database_manager()
+def _get_db():
+    """Return the current database handle."""
+    return get_database_manager()
 
 
 class Demonstration(BaseModel):
     # Running number and slug fields for user-friendly URLs
     running_number: int = None
     slug: str = None
+    TRANSLATABLE_FIELDS = {"title", "description", "tags"}
   
     """
     A class to represent a demonstration event.
@@ -57,6 +63,8 @@ class Demonstration(BaseModel):
         Facebook link for the event.
     img : optional
         Image associated with the event.
+    gallery_images : list, optional
+        Additional image URLs displayed as a carousel in detail view.
     preview_image : str, optional
         URL of the preview image for the event.
     cover_picture : str, optional
@@ -134,6 +142,7 @@ class Demonstration(BaseModel):
         # --- EXTERNAL LINKS & MEDIA ---
         facebook: str = None,
         img=None,
+        gallery_images: list = None,
         preview_image: str = None,
         cover_picture: str = None,
 
@@ -156,10 +165,27 @@ class Demonstration(BaseModel):
         slug: str = None,
         formatted_date: str = None,
         created_datetime=None,
+        last_modified=None,
         _id: ObjectId = None,
         description: str = None,
+        default_language: str = "fi",
+        translations: dict = None,
         _dont_override: bool = False,
         _rejected: bool = False,
+        cover_source: str = None,
+        cancellation_reason: str = None,
+        cancellation_requested: bool = False,
+        cancellation_requested_at=None,
+        cancellation_request_source: str = None,
+        cancellation_requested_by: dict = None,
+        cancellation_case_id=None,
+        cancelled: bool = False,
+        cancelled_at=None,
+        cancelled_by: dict = None,
+        # Provenance metadata for demos prefilled through the Facebook event
+        # importer: {"url": ..., "event_id": ..., "imported_at": ..., "imported_fields": [...]}.
+        # Present only when the submitter actually used the importer.
+        facebook_import: dict = None,
     ):
         """
         Initialize a new demonstration event.
@@ -256,10 +282,13 @@ class Demonstration(BaseModel):
 
         self.title = title
         self.description = description
+        self.default_language = (default_language or "fi").strip().lower()
+        self.translations = self._normalize_translations(translations)
 
         # Removed direct assignment for date, start_time, end_time
 
         self.city = city
+        self.city_key = normalize_city_key(city)
         self.address = address
 
         self.latitude = latitude
@@ -267,7 +296,7 @@ class Demonstration(BaseModel):
         
         if parent:
             try:
-                _parent = DB["recu_demos"].find_one({"_id": ObjectId(parent)})
+                _parent = _get_db()["recu_demos"].find_one({"_id": ObjectId(parent)})
             except Exception as e:
                 print(f"Error fetching parent demonstration: {e}")
 
@@ -286,27 +315,40 @@ class Demonstration(BaseModel):
             raise ValueError(f"Invalid event type: {self.event_type}")
 
         self.route = route  # If the demonstration is a march, this handles the route
-        
+
         if self.route is not None and not isinstance(self.route, list):
             try:
-                self.route = [x.strip() for x in self.route.split(",") if x.strip()]
+                parsed_route = ast.literal_eval(self.route) if isinstance(self.route, str) else self.route
+                if isinstance(parsed_route, list):
+                    self.route = [str(x).strip() for x in parsed_route if str(x).strip()]
+                else:
+                    self.route = [x.strip() for x in str(self.route).split(",") if x.strip()]
             except Exception:
-                pass
+                try:
+                    self.route = [x.strip() for x in str(self.route).split(",") if x.strip()]
+                except Exception:
+                    pass
         
 
-        self.img = img
 
         # EXTERNAL LINKS
         self.facebook = facebook
+
+        # Provenance for demos prefilled from a Facebook event (see __init__).
+        self.facebook_import = facebook_import
 
         self.approved = approved
         
         self._id = _id or ObjectId()  # Unique ID for the demonstration
         self.running_number = running_number
         self.slug = slug
+        
         self.tags = tags or []  # Tags for the demonstration
 
         self.created_datetime = created_datetime or None
+        # last_modified stores the last time this object was changed and saved
+        # If provided, use it; otherwise set to current UTC time
+        self.last_modified = last_modified or utcnow()
 
         # RECURRING DEMO STUFF
         self.parent: ObjectId = parent or None
@@ -331,20 +373,53 @@ class Demonstration(BaseModel):
         ]
 
         self.in_past = in_past  # Whether or not in past
-        
-        # FIXED: 19.2.2025
-        # Old logic was to hide all the demonstrations that are in the past
-        # This is no longer the case, as we want to keep past demonstrations visible
-        # If issues arise, this might be reverted        
-        #if self.in_past == True:
-            #self.hide = True
-            #self.save_flag = True
 
         self.aliases = aliases or []
         self.alias_fix()
 
+        # IMAGES
         self.preview_image = preview_image
+        self.img = img
+        self.gallery_images = self._normalize_gallery_images(gallery_images)
+        self.cover_picture = cover_picture
+        self.cover_source = cover_source
+
+        self.cancellation_reason = cancellation_reason
+        self.cancellation_requested = cancellation_requested
+        self.cancellation_requested_at = cancellation_requested_at
+        self.cancellation_request_source = cancellation_request_source
+        self.cancellation_requested_by = cancellation_requested_by or {}
+        self.cancellation_case_id = cancellation_case_id
+        self.cancelled = cancelled
+        self.cancelled_at = cancelled_at
+        self.cancelled_by = cancelled_by or {}
         
+        if not self.cover_picture:
+
+            if self.img:
+                # user-chosen image takes priority
+                self.cover_picture = self.img
+                self.cover_source = "user"
+
+            elif self.gallery_images:
+                # default to first gallery image
+                self.cover_picture = self.gallery_images[0]
+                self.cover_source = "user"
+
+            elif self.preview_image:
+                # fallback to auto-generated preview
+                self.cover_picture = self.preview_image
+                self.cover_source = "automatic"
+
+            else:
+                self.cover_picture = None
+                self.cover_source = None
+                
+        else:
+            self.cover_picture = cover_picture
+            self.cover_source = cover_source
+            
+
         def build_url(self):
             return '/static/demo_preview/' + str(self._id) + '.png'
     
@@ -355,7 +430,6 @@ class Demonstration(BaseModel):
             self.save_flag = True # Save the demonstration to update the preview image
         
         self.merged_into = merged_into  # Assign new parameter
-        self.cover_picture = cover_picture
 
         if self.save_flag and not self._dont_override:  # Save the demonstration if the save_flag is set
             self.save()  # Save the demonstration
@@ -363,6 +437,104 @@ class Demonstration(BaseModel):
         self.validate_fields(
             title, date, start_time, city, address
         )  # Validate required fields
+
+    def _normalize_translation_value(self, field, value):
+        if field == "tags":
+            if value is None:
+                return []
+            if isinstance(value, str):
+                return [tag.strip() for tag in value.split(",") if tag.strip()]
+            if isinstance(value, list):
+                return [str(tag).strip() for tag in value if str(tag).strip()]
+            return []
+
+        if value is None:
+            return ""
+        return str(value).strip()
+
+    def _normalize_translations(self, translations):
+        normalized = {}
+        if not isinstance(translations, dict):
+            return normalized
+
+        for language, values in translations.items():
+            lang = (language or "").strip().lower()
+            if not lang or not isinstance(values, dict):
+                continue
+
+            lang_values = {}
+            for field in self.TRANSLATABLE_FIELDS:
+                if field in values:
+                    lang_values[field] = self._normalize_translation_value(
+                        field, values.get(field)
+                    )
+
+            if lang_values:
+                normalized[lang] = lang_values
+
+        return normalized
+
+    def set_translation(self, language: str, field: str, value):
+        lang = (language or "").strip().lower()
+        if field not in self.TRANSLATABLE_FIELDS:
+            raise ValueError(f"Unsupported translatable field: {field}")
+        if not lang:
+            raise ValueError("Translation language is required")
+
+        if lang not in self.translations:
+            self.translations[lang] = {}
+        self.translations[lang][field] = self._normalize_translation_value(field, value)
+
+    def get_translation(self, language: str, field: str, fallback: bool = True):
+        lang = (language or "").strip().lower()
+        if field not in self.TRANSLATABLE_FIELDS:
+            raise ValueError(f"Unsupported translatable field: {field}")
+
+        if lang:
+            translated = self.translations.get(lang, {}).get(field)
+            if translated not in (None, "", []):
+                return copy.deepcopy(translated)
+
+        if fallback:
+            return copy.deepcopy(getattr(self, field))
+
+        return [] if field == "tags" else None
+
+    def available_translation_languages(self):
+        return sorted(self.translations.keys())
+
+    def available_languages(self):
+        languages = set(self.available_translation_languages())
+        if self.default_language:
+            languages.add(self.default_language)
+        return sorted(language for language in languages if language)
+
+    def get_localized_fields(self, language: str, fallback: bool = True):
+        return {
+            "title": self.get_translation(language, "title", fallback=fallback),
+            "description": self.get_translation(
+                language, "description", fallback=fallback
+            ),
+            "tags": self.get_translation(language, "tags", fallback=fallback),
+        }
+
+    def to_localized_dict(
+        self,
+        language: str = None,
+        fallback: bool = True,
+        json: bool = False,
+        include_translations: bool = True,
+    ):
+        data = self.to_dict(json=json)
+        localized = self.get_localized_fields(language, fallback=fallback)
+        data.update(localized)
+        data["resolved_language"] = (language or self.default_language or "fi").strip().lower()
+        data["available_languages"] = self.available_languages()
+
+        if not include_translations:
+            data.pop("translations", None)
+
+        return data
 
 
     def _format_date(self):
@@ -433,7 +605,7 @@ class Demonstration(BaseModel):
         >>> demo = Demonstration(...)
         >>> demo.merge("60f8e1e7a1b9c9b8f6b3f3b2") # Merge the demonstration with ID "60f8e1e7a1b9c9b8f6b3f3b2" into the current demonstration.
         """
-        other_demo_data = DB["demonstrations"].find_one(
+        other_demo_data = _get_db()["demonstrations"].find_one(
             {"_id": ObjectId(id_of_other_demo)}
         )
         if not other_demo_data:
@@ -450,7 +622,7 @@ class Demonstration(BaseModel):
         self.save()
 
         # Ensure the merged demonstration can be found by both IDs
-        DB["demonstrations"].update_one(
+        _get_db()["demonstrations"].update_one(
             {"_id": ObjectId(id_of_other_demo)},
             {"$set": {"merged_into": self._id, "hide": True}},
         )
@@ -492,6 +664,11 @@ class Demonstration(BaseModel):
             raise ValueError(
                 "The provided demonstration is not a RecurringDemonstration instance."
             )
+            
+        # TODO: Let's check the version history and keep the never info if it's newer than the recurring demo's info
+        # For now we just keep overriding title, description, tags, and organizers which is not ideal
+        # Maybe we should implement a function to compare and merge these fields intelligently
+        
 
         self.title = recurring_demo.title
         self.description = recurring_demo.description
@@ -499,6 +676,24 @@ class Demonstration(BaseModel):
         self.organizers = recurring_demo.organizers
 
         self.save()
+
+    def _merge_fields(self, recurring_demo: "RecurringDemonstration"):
+        """Merge fields from a recurring demonstration into the current demonstration.
+
+        This method intelligently merges fields from a recurring demonstration into the
+        current demonstration, keeping the most recent information.
+
+        Parameters
+        ----------
+        recurring_demo : RecurringDemonstration
+            The recurring demonstration instance.
+
+        Returns
+        -------
+        None
+        """
+        # TODO: Implement intelligent merging of fields
+        pass
 
     def to_dict(self, json=False):
         """
@@ -525,9 +720,27 @@ class Demonstration(BaseModel):
         ]
         data["aliases"] = [str(alias) for alias in self.aliases]
         data["preview_image"] = self.preview_image
+        data["gallery_images"] = self.gallery_images
         data["merged_into"] = str(self.merged_into) if self.merged_into else None  # Added line
         data["running_number"] = self.running_number
         data["slug"] = self.slug
+        data["translations"] = copy.deepcopy(self.translations)
+        data["default_language"] = self.default_language
+        # Include last_modified in the dictionary. If JSON output is requested,
+        # convert datetimes to ISO strings.
+        try:
+            if hasattr(self, "last_modified") and self.last_modified is not None:
+                if json:
+                    data["last_modified"] = (
+                        self.last_modified.isoformat()
+                    )
+                else:
+                    data["last_modified"] = self.last_modified
+            else:
+                data["last_modified"] = None
+        except Exception as e:
+            data["last_modified"] = None
+            logger.error(f"Error converting last_modified to dict: {e}")
         data.pop("save_flag", None)  # Remove save_flag from the dictionary representation
         data.pop("_dont_override", None)
         try:
@@ -586,6 +799,10 @@ class Demonstration(BaseModel):
         already exists in the database. If it does, the existing entry is updated.
         Otherwise, a new entry is inserted.
 
+        Existing entries retain fields not represented by this content model.
+        Server-owned moderation metadata must not disappear during normalization
+        or content editing. Owning workflows must explicitly unset retired fields.
+
         Parameters
         ----------
 
@@ -594,6 +811,9 @@ class Demonstration(BaseModel):
 
 
         """
+
+        # Update last_modified to now and prepare data for saving
+        self.last_modified = utcnow()
 
         # Get the database instance from DatabaseManager
         data = self.to_dict()  # Convert the object to a dictionary
@@ -609,9 +829,15 @@ class Demonstration(BaseModel):
         data.pop("parent_object", None)  # Remove parent_object if present
         
         # Check if the demonstration already exists in the database
-        if DB["demonstrations"].find_one({"_id": self._id}):
-            # Update existing entry
-            result = DB["demonstrations"].replace_one({"_id": self._id}, data)
+        db = _get_db()
+        if db["demonstrations"].find_one({"_id": self._id}):
+            # Persist modeled fields without deleting server-owned fields that
+            # this model does not serialize (moderation identity, rejected, etc.).
+            # Approval decisions and their side effects belong to the domain
+            # service, not to replacement of a content-edit snapshot.
+            result = db["demonstrations"].update_one(
+                {"_id": self._id}, {"$set": data}
+            )
             if result.modified_count:
                 print(
                     "Demonstration updated successfully."
@@ -622,7 +848,7 @@ class Demonstration(BaseModel):
                 )  # TODO: #191 Use utils.logger instead of print
         else:
             # Insert new entry
-            DB["demonstrations"].insert_one(data)
+            db["demonstrations"].insert_one(data)
             print(
                 "Demonstration saved successfully."
             )  # TODO: #191 Use utils.logger instead of print
@@ -647,27 +873,38 @@ class Demonstration(BaseModel):
         ValueError
             If the demonstration with the provided id/number/slug is not found.
         """
-        # Try ObjectId lookup
+        # Try ObjectId lookup first; fall back to alias lookup with the same id
+        obj_id = None
         try:
-            obj_id = ObjectId(demo_id)
-            data = DB["demonstrations"].find_one({"_id": obj_id})
-            if data:
-                return cls.from_dict(data)
-
+            if ObjectId.is_valid(str(demo_id)):
+                obj_id = ObjectId(demo_id)
+                data = _get_db()["demonstrations"].find_one({"_id": obj_id})
+                if data:
+                    logger.info("Found")
+                    return cls.from_dict(data)
         except Exception as e:
             logger.debug(f"ObjectId lookup failed for '{demo_id}': {e}")
+            obj_id = None
+
+        if obj_id:
+            alias_data = _get_db()["demonstrations"].find_one({"aliases": {"$in": [obj_id]}})
+            if alias_data:
+                logger.info("Found via alias id lookup")
+                return cls.from_dict(alias_data)
 
         # Try running_number lookup
         try:
             num = int(demo_id)
-            data = DB["demonstrations"].find_one({"running_number": num})
+            data = _get_db()["demonstrations"].find_one({"running_number": num})
             if data:
                 return cls.from_dict(data)
         except ValueError:
             logger.debug(f"Running number lookup failed for '{demo_id}'")
+        except Exception as e:
+            pass
 
         # Try slug lookup
-        data = DB["demonstrations"].find_one({"slug": demo_id})
+        data = _get_db()["demonstrations"].find_one({"slug": demo_id})
         if data:
             return cls.from_dict(data)
 
@@ -675,7 +912,7 @@ class Demonstration(BaseModel):
         raise ValueError(f"Demonstration with id/slug/number '{demo_id}' not found.")
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data, *, save_on_normalize=True):
         """
         Create a Demonstration instance from a dictionary.
 
@@ -683,6 +920,9 @@ class Demonstration(BaseModel):
         ----------
         data : dict
             Dictionary containing demonstration data.
+        save_on_normalize : bool, optional
+            Preserve the normal automatic normalization writes by default.
+            Set to False when a caller must validate the whole object before saving.
 
         Returns
         -------
@@ -698,6 +938,8 @@ class Demonstration(BaseModel):
             # Basic Info
             title=get("title"),
             description=get("description"),
+            default_language=get("default_language", "fi"),
+            translations=get("translations") or {},
             date=get("date"),
             start_time=get("start_time"),
             end_time=get("end_time"),
@@ -713,7 +955,9 @@ class Demonstration(BaseModel):
             facebook=get("facebook"),
             img=get("img"),
             preview_image=get("preview_image"),
+            gallery_images=get("gallery_images") or get("images"),
             cover_picture=get("cover_picture"),
+            cover_source=get("cover_source"),
 
             # Organizers & Tags
             organizers=get("organizers"),
@@ -723,17 +967,35 @@ class Demonstration(BaseModel):
             # Recurrence & Event Type
             recurs=get("recurs", False),
             event_type=get("event_type"),
+            parent=get("parent"),
+
 
             # Meta & System Fields
             approved=get("approved", False),
+            _rejected=get("rejected", False),
+            
             hide=get("hide", False),
             in_past=get("in_past", False),
-            parent=get("parent"),
+            
             created_datetime=get("created_datetime"),
+            last_modified=get("last_modified"),
             merged_into=get("merged_into"),
+
             _id=get("_id"),
-            _rejected=get("rejected", False),
             running_number=get("running_number"),
+            slug=get("slug"),
+
+            # Cancellation fields
+            cancellation_reason=get("cancellation_reason"),
+            cancellation_requested=get("cancellation_requested", False),
+            cancellation_requested_at=get("cancellation_requested_at"),
+            cancellation_request_source=get("cancellation_request_source"),
+            cancellation_requested_by=get("cancellation_requested_by"),
+            cancellation_case_id=get("cancellation_case_id"),
+            cancelled=get("cancelled", False),
+            cancelled_at=get("cancelled_at"),
+            cancelled_by=get("cancelled_by"),
+            _dont_override=not save_on_normalize,
         )
 
 
@@ -789,24 +1051,53 @@ class Demonstration(BaseModel):
         """
         if is_none(time_str):
             return None
-        
+
         try:
             # If time_str is in HH:MM format, append seconds as "00"
             if time_str.count(":") == 1:
                 dt = datetime.strptime(time_str, "%H:%M")
                 return dt.time().replace(second=0).isoformat()
-            else:
-                dt = datetime.strptime(time_str, "%H:%M:%S")
-                return dt.time().isoformat()
-            
+            dt = datetime.strptime(time_str, "%H:%M:%S")
+            return dt.time().isoformat()
         except ValueError as e:
-            raise ValueError(f"Time {time_str} is not in ISO8601 format (HH:MM or HH:MM:SS): {time_str}") from e
+            raise ValueError(
+                f"Time {time_str} is not in ISO8601 format (HH:MM or HH:MM:SS): {time_str}"
+            ) from e
+
+
+    @staticmethod
+    def _normalize_gallery_images(values):
+        """Ensure gallery images are stored as a unique, trimmed list."""
+        normalized = []
+
+        def append(item):
+            if not item:
+                return
+            if isinstance(item, str):
+                for fragment in item.splitlines():
+                    trimmed = fragment.strip()
+                    if trimmed and trimmed not in normalized:
+                        normalized.append(trimmed)
+                return
+            if isinstance(item, (list, tuple, set)):
+                for entry in item:
+                    append(entry)
+                return
+            trimmed = str(item).strip()
+            if trimmed and trimmed not in normalized:
+                normalized.append(trimmed)
+
+        append(values or [])
+        return normalized
         
 def is_none(s):
     if s is None:
         return True
     
-    if isinstance(s, str) and not s.strip():
+    if isinstance(s, str) and (
+        not s.strip() or s.strip().lower() in {"none", "null"}
+    ):
+        # Legacy rows stored the literal text "None" for a missing value.
         return True
     
     return False

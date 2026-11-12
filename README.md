@@ -1,10 +1,17 @@
 # Mielenosoitukset.fi
 
-Mielenosoitukset.fi is an open-source platform for discovering and submitting demonstrations in Finland. Users can browse upcoming events, submit new demonstrations, and administrators can manage and approve submissions.
+Mielenosoitukset.fi is an open-source platform for discovering and submitting demonstrations in Finland. Users can browse upcoming events, submit new demonstrations, and administrators can manage and moderate submissions.
+
+> ⚠️ **Documentation notice**
+>
+> This document is **not fully up to date** and may contain outdated information about the architecture, features, or setup of Mielenosoitukset.fi.
+>
+> **Always refer to the latest, authoritative documentation here:**
+> 👉 https://deepwiki.com/botsarefuture/mielenosoitukset_fi/
+>
+> The DeepWiki documentation reflects the current codebase and should be considered the source of truth.
 
 ---
-
-## Table of Contents
 
 - [Features](#features)
 - [Technologies](#technologies)
@@ -39,12 +46,12 @@ Mielenosoitukset.fi is an open-source platform for discovering and submitting de
 
 ### Prerequisites
 
-To run this project, you’ll need the following installed:
+To run this project locally you'll typically need:
 
-- Python 3.7+
-- MongoDB
+- Python 3.12+
+- MongoDB (or a compatible hosted MongoDB URI)
 - Flask
-- Any required dependencies, which can be installed via `requirements.txt`.
+- Project dependencies (installable via `requirements.txt`)
 
 ### Installation
 
@@ -68,26 +75,75 @@ To run this project, you’ll need the following installed:
     pip install -r requirements.txt
     ```
 
-4. Configure your environment variables in `config.py`:
+4. Configure your environment variables. The project uses `config.py` and `config.yaml` for configuration; a simple example would be:
 
     ```python
     class Config:
         SECRET_KEY = 'your-secret-key'  # Set this to a secure, random value
         MONGO_URI = 'mongodb://localhost:27017/your-db-name'  # Replace with your MongoDB URI
-        MAIL_SERVER = 'smtp.yourmailserver.com'  # Use your mail server details
+        MAIL_SERVER = 'smtp.yourmailserver.com'
         MAIL_PORT = 587
         MAIL_USE_TLS = True
         MAIL_USERNAME = 'your-email@example.com'
         MAIL_PASSWORD = 'your-email-password'
     ```
 
-5. Run the application:
+5. Run the application. You can start the app either with Flask or by running the project's runner:
 
     ```bash
+    # Option A: use the flask CLI
+    export FLASK_APP=run.py
     flask run
+
+    # Option B: run the bundled runner directly
+    python3 run.py
     ```
 
 6. Open your browser and navigate to [http://127.0.0.1:5000/](http://127.0.0.1:5000/) to start using the platform.
+
+---
+
+## Public React components
+
+The volunteer form uses React inside the existing Flask/Jinja campaign page.
+Built assets are included in the repository; Python-only runs need no Node.
+For frontend work, use Node 22.12+, run `npm ci` and `npm run dev`, and refresh
+the Flask page after changes. Run `npm run build` before committing.
+See [the React migration guide](docs/react-frontend.md) for entry points,
+translations, fallback behavior and deployment.
+
+## Testing
+
+Run the regression suite with:
+
+```bash
+docker compose -f compose.test.yml up -d mongo redis localstack mailpit
+pip install -r requirements-dev.txt
+python -m playwright install chromium
+python -m pytest
+```
+
+The GitHub Actions test workflow uses the same `pytest` runner. It also checks
+that the Flask route surface, background job inventory, Socket.IO events, and
+OpenAPI document stay synchronized with the codebase.
+
+The disposable `compose.test.yml` stack provides the same local service
+dependencies the CI job uses:
+
+- MongoDB on `127.0.0.1:27017`
+- Redis on `127.0.0.1:6379`
+- LocalStack S3 on `127.0.0.1:4566`
+- Mailpit SMTP on `127.0.0.1:1025`
+
+The suite now includes:
+
+- unit tests for core helpers and wrappers
+- route-wide Flask smoke coverage against a seeded database
+- Socket.IO chat smoke coverage
+- background job execution coverage
+- live HTTP smoke over a real localhost server
+- browser-driven end-to-end smoke in headless Chromium
+- service integration checks for Redis, SMTP, and S3
 
 ---
 
@@ -102,11 +158,15 @@ To run this project, you’ll need the following installed:
 ### Searching for Demonstrations
 
 1. Use the search bar on the homepage to search for upcoming demonstrations by title, topic, or location.
-   
+
 ### Admin Features
 
 1. Admins can log in to access the admin dashboard and manage submissions.
 2. Admins can approve, reject, or edit submitted demonstrations directly from the dashboard.
+
+### Preview Environments
+
+For PR preview deployment details, see [docs/preview-environments.md](docs/preview-environments.md).
 
 ---
 
@@ -124,6 +184,21 @@ We welcome contributions to Mielenosoitukset.fi! Please follow these steps to co
 5. Open a pull request on the main repository.
 
 We will review and merge your changes after testing.
+
+> [!NOTE]
+> We're actively looking for new contributors!
+>
+> If you'd like to help — whether with code, translations, documentation, testing, design, or moderation — please get in touch. You can:
+>
+> - Open an issue or a pull request on GitHub to start a discussion.
+> - Reach out directly to Olivia at olivia@mielenosoitukset.fi to talk about ways to contribute or to be added to the contributor channels.
+
+Suggested first tasks:
+
+- Fix small bugs or typos in the docs
+- Add or improve tests and CI
+- Help translate the UI (see `TRANSLATING.md`)
+- Improve the admin moderation flow or onboarding docs
 
 ---
 
@@ -144,8 +219,9 @@ This project is licensed under the Apache License, Version 2.0. See the [LICENSE
 
 If you have any questions, suggestions, or feedback, feel free to reach out to us:
 
-- Email: support@mielenosoitukset.fi
-- Twitter: [@mielenosoitukset](https://twitter.com/mielenosoitukset)
+- Email: tuki@mielenosoitukset.fi
+- Email: olivia@mielenosoitukset.fi (for contributor enquiries)
+
 - GitHub Issues: [https://github.com/botsarefuture/mielenosoitukset_fi/issues](https://github.com/botsarefuture/mielenosoitukset_fi/issues)
 
 We appreciate your input and support!
@@ -155,3 +231,11 @@ We appreciate your input and support!
 ## Changelog
 
 See the [CHANGELOG.md](CHANGELOG.md) file for details on the latest updates and changes to the project.
+
+## Modernization direction
+
+Follow the [maintainer's context](docs/modernization-context.txt) and the
+[assessment and migration order](docs/modernization-assessment.md). Reuse the
+[existing React integration](docs/react-frontend.md): shared header first,
+then demonstration listings and event/recurring-series pages. Backend technology
+and infrastructure changes remain separate decisions.

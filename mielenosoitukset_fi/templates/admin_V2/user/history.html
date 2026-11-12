@@ -1,0 +1,28 @@
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
+{% from 'admin_V2/user/_history.html' import user_identity, change_history %}
+{% block main_content %}
+<div class="admin-page admin-stack">
+  {{ admin_page_hero(
+    _('Muutoshistoria'), _('Käyttäjän kirjatut ylläpitomuutokset, tekijät ja ajankohdat.'), _('Käyttäjähallinta'),
+    [(_('Käyttäjät'), url_for('admin_user.user_control')), (user.displayname or user.username, url_for('admin_user.edit_user', user_id=user.id)), (_('Muutoshistoria'), none)],
+    back_url=url_for('admin_user.edit_user', user_id=user.id), back_label=_('Muokkaa käyttäjää')
+  ) }}
+  {{ user_identity(user) }}
+  <section class="admin-section-card">
+    <header class="admin-section-card__header"><div class="admin-section-card__title"><h2>{{ _('Muutoshistoria') }}</h2></div><span class="admin-status-badge">{{ total }}</span></header>
+    <div class="admin-section-card__body">
+      <p class="admin-profile-copy--muted">{{ _('Historia näyttää kirjatut ylläpitomuutokset. Vanhoista muutoksista ei välttämättä ole kenttäkohtaista tietoa.') }}</p>
+      {{ change_history(history) }}
+    </div>
+    {% if total_pages > 1 %}
+    {{ admin_pagination(current_page, total_pages,
+      prev_page=current_page-1 if current_page>1 else none, next_page=current_page+1 if current_page<total_pages else none,
+      prev_page_url=url_for('admin_user.user_history', user_id=user.id, page=current_page-1) if current_page>1 else none,
+      next_page_url=url_for('admin_user.user_history', user_id=user.id, page=current_page+1) if current_page<total_pages else none,
+      visible_pages=visible_pages, first_page_url=url_for('admin_user.user_history', user_id=user.id, page=1),
+      last_page_url=url_for('admin_user.user_history', user_id=user.id, page=total_pages), aria_label=_('Muutoshistorian sivutus')) }}
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,3 +1,4 @@
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 from typing import Any, Dict, Optional
 from bson import ObjectId
@@ -21,7 +22,7 @@ class AdminActivity(BaseModel):
         self._email = email
         self._action = action
         self._details = details
-        self._timestamp = timestamp or datetime.utcnow()
+        self._timestamp = timestamp or utcnow()
         self._date_time = self._timestamp.strftime("%Y-%m-%d %H:%M:%S")
         self._id = _id or ObjectId()
 

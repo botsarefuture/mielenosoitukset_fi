@@ -1,0 +1,281 @@
+/* CSS from style tag at line 10 */
+.mbBlackHoleInput1866 {
+    border: 1px solid var(--color-border);
+    border-radius: .75rem;
+    background: var(--color-card-bg);
+}
+
+.mbCoronaDiv2172 {
+    color: var(--color-text-muted);
+}
+
+.mbCometDiv4109 {
+    position: relative;
+    width: 100%;
+}
+
+.mbSupernovaButton2432 {
+    border: 1px solid var(--color-border);
+    border-radius: .75rem;
+    padding: .6rem 1rem;
+    background: var(--color-card-bg);
+    color: var(--input-text);
+}
+
+.mbUranusDiv8836 {
+    display: none;
+    overflow-y: auto;
+    position: absolute;
+    z-index: 1000;
+    border: 1px solid var(--color-border);
+    border-radius: .75rem;
+    margin-top: .3rem;
+    max-height: 250px;
+    width: 100%;
+    background: var(--color-card-bg);
+}
+
+.mbDracoDiv3949 {
+    border-bottom: 1px solid var(--color-border);
+    padding: .5rem;
+    background: var(--color-bg-secondary);
+}
+
+.mbSolarInput9963 {
+    display: inline-block;
+    border: none;
+    width: 85%;
+    background: transparent;
+    outline: none;
+}
+
+.mbApolloA7791 {
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.mbPerseusDiv6913 {
+    border-radius: 1em;
+}
+
+.mbAriesI9259 {
+    margin: auto;
+    margin-right: 20px;
+}
+
+.mbCometButton1455 {
+    display: none;
+}
+
+/* CSS from style tag at line 80 */
+:root {
+    --alert-error-text: light-dark(#721c24, #f8bfbf);
+    --alert-info-bg: light-dark(#d1ecf1, #102f42);
+    --alert-info-text: light-dark(#0c5460, #8ad8f8);
+    --alert-success-bg: light-dark(#d4edda, #1a3c2f);
+    --alert-success-text: light-dark(#155724, #a8e6c1);
+    --alert-warning-bg: light-dark(#fff3cd, #4a3d0c);
+    --alert-warning-text: light-dark(#856404, #ffe58f);
+    --border-color: light-dark(#e0e0e0, #2c2c2c);
+    --color-text-muted: light-dark(#555555, #aaaaaa);
+    --container-bg: light-dark(#f9f9f9, #1e1e1e);
+    --icon_color: light-dark(#555555, #bbbbbb);
+    --input-bg: light-dark(#fff, #1a1a1a);
+    --input-border: light-dark(#ccc, #444);
+    --input-text: light-dark(#111, #eee);
+    --no-access-bg: light-dark(#f0f0f0, #2a2a2a);
+    --no-access-border: light-dark(#cccccc, #444);
+    --no-access-text: light-dark(#999, #777);
+    --primary-hover: light-dark(#155a9c, #64b5f6);
+    --row-hover: light-dark(#f5f5f5, #2a2a2a);
+    --row-selected: light-dark(#e3f2fd, #1a2e40);
+    /* Alert Colors */
+	--alert-error-bg: light-dark(#f8d7da, #451317);
+    /* Background Colors */
+	--bg: light-dark(#ffffff, #121212);
+    /* Primary Accent */
+	--primary: light-dark(#1976d2, #90caf9);
+    /* Text Colors */
+	--color-text: light-dark(#111111, #f1f1f1);
+}
+
+.form-control {
+    color: var(--input-text);
+}
+
+.form-control::placeholder {
+    color: var(--placeholder_color);
+}
+
+/* Spinner */
+.spinner {
+    display: none;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    height: 20px;
+    width: 20px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Tabs styling */
+#settings-tabs {
+    margin-top: 20px;
+}
+
+#settings-tabs .ui-tabs-nav {
+    border: none;
+    border-bottom: 2px solid #ddd;
+    padding-left: 0;
+    background: var(--background, #f8f9fa);
+}
+
+#settings-tabs .ui-tabs-nav li {
+    display: inline-block;
+    margin: 0 5px -2px 0;
+}
+
+#settings-tabs .ui-tabs-nav a {
+    display: block;
+    border-radius: 5px 5px 0 0;
+    padding: 10px 15px;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--primary_text_color, #333);
+}
+
+#settings-tabs .ui-tabs-nav .ui-tabs-active a {
+    background: var(--primary_color, #0d6efd);
+    color: #fff;
+}
+
+#settings-tabs .ui-tabs-panel {
+    border: 1px solid #ddd;
+    border-radius: 0 5px 5px 5px;
+    margin-top: -1px;
+    padding: 20px;
+    background: var(--background, #fff);
+}
+
+#settings-tabs .ui-tabs-nav a:hover {
+    background: var(--hover_bg_color, #e9ecef);
+    color: var(--primary_text_color, #333);
+}
+
+#settings-tabs .ui-tabs-active a:hover {
+    background: var(--primary_color, #0b5ed7);
+    color: #fff;
+}
+
+label {
+    color: var(--input-text);
+}
+
+/* CSS from style tag at line 191 */
+.dropdown {
+    display: inline-block;
+    max-width: 300px;
+    width: 100%;
+}
+
+.dropdown-content {
+    display: none;
+    overflow-y: auto;
+    z-index: 1;
+    border-radius: 5px;
+    max-height: 300px;
+    width: 100%;
+    background: var(--input_background);
+    box-shadow: var(--box_shadow);
+    color: var(--color-text);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.text-muted {
+    color: var(--color-text-muted)!important;
+}
+
+input#searchInput {
+    color: var(--input-text);
+}
+
+.dropbtn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border_color);
+    border-radius: 5px;
+    padding: 10px;
+    width: 100%;
+    text-align: left;
+    background: var(--background);
+    cursor: pointer;
+}
+
+.dropbtn::after {
+    margin-left: 10px;
+    font-size: 12px;
+    color: var(--icon_color);
+    content: '▼';
+}
+
+.dropdown-content input {
+    border: none;
+    border-bottom: 1px solid var(--border_color);
+    box-sizing: border-box;
+    padding: 8px;
+    width: 100%;
+    background: var(--input_background);
+    outline: none;
+}
+
+.dropdown-content a {
+    display: block;
+    border-bottom: 1px solid var(--border_color);
+    padding: 10px;
+    text-decoration: none;
+    color: var(--primary_text_color);
+    transition: background 0.2s ease;
+}
+
+.dropdown-content a:hover {
+    background: var(--hover_bg_color);
+}
+
+/* Highlight selected city */
+.dropdown-content a.selected {
+    background: var(--selected_bg_color);
+    /* Optional: define a color for the selected city */;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+    transform: translateY(0);
+    }
+}
+
+/* CSS from style tag at line 314 */
+html.dark #display_name {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text);
+}
+
+html.dark .form-text {
+    color: var(--color-text-muted);
+}
+
+.hidden {
+    display: none;
+    
+}

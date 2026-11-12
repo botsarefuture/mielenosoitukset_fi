@@ -1,0 +1,42 @@
+<dialog id="cropperModal" class="user-modal user-cropper-modal"
+        aria-labelledby="cropperTitle" aria-describedby="cropperHelp"
+        data-module-url="{{ url_for('static', filename='vendor/cropperjs/2.1.0/cropper.esm.min.js') }}"
+        data-loading="{{ _('Ladataan kuvaa…') }}"
+        data-error="{{ _('Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva.') }}">
+  <div class="modal-content">
+    <header class="modal-header">
+      <h2 id="cropperTitle" class="modal-title">{{ _('Rajaa kuva') }}</h2>
+    </header>
+    <div class="modal-body">
+      <p id="cropperHelp">{{ _('Siirrä tai muuta rajausalueen kokoa. Voit siirtää aluetta nuolinäppäimillä.') }}</p>
+      <p id="cropperStatus" role="status" aria-live="polite"></p>
+      <div id="cropperError" class="user-form-feedback" role="alert" hidden></div>
+      <div id="cropperContainer"></div>
+    </div>
+    <footer class="modal-footer">
+      <button type="button" id="cancelCrop" class="button button-neutral" autofocus>{{ _('Peruuta') }}</button>
+      <button type="button" id="applyCrop" class="button" disabled>{{ _('Käytä rajausta') }}</button>
+    </footer>
+  </div>
+</dialog>
+<template id="cropperTemplate">
+  <cropper-canvas>
+    <cropper-image scalable translatable></cropper-image>
+    <cropper-shade hidden></cropper-shade>
+    <cropper-handle action="select" plain></cropper-handle>
+    <cropper-selection initial-coverage="0.8" aspect-ratio="1.777777778" movable resizable keyboard active tabindex="0" role="group" aria-label="{{ _('Rajausalue') }}">
+      <cropper-grid bordered covered></cropper-grid>
+      <cropper-crosshair centered></cropper-crosshair>
+      <cropper-handle action="move"></cropper-handle>
+      <cropper-handle action="n-resize"></cropper-handle>
+      <cropper-handle action="e-resize"></cropper-handle>
+      <cropper-handle action="s-resize"></cropper-handle>
+      <cropper-handle action="w-resize"></cropper-handle>
+      <cropper-handle action="ne-resize"></cropper-handle>
+      <cropper-handle action="nw-resize"></cropper-handle>
+      <cropper-handle action="se-resize"></cropper-handle>
+      <cropper-handle action="sw-resize"></cropper-handle>
+    </cropper-selection>
+  </cropper-canvas>
+</template>
+<script defer src="{{ url_for('static', filename='js/user-cropper.js', v='20261018-cropper-4') }}"></script>

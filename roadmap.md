@@ -1,0 +1,402 @@
+# Repository roadmap
+
+Last reconciled: 2026-10-24. Verified merge baseline: `main` at `b71f48cd`; #962, included #968, #970, #958, #955 and included #956 are merged, alongside #929–#947, #950, #951 and #953. #948 remains independent/open. Open implementation/review work is listed below; merge is not production acceptance.
+
+This is the delivery plan for the **whole repository**: security, public and admin workflows, backend correctness, operations, privacy, localization, tests, and maintenance. Issue [#833](https://github.com/botsarefuture/mielenosoitukset_fi/issues/833) is one workstream within it. Existing issue trackers retain their detailed acceptance criteria; this document sets the order and dependencies.
+
+Current merge batch (2026-10-24): #964 includes the original #965/#966/#971/#973/#974 heads through ordinary merge commits. This retains newsletter/digest planning, both individual test audits, roadmap reconciliation and translator-join CSRF protection together with the opt-in Telegram worker. One final combined-head full CI and resolved-review gate is required before normal merge; no original head is discarded or force-pushed. Telegram sending remains disabled pending separate configuration/live acceptance.
+
+An open issue is a candidate for investigation, not proof that its original report remains true. Verify the current code before fixing it. The dates and revision above are planning evidence, not a claim about current production.
+
+## At a glance
+
+- **Security interruption resolved for this scope — P1 (2026-10-22):** #951/#953 merged as8e6f0e2b. certifi2026.10.19 and hash-verified pip bootstrap are pinned; the reviewed production entrypoint and canonical root-owned dependency receipt are installed/verified. Distro pip retains Ubuntu's patched CA store; unrelated historical runtime drift is reported/preserved. #952 closed after operational acceptance. No broader environment or exploitation claim.
+
+- **P1 reliability gate merged:** [#969](https://github.com/botsarefuture/mielenosoitukset_fi/issues/969) / [PR #970](https://github.com/botsarefuture/mielenosoitukset_fi/pull/970) bounds test Mongo-client accumulation while preserving legacy handles; merged as `afb8d5a5`. Exact head `55933f8b` hosted Tests `40104202951` succeeded: **1,562 passed /327 skipped in857.15 seconds**, within the unchanged30-minute gate. #962/#968 integrated that prerequisite and their combined exact head `d90aa3bd` passed Tests `40109053527` before normal merge as `b71f48cd`. Sole historical timeout causality is not claimed. #964 now includes current main and requires its own updated-head CI.
+- **Open queue, not merged/released:** #964 bounded Telegram delivery; independent #966 permission-test audit, #965 newsletter/digest planning, #971 this reconciliation and #973 translator-join test audit. #962/#968/#970 are merged, not open work. Preserve all branches' individual assessments on integration. Next narrow security fix: #972 request-intent protection for translator self-service grants, based on the audited workflow. Finish reliability/permission gates before further product expansion; keep urgent event thresholds independent of city-review duration. Automatic deploy workflow `40126266266` reports success for `b71f48cd`; this is not independent live Telegram/SMTP/configuration acceptance.
+- **Alongside delivery:** QA-01/QA-02 — review security and data/workflow tests individually.
+- **Latest release checkpoint:** #955/#956 merge `cb4421da`; production workflow39928781504 succeeded and independent socket probe confirms active/status:ok at that exact SHA. Feature-head9632cabd CI39850389274 passed1,531 tests/327 skipped. This verifies build deployment, not real SMTP delivery or scheduler acceptance. Earlier release checkpoints below remain historical evidence.
+- **Verified release checkpoint:** #941 merged as `e6383141`; final required CI passed 1,370 tests with 325 skips. Public HTTPS and direct Gunicorn health probes both verify that exact running build; pre-existing tracked server overlays are byte-preserved. Automatic deploy run39149112591 remains failed because its public probe hit Cloudflare 403; independent runtime verification is not a green-workflow claim. Authenticated production visual acceptance is not claimed.
+- **Then:** reliable public listings, accessible forms/modals, and shared UI.
+- **Ongoing:** operational continuity, privacy/audit planning, localization and maintenance.
+- **Public React migration — owner direction, 2026-10-26:** Move the entire public frontend to React incrementally as pages are changed. Flask can remain the backend and the existing admin can remain Flask/Jinja; neither needs a rewrite. See UI-06 and the migration policy below.
+- **Tracking:** stable task IDs below; detailed implementation lives in linked issues/PRs. Tests have their own [review inventory](docs/test-review-inventory.md).
+
+## Priority policy
+
+P0–P3 are common engineering conventions. The definitions below are this repository's policy; they are not a universal standard. **Priority decides urgency; severity describes impact.** A security label or an old issue title alone does not prove P0.
+
+| Priority | Meaning | Scheduling rule | Examples |
+|---|---|---|---|
+| **P0 — Critical** | Confirmed active compromise, production outage, ongoing data loss, or an exposed critical authorization failure. | Interrupt planned work; contain the incident immediately, then verify recovery. | Live exploitation, unavailable core service, active destructive data corruption. |
+| **P1 — High** | Verified security gap, broken core workflow, material data-integrity risk, or accessibility failure preventing a core action. | Next delivery cycle; resolve before expanding the affected feature. | Authentication lifecycle flaw, unreliable pagination, inaccessible essential modal. |
+| **P2 — Medium** | Important usability, consistency, performance or maintainability improvement with a working core path. | Schedule after related P1 work and required dependencies. | Component consolidation, broader localization, measured performance improvements. |
+| **P3 — Low** | Optional enhancement or low-risk cleanup without immediate user harm. | Pull when higher-priority dependencies are clear. | Verified orphan assets, optional new product features. |
+
+Priorities below are planning assignments. Revalidate reported defects before implementation; promote a confirmed urgent defect to P0 and record the evidence. SEC-03 confirmed P0 code defects in case reads (#917), cross-organization authorization (merged #918) and direct user-role saving (#919). Neither live exploitation nor fresh production verification is claimed.
+
+Owner direction, 2026-10-19: prioritize ordinary functional workflows and concrete user-visible failures before speculative/hard-to-reach edge cases. Preserve critical security safeguards and focused regressions; defer broader concurrency/crash matrices until the core workflow works. Do not expand a narrow fix into an unnecessary framework or an unbounded review loop.
+
+## Status and ownership
+
+| Status | Meaning / required evidence |
+|---|---|
+| **Backlog** | Captured, but current behavior/scope or dependencies still need verification. |
+| **Ready** | Current issue verified; scope, owner, acceptance criteria, dependencies and validation defined. |
+| **In progress** | An assigned owner is implementing or reviewing the task. |
+| **In review** | PR/artifact exists and awaits review; not yet merged. |
+| **Blocked** | Cannot proceed; name the blocker, responsible decision/dependency and next action. |
+| **Merged** | Target branch contains the accepted change. |
+| **Released** | Deployed change verified with build/runtime evidence. |
+| **Closed** | Acceptance criteria satisfied; required merge/release evidence linked. Documentation/review tasks can close without deployment. |
+
+All backlog owners are **unassigned** until a contributor takes the task. Do not invent names or delivery dates. Before starting, record an accountable owner and a target milestone; milestones below express sequence, not calendar promises.
+
+Use one task record: **ID · priority · status · owner · milestone · issue/PR · dependencies · acceptance criteria · validation evidence**. Keep status in the ledger below and the detailed issue synchronized. Grouped roadmap entries are work packages: split them into small child issues/PRs with their own records before implementation.
+
+## How to choose the next task
+
+1. Fetch current main, inspect the relevant PR and issue, and read the applicable PMC notes. Preserve unrelated local changes using a clean isolated checkout.
+2. Select the first unblocked item in the next queue below. Record its ID, intended result, dependencies, focused validation, and current status here before starting.
+3. Finish one reviewable batch before opening another in the same workstream. Independent work may proceed while a PR awaits human review; record that explicitly.
+4. Use shared product components and preserve existing backend/Bootstrap contracts. For public-page changes, apply the React migration policy below; admin can retain Flask/Jinja. Preserve permission enforcement, payloads, routes, token scope, and fresh per-deletion reauthentication from #887. Preserve the incident containment/hardening merged in #912/#913.
+5. Every behavioral or visual batch includes CHANGELOG, applicable CSS cache version changes, focused validation, and PR evidence. Documentation-only batches need document validation, not a full application suite.
+6. After creating a PR, continue the next unblocked item. Merge/deploy requires authorization for that action. Mark implementation merged only after verifying main contains it; mark released only with deployment evidence.
+7. Change the order for a confirmed incident or higher-impact defect, documenting the reason. Do not start speculative rewrites or infrastructure changes merely because a task is blocked.
+
+## Public frontend React migration policy
+
+Owner direction, 2026-10-26: **the destination is an entirely React-based public
+frontend**, including discovery, event and organization pages, submission,
+accounts/settings, and supporting information pages. Flask can continue to own
+APIs, sessions, permissions and business logic. The current admin is outside this
+migration and may remain Flask/Jinja. Backend replacement is not a prerequisite
+or a deliverable of this workstream.
+
+**When changing a public page, migrate that page to React in the same delivery
+batch.** Apply this to new public pages too. The migration follows actual product
+work rather than a separate all-at-once rewrite. Reuse the TypeScript/Vite build,
+React components and Flask integration introduced by the volunteer form; see
+[the implementation guide](docs/react-frontend.md). During transition, Jinja
+pages and React pages/components coexist, with a clear owner for each DOM region
+and no duplicate legacy event handlers.
+
+If an existing page needs multiple reviewable slices, an island is an
+intermediate step: record the remaining page regions and their next migration
+tasks under UI-06 before closing the slice. Do not treat one converted widget as
+a completed page. An urgent production/security fix can ship before conversion;
+record the reason and the page's explicit migration follow-up. This exception
+must not become the default for ordinary page changes.
+
+Owner priority update, 2026-10-27: start with the shared header/navigation,
+then demonstration listings (main/city/tag and relevant discovery variants),
+then event detail and recurring-series pages including direct `occurrence`
+selection. Extract reusable components. The header slice now uses the existing
+React build and Flask props; footer and page bodies remain explicit follow-ups.
+This reorders the shared-shell slice ahead of the next whole-page conversions;
+it does not approve new backend infrastructure or authentication changes.
+
+Stages and completion criteria:
+
+1. **Foundation and first island:** volunteer signup, typed components,
+   page-specific entries, locked builds, Flask asset resolution and safe loading
+   fallbacks. This is implemented on `codex/react-volunteer-form`, not yet claimed
+   merged or released. Evidence: 77 focused checks, deterministic Node 22 build
+   and independent visual SHIP covering 48 captures at implementation snapshot
+   `63071baf`. Preserve the campaign publication gate and confirmation API.
+2. **Whole pages through ongoing work:** convert each touched public page and
+   extract reusable forms, cards and feedback components. Maintain a route/page
+   inventory under UI-06 identifying Jinja, mixed and fully React pages, remaining
+   regions, owner and the next delivery slice. Before moving indexable discovery
+   or event pages, choose and document how React renders their initial content
+   and metadata on the server or at build time. A client-only SPA is not an
+   assumed requirement.
+3. **Shared public application:** unify the public shell/navigation, route
+   handling, session state and translations as whole React pages accumulate.
+   Decide the React routing/rendering architecture in a scoped task using the
+   existing Flask APIs; retain reusable components from the island stage.
+4. **Finish the public migration:** explicitly schedule remaining untouched
+   routes instead of waiting indefinitely for unrelated edits. Close UI-06 only
+   when every public UI route is React-based, shared navigation/authentication
+   flows work, and obsolete public Jinja views, duplicate handlers and transitional
+   mounting code have been removed where superseded. Flask-rendered API/feed/
+   sitemap responses, email templates and the existing admin may remain.
+
+Each slice preserves existing URLs/redirects, session and permission checks,
+API payloads, translations, drafts and error/retry behavior, accessibility,
+themes and mobile layout. Preserve canonical/hreflang tags, social previews,
+event structured data and static recovery content where applicable. Keep useful
+no-JavaScript content and explicit safe fallbacks for interactive flows. Record
+focused regression and performance checks plus the required independent visual
+acceptance; migration is not permission for an unrelated redesign or an assumed
+DDoS mitigation. Existing urgent security/reliability priorities still apply.
+
+## Next delivery queue
+
+| Milestone | Priority | IDs | Deliverable | Acceptance criteria |
+|---|---|---|---|---|
+| **M1 — Secure core workflows** | P1 | SEC-01, QA-01 | Repair MFA lifecycle; review authentication/permission evidence. | Server-held opaque proof, atomic consume, reset revocation, expiry and bounded attempts; meaningful replay/concurrency/negative-path tests; #887/#912/#913 protections retained. Verify #763/#778 before scheduling fixes. |
+| **M2 — Reliable discovery and accessible actions** | P1 | DATA-01, UI-01 | Stable list pagination/result counts; accessible search/cropper. | Date/time/ID ordering, no page-boundary duplicates/gaps, correct ranges/totals, filter reset/URL state across list/city/tag; safe DOM, labels, keyboard/focus/Escape, both themes and mobile. |
+| **M3 — Operational correctness** | P1 | DATA-02, OPS-01 | Verify worker coordination and backup/alert gaps. | #908 investigated against merged code; overlap/retry/crash evidence; current recovery/alert evidence and explicit next actions in the continuity plan. Live changes follow its dependencies. |
+| **M4 — Consistent product UI** | P2 | UI-02, FORM-01, UI-03, UI-06 | Shared homepage/city, organization/submission, detail/error/status components. | Preserved requests/permissions/drafts/imports/SEO/preferences; shared geometry/tokens/states, localized copy, keyboard/mobile/light-dark acceptance and relevant performance checks. |
+| **M5 — Localization and maintainability** | P2/P3 | I18N-01, CLEAN-01, CLEAN-02 | Complete route-family translations and remove verified styling/dead-code debt. | Actual FI/EN/SV translations; reference audit before deletion; legacy calendar decision; smaller inline baseline and valid shipping variables/cache keys. |
+| **M6 — Acceptance** | P1 gate | ACCEPT-01, QA-01–QA-05 | Reconcile all delivered work with original requirements and test reviews. | Individual reviews complete, required CI and representative browser checks pass, trackers reflect actual merge/release evidence. Outstanding repository work remains visible. |
+
+Inspected main `175cb1fd` contains #901, #915, #918, #917, #916/#919 and the public #920–#924 stack. #921/#924 were merged; intermediate #922/#923 were closed only after their commits were verified in main. Merge does not establish release acceptance; retain #900 recurring discovery behavior.
+
+Test review runs alongside each milestone. Operations and privacy planning may proceed independently when their dependencies and ownership are clear. A confirmed P0/P1 failure takes precedence over the milestone sequence.
+
+## Workstreams and remaining backlog
+
+### Security and permissions
+
+- **QA-01j · P1 · In review · Codex · M1/M6 · codex/demo-permission-test-audit · base maind87c1e57:** Individually assess13 existing helper tests; enforce the promised no-DB short circuits for anonymous/global/invalid-ID paths and add wrong-organization/action/unrelated-editor denials. Production permissions unchanged.35 focused unit/real city-route compatibility cases pass; an in-memory early-lookup mutation is caught by all3 strengthened guards. Three-file local review completed with0findings. Fake-grant limitations and remaining request-cache/outage/integration scope recorded per definition. Independent of the pending Telegram stack.
+
+- **QA-01h · P1 · Merged · Codex · M1/M6 · #946 via #942 / codex/passkey-counter-concurrency:** Guard the final credential-counter write by observed counter, owner and public key and require a matched credential. Two individually assessed definitions / five real HTTP/crypto/Mongo cases reproduce four pre-fix failures and retain counterless concurrency. Stale higher-counter requests fail closed too and require fresh options. #942 and included #946 merged as `a5f256b7`; both heads are ancestors of current main. Exact-head `85481260` required CI `39735041525` succeeded before merge. No claim of credential revocation after a successful commit or hardware acceptance; broader security acceptance remains open.
+- **QA-02a · P1 · Merged · Codex · M1/M6 · #969 / PR #970:** Bound test-only Mongo clients across configuration/singleton resets without invalidating legacy handles or changing production lifecycle. Real repeated-reset/config-name and isolated ownership/concurrency regressions accompany the unchanged full-suite/30-minute CI gate, explicit per-test progress and faulthandler diagnostics. Main-based head55933f8b full CI40104202951 succeeded:1,562 passed /327 skipped in857.15 seconds; merged asafb8d5a5. Combined #962/#968 headd90aa3bd also passed CI40109053527 before merge. [Contract](docs/test-mongo-lifecycle.md). Accumulation is proven; sole historical timeout causality is not.
+
+- **SEC-05a / QA-01l · P1 · In review · Codex · M1/M6 · #972 / codex/translation-join-csrf · base #973:** Require an unpredictable session-bound form nonce and constant-time validation before self-service translator permission writes/welcome enqueue. Preserve login-first gating, actor-only grants and sequential idempotency. Missing/empty/wrong/Unicode/unissued and cross-session tokens are rejected without user writes/mail, with valid-form recovery controls. Actual Chromium keyboard submission works with JavaScript disabled at390px/light and1440px/dark. All26 focused route/browser/inline-style/surface/Mongo cases pass after integrating current main through updated #973; initial seven-file local review completed0findings. No CSS change/cache bump, new dependencies or authentication rewrite. No browser cross-site exploit, provider delivery or concurrent-mail exactly-once claim. Current-head full CI/review and merge remain gates.
+
+- **QA-01k · P1 · In review · Codex · M1/M6 · codex/translation-join-test-audit:** Individually review all seven self-service translator-join tests; strengthen guest no-write/no-mail, exact permission preservation, forged target/admin-field isolation, successful sequential retries/one welcome enqueue and real server-rendered CTA/form branches. Seven focused Flask/Mongo cases pass; no provider/browser/CSRF or concurrent-delivery claim. The code review identified missing session-bound request intent on this permission-writing POST: [#972](https://github.com/botsarefuture/mielenosoitukset_fi/issues/972) is the next narrow P1 security task, not evidence of production exploitation. Branch inventory1229 definitions /168 files /344 assessed retains main's337 records, separate from other open branches.
+
+
+
+- **QA-01g · P1 · Merged · Codex · M1/M6 · #945 via #944 / codex/passkey-challenge-lifecycle · depends on #943:** Three individually reviewed definitions /ten cases verify server expiry at299/300/301 seconds, purpose binding independently of user/session binding, and two real concurrent counterless assertions against the same challenge. All 71 combined cases pass; targeted predicate mutations cause nine intended failures while retaining the valid299s control. Included and verified in merge3c8665ab after exact-head CI/review; GitHub marks both PRs merged. Authentication/#887 policy unchanged; no hardware, replica-set or distinct-challenge counter-concurrency claim.
+
+- **QA-01f · P1 · Merged · Codex · M1/M6 · #943 / codex/passkey-boundary-test-review:** Four individually reviewed definitions add six cases for forged elevated cross-user rename/delete, signed origin/RP mismatch and consumed assertion/session binding. Actual crypto verification and disposable MongoDB, positive controls and exact credential/session assertions; all61 combined focused cases pass. Six targeted in-process boundary mutations each produce the intended HTTP200-versus-denial failure. Required CI and exact-head review passed before normal merge `9a86b4ce`. Authentication policy and #887 are unchanged. Broader physical-device/browser acceptance and concurrent counter updates remain separate; this batch does not close QA-01.
+
+- **QA-01a · P1 · Merged · Codex · M1/M6 · codex/step-up-test-review:** Individually assess all eleven step-up test definitions; repair vacuous original-session logout coverage and strengthen configured time boundaries, actor/session isolation, invalid credential rejection and stored password outcomes. Acceptance: focused step-up and fresh-deletion regressions pass (30 cases), mutation confirms logout cleanup regression detection, fixture/mock limits and remaining cases recorded. No production authentication or #887 policy changes.
+
+- [ ] **SEC-01 · P1:** #901 MFA challenge implementation is merged; preserve the shared legacy/no-JS behavior and obtain required release acceptance evidence.
+- [ ] **SEC-02 · P1:** Inactive/banned-account enforcement and admin status workflows are merged through #915/#916/#919, including shared target checks and atomic duplicate-submit coverage; #763 is closed. #931 supplies runtime translation coverage; broader release acceptance remains separate from issue closure.
+- [ ] **SEC-03 · P0/P1:** #918 target-organization/input validation and #917 case scope are merged; #919 user-action hierarchy/delegation, global clearance scope and audit searchability are merged through the account-management integration. Broader role lifecycle, concurrency, destructive-action and canonical audit requirements remain tracked.
+- [ ] **SEC-04 · P1:** Reconcile token/approval lifecycle requirements and prior completed trackers against current routes; prove revocation, expiry, replay behavior, idempotent decisions, case closure, audit and notification effects for every entrypoint.
+  - **SEC-04c · P1 · Merged · Codex · M1/M6 · #942 / codex/demo-rollback-preservation:** Content-only rollback preserves authority/moderation/visibility/series state and restores canonical coordinates/media/event type. A guarded atomic source-document pipeline retains exact event snapshots/ID/actor/time; idempotent history delivery retries on authorized reads/rollback, with pending receipts protected from destructive actions and excluded from raw readers. Twenty-six individually assessed definitions cover78 rollback cases. Guarded deletion retains an exact recovery pre-image until history is acknowledged; merge compensates known removals/unchanged primary on conflict while preserving newer state and confirmed progress. Unknown acknowledgements/history-pending failures return503 with explicit incomplete recovery state. Requires MongoDB4.2+, not replica-set transactions. Normal mergea5f256b7 followed exact85481260 required CI39735041525 success and review. Historical production workflow39739810427 succeeded and an independent origin check verified that build; this is not a fresh current-production assertion. Full audit/backup retention, grant-revocation races, all-failure cross-document merge atomicity and a general recovery worker remain separate; SEC-04 is not closed by this slice.
+  - **SEC-04a/b · P1 · Merged · Codex · M1/M6 · #935/#938–#940:** Individual lifecycle and decision tests, bounded conditional case reconciliation, and content-save preservation are included in the #940 integration. Generic MCP patches reject approval changes before any write; they do not invent a new moderation transition. Rollback authorization/state restoration, stale content edits racing decisions, provider-acceptance crash windows, and unknown-field retention remain open.
+- [ ] **SEC-05 · P1:** Review incident #912/#913 protections and credential/session lifecycle regressions before touching related code. Keep secrets out of documentation and audit data.
+
+### Backend, data, jobs and integrations
+
+- [ ] **CITY-01 · P2 · Backlog · Unassigned · M2/M4:** Complete the existing city-admin submission notification and review-deadline experience; do not build a parallel assignment system.
+- **CITY-01c · P2 · Merged · Codex · M2/M4 · PR #975 / codex/city-assignment-notifications:** Add the missing in-app notice to the existing submission worker before SMTP, using deterministic per-demo/reviewer IDs and preserving read state on retry. Delivery and inbox reads both check live city approval grants, assignment membership and unresolved/non-escalated/non-merged state, with authoritative city_key matching the review route. Changed queued email addresses cannot suppress inbox delivery or receive stale-address mail. Stream past hidden notices before applying the visible inbox quota. Only title/demo ID and an authenticated review URL are retained; no submitter details or bearer URLs. Completed historical jobs are not backfilled; terminal/ambiguous email jobs keep the existing operator-reconciliation policy.89 focused cases pass; six new definitions/24 cases individually assessed. Initial six-file local review completed with0findings after two verified corrections; follow-up GitHub merged-source finding fixed/tested, final tiny local re-review rate-limited (not a clean review). Merged as54b02c58 after hosted python-tests/dependency/security checks succeeded; release/runtime acceptance remains unverified. Dashboard/deadline work is already merged and is not reimplemented here.
+  - **CITY-01a · P2 · Merged · Codex · M2/M4 · #957 / PR #958:** Shared stored review deadline/duration for new assignments, both email notices and escalation selection. Preserve24h default/configured48h and freeze new-style windows across config changes; legacy fallback remains explicit. Ordinary content saves do not extend the clock; explicit edit-link reset retains the stored duration. Merged asd87c1e57 after exact8ae83f85 required CI39929471725 succeeded; earlier cancelled CI is historical. All337 individual assessments retained;105 focused actual-Mongo/browser/mocked-transport cases and completed12-file local review are recorded in the [contract](docs/city-review-deadline.md). Fresh production/deployed-setting and real delivery acceptance remain unverified. Dashboard #968 and policy #962 are now merged; delivery #964 and in-app notices remain pending.
+  - **Delivery dependency — DATA-04:** bounded recovery is now implemented in merged #955/#956, including failed/abandoned claims and per-message receipts (DATA-04a below). Actual SMTP/scheduler acceptance and ambiguous-delivery reconciliation remain gates; do not describe the pre-#955 pending-only worker as current behavior or credit mocked sends as live acceptance.
+  - **CITY-01b · P2 · Merged · Codex · M2/M4 · #967 / PR #968:** Limited city admins get a scoped20-row deadline-sorted dashboard instead of a list redirect, including ACCEPT_DEMO-only reviewers. Shared table/hero/pagination, exact Helsinki deadline, server-relative minute clock/no-JS fallback and explicit overdue/escalated/unknown states. Global metrics/API restrictions remain.115 focused tests pass; five new definitions plus one updated scoped-dashboard definition assessed. Shared opt-in stacked mobile-table component keeps actions/deadlines on screen; CSS-cache key bumped.15 new FI/EN/SV entries plus reused labels; unrelated compiled translation values preserved. Final16-text-file local review completed with0findings; binaries independently checked. #968 merged into #962 asd90aa3bd, then main asb71f48cd after exact-head CI40109053527. In-app notifications, city reassignment and live workflow acceptance remain separate.
+  - **Verified starting point (2026-10-19, main `e6383141`):** `utils/city_assignment.py` assigns new submissions to active, non-banned city admins with live `ACCEPT_DEMO` grants; `basic_routes.py` queues their email instead of the national notification. `scripts/escalate_city_assignments.py` escalates overdue pending submissions to the national team. The demo list renders responsibility/escalation badges; the admin overview counts assigned and escalated items. These code observations do not prove production email delivery or scheduler health.
+  - **Deadline contract:** use one server-authoritative deadline for notification copy, dashboard and escalation job, derived from `CITY_ASSIGNMENT_ESCALATION_HOURS` (**24h code default**, not an assumed48h; deployed value unverified). Merged #958 stores duration/deadline for new assignments: config changes do not shift them; legacy fallback is explicit. Ordinary content saves preserve the clock; explicit edit-link actions retain their reset behavior and stored duration. If48h is desired, explicitly change/test policy and configuration instead of hardcoding a UI timer. Dashboard #968 must retain this same contract.
+  - **Notifications and scope:** verify submission→queued notification→delivery for all eligible admins of the submitted city, including scoped/legacy grants, duplicate memberships, revoked/disabled/missing-email recipients and failures/retries. Preserve national fallback when no eligible city admin exists and national escalation after the configured interval. Add an in-app notification/deep link using the existing notification mechanism as well as the existing email; expose only authorized demo details and audit notification failures without secrets. Verify deduplication and decision-versus-escalation races; no duplicate announcements or revived queues after approval/rejection/cancellation.
+  - **Dashboard UX:** show authorized pending assignments in the shared admin dashboard with demo, city, responsibility, localized exact deadline and remaining hours/minutes (e.g. “23 h 15 min jäljellä”), ordered by nearest deadline. Link directly to review. Distinguish awaiting city review, deadline passed/awaiting escalation, escalated, and resolved; do not imply browser countdown completion performed the server action. Use server time/UTC storage, accessible `<time>`/non-color status, a no-JS absolute-deadline fallback, low-frequency updates and no per-row polling or per-second screen-reader announcements. Preserve identical light/dark/mobile components and permission-scoped counts.
+  - **Acceptance / tests:** actual submission route plus queue worker and escalation integration; zero/one/multiple eligible admins, configured24h/48h, just-before/exact/after expiry, allowed reset actions, empty/resolved queues, retry/concurrent sweep and decision races. Clock-controlled tests must compare the same deadline across email, dashboard and job. Add focused responsive/theme/keyboard tests and individually assess new and touched definitions in `docs/test-review-inventory.md`; captured enqueue/send calls are not proof of SMTP delivery. Dependencies: existing assignment/notification worker, scoped admin queries and shared dashboard; promote a verified security/delivery failure to P1 under the priority policy.
+
+- [ ] **CITY-02 · P1 · Backlog · Unassigned · M2:** Urgent pending-demonstration alerts to the Telegram channel **“Mielenosoitukset.fi kiireelliset admin jutut”**, using **@mielenosoituksetbot**, as requested by the owner.
+  - **CITY-02a · P1 · In review · Codex · M2 · #961 / #962 / codex/urgent-review-alert-policy · base main:** Shared Helsinki/UTC urgency and safe message-state builder, independent of review duration. Read-only live discovery verified the existing bot and target channel's post/edit rights on2026-10-23; no credentials copied or messages sent. Existing subscription poller unchanged. Review correction adds stale-archive rescheduling, honest terminal ownership and a scoped ACCEPT_DEMO review form with CSRF/canonical decisions; editor/command-center permissions unchanged. All18 related definitions individually assessed, including real Chromium light/dark at390/1440px; focused run/local review results recorded in PR evidence. [Policy/delivery limits](docs/urgent-review-alerts.md). Scheduled outbox/reconciliation, send/edit transport, staging delivery and enablement remain required before overall CITY-02 acceptance.
+  - **CITY-02b · P1 · In review · Codex · M2 · #963 / PR #964 / codex/urgent-review-delivery · depends #962:** Opt-in two-minute scheduled discovery, durable per-demo/channel receipts, bounded atomic send/edit claims, canonical fresh payloads, retry-after/backoff, unknown first-send quarantine and visible blocked-job status. Settled/history observation is separate from delivery slots; expired receipts remain retained, not polled forever. Existing bot poller untouched; sending defaults disabled.99 combined focused tests pass; eighteen new definitions individually assessed. Final nine-file local review completed with0findings after correcting historical-row starvation. Real staging send/edit, production configuration, date-query plan/sweep latency and release evidence remain gates.
+  - **Trigger:** evaluate time until the event starts, independently of CITY-01's review/escalation interval. Proposed explicit policy: pending events starting in less than48h produce an urgent alert; less than24h is a higher-urgency state on the same message. Verify/configure thresholds before release; do not wait24h for city escalation when an event starts sooner. Evaluate on submission, start-time changes and scheduled threshold crossings so an initially distant event is not missed. Include city-assigned and national-fallback pending submissions; approved/rejected/cancelled events must not create fresh review alerts. Define already-started and missing/invalid-time handling explicitly; never invent a start instant.
+  - **One maintained message:** retain demo ID plus Telegram chat/message IDs and delivery/state metadata, not raw bearer links. Create one alert per pending review lifecycle and **edit that same message** when urgency/responsibility changes or processing resolves it: approved, rejected, cancelled or escalated, with handled time and a clear status. Use canonical persisted decisions, not browser clicks or an ordinary content save, as the resolution source. Define reopened-review behavior explicitly. Guard stale retries from overwriting a newer resolved state; do not post a new message for every tick or edit.
+  - **Safe delivery:** verify the channel's numeric chat ID and the bot's send/edit permissions before enabling; channel display name/bot username alone are not sufficient routing configuration. Keep bot credentials in existing secret/config facilities, never Git/roadmap/logs. Send only necessary event title/city/start/deadline/status and an authenticated admin-review link: no submitter contact data, tokens or unauthenticated approval actions. Escape event text for the chosen message format. Preserve server-side role/scope checks on linked pages.
+  - **Reliability / acceptance:** use bounded asynchronous delivery, deduplication/concurrency guards, backoff/rate-limit handling and observable failures. Persist provider message IDs and reconcile ambiguous send outcomes rather than promising impossible exactly-once network delivery or blindly reposting. Handle message deleted/edit forbidden/bot removed without blocking submission or moderation; define an explicit visible fallback. No Telegram polling per dashboard row or per-second countdown edits. Main has no urgent-review sender yet; open #964 implements an opt-in outbound job on #962. A separately deployed subscription bot was located and must remain intact; do not add another incoming poller. Read-only routing/permission verification is not an actual staging send/edit or production enablement.
+  - **Tests / release gate:** clock-controlled before/exact/after24h/48h; upcoming event crossing thresholds without edits; reschedule; city/national queues; canonical approval/rejection/cancellation and reopening; duplicate/concurrent workers, decision-versus-send/edit races, stale/out-of-order retries,429/timeouts/deleted-message/permission failures and escaped malicious titles. Assert the same provider message ID is edited and no private/bearer data is sent. Individually assess all new/touched tests. Mocked transport proves payload/retry behavior only; authorized staging-channel send→edit plus production routing/permission verification are required before claiming release. This roadmap addition does not send messages or store credentials.
+
+- [ ] **DATA-07 · P2 · Backlog · Unassigned · M4:** Support **multi-day demonstrations** as a first-class event duration, distinct from a recurring series.
+  - **Import round trip:** `FacebookEventImporter` already parses `utcEndDate` into `event.end_date`. Preserve a later end date through import response → wizard prefill/draft/preview → submission payload → persisted event → detail/calendar output. Add a real importer-fixture-to-persistence regression, not only hand-entered multi-day form tests; retain single-day and omitted-end compatibility. Current start-date/time-only prefill is not multi-day acceptance.
+  - **Definition of Ready:** confirm continuous multi-day events versus separate daily sessions, inclusive displayed end date, omitted end time and overnight semantics. Choose an incremental date-range contract with Helsinki-local display and explicit timezone handling. Preserve existing single-day records, field/route/API compatibility and recurring-series identity; do not silently split one event into unrelated daily submissions.
+  - **Delivery slices:** (1) optional end-date/range model, server validation and backward-compatible readers/API payloads; (2) public submission plus admin create/edit/review, previews, confirmation/email text and translations using shared form/date components; (3) discovery and exports. Validate chronological start/end, partial updates, old records and malformed ranges server-side. Preserve approval, edit-token, city/org scope and #887 reauthentication safeguards.
+  - **Discovery / acceptance:** an ongoing event appears on every covered day's today/city/tag/calendar views, and upcoming/ongoing filters, counts and deterministic pagination agree without duplicating the event. Detail/cards show an unambiguous localized date/time range. Google Event structured data and iCalendar exports use correct start/end instants (including iCalendar exclusive all-day end semantics where applicable). Preserve #885's indexability window, recurring canonical/next-occurrence behavior and nearest-relevant event ordering; define the window behavior for a range spanning its boundary rather than guessing from start date alone.
+  - **Validation:** single-day compatibility, overnight/multiple-day duration, month/year/leap-day and Europe/Helsinki DST boundaries; missing/invalid/reversed end dates, create/edit/token/recurring interactions, ongoing-versus-ended filtering, page-boundary counts/order and structured-data/calendar round trips. FI/EN/SV rendering plus desktop/mobile/light/dark form/detail/calendar checks. Individually assess every new/touched test in the inventory. Dependencies: explicit duration semantics, existing date/SEO/list contracts and incremental schema compatibility; this roadmap entry does not authorize a bulk production migration.
+
+- [ ] **DATA-01 · P1:** Finish public pagination and totals; verify the API and browser controller together.
+  - **DATA-01a · P1 · Merged · Codex · M2 · #927:** Clamp public tag/demo/organization page sizes to 1–100; skip out-of-range database offsets; isolate old oversized cache entries. Seven individually reviewed test definitions, 92 focused cases passed locally on 2026-10-13. No production load test, deployment or broader denial-of-service-resistance claim.
+  - **DATA-01b · P2 · Merged · Codex · M2 · #928 · includes #927:** Automatic near-viewport loading, one list request at a time, five retained DOM pages (60 cards by default), no detached-page data cache. Backscroll re-fetches discarded pages; scroll anchor and focused cards are protected, including focus changes during slow requests. Filter/history cancellation and manual/retry/data-saving fallback remain. Four definitions individually assessed; nine new browser cases and 75 combined focused cases passed. Representative light desktop/dark mobile screenshots inspected. Live API performance, numerical heap profiling and broader assistive-technology acceptance remain unverified.
+- [ ] **DATA-02 · P1:** Resolve worker fencing/rebuild pruning (#908) with multi-worker, retry, crash and rebuild overlap evidence. Verify rather than assume historical analytics repair has run in production.
+- [ ] **DATA-03 · P2:** Review analytics accuracy/access/pagination (#551), large admin overview queries, and demonstration slow-query evidence from TODO.md. Establish measurement before index changes.
+- [ ] **DATA-04 · P1:** Verify email queue retries/idempotency, outgoing case reply history (#771), background job leadership and external service failure handling (#176). Define redacted audit metadata separately from user message retention.
+  - **DATA-04b · P1 · In review · Codex · #771 · codex/case-outgoing-reply-history:** Dedicated outgoing-reply history using shared admin cards/message styling, actual recorded recipient/sender, queue/sent timestamps, full escaped text and honest queued/sent/failed/unknown states. Preserve city/global case guards and existing mail processing. Keep historical recipients explicitly unknown instead of inferring them from mutable contact details. General audit payload/content-retention policy remains separate; do not copy private correspondence into broadly searchable logs or close #771's wider policy requirement on UI evidence alone.107 focused cases pass, including two actual Chromium mobile/theme cases; six new definitions and one existing shared-card contract assessed. FI/EN/SV runtime labels extended narrowly with unrelated MO entries preserved; CSS cache bumped. Local CodeRabbit analysis rate-limited; manual review, required hosted CI and release gates remain explicit.
+  - **DATA-04a · P1 · Merged · Codex · M2 · #954 / PR #955:** Recover the existing submission queue with five bounded attempts, backoff, per-message receipts and fenced ownership. Stale pre-send claims recover; ambiguous SMTP/receipt-write outcomes and legacy unreceipted errors require explicit reconciliation. Recheck moderation/assignment and narrow city recipients to still-authorized originally assigned users; reminders respect retry/unknown states. Merged ascb4421da including #956 after exact-head CI1,531 passed/327 skipped. Deployed build verified; no live SMTP/scheduler acceptance or exactly-once claim. Thirteen individual assessments retained. [Operator runbook](docs/submission-notification-recovery.md) defines limits; wider DATA-04 and CITY-01 remain open.
+- [ ] **DATA-05 · P1:** Investigate image failure/retry/rate-limit reports (#579/#580/#581) and Socket.IO reconnect behavior (#640). Bound retries and prove failure recovery without request storms.
+  - **DATA-05a · P1 · Merged · Codex · #947 / #581 / codex/profile-image-fallback:** Handler is disabled before the one fallback attempt, stopping repeated CDN requests. Exact-head required CI passed before normal merge63c85eae; both new browser cases executed locally, not proven by CI skips. One individually assessed definition covers fallback success/failure across all three avatar instances. Broader preview/Cloudflare/Socket.IO diagnosis remains separate; no production rate-limit claim.
+- [ ] **DATA-06 · P2:** Reconcile module TODO issues (#391/#392/#393/#394), user settings/configuration requests (#196/#226), invitation user creation (#387), and other open backend PRs. Inspect their current diff and dependencies before scheduling implementation.
+
+- [ ] **CASE-01 · P2 · Backlog · Unassigned · M2/M4 · #976:** Ask the submitter for additional information directly from a demonstration-submission case, reusing the support conversation/mail queue rather than creating an unrelated inbox.
+  - Permission-scoped city/global admins compose questions from the case using shared form/history components. Persist recipient, author, full user-visible question, timestamps and queue outcome; keep internal notes, audit details, grants and moderation-only data private. Replies attach to the same case and alert only currently authorized handlers. Define awaiting-information/resolved/reopened behavior and whether the existing city-review deadline changes; do not silently reset or extend it.
+  - **CASE-02 · P2 · Backlog · depends CASE-01:** Give the submitter a private reply/progress page, including accountless submissions. Use a purpose-bound case/conversation credential (not a demo-edit/approval token), high entropy, hashed storage, bounded lifetime, revocation/rotation and redacted logging. Keep raw links out of history/audits/analytics, apply noindex/referrer protections, rate limits, CSRF and bounded safe message input. Define link issuance/recovery, forwarded-link exposure, expiration and consent/retention policy before release. Account-linked access must prove ownership, never just accept a case ID/email from the browser.
+  - Show only user-visible correspondence and clear public handling status; never expose internal notes, third-party contact details or admin-only links. Support keyboard/mobile/light/dark and FI/EN/SV. Test owner/foreign/anonymous boundaries, valid/expired/revoked links, forged case IDs, safe rendering, replies and status changes, retry/duplicate-submit behavior and existing edit/approval/#887 protections. No public case endpoint, bulk mail or production migration is authorized by this planning entry.
+
+### Product and shared UI
+
+- [ ] **UI-06 · P2 · In progress · Codex (foundation); later page owners unassigned · M4 · codex/react-volunteer-form:** Entire public frontend to React through the migration-on-page-change policy above. Foundation/volunteer slice implemented. Campaign-page/confirmation refresh now composes the unchanged volunteer component and uses build-time HTML fallbacks; the shared site header/footer stay in Flask/Jinja for a later React shell migration. Fundraising receives scoped brand/layout cleanup in Jinja; other public routes remain. Merge/release pending. Dependencies: existing Flask API/session contracts and per-page product work; select the public rendering/routing architecture before migrating indexable routes. Acceptance: tracked route inventory reaches fully React for every public page, shared shell/routing/translations and account flows work, superseded public Jinja/legacy handlers are retired, and focused functional, SEO, accessibility, performance and independent visual checks pass. Flask backend and current admin may remain. Each later page slice records its own owner, scope, milestone and evidence; foundation completion does not close the migration.
+
+- **QA-03a · P2 · Closed · Codex · M1/M6 · #956 via merged #955:** Seven individual assessments: three merge-editor render/access/legacy-layer guards and four public-detail invite/cancelled-control guards. Maincb4421da retains every record; no runtime/test changes. All seven cases passed, including actual Chromium cancellation callback execution; two-file local review0findings. String guards are not visual/interactive/security acceptance, and GET restriction is not forged-POST or all-role coverage. Broader QA-03/UI-01 remain open.
+
+- [ ] **UI-01 · P1:** Shared labels/picker, native cropper focus/source-resolution/accepted-image rollback and safe keyboard city suggestions are merged through #924/#929/#930/#940. Whole-wizard, broader assistive-technology/browser and release acceptance remain pending.
+- **USER-01 · P2 · Released · Codex · M4 · #941 / codex/user-status-history:** Account-status confirmation and scoped before/after history use shared components and preserve permission/reauth contracts. Review corrections atomically retain each user/grant mutation's safe event in its source document, conditionally reject stale writes and project idempotently into admin/super audit stores; authorized reads/mutations retry delivery. Grant and role writes remain separate exact events, not one request-wide transaction. A bounded queue blocks unrecordable updates; deletion cannot remove undelivered events or reuse consumed fresh proof. Legacy status events, FI/EN/SV, fixed pagination and real-framework responsive themes retained. This is not canonical audit/GDPR or full retention acceptance. Public HTTPS and origin probes verify merge build `e6383141`; local fixture tests, not authenticated production inspection, cover visual acceptance.
+- [ ] **UI-02 · P2:** Footer/card overflow and shared homepage/organization hero/mobile typography fixes are merged through #936/#937 in main 6ef40610. Broader media/table, zoom/widget, locale and release acceptance remain pending.
+  - **UI-02a · P2 · Merged · Codex · M2/M4 · codex/public-mobile-width:** Own footer box sizing, shrinkable single-column grid and long card text wrapping at component level, without new global overflow suppression. Validate list/city/tag in both themes at 320/360/390/1440px with empty and populated responses, complete text and keyboard footer link bounds. All three width-test definitions reviewed; 93 combined cases pass and final test-file review has zero findings. Retain wider UI-02 scope.
+  - **UI-02b · P2 · Merged · Codex · M2/M4 · codex/public-page-width · depends on #936:** Shared hero content/actions shrink and wrap; remove legacy forced mobile heading sizing and page-local organization min-width/home nowrap conflicts. Acceptance: actual home/normal/long-organization SSR in both themes at 320/360/390/1440px preserves complete text, centered bounds, shared mobile typography and visible actions. All 117 combined focused cases pass, including 24 new browser cases; broader UI-02, localization, widget and release acceptance remain pending.
+- [ ] **FORM-01 · P2:** Organization details/forms and submission wizard migrate incrementally to shared sections/fields/modals. Preserve current permission and request contracts.
+- [ ] **UI-03 · P2:** Consolidate detail styles and invite modal, then shared error/status pages. Preserve recurring canonical URLs, cancellation notices, layout preferences and future-event navigation.
+- [ ] **UI-04 · P2:** Audit remaining public/admin form, list, editor and feedback surfaces against the written product standard, including dropdown clipping (#743), moderation affordances (#552) and #770's visual-quality expectations. Admin #677 is completed work, not a reason to repeat its migration.
+- [ ] **UI-05 · P2:** Calendar image fallbacks/internal links, accessible legacy-view policy, remaining public tables, no-JS behavior and mobile text stacks.
+- [ ] **PRODUCT-01 · P3:** Specify broader societal events (#583), tag following (#117), and city/tag subscription email (#121) only after core reliability/UX work. Confirm product requirements before backend schema or scope expansion.
+
+### Localization and documentation
+
+- [ ] **I18N-01:** Inventory active untranslated strings and catalog gaps; deliver by route family with real FI/EN/SV render checks.
+  - **I18N-01a · P1 · Merged · Codex · M1/M5 · codex/account-status-runtime-translations:** Eight account-status source messages are absent from runtime catalogs on main 9098c02a. Compile only this verified set while preserving unrelated runtime entries and existing contextual status labels. Acceptance: exact shipped FI/EN/SV catalog values and actual localized activate/disable confirmation plus protected POST success; nine cases across two individually assessed definitions; all 31 focused account-status cases pass. Compiled changes and #929/#930 are merged in main 6ef40610; production acceptance remains unverified.
+- [ ] **I18N-02:** Standardize backend/API/moderation/email messages (#582/#553), avoiding double translation in `flash_message()` and unsafe dynamic string interpolation.
+- [ ] **DOC-01 · P2:** Update user/moderator guides (#563) and maintained setup/API/design docs against working code. Decide and document any intentionally Finnish-only surfaces.
+- [ ] **DOC-02 · P2:** Keep this roadmap, detailed issues, release evidence and PMC aligned. Fix historical status conflicts through explicit updates, never by treating old notes as current implementation.
+
+### Operations, performance and continuity
+
+The PMC **Infrastructure and continuity work plan** owns the detailed OPS-001–OPS-010 documentation and subsequent live work. Reuse it; documentation completion does not prove live recovery.
+
+- [ ] **OPS-01 · P1:** Verify backup coverage/freshness, failure alert delivery, recovery access and ownership. Prepare measurable acceptance evidence for gaps.
+- [ ] **OPS-02 · P1:** Conduct authorized isolated application/mail/full-service recovery exercises; record RPO/RTO, dependency order, rollback and reproducible server construction.
+- [ ] **OPS-03 · P2:** Review released Web Vitals only after minimum sample thresholds; correlate route/device percentiles with controlled measurements. Verify alert routing and job/email latency coverage.
+- [ ] **OPS-04 · P1:** Maintain exact-build deployment/rollback and CDN dependency contracts. Production, provider, credential, backup-policy, DNS and database mutations follow their established approval scope.
+  - **OPS-04c · P1 · Closed · Codex · #952 / merged #953:** Atomic root-state receipt, installed changed-pin checks and read-only legacy-system adoption replace checkout-based skip. Exact-head CI1,510 passed/327 skipped; reviewed installed entrypoint and canonical receipt verified after production workflow39755861797 attempt3 succeeded at8e6f0e2b. Unrelated legacy drift preserved/reported; previous entrypoint recoverably backed up. No full venv migration or broader drift-reconciliation acceptance is claimed.
+  - **OPS-04b · P1 · Merged · Codex · #942 CI prerequisite:** MongoDB 8 rejected Ubuntu 24 runner kernel 7.0.0 in failed run `39733692011`. Ubuntu 22 test host retains MongoDB 8, Python 3.12 and all service/suite gates; exact #942 head `85481260` required CI `39735041525` then succeeded before merge `a5f256b7`. See docs/test-runtime-compatibility.md; re-evaluate before Ubuntu 22 retirement on 2027-04-17. No production OS/database change or ignored compatibility check. Later #962/#964 30-minute stalls are a separate #969 investigation, not evidence this kernel failure recurred.
+  - **OPS-04a · P1 · Released · Codex · #950 / codex/deploy-cloudflare-health:** Merged as fcb6a295 after required CI and completed local review. Automatic production run 39732901474 verified that exact origin SHA, then successfully warned on the real public Cloudflare 403 challenge. Direct post-deploy socket check also reports active/status:ok at fcb6a295. Public reachability is not proven by the warning. All 40 focused tests pass; ordinary errors, stale SHA and unverified origin still fail. No WAF/TLS/auth weakening or server configuration edits.
+
+### Privacy and audit architecture
+
+- [ ] **PRIV-01 · P1:** Produce a reviewed canonical audit schema and migration plan for every source in TODO.md; UTC, stable identity/correlation, outcomes, field allowlists and centralized redaction.
+- [ ] **PRIV-02 · P1:** Implement observability for audit delivery, tamper evidence, cross-source investigation permissions and retention/deletion/export rules in separate reviewed batches.
+- [ ] **PRIV-03 · P1:** Resolve #596 with the responsible privacy/legal owner; data-flow/consent/retention and backup policies need human policy review as well as technical tests.
+
+### Return visits and email subscriptions
+
+- [ ] **FUND-01 · P2 · Implementation complete; official details pending · Codex:** Fill-in-ready `/keräys` page for the planned €2,500 awareness campaign: official-detail placeholders, one JSON configuration, two MobilePay-link slots, optional header promotion and updated existing `/kampanja/` copy. Volunteer roles, confirmation guidance, accessible request feedback and JavaScript-disabled signup safeguards are implemented. Campaign/fundraising pages and the volunteer API require login by default until the authorized campaign-admin publication button is pressed; publication can be withdrawn and does not activate donations. Proposed 15.11.2026–15.2.2027 dates remain unconfirmed; planned 10.11 notification is not a completed filing. Donations remain closed until complete verified details, explicit activation and the valid period. Confirm MobilePay product suitability before publishing links. Server-rendered content/sitemap support the existing separate DR mirror; live date gating does not update a stale snapshot. See `docs/fundraising-page.md`. No deployment or actual payment acceptance claimed.
+
+Owner request added 2026-10-24. Schedule these P2 product workflows after the
+current P1 reliability/security work; recording them does not authorize a mailing
+or automatically subscribe existing accounts.
+
+- [ ] **ENGAGE-01 · P2 · Backlog · Unassigned · M4/M5:** A useful, optional **newsletter** that brings people back to the site with relevant upcoming demonstrations and service updates.
+  - **Existing foundations:** account settings already expose `user_settings.subscribe_newsletter` through `settings_api_v2()` in `users/BPs/auth.py`; the campaign page has an external mailing-list signup. `scripts/newsletter.py` is a legacy prototype: it currently selects global admins, materializes approved demos, and invokes sending at import. Inspect these paths without importing/executing the script; none proves an operating subscriber newsletter. Reconcile the existing settings and mailing-list provider instead of creating competing subscription registries.
+  - **Ready / scope decisions:** choose the initial audience and cadence (weekly is a candidate, not a decided setting), editorial ownership, and whether city/topic preferences or guest subscriptions belong in the first release. Define how an existing opt-in maps to the chosen provider and how opt-out propagates. Reuse the confirmed account email; never infer consent from account creation, admin role or notification preferences.
+  - **Delivery slices:** (1) shared, accessible subscription/preferences and confirmation/unsubscribe lifecycle; (2) localized responsive email template with a concise upcoming-events selection and canonical links; (3) bounded scheduling on the existing email queue, preview/test-recipient mode and an explicitly authorized first campaign. Recheck public visibility/approval/cancellation and nearest relevant recurring occurrence when composing; do not promote stale/hidden events or bearer edit links. No import-time sending or full-database materialization.
+  - **Acceptance:** the user can knowingly subscribe, inspect/change preferences and unsubscribe easily; unsubscribe/suppression is rechecked before sending, including already queued campaigns. Retries do not send duplicate editions; bounce/complaint suppression, failure visibility, recipient data minimization and authorized campaign controls are defined. Agree aggregate delivery/return-visit measures without assuming tracking pixels or person-level profiling.
+  - **Validation:** individually review existing subscription tests and each new test in `docs/test-review-inventory.md`; cover preference persistence, no default opt-in, confirmation/unsubscribe replay/expiry, queued opt-out, duplicate workers/retries, recipient isolation, safe content selection/links and actual FI/EN/SV template rendering. Inspect representative mobile email layouts. Mocked mail is not live provider acceptance; use authorized test recipients before release. Dependencies: DATA-04 delivery recovery, existing settings/provider reconciliation and sender/domain readiness.
+
+- [ ] **ENGAGE-02 · P2 · Backlog · Unassigned · M2/M4:** Optional **email summaries of a user's own notifications**, so useful unread activity can bring them back without a separate email for every notification.
+  - **Ready / behavior:** inventory existing in-app notifications and immediate emails first. Define eligible notification types, unread/new-since-last-summary semantics and a user-controlled cadence (off/daily/weekly candidates). Keep this distinct from ENGAGE-01 marketing/newsletter opt-in. Security/account-critical and time-sensitive transactional messages retain their own policy; a digest must not delay them or automatically duplicate an immediate email.
+  - **Delivery:** use existing notification records, recipient identity and email queue. Recheck active account, current resource permissions, notification existence/read state and current preferences at composition/send. Aggregate a bounded number into one localized summary with safe authenticated deep links; restricted admin content must not leak into the subject, previews or another recipient's message. Define overflow/count copy instead of producing an unbounded email.
+  - **Acceptance:** no empty digests, repeated already-covered items or catch-up flood after downtime; a durable recipient/window cursor advances only according to confirmed queue/delivery semantics. Document uncertain delivery and retry behavior rather than promising unsupported exactly-once email. Users can change frequency or disable these summaries separately from newsletters; queued messages respect that change. Batch/rate limits and visible failures reuse DATA-04, not another sender/worker framework.
+  - **Validation:** individually assessed tests for independent preferences, unread/seen cutoffs, stable ordering/count bounds, missed runs, concurrent claims/retries, read/deleted notifications, revoked access, disabled accounts and opt-out after enqueue. Verify correct recipient/locale, no private subject/snippet leaks, no duplicate immediate-mail/digest behavior and mobile templates with keyboard-accessible preference controls. Real SMTP/provider acceptance remains a separate release gate. Dependencies: existing notification-type audit, DATA-04, permission-scoped reads and agreed digest cadence.
+
+### Maintenance
+
+- [ ] **CLEAN-01 · P3:** Inventory references before removing orphan `list_legacy.html`, template `submit.css` and tracked backups; revalidate against current main.
+- [ ] **CLEAN-02 · P2:** Consolidate legacy palettes and shared hero geometry incrementally. Do not move all inline CSS into one unstructured stylesheet.
+- [ ] **CLEAN-03 · P2:** Reconcile open dependency PRs with compatibility/security evidence; retire stale branches/PRs only with the appropriate authority.
+- [ ] **CLEAN-04 · P2:** Keep a finite exception list for dynamic styles/variables and an enforceable CSS/asset-cache contract.
+
+## Test-by-test review programme
+
+**Every existing test must receive a review entry**, including parametrized variants and tests added while work continues. This is a review of meaningful protection, not a demand to add a test for every function (#174) or to delete inconvenient failures.
+
+The baseline [individual review inventory](docs/test-review-inventory.md) contained **997 test definitions across 140 Python test files**. Current main `d87c1e57` contains **1,229 definitions across 168 files / 337 assessed**, including #955/#956 and #958. Independent open branches add further reviews/tests; retain their individual records on integration rather than adding branch totals together (their baselines overlap). These are tracked-Python AST counts, not collected cases, full review completion or live release acceptance. The two test-named fixtures are excluded and assessed separately. Audit fixtures, CI, standalone scripts and browser harnesses too.
+
+For each test, record:
+
+| Field | Required review evidence |
+|---|---|
+| Requirement | The user behavior/security/data invariant and issue or contract it protects. |
+| Setup | Fixture realism, database/session/role state, dependencies and whether mocks erase the behavior being claimed. |
+| Assertion quality | What fails if the behavior breaks; check real outcome/state, not only source text, a loose status-code range or mirrored implementation. |
+| Cases | Parametrized variants, positive/negative paths, scope boundaries, cancellation/retry/concurrency and locale/theme/device where applicable. |
+| Reliability | Isolation, deterministic time/data/order, cleanup, skipped cases, external network assumptions and flakiness. |
+| Disposition | Keep; strengthen; merge duplicate; retire obsolete with reason; or blocked with exact dependency. |
+| Evidence | Reviewer/date, revision, relevant node IDs, observed run result and linked fix PR when needed. |
+
+Leave a checkbox unchecked until that evidence exists. A passing run alone does not satisfy review. Static guards can prevent structural regressions but cannot prove visual quality, authorization or runtime correctness.
+
+Review order:
+
+1. **QA-01 · P1 — security:** login/MFA/passkeys, fresh step-up, tokens, role/scope/anonymous/banned access, unsafe input/output.
+2. **QA-02 · P1 — data and workflows:** demo approval/recurrence/pagination, organizations/invites/cases, submissions/drafts/imports, mail/jobs/analytics.
+3. **QA-03 · P2 — shared UI:** CSS/token/inline-style contracts, public/admin form/list/modal/chrome tests; identify brittle snapshots and missing runtime assertions.
+4. **QA-04 · P2 — localization/accessibility/browser:** FI/EN/SV, keyboard/focus/no-JS, themes, mobile/desktop/zoom, errors/loading/empty/disabled states.
+5. **QA-05 · P2 — operations and remaining tests:** deployment/configuration/integrations/retention/performance and all remaining inventory entries.
+
+These are review-batch priorities, not the severity of every contained test. Escalate a discovered critical/core-workflow gap under the P0/P1 policy immediately. Record the requirement, review status and justified priority for each test; do not mechanically assign priorities from file names.
+
+Run the relevant focused tests after changes. Run the broader required CI suite at integration milestones; do not rerun the whole suite for each documentation or CSS edit. Record unavailable dependencies honestly. Fix substantive gaps in small PRs without weakening valid security or workflow checks.
+
+Test review proceeds beside each delivery batch: review its existing tests before relying on them, record gaps, and strengthen only the evidence the change requires. At each milestone refresh the inventory against current pytest collection, investigate additions/removals and cover tests outside `tests/`. No unchecked test may disappear silently.
+
+## Delivery gates
+
+**Definition of Ready:** the current requirement is verified, an owner and milestone are recorded, dependencies are explicit, the batch is reviewable, and acceptance/validation are agreed.
+
+**Definition of Done:** acceptance criteria are demonstrated; applicable tests and review are complete; CHANGELOG/cache keys/docs are updated as needed; no unresolved blocking review finding remains; merge/release evidence is linked when required. A green check or an open PR alone does not meet this definition.
+
+## Active status ledger
+
+| ID | Priority | Status | Owner | Milestone | Evidence / next action |
+|---|---|---|---|---|---|
+| SEC-01 | P1 | Merged | Codex | M1 | #901 in inspected main `3c2c8d3c`; release acceptance not established here. |
+| QA-01 | P1 | In progress | Codex | M1, then ongoing | #932–#935/#938–#940 add individually reviewed step-up, deletion, redirect, token and moderation protection to the combined inventory. Remaining authentication/permission tests are still unchecked. |
+| QA-01e / SEC-04a/b | P1 | Merged | Codex | M1/M6 | #938–#940 supply decision side-effect tests, deterministic opposite-decision/CAS retry cases and content/MCP preservation regressions. Provider acceptance/crash, rollback and stale-content races remain open. |
+| SEC-02 | P1 | Merged | Codex | M1 | #915/#916/#919 are merged; #763 is closed. Shared status-action visibility, hierarchy checks and duplicate-submit protection are integrated. Runtime translation follow-up #931 and broader release acceptance remain open; merge and issue closure do not establish production acceptance. |
+| SEC-03 | P0/P1 | In progress | Codex | M1 | #918/#917/#919 are merged, including user hierarchy/delegation, global clearance gates and searchable redacted audits. Broader role/audit acceptance remains pending. |
+| QA-02 | P1 | In progress | Codex | M2–M3 | Five API, five request-state, five listing-contract and three URL/history definitions reviewed on this stack. Remaining data/workflow tests pending. |
+| QA-03, QA-05 | P2 | Backlog | Unassigned | M4–M6 | Review shared UI and operations/remaining tests. |
+| QA-04 | P2 | In progress | Codex | M2, then M4–M6 | Two field, four existing accessibility and four real-picker definitions assessed; broader browser/assistive-technology evidence remains pending. |
+| DATA-01 | P1 | In progress | Codex | M2 | #920–#924 and bounded pagination/automatic loading #927–#928 are merged. Broader integration, legacy data and release acceptance remain pending. |
+| UI-01 | P1 | In progress | Codex | M2 | Search labels/picker and #929/#930 cropper/autocomplete are merged in main 6ef40610. Whole-wizard, broader browser/assistive-technology and release acceptance remain pending. |
+| DATA-02 / OPS-01 | P1 | Backlog | Unassigned | M3 | Verify #908 and load the existing continuity plan. |
+| ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |
+| UI-02a | P2 | Merged | Codex | M2/M4 | Footer padding is inside width; card title/address/tag text can wrap. Empty/populated route/theme/viewport and keyboard controls validate this slice; 93 combined cases pass; broader UI-02 acceptance remains open. |
+| UI-02b | P2 | Merged | Codex | M2/M4 | Depends on #936. Shared hero geometry/mobile typography with no fixed-min-width or nowrap conflict; 117 focused cases pass, including 24 actual SSR cases. Wider product acceptance remains open. |
+| UI-06 | P2 | In progress | Codex | M4 | On the standalone React host as of 10 November 2026: home, listings, detail/series, calendar, cities, today, submit, organization profile, information pages (#1040), Pride (#1043), campaign (#1046), fundraising (#1047) and contact (#1048). Remaining public pages and their blockers are listed in `TODO.md`. No-JS fallbacks follow the light-fallback policy in `AGENTS.md` (#1044). |
+| USER-01 | P2 | Released | Codex | M4 | #941 merge build e6383141 verified through public HTTPS and direct origin health probes; service active, existing tracked server overlays preserved. Final CI: 1,370 passed /325 skipped. GitHub deploy public-probe403 failure remains explicitly recorded; no authenticated production visual QA claim. |
+| CITY-01 | P2 | Backlog | Unassigned | M2/M4 | Extend existing city assignment/email/escalation with in-app notification and a shared authoritative dashboard deadline/countdown. Code default24h; deployed setting unverified. Define reset/config-change policy before implementation. |
+| CITY-02 | P1 | Backlog | Unassigned | M2 | Urgent pending-event Telegram alert (<48h, higher urgency <24h proposed) via @mielenosoituksetbot to the owner-named channel; edit the same message after canonical processing. Verify numeric chat ID, permissions, existing external bot, retry/state policy and staging send/edit before release. |
+| DATA-07 | P2 | Backlog | Unassigned | M4 | Multi-day duration, compatible model/forms, ongoing discovery, SEO/calendar exports and explicit recurrence boundaries. Confirm duration semantics before schema/UI implementation. |
+| DATA-04b | P1 | In review | Codex | M2 | #771 dedicated outgoing reply history;107 focused cases pass. Hosted CI/release and broader audit/retention policy remain separate. |
+| CASE-01 | P2 | Backlog | Unassigned | M2/M4 | #976: questions to demonstration submitters from their existing case; reuse scoped conversation/mail infrastructure and define waiting/deadline behavior. |
+| CASE-02 | P2 | Backlog | Unassigned | M2/M4 | #976; depends CASE-01. Private, purpose-bound submitter reply/progress page; no internal notes, moderation privileges or raw-link logging. |
+| ENGAGE-01 | P2 | Backlog | Unassigned | M4/M5 | Optional newsletter for relevant upcoming events/service updates; reconcile existing opt-in/provider, define cadence, unsubscribe and bounded authorized campaigns. |
+| ENGAGE-02 | P2 | Backlog | Unassigned | M2/M4 | Separate optional notification-email digest; define unread/cadence policy, recipient-scoped summaries and safe queue/retry/window behavior. |
+| All other IDs | As assigned above | Backlog | Unassigned | Assign before starting | Verify requirement, dependencies and acceptance before promoting to Ready. |
+
+The repository programme is complete only when each in-scope requirement has evidence, the per-test reviews are recorded, relevant checks pass, trackers match merged state, and release claims have actual deployment evidence. Do not equate this roadmap's creation with completion of the work.
+
+
+### UI-06 status slice — 10 November 2026
+
+Codex: `/status` now has React SSR/hydration, read-only Go `/api/status`, a
+one-second MongoDB ping cached for 60 seconds, and exact GET/HEAD routing prepared.
+Failures keep HTTP 200/noindex. Flask cache and initialized S3-client checks are
+omitted and tracked in TODO. Flask rollback remains intact. No production changes;
+socket smoke tests and independent visual acceptance are BLOCKED in this sandbox.
+
+### UI-06 public React inventory — header slice, 27 October 2026
+
+| Surface | Current owner / state | Remaining regions and next slice |
+| --- | --- | --- |
+| Shared public header/navigation | React components with Flask-derived props and native/Jinja fallback, implemented on `codex/react-site-header`; not merged or deployed | Header only; keep footer and page bodies explicit below. Final source/test/visual evidence belongs to this chat. |
+| Campaign and volunteer confirmation | React page content from merged #989, public Flask shell | Shared footer and final public-shell consolidation remain. |
+| Demonstration discovery (main/city/tag, related variants) | Existing Jinja/static-JS bodies with the shared React header after this slice | Next owner unassigned: inspect current consumer/API behavior, choose initial-content rendering, then reuse cards, filters, feedback and pagination. |
+| Event details and recurring-series selection | Existing Jinja/static-JS bodies with the shared React header after this slice | Next after listings, owner unassigned: reusable metadata/organizers/occurrence selector; preserve canonical URLs, `occurrence` selection, indexability and existing interactions. |
+| Public footer, organizations, submission, accounts/settings, fundraising and other information pages | Existing implementations; some have React header after this slice | Bodies/footer remain open; migrate through their own reviewed slices. Header conversion does not mark those pages complete. |
+| Administration | Existing Flask/Jinja | Outside public frontend migration. |
+
+
+### UI-06 listing slice: 27 October 2026
+
+Owner direction: continue on a stacked branch above #990; use available width,
+avoid unnecessary eyebrows/decorative heroes, group heading/search in a shared
+branded panel, style all-events navigation as a secondary action and preserve
+existing event-card presentation. New UI copy should avoid em dashes.
+
+Main/city/tag listing bodies now use shared React components on
+`codex/react-demonstration-listings`. The existing pagination/history and date/city
+widgets are explicit DOM adapters; their tested five-page/focus/history contracts
+remain. This is a listing slice, not completion of discovery: today/calendar,
+homepage and organization card consumers are still in their current
+implementation. The next selected page family is event details and recurring
+series, including direct occurrence selection and preserved canonical/SEO behavior.
+Merge, deployment and live performance acceptance are still separate.

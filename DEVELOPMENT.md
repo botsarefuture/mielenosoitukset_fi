@@ -1,0 +1,39 @@
+
+# Local development with Docker Compose
+
+Local development depends on following tools:
+- Caddy as reverse proxy and TLS certificate provider (using Caddy's local CA)
+- LocalStack to provide a local non-persistent AWS environment (just S3 for now)
+- Mailpit to provide a local SMTP server and web UI for testing email sending
+
+Configuration for backend is in `config.compose.dev.yaml` and mounted as volume mount to the backend container.
+
+
+## Initial setup
+The following steps will set up the necessary environment for local development:
+
+1. Install Docker and Docker Compose on your machine.
+2. Clone the repository and navigate to the project directory.
+3. You can continue with one of the two ways now:
+    - Run `./start-dev.sh` script which will automate the setup process, including editing the hosts file and starting the services. This is the recommended way for most users.
+    - Follow the manual steps below if you want to have more control over the setup process or if you encounter issues with the script.
+
+4. Edit `/etc/hosts` file to point `miekkari.localhost` to `127.0.0.1` by adding line:
+    ```
+    127.0.0.1	miekkari.localhost
+    ```
+5. Copy `config.compose.dev.example.yaml` to `config.compose.dev.yaml` and edit the configuration values if needed (e.g., AWS credentials for LocalStack, SMTP server settings, etc.).
+    If you just want to run this as development setup, you don't need to change the values.
+
+5. Run the following command to start the necessary services:
+    ```
+    docker compose -f compose.dev.yml up
+    ```
+6. Wait for services to start up. Get root certificate from Caddy and add it to your system's trusted certificates (Caddy will print instructions on how to do this in the terminal, 
+   or check https://caddyserver.com/docs/running#local-https-with-docker) and possibly your browser's trusted certificates as well.
+7. Open your browser to access the application
+ - `https://miekkari.localhost:8443` goes landing page, do submit a demonstration
+ - `http://localhost:8085/` to access Mailpit web UI to inspect emails sent to organizer and admin
+ - `https://miekkari.localhost:8443/admin/demo/` to access the admin interface (TODO: create admin user)
+
+NOTE: most services expose default port, so if you have other services running on those ports, you might need to stop them or change the port mappings in `compose.dev.yml`.

@@ -1,0 +1,173 @@
+"""
+Job definitions used by the background job manager.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List
+
+from mielenosoitukset_fi.scripts.repeat_v2 import main as repeat_main
+from mielenosoitukset_fi.scripts.update_demo_organizers import main as update_main
+from mielenosoitukset_fi.scripts.in_past import hide_past
+from mielenosoitukset_fi.scripts.CL import main as cl_main
+from mielenosoitukset_fi.scripts.preview_image_creator import run as run_preview
+from mielenosoitukset_fi.scripts.send_demo_reminders import main as demo_sche
+from mielenosoitukset_fi.scripts.process_submission_notifications import (
+    run as process_submit_notifications,
+)
+from mielenosoitukset_fi.scripts.process_ui_translation_sync import (
+    run as process_ui_translation_sync,
+)
+from mielenosoitukset_fi.utils.analytics import prep
+from mielenosoitukset_fi.utils.aggregate_analytics import rebuild_demo_analytics
+from mielenosoitukset_fi.scripts.auto_close_cases import main as auto_close_cases
+from mielenosoitukset_fi.scripts.process_support_tickets import main as process_support_tickets
+from mielenosoitukset_fi.scripts.process_email_queue import run as process_email_queue
+from mielenosoitukset_fi.scripts.escalate_city_assignments import main as escalate_city_assignments
+from mielenosoitukset_fi.scripts.process_urgent_review_alerts import run as process_urgent_review_alerts
+
+
+@dataclass(frozen=True)
+class JobDefinition:
+    """Metadata for a background job."""
+
+    key: str
+    name: str
+    description: str
+    func: Callable[[], Any]
+    default_trigger: Dict[str, Any]
+    allow_manual_trigger: bool = True
+    allow_interval_override: bool = True
+
+    def to_document(self) -> Dict[str, Any]:
+        """Return the MongoDB document fragment containing immutable job info."""
+        return {
+            "_id": self.key,
+            "name": self.name,
+            "description": self.description,
+            "trigger": self.default_trigger.get("trigger", "interval"),
+            "trigger_args": self.default_trigger.get("trigger_args", {}),
+            "allow_manual_trigger": self.allow_manual_trigger,
+            "allow_interval_override": self.allow_interval_override,
+        }
+
+
+def _interval(hours: int = 0, minutes: int = 0, days: int = 0) -> Dict[str, Any]:
+    """Build an interval trigger configuration from hours, minutes, and days."""
+    return {"trigger": "interval", "trigger_args": {"hours": hours, "minutes": minutes, "days": days}}
+
+
+JOB_DEFINITIONS: List[JobDefinition] = [
+    JobDefinition(
+        key="process_urgent_review_alerts",
+        name="Urgent demonstration review alerts",
+        description="Reconciles urgent review Telegram messages when explicitly enabled.",
+        func=process_urgent_review_alerts,
+        default_trigger=_interval(minutes=2),
+    ),
+    JobDefinition(
+        key="repeat_main",
+        name="Recurring demonstrations refresher",
+        description="Processes recurring demonstrations and creates child events.",
+        func=repeat_main,
+        default_trigger=_interval(hours=24),
+    ),
+    JobDefinition(
+        key="update_main",
+        name="Organizer metadata updater",
+        description="Refreshes demonstration organizer details.",
+        func=update_main,
+        default_trigger=_interval(hours=1),
+    ),
+    JobDefinition(
+        key="cl_main",
+        name="Cleanup and linking",
+        description="Runs the CL maintenance script.",
+        func=cl_main,
+        default_trigger=_interval(hours=24),
+    ),
+    JobDefinition(
+        key="prep",
+        name="Analytics rollup",
+        description="Aggregates analytics stats for dashboards.",
+        func=prep,
+        default_trigger=_interval(minutes=15),
+    ),
+    JobDefinition(
+        key="rebuild_d_analytics",
+        name="Demo analytics rebuild",
+        description="Recounts d_analytics from the raw analytics events, repairing inflated or stale counters.",
+        func=rebuild_demo_analytics,
+        default_trigger=_interval(days=30),
+    ),
+    JobDefinition(
+        key="run_preview",
+        name="Preview image regeneration",
+        description="Generates fresh preview images for demonstrations.",
+        func=run_preview,
+        default_trigger=_interval(hours=24),
+        allow_interval_override=False,
+    ),
+    JobDefinition(
+        key="demo_sche",
+        name="Demonstration reminder emails",
+        description="Sends reminder emails to subscribers.",
+        func=demo_sche,
+        default_trigger=_interval(hours=24),
+    ),
+    JobDefinition(
+        key="hide_past",
+        name="Past demonstration hider",
+        description="Archives events that have already taken place.",
+        func=hide_past,
+        default_trigger=_interval(hours=24),
+    ),
+    JobDefinition(
+        key="process_submit_notifications",
+        name="New demo notification dispatcher",
+        description="Sends confirmation + admin notification emails for submitted demonstrations.",
+        func=process_submit_notifications,
+        default_trigger=_interval(minutes=5),
+    ),
+    JobDefinition(
+        key="process_ui_translation_sync",
+        name="UI translation Git sync",
+        description="Pushes approved UI translation catalog changes to the configured Git branch/PR flow.",
+        func=process_ui_translation_sync,
+        default_trigger=_interval(minutes=10),
+    ),
+    JobDefinition(
+        key="auto_close_cases",
+        name="Case autoclose (demos/orgs)",
+        description="Closes cases whose linked demos were accepted/rejected/cancelled or org edits are applied.",
+        func=auto_close_cases,
+        default_trigger=_interval(hours=1),
+        allow_interval_override=True,
+    ),
+    JobDefinition(
+        key="process_support_tickets",
+        name="Support ticket ingress (tuki@ mailbox)",
+        description="Polls the tuki@ IMAP mailbox, creates support_ticket cases, sends auto-replies and relays URGENT follow-ups.",
+        func=process_support_tickets,
+        default_trigger=_interval(minutes=1),
+        allow_interval_override=True,
+    ),
+    JobDefinition(
+        key="process_email_queue",
+        name="Email queue drain",
+        description="Drains orphaned queued emails, ensuring delivery even when originating processes terminate.",
+        func=process_email_queue,
+        default_trigger=_interval(minutes=2),
+    ),
+    JobDefinition(
+        key="escalate_city_assignments",
+        name="City assignment escalation (24h)",
+        description="Escalates city-admin assigned demonstrations with no decision within 24 h to the national team.",
+        func=escalate_city_assignments,
+        default_trigger=_interval(minutes=30),
+        allow_interval_override=True,
+    ),
+]
+
+JOB_DEFINITION_MAP: Dict[str, JobDefinition] = {job.key: job for job in JOB_DEFINITIONS}

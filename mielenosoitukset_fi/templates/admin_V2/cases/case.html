@@ -1,0 +1,659 @@
+{% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% block title %}{{ _('Tapaus') }} #{{ case.running_num }}{% endblock %}
+
+{% block main_content %}
+{% set demo = case_data.demo if case_data.demo is defined else {} %}
+{% set submitter = case_data.submitter if case_data.submitter is defined else {} %}
+{% set cancellation = case_data.cancellation if case_data.cancellation is defined else {} %}
+{% set error_report = case_data.error_report if case_data.error_report is defined else {} %}
+{% set organization = case_data.organization if case_data.organization is defined else {} %}
+{% set changes = case_data.changes if case_data.changes is defined else [] %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="case-page admin-page">
+  {{ admin_page_hero(
+    _('Tapaus') ~ ' #' ~ case.running_num,
+    _('Tämä näkymä kokoaa tapauksen tilan, siihen liittyvät tiedot ja käsittelytoimet samaan paikkaan.'),
+    _('Tapaukset'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Tapaukset'), url_for('admin_case.cases')), (_('Tapaus') ~ ' #' ~ case.running_num, none)],
+    back_url=url_for('admin_case.cases'),
+    back_label=_('Tapaukset')
+  ) }}
+  <div class="admin-row-actions admin-case-statuses" aria-label="{{ _('Tapauksen tila') }}">
+    <span class="admin-status-badge"><i class="fa-solid fa-folder"></i>{{ case_data.type_label }}</span>
+    <span class="admin-status-badge admin-status-badge--{{ 'success' if case.meta.closed else 'info' }}">
+      <i class="fa-solid {{ 'fa-circle-check' if case.meta.closed else 'fa-clock' }}"></i>
+      {{ _('Suljettu') if case.meta.closed else _('Avoin') }}
+    </span>
+    {% if case.meta.superior_needed %}
+    <span class="admin-status-badge admin-status-badge--danger"><i class="fa-solid fa-arrow-up-right-dots"></i>{{ _('Eskaloitu') }}</span>
+    {% endif %}
+    {% if demo and demo.status %}
+    <span class="admin-status-badge admin-status-badge--{{ demo.status.tone }}"><i class="fa-solid fa-bullhorn"></i>{{ demo.status.label }}</span>
+    {% endif %}
+  </div>
+
+  <div class="admin-detail-layout">
+    <div class="admin-stack">
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2>{{ _('Tapauksen tiedot') }}</h2></div>
+          {% if demo and demo._id %}
+          <a class="btn btn-outline-primary btn-sm" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}">
+            <i class="fa-solid fa-eye me-1"></i>{{ _('Avaa julkinen sivu') }}
+          </a>
+          {% endif %}
+        </div>
+        <div class="admin-section-card__body admin-stack">
+          {% set support_ticket = case_data.support_ticket if case_data.support_ticket is defined else {} %}
+          {% if case.case_type == "support_ticket" %}
+          <div class="detail-grid">
+            <div class="detail-item"><strong>{{ _('Ilmoittaja') }}</strong><span>{{ case_data.submitter_label }}</span></div>
+            <div class="detail-item"><strong>{{ _('Vastaanotettu') }}</strong><span>{% if support_ticket.received_at %}{{ support_ticket.received_at|datetimeformat("%d.%m.%Y %H:%M") }}{% else %}-{% endif %}</span></div>
+            {% if case_data.urgent %}
+            <div class="detail-item"><strong>{{ _('Kiireellisyys') }}</strong><span class="admin-status-badge admin-status-badge--danger">{{ _('URGENT') }}</span></div>
+            {% endif %}
+            {% if support_ticket.from_wrapper %}
+            <div class="detail-item"><strong>{{ _('Alkupera') }}</strong><span>{{ _('Yhteydenottolomake') }}</span></div>
+            {% endif %}
+          </div>
+          <div class="detail-item">
+            <strong>{{ _('Aihe') }}</strong>
+            <div class="note-box">{{ support_ticket.subject or _('(ei aihetta)') }}</div>
+          </div>
+          <div class="detail-item">
+            <strong>{{ _('Viesti') }}</strong>
+            {% if support_ticket.html_message %}
+            <div class="description-box">{{ support_ticket.html_message|safe }}</div>
+            {% else %}
+            <div class="note-box">{{ support_ticket.message or _('(ei viestia)') }}</div>
+            {% endif %}
+          </div>
+          {% if support_ticket.followups %}
+          <div class="detail-item">
+            <strong>{{ _('Jatkoviestit') }}</strong>
+            <div class="info-list">
+              {% for followup in support_ticket.followups %}
+              <div class="note-box">
+                <div><strong>
+                  <span class="admin-status-badge admin-status-badge--secondary">← {{ _('Saapuva') }}</span>
+                  {{ followup.from_name or followup.from_email }}</strong> <span class="muted">{{ followup.timestamp|datetimeformat("%d.%m.%Y %H:%M") if followup.timestamp else '' }}</span>
+                </div>
+                {% if followup.subject %}<div class="muted">{{ followup.subject }}</div>{% endif %}
+                <div class="admin-message-body">{{ followup.message }}</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          {% if support_ticket.submitter_email %}
+          <div class="detail-item">
+            <strong>{{ _('Vastaa lähettäjälle') }}</strong>
+{% if can_edit_case %}
+            <form method="POST" action="{{ url_for('admin_case.reply_to_ticket', case_id=case._id) }}" class="admin-reply-form">
+              <div class="muted mb-1">{{ support_ticket.submitter_email }}</div>
+              <textarea id="reply_message" name="reply_message" class="form-control" rows="4" required aria-describedby="reply_message_help" placeholder="{{ _('Kirjoita vastaus...') }}"></textarea>
+              <p id="reply_message_help" class="admin-field__help">{{ _('Voit käyttää Markdown-muotoiluja, kuten lihavointia, otsikoita, listoja ja linkkejä.') }}</p>
+              <button type="submit" class="btn btn-sm btn-primary mt-1">{{ _('Lähetä vastaus sähköpostitse') }}</button>
+            </form>
+{% endif %}
+          </div>
+          {% endif %}
+          <div class="detail-item">
+            <strong>{{ _('Liitetyt toimenpiteet') }}</strong>
+            <div class="admin-linked-actions">
+              {% if case_data.demo %}
+              <div class="note-box">
+                <div>
+                  <span class="admin-status-badge admin-status-badge--info">Demo</span>
+                  {% if case_data.demo.title %}<strong>{{ case_data.demo.title }}</strong>{% endif %}
+                  {% if case_data.demo.city %}<span class="muted">({{ case_data.demo.city }})</span>{% endif %}
+                </div>
+                {% if case_data.demo._id %}
+                <a class="btn btn-sm btn-outline-primary mt-1" href="{{ url_for('admin_demo.demo_command_center', demo_id=case_data.demo._id) }}" target="_blank" rel="noopener noreferrer">{{ _('Avaa hallintapaneelissa') }}</a>
+                {% endif %}
+{% if global_case_controls %}
+                <form method="POST" action="{{ url_for('admin_case.unlink_demo', case_id=case._id) }}" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-outline-danger mt-1">{{ _('Poista linkki') }}</button>
+                </form>
+{% endif %}
+              </div>
+              {% else %}
+              <div class="note-box">
+{% if can_edit_case %}
+                <form method="POST" action="{{ url_for('admin_case.link_demo', case_id=case._id) }}" class="admin-link-form" data-link-type="demo">
+                  <label class="muted">{{ _('Liitä olemassa oleva mielenosoitus') }}</label>
+                  <div class="admin-link-search">
+                    <input type="text" name="demo_search" class="form-control" placeholder="{{ _('Hae otsikolla...') }}" autocomplete="off" data-search-type="demo" />
+                    <input type="hidden" name="demo_id" />
+                    <button type="submit" class="btn btn-sm btn-primary" disabled>{{ _('Liitä') }}</button>
+                  </div>
+                  <div class="admin-link-results"></div>
+                </form>
+{% endif %}
+              </div>
+              {% endif %}
+
+              {% if case_data.organization %}
+              <div class="note-box">
+                <div>
+                  <span class="admin-status-badge admin-status-badge--info">Org</span>
+                  <strong>{{ case_data.organization.name }}</strong>
+                </div>
+{% if global_case_controls %}
+                <form method="POST" action="{{ url_for('admin_case.unlink_org', case_id=case._id) }}" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-outline-danger mt-1">{{ _('Poista linkki') }}</button>
+                </form>
+{% endif %}
+              </div>
+              {% else %}
+              <div class="note-box">
+{% if global_case_controls %}
+                <form method="POST" action="{{ url_for('admin_case.link_org', case_id=case._id) }}" class="admin-link-form" data-link-type="org">
+                  <label class="muted">{{ _('Liitä olemassa oleva organisaatio') }}</label>
+                  <div class="admin-link-search">
+                    <input type="text" name="org_search" class="form-control" placeholder="{{ _('Hae nimellä...') }}" autocomplete="off" data-search-type="org" />
+                    <input type="hidden" name="organization_id" />
+                    <button type="submit" class="btn btn-sm btn-primary" disabled>{{ _('Liitä') }}</button>
+                  </div>
+                  <div class="admin-link-results"></div>
+                </form>
+{% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% elif case.case_type == "new_demo" %}
+          <div class="detail-grid">
+            <div class="detail-item"><strong>{{ _('Otsikko') }}</strong><span>{{ demo.title or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Paivamaara') }}</strong><span>{{ demo.date or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Alkamisaika') }}</strong><span>{{ demo.start_time or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Paattymisaika') }}</strong><span>{{ demo.end_time or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Kaupunki') }}</strong><span>{{ demo.city or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Osoite') }}</strong><span>{{ demo.address or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Tapahtumatyyppi') }}</strong><span>{{ demo.event_type or demo.type or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Facebook') }}</strong>{% if demo.facebook %}<a href="{{ demo.facebook }}" target="_blank" rel="noopener noreferrer">{{ demo.facebook }}</a>{% else %}<span>-</span>{% endif %}</div>
+          </div>
+
+          {% if demo.route %}
+          <div class="detail-item">
+            <strong>{{ _('Reitti') }}</strong>
+            <div class="pill-list">
+              {% for point in demo.route %}
+              <span>{{ point }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          {% if demo.tags %}
+          <div class="detail-item">
+            <strong>{{ _('Tunnisteet') }}</strong>
+            <div class="pill-list">
+              {% for tag in demo.tags %}
+              <span>#{{ tag }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="detail-item">
+            <strong>{{ _('Kuvaus') }}</strong>
+            <div class="description-box">{{ (demo.description or _('Ei kuvausta'))|safe }}</div>
+          </div>
+
+          {% if demo.organizers %}
+          <div class="detail-item">
+            <strong>{{ _('Jarjestajat') }}</strong>
+            <div class="info-list">
+              {% for org in demo.organizers %}
+              <div class="note-box">
+                <div><strong>{{ org.name or _('Nimeton jarjestaja') }}</strong></div>
+                {% if org.email %}<div class="muted">{{ org.email }}</div>{% endif %}
+                {% if org.website %}<div><a href="{{ org.website }}" target="_blank" rel="noopener noreferrer">{{ org.website }}</a></div>{% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="detail-item">
+            <strong>{{ _('Ilmoittaja') }}</strong>
+            <div class="note-box">
+              <div>{{ submitter.submitter_name or case_data.submitter_label }}</div>
+              {% if submitter.submitter_email %}<div class="muted">{{ submitter.submitter_email }}</div>{% endif %}
+              {% if submitter.submitter_role %}<div class="muted">{{ submitter.submitter_role }}</div>{% endif %}
+              {% if submitter.submitted_at %}<div class="muted">{{ _('Lahetetty') }}: {{ submitter.submitted_at }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="admin-row-actions">
+{% if global_case_controls %}
+            <button class="btn btn-success" type="button" onclick="sendDemoAction('accept')" {% if case.meta.superior_needed and current_user.role != 'global_admin' %}disabled{% endif %}>
+              <i class="fa-solid fa-check me-1"></i>{{ _('Hyvaksy mielenosoitus') }}
+            </button>
+{% endif %}
+{% if global_case_controls %}
+            <button class="btn btn-danger" type="button" onclick="rejectDemo()" {% if case.meta.superior_needed and current_user.role != 'global_admin' %}disabled{% endif %}>
+              <i class="fa-solid fa-xmark me-1"></i>{{ _('Hylkaa mielenosoitus') }}
+            </button>
+{% endif %}
+            {% if not case.meta.superior_needed %}
+{% if global_case_controls %}
+            <button class="btn btn-secondary" type="button" onclick="escalateDemo()">
+              <i class="fa-solid fa-arrow-up-right-dots me-1"></i>{{ _('Eskaloi esihenkilolle') }}
+            </button>
+{% endif %}
+            {% endif %}
+          </div>
+          {% elif case.case_type in ["demo_cancellation_request", "demo_cancelled"] %}
+          <div class="detail-grid">
+            <div class="detail-item"><strong>{{ _('Mielenosoitus') }}</strong><span>{{ demo.title or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Paivamaara') }}</strong><span>{{ demo.date or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Kaupunki') }}</strong><span>{{ demo.city or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Lahde') }}</strong><span>{{ cancellation.source or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Pyytaja') }}</strong><span>{{ cancellation.requested_by.email if cancellation.requested_by and cancellation.requested_by.email else case_data.submitter_label }}</span></div>
+            <div class="detail-item"><strong>{{ _('Pyynto vastaanotettu') }}</strong><span>{% if cancellation.requested_at %}{{ cancellation.requested_at|datetimeformat("%d.%m.%Y %H:%M") }}{% else %}-{% endif %}</span></div>
+          </div>
+          <div class="detail-item">
+            <strong>{{ _('Peruutuksen syy') }}</strong>
+            <div class="note-box">{{ cancellation.reason or _('Ei syyta annettu') }}</div>
+          </div>
+          {% if not cancellation.cancelled %}
+          <div class="admin-row-actions">
+{% if global_case_controls %}
+            <button class="btn btn-danger" type="button" onclick="approveCancellation()">
+              <i class="fa-solid fa-ban me-1"></i>{{ _('Hyvaksy peruutus') }}
+            </button>
+{% endif %}
+          </div>
+          {% endif %}
+          {% elif case.case_type == "demo_error_report" %}
+          <div class="detail-grid">
+            <div class="detail-item"><strong>{{ _('Liittyva mielenosoitus') }}</strong><span>{{ demo.title or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Raportoija') }}</strong><span>{{ error_report.user or _('Anonyymi') }}</span></div>
+            <div class="detail-item"><strong>{{ _('IP') }}</strong><span>{{ error_report.ip or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Aikaleima') }}</strong><span>{% if error_report.date %}{{ error_report.date }}{% else %}-{% endif %}</span></div>
+          </div>
+          <div class="detail-item">
+            <strong>{{ _('Virheilmoituksen sisalto') }}</strong>
+            <div class="note-box">{{ error_report.error or _('Ei sisaltoa') }}</div>
+          </div>
+          {% elif case.case_type == "organization_edit_suggestion" %}
+          <div class="detail-grid">
+            <div class="detail-item"><strong>{{ _('Organisaatio') }}</strong><span>{{ organization.name or '-' }}</span></div>
+            <div class="detail-item"><strong>{{ _('Ilmoittaja') }}</strong><span>{{ case_data.submitter_label }}</span></div>
+          </div>
+          <div class="detail-item">
+            <strong>{{ _('Ehdotetut muutokset') }}</strong>
+            {% if changes %}
+            <div class="change-list">
+              {% for change in changes %}
+              <div class="change-entry">
+                <strong>{{ change.field }}</strong>
+                <div class="before">{{ _('Nykyinen') }}: {{ change.old or _('Ei arvoa') }}</div>
+                <div class="after">{{ _('Ehdotettu') }}: {{ change.new or _('Ei arvoa') }}</div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">{{ _('Ei muutoksia vertailtavaksi.') }}</div>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="empty-state">{{ _('Talle tapaukselle ei ole viela omaa tarkempaa esitystapaa.') }}</div>
+          {% endif %}
+        </div>
+      </section>
+
+      {% if case.case_type == "support_ticket" %}
+      <section class="admin-section-card" id="outgoing-replies" aria-labelledby="outgoing-replies-heading">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2 id="outgoing-replies-heading">{{ _('Lähetetyt vastaukset') }}</h2></div>
+          <span class="admin-status-badge">{{ case_data.support_ticket.outgoing_replies|length }}</span>
+        </div>
+        <div class="admin-section-card__body admin-stack">
+          {% for reply in case_data.support_ticket.outgoing_replies %}
+          <article class="note-box admin-stack">
+            <div class="admin-row-actions">
+              {% if reply.status == 'sent' %}
+              <span class="admin-status-badge admin-status-badge--success">{{ _('Lähetetty') }}</span>
+              {% elif reply.status == 'failed' %}
+              <span class="admin-status-badge admin-status-badge--danger">{{ _('Epäonnistui') }}</span>
+              {% elif reply.status == 'queued' %}
+              <span class="admin-status-badge admin-status-badge--warning">{{ _('Jonossa') }}</span>
+              {% else %}
+              <span class="admin-status-badge">{{ _('Ei tiedossa') }}</span>
+              {% endif %}
+            </div>
+            <dl class="admin-message-meta">
+              <div><dt>{{ _('Lähettäjä') }}</dt><dd>{{ reply.from_name or reply.from_email or _('Ei tiedossa') }}</dd></div>
+              <div><dt>{{ _('Vastaanottaja') }}</dt><dd>{{ reply.to_email or _('Ei tiedossa') }}</dd></div>
+              <div><dt>{{ _('Lisätty jonoon') }}</dt><dd>{{ reply.timestamp|datetimeformat("%d.%m.%Y %H:%M") if reply.timestamp else _('Ei tiedossa') }}</dd></div>
+              {% if reply.sent_at %}<div><dt>{{ _('Lähetetty') }}</dt><dd>{{ reply.sent_at|datetimeformat("%d.%m.%Y %H:%M") }}</dd></div>{% endif %}
+            </dl>
+            {% if reply.subject %}<p class="fw-semibold mb-0">{{ reply.subject }}</p>{% endif %}
+            <div class="admin-message-body">{{ reply.message or '' }}</div>
+          </article>
+          {% else %}
+          <div class="admin-empty-state">{{ _('Ei vielä vastauksia.') }}</div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2>{{ _('Sisaiset muistiinpanot') }}</h2></div>
+        </div>
+        <div class="admin-section-card__body">
+{% if can_edit_case %}
+          <form class="form-stack admin-stack" method="POST" action="{{ url_for('admin_case.add_action', case_id=case._id) }}">
+            <label>
+              {{ _('Merkinnan tyyppi') }}
+              <select name="action_type">
+                <option value="note">{{ _('Muistiinpano') }}</option>
+                <option value="follow_up">{{ _('Seurantatoimi') }}</option>
+                <option value="contacted">{{ _('Oltu yhteydessa') }}</option>
+              </select>
+            </label>
+            <label>
+              {{ _('Sisalto') }}
+              <textarea name="reason" placeholder="{{ _('Kirjoita mita tehtiin tai mita seuraavaksi tarvitaan...') }}"></textarea>
+            </label>
+            <div>
+              <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-plus me-1"></i>{{ _('Lisaa merkinta') }}
+              </button>
+            </div>
+          </form>
+{% endif %}
+        </div>
+      </section>
+    </div>
+
+    <aside class="admin-stack">
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2>{{ _('Tapausstatus') }}</h2></div>
+        </div>
+        <div class="admin-section-card__body admin-stack">
+          <div class="detail-grid single">
+            <div class="detail-item"><strong>{{ _('Tilanne') }}</strong><span>{{ _('Suljettu') if case.meta.closed else _('Avoin') }}</span></div>
+            <div class="detail-item"><strong>{{ _('Luotu') }}</strong><span>{{ case.created_at|datetimeformat("%d.%m.%Y %H:%M") }}</span></div>
+            <div class="detail-item"><strong>{{ _('Paivitetty') }}</strong><span>{{ case.updated_at|datetimeformat("%d.%m.%Y %H:%M") }}</span></div>
+            <div class="detail-item"><strong>{{ _('Ilmoittaja') }}</strong><span>{{ case_data.submitter_label }}</span></div>
+            {% if case.meta.closed_reason %}
+            <div class="detail-item"><strong>{{ _('Sulkemisen syy') }}</strong><span>{{ case.meta.closed_reason }}</span></div>
+            {% endif %}
+          </div>
+          <div class="admin-row-actions">
+{% if can_edit_case %}
+            <button class="btn btn-outline-secondary" type="button" onclick="promptCaseAction('close')" {% if case.meta.closed %}disabled{% endif %}>
+              <i class="fa-solid fa-folder-closed me-1"></i>{{ _('Sulje tapaus') }}
+            </button>
+{% endif %}
+{% if can_edit_case %}
+            <button class="btn btn-outline-secondary" type="button" onclick="promptCaseAction('reopen')" {% if not case.meta.closed %}disabled{% endif %}>
+              <i class="fa-solid fa-folder-open me-1"></i>{{ _('Avaa uudelleen') }}
+            </button>
+{% endif %}
+            {% if case.meta.superior_needed and current_user.role == "global_admin" %}
+{% if global_case_controls %}
+            <button class="btn btn-outline-primary" type="button" onclick="deescalateCase()">
+              <i class="fa-solid fa-arrow-down me-1"></i>{{ _('Poista eskalointi') }}
+            </button>
+{% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2>{{ _('Toimintaloki') }}</h2></div>
+        </div>
+        <div class="admin-section-card__body admin-stack">
+          {% if case.action_logs %}
+          <div class="log-list">
+            {% for log in case.action_logs|reverse %}
+            <div class="log-entry">
+              <div class="log-entry-header">
+                <strong>{{ log.user or log.admin or _('Jarjestelma') }}</strong>
+                <span class="muted">{{ log.timestamp|datetimeformat("%d.%m.%Y %H:%M") if log.timestamp else '-' }}</span>
+              </div>
+              {% if log.action_type %}<div class="muted">{{ log.action_type }}</div>{% endif %}
+              <div>{{ log.reason or log.note or _('Ei lisatietoja') }}</div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="empty-state">{{ _('Ei viela merkintoja.') }}</div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="admin-section-card">
+        <div class="admin-section-card__header">
+          <div class="admin-section-card__title"><h2>{{ _('Tapahtumahistoria') }}</h2></div>
+        </div>
+        <div class="admin-section-card__body admin-stack">
+          {% if case.case_history %}
+          <div class="timeline-list">
+            {% for event in case.case_history|reverse %}
+            <div class="timeline-entry">
+              <div class="timeline-entry-header">
+                <strong>{{ event.action or _('Tapahtuma') }}</strong>
+                <span class="muted">{{ event.timestamp|datetimeformat("%d.%m.%Y %H:%M") if event.timestamp else '-' }}</span>
+              </div>
+              <div class="muted">{{ event.user or _('Jarjestelma') }}</div>
+              {% if event.metadata and event.metadata.reason %}
+              <div>{{ event.metadata.reason }}</div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="empty-state">{{ _('Ei tapahtumia.') }}</div>
+          {% endif %}
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const caseId = "{{ case._id }}";
+
+  function promptCaseAction(action) {
+    const title = action === "close" ? "{{ _('Sulje tapaus') }}" : "{{ _('Avaa tapaus uudelleen') }}";
+    Swal.fire({
+      title,
+      input: "textarea",
+      inputLabel: "{{ _('Syy') }}",
+      inputPlaceholder: "{{ _('Kirjoita lyhyt perustelu...') }}",
+      showCancelButton: true,
+      confirmButtonText: "{{ _('Vahvista') }}",
+      cancelButtonText: "{{ _('Peruuta') }}",
+      preConfirm: (reason) => {
+        if (!reason || !reason.trim()) {
+          Swal.showValidationMessage("{{ _('Syy on pakollinen.') }}");
+        }
+        return reason;
+      },
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      fetch(`/admin/case/${caseId}/${action}/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: result.value }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            location.reload();
+            return;
+          }
+          Swal.fire("{{ _('Virhe') }}", data.error || "{{ _('Tapausta ei voitu paivittaa.') }}", "error");
+        })
+        .catch(() => Swal.fire("{{ _('Virhe') }}", "{{ _('Tapahtui odottamaton virhe.') }}", "error"));
+    });
+  }
+
+  function sendDemoAction(action, reason = "") {
+    fetch(`/admin/case/${caseId}/demo_action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, reason }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          location.reload();
+          return;
+        }
+        Swal.fire("{{ _('Virhe') }}", data.error || "{{ _('Demoa ei voitu paivittaa.') }}", "error");
+      })
+      .catch(() => Swal.fire("{{ _('Virhe') }}", "{{ _('Tapahtui odottamaton virhe.') }}", "error"));
+  }
+
+  function rejectDemo() {
+    Swal.fire({
+      title: "{{ _('Hylkaa mielenosoitus') }}",
+      input: "textarea",
+      inputLabel: "{{ _('Syy hylkaykselle') }}",
+      inputPlaceholder: "{{ _('Kirjoita perustelu hylkaykselle...') }}",
+      showCancelButton: true,
+      confirmButtonText: "{{ _('Hylkaa') }}",
+      cancelButtonText: "{{ _('Peruuta') }}",
+      preConfirm: (reason) => {
+        if (!reason || !reason.trim()) {
+          Swal.showValidationMessage("{{ _('Syy on pakollinen.') }}");
+        }
+        return reason;
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        sendDemoAction("reject", result.value);
+      }
+    });
+  }
+
+  function approveCancellation() {
+    Swal.fire({
+      title: "{{ _('Hyvaksy peruutus') }}",
+      input: "textarea",
+      inputLabel: "{{ _('Sisainen perustelu') }}",
+      inputPlaceholder: "{{ _('Valinnainen lisatieto...') }}",
+      showCancelButton: true,
+      confirmButtonText: "{{ _('Hyvaksy') }}",
+      cancelButtonText: "{{ _('Peruuta') }}",
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      fetch(`/admin/case/${caseId}/approve_cancellation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: result.value || "" }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            location.reload();
+            return;
+          }
+          Swal.fire("{{ _('Virhe') }}", data.error || "{{ _('Peruutusta ei voitu kasitella.') }}", "error");
+        })
+        .catch(() => Swal.fire("{{ _('Virhe') }}", "{{ _('Tapahtui odottamaton virhe.') }}", "error"));
+    });
+  }
+
+  function escalateDemo() {
+    fetch(`/admin/case/${caseId}/demo_escalate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          location.reload();
+          return;
+        }
+        Swal.fire("{{ _('Virhe') }}", data.error || "{{ _('Eskalointi ei onnistunut.') }}", "error");
+      })
+      .catch(() => Swal.fire("{{ _('Virhe') }}", "{{ _('Tapahtui odottamaton virhe.') }}", "error"));
+  }
+
+  function deescalateCase() {
+    fetch(`/admin/case/${caseId}/deescalate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          location.reload();
+          return;
+        }
+        Swal.fire("{{ _('Virhe') }}", data.error || "{{ _('Eskaloinnin poisto ei onnistunut.') }}", "error");
+      })
+      .catch(() => Swal.fire("{{ _('Virhe') }}", "{{ _('Tapahtui odottamaton virhe.') }}", "error"));
+  }
+
+  // ---- Link support ticket to demo / organization (autocomplete) ----
+  document.querySelectorAll(".admin-link-form").forEach((form) => {
+    const searchInput = form.querySelector("input[data-search-type]");
+    const hiddenInput = form.querySelector("input[type='hidden']");
+    const submitBtn = form.querySelector("button[type='submit']");
+    const resultsBox = form.querySelector(".admin-link-results");
+    let selected = null;
+    let debounceTimer = null;
+
+    function renderResults(items) {
+      resultsBox.innerHTML = "";
+      if (!items.length) {
+        resultsBox.innerHTML = `<div class="muted">{{ _('Ei tuloksia.') }}</div>`;
+        return;
+      }
+      items.forEach((item) => {
+        const el = document.createElement("div");
+        el.className = "admin-link-result";
+        el.tabIndex = 0;
+        const label = item.title || item.name || "";
+        const extra = item.city ? ` <span class="muted">(${item.city})</span>` : (item.cancelled ? ` <span class="muted">(${item.cancelled ? '{{ _('peruttu') }}' : ''})</span>` : "");
+        el.innerHTML = `<strong>${label}</strong>${extra}`;
+        el.addEventListener("click", () => {
+          selected = item;
+          hiddenInput.value = item.id;
+          searchInput.value = label;
+          resultsBox.innerHTML = "";
+          submitBtn.disabled = false;
+        });
+        el.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") { el.click(); e.preventDefault(); }
+        });
+        resultsBox.appendChild(el);
+      });
+    }
+
+    searchInput.addEventListener("input", () => {
+      submitBtn.disabled = true;
+      hiddenInput.value = "";
+      selected = null;
+      const q = searchInput.value.trim();
+      if (q.length < 2) { resultsBox.innerHTML = ""; return; }
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const type = searchInput.dataset.searchType;
+        fetch(`/admin/case/${type === "org" ? "org_search" : "demo_search"}/?q=${encodeURIComponent(q)}`)
+          .then((res) => res.json())
+          .then(renderResults)
+          .catch(() => { resultsBox.innerHTML = `<div class="muted">{{ _('Haku epaonnistui.') }}</div>`; });
+      }, 250);
+    });
+  });
+</script>
+{% endblock %}

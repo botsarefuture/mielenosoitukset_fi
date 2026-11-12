@@ -1,24 +1,42 @@
-from flask import current_app, jsonify, redirect, request, Blueprint, url_for
+from copy import deepcopy
+from flask import current_app, jsonify, redirect, request, Blueprint, url_for, session
+import re
 from bson.objectid import ObjectId
-from datetime import datetime
+from mielenosoitukset_fi.utils.time_utils import utcnow
+from datetime import datetime, timedelta
+from flask_caching import Cache
 from flask_cors import CORS
 from functools import wraps
+from flask_babel import get_locale
 
 from flask_login import current_user, login_required
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.users.BPs.chat_ws import serialize_message
 from mielenosoitukset_fi.utils.classes import Demonstration
 from mielenosoitukset_fi.utils.database import stringify_object_ids
+from mielenosoitukset_fi.utils.public_pagination import (
+    PUBLIC_DEMONSTRATION_ORDER, public_page_args, public_page_metadata,
+)
+from mielenosoitukset_fi.utils.notifications import create_notification    # NEW
 from mielenosoitukset_fi.utils.analytics import get_prepped_data
+from mielenosoitukset_fi.utils.demo_localization import (
+    demo_has_tag,
+    demo_matches_search_query,
+    demo_matches_title_query,
+    get_demo_localized_dict,
+)
 from mielenosoitukset_fi.utils.tokens import (
-    TOKENS_COLLECTION,
-    TOKEN_USAGE_LOGS,
+    token_usage_logs_collection,
     token_expired,
     token_renewal_needed,
     create_token,
     check_token
 )
 from mielenosoitukset_fi.api.exceptions import ApiException, Message
+from mielenosoitukset_fi.utils.cache import cache, should_skip_cache
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
+from mielenosoitukset_fi.utils.site_analytics import record_event_for_request
 
 mongo = DatabaseManager().get_instance().get_db()
 api_bp = Blueprint("api", __name__)
@@ -71,12 +89,12 @@ def token_required(required_scopes=None, auto_renew=True):
                     raise ApiException(Message("Insufficient token scope", "token_scope"), 403)
 
             # Log usage
-            TOKEN_USAGE_LOGS.insert_one({
+            token_usage_logs_collection().insert_one({
                 "token_id": token_record["_id"],
                 "timestamp": datetime.now(),
                 "endpoint": request.path,
                 "method": request.method,
-                "ip": request.remote_addr
+                "ip": get_client_ip()
             })
 
             # Attach token record to request
@@ -123,89 +141,341 @@ def _update_likes(demo_id, delta=1):
 # -------------------------
 from urllib.parse import urlencode
 
+import hashlib
+import json
+from flask import request
+
+def make_cache_key(requested_language=None):
+    params = request.args.to_dict(flat=True)
+    page, per_page = public_page_args(request.args)
+    params.update(page=str(page), per_page=str(per_page))
+    params['_resolved_language'] = requested_language or ''
+    # sort keys to make order irrelevant
+    params_str = json.dumps(params, sort_keys=True)
+    # Old unbounded cached payloads must not bypass the new server limit.
+    return "demonstrations:page-v3:" + hashlib.md5(params_str.encode("utf-8")).hexdigest()
+
+
+def _case_insensitive_contains(value):
+    return {"$regex": re.escape(value), "$options": "i"}
+
+
+def _case_insensitive_exact(value):
+    return {"$regex": f"^{re.escape(value)}$", "$options": "i"}
+
+
+def _case_insensitive_exact_pattern(value):
+    return re.compile(f"^{re.escape(value)}$", re.IGNORECASE)
+
+
+def _parse_iso_date_arg(value):
+    raw = str(value or "").strip()
+    if raw and re.match(r"^\d{4}-\d{2}-\d{2}$", raw):
+        return raw
+    return None
+
+
+PUBLIC_DEMONSTRATION_LIST_PROJECTION = {
+    "_id": 1,
+    "title": 1,
+    "description": 1,
+    "default_language": 1,
+    "translations": 1,
+    "date": 1,
+    "formatted_date": 1,
+    "start_time": 1,
+    "end_time": 1,
+    "city": 1,
+    "address": 1,
+    "tags": 1,
+    "cancelled": 1,
+    "cover_picture": 1,
+    "cover_image": 1,
+    "preview_image": 1,
+    "img": 1,
+    "slug": 1,
+    "running_number": 1,
+    "latitude": 1,
+    "longitude": 1,
+    "type": 1,
+    "event_type": 1,
+}
+
+
 @api_bp.route("/demonstrations", methods=["GET"])
-#@token_required(required_scopes=["read"])
+# @token_required(required_scopes=["read"])
 def list_demonstrations():
-    search = request.args.get("search", "").lower()
-    city = request.args.get("city", "").lower()
-    title = request.args.get("title", "").lower()
-    tag = request.args.get("tag", "").lower()
-    recurring = request.args.get("recurring", "").lower()
-    in_past = request.args.get("in_past", "").lower()
-    parent_id = request.args.get("parent_id", "")
-    
-    try:
-        _parent_id = ObjectId(parent_id)
-        
-    except Exception:
-        parent_id = None
-        _parent_id = None
+    """
+    Retrieve a paginated and filterable list of demonstrations.
 
-    # Pagination params
-    try:
-        page = int(request.args.get("page", 1))
-        per_page = int(request.args.get("per_page", 20))
-        if page < 1: page = 1
-        if per_page < 1: per_page = 20
-    except ValueError:
-        page, per_page = 1, 20
+    ---
+    ### 🔍 Query Parameters
 
-    today = datetime.now()
+    - **search** (`str`, optional):  
+      Free text search within the title (case-insensitive).
+
+    - **city** (`str`, optional):  
+      Filter by city name (case-insensitive).
+
+    - **title** (`str`, optional):  
+      Title substring filter (case-insensitive).
+
+    - **tag** (`str`, optional):  
+      Filter by tag (case-insensitive match against the `tags` array).
+
+    - **recurring** (`str`, optional):  
+      Not currently applied; reserved for future use.
+
+    - **in_past** (`bool`, optional, default=`false`):  
+      Include past demonstrations if set to `"true"`.
+
+    - **parent_id** (`str`, optional):  
+      Filter by parent demonstration ID.
+
+    - **organization_id** (`str`, optional):  
+      Filter by organizer organization ID.
+
+    - **include_cancelled** (`bool`, optional, default=`false`):  
+      Include cancelled demonstrations. Automatically enabled when filtering by organization or recurring
+      parent demonstrations.
+
+    - **max_days_till** (`int`, optional):  
+      Include only demonstrations within *N* days from today (inclusive).
+
+    - **page** (`int`, optional, default=`1`):  
+      Pagination page number.
+
+    - **per_page** (`int`, optional, default=`20`):  
+      Number of items per page.
+
+    ---
+    ### 🧾 Returns
+    JSON response:
+    ```json
+    {
+        "page": 1,
+        "per_page": 20,
+        "total": 133,
+        "total_pages": 7,
+        "next_url": "...",
+        "prev_url": null,
+        "results": [ ... list of demonstration objects ... ]
+    }
+    ```
+    """
+
+    # --- Extract & normalize query parameters ---
+    def get_param(name: str, default: str = ""):
+        return request.args.get(name, default).strip().casefold()
+
+    def _requested_language():
+        explicit = (request.args.get("lang") or "").strip().lower()
+        if explicit:
+            return explicit
+        try:
+            locale = str(get_locale() or "").strip().lower()
+            if locale:
+                return locale
+        except Exception:
+            pass
+        return (session.get("locale") or "").strip().lower() or None
+
+    requested_language = _requested_language()
+    include_translations = (
+        request.args.get("include_translations", "").strip().lower() == "true"
+    )
+    cache_key = make_cache_key(requested_language)
+    use_cache = bool(cache) and not should_skip_cache(public_only=False)
+
+    cached_response = cache.get(cache_key) if use_cache else None
+
+    if cached_response:
+        # Preserve analytics even when serving from cache: record first-page
+        # search terms the same way /api/v1/demonstrations does.
+        try:
+            cached_page = max(int(request.args.get("page", 1)), 1)
+        except ValueError:
+            cached_page = 1
+        if cached_page == 1:
+            _search_term = (request.args.get("search") or "").strip()
+            if len(_search_term) >= 2:
+                try:
+                    record_event_for_request("demo_search", resource_id=_search_term[:120])
+                except Exception:
+                    pass
+        response_to_return = deepcopy(cached_response)
+        return jsonify(response_to_return), 200
+
+    search = get_param("search")
+    raw_city = request.args.get("city", "").strip()
+    city_list = [c.strip().casefold() for c in raw_city.split(",") if c.strip()]
+    title = get_param("title")
+    tag = get_param("tag")
+    recurring = get_param("recurring")
+    in_past = get_param("in_past")
+    parent_id = request.args.get("parent_id", "").strip()
+    organization_id = request.args.get("organization_id", "").strip()
+    max_days_till = request.args.get("max_days_till", "").strip()
+    location_query = request.args.get("location", "").strip().casefold()
+    date_start = _parse_iso_date_arg(request.args.get("date_start", ""))
+    date_end = _parse_iso_date_arg(request.args.get("date_end", ""))
+
+    # --- Parse IDs safely ---
+    def safe_objectid(value: str):
+        try:
+            return ObjectId(value)
+        except Exception:
+            return None
+
+    _parent_id = safe_objectid(parent_id)
+    _org_id = safe_objectid(organization_id)
+
+    # --- Parse numeric filters ---
+    max_days = None
+    if max_days_till:
+        try:
+            max_days = max(int(max_days_till), 0)
+        except ValueError:
+            pass
+
+    # --- Pagination ---
+    page, per_page = public_page_args(request.args)
+
+    # --- Prepare date ranges ---
+    today = datetime.now().date()
+    max_date = today + timedelta(days=max_days) if max_days else None
+
+    # --- Base query ---
     from mielenosoitukset_fi.utils.database import DEMO_FILTER
-    query = DEMO_FILTER
+    query = deepcopy(DEMO_FILTER)
+    include_cancelled_param = request.args.get("include_cancelled", "").strip().lower() == "true"
+    include_cancelled = include_cancelled_param or bool(_org_id or _parent_id)
+    if include_cancelled:
+        query.pop("cancelled", None)
+
     if _parent_id:
         query["parent"] = _parent_id
-        
+    if _org_id:
+        query["organizers"] = {"$elemMatch": {"organization_id": _org_id}}
 
-        
-    demos_cursor = mongo.demonstrations.find(query)
+    date_filter = {}
+    if in_past != "true":
+        date_filter["$gte"] = today.isoformat()
+    if max_date:
+        date_filter["$lte"] = max_date.isoformat()
+    if date_filter:
+        query["date"] = date_filter
 
-    filtered = []
-    for demo in demos_cursor:
-        demo_date = datetime.strptime(demo["date"], "%Y-%m-%d")
-        if demo_date >= today or in_past == "true":
-            demo_obj = stringify_object_ids(demo)
-            if (
-                (search in demo_obj["title"].lower() or not search) and
-                (city in demo_obj["city"].lower() or not city) and
-                (title in demo_obj["title"].lower() or not title) and
-                (tag in [t.lower() for t in demo_obj.get("tags", [])] or not tag)# and
-                #(not recurring or str(demo_obj.get("recurs")) == recurring)
-            ):
-                filtered.append(demo_obj)
+    extra_filters = []
+    if search:
+        pattern = _case_insensitive_contains(search)
+        search_or = [
+            {"title": pattern},
+            {"description": pattern},
+            {"tags": pattern},
+            {"address": pattern},
+        ]
+        for locale in (current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"]):
+            search_or.extend([
+                {f"translations.{locale}.title": pattern},
+                {f"translations.{locale}.description": pattern},
+                {f"translations.{locale}.tags": pattern},
+            ])
+        extra_filters.append({"$or": search_or})
+    if title:
+        pattern = _case_insensitive_contains(title)
+        title_or = [{"title": pattern}]
+        for locale in (current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"]):
+            title_or.append({f"translations.{locale}.title": pattern})
+        extra_filters.append({"$or": title_or})
+    if city_list:
+        extra_filters.append({"city": {"$in": [_case_insensitive_exact_pattern(city) for city in city_list]}})
+    if tag:
+        pattern = _case_insensitive_exact(tag)
+        tag_or = [{"tags": pattern}]
+        for locale in (current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"]):
+            tag_or.append({f"translations.{locale}.tags": pattern})
+        extra_filters.append({"$or": tag_or})
+    if location_query:
+        extra_filters.append({"address": _case_insensitive_contains(location_query)})
+    # Mirror /api/v1 semantics: date_start/date_end override the default
+    # today/max_date bounds (but still respect in_past=max preservation for
+    # partial ranges). When both are present we want a single tight `date`
+    # clause, not two competing ones in query["date"] and $and.
+    if date_start and date_end:
+        query["date"] = {"$gte": date_start, "$lte": date_end}
+    elif date_start and not date_end:
+        date_filter["$gte"] = max(date_filter.get("$gte", ""), date_start)
+        if date_filter:
+            query["date"] = date_filter
+    elif date_end and not date_start:
+        date_filter["$lte"] = date_end
+        if date_filter:
+            query["date"] = date_filter
+    if extra_filters:
+        query["$and"] = query.get("$and", []) + extra_filters
 
-    filtered.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"))
+    # --- Pagination slicing ---
+    total = mongo.demonstrations.count_documents(query)
+    total_pages = max((total + per_page - 1) // per_page, 1)
+    paginated = [
+        get_demo_localized_dict(
+            stringify_object_ids(demo),
+            language=requested_language,
+            include_translations=include_translations,
+        )
+        for demo in (
+            mongo.demonstrations.find(query, PUBLIC_DEMONSTRATION_LIST_PROJECTION)
+            .sort(PUBLIC_DEMONSTRATION_ORDER)
+            .skip((page - 1) * per_page)
+            .limit(per_page)
+        )
+    ] if total and page <= total_pages else []
 
-    # Pagination slicing
-    total = len(filtered)
-    start = (page - 1) * per_page
-    end = start + per_page
-    paginated = filtered[start:end]
-
-    total_pages = (total + per_page - 1) // per_page
-
-    # Build base query for URLs
-    query_params = request.args.to_dict(flat=True)
-    query_params.pop("page", None)
-    query_params.pop("per_page", None)
-    base_qs = urlencode(query_params)
-
+    # --- Navigation URLs ---
+    from urllib.parse import urlencode
+    base_params = {k: v for k, v in request.args.items() if k not in ["page", "per_page"]}
+    qs = urlencode(base_params)
     def build_url(p):
         params = f"page={p}&per_page={per_page}"
-        return f"{request.base_url}?{base_qs}&{params}" if base_qs else f"{request.base_url}?{params}"
+        return f"{request.base_url}?{qs}&{params}" if qs else f"{request.base_url}?{params}"
 
     next_url = build_url(page + 1) if page < total_pages else None
     prev_url = build_url(page - 1) if page > 1 else None
 
-    return jsonify({
-        "page": page,
-        "per_page": per_page,
-        "total": total,
-        "total_pages": total_pages,
+    # Record deliberate demo-list searches once per search (first page only —
+    # pagination requests of the same query are not new searches). Mirrors
+    # the /api/v1/demonstrations handler so city-page searches re-enter the
+    # built-in demo_search totals and top-search dashboard.
+    if page == 1:
+        search_term = (request.args.get("search") or "").strip()
+        if len(search_term) >= 2:
+            try:
+                record_event_for_request("demo_search", resource_id=search_term[:120])
+            except Exception:
+                pass
+
+    # --- Response object to cache ---
+    response_data = {
+        **public_page_metadata(page, per_page, total, len(paginated)),
         "next_url": next_url,
         "prev_url": prev_url,
         "results": paginated,
-    }), 200
+        "rendered_at": utcnow().isoformat() + "Z",
+        "cached": True  # mark as cached
+    }
+
+    # --- Cache the response ---
+    if use_cache:
+        cache.set(cache_key, response_data)
+
+    # --- Before returning, make a copy and set cached=False ---
+    response_to_return = deepcopy(response_data)
+    response_to_return["cached"] = False
+
+    return jsonify(response_to_return), 200
+
+
 
 @api_bp.route("/demonstrations/<demo_id>", methods=["GET"])
 @token_required(required_scopes=["read"])
@@ -214,8 +484,25 @@ def get_demonstration(demo_id):
     if not demo:
         raise ApiException(Message("Demonstration not found", "demo_not_found"), 404)
     
+    requested_language = (request.args.get("lang") or "").strip().lower() or None
+    if not requested_language:
+        try:
+            requested_language = str(get_locale() or "").strip().lower() or None
+        except Exception:
+            requested_language = None
+    if not requested_language:
+        requested_language = (session.get("locale") or "").strip().lower() or None
+    include_translations = (
+        request.args.get("include_translations", "").strip().lower() == "true"
+    )
+
     demo_obj = Demonstration.from_dict(demo)
-    return jsonify(stringify_object_ids(demo_obj.to_dict(json=False))), 200
+    payload = demo_obj.to_localized_dict(
+        language=requested_language,
+        include_translations=include_translations,
+        json=False,
+    )
+    return jsonify(stringify_object_ids(payload)), 200
 
 # -------------------------
 # DEMO STATS
@@ -358,7 +645,9 @@ def get_unapproved_demonstrations():
 @api_bp.route("/admin/demonstrations/<demo_id>", methods=["GET"])
 @_token_or_session_required(required_scopes=["admin"], required_perms=["VIEW_DEMO"])
 def admin_get_demo_info(demo_id):
-    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    demo = mongo.demonstrations.find_one(
+        {"_id": ObjectId(demo_id)}, {"_pending_rollback_history": 0},
+    )
     if not demo:
         raise ApiException(Message("Demonstration not found", "demo_not_found"), 404)
     return jsonify(stringify_object_ids(demo)), 200
@@ -377,7 +666,10 @@ def renew_token():
         user_id=token_record.get("user_id"),
         token_type=token_record.get("type"),
         scopes=token_record.get("scopes"),
-        system=token_record.get("system", False)
+        system=token_record.get("system", False),
+        category=token_record.get("category", "user"),
+        app_id=token_record.get("app_id"),
+        session_id=token_record.get("session_id"),
     )
     
     return jsonify({
@@ -406,12 +698,15 @@ def create_long_lived_token():
     if token_expired(token_record):
         raise ApiException(Message("Short-lived token has expired", "token_expired"), 400)
 
-    # Create long-lived token
+    # Create long-lived token (90 days)
     long_token, expires_at = create_token(
         user_id=token_record.get("user_id"),
         token_type="long",
         scopes=token_record.get("scopes"),
-        system=token_record.get("system", False)
+        system=token_record.get("system", False),
+        category=token_record.get("category", "user"),
+        app_id=token_record.get("app_id"),
+        session_id=token_record.get("session_id"),
     )
 
     return jsonify({
@@ -490,18 +785,18 @@ def friends_attending():
     demo_ids = data["demo_ids"]
     result = {}
     
-    print(demo_ids)
+    
     friends = _get_user_friends()
     
-    print("Filtering by", friends)
+    #print("Filtering by", friends)
 
     for demo_id in demo_ids:
         
         # Convert to ObjectId if coming as string
         demo_id = ObjectId(demo_id)
-        print(demo_id)
+        #print(demo_id)
         friends_attending = _get_attending_per_demo(demoId=demo_id, user_friends=friends)
-        print(friends_attending)
+        #print(friends_attending)
         result[str(demo_id)] = friends_attending
 
     return jsonify(result)
@@ -509,75 +804,90 @@ def friends_attending():
 @api_bp.route("/user/friends/")
 def friends():
     return redirect(url_for("users.profile.api_friends_list"))
+
 @api_bp.route("/demonstrations/<demo_id>/invite", methods=["POST"])
 @login_required
 def invite_friends(demo_id):
     """
-    Invite friends to a demo.
-    Expects JSON body: { "friend_ids": ["id1", "id2", ...] }
+    Invite friends to a demo and generate:
+      • notification bell entry   (notifications collection)
+      • chat message              (existing behaviour)
+    Body: { "friend_ids": ["id1", "id2", ...] }
     """
     try:
-        user_id = current_user._id  # current logged-in user
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         friend_ids = data.get("friend_ids", [])
         if not friend_ids:
             return jsonify({"error": "No friends provided"}), 400
 
         demo_obj_id = ObjectId(demo_id)
-        demo_doc = mongo.demonstrations.find_one({"_id": demo_obj_id})
-        demo_title = demo_doc.get("title", "Demo") if demo_doc else "Demo"
+        demo_doc    = mongo.demonstrations.find_one({"_id": demo_obj_id}) or {}
+        demo_title  = demo_doc.get("title") or "Demo"
 
-        inserted = []
+        inviter_id   = current_user._id
+        inviter_user = mongo.users.find_one({"_id": ObjectId(inviter_id)})
+        inviter_name = inviter_user.get("displayname") or inviter_user.get("username")
+
+        socketio = current_app.extensions["socketio"]
+        inserted  = []
+
         for fid in friend_ids:
-            # 1. Insert invite if not already there
-            existing = demo_invites_collection.find_one({
-                "demo_id": demo_obj_id,
-                "inviter_id": user_id,
-                "friend_id": fid
-            })
-            if existing:
+            fid_obj = ObjectId(fid)
+
+            # ───── Avoid duplicates ──────────────────────────────────────────
+            if demo_invites_collection.find_one(
+                {"demo_id": demo_obj_id, "inviter_id": inviter_id, "friend_id": fid_obj}
+            ):
                 continue
 
-            doc = {
-                "demo_id": demo_obj_id,
-                "inviter_id": user_id,
-                "friend_id": fid,
-                "created_at": datetime.utcnow()
-            }
-            demo_invites_collection.insert_one(doc)
+            # (1) Persist invite
+            demo_invites_collection.insert_one({
+                "demo_id":   demo_obj_id,
+                "inviter_id": inviter_id,
+                "friend_id":  fid_obj,
+                "created_at": utcnow(),
+            })
             inserted.append(fid)
 
-            # 2. Also create a chat message of type "invitation"
-            inviter_user = mongo.users.find_one({"_id": ObjectId(user_id)})
+            # (2) Bell-notification
+            create_notification(
+                user_id=fid,
+                n_type="demo_invite",
+                payload={
+                    "demo_title": demo_title,
+                    "inviter_name": inviter_name,
+                },
+                link=f"/demonstration/{demo_id}"
+            )
+
+            # (3) Chat message – unchanged
             msg = {
-                "sender_id": ObjectId(user_id),
-                "recipient_id": ObjectId(fid),
-                "type": "invitation",
-                "content": None,
+                "sender_id":     inviter_id,
+                "recipient_id":  fid_obj,
+                "type":          "invitation",
+                "content":       None,
                 "extra": {
                     "invitation_type": "demonstration",
-                    "demo_id": str(demo_obj_id),
+                    "demo_id":   demo_id,
                     "demo_title": demo_title,
-                    "inviter_name": inviter_user.get("displayname") or inviter_user.get("username"),
+                    "inviter_name": inviter_name,
                 },
-                "created_at": datetime.utcnow(),
-                "read": False
+                "created_at": utcnow(),
+                "read": False,
             }
             msg_id = mongo.messages.insert_one(msg).inserted_id
             msg["_id"] = msg_id
 
-            # 3. Emit to both inviter & invitee via Socket.IO
-            from mielenosoitukset_fi.users.BPs.chat_ws import serialize_message
             serialized = serialize_message(msg)
-            socketio = current_app.extensions['socketio']
-            socketio.emit("new_message", {"message": serialized}, room=str(user_id))
+            socketio.emit("new_message", {"message": serialized}, room=str(inviter_id))
             socketio.emit("new_message", {"message": serialized}, room=str(fid))
 
         return jsonify({
             "demo_id": demo_id,
             "invited_friends": inserted,
-            "message": f"Invited {len(inserted)} friends and sent invitations as messages."
+            "message": f"Invited {len(inserted)} friends; notifications + messages sent."
         })
 
     except Exception as e:
+        current_app.logger.exception("Invite failed")
         return jsonify({"error": str(e)}), 500

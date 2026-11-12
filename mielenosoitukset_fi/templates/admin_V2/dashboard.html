@@ -1,160 +1,488 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
-{% block styles %}
-<style>
-  /* ------------------ Dashboard Cards ------------------ */
-  .info-card {
-    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-    cursor: default;
-    border-radius: 12px;
-    padding: 1.5rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-  }
-
-  .info-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    background: linear-gradient(135deg, #ffffff 0%, #e9ecef 100%);
-  }
-
-  .info-icon {
-    font-size: 2.8rem;
-    color: #0d6efd; /* Bootstrap primary */
-    transition: transform 0.3s ease, color 0.3s ease, text-shadow 0.3s ease;
-    flex-shrink: 0;
-  }
-
-  .info-card:hover .info-icon {
-    transform: scale(1.3);
-    color: #ffc107; /* Bootstrap warning */
-    text-shadow: 0 0 8px rgba(255, 193, 7, 0.5);
-  }
-
-  .info-card h3 {
-    margin-top: 0;
-    font-size: 1.35rem;
-    font-weight: 600;
-    color: #212529;
-  }
-
-  .info-card p {
-    margin-bottom: 0.5rem;
-    color: #495057;
-  }
-
-  .btn-dashboard {
-    margin-top: 0.75rem;
-    font-weight: 500;
-    border-radius: 0.5rem;
-  }
-
-  .info-grid {
-    display: grid;
-    gap: 1.5rem;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    margin-top: 2rem;
-  }
-
-  /* Usage Manual Button */
-  .manual-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background-color: #6c757d;
-    color: #fff;
-    border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    text-decoration: none;
-    transition: background 0.2s ease, transform 0.2s ease;
-  }
-  .manual-btn:hover {
-    background-color: #495057;
-    transform: translateY(-2px);
-    text-decoration: none;
-  }
-</style>
-{% endblock %}
-
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/dashboard.css', v='20260914-admin-ui-51') }}">{% endblock %}
 {% block main_content %}
-<div class="container-fluid py-4">
-  <h2 class="mb-4">{{ _('Hallintatyökalut') }}</h2>
+<div class="admin-page admin-workspace admin-dashboard-shell">
+  {{ admin_page_hero(
+    _('Hallintapaneeli'),
+    _('Palvelun tilannekuva, sisällönhallinta ja sinulle sallitut ylläpitotyökalut yhdessä paikassa.'),
+    _('Admin-paneeli'),
+    []
+  ) }}
+  {% if is_admin_user %}
+  <div class="dashboard-grid">
+    <section class="main-panel admin-panel">
+      <header class="live-header">
+        <div>
+          <div class="eyebrow">{{ _('Hallintatyökalut') }}</div>
+          <h2 class="mb-1">{{ _('Reaaliaikainen tilannekuva') }}</h2>
+          <p class="text-muted mb-0">{{ _('Pysy kärryillä palvelun kuormituksesta, kirjautumisista ja hallintatoiminnoista yhdellä silmäyksellä.') }}</p>
+        </div>
+        <div class="live-indicator">
+          <span class="pulse"></span>
+          <div>
+            <div>{{ _('Live-seuranta') }}</div>
+            <small class="text-muted">{{ _('Päivitetty') }} <span id="snapshot-updated">—</span></small>
+          </div>
+        </div>
+        <div class="live-indicator clock-chip">
+          <span class="pulse"></span>
+          <div>
+            <div>{{ _('Helsinki') }}</div>
+            <small class="text-muted"><span id="helsinki-clock">--:--:--</span></small>
+          </div>
+        </div>
+      </header>
 
-  <div class="info-grid">
-
-    <!-- Super Admin Warning -->
-    <div class="info-card">
-      <i class="fa-solid fa-triangle-exclamation info-icon"></i>
-      <div>
-        <h3>{{ _('Huomio') }}</h3>
-        <p>{{ _('Olet kirjautunut sisään superkäyttäjänä. Kaikki toimenpiteesi voidaan jäljittää sinuun. Käytä oikeuksiasi huolellisesti.') }}</p>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">{{ _('Käyttäjiä') }}</div>
+          <div class="stat-value" id="stat-users-total">—</div>
+          <div class="stat-sub">
+            <span>{{ _('Vahvistettu') }}: <strong id="stat-users-confirmed">—</strong></span>
+            <span>{{ _('Kesken') }}: <strong id="stat-users-pending">—</strong></span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">{{ _('Ylläpitäjiä') }}</div>
+          <div class="stat-value" id="stat-users-admins">—</div>
+          <div class="stat-sub">
+            <span>{{ _('Mahdolliset uudet oikeudet') }}</span>
+            <span class="text-success"><i class="fa-solid fa-shield-halved me-1"></i>{{ _('Valvottu') }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">{{ _('Organisaatiot') }}</div>
+          <div class="stat-value" id="stat-orgs-active">—</div>
+          <div class="stat-sub">
+            <span>{{ _('Aktiivisia toimijoita') }}</span>
+            <span>{{ _('Koko maassa') }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">{{ _('Tapahtumat') }}</div>
+          <div class="stat-value" id="stat-demos-live">—</div>
+          <div class="stat-sub">
+            <span>{{ _('Valmiina julkaisuun') }}: <strong id="stat-demos-pending">—</strong></span>
+            <span>{{ _('Näkyvissä sivustolla') }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">{{ _('Hallintatapaukset') }}</div>
+          <div class="stat-value" id="stat-cases-open">—</div>
+          <div class="stat-sub">
+            <span>{{ _('Avoimia tikettejä') }}</span>
+            <span class="text-warning"><i class="fa-solid fa-circle-dot me-1"></i>{{ _('Seurannassa') }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">{{ _('Kirjautumiset / h') }}</div>
+          <div class="stat-value" id="stat-logins-hour">—</div>
+          <div class="stat-sub">
+            <span>{{ _('Onnistumisprosentti') }}: <strong id="stat-logins-success">—</strong></span>
+            <span>{{ _('24h yhteensä') }}: <strong id="stat-logins-day">—</strong></span>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Security -->
-    <div class="info-card">
-      <i class="fa-solid fa-lock info-icon"></i>
-      <div>
-        <h3>{{ _('Tietoturva') }}</h3>
-        <p>{{ _('Pidä käyttäjätietosi turvassa. Älä koskaan jaa salasanaasi.') }}</p>
+      <div class="system-rows">
+        <div class="panic-card">
+          <div class="panic-grid {{ 'active' if panic_mode else 'safe' }}" id="panic-grid">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="panic-status-text">
+            <p class="text-muted mb-1">{{ _('Panic Mode') }}</p>
+            <h4 class="mb-1">{{ _('Järjestelmävahti') }}</h4>
+            <div id="panic-state" class="panic-state {{ 'active' if panic_mode else 'safe' }}">
+              {{ _('AKTIIVINEN') if panic_mode else _('POIS PÄÄLTÄ') }}
+            </div>
+            <p class="text-muted mb-2">{{ _('Panic Mode lukitsee käyttäjille näkyvät palvelut kriisitilanteissa.') }}</p>
+            {% if current_user.role == "global_admin" %}
+            <div class="panic-actions">
+              {% if panic_mode %}
+                <form method="POST" action="{{ url_for('admin.deactivate_panic') }}">
+                  <button type="submit" class="btn btn-outline-success btn-sm">
+                    <i class="fa-solid fa-unlock me-1"></i>{{ _('Poista tila') }}
+                  </button>
+                </form>
+              {% else %}
+                <form method="POST" action="{{ url_for('admin.activate_panic') }}">
+                  <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="fa-solid fa-bolt me-1"></i>{{ _('Kytke päälle') }}
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="health-card">
+          <h5 class="mb-3">{{ _('Järjestelmän kunto') }}</h5>
+          <div class="health-metric">
+            <div class="health-label">
+              <span>{{ _('Kirjautumiset onnistui') }}</span>
+              <span id="metric-login-success">0%</span>
+            </div>
+            <div class="admin-dashboard-progress" role="progressbar" aria-label="{{ _('Kirjautumiset onnistui') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="bar-login-success"></span></div>
+          </div>
+          <div class="health-metric">
+            <div class="health-label">
+              <span>{{ _('Avoimet tapaukset / kapasiteetti') }}</span>
+              <span id="metric-case-load">0%</span>
+            </div>
+            <div class="admin-dashboard-progress" role="progressbar" aria-label="{{ _('Avoimet tapaukset / kapasiteetti') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="bar-case-load"></span></div>
+          </div>
+          <div class="health-metric">
+            <div class="health-label">
+              <span>{{ _('Tapahtumat julkaisuputkessa') }}</span>
+              <span id="metric-demo-pending">0%</span>
+            </div>
+            <div class="admin-dashboard-progress" role="progressbar" aria-label="{{ _('Tapahtumat julkaisuputkessa') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="bar-demo-pending"></span></div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Support -->
-    <div class="info-card">
-      <i class="fa-solid fa-tools info-icon"></i>
-      <div>
-        <h3>{{ _('Ylläpito') }}</h3>
-        <p>{{ _('Ota yhteyttä ylläpitoon ongelmatilanteissa.') }}</p>
-        <p>{{ _('Kiireellisissä asioissa helpdesk:') }} 
-          <a href="tel:+358123456789">+358 123 456 789</a>
-        </p>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="info-card">
-      <i class="fa-solid fa-chart-line info-icon"></i>
-      <div class="flex-grow-1">
-        <h3>{{ _('Tilastot') }}</h3>
-        <p>{{ _('Tarkastele sivuston tilastoja ja käyttäjämääriä.') }}</p>
-        <button class="btn btn-primary btn-dashboard" onclick="window.location.href='{{ url_for('admin.stats') }}'">
-          <i class="fa-solid fa-chart-column me-1"></i> {{ _('Tilastot') }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Users -->
-    <div class="info-card">
-      <i class="fa-solid fa-users info-icon"></i>
-      <div class="flex-grow-1">
-        <h3>{{ _('Käyttäjät') }}</h3>
-        <p>{{ _('Hallitse käyttäjiä ja heidän tietojaan.') }}</p>
-        <button class="btn btn-primary btn-dashboard" onclick="window.location.href='{{ url_for('admin_user.user_control') }}'">
-          <i class="fa-solid fa-user-gear me-1"></i> {{ _('Käyttäjät') }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Usage Manual -->
-    <div class="info-card">
-      <i class="fa-solid fa-book info-icon"></i>
-      <div class="flex-grow-1">
-        <h3>{{ _('Käyttöohje') }}</h3>
-        <p>{{ _('Katso koko hallintapaneelin käyttöohje ja vinkit.') }}</p>
-        <a href="{{ url_for('admin.manual') }}" class="manual-btn">
-          <i class="fa-solid fa-book-open"></i> {{ _('Avaa ohje') }}
+      <div class="quick-actions">
+        <a class="quick-card text-decoration-none" href="{{ url_for('admin.stats') }}">
+          <div>
+            <strong>{{ _('Tilastot') }}</strong>
+            <div class="text-muted small">{{ _('Ryhdy data-analyysiin') }}</div>
+          </div>
+          <i class="fa-solid fa-chart-line"></i>
         </a>
+        <a class="quick-card text-decoration-none" href="{{ url_for('admin_user.user_control') }}">
+          <div>
+            <strong>{{ _('Käyttäjähallinta') }}</strong>
+            <div class="text-muted small">{{ _('Roolit ja käyttöoikeudet') }}</div>
+          </div>
+          <i class="fa-solid fa-users-gear"></i>
+        </a>
+        <a class="quick-card text-decoration-none" href="{{ url_for('admin.logs') }}">
+          <div>
+            <strong>{{ _('Audit-lokit') }}</strong>
+            <div class="text-muted small">{{ _('Syvennä tapahtumia') }}</div>
+          </div>
+          <i class="fa-solid fa-list-check"></i>
+        </a>
+        <a class="quick-card text-decoration-none" href="{{ url_for('admin.manual') }}">
+          <div>
+            <strong>{{ _('Käyttöohje') }}</strong>
+            <div class="text-muted small">{{ _('Työkalujen läpikäynti') }}</div>
+          </div>
+          <i class="fa-solid fa-book"></i>
+        </a>
+        {% if current_user.role == "global_admin" %}
+        <div class="quick-card">
+          <div>
+            <strong>{{ _('Tyhjennä välimuisti') }}</strong>
+            <div class="text-muted small">{{ _('Pakota palvelu lataamaan uusimmat näkymät') }}</div>
+          </div>
+          <form method="POST" action="{{ url_for('admin.clear_cache') }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+              <i class="fa-solid fa-broom me-1"></i>{{ _('Tyhjennä') }}
+            </button>
+          </form>
+        </div>
+        {% endif %}
       </div>
+    </section>
+
+    <aside class="side-panel admin-panel">
+      <div class="side-header">
+        <div>
+          <h5 class="mb-0">{{ _('Kirjautumispäiväkirja') }}</h5>
+          <small class="text-muted">{{ _('Päivittyy muutaman sekunnin välein') }}</small>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" id="refresh-login-feed">
+          <i class="fa-solid fa-rotate"></i>
+        </button>
+      </div>
+      <div id="login-feed" class="login-feed">
+        <div class="admin-empty-state">{{ _('Ladataan kirjautumisia...') }}</div>
+      </div>
+    </aside>
+  </div>
+  {% else %}
+  <section class="admin-panel">
+    <header class="live-header">
+      <div>
+        <div class="eyebrow">{{ _('Hallintapaneeli') }}</div>
+        <h2 class="mb-1">{{ _('Hei %(name)s', name=(current_user.displayname or current_user.username)) }}</h2>
+        <p class="text-muted mb-0">{{ _('Täältä löydät omat työtilasi ja sinulle sallitut hallintatyökalut.') }}</p>
+      </div>
+    </header>
+
+    <div class="quick-actions">
+      {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission("TRANSLATE_DEMO") or current_user.has_permission("REVIEW_DEMO_TRANSLATIONS") %}
+      <a class="quick-card text-decoration-none" href="{{ url_for('admin_demo.demo_translation_dashboard') }}">
+        <div>
+          <strong>{{ _('Käännöstyöjono') }}</strong>
+          <div class="text-muted small">{{ _('Mielenosoitusten käännökset') }}</div>
+        </div>
+        <i class="fa-solid fa-language"></i>
+      </a>
+      {% endif %}
+      {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission("TRANSLATE_UI") or current_user.has_permission("REVIEW_UI_TRANSLATIONS") %}
+      <a class="quick-card text-decoration-none" href="{{ url_for('admin.ui_translation_dashboard') }}">
+        <div>
+          <strong>{{ _('Käyttöliittymäkäännökset') }}</strong>
+          <div class="text-muted small">{{ _('Käännä näkyviä tekstejä') }}</div>
+        </div>
+        <i class="fa-solid fa-globe"></i>
+      </a>
+      {% endif %}
+      {% if current_user.has_permission("LIST_DEMOS") %}
+      <a class="quick-card text-decoration-none" href="{{ url_for('admin_demo.demo_control') }}">
+        <div>
+          <strong>{{ _('Mielenosoitukset') }}</strong>
+          <div class="text-muted small">{{ _('Jatkuva hallinta') }}</div>
+        </div>
+        <i class="fa-solid fa-bullhorn"></i>
+      </a>
+      {% endif %}
+      {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
+      <a class="quick-card text-decoration-none" href="{{ url_for('admin_org.organization_control') }}">
+        <div>
+          <strong>{{ _('Organisaatiot') }}</strong>
+          <div class="text-muted small">{{ _('Toimijoiden tiedot') }}</div>
+        </div>
+        <i class="fa-solid fa-building"></i>
+      </a>
+      {% endif %}
     </div>
 
-  </div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">{{ _('Profiili') }}</div>
+        <div class="stat-sub">
+          <a href="{{ url_for('users.profile.profile') }}">{{ _('Näytä oma profiili') }}</a>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">{{ _('Asetukset') }}</div>
+        <div class="stat-sub">
+          <a href="{{ url_for('users.auth.settings') }}">{{ _('Muokkaa asetuksia') }}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
-<!-- Uses Bootstrap and FontAwesome; no extra scripts needed -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const snapshotEndpoint = "{{ url_for('admin.dashboard_data') }}";
+    const loginEndpoint = "{{ url_for('admin.dashboard_login_feed') }}";
+    const panicEndpoint = "{{ url_for('admin.panic_status') }}";
+
+    const elements = {
+      usersTotal: document.getElementById('stat-users-total'),
+      usersConfirmed: document.getElementById('stat-users-confirmed'),
+      usersPending: document.getElementById('stat-users-pending'),
+      admins: document.getElementById('stat-users-admins'),
+      orgs: document.getElementById('stat-orgs-active'),
+      demosLive: document.getElementById('stat-demos-live'),
+      demosPending: document.getElementById('stat-demos-pending'),
+      casesOpen: document.getElementById('stat-cases-open'),
+      loginsHour: document.getElementById('stat-logins-hour'),
+      loginsDay: document.getElementById('stat-logins-day'),
+      loginSuccessText: document.getElementById('stat-logins-success'),
+      metricLoginSuccess: document.getElementById('metric-login-success'),
+      metricCaseLoad: document.getElementById('metric-case-load'),
+      metricDemoPending: document.getElementById('metric-demo-pending'),
+      barLoginSuccess: document.getElementById('bar-login-success'),
+      barCaseLoad: document.getElementById('bar-case-load'),
+      barDemoPending: document.getElementById('bar-demo-pending'),
+      updated: document.getElementById('snapshot-updated'),
+      panicGrid: document.getElementById('panic-grid'),
+      panicState: document.getElementById('panic-state'),
+      loginFeed: document.getElementById('login-feed'),
+      clock: document.getElementById('helsinki-clock')
+    };
+
+    const numberFormat = new Intl.NumberFormat('fi-FI');
+
+    function updatePanicState(active) {
+      if (!elements.panicGrid || !elements.panicState) return;
+      elements.panicGrid.classList.remove('active', 'safe');
+      elements.panicState.classList.remove('active', 'safe');
+      if (active) {
+        elements.panicGrid.classList.add('active');
+        elements.panicState.classList.add('active');
+        elements.panicState.textContent = "{{ _('AKTIIVINEN') }}";
+      } else {
+        elements.panicGrid.classList.add('safe');
+        elements.panicState.classList.add('safe');
+        elements.panicState.textContent = "{{ _('POIS PÄÄLTÄ') }}";
+      }
+    }
+
+    function setProgress(elSpan, elLabel, value, max = 100) {
+      const percentage = Math.min(Math.max(Math.round((value / max) * 100), 0), 100);
+      if (elSpan) {
+        elSpan.style.width = `${percentage}%`;
+        elSpan.parentElement?.setAttribute('aria-valuenow', String(percentage));
+      }
+      if (elLabel) elLabel.textContent = `${percentage}%`;
+    }
+
+    function applySnapshot(data) {
+      const users = data.users || {};
+      const demos = data.demos || {};
+      const logins = data.logins || {};
+      const cases = data.cases || {};
+
+      elements.usersTotal.textContent = numberFormat.format(users.total || 0);
+      elements.usersConfirmed.textContent = numberFormat.format(users.confirmed || 0);
+      elements.usersPending.textContent = numberFormat.format(users.pending || 0);
+      elements.admins.textContent = numberFormat.format(users.admins || 0);
+      elements.orgs.textContent = numberFormat.format((data.organizations || {}).active || 0);
+      elements.demosLive.textContent = numberFormat.format(demos.live || 0);
+      elements.demosPending.textContent = numberFormat.format(demos.pending || 0);
+      elements.casesOpen.textContent = numberFormat.format(cases.open || 0);
+      elements.loginsHour.textContent = numberFormat.format(logins.last_hour || 0);
+      elements.loginsDay.textContent = numberFormat.format(logins.last_day || 0);
+
+      const successRate = logins.success_rate || 0;
+      elements.loginSuccessText.textContent = `${successRate}%`;
+      setProgress(elements.barLoginSuccess, elements.metricLoginSuccess, successRate);
+
+      // Approximate workload percentages
+      setProgress(elements.barCaseLoad, elements.metricCaseLoad, cases.open || 0, 50);
+      setProgress(elements.barDemoPending, elements.metricDemoPending, demos.pending || 0, Math.max(demos.live || 1, demos.pending || 1));
+
+      if (data.generated_at) {
+        const ts = new Date(data.generated_at);
+        if (!isNaN(ts)) {
+          elements.updated.textContent = ts.toLocaleTimeString('fi-FI', { hour12: false });
+        }
+      }
+
+      updatePanicState(Boolean(data.panic_mode));
+    }
+
+    async function refreshSnapshot() {
+      try {
+        const res = await fetch(snapshotEndpoint);
+        if (!res.ok) throw new Error('Snapshot request failed');
+        const data = await res.json();
+        applySnapshot(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    const minuteLabel = "{{ _('min') }}";
+
+    function makeFeedLine(iconClass, text, className = '') {
+      const line = document.createElement('div');
+      if (className) line.className = className;
+      const icon = document.createElement('i');
+      icon.className = `${iconClass} me-1`;
+      icon.setAttribute('aria-hidden', 'true');
+      line.append(icon, document.createTextNode(String(text)));
+      return line;
+    }
+
+    function renderLoginFeed(items) {
+      if (!elements.loginFeed) return;
+      elements.loginFeed.replaceChildren();
+      if (!items.length) {
+        const empty = document.createElement('div');
+        empty.className = 'admin-empty-state';
+        empty.textContent = "{{ _('Ei kirjautumisia vielä.') }}";
+        elements.loginFeed.append(empty);
+        return;
+      }
+
+      items.forEach(item => {
+        const time = item.timestamp ? new Date(item.timestamp).toLocaleTimeString('fi-FI', { hour12: false }) : '—';
+        const entry = document.createElement('article');
+        entry.className = `login-entry ${item.success ? 'success' : 'failure'}`;
+
+        const heading = document.createElement('div');
+        heading.className = 'entry-heading';
+        const username = document.createElement('strong');
+        username.textContent = String(item.username || '—');
+        const status = document.createElement('span');
+        status.className = `admin-status-badge ${item.success ? 'admin-status-badge--success' : 'admin-status-badge--danger'}`;
+        status.textContent = item.success ? "{{ _('onnistui') }}" : "{{ _('epäonnistui') }}";
+        heading.append(username, status);
+
+        const meta = document.createElement('div');
+        meta.className = 'entry-meta';
+        const relativeTime = item.minutes_ago != null ? ` · ${item.minutes_ago} ${minuteLabel}` : '';
+        meta.append(
+          makeFeedLine('fa-regular fa-clock', `${time}${relativeTime}`),
+          makeFeedLine('fa-solid fa-network-wired', item.ip || '—')
+        );
+        if (item.user_agent) {
+          meta.append(makeFeedLine('fa-solid fa-laptop-code', item.user_agent));
+        }
+        if (item.reason) {
+          meta.append(makeFeedLine('fa-solid fa-circle-exclamation', item.reason, 'text-danger small'));
+        }
+
+        entry.append(heading, meta);
+        elements.loginFeed.append(entry);
+      });
+    }
+
+    async function refreshLoginFeed() {
+      try {
+        const res = await fetch(loginEndpoint + '?limit=25');
+        if (!res.ok) throw new Error('Login feed failed');
+        const data = await res.json();
+        renderLoginFeed(data.logs || []);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function refreshPanicStatus() {
+      try {
+        const res = await fetch(panicEndpoint);
+        if (res.ok) {
+          const data = await res.json();
+          updatePanicState(Boolean(data.panic_mode));
+        }
+      } catch (err) {
+        // ignore quick failure
+      }
+    }
+
+    function startClock() {
+      if (!elements.clock) return;
+      const formatter = new Intl.DateTimeFormat('fi-FI', {
+        timeZone: 'Europe/Helsinki',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+      const tick = () => {
+        elements.clock.textContent = formatter.format(new Date());
+      };
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    const manualRefreshBtn = document.getElementById('refresh-login-feed');
+    if (manualRefreshBtn) {
+      manualRefreshBtn.addEventListener('click', refreshLoginFeed);
+    }
+
+    refreshSnapshot();
+    refreshLoginFeed();
+    startClock();
+
+    setInterval(refreshSnapshot, 15000);
+    setInterval(refreshLoginFeed, 8000);
+    setInterval(refreshPanicStatus, 20000);
+  });
+</script>
 {% endblock %}

@@ -1,42 +1,41 @@
-from datetime import datetime
+from mielenosoitukset_fi.utils.time_utils import utcnow
+from datetime import datetime, date, time
+import time as process_time
 from flask import Flask, redirect, request, session, g, url_for
 from flask_babel import Babel
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user, user_logged_in
+import hashlib
 from bson.objectid import ObjectId
-from apscheduler.schedulers.background import BackgroundScheduler
+from mielenosoitukset_fi.background_jobs import JOB_DEFINITIONS, init_background_jobs
 
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.users.models import User, AnonymousUser
 from mielenosoitukset_fi.error_handlers import register_error_handlers
+from mielenosoitukset_fi.utils.media_helpers import (
+    get_demo_cover_image,
+    get_demo_gallery_images,
+)
 
-from mielenosoitukset_fi.scripts.repeat_v2 import main as repeat_main
-from mielenosoitukset_fi.scripts.update_demo_organizers import main as update_main
-from mielenosoitukset_fi.scripts.in_past import hide_past
-from mielenosoitukset_fi.scripts.CL import main as cl_main
-from mielenosoitukset_fi.scripts.preview_image_creator import run as run_preview
-
-from mielenosoitukset_fi.scripts.send_demo_reminders import main as demo_sche
-
-from mielenosoitukset_fi.utils.analytics import prep
 import sys
 import os
+from zoneinfo import ZoneInfo
 
-from flask_autosec import FlaskAutoSec
 
 from mielenosoitukset_fi.utils import VERSION
+from mielenosoitukset_fi.utils.build_info import resolve_build_sha
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from mielenosoitukset_fi.kampanja import campaign_bp
+from mielenosoitukset_fi.notifications_bp import notif_bp
+from mielenosoitukset_fi.translations_join_bp import translations_join_bp
 
 import os
 
-from mielenosoitukset_fi.utils.wrappers import depracated_endpoint
+from mielenosoitukset_fi.utils.wrappers import depracated_endpoint, has_demo_permission
 
 from flask_caching import Cache  # Added for caching
-
-from datetime import datetime, date, time
 
 # Initialize Babel
 
@@ -44,43 +43,106 @@ babel = Babel()
 
 
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 
 
-def create_app() -> Flask:
+def _configure_timezone(app):
+    """Ensure process-level timezone matches Finland (or configured value)."""
+    tz_name = app.config.get("DEFAULT_TIMEZONE") or "Europe/Helsinki"
+    os.environ["TZ"] = tz_name
+    try:
+        process_time.tzset()
+    except AttributeError:
+        logger.warning("tzset() not available on this platform; system timezone unchanged.")
+
+    try:
+        app.config["LOCAL_TIMEZONE"] = ZoneInfo(tz_name)
+    except Exception:
+        logger.exception("Failed to load timezone %s, falling back to UTC.", tz_name)
+        app.config["LOCAL_TIMEZONE"] = ZoneInfo("UTC")
+
+
+def create_app(config_overrides=None) -> Flask:
     """Create and configure the Flask application."""
 
     app = Flask(__name__)
+    from mielenosoitukset_fi.utils.frontend import frontend_assets
+
+    app.jinja_env.globals["frontend_assets"] = frontend_assets
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
-    
-    try:
-        security = FlaskAutoSec(app.config.get("ENFORCE_RATELIMIT", True))
-        security.init_app(app)
-        
-    except Exception as e:
-        Limiter(
-            get_remote_address,
-            app=app,
-            default_limits=["86400 per day", "3600 per hour", "10 per second"],
-            storage_uri=f"{app.config['MONGO_URI']}/mielenosoitukset_fi.limiter",
+    if config_overrides:
+        app.config.update(config_overrides)
+    # Config already resolves WEBAUTHN_ALLOWED_ORIGINS from configuration, falling
+    # back to WEBAUTHN_ORIGIN, so a configured list (for example the apex and the
+    # www host) must survive app creation. Only re-derive it when a caller
+    # overrides the primary origin without also overriding the allowed list, as
+    # the test suite does.
+    overrides = config_overrides or {}
+    if "WEBAUTHN_ALLOWED_ORIGINS" not in overrides:
+        if "WEBAUTHN_ORIGIN" in overrides or not app.config.get(
+            "WEBAUTHN_ALLOWED_ORIGINS"
+        ):
+            app.config["WEBAUTHN_ALLOWED_ORIGINS"] = [app.config["WEBAUTHN_ORIGIN"]]
+    app.config.setdefault("BUILD_SHA", resolve_build_sha())
+
+    # Keep translation catalogs separate from languages that are ready to be
+    # published. This lets translators work on English and Swedish without
+    # exposing incomplete translations to visitors or search engines.
+    supported_locales = list(
+        dict.fromkeys(app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"])
+    )
+    default_locale = app.config.get("BABEL_DEFAULT_LOCALE") or "fi"
+    if default_locale not in supported_locales:
+        supported_locales.insert(0, default_locale)
+    public_locales = [
+        locale
+        for locale in dict.fromkeys(
+            app.config.get("BABEL_PUBLIC_LOCALES") or [default_locale]
         )
-        logger.error(f"Error initializing FlaskAutoSec: {e}")
-        logger.info("Using Flask-Limiter instead.")
+        if locale in supported_locales
+    ]
+    if default_locale not in public_locales:
+        public_locales.insert(0, default_locale)
+    app.config["BABEL_SUPPORTED_LOCALES"] = supported_locales
+    app.config["BABEL_PUBLIC_LOCALES"] = public_locales
+    _configure_timezone(app)
+
+    rate_limit_defaults = ["86400 per day", "3600 per hour", "10 per second"]
+    app.config["RATE_LIMIT_DEFAULTS"] = rate_limit_defaults
+    
+    if app.config.get("ENFORCE_RATELIMIT", True):
+        limiter = Limiter(
+            get_client_ip,
+            app=app,
+            default_limits=rate_limit_defaults,
+            storage_uri=app.config["MONGO_URI"],
+        )
+
+        from mielenosoitukset_fi.utils.uptimerobot_ips import is_uptimerobot_ip
+
+        @limiter.request_filter
+        def _exempt_uptimerobot():
+            return is_uptimerobot_ip(get_client_ip())
     
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy
-
-    # Initialize Flask-Caching
-    cache = Cache(app)
+        # Initialize Flask-Caching
+        
+    from mielenosoitukset_fi.utils.cache import cache, skip_cache_public_only
+    cache.init_app(app)
+    
 
     # Locale selector function
     def get_locale():
-        return session.get(
-            "locale",
-            request.accept_languages.best_match(
-                app.config["BABEL_SUPPORTED_LOCALES"],
-                app.config["BABEL_DEFAULT_LOCALE"],
-            ),
-        )  # Get locale from session or request headers or else use default locale
+        public_locales = app.config["BABEL_PUBLIC_LOCALES"]
+        selected_locale = session.get("locale")
+        if selected_locale in public_locales:
+            return selected_locale
+        if selected_locale is not None:
+            session.pop("locale", None)
+        return request.accept_languages.best_match(
+            public_locales,
+            app.config["BABEL_DEFAULT_LOCALE"],
+        )
 
     # Initialize Babel
     babel.init_app(app, locale_selector=get_locale)
@@ -93,6 +155,10 @@ def create_app() -> Flask:
     # Initialize MongoDB
     db_manager = DatabaseManager().get_instance()
     mongo = db_manager.get_db()
+    if app.config.get("AUTO_RUN_MIGRATIONS", True):
+        from mielenosoitukset_fi.utils.migration_runner import run_auto_migrations
+
+        run_auto_migrations(mongo)
 
     # Initialize Flask-Login
     login_manager = LoginManager()
@@ -103,13 +169,33 @@ def create_app() -> Flask:
     
     login_manager.anonymous_user = AnonymousUser
 
+    @user_logged_in.connect_via(app)
+    def clear_old_mfa_binding(sender, user, **extra):
+        """A new sign-in replaces any prior MFA credential binding."""
+        session.pop("mfa_credential_version", None)
+        session.pop("god_login_receipt", None)
+        session["auth_epoch"] = getattr(user, "auth_epoch", 0)
+
     # User Loader function
     @login_manager.user_loader
     def load_user(user_id):
         user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
         if user_doc:
+            if (user_doc.get("security_suspension") or {}).get("active") or session.get("auth_epoch", 0) != user_doc.get("auth_epoch", 0):
+                return None
+            if user_doc.get("role") == "god":
+                from mielenosoitukset_fi.users.god_auth import valid_god_session
+                if not valid_god_session(mongo, user_doc):
+                    return None
+            bound_version = session.get("mfa_credential_version")
+            current_version = hashlib.sha256(user_doc["password_hash"].encode("utf-8")).hexdigest()
+            if bound_version is not None and bound_version != current_version:
+                return None
+            user = User.from_db(user_doc)
+            if not user.is_active:
+                return None
             logger.info(f"User loaded: {user_doc.get('username')}")
-            return User.from_db(user_doc)
+            return user
         logger.warning(f"User not found with id: {user_id}")
         return None
 
@@ -118,18 +204,22 @@ def create_app() -> Flask:
         admin_bp,
         admin_user_bp,
         admin_demo_bp,
+        admin_case_bp,
         admin_demo_api_bp,
         admin_org_bp,
         admin_recu_demo_bp,
-        admin_media_bp,
         board_bp,
         audit_bp,
-        admin_kampanja_bp
+        admin_kampanja_bp,
+        admin_dev_bp,
+        admin_city_bp,
+        admin_governance_bp,
+        admin_site_analytics_bp,
     )
     from users import _BLUEPRINT_ as user_bp
-    from users import chat_ws
-    from flask_socketio import SocketIO, emit, join_room
     from api import api_bp
+    from developer_bp import developer_bp
+    from mielenosoitukset_fi.mcp_admin_bp import mcp_admin_bp
 
     app.register_blueprint(admin_bp)
     app.register_blueprint(admin_demo_bp)
@@ -138,25 +228,64 @@ def create_app() -> Flask:
     app.register_blueprint(admin_recu_demo_bp)
     app.register_blueprint(admin_user_bp)
     app.register_blueprint(admin_org_bp)
-    app.register_blueprint(admin_media_bp)
     app.register_blueprint(admin_kampanja_bp)
+    app.register_blueprint(admin_case_bp)
+    app.register_blueprint(admin_dev_bp)
+    app.register_blueprint(admin_city_bp)
+    app.register_blueprint(admin_governance_bp)
+    app.register_blueprint(admin_site_analytics_bp)
+    #app.register_blueprint(admin_case_bp)
     
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
+    app.register_blueprint(mcp_admin_bp)
+    app.register_blueprint(developer_bp, url_prefix="/developer")
     
     
     app.register_blueprint(campaign_bp)
+    app.register_blueprint(notif_bp)
+    app.register_blueprint(translations_join_bp)
+    from flask_babel import format_timedelta, get_locale
+    def timeago(dt):
+        return format_timedelta(utcnow() - dt,
+                                locale=str(get_locale()),
+                                granularity='minute')
+    app.jinja_env.filters["timeago"] = timeago
     app.register_blueprint(board_bp)
-    
-    socketio = SocketIO(app, cors_allowed_origins="*", message_queue="redis://localhost:6379/mosoitukset_fi")
-    app.register_blueprint(chat_ws.chat_ws)
-    chat_ws.init_socketio(socketio)
+
+    if app.config.get("ENABLE_CHAT", True):
+        from users import chat_ws
+        from flask_socketio import SocketIO, emit, join_room
+        socketio = SocketIO(
+            app,
+            cors_allowed_origins="*",
+            message_queue=app.config.get("SOCKETIO_MESSAGE_QUEUE") or None,
+        )
+        app.extensions["socketio"] = socketio
+        app.register_blueprint(chat_ws.chat_ws)
+        chat_ws.init_socketio(socketio)
+
     app.register_blueprint(audit_bp)
 
     # Import and initialize routes
     import basic_routes
 
     basic_routes.init_routes(app)
+
+    # ---- Built-in first-party analytics (server-side pageviews) ----------
+    # Records a pageview for public HTML responses in after_request, so it
+    # also counts cached pages and never delays rendering: the write is a
+    # single atomic MongoDB $inc and any failure is silently ignored.
+    from mielenosoitukset_fi.utils import site_analytics
+
+    @app.after_request
+    def _record_site_analytics(response):
+        try:
+            if app.config.get("SITE_ANALYTICS_ENABLED", True):
+                site_analytics.record_pageview_from_request(request, response)
+        except Exception:
+            logger.exception("Site analytics recording failed")
+        return response
 
     logger.info("Flask application created successfully.")
 
@@ -186,7 +315,14 @@ def create_app() -> Flask:
         except Exception:
             return value
 
-    
+    # utils/jinja_filters.py (or similar)
+    @app.template_filter('datetimeformat')
+    def datetimeformat(value, fmt="%d.%m.%Y %H:%M"):
+        if isinstance(value, (datetime,)):
+            return value.strftime(fmt)
+        return value  # fallback
+
+        
     
 
     @app.template_filter("time")
@@ -230,7 +366,7 @@ def create_app() -> Flask:
     if app.debug:
 
         @app.route("/ping")
-        @cache.cached(timeout=30)  # Cache the response for 30 seconds
+        @cache.cached(timeout=30, unless=skip_cache_public_only)  # Cache the response for 30 seconds
         def ping():
             return f"Pong from {VERSION}"
         
@@ -249,69 +385,106 @@ def create_app() -> Flask:
         from mielenosoitukset_fi.utils.screenshot import create_screenshot
         from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
         data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+        if data and data.get("preview_image"):
+            return redirect(data.get("preview_image"))
         demo = Demonstration.from_dict(data)
         screenshot_path = create_screenshot(demo)
         if screenshot_path is None:
             return redirect(url_for("static", filename="img/e.png"))
         return redirect(url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/")))
     
-    
+    from datetime import datetime, timedelta
+    from bson import ObjectId
+
+    # --- Cached admin tasks (avoid re-running heavy queries on every template render) ---
+    _admin_tasks_cache = {"tasks": None, "timestamp": 0}
+    _ADMIN_TASKS_CACHE_TTL = 30  # seconds
+
+    def _get_admin_tasks_cached():
+        import time as _time
+        now = _time.monotonic()
+        cached = _admin_tasks_cache["tasks"]
+        if cached is not None and (now - _admin_tasks_cache["timestamp"]) < _ADMIN_TASKS_CACHE_TTL:
+            return cached
+
+        tasks = []
+
+        # --- DEMONSTRATION approval tasks ---
+        waiting_demos = list(
+            mongo.demonstrations.find({
+                "approved": False,
+                "hide": False,
+                "$or": [
+                    {"rejected": False},
+                    {"rejected": {"$exists": False}}
+                ]
+            }).sort("created_at", -1)
+        )
+        for demo in waiting_demos:
+            if not getattr(current_user, "global_admin", False) and not has_demo_permission(
+                current_user,
+                demo["_id"],
+                "LIST_DEMOS",
+            ):
+                continue
+            tasks.append({
+                "type": "demo",
+                "id": str(demo["_id"]),
+                "title": demo.get("title", "Nimetön mielenosoitus"),
+                "created_at": demo.get("created_datetime", datetime.now()) or datetime.now(),
+                "status": "waiting_approval",
+                "link": url_for("admin_demo.edit_demo", demo_id=demo["_id"]),
+            })
+
+        # --- ORG SUGGESTIONS tasks ---
+        org_suggestions = list(
+            mongo.org_edit_suggestions.find({
+        "status.state": {"$nin": ["partially_applied", "applied", "rejected", "cancelled"]}
+        }).sort("created_at", -1)
+        )
+        for s in org_suggestions:
+            if not getattr(current_user, "global_admin", False) and not current_user.has_permission(
+                "EDIT_ORGANIZATION",
+                s["organization_id"],
+            ):
+                continue
+            org = mongo.organizations.find_one({"_id": ObjectId(s["organization_id"])})
+            org_name = org["name"] if org else "Tuntematon organisaatio"
+            tasks.append({
+                "type": "org_suggestion",
+                "id": str(s["_id"]),
+                "title": f"Organisaation päivitysehdotus: {org_name}",
+                "created_at": s.get("created_at", datetime.now()),
+                "status": (s.get("status") or {}).get("state"),
+                "link": url_for("admin_org.review_suggestion", org_id=s["organization_id"], suggestion_id=s["_id"]),
+            })
+
+        # sort by creation time descending
+        tasks.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+
+        _admin_tasks_cache["tasks"] = tasks
+        _admin_tasks_cache["timestamp"] = now
+        return tasks
 
     @app.context_processor
     def utility_processor():
-        def get_admin_tasks():
-            # check if any demonstrations are waiting for approval
-            # rejected doesnt exist or is False
-            waiting = list(
-                mongo.demonstrations.find({
-                    "approved": False,
-                    "hide": False,
-                    "$or": [
-                        {"rejected": False},
-                        {"rejected": {"$exists": False}}
-                    ]
-                }).sort("created_at", -1)
-            )
-            app.logger.debug(f"Found {len(waiting)} demonstrations waiting for approval.")
-            return waiting
-
         def get_org_name(org_id):
-            return mongo.organizations.find_one({"_id": ObjectId(org_id)}).get("name")
-        
+            org = mongo.organizations.find_one({"_id": ObjectId(org_id)}, {"name": 1})
+            return org.get("name") if org else "Tuntematon"
 
         def _get_user_by_id(user_id, fields=None, include_none=False):
-            """
-            Fetch user data by user_id from MongoDB.
-
-            Parameters
-            ----------
-            user_id : str or ObjectId
-                The ID of the user to fetch.
-            fields : list[str], optional
-                List of fields to return. Defaults to ["username", "display_name", "profile_picture", "last_login"].
-            include_none : bool, optional
-                If True, include fields even if their value is None. Defaults to False.
-
-            Returns
-            -------
-            dict or None
-                Dictionary of requested user fields, or None if user not found or invalid ID.
-            """
             if fields is None:
                 fields = ["username", "display_name", "profile_picture", "last_login"]
 
-            # Ensure user_id is an ObjectId
             try:
                 oid = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
             except Exception:
-                return None  # invalid user_id
+                return None
 
-            # Fetch user
             user = mongo.users.find_one({"_id": oid})
             if not user:
                 return None
 
-            # Build result dict
             user_data = {}
             for field in fields:
                 if field in user:
@@ -320,17 +493,18 @@ def create_app() -> Flask:
 
             return user_data
 
-
-
         def get_supported_locales():
-            return app.config["BABEL_SUPPORTED_LOCALES"]
+            return app.config["BABEL_PUBLIC_LOCALES"]
 
         def get_lang_name(lang_code):
             return app.config["BABEL_LANGUAGES"].get(lang_code)
 
-        tasks = get_admin_tasks()
+        # Get all tasks (uses 30s in-memory cache)
+        tasks = _get_admin_tasks_cached()
         tasks_amount_total = len(tasks)
-        tasks_amount_done = sum(1 for t in tasks if t.get("approved", False))
+
+        # Demonstrations done
+        tasks_amount_done = sum(1 for t in tasks if t.get("approved", False) or t.get("state") == "applied")
 
         return dict(
             get_org_name=get_org_name,
@@ -343,6 +517,7 @@ def create_app() -> Flask:
         )
 
 
+
     
     # if env var forcerun
     if os.environ.get("FORCERUN") or (
@@ -351,14 +526,7 @@ def create_app() -> Flask:
         # To unset: unset FORCERUN
         
         # Usage: python3 run.py force [task1,task2,...]
-        available_tasks = {
-            "cl_main": cl_main,
-            "repeat_main": repeat_main,
-            "update_main": update_main,
-            "hide_past": hide_past,
-            "prep": prep,
-            "run_preview": run_preview,
-        }
+        available_tasks = {job.key: job.func for job in JOB_DEFINITIONS}
 
         def run_selected_tasks(selected, till_param=None):
             """Run selected maintenance tasks.
@@ -402,20 +570,9 @@ def create_app() -> Flask:
             run_selected_tasks(list(available_tasks.keys()))
         exit()
 
-    # Create and configure the scheduler
-    scheduler = BackgroundScheduler()
-    with app.app_context():
-        scheduler.add_job(repeat_main, "interval", hours=24)  # Run every 24 hours
-        scheduler.add_job(update_main, "interval", hours=1)  # Run every hour
-        scheduler.add_job(cl_main, "interval", hours=24)  # Run every 24 hours
-        scheduler.add_job(prep, "interval", minutes=15)
-        scheduler.add_job(run_preview, "interval", hours=24)  # Run every 24 hours
-        scheduler.add_job(demo_sche, "interval", hours=24)
-
-        
-    with app.app_context():
-        scheduler.add_job(hide_past, "interval", hours=24)  # Run every 24 hours
-        scheduler.start()
+    # Initialize background jobs (scheduler + logging)
+    if app.config.get("ENABLE_BACKGROUND_JOBS", True):
+        init_background_jobs(app)
         
     @app.template_filter('displayname_or_username')
     def displayname_or_username(user):
@@ -431,7 +588,10 @@ def create_app() -> Flask:
                 return obj[a]
         return None
     
-    app.jinja_env.globals.update(attr_or_get=attr_or_get)
+    app.jinja_env.globals.update(
+        attr_or_get=attr_or_get,
+        get_demo_cover_image=get_demo_cover_image,
+        get_demo_gallery_images=get_demo_gallery_images,
+    )
 
     return app
-

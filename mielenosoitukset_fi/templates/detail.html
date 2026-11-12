@@ -1,822 +1,1884 @@
 {% extends 'base.html' %}
 
 {% set formatted_date = demo.get('formatted_date') %}
+{% set metadata_title = demo.get('title') or _('Mielenosoitus') %}
+{% set metadata_city = demo.get('city') or _('Tuntematon') %}
+{% set metadata_description = demo.get('description') or _('Mielenosoituksen tiedot.') %}
+{% set metadata_address = demo.get('address') or _('Tuntematon osoite') %}
+{% set stored_metadata_author = demo['organizers'][0].get('name') if demo.get('organizers') else none %}
+{% set metadata_author = stored_metadata_author or _('Tuntematon kirjoittaja') %}
+{% set metadata_section = demo.get('section') or _('Tapahtumat') %}
+{% set metadata_tags = demo.get('tags') or [_('mielenosoitus'), _('tapahtuma')] %}
+{% set metadata_summary = _('%(title)s – mielenosoitus kaupungissa %(city)s', title=metadata_title, city=metadata_city) %}
+{% if formatted_date %}
+  {% set metadata_summary = metadata_summary ~ '. ' ~ formatted_date %}
+{% endif %}
+{% if follow_meta is not defined or follow_meta is none %}
+  {% set follow_meta = {
+    'organizer_follow_map': {},
+    'recurring_target_id': None,
+    'recurring_following': False
+  } %}
+{% endif %}
+{% if detail_layout not in ['classic', 'overview'] %}
+  {% set detail_layout = 'overview' %}
+{% endif %}
+{% if recurring_context is not defined %}
+  {% set recurring_context = none %}
+{% endif %}
+{% if seo_noindex is not defined %}
+  {% set seo_noindex = false %}
+{% endif %}
+{% if detail_canonical_url is not defined %}
+  {% set detail_canonical_url = request.base_url %}
+{% endif %}
+
+{% macro event_description(collapsible=false) %}
+  {% if demo['description'] %}
+  <section class="{% if collapsible %}event-description user-data-card{% else %}content-section event-description--classic{% endif %} animate-fade-in-up"
+           {% if collapsible %}data-collapsible-description{% endif %}>
+    <h2 class="section-title">
+      <i class="fa-solid fa-align-left" aria-hidden="true"></i>
+      {{ _('Kuvaus') }}
+    </h2>
+    <div class="event-description__content{% if not collapsible %} event-description__content--classic{% endif %}"
+         id="demo-description">
+      {{ demo['description']|safe }}
+    </div>
+    {% if collapsible %}
+    <p class="event-description__preview"
+       data-description-accessible-preview
+       hidden></p>
+    <button class="event-description__toggle btn btn-outline-primary"
+            type="button"
+            aria-controls="demo-description"
+            aria-expanded="false"
+            data-more-label="{{ _('Näytä lisää') }}"
+            data-less-label="{{ _('Näytä vähemmän') }}"
+            hidden>
+      <span>{{ _('Näytä lisää') }}</span>
+      <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+    </button>
+    {% endif %}
+  </section>
+  {% endif %}
+{% endmacro %}
+
+{% macro recurring_occurrence_switcher(context) %}
+<section class="recurring-occurrence-switcher animate-fade-in-up"
+         aria-labelledby="recurring-occurrence-title">
+  <div class="recurring-occurrence-switcher__header">
+    <div>
+      <p class="recurring-occurrence-switcher__kicker">
+        <i class="fa-solid fa-repeat" aria-hidden="true"></i>
+        {{ _('Toistuva tapahtuma') }}
+      </p>
+      <h2 id="recurring-occurrence-title">{{ _('Kaikki tapahtuman ajankohdat') }}</h2>
+      {% if context.has_upcoming %}
+      <p>{{ _('Valitse ajankohta nähdäksesi sen tarkat tiedot.') }}</p>
+      {% else %}
+      <p>{{ _('Ei tulevia ajankohtia. Näytetään sarjan viimeisin tapahtuma.') }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% set upcoming_occurrences = context.occurrences %}
+  {% set past_occurrences = context.past_occurrences %}
+
+  {% if upcoming_occurrences %}
+  <nav aria-label="{{ _('Tulevat tapahtumat') }}">
+    <ol class="recurring-occurrence-list">
+      {% for occurrence in upcoming_occurrences %}
+      <li>
+        <a class="recurring-occurrence-link{% if occurrence.is_selected %} is-selected{% endif %}{% if occurrence.cancelled %} is-cancelled{% endif %}"
+           href="{{ occurrence.url }}"
+           {% if occurrence.is_selected %}aria-current="date"{% endif %}>
+          <span class="recurring-occurrence-link__date">{{ occurrence.date | date('%d.%m.%Y') }}</span>
+          <span class="recurring-occurrence-link__time">
+            {{ occurrence.start_time | time('%H:%M') }}
+            {% if occurrence.end_time %}–{{ occurrence.end_time | time('%H:%M') }}{% endif %}
+          </span>
+          {% if occurrence.cancelled %}
+          <span class="recurring-occurrence-link__status">{{ _('Peruttu') }}</span>
+          {% elif occurrence.is_selected %}
+          <span class="recurring-occurrence-link__status">{{ _('Valittu') }}</span>
+          {% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ol>
+  </nav>
+  {% endif %}
+
+  {% if past_occurrences %}
+  <details class="recurring-occurrence-history" {% if not context.has_upcoming %}open{% endif %}>
+    <summary>{{ _('Menneet ja perutut ajankohdat') }} ({{ past_occurrences | length }})</summary>
+    <ol class="recurring-occurrence-list recurring-occurrence-list--past">
+      {% for occurrence in past_occurrences %}
+      <li>
+        <a class="recurring-occurrence-link{% if occurrence.is_selected %} is-selected{% endif %}{% if occurrence.cancelled %} is-cancelled{% endif %}"
+           href="{{ occurrence.url }}"
+           {% if occurrence.is_selected %}aria-current="date"{% endif %}>
+          <span class="recurring-occurrence-link__date">{{ occurrence.date | date('%d.%m.%Y') }}</span>
+          <span class="recurring-occurrence-link__time">
+            {{ occurrence.start_time | time('%H:%M') }}
+            {% if occurrence.end_time %}–{{ occurrence.end_time | time('%H:%M') }}{% endif %}
+          </span>
+          {% if occurrence.cancelled %}
+          <span class="recurring-occurrence-link__status">{{ _('Peruttu') }}</span>
+          {% elif occurrence.is_selected %}
+          <span class="recurring-occurrence-link__status">{{ _('Valittu') }}</span>
+          {% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ol>
+  </details>
+  {% endif %}
+  <a class="btn btn-secondary" href="{{ url_for('demonstrations') }}">
+    {{ _('Selaa kaikkia mielenosoituksia') }}
+  </a>
+</section>
+{% endmacro %}
 
 {% block title %}
-{{ demo.get('title', 'Mielenosoitus') }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
+{{ metadata_title }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
 {% endblock %}
 
+{% block robots %}
+<meta name="robots" content="{{ 'noindex, follow' if seo_noindex else 'index, follow' }}" />
+{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="{{ detail_canonical_url }}" />
+{% endblock %}
+
+{% block og_url %}{{ detail_canonical_url }}{% endblock %}
+
 {% block og_title %}
-{{ demo.get('title', 'Mielenosoitus') }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
+{{ metadata_title }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
 {% endblock %}
 
 {% block og_description %}
-{{ demo.get('title', 'Mielenosoitus') ~
-' - mielenosoitus kaupungissa ' ~
-demo.get('city', 'Tuntematon') ~
-('. ' ~ formatted_date if formatted_date else '') }}
+{{ metadata_summary }}
 {% endblock %}
 
-{% block og_image %}
-{{ demo.get('preview_image') or url_for('static', filename='demo_preview/' ~ demo['_id'] ~ '.png', _external=True) }}
-{% endblock %}
+{% block og_image %}{{ demo.get('preview_image') or url_for('static', filename='demo_preview/' ~ demo['_id'] ~ '.png',
+_external=True) }}{% endblock %}
 
 {% block twitter_title %}
-{{ demo.get('title', 'Mielenosoitus') }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
+{{ metadata_title }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
 {% endblock %}
 
 {% block twitter_description %}
-{{ demo.get('description', 'Mielenosoituksen tiedot.') }}
+{{ metadata_description }}
 {% endblock %}
 
-{% block twitter_image %}
-{{ demo.get('preview_image') or url_for('static', filename='demo_preview/' ~ demo['_id'] ~ '.png', _external=True) }}
-{% endblock %}
+{% block twitter_image %}{{ demo.get('preview_image') or url_for('static', filename='demo_preview/' ~ demo['_id'] ~
+'.png', _external=True) }}{% endblock %}
 
 {% block meta %}
 <!-- Event Meta -->
-<meta property="og:event:start_time" content="{{ demo.get('start_time', '00:00:00') }}" />
-<meta property="og:event:end_time" content="{{ demo.get('end_time', '23:59:00') }}" />
+<meta property="og:event:start_time" content="{{ demo.get('start_time') or '00:00:00' }}" />
+<meta property="og:event:end_time" content="{{ demo.get('end_time') or '23:59:00' }}" />
 <meta property="og:event:location"
-  content="{{ demo.get('address', 'Tuntematon osoite') ~ ', ' ~ demo.get('city', 'Tuntematon') }}" />
+  content="{{ metadata_address ~ ', ' ~ metadata_city }}" />
 
 <!-- Article Meta -->
-<meta property="article:author"
-  content="{{ demo['organizers'][0]['name'] if demo.get('organizers') else 'Tuntematon kirjoittaja' }}" />
-<meta property="article:section" content="{{ demo.get('section', 'Tapahtumat') }}" />
-{% set tags = demo.get('tags') or ['mielenosoitus', 'tapahtuma'] %}
-{% for tag in tags %}
+<meta property="article:author" content="{{ metadata_author }}" />
+<meta property="article:section" content="{{ metadata_section }}" />
+{% for tag in metadata_tags %}
 <meta property="article:tag" content="{{ tag }}" />
 {% endfor %}
+
+
+{# Mastodon friendly: provide rel="me" and og:see_also when a Mastodon profile is configured.
+Template accepts either demo['mastodon'] or a global mastodon_profile variable. #}
+{% set _mastodon_profile = demo.get('mastodon') or "https://mastodon.social/@mielenosoitukset" %}
+{% if _mastodon_profile %}
+<link rel="me" href="{{ _mastodon_profile }}" />
+<meta property="og:see_also" content="{{ _mastodon_profile }}" />
+{% endif %}
 
 <!-- JSON-LD Structured Data -->
 <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Event",
-    "name": "{{ demo.get('title', 'Tuntematon tapahtuma') }}",
-    "startDate": "{{ demo.get('date', '') }}T{{ demo.get('start_time', '00:00:00') }}",
-    "endDate": "{{ demo.get('date', '') }}T{{ demo.get('end_time', '23:59:00') }}",
+    "name": {{ metadata_title | tojson }},
+    "startDate": {{ ((demo.get('date') or '') ~ 'T' ~ (demo.get('start_time') or '00:00:00')) | tojson }},
+    "endDate": {{ ((demo.get('date') or '') ~ 'T' ~ (demo.get('end_time') or '23:59:00')) | tojson }},
     "location": {
       "@type": "Place",
-      "name": "{{ demo.get('address', 'Tuntematon paikka') }}",
+      "name": {{ metadata_address | tojson }},
       "geo": {
         "@type": "GeoCoordinates",
-        "latitude": "{{ demo.get('latitude', '') }}",
-        "longitude": "{{ demo.get('longitude', '') }}"
+        "latitude": {{ (demo.get('latitude') or '') | tojson }},
+        "longitude": {{ (demo.get('longitude') or '') | tojson }}
       }
     },
-    "description": "{{ demo.get('description', 'Mielenosoituksen tiedot.') }}",
-    "image": "{{ demo.get('preview_image') or url_for('screenshot', demo_id=demo['_id'], _external=True) }}",
-    "url": "{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}",
+    "description": {{ metadata_description | tojson }},
+    "image": {{ (demo.get('preview_image') or url_for('screenshot', demo_id=demo['_id'], _external=True)) | tojson }},
+    "url": {{ detail_canonical_url | tojson }},
     "organizer": {
       "@type": "Organization",
-      "name": "{{ demo['organizers'][0]['name'] if demo.get('organizers') else 'Tuntematon' }}",
-      "url": "{{ url_for('org', org_id=demo['organizers'][0]['organization_id']) if demo.get('organizers') and demo['organizers'][0].get('organization_id') else '#' }}"
+      "name": {{ metadata_author | tojson }},
+      "url": {{ (url_for('org', org_id=demo['organizers'][0]['organization_id']) if demo.get('organizers') and demo['organizers'][0].get('organization_id') else '#') | tojson }}
     }
   }
-  </script>
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".follow-org-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        try {
+          await toggleOrganizationFollow(btn);
+        } catch (err) {
+          console.error(err);
+          displayFlashMessage(
+            "error",
+            {{ _('Seurannan päivittäminen epäonnistui. Yritä uudelleen.')|tojson }}
+          );
+        }
+      });
+    });
+
+    const recurringBtn = document.getElementById("follow-recurring-btn");
+    if (recurringBtn) {
+      recurringBtn.addEventListener("click", async () => {
+        try {
+          await toggleRecurringFollow(recurringBtn);
+        } catch (err) {
+          console.error(err);
+          displayFlashMessage(
+            "error",
+            {{ _('Seurannan päivittäminen epäonnistui. Yritä uudelleen.')|tojson }}
+          );
+        }
+      });
+    }
+  });
+
+  async function toggleOrganizationFollow(button) {
+    if (!button || button.dataset.loading === "1") return;
+    const orgId = button.dataset.orgId;
+    const following = button.dataset.following === "1";
+    const endpoint = following ? `/api/unfollow/organization/${orgId}` : `/api/follow/organization/${orgId}`;
+    button.dataset.loading = "1";
+    button.classList.add("loading");
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    });
+    button.dataset.loading = "0";
+    button.classList.remove("loading");
+    if (!response.ok) {
+      throw new Error("Failed follow update");
+    }
+    const data = await response.json();
+    updateFollowButton(button, data.following);
+  }
+
+  async function toggleRecurringFollow(button) {
+    if (!button || button.dataset.loading === "1") return;
+    const targetId = button.dataset.target;
+    const following = button.dataset.following === "1";
+    const endpoint = following ? `/api/unfollow/recurring/${targetId}` : `/api/follow/recurring/${targetId}`;
+    button.dataset.loading = "1";
+    button.classList.add("loading");
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    });
+    button.dataset.loading = "0";
+    button.classList.remove("loading");
+    if (!response.ok) {
+      throw new Error("Failed follow update");
+    }
+    const data = await response.json();
+    updateFollowButton(button, data.following);
+  }
+
+  function updateFollowButton(button, following) {
+    if (!button) return;
+    button.dataset.following = following ? "1" : "0";
+    button.setAttribute("aria-pressed", following ? "true" : "false");
+    const label = following ? button.dataset.followingLabel : button.dataset.followLabel;
+    const textNode = button.querySelector(".follow-label") || button.querySelector("span");
+    if (textNode && label) {
+      textNode.textContent = label;
+    }
+
+    const icon = button.querySelector(".follow-icon");
+    if (icon) {
+      icon.classList.toggle("fa-solid", following);
+      icon.classList.toggle("fa-regular", !following);
+    }
+
+    if (button.classList.contains("organizer-follow-btn")) {
+      button.classList.toggle("is-following", following);
+      return;
+    }
+
+    if (following) {
+      button.classList.add("btn-primary");
+      button.classList.remove("btn-outline-primary", "btn-outline-secondary");
+    } else {
+      button.classList.remove("btn-primary");
+      if (button.id === "follow-recurring-btn") {
+        button.classList.add("btn-outline-secondary");
+      } else {
+        button.classList.add("btn-outline-primary");
+      }
+    }
+  }
+</script>
 {% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/toolbox.css' )}}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/modal.css') }}" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-:root {
-  --color-bg: light-dark(#f8fafc, #0f1419);
-  --color-card-bg: light-dark(#ffffff, #1a1d23);
-  --color-text: light-dark(#1e293b, #e2e8f0);
-  --color-text-secondary: light-dark(#64748b, #94a3b8);
-  --color-primary: light-dark(#0052cc, #3b82f6);
-  --color-primary-hover: light-dark(#003d99, #2563eb);
-  --color-secondary: light-dark(#ff6b00, #f97316);
-  --color-secondary-hover: light-dark(#e55a00, #ea580c);
-  --color-accent: light-dark(#06b6d4, #0891b2);
-  --color-success: light-dark(#16a34a, #22c55e);
-  --color-warning: light-dark(#d97706, #f59e0b);
-  --color-error: light-dark(#dc2626, #ef4444);
-  --color-border: light-dark(#e2e8f0, #374151);
-  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
-  --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
-  --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
-  --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
-  --color-gradient-accent: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  --border-radius: 16px;
-  --border-radius-lg: 24px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dark:root {
-  --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-  --color-gradient-accent: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  line-height: 1.7;
-  margin: 0;
-  font-feature-settings: 'liga' 1, 'kern' 1;
-}
-
-/* Container */
-.container-main-content {
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 2rem;
-}
-
-/* Hero Section */
-.demo-hero {
-  background: var(--color-gradient-primary);
-  border-radius: var(--border-radius-lg);
-  padding: 4rem 2rem;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--color-shadow-lg);
-  margin-bottom: 3rem;
-}
-
-.demo-hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-.demo-hero-content {
-  position: relative;
-  z-index: 2;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.demo-title {
-  color: white;
-  font-size: clamp(2rem, 4vw, 3.5rem);
-  font-weight: 800;
-  margin-bottom: 1.5rem;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-
-.demo-datetime {
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.demo-location {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
-}
-
-/* Cover Image */
-.demo-cover {
-  margin-bottom: 3rem;
-  border-radius: var(--border-radius-lg);
-  overflow: hidden;
-  box-shadow: var(--color-shadow-lg);
-}
-
-.demo-cover img {
-  width: 100%;
-  height: 400px;
-  object-fit: cover;
-  display: block;
-}
-
-/* Action Buttons */
-.action-buttons {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin: 3rem 0;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  padding: 1rem 1.5rem;
-  border-radius: 50px;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-}
-
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: var(--transition);
-}
-
-.btn:hover::before {
-  left: 100%;
-}
-
-.btn-primary {
-  background: var(--color-gradient-primary);
-  color: white;
-  box-shadow: var(--color-shadow);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow-lg);
-  color: white;
-}
-
-.btn-secondary {
-  background: var(--color-gradient-secondary);
-  color: white;
-  box-shadow: var(--color-shadow);
-}
-
-.btn-secondary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow-lg);
-  color: white;
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--color-primary);
-  border: 2px solid var(--color-border);
-}
-
-.btn-outline:hover {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
-.btn-social {
-  background: var(--color-card-bg);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-}
-
-.btn-social:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow);
-}
-
-.btn-social.facebook {
-  background: #1877f2;
-  color: white;
-}
-
-.btn-social.twitter {
-  background: #000000;
-  color: white;
-}
-
-.btn-social.linkedin {
-  background: #0077b5;
-  color: white;
-}
-
-/* Participation Section */
-.participation-card {
-  background: var(--color-card-bg);
-  border-radius: var(--border-radius-lg);
-  padding: 3rem 2rem;
-  text-align: center;
-  box-shadow: var(--color-shadow);
-  border: 1px solid var(--color-border);
-  margin: 3rem 0;
-  position: relative;
-  overflow: hidden;
-}
-
-.participation-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--color-gradient-accent);
-}
-
-.like-button {
-  background: var(--color-gradient-accent);
-  color: white;
-  padding: 1.25rem 2.5rem;
-  font-size: 1.2rem;
-  font-weight: 700;
-  border-radius: var(--border-radius);
-  border: none;
-  cursor: pointer;
-  transition: var(--transition);
-  box-shadow: var(--color-shadow);
-  margin-bottom: 1.5rem;
-  position: relative;
-}
-
-.like-button:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--color-shadow-lg);
-}
-
-.like-button.liked {
-  background: var(--color-gradient-secondary);
-}
-
-.like-count {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-/* Content Sections */
-.content-section {
-  background: var(--color-card-bg);
-  border-radius: var(--border-radius-lg);
-  padding: 3rem 2.5rem;
-  margin-bottom: 2.5rem;
-  box-shadow: var(--color-shadow);
-  border: 1px solid var(--color-border);
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-}
-
-.content-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--color-gradient-primary);
-  opacity: 0;
-  transition: var(--transition);
-}
-
-.content-section:hover::before {
-  opacity: 1;
-}
-
-.section-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  margin-bottom: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.section-title i {
-  font-size: 1.5rem;
-}
-
-/* Tags */
-.tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: center;
-  margin: 2rem 0;
-}
-
-.tag {
-  background: var(--color-gradient-secondary);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 50px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: var(--transition);
-  box-shadow: var(--color-shadow);
-}
-
-.tag:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: var(--color-shadow-lg);
-  color: white;
-}
-
-/* Countdown */
-.countdown-card {
-  background: var(--color-gradient-accent);
-  color: white;
-  border-radius: var(--border-radius-lg);
-  padding: 3rem 2rem;
-  text-align: center;
-  margin: 3rem 0;
-  box-shadow: var(--color-shadow-lg);
-  position: relative;
-  overflow: hidden;
-}
-
-.countdown-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.countdown-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  position: relative;
-  z-index: 2;
-}
-
-.countdown-timer {
-  font-size: 2rem;
-  font-weight: 800;
-  position: relative;
-  z-index: 2;
-}
-
-/* Map */
-.map-container {
-  background: var(--color-card-bg);
-  border-radius: var(--border-radius-lg);
-  /*padding: 2.5rem;*/
-  box-shadow: var(--color-shadow);
-  border: 1px solid var(--color-border);
-  margin: 3rem 0;
-}
-
-.map-wrapper {
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  height: 400px;
-  box-shadow: var(--color-shadow);
-}
-
-/* Organizers */
-.organizers-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
-}
-
-.organizer-card {
-  background: var(--color-bg);
-  border-radius: var(--border-radius);
-  padding: 2rem;
-  box-shadow: var(--color-shadow);
-  border: 1px solid var(--color-border);
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-}
-
-.organizer-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--color-gradient-secondary);
-}
-
-.organizer-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--color-shadow-lg);
-}
-
-.organizer-name {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.organizer-contact {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.contact-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--color-text-secondary);
-}
-
-.contact-item a {
-  color: var(--color-primary);
-  text-decoration: none;
-  transition: var(--transition);
-}
-
-.contact-item a:hover {
-  color: var(--color-secondary);
-  text-decoration: underline;
-}
-
-/* Info Alerts */
-.info-alert {
-  background: rgba(6, 182, 212, 0.1);
-  border: 1px solid rgba(6, 182, 212, 0.2);
-  color: var(--color-accent);
-  padding: 1.5rem;
-  border-radius: var(--border-radius);
-  margin: 2rem 0;
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
-.info-alert.warning {
-  background: rgba(245, 158, 11, 0.1);
-  border-color: rgba(245, 158, 11, 0.2);
-  color: var(--color-warning);
-}
-
-.info-alert.success {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.2);
-  color: var(--color-success);
-}
-
-/* Navigation */
-.nav-buttons {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin: 3rem 0;
-}
-
-/* Report Button */
-#report-selection-btn {
-  position: absolute;
-  z-index: 2000;
-  display: none;
-  padding: 0.5rem 1rem;
-  background: var(--color-warning);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius);
-  font-size: 0.9rem;
-  font-weight: 600;
-  box-shadow: var(--color-shadow);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-#report-selection-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow-lg);
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .container-main-content {
-    padding: 0 1rem;
-    margin: 1rem auto;
+  :root {
+    --color-bg: light-dark(#f8fafc, #0f1419);
+    --color-card-bg: light-dark(#ffffff, #1a1d23);
+    --color-text: light-dark(#1e293b, #e2e8f0);
+    --color-text-secondary: light-dark(#64748b, #94a3b8);
+    --color-primary: light-dark(#0052cc, #3b82f6);
+    --color-primary-hover: light-dark(#003d99, #2563eb);
+    --color-secondary: light-dark(#ff6b00, #f97316);
+    --color-secondary-hover: light-dark(#e55a00, #ea580c);
+    --color-accent: light-dark(#06b6d4, #0891b2);
+    --color-success: light-dark(#16a34a, #22c55e);
+    --color-warning: light-dark(#d97706, #f59e0b);
+    --color-error: light-dark(#dc2626, #ef4444);
+    --color-border: light-dark(#e2e8f0, #374151);
+    --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+    --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
+    --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+    --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
+    --color-gradient-accent: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    --border-radius: 16px;
+    --border-radius-lg: 24px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  .dark:root {
+    --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    --color-gradient-accent: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  }
+
+  .dark body .text-muted {
+    color: #cbd5f5 !important;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.7;
+    margin: 0;
+    font-feature-settings: 'liga' 1, 'kern' 1;
+  }
+
+  /* Container */
+  .container-main-content {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+  }
+
+  /* Hero Section */
   .demo-hero {
-    padding: 3rem 1.5rem;
+    background: var(--color-gradient-primary);
+    border-radius: var(--border-radius-lg);
+    padding: 4rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--color-shadow-lg);
+    margin-bottom: 3rem;
+  }
+
+  .demo-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .demo-hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    margin: 0 auto;
   }
 
   .demo-title {
-    font-size: 2rem;
+    color: white;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
   }
 
   .demo-datetime {
-    font-size: 1.25rem;
-    flex-direction: column;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .demo-location {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+  }
+
+  .demo-language-panel {
+    margin-top: 1.5rem;
+    padding: 1rem 1.25rem;
+    border-radius: 14px;
+    background: light-dark(rgba(255, 255, 255, 0.16), rgba(15, 23, 42, 0.42));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .demo-language-copy {
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.95rem;
+    flex: 1 1 260px;
+  }
+
+  .demo-language-chips {
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
   }
 
+  .demo-language-chip {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.5rem 0.9rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: var(--transition);
+  }
+
+  .demo-language-chip:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+  }
+
+  .demo-language-chip.is-active {
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--color-primary);
+    border-color: rgba(255, 255, 255, 0.94);
+  }
+  /* Gallery */
+  .demo-gallery {
+    margin-bottom: 3rem;
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--color-shadow-lg);
+    background: #000;
+  }
+
+  .demo-gallery-main {
+    position: relative;
+  }
+
+  .demo-gallery-slide {
+    display: none;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .demo-gallery-slide.is-active {
+    display: block;
+  }
+
+  .demo-gallery-slide img {
+    width: 100%;
+    height: 420px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .demo-gallery-slide.is-low-resolution {
+    min-height: 420px;
+    align-items: center;
+    justify-content: center;
+    isolation: isolate;
+  }
+
+  .demo-gallery-slide.is-low-resolution.is-active {
+    display: flex;
+  }
+
+  .demo-gallery-slide.is-low-resolution::before {
+    content: "";
+    position: absolute;
+    inset: -24px;
+    z-index: -1;
+    background-image: var(--gallery-image);
+    background-position: center;
+    background-size: cover;
+    filter: blur(20px) brightness(0.55);
+    transform: scale(1.08);
+  }
+
+  .demo-gallery-slide.is-low-resolution img {
+    width: auto;
+    max-width: min(100%, var(--gallery-natural-width));
+    height: auto;
+    max-height: 420px;
+    object-fit: contain;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  }
+
+  .demo-gallery-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.4);
+    border: none;
+    color: #fff;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .demo-gallery-nav:hover {
+    background: rgba(0, 0, 0, 0.65);
+  }
+
+  .demo-gallery-nav.prev {
+    left: 1rem;
+  }
+
+  .demo-gallery-nav.next {
+    right: 1rem;
+  }
+
+  .demo-gallery-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem 0 0;
+    background: #0f172a;
+  }
+
+  .demo-gallery-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+  }
+
+  .demo-gallery-dot.is-active {
+    background: var(--color-secondary);
+  }
+
+  /* Action Buttons */
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 3rem 0;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: var(--transition);
+  }
+
+  .btn:hover::before {
+    left: 100%;
+  }
+
+  .btn-primary {
+    background: var(--color-gradient-primary);
+    color: white;
+    box-shadow: var(--color-shadow);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow-lg);
+    color: white;
+  }
+
+  .btn-secondary {
+    background: var(--color-gradient-secondary);
+    color: white;
+    box-shadow: var(--color-shadow);
+  }
+
+  .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow-lg);
+    color: white;
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--color-primary, light-dark(#2563eb, #60a5fa));
+    /* blue-600/blue-400 */
+    border: 2px solid var(--color-border, light-dark(#94a3b8, #475569)) !important;
+    /* slate-400/slate-600 */
+    border-radius: 0.75rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .btn-outline:hover {
+    background: var(--color-primary, light-dark(#2563eb, #60a5fa));
+    color: var(--color-on-primary, white);
+    border-color: var(--color-primary, light-dark(#2563eb, #60a5fa));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 40%, transparent);
+    /* soft focus glow */
+  }
+
+
+  .btn-social {
+    background: var(--color-card-bg);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+  }
+
+  .btn-social:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow);
+  }
+
+  .btn-social.facebook {
+    background: #1877f2;
+    color: white;
+  }
+
+  .btn-social.twitter {
+    background: #000000;
+    color: white;
+  }
+
+  .btn-social.mastodon {
+    background: linear-gradient(135deg, #6364ff 0%, #858afa 100%);
+    color: white;
+  }
+
+  .btn-social.linkedin {
+    background: #0077b5;
+    color: white;
+  }
+
+  /* Participation Section */
+  .participation-card {
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 3rem 2rem;
+    text-align: center;
+    box-shadow: var(--color-shadow);
+    border: 1px solid var(--color-border);
+    margin: 3rem 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .participation-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--color-gradient-accent);
+  }
+
+  .like-button {
+    background: var(--color-gradient-accent);
+    color: white;
+    padding: 1.25rem 2.5rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-radius: var(--border-radius);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--color-shadow);
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+
+  .like-button:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  .like-button.liked {
+    background: var(--color-gradient-secondary);
+  }
+
+  .like-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  /* Content Sections */
   .content-section {
-    padding: 2rem 1.5rem;
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 3rem 2.5rem;
+    margin-bottom: 2.5rem;
+    box-shadow: var(--color-shadow);
+    border: 1px solid var(--color-border);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .content-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--color-gradient-primary);
+    opacity: 0;
+    transition: var(--transition);
+  }
+
+  .content-section:hover::before {
+    opacity: 1;
   }
 
   .section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-title i {
     font-size: 1.5rem;
   }
 
-  .action-buttons {
-    flex-direction: column;
-    align-items: stretch;
+  /* Tags */
+  .tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin: 2rem 0;
   }
 
-  .organizers-grid {
-    grid-template-columns: 1fr;
+  .tag {
+    background: var(--color-gradient-secondary);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: var(--color-shadow);
+  }
+
+  .tag:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--color-shadow-lg);
+    color: white;
+  }
+
+  /* Countdown */
+  .countdown-card {
+    background: var(--color-gradient-accent);
+    color: white;
+    border-radius: var(--border-radius-lg);
+    padding: 3rem 2rem;
+    text-align: center;
+    margin: 3rem 0;
+    box-shadow: var(--color-shadow-lg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .countdown-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .countdown-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 2;
   }
 
   .countdown-timer {
-    font-size: 1.5rem;
+    font-size: 2rem;
+    font-weight: 800;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Map */
+  .map-container {
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius-lg);
+    /*padding: 2.5rem;*/
+    box-shadow: var(--color-shadow);
+    border: 1px solid var(--color-border);
+    margin: 3rem 0;
   }
 
   .map-wrapper {
-    height: 300px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    height: 400px;
+    box-shadow: var(--color-shadow);
   }
-}
 
-/* Animation Classes */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
+  /* Organizers */
+  .organizers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .organizer-card {
+    background: linear-gradient(135deg, rgba(54, 88, 226, 0.08), rgba(19, 16, 26, 0)) var(--color-bg);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: var(--color-shadow);
+    border: 1px solid var(--color-border);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
   }
-}
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out;
-}
+  .organizer-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--color-gradient-secondary);
+  }
 
-/* Focus States for Accessibility */
-.btn:focus,
-.like-button:focus,
-.tag:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
+  .organizer-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--color-shadow-lg);
+  }
 
-/* Loading States */
-.btn.loading {
-  pointer-events: none;
-  opacity: 0.8;
-}
+  .organizer-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
 
-.btn.loading::after {
-  content: '';
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-left: 8px;
-}
+  .organizer-follow-btn {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--color-text);
+    transition: var(--transition);
+    box-shadow: var(--color-shadow);
+    z-index: 2;
+  }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+  .organizer-follow-btn .follow-icon {
+    font-size: 0.95rem;
+  }
 
-#info-grid {
-  display: grid; 
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-  gap: 2rem;}
+  .organizer-follow-btn.is-following {
+    background: var(--color-accent);
+    color: #fff;
+    border-color: var(--color-accent);
+    box-shadow: var(--color-shadow-lg);
+  }
 
-@media screen and (max-width: 600px) {
-  #info-grid {
-    grid-template-columns: 1fr;
+  .organizer-follow-btn:hover:not(.loading) {
+    transform: translateY(-1px);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  @media (max-width: 600px) {
+    .organizer-follow-btn {
+      top: 1rem;
+      right: 1rem;
+      font-size: 0.78rem;
+    }
+  }
+
+  .organizer-logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: var(--color-shadow);
+  }
+
+  .organizer-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 8px;
+  }
+
+  .organizer-logo.placeholder {
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--color-text-secondary);
+    font-size: 1.5rem;
+  }
+
+  .organizer-info {
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .organizer-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 0.25rem;
+  }
+
+  .organizer-meta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+  }
+
+  .organizer-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.35rem 0.75rem;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .organizer-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+
+  .contact-item {
+    flex: 1 1 220px;
+    min-width: 0;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .contact-item i {
+    color: var(--color-primary);
+  }
+
+  .contact-item a {
+    min-width: 0;
+    max-width: 100%;
+    color: var(--color-text);
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .contact-item a:hover {
+    color: var(--color-primary);
+  }
+
+  /* Info Alerts */
+  .info-alert {
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    color: var(--color-accent);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    margin: 2rem 0;
+    display: flex;
+    align-items: flex-start;
     gap: 1rem;
   }
-}
+
+  .info-alert.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.2);
+    color: var(--color-warning);
+  }
+
+  .info-alert.success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.2);
+    color: var(--color-success);
+  }
+
+  /* Navigation */
+  .nav-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 3rem 0;
+  }
+
+  .similar-demos {
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--color-shadow);
+    padding: 2rem;
+    margin-top: 2rem;
+  }
+
+  .similar-demos .section-header p {
+    color: var(--color-text-secondary);
+  }
+
+  .similar-demos .suggestion-card {
+    background: light-dark(#fdfdfd, #111827);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    height: 100%;
+    padding: 1.25rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .similar-demos .suggestion-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-primary);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  .similar-demos .card-date {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .similar-demos .card-link {
+    color: var(--color-primary);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.75rem;
+  }
+
+  .similar-demos .card-link i {
+    transition: transform 0.2s ease;
+  }
+
+  .similar-demos .suggestion-card:hover .card-link i {
+    transform: translateX(3px);
+  }
+
+  /* Report Button */
+  #report-selection-btn {
+    position: absolute;
+    z-index: 2000;
+    display: none;
+    padding: 0.5rem 1rem;
+    background: var(--color-warning);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: var(--color-shadow);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  #report-selection-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  .report-flow-trigger {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    color: #111827;
+    border: none;
+    box-shadow: 0 12px 30px rgba(249, 115, 22, 0.22);
+    font-weight: 700;
+  }
+
+  .report-flow-trigger::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(255,255,255,0.22), transparent 55%);
+    pointer-events: none;
+  }
+
+  .report-flow-trigger:hover,
+  .report-flow-trigger:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(249, 115, 22, 0.28);
+    color: #111827;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    .demo-gallery-slide.is-low-resolution {
+      min-height: 260px;
+    }
+
+    .demo-gallery-slide.is-low-resolution img {
+      max-height: 260px;
+    }
+
+    .container-main-content {
+      padding: 0 1rem;
+      margin: 1rem auto;
+    }
+
+    .demo-hero {
+      padding: 3rem 1.5rem;
+    }
+
+    .demo-title {
+      font-size: 2rem;
+    }
+
+    .demo-datetime {
+      font-size: 1.25rem;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .content-section {
+      padding: 2rem 1.5rem;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .organizers-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .contact-item {
+      flex-basis: 100%;
+    }
+
+    .countdown-timer {
+      font-size: 1.5rem;
+    }
+
+    .map-wrapper {
+      height: 300px;
+    }
+  }
+
+  /* Animation Classes */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  /* Focus States for Accessibility */
+  .btn:focus,
+  .like-button:focus,
+  .tag:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Loading States */
+  .btn.loading {
+    pointer-events: none;
+    opacity: 0.8;
+  }
+
+  .btn.loading::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 8px;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  #info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  @media screen and (max-width: 600px) {
+    #info-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+</style>
+
+
+<style>
+  .help-us-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    background: var(--color-card-bg);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--border-radius-lg);
+    padding: 2rem 2.5rem;
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+  }
+
+
+
+  .help-us-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: var(--color-gradient-secondary);
+  }
+
+  .help-us-banner:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow-lg);
+    border-color: var(--color-secondary);
+  }
+
+  .help-us-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+  }
+
+  .help-us-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-secondary);
+    font-size: 1.75rem;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .help-us-icon::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--color-secondary);
+    opacity: 0.2;
+  }
+
+  .help-us-text {
+    flex: 1;
+  }
+
+  .help-us-text h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .help-us-text p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  .help-us-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    background: var(--color-gradient-secondary);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: var(--transition);
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+  }
+
+  .help-us-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+  }
+
+  .help-us-button:active {
+    transform: translateY(-1px);
+  }
+
+  .help-us-button i {
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 768px) {
+    .help-us-banner {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 2rem 1.5rem;
+      gap: 1.5rem;
+    }
+
+    .help-us-content {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .help-us-icon {
+      width: 50px;
+      height: 50px;
+      font-size: 1.5rem;
+    }
+
+    .help-us-button {
+      width: 100%;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .help-us-text h3 {
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+  }
+
+  /* Dark mode enhancements */
+  @media (prefers-color-scheme: dark) {
+    .help-us-banner {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.05) 0%, rgba(234, 88, 12, 0.05) 100%);
+    }
+
+    .help-us-icon {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%);
+    }
+  }
+
+
+  /* Inline | http://127.0.0.1:5002/demonstration/6908f16a6b220963bcbc28d8 */
+
+  .help-us-title {
+    display: flex;
+    justify-content: center;
+    justify-items: center;
+    align-content: center;
+    margin-bottom: 5px;
+  }
+
+  /* Inline | http://127.0.0.1:5002/demonstration/6908f16a6b220963bcbc28d8 */
+
+  .help-us-icon {
+    /* width: 60px; */
+    /* height: 60px; */
+    width: 30px;
+    height: 30px;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    margin: 10px 15px 10px 0;
+  }
+
+  .help-us-text h3 {
+    /* margin: 0 0 0.5rem 0; */
+    margin: auto;
+  }
+
+
+  .help-us-banner a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition);
+    position: relative;
+    padding-bottom: 2px;
+  }
+
+  .help-us-banner a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--color-primary);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: var(--transition);
+  }
+
+  .help-us-banner a:hover {
+    color: var(--color-secondary);
+  }
+
+  .help-us-banner a:hover::after {
+    background: var(--color-secondary);
+    transform: scaleX(1);
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-main-content">
-  
+
+  {% if not preview_mode %}
+  <nav class="detail-layout-preference animate-fade-in-up"
+       aria-label="{{ _('Tapahtumasivun näkymä') }}">
+    <div class="detail-layout-preference__choice">
+      <span class="detail-layout-preference__label">{{ _('Näkymä') }}</span>
+      <div class="detail-layout-preference__options">
+        <a class="detail-layout-preference__option{% if detail_layout == 'overview' %} is-active{% endif %}"
+           href="{% if recurring_context %}{{ url_for('siblings_meeting', parent=recurring_context.parent_id, occurrence=demo.get('slug') or demo['_id'], detail_layout='overview') }}{% else %}{{ url_for('demonstration_detail', demo_id=request.view_args.get('demo_id'), detail_layout='overview') }}{% endif %}"
+           {% if detail_layout == 'overview' %}aria-current="true"{% endif %}>
+          {{ _('Yleiskuva') }}
+          {% if detail_layout == 'overview' %}<span class="visually-hidden">({{ _('käytössä') }})</span>{% endif %}
+        </a>
+        <a class="detail-layout-preference__option{% if detail_layout == 'classic' %} is-active{% endif %}"
+           href="{% if recurring_context %}{{ url_for('siblings_meeting', parent=recurring_context.parent_id, occurrence=demo.get('slug') or demo['_id'], detail_layout='classic') }}{% else %}{{ url_for('demonstration_detail', demo_id=request.view_args.get('demo_id'), detail_layout='classic') }}{% endif %}"
+           {% if detail_layout == 'classic' %}aria-current="true"{% endif %}>
+          {{ _('Perinteinen') }}
+          {% if detail_layout == 'classic' %}<span class="visually-hidden">({{ _('käytössä') }})</span>{% endif %}
+        </a>
+      </div>
+    </div>
+    <a class="detail-layout-preference__feedback"
+       href="{{ url_for('contact') }}#contact-form-section">
+      {{ _('Anna palautetta tästä näkymästä') }}
+    </a>
+  </nav>
+  {% endif %}
+
   <!-- Demo Hero -->
-  <section class="demo-hero animate-fade-in-up">
+  <section class="demo-hero site-hero animate-fade-in-up">
     <div class="demo-hero-content">
       <h1 class="demo-title">{{ demo['title'] }}</h1>
+      {% if detail_layout == 'classic' %}
       <div class="demo-datetime">
-        <i class="fa-solid fa-calendar-days"></i>
+        <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
         <span>{{ demo['date'] | date('%d.%m.%Y') }}</span>
-        <i class="fa-solid fa-clock"></i>
+        <i class="fa-solid fa-clock" aria-hidden="true"></i>
         {% if demo['end_time'] %}
         <span>{{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}</span>
         {% else %}
         <span>{{ demo['start_time'] | time('%H:%M') }} {{ _('alkaen') }}</span>
         {% endif %}
       </div>
+      {% if demo['address'] or demo['city'] %}
       <div class="demo-location">
-        <i class="fa-solid fa-location-dot"></i>
-        {{ demo['address'] }}, {{ demo['city'] }}
+        <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+        {% if demo['address'] %}{{ demo['address'] }}{% if demo['city'] %}, {% endif %}{% endif %}{{ demo['city'] or '' }}
       </div>
+      {% endif %}
+      {% else %}
+      <dl class="demo-at-a-glance" aria-label="{{ _('Tapahtuman tiedot') }}">
+        <div class="demo-at-a-glance__item">
+          <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+          <div>
+            <dt>{{ _('Ajankohta') }}</dt>
+            <dd>
+              {{ demo['date'] | date('%d.%m.%Y') }}
+              {% if demo['end_time'] %}
+                · {{ demo['start_time'] | time('%H:%M') }}–{{ demo['end_time'] | time('%H:%M') }}
+              {% else %}
+                · {{ demo['start_time'] | time('%H:%M') }} {{ _('alkaen') }}
+              {% endif %}
+            </dd>
+          </div>
+        </div>
+        {% if demo['address'] or demo['city'] %}
+        <div class="demo-at-a-glance__item">
+          <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+          <div>
+            <dt>{{ _('Sijainti') }}</dt>
+            <dd>{% if demo['address'] %}{{ demo['address'] }}{% if demo['city'] %}, {% endif %}{% endif %}{{ demo['city'] or '' }}</dd>
+          </div>
+        </div>
+        {% endif %}
+        {% if demo['organizers'] and demo['organizers']|length > 0 %}
+        <div class="demo-at-a-glance__item">
+          <i class="fa-solid fa-users" aria-hidden="true"></i>
+          <div>
+            <dt>{{ _('Järjestäjät') }}</dt>
+            <dd>
+              {% for org in demo['organizers'] %}
+                {% if org.is_private and not org.show_name_public %}
+                  {{ _('Yksityishenkilö (nimi piilotettu)') }}
+                {% elif org.name %}
+                  {{ org.name }}
+                {% elif org.is_private %}
+                  {{ _('Yksityishenkilö') }}
+                {% else %}
+                  {{ _('Tuntematon järjestäjä') }}
+                {% endif %}{% if not loop.last %}, {% endif %}
+              {% endfor %}
+            </dd>
+          </div>
+        </div>
+        {% endif %}
+        <div class="demo-at-a-glance__item">
+          <i class="fa-solid fa-shapes" aria-hidden="true"></i>
+          <div>
+            <dt>{{ _('Tapahtumatyyppi') }}</dt>
+            <dd>
+              {% if demo.event_type == 'MARCH' %}{{ _('Marssi') }}
+              {% elif demo.event_type == 'STAY_STILL' %}{{ _('Paikallaan') }}
+              {% elif demo.event_type == 'ROAD_BLOCK' %}{{ _('Tiesulku') }}
+              {% else %}{{ _('Muu') }}{% endif %}
+            </dd>
+          </div>
+        </div>
+      </dl>
+      {% endif %}
+      {% if available_demo_languages and available_demo_languages|length > 1 %}
+      <div class="demo-language-panel">
+        <div class="demo-language-copy">
+          {% if current_demo_language == default_demo_language %}
+            {{ _('Näytät tapahtuman oletuskielellä %(language)s.', language=get_lang_name(current_demo_language) or current_demo_language.upper()) }}
+          {% else %}
+            {{ _('Näytät tapahtuman kielellä %(language)s. Oletuskieli on %(default_language)s.', language=get_lang_name(current_demo_language) or current_demo_language.upper(), default_language=get_lang_name(default_demo_language) or default_demo_language.upper()) }}
+          {% endif %}
+        </div>
+        <div class="demo-language-chips" aria-label="{{ _('Saatavilla olevat kielet') }}">
+          {% for language_code in available_demo_languages %}
+          <a href="{{ url_for('set_language', lang=language_code, next=request.full_path if request.query_string else request.path) }}"
+             class="demo-language-chip{% if language_code == current_demo_language %} is-active{% endif %}"
+             {% if language_code == current_demo_language %}aria-current="true"{% endif %}>
+            {{ (get_lang_name(language_code) or language_code)|upper if language_code|length <= 3 else (get_lang_name(language_code) or language_code) }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
     </div>
   </section>
 
-  <!-- Cover Image -->
-  {% if demo.cover_picture and not demo.cover_picture == 'None' %}
-  <section class="demo-cover animate-fade-in-up">
-    <img src="{{ demo.cover_picture }}" alt="Cover Photo">
+  {% if recurring_context %}
+    {{ recurring_occurrence_switcher(recurring_context) }}
+  {% endif %}
+
+  {% set gallery_images = get_demo_gallery_images(demo, include_preview=False) %}
+  {% set cover_source = (demo.cover_source or '')|lower %}
+  {% set has_manual_gallery = (demo.gallery_images and demo.gallery_images|length > 0) or demo.img %}
+  {% if (cover_source in ['auto', 'automatic']) and not has_manual_gallery %}
+    {% set gallery_images = [] %}
+  {% endif %}
+  {% if not gallery_images and demo.cover_picture and cover_source not in ['auto', 'automatic'] %}
+    {% set gallery_images = [demo.cover_picture] %}
+  {% endif %}
+
+  {% if gallery_images %}
+  <section class="demo-gallery animate-fade-in-up" data-gallery>
+    <div class="demo-gallery-main">
+      {% for image in gallery_images %}
+      <div class="demo-gallery-slide{% if loop.first %} is-active{% endif %}" data-index="{{ loop.index0 }}">
+        <img src="{{ image }}" alt="{{ demo.title }} - {{ _('Kuva %(num)d', num=loop.index) }}" data-gallery-image>
+      </div>
+      {% endfor %}
+      {% if gallery_images|length > 1 %}
+      <button class="demo-gallery-nav prev" type="button" aria-label="{{ _('Edellinen kuva') }}">&lt;</button>
+      <button class="demo-gallery-nav next" type="button" aria-label="{{ _('Seuraava kuva') }}">&gt;</button>
+      {% endif %}
+    </div>
+    {% if gallery_images|length > 1 %}
+    <div class="demo-gallery-dots">
+      {% for image in gallery_images %}
+      <button class="demo-gallery-dot{% if loop.first %} is-active{% endif %}" type="button"
+        data-target-index="{{ loop.index0 }}" aria-label="{{ _('Siirry kuvaan %(num)d', num=loop.index) }}"></button>
+      {% endfor %}
+    </div>
+    {% endif %}
   </section>
   {% endif %}
 
-  {% if demo['img'] and not demo['img'] == 'None' %}
-  <section class="demo-cover animate-fade-in-up">
-    <img src="{{ demo['img'] }}" alt="{{ demo['title'] }}">
-  </section>
+  {% if demo.cancelled %}
+  <div class="alert alert-warning d-flex align-items-center gap-2 animate-fade-in-up" role="alert">
+    <i class="fa-solid fa-ban"></i>
+    <div>{{ _('Tämä mielenosoitus on peruttu.') }}</div>
+  </div>
   {% endif %}
+
+  {% if detail_layout == 'overview' %}
+    {{ event_description(collapsible=true) }}
+  {% endif %}
+
 
   <!-- Action Buttons -->
   <div class="action-buttons animate-fade-in-up">
-    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#report-modal">
+    <button type="button" class="btn report-flow-trigger" data-bs-toggle="modal"
+      data-bs-target="#report-choice-modal">
       <i class="fa-solid fa-flag"></i>
       {{ _('Ilmoita virheestä') }}
     </button>
-    <button type="button" class="btn btn-primary" id="open-reminder-btn" data-bs-toggle="modal" data-bs-target="#reminder-modal">
+    {% if demo.cancelled %}
+    <button type="button" class="btn btn-secondary" disabled>
+      <i class="fa-solid fa-bell-slash"></i>
+      {{ _('Muistutukset eivät ole saatavilla perutulle tapahtumalle') }}
+    </button>
+    <button type="button" class="btn btn-outline-primary" disabled
+      title="{{ _('Kalenterivienti ei ole saatavilla perutuille tapahtumille') }}">
+      <i class="fa-regular fa-calendar-plus"></i>
+      {{ _('Lisää kalenteriin (.ics)') }}
+    </button>
+    {% else %}
+    <button type="button" class="btn btn-primary" id="open-reminder-btn" data-bs-toggle="modal"
+      data-bs-target="#reminder-modal">
       <i class="fa-solid fa-bell"></i>
       {{ _('Tilaa muistutus') }}
     </button>
+    <a class="btn btn-outline-primary" href="{{ url_for('download_demo_ics', demo_id=demo['_id']) }}">
+      <i class="fa-regular fa-calendar-plus"></i>
+      {{ _('Lisää kalenteriin (.ics)') }}
+    </a>
+    {% if follow_meta.recurring_target_id %}
+      {% if current_user.is_authenticated %}
+      <button type="button"
+              class="btn btn-outline-secondary"
+              id="follow-recurring-btn"
+              data-target="{{ follow_meta.recurring_target_id }}"
+              data-following="{{ '1' if follow_meta.recurring_following else '0' }}"
+              data-follow-label="{{ _('Seuraa sarjaa') }}"
+              data-following-label="{{ _('Seurataan sarjaa') }}">
+        <i class="fa-solid fa-arrows-spin"></i>
+        <span>
+          {% if follow_meta.recurring_following %}
+            {{ _('Seurataan sarjaa') }}
+          {% else %}
+            {{ _('Seuraa sarjaa') }}
+          {% endif %}
+        </span>
+      </button>
+      {% else %}
+      <button type="button" class="btn btn-outline-secondary" disabled
+        title="{{ _('Kirjaudu sisään seurataksesi tätä sarjaa') }}">
+        <i class="fa-solid fa-arrows-spin"></i>
+        {{ _('Seuraa sarjaa') }}
+      </button>
+      {% endif %}
+    {% endif %}
+    {% endif %}
   </div>
 
   <!-- Social Share -->
   <div class="action-buttons animate-fade-in-up">
-    <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
-       target="_blank" class="btn btn-social facebook">
+    {% set demo_url = detail_canonical_url %}
+    {% set share_text = demo['title'] ~ ' ' ~ demo_url %}
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ demo_url|urlencode }}"
+      target="_blank" class="btn btn-social facebook">
       <i class="fa-brands fa-facebook-f"></i>
       {{ _('Jaa Facebookissa') }}
     </a>
-    <a href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
-       target="_blank" class="btn btn-social twitter">
+    <a class="btn btn-social mastodon" href="https://mastodon.social/share?text={{ share_text|urlencode }}"
+      target="_blank" rel="noopener">
+      <i class="fa-brands fa-mastodon"></i>
+      {{ _('Jaa Mastodonissa') }}
+    </a>
+    <a href="https://twitter.com/intent/tweet?url={{ demo_url|urlencode }}&text={{ demo['title']|urlencode }}"
+      target="_blank" rel="noopener" class="btn btn-social twitter">
       <i class="fa-brands fa-x-twitter"></i>
       {{ _('Jaa X:ssä') }}
     </a>
-    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
-       target="_blank" class="btn btn-social linkedin">
+    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ demo_url|urlencode }}&title={{ demo['title']|urlencode }}"
+      target="_blank" class="btn btn-social linkedin">
       <i class="fa-brands fa-linkedin-in"></i>
       {{ _('Jaa LinkedInissä') }}
     </a>
-     <!-- Invite Friends Button -->
-  <button type="button" class="btn btn-social" id="invite-friends-btn">
-    <i class="fa-solid fa-user-plus"></i>
-    {{ _('Kutsu kavereita') }}
-  </button>
+    <!-- Invite Friends Button -->
+    {% if demo.cancelled %}
+    <button type="button" class="btn btn-social btn-secondary" id="invite-friends-btn" disabled
+      title="{{ _('Kutsut eivät ole saatavilla perutuille tapahtumille') }}">
+      <i class="fa-solid fa-user-plus"></i>
+      {{ _('Kutsu kavereita') }}
+    </button>
+    {% else %}
+    <button type="button" class="btn btn-social btn-secondary" id="invite-friends-btn">
+      <i class="fa-solid fa-user-plus"></i>
+      {{ _('Kutsu kavereita') }}
+    </button>
+    {% endif %}
   </div>
 
   <!-- Participation Card -->
+  {% if demo.cancelled %}
+  <section class="participation-card animate-fade-in-up">
+    <div class="alert alert-warning mb-0 w-100 d-flex align-items-center gap-2" role="alert">
+      <i class="fa-solid fa-ban"></i>
+      <span>{{ _('Osallistumisilmoituksia ei voi tehdä, koska mielenosoitus on peruttu.') }}</span>
+    </div>
+  </section>
+  {% else %}
   <section class="participation-card animate-fade-in-up">
     <button id="like-button" class="like-button" onclick="handleLikeClick('{{ demo['_id'] }}')" aria-pressed="false">
       <i class="fa-solid fa-thumbs-up"></i>
       <span id="like-btn-text">{{ _('Osallistun') }}</span>
       {% if not current_user.is_authenticated %}
-      <span class="login-prompt position-absolute top-100 start-50 translate-middle mt-1 px-2 py-1 rounded shadow text-white bg-dark"
-            style="display:none; white-space: nowrap; z-index:1000;">
+      <span
+        class="login-prompt position-absolute top-100 start-50 translate-middle mt-1 px-2 py-1 rounded shadow text-white bg-dark"
+        style="display:none; white-space: nowrap; z-index:1000;">
         {{ _('Kirjaudu sisään osallistuaksesi') }}
       </span>
       {% endif %}
     </button>
-    
+
     <div class="like-count">
       <i class="fa-solid fa-users"></i>
       <span id="like-count">{{ demo['likes'] }}</span>
       <span>{{ _('osallistujaa') }}</span>
     </div>
   </section>
+  {% endif %}
 
   <!-- Tags -->
   {% if demo["tags"] and demo["tags"]|length > 0 %}
@@ -829,24 +1891,25 @@ body {
   </div>
   {% endif %}
 
-  <!-- Description -->
-  {% if demo['description'] %}
-  <section class="content-section animate-fade-in-up">
-    <h2 class="section-title">
-      <i class="fa-solid fa-align-left"></i>
-      {{ _('Kuvaus') }}
-    </h2>
-    <div style="font-size: 1.1rem; line-height: 1.8;">
-      {{ demo['description']|safe }}
-    </div>
-  </section>
+  {% if detail_layout == 'classic' %}
+    {{ event_description() }}
   {% endif %}
 
-  <!-- Countdown -->
+  <!-- Countdown / Cancellation info -->
+  {% if demo.cancelled %}
+  <section class="countdown-card animate-fade-in-up">
+    <h2 class="countdown-title">{{ _('Tämä mielenosoitus on peruttu') }}</h2>
+    <div class="countdown-timer" style="font-size:1.2rem;">
+      <i class="fa-solid fa-circle-info"></i>
+      {{ _('Tapahtumaa ei järjestetä suunniteltuna ajankohtana.') }}
+    </div>
+  </section>
+  {% else %}
   <section class="countdown-card animate-fade-in-up">
     <h2 class="countdown-title">{{ _('Aikaa mielenosoituksen alkuun') }}</h2>
     <div id="timer" class="countdown-timer"></div>
   </section>
+  {% endif %}
 
   <!-- Location & Route -->
   <section class="content-section animate-fade-in-up">
@@ -854,7 +1917,7 @@ body {
       <i class="fa-solid fa-map-location-dot"></i>
       {{ _('Sijainti ja reitti') }}
     </h2>
-    
+
     <div style="text-align: center; margin-bottom: 2rem;">
       <div style="font-size: 1.25rem; font-weight: 600; color: var(--color-primary); margin-bottom: 0.5rem;">
         {{ demo['address'] }}, {{ demo['city'] }}
@@ -893,7 +1956,7 @@ body {
       <i class="fa-solid fa-info-circle"></i>
       {{ _('Lisätiedot') }}
     </h2>
-    
+
     <div id="info-grid">
       {% if demo['facebook'] %}
       <div class="info-alert">
@@ -909,12 +1972,13 @@ body {
       </div>
       {% endif %}
 
-      {% if demo["recurs"] and demo['repeat_schedule'] %}
+      {% if demo["recurs"] and demo['repeat_schedule'] and not recurring_context %}
       <div class="info-alert warning">
         <i class="fa-solid fa-repeat"></i>
         <div>
           <strong>{{ _('Toistuva tapahtuma') }}</strong>
-          <p style="margin: 0.5rem 0 1rem 0;">{{ _('Tämä mielenosoitus järjestetään säännöllisesti.') }} {{ toistuvuus }}</p>
+          <p style="margin: 0.5rem 0 1rem 0;">{{ _('Tämä mielenosoitus järjestetään säännöllisesti.') }} {{ toistuvuus
+            }}</p>
           <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}" class="btn btn-primary">
             <i class="fa-solid fa-calendar"></i>
             {{ _('Näytä kaikki ajankohdat') }}
@@ -937,30 +2001,116 @@ body {
     <div class="organizers-grid">
       {% for org in demo['organizers'] %}
       <div class="organizer-card">
-        <h3 class="organizer-name">
-          <i class="fa-solid fa-building"></i>
-          {{ org.name }}
-        </h3>
-        
+        <div class="organizer-card-header">
+          <div class="organizer-logo {% if not org.logo %}placeholder{% endif %}">
+            {% if org.logo %}
+            <img src="{{ org.logo }}" alt="{{ _('Logo: %(name)s', name=org.name) }}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+            {% else %}
+            <i class="fa-solid fa-building"></i>
+            {% endif %}
+          </div>
+          <div class="organizer-info">
+            {% set display_name = org.name %}
+            {% if org.is_private and not org.show_name_public %}
+              {% set display_name = _('Yksityishenkilö (nimi piilotettu)') %}
+            {% elif org.is_private and not org.name %}
+              {% set display_name = _('Yksityishenkilö') %}
+            {% elif not org.name %}
+              {% set display_name = _('Tuntematon järjestäjä') %}
+            {% endif %}
+            <h3 class="organizer-name">{{ display_name }}</h3>
+            <div class="organizer-meta">
+              {% if org.is_private %}
+              <span><i class="fa-solid fa-user"></i>{{ _('Yksityishenkilö') }}</span>
+              {% elif org.organization_id and org.organization_id != "None" %}
+              <span><i class="fa-solid fa-id-card-clip"></i>{{ _('Organisaatioprofiili') }}</span>
+              {% else %}
+              <span><i class="fa-solid fa-user-group"></i>{{ _('Järjestäjäryhmä') }}</span>
+              {% endif %}
+              {% if org.is_private and not org.show_email_public and org.email %}
+              <span><i class="fa-solid fa-shield"></i>{{ _('Sähköposti piilotettu') }}</span>
+              {% endif %}
+              {% if org.tags %}
+              <span><i class="fa-solid fa-tags"></i>{{ org.tags|length }} {{ _('tunnistetta') }}</span>
+              {% endif %}
+            </div>
+            {% set organizer_id_str = org.organization_id_str %}
+            {% if organizer_id_str and org.followable %}
+              {% if current_user.is_authenticated %}
+                {% set is_following = follow_meta.organizer_follow_map.get(organizer_id_str) %}
+                {% set follow_label = _('Seuraa')|upper %}
+                {% set following_label = _('Seurataan')|upper %}
+                <button type="button"
+                        class="follow-org-btn organizer-follow-btn {% if is_following %}is-following{% endif %}"
+                        data-org-id="{{ organizer_id_str }}"
+                        data-following="{{ '1' if is_following else '0' }}"
+                        data-follow-label="{{ follow_label }}"
+                        data-following-label="{{ following_label }}"
+                        aria-pressed="{{ 'true' if is_following else 'false' }}"
+                        title="{{ _('Seuraa organisaatiota') }}">
+                  <span class="follow-icon {% if is_following %}fa-solid{% else %}fa-regular{% endif %} fa-star" aria-hidden="true"></span>
+                  <span class="follow-label">
+                    {% if is_following %}
+                      {{ following_label }}
+                    {% else %}
+                      {{ follow_label }}
+                    {% endif %}
+                  </span>
+                </button>
+              {% else %}
+              <div class="text-muted small mt-2">{{ _('Kirjaudu sisään seurataaksesi tätä organisaatiota') }}</div>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+
         <div class="organizer-contact">
+          {% if (not org.website or not org.email or not org.url) and org.fill_url %}
+          <div class="help-us-banner">
+            <div class="help-us-content">
+
+              <div class="help-us-text">
+                <div class="help-us-title">
+                  <div class="help-us-icon">
+                    <i class="fa-solid fa-circle-info"></i>
+                  </div>
+                  <h3>{{ _('Puuttuvia tietoja') }}</h3>
+                </div>
+                <p>{{ _('Voit auttaa meitä') }} <a class="" href="{{ org.fill_url }}">{{ _('täydentämällä') }}</a> {{
+                  _('puuttuvia tietoja.') }}</p>
+              </div>
+            </div>
+          </div>
+
+          {% endif %}
+          {#
+          {% if (not org.website or not org.email or not org.url) and not org.fill_url %}
+          <div class="info-alert">
+            <i class="fa-solid fa-circle-info"></i>
+            Emme voi näyttää kaikkia tietoja, koska osa niistä puuttuu. Jos sinulla on lisää tietoja tästä
+            organisaatiosta, voit ottaa yhteyttä
+          </div>
+          {% endif %}
+          #}
+
           {% if org.website %}
           <div class="contact-item">
             <i class="fa-solid fa-globe"></i>
             <a href="{{ org.website }}" target="_blank" rel="noopener noreferrer">{{ org.website }}</a>
           </div>
           {% endif %}
-          
-          {% if org.email %}
+
+          {% if org.email and (not org.is_private or org.show_email_public) %}
           <div class="contact-item">
             <i class="fa-solid fa-envelope"></i>
             <a href="mailto:{{ org.email }}">{{ org.email }}</a>
           </div>
           {% endif %}
-          
-          {% if org.organization_id and org.organization_id != "None" %}
+
+          {% if org.organization_id and org.organization_id != "None" and not org.is_private %}
           <div class="contact-item">
             <i class="fa-solid fa-id-badge"></i>
-            <a href="{{ org.url if org.url else '/organization/' ~ org._id }}" target="_blank">
+            <a href="{{ org.url if org.url else '/organization/' ~ org.organization_id }}" target="_blank">
               {{ _('Organisaation profiili') }}
             </a>
           </div>
@@ -970,7 +2120,9 @@ body {
         {% if org.tags %}
         <div style="margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
           {% for tag in org.tags %}
-          <span style="background: rgba(0, 82, 204, 0.1); color: var(--color-primary); padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.8rem; font-weight: 500;">{{ tag }}</span>
+          <span
+            style="background: rgba(0, 82, 204, 0.1); color: var(--color-primary); padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.8rem; font-weight: 500;">{{
+            tag }}</span>
           {% endfor %}
         </div>
         {% endif %}
@@ -984,6 +2136,46 @@ body {
     </div>
     {% endif %}
   </section>
+
+  {% if similar_demos %}
+  <section class="similar-demos animate-fade-in-up">
+    <div class="section-header mb-3">
+      <h2 class="h4 mb-1">{{ _('Muita sinua kiinnostavia tapahtumia') }}</h2>
+      <p class="text-muted mb-0">{{ _('Poimimme samankaltaisia tai saman kaupungin tulevia tapahtumia.') }}</p>
+    </div>
+    <div class="row g-3">
+      {% for suggestion in similar_demos %}
+      <div class="col-12 col-md-6 col-lg-3">
+        <a class="text-decoration-none text-reset h-100 d-block" href="{{ url_for('demonstration_detail', demo_id=suggestion.slug or suggestion.id) }}">
+          <div class="suggestion-card">
+            {% set display_date = suggestion.formatted_date or suggestion.date %}
+            {% if display_date or suggestion.city %}
+            <div class="card-date">
+              <i class="fa-solid fa-calendar-day"></i>
+              <span>
+                {% if display_date %}{{ display_date }}{% endif %}
+                {% if suggestion.city %}
+                  {% if display_date %} · {% endif %}
+                  {{ suggestion.city }}
+                {% endif %}
+              </span>
+            </div>
+            {% endif %}
+            <h3 class="h6 mt-2 mb-2">{{ suggestion.title }}</h3>
+            {% if suggestion.address %}
+            <div class="text-muted small">{{ suggestion.address }}</div>
+            {% endif %}
+            <span class="card-link">
+              {{ _('Katso tapahtuma') }}
+              <i class="fa-solid fa-arrow-right-long"></i>
+            </span>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
 
   <!-- Navigation -->
   <div class="nav-buttons animate-fade-in-up">
@@ -1015,369 +2207,380 @@ body {
 
   {% import '_modals/past-demo-modal.html' as past_demo_modal %}
   {{ past_demo_modal.render_past_demo_modal(demo) }}
-<dialog id="invite-friends-dialog" class="p-0 border-0">
-  <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Kutsu kavereita osallistumaan</h5>
-        <button type="button" class="btn-close" id="close-dialog-btn" aria-label="Close"></button>
-      </div>
+  <dialog id="invite-friends-dialog" class="p-0 border-0">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ _('Kutsu kavereita osallistumaan') }}</h5>
+          <button type="button" class="btn-close" id="close-dialog-btn" aria-label="{{ _('Sulje') }}"></button>
+        </div>
 
-      <div class="modal-body">
-        {% if current_user.is_authenticated %}
-          <p>Valitse kaverit, jotka haluat kutsua tähän mielenosoitukseen:</p>
+        <div class="modal-body">
+          {% if current_user.is_authenticated %}
+          <p>{{ _('Valitse kaverit, jotka haluat kutsua tähän mielenosoitukseen:') }}</p>
           <div id="_friends-list" class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;"></div>
-        {% else %}
+          <p id="invite-friends-status" class="mt-3 mb-0" role="status" aria-live="polite"></p>
+          {% else %}
           <div class="alert alert-warning d-flex align-items-center gap-2">
             <i class="fa-solid fa-user-lock"></i>
-            <span>Kirjaudu sisään käyttääksesi kaverikutsuja</span>
+            <span>{{ _('Kirjaudu sisään käyttääksesi kaverikutsuja') }}</span>
           </div>
           <a href="{{ url_for('users.auth.login', next=request.path) }}?action=inviteFriends" class="btn btn-primary">
-            <i class="fa-solid fa-right-to-bracket"></i> Kirjaudu sisään
+            <i class="fa-solid fa-right-to-bracket"></i> {{ _('Kirjaudu sisään') }}
           </a>
-        {% endif %}
-      </div>
+          {% endif %}
+        </div>
 
-      <div class="modal-footer">
-        {% if current_user.is_authenticated %}
-          <button type="button" class="btn btn-secondary" id="cancel-invite-btn">Peruuta</button>
-          <button type="button" class="btn btn-primary" id="send-invite-btn">Lähetä kutsut</button>
-        {% else %}
-          <button type="button" class="btn btn-secondary" id="close-dialog-btn-unauth">Sulje</button>
-        {% endif %}
+        <div class="modal-footer">
+          {% if current_user.is_authenticated %}
+          <button type="button" class="btn btn-secondary" id="cancel-invite-btn">{{ _('Peruuta') }}</button>
+          <button type="button" class="btn btn-primary" id="send-invite-btn">{{ _('Lähetä kutsut') }}</button>
+          {% else %}
+          <button type="button" class="btn btn-secondary" id="close-dialog-btn-unauth">{{ _('Sulje') }}</button>
+          {% endif %}
+        </div>
       </div>
     </div>
-  </div>
-</dialog>
+  </dialog>
 
 
-<style>
-  /* Dialog/Modal Styles */
-#invite-friends-dialog {
-  background: transparent;
-  border: none;
-  padding: 0;
-  max-width: 90vw;
-  width: 500px;
-  border-radius: var(--border-radius-lg, 24px);
-  box-shadow: var(--color-shadow-lg, 0 25px 50px -12px rgba(0, 0, 0, 0.6));
-  animation: fadeIn 0.3s ease-out;
-}
+  <style>
+    /* Dialog/Modal Styles */
+    #invite-friends-dialog {
+      background: transparent;
+      border: none;
+      padding: 0;
+      max-width: 90vw;
+      width: 500px;
+      border-radius: var(--border-radius-lg, 24px);
+      box-shadow: var(--color-shadow-lg, 0 25px 50px -12px rgba(0, 0, 0, 0.6));
+      animation: fadeIn 0.3s ease-out;
+    }
 
-#invite-friends-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  animation: fadeIn 0.3s ease-out;
-}
+    #invite-friends-dialog::backdrop {
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.3s ease-out;
+    }
 
-.modal-dialog {
-  width: 100%;
-}
+    .modal-dialog {
+      width: 100%;
+    }
 
-.modal-content {
-  background: var(--color-card-bg, light-dark(#ffffff, #1a1d23));
-  color: var(--color-text, light-dark(#1e293b, #e2e8f0));
-  border-radius: var(--border-radius-lg, 24px);
-  border: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
-  overflow: hidden;
-  position: relative;
-}
+    .modal-content {
+      background: var(--color-card-bg, light-dark(#ffffff, #1a1d23));
+      color: var(--color-text, light-dark(#1e293b, #e2e8f0));
+      border-radius: var(--border-radius-lg, 24px);
+      border: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
+      overflow: hidden;
+      position: relative;
+    }
 
-.modal-content::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--color-gradient-primary, linear-gradient(135deg, #3b82f6 0%, #1e40af 100%));
-}
+    .modal-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--color-gradient-primary, linear-gradient(135deg, #3b82f6 0%, #1e40af 100%));
+    }
 
-/* Modal Header */
-.modal-header {
-  padding: 2rem 2rem 1.5rem 2rem;
-  border-bottom: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+    /* Modal Header */
+    .modal-header {
+      padding: 2rem 2rem 1.5rem 2rem;
+      border-bottom: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-.modal-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-text, light-dark(#1e293b, #e2e8f0));
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-text, light-dark(#1e293b, #e2e8f0));
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
 
-.modal-title::before {
-  
-  font-size: 1.75rem;
-}
+    .modal-title::before {
 
-.btn-close {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: var(--color-bg, light-dark(#f8fafc, #0f1419));
-  color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  padding: 0;
-}
+      font-size: 1.75rem;
+    }
 
-.btn-close::before {
-  content: '×';
-  font-size: 1.75rem;
-  line-height: 1;
-}
+    .btn-close {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: var(--color-bg, light-dark(#f8fafc, #0f1419));
+      color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      padding: 0;
+    }
 
-.btn-close:hover {
-  background: var(--color-error, light-dark(#dc2626, #ef4444));
-  color: white;
-  transform: rotate(90deg);
-}
+    .btn-close::before {
+      content: '×';
+      font-size: 1.75rem;
+      line-height: 1;
+    }
 
-/* Modal Body */
-.modal-body {
-  padding: 2rem;
-}
+    .btn-close:hover {
+      background: var(--color-error, light-dark(#dc2626, #ef4444));
+      color: white;
+      transform: rotate(90deg);
+    }
 
-.modal-body > p {
-  color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
-  margin-bottom: 1.5rem;
-  font-size: 1rem;
-}
+    /* Modal Body */
+    .modal-body {
+      padding: 2rem;
+    }
 
-/* Friends List */
-#_friends-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-height: 300px;
-  overflow-y: auto;
-  padding: 0.5rem;
-  margin: -0.5rem;
-}
+    .modal-body>p {
+      color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+    }
 
-#_friends-list::-webkit-scrollbar {
-  width: 8px;
-}
+    /* Friends List */
+    #_friends-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 0.5rem;
+      margin: -0.5rem;
+    }
 
-#_friends-list::-webkit-scrollbar-track {
-  background: var(--color-bg, light-dark(#f8fafc, #0f1419));
-  border-radius: 4px;
-}
+    #_friends-list::-webkit-scrollbar {
+      width: 8px;
+    }
 
-#_friends-list::-webkit-scrollbar-thumb {
-  background: var(--color-border, light-dark(#e2e8f0, #374151));
-  border-radius: 4px;
-  transition: all 0.3s;
-}
+    #_friends-list::-webkit-scrollbar-track {
+      background: var(--color-bg, light-dark(#f8fafc, #0f1419));
+      border-radius: 4px;
+    }
 
-#_friends-list::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary, light-dark(#0052cc, #3b82f6));
-}
+    #_friends-list::-webkit-scrollbar-thumb {
+      background: var(--color-border, light-dark(#e2e8f0, #374151));
+      border-radius: 4px;
+      transition: all 0.3s;
+    }
 
-.friend-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: var(--color-bg, light-dark(#f8fafc, #0f1419));
-  border: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
-  border-radius: var(--border-radius, 16px);
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+    #_friends-list::-webkit-scrollbar-thumb:hover {
+      background: var(--color-primary, light-dark(#0052cc, #3b82f6));
+    }
 
-.friend-item:hover {
-  background: var(--color-card-bg, light-dark(#ffffff, #1a1d23));
-  border-color: var(--color-primary, light-dark(#0052cc, #3b82f6));
-  transform: translateX(4px);
-}
+    .friend-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--color-bg, light-dark(#f8fafc, #0f1419));
+      border: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
+      border-radius: var(--border-radius, 16px);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-.friend-item input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  accent-color: var(--color-primary, light-dark(#0052cc, #3b82f6));
-}
+    .friend-item:hover {
+      background: var(--color-card-bg, light-dark(#ffffff, #1a1d23));
+      border-color: var(--color-primary, light-dark(#0052cc, #3b82f6));
+      transform: translateX(4px);
+    }
 
-.friend-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--color-gradient-primary, linear-gradient(135deg, #3b82f6 0%, #1e40af 100%));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-  flex-shrink: 0;
-}
+    .friend-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: var(--color-primary, light-dark(#0052cc, #3b82f6));
+    }
 
-.friend-info {
-  flex: 1;
-}
+    .friend-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--color-gradient-primary, linear-gradient(135deg, #3b82f6 0%, #1e40af 100%));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
 
-.friend-name {
-  font-weight: 600;
-  color: var(--color-text, light-dark(#1e293b, #e2e8f0));
-  margin-bottom: 0.25rem;
-}
+    .friend-info {
+      flex: 1;
+    }
 
-.friend-status {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
-}
+    .friend-name {
+      font-weight: 600;
+      color: var(--color-text, light-dark(#1e293b, #e2e8f0));
+      margin-bottom: 0.25rem;
+    }
 
-/* Modal Footer */
-.modal-footer {
-  padding: 1.5rem 2rem 2rem 2rem;
-  border-top: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-}
+    .friend-status {
+      font-size: 0.85rem;
+      color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+    }
 
-.btn {
-  padding: 0.875rem 1.75rem;
-  border-radius: 50px;
-  font-size: 1rem;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  position: relative;
-  overflow: hidden;
-}
+    /* Modal Footer */
+    .modal-footer {
+      padding: 1.5rem 2rem 2rem 2rem;
+      border-top: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+    }
 
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: all 0.5s;
-}
+    .btn {
+      padding: 0.875rem 1.75rem;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
 
-.btn:hover::before {
-  left: 100%;
-}
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: all 0.5s;
+    }
 
-.btn-primary {
-  background: var(--color-gradient-primary, linear-gradient(135deg, #3b82f6 0%, #1e40af 100%));
-  color: white;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
+    .btn:hover::before {
+      left: 100%;
+    }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
-}
+    .btn-primary {
+      background: var(--color-gradient-primary, linear-gradient(135deg, #3b82f6 0%, #1e40af 100%));
+      color: white;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
 
-.btn-secondary {
-  background: transparent;
-  color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
-  border: 2px solid var(--color-border, light-dark(#e2e8f0, #374151));
-}
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    }
 
-.btn-secondary:hover {
-  background: var(--color-bg, light-dark(#f8fafc, #0f1419));
-  border-color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
-}
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-text-secondary, light-dark(#475569, #cbd5e1));
+      /* slightly darker/lighter */
+      border: 2px solid var(--color-border, light-dark(#cbd5e1, #475569));
+      /* higher contrast border */
+      transition: all 0.2s ease;
+    }
 
-/* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+    .btn-secondary:hover {
+      background: var(--color-bg-hover, light-dark(#f1f5f9, #1e293b));
+      /* subtle but clear hover contrast */
+      color: var(--color-text-hover, light-dark(#0f172a, #f8fafc));
+      /* ensure text pops on hover */
+      border-color: var(--color-text-secondary, light-dark(#475569, #cbd5e1));
+    }
 
-/* Empty State */
-.friends-list-empty {
-  text-align: center;
-  padding: 3rem 2rem;
-  color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
-}
 
-.friends-list-empty i {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
 
-/* Loading State */
-.friends-list-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem;
-  color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
-}
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
 
-.spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid var(--color-border, light-dark(#e2e8f0, #374151));
-  border-top-color: var(--color-primary, light-dark(#0052cc, #3b82f6));
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-right: 0.75rem;
-}
+    /* Empty State */
+    .friends-list-empty {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+    }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+    .friends-list-empty i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
 
-/* Mobile Responsive */
-@media (max-width: 640px) {
-  #invite-friends-dialog {
-    width: 95vw;
-  }
+    /* Loading State */
+    .friends-list-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+    }
 
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: 1.5rem;
-  }
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--color-border, light-dark(#e2e8f0, #374151));
+      border-top-color: var(--color-primary, light-dark(#0052cc, #3b82f6));
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.75rem;
+    }
 
-  .modal-title {
-    font-size: 1.25rem;
-  }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
-  .modal-footer {
-    flex-direction: column-reverse;
-  }
+    /* Mobile Responsive */
+    @media (max-width: 640px) {
+      #invite-friends-dialog {
+        width: 95vw;
+      }
 
-  .btn {
-    width: 100%;
-    justify-content: center;
-  }
+      .modal-header,
+      .modal-body,
+      .modal-footer {
+        padding: 1.5rem;
+      }
 
-  #_friends-list {
-    max-height: 250px;
-  }
-}
-</style>
+      .modal-title {
+        font-size: 1.25rem;
+      }
+
+      .modal-footer {
+        flex-direction: column-reverse;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      #_friends-list {
+        max-height: 250px;
+      }
+    }
+  </style>
 
 
 </div>
@@ -1385,10 +2588,212 @@ body {
 
 {% block scripts %}
 <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("[data-collapsible-description]").forEach((section) => {
+      const content = section.querySelector(".event-description__content");
+      const toggle = section.querySelector(".event-description__toggle");
+      const accessiblePreview = section.querySelector("[data-description-accessible-preview]");
+      if (!content || !toggle || !accessiblePreview) return;
+
+      const focusableSelector = "a[href], button, input, select, textarea, [tabindex]";
+      const syncCollapsedSemantics = (collapsed) => {
+        section.classList.toggle("is-semantically-collapsed", collapsed);
+        content.querySelectorAll(focusableSelector).forEach((element) => {
+          const restoreTabindex = () => {
+            if (element.dataset.collapsedOriginalTabindex === "missing") {
+              element.removeAttribute("tabindex");
+            } else if (element.dataset.collapsedOriginalTabindex !== undefined) {
+              element.setAttribute("tabindex", element.dataset.collapsedOriginalTabindex);
+            }
+            delete element.dataset.collapsedOriginalTabindex;
+          };
+
+          if (!collapsed) {
+            restoreTabindex();
+            return;
+          }
+
+          if (element.dataset.collapsedOriginalTabindex === undefined) {
+            element.dataset.collapsedOriginalTabindex = element.hasAttribute("tabindex")
+              ? element.getAttribute("tabindex")
+              : "missing";
+          }
+          element.setAttribute("tabindex", "-1");
+        });
+
+        if (collapsed) {
+          content.setAttribute("aria-hidden", "true");
+          content.inert = true;
+          accessiblePreview.hidden = false;
+        } else {
+          content.removeAttribute("aria-hidden");
+          content.inert = false;
+          accessiblePreview.hidden = true;
+        }
+      };
+
+      const visiblePreviewText = () => {
+        const clipBottom = content.getBoundingClientRect().bottom;
+        const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+        const parts = [];
+        let node = walker.nextNode();
+
+        while (node) {
+          const value = node.nodeValue || "";
+          if (value.trim()) {
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            const rect = range.getBoundingClientRect();
+
+            if (rect.top >= clipBottom - 1) break;
+            if (rect.bottom <= clipBottom + 1) {
+              parts.push(value);
+            } else {
+              let low = 0;
+              let high = value.length;
+              while (low < high) {
+                const middle = Math.ceil((low + high) / 2);
+                range.setEnd(node, middle);
+                if (range.getBoundingClientRect().bottom <= clipBottom + 1) {
+                  low = middle;
+                } else {
+                  high = middle - 1;
+                }
+              }
+              parts.push(value.slice(0, low));
+              break;
+            }
+          }
+          node = walker.nextNode();
+        }
+
+        const preview = parts.join(" ").replace(/\s+/g, " ").trim();
+        return preview ? `${preview}…` : "";
+      };
+
+      const setExpanded = (expanded) => {
+        section.classList.toggle("is-expanded", expanded);
+        toggle.setAttribute("aria-expanded", String(expanded));
+        toggle.querySelector("span").textContent = expanded
+          ? toggle.dataset.lessLabel
+          : toggle.dataset.moreLabel;
+        syncCollapsedSemantics(!expanded && section.classList.contains("is-collapsible"));
+      };
+
+      const recomputeCollapsibility = () => {
+        const wasExpanded = section.classList.contains("is-expanded");
+        section.classList.remove("is-semantically-collapsed");
+        section.classList.add("is-collapsible");
+        section.classList.remove("is-expanded");
+        const needsCollapse = content.scrollHeight > content.clientHeight + 1;
+
+        section.classList.toggle("is-collapsible", needsCollapse);
+        toggle.hidden = !needsCollapse;
+        if (!needsCollapse) {
+          accessiblePreview.textContent = "";
+          setExpanded(false);
+          return;
+        }
+
+        if (wasExpanded) {
+          setExpanded(true);
+          return;
+        }
+
+        accessiblePreview.textContent = visiblePreviewText();
+        setExpanded(false);
+      };
+
+      toggle.addEventListener("click", () => {
+        const expanded = !section.classList.contains("is-expanded");
+        if (!expanded) {
+          section.classList.remove("is-expanded");
+          accessiblePreview.textContent = visiblePreviewText();
+        }
+        setExpanded(expanded);
+      });
+
+      recomputeCollapsibility();
+      if ("ResizeObserver" in window) {
+        let scheduled = false;
+        let observedWidth = content.getBoundingClientRect().width;
+        const observer = new ResizeObserver((entries) => {
+          const nextWidth = entries[0]?.contentRect.width ?? observedWidth;
+          if (Math.abs(nextWidth - observedWidth) < 0.5) return;
+          observedWidth = nextWidth;
+          if (scheduled) return;
+          scheduled = true;
+          window.requestAnimationFrame(() => {
+            scheduled = false;
+            recomputeCollapsibility();
+          });
+        });
+        observer.observe(section);
+      } else {
+        window.addEventListener("resize", recomputeCollapsibility);
+      }
+    });
+  });
+</script>
+<script>
   // Demo data initialization
   var demoData = {{ demo | tojson | safe }};
+  const demoIsCancelled = {{ 'true' if demo.cancelled else 'false' }};
   window.demoId = "{{ demo['_id'] }}";
-  
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("[data-gallery-image]").forEach((image) => {
+      const markLowResolution = () => {
+        const slide = image.closest(".demo-gallery-slide");
+        if (!slide || !image.naturalWidth || !image.naturalHeight) return;
+
+        const isLowResolution = image.naturalWidth < 800 || image.naturalHeight < 450;
+        slide.classList.toggle("is-low-resolution", isLowResolution);
+        if (isLowResolution) {
+          slide.style.setProperty("--gallery-image", `url("${image.currentSrc}")`);
+          slide.style.setProperty("--gallery-natural-width", `${image.naturalWidth}px`);
+        }
+      };
+
+      if (image.complete) {
+        markLowResolution();
+      } else {
+        image.addEventListener("load", markLowResolution, { once: true });
+      }
+    });
+
+    document.querySelectorAll("[data-gallery]").forEach((gallery) => {
+      const slides = Array.from(gallery.querySelectorAll(".demo-gallery-slide"));
+      if (!slides.length) return;
+      const dots = Array.from(gallery.querySelectorAll(".demo-gallery-dot"));
+      let activeIndex = 0;
+
+      const setActive = (nextIndex) => {
+        const total = slides.length;
+        activeIndex = (nextIndex + total) % total;
+        slides.forEach((slide, idx) => slide.classList.toggle("is-active", idx === activeIndex));
+        dots.forEach((dot, idx) => dot.classList.toggle("is-active", idx === activeIndex));
+      };
+
+      const prevBtn = gallery.querySelector(".demo-gallery-nav.prev");
+      const nextBtn = gallery.querySelector(".demo-gallery-nav.next");
+      if (prevBtn) {
+        prevBtn.addEventListener("click", () => setActive(activeIndex - 1));
+      }
+      if (nextBtn) {
+        nextBtn.addEventListener("click", () => setActive(activeIndex + 1));
+      }
+      dots.forEach((dot) => {
+        dot.addEventListener("click", () => {
+          const target = parseInt(dot.getAttribute("data-target-index"), 10);
+          if (!Number.isNaN(target)) {
+            setActive(target);
+          }
+        });
+      });
+    });
+  });
+
   // Check if demo has coordinates
   function _has_coords(demo) {
     return demo.latitude && demo.longitude;
@@ -1396,6 +2801,9 @@ body {
 
   // Handle like click
   function handleLikeClick(demoId) {
+    const likeButton = document.getElementById("like-button");
+    if (!likeButton) return;
+
     {% if not current_user.is_authenticated %}
     window.location.href = "{{ url_for('users.auth.login') }}?next={{ request.path }}?action=like";
     return;
@@ -1405,11 +2813,13 @@ body {
   }
 
   {% if not current_user.is_authenticated %}
-  const likeButton = document.getElementById("like-button");
-  const loginPrompt = likeButton.querySelector(".login-prompt");
-  if (loginPrompt) {
-    likeButton.addEventListener("mouseenter", () => loginPrompt.style.display = "block");
-    likeButton.addEventListener("mouseleave", () => loginPrompt.style.display = "none");
+  const anonymousLikeButton = document.getElementById("like-button");
+  if (anonymousLikeButton) {
+    const loginPrompt = anonymousLikeButton.querySelector(".login-prompt");
+    if (loginPrompt) {
+      anonymousLikeButton.addEventListener("mouseenter", () => loginPrompt.style.display = "block");
+      anonymousLikeButton.addEventListener("mouseleave", () => loginPrompt.style.display = "none");
+    }
   }
   {% endif %}
 
@@ -1425,17 +2835,20 @@ body {
 
   function animateLikeCount() {
     const count = document.getElementById("like-count");
+    if (!count) return;
+
     count.style.transform = "scale(1.2)";
     setTimeout(() => count.style.transform = "scale(1)", 300);
   }
 
   async function toggleLike(demoId) {
     if (likeRequestInProgress) return;
-    likeRequestInProgress = true;
 
     const likeButton = document.getElementById("like-button");
     const likeCountEl = document.getElementById("like-count");
-    
+    if (!likeButton || !likeCountEl) return;
+    likeRequestInProgress = true;
+
     // Add loading state
     likeButton.classList.add('loading');
     likeButton.disabled = true;
@@ -1458,7 +2871,7 @@ body {
       liked = !liked;
       document.cookie = `liked_${demoId}=${liked}; path=/`;
       likeButton.setAttribute("aria-pressed", liked ? "true" : "false");
-      
+
       if (liked) {
         likeButton.classList.add("liked");
         animateLikeCount();
@@ -1478,6 +2891,7 @@ body {
   async function getLikes(demoId) {
     const likeCountEl = document.getElementById("like-count");
     const likeButton = document.getElementById("like-button");
+    if (!likeButton || !likeCountEl) return;
 
     try {
       const response = await fetch(`/api/demonstrations/${demoId}/likes`, {
@@ -1504,11 +2918,15 @@ body {
     if (action === 'like') {
       handleLikeClick('{{ demo["_id"] }}');
     }
-    
-  if (action === "inviteFriends") {
-    const demoId = '{{ demo["_id"] }}'; // or dynamically from card if needed
-    openInviteDialog(demoId);
-  }
+
+    if (action === "inviteFriends") {
+      const inviteBtn = document.getElementById("invite-friends-btn");
+
+      if (inviteBtn && !inviteBtn.disabled) {
+        const demoId = '{{ demo["_id"] }}'; // or dynamically from card if needed
+        openInviteDialog(demoId);
+      }
+    }
 
     if (urlParams.has('action')) {
       urlParams.delete('action');
@@ -1532,26 +2950,89 @@ body {
     // Load likes
     getLikes("{{ demo['_id'] }}");
 
-    // Initialize map if coordinates available
+    // Load the below-the-fold map only when it is close to the viewport. This
+    // keeps Leaflet and map tiles out of the critical path for initial content.
     if (_has_coords(demoData)) {
-      const map = L.map("map", {
-        center: [demoData.latitude, demoData.longitude],
-        zoom: 13,
-        scrollWheelZoom: false,
-        zoomControl: true,
-        attributionControl: true,
-      });
-      
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(map);
-      
-      L.marker([demoData.latitude, demoData.longitude])
-        .addTo(map)
-        .bindPopup(demoData.address)
-        .openPopup();
+      const mapElement = document.getElementById("map");
+      let mapStarted = false;
+      let mapAttempts = 0;
+      let mapRetryTimer = null;
+      const maxMapAttempts = 3;
+      const initializeMap = async () => {
+        const stylesheet = document.createElement("link");
+        stylesheet.rel = "stylesheet";
+        stylesheet.href = "{{ url_for('static', filename='leaflet/leaflet.css') }}";
+        const stylesheetLoaded = new Promise((resolve, reject) => {
+          stylesheet.onload = resolve;
+          stylesheet.onerror = reject;
+        });
+        document.head.appendChild(stylesheet);
 
-      setTimeout(() => { map.invalidateSize(); }, 300);
+        const scriptLoaded = new Promise((resolve, reject) => {
+          if (window.L) {
+            resolve();
+            return;
+          }
+          const script = document.createElement("script");
+          script.src = "{{ url_for('static', filename='leaflet/leaflet.js') }}";
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+        await Promise.all([stylesheetLoaded, scriptLoaded]);
+
+        const map = L.map(mapElement, {
+          center: [demoData.latitude, demoData.longitude],
+          zoom: 13,
+          scrollWheelZoom: false,
+          zoomControl: true,
+          attributionControl: true,
+        });
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+
+        L.marker([demoData.latitude, demoData.longitude])
+          .addTo(map)
+          .bindPopup(demoData.address)
+          .openPopup();
+
+        setTimeout(() => { map.invalidateSize(); }, 300);
+      };
+
+      const startMapWithRetry = (onSuccess) => {
+        if (mapStarted || mapRetryTimer !== null || mapAttempts >= maxMapAttempts || !mapElement) return;
+        mapStarted = true;
+        mapAttempts += 1;
+
+        initializeMap()
+          .then(onSuccess)
+          .catch((error) => {
+            mapStarted = false;
+            console.warn("Map loading failed", error);
+            if (mapAttempts < maxMapAttempts) {
+              mapRetryTimer = window.setTimeout(() => {
+                mapRetryTimer = null;
+                startMapWithRetry(onSuccess);
+              }, mapAttempts * 1000);
+            }
+          });
+      };
+
+      if ("IntersectionObserver" in window) {
+        const mapObserver = new IntersectionObserver((entries, observer) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            startMapWithRetry(() => observer.disconnect());
+          }
+        }, { rootMargin: "400px" });
+        mapObserver.observe(mapElement);
+      } else {
+        window.addEventListener("load", () => {
+          startMapWithRetry(() => {});
+        }, { once: true });
+      }
     } else {
       const mapElement = document.getElementById("map");
       if (mapElement) {
@@ -1559,9 +3040,11 @@ body {
       }
     }
 
-    // Initialize countdown
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
+    // Initialize countdown only if still active
+    if (!demoIsCancelled) {
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+    }
 
     // Add scroll animations
     const observerOptions = {
@@ -1584,14 +3067,15 @@ body {
 
   // Countdown timer
   function updateCountdown() {
+    if (demoIsCancelled) return;
     const demoDate = demoData.date;
     const demoTime = demoData.start_time;
     let demoEnds = demoData.end_time || "23:59:59";
-    
+
     if (!demoEnds || demoEnds === "None") {
       demoEnds = "23:59:59";
     }
-    
+
     const eventDateStr = `${demoDate}T${demoTime}`;
     const eventDate = new Date(eventDateStr);
     const now = new Date();
@@ -1621,15 +3105,24 @@ body {
 
   // Report selection functionality
   const reportBtn = document.getElementById("report-selection-btn");
+  const reportChoiceModalEl = document.getElementById("report-choice-modal");
   let selectedText = "";
+  window.reportSelectedText = window.reportSelectedText || "";
+
+  function openReportChoiceModal() {
+    if (!reportChoiceModalEl) return;
+    const modal = bootstrap.Modal.getOrCreateInstance(reportChoiceModalEl);
+    modal.show();
+  }
 
   function showReportBtnAtSelection() {
     const selection = window.getSelection();
     selectedText = selection && selection.toString().trim();
+    window.reportSelectedText = selectedText || "";
     if (selectedText && selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
-      
+
       // Check if selection is in main content
       let node = selection.anchorNode;
       let insideMain = false;
@@ -1641,7 +3134,7 @@ body {
         }
         node = node.parentNode;
       }
-      
+
       if (insideMain) {
         reportBtn.style.display = "block";
         const scrollY = window.scrollY || window.pageYOffset;
@@ -1675,95 +3168,194 @@ body {
   });
 
   reportBtn.addEventListener("click", function () {
-    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("report-modal"));
-    modal.show();
-    const textarea = document.getElementById("error");
-    if (textarea && selectedText) {
-      textarea.value = "{{ _('Virheellinen kohta:') }}\n" + selectedText + "\n\n";
-      textarea.focus();
-    }
+    openReportChoiceModal();
     reportBtn.style.display = "none";
     window.getSelection().removeAllRanges();
   });
 </script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", () => {
     const dialog = document.getElementById("invite-friends-dialog");
     const inviteBtn = document.getElementById("invite-friends-btn");
 
-    if(dialog && inviteBtn){
-        inviteBtn.onclick = () => {
-          openInviteDialog(window.demoId);
-
-        };
+    if (dialog && inviteBtn && !inviteBtn.disabled) {
+      inviteBtn.onclick = () => {
+        openInviteDialog(window.demoId);
+      };
     }
-});
+  });
 
-function openInviteDialog(demoId) {
-  const dialog = document.getElementById("invite-friends-dialog");
+  function openInviteDialog(demoId) {
+    const dialog = document.getElementById("invite-friends-dialog");
+    const friendsList = document.getElementById("_friends-list");
+    const status = document.getElementById("invite-friends-status");
+    const sendInviteBtn = document.getElementById("send-invite-btn");
 
+    if (!dialog || !friendsList || !status || !sendInviteBtn) return;
 
-  const friendsList = document.getElementById("_friends-list");
-
-  // Open dialog
-  if (typeof dialog.showModal === "function") {
-    dialog.showModal();
-  } else {
-    alert("Your browser doesn't support <dialog> 😢");
-    return;
-  }
+    if (typeof dialog.showModal === "function") {
+      dialog.showModal();
+    } else {
+      status.textContent = "{{ _('Kaverikutsuja ei ole käytettävissä tässä selaimessa.') }}";
+      return;
+    }
 
     // Close with buttons
-  const cancelBtn = document.getElementById("cancel-invite-btn");
-  if (cancelBtn) cancelBtn.onclick = () => dialog.close();
+    const cancelBtn = document.getElementById("cancel-invite-btn");
+    if (cancelBtn) cancelBtn.onclick = () => dialog.close();
 
-  const closeBtn = document.getElementById("close-dialog-btn");
-  if (closeBtn) closeBtn.onclick = () => dialog.close();
+    const closeBtn = document.getElementById("close-dialog-btn");
+    if (closeBtn) closeBtn.onclick = () => dialog.close();
 
-  const closeUnauthBtn = document.getElementById("close-dialog-btn-unauth");
-  if (closeUnauthBtn) closeUnauthBtn.onclick = () => dialog.close();
+    const closeUnauthBtn = document.getElementById("close-dialog-btn-unauth");
+    if (closeUnauthBtn) closeUnauthBtn.onclick = () => dialog.close();
 
-  // Fetch friends
-  fetch("/api/user/friends/")
-    .then(res => res.json())
-    .then(friends => {
-      friendsList.innerHTML = "";
-      friends.friends.forEach(f => {
-        const div = document.createElement("div");
-        div.className = "form-check d-flex align-items-center gap-2";
+    status.textContent = "{{ _('Ladataan kavereita...') }}";
+    fetch("/api/user/friends/")
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to load friends");
+        return res.json();
+      })
+      .then(data => {
+        friendsList.replaceChildren();
+        const friends = Array.isArray(data.friends) ? data.friends : [];
+        if (!friends.length) {
+          status.textContent = "{{ _('Sinulla ei ole vielä kutsuttavia kavereita.') }}";
+          return;
+        }
 
-        div.innerHTML = `
-          <input class="form-check-input" type="checkbox" id="friend-${f._id}" value="${f._id}">
-          <label class="form-check-label d-flex align-items-center gap-2" for="friend-${f._id}">
-            <img src="${f.profile_picture}" alt="${f.displayname}" class="rounded-circle" width="30" height="30">
-            ${f.displayname}
-          </label>
-          
-        `;
-        friendsList.appendChild(div);
+        friends.forEach(friend => {
+          const row = document.createElement("div");
+          row.className = "form-check d-flex align-items-center gap-2";
+
+          const checkbox = document.createElement("input");
+          checkbox.className = "form-check-input";
+          checkbox.type = "checkbox";
+          checkbox.id = `friend-${friend._id}`;
+          checkbox.value = friend._id;
+
+          const label = document.createElement("label");
+          label.className = "form-check-label d-flex align-items-center gap-2";
+          label.htmlFor = checkbox.id;
+
+          const avatar = document.createElement("img");
+          avatar.src = friend.profile_picture || "/static/default-avatar.png";
+          avatar.alt = friend.displayname || "";
+          avatar.className = "rounded-circle";
+          avatar.width = 30;
+          avatar.height = 30;
+          avatar.loading = "lazy";
+
+          label.appendChild(avatar);
+          label.appendChild(document.createTextNode(friend.displayname || ""));
+          row.append(checkbox, label);
+          friendsList.appendChild(row);
+        });
+        status.textContent = "";
+      })
+      .catch(() => {
+        status.textContent = "{{ _('Kaverien lataaminen epäonnistui. Yritä uudelleen.') }}";
       });
-    });
 
-  // Send invites
-  document.getElementById("send-invite-btn").onclick = () => {
-    const selected = Array.from(friendsList.querySelectorAll("input[type=checkbox]:checked"))
-      .map(input => input.value);
+    sendInviteBtn.onclick = async () => {
+      const selected = Array.from(friendsList.querySelectorAll("input[type=checkbox]:checked"))
+        .map(input => input.value);
+      if (!selected.length) {
+        status.textContent = "{{ _('Valitse ainakin yksi kaveri.') }}";
+        return;
+      }
 
-    fetch(`/api/demonstrations/${demoId}/invite`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ friend_ids: selected })
-    })
-    .then(res => res.json())
-    .then(() => {
-      alert("Kutsut lähetetty! 💌");
-      dialog.close();
-    });
-  };
-}
+      sendInviteBtn.disabled = true;
+      status.textContent = "{{ _('Lähetetään kutsuja...') }}";
+      try {
+        const response = await fetch(`/api/demonstrations/${demoId}/invite`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ friend_ids: selected })
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload || payload.error) throw new Error("Failed to send invites");
+        status.textContent = "";
+        dialog.close();
+        if (typeof displayFlashMessage === "function") {
+          displayFlashMessage("success", "{{ _('Kutsut lähetetty!') }}");
+        }
+      } catch (error) {
+        status.textContent = "{{ _('Kutsujen lähettäminen epäonnistui. Yritä uudelleen.') }}";
+      } finally {
+        sendInviteBtn.disabled = false;
+      }
+    };
+  }
 
 </script>
-<!-- Leaflet JS -->
-<script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
+<script>
+  (function logDemoViewBeacon() {
+    if (window.__demoViewLogged) return;
+    const demoId = "{{ demo['_id'] }}";
+    if (!demoId) return;
+    window.__demoViewLogged = true;
+
+    const url = "{{ url_for('track_demo_view') }}";
+    const payload = JSON.stringify({ demo_id: demoId });
+
+    const sendViaFetch = () => {
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    if (navigator.sendBeacon) {
+      try {
+        const blob = new Blob([payload], { type: "application/json" });
+        const ok = navigator.sendBeacon(url, blob);
+        if (ok) return;
+      } catch (e) {
+        // fall through to fetch
+      }
+    }
+    // Fallback
+    if (document.readyState === "complete") {
+      sendViaFetch();
+    } else {
+      window.addEventListener("load", sendViaFetch, { once: true });
+    }
+  })();
+</script>
+<script>
+  (function disableCacheForLocalHost() {
+    const host = window.location.hostname;
+    if (!["127.0.0.1", "localhost"].includes(host)) {
+      return;
+    }
+
+    const noCacheMetas = [
+      { httpEquiv: "Cache-Control", content: "no-store, no-cache, must-revalidate, max-age=0" },
+      { httpEquiv: "Pragma", content: "no-cache" },
+      { httpEquiv: "Expires", content: "0" },
+    ];
+
+    noCacheMetas.forEach(({ httpEquiv, content }) => {
+      const meta = document.createElement("meta");
+      meta.httpEquiv = httpEquiv;
+      meta.content = content;
+      document.head.appendChild(meta);
+    });
+
+    const originalFetch = window.fetch;
+    window.fetch = function (input, init) {
+      const normalizedInit = Object.assign({}, init);
+      normalizedInit.cache = "no-store";
+      normalizedInit.headers = Object.assign(
+        { "Cache-Control": "no-cache" },
+        normalizedInit.headers || {}
+      );
+      return originalFetch.call(this, input, normalizedInit);
+    };
+  })();
+</script>
 <script src="{{ url_for('static', filename='js/admin_demo_info.js') }}"></script>
 {% endblock %}

@@ -5,17 +5,84 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import pyotp, datetime
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.utils.cities import normalize_city_key
+from mielenosoitukset_fi.utils.case_access import CASE_PERMISSIONS
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.classes.MemberShip import MemberShip
 #from mielenosoitukset_fi.utils.classes.BaseModel import BaseModel  # if still needed
 
-db  = DatabaseManager().get_instance()
-mongo = db.get_db()
 
-VALID_WINDOW = 5          # TODO → move to config
+def _get_mongo():
+    """Return the current database handle.
+
+    Tests reset DatabaseManager between app instances, so keeping a module-level
+    database object makes user helpers read and write stale databases.
+    """
+    return DatabaseManager().get_instance().get_db()
+
 DEFAULT_ROLE = "user"
+CITY_ADMIN_ORGANIZATION_PERMISSIONS = {
+    "LIST_ORGANIZATIONS",
+    "VIEW_ORGANIZATION",
+    "CREATE_ORGANIZATION",
+    "EDIT_ORGANIZATION",
+    "INVITE_TO_ORGANIZATION",
+}
 
 class User(UserMixin):
+    @property
+    def system_team_access(self):
+        if not self.active or self.banned or not self.confirmed:
+            return frozenset()
+        if self._system_team_access is None:
+            from mielenosoitukset_fi.utils.system_teams import user_team_access
+            self._system_team_access = user_team_access(_get_mongo(), self._id)
+        return self._system_team_access
+
+    @property
+    def global_admin(self):
+        if getattr(self, "_governance_managed", False):
+            return "national" in self.system_team_access
+        return self._global_admin or "national" in self.system_team_access
+
+    @global_admin.setter
+    def global_admin(self, value):
+        self._global_admin = bool(value)
+
+    def has_system_permission(self, permission):
+        from mielenosoitukset_fi.utils.system_teams import BOARD_PERMISSIONS
+        return permission in BOARD_PERMISSIONS and "board" in self.system_team_access
+
+    def has_admin_access(self) -> bool:
+        """Return whether this account may enter any admin workspace."""
+        return (
+            self.has_full_permissions()
+            or self.role == "admin"
+            or self.role == "translator"
+            or any(
+                self.has_permission(permission)
+                for permission in (
+                    "TRANSLATE_DEMO",
+                    "REVIEW_DEMO_TRANSLATIONS",
+                    "TRANSLATE_UI",
+                    "REVIEW_UI_TRANSLATIONS",
+                )
+            )
+            or self.has_city_admin_scope_grants()
+            or self.has_admin_scope_grants()
+            or "board" in self.system_team_access
+        )
+
+    def has_full_permissions(self) -> bool:
+        """Return whether this account bypasses individual permission grants."""
+        if self._governance_managed:
+            return bool(self.global_admin)
+        return bool(self.global_admin) or self.role in {
+            "global_admin",
+            "god",
+            "superuser",
+        }
+
     def _perm_in(self, permission: str) -> List[Union[str, ObjectId]]:
         """
         Return a list of scopes (organization IDs or the literal string "global")
@@ -31,14 +98,20 @@ class User(UserMixin):
         list of str or ObjectId
             List of organization IDs or "global" where the user has the permission.
         """
+        
+        if self.has_full_permissions() or self.has_system_permission(permission):
+            return ["global"]
+
         scopes = []
         if permission in self.global_permissions:
             scopes.append("global")
+        
         scopes.extend(
             m.organization_id for m in self.memberships if permission in m.permissions
         )
         # Remove duplicates while preserving order
         return list(dict.fromkeys(scopes))
+
     @classmethod
     def create_user(cls, username: str, password: str, email: str = None, displayname: str = None) -> dict:
         """
@@ -60,11 +133,15 @@ class User(UserMixin):
         dict
             The user document ready for insertion into the database.
         """
+        username = username.strip().casefold()
+        email = email.strip().casefold() if isinstance(email, str) else email
         password_hash = generate_password_hash(password)
         user_doc = {
             "username": username,
+            "username_canonical": username,
             "password_hash": password_hash,
             "email": email,
+            "email_canonical": email,
             "displayname": displayname,
             "global_admin": False,
             "confirmed": False,
@@ -74,6 +151,8 @@ class User(UserMixin):
             "mfa_enabled": False,
             "followers": [],
             "following": [],
+            "followed_organizations": [],
+            "followed_recurring_demos": [],
         }
         return user_doc
     
@@ -82,6 +161,9 @@ class User(UserMixin):
         """
         New method of creating a user, that also validates the data"""
         
+        from mielenosoitukset_fi.utils.system_teams import SUPER_ROLES
+        if user_data.get("role") in SUPER_ROLES:
+            raise PermissionError("Privileged accounts require governance approval")
         required_fields = ["username", "password", "email"]
         
         valid_fields = ["username", "password", "email", "displayname", "role", "bio"]
@@ -112,9 +194,14 @@ class User(UserMixin):
         new_password : str
             The new password to set.
         """
+        security = (_get_mongo().users.find_one({"_id": self._id}) or {}).get("god_security") or {}
+        if (self.role == "god" or security.get("policy") == 1) and len(new_password) < 32:
+            raise ValueError("God-tilin salasanan vähimmäispituus on 32 merkkiä.")
+        if self.role == "god" or security.get("policy") == 1:
+            if security.get("secret_hash") and check_password_hash(security["secret_hash"], new_password):
+                raise ValueError("Kirjautumissalasanan on oltava eri kuin erillinen vahvistussalasana.")
         self.password_hash = generate_password_hash(new_password)
         self.save()
-        #mongo.users.update_one({"_id": self._id}, {"$set": {"password_hash": self.password_hash}})
 
     # ---------- INIT / FACTORIES -------------------------------------------------
 
@@ -125,11 +212,15 @@ class User(UserMixin):
         password_hash: str,
         *,
         email: Optional[str] = None,
+        username_canonical: Optional[str] = None,
+        email_canonical: Optional[str] = None,
         displayname: Optional[str] = None,
         profile_picture: Optional[str] = None,
         bio: Optional[str] = None,
         followers: Optional[List[str]] = None,
         following: Optional[List[str]] = None,
+        followed_organizations: Optional[List[str]] = None,
+        followed_recurring_demos: Optional[List[str]] = None,
         global_admin: bool = False,
         confirmed: bool = False,
         global_permissions: Optional[List[str]] = None,
@@ -139,20 +230,30 @@ class User(UserMixin):
         friends: list = [],
         friend_requests: list = [],
         forced_pwd_reset: bool = False,
+        forced_identity_change: bool = False,
         active: bool = True,
-        last_login: datetime.datetime = None
+        last_login: datetime.datetime = None,
+        governance_managed: bool = False,
+        security_suspended: bool = False,
+        auth_epoch: int = 0,
     ):
         self.id                = str(user_id)  # flask‑login expects .id str
         self._id               = ObjectId(user_id)
         self.username          = username
+        self.username_canonical = username_canonical or username.strip().casefold()
         self.email             = email
+        self.email_canonical   = email_canonical or (email.strip().casefold() if email else None)
         self.password_hash     = password_hash
         self.displayname       = displayname
         self.profile_picture   = profile_picture
         self.bio               = bio
         self.followers         = followers or []
         self.following         = following or []
-        self.global_admin      = global_admin
+        self.followed_organizations = followed_organizations or []
+        self.followed_recurring_demos = followed_recurring_demos or []
+        self._global_admin     = bool(global_admin)
+        self._governance_managed = governance_managed
+        self._system_team_access = None
         self.confirmed         = confirmed
         self.global_permissions= global_permissions or []
         self.role              = role
@@ -162,11 +263,15 @@ class User(UserMixin):
         self.friends           = friends
         self.friend_requests    = friend_requests
         self.forced_pwd_reset    = forced_pwd_reset
+        self.forced_identity_change = forced_identity_change
         self.active             = active
         self.last_login         = last_login
+        self.security_suspended = security_suspended
+        self.auth_epoch = auth_epoch
 
         # CACHED memberships (lazy)  --------------------------------------------
         self._memberships: Optional[List[MemberShip]] = None
+        self._admin_scope_grants: Optional[List[dict]] = None
 
     # ---------- CLASS HELPERS ----------------------------------------------------
 
@@ -177,12 +282,17 @@ class User(UserMixin):
             username        = doc["username"],
             password_hash   = doc["password_hash"],
             email           = doc.get("email"),
+            username_canonical = doc.get("username_canonical"),
+            email_canonical = doc.get("email_canonical"),
             displayname     = doc.get("displayname"),
             profile_picture = doc.get("profile_picture"),
             bio             = doc.get("bio"),
             followers       = doc.get("followers", []),
             following       = doc.get("following", []),
-            global_admin    = doc.get("global_admin", False) or doc.get("role")=="global_admin",
+            followed_organizations = doc.get("followed_organizations", []),
+            followed_recurring_demos = doc.get("followed_recurring_demos", []),
+            global_admin    = doc.get("global_admin", False)
+                              or doc.get("role") in {"global_admin", "god", "superuser"},
             confirmed       = doc.get("confirmed", False),
             global_permissions = doc.get("global_permissions", []),
             role            = doc.get("role", DEFAULT_ROLE),
@@ -191,15 +301,19 @@ class User(UserMixin):
             friends         = doc.get("friends", []),
             friend_requests = doc.get("friend_requests", []),
             forced_pwd_reset = doc.get("forced_pwd_reset", False),
-            active          = doc.get("active", False),
-            last_login      = doc.get("last_login", None)
+            forced_identity_change = doc.get("forced_identity_change", False),
+            active          = doc.get("active", True),
+            last_login      = doc.get("last_login", None),
+            governance_managed = doc.get("governance_managed", False),
+            security_suspended = bool((doc.get("security_suspension") or {}).get("active")),
+            auth_epoch = doc.get("auth_epoch", 0),
         )
 
     @classmethod
     def from_OID(cls, oid: Union[str, ObjectId]) -> "User":
         if isinstance(oid, str):
             oid = ObjectId(oid)
-        doc = mongo.users.find_one({"_id": oid})
+        doc = _get_mongo().users.find_one({"_id": oid})
         if not doc:
             raise ValueError("User not found")
         return cls.from_db(doc)
@@ -215,7 +329,102 @@ class User(UserMixin):
 
     def org_ids(self) -> List[ObjectId]:
         return [m.organization_id for m in self.memberships]
+
+    @property
+    def admin_scope_grants(self) -> List[dict]:
+        """Lazy-load active scoped admin grants for this user."""
+        if self._admin_scope_grants is None:
+            self._admin_scope_grants = list(
+                _get_mongo().admin_scope_grants.find(
+                    {
+                        "user_id": {"$in": [self._id, str(self._id)]},
+                        "$or": [
+                            {"revoked_at": {"$exists": False}},
+                            {"revoked_at": None},
+                        ],
+                    }
+                )
+            )
+        return self._admin_scope_grants
+
+    def has_admin_scope_grants(self) -> bool:
+        return bool(self.admin_scope_grants)
+
+    def has_city_admin_scope_grants(self) -> bool:
+        """Return whether the user has an active, usable city-admin grant."""
+        return any(
+            grant.get("scope_type") == "city"
+            and bool(grant.get("scope_keys") or grant.get("scope_key"))
+            and bool(grant.get("permissions"))
+            for grant in self.admin_scope_grants
+        )
+
+    def scoped_city_keys_for(self, permission: str) -> List[str]:
+        """Return normalized city keys where this user has a scoped permission."""
+        keys: list[str] = []
+        for grant in self.admin_scope_grants:
+            if grant.get("scope_type") != "city":
+                continue
+            if permission not in (grant.get("permissions") or []):
+                continue
+
+            raw_keys = grant.get("scope_keys")
+            if raw_keys is None and grant.get("scope_key"):
+                raw_keys = [grant.get("scope_key")]
+            if isinstance(raw_keys, str):
+                raw_keys = [raw_keys]
+
+            for raw_key in raw_keys or []:
+                city_key = normalize_city_key(raw_key)
+                if city_key:
+                    keys.append(city_key)
+
+        return list(dict.fromkeys(keys))
+
+    def has_scoped_permission(
+        self,
+        permission: str,
+        *,
+        scope_type: str,
+        scope_key: str,
+    ) -> bool:
+        if self.has_full_permissions() or self.has_system_permission(permission):
+            return True
+        if permission in self.global_permissions:
+            return True
+        if scope_type != "city":
+            return False
+        return normalize_city_key(scope_key) in self.scoped_city_keys_for(permission)
     
+    def has_invite(self, organization_id: Union[str, ObjectId]) -> bool:
+        """
+        Check if the user has a pending invite for a specific organization.
+
+        Parameters
+        ----------
+        organization_id : str | ObjectId
+            The organization to check for a pending invite.
+
+        Returns
+        -------
+        bool
+            True if the user has a pending invite for this organization, else False.
+        """
+        oid = ObjectId(organization_id) if isinstance(organization_id, str) else organization_id
+
+        org = _get_mongo().organizations.find_one({"_id": oid})
+        if not org or "invitations" not in org:
+            return False
+
+        for inv in org["invitations"]:
+            if isinstance(inv, str) and inv == self.email:
+                return True
+            elif isinstance(inv, dict) and inv.get("email") == self.email:
+                return True
+
+        return False
+
+
     def _permission_in(self, permission: str) -> List[Union[str, ObjectId]]:
         """
         Return a list of scopes (organization IDs or the literal string "global")
@@ -227,6 +436,9 @@ class User(UserMixin):
           the organization_id of that membership is included.
         The list is deduplicated and keeps a predictable order.
         """
+        if self.has_full_permissions() or self.has_system_permission(permission):
+            return ["global"]
+
         scopes: List[Union[str, ObjectId]] = []
 
         # 1️⃣ global scope
@@ -303,6 +515,11 @@ class User(UserMixin):
 
     # ---------- PASSWORD / LOGIN -------------------------------------------------
 
+    @property
+    def is_active(self) -> bool:
+        """Allow authentication only while the account is enabled and unbanned."""
+        return bool(self.active) and not bool(self.banned) and not self.security_suspended
+
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
 
@@ -318,8 +535,18 @@ class User(UserMixin):
         return list(perms)
 
     def has_permission(self, perm: str, organization_id: Optional[Union[str, ObjectId]]=None, strict=False) -> bool:
+        if organization_id and perm in {"EDIT_ORGANIZATION", "DELETE_ORGANIZATION", "INVITE_TO_ORGANIZATION"}:
+            from mielenosoitukset_fi.utils.system_teams import protected_organization
+            if protected_organization(organization_id):
+                return False
+        if self.has_system_permission(perm):
+            return True
+        if self.has_full_permissions():
+            return True
         if perm in self.global_permissions:
             return True
+        if perm in CASE_PERMISSIONS:
+            return bool(self.scoped_city_keys_for(perm))
         
         if organization_id:
             ms = self.membership_for(organization_id)
@@ -327,9 +554,19 @@ class User(UserMixin):
                 print(ms.permissions)
                 print(ms.organization_id)
             
-            return bool(ms and perm in ms.permissions)
+            if ms and perm in ms.permissions:
+                return True
+            return (
+                perm in CITY_ADMIN_ORGANIZATION_PERMISSIONS
+                and self.has_city_admin_scope_grants()
+            )
         # if org not specified, check all org memberships
-        return any(perm in m.permissions for m in self.memberships)
+        if any(perm in m.permissions for m in self.memberships):
+            return True
+        return (
+            perm in CITY_ADMIN_ORGANIZATION_PERMISSIONS
+            and self.has_city_admin_scope_grants()
+        )
 
     # ---------- FOLLOW / BAN / MFA ----------------------------------------------
 
@@ -343,6 +580,30 @@ class User(UserMixin):
         oid = str(other_id._id) if isinstance(other_id, User) else str(other_id)
         if oid in self.following:
             self.following.remove(oid)
+            self.save()
+
+    def follow_organization(self, organization_id: Union[str, ObjectId]):
+        org_id = str(organization_id)
+        if org_id not in self.followed_organizations:
+            self.followed_organizations.append(org_id)
+            self.save()
+
+    def unfollow_organization(self, organization_id: Union[str, ObjectId]):
+        org_id = str(organization_id)
+        if org_id in self.followed_organizations:
+            self.followed_organizations.remove(org_id)
+            self.save()
+
+    def follow_recurring_demo(self, recurring_id: Union[str, ObjectId]):
+        rec_id = str(recurring_id)
+        if rec_id not in self.followed_recurring_demos:
+            self.followed_recurring_demos.append(rec_id)
+            self.save()
+
+    def unfollow_recurring_demo(self, recurring_id: Union[str, ObjectId]):
+        rec_id = str(recurring_id)
+        if rec_id in self.followed_recurring_demos:
+            self.followed_recurring_demos.remove(rec_id)
             self.save()
 
     def ban_user(self):
@@ -361,9 +622,21 @@ class User(UserMixin):
         """Persist user (does **not** touch memberships)."""
         doc = self.to_dict()
         doc.pop("_id", None)
-        mongo.users.update_one({"_id": self._id}, {"$set": doc}, upsert=True)
+        from mielenosoitukset_fi.utils.system_teams import SUPER_ROLES, clearance_approved
+        previous = _get_mongo().users.find_one({"_id": self._id}) or {}
+        if doc.get("role") == "god" and previous.get("role") != "god":
+            raise PermissionError("God-tili aktivoidaan vain vahvistetun käyttöönoton kautta.")
+        already_privileged = previous.get("global_admin") is True or previous.get("role") in SUPER_ROLES
+        incoming_privileged = doc.get("global_admin") is True or doc.get("role") in SUPER_ROLES
+        if incoming_privileged and not already_privileged:
+            if doc.get("role") == "god" or not clearance_approved(_get_mongo(), self._id) or "national" not in self.system_team_access:
+                raise PermissionError("Uusi superkäyttäjä vaatii hallinnon hyväksyntäkierroksen.")
+            doc["governance_managed"] = True
+            self._governance_managed = True
+        _get_mongo().users.update_one({"_id": self._id}, {"$set": doc}, upsert=True)
         # invalidate cache after save
         self._memberships = None
+        self._admin_scope_grants = None
 
     # ---------- SERIALISATION ----------------------------------------------------
 
@@ -371,14 +644,19 @@ class User(UserMixin):
         d = {
             "_id": str(self._id) if json else self._id,
             "username": self.username,
+            "username_canonical": self.username_canonical,
             "password_hash": self.password_hash,
             "email": self.email,
+            "email_canonical": self.email_canonical,
             "displayname": self.displayname,
             "profile_picture": self.profile_picture,
             "bio": self.bio,
             "followers": self.followers,
             "following": self.following,
-            "global_admin": self.global_admin,
+            "followed_organizations": self.followed_organizations,
+            "followed_recurring_demos": self.followed_recurring_demos,
+            "global_admin": self._global_admin,
+            "governance_managed": self._governance_managed,
             "confirmed": self.confirmed,
             "global_permissions": self.global_permissions,
             "role": self.role,
@@ -387,6 +665,7 @@ class User(UserMixin):
             "friends": self.friends,
             "friend_requests": self.friend_requests,
             "forced_pwd_reset": self.forced_pwd_reset,
+            "forced_identity_change": self.forced_identity_change,
             "active": self.active,
             "last_login": self.last_login
         }
@@ -433,6 +712,7 @@ class TwoFAToken:
 
 from typing import List, Dict
 import pyotp
+from mielenosoitukset_fi.utils.time_utils import utcnow
 import datetime
 from bson import ObjectId
 
@@ -444,10 +724,10 @@ class PendingMFA:
     def create(user_id: ObjectId) -> str:
         """Create a new pending MFA secret."""
         secret = pyotp.random_base32()
-        mongo[PendingMFA.COLLECTION].insert_one({
+        _get_mongo()[PendingMFA.COLLECTION].insert_one({
             "user_id": user_id,
             "secret": secret,
-            "created_at": datetime.datetime.utcnow()
+            "created_at": utcnow()
         })
         return secret
 
@@ -457,7 +737,7 @@ class PendingMFA:
         query = {"user_id": user_id}
         if secret:
             query["secret"] = secret
-        docs = mongo[PendingMFA.COLLECTION].find(query)
+        docs = _get_mongo()[PendingMFA.COLLECTION].find(query)
         return [doc["secret"] for doc in docs]
 
     @staticmethod
@@ -466,7 +746,7 @@ class PendingMFA:
         query = {"user_id": user_id}
         if secret:
             query["secret"] = secret
-        mongo[PendingMFA.COLLECTION].delete_many(query)
+        _get_mongo()[PendingMFA.COLLECTION].delete_many(query)
 
 
 class MFAToken:
@@ -487,7 +767,7 @@ class UserMFA:
 
     def list_devices(self) -> List[Dict]:
         """Return metadata for all active MFA secrets/devices."""
-        docs = mongo.mfas.find({"user_id": self.user_id})
+        docs = _get_mongo().mfas.find({"user_id": self.user_id})
         return [
             {
                 "id": str(doc["_id"]),
@@ -509,17 +789,17 @@ class UserMFA:
     def add_device(self, device_name: str = "New device") -> str:
         """Generate a new secret and store it as a device."""
         secret = pyotp.random_base32()
-        mongo.mfas.insert_one({
+        _get_mongo().mfas.insert_one({
             "user_id": self.user_id,
             "secret": secret,
             "device_name": device_name,
-            "created_at": datetime.datetime.utcnow()
+            "created_at": utcnow()
         })
         return secret
 
     def remove_device(self, device_id: str):
         """Remove a specific device by Mongo _id."""
-        result = mongo.mfas.delete_one({"_id": ObjectId(device_id), "user_id": self.user_id})
+        result = _get_mongo().mfas.delete_one({"_id": ObjectId(device_id), "user_id": self.user_id})
         return result.deleted_count > 0
 
     def get_qr_code_url(self, secret: str) -> str:
@@ -587,6 +867,14 @@ class AnonymousUser(AnonymousUserMixin):
 
 
         """
+        return False
+
+    def has_admin_access(self) -> bool:
+        """Anonymous visitors never have administration access."""
+        return False
+
+    def has_city_admin_scope_grants(self) -> bool:
+        """Anonymous visitors never have city-scoped administration grants."""
         return False
 
     def is_following(self, user_id):

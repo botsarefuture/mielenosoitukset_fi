@@ -1,0 +1,99 @@
+{% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero, admin_pagination %}
+
+{% block title %}{{ _('Tekninen audit-loki') }}{% endblock %}
+
+{% block main_content %}
+<section class="admin-page admin-workspace">
+  {{ admin_page_hero(
+    _('Tekninen audit-loki'),
+    _('Korkean tason tapahtumaloki järjestelmän toiminnoista ja niiden teknisestä kontekstista.'),
+    _('Lokit ja tietosuoja'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Hallinnan tapahtumaloki'), url_for('admin.logs')), (_('Tekninen audit-loki'), none)],
+    back_url=url_for('admin.logs'),
+    back_label=_('Hallinnan tapahtumaloki')
+  ) }}
+
+  <section class="admin-workspace-toolbar" aria-label="{{ _('Teknisen audit-lokin suodattimet') }}">
+    <form method="get" action="{{ url_for('admin_demo.view_super_audit_logs') }}" class="admin-filter-bar">
+      <input type="hidden" name="page" value="1">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="admin-filter-bar__primary">
+        <div class="admin-field">
+          <label for="super-audit-event">{{ _('Tapahtuma') }}</label>
+          <select id="super-audit-event" name="event">
+            <option value="">{{ _('Kaikki tapahtumat') }}</option>
+            {% for event in events %}<option value="{{ event }}" {% if filters.event == event %}selected{% endif %}>{{ event }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="admin-field">
+          <label for="super-audit-path">{{ _('Polku') }}</label>
+          <input id="super-audit-path" type="search" name="path" value="{{ filters.path }}" placeholder="/admin/…">
+        </div>
+        <div class="admin-field">
+          <label for="super-audit-method">{{ _('HTTP-metodi') }}</label>
+          <input id="super-audit-method" type="text" name="method" value="{{ filters.method }}" placeholder="GET">
+        </div>
+        <div class="admin-field">
+          <label for="super-audit-query">{{ _('Sisältöhaku') }}</label>
+          <input id="super-audit-query" type="search" name="q" value="{{ filters.q }}" placeholder="{{ _('Hae audit-datasta') }}">
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+      </div>
+    </form>
+    {% if filters.event or filters.path or filters.method or filters.q %}
+    <div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">
+      {% if filters.event %}<span class="admin-filter-chip">{{ _('Tapahtuma') }}: {{ filters.event }}</span>{% endif %}
+      {% if filters.path %}<span class="admin-filter-chip">{{ _('Polku') }}: {{ filters.path }}</span>{% endif %}
+      {% if filters.method %}<span class="admin-filter-chip">{{ _('Metodi') }}: {{ filters.method }}</span>{% endif %}
+      {% if filters.q %}<span class="admin-filter-chip">{{ _('Haku') }}: {{ filters.q }}</span>{% endif %}
+      <a class="admin-clear-filters" href="{{ url_for('admin_demo.view_super_audit_logs') }}">{{ _('Tyhjennä suodattimet') }}</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="admin-data-view admin-data-view--scrollable" aria-labelledby="super-audit-heading">
+    <div class="admin-data-view__header admin-result-summary" aria-live="polite">
+      <strong id="super-audit-heading">{{ _('Audit-tapahtumat') }}</strong>
+      <span>{{ _('Näytetään %(start)s–%(end)s / %(count)s tapahtumasta', start=range_start, end=range_end, count=total_count) }}</span>
+    </div>
+    <div class="admin-data-view__viewport">
+      <table class="admin-data-view__table">
+        <thead>
+          <tr><th>{{ _('Aika') }}</th><th>{{ _('Tapahtuma') }}</th><th>{{ _('Pyynnön tiedot') }}</th><th>{{ _('Sisältö') }}</th></tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+          <tr>
+            <td>{{ entry.timestamp_str }}</td>
+            <td><code>{{ entry.event }}</code></td>
+            <td>
+              {% if entry.request %}
+              <strong>{{ entry.request.method }} {{ entry.request.path }}</strong>
+              <div class="admin-field__help">{{ entry.request.remote_addr or '–' }}</div>
+              {% else %}–{% endif %}
+            </td>
+            <td><pre class="admin-code-block">{{ entry.payload | tojson(indent=2) }}</pre></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4"><div class="admin-empty-state"><i class="admin-empty-state__icon fa-solid fa-shield-halved" aria-hidden="true"></i><strong class="admin-empty-state__title">{{ _('Tapahtumia ei löytynyt') }}</strong><span>{{ _('Kokeile muuttaa suodattimia tai tyhjennä ne.') }}</span></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {{ admin_pagination(
+      current_page,
+      total_pages,
+      per_page=per_page,
+      prev_page=prev_page,
+      next_page=next_page,
+      prev_page_url=prev_page_url,
+      next_page_url=next_page_url,
+      visible_pages=visible_pages,
+      first_page_url=first_page_url,
+      last_page_url=last_page_url,
+      aria_label=_('Teknisen audit-lokin sivutus')
+    ) }}
+  </section>
+</section>
+{% endblock %}

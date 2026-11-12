@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { DemonstrationCards } from '../components/listings/DemonstrationCard';
+import '../../../mielenosoitukset_fi/static/css/public-detail.css';
 import type { CardProps } from '../components/listings/DemonstrationCard';
 import type { Demonstration } from '../components/listings/types';
+import { HomeContinuation } from './HomeContinuation';
+import type { HomeContinuationProps } from './HomeContinuation';
 
 export type HomeProps = {
   endpoint: string; locale: string; cards: CardProps;
@@ -12,6 +15,8 @@ export type HomeProps = {
     recommendedTitle: string; loading: string; loadError: string; retry: string };
   /** Optional pre-fetched batch. Without it the component requests the public API. */
   initialData?: HomeData | null;
+  /** Inline continuation with the chronological listing. Hosts without it keep the picks only. */
+  more?: { endpoint: string; text: HomeContinuationProps['text'] };
 };
 
 export type HomeData = { events: Demonstration[]; recommended: boolean };
@@ -23,7 +28,7 @@ function pageOrigin() {
 }
 
 /** Portable browser consumer: the host only supplies bootstrap configuration. */
-export function HomePage({ endpoint, locale, cards, urls, text, initialData = null }: HomeProps) {
+export function HomePage({ endpoint, locale, cards, urls, text, initialData = null, more }: HomeProps) {
   const [data, setData] = useState<HomeData | null>(initialData);
   const [failed, setFailed] = useState(false);
   const [attempt, retry] = useState(0);
@@ -53,11 +58,11 @@ export function HomePage({ endpoint, locale, cards, urls, text, initialData = nu
   return <div className="home-page public-demonstration-list">
     <header className="home-intro">
       <div><h1>{text.title}</h1><p>{text.intro}</p></div>
-      <a className="home-button home-button--secondary" href={urls.submit}>{text.submit}</a>
+      <a className="detail-button" href={urls.submit}>{text.submit}</a>
       <form className="home-search" action={urls.all} method="get" role="search">
         <label htmlFor="home-search">{text.search}</label>
         <div><input id="home-search" name="search" type="search" placeholder={text.searchPlaceholder} />
-          <button className="home-button" type="submit">{text.submitSearch}</button></div>
+          <button className="detail-button detail-button--primary" type="submit">{text.submitSearch}</button></div>
       </form>
       <nav className="home-links" aria-label={text.title}>
         <a href={urls.all}>{text.all} <span aria-hidden="true">→</span></a>
@@ -71,6 +76,9 @@ export function HomePage({ endpoint, locale, cards, urls, text, initialData = nu
         : data.events.length ? <div className="demos-grid"><DemonstrationCards events={data.events} props={cards} /></div>
         : <div className="home-empty"><h3>{text.emptyTitle}</h3><p>{text.empty}</p><a href={urls.submit}>{text.submit}</a></div>}
     </section>
+    {more && data && !failed && data.events.length > 0 && <HomeContinuation endpoint={more.endpoint} locale={locale}
+      cards={cards} allUrl={urls.all} shownIds={data.events.map(event => event._id)} text={more.text} />}
+    {/* The campaign follows the event stream, so it is never read as "more events". */}
     <aside className="home-campaign"><div><h2>{text.prideTitle}</h2><p>{text.prideIntro}</p></div>
       <a className="home-button home-button--secondary" href={urls.pride}>{text.prideLink}</a></aside>
   </div>;

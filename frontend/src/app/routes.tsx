@@ -3,6 +3,10 @@ import type { Catalog } from './i18n';
 import type { ListingRoute } from './listing';
 import { currentMonth } from './calendar';
 import { findCity } from './cities';
+import { informationPageForPath, informationPages } from './information';
+import { contactCopy, contactPath } from './contact-route';
+import { campaignCopy, campaignPath } from './campaign-route';
+import type { InformationPage } from './information';
 
 /**
  * Public routes owned by the standalone React application.
@@ -15,13 +19,22 @@ import { findCity } from './cities';
  */
 export type AppRoute =
   | { name: 'home' }
+  | { name: 'status' }
   | { name: 'submit' }
   | { name: 'god-auth' }
+  | { name: 'pride' }
+  | { name: 'information'; page: InformationPage }
+  | { name: 'contact' }
+  | { name: 'api-docs' }
+  | { name: 'campaign' }
+  | { name: 'fundraising' }
   | { name: 'cities' }
   | { name: 'calendar' | 'calendar-year'; year: number; month: number; city?: string }
   | { name: 'today'; value?: string }
   | ListingRoute
   | { name: 'organization'; id: string }
+  | { name: 'organization-fill'; id: string }
+  | { name: 'suggest-change'; id: string }
   | { name: 'detail'; identifier: string }
   | { name: 'series'; parent: string };
 
@@ -51,7 +64,14 @@ function readIdentifier(raw: string): string | null {
 }
 
 export function routeForPath(path: string): AppRoute | null {
+  if (path === '/status') return { name: 'status' };
+  const informationPage = informationPageForPath(path);
+  if (informationPage) return { name: 'information', page: informationPage };
   if (path === '/auth/god') return { name: 'god-auth' };
+  if (path === contactPath) return { name: 'contact' };
+  if (path === '/api-docs/') return { name: 'api-docs' };
+  if (path === campaignPath) return { name: 'campaign' };
+  if (path === '/keräys' || path === '/ker%C3%A4ys' || path === '/ker%c3%a4ys') return { name: 'fundraising' };
   const calendar = /^\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
   const scoped = /^\/city\/([^/]+)\/calendar(?:\/(\d{4})(?:\/(\d{1,2}))?)?\/?$/.exec(path);
   if (calendar || scoped) {
@@ -66,6 +86,7 @@ export function routeForPath(path: string): AppRoute | null {
     return { name: month ? 'calendar' : 'calendar-year', year, month, ...(city ? { city: city.key } : {}) };
   }
   if (path === '/submit') return { name: 'submit' };
+  if (path === '/pride-nakyvaksi' || path === '/pride' || path === '/pride/') return { name: 'pride' };
   if (path === '/cities') return { name: 'cities' };
   if (path === '/mielenosoitukset-tanaan') return { name: 'today' };
   const today = /^\/city\/([^/]+)\/tanaan$/.exec(path);
@@ -73,6 +94,10 @@ export function routeForPath(path: string): AppRoute | null {
     const value = readIdentifier(today[1]);
     return value && !value.includes('/') ? { name: 'today', value } : null;
   }
+  const organizationFill = /^\/organization\/([a-f\d]{24})\/fill$/i.exec(path);
+  if (organizationFill) return { name: 'organization-fill', id: organizationFill[1].toLowerCase() };
+  const suggestChange = /^\/suggest_change\/([a-f\d]{24})$/i.exec(path);
+  if (suggestChange) return { name: 'suggest-change', id: suggestChange[1].toLowerCase() };
   const organization = /^\/organization\/([a-f\d]{24})$/i.exec(path);
   if (organization) return { name: 'organization', id: organization[1].toLowerCase() };
   if (path === '/demonstrations') return { name: 'listing', scope: 'all' };
@@ -102,6 +127,29 @@ export function routeForPath(path: string): AppRoute | null {
  * metadata from one projected API read.
  */
 export function routeMeta(route: AppRoute, config: AppConfig, text: Catalog): RouteMeta {
+  if (route.name === 'api-docs') {
+    return { title: 'API-dokumentaatio | Mielenosoitukset.fi',
+      description: 'Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa.',
+      robots: 'index, follow', canonical: null };
+  }
+  if (route.name === 'contact') {
+    return { title: `${contactCopy.title} | Mielenosoitukset.fi`, description: contactCopy.description,
+      robots: 'index, follow', canonical: config.origin + contactPath };
+  }
+  if (route.name === 'information') {
+    const { path, title, description } = informationPages[route.page];
+    return { title: `${title} | Mielenosoitukset.fi`, description,
+      robots: 'index, follow', canonical: config.origin + path };
+  }
+  if (route.name === 'fundraising') {
+    return { title: 'Pienkeräys – Mielenosoitukset.fi',
+      description: 'Suunnittelemme 2 500 euron pienkeräystä, jotta yhä useampi löytäisi mielenosoitukset.fi-palvelun. Tutustu suunnitelmaan.',
+      robots: 'index, follow', canonical: `${config.origin}/ker%C3%A4ys` };
+  }
+  if (route.name === 'campaign') {
+    return { title: campaignCopy.title, description: campaignCopy.description,
+      robots: 'index, follow', canonical: config.origin + campaignPath, image: config.origin + campaignCopy.image };
+  }
   return {
     title: text.meta.title,
     description: text.meta.description,

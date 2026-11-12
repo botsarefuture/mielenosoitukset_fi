@@ -1,66 +1,163 @@
-# TODO — active task list
+# TODO
 
-Consolidated list of fixes/features requested (so none are forgotten). Tick items off as they land.
+Everything still to do, in one list. Updated 10 November 2026.
 
-## Overflow fixes
+- **Sources:** `roadmap.md` (IDs like UI-06), open GitHub issues (`#123`), open pull requests, review follow-ups and `BLOCKERS.md` on `claude/vibrant-gates-syjhk4`.
+- **Where status lives:** priorities, owners and acceptance evidence stay in `roadmap.md`; this file is the checklist. When an item lands, tick it here and update the roadmap entry.
+- **Approval:** merging and deploying need no separate approval once tests pass (plus a visual SHIP for UI). Items marked *(approval)* touch data, authentication, sessions, privileges or real email and need the maintainer's go-ahead (see `docs/development-workflow.md`).
 
-- [x] Ensure no overflow on public pages (reported for `/city/helsinki/tanaan`, cities pages)
-  - [x] Header `.container` overflows viewport by 24–64px on the right (clips bell/user area)
-  - [x] Header `.branding` pokes ~9px past viewport on mobile
-  - [x] `.city-card` overflows ~6px past viewport on `/cities` at ~360px
-- [x] Verify no horizontal page scroll / protruding elements on home, cities, city today pages at desktop + mobile widths
-  - Verified via Playwright + Jinja harness at 320/360/390/768/1024/1440 (zero right-side offenders); live-site header also measured.
+## Now
 
-## Fixes
-- [x] Please ensure hero consistency between all the user facing pages!
+- [ ] **Production virtual environment, then the security dependency update.** Pillow 11.0.0 → 13.0.0, PyJWT 2.10.1 → 2.15.1 and PyMongo 4.6.3 → 4.19.0 (#1053) merged but could not deploy: Flask runs on the read-only system Python, and `deploy/install_dependencies.py` only installs into an app-owned venv (see `docs/production-deployment.md`). The pins were reverted to unblock deploys. Next: create the venv, point Gunicorn and `PRODUCTION_PYTHON` at it, verify, then re-apply #1053. Pillow decodes uploaded images and has a critical advisory. *(approval: production infrastructure)*
+- [ ] **#778 city admins and cases (P0):** #917 is merged and the issue says it was revalidated. Confirm on production that a city admin can open and act on their city's cases, then close the issue.
+- [x] **#1029 far-future events:** generation capped (#1064); on 10 November 2026 the cleanup removed 68,642 generated occurrences after 2028-11-10 from three series, backed up on the production host first. Helsinki now shows 238 upcoming events.
+- [x] **#984 support replies:** acknowledge queue persistence before recording the queued reply and audit receipt; redact unconfirmed outcomes (DATA-04).
 
-## Features
+## Public site in React (UI-06, due January 2027)
 
-- [x] Add an info/welcome email to people who sign up as translators
-- [x] Allow all logged-in users to access the admin dashboard, but only show modules relevant to their role/job
-- [x] On demo detail pages, hide the "Seuraa" (follow) button for organizations that cannot be followed
-- [x] Ensure that the user can enable 2fa in their settings!
+Already on the React host: home, listings (all, city, tag, today), detail and series, calendar, cities, submit, organization profile, information pages, Pride, campaign, fundraising and contact.
 
-## Audit logging and GDPR
+- [ ] `/report` error report form. It needs a session-scope token like `/contact`. *(approval: session change)*
+- [x] `/status`: React SSR with read-only Go `/api/status`, bounded cached database check and HTTP 200 on dependency/API failure. Routing prepared; visual acceptance BLOCKED (no socket/browser captures in this sandbox).
+- [ ] Token pages: `/cancel_demonstration/<token>`, `/confirm/<token>`, `/confirm_email/<token>`, `/accept_invite`.
+- [ ] Account pages: login, register and next steps, settings, password reset, forced password and identity change, MFA verification, public profile `/<username>`. *(approval: authentication flows)*
+- [x] `/api-docs/`: build-time Markdown on the React host; OpenAPI YAML stays in Flask (#1068).
+- [ ] Secondary tools: `/developer`, demo material download.
+- [ ] Retire the Flask templates each migrated page leaves behind as rollback, once its React page has been stable for a while.
+- [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).
 
-- [ ] Build a complete, reliable and mutually compatible audit logging system across the whole service
-  - [ ] Define one versioned canonical event schema for `admin_logs`, `super_audit_logs`, `demo_audit_logs`, `login_logs`, `board_audit_logs` and future audit sources
-  - [ ] Include stable event, actor, subject/entity, timestamp, outcome, source, request and `correlation_id` fields so one investigation can be followed across every log source
-  - [ ] Add adapters and migration coverage for legacy entries; document which fields may be absent and guarantee that mixed old/new data remains searchable
-  - [ ] Audit every security- or privacy-relevant read and write, including log access itself, permission changes, exports, deletions, authentication attempts and automated/background actions
-  - [ ] Make audit writes failure-aware and observable: retries or a durable queue, delivery/error metrics and alerts must prevent silent gaps
-  - [ ] Use UTC timestamps, deterministic ordering and tamper-evident/append-only storage controls with documented administrator access
-  - [ ] Provide one investigation UI with cross-source search, actor/entity links, surrounding events, correlation navigation and appropriately permission-gated technical details
-  - [ ] Apply field allowlists and centralized secret redaction before persistence where possible; never store passwords, credentials, authorization headers, session cookies or raw tokens
-  - [ ] Define and enforce per-log retention, deletion/anonymization and backup policies based on purpose, legal basis and data-minimization requirements
-  - [ ] Document data-subject access/export workflows, access auditing, incident procedures, controller/processor responsibilities and relevant data flows
-  - [ ] Add automated completeness, authorization, redaction, retention, migration and cross-source correlation tests, plus periodic production audit sampling
-  - [ ] Complete and record a GDPR/privacy review with the responsible privacy or legal owner; technical tests alone must not be treated as proof of full legal compliance
+## Move APIs to Go
 
-## Infrastructure reliability (MongoDB performance)
+Proposal: [Public write API migration contracts, approval questions and rollout order](docs/go-write-api-proposal.md).
 
-Full status and evidence: `docs/mongodb-analytics-performance.md`.
+- [ ] Status checks omitted from `/api/status`: Flask's configured cache `set("_status_ping", True, timeout=5)` and initialized S3 client's `list_buckets()`. Go has no equivalent Flask-owned cache/storage client; do not call Flask during rendering or substitute Go response-cache health. Migrate their ownership before restoring these checks.
 
-- [x] `analytics` COLLSCAN investigation (Task #2) — root cause: `prep()`/admin overview
-      streamed all 1,041,654 raw view events into Python every 15 minutes (no index can
-      fix an unfiltered count). Fix = server-side `$group`; no index added.
-- [x] `d_analytics` overcount investigation (Task #1) — `d_analytics` counters total
-      1,930,142 vs 1,041,654 raw events (≈1.85×); minute-level proof of exact 2×
-      duplicates. Live rollup has been exact since 2026-07-01, so damage is historical.
-- [x] Repair `d_analytics` from raw events (rebuild job) + make the rollup replay-safe
-      (per-demo `last_event_id` written atomically with the `$inc`, no swallowed errors,
-      single writer only) — **implemented on branch `codex/analytics-rollup-aggregation`**:
-      `rebuild_d_analytics` job (server-side recount + pause/`last_event_id`), cursor re-read
-      per pass, `ROLLUP_IN_APP` opt-in, era-aware bucketing. Tests
-      `tests/test_analytics_rollup.py` (5) pass; awaiting merge/deploy, then run the rebuild
-      once on prod and verify `sum(d_analytics…) == db.analytics.countDocuments()`.
-- [x] `prepped_analytics` drop+reinsert churn — `prep()` now rewrites rows in
-      place keyed on `demo_id` (bulk update/insert/delete), touching only changed
-      counters instead of 28,604 drop+insert per 15 min. Implemented on branch
-      `codex/analytics-rollup-aggregation`; tests pass.
-- [ ] Related follow-ups: `demonstrations` COLLSCAN slow ops, admin overview
-      rendering 28,604 rows.
+Maintainer direction, 10 November 2026: when a page is redesigned or moved to React, its Flask endpoints move to the Go API too, in the same work or later. Still on Flask:
 
-## Process
+- [ ] `/api/session` and its scopes (`organization_id`, `translation_join`, `contact_form`). *(approval: session)*
+- [ ] `POST /contact`: rate limits, one-time token, honeypot, validation and email.
+- [ ] `POST /organization/<id>/save_suggestion`: stores the suggestion, opens a case and notifies moderators.
+- [ ] `POST /suggest_change/<demo_id>`: compares proposed fields and Markdown, stores a demonstration suggestion, opens a case and notifies moderators; GET/HEAD now belongs to the React host.
+- [ ] `POST /kampanja/api/volunteers` and `/kampanja/confirm/<token>`.
+- [ ] `POST /upcoming/translations/join`. *(approval: permissions)*
+- [ ] Analytics event `/api/analytics/event`: Go handler shipped dark (Flask still serves it). To activate: set `SITE_ANALYTICS_ENABLED=true` for the Go API on production, cross-check Go against Flask output, then add the POST rule; steps in `docs/go-public-api.md`. *(approval: production config)*
+- [ ] Analytics pageview `/api/analytics/pageview`: still Flask; visitor-secret/locale decisions remain prerequisites.
+- [ ] Fundraising details: today bundled from `fundraising.json` into the host; a Go endpoint would let it change without a host deploy.
 
-- [x] Update CHANGELOG.md for every user-facing change
+## UI follow-ups from reviews
+
+From the maintainer, 10 November 2026:
+
+- [x] Front page: center the search bar.
+- [x] `/demonstrations` (Tulevat mielenosoitukset): the search area is too heavy. Make it lighter and simpler. Secondary filters fold behind "Suodattimet" on phones.
+- [x] `/cities`: sorted alphabetically in letter groups with an A–Ö jump row, compact enough for every city in Finland.
+
+From the visual reviews:
+
+- [x] Shared inline success message: more space above than below (`.flash-message--inline`).
+- [x] Charcoal "Poista suodattimet" secondary button and the pale grey light secondary button.
+- [x] Underline next to the invite "+" on event cards.
+- [x] Organizer guide: step titles are centred at 390 px.
+- [x] Campaign page: on phones the form's error message is below the fold after an empty submit.
+- [x] Fundraising, open state: the MobilePay links sit far apart.
+- [x] Card times use `12:00 – 14:00` instead of `12.00–14.00` (reuse the detail clock helper; keep raw API clocks unchanged).
+- [x] The PRIDE badge text has weak contrast; map markers cover city labels.
+- [x] Mobile "Suodattimet" toggle: show an open/closed chevron tied to `aria-expanded`.
+- [x] Listing buttons and links: use `:focus-visible`; text inputs retain `:focus`.
+
+The checked visual follow-ups above are implemented; visual acceptance remains **BLOCKED** until real captures and an independent reviewer SHIP are available. This checkout's sandbox cannot bind sockets, and captures were explicitly excluded from this task.
+
+- [x] Keep action menus outside the scroll viewport (#743). Implemented; visual acceptance remains **BLOCKED** as above.
+- [ ] Organization page: an anonymous visitor who sends a fill-in suggestion never sees the "Kiitos! Ehdotuksesi on tallennettu" message, because the React page only fetches flash messages for signed-in members of that organization. Needs the session endpoint to report pending messages for everyone (session change: maintainer approval).
+
+## Security and permissions
+
+- [ ] **SEC-01:** release acceptance evidence for the MFA challenge (#901).
+- [ ] **SEC-03:** broader role and audit acceptance after #917/#918/#919.
+- [ ] **SEC-04:** token and approval lifecycle: revocation, expiry, replay, idempotent decisions.
+- [ ] **SEC-05:** review incident #912/#913 protections before touching related code.
+- [ ] Harden privileged admin user actions (#547), organization membership and invites (#550, #342), and the organization admin panel (#549).
+- [ ] **QA-01:** finish the individual review of authentication and permission tests. Open: #979 identity test audit (rebase on `CHANGELOG.md`, then merge), QA-01j, QA-01k.
+
+## Data, jobs and integrations
+
+- [ ] **DATA-01:** public pagination and totals, verified with the API and the browser together.
+- [ ] **DATA-02:** fence analytics workers and coordinate rebuild pruning (#908).
+- [ ] **DATA-03:** analytics correctness, access and pagination (#551); `demonstrations` COLLSCAN slow queries; the admin overview rendering 28,604 rows.
+- [ ] **DATA-04:** email queue retries and idempotency, case reply history (#771), job leadership, database error handling (#176).
+  - [x] #984: acknowledged support reply enqueue and correlated case receipt, without strict-mode retries.
+- [ ] **DATA-05:** preview images failing (#579), Cloudflare rate limiting on normal use (#580), Socket.IO reconnect storm (#640).
+- [ ] **DATA-06:** module TODO issues (#391–#394), settings and configuration (#196, #226), creating users from invites (#387).
+- [ ] **DATA-07:** multi-day demonstrations as their own duration, separate from recurring series.
+- [ ] **CITY-01:** city review dashboard with an authoritative deadline countdown (#967).
+- [ ] **CITY-02:** urgent pending-event alerts to Telegram through a durable outbox (#963).
+- [ ] **CASE-01/02:** let submitters answer case questions and follow progress (#976).
+- [ ] Recurring demonstration cancellation breaks: #620 is useful but over 1,000 commits behind; rebase or redo it.
+- [ ] Production performance and hosting review (#859).
+
+## Privacy and audit logging
+
+- [ ] **PRIV-03 / #596:** GDPR retention and consent review with the privacy owner. #597 (user deletion cleanup) is far behind and overlaps later deletion work (#887); redo it fresh.
+- [ ] **PRIV-01:** one versioned audit event schema for `admin_logs`, `super_audit_logs`, `demo_audit_logs`, `login_logs`, `board_audit_logs` and future sources, with stable event, actor, subject, time, outcome, source, request and correlation fields, plus adapters for legacy entries.
+- [ ] **PRIV-02:** audit every security- or privacy-relevant read and write, including log access. Make writes failure-aware (retries or a durable queue, metrics, alerts), UTC and tamper-evident.
+- [ ] One investigation UI with cross-source search and correlation, behind the right permissions.
+- [ ] Field allowlists and central redaction before storage; never store passwords, credentials, authorization headers, cookies or raw tokens.
+- [ ] Per-log retention, deletion, anonymization and backup rules; documented access, export and incident procedures.
+- [ ] Tests for completeness, authorization, redaction, retention, migration and correlation, plus periodic production sampling.
+- [ ] A recorded GDPR review with the responsible privacy or legal owner. Tests alone are not proof of compliance.
+
+## Operations
+
+- [ ] **OPS-01:** backup coverage and freshness, failure alerts, recovery access and ownership. **Checked 11 Nov 2026: no database backup exists**; ready-to-install kit and runbook in `docs/backups.md`. *(approval: install on lc-main; choose off-site copy and alert channel)*
+- [ ] **OPS-02:** authorized recovery exercises with recorded RPO and RTO.
+- [ ] **OPS-03:** review Web Vitals once there are enough samples.
+- [ ] **OPS-04:** keep exact-build deployment, rollback and CDN contracts.
+- [ ] Watch the next deploys that change routing: confirm the new probe retries (#1050) and that no 503 appears after restarts.
+
+## Localization and docs
+
+- [ ] **I18N-01:** inventory untranslated strings and catalog gaps per route family; English and Swedish copy comes from human translators.
+- [ ] **I18N-02:** standardize backend, API, moderation and email messages (#582, #553).
+- [ ] **DOC-01:** user and moderator guides (#563).
+- [ ] **DOC-02:** keep `roadmap.md`, this file, issues and release evidence aligned. Refresh `BLOCKERS.md`.
+
+## Product ideas (after core work)
+
+- [ ] Front page as a list of upcoming demonstrations.
+- [ ] Demonstration categories with preset options (for example Palestiina, ilmasto, ihmisoikeudet) so people can filter by topic. Decide how they relate to the existing free-form tags first.
+- [ ] **ENGAGE-01:** optional newsletter of relevant upcoming events.
+- [ ] **ENGAGE-02:** optional email digest of a user's own notifications.
+- [ ] **PRODUCT-01:** broader societal events (#583), following tags (#117), city and tag email subscriptions (#121).
+- [ ] Count visitors who browse without JavaScript (a `<noscript>` pixel; filter bots) to decide how much the no-JS fallback matters.
+- [ ] **FUND-01:** fill in the official fundraising details when they are confirmed, then open donations.
+- [ ] **PREVIEW-02: organizer design templates for preview images.** Let organizations upload their own template for a demo's preview image:
+  - Formats: InDesign, Photoshop and Illustrator, or the open-source alternatives the maintainer named ("design craft, photo craft, vector craft"). Decide which formats can be rendered server-side and how much of the file to support, for example named text layers for title, date and place.
+  - Save templates in the organization panel. Organizers pick one when they submit a new demonstration, and it applies automatically to that organization's recurring demonstrations.
+  - Global admins can upload templates for a specific recurring series, for example a weekly "Loppu kansanmurhalle" demonstration.
+  - Open questions: file size limits and malware scanning for uploads, a fallback to the default generated preview, and who may edit a shared template.
+
+## Maintenance
+
+- [x] **CLEAN-01:** removed the orphaned `list_legacy.html`, template `submit.css` and eleven tracked `.bak` stylesheets after checking every reference (intentional Flask rollback templates kept).
+- [x] Retire the legacy card renderer `static/js/demo-card-render.js` and `_modals/_demo-card-template.html`: no template loaded them since CLEAN-01; their renderer-only tests were removed.
+- [ ] Check that the React listing tests cover what the removed legacy loader tests checked: slow attendance requests surviving append and cancelled on eviction or search; stale search responses ignored; HTTP failure offering retry without erasing appended results; delayed append keeping keyboard focus and not restoring old filter pages.
+- [ ] **CLEAN-02:** consolidate legacy palettes and hero geometry.
+- [ ] **CLEAN-04:** keep a finite exception list for dynamic styles and a CSS cache contract.
+- [ ] Admin dashboard workflow: pagination, previews and clearer edit fields (#552); organization form UI (#178).
+- [ ] Unit tests for remaining routes and functions (#174).
+
+### Open pull requests to close or decide (CLEAN-03)
+
+- [ ] Close after the security update: #948, #527, #457, #445.
+- [x] Closed as already done on main (10 November 2026): #351, #293, #477, #570, #585.
+- [x] Closed as outdated (10 November 2026): #911, #598 (thanked the contributor).
+- [ ] Decide: #440 (flask-limiter 4.0, a major version), #849 (project memory guidance), #617 (preview teardown; are previews still used?), #599 (`Config.reload` path, external contributor), #1011 (submit migration check; most of it is on main).
+
+## Done recently
+
+- [x] Information pages, Pride, campaign, fundraising and contact moved to React (#1040, #1043, #1046, #1047, #1048).
+- [x] Contrast and shared listing states (#1045); richer `/info` layout (#1049).
+- [x] No-JavaScript fallbacks kept light and out of visual review (#1044).
+- [x] Deploys no longer briefly close the site (#1050).
+- [x] Overflow fixes, hero consistency, translator welcome email, role-based admin dashboard, follow button rules, MFA in settings.
+- [x] `analytics` COLLSCAN, `d_analytics` overcount repair and in-place `prepped_analytics` (see `docs/mongodb-analytics-performance.md`).

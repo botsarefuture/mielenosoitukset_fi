@@ -7,6 +7,7 @@ import type { ListingFilters } from '../components/listings/ReactSearchFilters';
 import type { ListingProps, ListParams, Page } from '../components/listings/types';
 import { FILTERS, listingQuery, QUERY_FILTERS } from '../components/listings/query';
 import '../components/listings/react-listing.css';
+import '../../../mielenosoitukset_fi/static/css/public-detail.css';
 
 export type PublicListingProps = ListingProps & {
   initialData?: Page | null;
@@ -220,7 +221,7 @@ export function PublicListingPage(props: PublicListingProps) {
     <ListingTools props={props} filters={<ReactSearchFilters props={props} values={values} change={setValues} submit={submit}
       removeCity={city => submit({ ...values, city: values.city.split(',').filter(value => value !== city).join(',') })} />} />
     <section className="public-list-results" aria-labelledby="listing-title">
-      <button ref={previous} id="load-previous-btn" type="button" className="button button-secondary load-more"
+      <button ref={previous} id="load-previous-btn" type="button" className="detail-button load-more"
         hidden={!first || first.page <= 1} disabled={loading}
         onClick={() => void load({ params, page: first.page - 1, append: true, previous: true, manual: true })}>{text.previous}</button>
       <div ref={grid} id="demos-grid" className="demos-grid public-list-window" aria-busy={loading}
@@ -230,18 +231,18 @@ export function PublicListingPage(props: PublicListingProps) {
         </div>)}
         {loading && !pages.length && <p className="loading-container" role="status">{text.loading}</p>}
       </div>
-      <p id="listing-result-summary" className="public-listing-summary" role="status" aria-live="polite" aria-atomic="true" hidden={!first}>{summary}</p>
+      <p id="listing-result-summary" className="public-listing-summary" role="status" aria-live="polite" aria-atomic="true" hidden={!first || !count}>{summary}</p>
       <div id="listing-load-error" className="public-listing-summary" hidden={!failure}>
-        <p role="alert">{text.loadError}</p><button type="button" className="button button-secondary" disabled={loading}
+        <p role="alert">{text.loadError}</p><button type="button" className="detail-button" disabled={loading}
           onClick={() => failure && void load({ ...failure, manual: true })}>{text.retry}</button>
       </div>
       <div id="no-results" className="no-results-card" hidden={loading || Boolean(failure) || count > 0}>
         <EmptyHeading className="no-results-title">{text.emptyTitle}</EmptyHeading><p className="no-results-text">{filtered ? text.filteredEmpty : text.empty}</p>
-        <div className="no-results-action"><button type="button" id="clear-filters-btn" className="button button-secondary" hidden={!filtered} onClick={clear}>{text.clearFilters}</button>
+        <div className="no-results-action"><button type="button" id="clear-filters-btn" className="detail-button" hidden={!filtered} onClick={clear}>{text.clearFilters}</button>
           <a href={props.submitUrl} className="button button-primary">{text.submitEvent}</a></div>
       </div>
-      <button ref={more} id="load-more-btn" type="button" className="button button-secondary load-more"
-        hidden={!last || last.page >= last.total_pages} disabled={loading}
+      <button ref={more} id="load-more-btn" type="button" className="detail-button load-more"
+        hidden={!last || last.page >= last.total_pages || Boolean(failure)} disabled={loading}
         onClick={() => void load({ params, page: last.page + 1, append: true, manual: true })}>{loading ? text.loadingMore : text.loadMore}</button>
     </section>
   </section>;

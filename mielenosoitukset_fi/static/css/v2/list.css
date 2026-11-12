@@ -428,7 +428,10 @@ h1 {
 }
 
 .pride-badge {
-  background: linear-gradient(45deg, #e40303, #ff8c00, #ffed00, #008026, #24408e, #732982);
+  color: var(--product-text);
+  border: 2px solid transparent;
+  background: linear-gradient(var(--product-surface), var(--product-surface)) padding-box,
+    var(--product-pride-gradient) border-box;
 }
 
 .cancelled-badge {

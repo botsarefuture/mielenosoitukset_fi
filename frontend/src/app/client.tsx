@@ -1,4 +1,4 @@
-import { createRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 import { useEffect, useRef } from 'react';
 import { App } from './App';
 import type { AppProps } from './App';
@@ -23,7 +23,7 @@ function Root(props: Bootstrap) {
       }
       // Detail/series views keep their separate demonstration-view collection.
       const name = routeForPath(path)?.name;
-      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year'].includes(name)
+      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride', 'information', 'campaign', 'fundraising', 'contact', 'organization-fill', 'suggest-change', 'api-docs'].includes(name)
         || !session.siteAnalyticsEnabled || tracked.current) return;
       tracked.current = true;
       try {
@@ -45,7 +45,45 @@ const bootstrap = document.getElementById('app-bootstrap')?.textContent;
 if (container) {
   try {
     if (!bootstrap) throw new Error('Missing app bootstrap');
-    createRoot(container).render(<Root {...(JSON.parse(bootstrap) as Bootstrap)} />);
+    const props = JSON.parse(bootstrap) as Bootstrap;
+    const route = routeForPath(props.path);
+    if (route?.name === 'api-docs') {
+      const html = document.getElementById('api-docs-page')?.innerHTML;
+      if (!html) throw new Error('Missing API documentation');
+      hydrateRoot(container, <Root {...props} serverPage={<div id="api-docs-page" dangerouslySetInnerHTML={{ __html: html }} />} />);
+    } else if (route?.name === 'status') {
+      void import('./StatusScreen').then(({ default: StatusScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<StatusScreen status={props.serviceStatus ?? null} />} />);
+      }).catch(error => console.error('Could not start the status page', error));
+    } else if (route?.name === 'information') {
+      void import('./InformationScreen').then(({ default: InformationScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<InformationScreen page={route.page} session={props.session} campaign={props.campaignVisible} />} />);
+      }).catch(error => console.error('Could not start information page controls', error));
+    } else if (route?.name === 'suggest-change' && props.suggestionDemo) {
+      const demo = props.suggestionDemo;
+      void import('./SuggestChangeScreen').then(({ default: SuggestChangeScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<SuggestChangeScreen demo={demo} />} />);
+      });
+    } else if (route?.name === 'organization-fill' && props.organizationFill) {
+      const profile = props.organizationFill;
+      void import('./OrganizationFillScreen').then(({ default: OrganizationFillScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<OrganizationFillScreen profile={profile} />} />);
+      }).catch(error => console.error('Could not start the organization fill-in form', error));
+    } else if (route?.name === 'contact') {
+      void import('./ContactScreen').then(({ default: ContactScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<ContactScreen session={props.session} />} />);
+      }).catch(error => console.error('Could not start the contact page', error));
+    } else if (route?.name === 'fundraising') {
+      void import('./FundraisingScreen').then(({ default: FundraisingScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<FundraisingScreen config={props.config} today={props.today ?? ''} />} />);
+      }).catch(error => console.error('Could not start the fundraising page', error));
+    } else if (route?.name === 'campaign') {
+      void import('./CampaignScreen').then(({ default: CampaignScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<CampaignScreen config={props.config} />} />);
+      }).catch(error => console.error('Could not start campaign page forms', error));
+    } else {
+      createRoot(container).render(<Root {...props} />);
+    }
   } catch (error) {
     console.error('Could not start the public app', error);
     container.textContent = 'Mielenosoitukset.fi · /demonstrations';

@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { clockLabel } from '../detail/content';
 import type { Demonstration, Friend, ListingProps } from './types';
+import { imageCandidates } from '../../lib/event-image';
 
 /** Server rendering has no location; the render entry supplies the public origin. */
 function pageOrigin() {
@@ -12,7 +14,6 @@ export function internalHref(value: string) {
     return url.origin === pageOrigin() ? `${url.pathname}${url.search}${url.hash}` : '#';
   } catch { return '#'; }
 }
-function time(value?: string | null) { return typeof value === 'string' ? value.trim().split(':').slice(0, 2).join(':') : ''; }
 export function eventHref(event: Demonstration, props: Pick<ListingProps, 'seriesUrl' | 'detailUrl'>) {
   const fallback = event.parent ? props.seriesUrl.replace('__ID__', encodeURIComponent(event.parent))
     : props.detailUrl.replace('__ID__', encodeURIComponent(String(event.slug || event.running_number || event._id)));
@@ -28,17 +29,33 @@ export type CardProps = Pick<ListingProps, 'seriesUrl' | 'detailUrl' | 'tagUrl' 
   messages: Pick<ListingProps['messages'], 'startingFrom' | 'endTime' | 'cancelled' | 'today' | 'loginPrompt' | 'loadingFriends' | 'attendingSuffix' | 'invite'>;
 };
 
+/** Card image that tries the next stored image when one fails and drops the
+ * image area when none load, instead of showing a broken picture (#579). */
+export function CardImage({ sources, alt }: { sources: string[]; alt: string }) {
+  const [index, setIndex] = useState(0);
+  const image = useRef<HTMLImageElement>(null);
+  const src = sources[index];
+  useEffect(() => {
+    // A server-rendered image may already have failed before hydration.
+    const element = image.current;
+    if (element && element.complete && element.naturalWidth === 0) setIndex(current => current + 1);
+  }, [src]);
+  if (!src) return null;
+  return <div className="demo-card-image"><img ref={image} src={src} alt={alt} loading="lazy"
+    onError={() => setIndex(current => current + 1)} /></div>;
+}
+
 export function DemonstrationCard({ event, props, friends }: {
   event: Demonstration; props: CardProps; friends: Friend[] | null;
 }) {
   const text = props.messages;
   const tags = Array.isArray(event.tags) ? event.tags.filter(tag => typeof tag === 'string') : [];
   const pride = tags.some(tag => tag.toLowerCase() === 'pride');
-  const cover = event.cover_picture || event.cover_image || event.preview_image || event.img;
+  const covers = imageCandidates(event);
   const href = eventHref(event, props);
-  const start = time(event.start_time_display) || time(event.start_time);
-  const end = time(event.end_time_display) || time(event.end_time);
-  const clock = start ? (end ? `${start} – ${end}` : `${start} ${text.startingFrom}`)
+  const start = clockLabel(event.start_time_display) || clockLabel(event.start_time);
+  const end = clockLabel(event.end_time_display) || clockLabel(event.end_time);
+  const clock = start ? (end ? `${start}–${end}` : `${start} ${text.startingFrom}`)
     : end ? `${text.endTime}: ${end}` : '';
   const today = new Date();
   const localDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -53,7 +70,7 @@ export function DemonstrationCard({ event, props, friends }: {
       {event.date === localDate && <span className="demo-badge today-badge">{text.today}</span>}
       {pride && <span className="demo-badge pride-badge">Pride</span>}
     </div>
-    {cover && <div className="demo-card-image"><img src={cover} alt={event.title || ''} loading="lazy" /></div>}
+    {covers.length > 0 && <CardImage key={covers.join('\n')} sources={covers} alt={event.title || ''} />}
     <div className="demo-card-title"><a href={href}><span>{event.title}</span></a></div>
     <div className="demo-card-details">
       <div className="demo-card-date-time">

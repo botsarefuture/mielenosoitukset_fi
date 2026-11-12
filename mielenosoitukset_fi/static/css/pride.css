@@ -115,6 +115,16 @@
   font-size: .95rem;
   font-variant-numeric: tabular-nums;
 }
+.pride-page .pride-city-label {
+  color: var(--product-text);
+  background: var(--product-surface);
+  border: 1px solid var(--product-border);
+  border-radius: .5rem;
+  box-shadow: var(--product-shadow);
+}
+.pride-page .leaflet-tooltip-right.pride-city-label::before {
+  border-right-color: var(--product-surface);
+}
 .pride-page :is(.pride-map-fallback, #pride-map-empty) {
   margin: 0;
   padding: .85rem 1rem;
@@ -153,7 +163,7 @@
   text-underline-offset: .2em;
 }
 .pride-page :is(.pride-intro, .pride-map-section, .pride-information, .pride-guidelines) :focus-visible {
-  outline: 2px solid var(--product-primary);
+  outline: 3px solid var(--product-primary);
   outline-offset: 3px;
 }
 .pride-page :is(#demos, #demo-guidelines, #pride-map-section) { scroll-margin-top: 6rem; }
@@ -184,3 +194,14 @@
 @media (prefers-reduced-motion: reduce) {
   .pride-page * { scroll-behavior: auto; transition: none; }
 }
+.pride-noscript { box-sizing: border-box; max-width: 72rem; margin-inline: auto; padding-inline: 1rem; color: var(--product-text); }
+.pride-noscript ul { padding: 0; list-style: none; }
+.pride-noscript li { padding-block: .35rem; }
+.pride-noscript a { color: var(--product-primary); }
+.container-main-content.pride-noscript h1, .container-main-content.pride-noscript h2 { color: var(--product-text); font-weight: 800; text-align: left; }
+.container-main-content.pride-noscript h1 { font-size: clamp(2rem, 3.7vw, 3.2rem); line-height: 1.1; }
+.container-main-content.pride-noscript h2 { font-size: 1.35rem; line-height: 1.25; }
+.pride-noscript ul a, .pride-noscript__links a { display: inline-block; min-width: 44px; min-height: 44px; padding-block: .6rem; }
+/* Padding and an equal negative margin widen each link's target without moving its text, so the dots stay evenly spaced. */
+.pride-noscript__links { display: flex; flex-wrap: wrap; align-items: center; column-gap: .6rem; }
+.pride-noscript__links a { min-width: 0; padding-inline: .5rem; margin-inline: -.5rem; }

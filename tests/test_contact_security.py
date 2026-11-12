@@ -323,3 +323,70 @@ def test_contact_global_rate_limit_applies_across_client_addresses(
         )
 
     assert [response.status_code for response in responses] == [302, 302, 429]
+
+
+def _scoped_token(client):
+    response = client.get("/api/session?contact_form=1")
+    assert response.status_code == 200
+    assert response.headers["Cache-Control"] == "no-store"
+    assert "Cookie" in response.headers["Vary"]
+    return response.get_json()["contact_form"]
+
+
+def test_session_scope_issues_contact_tokens_the_form_accepts(app, client, monkeypatch):
+    """The React host renders /contact from this scope; Flask keeps every POST check."""
+    import basic_routes
+
+    app.config["CONTACT_MIN_FORM_SECONDS"] = 0
+    queued = []
+    monkeypatch.setattr(basic_routes.email_sender, "queue_email", lambda **kwargs: queued.append(kwargs))
+    scope = _scoped_token(client)
+    assert scope["enabled"] is True
+    assert scope["limits"] == {"name_max": 120, "email_max": 254, "message_min": 10, "message_max": 5000}
+    assert re.fullmatch(r"[A-Za-z0-9_-]{43}", scope["csrf_token"])
+
+    response = client.post("/contact", data=_valid_payload(scope["csrf_token"]))
+    assert response.status_code == 302
+    assert len(queued) == 1
+    messages = _scoped_token(client)["messages"]
+    assert messages == [["success", "Yhteydenottopyyntö välitetty onnistuneesti!"]]
+    assert _scoped_token(client)["messages"] == [], "Feedback is shown once"
+
+    replay = client.post("/contact", data=_valid_payload(scope["csrf_token"]))
+    assert replay.status_code == 400
+    assert len(queued) == 1
+
+
+def test_session_scope_keeps_minimum_age_and_outstanding_token_cap(app, client, monkeypatch):
+    import basic_routes
+
+    queued = []
+    monkeypatch.setattr(basic_routes.email_sender, "queue_email", lambda **kwargs: queued.append(kwargs))
+    app.config["CONTACT_MIN_FORM_SECONDS"] = 60
+    early = client.post("/contact", data=_valid_payload(_scoped_token(client)["csrf_token"]))
+    assert early.status_code == 400
+
+    app.config["CONTACT_MIN_FORM_SECONDS"] = 0
+    app.config["CONTACT_FORM_MAX_OUTSTANDING_TOKENS"] = 2
+    oldest = _scoped_token(client)["csrf_token"]
+    _scoped_token(client)
+    _scoped_token(client)
+    assert client.post("/contact", data=_valid_payload(oldest)).status_code == 400
+    assert queued == []
+
+
+def test_session_scope_without_cookie_starts_a_session_and_other_scopes_do_not(app):
+    first = app.test_client()
+    response = first.get("/api/session?contact_form=1")
+    assert "session=" in response.headers.get("Set-Cookie", "")
+    second = app.test_client()
+    other = second.get("/api/session?contact_form=1").get_json()["contact_form"]["csrf_token"]
+    assert other != response.get_json()["contact_form"]["csrf_token"]
+    plain = app.test_client().get("/api/session")
+    assert "contact_form" not in plain.get_json()
+    assert "Set-Cookie" not in plain.headers
+
+
+def test_session_scope_reports_a_disabled_form(app, client):
+    app.config["CONTACT_FORM_ENABLED"] = False
+    assert _scoped_token(client)["enabled"] is False

@@ -126,7 +126,7 @@ func (s mongoStore) cityEventCounts(ctx context.Context, day string, upcoming bo
 	filter := publicDatedFilter()
 	filter["city"] = bson.M{"$type": "string", "$ne": ""}
 	if upcoming {
-		filter["date"] = bson.M{"$gte": day}
+		filter["date"] = bson.M{"$gte": day, "$lte": shiftDay(day, upcomingHorizonDays)}
 		filter["cancelled"] = bson.M{"$ne": true}
 	}
 	group := bson.M{"_id": bson.M{"city_key": "$city_key", "city": "$city"}, "count": bson.M{"$sum": 1},
@@ -180,7 +180,7 @@ func (a *API) getCities(w http.ResponseWriter, r *http.Request) {
 	}
 	data, err := source.FindCitiesJSON(r.Context())
 	if err != nil {
-		log.Print("City directory read failed")
+		log.Printf("City directory read failed (%s)", dbErrorKind(err))
 		writeError(w, 503, "service unavailable")
 		return
 	}

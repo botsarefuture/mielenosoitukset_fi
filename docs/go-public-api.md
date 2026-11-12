@@ -1,5 +1,113 @@
 # Public Go API: first read-only slice
 
+## Event beacon: `POST /api/analytics/event`
+
+Step 1 of the write migration. The existing JSON Blob callers are
+`frontend/src/app/ListingScreen.tsx`, `OrganizationScreen.tsx`, `PrideScreen.tsx`
+and the Flask base template's `static/js/site_analytics.js`. Requests use
+`{event, resource_id?}`; form mappings remain supported, unknown keys ignored.
+Only `map_interaction`, `external_link` and `demo_search` are accepted. Values
+are string-coerced and stripped; resources are truncated to 200 Unicode
+characters and omitted if empty. There is deliberately no new 1,024-byte body
+cap or dedicated rate limit: those proposal changes are not part of parity.
+
+Missing Referer is allowed for map/external events. A present hostname must
+match the request hostname, case-insensitively, ignoring port and scheme.
+Search requires at least two resource characters, exact scheme/netloc Referer,
+no `Sec-Fetch-Site: cross-site`, and a listing path: `/demonstrations`, `/cities`,
+`/mielenosoitukset-tanaan`, `/submit`, `/city/<city>` (optionally `/tanaan`),
+`/tag/<tag>` or `/organization/<24-hex-id>`. Pride search remains excluded.
+Origin/fetch metadata do not add restrictions to map/external events. Bot and
+device regexes match Flask, mobile before tablet before desktop, otherwise
+`other`. Unlike pageviews, event prefetch headers do **not** suppress counting.
+
+Privacy: `DNT: 1` suppresses every event. Inspection of `config.py` shows
+`SITE_ANALYTICS_ENABLED` comes only from `config.yaml`, not MongoDB. Go's
+public-status/lockdown reader reads MongoDB `panic`, so it cannot supply this
+switch. Set Go environment `SITE_ANALYTICS_ENABLED=true` **only** when the
+Flask YAML switch is enabled; unset, false and invalid values disable Go writes.
+This is a startup setting: restart Go after changing it, and keep both settings
+aligned during mixed-version operation and rollback. Never infer enablement
+from a browser payload. No secrets, IPs, user agents, cookies or visitor hashes
+are stored. The current public locale policy is Finnish-only
+(`BABEL.PUBLIC_LOCALES: [fi]`); Go writes `language: fi` without decoding Flask
+sessions. Expanding public locales requires revisiting this policy before
+cutover, not silently merging language buckets.
+
+Each accepted signal performs one best-effort, one-second MongoDB upsert into
+`site_analytics`, using the complete filter `{date, hour, event, language,
+device, referrer, resource_id?}` and `{$inc: {count: 1}}`. Date/hour use
+Europe/Helsinki, including DST; referrer is `internal` or `direct` after the
+host guard. No timestamps, visitor documents, pageview fields or extra
+collections are added. Repeated beacons count repeatedly. There is no retry
+after an ambiguous write and no index/schema migration. Storage failures are
+logged without request data and do not change the acknowledgement.
+
+All processed POSTs, including discarded bodies, disabled analytics, DNT,
+bots and write errors, return HTTP 200 `{"ok":true}` plus a newline, JSON
+content type, `Cache-Control: no-store`, and no wildcard write CORS.
+The existing outer Go lockdown gate still applies (503 on lockdown or a
+failed closed gate). Other methods are not claimed by the event middleware.
+Flask's optional shared limiter remains Flask-owned; deployments enforcing it
+need equivalent edge protection before routing activation.
+
+Apache's existing catch-all sends `/api/*` to Flask; the React host uses
+`PUBLIC_API_LOCAL` for its own Go reads, not as a blanket browser API proxy.
+**Status: shipped dark.** The routing include does not claim this path yet, so
+Flask still handles every analytics beacon. To activate:
+
+1. Set `SITE_ANALYTICS_ENABLED=true` in the Go API service environment on the
+   production host (matching Flask's `config.yaml`), and restart it.
+2. Cross-check: send the same few events to Flask and Go in a scratch database
+   and compare the resulting `site_analytics` documents field by field.
+3. Add exactly this rule to `deploy/apache/react-ssr-routing.conf`, using the
+   existing submission upstream `127.0.0.1:8091` and preserved host:
+
+   ```apache
+   RewriteCond %{REQUEST_METHOD} "^POST$"
+   RewriteRule "^/api/analytics/event$" "http://127.0.0.1:8091/api/analytics/event" [P,L]
+   ```
+
+Only a loopback proxy can supply forwarded host/proto for Go's origin check.
+GET/HEAD/OPTIONS, trailing or nested paths, pageview and vitals stay with Flask.
+Roll back by removing that one rule: the unchanged Flask handler writes the same
+counter documents. Do not dual-write or replay beacons.
+
+## Service status: `GET /api/status`
+
+Purpose: public status data for standalone React `GET /status`, without calling
+Flask for health checks. Authentication: none. GET and HEAD are read-only;
+OPTIONS is supported, writes return 405. Query parameters are ignored and cannot
+bypass the cache. The response is HTTP 200 even if the database is unavailable:
+
+```json
+{"overall_ok":true,"services":[{"name":"Tietokanta","status":"ok","message":"Yhteys kunnossa"}],"updated_at":"10.11.2026 12:00:00 UTC","latency_ms":0}
+```
+
+On failure the service has `status: "err"`, `message: "Ei vastaa"`, and
+`overall_ok: false`. `overall_ok` covers only the returned checks. `updated_at`
+is the response time in UTC and `latency_ms` is the request's elapsed time,
+including any probe/cache wait, as in Flask. No hostnames, connection strings,
+exception details or versions are returned. Browser/CDN caching is disabled.
+
+Database operations: one MongoDB ping, no collection reads or writes. Performance:
+a one-second probe context, no retries at this layer, and one process-local,
+mutex-coalesced result (including failures) for 60 seconds. Concurrent requests,
+cookies and arbitrary query strings share that result. No Redis response-cache
+dependency. The endpoint bypasses the public lockdown gate and its panic read,
+so database/lockdown failure cannot hide the status response.
+
+The former Flask view checked MongoDB `ping`, its configured cache's
+`set("_status_ping", True, timeout=5)` (success if it did not raise), and its
+initialized S3 client's `list_buckets()`. It showed the three names
+`Tietokanta`, `Välimuisti`, `Tiedostovarasto`; success messages `Yhteys kunnossa`
+or `Saavutettavissa`; failure `Ei vastaa`; overall state, UTC response timestamp
+and request latency. Its checks were cached for 60 seconds. Go retains the
+database probe, overall state and timing fields. The Flask-owned cache instance
+and initialized S3 client checks are omitted, not replaced with probes of
+different services. The page explicitly discloses this reduced coverage, and
+their ownership migration is recorded under “Move APIs to Go” in `TODO.md`.
+
 Current cache behavior: [public response caching](go-public-cache.md). The
 initial-slice and document-cache descriptions below are historical layer
 details, not a promise of per-request freshness through Redis or Cloudflare.
@@ -68,6 +176,25 @@ join or inference of publication consent.
 Recurring-parent *content* selection, organization enrichment and personalized
 follow/attendance state are intentionally not part of this initial contract.
 This is not a drop-in replacement for the authenticated Flask API.
+
+### Suggestion form prefills
+
+The detail endpoint additionally returns `suggestion` for the standalone React
+`/suggest_change/<id>` form. Its string fields are `title`, `date`, `start_time`,
+`end_time`, `city`, `address`, `facebook`, `tags`, `route`, `organizers` and
+`description_markdown`. These use original stored content, not the requested
+translation. Tags/routes use comma-space separation (including repeated stops),
+organizers use newlines and public name/contact display formatting. Empty values
+are empty strings. Markdown conversion mirrors Flask's existing editor using
+the installed Go HTML tokenizer, without accepting HTML as trusted UI markup.
+
+Visibility and organizer consent rules above apply unchanged. If redaction makes
+the organizer list incomplete, `organizers` is empty and optional
+`organizers_current` holds only the safe public display names. This prevents an
+untouched form from proposing replacement of a partially redacted list. Internal
+projection redaction flags are not serialized. No new database read, write,
+session scope, or Flask render dependency is introduced. This extension is only
+built for detail responses, not for listing or home cards.
 
 Invalid identifier/parameters:400; unknown or nonpublic event:404; identifier
 lookup or database failure:503, both with a bounded generic error. Responses are
@@ -276,3 +403,12 @@ release is available; a pure React host uses the same response contract and
 public URL paths. Roll back via the existing atomic Go release switch and
 frontend source revert. Endpoint implementation alone is not a production
 deployment or evidence of improved response latency.
+
+## Upcoming-event horizon
+
+Open-ended "upcoming" reads stop two years ahead (`upcomingHorizonDays` in
+`go-api/series.go`): the listing (`GET /api/demonstrations` without `date_end`
+or `max_days_till`), the home batch and the city event counts. An explicit
+`date_end`, a start/end range or `max_days_till` is used as given. The bound
+exists because recurring series once generated occurrences up to the year 3100
+(#1029); it also keeps listing totals and pagination meaningful.

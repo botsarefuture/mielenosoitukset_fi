@@ -10,6 +10,9 @@ current conversation, not as an additional GitHub test suite or model API job.
 Preserve the existing product language, roles, routes and security. This is a
 quality gate, not permission to redesign a page or import Hallmark's aesthetic.
 
+Skip `<noscript>` fallbacks: they are checked by automated assertions, not
+screenshots (see "No-JavaScript fallbacks" in `AGENTS.md`).
+
 ## Implementer
 
 - Identify the affected routes, roles and states before changing code. Capture

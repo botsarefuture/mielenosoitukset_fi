@@ -691,3 +691,32 @@ class patch_classification:
 
         sa.classify_request = self._originals["classify"]
         return False
+
+
+def test_campaign_confirmation_tokens_are_never_stored():
+    from mielenosoitukset_fi.utils.site_analytics import classify_path
+
+    assert classify_path("/kampanja/confirm/9e4bQz-secret-token") == {"page_type": "campaign", "resource_id": "confirm"}
+    assert classify_path("/kampanja/Confirm/abc/") == {"page_type": "campaign", "resource_id": "confirm"}
+    assert classify_path("/kampanja/") == {"page_type": "campaign", "resource_id": None}
+
+
+def test_events_honour_dnt_and_the_site_switch(app, db):
+    from mielenosoitukset_fi.utils import site_analytics
+
+    calls = []
+    original = site_analytics.record_event
+    site_analytics.record_event = lambda **kwargs: calls.append(kwargs) or True
+    try:
+        with app.test_request_context("/demonstrations", headers={"DNT": "1", "User-Agent": "Mozilla/5.0"}):
+            assert site_analytics.record_event_for_request("demo_search") is False
+        app.config["SITE_ANALYTICS_ENABLED"] = False
+        with app.test_request_context("/demonstrations", headers={"User-Agent": "Mozilla/5.0"}):
+            assert site_analytics.record_event_for_request("demo_search") is False
+        app.config["SITE_ANALYTICS_ENABLED"] = True
+        with app.test_request_context("/demonstrations", headers={"User-Agent": "Mozilla/5.0"}):
+            assert site_analytics.record_event_for_request("demo_search") is True
+    finally:
+        site_analytics.record_event = original
+        app.config["SITE_ANALYTICS_ENABLED"] = True
+    assert len(calls) == 1

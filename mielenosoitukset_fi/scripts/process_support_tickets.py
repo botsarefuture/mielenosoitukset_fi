@@ -32,6 +32,7 @@ from html import unescape
 from typing import Any, Dict, List, Optional, Tuple
 
 from markupsafe import Markup
+from flask_babel import _
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailJob import Sender
@@ -543,7 +544,7 @@ def _queue_urgent_alert(email_sender, config, sender_email: str, ticket_label: s
     return message_id
 
 
-def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, admin_label: str = "") -> str:
+def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, admin_label: str = "", require_acknowledged: bool = False) -> str:
     """Queue an admin reply to a support ticket and record it in the case.
 
     The outbound Message-ID is stored on the ticket so the user's next reply
@@ -551,6 +552,9 @@ def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, a
     ``suggestion.messages`` (direction ``out``) so it shows in the admin UI.
 
     ``case`` is the support-ticket document (dict) from MongoDB.
+
+    Strict callers require queue acknowledgement before one targeted case
+    receipt containing the reply, threading ID and correlated audit entries.
 
     Returns the generated Message-ID.
     """
@@ -580,7 +584,8 @@ def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, a
         "Mielenosoitukset.fi"
     )
 
-    email_sender.queue_email(
+    queue_options = {"require_acknowledged": True} if require_acknowledged else {}
+    queue_id = email_sender.queue_email(
         template_name="customer_support/ticket_admin_reply.html",
         subject=subject,
         recipients=[reply_to],
@@ -592,33 +597,54 @@ def queue_admin_reply(email_sender, config, case, reply_to: str, message: str, a
             "message_html": message_html,
             "admin_name": admin_label,
         },
+        **queue_options,
     )
 
+    if require_acknowledged and queue_id is None:
+        raise RuntimeError("Email queue receipt is missing")
+
     now = utcnow()
-    mongo.cases.update_one(
-        {"_id": case["_id"]},
-        {
-            "$push": {
-                "suggestion.messages": {
-                    "timestamp": now,
-                    "message_id": message_id,
-                    "from_email": _config_value(
-                        config,
-                        "TICKET_SENDER",
-                        _config_value(config, "TICKET_IMAP_USERNAME", ""),
-                    ),
-                    "from_name": admin_label,
-                    "to_email": reply_to,
-                    "direction": "out",
-                    "subject": subject,
-                    "message": message,
-                    "status": "queued",
-                }
-            },
-            "$addToSet": {"meta.ticket.reply_message_ids": message_id},
-            "$set": {"updated_at": now},
+    update = {
+        "$push": {
+            "suggestion.messages": {
+                "timestamp": now,
+                "message_id": message_id,
+                "from_email": _config_value(
+                    config,
+                    "TICKET_SENDER",
+                    _config_value(config, "TICKET_IMAP_USERNAME", ""),
+                ),
+                "from_name": admin_label,
+                "to_email": reply_to,
+                "direction": "out",
+                "subject": subject,
+                "message": message,
+                "status": "queued",
+            }
         },
-    )
+        "$addToSet": {"meta.ticket.reply_message_ids": message_id},
+        "$set": {"updated_at": now},
+    }
+    if require_acknowledged:
+        correlation = {"message_id": message_id, "queue_id": queue_id}
+        update["$push"]["suggestion.messages"].update(correlation)
+        update["$push"]["case_history"] = {
+            "timestamp": now,
+            "action": _("Vastaus lisätty lähetysjonoon."),
+            "user": admin_label,
+            "mech_action": "reply_to_ticket",
+            "metadata": {"to": reply_to, **correlation},
+        }
+        update["$push"]["action_logs"] = {
+            "timestamp": now,
+            "admin": admin_label,
+            "action_type": "reply_to_ticket",
+            "note": _("Vastaus lisätty lähetysjonoon."),
+            **correlation,
+        }
+    result = mongo.cases.update_one({"_id": case["_id"]}, update)
+    if require_acknowledged and (not result.acknowledged or result.matched_count != 1):
+        raise RuntimeError("Support reply case receipt was not confirmed")
     logger.info("Queued admin reply to %s (%s)", reply_to, ticket_label)
     return message_id
 

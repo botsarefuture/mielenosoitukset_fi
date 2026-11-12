@@ -119,6 +119,17 @@ for attempt in {1..20}; do
     sleep 1
 done
 [[ $healthy == true ]] || { echo 'Public app exact-build health failed' >&2; false; }
+# /health skips the public availability check and API reads, so it can pass
+# while pages still answer 503 for a few seconds after the Go API restarts.
+# Wait until the home page renders with the host's own assets.
+warm=false
+for attempt in {1..30}; do
+    if curl --fail --silent --show-error --max-time 5 http://127.0.0.1:8090/ 2>/dev/null | grep -q -- /app-assets/; then
+        warm=true; break
+    fi
+    sleep 1
+done
+[[ $warm == true ]] || { echo 'Public app did not render the home page after restart' >&2; false; }
 systemctl enable "$service"
 trap - ERR
 printf 'Public app healthy at %s; rollback state %s\n' "$release_sha" "$backup_dir"

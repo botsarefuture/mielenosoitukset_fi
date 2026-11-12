@@ -99,7 +99,11 @@ def test_legacy_empty_history_does_not_invent_recipients(admin_client, db, seede
     assert "Ei vielä vastauksia." in _text(history) and not history.findall(".//article")
 
 
-def test_reply_records_actual_recipient_and_retains_source_message(admin_client, db, seeded_data):
+def test_reply_records_actual_recipient_and_retains_source_message(admin_client, db, seeded_data, monkeypatch):
+    from bson import ObjectId
+    from mielenosoitukset_fi.emailer.EmailSender import EmailSender
+
+    monkeypatch.setattr(EmailSender, "queue_email", lambda self, **kwargs: ObjectId())
     case_id = seeded_data["case_id"]
     message = "**Question**\n\nPlease clarify the location."
     before = db.cases.find_one({"_id": case_id})

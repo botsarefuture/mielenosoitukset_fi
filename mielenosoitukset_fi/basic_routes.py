@@ -10,6 +10,7 @@ import time
 import uuid
 import hashlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
+from mielenosoitukset_fi.utils.demo_seo import _parse_clock
 from mielenosoitukset_fi.utils.fundraising import fundraising_details
 from mielenosoitukset_fi.utils.campaign_publication import campaign_pages_public, campaign_preview_required
 from datetime import datetime, date, timedelta, timezone
@@ -1778,13 +1779,15 @@ def init_routes(app):
 
     @app.route("/api/session")
     def public_session_summary():
-        """Read-only account summary for the standalone React public host.
+        """Account summary for the standalone React public host.
 
         The React host cannot read Flask's signed session cookie. It asks this
         same-origin endpoint for the same header state the templates receive:
         identity labels, role flags and the unread notification count. No
-        cookie value, token, email, permission list or private record is
-        returned, and this endpoint grants no authority by itself.
+        cookie value, email, permission list or private record is returned.
+        The translation page may request its existing session-bound form nonce.
+        The contact page requests a contact form token, for anonymous visitors
+        too; that response may set the session cookie and must never be shared.
         """
         organization_scope = request.args.getlist("organization_id")
         if organization_scope and (len(organization_scope) != 1 or not ObjectId.is_valid(organization_scope[0])):
@@ -1842,6 +1845,16 @@ def init_routes(app):
             except Exception:
                 # A notification read must never break the page shell.
                 payload["unread"] = 0
+            if request.args.get("translation_join") == "1":
+                from flask import get_flashed_messages
+                from mielenosoitukset_fi.translations_join_bp import translation_join_csrf_token
+
+                joined = current_user.has_permission("TRANSLATE_DEMO")
+                payload["translation_join"] = {
+                    "joined": joined,
+                    "csrf_token": None if joined else translation_join_csrf_token(),
+                    "messages": get_flashed_messages(with_categories=True),
+                }
             if organization_scope:
                 org_oid = ObjectId(organization_scope[0])
                 payload["organization"] = {
@@ -1856,6 +1869,20 @@ def init_routes(app):
                         )
                     },
                 }
+        if request.args.get("contact_form") == "1":
+            from flask import get_flashed_messages
+
+            payload["contact_form"] = {
+                "enabled": bool(app.config.get("CONTACT_FORM_ENABLED", True)),
+                "csrf_token": _new_contact_form_token(),
+                "messages": get_flashed_messages(with_categories=True),
+                "limits": {
+                    "name_max": app.config.get("CONTACT_NAME_MAX_LENGTH", 120),
+                    "email_max": app.config.get("CONTACT_EMAIL_MAX_LENGTH", 254),
+                    "message_min": app.config.get("CONTACT_MESSAGE_MIN_LENGTH", 10),
+                    "message_max": app.config.get("CONTACT_MESSAGE_MAX_LENGTH", 5000),
+                },
+            }
         response = jsonify(payload)
         response.headers["Cache-Control"] = "no-store"
         response.headers["Vary"] = "Cookie"
@@ -3497,6 +3524,9 @@ def init_routes(app):
             original_values = {}
             for f in candidate_fields:
                 val = (request.form.get(f) or '').strip()
+                if val.lower() in {'none', 'null'}:
+                    # A missing value printed into the form must not become a suggestion.
+                    val = ''
                 # normalize tags as list if provided
                 if f == 'tags' and val:
                     val = _normalize_tag_list(val.split(','))
@@ -3526,6 +3556,11 @@ def init_routes(app):
                         if val and _organizer_identity_keys(val) != _organizer_identity_keys(orig_comp):
                             changed = True
                     elif val and isinstance(val, list) and val != orig_comp:
+                        changed = True
+                elif f in {'start_time', 'end_time'}:
+                    # Stored times are "HH:MM" or "HH:MM:SS"; the same clock
+                    # time in the other format is not a change.
+                    if val and (_parse_clock(val) or val) != (_parse_clock(orig_comp) or orig_comp):
                         changed = True
                 else:
                     if val and str(val) != str(orig_comp):

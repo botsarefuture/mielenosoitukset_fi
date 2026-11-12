@@ -122,6 +122,20 @@
 .detail-button--quiet {
   background:transparent
 }
+/* Cancel and other backing-out actions are always red, on every page. */
+.detail-button--danger {
+  background:var(--product-danger-soft);
+  border-color:var(--product-danger);
+  color:var(--product-danger)!important
+}
+.detail-button--danger:hover {
+  background:var(--product-danger);
+  color:var(--product-surface)!important
+}
+.detail-button:focus-visible {
+  outline:3px solid var(--product-primary);
+  outline-offset:3px
+}
 .detail-layout {
   display:grid;
   grid-template-columns:minmax(0,1fr) minmax(260px,330px);

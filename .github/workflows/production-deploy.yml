@@ -44,6 +44,14 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Set up documentation build tools
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the existing Markdown compiler
+        run: python3 -m pip install "$(sed -n '/^Markdown==/p' requirements.txt)"
+
       - name: Build and verify the React public host
         run: |
           set -euo pipefail

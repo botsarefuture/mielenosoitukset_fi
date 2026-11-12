@@ -352,7 +352,7 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 | ACCEPT-01 | P1 | Backlog | Unassigned | M6 | Depends on delivered milestones and completed per-test reviews. |
 | UI-02a | P2 | Merged | Codex | M2/M4 | Footer padding is inside width; card title/address/tag text can wrap. Empty/populated route/theme/viewport and keyboard controls validate this slice; 93 combined cases pass; broader UI-02 acceptance remains open. |
 | UI-02b | P2 | Merged | Codex | M2/M4 | Depends on #936. Shared hero geometry/mobile typography with no fixed-min-width or nowrap conflict; 117 focused cases pass, including 24 actual SSR cases. Wider product acceptance remains open. |
-| UI-06 | P2 | In progress | Codex (header slice); later owners unassigned | M4 | React foundation/campaign refresh are merged through #989 (`c435275d`); deployment unverified. Shared header component slice implemented locally, acceptance tracked in this chat; merge/release pending. Next: listing bodies and shared cards/filters, then event/series bodies and occurrence selection. Footer, remaining public pages and final rendering/routing consolidation remain open. Flask backend and current admin may remain. |
+| UI-06 | P2 | In progress | Codex | M4 | On the standalone React host as of 10 November 2026: home, listings, detail/series, calendar, cities, today, submit, organization profile, information pages (#1040), Pride (#1043), campaign (#1046), fundraising (#1047) and contact (#1048). Remaining public pages and their blockers are listed in `TODO.md`. No-JS fallbacks follow the light-fallback policy in `AGENTS.md` (#1044). |
 | USER-01 | P2 | Released | Codex | M4 | #941 merge build e6383141 verified through public HTTPS and direct origin health probes; service active, existing tracked server overlays preserved. Final CI: 1,370 passed /325 skipped. GitHub deploy public-probe403 failure remains explicitly recorded; no authenticated production visual QA claim. |
 | CITY-01 | P2 | Backlog | Unassigned | M2/M4 | Extend existing city assignment/email/escalation with in-app notification and a shared authoritative dashboard deadline/countdown. Code default24h; deployed setting unverified. Define reset/config-change policy before implementation. |
 | CITY-02 | P1 | Backlog | Unassigned | M2 | Urgent pending-event Telegram alert (<48h, higher urgency <24h proposed) via @mielenosoituksetbot to the owner-named channel; edit the same message after canonical processing. Verify numeric chat ID, permissions, existing external bot, retry/state policy and staging send/edit before release. |
@@ -366,6 +366,14 @@ Test review proceeds beside each delivery batch: review its existing tests befor
 
 The repository programme is complete only when each in-scope requirement has evidence, the per-test reviews are recorded, relevant checks pass, trackers match merged state, and release claims have actual deployment evidence. Do not equate this roadmap's creation with completion of the work.
 
+
+### UI-06 status slice — 10 November 2026
+
+Codex: `/status` now has React SSR/hydration, read-only Go `/api/status`, a
+one-second MongoDB ping cached for 60 seconds, and exact GET/HEAD routing prepared.
+Failures keep HTTP 200/noindex. Flask cache and initialized S3-client checks are
+omitted and tracked in TODO. Flask rollback remains intact. No production changes;
+socket smoke tests and independent visual acceptance are BLOCKED in this sandbox.
 
 ### UI-06 public React inventory — header slice, 27 October 2026
 

@@ -1,8 +1,7 @@
-// Public app host: metadata-only rendering plus the client bundle.
+// Public app host: server-owned document metadata and the React client bundle.
 //
-// It renders the document head, an empty app root and the bootstrap JSON. Page
-// components and event data are fetched and rendered by the browser, so a page
-// request does no React rendering and no event query.
+// Information pages include server-rendered React markup. Event routes keep
+// their client-rendered bodies and load data through the public API.
 import { createServer } from 'node:http';
 import { isIP } from 'node:net';
 import { readFileSync, existsSync } from 'node:fs';
@@ -70,6 +69,14 @@ function assetTags(manifest) {
     calendar: routeAssets('src/app/CalendarScreen.tsx'),
     calendarYear: routeAssets('src/app/YearCalendarScreen.tsx'),
     godAuth: routeAssets('src/app/GodScreen.tsx'),
+    pride: routeAssets('src/app/PrideScreen.tsx'),
+    information: routeAssets('src/app/InformationScreen.tsx'),
+    campaign: routeAssets('src/app/CampaignScreen.tsx'),
+    fundraising: routeAssets('src/app/FundraisingScreen.tsx'),
+    contact: routeAssets('src/app/ContactScreen.tsx'),
+    organizationFill: routeAssets('src/app/OrganizationFillScreen.tsx'),
+    suggestChange: routeAssets('src/app/SuggestChangeScreen.tsx'),
+    status: routeAssets('src/app/StatusScreen.tsx'),
     head: [...css].map((file) => `<link rel="stylesheet" href="/app-assets/${file}">`)
       .concat([...modules].filter((file) => file.endsWith('.js'))
         .map((file) => `<link rel="modulepreload" href="/app-assets/${file}">`)).join('\n'),
@@ -163,15 +170,18 @@ const server = createServer(async (request, response) => {
     const result = await renderPage({
       path: url.pathname, search: url.search, origin, apiBase, apiReadBase, sessionUrl, flaskSocketPath,
       cookie: request.headers.cookie,
+      headOnly,
       clientIp,
       cloudflareIp,
       doNotTrack: request.headers.dnt === '1',
-      publicUnavailable: url.pathname === '/auth/god' ? false : !await publicAvailable(),
+      publicUnavailable: ['/auth/god', '/status'].includes(url.pathname) ? false : !await publicAvailable(),
     }, assets);
     if (result.redirect) {
       // A site-relative preview target stays on the same public origin; the web
       // server decides which handler owns the flagged request.
+      // Route headers such as the campaign gate's noindex still apply; caching stays off.
       response.writeHead(result.status, {
+        ...(result.headers ?? {}),
         Location: result.redirect, 'Content-Length': '0', 'Cache-Control': 'no-store', Vary: 'Cookie',
       });
       response.end();

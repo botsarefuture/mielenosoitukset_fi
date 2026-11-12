@@ -4,7 +4,7 @@ import type { Demonstration } from '../listings/types';
 
 type Point = [number, number];
 type MapInstance = {
-  fitBounds(points: Point[], options: { padding: Point; maxZoom: number }): void;
+  fitBounds(points: Point[], options: { paddingTopLeft: Point; paddingBottomRight: Point; maxZoom: number }): void;
   setView(point: Point, zoom: number): void;
   invalidateSize(): void;
   remove(): void;
@@ -13,6 +13,7 @@ type Group = { addTo(map: MapInstance): Group; clearLayers(): void };
 type Tiles = { addTo(map: MapInstance): Tiles; on(name: string, handler: () => void): Tiles; redraw(): void };
 type Marker = {
   bindPopup(content: HTMLElement): Marker; addTo(group: Group): Marker;
+  bindTooltip(content: HTMLElement, options: { permanent: boolean; direction: string; offset: Point; className: string; opacity: number }): Marker;
   getElement(): SVGElement | undefined; openPopup(): Marker; closePopup(): Marker;
   getPopup(): { getElement(): HTMLElement | undefined } | undefined;
   on(name: 'popupopen', handler: () => void): Marker;
@@ -124,7 +125,7 @@ export function PrideMap(props: PrideMapProps) {
         const events = new Map<string, Demonstration>();
         let pages = 1;
         for (let pageNumber = 1; pageNumber <= pages; pageNumber++) {
-          const query = new URLSearchParams({ tag: props.tag, page: String(pageNumber), per_page: '100', lang: props.locale, scope: 'pride_map' });
+          const query = new URLSearchParams({ tag: props.tag, page: String(pageNumber), per_page: '100', lang: props.locale });
           const response = await fetch(`${props.endpoint}?${query}`, { signal, credentials: 'same-origin', headers: { Accept: 'application/json' } });
           if (!response.ok || response.redirected) throw new Error('Pride map request failed');
           const page = parsePage(await response.json(), pageNumber);
@@ -136,6 +137,7 @@ export function PrideMap(props: PrideMapProps) {
         const rows = [...events.values()];
         const bounds: Point[] = [];
         const cities = new Set<string>();
+        const labelledCities = new Set<string>();
         markers.clearLayers();
         rows.forEach(event => {
           const city = publicText(event.city).trim().toLocaleLowerCase(props.locale);
@@ -146,6 +148,14 @@ export function PrideMap(props: PrideMapProps) {
           const marker = library.circleMarker(point, {
             radius: 9, color: 'var(--pride-marker)', fillColor: 'var(--pride-marker-fill)', fillOpacity: .9, weight: 2,
           }).bindPopup(content).addTo(markers);
+          if (city && !labelledCities.has(city)) {
+            const label = document.createElement('span');
+            label.textContent = publicText(event.city).trim();
+            marker.bindTooltip(label, {
+              permanent: true, direction: 'right', offset: [12, 0], className: 'pride-city-label', opacity: 1,
+            });
+            labelledCities.add(city);
+          }
           const node = marker.getElement();
           if (node) {
             node.setAttribute('tabindex', '0');
@@ -171,7 +181,8 @@ export function PrideMap(props: PrideMapProps) {
           }
           bounds.push(point);
         });
-        if (bounds.length) map.fitBounds(bounds, { padding: [24, 24], maxZoom: 13 });
+        // City labels sit to the right of their markers; keep room for them.
+        if (bounds.length) map.fitBounds(bounds, { paddingTopLeft: [24, 24], paddingBottomRight: [120, 24], maxZoom: 13 });
         else map.setView(INITIAL_CENTER, 5);
         frame = requestAnimationFrame(() => { if (!disposed) map.invalidateSize(); });
         setLoaded({ events: rows, cities: cities.size, mapped: bounds.length });

@@ -37,6 +37,24 @@ another independent review. Missing browser/screenshots/reviewer means
 **BLOCKED**, never an implied pass. Keep existing relevant tests; do not add a
 second CI suite or run the full suite just to perform this visual review.
 
+### No-JavaScript fallbacks
+
+Maintainer decision, 9 November 2026: most visitors use the JavaScript page, so
+the `<noscript>` fallback of a public React route stays deliberately light and
+is not part of visual acceptance.
+
+- Keep what crawlers, link previews and failed script loads need: the page title
+  and lead, the event links with paging, and a link to all demonstrations. Keep
+  the canonical URL and metadata on the server-rendered document.
+- Start the fallback with the short notice that the page works best with
+  JavaScript. Do not add background sections, layout polish or page-specific
+  styling to it.
+- Check fallbacks with automated assertions such as
+  `scripts/verify_public_host.mjs`, not with screenshots or a reviewer SHIP. A
+  change that only touches `<noscript>` output needs no visual review.
+
+Branch, PR, review and approval routines are in [docs/development-workflow.md](docs/development-workflow.md); follow it in every session.
+
 Sticking to these steps keeps the project history readable and prevents surprises for maintainers. Thanks! 🚀
 
 ## Modernization direction
@@ -93,6 +111,7 @@ The context is guidance, not an approved replacement specification.
 
 ## Public UI ownership and copy
 
+- Before building or changing a public screen, read [the design system](docs/design-system/README.md): tokens, component guidelines, copy rules and the *Consistency* table that settles where existing pages differ. Reuse its components and tokens; if a rule changes, update that folder in the same PR.
 - Maintainer instruction (1 November 2026): no new Flask surface for public UI. New behaviour goes into the Go API plus React; reusing an existing Flask page or endpoint is fine, adding a route, view or template is not.
 - The target is a standalone React app that does not need Flask at runtime, not Flask-hosted islands. Treat island props (`react_detail.py` and similar) as a bridge to keep correct, not as the contract to extend; new copy and URLs belong in the TypeScript catalog/config the host will use.
 - The public site is Finnish-only today. Keep the localization plumbing, prefer existing msgids, and when a new string is required leave `en`/`sv` copy to human translators rather than machine-guessing it.

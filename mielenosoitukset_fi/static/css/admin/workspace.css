@@ -4509,11 +4509,6 @@ th.sortable.desc::after {
     overflow-x: auto;
     overscroll-behavior-inline: contain;
   }
-  .admin-data-view__table .dropdown-menu.show {
-    position: static !important;
-    transform: none !important;
-    margin-top: .4rem !important;
-  }
   :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

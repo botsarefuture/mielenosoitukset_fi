@@ -11,7 +11,11 @@ def test_mongo_compatible_runner_keeps_database_and_required_suite():
     workflow = yaml.safe_load((root / ".github/workflows/tests.yml").read_text())
     compose = yaml.safe_load((root / "compose.test.yml").read_text())
     job = workflow["jobs"]["python-tests"]
-    assert job["runs-on"] == "ubuntu-22.04"
+    # GitHub-hosted ubuntu-22.04 stays the default and the only host for fork
+    # PRs; the MOSO_CI_RUNS_ON variable may opt same-repo runs into moso-ci.
+    runs_on = job["runs-on"]
+    assert "github.event.pull_request.head.repo.full_name != github.repository) && 'ubuntu-22.04'" in runs_on
+    assert "fromJSON(vars.MOSO_CI_RUNS_ON || '\"ubuntu-22.04\"')" in runs_on
     assert compose["services"]["mongo"]["image"] == "mongo:8"
     assert not job.get("continue-on-error", False)
     assert job["timeout-minutes"] == 30

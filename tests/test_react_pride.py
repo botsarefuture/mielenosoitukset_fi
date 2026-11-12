@@ -92,7 +92,7 @@ def map_payload(rows, *, page=1, total=None, total_pages=1):
 
 def is_map_request(request):
     query = parse_qs(urlsplit(request.url).query)
-    return query.get('scope') == ['pride_map']
+    return query.get('tag') == ['pride'] and query.get('per_page') == ['100']
 
 
 def manual_pagination(page):
@@ -172,6 +172,8 @@ def test_real_map_reads_all_pride_pages_and_listing_filters_do_not_change_its_sc
     expect(summary).to_have_attribute('data-city-count', '2')
     expect(summary).to_have_attribute('data-mapped-count', '98')
     expect(page.locator('#pride-map path.leaflet-interactive')).to_have_count(98)
+    expect(page.locator('.pride-city-label')).to_have_count(2)
+    expect(page.locator('.pride-city-label')).to_have_text(['Helsinki', 'Turku'])
     expect(page.locator('#pride-map-retry')).to_be_hidden()
     expect(page.locator('.demo-card')).to_have_count(12)
     assert_pride_scope(requested)
@@ -255,7 +257,7 @@ def test_map_popup_treats_event_fields_as_text_and_rejects_external_detail_urls(
     page = browser_page
     malicious = {'_id': '000000000000000000000001', 'title': '<img src=x onerror=alert(1)>',
                  'date': '2099-01-01', 'formatted_date': '<strong>unsafe date</strong>',
-                 'address': '<svg onload=alert(1)>', 'city': 'Helsinki',
+                 'address': '<svg onload=alert(1)>', 'city': '<img src=x onerror=alert(1)>',
                  'latitude': '60.1699', 'longitude': '24.9384',
                  'detail_url': 'https://foreign.example.test/trap'}
 
@@ -268,6 +270,8 @@ def test_map_popup_treats_event_fields_as_text_and_rejects_external_detail_urls(
     page.route('**/api/demonstrations?*', serve)
     page.goto(live_server + '/pride-nakyvaksi', wait_until='networkidle')
     expect(page.locator('#pride-map-summary')).to_have_attribute('data-event-count', '1')
+    expect(page.locator('.pride-city-label')).to_have_text(malicious['city'])
+    assert page.locator('.pride-city-label img').count() == 0
     page.locator('#pride-map path.leaflet-interactive').dispatch_event('click')
     popup = page.locator('.leaflet-popup-content')
     expect(popup).to_be_visible()

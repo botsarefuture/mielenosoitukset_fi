@@ -1,6 +1,7 @@
 import { SearchFilters } from './SearchFilters';
 import type { ListingProps } from './types';
 import type { ReactNode } from 'react';
+import '../../../../mielenosoitukset_fi/static/css/public-detail.css';
 
 export function ListingTools({ props, filters }: { props: ListingProps; filters?: ReactNode }) {
   const Heading = props.headingLevel === 2 ? 'h2' : 'h1';
@@ -8,9 +9,9 @@ export function ListingTools({ props, filters }: { props: ListingProps; filters?
     <header className="public-list-heading">
       <Heading id="listing-title">{props.title}</Heading>
       <div className="public-list-actions">
-        {props.calendarUrl && <a className="public-list-feed" href={props.calendarUrl}><i className="fa-regular fa-calendar" aria-hidden="true" />Kalenteri</a>}
-        {props.rssUrl && <a className="public-list-feed" href={props.rssUrl}><i className="fa-solid fa-rss" aria-hidden="true" />RSS</a>}
-        {Object.keys(props.fixed).length > 0 && <a className="public-list-all" href={props.allEventsUrl}><i className="fa-solid fa-arrow-left" aria-hidden="true" />{props.messages.allEvents}</a>}
+        {props.calendarUrl && <a className="detail-button public-list-feed" href={props.calendarUrl}><i className="fa-regular fa-calendar" aria-hidden="true" />Kalenteri</a>}
+        {props.rssUrl && <a className="detail-button public-list-feed" href={props.rssUrl}><i className="fa-solid fa-rss" aria-hidden="true" />RSS</a>}
+        {Object.keys(props.fixed).length > 0 && <a className="detail-button public-list-all" href={props.allEventsUrl}><i className="fa-solid fa-arrow-left" aria-hidden="true" />{props.messages.allEvents}</a>}
       </div>
     </header>
     {filters ?? <SearchFilters props={props} />}

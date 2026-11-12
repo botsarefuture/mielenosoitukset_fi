@@ -186,6 +186,7 @@
 }
 
 .city-admin-privacy {
+  margin: 1.25rem 0;
   padding: 0.9rem 1rem;
   border: 1px solid var(--product-border, #d8dde6);
   border-radius: 0.5rem;
@@ -193,6 +194,7 @@
 }
 
 .city-admin-privacy h3 {
+  font-weight: 700;
   margin: 0 0 0.4rem;
   font-size: 1rem;
 }

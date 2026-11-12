@@ -113,7 +113,7 @@ export function App({ config, session, route, path, detail, series, home, listin
           info: config.urls.info, pride: config.urls.pride,
         }}
         text={text.home}
-        more={{ endpoint: `${config.apiBase}/demonstrations`, text: text.homeMore }}
+        quick={{ todayUrl: config.urls.today, text: text.homeQuick }}
       />}
       {(route.name === 'detail' || route.name === 'series') && (detail
         ? <DetailScreen

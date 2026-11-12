@@ -95,7 +95,7 @@ def test_admin_management_views_share_workspace_design(app, seeded_data):
     assert "city-admin-header" not in city_page
     assert city_page.count("admin-workspace-summary-card") >= 3
     assert 'class="admin-workspace-summary city-admin-overview"' in city_page
-    assert city_page.count("city-admin-summary-copy") == 3
+    assert city_page.count("city-admin-summary-copy") == 5  # three totals plus the two admin-coverage cards
     assert "city-admin-input-with-icon" in city_page
     assert "city-admin-city-identity" in city_page
     assert "admin-data-view admin-data-view--scrollable" in city_page

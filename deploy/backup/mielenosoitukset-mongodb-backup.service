@@ -1,11 +1,12 @@
 [Unit]
-Description=MongoDB backup for mielenosoitukset.fi
+Description=Nightly core MongoDB backup for mielenosoitukset.fi (without audit logs)
 After=network-online.target
 Wants=network-online.target
 OnFailure=mielenosoitukset-backup-failed.service
 
 [Service]
 Type=oneshot
+Environment=BACKUP_MODE=core
 ExecStart=/var/www/mielenosoitukset_fi/deploy/backup/mongodb-backup.sh
 Nice=10
 IOSchedulingClass=idle

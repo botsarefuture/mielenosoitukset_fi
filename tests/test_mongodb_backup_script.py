@@ -28,7 +28,7 @@ exit "${FAKE_EXIT:-0}"
 """
 
 
-def _run(tmp_path, **env):
+def _run(tmp_path, uri=f"mongodb://app:{SECRET}@db.example:27017", **env):
     tools = tmp_path / "bin"
     tools.mkdir(exist_ok=True)
     for name in ("mongodump", "mongorestore"):
@@ -36,7 +36,7 @@ def _run(tmp_path, **env):
         tool.write_text(FAKE_TOOL)
         tool.chmod(0o755)
     config = tmp_path / "config.yaml"
-    config.write_text(f'MONGO_URI: "mongodb://app:{SECRET}@db.example:27017"\nMONGO_DBNAME: "mielenosoitukset"\n')
+    config.write_text(f'MONGO_URI: "{uri}"\nMONGO_DBNAME: "mielenosoitukset"\n')
     backups = tmp_path / "backups"
     full_env = {
         **os.environ,
@@ -59,6 +59,8 @@ def test_backup_writes_a_verified_archive_without_exposing_the_password(tmp_path
     argv = (tmp_path / "argv.log").read_text()
     assert SECRET not in argv and SECRET not in result.stdout + result.stderr
     assert "--dryRun" in argv and "--nsTo=restorecheck_mielenosoitukset.*" in argv
+    # The URI names no auth database, so the tools authenticate where PyMongo does.
+    assert argv.count("--authenticationDatabase=admin") == 2
     assert SECRET in (tmp_path / "config.log").read_text()
 
 
@@ -117,3 +119,15 @@ def test_leftover_partials_from_killed_runs_are_removed(tmp_path):
 
     assert result.returncode == 0, result.stderr
     assert not stale.exists()
+
+
+def test_auth_database_follows_the_uri_like_pymongo(tmp_path):
+    result, _ = _run(tmp_path, uri=f"mongodb://app:{SECRET}@db.example:27017/appdb?authSource=users")
+    assert result.returncode == 0, result.stderr
+    assert "--authenticationDatabase=users" in (tmp_path / "argv.log").read_text()
+
+    other = tmp_path / "second"
+    other.mkdir()
+    result, _ = _run(other, uri=f"mongodb://app:{SECRET}@db.example:27017/appdb")
+    assert result.returncode == 0, result.stderr
+    assert "--authenticationDatabase=appdb" in (other / "argv.log").read_text()

@@ -196,8 +196,14 @@ try {
     assert.equal(down.headers['Set-Cookie'], undefined);
   } finally { contactSessions.close(); }
   console.log('PASS: contact page mints a private per-visitor form token, forwards the session cookie, skips HEAD and degrades to email');
+  let fundState = { status: 503, body: {} };
   let campaignState = { status: 200, body: { published: false } };
   const campaignApi = createServer((req, res) => {
+    if (req.url === '/api/fundraising/details') {
+      res.writeHead(fundState.status, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(fundState.body));
+      return;
+    }
     if (req.url !== '/api/campaign/publication') { res.writeHead(404); res.end(); return; }
     res.writeHead(campaignState.status, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(campaignState.body));
@@ -256,6 +262,14 @@ try {
     assert(fundLive.html.includes('rel="canonical" href="https://example.test/ker%C3%A4ys"'));
     assert(fundLive.html.includes('/static/css/public-content.css'));
     assert.match(bootstrap(fundLive.html).today, /^\d{4}-\d{2}-\d{2}$/);
+    assert.equal(bootstrap(fundLive.html).fundraising, undefined, 'Unreachable API: bundled details, nothing embedded');
+    fundState = { status: 200, body: { publication_state: 'preparation', details_confirmed: false, planned_start_date: '2026-12-01', planned_end_date: '2027-03-01', mobilepay_links: [] } };
+    const fundApi = await fundraising();
+    const fundApiBody = fundApi.html.split('<body>')[1].split('<script type="application/json"')[0];
+    assert.match(fundApiBody, /datetime="2026-12-01"[^]*datetime="2027-03-01"/i, 'API details replace the bundled file');
+    assert.equal(bootstrap(fundApi.html).fundraising.planned_start_date, '2026-12-01');
+    fundState = { status: 200, body: [] };
+    assert.match((await fundraising()).html, /datetime="2026-11-16"/i, 'Malformed API answer falls back to the bundled file');
   } finally { campaignApi.close(); }
   console.log('PASS: campaign and fundraising pages keep the publication gate: signed-in preview, fail-closed reads, private no-store and noindex until published');
   const { fundraisingDetails } = await import(pathToFileURL(`${root}/frontend/dist/server/render.js`));

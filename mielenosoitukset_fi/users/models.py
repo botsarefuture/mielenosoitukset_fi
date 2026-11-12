@@ -20,7 +20,6 @@ def _get_mongo():
     """
     return DatabaseManager().get_instance().get_db()
 
-VALID_WINDOW = 5          # TODO → move to config
 DEFAULT_ROLE = "user"
 CITY_ADMIN_ORGANIZATION_PERMISSIONS = {
     "LIST_ORGANIZATIONS",

@@ -130,11 +130,17 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 - [ ] **PRODUCT-01:** broader societal events (#583), following tags (#117), city and tag email subscriptions (#121).
 - [ ] Count visitors who browse without JavaScript (a `<noscript>` pixel; filter bots) to decide how much the no-JS fallback matters.
 - [ ] **FUND-01:** fill in the official fundraising details when they are confirmed, then open donations.
+- [ ] **PREVIEW-02: organizer design templates for preview images.** Let organizations upload their own template for a demo's preview image:
+  - Formats: InDesign, Photoshop and Illustrator, or the open-source alternatives the maintainer named ("design craft, photo craft, vector craft"). Decide which formats can be rendered server-side and how much of the file to support, for example named text layers for title, date and place.
+  - Save templates in the organization panel. Organizers pick one when they submit a new demonstration, and it applies automatically to that organization's recurring demonstrations.
+  - Global admins can upload templates for a specific recurring series, for example a weekly "Loppu kansanmurhalle" demonstration.
+  - Open questions: file size limits and malware scanning for uploads, a fallback to the default generated preview, and who may edit a shared template.
 
 ## Maintenance
 
 - [x] **CLEAN-01:** removed the orphaned `list_legacy.html`, template `submit.css` and eleven tracked `.bak` stylesheets after checking every reference (intentional Flask rollback templates kept).
-- [ ] Retire the legacy card renderer `static/js/demo-card-render.js` and `_modals/_demo-card-template.html`: no template loads them since CLEAN-01; only tests do (`test_public_attendance_window`, `test_public_list_request_state`, `test_public_windowed_loading`, `test_demo_card_i18n_contract`).
+- [x] Retire the legacy card renderer `static/js/demo-card-render.js` and `_modals/_demo-card-template.html`: no template loaded them since CLEAN-01; their renderer-only tests were removed.
+- [ ] Check that the React listing tests cover what the removed legacy loader tests checked: slow attendance requests surviving append and cancelled on eviction or search; stale search responses ignored; HTTP failure offering retry without erasing appended results; delayed append keeping keyboard focus and not restoring old filter pages.
 - [ ] **CLEAN-02:** consolidate legacy palettes and hero geometry.
 - [ ] **CLEAN-04:** keep a finite exception list for dynamic styles and a CSS cache contract.
 - [ ] Admin dashboard workflow: pagination, previews and clearer edit fields (#552); organization form UI (#178).

@@ -116,7 +116,7 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 
 ## Localization and docs
 
-- [ ] **I18N-01:** inventory untranslated strings and catalog gaps per route family; English and Swedish copy comes from human translators.
+- [x] **I18N-01:** inventory untranslated strings and catalog gaps per route family in `docs/i18n-inventory.md` (regenerate with `scripts/i18n_inventory.py`); English and Swedish translation itself stays with human translators.
 - [ ] **I18N-02:** standardize backend, API, moderation and email messages (#582, #553).
 - [ ] **DOC-01:** user and moderator guides (#563).
 - [ ] **DOC-02:** keep `roadmap.md`, this file, issues and release evidence aligned. Refresh `BLOCKERS.md`.

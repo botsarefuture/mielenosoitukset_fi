@@ -420,7 +420,10 @@ class User(UserMixin):
             if isinstance(inv, str) and inv == self.email:
                 return True
             elif isinstance(inv, dict) and inv.get("email") == self.email:
-                return True
+                from mielenosoitukset_fi.utils.invitations import invitation_expired
+
+                if not invitation_expired(inv):
+                    return True
 
         return False
 

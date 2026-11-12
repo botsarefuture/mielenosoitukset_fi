@@ -1,0 +1,1 @@
+- Organization invitations created from now on expire after 30 days. Invitations sent earlier have no date and do not expire.

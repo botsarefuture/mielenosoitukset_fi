@@ -1,0 +1,1 @@
+- The city admin application form (`/kaupunkiadmin`) now shows who sees an application, what it is used for and how long it is kept. Proposed retention: text of declined or withdrawn applications is erased 90 days after the decision, approved ones after 365 days. The erasing job is off by default (`CITY_ADMIN_APPLICATION_RETENTION_ENABLED`) until the maintainer approves it.

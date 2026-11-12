@@ -59,6 +59,10 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   left to human translators; the catalog falls back to Finnish until then.
 - **No icons in page headings.** Icons go beside labels, tiles and cards. Cancel
   buttons use the danger style.
+- **`/developer` waits for a session scope (2026-11-12).** The pages are per-user and
+  private, so React needs a new signed-in read; proposal in
+  [developer-react-proposal.md](developer-react-proposal.md). `/download_material/<id>`
+  stays in Flask as a download redirect.
 - **Home page continuation (2026-11-12).** The Pride banner after the event grid was
   mistaken for "more events", so it now follows a continuation of the listing (#1098).
   Open: research suggests replacing the scroll auto-load with "Tänään" and

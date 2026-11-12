@@ -170,3 +170,44 @@ def test_edit_user_revoking_city_grant_does_not_deactivate_city(app, db, seeded_
     )
     assert grant["revoked_at"] is not None
     assert db.city_settings.find_one({"city_key": "varkaus"})["enabled"] is True
+
+
+def test_admin_city_control_shows_admin_coverage_against_the_two_admin_target(app, db, seeded_data):
+    from bson import ObjectId
+
+    db.admin_scope_grants.delete_many({})
+    db.city_settings.update_many({}, {"$set": {"enabled": False}})
+    for key in ("tampere", "turku", "oulu", "kuopio"):
+        db.city_settings.update_one({"city_key": key}, {"$set": {"enabled": True}}, upsert=True)
+
+    def account(**fields):
+        user_id = ObjectId()
+        db.users.insert_one({"_id": user_id, "username": f"u{user_id}", "active": True, "confirmed": True, **fields})
+        return user_id
+
+    def grant(user_id, keys, **fields):
+        db.admin_scope_grants.insert_one({"user_id": user_id, "scope_type": "city", "scope_keys": keys,
+                                          "permissions": ["LIST_DEMOS", "ACCEPT_DEMO"], **fields})
+
+    first, second, banned, revoked = account(), account(), account(banned=True), account()
+    viewer, scalar = account(), account()
+    grant(first, ["tampere", "turku"])
+    grant(viewer, ["oulu"], permissions=["LIST_DEMOS", "VIEW_CASE"])  # cannot approve: not coverage
+    grant(scalar, "kuopio")                   # a single string scope still counts
+    grant(str(second), ["tampere"])           # string user ids are still counted
+    grant(banned, ["turku"])                  # inactive accounts are not coverage
+    grant(revoked, ["oulu"], revoked_at=utcnow())
+
+    page = _client_for_user(app, seeded_data["admin_id"]).get("/admin/cities/").get_data(as_text=True)
+
+    def coverage_cell(city):
+        row = page[page.index(f'data-city-name="{city.lower()}"'):]
+        return row[row.index('city-admin-coverage--'):row.index('</td>', row.index('city-admin-coverage--'))]
+
+    assert "city-admin-coverage--team" in coverage_cell("Tampere") and "Tiimi: 2" in coverage_cell("Tampere")
+    assert "city-admin-coverage--single" in coverage_cell("Turku") and "Yksi, haetaan toista" in coverage_cell("Turku")
+    assert "city-admin-coverage--none" in coverage_cell("Oulu") and "Ei kaupunkiadminia" in coverage_cell("Oulu")
+    assert "city-admin-coverage--single" in coverage_cell("Kuopio")
+    assert '<option value="needs-admins">' in page
+    assert "city-admin-coverage--national" in coverage_cell("Helsinki") and "Valtakunnallinen tiimi" in coverage_cell("Helsinki")
+    assert "Tavoite on vähintään 2 aktiivista kaupunkiadminia" in page

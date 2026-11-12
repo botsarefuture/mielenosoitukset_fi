@@ -17,6 +17,8 @@ The maintainer decides what we build and why. Whoever implements decides how.
   are fine. Everything else goes into `TODO.md` or an issue.
 - If an approved plan turns out to need a different direction, say so and get approval
   before changing course.
+- Record every maintainer decision, with its reason, in [the decisions log](decisions.md)
+  in the same PR that implements it.
 - Security problems are reported to the maintainer straight away, not fixed quietly with a
   disruptive change.
 

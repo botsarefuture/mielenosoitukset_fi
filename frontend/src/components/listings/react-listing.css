@@ -122,3 +122,27 @@
   border-color: var(--product-border);
   color: var(--product-text);
 }
+
+/* City pages: a quiet invitation where fewer than two city admins are active. */
+.city-admin-recruiting {
+  margin: 0 0 1.25rem;
+  padding: .75rem 1rem;
+  border: 1px solid var(--product-border);
+  border-radius: 8px;
+  background: var(--product-surface);
+  color: var(--product-text);
+}
+
+.city-admin-recruiting p {
+  margin: 0;
+}
+
+.city-admin-recruiting a {
+  color: var(--product-primary);
+  font-weight: 600;
+}
+
+.city-admin-recruiting a:focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: 3px;
+}

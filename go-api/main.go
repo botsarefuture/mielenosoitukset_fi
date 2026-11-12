@@ -127,6 +127,7 @@ func (a *API) handler() http.Handler {
 	mux.Handle("GET /api/status", serviceStatusHandler(a.store.Ping))
 	mux.HandleFunc("GET /api/demonstrations", a.getListing)
 	mux.HandleFunc("GET /api/cities", a.getCities)
+	mux.HandleFunc("GET /api/cities/{key}/admin-status", a.getCityAdminStatus)
 	mux.HandleFunc("GET /api/calendar/{year}/{month}", a.getCalendar)
 	mux.HandleFunc("GET /api/calendar/{year}", a.getCalendar)
 	mux.HandleFunc("GET /api/demonstrations/{id}", a.getDemonstrationCached)
@@ -246,6 +247,7 @@ func main() {
 		log.Fatal("Public submission configuration is invalid")
 	}
 	handler := publicSubmissionHandler(publicResponseCache(a.handler(), shared), client.Database(database), submissionConfig)
+	handler = cityAdminApplicationHandler(handler, client.Database(database), submissionConfig)
 	handler = analyticsEventHandler(handler, analyticsEnabledFromEnv(), incrementAnalyticsEvent(client.Database(database)))
 	handler = campaignPublication(handler, readCampaignPublication(client.Database(database)))
 	handler = publicAvailability(handler, readPublicLockdown(client.Database(database)))

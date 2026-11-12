@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { DemonstrationCards } from '../components/listings/DemonstrationCard';
 import { ListingTools } from '../components/listings/ListingTools';
 import { displayDate, isoDate, ReactSearchFilters } from '../components/listings/ReactSearchFilters';
@@ -10,6 +10,8 @@ import '../components/listings/react-listing.css';
 import '../../../mielenosoitukset_fi/static/css/public-detail.css';
 
 export type PublicListingProps = ListingProps & {
+  /** Optional notice shown between the tools and the results. */
+  notice?: ReactNode;
   initialData?: Page | null;
   initialSearch?: string;
   /** Deliberate first-page searches, independent of the public content cache. */
@@ -220,6 +222,7 @@ export function PublicListingPage(props: PublicListingProps) {
     {props.cover && <img className="public-list-cover" src={props.cover} alt={props.coverAlt} />}
     <ListingTools props={props} filters={<ReactSearchFilters props={props} values={values} change={setValues} submit={submit}
       removeCity={city => submit({ ...values, city: values.city.split(',').filter(value => value !== city).join(',') })} />} />
+    {props.notice}
     <section className="public-list-results" aria-labelledby="listing-title">
       <button ref={previous} id="load-previous-btn" type="button" className="detail-button load-more"
         hidden={!first || first.page <= 1} disabled={loading}

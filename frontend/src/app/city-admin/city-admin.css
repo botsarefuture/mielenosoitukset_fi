@@ -1,0 +1,177 @@
+.city-admin-page .public-prose-card ul {
+  padding-inline-start: 1.25rem;
+}
+
+.city-admin-hint {
+  margin: -0.2rem 0 0;
+  color: var(--product-text-muted);
+  font-size: 0.9rem;
+}
+
+.city-admin-picker {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.city-admin-picker__row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.contact-form .city-admin-picker__row input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.contact-form .city-admin-picker__row button {
+  flex: 0 0 auto;
+  margin-top: 0;
+}
+
+.city-admin-field-error {
+  margin: 0;
+  color: var(--product-danger);
+  font-size: 0.9rem;
+}
+
+.city-admin-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.city-admin-page .public-prose-card .city-admin-chips {
+  padding-inline-start: 0;
+}
+
+/* The prose card spaces sibling list items; these lists use gap instead. */
+.city-admin-page .public-prose-card .city-admin-chips li,
+.city-admin-page .public-prose-card .city-admin-applications li {
+  margin: 0;
+}
+
+.city-admin-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0.2rem 0.15rem 0.75rem;
+  border: 1px solid var(--product-border);
+  border-radius: 999px;
+  background: var(--product-surface);
+  color: var(--product-text);
+}
+
+.contact-form .city-admin-chips button {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--product-text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.city-admin-chips button:hover {
+  background: var(--product-border);
+  color: var(--product-text);
+}
+
+.contact-form .city-admin-chips button:focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: -3px;
+}
+
+.city-admin-fieldset {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1rem 0 0;
+  padding: 0.25rem 1rem 1rem;
+  border: 1px solid var(--product-border);
+  border-radius: 8px;
+}
+
+.city-admin-fieldset legend {
+  padding: 0 0.35rem;
+  color: var(--product-text);
+  font-weight: 700;
+}
+
+.contact-form .city-admin-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-weight: 400;
+}
+
+.contact-form .city-admin-consent input {
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  min-height: 0;
+  margin-top: 0.2rem;
+  padding: 0;
+}
+
+.city-admin-applications {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  list-style: none;
+}
+
+.city-admin-page .public-prose-card .city-admin-applications {
+  padding-inline-start: 0;
+}
+
+.city-admin-applications li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  align-items: center;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--product-border);
+  border-radius: 8px;
+}
+
+.city-admin-applications li > span:first-child {
+  flex: 1 1 100%;
+  font-weight: 600;
+}
+
+.city-admin-status {
+  padding: 0.1rem 0.6rem;
+  border: 1px solid var(--product-border);
+  border-radius: 999px;
+  color: var(--product-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.city-admin-status--declined,
+.city-admin-status--withdrawn {
+  border-color: currentColor;
+  color: var(--product-danger);
+}
+
+.city-admin-nojs {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--product-border);
+  border-radius: 8px;
+  background: var(--product-surface-muted);
+  color: var(--product-text);
+}
+
+.city-admin-date {
+  color: var(--product-text-muted);
+  font-size: 0.9rem;
+}

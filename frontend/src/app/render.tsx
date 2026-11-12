@@ -13,7 +13,7 @@ import { loadDetailHead, loadSeries, selectOccurrence, seriesNavigation, seriesP
 import type { DetailBootstrap, DetailSeries } from './detail-route';
 import { catalog } from './i18n';
 import { ttlCache } from './server-cache';
-import { listingProps, listingQuery, loadListingPage } from './listing';
+import { listingProps, listingQuery, loadCityAdminStatus, loadListingPage } from './listing';
 import type { ListingBootstrap } from './listing';
 import { loadOrganization } from './organization';
 import type { OrganizationBootstrap } from './organization';
@@ -29,6 +29,7 @@ import { PrideDetails, prideCopy, prideRoute } from './PrideScreen';
 import CampaignScreen from './CampaignScreen';
 import FundraisingScreen from './FundraisingScreen';
 import ContactScreen from './ContactScreen';
+import CityAdminApplyScreen from './CityAdminApplyScreen';
 import OrganizationFillScreen from './OrganizationFillScreen';
 import SuggestChangeScreen from './SuggestChangeScreen';
 import ApiDocsScreen from './ApiDocsScreen';
@@ -74,7 +75,7 @@ export type RenderInput = {
   headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; organizationFill?: string; suggestChange?: string; status?: string; pride?: string; information?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; cityAdmin?: string; organizationFill?: string; suggestChange?: string; status?: string; pride?: string; information?: string };
 
 export type RenderResult = {
   status: number;
@@ -102,6 +103,9 @@ const DETAIL_STYLESHEET = '/static/css/public-detail.css?v=20261110-detail-butto
  */
 const HOME_CACHE_TTL_MS = 30_000;
 const HOME_TIMEOUT_MS = 1200;
+/** Opts the home page and the listings into the cross-document transition
+ * between them. Pages without it navigate normally. */
+const PAGE_TRANSITION_STYLESHEET = '<link rel="stylesheet" href="/static/css/page-transition.css?v=20261112-1">';
 const homeBatches = ttlCache<HomeData>(HOME_CACHE_TTL_MS, 4);
 
 function validHomeData(value: unknown): value is HomeData {
@@ -205,7 +209,7 @@ ${options.jsonLd ? `<script type="application/ld+json">${serialize(options.jsonL
 <noscript><link rel="stylesheet" href="/static/fa/css/all.css"></noscript>
 <link rel="preload" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" as="style" crossorigin onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" crossorigin></noscript>
-<link rel="stylesheet" href="/static/css/home.css?v=20261111-continuation-2">
+<link rel="stylesheet" href="/static/css/home.css?v=20261112-quick-picks">
 <link rel="stylesheet" href="/static/css/product-tokens.css?v=20261110-pride-contrast-1">
 <link rel="stylesheet" href="/static/css/user-workspace.css?v=20261110-user-workspace-7">
 <link rel="stylesheet" href="/static/css/public-header.css?v=20261027-react-header-1">
@@ -413,6 +417,15 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       serverPage={<OrganizationFillScreen profile={organizationFill} />} />);
   }
 
+  if (route.name === 'city-admin') {
+    headers['Cache-Control'] = 'private, no-store';
+    extraHead = (assets.cityAdmin ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    // The page renders its own no-JavaScript fallback inside the form card.
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<CityAdminApplyScreen session={session} />} />);
+  }
+
   if (route.name === 'contact') {
     headers['Cache-Control'] = 'private, no-store';
     // The form uses the shared .detail-button contract.
@@ -542,7 +555,10 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       + `</article></noscript>`;
   }
 
-  if (route.name === 'home') home = await loadHomeBatch(readBase, config.locale);
+  if (route.name === 'home') {
+    home = await loadHomeBatch(readBase, config.locale);
+    extraHead = PAGE_TRANSITION_STYLESHEET;
+  }
   if (calendarRoute) {
     const data = await calendarRead;
     const search = new URLSearchParams(input.search ?? '');
@@ -609,11 +625,16 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   if (route.name === 'listing') {
     const props = listingProps(route, config, session);
     const query = listingQuery(route, input.search ?? '', config.locale);
-    listing = { query: input.search ?? '', page: await loadListingPage(readBase, query) };
+    const recruitingCity = route.scope === 'city' ? findCity(route.value!)?.key : undefined;
+    const [page, cityAdminStatus] = await Promise.all([
+      loadListingPage(readBase, query),
+      recruitingCity ? loadCityAdminStatus(readBase, recruitingCity) : Promise.resolve(undefined),
+    ]);
+    listing = { query: input.search ?? '', page, ...(cityAdminStatus ? { cityAdminStatus } : {}) };
     meta = { title: `${props.title} | Mielenosoitukset.fi`, description: props.title,
       canonical: `${config.origin}${input.path}`, robots: 'index, follow' };
     extraHead = '<link rel="stylesheet" href="/static/vendor/flatpickr/4.6.13/flatpickr.min.css">'
-      + (assets.listing ?? '');
+      + PAGE_TRANSITION_STYLESHEET + (assets.listing ?? '');
     noscript = `<noscript><p class="container-main-content">Lista avautuu JavaScriptillä. `
       + `<a href="${escapeHtml(props.rssUrl!)}">RSS</a> · <a href="/calendar/">Kalenteri</a></p></noscript>`;
   }

@@ -23,6 +23,7 @@ from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo
 from mielenosoitukset_fi.utils.case_access import (
     case_scope_query, can_access_case, global_case_permission,
 )
+from mielenosoitukset_fi.utils import city_admin_applications as applications
 
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.logger import logger
@@ -104,6 +105,7 @@ def _case_type_label(case_type):
         "demo_cancellation_request": _("Peruutuspyyntö"),
         "demo_cancelled": _("Peruttu mielenosoitus"),
         "support_ticket": _("Tukipyyntö"),
+        "city_admin_application": _("Kaupunkiadminhakemus"),
     }
     return labels.get(case_type, str(case_type).replace("_", " ").capitalize())
 
@@ -219,6 +221,10 @@ def _build_case_row(case_obj, demo_doc=None, org_doc=None):
         description = (case_obj.suggestion or {}).get("message") or _("Ei viestiä")
         meta_line = submitter.get("submitter_email") or submitter.get("email") or _("Ei ilmoittajaa")
         title = _("Tukipyyntö: {subject}").format(subject=ticket_subject[:100]) if ticket_subject else _("Tukipyyntö")
+    elif case_obj.case_type == "city_admin_application":
+        title = _("Kaupunkiadminhakemus")
+        description = ", ".join(applications.city_names((case_obj.meta or {}).get("city_keys")))
+        meta_line = submitter.get("submitter_name") or ""
     else:
         title = _case_type_label(case_obj.case_type)
         description = _("Ei lisatietoja")
@@ -492,6 +498,25 @@ def single_case(case_id):
             org = mongo.organizations.find_one({"_id": _safe_objectid(case.organization_id)})
             case_data["organization"] = stringify_object_ids(org) if org else {}
 
+    elif case.case_type == applications.CASE_TYPE:
+        application = mongo.city_admin_applications.find_one({"_id": _safe_objectid((case.meta or {}).get("application_id"))})
+        if application:
+            activism = application.get("activism") or {}
+            case_data["application"] = {
+                "status": application.get("status"),
+                "status_label": applications.STATUS_LABELS.get(application.get("status"), application.get("status")),
+                "cities": applications.city_names(application.get("city_keys")),
+                "about": application.get("about") or "",
+                "active_cities": applications.city_names(activism.get("cities")),
+                "organizations": activism.get("organizations") or "",
+                "experience": applications.EXPERIENCE_LABELS.get(activism.get("experience"), "-"),
+                "experience_details": activism.get("experience_details") or "",
+                "references": application.get("references") or "",
+                "created_at": application.get("created_at"),
+                "user_id": str(application.get("user_id") or ""),
+                "decision_statuses": [(key, applications.STATUS_LABELS[key]) for key in applications.DECISION_STATUSES],
+            }
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}cases/case.html",
         case=case,
@@ -557,7 +582,7 @@ def link_demo(case_id):
         return redirect(url_for("admin_case.single_case", case_id=case_id))
 
     if not global_case_permission(current_user, "EDIT_CASE"):
-        scoped_demo_ids = case_scope_query(current_user, "EDIT_CASE")["demo_id"]["$in"]
+        scoped_demo_ids = case_scope_query(current_user, "EDIT_CASE")["$or"][0]["demo_id"]["$in"]
         if ObjectId(demo_id) not in scoped_demo_ids:
             abort(403)
 
@@ -716,6 +741,29 @@ def reply_to_ticket(case_id):
 
     log_admin_action_V2(f"{current_user.username} lisäsi vastauksen tukipyynnön {case.running_num} lähetysjonoon ({submitter})", case_id)
     flash_message(_("Vastaus lisätty lähetysjonoon. Toimitusta ei ole vielä vahvistettu."), "success")
+    return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+
+@admin_case_bp.route("/<case_id>/application_status/", methods=["POST"])
+@login_required
+@admin_required
+@case_permission("EDIT_CASE", allow_city=True)
+def set_application_status(case_id):
+    """Record a decision. Local city admins can comment but only global admins decide."""
+    if not global_case_permission(current_user, "EDIT_CASE"):
+        abort(403)
+    case = Case.get(case_id)
+    if not case or case.case_type != applications.CASE_TYPE:
+        abort(404)
+    status = request.form.get("status", "")
+    if status not in applications.DECISION_STATUSES:
+        flash_message(_("Tuntematon tila."), "warning")
+        return redirect(url_for("admin_case.single_case", case_id=case_id))
+    if not applications.set_status(mongo, case._id, status, current_user.username):
+        flash_message(_("Hakemusta ei löytynyt tai se on peruttu."), "error")
+        return redirect(url_for("admin_case.single_case", case_id=case_id))
+    log_admin_action_V2(f"{current_user.username} asetti kaupunkiadminhakemuksen tilaksi {status}", case_id)
+    flash_message(_("Hakemuksen tila päivitetty."), "success")
     return redirect(url_for("admin_case.single_case", case_id=case_id))
 
 

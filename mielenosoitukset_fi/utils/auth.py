@@ -104,6 +104,16 @@ def _verify_token(token: str) -> Tuple[Optional[dict], int]:
         return None, 0
 
 
+def _purpose_allows(data, purpose: str) -> bool:
+    """Reject a token minted for another purpose.
+
+    Links issued before the ``purpose`` claim existed carry none and stay valid
+    until they expire (one hour), so deploying this breaks no pending email.
+    """
+    claimed = (data or {}).get("purpose")
+    return claimed is None or claimed == purpose
+
+
 def generate_reset_token(email: str) -> str:
     """
     Generate a password reset token for the given email address.
@@ -118,7 +128,7 @@ def generate_reset_token(email: str) -> str:
     str
         The generated JWT token.
     """
-    return _generate_token({"email": email}, 3600)
+    return _generate_token({"email": email, "purpose": "password_reset"}, 3600)
 
 
 def verify_reset_token(token: str) -> Optional[str]:
@@ -136,7 +146,7 @@ def verify_reset_token(token: str) -> Optional[str]:
         The email address if the token is valid, None otherwise.
     """
     data, status = _verify_token(token)
-    if status == 1:
+    if status == 1 and _purpose_allows(data, "password_reset"):
         return data.get("email")
     return None
 
@@ -156,7 +166,7 @@ def generate_confirmation_token(email: str) -> str:
         The generated JWT token.
     """
     # Use 3600 seconds (1 hour) for expiration, as _generate_token expects seconds (int)
-    return _generate_token({"email": email}, 3600)
+    return _generate_token({"email": email, "purpose": "email_confirmation"}, 3600)
 
 
 def verify_confirmation_token(token: str) -> Optional[str]:
@@ -174,6 +184,6 @@ def verify_confirmation_token(token: str) -> Optional[str]:
         The email address associated with the token if the token is valid, otherwise None.
     """
     data, status = _verify_token(token)
-    if status == 1 and data and isinstance(data, dict):
+    if status == 1 and data and isinstance(data, dict) and _purpose_allows(data, "email_confirmation"):
         return data.get("email")
     return None

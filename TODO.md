@@ -75,7 +75,7 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 
 - [ ] **SEC-01:** release acceptance evidence for the MFA challenge (#901).
 - [ ] **SEC-03:** broader role and audit acceptance after #917/#918/#919.
-- [ ] **SEC-04:** token and approval lifecycle: revocation, expiry, replay, idempotent decisions.
+- [x] **SEC-04:** token and approval lifecycle: revocation, expiry, replay, idempotent decisions. Inventory and open questions in [docs/token-lifecycle.md](docs/token-lifecycle.md).
 - [ ] **SEC-05:** review incident #912/#913 protections before touching related code.
 - [ ] Harden privileged admin user actions (#547), organization membership and invites (#550, #342), and the organization admin panel (#549).
 - [ ] **QA-01:** finish the individual review of authentication and permission tests. QA-01j (#966) and QA-01k (#973 via #964) are merged; #1114 (supersedes #979) carries the identity audit, QA-01m. Remaining: other authentication and permission test files, see the roadmap.

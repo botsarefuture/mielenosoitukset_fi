@@ -1777,6 +1777,33 @@ def init_routes(app):
         )
 
 
+    import re as _auth_re  # `re` is rebound later in this function
+    AUTH_BRIDGE_PERMISSION = _auth_re.compile(r"[A-Z][A-Z0-9_]{1,63}")
+
+    def _add_auth_bridge_scopes(payload, organization_scope):
+        """Read-only scopes for the Go/React auth bridge (docs/auth-bridge.md).
+
+        Only active with AUTH_BRIDGE_SCOPES. They answer about the caller's own
+        session: boolean results for up to ten named permissions, and whether an
+        anonymous visitor has a pending flash message for an organization page.
+        Nothing here consumes a flash message or changes the session.
+        """
+        payload["auth_bridge"] = True
+        requested = request.args.getlist("permission")
+        if requested:
+            names = sorted({name for name in requested if AUTH_BRIDGE_PERMISSION.fullmatch(name)})[:10]
+            org_oid = ObjectId(organization_scope[0]) if organization_scope else None
+            payload["permissions"] = {
+                name: bool(current_user.is_authenticated and current_user.has_permission(name, org_oid))
+                if org_oid else bool(current_user.is_authenticated and current_user.has_permission(name))
+                for name in names
+            }
+        if organization_scope and not current_user.is_authenticated:
+            payload["organization"] = {
+                "id": organization_scope[0],
+                "has_messages": bool(session.get("_flashes")),
+            }
+
     @app.route("/api/session")
     def public_session_summary():
         """Account summary for the standalone React public host.
@@ -1869,6 +1896,8 @@ def init_routes(app):
                         )
                     },
                 }
+        if current_app.config.get("AUTH_BRIDGE_SCOPES", False):
+            _add_auth_bridge_scopes(payload, organization_scope)
         if request.args.get("contact_form") == "1":
             from flask import get_flashed_messages
 

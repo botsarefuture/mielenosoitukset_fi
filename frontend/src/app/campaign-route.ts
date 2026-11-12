@@ -5,7 +5,7 @@ export const campaignPath = '/kampanja/';
 
 export const campaignCopy = {
   title: 'Yhdessä näkyväksi – Mielenosoitukset.fi',
-  description: 'Tule tekemään mielenosoitukset.fi-palvelua tunnetuksi. Voit auttaa omalla paikkakunnallasi tai verkossa.',
+  description: 'Tule tekemään Mielenosoitukset.fi-palvelua tunnetuksi. Voit auttaa omalla paikkakunnallasi tai verkossa.',
   image: '/static/kampanja/og-banner.png',
 };
 

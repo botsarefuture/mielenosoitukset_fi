@@ -153,7 +153,7 @@ export function routeMeta(route: AppRoute, config: AppConfig, text: Catalog): Ro
   }
   if (route.name === 'fundraising') {
     return { title: 'Pienkeräys – Mielenosoitukset.fi',
-      description: 'Suunnittelemme 2 500 euron pienkeräystä, jotta yhä useampi löytäisi mielenosoitukset.fi-palvelun. Tutustu suunnitelmaan.',
+      description: 'Suunnittelemme 2 500 euron pienkeräystä, jotta yhä useampi löytäisi Mielenosoitukset.fi-palvelun. Tutustu suunnitelmaan.',
       robots: 'index, follow', canonical: `${config.origin}/ker%C3%A4ys` };
   }
   if (route.name === 'campaign') {

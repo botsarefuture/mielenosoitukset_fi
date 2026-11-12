@@ -19,7 +19,7 @@ export function AboutContent({ campaign = false }: { campaign?: boolean }) {
       <i className="fa-solid fa-bullhorn about-campaign__icon" aria-hidden="true" />
       <div>
         <h2 id="about-campaign-title">Tule mukaan valtakunnalliseen kampanjaan</h2>
-        <p>Tule mukaan levittämään tietoa mielenosoitukset.fi:stä kaikkialle Suomeen. Rahoita kampanjaa, levitä markkinointimateriaaleja, tule vapaaehtoiseksi tai jaa tietoa sosiaalisessa mediassa.</p>
+        <p>Tule mukaan levittämään tietoa Mielenosoitukset.fi:stä kaikkialle Suomeen. Rahoita kampanjaa, levitä markkinointimateriaaleja, tule vapaaehtoiseksi tai jaa tietoa sosiaalisessa mediassa.</p>
         <div className="detail-actions">
           <a className="detail-button detail-button--primary" href="/kampanja/">Tutustu kampanjaan</a>
           <a className="detail-button" href="/kampanja/#vapaaehtoiseksi">Tule vapaaehtoiseksi</a>

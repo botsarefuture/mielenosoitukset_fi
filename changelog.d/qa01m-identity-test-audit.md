@@ -1,0 +1,1 @@
+- Strengthen identity regression tests (wrong-password rejection, normalized and legacy MFA preflights, canonical uniqueness, duplicate-email registration) and individually assess the existing identity tests. Tests and documentation only; authentication behavior is unchanged.

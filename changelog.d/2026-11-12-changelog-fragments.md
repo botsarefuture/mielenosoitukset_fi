@@ -1,0 +1,1 @@
+- Keep new change notes in separate files and render them together with the historical changelog, reducing conflicts between pull requests.

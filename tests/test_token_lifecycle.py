@@ -4,6 +4,7 @@ One test per documented behaviour in docs/token-lifecycle.md: expiry, replay,
 revocation and repeated decisions for each bearer link.
 """
 
+import hashlib
 from datetime import timedelta
 
 import jwt
@@ -164,7 +165,7 @@ def test_reset_token_is_single_use(client, db, seeded_data):
         data={"password": new_password, "password_confirm": new_password},
     )
     assert first.status_code == 302
-    assert db.used_password_change_tokens.count_documents({"token": token}) == 1
+    assert db.used_password_change_tokens.count_documents({"token_hash": hashlib.sha256(token.encode()).hexdigest()}) == 1
     before = db.users.find_one({"email": "alice@example.test"})["password_hash"]
 
     other = "Another-Strong-Passphrase-9!"
@@ -174,7 +175,7 @@ def test_reset_token_is_single_use(client, db, seeded_data):
     )
     assert replay.status_code == 302
     assert db.users.find_one({"email": "alice@example.test"})["password_hash"] == before
-    assert db.used_password_change_tokens.count_documents({"token": token}) == 1
+    assert db.used_password_change_tokens.count_documents({"token_hash": hashlib.sha256(token.encode()).hexdigest()}) == 1
 
 
 def test_expired_and_garbage_reset_tokens_change_nothing(app, client, db):
@@ -302,3 +303,54 @@ def test_failed_cancellation_releases_the_link(client, db, seeded_data, monkeypa
             pass
     client.post(f"/cancel_demonstration/{seeded_data['cancel_token']}", data={"reason": "x"})
     assert db.demo_cancellation_tokens.find_one({})["used_at"] is None
+
+def test_reset_token_is_stored_hashed_and_legacy_rows_are_still_honoured(
+    app, client, db, seeded_data
+):
+    token = seeded_data["reset_token"]
+    password = "Zq7-correct-horse-battery-staple"
+    client.post(
+        f"/users/auth/password_reset/{token}",
+        data={"password": password, "password_confirm": password},
+    )
+    row = db.used_password_change_tokens.find_one({})
+    assert "token" not in row and row["password_change_success"] is True
+    assert not db.password_changes.find_one({"token": {"$exists": True}})
+
+    # A raw row written before hashing existed still blocks reuse, and is
+    # rewritten to a hash when it is met.
+    legacy = _expired_jwt(app, {"email": "alice@example.test"}).replace("a", "b", 1)
+    db.used_password_change_tokens.insert_one({"token": legacy, "email": "x"})
+    client.get(f"/users/auth/password_reset/{legacy}")
+    migrated = db.used_password_change_tokens.find_one({"email": "x"})
+    assert "token" not in migrated and "token_hash" in migrated
+
+
+def test_claimed_reset_token_blocks_a_second_submission(
+    client, db, seeded_data, monkeypatch
+):
+    from importlib import import_module
+
+    token = seeded_data["reset_token"]
+    # Simulate the race: both requests passed the "already used" read, the
+    # other one has since claimed the token. Only the unique claim stops us.
+    for name in ("mielenosoitukset_fi.users.BPs.auth", "users.BPs.auth"):
+        try:
+            monkeypatch.setattr(
+                import_module(name), "_reset_token_spent", lambda *a, **k: False
+            )
+        except ImportError:
+            pass
+    db.used_password_change_tokens.insert_one(
+        {
+            "token_hash": hashlib.sha256(token.encode()).hexdigest(),
+            "password_change_success": False,
+        }
+    )
+    before = db.users.find_one({"email": "alice@example.test"})["password_hash"]
+    password = "Zq7-correct-horse-battery-staple"
+    client.post(
+        f"/users/auth/password_reset/{token}",
+        data={"password": password, "password_confirm": password},
+    )
+    assert db.users.find_one({"email": "alice@example.test"})["password_hash"] == before

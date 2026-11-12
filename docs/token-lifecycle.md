@@ -54,3 +54,10 @@ are covered in `tests/test_demo_decision_service.py`.
    `invited_at` on each invitation (schema).
 
 Related: incident #912/#913 protections (SEC-05) were not touched by this work.
+
+## Follow-up changes (coordinator answers, 12 November 2026)
+
+- Suggestions: decided suggestions refuse a second decision; other fields of an applied suggestion can still be applied (PR 1119).
+- Organization invites: new invitations carry `invited_at` and expire after 30 days; undated ones never expire (PR 1120).
+- Cancellation links: claimed atomically before acting (PR 1121).
+- Password reset: claimed through a unique partial index `token_hash_unique` on `used_password_change_tokens` (revert: `db.used_password_change_tokens.dropIndex("token_hash_unique")` and the code falls back to the read-then-write check only after reverting the PR). Spent tokens are stored as SHA-256 hashes; legacy raw rows are still honoured and rewritten to hashes when met. Back up `used_password_change_tokens` before the first production start with this code. The visit log in `password_changes` also stores the hash now, not the raw token.

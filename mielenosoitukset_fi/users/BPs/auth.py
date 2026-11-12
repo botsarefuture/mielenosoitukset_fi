@@ -1735,6 +1735,29 @@ def user_profile():
     })
 from datetime import datetime
 
+def _reset_token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _reset_token_spent(token: str, token_hash: str) -> bool:
+    """True if the token was used. Reads hashed rows and legacy raw rows.
+
+    A legacy raw row is rewritten to its hash when met, so raw tokens leave the
+    collection as they are touched; no bulk migration is needed.
+    """
+    used = mongo.used_password_change_tokens
+    if used.find_one({"token_hash": token_hash}):
+        return True
+    legacy = used.find_one({"token": token})
+    if legacy:
+        used.update_one(
+            {"_id": legacy["_id"]},
+            {"$set": {"token_hash": token_hash}, "$unset": {"token": ""}},
+        )
+        return True
+    return False
+
+
 @auth_bp.route("/password_reset/<token>", methods=["GET", "POST"])
 def password_reset(token):
     """
@@ -1743,8 +1766,9 @@ def password_reset(token):
     ip = get_client_ip()
     user_agent = request.headers.get("User-Agent", "")
     
-    # Check if token has already been used
-    if mongo.used_password_change_tokens.find_one({"token": token}):
+    token_hash = _reset_token_hash(token)
+    # Check if token has already been used (hashed rows, or legacy raw rows)
+    if _reset_token_spent(token, token_hash):
         flash_message(
             "Tämä salasanan palautuslinkki on jo käytetty.", "warning"
         )
@@ -1753,7 +1777,7 @@ def password_reset(token):
     email = verify_reset_token(token)
 
     log_entry = {
-        "token": token,
+        "token_hash": token_hash,
         "email": email or None,
         "datetime": utcnow(),
         "ip": ip,
@@ -1801,21 +1825,34 @@ def password_reset(token):
             flash_message("Salasana ei täytä vaatimuksia.", "warning")
             return redirect(url_for("users.auth.password_reset", token=token))
 
+        # Claim the token before changing anything: the unique index on
+        # token_hash lets exactly one of two simultaneous submissions proceed.
         try:
-            user._change_password(password)
-            log_entry["changed"] = True
-            mongo.password_changes.insert_one(log_entry)
-
-            # Mark token as used
             mongo.used_password_change_tokens.insert_one({
-                "token": token,
+                "token_hash": token_hash,
                 "email": email,
                 "used_at": utcnow(),
                 "ip": ip,
                 "user_agent": user_agent,
-                "password_change_success": True
+                "password_change_success": False
             })
+        except DuplicateKeyError:
+            flash_message("Tämä salasanan palautuslinkki on jo käytetty.", "warning")
+            return redirect(url_for("users.auth.password_reset_request"))
+
+        try:
+            user._change_password(password)
+            log_entry["changed"] = True
+            mongo.password_changes.insert_one(log_entry)
+            mongo.used_password_change_tokens.update_one(
+                {"token_hash": token_hash},
+                {"$set": {"password_change_success": True}},
+            )
         except Exception as e:
+            # Release the claim so the link can be retried after a failure.
+            mongo.used_password_change_tokens.delete_one(
+                {"token_hash": token_hash, "password_change_success": False}
+            )
             log_entry["error"] = f"Password change failed: {e}"
             mongo.password_changes.insert_one(log_entry)
             flash_message(f"Salasanan vaihto epäonnistui: {e}", "error")

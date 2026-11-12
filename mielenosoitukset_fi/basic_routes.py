@@ -182,6 +182,14 @@ def ensure_audit_pagination_indexes(database):
 ensure_audit_pagination_indexes(mongo)
 mongo["magic_links"].create_index("token_hash", unique=True, background=True)
 mongo["magic_links"].create_index("demo_id", background=True)
+# Additive. Revert: db.used_password_change_tokens.dropIndex("token_hash_unique")
+mongo["used_password_change_tokens"].create_index(
+    "token_hash",
+    unique=True,
+    partialFilterExpression={"token_hash": {"$type": "string"}},
+    name="token_hash_unique",
+    background=True,
+)
 mongo["cases"].create_index([("demo_id", ASCENDING), ("created_at", DESCENDING)], background=True)
 mongo["demo_attending"].create_index("demo_id", background=True)
 mongo["demo_invites"].create_index("demo_id", background=True)

@@ -1,0 +1,1 @@
+- A simultaneous second city admin application from the same user now gets the same "you already have an open application" answer, once the proposed database index exists. Nothing changes until a maintainer creates the index.

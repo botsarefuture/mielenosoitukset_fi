@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -100,5 +102,17 @@ func TestApplicationAcceptsEveryCatalogCityExceptNationalOnes(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s rejected: %v", key, err)
 		}
+	}
+}
+
+func TestApplicationInsertFailureTreatsDuplicateKeyAsOpenApplication(t *testing.T) {
+	duplicate := mongo.WriteException{WriteErrors: mongo.WriteErrors{{Code: 11000, Message: "E11000 duplicate key"}}}
+	status, code, _ := applicationInsertFailure(duplicate)
+	if status != 409 || code != "APPLY_OPEN_EXISTS" {
+		t.Fatalf("duplicate key gave %d %s", status, code)
+	}
+	status, code, _ = applicationInsertFailure(errors.New("network down"))
+	if status != 503 || code != "APPLY_SAVE_FAILED" {
+		t.Fatalf("other error gave %d %s", status, code)
 	}
 }

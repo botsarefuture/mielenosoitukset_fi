@@ -26,6 +26,8 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 - [ ] Secondary tools: `/developer` needs a signed-in session scope. Proposal in [docs/developer-react-proposal.md](docs/developer-react-proposal.md). *(approval: session change)* `/download_material/<id>` is a download redirect and stays in Flask.
 - [ ] Retire the Flask templates each migrated page leaves behind as rollback, once its React page has been stable for a while.
 - [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).
+  - Done (12 November 2026): submit headings without icons, red conflict cancel, one `…` character, no exclamation marks, mielenosoitus instead of tapahtuma in the submit form.
+  - Open: retry buttons differ (calendar and chat use bare buttons, Pride `button-secondary`, others `detail-button`; the calendar does not load `public-detail.css`). The detail page still says tapahtuma in places, but its catalog must match the Flask msgids (`tests/test_public_detail_copy_parity.py`), so changing it needs new msgids and human en/sv translation. Not yet walked in detail: city, organization, fundraising, status, privacy and cancel pages.
 
 ## Move APIs to Go
 

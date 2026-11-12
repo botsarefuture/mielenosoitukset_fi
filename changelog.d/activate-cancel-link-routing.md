@@ -1,0 +1,1 @@
+- The organizer cancellation page (`/cancel_demonstration/<token>`) is now served by the React site. Links, forms and cancelling work as before.

@@ -818,8 +818,7 @@ try {
   } finally {
     globalThis.fetch = cancelFetch;
   }
-  assert(apacheRouting.includes('#RewriteRule "^/cancel_demonstration/[A-Za-z0-9_-]{1,128}$" "http://127.0.0.1:8090$0" [P,L]'));
-  assert(!/^RewriteRule "\^\/cancel_demonstration/m.test(apacheRouting), 'Cancellation routing is prepared, not active');
+  assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/cancel_demonstration/[A-Za-z0-9_-]{1,128}$" "http://127.0.0.1:8090$0" [P,L]'));
   console.log('PASS: cancellation link states, escaping, noindex, Flask POST form and failures');
 
   // Developer panel: the shell is server-rendered, the data is read in the browser from Go.

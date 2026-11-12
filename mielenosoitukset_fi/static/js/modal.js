@@ -162,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
   closeButtons.forEach((button) =>
     button.addEventListener("click", closeModal)
   );
-  overlay.addEventListener("click", closeModal);
+  overlay?.addEventListener("click", closeModal);
 
   // Open modal function
   //function openModal(modalId) {

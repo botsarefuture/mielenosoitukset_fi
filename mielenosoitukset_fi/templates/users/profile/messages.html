@@ -51,7 +51,9 @@ let friend_id_to_name = {};
 let friend_pfp_cache = {};
 
 // --- Socket.IO setup ---
-const socket = io({ withCredentials: true });
+// Gentle, jittered reconnects: after a server restart every open tab would
+// otherwise reconnect at once and trip Apache's mod_evasive limits (#640).
+const socket = io({ withCredentials: true, reconnectionDelay: 2000, reconnectionDelayMax: 60000, randomizationFactor: 0.5 });
 
 socket.on("connect", () => {
     console.log("Socket.IO connected");

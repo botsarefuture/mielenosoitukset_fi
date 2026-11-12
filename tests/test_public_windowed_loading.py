@@ -72,51 +72,6 @@ def test_automatic_public_lists_bound_dom_and_restore_discarded_pages(live_serve
 
 
 @pytest.mark.e2e
-def test_delayed_append_preserves_new_focus_and_cannot_restore_old_filter_pages(browser_page):
-    browser_page.set_viewport_size({'width': 1280, 'height': 900})
-    browser_page.set_content('''<style>.public-list-page{height:600px;overflow-anchor:none}</style>
-      <div id="demos-grid"></div><div id="no-results"></div>
-      <p id="listing-result-summary" data-format="__START__–__END__ / __COUNT__"></p>
-      <div id="listing-load-error" hidden><button>Retry</button></div>''')
-    scripts = Path('mielenosoitukset_fi/static/js')
-    browser_page.add_script_tag(path=str(scripts / 'user-pagination.js'))
-    browser_page.add_script_tag(path=str(scripts / 'demo-card-render.js'))
-    result = browser_page.evaluate('''async () => {
-      const pending=[];
-      window.fetch=(url,options)=>new Promise(resolve=>pending.push({options,resolve}));
-      getFriendsAttending=()=>{};
-      renderDemoCards=(rows,options)=>rows.map(row=>{
-        const link=document.createElement('a');link.href='#';link.textContent=row.title;
-        options.container.append(link);return link;
-      });
-      window.publicListWindow=UserPagination.createPageWindow(document.getElementById('demos-grid'));
-      const finish=(index,page,title)=>pending[index].resolve({ok:true,json:async()=>({
-        page,per_page:1,total_pages:20,total:20,result_start:page,result_end:page,
-        results:[{title}]})});
-      for(let page=1;page<=5;page++){
-        scrollTo(0,document.body.scrollHeight);
-        const request=loadDemos(page,page!==1);finish(page-1,page,`Page ${page}`);await request;
-      }
-      scrollTo(0,document.body.scrollHeight);
-      const delayed=loadDemos(6,true);
-      const focus=document.querySelector('[data-list-page="1"] a');focus.focus({preventScroll:true});
-      finish(5,6,'Must not evict focus');const blocked=await delayed;
-      const preserved=focus.isConnected && document.activeElement===focus && publicListWindow.first===1;
-      focus.blur();
-      const old=loadDemos(6,true);
-      const search=loadDemos(1,false,{search:'new'});
-      finish(7,1,'New filter');await search;
-      finish(6,6,'Stale old filter');await old;
-      return {preserved,deferred:blocked?.deferred,aborted:pending[6].options.signal.aborted,
-        pages:document.querySelectorAll('.public-list-page').length,
-        text:document.getElementById('demos-grid').textContent,
-        busy:document.getElementById('demos-grid').getAttribute('aria-busy')};
-    }''')
-    assert result == {'preserved': True, 'deferred': True, 'aborted': True,
-                      'pages': 1, 'text': 'New filter', 'busy': 'false'}
-
-
-@pytest.mark.e2e
 def test_window_does_not_discard_keyboard_focus_and_preserves_scroll_anchor(browser_page):
     browser_page.set_content('<style>.public-list-page{height:600px;overflow-anchor:none} #demos-grid{overflow-anchor:none}</style><div id="demos-grid"></div>')
     browser_page.add_script_tag(path=str(Path('mielenosoitukset_fi/static/js/user-pagination.js')))

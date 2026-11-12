@@ -2,6 +2,7 @@ import type { AppConfig } from './config';
 import { detailPath } from './detail';
 import type { RouteMeta } from './routes';
 import { ttlCache } from './server-cache';
+import { uploadedImage } from '../lib/event-image';
 
 /**
  * Server-side metadata for one public event.
@@ -76,6 +77,7 @@ type Payload = {
   city: string | null;
   address: string | null;
   previewImage: string | null;
+  uploadedImage: string | null;
 };
 
 const text = (value: unknown): string | null => {
@@ -150,6 +152,7 @@ export function parseDetailPayload(value: unknown): Payload | null {
     city: text(data.city),
     address: text(data.address),
     previewImage: text(data.preview_image),
+    uploadedImage: uploadedImage(data),
   };
 }
 
@@ -223,7 +226,8 @@ export async function loadDetail(
         description,
         robots: noindex ? 'noindex, follow' : 'index, follow',
         canonical,
-        image: absolute(config, payload.previewImage) ?? `${config.origin}/screenshot/${payload.id}`,
+        // An organizer's own picture wins; then the generated preview; else the site default.
+        image: absolute(config, payload.uploadedImage) ?? absolute(config, payload.previewImage) ?? null,
       },
       jsonLd: jsonLd(config, payload, canonical, plainText(payload.description) || FALLBACK_DESCRIPTION),
       parent: payload.parent,

@@ -256,7 +256,7 @@ func (a *API) getSeries(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, mongo.ErrNoDocuments):
 		writeError(w, 404, "series not found")
 	default:
-		log.Print("Series database read failed")
+		log.Printf("Series database read failed (%s)", dbErrorKind(err))
 		writeError(w, 503, "service unavailable")
 	}
 }

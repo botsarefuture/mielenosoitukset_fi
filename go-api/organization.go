@@ -101,10 +101,12 @@ func (a *API) getOrganization(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 400, "invalid query parameters")
 		return
 	}
+	var readErr error
 	if source, ok := a.store.(interface {
 		FindOrganizationJSON(context.Context, bson.ObjectID) ([]byte, error)
 	}); ok {
 		data, err := source.FindOrganizationJSON(r.Context(), id)
+		readErr = err
 		if err == nil {
 			w.Header().Set("Cache-Control", "public, max-age=30, s-maxage=60")
 			writeJSONBytes(w, 200, data)
@@ -118,6 +120,7 @@ func (a *API) getOrganization(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 		profile, err := source.FindOrganization(ctx, id)
+		readErr = err
 		if err == nil {
 			w.Header().Set("Cache-Control", "public, max-age=30, s-maxage=60")
 			writeJSON(w, 200, profile)
@@ -128,6 +131,6 @@ func (a *API) getOrganization(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	log.Print("Organization database read failed")
+	log.Printf("Organization database read failed (%s)", dbErrorKind(readErr))
 	writeError(w, 503, "service unavailable")
 }

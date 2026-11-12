@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- Add `docs/decisions.md`, a log of maintainer decisions and their reasons, and link it from `AGENTS.md` so they don't get lost between sessions.
 - Serialize core and full backups with a shared lock so one run cannot delete the other's unfinished archive, and expire archives named before backup modes existed.
 - Split MongoDB backups into a nightly core dump without the two audit-log collections (most of the database) and a weekly full dump, so nightly runs stay short and light on lc-db.
 - Fix the nightly MongoDB backup failing to authenticate in production: the Mongo tools now use the same authentication database as the app (the URI's `authSource`, else its path, else `admin`) and log mongodump's error to the journal.

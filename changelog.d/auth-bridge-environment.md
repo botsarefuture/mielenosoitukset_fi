@@ -1,0 +1,1 @@
+- Derive the Go sign-in bridge switch from config.yaml so a deploy no longer drops it.

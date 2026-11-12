@@ -159,7 +159,7 @@ Two independent flags, both off by default. With both off nothing changes.
 
 Reading these never consumes a flash message and changes nothing.
 
-**Go (`AUTH_BRIDGE_ENABLED=true`, `go-api/auth_bridge.go`)**
+**Go (`AUTH_BRIDGE_ENABLED=true`, `go-api/auth_bridge.go`; written into `/etc/mielenosoitukset-api/environment` by `deploy/go-api/configure_environment.py` whenever `config.yaml` has `AUTH_BRIDGE_SCOPES: true`)**
 
 - `sessionResolver.Resolve` calls Flask `/api/session` over the Gunicorn socket
   (`AUTH_BRIDGE_ORIGIN`, `AUTH_BRIDGE_SESSION_SOCKET`; they fall back to
@@ -210,10 +210,10 @@ the visual review (SHIP), the flags were turned on in production: backup in
 `/root/auth-bridge-backup-latest` names the newest), `AUTH_BRIDGE_SCOPES: true`
 appended to `config.yaml`, `AUTH_BRIDGE_ENABLED=true` appended to
 `/etc/mielenosoitukset-api/environment`, Gunicorn reloaded and the API restarted
-(no dump running). Verified on the server: `/api/session` returns the new scopes,
+(no dump running). The Go line was lost at the next deploy because the deploy rewrites that file from `config.yaml`; `configure_environment.py` now derives it from `AUTH_BRIDGE_SCOPES`, so `config.yaml` is the only switch. Verified on the server: `/api/session` returns the new scopes,
 `/api/auth/me` returns 200, a cookie goes Go → Flask and comes back anonymous,
-`?organization_id=bad` returns 400. Revert: delete those two lines (or restore the
-backup copies), reload Gunicorn, restart the API.
+`?organization_id=bad` returns 400. Revert: set `AUTH_BRIDGE_SCOPES` to false or delete it in `config.yaml`, reload
+Gunicorn, and re-run the deploy (or restart the API after regenerating the environment).
 
 ## 7. Risks and open points
 

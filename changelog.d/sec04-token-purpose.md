@@ -1,0 +1,1 @@
+- Password reset and e-mail confirmation links now carry a purpose, so one can no longer be used as the other. Links already sent keep working until they expire.

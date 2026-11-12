@@ -155,7 +155,7 @@ export default function CityAdminApplyScreen({ session, apiBase }: { session: Se
       const data = await response.json().catch(() => ({}));
       if (response.ok && data.success) {
         setApplications([{ id: data.id, city_keys: cities, status: 'received', created_at: new Date().toISOString() }, ...applications]);
-        setResult({ kind: 'success', message: 'Kiitos! Hakemuksesi on vastaanotettu. Ylläpito ottaa sinuun yhteyttä.' });
+        setResult({ kind: 'success', message: 'Kiitos, hakemuksesi on vastaanotettu. Ylläpito ottaa sinuun yhteyttä.' });
       } else {
         setResult({ kind: 'error', message: typeof data.message === 'string' ? data.message : 'Hakemusta ei voitu lähettää. Yritä uudelleen.' });
       }

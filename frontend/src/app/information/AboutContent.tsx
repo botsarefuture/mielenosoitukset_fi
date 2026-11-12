@@ -18,7 +18,7 @@ export function AboutContent({ campaign = false }: { campaign?: boolean }) {
     {campaign && <section className="about-campaign" aria-labelledby="about-campaign-title">
       <i className="fa-solid fa-bullhorn about-campaign__icon" aria-hidden="true" />
       <div>
-        <h2 id="about-campaign-title">Tule mukaan valtakunnalliseen kampanjaan!</h2>
+        <h2 id="about-campaign-title">Tule mukaan valtakunnalliseen kampanjaan</h2>
         <p>Tule mukaan levittämään tietoa mielenosoitukset.fi:stä kaikkialle Suomeen. Rahoita kampanjaa, levitä markkinointimateriaaleja, tule vapaaehtoiseksi tai jaa tietoa sosiaalisessa mediassa.</p>
         <div className="detail-actions">
           <a className="detail-button detail-button--primary" href="/kampanja/">Tutustu kampanjaan</a>
@@ -37,7 +37,7 @@ export function AboutContent({ campaign = false }: { campaign?: boolean }) {
         </section>
         <section className="public-prose-card" aria-labelledby="about-submit-title">
           <h2 id="about-submit-title">Kuinka ilmoitan mielenosoituksesta?</h2>
-          <p>Huomasitko, ettei jokin mielenosoitus vielä ole sivustolla? Voit ilmoittaa siitä itse! Täytä <a href="/submit">ilmoituslomake</a> ja varmista, että kaikki tiedot ovat oikein ja ajankohtaisia. Mielenosoitus näkyy sivustolla heti hyväksynnän jälkeen.</p>
+          <p>Huomasitko, ettei jokin mielenosoitus vielä ole sivustolla? Voit ilmoittaa siitä itse. Täytä <a href="/submit">ilmoituslomake</a> ja varmista, että kaikki tiedot ovat oikein ja ajankohtaisia. Mielenosoitus näkyy sivustolla heti hyväksynnän jälkeen.</p>
           <div className="about-questions">
             <div>
               <h3>Voinko ilmoittaa jonkun muun kuin itseni järjestämän mielenosoituksen?</h3>

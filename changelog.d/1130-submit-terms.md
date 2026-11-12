@@ -1,0 +1,1 @@
+- Submit form: remaining "tapahtuma" wording about the demonstration itself now says "mielenosoitus" (choice heading, helpers, similar-demonstration dialog and the "report another" button), and the thank-you heading no longer ends in a period.

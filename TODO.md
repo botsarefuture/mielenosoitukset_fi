@@ -19,12 +19,15 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 
 - [ ] `/report` error report form. It needs a session-scope token like `/contact`. *(approval: session change)*
 - [x] `/status`: React SSR with read-only Go `/api/status`, bounded cached database check and HTTP 200 on dependency/API failure. Routing prepared; visual acceptance BLOCKED (no socket/browser captures in this sandbox).
-- [ ] Token pages: `/cancel_demonstration/<token>`, `/confirm/<token>`, `/confirm_email/<token>`, `/accept_invite`.
+- [x] Token pages, `/cancel_demonstration/<token>`: React page with a read-only Go `/api/cancellation-links/<token>`; routing prepared but commented out in `deploy/apache/react-ssr-routing.conf` until the maintainer approves.
+- [ ] Token pages that write on GET: `/kampanja/confirm/<token>`, `/auth/confirm_email/<token>` and `/orgs/accept_invite` confirm or join in the GET itself and redirect (login needed for the invite). Moving them needs a decision: split into a React page plus a POST, or keep Flask.
 - [ ] Account pages: login, register and next steps, settings, password reset, forced password and identity change, MFA verification, public profile `/<username>`. *(approval: authentication flows)*
 - [x] `/api-docs/`: build-time Markdown on the React host; OpenAPI YAML stays in Flask (#1068).
 - [ ] Secondary tools: `/developer` needs a signed-in session scope. Proposal in [docs/developer-react-proposal.md](docs/developer-react-proposal.md). *(approval: session change)* `/download_material/<id>` is a download redirect and stays in Flask.
 - [ ] Retire the Flask templates each migrated page leaves behind as rollback, once its React page has been stable for a while.
 - [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).
+  - Done (12 November 2026): submit headings without icons, red conflict cancel, one `…` character, no exclamation marks, mielenosoitus instead of tapahtuma in the submit form.
+  - Open: retry buttons differ (calendar and chat use bare buttons, Pride `button-secondary`, others `detail-button`; the calendar does not load `public-detail.css`). The detail page still says tapahtuma in places, but its catalog must match the Flask msgids (`tests/test_public_detail_copy_parity.py`), so changing it needs new msgids and human en/sv translation. Not yet walked in detail: city, organization, fundraising, status, privacy and cancel pages.
 
 ## Move APIs to Go
 
@@ -74,10 +77,10 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 
 - [ ] **SEC-01:** release acceptance evidence for the MFA challenge (#901).
 - [ ] **SEC-03:** broader role and audit acceptance after #917/#918/#919.
-- [ ] **SEC-04:** token and approval lifecycle: revocation, expiry, replay, idempotent decisions.
+- [x] **SEC-04:** token and approval lifecycle: revocation, expiry, replay, idempotent decisions. Inventory and open questions in [docs/token-lifecycle.md](docs/token-lifecycle.md).
 - [ ] **SEC-05:** review incident #912/#913 protections before touching related code.
 - [ ] Harden privileged admin user actions (#547), organization membership and invites (#550, #342), and the organization admin panel (#549).
-- [ ] **QA-01:** finish the individual review of authentication and permission tests. Open: #979 identity test audit (rebase on `CHANGELOG.md`, then merge), QA-01j, QA-01k.
+- [ ] **QA-01:** finish the individual review of authentication and permission tests. QA-01j (#966) and QA-01k (#973 via #964) are merged; #1114 (supersedes #979) carries the identity audit, QA-01m. Remaining: other authentication and permission test files, see the roadmap.
 
 ## Data, jobs and integrations
 

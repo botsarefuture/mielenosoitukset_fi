@@ -35,9 +35,11 @@ def test_invite_role_normalizes_input_and_matches_legacy_address(admin_client, d
         "organization_id": str(org_id), "email": " Alice@Example.Test ", "role": "member",
     })
     assert response.status_code == 200
-    assert db.organizations.find_one({"_id": org_id})["invitations"] == [
+    stored = db.organizations.find_one({"_id": org_id})["invitations"]
+    assert [{k: v for k, v in i.items() if k != "invited_at"} for i in stored] == [
         {"email": "alice@example.test", "role": "member"},
     ]
+    assert stored[0]["invited_at"] is not None
     response = admin_client.post("/admin/organization/api/cancel_invite/", json={
         "organization_id": str(org_id), "email": " ALICE@example.test ",
     })

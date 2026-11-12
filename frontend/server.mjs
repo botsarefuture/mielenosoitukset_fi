@@ -78,6 +78,7 @@ function assetTags(manifest) {
     organizationFill: routeAssets('src/app/OrganizationFillScreen.tsx'),
     suggestChange: routeAssets('src/app/SuggestChangeScreen.tsx'),
     status: routeAssets('src/app/StatusScreen.tsx'),
+    cancelLink: routeAssets('src/app/CancelLinkScreen.tsx'),
     head: [...css].map((file) => `<link rel="stylesheet" href="/app-assets/${file}">`)
       .concat([...modules].filter((file) => file.endsWith('.js'))
         .map((file) => `<link rel="modulepreload" href="/app-assets/${file}">`)).join('\n'),

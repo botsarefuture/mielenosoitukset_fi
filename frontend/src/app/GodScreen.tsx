@@ -107,7 +107,7 @@ export default function GodScreen() {
   return <section className="god-auth" aria-busy={busy}>
     <h1>God-tilin turvallinen kirjautuminen</h1>
     <p>Kaikki vahvistukset tarvitaan jokaisella kirjautumisella. Kirjautuminen vanhenee 30 minuutissa.</p>
-    {stage === 'loading' ? <p role="status">Ladataan kirjautumista...</p> : <>
+    {stage === 'loading' ? <p role="status">Ladataan kirjautumista…</p> : <>
       <h2 ref={heading} tabIndex={-1}>{setup && stage === 'start' ? 'Ensimmäinen käyttöönotto' : labels[stage]}</h2>
       {loginStages.includes(stage) && <p>Vaihe {loginStages.indexOf(stage) + 1} / 7</p>}
       {error && <p role="alert" className="god-auth-error">{error}</p>}
@@ -135,7 +135,7 @@ export default function GodScreen() {
             <label>Toisen authenticatorin koodi<input name="second" inputMode="numeric" pattern="[0-9]{6}" required /></label>
           </>}
           {['final_secret', 'enroll_secrets'].includes(stage) && <label>Erillinen vahvistussalasana, vähintään 64 merkkiä<input name="secret" type="password" autoComplete={stage === 'enroll_secrets' ? 'new-password' : 'off'} minLength={64} maxLength={4096} required /></label>}
-          <button type="submit" disabled={busy || (['email_link', 'enroll_email'].includes(stage) && !linkToken)}>{busy ? 'Vahvistetaan...' : stage === 'enroll_passkey' ? 'Lisää passkey' : 'Vahvista ja jatka'}</button>
+          <button type="submit" disabled={busy || (['email_link', 'enroll_email'].includes(stage) && !linkToken)}>{busy ? 'Vahvistetaan…' : stage === 'enroll_passkey' ? 'Lisää passkey' : 'Vahvista ja jatka'}</button>
         </form>}
       {stage === 'start' && <button className="god-auth-secondary" type="button" disabled={busy} onClick={() => { setSetup(!setup); setError(''); }}>{setup ? 'Takaisin kirjautumiseen' : 'Ota uusi god-tili käyttöön'}</button>}
       {stage !== 'start' && <a href="/auth/god">Päivitä vahvistuksen tila</a>}

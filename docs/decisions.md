@@ -122,8 +122,9 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   `CITY_ADMIN_APPLICATION_RETENTION_ENABLED` is set; it ships off. The Finnish
   notice is shown on the form (`cityAdminApplyCopy.privacy*` in `i18n.ts`), and the
   numbers there must match `RETENTION_DAYS`. The flag may be switched on after a
-  backup of `city_admin_applications`, with the dry-run count checked first. A
-  matching paragraph on `/privacy` follows in a separate PR.
+  backup of `city_admin_applications`, with the dry-run count checked first. The
+  same numbers are stated in `PrivacyContent.tsx` (`/privacy`, data list and
+  retention section); change all three places together.
 - **Case access (2026-11-11).** City admins' grants include `LIST_CASES`,
   `VIEW_CASE` and `EDIT_CASE`. The 2026-11-11 update is tagged
   `case_access_granted_for: issue-778`, so it can be reverted in one update.

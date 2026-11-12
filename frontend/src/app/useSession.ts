@@ -15,8 +15,12 @@ type Options = {
 
 /** The fields the Go answer is allowed to replace; everything else keeps the server-rendered value. */
 export function mergeBridgeSession(initial: SessionSummary, fresh: SessionSummary): SessionSummary {
+  // Signed-in-only extras must not outlive a sign-out seen by the fresh answer.
+  const signedOut = !fresh.authenticated;
   return {
     ...initial,
+    ...(signedOut ? { translationJoin: undefined, submission: initial.submission
+      ? { ...initial.submission, canEditDemo: false } : undefined } : {}),
     authenticated: fresh.authenticated, role: fresh.role, name: fresh.name, picture: fresh.picture,
     globalAdmin: fresh.globalAdmin, hasAdminAccess: fresh.hasAdminAccess, unread: fresh.unread,
     organization: fresh.organization,

@@ -274,3 +274,29 @@ func TestRequireWrappersDenyByDefault(t *testing.T) {
 		}
 	}
 }
+
+func TestRequirePermissionRefusesMalformedOrganizationInsteadOfWidening(t *testing.T) {
+	config, _ := fakeFlask(t, flaskAnswer)
+	resolver, _ := newSessionResolver(config)
+	reached := false
+	ok := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { reached = true })
+	h := resolver.RequirePermission("EDIT_DEMO", func(*http.Request) string { return strings.ToUpper(testOrg) }, ok)
+	if w := get(h, "/x", "session=member"); w.Code != 400 || reached {
+		t.Fatalf("got %d reached=%v", w.Code, reached)
+	}
+}
+
+func TestCachedPrincipalCannotBeChangedByCallers(t *testing.T) {
+	config, _ := fakeFlask(t, flaskAnswer)
+	config.CacheTTL = time.Second
+	resolver, _ := newSessionResolver(config)
+	r := httptest.NewRequest("GET", "/", nil)
+	r.Header.Set("Cookie", "session=member")
+	scope := authScope{Permissions: []string{"EDIT_DEMO"}}
+	first, _ := resolver.Resolve(r.Context(), r, scope)
+	first.Permissions["EDIT_DEMO"] = false
+	second, _ := resolver.Resolve(r.Context(), r, scope)
+	if !second.Has("EDIT_DEMO") {
+		t.Fatal("cached answer was changed through a returned map")
+	}
+}

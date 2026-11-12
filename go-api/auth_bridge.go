@@ -24,7 +24,6 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -141,6 +140,27 @@ func (p Principal) Has(permission string) bool {
 	return p.Authenticated && p.Permissions[permission]
 }
 
+// clone copies the maps so a handler cannot change a cached answer.
+func (p Principal) clone() Principal {
+	copyMap := func(m map[string]bool) map[string]bool {
+		if m == nil {
+			return nil
+		}
+		out := make(map[string]bool, len(m))
+		for k, v := range m {
+			out[k] = v
+		}
+		return out
+	}
+	p.Permissions = copyMap(p.Permissions)
+	if p.Organization != nil {
+		o := *p.Organization
+		o.Permissions = copyMap(o.Permissions)
+		p.Organization = &o
+	}
+	return p
+}
+
 var anonymousPrincipal = Principal{Role: "guest"}
 
 type authCacheEntry struct {
@@ -196,7 +216,7 @@ func (r *sessionResolver) Resolve(ctx context.Context, request *http.Request, sc
 		entry, ok := r.cache[key]
 		r.mu.Unlock()
 		if ok && r.now().Before(entry.expires) {
-			return entry.principal, nil
+			return entry.principal.clone(), nil
 		}
 	}
 	principal, err := r.fetch(ctx, request, cookie, scope)
@@ -208,7 +228,7 @@ func (r *sessionResolver) Resolve(ctx context.Context, request *http.Request, sc
 		if len(r.cache) >= authBridgeMaxCacheItems {
 			r.cache = map[string]authCacheEntry{}
 		}
-		r.cache[key] = authCacheEntry{principal, r.now().Add(r.ttl)}
+		r.cache[key] = authCacheEntry{principal.clone(), r.now().Add(r.ttl)}
 		r.mu.Unlock()
 	}
 	return principal, nil
@@ -366,13 +386,18 @@ func (r *sessionResolver) RequireAuthenticated(next http.Handler) http.Handler {
 }
 
 // RequirePermission runs next only when Flask says the signed-in account has
-// the permission, optionally within the organization that organizationID
-// returns for the request (empty for a global check).
+// the permission. With organizationID the check is for that organization; a
+// non-empty id that is not 24 lowercase hex characters is refused (400), never
+// widened. Without an id, Flask answers "in any organization or globally".
 func (r *sessionResolver) RequirePermission(permission string, organizationID func(*http.Request) string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
 		scope := authScope{Permissions: []string{permission}}
 		if organizationID != nil {
 			scope.OrganizationID = organizationID(request)
+			if scope.OrganizationID != "" && !authObjectID.MatchString(scope.OrganizationID) {
+				authDenied(w, http.StatusBadRequest, "invalid organization")
+				return
+			}
 		}
 		withPrincipal, ok := r.resolveFor(w, request, scope)
 		if !ok {
@@ -456,7 +481,7 @@ func authBridgeHandlerWith(next http.Handler, resolver *sessionResolver) http.Ha
 			scope.OrganizationID = orgs[0]
 		}
 		for _, name := range scope.Permissions {
-			if !authPermissionName.MatchString(strings.TrimSpace(name)) {
+			if !authPermissionName.MatchString(name) {
 				writeError(w, http.StatusBadRequest, "invalid permission name")
 				return
 			}

@@ -64,11 +64,11 @@ for signed-in users, with `Cache-Control: no-store` and `Vary: Cookie`. Scopes:
 
 | Scope | Returns |
 | --- | --- |
-| `organization_id=<id>` (one) | signed-in only: following, invited, `has_messages`, four organization permissions |
+| `organization_id=<id>` (one) | signed-in: following, invited, `has_messages`, four organization permissions. With `AUTH_BRIDGE_SCOPES`, anonymous visitors get `{id, has_messages}` only |
 | `translation_join=1` | signed-in only: join state, nonce, flashes (consumes them) |
 | `contact_form=1` | anyone: one-time token, flashes (consumes them), limits; may set the cookie |
 
-It never returns the cookie, email, a permission list or private records.
+It never returns the cookie, email or private records. With `AUTH_BRIDGE_SCOPES` it also answers named permissions as booleans for the caller's own account (at most 10).
 
 ### Consumers today
 
@@ -171,7 +171,7 @@ Reading these never consumes a flash message and changes nothing.
   permission that was not asked for is false.
 - `GET /api/auth/me[?organization_id=…&permission=…]` is the browser-facing
   answer, in `/api/session` field names, without `actor_id`. No CORS header,
-  `no-store`, `Vary: Cookie`, refuses `Sec-Fetch-Site: cross-site`.
+  `no-store`, `Vary: Cookie`, refuses any `Sec-Fetch-Site` other than `same-origin` or `none`.
 - Optional per-cookie cache `AUTH_BRIDGE_CACHE_TTL_SECONDS` (0 to 5, default 0).
   Revocation can lag by that long when set.
 - Flask cookies are never parsed, copied, stored or set by Go.
@@ -203,6 +203,14 @@ Reading these never consumes a flash message and changes nothing.
 4. Before activation take a backup of `config.yaml` and the Go environment file.
 
 ## 7. Risks and open points
+
+- `has_messages` is true for any pending flash in the visitor's session, not only
+  one meant for the organization page, so the page may show and consume another
+  page's message. This is existing behaviour for signed-in members, now shared by
+  anonymous visitors. Scoping flashes by page is open.
+- `RequirePermission` without an organization id means "in any organization or
+  globally" (Flask's rule). Give it an id callback for organization routes; a
+  malformed id is refused with 400 rather than widened.
 
 - Each Go request that needs identity costs one Flask call. Keep it to handlers
   that need it; do not add the middleware to public cached routes.

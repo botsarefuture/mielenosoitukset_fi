@@ -42,6 +42,47 @@ All colours and the background live in `PreviewTheme`. A theme's `background`
 callable can return any image, so a future organizer-supplied template can
 reuse the text layout without changing the renderer.
 
+## Which picture is shown
+
+A picture the organizer uploaded always wins over the generated preview. Event
+cards (Go `cardImage` in `go-api/cards.go`, React `imageCandidates`) and the
+detail page's `og:image` (`frontend/src/app/detail-route.ts`, `uploadedImage`)
+use the first image from `gallery_images`, `images`, `img`, `cover_picture` or
+`cover_image` that is not a generated preview. Generated previews are the
+`DEM/demo_preview-N` CDN objects and the legacy `/static/demo_preview/` files;
+uploads are stored as `DEM/demo_pics-N`. Without an upload, `preview_image` is
+used, and without either the site default `og-default.jpg`.
+
+Older events have a generated preview copied into `cover_picture`, which made
+cards keep showing an outdated square image. Those copies no longer count as
+covers.
+
+## Regenerating existing images
+
+On 11 November 2026, all 638 events were regenerated in production (638 done,
+0 failed, 0 skipped). Every upload got a new CDN key, and no old object was
+overwritten or deleted. The backups are on the production host in
+`/var/backups/mielenosoitukset/`:
+
+- `preview_image_backup_2026-11-11.jsonl`: one line per regenerated event,
+  holding its `_id` and its `old` and `new` URLs;
+- `image_fields_snapshot_2026-11-11.json`: `preview_image`, `cover_picture`,
+  `img` and `cover_source` for every event and recurring series, taken after
+  the run;
+- copies of `scripts/regenerate_preview_images.py` (the throttled run) and `scripts/restore_preview_images.py`.
+
+To revert, run the restore script. Without `--apply` it is a dry run that only
+reports what it would change. It skips any event whose `preview_image` has
+changed since the run:
+
+```bash
+cd /var/www/mielenosoitukset_fi
+sudo -u www-data env PYTHONPATH=. python3 /var/backups/mielenosoitukset/restore_preview_images.py \
+  /var/backups/mielenosoitukset/preview_image_backup_2026-11-11.jsonl --apply
+```
+
+Cached detail responses refresh within 15 minutes.
+
 ## Before and after
 
 Sample events rendered with the old template (left) and the new generator (right).

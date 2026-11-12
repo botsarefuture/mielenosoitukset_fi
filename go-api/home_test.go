@@ -122,7 +122,8 @@ func TestMongoHomeResponseContract(t *testing.T) {
 	assertHome("fi", []int{0, 1, 2, 3, 4, 5}, false)
 	query, _ := parseListingQuery("", time.Now())
 	page, err := store.FindListing(ctx, query)
-	if err != nil || len(page.Results) != 8 || page.Results[0]["cover_image"] != "https://example.test/cover.jpg" {
+	// Listings share the home cards' order: uploaded gallery images come first.
+	if err != nil || len(page.Results) != 8 || page.Results[0]["cover_image"] != "https://example.test/gallery.jpg" {
 		t.Fatalf("listing image priority or public visibility changed: %+v %v", page, err)
 	}
 }

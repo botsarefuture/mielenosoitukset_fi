@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { clockLabel } from '../detail/content';
 import type { Demonstration, Friend, ListingProps } from './types';
+import { imageCandidates } from '../../lib/event-image';
 
 /** Server rendering has no location; the render entry supplies the public origin. */
 function pageOrigin() {
@@ -50,8 +51,7 @@ export function DemonstrationCard({ event, props, friends }: {
   const text = props.messages;
   const tags = Array.isArray(event.tags) ? event.tags.filter(tag => typeof tag === 'string') : [];
   const pride = tags.some(tag => tag.toLowerCase() === 'pride');
-  const covers = [...new Set([event.cover_picture, event.cover_image, event.preview_image, event.img]
-    .filter((value): value is string => typeof value === 'string' && value.length > 0))];
+  const covers = imageCandidates(event);
   const href = eventHref(event, props);
   const start = clockLabel(event.start_time_display) || clockLabel(event.start_time);
   const end = clockLabel(event.end_time_display) || clockLabel(event.end_time);

@@ -162,6 +162,46 @@ change. Do not remove the Flask implementation in this migration. Visual
 acceptance: independent reviewer SHIP on 10 November 2026 (#1060), from real
 application captures at 390px/1440px in both themes.
 
+### Organizer cancellation link
+
+`GET /cancel_demonstration/<token>` is rendered by the React host, with its copy in
+`frontend/src/app/cancel-link.ts` (the Flask template's Finnish msgids, without
+icons). **Routing is prepared but not active:** the two Apache lines in
+`deploy/apache/react-ssr-routing.conf` are commented out and need the
+maintainer's approval to enable.
+
+- *Purpose:* lets the host show the page without Flask. It never writes.
+- *Request:* Go `GET /api/cancellation-links/<token>` (GET/HEAD only). Tokens
+  outside `[A-Za-z0-9_-]{1,128}` are answered `invalid` without a database read.
+- *Response:* `state` is `invalid`, `expired`, `used`, `missing-demonstration` or
+  `ready`, resolved in Flask's order: later checks override earlier ones. Only
+  `ready` carries `demo` (`title`, `date` as `dd.mm.yyyy`, `city`, `cancelled`),
+  `cancellation_pending` and `can_cancel_directly`. Never the organizer's
+  email, organization or the token hash.
+- *Authentication:* none; the unguessable token is the credential, as in Flask.
+  Unknown, expired and used tokens all answer 200 with a state, so the status code
+  does not reveal which tokens exist. A failed read is 503 and the host shows its
+  unavailable page, never "link not recognised".
+- *Database:* one read of `demo_cancellation_tokens` by SHA-256 `token_hash`, then
+  one read of `demonstrations` by `_id`. No cache, `Cache-Control: no-store`.
+- *Page:* `private, no-store`, `noindex, nofollow`, no canonical URL, no analytics
+  beacon and `Referrer-Policy: no-referrer`, so the token neither leaks nor is
+  indexed. The session cookie is not sent to the token read.
+- *Writes:* the form posts the unchanged `reason` field to the same URL. Flask keeps
+  token validation, cancelling or requesting cancellation, marking the token used,
+  the flash message and the redirect. A failed POST still re-renders the Flask
+  template, because Apache only claims GET/HEAD.
+
+Not migrated: `/confirm/<token>` (`/kampanja/confirm/<token>`), `/auth/confirm_email/<token>`
+and `/orgs/accept_invite`. Their GET is itself the write (it confirms the email or
+joins the organization) and the last two redirect after login or confirmation, so a
+read-only React page cannot replace them without changing the handler's behaviour;
+see TODO.md.
+
+Rollout: deploy Go, then the host, verify with a real unused token, then ask for
+approval and uncomment both lines. Removing them restores the Flask page; no data
+or session change.
+
 ### Contact page
 
 The Apache include routes GET/HEAD `/contact` to Node. The form posts to Flask

@@ -35,6 +35,8 @@ import SuggestChangeScreen from './SuggestChangeScreen';
 import ApiDocsScreen from './ApiDocsScreen';
 import apiDocs from 'virtual:api-docs';
 import StatusScreen from './StatusScreen';
+import CancelLinkScreen from './CancelLinkScreen';
+import { loadCancelLink, cancelLinkTitle, type CancelLinkState } from './cancel-link';
 import { loadStatus, statusTitle, type ServiceStatus } from './status';
 import { loadSuggestion, suggestionTitle, suggestionLead, type SuggestionDemo } from './suggest-change';
 import { helsinkiToday, loadFundraisingData } from './fundraising';
@@ -75,7 +77,7 @@ export type RenderInput = {
   headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; cityAdmin?: string; organizationFill?: string; suggestChange?: string; status?: string; pride?: string; information?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; cityAdmin?: string; organizationFill?: string; suggestChange?: string; cancelLink?: string; status?: string; pride?: string; information?: string };
 
 export type RenderResult = {
   status: number;
@@ -387,6 +389,23 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
       serverPage={<StatusScreen status={serviceStatus} />} />);
+  }
+  let cancelLink: CancelLinkState | undefined;
+  if (route.name === 'cancel-link') {
+    // The link is a bearer secret: never cached, never indexed, no referrer to other sites.
+    const loaded = await loadCancelLink(readBase, route.token);
+    if (loaded.state === 'unavailable') {
+      return { status: 503, html: unavailableDocument(), headers: { 'Cache-Control': 'no-store', 'Retry-After': '30', 'X-Robots-Tag': 'noindex' } };
+    }
+    cancelLink = loaded;
+    headers['X-Robots-Tag'] = 'noindex, nofollow';
+    headers['Referrer-Policy'] = 'no-referrer';
+    meta = { title: `${cancelLinkTitle} | Mielenosoitukset.fi`, description: cancelLinkTitle,
+      canonical: null, robots: 'noindex, nofollow' };
+    extraHead = (assets.cancelLink ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<CancelLinkScreen link={cancelLink} token={route.token} />} />);
   }
   if (route.name === 'suggest-change') {
     const loaded = await loadSuggestion(readBase, route.id);
@@ -716,6 +735,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     ...(campaignVisible !== undefined ? { campaignVisible } : {}),
     ...(organizationFill ? { organizationFill } : {}),
     ...(suggestionDemo ? { suggestionDemo } : {}),
+    ...(cancelLink ? { cancelLink } : {}),
     ...(route.name === 'status' ? { serviceStatus } : {}),
     ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}),
     ...(listing ? { listing } : {}), ...(organization ? { organization } : {}), ...(cities !== undefined ? { cities } : {}),

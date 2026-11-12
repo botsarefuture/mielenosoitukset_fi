@@ -5,12 +5,18 @@ import type { AppConfig } from './config';
 import { listingProps } from './listing';
 import type { OrganizationBootstrap } from './organization';
 import type { SessionSummary } from './session';
+import { useSession } from './useSession';
 
-export default function OrganizationScreen({ organization, config, session }: {
+export default function OrganizationScreen({ organization, config, session: initialSession }: {
   organization: OrganizationBootstrap; config: AppConfig; session: SessionSummary;
 }) {
   const id = organization.profile._id;
-  const state = session.authenticated && session.organization?.id === id ? session.organization : null;
+  // With the auth bridge on, the page re-reads who is signed in after hydration,
+  // so a page restored from the browser cache never shows stale account state.
+  const { session } = useSession(initialSession, { endpoint: config.urls.authMe, scope: { organization_id: id } });
+  const state = session.organization?.id === id ? session.organization : null;
+  // Only a signed-in member gets the private panel; anonymous visitors get the flash flag alone.
+  const privateState = session.authenticated ? state : null;
   const [notices, showNotices] = useState<{ category: string; message: string }[]>([]);
   useEffect(() => {
     if (!state?.hasMessages) return;
@@ -33,7 +39,7 @@ export default function OrganizationScreen({ organization, config, session }: {
   return <div className={session.authenticated ? 'organization-screen organization-screen--signed-in' : 'organization-screen'}>
     {notices.map((notice, index) => <div key={index} className={`flash-message flash-message--inline flash-${notice.category}`}
       role={notice.category === 'error' ? 'alert' : 'status'}><span className="flash-text">{notice.message}</span></div>)}
-    <OrganizationPage organization={organization.profile} authenticated={session.authenticated} privateState={state}
+    <OrganizationPage organization={organization.profile} authenticated={session.authenticated} privateState={privateState}
       urls={{ login: `${config.urls.login}?next=${encodeURIComponent(path)}`, fill: `${path}/fill`,
         follow: `/api/follow/organization/${id}`, unfollow: `/api/unfollow/organization/${id}`,
         acceptInvite: `/users/orgs/accept_invite/${id}`, declineInvite: `/users/orgs/decline_invite?organization_id=${id}`,

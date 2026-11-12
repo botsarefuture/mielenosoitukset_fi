@@ -1,0 +1,1 @@
+- Add an off-by-default read-only sign-in bridge for the Go API and React (`AUTH_BRIDGE_SCOPES`, `AUTH_BRIDGE_ENABLED`): Go can ask Flask who is signed in and what they may do, and the organization page can show the "Kiitos! Ehdotuksesi on tallennettu" message to visitors who are not signed in. Login, accounts, cookies and URLs are unchanged. See `docs/auth-bridge.md`.

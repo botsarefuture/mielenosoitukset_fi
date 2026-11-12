@@ -4,8 +4,6 @@
 
 ## UNRELEASED
 
-- Go API deployment: the environment configurator now carries `SITE_ANALYTICS_ENABLED=true` from `config.yaml`, so a normal release no longer silently turns event analytics off.
-- Route analytics event beacons (`POST /api/analytics/event`) to the Go API. Flask keeps pageviews, vitals and every other analytics path. Roll back by removing the routing rule.
 - Signed-in users can apply to become a city admin at `/kaupunkiadmin`. They choose cities, describe their activism and can name references. Each application becomes a review case for the national team. Local city admins can read and comment on applications for their own cities. Only global admins record decisions, and approving never grants rights on its own. City pages recruiting admins now link to the form.
 - City listing pages ask visitors to volunteer when the city has no or only one active city admin (target two). Cities without a city admin say that the national admin team reviews their events. Helsinki is moderated by the national admin team and never shows the note. The new Go endpoint `GET /api/cities/{key}/admin-status` exposes only a coverage band, never names or counts.
 - City listing pages ask visitors to volunteer when the city has no or only one active city admin (target two). Cities without a city admin say that the national admin team reviews their events. Helsinki is moderated by the national admin team and never shows the note. The new Go endpoint `GET /api/cities/{key}/admin-status` exposes only a coverage band, never names or counts.

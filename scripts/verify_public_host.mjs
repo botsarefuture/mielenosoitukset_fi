@@ -375,6 +375,14 @@ function createApi(log) {
         organizers: 'Järjestö (public@example.test, https://example.test)\nToinen',
         description_markdown: 'Ensimmäinen kappale.\n\n**Tärkeä** lisätieto.\n\n<script>alert(1)</script>' },
     };
+    if (identifier === 'uploaded-picture') {
+      doc.cover_picture = 'https://cdn.example/DEM/demo_pics-7.jpg';
+      doc.preview_image = 'https://cdn.example/DEM/demo_preview-10.jpg';
+    }
+    if (identifier === 'generated-only') {
+      doc.cover_picture = 'https://cdn.example/DEM/demo_preview-3.jpg';
+      doc.preview_image = 'https://cdn.example/DEM/demo_preview-10.jpg';
+    }
     if (identifier === '66fa58601102367d5d528094') {
       doc._id = identifier;
       doc.suggestion.organizers = '';
@@ -422,6 +430,14 @@ try {
   assert(description.length <= 200 && description.endsWith('...'), 'Meta description is truncated like the shell');
   assert(detailSessionReads <= 1, 'Anonymous detail configuration is read at most once while cached');
   const readsAfterFirstPage = detailSessionReads;
+
+  // og:image: an organizer's own picture, then the generated preview, then the site default.
+  const ogImage = html => html.match(/<meta property="og:image" content="([^"]*)"/)[1];
+  assert.equal(ogImage(event.html), 'https://example.test/static/images/og-default.jpg');
+  assert.equal(ogImage((await detailPage({ path: '/demonstration/uploaded-picture' })).html),
+    'https://cdn.example/DEM/demo_pics-7.jpg');
+  assert.equal(ogImage((await detailPage({ path: '/demonstration/generated-only' })).html),
+    'https://cdn.example/DEM/demo_preview-10.jpg');
 
   // A hex URL resolves and still advertises the canonical slug.
   const byId = await detailPage({ path: `/demonstration/${detailId}` });

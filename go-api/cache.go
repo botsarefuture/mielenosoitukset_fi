@@ -184,6 +184,9 @@ type cachedDetailStore struct {
 	organization *organizationCache // nil if the source has no FindOrganization
 	cities       *citiesCache
 	calendar     *calendarCache
+	resolved     *resolveCache
+	resolveGroup singleflight.Group
+	series       *seriesCache // nil if the source has no FindSeries
 
 	hits, staleHits, negHits, misses, loads, loadErrors, oversize, unknownDropped atomic.Uint64
 }
@@ -202,6 +205,7 @@ func newCachedDetailStoreWithConfig(src Store, cfg detailCacheConfig) *cachedDet
 		unknownLimit: rate.NewLimiter(rate.Limit(cfg.UnknownLookupsPerSec), int(cfg.UnknownLookupsPerSec)+1),
 		base:         base,
 		cancel:       cancel,
+		resolved:     newResolveCache(),
 	}
 	for i := range s.shards {
 		s.shards[i] = &detailShard{
@@ -223,6 +227,9 @@ func newCachedDetailStoreWithConfig(src Store, cfg detailCacheConfig) *cachedDet
 	if source, ok := src.(citiesStore); ok {
 		s.cities = &citiesCache{source: source, base: base, now: time.Now}
 	}
+	if source, ok := src.(seriesStore); ok {
+		s.series = newSeriesCache(source)
+	}
 	if source, ok := src.(calendarStore); ok {
 		s.calendar = &calendarCache{source: source, base: base, items: map[calendarMonth]calendarEntry{}, sem: make(chan struct{}, 4)}
 	}
@@ -233,12 +240,6 @@ func newCachedDetailStoreWithConfig(src Store, cfg detailCacheConfig) *cachedDet
 func (s *cachedDetailStore) Close() { s.cancel() }
 
 func (s *cachedDetailStore) Ping(ctx context.Context) error { return s.source.Ping(ctx) }
-
-// This document-cache layer does not cache identifier resolution. The outer
-// Redis/CDN response tiers may reuse an HTTP response for their policy TTL.
-func (s *cachedDetailStore) ResolvePublicID(ctx context.Context, raw string) (bson.ObjectID, error) {
-	return s.source.ResolvePublicID(ctx, raw)
-}
 
 func (s *cachedDetailStore) shardFor(id bson.ObjectID) *detailShard {
 	// Last 4 bytes of an ObjectID are the counter; mix them for an even spread.

@@ -4,7 +4,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   gap: 1rem;
-  margin-block: 1rem;
+  margin: 0;
 }
 
 .developer-card { overflow-wrap: anywhere; }
@@ -23,3 +23,6 @@
   border-radius: 999px;
   font-size: 0.9rem;
 }
+
+.developer-page > :not(header) { margin-top: 1.5rem; }
+.developer-page code { color: var(--product-text); overflow-wrap: anywhere; }

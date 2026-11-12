@@ -118,7 +118,7 @@ export default function DeveloperScreen({ config, session: initial, appId }: { c
   return <article className="public-page-shell information-page suggest-change-page developer-page" aria-labelledby="developer-title">
     <header className="public-page-header"><div className="public-page-header__content">
       <h1 className="public-page-header__title" id="developer-title">{copy.title}</h1>
-      {!appId && <p className="public-page-header__description">{copy.lead}</p>}
+      <p className="public-page-header__description">{copy.lead}</p>
     </div></header>
     {load.state === 'loading' && <p role="status">{copy.loading}</p>}
     {load.state === 'anonymous' && <>

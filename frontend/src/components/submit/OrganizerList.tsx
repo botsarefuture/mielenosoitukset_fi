@@ -140,7 +140,7 @@ function OrganizerCard({ organizer, index, messages, orgSearchUrl, onChange, onR
   return (
     <div className="organizer-card" id={`organizer-${index}`}>
       <div className="organizer-header">
-        <h3><i className="fa-solid fa-building" aria-hidden="true" /> {messages.organizerLabel} {index}</h3>
+        <h3>{messages.organizerLabel} {index}</h3>
         {onRemove && (
           <button type="button" className="btn-remove" onClick={onRemove} aria-label={`${messages.removeOrganizer} ${index}`}>
             <i className="fa-solid fa-times" aria-hidden="true" />

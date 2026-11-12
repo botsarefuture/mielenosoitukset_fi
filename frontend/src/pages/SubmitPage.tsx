@@ -653,7 +653,7 @@ export function SubmitPage(props: SubmitPageProps) {
           {/* 1 — how to add the event */}
           <div className={`form-page${step === 1 ? ' active' : ''}`} id="page-1" hidden={step !== 1}>
             <div className="page-header">
-              <h2><i className="fa-solid fa-wand-magic-sparkles" aria-hidden="true" /> {messages.choiceTitle}</h2>
+              <h2>{messages.choiceTitle}</h2>
               <p>{messages.choiceLead}</p>
             </div>
             <div className="import-choice-cards">
@@ -673,7 +673,7 @@ export function SubmitPage(props: SubmitPageProps) {
           {/* 2 — basics */}
           <div className={`form-page${step === 2 ? ' active' : ''}`} id="page-2" hidden={step !== 2}>
             <div className="page-header">
-              <h2><i className="fa-solid fa-info-circle" aria-hidden="true" /> {messages.basicsTitle}</h2>
+              <h2>{messages.basicsTitle}</h2>
               <p>{messages.basicsLead}</p>
             </div>
 
@@ -832,7 +832,7 @@ export function SubmitPage(props: SubmitPageProps) {
           {/* 3 — time and place */}
           <div className={`form-page${step === 3 ? ' active' : ''}`} id="page-3" hidden={step !== 3}>
             <div className="page-header">
-              <h2>                  <i className="fa-solid fa-calendar" aria-hidden="true" /> {messages.timePlaceTitle}</h2>
+              <h2>{messages.timePlaceTitle}</h2>
               <p>{messages.timePlaceLead}</p>
             </div>
 
@@ -957,7 +957,7 @@ export function SubmitPage(props: SubmitPageProps) {
           {/* 4 — organizers */}
           <div className={`form-page${step === 4 ? ' active' : ''}`} id="page-4" hidden={step !== 4}>
             <div className="page-header">
-              <h2><i className="fa-solid fa-users-gear" aria-hidden="true" /> {messages.organizersTitle}</h2>
+              <h2>{messages.organizersTitle}</h2>
               <p>{messages.organizersLead}</p>
             </div>
             <OrganizerList
@@ -976,7 +976,7 @@ export function SubmitPage(props: SubmitPageProps) {
           {/* 5 — contact and terms */}
           <div className={`form-page${step === 5 ? ' active' : ''}`} id="page-5" hidden={step !== 5}>
             <div className="page-header">
-              <h2><i className="fa-solid fa-user-check" aria-hidden="true" /> {messages.contactTitle}</h2>
+              <h2>{messages.contactTitle}</h2>
               <p>{messages.contactLead}</p>
             </div>
 
@@ -1103,7 +1103,7 @@ export function SubmitPage(props: SubmitPageProps) {
               </ol>
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" id="submit-conflict-cancel" onClick={() => closeConflict(false)}>
+              <button type="button" className="btn btn-danger" id="submit-conflict-cancel" onClick={() => closeConflict(false)}>
                 {messages.conflictCancel}
               </button>
               <button type="button" className="btn btn-primary" id="submit-conflict-confirm" onClick={() => closeConflict(true)}>
@@ -1116,7 +1116,7 @@ export function SubmitPage(props: SubmitPageProps) {
 
       <div className="submit-support">
         <div className="page-header">
-          <h2><i className="fa-solid fa-life-ring" aria-hidden="true" /> {messages.supportTitle}</h2>
+          <h2>{messages.supportTitle}</h2>
           <p>{messages.supportLead}</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>

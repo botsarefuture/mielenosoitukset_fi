@@ -32,6 +32,10 @@ def configure(source, target):
         values["PUBLIC_SUBMIT_SESSION_SOCKET"] = "/var/www/mielenosoitukset_fi/mielenosoitus.sock"
         babel = config.get("BABEL") or {}
         values["PUBLIC_SUBMIT_LOCALES"] = ",".join(babel.get("SUPPORTED_LOCALES", ["fi", "en"]) or ["fi"])
+    # Event analytics follow the Flask switch. Only a literal true enables Go
+    # writes, so a redeploy keeps them in step with config.yaml.
+    if config.get("SITE_ANALYTICS_ENABLED") is True:
+        values["SITE_ANALYTICS_ENABLED"] = "true"
     for key, value in values.items():
         if not isinstance(value, str) or not value or any(c in value for c in "\n\r\0"):
             raise ValueError(f"Missing or invalid {key}; refusing to guess production settings")

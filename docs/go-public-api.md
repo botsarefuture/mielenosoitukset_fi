@@ -26,6 +26,8 @@ Privacy: `DNT: 1` suppresses every event. Inspection of `config.py` shows
 public-status/lockdown reader reads MongoDB `panic`, so it cannot supply this
 switch. Set Go environment `SITE_ANALYTICS_ENABLED=true` **only** when the
 Flask YAML switch is enabled; unset, false and invalid values disable Go writes.
+`deploy/go-api/configure_environment.py` writes it for every deployment when
+`config.yaml` has a literal `SITE_ANALYTICS_ENABLED: true`.
 This is a startup setting: restart Go after changing it, and keep both settings
 aligned during mixed-version operation and rollback. Never infer enablement
 from a browser payload. No secrets, IPs, user agents, cookies or visitor hashes
@@ -53,8 +55,12 @@ need equivalent edge protection before routing activation.
 
 Apache's existing catch-all sends `/api/*` to Flask; the React host uses
 `PUBLIC_API_LOCAL` for its own Go reads, not as a blanket browser API proxy.
-**Status: shipped dark.** The routing include does not claim this path yet, so
-Flask still handles every analytics beacon. To activate:
+**Status: active since 11 November 2026.** `SITE_ANALYTICS_ENABLED=true` is set
+in the production Go environment (`/etc/mielenosoitukset-api/environment`;
+the previous file is kept as `environment.bak-before-analytics-20261111`). A
+cross-check event written by Go had exactly the same fields as Flask's
+`demo_search` documents, and the test document was then deleted. The routing
+include claims the POST path. The activation steps, kept for reference:
 
 1. Set `SITE_ANALYTICS_ENABLED=true` in the Go API service environment on the
    production host (matching Flask's `config.yaml`), and restart it.

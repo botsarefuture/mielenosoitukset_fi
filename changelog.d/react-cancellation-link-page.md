@@ -1,0 +1,1 @@
+- The organizer cancellation page (`/cancel_demonstration/<token>`) has a React version with the same texts, states and form. Cancelling and the token checks still run in the existing handler. It is prepared in the routing file but not yet switched on.

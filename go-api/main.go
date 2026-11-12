@@ -251,6 +251,7 @@ func main() {
 	handler = cityAdminApplicationHandler(handler, client.Database(database), submissionConfig)
 	handler = analyticsEventHandler(handler, analyticsEnabledFromEnv(), incrementAnalyticsEvent(client.Database(database)))
 	handler = campaignPublication(handler, readCampaignPublication(client.Database(database)))
+	handler = cancellationLinkHandler(handler, readCancellationLink(client.Database(database)))
 	handler = publicAvailability(handler, readPublicLockdown(client.Database(database)))
 	if submissionConfig.Origin != "" {
 		indexContext, cancelIndexCheck := context.WithTimeout(context.Background(), 3*time.Second)

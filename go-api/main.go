@@ -259,6 +259,7 @@ func main() {
 	handler = analyticsEventHandler(handler, analyticsEnabledFromEnv(), incrementAnalyticsEvent(client.Database(database)))
 	handler = fundraisingDetails(handler, os.Getenv("FUNDRAISING_DETAILS_FILE"))
 	handler = campaignPublication(handler, readCampaignPublication(client.Database(database)))
+	handler = cancellationLinkHandler(handler, readCancellationLink(client.Database(database)))
 	handler = publicAvailability(handler, readPublicLockdown(client.Database(database)))
 	if submissionConfig.Origin != "" {
 		indexContext, cancelIndexCheck := context.WithTimeout(context.Background(), 3*time.Second)

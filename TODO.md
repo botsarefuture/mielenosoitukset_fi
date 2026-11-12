@@ -19,7 +19,8 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 
 - [ ] `/report` error report form. It needs a session-scope token like `/contact`. *(approval: session change)*
 - [x] `/status`: React SSR with read-only Go `/api/status`, bounded cached database check and HTTP 200 on dependency/API failure. Routing prepared; visual acceptance BLOCKED (no socket/browser captures in this sandbox).
-- [ ] Token pages: `/cancel_demonstration/<token>`, `/confirm/<token>`, `/confirm_email/<token>`, `/accept_invite`.
+- [x] Token pages, `/cancel_demonstration/<token>`: React page with a read-only Go `/api/cancellation-links/<token>`; routing prepared but commented out in `deploy/apache/react-ssr-routing.conf` until the maintainer approves.
+- [ ] Token pages that write on GET: `/kampanja/confirm/<token>`, `/auth/confirm_email/<token>` and `/orgs/accept_invite` confirm or join in the GET itself and redirect (login needed for the invite). Moving them needs a decision: split into a React page plus a POST, or keep Flask.
 - [ ] Account pages: login, register and next steps, settings, password reset, forced password and identity change, MFA verification, public profile `/<username>`. *(approval: authentication flows)*
 - [x] `/api-docs/`: build-time Markdown on the React host; OpenAPI YAML stays in Flask (#1068).
 - [ ] Secondary tools: `/developer` needs a signed-in session scope. Proposal in [docs/developer-react-proposal.md](docs/developer-react-proposal.md). *(approval: session change)* `/download_material/<id>` is a download redirect and stays in Flask.

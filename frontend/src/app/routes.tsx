@@ -37,6 +37,7 @@ export type AppRoute =
   | { name: 'organization'; id: string }
   | { name: 'organization-fill'; id: string }
   | { name: 'suggest-change'; id: string }
+  | { name: 'cancel-link'; token: string }
   | { name: 'detail'; identifier: string }
   | { name: 'series'; parent: string };
 
@@ -101,6 +102,8 @@ export function routeForPath(path: string): AppRoute | null {
   if (organizationFill) return { name: 'organization-fill', id: organizationFill[1].toLowerCase() };
   const suggestChange = /^\/suggest_change\/([a-f\d]{24})$/i.exec(path);
   if (suggestChange) return { name: 'suggest-change', id: suggestChange[1].toLowerCase() };
+  const cancelLink = /^\/cancel_demonstration\/([A-Za-z0-9_-]{1,128})$/.exec(path);
+  if (cancelLink) return { name: 'cancel-link', token: cancelLink[1] };
   const organization = /^\/organization\/([a-f\d]{24})$/i.exec(path);
   if (organization) return { name: 'organization', id: organization[1].toLowerCase() };
   if (path === '/demonstrations') return { name: 'listing', scope: 'all' };

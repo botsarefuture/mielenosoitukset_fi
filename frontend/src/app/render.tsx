@@ -39,7 +39,7 @@ import CancelLinkScreen from './CancelLinkScreen';
 import { loadCancelLink, cancelLinkTitle, type CancelLinkState } from './cancel-link';
 import { loadStatus, statusTitle, type ServiceStatus } from './status';
 import { loadSuggestion, suggestionTitle, suggestionLead, type SuggestionDemo } from './suggest-change';
-import { helsinkiToday } from './fundraising';
+import { helsinkiToday, loadFundraisingData } from './fundraising';
 export { fundraisingDetails } from './fundraising';
 import { campaignPath, loadCampaignPublication } from './campaign-route';
 import { routeForPath, routeMeta } from './routes';
@@ -322,6 +322,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   if (responseCookies.length) headers['Set-Cookie'] = responseCookies;
   let appMarkup = '';
   let today: string | undefined;
+  let fundraisingData: Record<string, unknown> | null | undefined;
   let campaignVisible: boolean | undefined;
   if (route.name === 'api-docs') {
     extraHead = '<link rel="stylesheet" href="/static/css/public-api-docs.css?v=20261110-2">';
@@ -365,13 +366,14 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
         serverPage={<CampaignScreen config={config} />} />);
     } else {
       today = helsinkiToday();
+      fundraisingData = await loadFundraisingData(readBase);
       extraHead = (assets.fundraising ?? '')
         + '<link rel="stylesheet" href="/static/css/public-content.css?v=20261026-fundraising-2">'
         + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261110-volunteer-message-1">';
       // The whole page is in the server-rendered document; no fallback is needed.
       noscript = '';
       appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
-        serverPage={<FundraisingScreen config={config} today={today} />} />);
+        serverPage={<FundraisingScreen config={config} today={today} data={fundraisingData} />} />);
     }
   }
 
@@ -729,6 +731,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   }
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
   const bootstrap = serialize({ config, session, path: input.path, route, ...(today ? { today } : {}),
+    ...(fundraisingData ? { fundraising: fundraisingData } : {}),
     ...(campaignVisible !== undefined ? { campaignVisible } : {}),
     ...(organizationFill ? { organizationFill } : {}),
     ...(suggestionDemo ? { suggestionDemo } : {}),

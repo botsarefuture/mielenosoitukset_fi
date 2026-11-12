@@ -1,0 +1,1 @@
+- The fundraising page can now read its details from the Go API (`GET /api/fundraising/details`), so the collection dates, account and links can change without a host deploy. If the API is unreachable the page uses the details bundled with the host, so nothing breaks.

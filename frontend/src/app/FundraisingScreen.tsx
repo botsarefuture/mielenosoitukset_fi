@@ -87,6 +87,7 @@ export function FundraisingPage({ details, config }: { details: FundraisingDetai
 
 export const fundraisingData: unknown = data;
 
-export default function FundraisingScreen({ config, today }: { config: AppConfig; today: string }) {
-  return <FundraisingPage details={fundraisingDetails(fundraisingData, today)} config={config} />;
+/** `data` is the API copy; the bundled file is the fallback when the API is unreachable. */
+export default function FundraisingScreen({ config, today, data }: { config: AppConfig; today: string; data?: Record<string, unknown> | null }) {
+  return <FundraisingPage details={fundraisingDetails(data ?? fundraisingData, today)} config={config} />;
 }

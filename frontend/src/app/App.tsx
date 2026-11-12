@@ -53,6 +53,7 @@ export type AppProps = {
   serverPage?: ReactNode;
   /** Helsinki date the server used for the fundraising page, so hydration matches. */
   today?: string;
+  fundraising?: Record<string, unknown> | null;
   /** Whether the /info page may promote the campaign: published, or the visitor can preview it. */
   campaignVisible?: boolean;
   /** The organization whose details the fill-in page suggests changes to. */

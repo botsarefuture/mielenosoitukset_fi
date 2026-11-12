@@ -23,7 +23,7 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 - [ ] Token pages that write on GET: `/kampanja/confirm/<token>`, `/auth/confirm_email/<token>` and `/orgs/accept_invite` confirm or join in the GET itself and redirect (login needed for the invite). Moving them needs a decision: split into a React page plus a POST, or keep Flask.
 - [ ] Account pages: login, register and next steps, settings, password reset, forced password and identity change, MFA verification, public profile `/<username>`. *(approval: authentication flows)*
 - [x] `/api-docs/`: build-time Markdown on the React host; OpenAPI YAML stays in Flask (#1068).
-- [ ] Secondary tools: `/developer`, demo material download.
+- [ ] Secondary tools: `/developer` needs a signed-in session scope. Proposal in [docs/developer-react-proposal.md](docs/developer-react-proposal.md). *(approval: session change)* `/download_material/<id>` is a download redirect and stays in Flask.
 - [ ] Retire the Flask templates each migrated page leaves behind as rollback, once its React page has been stable for a while.
 - [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).
 
@@ -43,7 +43,7 @@ Maintainer direction, 10 November 2026: when a page is redesigned or moved to Re
 - [ ] `POST /upcoming/translations/join`. *(approval: permissions)*
 - [ ] Analytics event `/api/analytics/event`: Go handler shipped dark (Flask still serves it). To activate: set `SITE_ANALYTICS_ENABLED=true` for the Go API on production, cross-check Go against Flask output, then add the POST rule; steps in `docs/go-public-api.md`. *(approval: production config)*
 - [ ] Analytics pageview `/api/analytics/pageview`: still Flask; visitor-secret/locale decisions remain prerequisites.
-- [ ] Fundraising details: today bundled from `fundraising.json` into the host; a Go endpoint would let it change without a host deploy.
+- [x] Fundraising details: `GET /api/fundraising/details` serves a file-backed copy, the host falls back to the bundled `fundraising.json` ([docs/go-fundraising-details.md](docs/go-fundraising-details.md)). Open: database collection plus admin editing.
 
 ## UI follow-ups from reviews
 

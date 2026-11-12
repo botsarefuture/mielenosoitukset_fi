@@ -85,7 +85,7 @@ if (container) {
       }).catch(error => console.error('Could not start the contact page', error));
     } else if (route?.name === 'fundraising') {
       void import('./FundraisingScreen').then(({ default: FundraisingScreen }) => {
-        hydrateRoot(container, <Root {...props} serverPage={<FundraisingScreen config={props.config} today={props.today ?? ''} />} />);
+        hydrateRoot(container, <Root {...props} serverPage={<FundraisingScreen config={props.config} today={props.today ?? ''} data={props.fundraising} />} />);
       }).catch(error => console.error('Could not start the fundraising page', error));
     } else if (route?.name === 'campaign') {
       void import('./CampaignScreen').then(({ default: CampaignScreen }) => {

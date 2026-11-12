@@ -41,7 +41,7 @@ func (a *API) getHome(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	result, err := source.FindHome(ctx, lang)
 	if err != nil {
-		log.Print("Home database read failed")
+		log.Printf("Home database read failed (%s)", dbErrorKind(err))
 		writeError(w, 503, "service unavailable")
 		return
 	}

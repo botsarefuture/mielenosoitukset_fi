@@ -88,6 +88,7 @@ real application captures at 390px and 1440px in both themes, including no-JS.
 | Event data | Browser requests the public Go `/api/home?lang=...` contract |
 | Detail head (title, canonical, JSON-LD, robots) | Server requests the same public API once, `/api/demonstrations/<identifier>` |
 | Home card batch | Server reads `/api/home` once, caches it for 30 s and inlines it in the bootstrap |
+| Home continuation | Browser reads `/api/demonstrations?page=N&per_page=12` after the picks: two pages when scrolled into view, then on request; picks are not repeated (`frontend/src/pages/HomeContinuation.tsx`) |
 | Information pages | Server renders the React page and shell. The client hydrates the navigation and theme controls. The content, guide anchors, FAQ and translator form work without JavaScript. |
 
 The server accesses no event collection directly. Submission pages additionally

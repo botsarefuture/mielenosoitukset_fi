@@ -71,7 +71,7 @@ if (container) {
       }).catch(error => console.error('Could not start the organization fill-in form', error));
     } else if (route?.name === 'city-admin') {
       void import('./CityAdminApplyScreen').then(({ default: CityAdminApplyScreen }) => {
-        hydrateRoot(container, <Root {...props} serverPage={<CityAdminApplyScreen session={props.session} />} />);
+        hydrateRoot(container, <Root {...props} serverPage={<CityAdminApplyScreen session={props.session} apiBase={props.config.apiBase} />} />);
       }).catch(error => console.error('Could not start the city admin application page', error));
     } else if (route?.name === 'contact') {
       void import('./ContactScreen').then(({ default: ContactScreen }) => {

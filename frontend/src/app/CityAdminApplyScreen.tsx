@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { SessionSummary } from './session';
 import { cityCatalog, findCity } from './cities';
+import { cityAdminApplyCopy as copy } from './i18n';
 import {
   applicationStatusLabels, cityAdminCopy, cityAdminMinePath, cityAdminPath, cityAdminSubmitPath,
   nationallyManagedCities,
@@ -16,16 +17,34 @@ type Result = { kind: 'success' | 'error'; message: string } | null;
 const cityName = (key: string) => findCity(key)?.name ?? key;
 const applicableCities = cityCatalog.filter(city => !nationallyManagedCities.has(city.key));
 
+/** Public coverage bands only; the API never sends names or counts. */
+export type Coverage = Record<string, 'none' | 'single' | 'team' | 'national'>;
+
+export function readCoverage(value: unknown): Coverage | null {
+  const cities = (value as { cities?: unknown } | null)?.cities;
+  if (!cities || typeof cities !== 'object') return null;
+  const result: Coverage = {};
+  for (const [key, band] of Object.entries(cities)) {
+    if (band === 'none' || band === 'single' || band === 'team' || band === 'national') result[key] = band;
+  }
+  return Object.keys(result).length ? result : null;
+}
+
+const coverageGroups = [
+  { band: 'none', label: copy.groupNone },
+  { band: 'single', label: copy.groupSingle },
+  { band: 'team', label: copy.groupTeam },
+] as const;
+
 /** Choose cities from the catalog; a datalist keeps 300+ names usable on mobile. */
-function CityPicker({ id, label, hint, value, onChange, max, allowNational }: {
+function CityPicker({ id, label, hint, value, onChange, max, allowNational, coverage }: {
   id: string; label: string; hint: string; value: string[]; onChange: (keys: string[]) => void;
-  max: number; allowNational: boolean;
+  max: number; allowNational: boolean; coverage?: Coverage | null;
 }) {
   const [draft, setDraft] = useState('');
   const [problem, setProblem] = useState('');
   const options = allowNational ? cityCatalog : applicableCities;
-  const add = () => {
-    const city = findCity(draft);
+  const pick = (city: ReturnType<typeof findCity>) => {
     if (!city) { setProblem('Valitse paikkakunta listasta.'); return; }
     if (!allowNational && nationallyManagedCities.has(city.key)) {
       setProblem(`${city.name} on valtakunnallisen ylläpitotiimin hoitama, joten sille ei haeta kaupunkiadmineja.`);
@@ -36,20 +55,35 @@ function CityPicker({ id, label, hint, value, onChange, max, allowNational }: {
     setDraft('');
     if (!value.includes(city.key)) onChange([...value, city.key]);
   };
+  const add = () => pick(findCity(draft));
+  const grouped = coverage && !allowNational;
+  const chipNote = (key: string) => coverage?.[key] === 'none' ? copy.chipNone : coverage?.[key] === 'single' ? copy.chipSingle : '';
   return <div className="city-admin-picker">
     <label htmlFor={id}>{label}</label>
     <p className="city-admin-hint" id={`${id}-hint`}>{hint}</p>
-    <div className="city-admin-picker__row">
-      <input id={id} list={`${id}-options`} value={draft} autoComplete="off" aria-describedby={`${id}-hint`}
-        onChange={event => setDraft(event.target.value)}
-        onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); add(); } }} />
-      <button type="button" className="detail-button detail-button--quiet" onClick={add}>Lisää</button>
-    </div>
-    <datalist id={`${id}-options`}>{options.map(city => <option key={city.key} value={city.name} />)}</datalist>
+    {grouped ? <select id={id} className="city-admin-picker__select" value="" aria-describedby={`${id}-hint`}
+      onChange={event => pick(findCity(event.target.value))}>
+      <option value="">{copy.choose}</option>
+      {coverageGroups.map(group => {
+        const cities = applicableCities.filter(city => coverage[city.key] === group.band)
+          .sort((a, b) => a.name.localeCompare(b.name, 'fi'));
+        return cities.length ? <optgroup key={group.band} label={group.label}>
+          {cities.map(city => <option key={city.key} value={city.key}>{city.name}</option>)}
+        </optgroup> : null;
+      })}
+    </select> : <>
+      <div className="city-admin-picker__row">
+        <input id={id} list={`${id}-options`} value={draft} autoComplete="off" aria-describedby={`${id}-hint`}
+          onChange={event => setDraft(event.target.value)}
+          onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); add(); } }} />
+        <button type="button" className="detail-button detail-button--quiet" onClick={add}>Lisää</button>
+      </div>
+      <datalist id={`${id}-options`}>{options.map(city => <option key={city.key} value={city.name} />)}</datalist>
+    </>}
     {problem ? <p className="city-admin-field-error" role="alert">{problem}</p> : null}
     {value.length ? <ul className="city-admin-chips" aria-label={label}>
       {value.map(key => <li key={key}>
-        <span>{cityName(key)}</span>
+        <span>{cityName(key)}{chipNote(key) ? <small className="city-admin-chip-note"> · {chipNote(key)}</small> : null}</span>
         <button type="button" aria-label={`Poista ${cityName(key)}`} onClick={() => onChange(value.filter(item => item !== key))}>×</button>
       </li>)}
     </ul> : null}
@@ -71,9 +105,10 @@ function MyApplications({ applications }: { applications: Application[] }) {
 }
 
 /** The application page. Go stores the application; the national team reviews it as a case. */
-export default function CityAdminApplyScreen({ session }: { session: SessionSummary }) {
+export default function CityAdminApplyScreen({ session, apiBase }: { session: SessionSummary; apiBase?: string }) {
   const [cities, setCities] = useState<string[]>([]);
   const [activeIn, setActiveIn] = useState<string[]>([]);
+  const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<Result>(null);
@@ -85,12 +120,18 @@ export default function CityAdminApplyScreen({ session }: { session: SessionSumm
     setReady(true);
     const preset = findCity(new URLSearchParams(window.location.search).get('city') ?? '');
     if (preset && !nationallyManagedCities.has(preset.key)) setCities([preset.key]);
+    if (apiBase) {
+      fetch(`${apiBase}/cities/admin-status`, { credentials: 'omit', headers: { Accept: 'application/json' } })
+        .then(response => response.ok ? response.json() : null)
+        .then(data => setCoverage(readCoverage(data)))
+        .catch(() => { /* Without coverage the picker falls back to a plain list. */ });
+    }
     if (!session.authenticated) return;
     fetch(cityAdminMinePath, { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' } })
       .then(response => response.ok ? response.json() : null)
       .then(data => { if (data && Array.isArray(data.applications)) setApplications(data.applications); })
       .catch(() => { /* The form works without the status list. */ });
-  }, [session.authenticated]);
+  }, [session.authenticated, apiBase]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -155,8 +196,8 @@ export default function CityAdminApplyScreen({ session }: { session: SessionSumm
         : !ready ? <p className="city-admin-nojs">Hakulomake vaatii JavaScriptin. Jos se ei ole käytössä, voit <a href="/contact">ottaa yhteyttä</a> ja kertoa, millä paikkakunnalla haluaisit auttaa.</p>
         : open ? <p>Sinulla on käsittelyssä oleva hakemus. Voit hakea uudelleen, kun se on käsitelty.</p>
         : <form className="contact-form city-admin-form" onSubmit={submit} noValidate={false}>
-          <CityPicker id="city-admin-cities" label="Paikkakunnat, joilla haluat toimia" hint="1–5 paikkakuntaa."
-            value={cities} onChange={setCities} max={5} allowNational={false} />
+          <CityPicker id="city-admin-cities" label="Paikkakunnat, joilla haluat toimia" hint={coverage ? `1–5 paikkakuntaa. ${copy.coverageHint}` : '1–5 paikkakuntaa.'}
+            value={cities} onChange={setCities} max={5} allowNational={false} coverage={coverage} />
           <label htmlFor="city-admin-about">Kerro itsestäsi ja miksi haluat kaupunkiadminiksi</label>
           <textarea id="city-admin-about" name="about" rows={6} required minLength={50} maxLength={3000} />
           <fieldset className="city-admin-fieldset">

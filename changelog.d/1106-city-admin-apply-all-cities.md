@@ -1,0 +1,1 @@
+- The city admin application form (`/kaupunkiadmin`) now offers all cities, not only those with demonstrations or enabled ones. Cities without a city admin are listed first under "Tarvitsemme adminia", then cities needing a second admin, then covered cities. Helsinki stays excluded. New public Go endpoint `GET /api/cities/admin-status` returns only the coverage band per city.

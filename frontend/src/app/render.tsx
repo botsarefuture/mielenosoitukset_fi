@@ -423,7 +423,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     // The page renders its own no-JavaScript fallback inside the form card.
     noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
-      serverPage={<CityAdminApplyScreen session={session} />} />);
+      serverPage={<CityAdminApplyScreen session={session} apiBase={config.apiBase} />} />);
   }
 
   if (route.name === 'contact') {

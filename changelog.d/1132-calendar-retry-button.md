@@ -1,0 +1,1 @@
+- Calendar: the "Yritä uudelleen" button in the load-error notices is the same styled button as on the other pages.

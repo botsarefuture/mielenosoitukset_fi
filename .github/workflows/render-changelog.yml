@@ -1,0 +1,25 @@
+name: Render changelog
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '20 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Combine change notes and history
+        run: python3 scripts/render_changelog.py > "$RUNNER_TEMP/CHANGELOG.md"
+      - name: Upload combined changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-${{ github.sha }}
+          path: ${{ runner.temp }}/CHANGELOG.md
+          retention-days: 30

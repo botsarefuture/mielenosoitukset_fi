@@ -1,0 +1,24 @@
+/*
+ * Cross-document transition between the home page and the listings.
+ * Only pages that link this file opt in; others navigate normally, and
+ * browsers without cross-document View Transitions ignore it.
+ */
+@view-transition { navigation: auto; }
+
+/* The header stays put while the content changes underneath it. */
+.public-site-header { view-transition-name: moso-header; }
+
+/* The home page's "all demonstrations" button becomes the listing title. */
+.home-all-link, .public-list-tools #listing-title { view-transition-name: moso-listing-title; }
+
+::view-transition-group(moso-listing-title) { animation-duration: .45s; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
+::view-transition-old(moso-listing-title), ::view-transition-new(moso-listing-title) { height: 100%; object-fit: contain; }
+::view-transition-old(root) { animation: .22s cubic-bezier(.4, 0, 1, 1) both moso-page-out; }
+::view-transition-new(root) { animation: .38s cubic-bezier(0, 0, .2, 1) .06s both moso-page-in; }
+
+@keyframes moso-page-out { to { opacity: 0; transform: translateY(-1.5rem); } }
+@keyframes moso-page-in { from { opacity: 0; transform: translateY(2.5rem); } }
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+}

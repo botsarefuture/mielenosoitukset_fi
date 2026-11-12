@@ -24,16 +24,25 @@ and `MONGO_DBNAME` as the app (`/var/www/mielenosoitukset_fi/config.yaml`).
 The archives therefore live on a different machine from the database.
 
 - `mongodb-backup.sh`:
-  - writes `/var/backups/mielenosoitukset/<db>-<UTC time>.archive.gz`;
+  - writes `/var/backups/mielenosoitukset/<db>-<mode>-<UTC time>.archive.gz`.
+    Mode `core` (nightly) skips `super_audit_logs` and `admin_logs`, which are
+    about 13.6 GB uncompressed together (most of the database). Mode `full`
+    (weekly) includes them. A full dump read for more than 20 minutes and
+    loaded lc-db enough that a Go API restart during it failed its startup
+    database check (11 November 2026), so full dumps run only once a week, at
+    night;
   - checks every archive's full gzip stream (CRC over every byte) and that
     `mongorestore --dryRun` can parse it. The dry run alone does not read
     collection data, so the restore drill below remains the real proof;
   - removes unfinished `.partial` files from failed or killed runs;
-  - keeps 14 days of archives.
+  - keeps 14 days of core archives and 35 days of full archives. Each mode only
+    prunes its own files.
   - The URI is passed through a mode-0600 temporary config file, never on the
     command line.
-- `mielenosoitukset-mongodb-backup.service` / `.timer`: runs nightly at 02:30
-  UTC, with `Persistent=true` so a missed run catches up.
+- `mielenosoitukset-mongodb-backup.service` / `.timer`: core dump nightly at
+  02:30 UTC, with `Persistent=true` so a missed run catches up.
+- `mielenosoitukset-mongodb-backup-full.service` / `.timer`: full dump on
+  Sundays at 03:30 UTC.
 - `mielenosoitukset-backup-failed.service`: on failure it logs an error-level
   line tagged `mielenosoitukset-backup`. Hook a real alert to it once a channel
   is chosen.
@@ -53,8 +62,11 @@ systemctl daemon-reload
 systemctl start mielenosoitukset-mongodb-backup.service   # first run now
 journalctl -u mielenosoitukset-mongodb-backup -n 20 --no-pager
 ls -lh /var/backups/mielenosoitukset
-systemctl enable --now mielenosoitukset-mongodb-backup.timer
+systemctl enable --now mielenosoitukset-mongodb-backup.timer mielenosoitukset-mongodb-backup-full.timer
 ```
+
+Roll back with `systemctl disable --now mielenosoitukset-mongodb-backup.timer
+mielenosoitukset-mongodb-backup-full.timer`. The archives stay where they are.
 
 The script needs `mongodump` and `mongorestore` (database tools 100.x, already on
 lc-main) and Python with PyYAML (already used by the app).

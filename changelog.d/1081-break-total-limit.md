@@ -1,0 +1,1 @@
+- Recurring demonstration break ranges are limited to 800 distinct days in total, so the edit form stays under the 1,000 form-field limit and reopening a series cannot fail with HTTP 413.

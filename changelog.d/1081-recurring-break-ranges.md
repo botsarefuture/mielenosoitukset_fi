@@ -1,0 +1,1 @@
+- Recurring demonstration admins can add inclusive breaks of up to 366 days alongside single break dates. Breaks exclude preview and generated dates and cancel existing children without touching frozen children (#620 redone).

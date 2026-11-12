@@ -219,6 +219,11 @@ def _get_route_points(form):
     return [point.strip() for point in legacy_route.split(",") if point.strip()]
 
 
+# The edit form renders every break day as its own multipart field, and
+# Werkzeug rejects forms with more than 1,000 parts, so keep well below that.
+MAX_BREAK_DATES = 800
+
+
 def _collect_break_dates(form):
     """Collect single days and expand validated inclusive ranges into break dates."""
     seen = set()
@@ -256,6 +261,8 @@ def _collect_break_dates(form):
             raise ValueError("Tauko voi kestää enintään 366 päivää.")
         for offset in range(day_count):
             seen.add((start_date + timedelta(days=offset)).isoformat())
+        if len(seen) > MAX_BREAK_DATES:
+            raise ValueError(f"Taukopäiviä voi olla yhteensä enintään {MAX_BREAK_DATES}.")
     return sorted(seen)
 
 

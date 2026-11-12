@@ -740,3 +740,19 @@ def test_recurring_demo_cover_upload_overrides_the_url(admin_client, db):
     assert created["cover_picture"] == (
         "https://cdn.example.test/uploads/demo_preview/uusi_kansi.jpg"
     )
+
+
+def test_break_ranges_are_bounded_by_the_edit_form_part_limit():
+    from werkzeug.datastructures import MultiDict
+    from mielenosoitukset_fi.admin.admin_recu_demo_bp import MAX_BREAK_DATES, _collect_break_dates
+
+    form = MultiDict([
+        ("break_start_dates", "2099-01-01"), ("break_end_dates", "2099-12-31"),
+        ("break_start_dates", "2100-01-01"), ("break_end_dates", "2100-12-31"),
+        ("break_start_dates", "2101-01-01"), ("break_end_dates", "2101-12-31"),
+    ])
+    with pytest.raises(ValueError):
+        _collect_break_dates(form)
+
+    ok = MultiDict([("break_start_dates", "2099-01-01"), ("break_end_dates", "2099-12-31")])
+    assert len(_collect_break_dates(ok)) <= MAX_BREAK_DATES

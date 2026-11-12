@@ -118,13 +118,13 @@
     ]
   },
   "background_jobs": {
-    "count": 15,
+    "count": 16,
     "coverage": [
       "jobs",
       "tests/test_urgent_review_delivery.py",
       "integration"
     ],
-    "sha256": "8de743382af2283084fd57d190e36378db004baef86b4f218f3b2fd3e291f02c"
+    "sha256": "1df7cfbd3bd967014dca9e14abae57ed113394617bf115991b5854807b90f37f"
   },
   "routes": {
     "mielenosoitukset_fi/admin/admin_bp.py": {
@@ -136,12 +136,12 @@
       "sha256": "0dfb8f5d9deaa4a7dd9554635c8c5418e2af122dea7f954faf2a472d29e344bf"
     },
     "mielenosoitukset_fi/admin/admin_case_bp.py": {
-      "count": 21,
+      "count": 22,
       "coverage": [
         "integration",
         "e2e-admin"
       ],
-      "sha256": "63dcb694303ad1eccab5a0378f231f3222ff1d591de1fcfba4f74d59261af526"
+      "sha256": "9230941f2189410071ecc4fb17ab8a09f8793805b344e17972b2486514d9274d"
     },
     "mielenosoitukset_fi/admin/admin_city_bp.py": {
       "count": 1,

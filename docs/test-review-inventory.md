@@ -3514,3 +3514,13 @@ cancellation, stale append suppression and localized tag-empty/reset behavior.
 Only the three removed inline-style debt entries are deleted from the baseline.
 The in-conversation visual gate covers the final source and captures; no new CI
 suite is introduced.
+
+## tests/test_god_auth.py (QA-01 follow-up, 2026-11-12)
+
+Three added definitions on real Flask, indexed Mongo and the actual god-login endpoint; email is the queued-mail double. The nine existing definitions are not individually reassessed here and remain unchecked.
+
+- [x] `test_wrong_password_and_unknown_user_are_rejected_identically_without_a_challenge`: wrong password and unknown username give identical 403 bodies and create no `god_login` challenge; the correct password then starts exactly one. Not a timing or rate-limit claim.
+- [x] `test_stages_cannot_be_skipped_and_wrong_later_factors_do_not_advance`: out-of-order final-secret/email actions are refused and the stage stays; a wrong email code increments attempts without advancing, the real code still works, and no user session exists. Passkey step is not exercised here (covered by the full-flow test with a patched verifier).
+- [x] `test_wrong_final_secret_does_not_sign_in`: wrong and too-short final secrets leave no user or receipt session, no governance access and no audit row; the right secret on the same proof completes with one audit row. The proof is placed at the final stage directly, so earlier stages are not re-proven.
+
+Production authentication is unchanged.

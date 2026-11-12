@@ -93,3 +93,16 @@ def test_delivery_stays_pending_while_the_national_team_has_nobody_to_notify(db,
     notice = db.notifications.find_one({"_id": f"city-admin-application:{application}:{admin}"})
     from mielenosoitukset_fi.utils.notifications import serialize_notification
     assert serialize_notification(notice)["message"] == "Uusi kaupunkiadminhakemus: Tampere"
+
+
+def test_duplicate_check_pipeline_is_read_only_and_groups_open_per_user():
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "scripts" / "check_city_admin_application_duplicates.py"
+    spec = importlib.util.spec_from_file_location("dup_check", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    stages = [next(iter(stage)) for stage in module.PIPELINE]
+    assert stages == ["$match", "$group", "$match", "$sort"]
+    assert module.OPEN_STATUSES == ["received", "in_review"]

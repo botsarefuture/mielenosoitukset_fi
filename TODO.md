@@ -42,7 +42,7 @@ Maintainer direction, 10 November 2026: when a page is redesigned or moved to Re
 - [ ] `POST /upcoming/translations/join`. *(approval: permissions)*
 - [ ] Analytics event `/api/analytics/event`: Go handler shipped dark (Flask still serves it). To activate: set `SITE_ANALYTICS_ENABLED=true` for the Go API on production, cross-check Go against Flask output, then add the POST rule; steps in `docs/go-public-api.md`. *(approval: production config)*
 - [ ] Analytics pageview `/api/analytics/pageview`: still Flask; visitor-secret/locale decisions remain prerequisites.
-- [ ] Fundraising details: today bundled from `fundraising.json` into the host; a Go endpoint would let it change without a host deploy.
+- [x] Fundraising details: `GET /api/fundraising/details` serves a file-backed copy, the host falls back to the bundled `fundraising.json` ([docs/go-fundraising-details.md](docs/go-fundraising-details.md)). Open: database collection plus admin editing.
 
 ## UI follow-ups from reviews
 

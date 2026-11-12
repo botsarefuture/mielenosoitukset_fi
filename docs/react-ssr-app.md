@@ -166,9 +166,8 @@ application captures at 390px/1440px in both themes.
 
 `GET /cancel_demonstration/<token>` is rendered by the React host, with its copy in
 `frontend/src/app/cancel-link.ts` (the Flask template's Finnish msgids, without
-icons). **Routing is prepared but not active:** the two Apache lines in
-`deploy/apache/react-ssr-routing.conf` are commented out and need the
-maintainer's approval to enable.
+icons). **Routing is active since 12 November 2026** (maintainer approved): two exact
+GET/HEAD lines in `deploy/apache/react-ssr-routing.conf`. Revert: re-comment them and reload Apache.
 
 - *Purpose:* lets the host show the page without Flask. It never writes.
 - *Request:* Go `GET /api/cancellation-links/<token>` (GET/HEAD only). Tokens
@@ -198,9 +197,8 @@ joins the organization) and the last two redirect after login or confirmation, s
 read-only React page cannot replace them without changing the handler's behaviour;
 see TODO.md.
 
-Rollout: deploy Go, then the host, verify with a real unused token, then ask for
-approval and uncomment both lines. Removing them restores the Flask page; no data
-or session change.
+Rollout order was Go, host, then the two Apache lines. Removing them restores the
+Flask page; no data or session change.
 
 ### Contact page
 

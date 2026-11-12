@@ -88,8 +88,8 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   - A user can have only one open application.
   - Open: whether to add a unique index against simultaneous submissions.
   - Retention and privacy notice: see the next entry (proposed).
-- **Application retention and privacy notice (2026-11-12, proposed, awaiting
-  maintainer approval).** Open applications are kept until decided. After a
+- **Application retention and privacy notice (2026-11-12, approved by the
+  maintainer 2026-11-12).** Open applications are kept until decided. After a
   decision, the free text (`about`, `activism`, `references`, `consent_at`) is erased
   from declined and withdrawn applications after 90 days and from approved ones after
   365 days. The row stays with user, cities, status and dates, so the one-open-
@@ -97,10 +97,9 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   `purge_city_admin_applications` (daily) does nothing unless
   `CITY_ADMIN_APPLICATION_RETENTION_ENABLED` is set; it ships off. The Finnish
   notice is shown on the form (`cityAdminApplyCopy.privacy*` in `i18n.ts`), and the
-  numbers there must match `RETENTION_DAYS`. Approving the PR does not switch the
-  job on in production; the flag needs its own go-ahead and a backup of
-  `city_admin_applications` first. Open: the case history and the linked
-  `/privacy` page text.
+  numbers there must match `RETENTION_DAYS`. The flag may be switched on after a
+  backup of `city_admin_applications`, with the dry-run count checked first. A
+  matching paragraph on `/privacy` follows in a separate PR.
 - **Case access (2026-11-11).** City admins' grants include `LIST_CASES`,
   `VIEW_CASE` and `EDIT_CASE`. The 2026-11-11 update is tagged
   `case_access_granted_for: issue-778`, so it can be reverted in one update.

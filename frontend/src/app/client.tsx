@@ -23,7 +23,7 @@ function Root(props: Bootstrap) {
       }
       // Detail/series views keep their separate demonstration-view collection.
       const name = routeForPath(path)?.name;
-      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride', 'information', 'campaign', 'fundraising', 'contact', 'organization-fill', 'suggest-change', 'api-docs'].includes(name)
+      if (!name || !['home', 'listing', 'organization', 'cities', 'today', 'submit', 'calendar', 'calendar-year', 'pride', 'information', 'campaign', 'fundraising', 'contact', 'city-admin', 'organization-fill', 'suggest-change', 'api-docs'].includes(name)
         || !session.siteAnalyticsEnabled || tracked.current) return;
       tracked.current = true;
       try {
@@ -69,6 +69,10 @@ if (container) {
       void import('./OrganizationFillScreen').then(({ default: OrganizationFillScreen }) => {
         hydrateRoot(container, <Root {...props} serverPage={<OrganizationFillScreen profile={profile} />} />);
       }).catch(error => console.error('Could not start the organization fill-in form', error));
+    } else if (route?.name === 'city-admin') {
+      void import('./CityAdminApplyScreen').then(({ default: CityAdminApplyScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<CityAdminApplyScreen session={props.session} />} />);
+      }).catch(error => console.error('Could not start the city admin application page', error));
     } else if (route?.name === 'contact') {
       void import('./ContactScreen').then(({ default: ContactScreen }) => {
         hydrateRoot(container, <Root {...props} serverPage={<ContactScreen session={props.session} />} />);

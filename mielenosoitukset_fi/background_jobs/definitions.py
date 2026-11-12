@@ -25,6 +25,7 @@ from mielenosoitukset_fi.scripts.auto_close_cases import main as auto_close_case
 from mielenosoitukset_fi.scripts.process_support_tickets import main as process_support_tickets
 from mielenosoitukset_fi.scripts.process_email_queue import run as process_email_queue
 from mielenosoitukset_fi.scripts.escalate_city_assignments import main as escalate_city_assignments
+from mielenosoitukset_fi.scripts.deliver_city_admin_applications import main as deliver_city_admin_applications
 from mielenosoitukset_fi.scripts.process_urgent_review_alerts import run as process_urgent_review_alerts
 
 
@@ -167,6 +168,13 @@ JOB_DEFINITIONS: List[JobDefinition] = [
         func=escalate_city_assignments,
         default_trigger=_interval(minutes=30),
         allow_interval_override=True,
+    ),
+    JobDefinition(
+        key="deliver_city_admin_applications",
+        name="City admin applications to cases",
+        description="Creates a review case and national team inbox notices for each city admin application stored by the Go API.",
+        func=deliver_city_admin_applications,
+        default_trigger=_interval(minutes=2),
     ),
 ]
 

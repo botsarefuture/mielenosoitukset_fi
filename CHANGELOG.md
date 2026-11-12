@@ -4,6 +4,8 @@
 
 ## UNRELEASED
 
+- Signed-in users can apply to become a city admin at `/kaupunkiadmin`. They choose cities, describe their activism and can name references. Each application becomes a review case for the national team. Local city admins can read and comment on applications for their own cities. Only global admins record decisions, and approving never grants rights on its own. City pages recruiting admins now link to the form.
+- City listing pages ask visitors to volunteer when the city has no or only one active city admin (target two). Cities without a city admin say that the national admin team reviews their events. Helsinki is moderated by the national admin team and never shows the note. The new Go endpoint `GET /api/cities/{key}/admin-status` exposes only a coverage band, never names or counts.
 - City listing pages ask visitors to volunteer when the city has no or only one active city admin (target two). Cities without a city admin say that the national admin team reviews their events. Helsinki is moderated by the national admin team and never shows the note. The new Go endpoint `GET /api/cities/{key}/admin-status` exposes only a coverage band, never names or counts.
 - Show city admin coverage in Kaupunkihallinta: active admins per city (no admin, one admin, or a team), counts of cities below the two-admin target, and a filter for cities that need admins. Only usable accounts count.
 - Add `docs/decisions.md`, a log of maintainer decisions and their reasons, and link it from `AGENTS.md` so they don't get lost between sessions.

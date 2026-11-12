@@ -14,7 +14,8 @@ export default function ListingScreen({ route, config, session, listing }: {
   const status = route.scope === 'city' ? listing?.cityAdminStatus : undefined;
   const recruiting = status === 'none' || status === 'single' ? status : undefined;
   return <PublicListingPage {...listingProps(route, config, session)}
-    notice={recruiting ? <CityAdminRecruiting status={recruiting} text={catalog(config.locale).cityAdmin} href={config.urls.contact} /> : undefined}
+    notice={recruiting ? <CityAdminRecruiting status={recruiting} text={catalog(config.locale).cityAdmin}
+      href={`${config.urls.cityAdmin}?city=${encodeURIComponent(route.scope === 'city' ? route.value ?? '' : '')}`} /> : undefined}
     initialData={listing?.page ?? undefined} initialSearch={listing?.query}
     onSearch={search => {
       if (!session.siteAnalyticsEnabled || navigator.doNotTrack === '1') return;

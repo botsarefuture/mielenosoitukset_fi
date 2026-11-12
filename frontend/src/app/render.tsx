@@ -29,6 +29,7 @@ import { PrideDetails, prideCopy, prideRoute } from './PrideScreen';
 import CampaignScreen from './CampaignScreen';
 import FundraisingScreen from './FundraisingScreen';
 import ContactScreen from './ContactScreen';
+import CityAdminApplyScreen from './CityAdminApplyScreen';
 import OrganizationFillScreen from './OrganizationFillScreen';
 import SuggestChangeScreen from './SuggestChangeScreen';
 import ApiDocsScreen from './ApiDocsScreen';
@@ -74,7 +75,7 @@ export type RenderInput = {
   headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; organizationFill?: string; suggestChange?: string; status?: string; pride?: string; information?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; cityAdmin?: string; organizationFill?: string; suggestChange?: string; status?: string; pride?: string; information?: string };
 
 export type RenderResult = {
   status: number;
@@ -414,6 +415,15 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
       serverPage={<OrganizationFillScreen profile={organizationFill} />} />);
+  }
+
+  if (route.name === 'city-admin') {
+    headers['Cache-Control'] = 'private, no-store';
+    extraHead = (assets.cityAdmin ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    // The page renders its own no-JavaScript fallback inside the form card.
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<CityAdminApplyScreen session={session} />} />);
   }
 
   if (route.name === 'contact') {

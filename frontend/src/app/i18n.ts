@@ -87,7 +87,7 @@ const fi: Catalog = {
     label: 'Kaupunkiadminit',
     none: 'Paikkakunnalla ei vielä ole omaa kaupunkiadminia, joten valtakunnallinen ylläpitotiimi tarkistaa täkäläiset ilmoitukset. Haluatko auttaa?',
     single: 'Paikkakunnalle haetaan toista kaupunkiadminia. Kiinnostaako?',
-    action: 'Ota yhteyttä',
+    action: 'Hae kaupunkiadminiksi',
   },
 };
 

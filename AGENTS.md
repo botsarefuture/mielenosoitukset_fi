@@ -132,3 +132,64 @@ with the project development dependencies and Node 22.12+. The `check` and
 `capture` modes support focused reruns without ad hoc duplicate commands.
 Keep visual output outside the repository. Passing this script is technical
 verification, not the independent visual SHIP required above.
+
+## Keeping sessions cheap
+
+Most of a session's cost is not what it writes but what it re-reads: the
+instructions and tool list on every turn, and the whole conversation so far.
+A session that grew from 74k to 213k tokens per turn paid for every earlier
+command output many times over.
+
+- One task per session. Start a fresh session for a new task with a self-contained
+  brief instead of continuing a long one.
+- Never print unbounded output. Pipe `curl`, `gh run view --log-failed`, `gh api`
+  and `journalctl` through `head`, `tail`, `grep` or `jq`, or write to a file. The
+  hook in `.claude/hooks/quiet-commands.py` blocks the common cases and says how
+  to retry.
+- Wait for CI with a background loop on `gh pr checks`, never by polling in chat.
+- Read only the lines of a file you need.
+- Add user-facing notes under `changelog.d/`, never to `CHANGELOG.md`, so pull
+  requests do not conflict and need no repeat CI runs.
+
+## Coordinating sessions
+
+The maintainer drops ideas into one conversation, the coordinator, which knows the
+project. The coordinator stays thin so it stays cheap:
+
+- It does not implement. Each idea becomes a fresh session with a complete brief
+  (task, files, what done looks like, the model and caveman rules from the user's
+  instructions). Small answers and one-line edits stay in the coordinator.
+- It writes the queue and open decisions to the shared notes folder and to
+  `docs/decisions.md`, not only to chat, so a new coordinator can take over by reading them.
+- It merges, in order, pull requests whose required checks are green and whose review
+  threads are resolved, merging `main` in first. It stops and asks for anything that
+  changes data, authentication, privileges or sends email.
+- Hand over by context size, not turn count. When a turn needs more than about 120k
+  tokens of context, or when the queue is empty and a new topic starts, write a
+  hand-over note (queue, sessions in flight with their ids, open decisions, what was
+  verified) in the shared notes folder and let the maintainer start a fresh coordinator
+  from it. A long conversation costs context size times turns, so size is the signal.
+- A session reports to whoever started it, and that link does not move. So every brief
+  says: put the result in the pull request and in the notes file, and message the
+  coordinator only when blocked. Before handing over, the old coordinator sends each
+  session in flight the new coordinator's id (or the notes file path) and tells it to
+  report there. The hand-over note lists those ids so the new coordinator can check
+  each one.
+
+### Traffic light for the merge queue
+
+Merging many pull requests can loop: each merge makes the next one conflict or fall
+behind, and each retry costs a CI run and a long context. Use three states:
+
+- **Green:** normal flow, one pull request at a time, merging `main` in first.
+- **Yellow:** the same pull request fails or conflicts twice in a row, or the same
+  failure shows up on two pull requests. Stop retrying. Read the cause once, fix it at
+  the source (for example a shared file, a stale manifest, a flaky test), then continue.
+- **Red:** a third repeat, or any failure whose cause is unclear. Freeze the queue, do not
+  push or merge anything more, write what happened to the notes folder, and ask the
+  maintainer with a suggested answer.
+
+The coordinator also always uses the caveman style in chat, and gives every session the
+cheapest model that can do the job (read-only work on the smallest model, routine work
+on a mid-size one, only hard design or security work on the largest) with a lower
+reasoning effort for mechanical work.

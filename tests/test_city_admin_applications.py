@@ -93,3 +93,36 @@ def test_delivery_stays_pending_while_the_national_team_has_nobody_to_notify(db,
     notice = db.notifications.find_one({"_id": f"city-admin-application:{application}:{admin}"})
     from mielenosoitukset_fi.utils.notifications import serialize_notification
     assert serialize_notification(notice)["message"] == "Uusi kaupunkiadminhakemus: Tampere"
+
+
+def test_retention_erases_only_expired_decided_text(db, seeded_data):
+    from datetime import timedelta
+    from mielenosoitukset_fi.utils.city_admin_applications import purge_expired, retention_enabled
+    applicant = seeded_data["user_id"]
+    old = utcnow() - timedelta(days=100)
+    expired = _application(db, applicant, ["tampere"])
+    recent = _application(db, applicant, ["turku"])
+    pending = _application(db, applicant, ["oulu"])
+    approved = _application(db, applicant, ["vaasa"])
+    db.city_admin_applications.update_one({"_id": expired}, {"$set": {"status": "declined", "updated_at": old}})
+    db.city_admin_applications.update_one({"_id": recent}, {"$set": {"status": "declined"}})
+    db.city_admin_applications.update_one({"_id": pending}, {"$set": {"updated_at": old}})
+    db.city_admin_applications.update_one({"_id": approved}, {"$set": {"status": "approved", "updated_at": old}})
+
+    assert purge_expired(db, dry_run=True) == 1
+    assert "about" in db.city_admin_applications.find_one({"_id": expired})
+    assert purge_expired(db) == 1
+    assert purge_expired(db) == 0
+    gone = db.city_admin_applications.find_one({"_id": expired})
+    assert "about" not in gone and "references" not in gone and gone["purged_at"]
+    assert gone["status"] == "declined" and gone["city_keys"] == ["tampere"]
+    for kept in (recent, pending, approved):
+        assert "about" in db.city_admin_applications.find_one({"_id": kept})
+    assert retention_enabled({}) is False
+    assert retention_enabled({"CITY_ADMIN_APPLICATION_RETENTION_ENABLED": "true"}) is True
+
+
+def test_retention_job_is_off_by_default(db, monkeypatch):
+    from mielenosoitukset_fi.scripts.purge_city_admin_applications import main
+    monkeypatch.delenv("CITY_ADMIN_APPLICATION_RETENTION_ENABLED", raising=False)
+    assert main(db) == {"enabled": False, "purged": 0}

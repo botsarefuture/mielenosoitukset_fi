@@ -291,7 +291,7 @@ db.city_admin_applications.createIndex(
 It matches the existing rule of one open application per user, not per city.
 Decided applications (approved, declined, withdrawn) fall out of the index, so
 the user can apply again. `$in` in a partial filter needs MongoDB 6.0 or newer;
-check the production version first.
+production runs MongoDB 7.0.37 (checked 2026-11-12 with `mongod --version` on lc-db), so it is supported.
 
 **Handler behavior.** A duplicate key error on insert returns 409
 `APPLY_OPEN_EXISTS`, the same code as the existing check, so the form needs no

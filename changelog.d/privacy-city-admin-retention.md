@@ -1,0 +1,1 @@
+- The privacy notice (`/privacy`) now describes city admin applications: what is stored, who sees it, and that the text of declined or withdrawn applications is erased 90 days after the decision and of approved ones after 365 days. Matches the notice on the application form.

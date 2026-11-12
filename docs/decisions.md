@@ -106,12 +106,24 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
     decide. Approving never grants rights; the role is granted in the accounts
     dashboard.
   - A user can have only one open application.
-  - Open: retention periods and the privacy notice wording.
+  - Retention and privacy notice: see the entry after this one.
   - **Unique index against simultaneous submissions (proposed, awaiting maintainer
     approval).** Partial unique index on `user_id` for open applications; a
     duplicate key returns 409 `APPLY_OPEN_EXISTS`. Not created yet. Details, the
     pre-check script and rollback are in
     [city-admin-applications.md](city-admin-applications.md#duplicate-submissions-proposed-awaiting-maintainer-approval).
+- **Application retention and privacy notice (2026-11-12, approved by the
+  maintainer 2026-11-12).** Open applications are kept until decided. After a
+  decision, the free text (`about`, `activism`, `references`, `consent_at`) is erased
+  from declined and withdrawn applications after 90 days and from approved ones after
+  365 days. The row stays with user, cities, status and dates, so the one-open-
+  application rule and the applicant's status list keep working. The erasing job
+  `purge_city_admin_applications` (daily) does nothing unless
+  `CITY_ADMIN_APPLICATION_RETENTION_ENABLED` is set; it ships off. The Finnish
+  notice is shown on the form (`cityAdminApplyCopy.privacy*` in `i18n.ts`), and the
+  numbers there must match `RETENTION_DAYS`. The flag may be switched on after a
+  backup of `city_admin_applications`, with the dry-run count checked first. A
+  matching paragraph on `/privacy` follows in a separate PR.
 - **Case access (2026-11-11).** City admins' grants include `LIST_CASES`,
   `VIEW_CASE` and `EDIT_CASE`. The 2026-11-11 update is tagged
   `case_access_granted_for: issue-778`, so it can be reverted in one update.

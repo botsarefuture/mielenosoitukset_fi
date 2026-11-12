@@ -1,0 +1,1 @@
+- Turn on the read-only auth bridge's `/api/auth/me` route in the web server so the organization page can re-read who is signed in; no visible change.

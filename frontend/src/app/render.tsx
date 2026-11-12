@@ -618,7 +618,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       url: `${config.origin}${monthPath(route)}?day=${Number(row.date.slice(8))}#calendar-agenda` }))
       : Array.from({length:12},(_,index)=>({ name:monthName({...route,month:index+1}), url:`${config.origin}${monthPath({...route,month:index+1})}` }));
     jsonLd = discoveryStructuredData(meta, items);
-    extraHead = (route.month ? assets.calendar : assets.calendarYear) ?? '';
+    extraHead = ((route.month ? assets.calendar : assets.calendarYear) ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
     noscript = `<noscript>${renderToStaticMarkup(<CalendarFallback calendar={calendar} config={config} />)}</noscript>`;
     if (!data || calendar.events === null) { status = 503; headers['Retry-After'] = '30'; headers['X-Robots-Tag'] = 'noindex, follow'; }
   }

@@ -202,6 +202,19 @@ Reading these never consumes a flash message and changes nothing.
    No data, cookie or account is touched, so there is nothing to restore.
 4. Before activation take a backup of `config.yaml` and the Go environment file.
 
+### Activation record (2026-11-12)
+
+PR #1123 merged and deployed with both flags off. After the auth review (SHIP) and
+the visual review (SHIP), the flags were turned on in production: backup in
+`/root/auth-bridge-backup-20261112T135027Z` (`config.yaml`, `api-environment`;
+`/root/auth-bridge-backup-latest` names the newest), `AUTH_BRIDGE_SCOPES: true`
+appended to `config.yaml`, `AUTH_BRIDGE_ENABLED=true` appended to
+`/etc/mielenosoitukset-api/environment`, Gunicorn reloaded and the API restarted
+(no dump running). Verified on the server: `/api/session` returns the new scopes,
+`/api/auth/me` returns 200, a cookie goes Go → Flask and comes back anonymous,
+`?organization_id=bad` returns 400. Revert: delete those two lines (or restore the
+backup copies), reload Gunicorn, restart the API.
+
 ## 7. Risks and open points
 
 - `has_messages` is true for any pending flash in the visitor's session, not only

@@ -11,7 +11,12 @@
 # Environment (all optional):
 #   APP_CONFIG    Flask config.yaml   (default /var/www/mielenosoitukset_fi/config.yaml)
 #   BACKUP_DIR    where archives go   (default /var/backups/mielenosoitukset)
-#   KEEP_DAYS     days to keep        (default 14)
+#   BACKUP_MODE   core or full        (default core)
+#                 core skips the bulky audit-log collections in EXCLUDE_COLLECTIONS;
+#                 full dumps every collection. Archives are named <db>-<mode>-<time>.
+#   EXCLUDE_COLLECTIONS  space-separated, core mode only
+#                 (default "super_audit_logs admin_logs")
+#   KEEP_DAYS     days to keep archives of this mode (default 14)
 #   MONGODUMP     mongodump binary    (default mongodump)
 #   MONGORESTORE  mongorestore binary (default mongorestore)
 #   PYTHON        interpreter used to read the YAML config (default python3)
@@ -21,11 +26,21 @@ umask 077
 app_config="${APP_CONFIG:-/var/www/mielenosoitukset_fi/config.yaml}"
 backup_dir="${BACKUP_DIR:-/var/backups/mielenosoitukset}"
 keep_days="${KEEP_DAYS:-14}"
+mode="${BACKUP_MODE:-core}"
+exclude="${EXCLUDE_COLLECTIONS-super_audit_logs admin_logs}"
 mongodump="${MONGODUMP:-mongodump}"
 mongorestore="${MONGORESTORE:-mongorestore}"
 python="${PYTHON:-python3}"
 
 [[ "$keep_days" =~ ^[0-9]+$ && "$keep_days" -ge 1 ]] || { echo "mongodb-backup: KEEP_DAYS must be a positive integer" >&2; exit 2; }
+[[ "$mode" == core || "$mode" == full ]] || { echo "mongodb-backup: BACKUP_MODE must be core or full" >&2; exit 2; }
+excluded=()
+if [[ "$mode" == core ]]; then
+  for name in $exclude; do
+    [[ "$name" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "mongodb-backup: invalid collection name in EXCLUDE_COLLECTIONS" >&2; exit 2; }
+    excluded+=("--excludeCollection=$name")
+  done
+fi
 [[ -r "$app_config" ]] || { echo "mongodb-backup: cannot read $app_config" >&2; exit 2; }
 
 work="$(mktemp -d)"
@@ -59,14 +74,20 @@ authdb="$(cat "$work/authdb")"
 [[ "$authdb" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "mongodb-backup: unexpected authentication database" >&2; exit 2; }
 
 install -d -m 0700 "$backup_dir"
+# Core and full runs share one directory; serialize them so one run never
+# deletes the other's unfinished archive. Held until this process exits.
+if command -v flock >/dev/null 2>&1; then
+  exec 9>"$backup_dir/.backup.lock"
+  flock 9
+fi
 # Clear leftovers from runs that were killed before their own cleanup ran.
 find "$backup_dir" -maxdepth 1 -type f -name "*.partial" -print -delete
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-target="$backup_dir/${dbname}-${stamp}.archive.gz"
+target="$backup_dir/${dbname}-${mode}-${stamp}.archive.gz"
 partial="$target.partial"
 
 # No --quiet: on failure mongodump's reason must reach the journal.
-"$mongodump" --config="$work/tools.yaml" --authenticationDatabase="$authdb" --db="$dbname" --archive="$partial" --gzip
+"$mongodump" --config="$work/tools.yaml" --authenticationDatabase="$authdb" --db="$dbname" ${excluded[@]+"${excluded[@]}"} --archive="$partial" --gzip
 [[ -s "$partial" ]] || { echo "mongodb-backup: dump is empty" >&2; exit 1; }
 # --dryRun alone stops before reading collection data, so first prove the whole
 # gzip stream decompresses and its checksum matches.
@@ -77,7 +98,14 @@ mv "$partial" "$target"
 partial=""
 
 # Retention: only ever delete our own finished archives, never the newest one.
-find "$backup_dir" -maxdepth 1 -type f -name "${dbname}-*.archive.gz" -mtime "+$((keep_days - 1))" \
+find "$backup_dir" -maxdepth 1 -type f -name "${dbname}-${mode}-*.archive.gz" -mtime "+$((keep_days - 1))" \
   ! -newer "$target" ! -samefile "$target" -print -delete
+
+# Archives written before the mode was part of the name (<db>-<time>.archive.gz)
+# were full dumps. Expire them with the core retention so they do not pile up.
+if [[ "$mode" == core ]]; then
+  find "$backup_dir" -maxdepth 1 -type f -name "${dbname}-[0-9]*T[0-9]*Z.archive.gz" -mtime "+$((keep_days - 1))" \
+    ! -newer "$target" ! -samefile "$target" -print -delete
+fi
 
 echo "mongodb-backup: wrote $target ($(du -h "$target" | cut -f1))"

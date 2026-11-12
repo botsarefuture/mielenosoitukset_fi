@@ -35,7 +35,16 @@
       <span class="admin-workspace-summary-icon"><i class="fa-solid fa-user-shield" aria-hidden="true"></i></span>
       <div class="city-admin-summary-copy"><strong>{{ grant_count }}</strong><span>{{ _('Voimassa olevia kaupunkioikeuksia') }}</span></div>
     </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-user-plus" aria-hidden="true"></i></span>
+      <div class="city-admin-summary-copy"><strong>{{ no_admin_count }}</strong><span>{{ _('Kaupunkeja ilman kaupunkiadminia') }}</span></div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-user-group" aria-hidden="true"></i></span>
+      <div class="city-admin-summary-copy"><strong>{{ single_admin_count }}</strong><span>{{ _('Kaupunkeja, joilla vain yksi kaupunkiadmin') }}</span></div>
+    </article>
   </section>
+  <p class="small text-body-secondary city-admin-target-note">{{ _('Tavoite on vähintään %(target)s aktiivista kaupunkiadminia kaupunkia kohden. Yhdelläkin pärjätään väliaikaisesti. Määrissä lasketaan vain käytössä olevat tilit.', target=admin_target) }}</p>
 
   <form method="post" class="city-admin-card admin-section-card" id="city-admin-form">
 
@@ -54,6 +63,7 @@
           <option value="all">{{ _('Kaikki kaupungit') }}</option>
           <option value="enabled">{{ _('Vain käytössä olevat') }}</option>
           <option value="disabled">{{ _('Vain pois käytöstä olevat') }}</option>
+          <option value="needs-admins">{{ _('Tarvitsee admineja (alle %(target)s)', target=admin_target) }}</option>
         </select>
       </div>
       <div class="city-admin-result-state">
@@ -84,11 +94,12 @@
             <th>{{ _('Kaupunki') }}</th>
             <th class="city-admin-metric-column">{{ _('Ilmoituksia') }}</th>
             <th class="city-admin-metric-column">{{ _('Kaupunkioikeuksia') }}</th>
+            <th>{{ _('Kaupunkiadminit') }}</th>
           </tr>
         </thead>
         <tbody>
           {% for row in city_rows %}
-          <tr data-city-row data-city-name="{{ row.name|lower }}" data-enabled="{{ 'true' if row.enabled else 'false' }}" data-relevant="{{ 'true' if row.enabled or row.demo_count or row.grant_count else 'false' }}">
+          <tr data-city-row data-city-name="{{ row.name|lower }}" data-enabled="{{ 'true' if row.enabled else 'false' }}" data-relevant="{{ 'true' if row.enabled or row.demo_count or row.grant_count else 'false' }}" data-coverage="{{ row.coverage }}">
             <td class="city-admin-toggle-column">
               <input class="form-check-input" type="checkbox" name="enabled_cities[]" value="{{ row.key }}" id="city_{{ row.key }}" data-city-toggle data-initial="{{ 'true' if row.enabled else 'false' }}" data-city-name="{{ row.name }}" data-demo-count="{{ row.demo_count }}" data-grant-count="{{ row.grant_count }}" {% if row.enabled %}checked{% endif %}>
             </td>
@@ -108,6 +119,12 @@
               {% else %}
                 <span class="city-admin-metric">{{ row.grant_count }}</span>
               {% endif %}
+            </td>
+            <td class="city-admin-coverage city-admin-coverage--{{ row.coverage }}">
+              {% if row.coverage == 'national' %}{{ _('Valtakunnallinen tiimi') }}
+              {% elif row.coverage == 'none' %}{{ _('Ei kaupunkiadminia') }}
+              {% elif row.coverage == 'single' %}{{ _('Yksi, haetaan toista') }}
+              {% else %}{{ _('Tiimi: %(count)s', count=row.admin_count) }}{% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -138,7 +155,8 @@ function filterCities() {
     const matchesStatus = status === 'all' ||
       (status === 'relevant' && row.dataset.relevant === 'true') ||
       (status === 'enabled' && enabled) ||
-      (status === 'disabled' && !enabled);
+      (status === 'disabled' && !enabled) ||
+      (status === 'needs-admins' && row.dataset.relevant === 'true' && (row.dataset.coverage === 'none' || row.dataset.coverage === 'single'));
     row.hidden = !(matchesName && matchesStatus);
     if (!row.hidden) shown += 1;
   });

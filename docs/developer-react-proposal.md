@@ -4,7 +4,7 @@ Status: approved through the auth bridge (2026-11-12, see [auth-bridge.md](auth-
 implemented as Go read routes instead of a Flask scope: `GET /api/developer/overview` and
 `GET /api/developer/apps/<id>` (`go-api/developer.go`), served only when `AUTH_BRIDGE_ENABLED=true`,
 returning the signed-in account's own metadata with no secrets. Not routed by Apache yet. React screens
-and routing are the next steps. Written 12 November 2026. This follows the TODO item "Secondary tools".
+are implemented (`DeveloperScreen.tsx`, read-only; see below) and routing is prepared but not active. Written 12 November 2026. This follows the TODO item "Secondary tools".
 
 ## Verified facts
 
@@ -61,3 +61,19 @@ and nothing needs to change for the React target.
    `organization_id`.
 2. Should the `/developer` writes later move to Go? Suggested: not now; they handle
    secrets and sit under the authentication approval.
+
+## React screens (implemented 12 November 2026)
+
+- Routes claimed by the React host: `/developer` (and `/developer/`) and `/developer/apps/<24 hex>`. `/developer/apps`
+  (the create form), `/developer/docs` and every POST stay in Flask. The Apache lines are commented out in
+  `deploy/apache/react-ssr-routing.conf`.
+- The host renders only a shell (`private, no-store`, `noindex, nofollow`, no canonical URL, no analytics). The browser
+  then reads `GET /api/developer/overview` or `/api/developer/apps/<id>` with its own cookie, through `useSession`
+  (which also re-reads `/api/auth/me` when the bridge is on).
+- States: anonymous (or Go 401) shows a sign-in link to `/users/auth/login?next=<this page>`; `{access:false}` shows the
+  lock text and the request form, which posts the unchanged `reason` field to Flask `/developer/request_access`; an
+  unknown or foreign app (404) shows "Sovellusta ei löytynyt."; any other failure or a malformed body shows a retry
+  message, never an empty panel. Secrets are not in the response, so none can be shown.
+- Copy is the Flask templates' Finnish msgids in `frontend/src/app/developer-route.ts`; no icons in headings.
+- Left out on purpose: the create, rotate, revoke and scope-request controls and the rate-limit panel (no Go data for
+  it yet). Until they exist in React, activating the routing would remove them, so activation is open in TODO.md.

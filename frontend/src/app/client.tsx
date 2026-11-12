@@ -70,6 +70,11 @@ if (container) {
       void import('./CancelLinkScreen').then(({ default: CancelLinkScreen }) => {
         hydrateRoot(container, <Root {...props} serverPage={<CancelLinkScreen link={link} token={token} />} />);
       }).catch(error => console.error('Could not start the cancellation page', error));
+    } else if (route?.name === 'developer') {
+      const appId = route.appId;
+      void import('./DeveloperScreen').then(({ default: DeveloperScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<DeveloperScreen config={props.config} session={props.session} appId={appId} />} />);
+      }).catch(error => console.error('Could not start the developer panel', error));
     } else if (route?.name === 'organization-fill' && props.organizationFill) {
       const profile = props.organizationFill;
       void import('./OrganizationFillScreen').then(({ default: OrganizationFillScreen }) => {

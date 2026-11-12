@@ -822,6 +822,26 @@ try {
   assert(!/^RewriteRule "\^\/cancel_demonstration/m.test(apacheRouting), 'Cancellation routing is prepared, not active');
   console.log('PASS: cancellation link states, escaping, noindex, Flask POST form and failures');
 
+  // Developer panel: the shell is server-rendered, the data is read in the browser from Go.
+  const developerAppId = 'a'.repeat(24);
+  for (const [path, next] of [['/developer', '%2Fdeveloper'], [`/developer/apps/${developerAppId}`, `%2Fdeveloper%2Fapps%2F${developerAppId}`]]) {
+    const anonymous = await detailPage({ path });
+    assert.equal(anonymous.status, 200, path);
+    const body = anonymous.html.split('<body>')[1].split('<script type="application/json"')[0];
+    for (const text of ['Kehittäjäpaneeli', 'Kirjaudu sisään', `/users/auth/login?next=${next}`]) assert(body.includes(text), `${path}: ${text}`);
+    assert(!body.includes('Client ID'), 'The anonymous shell holds no account data');
+    assert.match(anonymous.html, /<meta name="robots" content="noindex, nofollow" \/>/);
+    assert(!/rel="canonical"/.test(anonymous.html));
+    assert.equal(anonymous.headers?.['Cache-Control'] ?? anonymous.headers?.['cache-control'], 'private, no-store');
+  }
+  for (const path of ['/developer/apps', `/developer/apps/${developerAppId}/`, '/developer/apps/short', '/developer/request_access', '/developer/docs']) {
+    assert.equal((await detailPage({ path })).status, 404, `${path} stays on Flask`);
+  }
+  assert(apacheRouting.includes('#RewriteRule "^/developer/?$" "http://127.0.0.1:8090$0" [P,L]'));
+  assert(apacheRouting.includes('#RewriteRule "^/developer/apps/[a-fA-F0-9]{24}$" "http://127.0.0.1:8090$0" [P,L]'));
+  assert(!/^RewriteRule "\^\/developer/m.test(apacheRouting), 'Developer routing is prepared, not active');
+  console.log('PASS: developer panel shell, login redirect with next, noindex, unclaimed paths and inactive routing');
+
   const statusFetch = globalThis.fetch;
   const healthyStatus = { overall_ok: true, services: [{ name: 'Tietokanta', status: 'ok', message: 'Yhteys kunnossa' }],
     updated_at: '10.11.2026 12:00:00 UTC', latency_ms: 1 };

@@ -175,7 +175,7 @@ func (a *API) getDemonstration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		log.Print("Demonstration identifier lookup failed")
+		log.Printf("Demonstration identifier lookup failed (%s)", dbErrorKind(err))
 		writeError(w, 503, "service unavailable")
 		return
 	}
@@ -185,7 +185,7 @@ func (a *API) getDemonstration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		log.Print("Demonstration database read failed")
+		log.Printf("Demonstration database read failed (%s)", dbErrorKind(err))
 		writeError(w, 503, "service unavailable")
 		return
 	}

@@ -1,0 +1,1 @@
+- Go API deployment: event analytics now stay enabled across releases when `SITE_ANALYTICS_ENABLED` is missing from `config.yaml`, matching Flask's default; only an explicit false turns them off.

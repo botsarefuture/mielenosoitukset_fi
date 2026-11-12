@@ -27,7 +27,8 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 - [ ] Retire the Flask templates each migrated page leaves behind as rollback, once its React page has been stable for a while.
 - [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).
   - Done (12 November 2026): submit headings without icons, red conflict cancel, one `…` character, no exclamation marks, mielenosoitus instead of tapahtuma in the submit form.
-  - Open: retry buttons differ (calendar and chat use bare buttons, Pride `button-secondary`, others `detail-button`; the calendar does not load `public-detail.css`). The detail page still says tapahtuma in places, but its catalog must match the Flask msgids (`tests/test_public_detail_copy_parity.py`), so changing it needs new msgids and human en/sv translation. Not yet walked in detail: city, organization, fundraising, status, privacy and cancel pages.
+  - Retry buttons (12 November 2026): calendar notices now use `detail-button`. Kept as is with reason: the chat widget's compact buttons, Pride's `button-secondary` and the home page's `home-button`, which belong to their own page styles.
+  - Open: the detail page still says tapahtuma in places, but its catalog must match the Flask msgids (`tests/test_public_detail_copy_parity.py`), so changing it needs new msgids and human en/sv translation. Not yet walked in detail: city, organization, fundraising, status, privacy and cancel pages.
 
 ## Move APIs to Go
 

@@ -224,11 +224,10 @@ func seriesEntry(doc bson.M) (seriesOccurrence, bool) {
 }
 
 func (s *cachedDetailStore) FindSeries(ctx context.Context, parent bson.ObjectID) (seriesPayload, error) {
-	source, ok := s.source.(seriesStore)
-	if !ok {
+	if s.series == nil {
 		return seriesPayload{}, errors.New("series store unavailable")
 	}
-	return source.FindSeries(ctx, parent)
+	return s.series.find(ctx, parent)
 }
 
 func (a *API) getSeries(w http.ResponseWriter, r *http.Request) {

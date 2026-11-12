@@ -28,8 +28,8 @@ def test_submission_locales_follow_nested_flask_configuration(tmp_path, babel, e
     assert json.loads(values["PUBLIC_SUBMIT_LOCALES"]).split(",") == expected
 
 
-@pytest.mark.parametrize("flag, expected", [(True, "true"), (False, None), (None, None), ("true", None)])
-def test_event_analytics_switch_follows_the_flask_yaml_flag(tmp_path, flag, expected):
+@pytest.mark.parametrize("flag, expected", [(True, "true"), (None, "true"), (False, None)])
+def test_event_analytics_switch_follows_the_flask_default_and_yaml_flag(tmp_path, flag, expected):
     path = Path(__file__).resolve().parents[1] / "deploy/go-api/configure_environment.py"
     spec = importlib.util.spec_from_file_location("go_environment", path)
     module = importlib.util.module_from_spec(spec)

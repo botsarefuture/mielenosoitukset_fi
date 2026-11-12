@@ -1,0 +1,1 @@
+- Finnish copy cleanup on the React pages: loading and placeholder texts end in a single ellipsis character, exclamation marks are gone from interface and page text, the submit import and calendar messages say "mielenosoitus" instead of "tapahtuma", the notification load error is a full sentence, and the similar-demonstration dialog no longer repeats its lead text.

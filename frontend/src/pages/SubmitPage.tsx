@@ -1092,7 +1092,7 @@ export function SubmitPage(props: SubmitPageProps) {
             </div>
             <div className="modal-body">
               <p id="submit-conflict-message">{conflict?.message || messages.conflictLead}</p>
-              <p>{messages.conflictLead}</p>
+              {conflict?.message && <p>{messages.conflictLead}</p>}
               <h3 className="h6">{messages.conflictMatches}</h3>
               <ol id="submit-conflict-matches" className="user-conflict-list">
                 {(conflict?.demos ?? []).slice(0, 5).map((demo, index) => (

@@ -8,9 +8,9 @@ export function TranslationContent({ session }: { session: SessionSummary }) {
   const loginUrl = '/users/auth/login?next=' + encodeURIComponent(informationPages.translations.path);
   return <>
     <section className="public-prose-card">
-      <h2>Auta meitä tekemään sivustosta monikielinen!</h2>
+      <h2>Auta meitä tekemään sivustosta monikielinen</h2>
       <p>Ensimmäisessä vaiheessa käännämme sivuston käyttöliittymän, ohjetekstit ja muut staattiset sisällöt. Tämän jälkeen toteutetaan järjestelmä, jonka avulla myös käyttäjien ilmoittamat mielenosoitukset ja tapahtumat voidaan kääntää useille kielille.</p>
-      <p>Tämä työ tehdään yhdessä vapaaehtoisten kanssa. Tule mukaan!</p>
+      <p>Tämä työ tehdään yhdessä vapaaehtoisten kanssa. Tule mukaan.</p>
       <div className="information-actions">
         {join?.joined ? <strong>Olet mukana käännöstyössä</strong>
           : session.authenticated && join?.csrfToken ? <form method="post" action="/upcoming/translations/join">

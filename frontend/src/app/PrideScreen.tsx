@@ -16,7 +16,7 @@ export const prideCopy = {
 
 const mapMessages = {
   title: 'Pride-kartta',
-  loading: 'Ladataan Pride-karttaa...',
+  loading: 'Ladataan Pride-karttaa…',
   error: 'Pride-kartan lataaminen epäonnistui. Yritä uudelleen.',
   retry: 'Yritä uudelleen',
   empty: 'Kartalla ei vielä ole tulevia Pride-mielenosoituksia.',

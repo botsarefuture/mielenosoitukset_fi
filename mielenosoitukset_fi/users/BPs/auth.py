@@ -19,6 +19,8 @@ from flask_babel import gettext as _
 from config import Config
 from mielenosoitukset_fi.users.models import MFAToken, PendingMFA, User, UserMFA
 from mielenosoitukset_fi.utils.auth import (
+    reset_invalidation_enabled,
+    token_issued_before,
     generate_confirmation_token,
     verify_confirmation_token,
     generate_reset_token,
@@ -1802,6 +1804,16 @@ def password_reset(token):
         flash_message("Käyttäjää ei löytynyt.", "warning")
         return redirect(url_for("users.auth.password_reset_request"))
 
+    if reset_invalidation_enabled() and token_issued_before(
+        token, user_doc.get("password_changed_at")
+    ):
+        log_entry["error"] = "Token issued before the last password change"
+        mongo.password_changes.insert_one(log_entry)
+        flash_message(
+            "Salasanan palautuslinkki on virheellinen tai vanhentunut.", "warning"
+        )
+        return redirect(url_for("users.auth.password_reset_request"))
+
     user = User.from_db(user_doc)
 
     if request.method == "POST":
@@ -1848,6 +1860,10 @@ def password_reset(token):
                 {"token_hash": token_hash},
                 {"$set": {"password_change_success": True}},
             )
+            if reset_invalidation_enabled():
+                # Existing sessions carry the old epoch and are dropped by the
+                # user loader; the cookie format is unchanged.
+                mongo.users.update_one({"_id": user_doc["_id"]}, {"$inc": {"auth_epoch": 1}})
         except Exception as e:
             # Release the claim so the link can be retried after a failure.
             mongo.used_password_change_tokens.delete_one(

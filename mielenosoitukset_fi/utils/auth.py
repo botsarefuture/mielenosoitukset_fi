@@ -53,6 +53,7 @@ def _generate_token(data, expiration):
     return jwt.encode(
         {
             **data,
+            "iat": utcnow(),
             "exp": utcnow() + datetime.timedelta(seconds=expiration),
         },
         current_app.config["SECRET_KEY"],
@@ -187,3 +188,37 @@ def verify_confirmation_token(token: str) -> Optional[str]:
     if status == 1 and data and isinstance(data, dict) and _purpose_allows(data, "email_confirmation"):
         return data.get("email")
     return None
+
+
+def reset_invalidation_enabled() -> bool:
+    """Whether a password reset also ends sessions and older reset links.
+
+    Off unless ``INVALIDATE_ON_PASSWORD_RESET`` is set in the app config or the
+    environment. Turning it off again (unset, restart) is the whole revert.
+    """
+    import os
+
+    value = current_app.config.get("INVALIDATE_ON_PASSWORD_RESET")
+    if value is None:
+        value = os.environ.get("INVALIDATE_ON_PASSWORD_RESET", "")
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def token_issued_before(token: str, moment) -> bool:
+    """True if a signed token was issued before ``moment``.
+
+    Tokens minted before the ``iat`` claim existed are dated one hour before
+    their expiry, which is the lifetime they were given.
+    """
+    try:
+        data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
+    except jwt.InvalidTokenError:
+        return False
+    issued = data.get("iat")
+    if issued is None and data.get("exp") is not None:
+        issued = data["exp"] - 3600
+    if issued is None or moment is None:
+        return False
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=datetime.timezone.utc)
+    return datetime.datetime.fromtimestamp(issued, datetime.timezone.utc) < moment

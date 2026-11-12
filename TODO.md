@@ -35,7 +35,7 @@ Proposal: [Public write API migration contracts, approval questions and rollout 
 
 Maintainer direction, 10 November 2026: when a page is redesigned or moved to React, its Flask endpoints move to the Go API too, in the same work or later. Still on Flask:
 
-- [ ] `/api/session` and its scopes (`organization_id`, `translation_join`, `contact_form`). *(approval: session)*
+- [ ] `/api/session` and its scopes (`organization_id`, `translation_join`, `contact_form`). *(approval: session)* Read-only Go bridge and permission scopes built behind `AUTH_BRIDGE_*` flags (approved 2026-11-12, [auth-bridge.md](docs/auth-bridge.md)); the endpoint itself still lives in Flask.
 - [ ] `POST /contact`: rate limits, one-time token, honeypot, validation and email.
 - [ ] `POST /organization/<id>/save_suggestion`: stores the suggestion, opens a case and notifies moderators.
 - [ ] `POST /suggest_change/<demo_id>`: compares proposed fields and Markdown, stores a demonstration suggestion, opens a case and notifies moderators; GET/HEAD now belongs to the React host.
@@ -69,7 +69,7 @@ From the visual reviews:
 The checked visual follow-ups above are implemented; visual acceptance remains **BLOCKED** until real captures and an independent reviewer SHIP are available. This checkout's sandbox cannot bind sockets, and captures were explicitly excluded from this task.
 
 - [x] Keep action menus outside the scroll viewport (#743). Implemented; visual acceptance remains **BLOCKED** as above.
-- [ ] Organization page: an anonymous visitor who sends a fill-in suggestion never sees the "Kiitos! Ehdotuksesi on tallennettu" message, because the React page only fetches flash messages for signed-in members of that organization. Needs the session endpoint to report pending messages for everyone (session change: maintainer approval).
+- [ ] Organization page: an anonymous visitor who sends a fill-in suggestion never sees the "Kiitos! Ehdotuksesi on tallennettu" message, because the React page only fetches flash messages for signed-in members of that organization. Fixed behind `AUTH_BRIDGE_SCOPES` ([auth-bridge.md](docs/auth-bridge.md)); done once the flag is on in production.
 
 ## Security and permissions
 

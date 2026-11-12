@@ -221,6 +221,9 @@ class Config:
         # limiter so support ingress can be contained without affecting other
         # public routes.
         cls.CONTACT_FORM_ENABLED = bool(config.get("CONTACT_FORM_ENABLED", True))
+        # Off by default: lets /api/session answer the Go/React auth bridge's
+        # read-only permission and anonymous flash scopes. See docs/auth-bridge.md.
+        cls.AUTH_BRIDGE_SCOPES = bool(config.get("AUTH_BRIDGE_SCOPES", False))
         cls.CONTACT_PER_IP_LIMIT = config.get(
             "CONTACT_PER_IP_LIMIT",
             "3 per 10 minutes; 10 per day",

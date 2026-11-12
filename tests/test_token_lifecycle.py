@@ -273,3 +273,32 @@ def test_expired_volunteer_confirmation_does_not_confirm(client, db):
     _volunteer(db, confirmation_expires=utcnow() - timedelta(seconds=1))
     assert client.get("/kampanja/confirm/vol-token").status_code == 400
     assert db.volunteers.find_one({"email": "v@example.test"})["confirmed"] is False
+
+
+def test_cancellation_link_is_claimed_atomically(client, db, seeded_data):
+    from mielenosoitukset_fi.utils.demo_cancellation import (
+        claim_cancellation_token,
+        release_cancellation_token,
+    )
+
+    record = db.demo_cancellation_tokens.find_one({})
+    assert claim_cancellation_token(record["_id"]) is True
+    assert claim_cancellation_token(record["_id"]) is False
+    release_cancellation_token(record["_id"])
+    assert db.demo_cancellation_tokens.find_one({"_id": record["_id"]})["used_at"] is None
+    assert claim_cancellation_token(record["_id"]) is True
+
+
+def test_failed_cancellation_releases_the_link(client, db, seeded_data, monkeypatch):
+    from importlib import import_module
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("down")
+
+    for name in ("mielenosoitukset_fi.basic_routes", "basic_routes"):
+        try:
+            monkeypatch.setattr(import_module(name), "cancel_demo", boom)
+        except ImportError:
+            pass
+    client.post(f"/cancel_demonstration/{seeded_data['cancel_token']}", data={"reason": "x"})
+    assert db.demo_cancellation_tokens.find_one({})["used_at"] is None

@@ -81,14 +81,14 @@ export function App({ config, session, route, path, detail, series, home, listin
     <SiteHeader {...headerProps(config, session, text, path)} hydrating={route.name === 'api-docs' || route.name === 'status' || route.name === 'information' || route.name === 'campaign' || route.name === 'fundraising' || route.name === 'contact' || route.name === 'city-admin' || route.name === 'organization-fill' || route.name === 'suggest-change' || route.name === 'cancel-link'} />
     <main className={`container-main-content ${route.name === 'submit' ? 'submit-workspace' : route.name === 'detail' || route.name === 'series' ? 'public-detail-main' : 'public-layout-wide'}`} id="main-content" tabIndex={-1}>
       {serverPage}
-      {route.name === 'god-auth' && <Suspense fallback={<p role="status">Ladataan kirjautumista...</p>}><GodScreen /></Suspense>}
-      {route.name === 'calendar' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria...</p>}>
+      {route.name === 'god-auth' && <Suspense fallback={<p role="status">Ladataan kirjautumista…</p>}><GodScreen /></Suspense>}
+      {route.name === 'calendar' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria…</p>}>
         <CalendarScreen calendar={calendar} config={config} session={session} />
       </Suspense>}
-      {route.name === 'calendar-year' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria...</p>}>
+      {route.name === 'calendar-year' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria…</p>}>
         <YearCalendarScreen calendar={calendar} />
       </Suspense>}
-      {route.name === 'submit' && submission && <Suspense fallback={<p role="status">Ladataan lomaketta...</p>}>
+      {route.name === 'submit' && submission && <Suspense fallback={<p role="status">Ladataan lomaketta…</p>}>
         <SubmitScreen config={config} submission={submission} />
       </Suspense>}
       {route.name === 'cities' && <Suspense fallback={<p role="status">Ladataan kaupunkeja…</p>}>
@@ -97,13 +97,13 @@ export function App({ config, session, route, path, detail, series, home, listin
       {route.name === 'today' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia…</p>}>
         <TodayScreen city={route.value} listing={listing} config={config} session={session} />
       </Suspense>}
-      {route.name === 'organization' && organization && <Suspense fallback={<p role="status">Ladataan organisaatiota...</p>}>
+      {route.name === 'organization' && organization && <Suspense fallback={<p role="status">Ladataan organisaatiota…</p>}>
         <OrganizationScreen key={path} organization={organization} config={config} session={session} />
       </Suspense>}
-      {route.name === 'pride' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia...</p>}>
+      {route.name === 'pride' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia…</p>}>
         <PrideScreen config={config} session={session} listing={listing} />
       </Suspense>}
-      {route.name === 'listing' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia...</p>}>
+      {route.name === 'listing' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia…</p>}>
         <ListingScreen key={path} route={route} config={config} session={session} listing={listing} />
       </Suspense>}
       {route.name === 'home' && <HomePage

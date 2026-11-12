@@ -5,7 +5,7 @@ export const organizationCopy = {
   verifiedHelp: 'Tätä organisaatioprofiilia hallinnoivat organisaatioon kuuluvat henkilöt.',
   stayUpdated: 'Pysy ajan tasalla',
   followIntro: 'Seuraa tätä organisaatiota ja näe sen mielenosoitukset nopeammin etusivulla ja ilmoituksissa.',
-  follow: 'Seuraa', following: 'Seurataan', loading: 'Ladataan...',
+  follow: 'Seuraa', following: 'Seurataan', loading: 'Ladataan…',
   followError: 'Seurannan päivittäminen epäonnistui. Yritä uudelleen.',
   loginPrompt: 'Kirjaudu sisään seurataksesi organisaatioita ja saadaksesi ehdotuksia niiden tapahtumista.',
   login: 'Kirjaudu sisään', invited: 'Sinut on kutsuttu liittymään organisaatioon',

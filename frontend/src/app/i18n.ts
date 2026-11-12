@@ -72,7 +72,7 @@ const fi: Catalog = {
     darkTheme: 'Vaihda tummaan teemaan',
     adminWarning: 'Olet mobiililaitteella. Siirry PC:lle admintoimintojen käyttöä varten',
     notifications: 'Ilmoitukset', markRead: 'Merkitse luetuiksi', all: 'Näytä kaikki',
-    empty: 'Ei ilmoituksia', loading: 'Ladataan…', loadError: 'Virhe ladattaessa',
+    empty: 'Ei ilmoituksia', loading: 'Ladataan…', loadError: 'Ilmoitusten lataaminen epäonnistui.',
     markError: 'Ilmoituksia ei voitu merkitä luetuiksi.',
   },
   footer: {
@@ -85,16 +85,16 @@ const fi: Catalog = {
   home: {
     title: 'Tulevat mielenosoitukset',
     intro: 'Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen.',
-    search: 'Hae mielenosoituksia', searchPlaceholder: 'Hae mielenosoituksia...', submitSearch: 'Hae',
+    search: 'Hae mielenosoituksia', searchPlaceholder: 'Hae mielenosoituksia…', submitSearch: 'Hae',
     all: 'Kaikki mielenosoitukset', submit: 'Ilmoita mielenosoituksesta',
     calendar: 'Kalenterinäkymä', info: 'Tietoa sivustosta',
     eventsTitle: 'Poimintoja ajankohtaisista mielenosoituksista.', recommendedTitle: 'Suosittelemme',
     emptyTitle: 'Ei mielenosoituksia näytettäväksi',
-    empty: 'Uusia mielenosoituksia lisätään jatkuvasti. Tarkista myöhemmin uudelleen!',
+    empty: 'Uusia mielenosoituksia lisätään jatkuvasti. Tarkista myöhemmin uudelleen.',
     prideTitle: 'Pride näkyväksi koko Suomessa',
     prideIntro: 'Tutustu Pride näkyväksi -sivuun, katso Pride-mielenosoitukset kartalla ja lisää myös oma tapahtumasi mukaan.',
     prideLink: 'Avaa Pride näkyväksi',
-    loading: 'Ladataan mielenosoituksia...',
+    loading: 'Ladataan mielenosoituksia…',
     loadError: 'Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen.',
     retry: 'Yritä uudelleen',
   },
@@ -105,7 +105,7 @@ const fi: Catalog = {
   cards: {
     startingFrom: 'alkaen', endTime: 'Päättymisaika', cancelled: 'Peruttu', today: 'Tänään',
     loginPrompt: 'Kirjaudu sisään käyttääksesi sosiaalisia toimintoja',
-    loadingFriends: 'Ladataan kavereita...', attendingSuffix: 'osallistuu', invite: 'Kutsu kavereita',
+    loadingFriends: 'Ladataan kavereita…', attendingSuffix: 'osallistuu', invite: 'Kutsu kavereita',
   },
   cityAdmin: {
     label: 'Kaupunkiadminit',

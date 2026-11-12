@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- City listing pages ask visitors to volunteer when the city has no or only one active city admin (target two). Cities without a city admin say that the national admin team reviews their events. Helsinki is moderated by the national admin team and never shows the note. The new Go endpoint `GET /api/cities/{key}/admin-status` exposes only a coverage band, never names or counts.
 - Show city admin coverage in Kaupunkihallinta: active admins per city (no admin, one admin, or a team), counts of cities below the two-admin target, and a filter for cities that need admins. Only usable accounts count.
 - Add `docs/decisions.md`, a log of maintainer decisions and their reasons, and link it from `AGENTS.md` so they don't get lost between sessions.
 - Serialize core and full backups with a shared lock so one run cannot delete the other's unfinished archive, and expire archives named before backup modes existed.

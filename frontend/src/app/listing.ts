@@ -6,7 +6,8 @@ import { ttlCache } from './server-cache';
 import { listingQuery as parseQuery } from '../components/listings/query';
 
 export type ListingRoute = { name: 'listing'; scope: 'all' | 'city' | 'tag' | 'organization' | 'today' | 'city-today'; value?: string };
-export type ListingBootstrap = { query: string; page: Page | null };
+export type CityAdminStatus = 'none' | 'single' | 'team' | 'national';
+export type ListingBootstrap = { query: string; page: Page | null; cityAdminStatus?: CityAdminStatus };
 const cities = cityCatalog.map(city => city.name);
 
 export function listingFixed(route: ListingRoute): Record<string, string> {
@@ -86,6 +87,24 @@ const pages = ttlCache<Page>(30_000, 64);
 const pending = new Map<string, Promise<Page | null>>();
 
 /** Successful public batches only; private header state never enters this cache. */
+/** Whether a city still needs city admins. Only the coverage band is public. */
+export async function loadCityAdminStatus(readBase: string, cityKey: string): Promise<CityAdminStatus | undefined> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 800);
+  try {
+    const response = await fetch(`${readBase}/cities/${encodeURIComponent(cityKey)}/admin-status`, {
+      signal: controller.signal, credentials: 'omit', headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) return undefined;
+    const status = (await response.json() as { status?: unknown }).status;
+    return status === 'none' || status === 'single' || status === 'team' || status === 'national' ? status : undefined;
+  } catch {
+    return undefined;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function loadListingPage(readBase: string, query: string): Promise<Page | null> {
   if (query.length > 4096) return null;
   const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Helsinki' }).format(new Date());

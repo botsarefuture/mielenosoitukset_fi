@@ -78,7 +78,7 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 - [ ] **SEC-04:** token and approval lifecycle: revocation, expiry, replay, idempotent decisions.
 - [ ] **SEC-05:** review incident #912/#913 protections before touching related code.
 - [ ] Harden privileged admin user actions (#547), organization membership and invites (#550, #342), and the organization admin panel (#549).
-- [ ] **QA-01:** finish the individual review of authentication and permission tests. Open: #979 identity test audit (rebase on `CHANGELOG.md`, then merge), QA-01j, QA-01k.
+- [ ] **QA-01:** finish the individual review of authentication and permission tests. QA-01j (#966) and QA-01k (#973 via #964) are merged; #1114 (supersedes #979) carries the identity audit, QA-01m. Remaining: other authentication and permission test files, see the roadmap.
 
 ## Data, jobs and integrations
 

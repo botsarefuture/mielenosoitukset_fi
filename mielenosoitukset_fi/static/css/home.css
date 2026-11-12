@@ -32,35 +32,18 @@
 }
 .home-status { min-height: 20rem; padding: 1.5rem; background: var(--product-surface); border: 1px solid var(--product-border); border-radius: .75rem; }
 html:not(.js) .home-status { display: none; }
-/* Inline continuation: the picks flow into the chronological listing. */
-.home-more { position: relative; margin-block: 0 2.25rem; }
-.home-more-intro { position: relative; display: grid; justify-items: center; gap: .4rem; padding: 2.75rem 1rem 1.5rem; text-align: center; }
-.home-more-intro::before { content: ""; position: absolute; inset: 0 0 auto; height: 1px; background: linear-gradient(90deg, transparent, var(--product-border) 18%, var(--product-accent) 50%, var(--product-border) 82%, transparent); }
-.home-more-intro h2 { font-size: 1.4rem; color: var(--product-text); margin: 0; }
-.home-more-intro p { margin: 0; max-width: 52ch; color: var(--product-text-muted, var(--product-text)); }
-.home-more-cue { width: 1.6rem; height: 2.5rem; margin-top: .6rem; border: 2px solid color-mix(in srgb, var(--product-primary) 45%, transparent); border-radius: 1rem; position: relative; }
-.home-more-cue::after { content: ""; position: absolute; left: 50%; top: .45rem; width: .3rem; height: .55rem; margin-left: -.15rem; border-radius: 1rem; background: var(--product-primary); animation: home-more-cue 1.8s ease-in-out infinite; }
-.home-more-page { display: contents; }
-.home-more-grid .demo-card { animation: home-more-in .7s cubic-bezier(.2, .8, .2, 1) both; }
-.home-more-page > .demo-card:nth-child(3n + 2) { animation-delay: .08s; }
-.home-more-page > .demo-card:nth-child(3n) { animation-delay: .16s; }
-.home-more-skeleton { margin-top: 1.25rem; }
-.home-more-grid + .home-more-skeleton { margin-top: 1.25rem; }
-.home-more-placeholder { min-height: 18rem; border-radius: .75rem; border: 1px solid var(--product-border); background: linear-gradient(100deg, var(--product-surface) 30%, var(--product-primary-soft) 50%, var(--product-surface) 70%) 0 0 / 300% 100%; animation: home-more-shimmer 1.4s linear infinite; }
-.home-more-sentinel { height: 1px; }
-.home-more-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-.home-more-next { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .75rem 1rem; margin-top: 1.75rem; text-align: center; }
-.home-more-next p { flex-basis: 100%; margin: 0; }
-.home-more-end { font-weight: 650; }
-.home-more-error { color: var(--product-danger, var(--product-text)); }
-.home-more-button:disabled { opacity: .65; cursor: progress; }
-html:not(.js) .home-more-button, html:not(.js) .home-more-cue, html:not(.js) .home-more-intro p { display: none; }
-@keyframes home-more-in { from { opacity: 0; transform: translateY(2rem) scale(.96); filter: blur(6px); } }
-@keyframes home-more-shimmer { to { background-position: -150% 0; } }
-@keyframes home-more-cue { 0% { opacity: 0; transform: translateY(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(.9rem); } }
-@media (max-width: 1000px) { .home-more-page > .demo-card:nth-child(n) { animation-delay: 0s; } .home-more-page > .demo-card:nth-child(2n) { animation-delay: .08s; } }
-@media (max-width: 600px) { .home-more-placeholder:nth-child(n + 2) { display: none; } .home-more-page > .demo-card:nth-child(n) { animation-delay: 0s; } .home-more-next > * { width: 100%; } }
-@media (prefers-reduced-motion: reduce) {
-  .home-more-grid .demo-card, .home-more-placeholder, .home-more-cue::after { animation: none; }
-  .home-more-cue::after { opacity: 1; }
-}
+/* Date shortcuts under the search box. */
+.home-quick { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; grid-column: 1 / -1; }
+.home-quick a { display: inline-flex; align-items: center; min-height: 44px; padding: .5rem 1.15rem; border: 1px solid var(--product-border); border-radius: 999px; background: var(--product-surface); color: var(--product-primary); font-weight: 650; text-decoration: none; }
+.home-quick a:hover { background: var(--product-primary-soft); color: var(--product-primary-strong); border-color: var(--product-primary); }
+/* The one exit after the picks. */
+.home-all-link { display: flex; justify-content: center; align-items: center; gap: .6rem; width: 100%; max-width: 36rem; min-height: 3.5rem; margin: 1.75rem auto 2.25rem; padding: .9rem 1.5rem; border-radius: .75rem; background: var(--product-action-bg); color: var(--product-on-action); font-size: 1.1rem; font-weight: 700; text-decoration: none; }
+.home-all-link:hover { background: var(--product-action-hover); color: var(--product-on-action); }
+.home-all-link span { transition: transform .2s ease; }
+.home-all-link:hover span { transform: translateX(.25rem); }
+.home-events + .home-all-link { margin-top: -.5rem; }
+/* The campaign returns as a compact strip below the exit. */
+.home-campaign { padding: 1rem 1.25rem; gap: .75rem 1.25rem; }
+.home-campaign h2 { font-size: 1.15rem; margin-bottom: .25rem; }
+@media (max-width: 600px) { .home-all-link { max-width: none; } }
+@media (prefers-reduced-motion: reduce) { .home-all-link span { transition: none; } }

@@ -102,6 +102,9 @@ const DETAIL_STYLESHEET = '/static/css/public-detail.css?v=20261110-detail-butto
  */
 const HOME_CACHE_TTL_MS = 30_000;
 const HOME_TIMEOUT_MS = 1200;
+/** Opts the home page and the listings into the cross-document transition
+ * between them. Pages without it navigate normally. */
+const PAGE_TRANSITION_STYLESHEET = '<link rel="stylesheet" href="/static/css/page-transition.css?v=20261112-1">';
 const homeBatches = ttlCache<HomeData>(HOME_CACHE_TTL_MS, 4);
 
 function validHomeData(value: unknown): value is HomeData {
@@ -205,7 +208,7 @@ ${options.jsonLd ? `<script type="application/ld+json">${serialize(options.jsonL
 <noscript><link rel="stylesheet" href="/static/fa/css/all.css"></noscript>
 <link rel="preload" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" as="style" crossorigin onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdn2.mielenosoitukset.fi/vendor/bootstrap/5.3.0/bootstrap.min.css" crossorigin></noscript>
-<link rel="stylesheet" href="/static/css/home.css?v=20261111-continuation-2">
+<link rel="stylesheet" href="/static/css/home.css?v=20261112-quick-picks">
 <link rel="stylesheet" href="/static/css/product-tokens.css?v=20261110-pride-contrast-1">
 <link rel="stylesheet" href="/static/css/user-workspace.css?v=20261110-user-workspace-7">
 <link rel="stylesheet" href="/static/css/public-header.css?v=20261027-react-header-1">
@@ -542,7 +545,10 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       + `</article></noscript>`;
   }
 
-  if (route.name === 'home') home = await loadHomeBatch(readBase, config.locale);
+  if (route.name === 'home') {
+    home = await loadHomeBatch(readBase, config.locale);
+    extraHead = PAGE_TRANSITION_STYLESHEET;
+  }
   if (calendarRoute) {
     const data = await calendarRead;
     const search = new URLSearchParams(input.search ?? '');
@@ -613,7 +619,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     meta = { title: `${props.title} | Mielenosoitukset.fi`, description: props.title,
       canonical: `${config.origin}${input.path}`, robots: 'index, follow' };
     extraHead = '<link rel="stylesheet" href="/static/vendor/flatpickr/4.6.13/flatpickr.min.css">'
-      + (assets.listing ?? '');
+      + PAGE_TRANSITION_STYLESHEET + (assets.listing ?? '');
     noscript = `<noscript><p class="container-main-content">Lista avautuu JavaScriptillä. `
       + `<a href="${escapeHtml(props.rssUrl!)}">RSS</a> · <a href="/calendar/">Kalenteri</a></p></noscript>`;
   }

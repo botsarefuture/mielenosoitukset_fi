@@ -1,7 +1,6 @@
 import type { HeaderMessages } from '../components/header/types';
 import type { CardProps } from '../components/listings/DemonstrationCard';
-import type { HomeProps } from '../pages/HomePage';
-import type { HomeContinuationProps } from '../pages/HomeContinuation';
+import type { HomeProps, QuickText } from '../pages/HomePage';
 import type { AppLocale } from './config';
 
 /**
@@ -27,7 +26,7 @@ export type Catalog = {
   fundraising: string;
   home: HomeProps['text'];
   /** Finnish only for now; en/sv inherit it until human translators supply copy. */
-  homeMore: HomeContinuationProps['text'];
+  homeQuick: QuickText;
   cards: CardMessages;
 };
 
@@ -73,16 +72,9 @@ const fi: Catalog = {
     loadError: 'Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen.',
     retry: 'Yritä uudelleen',
   },
-  homeMore: {
-    title: 'Kaikki tulevat mielenosoitukset',
-    intro: 'Jatka selaamista: lisää mielenosoituksia latautuu aikajärjestyksessä.',
-    loading: 'Ladataan lisää mielenosoituksia...',
-    loaded: 'Lisää mielenosoituksia ladattu: __COUNT__.',
-    loadMore: 'Näytä lisää mielenosoituksia',
-    loadError: 'Lisää mielenosoituksia ei voitu ladata. Yritä uudelleen.',
-    retry: 'Yritä uudelleen',
-    all: 'Kaikki mielenosoitukset ja haku',
-    end: 'Olet selannut kaikki tulevat mielenosoitukset.',
+  homeQuick: {
+    nav: 'Pikavalinnat', today: 'Tänään', weekend: 'Viikonloppuna',
+    all: 'Kaikki tulevat mielenosoitukset',
   },
   cards: {
     startingFrom: 'alkaen', endTime: 'Päättymisaika', cancelled: 'Peruttu', today: 'Tänään',

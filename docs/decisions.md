@@ -86,8 +86,12 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
     decide. Approving never grants rights; the role is granted in the accounts
     dashboard.
   - A user can have only one open application.
-  - Open: retention periods and the privacy notice wording, and whether to add a
-    unique index against simultaneous submissions.
+  - Open: retention periods and the privacy notice wording.
+  - **Unique index against simultaneous submissions (proposed, awaiting maintainer
+    approval).** Partial unique index on `user_id` for open applications; a
+    duplicate key returns 409 `APPLY_OPEN_EXISTS`. Not created yet. Details, the
+    pre-check script and rollback are in
+    [city-admin-applications.md](city-admin-applications.md#duplicate-submissions-proposed-awaiting-maintainer-approval).
 - **Case access (2026-11-11).** City admins' grants include `LIST_CASES`,
   `VIEW_CASE` and `EDIT_CASE`. The 2026-11-11 update is tagged
   `case_access_granted_for: issue-778`, so it can be reverted in one update.

@@ -160,6 +160,18 @@ func applicationAccount(ctx context.Context, db *mongo.Database, actor bson.Obje
 	return activeAccount(doc), nil
 }
 
+// applicationInsertFailure maps a failed insert to a response. With the optional
+// partial unique index on open applications (docs/city-admin-applications.md,
+// "Duplicate submissions"), a simultaneous second submission fails with a
+// duplicate key error. It gets the same answer as the open-application check
+// above, so the form needs no new error code.
+func applicationInsertFailure(err error) (int, string, string) {
+	if mongo.IsDuplicateKeyError(err) {
+		return 409, "APPLY_OPEN_EXISTS", "Sinulla on jo käsittelyssä oleva hakemus. Voit seurata sen tilaa tällä sivulla."
+	}
+	return 503, "APPLY_SAVE_FAILED", "Hakemusta ei voitu tallentaa. Yritä uudelleen."
+}
+
 type applicationSummary struct {
 	ID        string    `json:"id"`
 	CityKeys  []string  `json:"city_keys"`
@@ -293,8 +305,11 @@ func serveApplication(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	// Flask's delivery job creates the admin case and clears this flag.
 	fields["case_pending"] = true
 	if _, err := applications.InsertOne(ctx, fields); err != nil {
-		log.Print("City admin application could not be stored")
-		applicationFailure(w, 503, "APPLY_SAVE_FAILED", "Hakemusta ei voitu tallentaa. Yritä uudelleen.")
+		status, code, message := applicationInsertFailure(err)
+		if status == 503 {
+			log.Print("City admin application could not be stored")
+		}
+		applicationFailure(w, status, code, message)
 		return
 	}
 	writeJSON(w, 201, bson.M{"success": true, "id": id.Hex(), "status": "received"})

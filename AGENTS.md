@@ -164,5 +164,14 @@ project. The coordinator stays thin so it stays cheap:
 - It merges, in order, pull requests whose required checks are green and whose review
   threads are resolved, merging `main` in first. It stops and asks for anything that
   changes data, authentication, privileges or sends email.
-- After about 100 turns, or when a turn needs more than 150k tokens of context, it
-  writes a hand-over note and the maintainer starts a fresh coordinator from it.
+- Hand over by context size, not turn count. When a turn needs more than about 120k
+  tokens of context, or when the queue is empty and a new topic starts, write a
+  hand-over note (queue, sessions in flight with their ids, open decisions, what was
+  verified) in the shared notes folder and let the maintainer start a fresh coordinator
+  from it. A long conversation costs context size times turns, so size is the signal.
+- A session reports to whoever started it, and that link does not move. So every brief
+  says: put the result in the pull request and in the notes file, and message the
+  coordinator only when blocked. Before handing over, the old coordinator sends each
+  session in flight the new coordinator's id (or the notes file path) and tells it to
+  report there. The hand-over note lists those ids so the new coordinator can check
+  each one.

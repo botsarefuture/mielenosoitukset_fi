@@ -220,6 +220,11 @@ export default function CityAdminApplyScreen({ session, apiBase }: { session: Se
           <label htmlFor="city-admin-references">Suosittelijat (vapaaehtoinen)</label>
           <textarea id="city-admin-references" name="references" rows={3} maxLength={1000}
             placeholder="Esimerkiksi paikallinen aktiivi tai sivuston käyttäjä, joka voi suositella sinua." />
+          <section className="city-admin-privacy" aria-labelledby="city-admin-privacy-title">
+            <h3 id="city-admin-privacy-title">{copy.privacyTitle}</h3>
+            <ul>{copy.privacyItems.map(item => <li key={item}>{item}</li>)}</ul>
+            <p>{copy.privacyLinkLead} <a href="/privacy">{copy.privacyLinkText}</a>.</p>
+          </section>
           <label className="city-admin-consent">
             <input type="checkbox" name="consent" required />
             <span>Hyväksyn, että ylläpito käsittelee hakemukseni ja säilyttää sen <a href="/privacy">tietosuojaselosteen</a> mukaisesti.</span>

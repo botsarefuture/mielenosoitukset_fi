@@ -255,7 +255,7 @@ func main() {
 		log.Print("Auth bridge disabled: ", err)
 		authConfig = authBridgeConfig{}
 	}
-	handler = authBridgeHandler(handler, authConfig)
+	handler = authBridgeHandler(handler, authConfig, client.Database(database))
 	handler = analyticsEventHandler(handler, analyticsEnabledFromEnv(), incrementAnalyticsEvent(client.Database(database)))
 	handler = fundraisingDetails(handler, os.Getenv("FUNDRAISING_DETAILS_FILE"))
 	handler = campaignPublication(handler, readCampaignPublication(client.Database(database)))

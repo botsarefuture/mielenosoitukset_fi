@@ -26,6 +26,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 const (
@@ -442,7 +444,7 @@ func authMePayload(p Principal) map[string]any {
 
 // authBridgeHandler serves GET /api/auth/me and passes everything else to next.
 // It adds no CORS header: only same-origin script can read the answer.
-func authBridgeHandler(next http.Handler, config authBridgeConfig) http.Handler {
+func authBridgeHandler(next http.Handler, config authBridgeConfig, db *mongo.Database) http.Handler {
 	if !config.Enabled {
 		return next
 	}
@@ -451,7 +453,8 @@ func authBridgeHandler(next http.Handler, config authBridgeConfig) http.Handler 
 		log.Print("Auth bridge disabled: invalid configuration")
 		return next
 	}
-	return authBridgeHandlerWith(next, resolver)
+	// Routes that need the signed-in account sit behind the same flag and resolver.
+	return authBridgeHandlerWith(developerHandler(next, mongoDeveloperStore{db}, resolver), resolver)
 }
 
 func authBridgeHandlerWith(next http.Handler, resolver *sessionResolver) http.Handler {

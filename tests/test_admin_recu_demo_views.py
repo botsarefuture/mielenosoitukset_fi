@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 
+import pytest
 from bson import ObjectId
 
 
@@ -70,6 +71,49 @@ def test_recurring_date_preview_uses_schedule_and_excludes_breaks(admin_client):
     assert payload["excluded_break_dates"] == 1
     assert payload["dates"]
     assert all(date.fromisoformat(value).weekday() == 4 for value in payload["dates"])
+
+
+def test_recurring_date_preview_excludes_inclusive_ranges_and_legacy_days(admin_client):
+    response = admin_client.get(
+        "/admin/recu_demo/preview-dates",
+        query_string=[
+            ("date", "2099-01-01"),
+            ("frequency_type", "daily"),
+            ("end_date", "2099-01-10"),
+            ("break_start_dates", "2099-01-02"),
+            ("break_end_dates", "2099-01-04"),
+            ("break_start_dates", "2099-01-04"),
+            ("break_end_dates", "2099-01-05"),
+            ("break_dates", "2099-01-05"),
+            ("break_dates", "2099-01-07"),
+        ],
+    )
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["dates"] == [
+        "2099-01-01", "2099-01-06", "2099-01-08", "2099-01-09", "2099-01-10"
+    ]
+    assert payload["excluded_break_dates"] == 5
+
+
+@pytest.mark.parametrize("fields", [
+    [("break_start_dates", "2099-01-02"), ("break_end_dates", "2099-01-01")],
+    [("break_start_dates", "2099-02-30"), ("break_end_dates", "2099-03-01")],
+    [("break_start_dates", "2099-01-01"), ("break_end_dates", "2100-01-03")],
+    [("break_start_dates", "2099-01-01")],
+    [("break_end_dates", "2099-01-01")],
+    [
+        ("break_start_dates", ""), ("break_end_dates", "2099-01-02"),
+        ("break_start_dates", "2099-01-03"), ("break_end_dates", ""),
+    ],
+])
+def test_recurring_date_preview_rejects_invalid_ranges(admin_client, fields):
+    response = admin_client.get(
+        "/admin/recu_demo/preview-dates",
+        query_string=[("date", "2099-01-01"), ("frequency_type", "daily"), *fields],
+    )
+    assert response.status_code == 400
+    assert response.get_json()["message"]
 
 
 def test_recurring_date_preview_scans_past_long_consecutive_break(admin_client):

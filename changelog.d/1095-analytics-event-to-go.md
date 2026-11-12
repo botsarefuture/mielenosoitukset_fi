@@ -1,0 +1,2 @@
+- Go API deployment: the environment configurator now carries `SITE_ANALYTICS_ENABLED=true` from `config.yaml`, so a normal release no longer silently turns event analytics off.
+- Route analytics event beacons (`POST /api/analytics/event`) to the Go API. Flask keeps pageviews, vitals and every other analytics path. Roll back by removing the routing rule.

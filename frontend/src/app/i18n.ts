@@ -43,7 +43,7 @@ export type Catalog = {
   homeQuick: QuickText;
   cards: CardMessages;
   /** City listing note where a city has fewer than two active city admins. */
-  cityAdmin: { label: string; none: string; single: string; action: string };
+  cityAdmin: { label: string; none: string; single: string; action: string; national: string; nationalNote: string };
 };
 
 const fi: Catalog = {
@@ -102,6 +102,8 @@ const fi: Catalog = {
     none: 'Paikkakunnalla ei vielä ole omaa kaupunkiadminia, joten valtakunnallinen ylläpitotiimi tarkistaa täkäläiset ilmoitukset. Haluatko auttaa?',
     single: 'Paikkakunnalle haetaan toista kaupunkiadminia. Kiinnostaako?',
     action: 'Hae kaupunkiadminiksi',
+    national: 'Valtakunnallinen tiimi',
+    nationalNote: 'tarkistaa tämän paikkakunnan ilmoitukset.',
   },
 };
 

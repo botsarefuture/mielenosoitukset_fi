@@ -1,7 +1,10 @@
 # `/developer` and demo material download on the React host
 
-Status: proposal, awaiting maintainer approval (session change). Written 12 November 2026.
-No code has changed. This follows the TODO item "Secondary tools".
+Status: approved through the auth bridge (2026-11-12, see [auth-bridge.md](auth-bridge.md)). Step 1 is
+implemented as Go read routes instead of a Flask scope: `GET /api/developer/overview` and
+`GET /api/developer/apps/<id>` (`go-api/developer.go`), served only when `AUTH_BRIDGE_ENABLED=true`,
+returning the signed-in account's own metadata with no secrets. Not routed by Apache yet. React screens
+and routing are the next steps. Written 12 November 2026. This follows the TODO item "Secondary tools".
 
 ## Verified facts
 

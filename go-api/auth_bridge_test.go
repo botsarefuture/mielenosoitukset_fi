@@ -93,7 +93,7 @@ func get(h http.Handler, target, cookie string, headers ...string) *httptest.Res
 
 func TestDisabledBridgeLeavesTheRouteToTheNextHandler(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(404) })
-	h := authBridgeHandler(next, authBridgeConfig{})
+	h := authBridgeHandler(next, authBridgeConfig{}, nil)
 	if w := get(h, "/api/auth/me", "session=member"); w.Code != 404 {
 		t.Fatalf("flag off must not serve /api/auth/me, got %d", w.Code)
 	}

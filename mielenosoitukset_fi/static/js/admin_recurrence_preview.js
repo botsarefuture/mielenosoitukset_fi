@@ -19,6 +19,8 @@ document.addEventListener("DOMContentLoaded", () => {
     "weekday_of_month",
     "end_date",
     "break_dates",
+    "break_start_dates",
+    "break_end_dates",
   ]);
   let debounceTimer;
   let requestController;
@@ -32,7 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const fields = form.querySelectorAll(`[name="${name}"]`);
       fields.forEach((field) => {
         if ((field.type === "radio" || field.type === "checkbox") && !field.checked) return;
-        if (field.value) query.append(name, field.value);
+        if (field.value || name === "break_start_dates" || name === "break_end_dates") {
+          query.append(name, field.value);
+        }
       });
     }
     return query;
@@ -121,10 +125,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   form.addEventListener("input", scheduleRefresh);
   form.addEventListener("change", scheduleRefresh);
-  const breakDateList = document.getElementById("break-date-list");
+  const breakDateList = document.getElementById("recurring-break-dates");
   if (breakDateList) {
     new MutationObserver(() => scheduleRefresh()).observe(breakDateList, {
       childList: true,
+      subtree: true,
     });
   }
   refreshPreview();

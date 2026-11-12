@@ -1,6 +1,6 @@
 import re
 from copy import deepcopy
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from bson.objectid import ObjectId
 from flask import (
@@ -219,9 +219,13 @@ def _get_route_points(form):
     return [point.strip() for point in legacy_route.split(",") if point.strip()]
 
 
+# The edit form renders every break day as its own multipart field, and
+# Werkzeug rejects forms with more than 1,000 parts, so keep well below that.
+MAX_BREAK_DATES = 800
+
+
 def _collect_break_dates(form):
-    """Collect unique recurring-series break dates from repeated date inputs."""
-    dates = []
+    """Collect single days and expand validated inclusive ranges into break dates."""
     seen = set()
     for raw_date in form.getlist("break_dates"):
         value = (raw_date or "").strip()
@@ -231,10 +235,35 @@ def _collect_break_dates(form):
             normalized = datetime.strptime(value, "%Y-%m-%d").date().isoformat()
         except ValueError:
             continue
-        if normalized not in seen:
-            dates.append(normalized)
-            seen.add(normalized)
-    return sorted(dates)
+        seen.add(normalized)
+    starts = form.getlist("break_start_dates")
+    ends = form.getlist("break_end_dates")
+    if len(starts) != len(ends):
+        raise ValueError("Täytä tauon alku- ja loppupäivä.")
+    for start_value, end_value in zip(starts, ends):
+        start_value = start_value.strip()
+        end_value = end_value.strip()
+        if not start_value and not end_value:
+            continue
+        if not start_value or not end_value:
+            raise ValueError("Täytä tauon alku- ja loppupäivä.")
+        try:
+            start_date = date.fromisoformat(start_value)
+            end_date = date.fromisoformat(end_value)
+            if start_date.isoformat() != start_value or end_date.isoformat() != end_value:
+                raise ValueError
+        except ValueError:
+            raise ValueError("Anna tauon päivämäärät muodossa vvvv-kk-pp.") from None
+        day_count = (end_date - start_date).days + 1
+        if day_count < 1:
+            raise ValueError("Tauon loppupäivä ei voi olla ennen alkupäivää.")
+        if day_count > 366:
+            raise ValueError("Tauko voi kestää enintään 366 päivää.")
+        for offset in range(day_count):
+            seen.add((start_date + timedelta(days=offset)).isoformat())
+        if len(seen) > MAX_BREAK_DATES:
+            raise ValueError(f"Taukopäiviä voi olla yhteensä enintään {MAX_BREAK_DATES}.")
+    return sorted(seen)
 
 
 def _parse_recurrence_preview_date(value):
@@ -292,7 +321,10 @@ def preview_recurrence_dates():
             {"message": "Tarkista, että kaikki toistuvuusasetukset ovat kelvollisia."}
         ), 400
 
-    break_dates = set(_collect_break_dates(request.args))
+    try:
+        break_dates = set(_collect_break_dates(request.args))
+    except ValueError as error:
+        return jsonify({"message": str(error)}), 400
     dates, has_more, excluded_count = collect_recurrence_preview_dates(
         start_date,
         schedule,
@@ -365,9 +397,18 @@ def _cancel_children_for_break_dates(parent_id, break_dates):
     """Mark already-created children on break dates as cancelled."""
     if not break_dates:
         return 0, 0
+    parent = mongo.recu_demos.find_one({"_id": parent_id}) or {}
+    frozen_ids = {str(child_id) for child_id in parent.get("freezed_children", [])}
+    frozen_object_ids = [
+        ObjectId(child_id) for child_id in frozen_ids if ObjectId.is_valid(child_id)
+    ]
     return _cancel_recurring_children(
         parent_id,
-        {"parent": parent_id, "date": {"$in": break_dates}},
+        {
+            "parent": parent_id,
+            "date": {"$in": break_dates},
+            "_id": {"$nin": frozen_object_ids},
+        },
         "Toistuvan mielenosoituksen taukopäivä",
         "cancel_recurring_child_break",
         "Lapsimielenosoitus peruttiin sarjan taukopäivän vuoksi",
@@ -630,6 +671,11 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         if is_edit and demo_id
         else None
     )
+    try:
+        break_dates = _collect_break_dates(request.form)
+    except ValueError as error:
+        flash_message("Virhe: %(error)s", "error", error=str(error))
+        return redirect(request.url)
 
     # Basic info
     title = request.form.get("title")
@@ -746,7 +792,6 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         weekday_of_month=weekday_of_month,
         end_date=end_date,
     ).to_dict()
-    break_dates = _collect_break_dates(request.form)
 
     if existing_demo:
         for field_name, submitted_value in (

@@ -2,7 +2,12 @@ from pathlib import Path
 
 import pytest
 
-from scripts.render_changelog import render
+from scripts.render_changelog import ROOT, render
+
+
+def test_repository_change_notes_render():
+    # Run the same validation contributors use against every committed note.
+    assert render(ROOT).startswith("# Changelog\n")
 
 
 def test_render_preserves_history_and_orders_notes(tmp_path: Path):

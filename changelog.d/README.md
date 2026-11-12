@@ -3,7 +3,8 @@
 For each user-facing pull request, add a uniquely named `.md` file in this directory,
 for example `1234-city-search.md` or a descriptive name with a date. Start with a
 Markdown bullet describing the change and its impact. Use multiple bullets when
-needed. Do not edit another pull request's note.
+needed. Do not edit another pull request's note. The existing test suite checks that
+all notes can be rendered, including the required opening bullet.
 
 To view the combined changelog, run `python scripts/render_changelog.py`. It prints
 these notes under `UNRELEASED` followed by the existing `CHANGELOG.md` history. To

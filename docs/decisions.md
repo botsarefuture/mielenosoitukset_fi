@@ -12,6 +12,10 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 
 ## Process and approvals
 
+- **Changelog notes (2026-11-12).** New user-facing changes use separate files in
+  `changelog.d/` to avoid pull requests conflicting in `CHANGELOG.md`. Render the
+  notes with the existing history using `scripts/render_changelog.py`; release
+  numbering and publication remain open.
 - **Merging (2026-11-11).** The maintainer approves merging and deploying once the
   required tests pass, plus an independent visual SHIP for UI changes. No separate
   question is needed per PR.

@@ -25,6 +25,16 @@ export const cityAdminApplyCopy = {
   groupTeam: 'Admintiimi on jo, varahenkilöt tervetulleita',
   chipNone: 'tarvitsee adminia',
   chipSingle: 'tarvitsee lisää admineja',
+  privacyTitle: 'Miten hakemustasi käsitellään',
+  privacyItems: [
+    'Hakemuksesi näkevät valtakunnallinen ylläpitotiimi ja niiden paikkakuntien kaupunkiadminit, joille haet. Vain valtakunnallinen ylläpito päättää hakemuksesta.',
+    'Käsittelemme tekstikenttiin kirjoittamasi tiedot, valitsemasi paikkakunnat ja käyttäjätilisi tiedot. Älä kirjoita hakemukseen muita henkilötietoja kuin suosittelijoiden nimet tai käyttäjänimet.',
+    'Käytämme tietoja vain kaupunkiadmin-tehtävän arviointiin. Hyväksyminen ei anna oikeuksia itsestään: tehtävä annetaan erikseen ylläpidon hallintapaneelissa.',
+    'Käsittelemätöntä hakemusta säilytetään, kunnes se on käsitelty. Hylätyn tai perutun hakemuksen tekstit poistetaan 90 päivän kuluttua päätöksestä ja hyväksytyn 365 päivän kuluttua. Jäljelle jää vain tieto hakemuksen paikkakunnista, tilasta ja päivämääristä.',
+    'Voit pyytää hakemuksesi poistamista aiemmin ottamalla yhteyttä ylläpitoon.',
+  ],
+  privacyLinkLead: 'Lisätietoa on',
+  privacyLinkText: 'tietosuojaselosteessa',
   coverageHint: 'Listan alussa ovat paikkakunnat, joilla ei vielä ole kaupunkiadminia. Voit hakea myös paikkakunnalle, jolla on jo admineja: tarvitsemme varahenkilöitä ja kierrätämme tehtäviä.',
 };
 

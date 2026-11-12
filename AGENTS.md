@@ -132,3 +132,37 @@ with the project development dependencies and Node 22.12+. The `check` and
 `capture` modes support focused reruns without ad hoc duplicate commands.
 Keep visual output outside the repository. Passing this script is technical
 verification, not the independent visual SHIP required above.
+
+## Keeping sessions cheap
+
+Most of a session's cost is not what it writes but what it re-reads: the
+instructions and tool list on every turn, and the whole conversation so far.
+A session that grew from 74k to 213k tokens per turn paid for every earlier
+command output many times over.
+
+- One task per session. Start a fresh session for a new task with a self-contained
+  brief instead of continuing a long one.
+- Never print unbounded output. Pipe `curl`, `gh run view --log-failed`, `gh api`
+  and `journalctl` through `head`, `tail`, `grep` or `jq`, or write to a file. The
+  hook in `.claude/hooks/quiet-commands.py` blocks the common cases and says how
+  to retry.
+- Wait for CI with a background loop on `gh pr checks`, never by polling in chat.
+- Read only the lines of a file you need.
+- Add user-facing notes under `changelog.d/`, never to `CHANGELOG.md`, so pull
+  requests do not conflict and need no repeat CI runs.
+
+## Coordinating sessions
+
+The maintainer drops ideas into one conversation, the coordinator, which knows the
+project. The coordinator stays thin so it stays cheap:
+
+- It does not implement. Each idea becomes a fresh session with a complete brief
+  (task, files, what done looks like, the model and caveman rules from the user's
+  instructions). Small answers and one-line edits stay in the coordinator.
+- It writes the queue and open decisions to the shared notes folder and to
+  `docs/decisions.md`, not only to chat, so a new coordinator can take over by reading them.
+- It merges, in order, pull requests whose required checks are green and whose review
+  threads are resolved, merging `main` in first. It stops and asks for anything that
+  changes data, authentication, privileges or sends email.
+- After about 100 turns, or when a turn needs more than 150k tokens of context, it
+  writes a hand-over note and the maintainer starts a fresh coordinator from it.

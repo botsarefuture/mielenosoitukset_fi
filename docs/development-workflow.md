@@ -44,8 +44,9 @@ The maintainer decides what we build and why. Whoever implements decides how.
   base each uses.
 - The description says what changed, why, how it was checked and anything that was not
   checked. Link the roadmap item or issue.
-- Every user-facing change has a `CHANGELOG.md` entry (`## UNRELEASED` unless it ships
-  immediately). Write it for a reader of the changelog, not as a diff summary.
+- Every user-facing change has a separate note in `changelog.d/`. Write it for a
+  reader of the changelog, not as a diff summary. See `changelog.d/README.md` for
+  how to render the combined history.
 - Open the PR as soon as the branch is ready, then move on to independent work. Do not
   sit waiting for CI.
 

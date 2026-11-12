@@ -13,7 +13,7 @@ export type AppUrls = {
   info: string; pride: string; privacy: string; contact: string; cityAdmin: string; guides: string; developer: string;
   login: string; register: string; logout: string; profile: string; settings: string; admin: string;
   notifications: { list: string; markRead: string; all: string };
-  attendance: string; session: string; rss: string; fundraising: string;
+  attendance: string; session: string; authMe: string; rss: string; fundraising: string;
   detail: string; series: string; tag: string;
   language: (code: AppLocale) => string;
 };
@@ -42,7 +42,7 @@ const ROUTES = {
   profile: '/users/profile/', settings: '/users/auth/settings', admin: '/admin/dashboard',
   notificationsList: '/api/notifications/', notificationsMarkRead: '/api/notifications/mark-read',
   notificationsAll: '/api/notifications/all', attendance: '/api/friends-attending',
-  session: '/api/session', rss: '/demonstrations.rss',
+  session: '/api/session', authMe: '/api/auth/me', rss: '/demonstrations.rss',
   detail: '/demonstration/__ID__', series: '/demonstration/__ID__/children', tag: '/tag/__TAG__',
 } as const;
 
@@ -79,7 +79,7 @@ export function appConfig(options: {
       profile: ROUTES.profile, settings: ROUTES.settings, admin: ROUTES.admin,
       notifications: { list: ROUTES.notificationsList, markRead: ROUTES.notificationsMarkRead,
         all: ROUTES.notificationsAll },
-      attendance: ROUTES.attendance, session: ROUTES.session, rss: ROUTES.rss,
+      attendance: ROUTES.attendance, session: ROUTES.session, authMe: ROUTES.authMe, rss: ROUTES.rss,
       detail: ROUTES.detail, series: ROUTES.series, tag: ROUTES.tag,
       language: (code: AppLocale) => `/set_language/${code}`,
     },

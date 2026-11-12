@@ -34,6 +34,22 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 - **Questions to the maintainer** are asked as a numbered list, with a suggested
   answer under each question.
 
+## Authentication and sessions
+
+- **Auth bridge: Go and React ask Flask who is signed in (2026-11-12).** The
+  maintainer approved starting the move of authentication towards React and Go,
+  keeping login on Flask if possible. Chosen after comparing four options: Go asks
+  Flask's read-only `/api/session` (with an optional ≤5 s cache, default off).
+  Rejected: validating the cookie in Go and Flask-minted tokens (revocation
+  through `auth_epoch`, suspension and password resets would lag or be
+  reimplemented), and full auth in Go (no rollback). Two off-by-default flags,
+  `AUTH_BRIDGE_SCOPES` (Flask) and `AUTH_BRIDGE_ENABLED` (Go); rollback is removing
+  either. Login, MFA and password pages are not moved; that needs a new approval.
+  Details and the evidence: [auth-bridge.md](auth-bridge.md).
+- **Anonymous organization flash message (2026-11-12).** Shown through the bridge:
+  an anonymous visitor only learns that a message is waiting, nothing about
+  memberships.
+
 ## Public site
 
 - **React plus Go only (1 November 2026).** See AGENTS.md: there is no new Flask

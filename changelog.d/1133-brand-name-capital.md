@@ -1,0 +1,1 @@
+- The service name is written "Mielenosoitukset.fi" with a capital letter in the fundraiser, campaign and about page texts, like everywhere else on the site.

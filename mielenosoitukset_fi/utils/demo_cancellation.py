@@ -148,6 +148,23 @@ def mark_token_used(record_id: ObjectId, reason: Optional[str] = None) -> None:
     mongo[TOKEN_COLLECTION].update_one({"_id": record_id}, {"$set": updates})
 
 
+def claim_cancellation_token(record_id: ObjectId) -> bool:
+    """Atomically take an unused link; False if another request already did."""
+    claimed = mongo[TOKEN_COLLECTION].find_one_and_update(
+        {"_id": record_id, "used_at": None},
+        {"$set": {"used_at": utcnow(), "used_reason": "claimed"}},
+    )
+    return claimed is not None
+
+
+def release_cancellation_token(record_id: ObjectId) -> None:
+    """Undo a claim after the action failed, so the organizer can retry."""
+    mongo[TOKEN_COLLECTION].update_one(
+        {"_id": record_id, "used_reason": "claimed"},
+        {"$set": {"used_at": None}, "$unset": {"used_reason": ""}},
+    )
+
+
 def request_cancellation_case(
     demo_doc: dict,
     reason: Optional[str],

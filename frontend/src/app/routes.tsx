@@ -7,6 +7,7 @@ import { informationPageForPath, informationPages } from './information';
 import { contactCopy, contactPath } from './contact-route';
 import { campaignCopy, campaignPath } from './campaign-route';
 import { cityAdminCopy, cityAdminPath } from './city-admin-route';
+import { developerCopy, developerPath } from './developer-route';
 import type { InformationPage } from './information';
 
 /**
@@ -37,6 +38,8 @@ export type AppRoute =
   | { name: 'organization'; id: string }
   | { name: 'organization-fill'; id: string }
   | { name: 'suggest-change'; id: string }
+  | { name: 'cancel-link'; token: string }
+  | { name: 'developer'; appId?: string }
   | { name: 'detail'; identifier: string }
   | { name: 'series'; parent: string };
 
@@ -101,6 +104,11 @@ export function routeForPath(path: string): AppRoute | null {
   if (organizationFill) return { name: 'organization-fill', id: organizationFill[1].toLowerCase() };
   const suggestChange = /^\/suggest_change\/([a-f\d]{24})$/i.exec(path);
   if (suggestChange) return { name: 'suggest-change', id: suggestChange[1].toLowerCase() };
+  if (path === developerPath || path === `${developerPath}/`) return { name: 'developer' };
+  const developerApp = /^\/developer\/apps\/([a-f\d]{24})$/i.exec(path);
+  if (developerApp) return { name: 'developer', appId: developerApp[1].toLowerCase() };
+  const cancelLink = /^\/cancel_demonstration\/([A-Za-z0-9_-]{1,128})$/.exec(path);
+  if (cancelLink) return { name: 'cancel-link', token: cancelLink[1] };
   const organization = /^\/organization\/([a-f\d]{24})$/i.exec(path);
   if (organization) return { name: 'organization', id: organization[1].toLowerCase() };
   if (path === '/demonstrations') return { name: 'listing', scope: 'all' };
@@ -135,6 +143,10 @@ export function routeMeta(route: AppRoute, config: AppConfig, text: Catalog): Ro
       description: 'Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa.',
       robots: 'index, follow', canonical: null };
   }
+  if (route.name === 'developer') {
+    return { title: `${developerCopy.title} | Mielenosoitukset.fi`, description: developerCopy.description,
+      robots: 'noindex, nofollow', canonical: null };
+  }
   if (route.name === 'city-admin') {
     return { title: `${cityAdminCopy.title} | Mielenosoitukset.fi`, description: cityAdminCopy.description,
       robots: 'index, follow', canonical: config.origin + cityAdminPath };
@@ -150,7 +162,7 @@ export function routeMeta(route: AppRoute, config: AppConfig, text: Catalog): Ro
   }
   if (route.name === 'fundraising') {
     return { title: 'Pienkeräys – Mielenosoitukset.fi',
-      description: 'Suunnittelemme 2 500 euron pienkeräystä, jotta yhä useampi löytäisi mielenosoitukset.fi-palvelun. Tutustu suunnitelmaan.',
+      description: 'Suunnittelemme 2 500 euron pienkeräystä, jotta yhä useampi löytäisi Mielenosoitukset.fi-palvelun. Tutustu suunnitelmaan.',
       robots: 'index, follow', canonical: `${config.origin}/ker%C3%A4ys` };
   }
   if (route.name === 'campaign') {

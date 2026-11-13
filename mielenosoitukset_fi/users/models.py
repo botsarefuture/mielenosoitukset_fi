@@ -202,6 +202,11 @@ class User(UserMixin):
                 raise ValueError("Kirjautumissalasanan on oltava eri kuin erillinen vahvistussalasana.")
         self.password_hash = generate_password_hash(new_password)
         self.save()
+        # Additive; absent on older accounts, which count as "changed long ago".
+        _get_mongo().users.update_one(
+            {"_id": self._id},
+            {"$set": {"password_changed_at": datetime.datetime.now(datetime.timezone.utc)}},
+        )
 
     # ---------- INIT / FACTORIES -------------------------------------------------
 
@@ -420,7 +425,10 @@ class User(UserMixin):
             if isinstance(inv, str) and inv == self.email:
                 return True
             elif isinstance(inv, dict) and inv.get("email") == self.email:
-                return True
+                from mielenosoitukset_fi.utils.invitations import invitation_expired
+
+                if not invitation_expired(inv):
+                    return True
 
         return False
 

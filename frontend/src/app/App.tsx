@@ -1,6 +1,7 @@
 import type { PublicOrganization } from '../components/organization/types';
 import type { SuggestionDemo } from './suggest-change';
 import type { ServiceStatus } from './status';
+import type { CancelLinkState } from './cancel-link';
 import type { CardProps } from '../components/listings/DemonstrationCard';
 import { SiteHeader } from '../components/header/SiteHeader';
 import { DetailScreen } from '../components/detail/DetailScreen';
@@ -59,6 +60,7 @@ export type AppProps = {
   organizationFill?: PublicOrganization;
   suggestionDemo?: SuggestionDemo;
   serviceStatus?: ServiceStatus | null;
+  cancelLink?: CancelLinkState;
 };
 
 function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<typeof catalog>): CardProps {
@@ -76,17 +78,17 @@ function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<
 export function App({ config, session, route, path, detail, series, home, listing, organization, cities, submission, calendar, serverPage }: AppProps) {
   const text = catalog(config.locale);
   return <>
-    <SiteHeader {...headerProps(config, session, text, path)} hydrating={route.name === 'api-docs' || route.name === 'status' || route.name === 'information' || route.name === 'campaign' || route.name === 'fundraising' || route.name === 'contact' || route.name === 'city-admin' || route.name === 'organization-fill' || route.name === 'suggest-change'} />
+    <SiteHeader {...headerProps(config, session, text, path)} hydrating={route.name === 'api-docs' || route.name === 'status' || route.name === 'information' || route.name === 'campaign' || route.name === 'fundraising' || route.name === 'contact' || route.name === 'city-admin' || route.name === 'organization-fill' || route.name === 'suggest-change' || route.name === 'cancel-link' || route.name === 'developer'} />
     <main className={`container-main-content ${route.name === 'submit' ? 'submit-workspace' : route.name === 'detail' || route.name === 'series' ? 'public-detail-main' : 'public-layout-wide'}`} id="main-content" tabIndex={-1}>
       {serverPage}
-      {route.name === 'god-auth' && <Suspense fallback={<p role="status">Ladataan kirjautumista...</p>}><GodScreen /></Suspense>}
-      {route.name === 'calendar' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria...</p>}>
+      {route.name === 'god-auth' && <Suspense fallback={<p role="status">Ladataan kirjautumista…</p>}><GodScreen /></Suspense>}
+      {route.name === 'calendar' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria…</p>}>
         <CalendarScreen calendar={calendar} config={config} session={session} />
       </Suspense>}
-      {route.name === 'calendar-year' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria...</p>}>
+      {route.name === 'calendar-year' && calendar && <Suspense fallback={<p role="status">Ladataan kalenteria…</p>}>
         <YearCalendarScreen calendar={calendar} />
       </Suspense>}
-      {route.name === 'submit' && submission && <Suspense fallback={<p role="status">Ladataan lomaketta...</p>}>
+      {route.name === 'submit' && submission && <Suspense fallback={<p role="status">Ladataan lomaketta…</p>}>
         <SubmitScreen config={config} submission={submission} />
       </Suspense>}
       {route.name === 'cities' && <Suspense fallback={<p role="status">Ladataan kaupunkeja…</p>}>
@@ -95,13 +97,13 @@ export function App({ config, session, route, path, detail, series, home, listin
       {route.name === 'today' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia…</p>}>
         <TodayScreen city={route.value} listing={listing} config={config} session={session} />
       </Suspense>}
-      {route.name === 'organization' && organization && <Suspense fallback={<p role="status">Ladataan organisaatiota...</p>}>
+      {route.name === 'organization' && organization && <Suspense fallback={<p role="status">Ladataan organisaatiota…</p>}>
         <OrganizationScreen key={path} organization={organization} config={config} session={session} />
       </Suspense>}
-      {route.name === 'pride' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia...</p>}>
+      {route.name === 'pride' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia…</p>}>
         <PrideScreen config={config} session={session} listing={listing} />
       </Suspense>}
-      {route.name === 'listing' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia...</p>}>
+      {route.name === 'listing' && <Suspense fallback={<p role="status">Ladataan mielenosoituksia…</p>}>
         <ListingScreen key={path} route={route} config={config} session={session} listing={listing} />
       </Suspense>}
       {route.name === 'home' && <HomePage

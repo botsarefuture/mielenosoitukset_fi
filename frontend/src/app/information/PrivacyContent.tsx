@@ -15,6 +15,7 @@ export function PrivacyContent() {
       <ul>
         <li><strong>Käyttäjätilit ja profiilit:</strong> käyttäjänimi, sähköpostiosoite, salasanan tiiviste, näyttönimi, profiilitiedot, käyttöoikeudet, seuratut kohteet sekä tiliin liittyvät asetukset ja tunnisteet.</li>
         <li><strong>Mielenosoitusten ilmoittajat ja järjestäjät:</strong> nimi, sähköpostiosoite, verkkosivut, organisaatiotiedot sekä valinnat siitä, mitkä järjestäjätiedot näytetään julkisesti. Ilmoitukseen liittyvä muokkaus- tai peruutuslinkki voi sisältää yksilöllisen tunnisteen.</li>
+        <li><strong>Kaupunkiadmin-hakemukset:</strong> hakemuksen tekstikentät (esittely, aiempi toiminta ja suosittelijat), valitut paikkakunnat, hakijan käyttäjätilin tiedot sekä hakemuksen tila ja päivämäärät. Hakemuksen näkevät valtakunnallinen ylläpitotiimi ja haettujen paikkakuntien kaupunkiadminit.</li>
         <li><strong>Muistutukset, yhteydenotot ja raportit:</strong> sähköpostiosoite ja viestin tai raportin sisältö sekä tarvittaessa siihen liittyvä käyttäjä- tai tapahtumatunniste.</li>
         <li><strong>Tekniset ja turvallisuustiedot:</strong> IP-osoite, selaimen tai laitteen User-Agent-tieto, aikaleima, pyydetty osoite, toiminnon onnistuminen sekä turvallisuus- tai virhetilanteen syy.</li>
         <li><strong>Hallinta-, muutos- ja virhelokit:</strong> ylläpidon ja automaattisten toimintojen lokit, muutosten historia sekä virhetilanteissa pyyntöön liittyviä metatietoja. Mielenosoituksen lähetysvirheen loki voi sisältää myös lähetetyn lomakkeen tietoja.</li>
@@ -54,6 +55,7 @@ export function PrivacyContent() {
     <section className="public-prose-card">
       <h2>Tietojen säilytys</h2>
       <p>Käyttäjätilin ja palvelupyyntöjen toteuttamiseksi tarvittavia tietoja säilytetään niin kauan kuin tili tai palvelusuhde on voimassa. Mielenosoituksiin liittyviä julkaisu-, järjestäjä- ja muutoshistoriatietoja voidaan säilyttää myös tapahtuman jälkeen palvelun historian, moderoinnin ja oikeusvaateiden vuoksi.</p>
+      <p>Kaupunkiadmin-hakemusta säilytetään, kunnes se on käsitelty. Hylätyn tai perutun hakemuksen tekstit poistetaan 90 päivän kuluttua päätöksestä ja hyväksytyn hakemuksen tekstit 365 päivän kuluttua. Jäljelle jää tieto hakemuksen paikkakunnista, tilasta ja päivämääristä. Voit pyytää hakemuksesi poistamista aiemmin ottamalla yhteyttä osoitteeseen <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>.</p>
       <p>Muistutus-, yhteydenotto-, kirjautumis-, turvallisuus-, virhe- ja hallintalokit säilytetään niin kauan kuin niitä tarvitaan kyseisen toiminnon toteuttamiseen, väärinkäytösten ehkäisyyn, virheiden selvittämiseen tai oikeusvaateiden käsittelyyn. Kaikille nykyisille lokikokoelmille ei ole vielä toteutettu automaattista määräajan jälkeistä poistamista. Säilytysaikoja ja automaattista poistamista tarkennetaan osana palvelun tietosuojakehitystä.</p>
       <p>Tietoja voidaan säilyttää pidempään, jos laki sitä edellyttää tai tieto on tarpeen oikeusvaateen laatimiseksi, esittämiseksi tai puolustamiseksi. Tarpeettomat tiedot poistetaan tai anonymisoidaan.</p>
     </section>

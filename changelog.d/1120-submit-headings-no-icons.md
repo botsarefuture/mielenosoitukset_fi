@@ -1,0 +1,1 @@
+- Submit form: section headings no longer carry icons, and the "Peruuta" button in the similar-demonstration dialog is red like other cancel buttons.

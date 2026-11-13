@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
+const sessionLib = await import(fileURLToPath(new URL('../frontend/src/app/bridge.ts', import.meta.url)));
 const route = await import(fileURLToPath(new URL('../frontend/src/app/developer-route.ts', import.meta.url)));
 const { readDeveloper, developerWrite, writeFailure, developerCopy, developerIssuableScopes, classifyDeveloperResponse, developerStanding } = route;
 const id = 'a'.repeat(24);
@@ -66,4 +67,29 @@ assert.equal(developerStanding(unread, 'unavailable', guest), 'unknown');
 assert.equal(developerStanding(unread, 'ready', member), 'signed-in');
 assert.equal(developerStanding(unread, 'ready', guest), 'signed-out');
 assert.equal(developerStanding(member, 'ready', guest), 'signed-out');
+
+// The bridge read: a hang times out as unavailable (not loading forever, not signed out); unmount is the only abort.
+const { readBridge } = sessionLib;
+const anonymousSession = { authenticated: false, name: null };
+const normalize = raw => ({ authenticated: raw.authenticated, name: raw.name ?? null, role: raw.role ?? 'guest' });
+const answer = (status, body) => async () => ({ ok: status < 400, status, json: async () => body });
+const never = (_url, init) => new Promise((_, reject) => init.signal.addEventListener('abort', () => reject(new Error('aborted'))));
+let read = await readBridge('/api/auth/me', { normalize, fetcher: never, timeoutMs: 20 });
+assert.equal(read.kind, 'unavailable', 'a bridge that never answers must time out into unavailable');
+const unmount = new AbortController();
+const pending = readBridge('/api/auth/me', { normalize, fetcher: never, timeoutMs: 5000, signal: unmount.signal });
+unmount.abort();
+assert.equal((await pending).kind, 'aborted');
+assert.equal((await readBridge('/x', { normalize, fetcher: answer(404, null) })).kind, 'unavailable');
+assert.equal((await readBridge('/x', { normalize, fetcher: answer(500, null) })).kind, 'unavailable');
+assert.equal((await readBridge('/x', { normalize, fetcher: async () => { throw new Error('offline'); } })).kind, 'unavailable');
+assert.equal((await readBridge('/x', { normalize, fetcher: answer(200, { name: 'x' }) })).kind, 'unavailable', 'no boolean authenticated is not an answer');
+read = await readBridge('/x', { normalize, fetcher: answer(200, { authenticated: true, name: 'Olivia', role: 'user' }) });
+assert(read.kind === 'ready' && read.session.authenticated);
+
+// After a failed server read, a confirmed sign-in switches the header to the account menu; a failed bridge does not.
+const unverifiedGuest = { ...anonymousSession, unverified: true };
+const merged = sessionLib.mergeBridgeSession(unverifiedGuest, read.session);
+assert.equal(merged.authenticated, true);
+assert.equal(merged.name, 'Olivia');
 console.log('PASS: developer write controls');

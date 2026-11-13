@@ -67,11 +67,17 @@ func submissionClient(r *http.Request, secret string) string {
 }
 
 func submissionRate(ctx context.Context, db *mongo.Database, key string) (bool, error) {
+	return windowedRate(ctx, db, key, 5, 30)
+}
+
+// windowedRate counts a request against per-minute and per-hour buckets for
+// key and reports whether it is still within both limits.
+func windowedRate(ctx context.Context, db *mongo.Database, key string, minuteLimit, hourLimit int64) (bool, error) {
 	now := time.Now().UTC()
 	for _, window := range []struct {
 		name           string
 		seconds, limit int64
-	}{{"minute", 60, 5}, {"hour", 3600, 30}} {
+	}{{"minute", 60, minuteLimit}, {"hour", 3600, hourLimit}} {
 		bucket := now.Unix() / window.seconds
 		filter := bson.M{"token": "go-rate:" + window.name + ":" + strconv.FormatInt(bucket, 10) + ":" + key}
 		var record struct {

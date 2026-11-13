@@ -32,6 +32,11 @@ def configure(source, target):
         values["PUBLIC_SUBMIT_SESSION_SOCKET"] = "/var/www/mielenosoitukset_fi/mielenosoitus.sock"
         babel = config.get("BABEL") or {}
         values["PUBLIC_SUBMIT_LOCALES"] = ",".join(babel.get("SUPPORTED_LOCALES", ["fi", "en"]) or ["fi"])
+        # Fundraising opening reminder signup (docs/fundraising-reminder.md): off
+        # unless set, and only with public submissions on. The Go API also needs
+        # the unique e-mail index and disables the routes without it.
+        if config.get("FUNDRAISING_REMINDER") is True:
+            values["FUNDRAISING_REMINDER_ENABLED"] = "true"
     # Event analytics follow the Flask switch, which defaults to enabled when
     # the key is missing (app.py: config.get("SITE_ANALYTICS_ENABLED", True)),
     # so a redeploy keeps Go writes in step with Flask.

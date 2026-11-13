@@ -118,13 +118,14 @@
     ]
   },
   "background_jobs": {
-    "count": 17,
+    "count": 20,
     "coverage": [
       "jobs",
       "tests/test_urgent_review_delivery.py",
-      "integration"
+      "integration",
+      "tests/test_fundraising_reminder.py"
     ],
-    "sha256": "522d706e73f78540a7a3b675eccf3114a82a4082642d940bf6f32fa6b3839ac4"
+    "sha256": "7325af7dd5428a3565962ade7505b3fea7230a19848f6ab122346747ee2b7ce1"
   },
   "routes": {
     "mielenosoitukset_fi/admin/admin_bp.py": {

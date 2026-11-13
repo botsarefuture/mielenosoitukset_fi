@@ -5,6 +5,12 @@ on:
     branches:
       - main
   pull_request:
+  # Required merge check for the GitHub merge queue: the queue runs this
+  # workflow on the temporary merge group commit.
+  merge_group:
+
+permissions:
+  contents: read
 
 concurrency:
   group: tests-${{ github.event.pull_request.number || github.ref }}

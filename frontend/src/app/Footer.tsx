@@ -37,7 +37,13 @@ export function SiteFooter({ config, session, text }: {
       </ul>
       <ul className="footer-links auth-buttons public-site-footer__auth" aria-label={text.footer.account}>
         {session.authenticated
-          ? <li><a href={config.urls.logout}>{text.account.logout}</a></li>
+          ? <li>{session.logoutToken
+            ? <form method="post" action={config.urls.logout} className="footer-logout-form">
+              <input type="hidden" name="logout_token" value={session.logoutToken} />
+              <button type="submit" className="footer-logout-button">{text.account.logout}</button>
+            </form>
+            // Without a token the link opens the confirmation page; a GET never signs anyone out.
+            : <a href={config.urls.logout}>{text.account.logout}</a>}</li>
           : <><li><a href={config.urls.login}>{text.account.login}</a></li>
             <li><a href={config.urls.register}>{text.account.register}</a></li></>}
       </ul>

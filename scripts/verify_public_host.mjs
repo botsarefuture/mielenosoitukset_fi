@@ -19,7 +19,8 @@ const sessionServer = createServer((req, res) => {
   setTimeout(() => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ authenticated, name, locale: 'fi', locales: [{ code: 'fi', name: 'Suomi' }],
-      role: authenticated ? 'user' : 'guest', site_analytics_enabled: true, matomo_enabled: true }));
+      role: authenticated ? 'user' : 'guest', site_analytics_enabled: true, matomo_enabled: true,
+      ...(authenticated ? { logout_token: 'x'.repeat(30) + '.' + 'y'.repeat(20) } : {}) }));
   }, 25);
 });
 await new Promise(resolve => sessionServer.listen(0, '127.0.0.1', resolve));
@@ -56,6 +57,14 @@ try {
   assert.equal(reads, 3, 'Cookie-bearing requests must not share reads');
   assert.equal(bootstrap(alice.html).session.name, 'Alice');
   assert.equal(bootstrap(bob.html).session.name, 'Bob');
+  // Signing out is a POST form in the header menu and footer, never a followable link.
+  const readsBefore = reads;
+  const signedInPage = (await page({ path: '/info', cookie: 'session=alice' })).html;
+  assert(!signedInPage.includes('href="/users/auth/logout"'), 'a signed-in page must not link to a GET sign-out');
+  assert((signedInPage.match(/<form [^>]*action="\/users\/auth\/logout"[^>]*method="post"/g) ?? []).length >= 2, 'header menu and footer post the sign-out form');
+  assert(signedInPage.includes('name="logout_token"'));
+  assert(!(await page({ path: '/info' })).html.includes('name="logout_token"'), 'anonymous pages carry no sign-out token');
+  reads = readsBefore;
   assert.equal(bootstrap((await page()).html).session.name, null);
   const forms = await Promise.all(Array.from({ length: 8 }, () => page({ path: '/submit' })));
   const tokens = forms.map(result => bootstrap(result.html).submission.token);

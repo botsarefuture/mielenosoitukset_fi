@@ -1,4 +1,5 @@
-export type HeaderLink = { href: string; label: string; icon: string };
+/** `post` is the sign-out form token; a link that has it is submitted as a POST form, never followed. */
+export type HeaderLink = { href: string; label: string; icon: string; post?: string };
 export type HeaderMessages = {
   skip: string; home: string; navigation: string; languages: string; changeLanguage: string;
   menu: string; openMenu: string; closeMenu: string; close: string; userMenu: string;

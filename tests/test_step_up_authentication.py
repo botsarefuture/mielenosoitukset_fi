@@ -255,7 +255,8 @@ def test_logout_clears_elevation(wapp, db, seeded_data):
     client = _client_for_user(wapp, seeded_data["user_id"])
     _elevate_with_password(client, password="UserPass1!")
 
-    r = client.get("/users/auth/logout")
+    token = client.get("/api/session").get_json()["logout_token"]
+    r = client.post("/users/auth/logout", data={"logout_token": token})
     assert r.status_code == 302
     with client.session_transaction() as session:
         assert "sudo" not in session

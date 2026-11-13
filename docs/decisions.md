@@ -105,6 +105,24 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   `AUTH_BRIDGE_SCOPES` (Flask) and `AUTH_BRIDGE_ENABLED` (Go); rollback is removing
   either. Login, MFA and password pages are not moved; that needs a new approval.
   Details and the evidence: [auth-bridge.md](auth-bridge.md).
+- **Signing out is a POST with a token (2026-11-13).** Sign-out was a plain GET
+  link, so a prefetch, crawler or stray hover could end a session (the Apache log
+  showed single and triple `GET /users/auth/logout` requests). Now a GET only shows
+  a confirmation page (and answers 204 to prefetch/prerender), and only a POST with a
+  stateless signed token tied to the account signs out. The account menu opens on
+  click or keyboard, not hover. The token is not single-use and not bound to the
+  session cookie (stateless by design; it only needs to be unguessable for an
+  attacker page, and the worst case is a forced sign-out); it expires after 12 h and
+  an expired or wrong one sends the visitor to the confirmation page. After a
+  failed server read is confirmed through the bridge the menu has no token and
+  links to that confirmation page. Revert: restore the old route in
+  `users/BPs/auth.py`; no data changes.
+- **A failed session read is "unknown", not "signed out" (2026-11-13).** The React
+  host marks a visitor whose cookie it could not read as `unverified`; the page asks
+  the bridge and shows an error with retry instead of a sign-in prompt. Known edges:
+  `unverified` is set for any failed read with a cookie, and the campaign and
+  fundraising pages still treat an unverified visitor as a guest and redirect
+  (reviewer findings 3 and 4 on #1145); fix them if they show up in practice.
 - **Anonymous organization flash message (2026-11-12).** Shown through the bridge:
   an anonymous visitor only learns that a message is waiting, nothing about
   memberships.

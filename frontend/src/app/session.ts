@@ -36,6 +36,8 @@ export type SessionSummary = {
   authBridge?: boolean;
   /** The visitor sent a cookie but the server could not read the session (timeout, error). Not the same as signed out. */
   unverified?: boolean;
+  /** Signed token the sign-out form must post; only present for a signed-in visitor. */
+  logoutToken?: string;
   organization?: {
     id: string; following: boolean; invited: boolean; hasMessages: boolean;
     permissions: Record<'VIEW_ORGANIZATION' | 'EDIT_ORGANIZATION' | 'DELETE_ORGANIZATION' | 'INVITE_TO_ORGANIZATION', boolean>;
@@ -101,6 +103,8 @@ export function normalizeSession(value: unknown): SessionSummary {
       canEditDemo: raw.authenticated === true && submission.can_edit_demo === true,
     },
     ...(raw.auth_bridge === true ? { authBridge: true } : {}),
+    ...(raw.authenticated === true && typeof raw.logout_token === 'string' && /^[\w.-]{20,400}$/.test(raw.logout_token)
+      ? { logoutToken: raw.logout_token } : {}),
     ...(organization ? { organization } : {}),
     ...(raw.authenticated === true && raw.translation_join && typeof raw.translation_join === 'object'
       ? { translationJoin: normalizeTranslationJoin(raw.translation_join as Record<string, unknown>) } : {}),

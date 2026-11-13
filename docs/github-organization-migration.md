@@ -116,14 +116,19 @@ rule, condition and bypass actor back unchanged. Re-running with matching settin
 performs no write. The script never enqueues or merges pull requests and never
 triggers a deployment.
 
-At 3 entries, 40 waiting pull requests need about 14 group builds of roughly 13
-minutes: over three hours serial. At 8, they need about 5. A failing group entry
-invalidates the whole group and requeues the rest; do not raise the limit further
-without evidence. These are sizing estimates, not measured throughput guarantees.
-Build concurrency limits concurrent `merge_group` builds; the maximum merge size limits how many ready
-entries land together. GitHub may build each entry separately, so 8/8 does not
-promise only five CI runs. Minimum 1 and wait 0 let a lone ready pull request merge
-without a batching delay; required queue checks still run.
+At build concurrency 3, 40 ready pull requests need about 14 waves of roughly
+13-minute checks: over three hours with full utilization and no failures. At
+concurrency 8, about 5 waves take roughly 65 minutes. These are idealized waves
+of parallel checks, not five total CI runs. ALLGREEN still verifies each entry.
+Maximum merge size independently limits how many ready entries land together.
+A failed entry invalidates later groups that include it; do not raise concurrency
+further without measured throughput and failure evidence.
+
+Minimum 1 and wait 0 let a lone ready PR merge without a batching delay; required
+queue checks still run. Merge limits do not combine CI builds. A deployment is
+associated with a selected verified commit, not with each PR: a merge-group update
+containing several PRs needs no artificial per-PR deployments. The production
+workflow already coalesces pending runs while allowing its active run to finish.
 
 Rollback through the same script, reviewing the dry run before confirming:
 

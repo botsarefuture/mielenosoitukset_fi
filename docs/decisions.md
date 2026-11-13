@@ -22,12 +22,12 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 
 - **Size the merge queue for 40 waiting pull requests (2026-11-13).** Raise both
   `max_entries_to_build` and `max_entries_to_merge` from 3 to 8. Keep MERGE,
-  ALLGREEN, minimum 1, wait 0 and the 60-minute timeout. At 3, about 14 group
-  builds of roughly 13 minutes take over three hours serial; at 8, about 5 builds
-  suffice in the batching estimate, not a guarantee of CI run count: build concurrency
-  controls simultaneous builds and GitHub may build each entry separately.
-  A failing group entry invalidates the whole group and requeues the
-  rest, so do not go higher without evidence. The script exposes both limits as
+  ALLGREEN, minimum 1, wait 0 and the 60-minute timeout. With roughly 13-minute
+  checks, 40 ready PRs need about 14 waves at concurrency 3 (over three hours)
+  versus 5 waves at concurrency 8 (about 65 minutes), assuming full utilization
+  and no failures. These are parallel waves, not five total CI runs: ALLGREEN
+  still checks each entry. Merge size is a separate limit. A failed entry
+  invalidates later groups that include it, so do not go higher without evidence. The script exposes both limits as
   CLI flags and preserves every other rule, condition and bypass actor. Roll back
   by setting both flags to 3 after reviewing `--dry-run`.
 
@@ -71,7 +71,7 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   change, take a backup or record the prior state. Report where the backup is and how
   to revert. Anything without a revert path (permanent deletes without an export,
   real emails to real people) still needs an explicit yes.
-- **Review threads block merging.** The `main` ruleset requires every review thread
+- **Review threads block merging (historical; auto-merge policy superseded 2026-11-13).** The `main` ruleset requires every review thread
   to be resolved and the `python-tests` check to pass. Auto-merge is turned off.
   Resolve bot review threads by fixing the issue, or by replying with the reason it
   does not apply.

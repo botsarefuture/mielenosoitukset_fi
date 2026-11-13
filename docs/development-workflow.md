@@ -62,6 +62,12 @@ The maintainer decides what we build and why. Whoever implements decides how.
   Retained branches prevent automatic retargeting, so verify its base explicitly.
   Dequeue before pushing fixes to a queued branch, then re-arm auto-merge.
 
+A production deployment corresponds to a selected verified commit, not a PR count.
+The existing workflow coalesces pending runs and finishes its active deployment.
+Do not request a separate deployment for each PR in a merge-group update or cancel
+an active deployment to accelerate another PR. Migration and rollback obligations
+remain; see [production-deployment.md](production-deployment.md).
+
 ## Keeping track of open PRs
 
 - At the start of every session and after finishing each PR, list open PRs, check CI and

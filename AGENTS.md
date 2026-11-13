@@ -246,6 +246,19 @@ the script that applied them are in
 - Raising concurrency beyond 8 needs measured throughput and failure evidence:
   larger groups increase the work invalidated by a failure.
 
+### Production deployment is separate from PR counting
+
+- A deployment identifies a verified commit and its release artifacts, not a PR.
+  Several PRs in one update to `main` need no separate deployment for each PR.
+- The production workflow permits one active run and one replaceable pending run.
+  `cancel-in-progress: false` protects the active deployment; it does not retain
+  every pending revision. Do not add `queue: max` or custom batching timers without
+  an approved deployment design and evidence.
+- Do not cancel an active deployment to hurry another PR. Superseded pending runs
+  and failed deployments are different; inspect actual failures and preserve the
+  migration, health-check and rollback requirements in
+  [docs/production-deployment.md](docs/production-deployment.md).
+
 ### While a pull request is in the queue
 
 A queued branch is frozen. GitHub refuses pushes to it and says "Merging is blocked: a

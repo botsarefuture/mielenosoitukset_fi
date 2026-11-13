@@ -31,3 +31,9 @@ still runs required queue checks. Do not promise one CI run per eight PRs, bypas
 protections, or use agents to poll and direct every merge. Return for failures,
 conflicts or review feedback. Dependent PRs must target `main` after their parent
 merges before entering the queue; retained branches are not retargeted for you.
+
+Production deployments identify verified commits, not individual PRs. A multi-PR
+update to `main` needs no artificial per-PR deployments. Native concurrency keeps
+one active deployment and replaces pending runs; `cancel-in-progress: false` does
+not queue every revision. Do not cancel active deployments or add custom timers.
+See `AGENTS.md` for the approved backlog and deployment separation rules.

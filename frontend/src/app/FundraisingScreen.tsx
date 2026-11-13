@@ -97,7 +97,6 @@ export function FundraisingPage({ details, extras, config }: { details: Fundrais
             ? <><time dateTime={f.display_start_date}>{finnishDate(f.display_start_date)}</time>–<time dateTime={f.display_end_date}>{finnishDate(f.display_end_date)}</time></>
             : 'Vahvistetaan myöhemmin'}</dd></div>
           <div><dt>Keräysalue</dt><dd>{extras.area || 'Vahvistetaan myöhemmin'}</dd></div>
-          <div><dt>Keräyksen järjestäjä</dt><dd>{f.organizer || 'Vahvistetaan myöhemmin'}</dd></div>
           <div><dt>Tilanne</dt><dd>{status}</dd></div>
         </dl>
         {pre ? <div className="public-content__notice">
@@ -122,7 +121,7 @@ export function FundraisingPage({ details, extras, config }: { details: Fundrais
           <h3>{f.is_preparation ? 'Lahjoittaminen ei ole vielä avoinna' : 'Lahjoittaminen on suljettu'}</h3>
           <p>{f.confirmed
             ? 'Lahjoituksia voi tehdä vain vahvistettuna keräysaikana ja keräyksen ollessa avoinna.'
-            : 'Keräyksen järjestäjä ja lahjoitusohjeet julkaistaan, kun tiedot on vahvistettu.'}</p>
+            : 'Lahjoitusohjeet julkaistaan, kun tiedot on vahvistettu.'}</p>
         </div>}
         {!pre && f.is_preparation && f.mobilepay_links.length > 0 && <section className="public-content__notice" aria-labelledby="mobilepay-title">
           <h3 id="mobilepay-title">MobilePay</h3>

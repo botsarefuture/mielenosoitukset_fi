@@ -33,7 +33,7 @@ def fundraising_details(data=None, *, today=None):
         data = {}
     details = {
         key: data.get(key, "").strip() if isinstance(data.get(key), str) else ""
-        for key in ("organizer", "collection_number", "recipient", "iban", "reference", "payment_url")
+        for key in ("collection_number", "recipient", "iban", "reference", "payment_url")
     }
     # Only deliberately configured HTTPS destinations can become links.
     details["payment_url"] = _https_url(details["payment_url"])
@@ -55,7 +55,7 @@ def fundraising_details(data=None, *, today=None):
         planned_start = planned_end = None
     complete = bool(
         start and end and start <= end
-        and details["organizer"] and details["collection_number"]
+        and details["collection_number"]
         and (details["payment_url"] or (details["recipient"] and details["iban"]) or any(link["url"] for link in details["mobilepay_links"]))
     )
     confirmed = data.get("details_confirmed") is True and complete

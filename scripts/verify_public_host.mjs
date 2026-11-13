@@ -243,7 +243,7 @@ try {
     const dayHelsinki = offset => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Helsinki' }).format(new Date(Date.now() + offset * 86_400_000));
     const bodyOf = r => r.html.split('<body>')[1].split('<script type="application/json"')[0];
     campaignState = { status: 200, body: { published: false } };
-    const closedFund = { publication_state: 'active', details_confirmed: true, organizer: 'Testiyhdistys', collection_number: 'RA/2026/0000',
+    const closedFund = { publication_state: 'active', details_confirmed: true, collection_number: 'RA/2026/0000',
       recipient: 'Testiyhdistys', iban: 'FI00 0000 0000 0000 00', bic: 'TESTFIHH', area: 'Koko Suomi Ahvenanmaata lukuun ottamatta',
       mobilepay_links: [], end_date: dayHelsinki(60) };
     // Pre-launch: first day is tomorrow. No account, noindex, calendar download only.

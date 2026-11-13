@@ -477,8 +477,15 @@ func (s mongoDeveloperStore) CountApps(ctx context.Context, owner bson.ObjectID)
 	return s.db.Collection("developer_apps").CountDocuments(ctx, bson.M{"owner_id": owner})
 }
 
+// CountTokens counts the rows the page lists for the target (the app's, or the
+// account's personal ones), so the cap never blocks an unrelated list. Count and
+// insert are separate operations; the per-account rate limit bounds any overshoot.
 func (s mongoDeveloperStore) CountTokens(ctx context.Context, owner, appID bson.ObjectID) (int64, error) {
-	return s.db.Collection("api_tokens").CountDocuments(ctx, bson.M{"user_id": owner})
+	filter := bson.M{"user_id": owner, "category": "user"}
+	if !appID.IsZero() {
+		filter = bson.M{"user_id": owner, "app_id": appID}
+	}
+	return s.db.Collection("api_tokens").CountDocuments(ctx, filter)
 }
 
 func (s mongoDeveloperStore) CreateApp(ctx context.Context, doc bson.M) (bson.ObjectID, error) {

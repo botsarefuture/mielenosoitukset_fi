@@ -238,46 +238,63 @@ try {
     assert(body.includes('/kampanja/api/volunteers') || live.html.includes('/kampanja/api/volunteers'));
     assert.equal((await page({ path: '/kampanja' })).status, 404, 'Flask keeps the slash redirect');
     assert.equal((await page({ path: '/kampanja/confirm/token' })).status, 404, 'Confirmation stays in Flask');
+    // The fundraising page is public and independent of the campaign gate.
     const fundraising = changes => campaign({ path: '/ker%C3%A4ys', ...changes });
+    const dayHelsinki = offset => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Helsinki' }).format(new Date(Date.now() + offset * 86_400_000));
+    const bodyOf = r => r.html.split('<body>')[1].split('<script type="application/json"')[0];
     campaignState = { status: 200, body: { published: false } };
-    for (const path of ['/ker%C3%A4ys', '/keräys']) {
-      const hidden = await fundraising({ path });
-      assert.equal(hidden.status, 302, path);
-      assert.equal(hidden.redirect, '/users/auth/login?next=%2Fker%C3%A4ys');
-      assert.equal(hidden.headers['Cache-Control'], 'private, no-store');
-    }
-    const fundPreview = await fundraising({ cookie: 'session=alice' });
-    assert.equal(fundPreview.status, 200);
-    assert.equal(fundPreview.headers['X-Robots-Tag'], 'noindex, nofollow');
-    campaignState = { status: 200, body: { published: true } };
-    const fundLive = await fundraising();
-    assert.equal(fundLive.status, 200);
-    assert.equal(fundLive.headers['Cache-Control'], 'private, no-store');
-    const fundBody = fundLive.html.split('<body>')[1].split('<script type="application/json"')[0];
-    for (const text of ['Jotta mielenosoitukset löytyvät', '2 500 €', 'Valmistelussa', 'Lahjoittaminen ei ole vielä avoinna',
-      'jatkuvuuden turvaamiseen', 'href="/contact"', 'MobilePay 1', 'MobilePay 2',
-      '<article class="public-content campaign-page" lang="fi">']) assert(fundBody.includes(text), text);
-    assert.match(fundBody, /datetime="2026-11-16"[^]*datetime="2027-02-16"/i);
-    for (const text of ['Näin lahjoitat', 'Tilinumero (IBAN)', 'name="iban"', 'type="submit"']) assert(!fundBody.includes(text), text);
-    assert(fundLive.html.includes('rel="canonical" href="https://example.test/ker%C3%A4ys"'));
-    assert(fundLive.html.includes('/static/css/public-content.css'));
-    assert.match(bootstrap(fundLive.html).today, /^\d{4}-\d{2}-\d{2}$/);
-    assert.equal(bootstrap(fundLive.html).fundraising, undefined, 'Unreachable API: bundled details, nothing embedded');
-    fundState = { status: 200, body: { publication_state: 'preparation', details_confirmed: false, planned_start_date: '2026-12-01', planned_end_date: '2027-03-01', mobilepay_links: [] } };
-    const fundApi = await fundraising();
-    const fundApiBody = fundApi.html.split('<body>')[1].split('<script type="application/json"')[0];
-    assert.match(fundApiBody, /datetime="2026-12-01"[^]*datetime="2027-03-01"/i, 'API details replace the bundled file');
-    assert.equal(bootstrap(fundApi.html).fundraising.planned_start_date, '2026-12-01');
+    const closedFund = { publication_state: 'active', details_confirmed: true, organizer: 'Testiyhdistys', collection_number: 'RA/2026/0000',
+      recipient: 'Testiyhdistys', iban: 'FI00 0000 0000 0000 00', bic: 'TESTFIHH', area: 'Koko Suomi Ahvenanmaata lukuun ottamatta',
+      mobilepay_links: [], end_date: dayHelsinki(60) };
+    // Pre-launch: first day is tomorrow. No account, noindex, calendar download only.
+    fundState = { status: 200, body: { ...closedFund, start_date: dayHelsinki(1) } };
+    const pre = await fundraising();
+    assert.equal(pre.status, 200, 'Public without login or campaign publication');
+    assert.equal(pre.headers['Cache-Control'], 'private, no-store');
+    assert.equal(pre.headers['X-Robots-Tag'], 'noindex, follow');
+    assert.match(pre.html, /<meta name="robots" content="noindex, follow" \/>/);
+    const preBody = bodyOf(pre);
+    for (const text of ['Pienkeräys aukeaa', 'Lisää kalenteriin', 'data:text/calendar', 'Keräyksen tiedot', 'RA/2026/0000',
+      'Koko Suomi Ahvenanmaata lukuun ottamatta', 'Lahjoittaminen ei ole vielä avoinna']) assert(preBody.includes(text), text);
+    for (const text of ['FI00 0000 0000 0000 00', 'TESTFIHH', 'Näin lahjoitat', 'Kopioi tilinumero', 'Tilinumero (IBAN)']) assert(!pre.html.includes(text), `pre-launch leaks ${text}`);
+    // Open: first day is today. Account, BIC and copy button appear; indexable.
+    fundState = { status: 200, body: { ...closedFund, start_date: dayHelsinki(0) } };
+    const open = await fundraising();
+    assert.equal(open.headers['X-Robots-Tag'], undefined);
+    assert.match(open.html, /<meta name="robots" content="index, follow" \/>/);
+    const openBody = bodyOf(open);
+    for (const text of ['Näin lahjoitat', 'FI00 0000 0000 0000 00', 'TESTFIHH', 'Kopioi tilinumero', 'RA/2026/0000']) assert(openBody.includes(text), text);
+    for (const text of ['Pienkeräys aukeaa', 'Lisää kalenteriin', 'data:text/calendar']) assert(!openBody.includes(text), `open page keeps ${text}`);
+    // The page makes no fundraising link on its own routes: nothing here links it from other pages.
+    fundState = { status: 503, body: {} };
+    const bundled = await fundraising();
+    assert.equal(bundled.status, 200);
+    assert.equal(bootstrap(bundled.html).fundraising, undefined, 'Unreachable API: bundled details, nothing embedded');
+    assert.match(bootstrap(bundled.html).today, /^\d{4}-\d{2}-\d{2}$/);
+    assert(bundled.html.includes('rel="canonical" href="https://example.test/ker%C3%A4ys"'));
     fundState = { status: 200, body: [] };
-    assert.match((await fundraising()).html, /datetime="2026-11-16"/i, 'Malformed API answer falls back to the bundled file');
+    assert.match(bodyOf(await fundraising()), /datetime="2026-11-16"/i, 'Malformed API answer falls back to the bundled file');
+    for (const path of ['/ker%C3%A4ys', '/keräys']) assert.equal((await fundraising({ path })).status, 200, path);
   } finally { campaignApi.close(); }
-  console.log('PASS: campaign and fundraising pages keep the publication gate: signed-in preview, fail-closed reads, private no-store and noindex until published');
-  const { fundraisingDetails } = await import(pathToFileURL(`${root}/frontend/dist/server/render.js`));
+  console.log('PASS: campaign keeps the publication gate; fundraising is public with a pre-launch state that hides the account and is noindex until the first collection day');
+  const { fundraisingDetails, fundraisingExtras, fundraisingIcs } = await import(pathToFileURL(`${root}/frontend/dist/server/render.js`));
   const parity = JSON.parse(readFileSync(`${root}/tests/fixtures/fundraising_parity.json`, "utf8"));
   for (const item of parity) {
     const got = fundraisingDetails(item.input, item.today);
     assert.deepEqual(Object.fromEntries(Object.entries(got).sort()), item.expected, item.name);
   }
+  const ex = (start, today) => fundraisingExtras({ start_date: start, end_date: '2027-02-15' }, today);
+  assert.equal(ex('2026-11-16', '2026-11-15').pre_launch, true, 'Day before opening is pre-launch');
+  assert.equal(ex('2026-11-16', '2026-11-16').pre_launch, false, 'Opening day is open');
+  assert.equal(ex('2026-11-16', '2026-11-17').pre_launch, false);
+  assert.equal(fundraisingExtras({ planned_start_date: '2026-11-16' }, '2026-11-15').pre_launch, true, 'Planned date counts while unconfirmed');
+  assert.equal(fundraisingExtras({}, '2026-11-15').pre_launch, false, 'No date: never pre-launch');
+  assert.equal(fundraisingExtras({ start_date: 'bad' }, '2026-11-15').opens_date, null);
+  const ics = fundraisingIcs('2026-11-16', 'https://example.test/ker%C3%A4ys');
+  for (const line of ['DTSTART;VALUE=DATE:20261116', 'DTEND;VALUE=DATE:20261117', 'SUMMARY:Pienkeräys aukeaa', 'URL:https://example.test/ker%C3%A4ys', 'BEGIN:VEVENT', 'END:VCALENDAR'])
+    assert(ics.split('\r\n').includes(line), line);
+  assert(!/ATTENDEE|ORGANIZER|mailto:/i.test(ics), 'Reminder holds no personal data');
+  assert.equal(fundraisingIcs('2026-12-31', 'x').includes('DTEND;VALUE=DATE:20270101'), true, 'Year rollover');
   console.log(`PASS: fundraising rules match the Python implementation on ${parity.length} shared cases`);
 } finally {
   await new Promise(resolve => sessionServer.close(resolve));

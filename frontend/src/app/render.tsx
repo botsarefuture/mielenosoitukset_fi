@@ -40,8 +40,9 @@ import DeveloperScreen from './DeveloperScreen';
 import { loadCancelLink, cancelLinkTitle, type CancelLinkState } from './cancel-link';
 import { loadStatus, statusTitle, type ServiceStatus } from './status';
 import { loadSuggestion, suggestionTitle, suggestionLead, type SuggestionDemo } from './suggest-change';
-import { helsinkiToday, loadFundraisingData } from './fundraising';
-export { fundraisingDetails } from './fundraising';
+import { helsinkiToday, loadFundraisingData, fundraisingExtras, withoutAccount } from './fundraising';
+import { fundraisingData as fundraisingBundled } from './FundraisingScreen';
+export { fundraisingDetails, fundraisingExtras, fundraisingIcs } from './fundraising';
 import { campaignPath, loadCampaignPublication } from './campaign-route';
 import { routeForPath, routeMeta } from './routes';
 import type { RouteMeta } from './routes';
@@ -345,10 +346,29 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       serverPage={<InformationScreen page={route.page} session={session} campaign={campaignVisible} />} />);
   }
 
-  if (route.name === 'campaign' || route.name === 'fundraising') {
+  if (route.name === 'fundraising') {
+    // Public from the start; it has its own pre-launch state. Until the first
+    // collection day (Helsinki time) it is not indexed. Not part of the campaign gate.
+    today = helsinkiToday();
+    fundraisingData = await loadFundraisingData(readBase);
+    headers['Cache-Control'] = 'private, no-store';
+    if (fundraisingExtras(fundraisingData ?? fundraisingBundled, today).pre_launch) {
+      headers['X-Robots-Tag'] = 'noindex, follow';
+      meta = { ...meta, robots: 'noindex, follow' };
+    }
+    extraHead = (assets.fundraising ?? '')
+      + '<link rel="stylesheet" href="/static/css/public-content.css?v=20261113-fundraising-prelaunch-1">'
+      + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261110-volunteer-message-1">';
+    // The whole page is in the server-rendered document; no fallback is needed.
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<FundraisingScreen config={config} today={today} data={fundraisingData} />} />);
+  }
+
+  if (route.name === 'campaign') {
     // The Flask gate: signed-in preview until the campaign is published.
     const published = await loadCampaignPublication(readBase);
-    const gatedPath = route.name === 'campaign' ? campaignPath : config.urls.fundraising;
+    const gatedPath = campaignPath;
     if (!published && !session.authenticated) {
       return { status: 302, html: '', redirect: `${config.urls.login}?next=${encodeURIComponent(gatedPath)}`,
         headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } };
@@ -358,23 +378,13 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       headers['X-Robots-Tag'] = 'noindex, nofollow';
       meta = { ...meta, robots: 'noindex, nofollow' };
     }
-    if (route.name === 'campaign') {
+    {
       extraHead = (assets.campaign ?? '')
         + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261110-volunteer-message-1">';
       noscript = '<noscript><p class="container-main-content">Sivu toimii parhaiten, kun JavaScript on käytössä. '
         + 'Ilmoittautuminen ja uutiskirjeen tilaus tarvitsevat sen.</p></noscript>';
       appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
         serverPage={<CampaignScreen config={config} />} />);
-    } else {
-      today = helsinkiToday();
-      fundraisingData = await loadFundraisingData(readBase);
-      extraHead = (assets.fundraising ?? '')
-        + '<link rel="stylesheet" href="/static/css/public-content.css?v=20261026-fundraising-2">'
-        + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261110-volunteer-message-1">';
-      // The whole page is in the server-rendered document; no fallback is needed.
-      noscript = '';
-      appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
-        serverPage={<FundraisingScreen config={config} today={today} data={fundraisingData} />} />);
     }
   }
 
@@ -742,7 +752,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   }
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
   const bootstrap = serialize({ config, session, path: input.path, route, ...(today ? { today } : {}),
-    ...(fundraisingData ? { fundraising: fundraisingData } : {}),
+    ...(fundraisingData ? { fundraising: fundraisingExtras(fundraisingData, today).pre_launch ? withoutAccount(fundraisingData) : fundraisingData } : {}),
     ...(campaignVisible !== undefined ? { campaignVisible } : {}),
     ...(organizationFill ? { organizationFill } : {}),
     ...(suggestionDemo ? { suggestionDemo } : {}),

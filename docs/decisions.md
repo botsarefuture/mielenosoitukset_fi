@@ -157,3 +157,7 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 - **Analytics beacons (2026-11-11).** `POST /api/analytics/event` is served by Go,
   with `SITE_ANALYTICS_ENABLED=true` matching Flask. Pageviews and vitals stay in
   Flask. Roll back by removing the routing rule.
+
+## Fundraising page
+
+- **Pre-launch mode (2026-11-13).** `/keräys` is public without login or campaign publication and is not linked from anywhere (no nav, footer, sitemap or front page; the existing link on `/kampanja/` shows only once the campaign is published). Until Helsinki's date reaches `start_date` it shows "Pienkeräys aukeaa", hides IBAN/BIC and payment links (in the page, the embedded bootstrap and `GET /api/fundraising/details`) and is `noindex, follow`. The opening day is the existing `start_date`, so no extra hardcoded instant. The account block needs `details_confirmed`, `publication_state: active`, organiser and recipient to be filled in; nothing is invented.

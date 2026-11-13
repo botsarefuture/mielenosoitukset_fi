@@ -6,7 +6,7 @@ Flask==3.1.1
 flask_babel==4.0.0
 flask-caching==2.3.1
 Flask_Cors==6.0.0
-Flask_Limiter==3.8.0
+Flask_Limiter==4.0.0
 Flask_Login==0.6.3
 flask-socketio==5.6.0
 itsdangerous==2.2.0

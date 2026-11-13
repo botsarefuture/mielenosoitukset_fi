@@ -61,6 +61,7 @@ export const developerCopy = {
   copy: 'Kopioi',
   copied: 'Kopioitu',
   reloadPage: 'Lataa sivu uudelleen',
+  retry: 'Yritä uudelleen',
   revoked: 'Token mitätöity.',
   rotate: 'Vaihda salaisuus',
   rotateConfirm: 'Vahvista: vanha salaisuus lakkaa toimimasta',
@@ -159,4 +160,30 @@ export function formatDeveloperDate(iso?: string): string {
   if (Number.isNaN(date.getTime())) return '–';
   return new Intl.DateTimeFormat('fi-FI', { timeZone: 'Europe/Helsinki', day: 'numeric', month: 'numeric', year: 'numeric',
     hour: '2-digit', minute: '2-digit' }).format(date);
+}
+
+export type DeveloperResponseKind = 'ok' | 'signed-out' | 'not-found' | 'unavailable';
+
+/**
+ * Only a real 401 means signed out. A 404 means "no such app" only when Go answered it
+ * with JSON; a 404 page from Flask (route not proxied to Go) or any 5xx is unavailable.
+ */
+export function classifyDeveloperResponse(status: number, contentType: string | null): DeveloperResponseKind {
+  if (status === 401) return 'signed-out';
+  if (status === 404 && /^application\/json/i.test(contentType ?? '')) return 'not-found';
+  if (status >= 200 && status < 300) return 'ok';
+  return 'unavailable';
+}
+
+export type DeveloperStanding = 'signed-in' | 'signed-out' | 'unknown';
+
+/**
+ * Who the page believes it is serving. A server read that failed (`unverified`) stays unknown
+ * until the bridge answers; a failed bridge call never turns anyone into a guest.
+ */
+export function developerStanding(initial: { authenticated: boolean; unverified?: boolean },
+  bridge: 'initial' | 'loading' | 'ready' | 'unavailable', fresh: { authenticated: boolean }): DeveloperStanding {
+  if (bridge === 'ready') return fresh.authenticated ? 'signed-in' : 'signed-out';
+  if (initial.unverified) return 'unknown';
+  return initial.authenticated ? 'signed-in' : 'signed-out';
 }

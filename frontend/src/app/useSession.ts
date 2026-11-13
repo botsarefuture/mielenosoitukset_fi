@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { mergeBridgeSession, readBridge } from './bridge';
 import { normalizeSession } from './session';
 import type { SessionSummary } from './session';
 
@@ -12,20 +13,6 @@ type Options = {
   /** Re-read on mount. Default true. */
   refreshOnMount?: boolean;
 };
-
-/** The fields the Go answer is allowed to replace; everything else keeps the server-rendered value. */
-export function mergeBridgeSession(initial: SessionSummary, fresh: SessionSummary): SessionSummary {
-  // Signed-in-only extras must not outlive a sign-out seen by the fresh answer.
-  const signedOut = !fresh.authenticated;
-  return {
-    ...initial,
-    ...(signedOut ? { translationJoin: undefined, submission: initial.submission
-      ? { ...initial.submission, canEditDemo: false } : undefined } : {}),
-    authenticated: fresh.authenticated, role: fresh.role, name: fresh.name, picture: fresh.picture,
-    globalAdmin: fresh.globalAdmin, hasAdminAccess: fresh.hasAdminAccess, unread: fresh.unread,
-    organization: fresh.organization,
-  };
-}
 
 /**
  * Who is signed in, for anonymous and signed-in visitors alike.
@@ -46,30 +33,22 @@ export function useSession(initial: SessionSummary, options: Options) {
   useEffect(() => { setSession(initial); }, [initial]);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
-    if (!initial.authBridge) return;
+    if (!initial.authBridge && !initial.unverified) return;
     const url = new URL(options.endpoint, window.location.origin);
     for (const [key, value] of Object.entries(JSON.parse(scopeKey) as Record<string, string>)) url.searchParams.set(key, value);
     setStatus('loading');
-    try {
-      const response = await fetch(url.pathname + url.search, { credentials: 'same-origin', cache: 'no-store', signal,
-        headers: { Accept: 'application/json' } });
-      if (!response.ok) throw new Error('unavailable');
-      const raw: unknown = await response.json();
-      // A body without a boolean `authenticated` is not an answer; never read it as "signed out".
-      if (!raw || typeof raw !== 'object' || typeof (raw as { authenticated?: unknown }).authenticated !== 'boolean') throw new Error('invalid');
-      if (active.current) { setSession(mergeBridgeSession(initial, normalizeSession(raw))); setStatus('ready'); }
-    } catch {
-      if (active.current && !signal?.aborted) setStatus('unavailable');
-    }
+    const result = await readBridge(url.pathname + url.search, { normalize: normalizeSession, signal });
+    if (!active.current || result.kind === 'aborted') return;
+    if (result.kind === 'ready') { setSession(mergeBridgeSession(initial, result.session)); setStatus('ready'); }
+    else setStatus('unavailable');
   }, [initial, options.endpoint, scopeKey]);
 
   useEffect(() => {
-    if (options.refreshOnMount === false || !initial.authBridge) return;
+    if (options.refreshOnMount === false || (!initial.authBridge && !initial.unverified)) return;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
-    void refresh(controller.signal).finally(() => clearTimeout(timer));
-    return () => { controller.abort(); clearTimeout(timer); };
-  }, [initial.authBridge, options.refreshOnMount, refresh]);
+    void refresh(controller.signal);
+    return () => controller.abort();
+  }, [initial.authBridge, initial.unverified, options.refreshOnMount, refresh]);
 
   return { session, status, refresh: () => refresh() };
 }

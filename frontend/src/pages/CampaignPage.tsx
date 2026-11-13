@@ -76,14 +76,14 @@ export function CampaignPage({ urls, volunteer, schedule = defaultSchedule, toda
   const opensShort = fiDayMonth(s.collectionStart);
   const shareText = `Mielenosoitukset.fi kokoaa tulevat mielenosoitukset eri puolilta Suomea yhteen kalenteriin. Kampanja alkaa ${fiDate(s.campaignStart)}. Lue lisää: ${shareAddress}`;
   const fundraisingInfo = <section id="kerays" className="kv-sec" aria-labelledby="ker"><div className="kv-trust kv-trust--compact">
-    <h2 id="ker" className="kv-h2" style={{ marginBottom: '.9rem', fontSize: '1.4rem' }}>Tietoa keräyksestä</h2>
+    <h2 id="ker" className="kv-h2 kv-h2--compact">Tietoa keräyksestä</h2>
     <dl>
       <div><dt>Pienkeräysnumero</dt><dd>{s.collectionNumber}</dd></div>
       <div><dt>Aika</dt><dd>{collectionRange}</dd></div>
       <div><dt>Alue</dt><dd>{s.area}</dd></div>
       <div><dt>Käyttötarkoitus</dt><dd>Kampanjan markkinointi (tarrat, julisteet ja banderollit) sekä palvelun ylläpito</dd></div>
     </dl>
-    <a className="campaign-text-link kv-link" href={urls.fundraising} style={{ marginTop: '.5rem' }}>Lue lisää keräyksestä <Arrow /></a>
+    <a className="campaign-text-link kv-link kv-more-link" href={urls.fundraising}>Lue lisää keräyksestä <Arrow /></a>
   </div></section>;
   const helpCards = phase.collectionClosed ? 3 : 4;
 
@@ -136,8 +136,7 @@ export function CampaignPage({ urls, volunteer, schedule = defaultSchedule, toda
       <h2 id="mita">Mistä on kyse</h2>
       <div className="kv-what">
         <figure className="kx-stickerfig">
-          <img src="/static/kampanja/sticker-2026-fi.png" width={1145} height={1600} loading="lazy" style={{ maxWidth: 260 }}
-            alt="Vuoden 2026 tarra: QR-koodi ja teksti Kaikki mielenosoitukset kädenulottuvilla" />
+          <img src="/static/kampanja/sticker-2026-fi.png" width={1145} height={1600} loading="lazy"            alt="Vuoden 2026 tarra: QR-koodi ja teksti Kaikki mielenosoitukset kädenulottuvilla" />
           <figcaption>Esimerkki: vuoden 2026 tarra</figcaption>
         </figure>
         <div>
@@ -160,7 +159,7 @@ export function CampaignPage({ urls, volunteer, schedule = defaultSchedule, toda
 
     <section className="kv-sec" aria-labelledby="lahde"><div className="kv-vol">
       <div>
-        <h2 id="lahde" className="kv-h2" style={{ marginBottom: '1rem' }}>Tule mukaan</h2>
+        <h2 id="lahde" className="kv-h2 kv-h2--tight">Tule mukaan</h2>
         <p className="kv-lead">Yksi ihminen riittää aloittamaan. Kerro, missä haluaisit auttaa, niin otamme yhteyttä. Jos haluat auttaa markkinointiviikolla {marketing}, kerro siitä ilmoittautuessasi.</p>
       </div>
       <div className="volunteer-signup campaign-signup kv-form" id="vapaaehtoiseksi">
@@ -177,20 +176,20 @@ export function CampaignPage({ urls, volunteer, schedule = defaultSchedule, toda
 
     <section id="avajaiset" className="kv-sec" aria-labelledby="av"><div className="kv-party kv-party--solo">
       <div>
-        <h2 id="av" className="kv-h2" style={{ marginBottom: '1.25rem' }}>Kampanjan avajaiset {s.openingCityIn}</h2>
+        <h2 id="av" className="kv-h2 kv-h2--loose">Kampanjan avajaiset {s.openingCityIn}</h2>
         <dl className="kv-facts2">
           <div><dt>Päivä</dt><dd>{fiWeekday(s.openingDate)} {fiDate(s.openingDate)}</dd></div>
           <div><dt>Aika</dt><dd>{s.openingTime} alkaen</dd></div>
           <div><dt>Paikka</dt><dd>{s.openingCity}, paikka tarkentuu</dd></div>
         </dl>
-        <p className="kv-lead" style={{ fontSize: '1.05rem' }}>Tervetuloa kampanjan avajaisiin. Tapaa vapaaehtoisia ja kuule, mitä kampanja tekee. Ilmoittautuminen ei sido mihinkään.</p>
+        <p className="kv-lead kv-lead--small">Tervetuloa kampanjan avajaisiin. Tapaa vapaaehtoisia ja kuule, mitä kampanja tekee. Ilmoittautuminen ei sido mihinkään.</p>
       </div>
     </div></section>
 
     <section id="pride" className="kv-sec" aria-labelledby="pr"><div className="kv-pride">
       <div>
-        <h2 id="pr" className="kv-h2" style={{ marginBottom: '1rem' }}>Pride näkyväksi</h2>
-        <p className="kv-lead" style={{ fontSize: '1.05rem' }}>Tavoitteena on, että jokaisessa Pridessa on Mielenosoitukset.fi-banderolli. Tarvitsemme kantajia. Banderolleja on 12: 8 Pride-banderollia ja 4 tavallista.</p>
+        <h2 id="pr" className="kv-h2 kv-h2--tight">Pride näkyväksi</h2>
+        <p className="kv-lead kv-lead--small">Tavoitteena on, että jokaisessa Pridessa on Mielenosoitukset.fi-banderolli. Tarvitsemme kantajia. Banderolleja on 12: 8 Pride-banderollia ja 4 tavallista.</p>
         <div className="kv-actions"><a className="kv-btn kv-btn--primary" href={`${urls.pride ?? '/pride-nakyvaksi'}#banderolli`}>Ilmoittaudu kantajaksi</a></div>
       </div>
       <div className="kv-pairs"><div><b>8</b><span>Pride-banderollia</span></div><div><b>4</b><span>tavallista banderollia</span></div></div>

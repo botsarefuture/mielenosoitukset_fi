@@ -108,3 +108,9 @@ html,body,#app{height:auto!important;overflow:visible!important;min-height:0!imp
 @media(max-width:900px){.kv-hero{grid-template-columns:minmax(0,1fr)}}
 .kv-hero h1,.kv-hero .kv-lead,.kv-hero .kv-meta{overflow-wrap:break-word}
 @media(max-width:360px){.kv-hero h1{font-size:1.6rem}.kv-hero{padding:1rem}}
+.kv .kv-h2--compact{margin-bottom:.9rem;font-size:1.4rem}
+.kv .kv-h2--tight{margin-bottom:1rem}
+.kv .kv-h2--loose{margin-bottom:1.25rem}
+.kv .kv-lead--small{font-size:1.05rem}
+.kv .kv-more-link{margin-top:.5rem}
+.kx-stickerfig img{max-width:260px}

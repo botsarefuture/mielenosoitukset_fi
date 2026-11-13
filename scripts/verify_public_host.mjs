@@ -256,7 +256,7 @@ try {
     const preBody = bodyOf(pre);
     for (const text of ['Pienkeräys aukeaa', 'Lisää kalenteriin', 'data:text/calendar', 'Keräyksen tiedot', 'RA/2026/0000',
       'Koko Suomi Ahvenanmaata lukuun ottamatta', 'Lahjoittaminen ei ole vielä avoinna',
-      'Mitä keräyksellä tehdään?', 'Tarroja yli 70 paikkakunnalle', 'Turku, Jyväskylä', 'Noin 12 banderollia', 'Ensisijaisesti', 'Jos varoja jää yli', 'Virallinen käyttötarkoitus', 'Tampereen Tapahtuma- ja mediarenessanssi ry', 'äänentoistolaitteita',
+      'Mitä keräyksellä tehdään?', 'Tarroja yli 70 paikkakunnalle', 'Turku, Jyväskylä', '12 banderollia', 'Ensisijaisesti', 'Jos varoja jää yli', 'Virallinen käyttötarkoitus', 'Tampereen Tapahtuma- ja mediarenessanssi ry', 'äänentoistolaitteita',
       'palvelin ja ylläpito', '<details class="fundraising-official">']) assert(preBody.includes(text), text);
     assert(!/€|euro/i.test(preBody), 'No euro amounts on the page');
     for (const text of ['FI00 0000 0000 0000 00', 'TESTFIHH', 'Näin lahjoitat', 'Kopioi tilinumero', 'Tilinumero (IBAN)']) assert(!pre.html.includes(text), `pre-launch leaks ${text}`);

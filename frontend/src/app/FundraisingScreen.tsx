@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { fundraisingDetails, fundraisingExtras, fundraisingIcs } from './fundraising';
 import type { FundraisingDetails, FundraisingExtras } from './fundraising';
 
-const finnishDate = (iso: string) => iso.split('-').reverse().join('.');
+const finnishDate = (iso: string) => iso.split('-').reverse().map(part => String(Number(part))).join('.');
 
 function Arrow() {
   return <i className="fas fa-arrow-right" aria-hidden="true" />;
@@ -24,7 +24,7 @@ function CopyIban({ iban }: { iban: string }) {
   };
   return <>
     <button type="button" className="fundraising-copy" onClick={copy}>Kopioi tilinumero</button>
-    <span className="fundraising-copy__status" role="status">{state === 'copied' ? 'Tilinumero kopioitu' : state === 'failed' ? 'Kopiointi ei onnistunut, valitse numero ja kopioi se itse' : ''}</span>
+    <span className="fundraising-copy__status" role="status">{state === 'copied' ? 'Tilinumero kopioitu' : state === 'failed' ? 'Kopiointi ei onnistunut. Valitse numero ja kopioi se itse.' : ''}</span>
   </>;
 }
 
@@ -41,16 +41,16 @@ export function FundraisingPage({ details, extras, config }: { details: Fundrais
     <section className="campaign-fundraising-intro" aria-labelledby="fundraising-title">
       <div>
         <h1 id="fundraising-title">Jotta mielenosoitukset löytyvät</h1>
-        <p>Haluamme tuoda Mielenosoitukset.fi-palvelun yhä useamman ihmisen tietoon. </p>
+        <p>Haluamme saada Mielenosoitukset.fi-palvelun yhä useamman ihmisen tietoon.</p>
         <p><strong>{fundraisingCopy.lead}</strong></p>
       </div>
     </section>
 
     {pre && opens && <section className="public-content__card fundraising-prelaunch" aria-labelledby="prelaunch-title">
       <h2 id="prelaunch-title">Pienkeräys aukeaa {opensShort}</h2>
-      <p>Keräys alkaa {finnishDate(opens)} kello 0.00. Lahjoitusohjeet ja tilinumero julkaistaan tälle sivulle silloin. Lahjoita vasta keräysajan alettua.</p>
+      <p>Keräys alkaa {finnishDate(opens)} kello 0.00. Tilinumero ja lahjoitusohjeet julkaistaan tällä sivulla keräyksen alkaessa. Lahjoita vasta, kun keräysaika on alkanut.</p>
       <a className="fundraising-calendar" href={calendarHref} download="pienkerays-aukeaa.ics">Lisää kalenteriin</a>
-      <p className="fundraising-prelaunch__note">Kalenterimerkintä ladataan laitteellesi. Emme kerää siihen yhteystietojasi.</p>
+      <p className="fundraising-prelaunch__note">Kalenteritiedosto ladataan laitteellesi. Emme kerää yhteystietojasi.</p>
     </section>}
 
     <div className="public-content__grid">

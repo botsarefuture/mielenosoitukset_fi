@@ -454,7 +454,11 @@ func authBridgeHandler(next http.Handler, config authBridgeConfig, db *mongo.Dat
 		return next
 	}
 	// Routes that need the signed-in account sit behind the same flag and resolver.
-	return authBridgeHandlerWith(developerHandler(next, mongoDeveloperStore{db}, resolver), resolver)
+	var writes *developerWrites
+	if os.Getenv("DEVELOPER_WRITES_ENABLED") == "true" {
+		writes = newDeveloperWrites(mongoDeveloperStore{db}, config.Origin)
+	}
+	return authBridgeHandlerWith(developerHandlerWith(next, mongoDeveloperStore{db}, resolver, writes), resolver)
 }
 
 func authBridgeHandlerWith(next http.Handler, resolver *sessionResolver) http.Handler {

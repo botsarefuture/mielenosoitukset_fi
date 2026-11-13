@@ -49,10 +49,15 @@ until Flask retires the page.
 
 ## Rollout
 
-Deploy the Go binary, create the file with mode 0640, set `FUNDRAISING_DETAILS_FILE` in
+Deploy the Go binary, create the file with mode 0644 in a world-readable directory (the API runs as a
+dynamic user and `/etc/mielenosoitukset-api` is root-only 0700), set `FUNDRAISING_DETAILS_FILE` in
 `/etc/mielenosoitukset-api/environment` (back up the old file first), restart the API
 (never during a backup dump: core 02:32 UTC, full Sunday 03:34 UTC). Roll back by
 unsetting the variable; the host then uses the bundled copy.
+
+**Status: active since 12 November 2026.** File `/etc/mielenosoitukset-fundraising/fundraising.json`
+(copy of the bundled JSON); previous environment saved as
+`environment.bak-before-fundraising-20261112`. Edit the file to change the page; no restart needed.
 
 ## Open
 

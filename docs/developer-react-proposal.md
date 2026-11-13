@@ -77,3 +77,7 @@ and nothing needs to change for the React target.
 - Copy is the Flask templates' Finnish msgids in `frontend/src/app/developer-route.ts`; no icons in headings.
 - Left out on purpose: the create, rotate, revoke and scope-request controls and the rate-limit panel (no Go data for
   it yet). Until they exist in React, activating the routing would remove them, so activation is open in TODO.md.
+
+## Write controls (13 November 2026)
+
+Ported: see [developer-react-write-controls.md](developer-react-write-controls.md). The "left out on purpose" list above is superseded; the controls appear only when Go reports `writes: true`.

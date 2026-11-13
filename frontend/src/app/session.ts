@@ -31,6 +31,8 @@ export type SessionSummary = {
   };
   /** True when the server's read-only auth bridge is on; the client may then use `urls.authMe`. */
   authBridge?: boolean;
+  /** The visitor sent a cookie but the server could not read the session (timeout, error). Not the same as signed out. */
+  unverified?: boolean;
   organization?: {
     id: string; following: boolean; invited: boolean; hasMessages: boolean;
     permissions: Record<'VIEW_ORGANIZATION' | 'EDIT_ORGANIZATION' | 'DELETE_ORGANIZATION' | 'INVITE_TO_ORGANIZATION', boolean>;

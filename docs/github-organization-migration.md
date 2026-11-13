@@ -5,9 +5,9 @@ The repository moves from `botsarefuture/mielenosoitukset_fi` to
 
 Canonical URL: <https://github.com/mielenosoitukset-fi/mielenosoitukset_fi/>
 
-Status: the repository is prepared, the transfer itself has not been performed.
-Production and preview servers, credentials, environment variables and deployment
-paths are unchanged.
+Status: the transfer is done. The production checkout's `origin`, its
+`UI_TRANSLATION_GITHUB_REPO` setting and the merge queue follow the new owner; servers,
+credentials, environment variables and deployment paths are unchanged.
 
 GitHub redirects the old repository location for web pages, `git clone`,
 `git fetch` and `git push`, so existing clones and the servers' `origin` remotes
@@ -71,16 +71,16 @@ Deliberately unchanged:
 - `render-changelog.yml` and `production-deploy.yml` are not merge checks.
 
 Enabling the queue is a repository settings change. The eligibility finding, the
-intended settings and the prepared script are in the merge queue section below.
+settings and the script are in the merge queue section below.
 
-## Merge queue enablement (prepared, not enabled)
+## Merge queue enablement
 
 GitHub offers pull request merge queues for public repositories owned by an
-organization, or for private repositories on GitHub Enterprise Cloud. This repository
-is public and `mielenosoitukset-fi` is on the free plan, so the queue becomes available
-only once the repository is owned by the organization. It cannot be enabled while the
-repository belongs to a user account, which is why the rule is prepared and not
-applied.
+organization, or for private repositories on GitHub Enterprise Cloud. The queue could
+not be enabled while the repository belonged to a user account, so the rule was
+prepared beforehand and applied on 2026-11-13, once the repository was owned by
+`mielenosoitukset-fi`. The ruleset now reports `merge_queue` next to the five rules it
+carried before, unchanged.
 
 Current protections: `main` is protected by the repository ruleset `Protection`
 (id 1440033, active, target `~DEFAULT_BRANCH`), not by classic branch protection. The
@@ -88,7 +88,7 @@ ruleset requires a pull request, resolves review threads, requires the `python-t
 check with "branches must be up to date", and allows merge, squash and rebase. The
 required check now also runs on `merge_group`.
 
-Intended queue configuration, conservative because several agents work at once:
+Enabled queue configuration, conservative because several agents work at once:
 
 | Setting | Value | Why |
 | --- | --- | --- |
@@ -100,7 +100,8 @@ Intended queue configuration, conservative because several agents work at once:
 | Min wait | 0 minutes | No artificial delay |
 | Check timeout | 60 minutes | Above the 30-minute test job limit |
 
-`scripts/enable_merge_queue.py` applies it after the transfer, once approved:
+`scripts/enable_merge_queue.py` applies it and reports the current settings instead of
+writing when the rule already exists:
 
 ```
 python scripts/enable_merge_queue.py --dry-run   # print the plan, change nothing
@@ -254,7 +255,8 @@ that it depends on them; their current configuration cannot be inspected from he
 4. Inventory secrets, variables, environments and rulesets; compare with the list in
    `docs/production-deployment.md`.
 5. Enable the merge queue on a small PR and confirm the queue run reports
-   `python-tests` and the PR merges as a merge commit.
+   `python-tests` and the PR merges as a merge commit. Done 2026-11-13: the queue is
+   enabled; the first enqueued pull request is #1149.
 6. Watch the first normal push to `main` through release, deploy and routing.
 7. Preview: open one PR and confirm the preview comment and cleanup still work.
 8. Update `UI_TRANSLATION_GITHUB_REPO` on the servers, run one translation sync, and
@@ -265,7 +267,8 @@ that it depends on them; their current configuration cannot be inspected from he
 11. Watch the next deploy: the `downloading release assets … from <slug>` line must
     name `mielenosoitukset-fi/mielenosoitukset_fi`.
 12. Run `python scripts/enable_merge_queue.py --dry-run`, review the plan, then
-    `--confirm` once approved.
+    `--confirm` once approved. Done 2026-11-13: `--dry-run` matched the plan and
+    `--confirm` enabled the rule.
 13. Remove this document's steps that no longer apply.
 
 ## Open risks

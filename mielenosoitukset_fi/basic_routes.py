@@ -1837,9 +1837,8 @@ def init_routes(app):
         if locale not in supported:
             locale = "fi"
         details = fundraising_details()
+        # `/keräys` is public in pre-launch mode, so `show_bar` alone decides; it is the launch switch.
         bar_settings = fundraising_bar()
-        if not (campaign_pages_public() or current_user.is_authenticated):
-            bar_settings = {**bar_settings, "enabled": False}
         language_names = current_app.config.get("BABEL_LANGUAGES") or {}
         try:
             can_edit_demo = bool(current_user.is_authenticated and current_user.has_permission("EDIT_DEMO"))

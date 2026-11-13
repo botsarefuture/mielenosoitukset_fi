@@ -37,7 +37,7 @@ def test_fundraising_preview_is_public_and_has_no_payment_instructions(client):
     assert "Valmistelussa" in page
     assert "Lahjoittaminen ei ole vielä avoinna" in page
     assert 'datetime="2026-11-16"' in page
-    assert 'datetime="2027-02-16"' in page
+    assert 'datetime="2027-02-15"' in page
     # The account number is stored ahead of time but stays hidden until the
     # details are confirmed and the collection is active.
     assert "FI46" not in page and "5723 0221" not in page

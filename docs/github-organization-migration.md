@@ -96,7 +96,7 @@ Queue configuration for a backlog of about 40 pull requests:
 | Grouping | ALLGREEN | Every entry must pass its own required checks |
 | Max entries to build | 8 | Allows eight concurrent queue builds |
 | Max entries to merge | 8 | Bounds the group failure blast radius |
-| Min entries to merge | 1 | A single pull request merges immediately |
+| Min entries to merge | 1 | A lone PR needs no batch once checks pass |
 | Min wait | 0 minutes | No artificial delay |
 | Check timeout | 60 minutes | Above the 30-minute test job limit |
 
@@ -110,16 +110,17 @@ python scripts/enable_merge_queue.py --confirm   # apply
 
 It refuses to run without one of those flags, verifies that the repository is public and
 owned by the organization, that Actions is enabled and that
-`.github/workflows/tests.yml` on `main` still triggers on `merge_group`, then adds or updates the
-`merge_queue` rule to the existing ruleset and sends every other rule, condition and
-bypass actor back unchanged. Re-running with matching settings performs no write, and the script never enqueues or merges pull requests and never
+`.github/workflows/tests.yml` on `main` still triggers on `merge_group`, then adds
+or updates the `merge_queue` rule in the existing ruleset. It sends every other
+rule, condition and bypass actor back unchanged. Re-running with matching settings
+performs no write. The script never enqueues or merges pull requests and never
 triggers a deployment.
 
 At 3 entries, 40 waiting pull requests need about 14 group builds of roughly 13
 minutes: over three hours serial. At 8, they need about 5. A failing group entry
 invalidates the whole group and requeues the rest; do not raise the limit further
-without evidence. These are sizing estimates, not measured throughput guarantees. Build concurrency
-limits concurrent `merge_group` builds; the maximum merge size limits how many ready
+without evidence. These are sizing estimates, not measured throughput guarantees.
+Build concurrency limits concurrent `merge_group` builds; the maximum merge size limits how many ready
 entries land together. GitHub may build each entry separately, so 8/8 does not
 promise only five CI runs. Minimum 1 and wait 0 let a lone ready pull request merge
 without a batching delay; required queue checks still run.

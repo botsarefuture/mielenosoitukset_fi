@@ -199,9 +199,10 @@ reasoning effort for mechanical work.
 
 ### Merging
 
-Every change reaches `main` through the GitHub merge queue: `gh pr merge`,
-`gh pr merge --merge-queue` and the UI Merge button all enqueue, and nothing is picked up
-on its own, so a green pull request waits until someone queues or arms it. Do not bypass
+Every change reaches `main` through the GitHub merge queue. Use
+`gh pr merge --auto --merge` to arm a ready PR; GitHub queues it when requirements
+pass. There is no `gh pr merge --merge-queue` flag. Nothing is picked up on its
+own, so a green pull request waits until someone queues or arms it. Do not bypass
 the queue with `--admin`.
 
 The queue merges with merge commits, builds and merges at most eight entries at once and

@@ -60,7 +60,6 @@ export function FundraisingPage({ details, extras, config }: { details: Fundrais
           <p>{fundraisingCopy.planIntro}</p>
           <h3>{fundraisingCopy.stickersTitle}</h3>
           <p>{fundraisingCopy.stickersLead}</p>
-          <ul>{fundraisingCopy.stickerTiers.map(tier => <li key={tier.amount}><strong>{tier.amount}:</strong> {tier.places}</li>)}</ul>
           <h3>{fundraisingCopy.bannersTitle}</h3>
           <p>{fundraisingCopy.banners}</p>
           <h3>{fundraisingCopy.upkeepTitle}</h3>

@@ -357,7 +357,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       meta = { ...meta, robots: 'noindex, follow' };
     }
     extraHead = (assets.fundraising ?? '')
-      + '<link rel="stylesheet" href="/static/css/public-content.css?v=20261113-fundraising-purpose-3">'
+      + '<link rel="stylesheet" href="/static/css/public-content.css?v=20261113-fundraising-purpose-4">'
       + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261110-volunteer-message-1">';
     // The whole page is in the server-rendered document; no fallback is needed.
     noscript = '';

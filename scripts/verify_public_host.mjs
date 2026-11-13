@@ -256,9 +256,10 @@ try {
     const preBody = bodyOf(pre);
     for (const text of ['Pienkeräys aukeaa', 'Lisää kalenteriin', 'data:text/calendar', 'Keräyksen tiedot', 'RA/2026/0000',
       'Koko Suomi Ahvenanmaata lukuun ottamatta', 'Lahjoittaminen ei ole vielä avoinna',
-      'Mitä keräyksellä tehdään?', 'Tarroja yli 70 paikkakunnalle', 'Turku, Jyväskylä', '12 banderollia', 'Ensisijaisesti', 'Jos varoja jää yli', 'Virallinen käyttötarkoitus', 'Tampereen Tapahtuma- ja mediarenessanssi ry', 'äänentoistolaitteita',
+      'Mitä keräyksellä tehdään?', 'Tarroja kymmeniin kaupunkeihin', '12 banderollia', 'Ensisijaisesti', 'Jos varoja jää yli', 'Virallinen käyttötarkoitus', 'Tampereen Tapahtuma- ja mediarenessanssi ry', 'äänentoistolaitteita',
       'palvelin ja ylläpito', '<details class="fundraising-official">']) assert(preBody.includes(text), text);
     assert(!/€|euro/i.test(preBody), 'No euro amounts on the page');
+    assert(!/Turku|Kirkkonummi|Noin 1 000|Noin 500|tarraa:/.test(preBody), 'No per-city sticker quantities');
     for (const text of ['FI00 0000 0000 0000 00', 'TESTFIHH', 'Näin lahjoitat', 'Kopioi tilinumero', 'Tilinumero (IBAN)']) assert(!pre.html.includes(text), `pre-launch leaks ${text}`);
     // Open: first day is today. Account, BIC and copy button appear; indexable.
     fundState = { status: 200, body: { ...closedFund, start_date: dayHelsinki(0) } };

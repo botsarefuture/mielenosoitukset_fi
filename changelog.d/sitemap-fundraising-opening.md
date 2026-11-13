@@ -1,0 +1,1 @@
+- The sitemap lists the fundraising page only from its first collection day, because the page is not indexed before that.

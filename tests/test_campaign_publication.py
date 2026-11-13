@@ -165,3 +165,22 @@ def test_publication_write_error_does_not_report_success(admin_client, db, monke
     assert 'Tallennusta ei voitu varmistaa' in page
     assert 'Kampanja- ja keräyssivut on julkaistu kaikille.' not in page
     assert db.campaign_settings.find_one({'_id': 'public_pages'}) is None
+
+
+def test_fundraising_joins_the_sitemap_only_from_its_first_collection_day(admin_client, client, monkeypatch):
+    from datetime import date, timedelta
+
+    from mielenosoitukset_fi.utils.fundraising import fundraising_details
+
+    assert _publish(admin_client).status_code == 303
+    route_globals = client.application.view_functions['sitemap'].__globals__
+
+    def sitemap_with_start(start, nonce):
+        plan = {'planned_start_date': start.isoformat(), 'planned_end_date': (start + timedelta(days=90)).isoformat()}
+        monkeypatch.setitem(route_globals, 'fundraising_details', lambda: fundraising_details(plan))
+        return client.get(f'/sitemap.xml?n={nonce}').get_data(as_text=True)
+
+    # Helsinki is at most a day ahead of UTC, so +-2 days avoids the boundary hour.
+    before = sitemap_with_start(date.today() + timedelta(days=2), 1)
+    assert '/kampanja/' in before and '/ker%C3%A4ys' not in before
+    assert '/ker%C3%A4ys' in sitemap_with_start(date.today() - timedelta(days=2), 2)

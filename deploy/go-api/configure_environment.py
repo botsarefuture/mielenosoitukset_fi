@@ -37,6 +37,9 @@ def configure(source, target):
         # the unique e-mail index and disables the routes without it.
         if config.get("FUNDRAISING_REMINDER") is True:
             values["FUNDRAISING_REMINDER_ENABLED"] = "true"
+        # Pride banner carrier signup (docs/pride-banner-volunteers.md): same rules.
+        if config.get("PRIDE_BANNER_SIGNUP") is True:
+            values["PRIDE_BANNER_SIGNUP_ENABLED"] = "true"
     # Event analytics follow the Flask switch, which defaults to enabled when
     # the key is missing (app.py: config.get("SITE_ANALYTICS_ENABLED", True)),
     # so a redeploy keeps Go writes in step with Flask.

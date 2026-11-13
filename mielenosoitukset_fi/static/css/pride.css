@@ -251,3 +251,7 @@
 .pride-page .pride-volunteer :focus-visible { outline: 3px solid var(--product-primary); outline-offset: 2px; }
 
 .pride-page .pride-done { overflow-wrap: anywhere; }
+.pride-page .pride-volunteer-link { max-width: 40rem; }
+.pride-page .pride-volunteer-link h2 { margin: 0 0 .75rem; color: var(--product-text); font: 700 1.4rem/1.35 Montserrat, sans-serif; text-align: start; }
+.pride-page .pride-volunteer-link p { margin: 0 0 .85rem; }
+.pride-page .pride-volunteer-link .pride-error:empty { display: none; }

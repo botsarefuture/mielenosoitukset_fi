@@ -104,3 +104,25 @@ def test_fundraising_reminder_flag_needs_public_submissions_and_is_off_by_defaul
         module.configure(source, target)
         values = dict(line.split("=", 1) for line in target.read_text().splitlines())
         assert ("FUNDRAISING_REMINDER_ENABLED" in values) is expected
+
+
+def test_pride_banner_signup_flag_needs_public_submissions_and_is_off_by_default(tmp_path):
+    path = Path(__file__).resolve().parents[1] / "deploy/go-api/configure_environment.py"
+    spec = importlib.util.spec_from_file_location("go_environment_banner", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    secret = "test-secret-not-for-production-" * 2
+    cases = (
+        ({}, False),
+        ({"PRIDE_BANNER_SIGNUP": True}, False),  # no submissions, no signup
+        ({"GO_SUBMIT_ENABLED": True}, False),
+        ({"GO_SUBMIT_ENABLED": True, "PRIDE_BANNER_SIGNUP": False}, False),
+        ({"GO_SUBMIT_ENABLED": True, "PRIDE_BANNER_SIGNUP": True}, True),
+    )
+    for index, (extra, expected) in enumerate(cases):
+        source, target = tmp_path / f"c{index}.yaml", tmp_path / f"e{index}"
+        source.write_text(yaml.safe_dump({"MONGO_URI": "mongodb://127.0.0.1/isolated", "MONGO_DBNAME": "isolated",
+                                          "SECRET_KEY": secret, **extra}))
+        module.configure(source, target)
+        values = dict(line.split("=", 1) for line in target.read_text().splitlines())
+        assert ("PRIDE_BANNER_SIGNUP_ENABLED" in values) is expected

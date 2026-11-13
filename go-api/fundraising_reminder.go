@@ -56,11 +56,17 @@ func reminderEnabledFromEnv() bool {
 // checkReminderIndex requires the unique index on the normalised e-mail
 // address, so two simultaneous signups can never create two rows.
 func checkReminderIndex(ctx context.Context, db *mongo.Database) error {
-	cursor, err := db.Collection(reminderCollection).Indexes().List(ctx)
+	return checkListEmailIndex(ctx, db, reminderCollection, "fundraising reminder")
+}
+
+// checkListEmailIndex is shared by every signup list: the list's collection
+// must exist with a unique index on the single key "email".
+func checkListEmailIndex(ctx context.Context, db *mongo.Database, collection, label string) error {
+	cursor, err := db.Collection(collection).Indexes().List(ctx)
 	if err != nil {
 		var commandError mongo.CommandError
 		if errors.As(err, &commandError) && commandError.Code == 26 {
-			return errors.New("fundraising reminder collection and unique index required")
+			return errors.New(label + " collection and unique index required")
 		}
 		return err
 	}
@@ -77,7 +83,7 @@ func checkReminderIndex(ctx context.Context, db *mongo.Database) error {
 			return nil
 		}
 	}
-	return errors.New("unique fundraising reminder e-mail index required")
+	return errors.New("unique " + label + " e-mail index required")
 }
 
 // startFundraisingReminder decides at startup whether the routes are on.
@@ -157,16 +163,24 @@ func reminderTokenHash(token string) (string, bool) {
 }
 
 func reminderEmailKey(email, secret string) string {
+	return listEmailKey("reminder-email", email, secret)
+}
+
+func listEmailKey(prefix, email, secret string) string {
 	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write([]byte("reminder-email\x00" + email))
+	mac.Write([]byte(prefix + "\x00" + email))
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
 func readReminderJSON(w http.ResponseWriter, r *http.Request, into any) error {
+	return readListJSON(w, r, into, reminderMaxBody)
+}
+
+func readListJSON(w http.ResponseWriter, r *http.Request, into any, limit int64) error {
 	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 		return reminderError{"REMINDER_FORMAT", "Lähetä lomake sivuston lomakkeella."}
 	}
-	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, reminderMaxBody))
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, limit))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(into); err != nil {
 		return reminderError{"REMINDER_FORMAT", "Tarkista tiedot ja yritä uudelleen."}
@@ -177,17 +191,36 @@ func readReminderJSON(w http.ResponseWriter, r *http.Request, into any) error {
 	return nil
 }
 
+// reminderList describes one signup list on the shared system: where its routes
+// live, which collection holds its rows and what its signup route accepts.
+// Everything else (guards, rate limits, panic switch, token handling) is shared.
+type reminderList struct {
+	signupPath, confirmPath, unsubscribePath string
+	collection, rateScope                    string
+	unavailable                              string
+	signup                                   func(ctx context.Context, w http.ResponseWriter, r *http.Request, db *mongo.Database, config submissionConfig)
+}
+
 func fundraisingReminderHandler(next http.Handler, db *mongo.Database, config submissionConfig, state *reminderState) http.Handler {
+	return reminderListHandler(next, db, config, state, reminderList{
+		signupPath: reminderPath, confirmPath: reminderConfirmPath, unsubscribePath: reminderUnsubscribePath,
+		collection: reminderCollection, rateScope: "reminder",
+		unavailable: "Muistutuksen tilaus ei ole käytettävissä.",
+		signup:      serveReminderSignup,
+	})
+}
+
+func reminderListHandler(next http.Handler, db *mongo.Database, config submissionConfig, state *reminderState, list reminderList) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		if path != reminderPath && path != reminderConfirmPath && path != reminderUnsubscribePath {
+		if path != list.signupPath && path != list.confirmPath && path != list.unsubscribePath {
 			next.ServeHTTP(w, r)
 			return
 		}
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		if !state.Enabled() {
-			reminderFailure(w, http.StatusNotFound, "REMINDER_UNAVAILABLE", "Muistutuksen tilaus ei ole käytettävissä.")
+			reminderFailure(w, http.StatusNotFound, "REMINDER_UNAVAILABLE", list.unavailable)
 			return
 		}
 		if r.Method != http.MethodPost {
@@ -199,7 +232,7 @@ func fundraisingReminderHandler(next http.Handler, db *mongo.Database, config su
 		// Origin; the one-time token is its authorisation. Signup and
 		// confirmation come from the page and must be same-origin. There is no
 		// session to forge, so no CSRF token exists to check.
-		if path != reminderUnsubscribePath &&
+		if path != list.unsubscribePath &&
 			(r.Header.Get("Sec-Fetch-Site") == "cross-site" || !submissionOriginAllowed(r.Header.Get("Origin"), config.Origin)) {
 			reminderFailure(w, http.StatusForbidden, "REMINDER_ORIGIN", "Lähetä lomake sivuston lomakkeella.")
 			return
@@ -219,10 +252,10 @@ func fundraisingReminderHandler(next http.Handler, db *mongo.Database, config su
 		// unsubscribe comes from a mailbox provider's shared servers, and a
 		// removal must never be refused. It is a cheap indexed delete by a
 		// 256-bit token.
-		if path != reminderUnsubscribePath {
-			scope, minute, hour := "reminder-signup:", int64(5), int64(20)
-			if path == reminderConfirmPath {
-				scope, minute, hour = "reminder-confirm:", 10, 60
+		if path != list.unsubscribePath {
+			scope, minute, hour := list.rateScope+"-signup:", int64(5), int64(20)
+			if path == list.confirmPath {
+				scope, minute, hour = list.rateScope+"-confirm:", 10, 60
 			}
 			allowed, err := windowedRate(ctx, db, scope+submissionClient(r, config.Secret), minute, hour)
 			if err != nil {
@@ -236,12 +269,12 @@ func fundraisingReminderHandler(next http.Handler, db *mongo.Database, config su
 			}
 		}
 		switch path {
-		case reminderPath:
-			serveReminderSignup(ctx, w, r, db, config)
-		case reminderConfirmPath:
-			serveReminderConfirm(ctx, w, r, db)
+		case list.signupPath:
+			list.signup(ctx, w, r, db, config)
+		case list.confirmPath:
+			serveListConfirm(ctx, w, r, db, list.collection)
 		default:
-			serveReminderUnsubscribe(ctx, w, r, db)
+			serveListUnsubscribe(ctx, w, r, db, list.collection)
 		}
 	})
 }
@@ -318,7 +351,7 @@ func storeReminderSignup(ctx context.Context, db *mongo.Database, email, locale 
 	return err
 }
 
-func serveReminderConfirm(ctx context.Context, w http.ResponseWriter, r *http.Request, db *mongo.Database) {
+func serveListConfirm(ctx context.Context, w http.ResponseWriter, r *http.Request, db *mongo.Database, collection string) {
 	var input reminderTokenInput
 	if err := readReminderJSON(w, r, &input); err != nil {
 		var invalid reminderError
@@ -336,7 +369,7 @@ func serveReminderConfirm(ctx context.Context, w http.ResponseWriter, r *http.Re
 	}
 	now := time.Now().UTC()
 	// One atomic step both checks and consumes the token.
-	err := db.Collection(reminderCollection).FindOneAndUpdate(ctx,
+	err := db.Collection(collection).FindOneAndUpdate(ctx,
 		bson.M{"confirm_hash": hash, "confirm_expires_at": bson.M{"$gt": now}, "status": "pending"},
 		bson.M{"$set": bson.M{"status": "confirmed", "confirmed_at": now}, "$unset": bson.M{"confirm_hash": "", "confirm_expires_at": ""}},
 		options.FindOneAndUpdate().SetProjection(bson.M{"_id": 1})).Err()
@@ -351,7 +384,7 @@ func serveReminderConfirm(ctx context.Context, w http.ResponseWriter, r *http.Re
 	writeJSON(w, http.StatusOK, bson.M{"success": true, "status": "confirmed"})
 }
 
-func serveReminderUnsubscribe(ctx context.Context, w http.ResponseWriter, r *http.Request, db *mongo.Database) {
+func serveListUnsubscribe(ctx context.Context, w http.ResponseWriter, r *http.Request, db *mongo.Database, collection string) {
 	token := ""
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 		var input reminderTokenInput
@@ -380,7 +413,7 @@ func serveReminderUnsubscribe(ctx context.Context, w http.ResponseWriter, r *htt
 	}
 	// Deleting twice is harmless and answers the same, so the response never
 	// tells whether an address was registered.
-	if _, err := db.Collection(reminderCollection).DeleteOne(ctx, bson.M{"unsubscribe_hashes": hash}); err != nil {
+	if _, err := db.Collection(collection).DeleteOne(ctx, bson.M{"unsubscribe_hashes": hash}); err != nil {
 		reminderFailure(w, http.StatusServiceUnavailable, "REMINDER_UNAVAILABLE", "Yritä uudelleen hetken kuluttua.")
 		return
 	}

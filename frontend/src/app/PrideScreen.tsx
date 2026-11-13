@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { PrideMap } from '../components/pride/PrideMap';
+import { PrideVolunteer } from './PrideVolunteer';
+import { prideVolunteerCopy, prideVolunteerEnabled } from './pride-volunteer';
 import { PublicListingPage } from '../pages/PublicListingPage';
 import type { AppConfig } from './config';
 import { listingProps } from './listing';
@@ -57,7 +59,7 @@ export default function PrideScreen({ config, session, listing }: {
   // Scrolling loads more events above the lower sections, so stay aligned until the reader takes over.
   useEffect(() => {
     const { hash } = window.location;
-    const target = ['#demos', '#demo-guidelines', '#pride-map-section'].includes(hash) ? document.querySelector(hash) : null;
+    const target = ['#demos', '#demo-guidelines', '#pride-map-section', '#banderolli'].includes(hash) ? document.querySelector(hash) : null;
     const page = document.querySelector('.pride-page');
     if (!target || !page) return undefined;
     const align = () => target.scrollIntoView({ block: 'start' });
@@ -74,6 +76,7 @@ export default function PrideScreen({ config, session, listing }: {
     align();
     return stop;
   }, []);
+  const volunteers = prideVolunteerEnabled();
   return <div className="pride-page">
     <section className="pride-intro" aria-labelledby="pride-title">
       <h1 id="pride-title">{prideCopy.title}</h1>
@@ -81,6 +84,7 @@ export default function PrideScreen({ config, session, listing }: {
       <div className="pride-actions">
         <a className="button button-primary" href="#demos">Katso mielenosoitukset</a>
         <a className="button button-secondary" href={config.urls.submit}>Ilmoita mielenosoitus</a>
+        {volunteers && <a className="button button-secondary" href="#banderolli">{prideVolunteerCopy.navButton}</a>}
       </div>
     </section>
 
@@ -104,6 +108,8 @@ export default function PrideScreen({ config, session, listing }: {
           ], { type: 'application/json' })); } catch { /* Optional analytics. */ }
         }} />
     </section>
+
+    {volunteers && <PrideVolunteer privacyUrl={config.urls.privacy} />}
 
     <PrideDetails submitUrl={config.urls.submit} />
   </div>;

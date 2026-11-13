@@ -22,7 +22,7 @@ a dated snapshot: check their live state before acting.
 
 - [ ] **Safe sign-out (#1154):** POST with an account-bound token, harmless GET confirmation/prefetch handling, and click-open account menus. Coordinator records auth and visual reviews; finish final-head checks/queue, then verify on production that a plain GET does not sign anyone out. This is in progress, not a new account-migration task.
 - [ ] **Campaign redesign v2.2:** approved mockup build is under way. Deliver the page/date-driven states, revised volunteer form (roles/area, no phone; API/privacy update), party-interest UI, then its backend after #1146. Preserve publication/donation gates; use independent visual review and security/privacy review for data/email work. No implementation PR was open at this refresh.
-- [ ] **Pride banner carriers (#1155):** UI-only form is in review, `volunteer_form=false`, submission stubbed. The Go/storage/mail double-opt-in, unsubscribe, retention and privacy work remains a separate second part using the now-merged #1146, with security/privacy and visual acceptance before activation.
+- [ ] **Pride banner carriers (#1155):** UI-only form is merged, `volunteer_form=false`, submission stubbed. The Go/storage/mail double-opt-in, unsubscribe, retention and privacy work remains a separate second part using the now-merged #1146, with security/privacy and visual acceptance before activation.
 - [ ] **Fundraising opening reminder (#1146 / FUND-02):** implementation is merged and off by default. Confirm final security/privacy and visual acceptance, then separately approve/provision the unique index and activation. First real bulk send still needs the maintainer's go; optional results-message delivery remains undecided. See [docs/fundraising-reminder.md](docs/fundraising-reminder.md).
 
 ## Public site in React (UI-06, due January 2027)
@@ -116,6 +116,7 @@ The checked visual follow-ups above record implementation, not a blanket visual 
 - [ ] **CITY-01 remaining:** live inbox/email/scheduler acceptance, deployed deadline configuration and any separately agreed reassignment follow-up. Do not rebuild the existing notices or countdown.
 - [x] **CITY-02 outbox implementation:** #964 is merged; #963 is closed. Bounded discovery/claims, same-message updates, backoff and unknown-send handling are implemented.
 - [ ] **CITY-02 release evidence:** verify provider staging send/edit, target permissions, sweep/query plans and production enablement. The issue-closing deployment note alone does not establish these earlier acceptance gates.
+- [ ] **Admin notifications and Bark:** notify the appropriate admins in the app's notification panel when new suggestions or other review items arrive. Explore Bark push notifications for urgent items, especially for super admins, so admins can notice them without checking the site. First inventory existing notifications and the CITY-02 alert flow; define event types, recipients, urgency, opt-in settings, privacy and reliable delivery before implementation. *(approval: production configuration and real notifications)*
 - [ ] **CASE-01/02:** let submitters answer case questions and follow progress (#976).
 - [x] Recurring demonstration cancellation breaks: #620 redone on current main with inclusive date ranges, validation and frozen-child protection.
 - [ ] Production performance and hosting review (#859).

@@ -1,0 +1,1 @@
+- The fundraising page's Flask copy no longer shows a euro goal or amount in the page text or the sharing description.

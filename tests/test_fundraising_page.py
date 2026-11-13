@@ -33,7 +33,7 @@ def test_fundraising_preview_is_public_and_has_no_payment_instructions(client):
     response = client.get("/keräys")
     assert response.status_code == 200
     page = response.get_data(as_text=True)
-    assert "2 500 €" in page
+    assert "€" not in page and "euro" not in page.lower()
     assert "Valmistelussa" in page
     assert "Lahjoittaminen ei ole vielä avoinna" in page
     assert 'datetime="2026-11-16"' in page

@@ -32,10 +32,22 @@ def configure(source, target):
         values["PUBLIC_SUBMIT_SESSION_SOCKET"] = "/var/www/mielenosoitukset_fi/mielenosoitus.sock"
         babel = config.get("BABEL") or {}
         values["PUBLIC_SUBMIT_LOCALES"] = ",".join(babel.get("SUPPORTED_LOCALES", ["fi", "en"]) or ["fi"])
-    # Event analytics follow the Flask switch. Only a literal true enables Go
-    # writes, so a redeploy keeps them in step with config.yaml.
-    if config.get("SITE_ANALYTICS_ENABLED") is True:
+    # Event analytics follow the Flask switch, which defaults to enabled when
+    # the key is missing (app.py: config.get("SITE_ANALYTICS_ENABLED", True)),
+    # so a redeploy keeps Go writes in step with Flask.
+    if config.get("SITE_ANALYTICS_ENABLED", True):
         values["SITE_ANALYTICS_ENABLED"] = "true"
+    # The read-only auth bridge (docs/auth-bridge.md) follows the same switch as
+    # Flask's /api/session scopes, so one line in config.yaml turns both on. The
+    # environment is rewritten on every deploy; a hand-edited flag would be lost.
+    if config.get("AUTH_BRIDGE_SCOPES") is True:
+        values["AUTH_BRIDGE_ENABLED"] = "true"
+        values["AUTH_BRIDGE_ORIGIN"] = config.get("GO_SUBMIT_ORIGIN", "https://mielenosoitukset.fi")
+        values["AUTH_BRIDGE_SESSION_SOCKET"] = "/var/www/mielenosoitukset_fi/mielenosoitus.sock"
+        # Developer write controls (docs/developer-react-write-controls.md): a
+        # separate switch, off by default, and only with the bridge on.
+        if config.get("DEVELOPER_WRITES") is True:
+            values["DEVELOPER_WRITES_ENABLED"] = "true"
     for key, value in values.items():
         if not isinstance(value, str) or not value or any(c in value for c in "\n\r\0"):
             raise ValueError(f"Missing or invalid {key}; refusing to guess production settings")

@@ -22,7 +22,7 @@ def _confirmed_plan():
     return {
         "publication_state": "active", "details_confirmed": True,
         "start_date": "2026-11-15", "end_date": "2027-02-15",
-        "organizer": "Example organizer", "collection_number": "EXAMPLE-NOT-REAL",
+        "collection_number": "EXAMPLE-NOT-REAL",
         "recipient": "Example recipient", "iban": "EXAMPLE-NOT-A-BANK-ACCOUNT",
         "payment_url": "", "reference": "123",
         "mobilepay_links": [],
@@ -37,7 +37,7 @@ def test_fundraising_preview_is_public_and_has_no_payment_instructions(client):
     assert "Valmistelussa" in page
     assert "Lahjoittaminen ei ole vielä avoinna" in page
     assert 'datetime="2026-11-16"' in page
-    assert 'datetime="2027-02-16"' in page
+    assert 'datetime="2027-02-15"' in page
     # The account number is stored ahead of time but stays hidden until the
     # details are confirmed and the collection is active.
     assert "FI46" not in page and "5723 0221" not in page
@@ -56,7 +56,6 @@ def test_fundraising_preview_is_public_and_has_no_payment_instructions(client):
     ({"publication_state": "preparation"}, date(2026, 12, 1), False),
     ({"details_confirmed": False}, date(2026, 12, 1), False),
     ({"collection_number": ""}, date(2026, 12, 1), False),
-    ({"organizer": ""}, date(2026, 12, 1), False),
     ({"start_date": "invalid"}, date(2026, 12, 1), False),
     ({"end_date": "2026-10-01"}, date(2026, 12, 1), False),
     ({"iban": "", "payment_url": "https://example.test/donate"}, date(2026, 12, 1), True),
@@ -70,7 +69,7 @@ def test_donations_require_complete_confirmed_active_details_within_dates(change
 
 def test_confirmed_donation_details_render_escaped_and_close_after_end(client, monkeypatch):
     plan = _confirmed_plan() | {
-        "organizer": "Example <script>unsafe</script>", "payment_url": "https://example.test/donate",
+        "recipient": "Example <script>unsafe</script>", "payment_url": "https://example.test/donate",
         "mobilepay_links": [
             {"label": "MobilePay 1", "url": "https://qr.mobilepay.fi/box/example-one/pay-in"},
             {"label": "MobilePay 2", "url": "https://qr.mobilepay.fi/box/example-two/pay-in"},

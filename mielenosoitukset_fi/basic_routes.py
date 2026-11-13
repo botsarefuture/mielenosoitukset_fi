@@ -11,7 +11,7 @@ import uuid
 import hashlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from mielenosoitukset_fi.utils.demo_seo import _parse_clock
-from mielenosoitukset_fi.utils.fundraising import fundraising_details
+from mielenosoitukset_fi.utils.fundraising import fundraising_bar, fundraising_details
 from mielenosoitukset_fi.utils.campaign_publication import campaign_pages_public, campaign_preview_required
 from datetime import datetime, date, timedelta, timezone
 from urllib.parse import parse_qs, urlencode, urlsplit
@@ -93,6 +93,8 @@ from mielenosoitukset_fi.utils.demo_cancellation import (
     cancel_demo,
     fetch_cancellation_token,
     mark_token_used,
+    claim_cancellation_token,
+    release_cancellation_token,
     queue_cancellation_links_for_demo,
     request_cancellation_case,
 )
@@ -180,6 +182,14 @@ def ensure_audit_pagination_indexes(database):
 ensure_audit_pagination_indexes(mongo)
 mongo["magic_links"].create_index("token_hash", unique=True, background=True)
 mongo["magic_links"].create_index("demo_id", background=True)
+# Additive. Revert: db.used_password_change_tokens.dropIndex("token_hash_unique")
+mongo["used_password_change_tokens"].create_index(
+    "token_hash",
+    unique=True,
+    partialFilterExpression={"token_hash": {"$type": "string"}},
+    name="token_hash_unique",
+    background=True,
+)
 mongo["cases"].create_index([("demo_id", ASCENDING), ("created_at", DESCENDING)], background=True)
 mongo["demo_attending"].create_index("demo_id", background=True)
 mongo["demo_invites"].create_index("demo_id", background=True)
@@ -1777,6 +1787,33 @@ def init_routes(app):
         )
 
 
+    import re as _auth_re  # `re` is rebound later in this function
+    AUTH_BRIDGE_PERMISSION = _auth_re.compile(r"[A-Z][A-Z0-9_]{1,63}")
+
+    def _add_auth_bridge_scopes(payload, organization_scope):
+        """Read-only scopes for the Go/React auth bridge (docs/auth-bridge.md).
+
+        Only active with AUTH_BRIDGE_SCOPES. They answer about the caller's own
+        session: boolean results for up to ten named permissions, and whether an
+        anonymous visitor has a pending flash message for an organization page.
+        Nothing here consumes a flash message or changes the session.
+        """
+        payload["auth_bridge"] = True
+        requested = request.args.getlist("permission")
+        if requested:
+            names = sorted({name for name in requested if AUTH_BRIDGE_PERMISSION.fullmatch(name)})[:10]
+            org_oid = ObjectId(organization_scope[0]) if organization_scope else None
+            payload["permissions"] = {
+                name: bool(current_user.is_authenticated and current_user.has_permission(name, org_oid))
+                if org_oid else bool(current_user.is_authenticated and current_user.has_permission(name))
+                for name in names
+            }
+        if organization_scope and not current_user.is_authenticated:
+            payload["organization"] = {
+                "id": organization_scope[0],
+                "has_messages": bool(session.get("_flashes")),
+            }
+
     @app.route("/api/session")
     def public_session_summary():
         """Account summary for the standalone React public host.
@@ -1800,6 +1837,8 @@ def init_routes(app):
         if locale not in supported:
             locale = "fi"
         details = fundraising_details()
+        # `/keräys` is public in pre-launch mode, so `show_bar` alone decides; it is the launch switch.
+        bar_settings = fundraising_bar()
         language_names = current_app.config.get("BABEL_LANGUAGES") or {}
         try:
             can_edit_demo = bool(current_user.is_authenticated and current_user.has_permission("EDIT_DEMO"))
@@ -1820,6 +1859,7 @@ def init_routes(app):
             "unread": 0,
             "fundraising": bool(details.get("show_header_link"))
             and (campaign_pages_public() or current_user.is_authenticated),
+            "fundraising_bar": bar_settings,
             "site_analytics_enabled": bool(current_app.config.get("SITE_ANALYTICS_ENABLED", True)),
             "matomo_enabled": bool(current_app.config.get("MATOMO_ENABLED", True)),
             "submission": {
@@ -1869,6 +1909,8 @@ def init_routes(app):
                         )
                     },
                 }
+        if current_app.config.get("AUTH_BRIDGE_SCOPES", False):
+            _add_auth_bridge_scopes(payload, organization_scope)
         if request.args.get("contact_form") == "1":
             from flask import get_flashed_messages
 
@@ -3661,6 +3703,12 @@ def init_routes(app):
                 if request.method == "POST" and not token_error:
                     reason = (request.form.get("reason") or "").strip() or None
 
+                    # Claim the link atomically so two simultaneous submissions
+                    # cannot both act. Released again if the action fails.
+                    if not claim_cancellation_token(token_doc.get("_id")):
+                        token_error = _("Peruutuslinkki on jo käytetty.")
+
+                if request.method == "POST" and not token_error:
                     try:
                         if can_cancel_directly:
                             cancel_demo(
@@ -3686,6 +3734,7 @@ def init_routes(app):
                         mark_token_used(token_doc.get("_id"), reason or "submitted")
                         return redirect(url_for("demonstration_detail", demo_id=token_doc.get("demo_id")))
                     except Exception:
+                        release_cancellation_token(token_doc.get("_id"))
                         logger.exception("Failed to handle cancellation from token")
                         flash_message(_("Peruutusta ei voitu käsitellä."), "error")
 

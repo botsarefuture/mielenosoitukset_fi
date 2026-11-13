@@ -1,0 +1,1 @@
+- Public city pages for cities moderated by the national admin team (Helsinki) now show "Valtakunnallinen tiimi" with a short note that the team reviews the city's demonstrations. Before, the page showed nothing there. No recruiting link is shown.

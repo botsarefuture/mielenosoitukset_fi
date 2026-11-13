@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -80,5 +82,37 @@ func TestApplicationHandlerGuardsBeforeTouchingTheDatabase(t *testing.T) {
 		if check.code != 299 && check.result.Header().Get("Cache-Control") != "private, no-store" {
 			t.Fatalf("%s: responses must never be cached", check.name)
 		}
+	}
+}
+
+// Applying must not depend on a city having demonstrations or being enabled:
+// every catalog city except the nationally managed ones is a valid target.
+func TestApplicationAcceptsEveryCatalogCityExceptNationalOnes(t *testing.T) {
+	if len(cityCatalog) < 300 {
+		t.Fatalf("catalog unexpectedly small: %d", len(cityCatalog))
+	}
+	for key := range cityCatalog {
+		_, err := applicationCities([]string{key}, 1, 5, false)
+		if nationallyManagedCities[key] {
+			if err == nil {
+				t.Fatalf("%s must be rejected", key)
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatalf("%s rejected: %v", key, err)
+		}
+	}
+}
+
+func TestApplicationInsertFailureTreatsDuplicateKeyAsOpenApplication(t *testing.T) {
+	duplicate := mongo.WriteException{WriteErrors: mongo.WriteErrors{{Code: 11000, Message: "E11000 duplicate key"}}}
+	status, code, _ := applicationInsertFailure(duplicate)
+	if status != 409 || code != "APPLY_OPEN_EXISTS" {
+		t.Fatalf("duplicate key gave %d %s", status, code)
+	}
+	status, code, _ = applicationInsertFailure(errors.New("network down"))
+	if status != 503 || code != "APPLY_SAVE_FAILED" {
+		t.Fatalf("other error gave %d %s", status, code)
 	}
 }

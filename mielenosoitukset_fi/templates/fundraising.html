@@ -45,7 +45,6 @@
         <div><dt>Keräystavoite</dt><dd class="public-content__amount">2 500 €</dd></div>
         <div><dt>{{ 'Keräysaika' if fundraising.confirmed else 'Suunniteltu keräysaika' }}</dt><dd>{% if fundraising.display_start_date and fundraising.display_end_date %}<time datetime="{{ fundraising.display_start_date.isoformat() }}">{{ fundraising.display_start_date.strftime('%d.%m.%Y') }}</time>–<time datetime="{{ fundraising.display_end_date.isoformat() }}">{{ fundraising.display_end_date.strftime('%d.%m.%Y') }}</time>{% else %}Vahvistetaan myöhemmin{% endif %}</dd></div>
         <div><dt>Tilanne</dt><dd>{{ 'Valmistelussa' if fundraising.is_preparation else 'Keräys avoinna' if fundraising.can_donate else 'Lahjoittaminen suljettu' }}</dd></div>
-        <div><dt>Keräyksen järjestäjä</dt><dd>{{ fundraising.organizer if fundraising.confirmed else 'Vahvistetaan myöhemmin' }}</dd></div>
         <div><dt>Keräysnumero</dt><dd>{{ fundraising.collection_number if fundraising.confirmed else 'Lisätään ilmoituksen vahvistamisen jälkeen' }}</dd></div>
       </dl>
       {% if fundraising.can_donate %}
@@ -67,7 +66,7 @@
       {% else %}
       <div class="public-content__notice">
         <h3>{{ 'Lahjoittaminen ei ole vielä avoinna' if fundraising.is_preparation else 'Lahjoittaminen on suljettu' }}</h3>
-        <p>{{ 'Lahjoituksia voi tehdä vain vahvistettuna keräysaikana ja keräyksen ollessa avoinna.' if fundraising.confirmed else 'Keräyksen järjestäjä, keräysnumero ja lahjoitusohjeet julkaistaan, kun tiedot ja aloitus on vahvistettu. Myös keräysaika on vielä suunniteltu.' }}</p>
+        <p>{{ 'Lahjoituksia voi tehdä vain vahvistettuna keräysaikana ja keräyksen ollessa avoinna.' if fundraising.confirmed else 'Keräysnumero ja lahjoitusohjeet julkaistaan, kun tiedot ja aloitus on vahvistettu. Myös keräysaika on vielä suunniteltu.' }}</p>
       </div>
       {% endif %}
       {% if fundraising.is_preparation and fundraising.mobilepay_links %}

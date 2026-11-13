@@ -270,3 +270,37 @@ with the write handled by the backend.
 8. Should the nationally managed cities list stay hardcoded, or become a
    `city_settings` flag that global admins can toggle (for example if another
    large city needs the same treatment)?
+
+## Duplicate submissions (proposed, awaiting maintainer approval)
+
+The Go handler checks for an open application and then inserts, so two
+simultaneous submissions from one user can both pass the check. The delivery job
+is not affected: the case ID equals the application ID, so each application gets
+exactly one case. The harm is two open applications from one user.
+
+**Proposed index** (not created by any code; a maintainer runs it):
+
+```js
+db.city_admin_applications.createIndex(
+  { user_id: 1 },
+  { unique: true, name: "city_admin_applications_one_open_per_user",
+    partialFilterExpression: { status: { $in: ["received", "in_review"] } } }
+)
+```
+
+It matches the existing rule of one open application per user, not per city.
+Decided applications (approved, declined, withdrawn) fall out of the index, so
+the user can apply again. `$in` in a partial filter needs MongoDB 6.0 or newer;
+production runs MongoDB 7.0.37 (checked 2026-11-12 with `mongod --version` on lc-db), so it is supported.
+
+**Handler behavior.** A duplicate key error on insert returns 409
+`APPLY_OPEN_EXISTS`, the same code as the existing check, so the form needs no
+change. Without the index nothing changes, so the code can ship before the index.
+
+**Before creating the index.** Run `python scripts/check_city_admin_application_duplicates.py`.
+It is read-only and lists users with more than one open application, which would
+make index creation fail. Resolve those by hand (withdraw or decline extras) first.
+
+**Rollback.** `db.city_admin_applications.dropIndex("city_admin_applications_one_open_per_user")`.
+No data is changed by creating or dropping it. Reverting the Go change is optional;
+the duplicate-key branch is then simply never reached.

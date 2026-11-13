@@ -148,6 +148,107 @@ func (s mongoStore) CountCityAdmins(ctx context.Context, key string) (int, error
 	return active, nil
 }
 
+// grantKeys lists the city keys a grant covers (scope_keys and the older scope_key).
+func grantKeys(grant bson.M) []string {
+	keys := []string{}
+	switch values := grant["scope_keys"].(type) {
+	case bson.A:
+		for _, value := range values {
+			if key, ok := value.(string); ok {
+				keys = append(keys, key)
+			}
+		}
+	}
+	if key, ok := grant["scope_key"].(string); ok {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
+// CityAdminCoverage counts active city admins for every city in one pass, for
+// the application form. Callers reduce the counts to bands before sending them.
+func (s mongoStore) CityAdminCoverage(ctx context.Context) (map[string]int, error) {
+	db := s.collection.Database()
+	cursor, err := db.Collection("admin_scope_grants").Find(ctx, bson.M{
+		"scope_type":  "city",
+		"permissions": "ACCEPT_DEMO",
+		"$or":         bson.A{bson.M{"revoked_at": bson.M{"$exists": false}}, bson.M{"revoked_at": nil}},
+	}, options.Find().SetProjection(bson.M{"user_id": 1, "scope_keys": 1, "scope_key": 1}).SetLimit(5000))
+	if err != nil {
+		return nil, err
+	}
+	var grants []bson.M
+	if err := cursor.All(ctx, &grants); err != nil {
+		return nil, err
+	}
+	cityUsers := map[string]map[bson.ObjectID]bool{}
+	ids := bson.A{}
+	known := map[bson.ObjectID]bool{}
+	for _, grant := range grants {
+		var id bson.ObjectID
+		switch value := grant["user_id"].(type) {
+		case bson.ObjectID:
+			id = value
+		case string:
+			parsed, err := bson.ObjectIDFromHex(value)
+			if err != nil {
+				continue
+			}
+			id = parsed
+		default:
+			continue
+		}
+		for _, key := range grantKeys(grant) {
+			if cityUsers[key] == nil {
+				cityUsers[key] = map[bson.ObjectID]bool{}
+			}
+			cityUsers[key][id] = true
+		}
+		if !known[id] {
+			known[id] = true
+			ids = append(ids, id)
+		}
+	}
+	counts := map[string]int{}
+	if len(ids) == 0 {
+		return counts, nil
+	}
+	users, err := db.Collection("users").Find(ctx, bson.M{"_id": bson.M{"$in": ids}},
+		options.Find().SetProjection(bson.M{"active": 1, "banned": 1, "confirmed": 1, "security_suspension": 1}))
+	if err != nil {
+		return nil, err
+	}
+	var docs []bson.M
+	if err := users.All(ctx, &docs); err != nil {
+		return nil, err
+	}
+	usable := map[bson.ObjectID]bool{}
+	for _, doc := range docs {
+		if id, ok := doc["_id"].(bson.ObjectID); ok && activeAccount(doc) {
+			usable[id] = true
+		}
+	}
+	for key, members := range cityUsers {
+		for id := range members {
+			if usable[id] {
+				counts[key]++
+			}
+		}
+	}
+	return counts, nil
+}
+
+// CityAdminCoverage lets the production caching wrapper pass the read through.
+func (s *cachedDetailStore) CityAdminCoverage(ctx context.Context) (map[string]int, error) {
+	source, ok := s.source.(interface {
+		CityAdminCoverage(context.Context) (map[string]int, error)
+	})
+	if !ok {
+		return nil, errors.New("city admin coverage unavailable")
+	}
+	return source.CityAdminCoverage(ctx)
+}
+
 // CountCityAdmins lets the production caching wrapper pass the read through.
 func (s *cachedDetailStore) CountCityAdmins(ctx context.Context, key string) (int, error) {
 	source, ok := s.source.(interface {
@@ -193,4 +294,49 @@ func (a *API) getCityAdminStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Cache-Control", "public, max-age=300")
 	writeJSON(w, 200, map[string]string{"key": key, "status": status})
+}
+
+var coverageCache = struct {
+	mu      sync.Mutex
+	bands   map[string]string
+	expires time.Time
+}{}
+
+// getCityAdminCoverage serves the coverage band of every catalog city for the
+// application form. Only bands are public: no names, ids or counts.
+func (a *API) getCityAdminCoverage(w http.ResponseWriter, r *http.Request) {
+	now := time.Now()
+	coverageCache.mu.Lock()
+	bands, fresh := coverageCache.bands, coverageCache.bands != nil && now.Before(coverageCache.expires)
+	coverageCache.mu.Unlock()
+	if !fresh {
+		source, ok := a.store.(interface {
+			CityAdminCoverage(context.Context) (map[string]int, error)
+		})
+		if !ok {
+			writeError(w, 503, "service unavailable")
+			return
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		defer cancel()
+		counts, err := source.CityAdminCoverage(ctx)
+		if err != nil {
+			log.Print("City admin coverage read failed")
+			writeError(w, 503, "service unavailable")
+			return
+		}
+		bands = make(map[string]string, len(cityCatalog))
+		for key := range cityCatalog {
+			if nationallyManagedCities[key] {
+				bands[key] = "national"
+			} else {
+				bands[key] = cityAdminStatus(counts[key])
+			}
+		}
+		coverageCache.mu.Lock()
+		coverageCache.bands, coverageCache.expires = bands, now.Add(cityAdminStatusTTL)
+		coverageCache.mu.Unlock()
+	}
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	writeJSON(w, 200, map[string]any{"cities": bands})
 }

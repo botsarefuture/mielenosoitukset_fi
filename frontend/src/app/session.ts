@@ -1,5 +1,7 @@
 import type { AppLocale } from './config';
 import { isLocale } from './config';
+import { disabledBar, normalizeBar } from './fundraising-bar';
+import type { FundraisingBarConfig } from './fundraising-bar';
 
 /**
  * Header state for the public app.
@@ -20,6 +22,7 @@ export type SessionSummary = {
   hasAdminAccess: boolean;
   unread: number;
   fundraising: boolean;
+  fundraisingBar: FundraisingBarConfig;
   siteAnalyticsEnabled: boolean;
   matomoEnabled: boolean;
   submission?: { locales: AppLocale[]; defaultLanguage: AppLocale; canEditDemo: boolean };
@@ -29,6 +32,10 @@ export type SessionSummary = {
     enabled: boolean; csrfToken?: string; messages: { category: string; message: string }[];
     limits: { nameMax: number; emailMax: number; messageMin: number; messageMax: number };
   };
+  /** True when the server's read-only auth bridge is on; the client may then use `urls.authMe`. */
+  authBridge?: boolean;
+  /** The visitor sent a cookie but the server could not read the session (timeout, error). Not the same as signed out. */
+  unverified?: boolean;
   organization?: {
     id: string; following: boolean; invited: boolean; hasMessages: boolean;
     permissions: Record<'VIEW_ORGANIZATION' | 'EDIT_ORGANIZATION' | 'DELETE_ORGANIZATION' | 'INVITE_TO_ORGANIZATION', boolean>;
@@ -38,7 +45,7 @@ export type SessionSummary = {
 export const anonymousSession: SessionSummary = {
   authenticated: false, locale: 'fi', locales: [{ code: 'fi', name: 'Suomi' }],
   role: 'guest', name: null, picture: null,
-  globalAdmin: false, hasAdminAccess: false, unread: 0, fundraising: false,
+  globalAdmin: false, hasAdminAccess: false, unread: 0, fundraising: false, fundraisingBar: disabledBar,
   siteAnalyticsEnabled: false, matomoEnabled: false,
 };
 
@@ -62,13 +69,15 @@ export function normalizeSession(value: unknown): SessionSummary {
     ? raw.organization as Record<string, unknown> : null;
   const permissions = scoped?.permissions && typeof scoped.permissions === 'object'
     ? scoped.permissions as Record<string, unknown> : {};
-  const organization = raw.authenticated === true && scoped && typeof scoped.id === 'string' && /^[a-f\d]{24}$/.test(scoped.id)
-    ? { id: scoped.id, following: scoped.following === true, invited: scoped.invited === true,
+  // An anonymous visitor only ever gets the pending-message flag: no membership, invitation or permission.
+  const member = raw.authenticated === true;
+  const organization = scoped && typeof scoped.id === 'string' && /^[a-f\d]{24}$/.test(scoped.id)
+    ? { id: scoped.id, following: member && scoped.following === true, invited: member && scoped.invited === true,
       hasMessages: scoped.has_messages === true,
-      permissions: { VIEW_ORGANIZATION: permissions.VIEW_ORGANIZATION === true,
-        EDIT_ORGANIZATION: permissions.EDIT_ORGANIZATION === true,
-        DELETE_ORGANIZATION: permissions.DELETE_ORGANIZATION === true,
-        INVITE_TO_ORGANIZATION: permissions.INVITE_TO_ORGANIZATION === true } } : undefined;
+      permissions: { VIEW_ORGANIZATION: member && permissions.VIEW_ORGANIZATION === true,
+        EDIT_ORGANIZATION: member && permissions.EDIT_ORGANIZATION === true,
+        DELETE_ORGANIZATION: member && permissions.DELETE_ORGANIZATION === true,
+        INVITE_TO_ORGANIZATION: member && permissions.INVITE_TO_ORGANIZATION === true } } : undefined;
   return {
     authenticated: raw.authenticated === true,
     locale: isLocale(raw.locale) && enabled.some((item) => item.code === raw.locale)
@@ -82,6 +91,7 @@ export function normalizeSession(value: unknown): SessionSummary {
     unread: typeof raw.unread === 'number' && Number.isFinite(raw.unread) && raw.unread > 0
       ? Math.min(Math.floor(raw.unread), 999) : 0,
     fundraising: raw.fundraising === true,
+    fundraisingBar: normalizeBar(raw.fundraising_bar),
     siteAnalyticsEnabled: raw.site_analytics_enabled === true,
     matomoEnabled: raw.matomo_enabled === true,
     submission: {
@@ -90,6 +100,7 @@ export function normalizeSession(value: unknown): SessionSummary {
         ? submission.default_language : 'fi',
       canEditDemo: raw.authenticated === true && submission.can_edit_demo === true,
     },
+    ...(raw.auth_bridge === true ? { authBridge: true } : {}),
     ...(organization ? { organization } : {}),
     ...(raw.authenticated === true && raw.translation_join && typeof raw.translation_join === 'object'
       ? { translationJoin: normalizeTranslationJoin(raw.translation_join as Record<string, unknown>) } : {}),

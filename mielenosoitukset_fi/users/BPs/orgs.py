@@ -4,6 +4,7 @@ from bson.objectid import ObjectId
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.classes import Organization
+from mielenosoitukset_fi.utils.invitations import invitation_expired
 
 mongo = DatabaseManager().get_instance().get_db()
 
@@ -32,7 +33,8 @@ def _get_invited_emails(org_inv):
         if isinstance(inv, str):
             emails.append(inv)
         elif isinstance(inv, dict) and "email" in inv:
-            emails.append(inv["email"])
+            if not invitation_expired(inv):
+                emails.append(inv["email"])
         # else ignore anything else (None, unexpected types)
     
     return emails

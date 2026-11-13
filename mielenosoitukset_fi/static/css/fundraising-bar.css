@@ -1,0 +1,55 @@
+/* Fundraising bar above the public header. Colours are design-system tokens only.
+   The bar has a fixed height (--fb-h) so nothing shifts; the sticky nav sits below it. */
+:root { --fb-h: 56px; }
+html[data-fb-hidden] { --fb-h: 0px; }
+html[data-fb-hidden] .fundraising-bar { display: none; }
+@media (max-width: 720px) { :root { --fb-h: 48px; } }
+.public-main-nav { top: var(--fb-h); }
+
+.fundraising-bar {
+  position: sticky; top: 0; z-index: 9000; box-sizing: border-box; height: var(--fb-h);
+  background: var(--product-accent-soft); color: var(--product-text);
+  border-top: 3px solid var(--product-accent); border-bottom: 1px solid var(--product-border);
+  font-size: .9375rem; font-weight: 600; letter-spacing: .005em; line-height: 1.3;
+}
+.fundraising-bar__inner {
+  position: relative; box-sizing: border-box; height: 100%; max-width: 1400px; margin: 0 auto; padding: 0 2rem;
+  display: flex; align-items: center; justify-content: center; gap: 1rem;
+}
+.fundraising-bar__text { margin: 0; min-width: 0; }
+.fundraising-bar__short { display: none; }
+.fundraising-bar__actions { display: flex; align-items: center; gap: .75rem; flex: none; }
+.fundraising-bar__button {
+  display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 40px; padding: 0 1.1rem;
+  border-radius: 8px; font: inherit; font-weight: 650; text-decoration: none; transition: background .18s ease, transform .18s ease;
+}
+.fundraising-bar__button--primary {
+  background: var(--product-action-bg); color: var(--product-on-action);
+  box-shadow: inset 0 0 0 1px light-dark(transparent, rgba(255, 255, 255, .3));
+}
+.fundraising-bar__button--primary:hover { background: var(--product-action-hover); }
+.fundraising-bar__button--primary:active { transform: translateY(1px); }
+.fundraising-bar__button--ghost { background: transparent; color: var(--product-primary); }
+.fundraising-bar__button--ghost:hover { background: var(--product-primary-soft); }
+.fundraising-bar__button--ghost:active { background: light-dark(rgba(0, 51, 160, .16), rgba(139, 177, 255, .22)); }
+.fundraising-bar__close {
+  position: absolute; right: 1.25rem; top: 50%; transform: translateY(-50%); display: grid; place-items: center;
+  width: 40px; height: 40px; padding: 0; border: 0; border-radius: 999px; background: transparent;
+  color: var(--product-text); font-size: 1rem; cursor: pointer; opacity: .8; transition: background .18s ease, opacity .18s ease;
+}
+.fundraising-bar__close:hover { background: light-dark(rgba(23, 32, 51, .09), rgba(242, 245, 250, .14)); opacity: 1; }
+.fundraising-bar__close:active { background: light-dark(rgba(23, 32, 51, .16), rgba(242, 245, 250, .22)); }
+.fundraising-bar__button:focus-visible, .fundraising-bar__close:focus-visible { outline: 3px solid var(--product-primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .fundraising-bar__button, .fundraising-bar__close { transition: none; }
+}
+@media (max-width: 720px) {
+  .fundraising-bar { font-size: .875rem; }
+  .fundraising-bar__inner { padding: 0 .5rem 0 1rem; gap: .5rem; justify-content: flex-start; }
+  .fundraising-bar__long { display: none; }
+  .fundraising-bar__short { display: inline; white-space: nowrap; }
+  .fundraising-bar__text { flex: 1; }
+  .fundraising-bar__actions { gap: .25rem; margin-left: auto; }
+  .fundraising-bar__button { min-height: 38px; padding: 0 .75rem; font-size: .875rem; }
+  .fundraising-bar__close { position: static; transform: none; flex: none; width: 38px; height: 38px; }
+}

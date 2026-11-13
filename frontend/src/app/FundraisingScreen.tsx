@@ -1,39 +1,83 @@
 import data from '../../../mielenosoitukset_fi/utils/data/fundraising.json';
 import type { AppConfig } from './config';
-import { fundraisingDetails } from './fundraising';
-import type { FundraisingDetails } from './fundraising';
+import { fundraisingCopy } from './fundraising-copy';
+import { useState } from 'react';
+import { fundraisingDetails, fundraisingExtras, fundraisingIcs } from './fundraising';
+import type { FundraisingDetails, FundraisingExtras } from './fundraising';
 
-const finnishDate = (iso: string) => iso.split('-').reverse().join('.');
+const finnishDate = (iso: string) => iso.split('-').reverse().map(part => String(Number(part))).join('.');
 
 function Arrow() {
   return <i className="fas fa-arrow-right" aria-hidden="true" />;
 }
 
+/** Copies the IBAN; the button label confirms it for assistive technology too. */
+function CopyIban({ iban }: { iban: string }) {
+  const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(iban);
+      setState('copied');
+    } catch {
+      setState('failed');
+    }
+  };
+  return <>
+    <button type="button" className="fundraising-copy" onClick={copy}>Kopioi tilinumero</button>
+    <span className="fundraising-copy__status" role="status">{state === 'copied' ? 'Tilinumero kopioitu' : state === 'failed' ? 'Kopiointi ei onnistunut. Valitse numero ja kopioi se itse.' : ''}</span>
+  </>;
+}
+
 /** The fundraising page; payment details appear only while donations are open. */
-export function FundraisingPage({ details, config }: { details: FundraisingDetails; config: AppConfig }) {
+export function FundraisingPage({ details, extras, config }: { details: FundraisingDetails; extras: FundraisingExtras; config: AppConfig }) {
   const f = details;
-  const status = f.is_preparation ? 'Valmistelussa' : f.can_donate ? 'Keräys avoinna' : 'Lahjoittaminen suljettu';
+  const pre = extras.pre_launch;
+  const opens = extras.opens_date;
+  const opensShort = opens ? finnishDate(opens).replace(/\.\d{4}$/, '.') : '';
+  const calendarHref = opens
+    ? `data:text/calendar;charset=utf-8,${encodeURIComponent(fundraisingIcs(opens, `${config.origin}/ker%C3%A4ys`))}` : '';
+  const status = pre ? `Aukeaa ${opens ? finnishDate(opens) : ''}` : f.is_preparation ? 'Valmistelussa' : f.can_donate ? 'Keräys avoinna' : 'Lahjoittaminen suljettu';
   return <article className="public-content campaign-page" lang="fi">
     <section className="campaign-fundraising-intro" aria-labelledby="fundraising-title">
       <div>
         <h1 id="fundraising-title">Jotta mielenosoitukset löytyvät</h1>
-        <p>Haluamme tuoda mielenosoitukset.fi-palvelun yhä useamman ihmisen tietoon. {f.is_preparation
-          ? 'Suunnittelemme pienkeräystä yhteisen markkinointikampanjan toteuttamiseen.'
-          : 'Pienkeräyksellä rahoitetaan yhteinen markkinointikampanja.'}</p>
+        <p>Haluamme saada Mielenosoitukset.fi-palvelun yhä useamman ihmisen tietoon.</p>
+        <p><strong>{fundraisingCopy.lead}</strong></p>
       </div>
     </section>
 
+    {pre && opens && <section className="public-content__card fundraising-prelaunch" aria-labelledby="prelaunch-title">
+      <h2 id="prelaunch-title">Pienkeräys aukeaa {opensShort}</h2>
+      <p>Keräys alkaa {finnishDate(opens)} kello 0.00. Tilinumero ja lahjoitusohjeet julkaistaan tällä sivulla keräyksen alkaessa. Lahjoita vasta, kun keräysaika on alkanut.</p>
+      <a className="fundraising-calendar" href={calendarHref} download="pienkerays-aukeaa.ics">Lisää kalenteriin</a>
+      <p className="fundraising-prelaunch__note">Kalenteritiedosto ladataan laitteellesi. Emme kerää yhteystietojasi.</p>
+    </section>}
+
     <div className="public-content__grid">
       <div className="public-content__sections">
+        <section className="public-content__card" aria-labelledby="plan-title">
+          <h2 id="plan-title">{fundraisingCopy.planTitle}</h2>
+          <p>{fundraisingCopy.planIntro}</p>
+          <h3>{fundraisingCopy.stickersTitle}</h3>
+          <p>{fundraisingCopy.stickersLead}</p>
+          <h3>{fundraisingCopy.bannersTitle}</h3>
+          <p>{fundraisingCopy.banners}</p>
+          <h3>{fundraisingCopy.upkeepTitle}</h3>
+          <p>{fundraisingCopy.upkeep}</p>
+        </section>
+
         <section className="public-content__card" aria-labelledby="purpose-title">
-          <h2 id="purpose-title">Mihin varat käytetään?</h2>
-          <p>Kerätyt varat käytetään mielenosoitukset.fi-palvelun tunnettuuden lisäämiseen tähtäävän markkinointikampanjan toteuttamiseen.</p>
-          <ul>
-            <li>Markkinointimateriaalien, kuten tarrojen, julisteiden ja banderollien, suunnittelu, valmistus ja hankinta.</li>
-            <li>Kampanjan toteuttamisesta aiheutuvat muut kulut, kuten matkakulut.</li>
-          </ul>
-          <h3>Jos varoja jää yli</h3>
-          <p>Mikäli varoja jää ensisijaisen käyttötarkoituksen toteuttamisen jälkeen, ne käytetään mielenosoitukset.fi-palvelun ylläpitoon ja jatkuvuuden turvaamiseen.</p>
+          <h2 id="purpose-title">{fundraisingCopy.purposeTitle}</h2>
+          <p>{fundraisingCopy.purposeIntro}</p>
+          <h3>{fundraisingCopy.primaryTitle}</h3>
+          <ul>{fundraisingCopy.primary.map(item => <li key={item}>{item}</li>)}</ul>
+          <h3>{fundraisingCopy.secondaryTitle}</h3>
+          <p>{fundraisingCopy.secondary}</p>
+          <details className="fundraising-official">
+            <summary>{fundraisingCopy.officialTitle}</summary>
+            <p>{fundraisingCopy.officialPrimary}</p>
+            <p>{fundraisingCopy.officialSecondary}</p>
+          </details>
         </section>
 
         <section className="public-content__card" aria-labelledby="service-title">
@@ -45,35 +89,40 @@ export function FundraisingPage({ details, config }: { details: FundraisingDetai
       </div>
 
       <aside className="public-content__card public-content__summary" aria-labelledby="summary-title">
-        <h2 id="summary-title">{f.is_preparation ? 'Keräyksen suunnitelma' : 'Keräyksen tiedot'}</h2>
-        {f.is_preparation && <p>Ilmoitus on tarkoitus jättää 10.11.2026. Ilmoituksen jättämistä tai keräyksen aloitusta ei ole vahvistettu.</p>}
+        <h2 id="summary-title">Keräyksen tiedot</h2>
         <dl className="public-content__facts">
-          <div><dt>Keräystavoite</dt><dd className="public-content__amount">2 500 €</dd></div>
-          <div><dt>{f.confirmed ? 'Keräysaika' : 'Suunniteltu keräysaika'}</dt><dd>{f.display_start_date && f.display_end_date
+          <div><dt>Pienkeräysnumero</dt><dd>{f.collection_number || 'Vahvistetaan myöhemmin'}</dd></div>
+          <div><dt>Keräysaika</dt><dd>{f.display_start_date && f.display_end_date
             ? <><time dateTime={f.display_start_date}>{finnishDate(f.display_start_date)}</time>–<time dateTime={f.display_end_date}>{finnishDate(f.display_end_date)}</time></>
             : 'Vahvistetaan myöhemmin'}</dd></div>
+          <div><dt>Keräysalue</dt><dd>{extras.area || 'Vahvistetaan myöhemmin'}</dd></div>
           <div><dt>Tilanne</dt><dd>{status}</dd></div>
-          <div><dt>Keräyksen järjestäjä</dt><dd>{f.confirmed ? f.organizer : 'Vahvistetaan myöhemmin'}</dd></div>
-          <div><dt>Keräysnumero</dt><dd>{f.confirmed ? f.collection_number : 'Lisätään ilmoituksen vahvistamisen jälkeen'}</dd></div>
         </dl>
-        {f.can_donate ? <section className="public-content__notice" aria-labelledby="donate-title">
+        {pre ? <div className="public-content__notice">
+          <h3>Lahjoittaminen ei ole vielä avoinna</h3>
+          <p>Tilinumero ja lahjoitusohjeet julkaistaan, kun keräys alkaa.</p>
+        </div> : f.can_donate ? <section className="public-content__notice" aria-labelledby="donate-title">
           <h3 id="donate-title">Näin lahjoitat</h3>
           <p>Lahjoita vain keräysaikana {finnishDate(f.start_date!)}–{finnishDate(f.end_date!)}. Älä tee lahjoitusta keräysajan päätyttyä.</p>
           <div className="campaign-mobilepay-links">{f.mobilepay_links.filter(link => link.url).map(link =>
             <a key={link.url} className="public-content__link" href={link.url} rel="noopener noreferrer">{link.label} <Arrow /></a>)}</div>
-          {f.iban && f.recipient && <dl className="public-content__facts">
-            <div><dt>Saaja</dt><dd>{f.recipient}</dd></div>
-            <div><dt>Tilinumero (IBAN)</dt><dd>{f.iban}</dd></div>
-            {f.reference && <div><dt>Viite</dt><dd>{f.reference}</dd></div>}
-          </dl>}
+          {f.iban && f.recipient && <>
+            <dl className="public-content__facts">
+              <div><dt>Saaja</dt><dd>{f.recipient}</dd></div>
+              <div><dt>Tilinumero (IBAN)</dt><dd className="fundraising-iban">{f.iban}</dd></div>
+              {extras.bic && <div><dt>BIC</dt><dd>{extras.bic}</dd></div>}
+              {f.reference && <div><dt>Viite</dt><dd>{f.reference}</dd></div>}
+            </dl>
+            <CopyIban iban={f.iban} />
+          </>}
           {f.payment_url && <a className="public-content__link" href={f.payment_url} rel="noopener noreferrer">Siirry lahjoittamaan <Arrow /></a>}
         </section> : <div className="public-content__notice">
           <h3>{f.is_preparation ? 'Lahjoittaminen ei ole vielä avoinna' : 'Lahjoittaminen on suljettu'}</h3>
           <p>{f.confirmed
             ? 'Lahjoituksia voi tehdä vain vahvistettuna keräysaikana ja keräyksen ollessa avoinna.'
-            : 'Keräyksen järjestäjä, keräysnumero ja lahjoitusohjeet julkaistaan, kun tiedot ja aloitus on vahvistettu. Myös keräysaika on vielä suunniteltu.'}</p>
+            : 'Lahjoitusohjeet julkaistaan, kun tiedot on vahvistettu.'}</p>
         </div>}
-        {f.is_preparation && f.mobilepay_links.length > 0 && <section className="public-content__notice" aria-labelledby="mobilepay-title">
+        {!pre && f.is_preparation && f.mobilepay_links.length > 0 && <section className="public-content__notice" aria-labelledby="mobilepay-title">
           <h3 id="mobilepay-title">MobilePay</h3>
           {f.mobilepay_links.map((link, index) => <p key={index}><strong>{link.label}</strong><br />Linkki lisätään ennen keräyksen avaamista.</p>)}
         </section>}
@@ -87,6 +136,7 @@ export function FundraisingPage({ details, config }: { details: FundraisingDetai
 
 export const fundraisingData: unknown = data;
 
-export default function FundraisingScreen({ config, today }: { config: AppConfig; today: string }) {
-  return <FundraisingPage details={fundraisingDetails(fundraisingData, today)} config={config} />;
+/** `data` is the API copy; the bundled file is the fallback when the API is unreachable. */
+export default function FundraisingScreen({ config, today, data }: { config: AppConfig; today: string; data?: Record<string, unknown> | null }) {
+  return <FundraisingPage details={fundraisingDetails(data ?? fundraisingData, today)} extras={fundraisingExtras(data ?? fundraisingData, today)} config={config} />;
 }

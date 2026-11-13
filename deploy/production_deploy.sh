@@ -84,6 +84,50 @@ flock -w 300 9 || {
 cd "$repo_dir"
 git config --global --add safe.directory "$repo_dir" >/dev/null 2>&1 || true
 
+state_dir=${PRODUCTION_STATE_DIR:-/var/lib/mielenosoitukset-fi-deploy}
+receipt=$state_dir/last-successful.json
+hold_file=${PRODUCTION_HOLD_FILE:-$state_dir/hold}
+managed_file=${PRODUCTION_MIGRATIONS_MANAGED_FILE:-/etc/mielenosoitukset-fi/migrations-managed}
+if [[ -e $hold_file ]]; then
+  echo "production_deploy.sh: deployment admission is held; inspect $hold_file" >&2
+  exit 1
+fi
+
+git fetch --prune origin main
+main_sha="$(git rev-parse origin/main)"
+if [[ "$main_sha" != "$expected_sha" ]]; then
+  echo "production_deploy.sh: requested ${expected_sha}, but origin/main is ${main_sha}; refusing a stale deployment" >&2
+  exit 1
+fi
+
+# All admission checks precede tracked overlays, dependency changes or reloads.
+previous_sha=$("$production_python" <(git show "${expected_sha}:deploy/release_state.py") \
+  --receipt "$receipt" --fallback-file "$build_sha_file" --repo "$repo_dir" \
+  --check "$expected_sha") || exit 1
+[[ $previous_sha =~ ^[0-9a-f]{40}$ ]] || {
+  echo "production_deploy.sh: missing verified serving baseline" >&2
+  exit 1
+}
+
+# A duplicate successful revision verifies readiness without repeating reloads.
+if [[ -f $receipt && $previous_sha == "$expected_sha" &&
+      $(git rev-parse HEAD) == "$expected_sha" &&
+      $(cat "$build_sha_file") == "$expected_sha" ]]; then
+  if "$production_python" deploy/run_migrations.py --check --baseline "$previous_sha" &&
+     "$production_python" deploy/verify_health_sha.py "$expected_sha" "$health_url" \
+       --unix-socket "$health_socket" --attempts 1 --timeout 5 &&
+     "$production_python" deploy/verify_health_sha.py "$expected_sha" http://127.0.0.1:8091/health --attempts 1 --timeout 5 &&
+     "$production_python" deploy/verify_health_sha.py "$expected_sha" http://127.0.0.1:8090/health --attempts 1 --timeout 5 &&
+     { [[ $routing == false ]] || cmp -s deploy/apache/react-ssr-routing.conf /etc/apache2/mielenosoitukset-react-ssr.conf; }; then
+    echo "Already verified ${expected_sha}; no repeated deployment effects."
+    exit 0
+  fi
+fi
+
+# Protect worker respawns before exposing any new source or dependencies.
+install -d -m 0755 "$(dirname "$managed_file")"
+install -m 0644 /dev/null "$managed_file"
+
 stash_ref=""
 
 restore_local_changes() {
@@ -101,13 +145,6 @@ if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
   stash_ref="stash@{0}"
 fi
 
-git fetch --prune origin main
-main_sha="$(git rev-parse origin/main)"
-if [[ "$main_sha" != "$expected_sha" ]]; then
-  echo "production_deploy.sh: requested ${expected_sha}, but origin/main is ${main_sha}; refusing a stale deployment" >&2
-  exit 1
-fi
-
 git switch main
 git merge --ff-only "$expected_sha"
 
@@ -121,6 +158,9 @@ fi
 trap - EXIT
 
 chown -R www-data:www-data "$repo_dir"
+
+# Pending data changes require an explicitly approved phase under this lock.
+"$production_python" deploy/run_migrations.py --check --baseline "$previous_sha"
 
 # Index builds are synchronous even with background=True. Finish the
 # idempotent provisioning step while old workers still serve traffic.
@@ -153,7 +193,8 @@ if [[ "$skip_public" == true ]]; then
 elif [[ -x "$repo_dir/deploy/release_public.sh" ]]; then
   "$repo_dir/deploy/release_public.sh" "$expected_sha"
 else
-  echo "production_deploy.sh: deploy/release_public.sh is missing; skipping the public host and API" >&2
+  echo "production_deploy.sh: deploy/release_public.sh is missing; refusing an incomplete release" >&2
+  exit 1
 fi
 
 if [[ "$routing" == true ]]; then
@@ -167,6 +208,12 @@ elif [[ -f /etc/apache2/mielenosoitukset-react-ssr.conf ]] && \
   # Routing stays a separate, explicit step; say so instead of letting the
   # release look fully activated when a route set is still handled by Flask.
   echo "production_deploy.sh: the active Apache routing include differs from ${expected_sha}; run 'deploy-routing ${expected_sha}' to activate it" >&2
+fi
+
+if [[ "$skip_public" == false ]]; then
+  routing_receipt=(--receipt "$receipt" --record "$expected_sha" --previous "$previous_sha")
+  if [[ "$routing" == true ]]; then routing_receipt+=(--routing); fi
+  "$production_python" deploy/release_state.py "${routing_receipt[@]}"
 fi
 
 if [[ "$skip_public" == true ]]; then

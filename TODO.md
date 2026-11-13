@@ -8,7 +8,7 @@ Everything still to do, in one list. Updated 10 November 2026.
 
 ## Now
 
-- [ ] **Production virtual environment, then the security dependency update.** Pillow 11.0.0 → 13.0.0, PyJWT 2.10.1 → 2.15.1 and PyMongo 4.6.3 → 4.19.0 (#1053) merged but could not deploy: Flask runs on the read-only system Python, and `deploy/install_dependencies.py` only installs into an app-owned venv (see `docs/production-deployment.md`). The pins were reverted to unblock deploys. Next: create the venv, point Gunicorn and `PRODUCTION_PYTHON` at it, verify, then re-apply #1053. Pillow decodes uploaded images and has a critical advisory. *(approval: production infrastructure)*
+- [x] **Production virtual environment, then the security dependency update.** *(done 12 November 2026: production runs on `/opt/mielenosoitukset-fi/venv` with the new pins; see `docs/production-deployment.md`. Original note:)* Pillow 11.0.0 → 13.0.0, PyJWT 2.10.1 → 2.15.1 and PyMongo 4.6.3 → 4.19.0 (#1053) merged but could not deploy: Flask runs on the read-only system Python, and `deploy/install_dependencies.py` only installs into an app-owned venv (see `docs/production-deployment.md`). The pins were reverted to unblock deploys. Next: create the venv, point Gunicorn and `PRODUCTION_PYTHON` at it, verify, then re-apply #1053. Pillow decodes uploaded images and has a critical advisory. *(approval: production infrastructure)*
 - [ ] **#778 city admins and cases (P0):** #917 is merged and the issue says it was revalidated. Confirm on production that a city admin can open and act on their city's cases, then close the issue.
 - [x] **#1029 far-future events:** generation capped (#1064); on 10 November 2026 the cleanup removed 68,642 generated occurrences after 2028-11-10 from three series, backed up on the production host first. Helsinki now shows 238 upcoming events.
 - [x] **#984 support replies:** acknowledge queue persistence before recording the queued reply and audit receipt; redact unconfirmed outcomes (DATA-04).
@@ -19,12 +19,19 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 
 - [ ] `/report` error report form. It needs a session-scope token like `/contact`. *(approval: session change)*
 - [x] `/status`: React SSR with read-only Go `/api/status`, bounded cached database check and HTTP 200 on dependency/API failure. Routing prepared; visual acceptance BLOCKED (no socket/browser captures in this sandbox).
-- [ ] Token pages: `/cancel_demonstration/<token>`, `/confirm/<token>`, `/confirm_email/<token>`, `/accept_invite`.
+- [x] Token pages, `/cancel_demonstration/<token>`: React page with a read-only Go `/api/cancellation-links/<token>`; routing active since 12 Nov 2026.
+- [ ] Token pages that write on GET: `/kampanja/confirm/<token>`, `/auth/confirm_email/<token>` and `/orgs/accept_invite` confirm or join in the GET itself and redirect (login needed for the invite). Moving them needs a decision: split into a React page plus a POST, or keep Flask.
 - [ ] Account pages: login, register and next steps, settings, password reset, forced password and identity change, MFA verification, public profile `/<username>`. *(approval: authentication flows)*
 - [x] `/api-docs/`: build-time Markdown on the React host; OpenAPI YAML stays in Flask (#1068).
-- [ ] Secondary tools: `/developer`, demo material download.
+- [x] `/developer` overview and `/developer/apps/<id>`: read-only React screens on the Go routes `/api/developer/*` (#1130), routing prepared but commented out. `/download_material/<id>` is a download redirect and stays in Flask. See [docs/developer-react-proposal.md](docs/developer-react-proposal.md).
+- [ ] Hash `client_secret` for developer apps (Flask and Go both store it plaintext today). **Pre-approved by the maintainer on 13 November 2026; do it last, after every other page has moved to React and the Flask templates are retired (so after January 2027), as one planned change.** Plan: add a `client_secret_hash` schema marker, change `developer_bp.py` (create and rotate) and the Go write routes together to store only the hash, run a one-off migration, and tell owners of existing apps to rotate, since plaintext cannot be hashed back into a shown secret. Needs a backup, an independent security reviewer SHIP and a revert note first. Not urgent: tokens are already hashed, and the risk is only a database or backup leak.
+- [x] `/developer` activation: Apache lines uncommented 13 November 2026 after the write controls went live (`DEVELOPER_WRITES_ENABLED=true`); see [docs/developer-react-write-controls.md](docs/developer-react-write-controls.md). Scope and access requests stay on Flask. Revert by re-commenting the four lines.
 - [ ] Retire the Flask templates each migrated page leaves behind as rollback, once its React page has been stable for a while.
 - [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).
+  - Done (12 November 2026): submit headings without icons, red conflict cancel, one `…` character, no exclamation marks, mielenosoitus instead of tapahtuma in the submit form.
+  - Retry buttons (12 November 2026): calendar notices now use `detail-button`. Kept as is with reason: the chat widget's compact buttons, Pride's `button-secondary` and the home page's `home-button`, which belong to their own page styles.
+  - Brand name written "Mielenosoitukset.fi" in page texts (#1135). Decision (12 November 2026): the demonstration detail page keeps "tapahtuma" in places, because its catalog must match the Flask msgids (`tests/test_public_detail_copy_parity.py`); changing it needs new msgids and human en/sv translation, to be done when `/demonstration/<id>` leaves Flask.
+  - Open: a detailed visual walk of the city, organization, status, privacy and cancel pages with real data (only grep checks so far); `scripts/submit_visual_capture.py` captures the legacy Flask page, not the React host, so React reviews need `frontend/server.mjs` captures.
 
 ## Move APIs to Go
 
@@ -34,7 +41,7 @@ Proposal: [Public write API migration contracts, approval questions and rollout 
 
 Maintainer direction, 10 November 2026: when a page is redesigned or moved to React, its Flask endpoints move to the Go API too, in the same work or later. Still on Flask:
 
-- [ ] `/api/session` and its scopes (`organization_id`, `translation_join`, `contact_form`). *(approval: session)*
+- [ ] `/api/session` and its scopes (`organization_id`, `translation_join`, `contact_form`). *(approval: session)* Read-only Go bridge and permission scopes built behind `AUTH_BRIDGE_*` flags (approved 2026-11-12, [auth-bridge.md](docs/auth-bridge.md)); the endpoint itself still lives in Flask.
 - [ ] `POST /contact`: rate limits, one-time token, honeypot, validation and email.
 - [ ] `POST /organization/<id>/save_suggestion`: stores the suggestion, opens a case and notifies moderators.
 - [ ] `POST /suggest_change/<demo_id>`: compares proposed fields and Markdown, stores a demonstration suggestion, opens a case and notifies moderators; GET/HEAD now belongs to the React host.
@@ -42,7 +49,7 @@ Maintainer direction, 10 November 2026: when a page is redesigned or moved to Re
 - [ ] `POST /upcoming/translations/join`. *(approval: permissions)*
 - [ ] Analytics event `/api/analytics/event`: Go handler shipped dark (Flask still serves it). To activate: set `SITE_ANALYTICS_ENABLED=true` for the Go API on production, cross-check Go against Flask output, then add the POST rule; steps in `docs/go-public-api.md`. *(approval: production config)*
 - [ ] Analytics pageview `/api/analytics/pageview`: still Flask; visitor-secret/locale decisions remain prerequisites.
-- [ ] Fundraising details: today bundled from `fundraising.json` into the host; a Go endpoint would let it change without a host deploy.
+- [x] Fundraising details: `GET /api/fundraising/details` serves a file-backed copy, the host falls back to the bundled `fundraising.json` ([docs/go-fundraising-details.md](docs/go-fundraising-details.md)). Open: database collection plus admin editing.
 
 ## UI follow-ups from reviews
 
@@ -68,16 +75,16 @@ From the visual reviews:
 The checked visual follow-ups above are implemented; visual acceptance remains **BLOCKED** until real captures and an independent reviewer SHIP are available. This checkout's sandbox cannot bind sockets, and captures were explicitly excluded from this task.
 
 - [x] Keep action menus outside the scroll viewport (#743). Implemented; visual acceptance remains **BLOCKED** as above.
-- [ ] Organization page: an anonymous visitor who sends a fill-in suggestion never sees the "Kiitos! Ehdotuksesi on tallennettu" message, because the React page only fetches flash messages for signed-in members of that organization. Needs the session endpoint to report pending messages for everyone (session change: maintainer approval).
+- [ ] Organization page: an anonymous visitor who sends a fill-in suggestion never sees the "Kiitos! Ehdotuksesi on tallennettu" message, because the React page only fetches flash messages for signed-in members of that organization. Fixed behind `AUTH_BRIDGE_SCOPES` ([auth-bridge.md](docs/auth-bridge.md)); done once the flag is on in production.
 
 ## Security and permissions
 
 - [ ] **SEC-01:** release acceptance evidence for the MFA challenge (#901).
 - [ ] **SEC-03:** broader role and audit acceptance after #917/#918/#919.
-- [ ] **SEC-04:** token and approval lifecycle: revocation, expiry, replay, idempotent decisions.
+- [x] **SEC-04:** token and approval lifecycle: revocation, expiry, replay, idempotent decisions. Inventory and open questions in [docs/token-lifecycle.md](docs/token-lifecycle.md).
 - [ ] **SEC-05:** review incident #912/#913 protections before touching related code.
 - [ ] Harden privileged admin user actions (#547), organization membership and invites (#550, #342), and the organization admin panel (#549).
-- [ ] **QA-01:** finish the individual review of authentication and permission tests. Open: #979 identity test audit (rebase on `CHANGELOG.md`, then merge), QA-01j, QA-01k.
+- [ ] **QA-01:** finish the individual review of authentication and permission tests. QA-01j (#966) and QA-01k (#973 via #964) are merged; #1114 (supersedes #979) carries the identity audit, QA-01m. Remaining: other authentication and permission test files, see the roadmap.
 
 ## Data, jobs and integrations
 
@@ -117,7 +124,7 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 
 ## Localization and docs
 
-- [ ] **I18N-01:** inventory untranslated strings and catalog gaps per route family; English and Swedish copy comes from human translators.
+- [x] **I18N-01:** inventory untranslated strings and catalog gaps per route family in `docs/i18n-inventory.md` (regenerate with `scripts/i18n_inventory.py`); English and Swedish translation itself stays with human translators.
 - [ ] **I18N-02:** standardize backend, API, moderation and email messages (#582, #553).
 - [ ] **DOC-01:** user and moderator guides (#563).
 - [ ] **DOC-02:** keep `roadmap.md`, this file, issues and release evidence aligned. Refresh `BLOCKERS.md`.
@@ -130,6 +137,7 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 - [ ] **ENGAGE-02:** optional email digest of a user's own notifications.
 - [ ] **PRODUCT-01:** broader societal events (#583), following tags (#117), city and tag email subscriptions (#121).
 - [ ] Count visitors who browse without JavaScript (a `<noscript>` pixel; filter bots) to decide how much the no-JS fallback matters.
+- [ ] **FUND-02 (question):** Should visitors be able to sign up for a reminder by email before the collection opens? The calendar download collects nothing, an email signup stores addresses and sends mail, so it needs your OK and a privacy notice. Suggested answer: no for now; the calendar file is enough, and the collection page is not linked yet. If yes: one-shot list in Mongo, consent text on the form, one email on opening day, deleted afterwards.
 - [ ] **FUND-01:** fill in the official fundraising details when they are confirmed, then open donations.
 - [ ] **PREVIEW-02: organizer design templates for preview images.** Let organizations upload their own template for a demo's preview image:
   - Formats: InDesign, Photoshop and Illustrator, or the open-source alternatives the maintainer named ("design craft, photo craft, vector craft"). Decide which formats can be rendered server-side and how much of the file to support, for example named text layers for title, date and place.

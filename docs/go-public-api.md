@@ -27,7 +27,8 @@ public-status/lockdown reader reads MongoDB `panic`, so it cannot supply this
 switch. Set Go environment `SITE_ANALYTICS_ENABLED=true` **only** when the
 Flask YAML switch is enabled; unset, false and invalid values disable Go writes.
 `deploy/go-api/configure_environment.py` writes it for every deployment when
-`config.yaml` has a literal `SITE_ANALYTICS_ENABLED: true`.
+`config.yaml` does not set `SITE_ANALYTICS_ENABLED` to a false value; a missing key
+counts as enabled, exactly as in Flask.
 This is a startup setting: restart Go after changing it, and keep both settings
 aligned during mixed-version operation and rollback. Never infer enablement
 from a browser payload. No secrets, IPs, user agents, cookies or visitor hashes

@@ -15,7 +15,8 @@ export default function ListingScreen({ route, config, session, listing }: {
   const recruiting = status === 'none' || status === 'single' ? status : undefined;
   return <PublicListingPage {...listingProps(route, config, session)}
     notice={recruiting ? <CityAdminRecruiting status={recruiting} text={catalog(config.locale).cityAdmin}
-      href={`${config.urls.cityAdmin}?city=${encodeURIComponent(route.scope === 'city' ? route.value ?? '' : '')}`} /> : undefined}
+      href={`${config.urls.cityAdmin}?city=${encodeURIComponent(route.scope === 'city' ? route.value ?? '' : '')}`} />
+      : status === 'national' ? <NationalTeamNotice text={catalog(config.locale).cityAdmin} /> : undefined}
     initialData={listing?.page ?? undefined} initialSearch={listing?.query}
     onSearch={search => {
       if (!session.siteAnalyticsEnabled || navigator.doNotTrack === '1') return;
@@ -29,5 +30,12 @@ export default function ListingScreen({ route, config, session, listing }: {
 function CityAdminRecruiting({ status, text, href }: { status: 'none' | 'single'; text: Catalog['cityAdmin']; href: string }) {
   return <aside className="city-admin-recruiting" aria-label={text.label}>
     <p>{status === 'none' ? text.none : text.single}{' '}<a href={href}>{text.action}</a></p>
+  </aside>;
+}
+
+/** Cities moderated by the national admin team (Helsinki) name the team and never recruit. */
+function NationalTeamNotice({ text }: { text: Catalog['cityAdmin'] }) {
+  return <aside className="city-admin-recruiting" aria-label={text.label}>
+    <p><strong>{text.national}</strong>{' '}{text.nationalNote}</p>
   </aside>;
 }

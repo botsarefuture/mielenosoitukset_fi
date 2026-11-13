@@ -1,0 +1,1 @@
+- The developer panel (`/developer` and a single app page) is now served by the React site. Creating, rotating and revoking tokens and requesting scopes work as before.

@@ -64,6 +64,17 @@ if (container) {
       void import('./SuggestChangeScreen').then(({ default: SuggestChangeScreen }) => {
         hydrateRoot(container, <Root {...props} serverPage={<SuggestChangeScreen demo={demo} />} />);
       });
+    } else if (route?.name === 'cancel-link' && props.cancelLink) {
+      const link = props.cancelLink;
+      const token = route.token;
+      void import('./CancelLinkScreen').then(({ default: CancelLinkScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<CancelLinkScreen link={link} token={token} />} />);
+      }).catch(error => console.error('Could not start the cancellation page', error));
+    } else if (route?.name === 'developer') {
+      const appId = route.appId;
+      void import('./DeveloperScreen').then(({ default: DeveloperScreen }) => {
+        hydrateRoot(container, <Root {...props} serverPage={<DeveloperScreen config={props.config} session={props.session} appId={appId} />} />);
+      }).catch(error => console.error('Could not start the developer panel', error));
     } else if (route?.name === 'organization-fill' && props.organizationFill) {
       const profile = props.organizationFill;
       void import('./OrganizationFillScreen').then(({ default: OrganizationFillScreen }) => {
@@ -71,7 +82,7 @@ if (container) {
       }).catch(error => console.error('Could not start the organization fill-in form', error));
     } else if (route?.name === 'city-admin') {
       void import('./CityAdminApplyScreen').then(({ default: CityAdminApplyScreen }) => {
-        hydrateRoot(container, <Root {...props} serverPage={<CityAdminApplyScreen session={props.session} />} />);
+        hydrateRoot(container, <Root {...props} serverPage={<CityAdminApplyScreen session={props.session} apiBase={props.config.apiBase} />} />);
       }).catch(error => console.error('Could not start the city admin application page', error));
     } else if (route?.name === 'contact') {
       void import('./ContactScreen').then(({ default: ContactScreen }) => {
@@ -79,7 +90,7 @@ if (container) {
       }).catch(error => console.error('Could not start the contact page', error));
     } else if (route?.name === 'fundraising') {
       void import('./FundraisingScreen').then(({ default: FundraisingScreen }) => {
-        hydrateRoot(container, <Root {...props} serverPage={<FundraisingScreen config={props.config} today={props.today ?? ''} />} />);
+        hydrateRoot(container, <Root {...props} serverPage={<FundraisingScreen config={props.config} today={props.today ?? ''} data={props.fundraising} />} />);
       }).catch(error => console.error('Could not start the fundraising page', error));
     } else if (route?.name === 'campaign') {
       void import('./CampaignScreen').then(({ default: CampaignScreen }) => {

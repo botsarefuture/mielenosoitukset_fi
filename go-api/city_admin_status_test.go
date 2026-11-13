@@ -26,6 +26,11 @@ func (fakeStatusStore) ResolvePublicID(context.Context, string) (bson.ObjectID, 
 }
 func (fakeStatusStore) Ping(context.Context) error { return nil }
 
+func (s *adminCountStore) CityAdminCoverage(context.Context) (map[string]int, error) {
+	s.calls++
+	return s.counts, s.err
+}
+
 func (s *adminCountStore) CountCityAdmins(_ context.Context, key string) (int, error) {
 	s.calls++
 	return s.counts[key], s.err
@@ -117,5 +122,55 @@ func TestCachedStoreForwardsCityAdminCounts(t *testing.T) {
 	}
 	if _, err := (&cachedDetailStore{source: fakeStatusStore{}}).CountCityAdmins(context.Background(), "oulu"); err == nil {
 		t.Fatal("a source without counts must report an error, not zero admins")
+	}
+}
+
+func TestCityAdminCoverageListsEveryCityAsABandOnly(t *testing.T) {
+	coverageCache.bands = nil
+	store := &adminCountStore{counts: map[string]int{"turku": 1, "tampere": 4}}
+	api := &API{store: store}
+	rec := httptest.NewRecorder()
+	api.getCityAdminCoverage(rec, httptest.NewRequest("GET", "/api/cities/admin-status", nil))
+	if rec.Code != 200 {
+		t.Fatalf("status %d", rec.Code)
+	}
+	var body struct {
+		Cities map[string]string `json:"cities"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if len(body.Cities) != len(cityCatalog) {
+		t.Fatalf("want every catalog city, got %d of %d", len(body.Cities), len(cityCatalog))
+	}
+	want := map[string]string{"turku": "single", "tampere": "team", "oulu": "none", "helsinki": "national"}
+	for key, band := range want {
+		if body.Cities[key] != band {
+			t.Fatalf("%s = %q, want %q", key, body.Cities[key], band)
+		}
+	}
+	for _, band := range body.Cities {
+		if band != "none" && band != "single" && band != "team" && band != "national" {
+			t.Fatalf("unexpected value %q", band)
+		}
+	}
+	calls := store.calls
+	api.getCityAdminCoverage(httptest.NewRecorder(), httptest.NewRequest("GET", "/api/cities/admin-status", nil))
+	if store.calls != calls {
+		t.Fatal("repeat reads must come from the cache")
+	}
+	coverageCache.bands = nil
+	store.err = errors.New("down")
+	rec = httptest.NewRecorder()
+	api.getCityAdminCoverage(rec, httptest.NewRequest("GET", "/api/cities/admin-status", nil))
+	if rec.Code != 503 {
+		t.Fatalf("read failure: %d", rec.Code)
+	}
+}
+
+func TestGrantKeysReadsBothGrantShapes(t *testing.T) {
+	got := grantKeys(bson.M{"scope_keys": bson.A{"turku", "oulu"}, "scope_key": "espoo"})
+	if len(got) != 3 || got[0] != "turku" || got[2] != "espoo" {
+		t.Fatalf("grantKeys = %v", got)
 	}
 }

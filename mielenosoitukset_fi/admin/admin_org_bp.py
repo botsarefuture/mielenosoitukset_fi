@@ -1560,13 +1560,13 @@ def set_invite_role() -> Tuple[Response, int]:
 
         # Legacy format: invite stored as just email string
         if isinstance(invite, str) and _invite_matches_email(invite, email):
-            invitations[invitations.index(invite)] = {"email": email, "role": role}
+            invitations[invitations.index(invite)] = {"email": email, "role": role, "invited_at": utcnow()}
             updated = True
             break
 
     if not updated:
         # No existing invite → add a new one
-        invitations.append({"email": email, "role": role})
+        invitations.append({"email": email, "role": role, "invited_at": utcnow()})
 
     # --- Update organization ---
     mongo.organizations.update_one(

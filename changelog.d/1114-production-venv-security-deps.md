@@ -1,0 +1,1 @@
+- Updated Pillow (13.0.0), PyJWT (2.15.1) and PyMongo (4.19.0) for security fixes, and added `deploy/create_production_venv.sh` so production runs on an application-owned virtual environment instead of the read-only system Python. No visible change for visitors.

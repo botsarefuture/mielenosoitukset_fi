@@ -175,3 +175,35 @@
   color: var(--product-text-muted);
   font-size: 0.9rem;
 }
+
+.contact-form .city-admin-picker__select {
+  width: 100%;
+}
+
+.city-admin-chip-note {
+  color: var(--product-text-muted);
+  font-size: 0.85em;
+}
+
+.city-admin-privacy {
+  margin: 1.25rem 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--product-border, #d8dde6);
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.city-admin-privacy h3 {
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+
+.city-admin-privacy ul {
+  margin: 0 0 0.5rem;
+  padding-left: 1.2rem;
+}
+
+.city-admin-privacy p {
+  margin: 0;
+}

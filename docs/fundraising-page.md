@@ -1,7 +1,7 @@
 # Fill in the fundraising page
 
 The default is a Finnish **preparation page behind login** at `/keräys`. Empty official
-fields have explicit public placeholders. No invented organizer, collection
+fields have explicit public placeholders. No invented collection
 number, payment details, amount raised or endorsements are published. The
 €2,500 amount is a target. The supplied 15.11.2026–15.2.2027 period remains
 proposed; the planned 10.11 notification is not a completed filing.
@@ -12,11 +12,11 @@ Edit `mielenosoitukset_fi/utils/data/fundraising.json`:
 
 | Field | Fill with |
 | --- | --- |
-| `organizer` | Confirmed official organizer's full published name |
 | `collection_number` | Confirmed collection number |
 | `start_date`, `end_date` | Confirmed dates as `YYYY-MM-DD`; empty by default |
 | `planned_start_date`, `planned_end_date` | Proposed dates for preparation copy only; never enable payments |
 | `recipient`, `iban` | Verified recipient and IBAN; required together for bank transfers |
+| `bic`, `area` | Bank BIC and collection area text; page only, not part of the Flask parity rules |
 | `reference` | Optional bank reference; leave empty if none is provided |
 | `payment_url` | Optional verified HTTPS donation page; can replace bank instructions |
 | `mobilepay_links` | Two ready entries with `label` and empty `url`; fill each with a confirmed, appropriate MobilePay payment link. Add more entries if needed. |

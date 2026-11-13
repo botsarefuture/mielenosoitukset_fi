@@ -1,0 +1,1 @@
+- Keep the developer panel from showing a sign-in prompt when the session cannot be read or a call fails; only a real 401 means signed out, and other failures offer a retry.

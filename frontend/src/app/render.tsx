@@ -35,10 +35,16 @@ import SuggestChangeScreen from './SuggestChangeScreen';
 import ApiDocsScreen from './ApiDocsScreen';
 import apiDocs from 'virtual:api-docs';
 import StatusScreen from './StatusScreen';
+import CancelLinkScreen from './CancelLinkScreen';
+import DeveloperScreen from './DeveloperScreen';
+import { loadCancelLink, cancelLinkTitle, type CancelLinkState } from './cancel-link';
 import { loadStatus, statusTitle, type ServiceStatus } from './status';
 import { loadSuggestion, suggestionTitle, suggestionLead, type SuggestionDemo } from './suggest-change';
-import { helsinkiToday } from './fundraising';
-export { fundraisingDetails } from './fundraising';
+import { helsinkiToday, loadFundraisingData, fundraisingExtras, withoutAccount } from './fundraising';
+import { fundraisingData as fundraisingBundled } from './FundraisingScreen';
+export { fundraisingDetails, fundraisingExtras, fundraisingIcs } from './fundraising';
+import { BAR_STYLESHEET, barMilestone, dismissScript } from './fundraising-bar';
+export { barPhase, barMilestone, isDismissed, normalizeBar, dismissScript, shortDate } from './fundraising-bar';
 import { campaignPath, loadCampaignPublication } from './campaign-route';
 import { routeForPath, routeMeta } from './routes';
 import type { RouteMeta } from './routes';
@@ -75,7 +81,7 @@ export type RenderInput = {
   headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; cityAdmin?: string; organizationFill?: string; suggestChange?: string; status?: string; pride?: string; information?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; cityAdmin?: string; organizationFill?: string; suggestChange?: string; cancelLink?: string; developer?: string; status?: string; pride?: string; information?: string };
 
 export type RenderResult = {
   status: number;
@@ -320,6 +326,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
   if (responseCookies.length) headers['Set-Cookie'] = responseCookies;
   let appMarkup = '';
   let today: string | undefined;
+  let fundraisingData: Record<string, unknown> | null | undefined;
   let campaignVisible: boolean | undefined;
   if (route.name === 'api-docs') {
     extraHead = '<link rel="stylesheet" href="/static/css/public-api-docs.css?v=20261110-2">';
@@ -341,10 +348,29 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       serverPage={<InformationScreen page={route.page} session={session} campaign={campaignVisible} />} />);
   }
 
-  if (route.name === 'campaign' || route.name === 'fundraising') {
+  if (route.name === 'fundraising') {
+    // Public from the start; it has its own pre-launch state. Until the first
+    // collection day (Helsinki time) it is not indexed. Not part of the campaign gate.
+    today = helsinkiToday();
+    fundraisingData = await loadFundraisingData(readBase);
+    headers['Cache-Control'] = 'private, no-store';
+    if (fundraisingExtras(fundraisingData ?? fundraisingBundled, today).pre_launch) {
+      headers['X-Robots-Tag'] = 'noindex, follow';
+      meta = { ...meta, robots: 'noindex, follow' };
+    }
+    extraHead = (assets.fundraising ?? '')
+      + '<link rel="stylesheet" href="/static/css/public-content.css?v=20261113-fundraising-purpose-4">'
+      + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261110-volunteer-message-1">';
+    // The whole page is in the server-rendered document; no fallback is needed.
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<FundraisingScreen config={config} today={today} data={fundraisingData} />} />);
+  }
+
+  if (route.name === 'campaign') {
     // The Flask gate: signed-in preview until the campaign is published.
     const published = await loadCampaignPublication(readBase);
-    const gatedPath = route.name === 'campaign' ? campaignPath : config.urls.fundraising;
+    const gatedPath = campaignPath;
     if (!published && !session.authenticated) {
       return { status: 302, html: '', redirect: `${config.urls.login}?next=${encodeURIComponent(gatedPath)}`,
         headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } };
@@ -354,22 +380,13 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       headers['X-Robots-Tag'] = 'noindex, nofollow';
       meta = { ...meta, robots: 'noindex, nofollow' };
     }
-    if (route.name === 'campaign') {
+    {
       extraHead = (assets.campaign ?? '')
         + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261110-volunteer-message-1">';
       noscript = '<noscript><p class="container-main-content">Sivu toimii parhaiten, kun JavaScript on käytössä. '
         + 'Ilmoittautuminen ja uutiskirjeen tilaus tarvitsevat sen.</p></noscript>';
       appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
         serverPage={<CampaignScreen config={config} />} />);
-    } else {
-      today = helsinkiToday();
-      extraHead = (assets.fundraising ?? '')
-        + '<link rel="stylesheet" href="/static/css/public-content.css?v=20261026-fundraising-2">'
-        + '<link rel="stylesheet" href="/static/css/campaign.css?v=20261110-volunteer-message-1">';
-      // The whole page is in the server-rendered document; no fallback is needed.
-      noscript = '';
-      appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
-        serverPage={<FundraisingScreen config={config} today={today} />} />);
     }
   }
 
@@ -385,6 +402,23 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
       serverPage={<StatusScreen status={serviceStatus} />} />);
+  }
+  let cancelLink: CancelLinkState | undefined;
+  if (route.name === 'cancel-link') {
+    // The link is a bearer secret: never cached, never indexed, no referrer to other sites.
+    const loaded = await loadCancelLink(readBase, route.token);
+    if (loaded.state === 'unavailable') {
+      return { status: 503, html: unavailableDocument(), headers: { 'Cache-Control': 'no-store', 'Retry-After': '30', 'X-Robots-Tag': 'noindex' } };
+    }
+    cancelLink = loaded;
+    headers['X-Robots-Tag'] = 'noindex, nofollow';
+    headers['Referrer-Policy'] = 'no-referrer';
+    meta = { title: `${cancelLinkTitle} | Mielenosoitukset.fi`, description: cancelLinkTitle,
+      canonical: null, robots: 'noindex, nofollow' };
+    extraHead = (assets.cancelLink ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<CancelLinkScreen link={cancelLink} token={route.token} />} />);
   }
   if (route.name === 'suggest-change') {
     const loaded = await loadSuggestion(readBase, route.id);
@@ -423,7 +457,17 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     // The page renders its own no-JavaScript fallback inside the form card.
     noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
-      serverPage={<CityAdminApplyScreen session={session} />} />);
+      serverPage={<CityAdminApplyScreen session={session} apiBase={config.apiBase} />} />);
+  }
+
+  if (route.name === 'developer') {
+    // Per-account page: never cached or indexed. The data loads in the browser from the Go read routes.
+    headers['Cache-Control'] = 'private, no-store';
+    headers['X-Robots-Tag'] = 'noindex, nofollow';
+    extraHead = (assets.developer ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<DeveloperScreen config={config} session={session} appId={route.appId} />} />);
   }
 
   if (route.name === 'contact') {
@@ -586,7 +630,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       url: `${config.origin}${monthPath(route)}?day=${Number(row.date.slice(8))}#calendar-agenda` }))
       : Array.from({length:12},(_,index)=>({ name:monthName({...route,month:index+1}), url:`${config.origin}${monthPath({...route,month:index+1})}` }));
     jsonLd = discoveryStructuredData(meta, items);
-    extraHead = (route.month ? assets.calendar : assets.calendarYear) ?? '';
+    extraHead = ((route.month ? assets.calendar : assets.calendarYear) ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
     noscript = `<noscript>${renderToStaticMarkup(<CalendarFallback calendar={calendar} config={config} />)}</noscript>`;
     if (!data || calendar.events === null) { status = 503; headers['Retry-After'] = '30'; headers['X-Robots-Tag'] = 'noindex, follow'; }
   }
@@ -708,11 +752,16 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       + (profile.email ? `<p><a href="mailto:${escapeHtml(profile.email)}">${escapeHtml(profile.email)}</a></p>` : '')
       + `<a href="/demonstrations">Kaikki mielenosoitukset</a></article></noscript>`;
   }
+  // The fundraising bar: its stylesheet, plus the pre-paint script that hides it for visitors who dismissed it.
+  const barMilestoneNow = route.name === 'fundraising' ? null : barMilestone(session.fundraisingBar);
+  const barHead = barMilestoneNow ? BAR_STYLESHEET + dismissScript(barMilestoneNow) : '';
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
   const bootstrap = serialize({ config, session, path: input.path, route, ...(today ? { today } : {}),
+    ...(fundraisingData ? { fundraising: fundraisingExtras(fundraisingData, today).pre_launch ? withoutAccount(fundraisingData) : fundraisingData } : {}),
     ...(campaignVisible !== undefined ? { campaignVisible } : {}),
     ...(organizationFill ? { organizationFill } : {}),
     ...(suggestionDemo ? { suggestionDemo } : {}),
+    ...(cancelLink ? { cancelLink } : {}),
     ...(route.name === 'status' ? { serviceStatus } : {}),
     ...(detail ? { detail } : {}), ...(series ? { series } : {}), ...(home ? { home } : {}),
     ...(listing ? { listing } : {}), ...(organization ? { organization } : {}), ...(cities !== undefined ? { cities } : {}),
@@ -723,7 +772,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
 ${headMarkup({
     title: meta.title, description: meta.description, robots: meta.robots,
     canonical: meta.canonical, url, origin: config.origin, locale: config.locale,
-    assets: assets.head, image: meta.image ?? null, jsonLd, extraHead,
+    assets: assets.head, image: meta.image ?? null, jsonLd, extraHead: extraHead + barHead,
     siteAnalyticsEnabled: session.siteAnalyticsEnabled,
   })}
 </head>

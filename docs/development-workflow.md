@@ -41,21 +41,44 @@ The maintainer decides what we build and why. Whoever implements decides how.
 - Small commits, one idea each, with a message that says why the change was needed.
   Imperative mood, no trailing period, no tool or assistant attribution.
 - A PR covers one reviewable change. Stack PRs when one depends on another and say which
-  base each uses.
+  base each uses. Use the installed `gh stack` extension for dependent work:
+  `gh stack init`, `gh stack add <branch>`, `gh stack submit`, `gh stack sync`
+  and `gh stack view`. Merge from the bottom and verify the next layer targets
+  `main` before arming it. Independent changes need no stack.
 - The description says what changed, why, how it was checked and anything that was not
   checked. Link the roadmap item or issue.
 - Every user-facing change has a separate note in `changelog.d/`. Write it for a
   reader of the changelog, not as a diff summary. See `changelog.d/README.md` for
   how to render the combined history.
-- Open the PR as soon as the branch is ready, then move on to independent work. Do not
-  sit waiting for CI.
+- Open the PR as soon as the branch is ready and arm auto-merge with
+  `gh pr merge --auto --merge`, then move on to independent work. Do not sit waiting
+  for CI or wait for one independent PR to merge before arming the next.
+- For backlogs of 20–40 PRs, the queue allows 8 concurrent builds and merges up to
+  8 ready entries. Minimum 1 and wait 0 avoid a batching delay for a lone PR;
+  required queue checks still run. Build concurrency does not guarantee one CI
+  run per eight entries. Agents intervene for failures, conflicts and review
+  feedback, rather than directing each successful merge.
+- A dependent PR must target `main` after its parent merges before being queued.
+  Retained branches prevent automatic retargeting, so verify its base explicitly.
+  Dequeue before pushing fixes to a queued branch, then re-arm auto-merge.
+
+A production deployment corresponds to a selected verified commit, not a PR count.
+The existing workflow coalesces pending runs and finishes its active deployment.
+Do not request a separate deployment for each PR in a merge-group update or cancel
+an active deployment to accelerate another PR. Migration and rollback obligations
+remain; see [production-deployment.md](production-deployment.md).
 
 ## Keeping track of open PRs
 
 - At the start of every session and after finishing each PR, list open PRs, check CI and
   read new review comments. Fix what is red or requested before starting new work.
-- Rebase or merge `main` into a branch that has fallen behind; resolve conflicts in the
-  generated frontend assets by rebuilding, not by hand.
+- A branch that has only fallen behind needs no rebase: the merge queue validates it
+  against the current tip. Resolve real conflicts in the branch, and rebuild generated
+  frontend assets instead of hand-merging them.
+- A queued pull request is frozen: take it out of the queue before pushing any change to
+  it, and do not merge `main` in while it waits.
+- When a change depends on an unmerged pull request, build a stack with `gh stack`
+  rather than basing one branch on another by hand.
 - Merging and production activation follow the approval rules below: green required
   tests (plus SHIP for UI) are enough to merge.
 

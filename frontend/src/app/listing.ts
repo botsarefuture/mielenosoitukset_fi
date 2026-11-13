@@ -23,18 +23,18 @@ export function listingFixed(route: ListingRoute): Record<string, string> {
 }
 
 const messages: ListingMessages = {
-  search: 'Hae mielenosoituksia', searchPlaceholder: 'Hae mielenosoituksia...', city: 'Kaupunki',
+  search: 'Hae mielenosoituksia', searchPlaceholder: 'Hae mielenosoituksia…', city: 'Kaupunki',
   location: 'Sijainti', startDate: 'Alkupäivä (pp.kk.vvvv)', endDate: 'Loppupäivä (pp.kk.vvvv)',
   dateError: 'Valitse kelvollinen päivämääräväli tulevaisuudesta', year: 'Vuosi', month: 'Kuukausi',
-  submitSearch: 'Hae', removeFilter: 'Poista suodatin', loading: 'Ladataan mielenosoituksia...',
-  loadMore: 'Näytä lisää', loadingMore: 'Ladataan...', previous: 'Edellinen',
+  submitSearch: 'Hae', removeFilter: 'Poista suodatin', loading: 'Ladataan mielenosoituksia…',
+  loadMore: 'Näytä lisää', loadingMore: 'Ladataan…', previous: 'Edellinen',
   summary: 'Näytetään __START__–__END__ / __COUNT__ mielenosoituksesta',
   loadError: 'Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen.', retry: 'Yritä uudelleen',
   emptyTitle: 'Ei löytynyt mielenosoituksia', empty: 'Tällä hetkellä ei ole mielenosoituksia. Tarkista myöhemmin.',
   filteredEmpty: 'Kokeile poistaa suodattimia tai hakea toisella sanalla.',
   filters: 'Suodattimet', clearFilters: 'Poista suodattimet', submitEvent: 'Ilmoita uusi mielenosoitus', cancelled: 'Peruttu', today: 'Tänään',
   startingFrom: 'alkaen', endTime: 'Päättymisaika', loginPrompt: 'Kirjaudu sisään käyttääksesi sosiaalisia toimintoja',
-  attendingSuffix: 'osallistuu', loadingFriends: 'Ladataan kavereita...', invite: 'Kutsu kavereita',
+  attendingSuffix: 'osallistuu', loadingFriends: 'Ladataan kavereita…', invite: 'Kutsu kavereita',
   allEvents: 'Kaikki mielenosoitukset',
 };
 

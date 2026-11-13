@@ -10,9 +10,18 @@ exec 9>/run/lock/mielenosoitukset-api-deploy.lock
 flock -n 9 || { echo 'API deploy already running'; exit 1; }
 printf '%s  %s\n' "$binary_sha" "$script_dir/api" | sha256sum --check --status
 release_dir=/opt/mielenosoitukset-api/releases/$release_sha
+release_exists=false
+if [[ -e $release_dir || -L $release_dir ]]; then
+    if [[ ! -d $release_dir || -L $release_dir || ! -f $release_dir/api || -L $release_dir/api ]] ||
+       ! printf '%s  %s\n' "$binary_sha" "$release_dir/api" | sha256sum --check --status; then
+        echo 'Existing release has a different binary; refusing overwrite' >&2
+        exit 1
+    fi
+    release_exists=true
+fi
 backup_dir=/var/backups/mielenosoitukset-api/$(date -u +%Y%m%dT%H%M%SZ)
 install -d -m 0700 "$backup_dir" /etc/mielenosoitukset-api
-install -d -m 0755 "$release_dir"
+if [[ $release_exists == false ]]; then install -d -m 0755 "$release_dir"; fi
 previous=$(readlink -f /opt/mielenosoitukset-api/current || true)
 if [[ -n $previous && -x $previous/api ]]; then printf '%s\n' "$previous" > "$backup_dir/previous-release"; fi
 for path in /etc/mielenosoitukset-api/environment /etc/systemd/system/mielenosoitukset-api.service; do
@@ -31,7 +40,7 @@ rollback_service() {
     fi
 }
 trap 'rollback_service || echo "Automatic API rollback failed; inspect service and saved backup" >&2' ERR
-install -o root -g root -m 0755 "$script_dir/api" "$release_dir/api"
+if [[ $release_exists == false ]]; then install -o root -g root -m 0755 "$script_dir/api" "$release_dir/api"; fi
 python3 "$script_dir/configure_environment.py" /var/www/mielenosoitukset_fi/config.yaml /etc/mielenosoitukset-api/environment
 install -m 0644 "$script_dir/mielenosoitukset-api.service" /etc/systemd/system/mielenosoitukset-api.service
 ln -sfn "$release_dir" /opt/mielenosoitukset-api/current.next

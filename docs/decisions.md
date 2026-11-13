@@ -12,6 +12,14 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 
 ## Process and approvals
 
+- **Repository ownership moves to the `mielenosoitukset-fi` organization (2026-11-13).**
+  The canonical URL is https://github.com/mielenosoitukset-fi/mielenosoitukset_fi/;
+  the old `botsarefuture/mielenosoitukset_fi` links and remotes keep working through
+  GitHub's redirect. `python-tests` now also runs on `merge_group` so it can stay the
+  required check once the merge queue is switched on. Deployment hosts, credentials,
+  paths and environment variables are unchanged. The reference audit, the external and
+  server-side follow-ups and the post-transfer checks are in
+  [github-organization-migration.md](github-organization-migration.md).
 - **Changelog notes (2026-11-12).** New user-facing changes use separate files in
   `changelog.d/` to avoid pull requests conflicting in `CHANGELOG.md`. Render the
   notes with the existing history using `scripts/render_changelog.py`; release

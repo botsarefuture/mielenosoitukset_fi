@@ -55,10 +55,14 @@ To run this project locally you'll typically need:
 
 ### Installation
 
+The canonical repository is
+<https://github.com/mielenosoitukset-fi/mielenosoitukset_fi/>. Clones of the older
+`botsarefuture/mielenosoitukset_fi` URL keep working through GitHub's redirect.
+
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/botsarefuture/mielenosoitukset_fi.git
+    git clone https://github.com/mielenosoitukset-fi/mielenosoitukset_fi.git
     cd mielenosoitukset_fi
     ```
 
@@ -222,7 +226,7 @@ If you have any questions, suggestions, or feedback, feel free to reach out to u
 - Email: tuki@mielenosoitukset.fi
 - Email: olivia@mielenosoitukset.fi (for contributor enquiries)
 
-- GitHub Issues: [https://github.com/botsarefuture/mielenosoitukset_fi/issues](https://github.com/botsarefuture/mielenosoitukset_fi/issues)
+- GitHub Issues: [https://github.com/mielenosoitukset-fi/mielenosoitukset_fi/issues](https://github.com/mielenosoitukset-fi/mielenosoitukset_fi/issues)
 
 We appreciate your input and support!
 

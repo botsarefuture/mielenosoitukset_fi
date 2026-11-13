@@ -35,3 +35,15 @@ def test_session_summary_carries_the_bar_settings_off_by_default(client):
     payload = client.get("/api/session").get_json()
     assert payload["fundraising_bar"]["enabled"] is False
     assert set(payload["fundraising_bar"]) == {"enabled", "start", "end", "donations_open"}
+
+
+def test_shipped_configuration_announces_the_opening_but_hides_donation_details():
+    from datetime import date
+
+    from mielenosoitukset_fi.utils.fundraising import fundraising_details
+
+    for day in (date(2026, 11, 14), date(2026, 11, 15)):
+        bar = fundraising_bar(today=day)
+        assert bar["enabled"] is True and bar["start"] == "2026-11-16" and bar["end"] == "2027-02-15"
+        assert bar["donations_open"] is False
+        assert fundraising_details(today=day)["can_donate"] is False

@@ -88,20 +88,20 @@ ruleset requires a pull request, resolves review threads, requires the `python-t
 check with "branches must be up to date", and allows merge, squash and rebase. The
 required check now also runs on `merge_group`.
 
-Enabled queue configuration, conservative because several agents work at once:
+Queue configuration for a backlog of about 40 pull requests:
 
 | Setting | Value | Why |
 | --- | --- | --- |
 | Merge method | Merge | Matches the merge-commit history |
 | Grouping | ALLGREEN | Every entry must pass its own required checks |
-| Max entries to build | 3 | Bounds concurrent CI cost |
-| Max entries to merge | 3 | Small batches, faster failure isolation |
-| Min entries to merge | 1 | A single pull request merges immediately |
+| Max entries to build | 8 | Allows eight concurrent queue builds |
+| Max entries to merge | 8 | Bounds the group failure blast radius |
+| Min entries to merge | 1 | A lone PR needs no batch once checks pass |
 | Min wait | 0 minutes | No artificial delay |
 | Check timeout | 60 minutes | Above the 30-minute test job limit |
 
 `scripts/enable_merge_queue.py` applies it and reports the current settings instead of
-writing when the rule already exists:
+writing when the settings already match:
 
 ```
 python scripts/enable_merge_queue.py --dry-run   # print the plan, change nothing
@@ -110,15 +110,35 @@ python scripts/enable_merge_queue.py --confirm   # apply
 
 It refuses to run without one of those flags, verifies that the repository is public and
 owned by the organization, that Actions is enabled and that
-`.github/workflows/tests.yml` on `main` still triggers on `merge_group`, then adds the
-`merge_queue` rule to the existing ruleset and sends every other rule, condition and
-bypass actor back unchanged. Re-running reports the current settings instead of
-changing them, and the script never enqueues or merges pull requests and never
+`.github/workflows/tests.yml` on `main` still triggers on `merge_group`, then adds
+or updates the `merge_queue` rule in the existing ruleset. It sends every other
+rule, condition and bypass actor back unchanged. Re-running with matching settings
+performs no write. The script never enqueues or merges pull requests and never
 triggers a deployment.
 
-If the API refuses, configure it by hand in Settings → Rules → `Protection` → Edit →
-"Require merge queue" with the table above. A 403 or 404 usually means the transfer
-has not finished, the plan lacks the feature, or the token lacks repository admin.
+At build concurrency 3, 40 ready pull requests need about 14 waves of roughly
+13-minute checks: over three hours with full utilization and no failures. At
+concurrency 8, about 5 waves take roughly 65 minutes. These are idealized waves
+of parallel checks, not five total CI runs. ALLGREEN still verifies each entry.
+Maximum merge size independently limits how many ready entries land together.
+A failed entry invalidates later groups that include it; do not raise concurrency
+further without measured throughput and failure evidence.
+
+Minimum 1 and wait 0 let a lone ready PR merge without a batching delay; required
+queue checks still run. Merge limits do not combine CI builds. A deployment is
+associated with a selected verified commit, not with each PR: a merge-group update
+containing several PRs needs no artificial per-PR deployments. The production
+workflow already coalesces pending runs while allowing its active run to finish.
+
+Rollback through the same script, reviewing the dry run before confirming:
+
+```sh
+python scripts/enable_merge_queue.py --max-entries-to-build 3 --max-entries-to-merge 3 --dry-run
+python scripts/enable_merge_queue.py --max-entries-to-build 3 --max-entries-to-merge 3 --confirm
+```
+
+If the API refuses, inspect the error and retry the script; do not hand-edit the
+ruleset. A 403 or 404 can mean missing repository administration access.
 
 Queue behaviour worth knowing: the same `python-tests` check name is reported for the
 merge group commit, so the ruleset needs no change; fork pull requests and merge-group

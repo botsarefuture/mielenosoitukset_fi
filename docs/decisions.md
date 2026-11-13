@@ -24,6 +24,25 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   The worker marker prevents parallel startup migrations. No destructive migration
   or database rollback is authorized by this pipeline change.
 
+- **GitHub handles the merge backlog (2026-11-13).** For 20–40 independent PRs,
+  agents arm auto-merge as each is ready and continue other work. Do not serialize
+  them by watching each merge. GitHub owns waiting and order; agents intervene for
+  failed checks, conflicts and review feedback. A lone PR keeps minimum 1 and
+  wait 0, with required queue tests intact. Dependent PRs enter only after the
+  parent merges and their base is `main`. This avoids an AI traffic-police role
+  without weakening protections.
+
+- **Size the merge queue for 40 waiting pull requests (2026-11-13).** Raise both
+  `max_entries_to_build` and `max_entries_to_merge` from 3 to 8. Keep MERGE,
+  ALLGREEN, minimum 1, wait 0 and the 60-minute timeout. With roughly 13-minute
+  checks, 40 ready PRs need about 14 waves at concurrency 3 (over three hours)
+  versus 5 waves at concurrency 8 (about 65 minutes), assuming full utilization
+  and no failures. These are parallel waves, not five total CI runs: ALLGREEN
+  still checks each entry. Merge size is a separate limit. A failed entry
+  invalidates later groups that include it, so do not go higher without evidence. The script exposes both limits as
+  CLI flags and preserves every other rule, condition and bypass actor. Roll back
+  by setting both flags to 3 after reviewing `--dry-run`.
+
 - **Agents arm auto-merge (2026-11-13).** Auto-merge is enabled on the repository, so
   a session should run `gh pr merge --auto --merge` on a pull request whose checks are
   running and end, instead of watching CI and spending tokens on it. It bypasses
@@ -64,7 +83,7 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   change, take a backup or record the prior state. Report where the backup is and how
   to revert. Anything without a revert path (permanent deletes without an export,
   real emails to real people) still needs an explicit yes.
-- **Review threads block merging.** The `main` ruleset requires every review thread
+- **Review threads block merging (historical; auto-merge policy superseded 2026-11-13).** The `main` ruleset requires every review thread
   to be resolved and the `python-tests` check to pass. Auto-merge is turned off.
   Resolve bot review threads by fixing the issue, or by replying with the reason it
   does not apply.

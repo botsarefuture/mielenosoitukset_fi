@@ -9,11 +9,13 @@ transfer.
 The script adds the merge_queue rule to the existing "Protection" branch ruleset
 and sends every other rule, condition and bypass actor back unchanged. It never
 enqueues or merges pull requests and never triggers a deployment. Re-running it
-reports the current queue settings instead of changing them.
+with matching settings reports them without writing.
 
 Usage:
     python scripts/enable_merge_queue.py --dry-run   # print the plan, change nothing
-    python scripts/enable_merge_queue.py --confirm   # apply, after approval explicitly
+    python scripts/enable_merge_queue.py --confirm   # apply the reviewed plan
+    # Rollback: pass both flags to --dry-run, then --confirm:
+    # --max-entries-to-build 3 --max-entries-to-merge 3
 """
 
 from __future__ import annotations
@@ -29,28 +31,23 @@ BRANCH = "main"
 WORKFLOW_PATH = ".github/workflows/tests.yml"
 REQUIRED_CHECK = "python-tests"
 
-# Conservative defaults for concurrent work: small batches, no artificial wait,
+# Defaults for a backlog of about 40 pull requests: bounded batches, no wait,
 # every entry must pass its own required checks, and merge commits to match the
 # history this repository already has.
 QUEUE_PARAMETERS = {
     "check_response_timeout_minutes": 60,
     "grouping_strategy": "ALLGREEN",
-    "max_entries_to_build": 3,
-    "max_entries_to_merge": 3,
+    "max_entries_to_build": 8,
+    "max_entries_to_merge": 8,
     "merge_method": "MERGE",
     "min_entries_to_merge": 1,
     "min_entries_to_merge_wait_minutes": 0,
 }
 
 MANUAL_STEPS = """\
-If the API refuses, configure it by hand (Settings -> Rules -> "Protection" -> Edit):
-  1. Enable "Require merge queue".
-  2. Merge method: Merge. Maximum pull requests to merge: 3. Minimum: 1.
-     Minimum wait time: 0. Require all queue entries to pass required checks: on.
-     Maximum pull requests to build: 3. Check timeout: 60 minutes.
-  3. Save.
-Prerequisites: a public repository owned by the mielenosoitukset-fi organization,
-`python-tests` running on merge_group, and no wildcard branch pattern."""
+If the API refuses, inspect the error and retry this script; do not hand-edit the ruleset.
+Prerequisites: a public organization repository, `python-tests` on merge_group,
+and an exact branch pattern."""
 
 
 class ScriptError(RuntimeError):
@@ -147,13 +144,19 @@ def targets_branch(ruleset: dict) -> bool:
     return any(item in ("~DEFAULT_BRANCH", f"refs/heads/{BRANCH}") for item in include)
 
 
-def queue_rule() -> dict:
-    return {"type": "merge_queue", "parameters": dict(QUEUE_PARAMETERS)}
+def queue_rule(parameters: dict | None = None) -> dict:
+    return {
+        "type": "merge_queue",
+        "parameters": dict(QUEUE_PARAMETERS if parameters is None else parameters),
+    }
 
 
-def payload_for(ruleset: dict) -> dict:
+def payload_for(ruleset: dict, parameters: dict | None = None) -> dict:
     existing = []
     for rule in ruleset.get("rules", []):
+        if rule["type"] == "merge_queue":
+            existing.append(queue_rule(parameters))
+            continue
         entry = {"type": rule["type"]}
         if rule.get("parameters") is not None:
             entry["parameters"] = rule["parameters"]
@@ -166,13 +169,15 @@ def payload_for(ruleset: dict) -> dict:
         }
         for actor in ruleset.get("bypass_actors", [])
     ]
+    if "merge_queue" not in rule_types(ruleset):
+        existing.append(queue_rule(parameters))
     return {
         "name": ruleset["name"],
         "target": ruleset["target"],
         "enforcement": ruleset["enforcement"],
         "bypass_actors": bypass,
         "conditions": ruleset["conditions"],
-        "rules": [*existing, queue_rule()],
+        "rules": existing,
     }
 
 
@@ -187,17 +192,15 @@ def apply(ruleset: dict, payload: dict) -> None:
     )
 
 
-def verify(ruleset_id: int, before: list[str]) -> dict:
+def verify(ruleset_id: int, expected: dict) -> dict:
     updated = get_json(f"repos/{TARGET}/rulesets/{ruleset_id}")
-    after = rule_types(updated)
-    if "merge_queue" not in after:
-        raise ScriptError("the merge_queue rule is missing after the update")
-    if not set(before) <= set(after):
-        raise ScriptError("an existing rule disappeared; restore the ruleset")
-    for rule in updated["rules"]:
-        if rule["type"] == "merge_queue":
-            return rule["parameters"]
-    raise ScriptError("the merge_queue rule has no parameters")
+    actual = payload_for(updated, next(
+        (rule["parameters"] for rule in updated["rules"] if rule["type"] == "merge_queue"),
+        {},
+    ))
+    if actual != expected:
+        raise ScriptError("ruleset differs from the planned payload; inspect and restore it")
+    return next(rule["parameters"] for rule in updated["rules"] if rule["type"] == "merge_queue")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -208,7 +211,16 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="apply the change; required because it edits branch protections",
     )
+    for name in ("build", "merge"):
+        parser.add_argument(
+            f"--max-entries-to-{name}", type=int, choices=range(1, 101),
+            default=QUEUE_PARAMETERS[f"max_entries_to_{name}"], metavar="1..100",
+            help=f"maximum entries to {name} (default: 8; rollback: 3)",
+        )
     arguments = parser.parse_args(argv)
+    parameters = dict(QUEUE_PARAMETERS)
+    parameters["max_entries_to_build"] = arguments.max_entries_to_build
+    parameters["max_entries_to_merge"] = arguments.max_entries_to_merge
     if not arguments.dry_run and not arguments.confirm:
         print(
             "refusing to run without --dry-run or --confirm; "
@@ -251,21 +263,23 @@ def main(argv: list[str] | None = None) -> int:
                 for rule in ruleset["rules"]
                 if rule["type"] == "merge_queue"
             )
-            print(f"merge queue already enabled on ruleset {ruleset['id']}")
+            print("current queue parameters:")
             print(json.dumps(current, indent=2, sort_keys=True))
-            return 0
+            if current == parameters:
+                print(f"merge queue already matches on ruleset {ruleset['id']}; nothing changed")
+                return 0
 
-        payload = payload_for(ruleset)
-        print(f"ruleset {ruleset['id']} ({ruleset['name']}) would gain:")
-        print(json.dumps(queue_rule(), indent=2, sort_keys=True))
+        payload = payload_for(ruleset, parameters)
+        print(f"ruleset {ruleset['id']} ({ruleset['name']}) planned queue:")
+        print(json.dumps(queue_rule(parameters), indent=2, sort_keys=True))
         print(f"rules kept: {', '.join(before)}")
         if arguments.dry_run:
             print("dry run: nothing changed")
             return 0
 
         apply(ruleset, payload)
-        parameters = verify(ruleset["id"], before)
-        print("merge queue enabled")
+        parameters = verify(ruleset["id"], payload)
+        print("merge queue configured and full ruleset verified")
         print(json.dumps(parameters, indent=2, sort_keys=True))
         current_types = rule_types(get_json("repos/{}/rulesets/{}".format(TARGET, ruleset["id"])))
         print(f"rules now: {', '.join(current_types)}")

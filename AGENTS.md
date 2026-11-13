@@ -199,12 +199,13 @@ reasoning effort for mechanical work.
 
 ### Merging
 
-Every change reaches `main` through the GitHub merge queue: `gh pr merge`,
-`gh pr merge --merge-queue` and the UI Merge button all enqueue, and nothing is picked up
-on its own, so a green pull request waits until someone queues or arms it. Do not bypass
+Every change reaches `main` through the GitHub merge queue. Use
+`gh pr merge --auto --merge` to arm a ready PR; GitHub queues it when requirements
+pass. There is no `gh pr merge --merge-queue` flag. Nothing is picked up on its
+own, so a green pull request waits until someone queues or arms it. Do not bypass
 the queue with `--admin`.
 
-The queue merges with merge commits, builds and merges at most three entries at once and
+The queue merges with merge commits, builds and merges at most eight entries at once and
 merges a single entry without waiting. It re-runs `python-tests` on the tip the change
 will land on, so a branch that has only fallen behind needs no rebase; a real conflict is
 different, because the queue drops the entry, so resolve it in the branch. Settings and
@@ -225,6 +226,39 @@ the script that applied them are in
   requests no longer exists. A repeated failure still means stopping and fixing the
   cause, as any failing check does.
 
+### Backlogs of 20–40 pull requests
+
+- Finish independent pull requests and arm auto-merge as each is ready. Do not hold
+  the next pull request until the previous one merges, poll CI in chat, or use an
+  agent as a serial merge coordinator. GitHub handles eligibility, checks and order.
+- The limits are 8 concurrent queue builds and 8 entries per merge, with ALLGREEN,
+  minimum 1, wait 0 and a 60-minute check timeout. Later entries can build while
+  earlier ones run, including the changes ahead of them. Eight entries is a cap,
+  not a promise of eight-entry batches or one CI run per batch.
+- A lone eligible pull request has no batching delay; it still needs the required
+  queue checks. Do not bypass protection or add a five-minute wait for it.
+- Intervene for failed checks, unresolved review threads or actual conflicts. Fix
+  the cause, dequeue before pushing if needed, then re-arm auto-merge. Do not
+  reorder the queue casually: moving an entry ahead can invalidate later builds.
+- Dependent pull requests wait for their parent to merge and must target `main`
+  before they are queued. Retarget manually when kept branches prevent GitHub
+  doing it. Never enqueue a child against its parent's branch.
+- Raising concurrency beyond 8 needs measured throughput and failure evidence:
+  larger groups increase the work invalidated by a failure.
+
+### Production deployment is separate from PR counting
+
+- A deployment identifies a verified commit and its release artifacts, not a PR.
+  Several PRs in one update to `main` need no separate deployment for each PR.
+- The production workflow permits one active run and one replaceable pending run.
+  `cancel-in-progress: false` protects the active deployment; it does not retain
+  every pending revision. Do not add `queue: max` or custom batching timers without
+  an approved deployment design and evidence.
+- Do not cancel an active deployment to hurry another PR. Superseded pending runs
+  and failed deployments are different; inspect actual failures and preserve the
+  migration, health-check and rollback requirements in
+  [docs/production-deployment.md](docs/production-deployment.md).
+
 ### While a pull request is in the queue
 
 A queued branch is frozen. GitHub refuses pushes to it and says "Merging is blocked: a
@@ -244,6 +278,7 @@ is the queue working, not a failed update:
 
 ### Stacked pull requests
 
+Independent PRs target `main` directly; do not stack unrelated changes.
 When a change depends on another pull request that has not merged, stack it instead of
 basing a branch on another branch by hand. The `gh stack` command (the `github/gh-stack`
 extension) is installed:
@@ -255,7 +290,8 @@ extension) is installed:
   shows it.
 - Merge from the bottom: each layer lands on `main` in turn and the ones above are
   retargeted, so do not re-base them by hand. `gh stack rebase` replays a stack when its
-  trunk has moved.
+  trunk has moved. Verify each next layer targets `main` after its parent merges
+  before arming auto-merge; do not assume a retained parent branch was retargeted.
 - Link the chain before its bottom layer is queued: `gh stack link 1149 1150` refuses a
   pull request that is already in the queue ("it is queued for merge"), and
   `gh stack submit` links only what is not queued yet.

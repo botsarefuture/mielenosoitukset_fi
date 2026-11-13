@@ -110,3 +110,38 @@ def set_status(db, application_id, status, actor):
         update["$set"].update({"meta.closed": True, "meta.closed_reason": STATUS_LABELS[status], "meta.closed_at": now})
     db.cases.update_one({"_id": application_id}, update)
     return True
+
+
+# Proposed retention (docs/decisions.md, awaiting maintainer approval). Only
+# decided applications are touched; open ones are never purged.
+RETENTION_DAYS = {"declined": 90, "withdrawn": 90, "approved": 365}
+RETENTION_ENV_FLAG = "CITY_ADMIN_APPLICATION_RETENTION_ENABLED"
+_FREE_TEXT_FIELDS = {"about": "", "activism": "", "references": "", "consent_at": ""}
+
+
+def retention_enabled(environ=None):
+    import os
+    value = (environ if environ is not None else os.environ).get(RETENTION_ENV_FLAG, "")
+    return str(value).strip().lower() in ("1", "true", "yes", "on")
+
+
+def purge_expired(db, now=None, dry_run=False):
+    """Erase the free text of decided applications once their retention ends.
+
+    The row stays with user, cities, status and dates, so the "one open
+    application" rule and the applicant's status list keep working. The
+    ``purged_at`` mark makes reruns skip finished rows. Returns the count.
+    """
+    from datetime import timedelta
+    now = now or utcnow()
+    purged = 0
+    for status, days in RETENTION_DAYS.items():
+        query = {"status": status, "purged_at": {"$exists": False},
+                 "updated_at": {"$lt": now - timedelta(days=days)}}
+        if dry_run:
+            purged += db.city_admin_applications.count_documents(query)
+            continue
+        result = db.city_admin_applications.update_many(
+            query, {"$unset": _FREE_TEXT_FIELDS, "$set": {"purged_at": now}})
+        purged += result.modified_count
+    return purged

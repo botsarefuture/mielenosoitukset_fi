@@ -34,6 +34,22 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 - **Questions to the maintainer** are asked as a numbered list, with a suggested
   answer under each question.
 
+## Authentication and sessions
+
+- **Auth bridge: Go and React ask Flask who is signed in (2026-11-12).** The
+  maintainer approved starting the move of authentication towards React and Go,
+  keeping login on Flask if possible. Chosen after comparing four options: Go asks
+  Flask's read-only `/api/session` (with an optional ≤5 s cache, default off).
+  Rejected: validating the cookie in Go and Flask-minted tokens (revocation
+  through `auth_epoch`, suspension and password resets would lag or be
+  reimplemented), and full auth in Go (no rollback). Two off-by-default flags,
+  `AUTH_BRIDGE_SCOPES` (Flask) and `AUTH_BRIDGE_ENABLED` (Go); rollback is removing
+  either. Login, MFA and password pages are not moved; that needs a new approval.
+  Details and the evidence: [auth-bridge.md](auth-bridge.md).
+- **Anonymous organization flash message (2026-11-12).** Shown through the bridge:
+  an anonymous visitor only learns that a message is waiting, nothing about
+  memberships.
+
 ## Public site
 
 - **React plus Go only (1 November 2026).** See AGENTS.md: there is no new Flask
@@ -43,6 +59,10 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   left to human translators; the catalog falls back to Finnish until then.
 - **No icons in page headings.** Icons go beside labels, tiles and cards. Cancel
   buttons use the danger style.
+- **`/developer` waits for a session scope (2026-11-12).** The pages are per-user and
+  private, so React needs a new signed-in read; proposal in
+  [developer-react-proposal.md](developer-react-proposal.md). `/download_material/<id>`
+  stays in Flask as a download redirect.
 - **Home page continuation (2026-11-12).** The Pride banner after the event grid was
   mistaken for "more events", so it now follows a continuation of the listing (#1098).
   Open: research suggests replacing the scroll auto-load with "Tänään" and
@@ -88,8 +108,25 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
     decide. Approving never grants rights; the role is granted in the accounts
     dashboard.
   - A user can have only one open application.
-  - Open: retention periods and the privacy notice wording, and whether to add a
-    unique index against simultaneous submissions.
+  - Retention and privacy notice: see the entry after this one.
+  - **Unique index against simultaneous submissions (proposed, awaiting maintainer
+    approval).** Partial unique index on `user_id` for open applications; a
+    duplicate key returns 409 `APPLY_OPEN_EXISTS`. Not created yet. Details, the
+    pre-check script and rollback are in
+    [city-admin-applications.md](city-admin-applications.md#duplicate-submissions-proposed-awaiting-maintainer-approval).
+- **Application retention and privacy notice (2026-11-12, approved by the
+  maintainer 2026-11-12).** Open applications are kept until decided. After a
+  decision, the free text (`about`, `activism`, `references`, `consent_at`) is erased
+  from declined and withdrawn applications after 90 days and from approved ones after
+  365 days. The row stays with user, cities, status and dates, so the one-open-
+  application rule and the applicant's status list keep working. The erasing job
+  `purge_city_admin_applications` (daily) does nothing unless
+  `CITY_ADMIN_APPLICATION_RETENTION_ENABLED` is set; it ships off. The Finnish
+  notice is shown on the form (`cityAdminApplyCopy.privacy*` in `i18n.ts`), and the
+  numbers there must match `RETENTION_DAYS`. The flag may be switched on after a
+  backup of `city_admin_applications`, with the dry-run count checked first. The
+  same numbers are stated in `PrivacyContent.tsx` (`/privacy`, data list and
+  retention section); change all three places together.
 - **Case access (2026-11-11).** City admins' grants include `LIST_CASES`,
   `VIEW_CASE` and `EDIT_CASE`. The 2026-11-11 update is tagged
   `case_access_granted_for: issue-778`, so it can be reverted in one update.

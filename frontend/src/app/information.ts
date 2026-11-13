@@ -19,7 +19,7 @@ export const informationPages = {
   },
   translations: {
     path: '/upcoming/translations/', title: 'Käännöshanke',
-    description: 'Mielenosoitukset.fi -sivustoa ollaan parhaillaan kääntämässä englanniksi ja ruotsiksi! Tavoitteena on, että koko sivusto ja sen perustoiminnot toimivat useilla kielillä, jotta mielenosoitukset olisivat saavutettavampia kaikille Suomessa.',
+    description: 'Mielenosoitukset.fi -sivustoa ollaan parhaillaan kääntämässä englanniksi ja ruotsiksi. Tavoitteena on, että koko sivusto ja sen perustoiminnot toimivat useilla kielillä, jotta mielenosoitukset olisivat saavutettavampia kaikille Suomessa.',
   },
 } as const;
 

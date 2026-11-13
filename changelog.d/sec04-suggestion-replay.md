@@ -1,0 +1,1 @@
+- An admin suggestion that was already rejected or closed can no longer be applied, and a field that was already applied is not applied twice. Other fields can still be applied.

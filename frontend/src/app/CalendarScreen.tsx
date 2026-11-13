@@ -62,7 +62,7 @@ export default function CalendarScreen({ calendar, config, session }: {
           <a href={monthPath({ ...currentMonth(), city: calendar.city })}>Tämä kuukausi</a>
           {next.year <= 2100 && <a href={monthPath(next)} aria-label={`Seuraava kuukausi: ${monthName(next)}`}>Seuraava →</a>}
         </nav></div>
-      {!data ? <div role="alert" className="calendar-notice"><p>Kalenterin lataaminen epäonnistui.</p><button onClick={() => window.location.reload()}>Yritä uudelleen</button></div> : <>
+      {!data ? <div role="alert" className="calendar-notice"><p>Kalenterin lataaminen epäonnistui.</p><button type="button" className="detail-button" onClick={() => window.location.reload()}>Yritä uudelleen</button></div> : <>
         <p className="month-calendar-summary">{data.total} {data.total === 1 ? 'mielenosoitus' : 'mielenosoitusta'} tässä kuussa. Päivän numeroiden alla näkyy mielenosoitusten määrä.</p>
         <CalendarGrid period={calendar} days={data.days} selected={day} />
         <div className="month-calendar-links"><span>Tänään on {dayLabel(helsinkiDay())}</span><a href={monthPath({ ...calendar, month: 0 })}>Vuosi {calendar.year}</a></div>
@@ -71,10 +71,10 @@ export default function CalendarScreen({ calendar, config, session }: {
     {data && <section className="calendar-agenda public-demonstration-list" id="calendar-agenda" aria-labelledby="calendar-day">
       <h2 id="calendar-day" tabIndex={-1}>{dayLabel(date)}</h2>
       {count === 0 ? <div className="calendar-notice"><p>Tälle päivälle ei ole ilmoitettu mielenosoituksia.</p><a href={config.urls.demonstrations}>Katso tulevat mielenosoitukset</a></div>
-        : failed ? <div role="alert" className="calendar-notice"><p>Mielenosoitusten lataaminen epäonnistui.</p><button onClick={() => setAttempt(value => value + 1)}>Yritä uudelleen</button></div>
-        : !events ? <p role="status">Ladataan mielenosoituksia...</p>
+        : failed ? <div role="alert" className="calendar-notice"><p>Mielenosoitusten lataaminen epäonnistui.</p><button type="button" className="detail-button" onClick={() => setAttempt(value => value + 1)}>Yritä uudelleen</button></div>
+        : !events ? <p role="status">Ladataan mielenosoituksia…</p>
         : events.page > events.total_pages ? <div className="calendar-notice"><p>Tällä sivulla ei ole mielenosoituksia.</p><a href={href(day)}>Palaa päivän ensimmäiselle sivulle</a></div>
-        : <><p role="status">{events.total === 0 ? 'Päivän tapahtumat ovat muuttuneet. Valitse toinen päivä tai päivitä sivu.' : `Näytetään ${events.result_start}–${events.result_end} / ${events.total} mielenosoituksesta`}</p>
+        : <><p role="status">{events.total === 0 ? 'Päivän mielenosoitukset ovat muuttuneet. Valitse toinen päivä tai päivitä sivu.' : `Näytetään ${events.result_start}–${events.result_end} / ${events.total} mielenosoituksesta`}</p>
           <div className="demos-grid"><DemonstrationCards events={events.results} props={props} /></div>
           {(events.total_pages > 1) && <nav className="calendar-pagination" aria-label="Päivän mielenosoitusten sivut">
             {page > 1 && <a href={href(day, page - 1)}>← Edellinen sivu</a>}

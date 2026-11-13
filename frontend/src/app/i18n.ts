@@ -25,6 +25,16 @@ export const cityAdminApplyCopy = {
   groupTeam: 'Admintiimi on jo, varahenkilöt tervetulleita',
   chipNone: 'tarvitsee adminia',
   chipSingle: 'tarvitsee lisää admineja',
+  privacyTitle: 'Miten hakemustasi käsitellään',
+  privacyItems: [
+    'Hakemuksesi näkevät valtakunnallinen ylläpitotiimi ja niiden paikkakuntien kaupunkiadminit, joille haet. Vain valtakunnallinen ylläpito päättää hakemuksesta.',
+    'Käsittelemme tekstikenttiin kirjoittamasi tiedot, valitsemasi paikkakunnat ja käyttäjätilisi tiedot. Älä kirjoita hakemukseen muita henkilötietoja kuin suosittelijoiden nimet tai käyttäjänimet.',
+    'Käytämme tietoja vain kaupunkiadmin-tehtävän arviointiin. Hyväksyminen ei anna oikeuksia itsestään: tehtävä annetaan erikseen ylläpidon hallintapaneelissa.',
+    'Käsittelemätöntä hakemusta säilytetään, kunnes se on käsitelty. Hylätyn tai perutun hakemuksen tekstit poistetaan 90 päivän kuluttua päätöksestä ja hyväksytyn 365 päivän kuluttua. Jäljelle jää vain tieto hakemuksen paikkakunnista, tilasta ja päivämääristä.',
+    'Voit pyytää hakemuksesi poistamista aiemmin ottamalla yhteyttä ylläpitoon.',
+  ],
+  privacyLinkLead: 'Lisätietoa on',
+  privacyLinkText: 'tietosuojaselosteessa',
   coverageHint: 'Listan alussa ovat paikkakunnat, joilla ei vielä ole kaupunkiadminia. Voit hakea myös paikkakunnalle, jolla on jo admineja: tarvitsemme varahenkilöitä ja kierrätämme tehtäviä.',
 };
 
@@ -62,7 +72,7 @@ const fi: Catalog = {
     darkTheme: 'Vaihda tummaan teemaan',
     adminWarning: 'Olet mobiililaitteella. Siirry PC:lle admintoimintojen käyttöä varten',
     notifications: 'Ilmoitukset', markRead: 'Merkitse luetuiksi', all: 'Näytä kaikki',
-    empty: 'Ei ilmoituksia', loading: 'Ladataan…', loadError: 'Virhe ladattaessa',
+    empty: 'Ei ilmoituksia', loading: 'Ladataan…', loadError: 'Ilmoitusten lataaminen epäonnistui.',
     markError: 'Ilmoituksia ei voitu merkitä luetuiksi.',
   },
   footer: {
@@ -75,16 +85,16 @@ const fi: Catalog = {
   home: {
     title: 'Tulevat mielenosoitukset',
     intro: 'Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen.',
-    search: 'Hae mielenosoituksia', searchPlaceholder: 'Hae mielenosoituksia...', submitSearch: 'Hae',
+    search: 'Hae mielenosoituksia', searchPlaceholder: 'Hae mielenosoituksia…', submitSearch: 'Hae',
     all: 'Kaikki mielenosoitukset', submit: 'Ilmoita mielenosoituksesta',
     calendar: 'Kalenterinäkymä', info: 'Tietoa sivustosta',
     eventsTitle: 'Poimintoja ajankohtaisista mielenosoituksista.', recommendedTitle: 'Suosittelemme',
     emptyTitle: 'Ei mielenosoituksia näytettäväksi',
-    empty: 'Uusia mielenosoituksia lisätään jatkuvasti. Tarkista myöhemmin uudelleen!',
+    empty: 'Uusia mielenosoituksia lisätään jatkuvasti. Tarkista myöhemmin uudelleen.',
     prideTitle: 'Pride näkyväksi koko Suomessa',
     prideIntro: 'Tutustu Pride näkyväksi -sivuun, katso Pride-mielenosoitukset kartalla ja lisää myös oma tapahtumasi mukaan.',
     prideLink: 'Avaa Pride näkyväksi',
-    loading: 'Ladataan mielenosoituksia...',
+    loading: 'Ladataan mielenosoituksia…',
     loadError: 'Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen.',
     retry: 'Yritä uudelleen',
   },
@@ -95,7 +105,7 @@ const fi: Catalog = {
   cards: {
     startingFrom: 'alkaen', endTime: 'Päättymisaika', cancelled: 'Peruttu', today: 'Tänään',
     loginPrompt: 'Kirjaudu sisään käyttääksesi sosiaalisia toimintoja',
-    loadingFriends: 'Ladataan kavereita...', attendingSuffix: 'osallistuu', invite: 'Kutsu kavereita',
+    loadingFriends: 'Ladataan kavereita…', attendingSuffix: 'osallistuu', invite: 'Kutsu kavereita',
   },
   cityAdmin: {
     label: 'Kaupunkiadminit',

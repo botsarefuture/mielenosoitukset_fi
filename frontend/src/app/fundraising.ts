@@ -47,6 +47,27 @@ function isoDate(value: unknown): string | null {
   return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day ? value : null;
 }
 
+/**
+ * The raw fundraising configuration from the Go API, or null when it is
+ * unreachable or malformed; callers then use the copy bundled with the host.
+ */
+export async function loadFundraisingData(readBase: string): Promise<Record<string, unknown> | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 1500);
+  try {
+    const response = await fetch(`${readBase}/fundraising/details`, {
+      signal: controller.signal, credentials: 'omit', headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) return null;
+    const data: unknown = await response.json();
+    return data && typeof data === 'object' && !Array.isArray(data) ? data as Record<string, unknown> : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Today's date in Helsinki as `YYYY-MM-DD`. */
 export function helsinkiToday(now = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Helsinki', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);

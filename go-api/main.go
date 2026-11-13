@@ -249,8 +249,17 @@ func main() {
 	}
 	handler := publicSubmissionHandler(publicResponseCache(a.handler(), shared), client.Database(database), submissionConfig)
 	handler = cityAdminApplicationHandler(handler, client.Database(database), submissionConfig)
+	authConfig, err := authBridgeConfigFromEnv()
+	if err != nil {
+		// A bad bridge setting must not take the public API down: stay disabled.
+		log.Print("Auth bridge disabled: ", err)
+		authConfig = authBridgeConfig{}
+	}
+	handler = authBridgeHandler(handler, authConfig, client.Database(database))
 	handler = analyticsEventHandler(handler, analyticsEnabledFromEnv(), incrementAnalyticsEvent(client.Database(database)))
+	handler = fundraisingDetails(handler, os.Getenv("FUNDRAISING_DETAILS_FILE"))
 	handler = campaignPublication(handler, readCampaignPublication(client.Database(database)))
+	handler = cancellationLinkHandler(handler, readCancellationLink(client.Database(database)))
 	handler = publicAvailability(handler, readPublicLockdown(client.Database(database)))
 	if submissionConfig.Origin != "" {
 		indexContext, cancelIndexCheck := context.WithTimeout(context.Background(), 3*time.Second)

@@ -1,0 +1,1 @@
+- Password reset links are now claimed before the password changes, stored only as hashes, and stay usable if the change fails.

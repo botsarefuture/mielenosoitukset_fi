@@ -42,7 +42,7 @@ export default function ContactScreen({ session }: { session: SessionSummary }) 
       <section id="contact-form-section" className="public-prose-card" aria-labelledby="contact-form-title">
         <h2 id="contact-form-title">Ota yhteyttä lomakkeen kautta</h2>
         {form?.enabled && form.csrfToken ? <>
-          <p>Täytä alla oleva lomake ja lähetä, niin olemme sinuun yhteydessä!</p>
+          <p>Täytä alla oleva lomake ja lähetä, niin olemme sinuun yhteydessä.</p>
           <form id="contact-form" className="contact-form" action={contactPath} method="post">
             <input type="hidden" name="csrf_token" value={form.csrfToken} />
             <div hidden aria-hidden="true">

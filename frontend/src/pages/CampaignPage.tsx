@@ -66,7 +66,7 @@ export function CampaignPage({ urls, volunteer, newsletter, serverFallback = fal
     <section className="campaign-intro campaign-shell" aria-labelledby="campaign-title">
       <div className="campaign-intro__copy">
         <h1 id="campaign-title">Yhdessä näkyväksi</h1>
-        <p className="campaign-intro__lead">Auta yhä useampaa löytämään mielenosoitukset.fi ja tulevat mielenosoitukset.</p>
+        <p className="campaign-intro__lead">Auta yhä useampaa löytämään Mielenosoitukset.fi ja tulevat mielenosoitukset.</p>
         <div className="campaign-actions">
           <a className="campaign-button campaign-button--primary" href="#vapaaehtoiseksi">Tule vapaaehtoiseksi <span aria-hidden="true">→</span></a>
           <a className="campaign-text-link" href="#materiaalitavoitteet">Tutustu kampanjaan</a>

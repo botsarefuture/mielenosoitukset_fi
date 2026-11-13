@@ -1,0 +1,28 @@
+.developer-page { max-width: 1080px; }
+
+.developer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.developer-card { overflow-wrap: anywhere; }
+.developer-card h2 { text-align: left; }
+
+.developer-card .developer-list { list-style: none; margin: 0; padding: 0; }
+.developer-list li { margin: 0; padding: 0.5rem 0; border-bottom: 1px solid var(--product-border); }
+.developer-list li:last-child { border-bottom: 0; }
+
+.developer-muted { color: var(--product-text-muted); }
+
+.developer-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.developer-pill {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--product-border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.developer-page > :not(header) { margin-top: 1.5rem; }
+.developer-page code { color: var(--product-text); overflow-wrap: anywhere; }

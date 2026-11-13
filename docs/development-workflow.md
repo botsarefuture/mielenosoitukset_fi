@@ -41,14 +41,32 @@ The maintainer decides what we build and why. Whoever implements decides how.
 - Small commits, one idea each, with a message that says why the change was needed.
   Imperative mood, no trailing period, no tool or assistant attribution.
 - A PR covers one reviewable change. Stack PRs when one depends on another and say which
-  base each uses.
+  base each uses. Use the installed `gh stack` extension for dependent work:
+  `gh stack init`, `gh stack add <branch>`, `gh stack submit`, `gh stack sync`
+  and `gh stack view`. Merge from the bottom and verify the next layer targets
+  `main` before arming it. Independent changes need no stack.
 - The description says what changed, why, how it was checked and anything that was not
   checked. Link the roadmap item or issue.
 - Every user-facing change has a separate note in `changelog.d/`. Write it for a
   reader of the changelog, not as a diff summary. See `changelog.d/README.md` for
   how to render the combined history.
-- Open the PR as soon as the branch is ready, then move on to independent work. Do not
-  sit waiting for CI.
+- Open the PR as soon as the branch is ready and arm auto-merge with
+  `gh pr merge --auto --merge`, then move on to independent work. Do not sit waiting
+  for CI or wait for one independent PR to merge before arming the next.
+- For backlogs of 20–40 PRs, the queue allows 8 concurrent builds and merges up to
+  8 ready entries. Minimum 1 and wait 0 avoid a batching delay for a lone PR;
+  required queue checks still run. Build concurrency does not guarantee one CI
+  run per eight entries. Agents intervene for failures, conflicts and review
+  feedback, rather than directing each successful merge.
+- A dependent PR must target `main` after its parent merges before being queued.
+  Retained branches prevent automatic retargeting, so verify its base explicitly.
+  Dequeue before pushing fixes to a queued branch, then re-arm auto-merge.
+
+A production deployment corresponds to a selected verified commit, not a PR count.
+The existing workflow coalesces pending runs and finishes its active deployment.
+Do not request a separate deployment for each PR in a merge-group update or cancel
+an active deployment to accelerate another PR. Migration and rollback obligations
+remain; see [production-deployment.md](production-deployment.md).
 
 ## Keeping track of open PRs
 

@@ -204,7 +204,7 @@ Every change reaches `main` through the GitHub merge queue: `gh pr merge`,
 on its own, so a green pull request waits until someone queues or arms it. Do not bypass
 the queue with `--admin`.
 
-The queue merges with merge commits, builds and merges at most three entries at once and
+The queue merges with merge commits, builds and merges at most eight entries at once and
 merges a single entry without waiting. It re-runs `python-tests` on the tip the change
 will land on, so a branch that has only fallen behind needs no rebase; a real conflict is
 different, because the queue drops the entry, so resolve it in the branch. Settings and

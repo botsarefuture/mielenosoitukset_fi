@@ -12,6 +12,17 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 
 ## Process and approvals
 
+- **Size the merge queue for 40 waiting pull requests (2026-11-13).** Raise both
+  `max_entries_to_build` and `max_entries_to_merge` from 3 to 8. Keep MERGE,
+  ALLGREEN, minimum 1, wait 0 and the 60-minute timeout. At 3, about 14 group
+  builds of roughly 13 minutes take over three hours serial; at 8, about 5 builds
+  suffice in the batching estimate, not a guarantee of CI run count: build concurrency
+  controls simultaneous builds and GitHub may build each entry separately.
+  A failing group entry invalidates the whole group and requeues the
+  rest, so do not go higher without evidence. The script exposes both limits as
+  CLI flags and preserves every other rule, condition and bypass actor. Roll back
+  by setting both flags to 3 after reviewing `--dry-run`.
+
 - **Agents arm auto-merge (2026-11-13).** Auto-merge is enabled on the repository, so
   a session should run `gh pr merge --auto --merge` on a pull request whose checks are
   running and end, instead of watching CI and spending tokens on it. It bypasses

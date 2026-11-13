@@ -121,3 +121,23 @@
 .fundraising-official { margin-top: 1rem; border-top: 1px solid var(--product-border, #d0d7de); padding-top: .75rem; }
 .fundraising-official summary { cursor: pointer; font-weight: 650; }
 .fundraising-official summary:focus-visible { outline: 3px solid var(--product-primary); outline-offset: 3px; }
+
+/* Fundraising reminder signup and the confirm / remove panel */
+.fundraising-reminder { margin-top: 1.25rem; border-top: 1px solid var(--product-border, #d0d7de); padding-top: 1rem; }
+.fundraising-reminder h3 { margin: 0 0 .5rem; }
+.fundraising-reminder__form { display: grid; gap: .75rem; max-width: 32rem; }
+.fundraising-reminder__form > label { font-weight: 650; }
+.fundraising-reminder__form input[type="email"] {
+  min-height: 44px; padding: .5rem .75rem; border: 1px solid var(--product-border, #d0d7de); border-radius: 8px;
+  background: var(--product-surface); color: var(--product-text); font: inherit; width: 100%; box-sizing: border-box;
+}
+.fundraising-reminder__form input[type="email"]:focus-visible { outline: 3px solid var(--product-primary); outline-offset: 2px; }
+.fundraising-reminder__check { display: flex; gap: .6rem; align-items: flex-start; font-weight: 400; line-height: 1.5; }
+.fundraising-reminder__check input { flex: none; width: 1.25rem; height: 1.25rem; margin-top: .2rem; accent-color: var(--product-action-bg); }
+.fundraising-reminder__check small { display: block; font-size: .85rem; opacity: .85; }
+.fundraising-reminder__form .fundraising-calendar { justify-self: start; }
+.fundraising-reminder__form .fundraising-calendar:disabled, .fundraising-reminder-link .fundraising-calendar:disabled { opacity: .6; cursor: not-allowed; }
+.fundraising-reminder__status { margin: .5rem 0 0; font-weight: 600; }
+.fundraising-reminder__status:empty { margin: 0; }
+.fundraising-reminder__status--error { color: var(--product-danger, #b42318); }
+.fundraising-reminder-link { margin-bottom: 1.5rem; }

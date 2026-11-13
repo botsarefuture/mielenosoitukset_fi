@@ -14,7 +14,7 @@ func serveFundraising(t *testing.T, path, method, target string) *httptest.Respo
 	t.Helper()
 	handler := fundraisingDetails(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusTeapot)
-	}), path)
+	}), path, nil)
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, httptest.NewRequest(method, target, nil))
 	return w

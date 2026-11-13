@@ -27,6 +27,9 @@ from mielenosoitukset_fi.scripts.process_email_queue import run as process_email
 from mielenosoitukset_fi.scripts.escalate_city_assignments import main as escalate_city_assignments
 from mielenosoitukset_fi.scripts.deliver_city_admin_applications import main as deliver_city_admin_applications
 from mielenosoitukset_fi.scripts.purge_city_admin_applications import main as purge_city_admin_applications
+from mielenosoitukset_fi.scripts.deliver_fundraising_reminder_confirmations import main as deliver_fundraising_reminder_confirmations
+from mielenosoitukset_fi.scripts.send_fundraising_reminders import main as send_fundraising_reminders
+from mielenosoitukset_fi.scripts.purge_fundraising_reminders import main as purge_fundraising_reminders
 from mielenosoitukset_fi.scripts.process_urgent_review_alerts import run as process_urgent_review_alerts
 
 
@@ -182,6 +185,27 @@ JOB_DEFINITIONS: List[JobDefinition] = [
         name="City admin application retention",
         description="Erases the text of decided city admin applications after their retention period. Does nothing unless CITY_ADMIN_APPLICATION_RETENTION_ENABLED is set.",
         func=purge_city_admin_applications,
+        default_trigger=_interval(days=1),
+    ),
+    JobDefinition(
+        key="deliver_fundraising_reminder_confirmations",
+        name="Fundraising reminder confirmations",
+        description="Queues the confirmation mail for each fundraising reminder signup. Does nothing unless FUNDRAISING_REMINDER_MAILS_ENABLED is set.",
+        func=deliver_fundraising_reminder_confirmations,
+        default_trigger=_interval(minutes=2),
+    ),
+    JobDefinition(
+        key="send_fundraising_reminders",
+        name="Fundraising opening reminder (once)",
+        description="Queues the single opening reminder for confirmed signups from 16.11.2026 00:00 Helsinki. Does nothing without FUNDRAISING_REMINDER_MAILS_ENABLED and FUNDRAISING_REMINDER_BULK_SEND_APPROVED.",
+        func=send_fundraising_reminders,
+        default_trigger=_interval(minutes=5),
+    ),
+    JobDefinition(
+        key="purge_fundraising_reminders",
+        name="Fundraising reminder retention",
+        description="Deletes unconfirmed signups after two weeks and all reminder data 30 days after the collection ends (17.3.2027).",
+        func=purge_fundraising_reminders,
         default_trigger=_interval(days=1),
     ),
 ]

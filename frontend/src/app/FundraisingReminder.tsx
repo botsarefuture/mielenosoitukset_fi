@@ -19,7 +19,7 @@ export function ReminderSignup({ privacyUrl }: { privacyUrl: string }) {
     });
     setSending(false);
     if (result.ok) {
-      setOutcome({ kind: 'ok', text: result.message || c.intro });
+      setOutcome({ kind: 'ok', text: c.sent });
       (event.target as HTMLFormElement).reset();
     } else {
       setOutcome({ kind: 'error', text: result.status === 429 ? c.rateLimited : result.message || c.error });

@@ -169,10 +169,10 @@ func readReminderJSON(w http.ResponseWriter, r *http.Request, into any) error {
 	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, reminderMaxBody))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(into); err != nil {
-		return reminderError{"REMINDER_FORMAT", "Lomaketta ei voitu lukea."}
+		return reminderError{"REMINDER_FORMAT", "Tarkista tiedot ja yritä uudelleen."}
 	}
 	if _, err := decoder.Token(); !errors.Is(err, io.EOF) {
-		return reminderError{"REMINDER_FORMAT", "Lomaketta ei voitu lukea."}
+		return reminderError{"REMINDER_FORMAT", "Tarkista tiedot ja yritä uudelleen."}
 	}
 	return nil
 }
@@ -356,7 +356,7 @@ func serveReminderUnsubscribe(ctx context.Context, w http.ResponseWriter, r *htt
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 		var input reminderTokenInput
 		if err := readReminderJSON(w, r, &input); err != nil {
-			reminderFailure(w, http.StatusBadRequest, "REMINDER_FORMAT", "Lomaketta ei voitu lukea.")
+			reminderFailure(w, http.StatusBadRequest, "REMINDER_FORMAT", "Tarkista tiedot ja yritä uudelleen.")
 			return
 		}
 		token = input.Token

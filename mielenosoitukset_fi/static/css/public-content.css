@@ -132,7 +132,8 @@
   background: var(--product-surface); color: var(--product-text); font: inherit; width: 100%; box-sizing: border-box;
 }
 .fundraising-reminder__form input[type="email"]:focus-visible { outline: 3px solid var(--product-primary); outline-offset: 2px; }
-.fundraising-reminder__check { display: flex; gap: .6rem; align-items: flex-start; font-weight: 400; line-height: 1.5; }
+.fundraising-reminder__form > label.fundraising-reminder__check, .fundraising-reminder__check { display: flex; gap: .6rem; align-items: flex-start; font-weight: 400; line-height: 1.5; }
+.fundraising-reminder__form > label.fundraising-reminder__check { font-weight: 400; }
 .fundraising-reminder__check input { flex: none; width: 1.25rem; height: 1.25rem; margin-top: .2rem; accent-color: var(--product-action-bg); }
 .fundraising-reminder__check small { display: block; font-size: .85rem; opacity: .85; }
 .fundraising-reminder__form .fundraising-calendar { justify-self: start; }

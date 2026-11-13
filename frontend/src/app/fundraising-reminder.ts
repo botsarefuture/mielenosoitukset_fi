@@ -15,6 +15,7 @@ export const reminderCopy = {
   results: 'Haluan myös kuulla keräyksen tuloksista',
   resultsHint: 'Valinta on vapaaehtoinen. Voimme lähettää tällöin yhden viestin tuloksista keräyksen päätyttyä.',
   submit: 'Tilaa muistutus',
+  sent: 'Tarkista sähköpostisi. Jos osoite on kelvollinen, lähetämme siihen vahvistusviestin.',
   sending: 'Lähetetään',
   privacy: 'Lue, miten osoitettasi käsitellään',
   retention: 'Poistamme osoitteen viimeistään 30 päivää keräyksen päättymisen jälkeen. Voit poistaa sen milloin tahansa jokaisen viestin linkistä.',

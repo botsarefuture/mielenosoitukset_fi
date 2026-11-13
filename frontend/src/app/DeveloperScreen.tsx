@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AppConfig } from './config';
 import type { SessionSummary } from './session';
 import { useSession } from './useSession';
@@ -20,25 +20,40 @@ const notice = (kind: 'error' | 'info', children: React.ReactNode) =>
     <span className="flash-text">{children}</span>
   </div>;
 
+/** An error; an expired session also offers the one thing that fixes it. */
+function ErrorNote({ message }: { message: string }) {
+  return <>
+    {notice('error', message)}
+    {message === copy.sessionExpired && <div className="detail-actions">
+      <button type="button" className="detail-button" onClick={() => window.location.reload()}>{copy.reloadPage}</button>
+    </div>}
+  </>;
+}
+
 /** What a write controls component needs: the CSRF token, and a way to reread the page after a change. */
 type Writes = { csrf: string; reload: () => void };
 
 function Tokens({ tokens, empty, writes }: { tokens: DeveloperToken[]; empty: string; writes?: Writes }) {
   const [message, setMessage] = useState<string>('');
+  const [confirmId, setConfirmId] = useState('');
   if (!tokens.length) return <p className="developer-muted">{empty}</p>;
   const revoke = async (id: string) => {
     if (!writes) return;
     const result = await developerWrite('DELETE', `${developerTokensApi}/${id}`, writes.csrf);
+    setConfirmId('');
     if (result.ok) writes.reload(); else setMessage(result.message);
   };
   return <>
-    {message && notice('error', message)}
+    {message && <ErrorNote message={message} />}
     <ul className="developer-list">
       {tokens.map(token => <li key={token.id || `${token.type}-${token.expiresAt}`}>
         <strong>{token.type}</strong> — {token.scopes.join(', ') || 'read'}
         <div className="developer-muted">{copy.validUntil} {formatDeveloperDate(token.expiresAt)}</div>
         {writes && token.id && <div className="detail-actions">
-          <button type="button" className="detail-button detail-button--danger" onClick={() => revoke(token.id)}>{copy.revoke}</button>
+          {confirmId === token.id ? <>
+            <button type="button" className="detail-button detail-button--danger" onClick={() => revoke(token.id)}>{copy.revokeConfirm}</button>
+            <button type="button" className="detail-button detail-button--danger" onClick={() => setConfirmId('')}>{copy.cancel}</button>
+          </> : <button type="button" className="detail-button" onClick={() => setConfirmId(token.id)}>{copy.revoke}</button>}
         </div>}
       </li>)}
     </ul>
@@ -47,12 +62,23 @@ function Tokens({ tokens, empty, writes }: { tokens: DeveloperToken[]; empty: st
 
 /** A secret the server will not show again. It lives only in this component's state. */
 function SecretBox({ label, value, onClose }: { label: string; value: string; onClose: () => void }) {
-  return <div className="flash-message flash-message--inline flash-info developer-secret" role="status">
+  const box = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
+  // Move focus here so keyboard and screen reader users land on the secret after the form closes.
+  useEffect(() => { box.current?.focus(); }, []);
+  const copyValue = async () => {
+    try { await navigator.clipboard.writeText(value); setCopied(true); } catch { setCopied(false); }
+  };
+  return <div ref={box} tabIndex={-1} className="flash-message flash-message--inline flash-info developer-secret" aria-label={label}>
     <span className="flash-text">
       <strong>{label}</strong> {copy.secretOnce}
       <code className="developer-secret__value">{value}</code>
     </span>
-    <button type="button" className="detail-button" onClick={onClose}>OK</button>
+    <div className="detail-actions">
+      <button type="button" className="detail-button" onClick={copyValue}>{copied ? copy.copied : copy.copy}</button>
+      <button type="button" className="detail-button" onClick={onClose}>{copy.close}</button>
+    </div>
+    <span className="developer-sr-only" role="status">{copied ? copy.copied : ''}</span>
   </div>;
 }
 
@@ -97,7 +123,7 @@ function CreateAppForm({ writes }: { writes: Writes }) {
         <label htmlFor="developer-app-description">{copy.appDescription}</label>
         <textarea id="developer-app-description" rows={2} value={description} maxLength={1000} onChange={event => setDescription(event.target.value)} />
       </div>
-      {error && notice('error', error)}
+      {error && <ErrorNote message={error} />}
       <div className="detail-actions"><button type="submit" className="detail-button detail-button--primary" disabled={busy}>{busy ? copy.creating : copy.create}</button></div>
     </form>
     {secret && <SecretBox {...secret} onClose={() => setSecret(null)} />}
@@ -132,7 +158,7 @@ function CreateTokenForm({ writes, appId, scopes }: { writes: Writes; appId?: st
       </select>
     </div>
     <ScopeChecks options={scopes} picked={picked} onChange={setPicked} name={`${idPrefix}-scope`} />
-    {error && notice('error', error)}
+    {error && <ErrorNote message={error} />}
     <div className="detail-actions"><button type="submit" className="detail-button detail-button--primary" disabled={busy}>{busy ? copy.creating : copy.createToken}</button></div>
     {secret && <SecretBox {...secret} onClose={() => setSecret(null)} />}
   </form>;
@@ -151,10 +177,13 @@ function RotateSecret({ writes, appId, onRotated }: { writes: Writes; appId: str
   };
   return <>
     <p className="developer-muted">{copy.rotateNote}</p>
-    {error && notice('error', error)}
+    {error && <ErrorNote message={error} />}
     <div className="detail-actions">
       {confirming
-        ? <button type="button" className="detail-button detail-button--danger" onClick={rotate}>{copy.rotateConfirm}</button>
+        ? <>
+          <button type="button" className="detail-button detail-button--danger" onClick={rotate}>{copy.rotateConfirm}</button>
+          <button type="button" className="detail-button detail-button--danger" onClick={() => setConfirming(false)}>{copy.cancel}</button>
+        </>
         : <button type="button" className="detail-button" onClick={() => setConfirming(true)}>{copy.rotate}</button>}
     </div>
   </>;

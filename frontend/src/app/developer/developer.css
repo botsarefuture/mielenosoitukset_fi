@@ -34,3 +34,6 @@
 .developer-secret { align-items: flex-start; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
 .developer-secret__value { display: block; margin-top: 0.5rem; padding: 0.5rem; border: 1px solid var(--product-border); border-radius: 6px; user-select: all; }
 .developer-card .detail-actions { margin-top: 0.75rem; }
+.developer-card .developer-check input { width: 1.25rem; height: 1.25rem; flex: none; padding: 0; }
+.developer-secret .detail-actions { margin-top: 0; }
+.developer-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

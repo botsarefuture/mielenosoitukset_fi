@@ -919,8 +919,15 @@ def suggestion_apply(suggestion_id):
         flash_message('Mielenosoitusta ei löytynyt.', 'error')
         return redirect(url_for('admin_demo.suggestions_list'))
 
+    # A rejected or closed suggestion is decided. An applied one may still give
+    # other fields, but a field that was already applied is not applied again.
+    if s.get('status') in ('rejected', 'closed'):
+        flash_message('Ehdotus on jo käsitelty.', 'error')
+        return redirect(url_for('admin_demo.suggestion_view', suggestion_id=suggestion_id))
+    already_applied = set(s.get('applied_fields') or []) if s.get('status') == 'applied' else set()
+
     # fields selected by admin
-    selected = request.form.getlist('apply_field') or []
+    selected = [f for f in (request.form.getlist('apply_field') or []) if f not in already_applied]
     suggested = s.get('suggested_fields', {})
     update = {}
     for f in selected:
@@ -948,7 +955,7 @@ def suggestion_apply(suggestion_id):
     # Apply update
     try:
         mongo.demonstrations.update_one({'_id': ObjectId(demo_id)}, {'$set': update})
-        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': 'applied', 'applied_fields': selected, 'applied_by': str(getattr(current_user, '_id', 'unknown')), 'applied_at': utcnow()}})
+        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': 'applied', 'applied_fields': sorted(already_applied | set(selected)), 'applied_by': str(getattr(current_user, '_id', 'unknown')), 'applied_at': utcnow()}})
         flash_message('Ehdotuksen valitut kentät on päivitetty.', 'success')
     except Exception:
         logger.exception('Failed to apply suggestion to demo')
@@ -976,6 +983,10 @@ def suggestion_status_update(suggestion_id):
         s_for_check = None
     if s_for_check:
         _abort_if_demo_forbidden(s_for_check.get('demo_id'), "EDIT_DEMO")
+
+    if s_for_check and s_for_check.get('status') in ('applied', 'rejected', 'closed'):
+        flash_message('Ehdotus on jo käsitelty.', 'error')
+        return redirect(url_for('admin_demo.suggestion_view', suggestion_id=suggestion_id))
 
     try:
         mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': status, 'reviewed_by': str(getattr(current_user, '_id', 'unknown')), 'reviewed_at': utcnow()}})

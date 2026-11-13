@@ -1,0 +1,1 @@
+- Password changes now record when they happened. Ending other sessions and older reset links after a reset is built but switched off by default (INVALIDATE_ON_PASSWORD_RESET).

@@ -191,3 +191,53 @@ def test_god_cannot_create_or_reuse_bearer_token_or_reuse_main_secret(app, db, g
             check_token('old-token')
         with pytest.raises(ValueError):
             User.from_OID(god['id'])._change_password(SECRET)
+
+
+def test_wrong_password_and_unknown_user_are_rejected_identically_without_a_challenge(app, db, god):
+    client = app.test_client()
+    action = api(client)
+    wrong = action('start', username='alice', password='x' * 40)
+    unknown = action('start', username='nobody-here', password=PASSWORD)
+    assert wrong.status_code == unknown.status_code == 403
+    assert wrong.json == unknown.json
+    assert db.mfa_login_challenges.count_documents({'kind': 'god_login'}) == 0
+    # Positive control: the same form with the right password starts the flow.
+    assert action('start', username='alice', password=PASSWORD).json['stage'] == 'totp_first'
+    assert db.mfa_login_challenges.count_documents({'kind': 'god_login'}) == 1
+
+
+def test_stages_cannot_be_skipped_and_wrong_later_factors_do_not_advance(app, db, god):
+    client = app.test_client()
+    action = api(client)
+    action('start', username='alice', password=PASSWORD)
+    # Jumping ahead to the final secret or email steps is refused at stage one.
+    for name, fields in (('final_secret', {'secret': SECRET}), ('email_code', {'code': '000000'}),
+                         ('email_link', {'token': 'x'})):
+        assert action(name, **fields).status_code == 403
+    assert db.mfa_login_challenges.find_one({'kind': 'god_login'})['stage'] == 'totp_first'
+    action('totp_first', code=pyotp.TOTP(god['secrets'][0]).now())
+    # A wrong email code leaves the stage unchanged; the real code still works afterwards.
+    assert action('email_code', code='000000').status_code == 403
+    proof = db.mfa_login_challenges.find_one({'kind': 'god_login'})
+    assert proof['stage'] == 'email_code' and proof['attempts'] == 1
+    code = re.search(r'\d{6}', db.email_queue.find_one({'subject': 'God-tilin kirjautumisen vahvistus'})['body']).group()
+    assert action('email_code', code=code).json['stage'] == 'passkey'
+    with client.session_transaction() as state:
+        assert '_user_id' not in state
+
+
+def test_wrong_final_secret_does_not_sign_in(app, db, god, monkeypatch):
+    client = app.test_client()
+    action = api(client)
+    action('start', username='alice', password=PASSWORD)
+    # Move the stored proof straight to the final stage; earlier stages are covered above.
+    db.mfa_login_challenges.update_one({'kind': 'god_login'}, {'$set': {'stage': 'final_secret'}})
+    assert action('final_secret', secret=PASSWORD).status_code == 403
+    assert action('final_secret', secret='short').status_code == 403
+    with client.session_transaction() as state:
+        assert '_user_id' not in state and god_auth.RECEIPT_KEY not in state
+    assert client.get('/admin/governance/').status_code == 302
+    assert db.board_audit_logs.count_documents({'action': 'god-kirjautuminen'}) == 0
+    # Positive control for the same prepared proof.
+    assert action('final_secret', secret=SECRET).json['stage'] == 'complete'
+    assert db.board_audit_logs.count_documents({'action': 'god-kirjautuminen'}) == 1

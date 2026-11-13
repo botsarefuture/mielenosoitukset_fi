@@ -1,0 +1,2 @@
+- Strengthen identity regression tests (wrong-password rejection, normalized and legacy MFA preflights, canonical uniqueness, duplicate-email registration) and individually assess the existing identity tests. Tests and documentation only; authentication behavior is unchanged.
+- Add negative-path tests for the god-account login flow (wrong password, unknown user, skipped stages, wrong email code and final secret). Tests only.

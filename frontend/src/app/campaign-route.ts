@@ -5,7 +5,7 @@ export const campaignPath = '/kampanja/';
 
 export const campaignCopy = {
   title: 'Yhdessä näkyväksi – Mielenosoitukset.fi',
-  description: 'Tule tekemään mielenosoitukset.fi-palvelua tunnetuksi. Voit auttaa omalla paikkakunnallasi tai verkossa.',
+  description: 'Tule tekemään Mielenosoitukset.fi-palvelua tunnetuksi. Voit auttaa omalla paikkakunnallasi tai verkossa.',
   image: '/static/kampanja/og-banner.png',
 };
 
@@ -18,7 +18,7 @@ export function campaignProps(config: AppConfig): CampaignPageProps {
       messages: {
         required: 'Nimi ja sähköpostiosoite ovat pakollisia.',
         invalid: 'Tarkista korostetut tiedot ja yritä uudelleen.',
-        success: 'Kiitos ilmoittautumisestasi! Tarkista sähköpostisi vahvistaaksesi ilmoittautumisen.',
+        success: 'Kiitos ilmoittautumisestasi. Tarkista sähköpostisi vahvistaaksesi ilmoittautumisen.',
         failed: 'Ilmoittautuminen epäonnistui. Yritä uudelleen.',
         network: 'Yhteys palveluun epäonnistui. Yritä myöhemmin uudelleen.',
         sending: 'Lähetetään…',

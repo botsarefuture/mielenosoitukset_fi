@@ -1,6 +1,9 @@
+import hashlib
+
 import pytest
 from pymongo.errors import DuplicateKeyError
 
+from mielenosoitukset_fi.users.models import UserMFA
 from mielenosoitukset_fi.utils.validators import (
     is_reserved_identity_name,
     normalize_email,
@@ -48,6 +51,7 @@ def test_normalize_email_is_case_and_whitespace_insensitive():
         "alice-123",
         "alice_test",
         "123",
+        "a" * 30,
     ],
 )
 def test_validate_username_accepts_supported_usernames(username):
@@ -90,6 +94,8 @@ def test_username_availability_rejects_invalid_username(client):
 
 
 def test_username_availability_is_case_insensitive_for_existing_users(client):
+    free = client.get("/users/auth/api/username_free?username=unclaimed-user")
+    assert free.status_code == 200 and free.get_json()["available"] is True
     response = client.get("/users/auth/api/username_free?username=Alice")
 
     assert response.status_code == 200
@@ -130,6 +136,8 @@ def test_registration_normalizes_email(client, db):
 
 
 def test_registration_rejects_email_with_different_casing(client, db):
+    original = db.users.find_one({"username": "alice"})
+    count = db.users.count_documents({})
     response = client.post(
         "/users/auth/register",
         data={
@@ -141,6 +149,16 @@ def test_registration_rejects_email_with_different_casing(client, db):
 
     assert response.status_code == 302
     assert db.users.find_one({"username": "another-alice"}) is None
+    assert db.users.count_documents({}) == count
+    assert db.users.find_one({"_id": original["_id"]}) == original
+    # Prove the remaining input is accepted when only the duplicate email changes.
+    accepted = client.post("/users/auth/register", data={
+        "username": "another-alice", "email": "different@example.test",
+        "password": "StrongPassword123!",
+    })
+    assert accepted.status_code == 302
+    assert db.users.find_one({"username": "another-alice"})["email"] == "different@example.test"
+    assert db.users.count_documents({}) == count + 1
 
 
 @pytest.mark.parametrize(
@@ -153,13 +171,19 @@ def test_registration_rejects_email_with_different_casing(client, db):
 def test_database_enforces_canonical_identity_uniqueness(
     db, canonical_field, canonical_value
 ):
-    db.users.insert_one({canonical_field: canonical_value})
+    first_id = db.users.insert_one({canonical_field: canonical_value}).inserted_id
 
     with pytest.raises(DuplicateKeyError):
         db.users.insert_one({canonical_field: canonical_value})
+    assert db.users.count_documents({canonical_field: canonical_value}) == 1
+    assert db.users.find_one({canonical_field: canonical_value})["_id"] == first_id
 
 
 def test_login_normalizes_username(client, db):
+    denied = client.post("/users/auth/login", data={"username": " ALICE ", "password": "IncorrectPassword1!"})
+    assert denied.status_code == 302
+    with client.session_transaction() as login_session:
+        assert "_user_id" not in login_session
     response = client.post(
         "/users/auth/login",
         data={"username": " ALICE ", "password": "UserPass1!"},
@@ -170,14 +194,23 @@ def test_login_normalizes_username(client, db):
         assert session["_user_id"] == str(db.users.find_one({"username": "alice"})["_id"])
 
 
-def test_mfa_check_normalizes_username(client):
+@pytest.mark.parametrize("enabled", [False, True])
+def test_mfa_check_normalizes_username(client, db, enabled):
+    user_id = db.users.find_one({"username": "alice"})["_id"]
+    if enabled:
+        UserMFA(user_id).add_device()
+        db.users.update_one({"_id": user_id}, {"$set": {"mfa_enabled": True}})
+    denied = client.post("/users/auth/2fa_check", data={"username": " ALICE ", "password": "IncorrectPassword1!"})
+    assert denied.status_code == 200 and denied.get_json() == {"enabled": False, "valid": False}
+    assert db.mfa_login_challenges.count_documents({"user_id": user_id}) == 0
     response = client.post(
         "/users/auth/2fa_check",
         data={"username": " ALICE ", "password": "UserPass1!"},
     )
 
     assert response.status_code == 200
-    assert response.get_json() == {"enabled": False, "valid": True}
+    assert response.get_json() == {"enabled": enabled, "valid": True}
+    _assert_preflight_does_not_sign_in(client, db, user_id, enabled)
 
 
 def test_login_supports_legacy_mixed_case_username(client, db):
@@ -185,6 +218,11 @@ def test_login_supports_legacy_mixed_case_username(client, db):
         {"username": "alice"},
         {"$set": {"username": "LegacyAlice"}, "$unset": {"username_canonical": ""}},
     )
+
+    denied = client.post("/users/auth/login", data={"username": "legacyalice", "password": "IncorrectPassword1!"})
+    assert denied.status_code == 302
+    with client.session_transaction() as login_session:
+        assert "_user_id" not in login_session
 
     response = client.post(
         "/users/auth/login",
@@ -198,11 +236,20 @@ def test_login_supports_legacy_mixed_case_username(client, db):
         )
 
 
-def test_mfa_check_supports_legacy_mixed_case_username(client, db):
+@pytest.mark.parametrize("enabled", [False, True])
+def test_mfa_check_supports_legacy_mixed_case_username(client, db, enabled):
+    user_id = db.users.find_one({"username": "alice"})["_id"]
+    if enabled:
+        UserMFA(user_id).add_device()
+        db.users.update_one({"_id": user_id}, {"$set": {"mfa_enabled": True}})
     db.users.update_one(
         {"username": "alice"},
         {"$set": {"username": "LegacyAlice"}, "$unset": {"username_canonical": ""}},
     )
+
+    denied = client.post("/users/auth/2fa_check", data={"username": "LEGACYALICE", "password": "IncorrectPassword1!"})
+    assert denied.status_code == 200 and denied.get_json() == {"enabled": False, "valid": False}
+    assert db.mfa_login_challenges.count_documents({"user_id": user_id}) == 0
 
     response = client.post(
         "/users/auth/2fa_check",
@@ -210,4 +257,16 @@ def test_mfa_check_supports_legacy_mixed_case_username(client, db):
     )
 
     assert response.status_code == 200
-    assert response.get_json() == {"enabled": False, "valid": True}
+    assert response.get_json() == {"enabled": enabled, "valid": True}
+    _assert_preflight_does_not_sign_in(client, db, user_id, enabled)
+
+
+def _assert_preflight_does_not_sign_in(client, db, user_id, enabled):
+    with client.session_transaction() as login_session:
+        assert "_user_id" not in login_session
+        assert bool(login_session.get("mfa_pending_login")) is enabled
+        if enabled:
+            proof = login_session["mfa_pending_login"]
+            row = db.mfa_login_challenges.find_one({"_id": hashlib.sha256(proof.encode()).hexdigest()})
+            assert row is not None and row["user_id"] == user_id
+            assert "password" not in row and "password_hash" not in row

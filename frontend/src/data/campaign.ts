@@ -1,7 +1,7 @@
 export const volunteerMessages = {
   required: 'Nimi ja sähköpostiosoite ovat pakollisia.',
   invalid: 'Tarkista korostetut tiedot ja yritä uudelleen.',
-  success: 'Kiitos ilmoittautumisestasi! Tarkista sähköpostisi vahvistaaksesi ilmoittautumisen.',
+  success: 'Kiitos ilmoittautumisestasi. Tarkista sähköpostisi vahvistaaksesi ilmoittautumisen.',
   failed: 'Ilmoittautuminen epäonnistui. Yritä uudelleen.',
   network: 'Yhteys palveluun epäonnistui. Yritä myöhemmin uudelleen.',
   sending: 'Lähetetään…',

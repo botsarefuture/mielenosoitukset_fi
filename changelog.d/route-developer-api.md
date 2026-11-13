@@ -1,0 +1,1 @@
+- The developer panel now loads its data: Apache sends `/api/developer/*` to the Go API, so the React page no longer shows "Kehittäjäpaneelia ei saatu ladattua".

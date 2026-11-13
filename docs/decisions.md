@@ -12,6 +12,18 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 
 ## Process and approvals
 
+- **Verified production revisions, native coalescing (2026-11-13).** The maintainer
+  approved retaining queue 8/8, ALLGREEN, minimum 1 and wait 0 while hardening
+  deployments. One active production run finishes; native single-pending
+  concurrency coalesces bursts without a scheduler. Reuse trusted full Tests
+  evidence for the exact SHA instead of rerunning it on main pushes. Publish
+  immutable artifacts once, and deploy Flask, Go, React and routing in one locked
+  transaction. Preserve health checks, monotonic successful-release identification
+  and visible failures. Normal deployment checks migration readiness; pending
+  data changes require a separately approved migration procedure under the lock.
+  The worker marker prevents parallel startup migrations. No destructive migration
+  or database rollback is authorized by this pipeline change.
+
 - **GitHub handles the merge backlog (2026-11-13).** For 20–40 independent PRs,
   agents arm auto-merge as each is ready and continue other work. Do not serialize
   them by watching each merge. GitHub owns waiting and order; agents intervene for
@@ -232,3 +244,7 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 ## Fundraising page
 
 - **Pre-launch mode (2026-11-13).** `/keräys` is public without login or campaign publication and is not linked from anywhere (no nav, footer, sitemap or front page; the existing link on `/kampanja/` shows only once the campaign is published). Until Helsinki's date reaches `start_date` it shows "Pienkeräys aukeaa", hides IBAN/BIC and payment links (in the page, the embedded bootstrap and `GET /api/fundraising/details`) and is `noindex, follow`. The opening day is the existing `start_date`, so no extra hardcoded instant. The account block needs `details_confirmed`, `publication_state: active`, organiser and recipient to be filled in; nothing is invented.
+
+## Fundraising bar
+
+- **Slim bar above the header, off by default (2026-11-13).** The maintainer chose the cream look with an orange edge and no pill. It is controlled by `show_bar` in the fundraising configuration, takes its dates from the same configuration (shown dates, so the opening can be announced before confirmation), hides after the end date and on `/keräys`, and replaces the header link. Setting `show_bar` is the first public link to `/keräys` (pre-launch mode otherwise links it from nowhere), so it is the launch switch and is not gated by campaign publication. Dismissal lasts 7 days and ends early at a milestone. The bar never says what leftover funds do: the permit's primary use is the marketing campaign and the service's running costs, and leftovers go to shared demonstration equipment.

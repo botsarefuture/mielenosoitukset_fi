@@ -39,7 +39,8 @@ export function headerProps(config: AppConfig, session: SessionSummary, text: Ca
       href: config.urls.login, label: text.account.login, icon: 'fa-sign-in-alt',
     }],
     languages: config.locales,
-    fundraising: session.fundraising ? config.urls.fundraising : null,
+    // The bar replaces the header link: with the bar flag on, the link never shows.
+    fundraising: session.fundraising && !session.fundraisingBar.enabled ? config.urls.fundraising : null,
     account,
     notifications: {
       list: config.urls.notifications.list, markRead: config.urls.notifications.markRead,

@@ -11,7 +11,7 @@ import uuid
 import hashlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from mielenosoitukset_fi.utils.demo_seo import _parse_clock
-from mielenosoitukset_fi.utils.fundraising import fundraising_details
+from mielenosoitukset_fi.utils.fundraising import fundraising_bar, fundraising_details
 from mielenosoitukset_fi.utils.campaign_publication import campaign_pages_public, campaign_preview_required
 from datetime import datetime, date, timedelta, timezone
 from urllib.parse import parse_qs, urlencode, urlsplit
@@ -1837,6 +1837,8 @@ def init_routes(app):
         if locale not in supported:
             locale = "fi"
         details = fundraising_details()
+        # `/keräys` is public in pre-launch mode, so `show_bar` alone decides; it is the launch switch.
+        bar_settings = fundraising_bar()
         language_names = current_app.config.get("BABEL_LANGUAGES") or {}
         try:
             can_edit_demo = bool(current_user.is_authenticated and current_user.has_permission("EDIT_DEMO"))
@@ -1857,6 +1859,7 @@ def init_routes(app):
             "unread": 0,
             "fundraising": bool(details.get("show_header_link"))
             and (campaign_pages_public() or current_user.is_authenticated),
+            "fundraising_bar": bar_settings,
             "site_analytics_enabled": bool(current_app.config.get("SITE_ANALYTICS_ENABLED", True)),
             "matomo_enabled": bool(current_app.config.get("MATOMO_ENABLED", True)),
             "submission": {

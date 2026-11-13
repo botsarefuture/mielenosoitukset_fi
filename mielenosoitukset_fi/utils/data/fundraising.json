@@ -23,5 +23,12 @@
   "planned_start_date": "2026-11-16",
   "planned_end_date": "2027-02-15",
   "bic": "OKOYFIHH",
-  "area": "Koko Suomi Ahvenanmaata lukuun ottamatta"
+  "area": "Koko Suomi Ahvenanmaata lukuun ottamatta",
+  "campaign_start_date": "2027-03-01",
+  "opening_date": "2027-03-06",
+  "opening_time": "18.00",
+  "opening_city": "Tampere",
+  "marketing_week_start": "2027-05-03",
+  "marketing_week_end": "2027-05-09",
+  "opening_city_in": "Tampereella"
 }

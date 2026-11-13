@@ -234,3 +234,7 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 ## Fundraising bar
 
 - **Slim bar above the header, off by default (2026-11-13).** The maintainer chose the cream look with an orange edge and no pill. It is controlled by `show_bar` in the fundraising configuration, takes its dates from the same configuration (shown dates, so the opening can be announced before confirmation), hides after the end date and on `/keräys`, and replaces the header link. Setting `show_bar` is the first public link to `/keräys` (pre-launch mode otherwise links it from nowhere), so it is the launch switch and is not gated by campaign publication. Dismissal lasts 7 days and ends early at a milestone. The bar never says what leftover funds do: the permit's primary use is the marketing campaign and the service's running costs, and leftovers go to shared demonstration equipment.
+
+## Campaign page
+
+- **Campaign page follows mockup v2.2 (2026-11-13).** The maintainer approved the mockup after several review rounds; copy, order and states are not redesigned. Dates and phase come from the fundraising configuration (see [campaign-page.md](campaign-page.md)); the Helsinki date picks the timeline dot, the donate slot and, from 16.11.2026, moves "Tietoa keräyksestä" above "Mistä on kyse". The page keeps the campaign publication gate. The mockup has no newsletter block, so the page no longer has one. The opening interest form and the volunteer form's new data model ship as separate pull requests.

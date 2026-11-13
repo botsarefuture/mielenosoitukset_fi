@@ -30,8 +30,9 @@ try {
   save('campaign', createElement(CampaignPage, {
     urls: { home: '__URL_HOME__', fundraising: '__URL_FUNDRAISING__', privacy: '__URL_PRIVACY__' },
     serverFallback: true,
+    // Bridge only: the static fallback shows the pre-launch phase; the island recomputes the phase from the Helsinki date.
+    today: '2026-11-13',
     volunteer: { endpoint: '__VOLUNTEER_ENDPOINT__', messages: volunteerMessages },
-    newsletter: { endpoint: 'https://mailist.luova.club/signup', listId: '68d26ca27f8e9dee7c846a22' },
   }));
   for (const status of ['success', 'invalid', 'expired']) {
     save(`confirmation_${status}`, createElement(ConfirmationPage, {

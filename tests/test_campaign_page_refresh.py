@@ -13,9 +13,9 @@ def test_campaign_fallback_is_readable_and_contains_no_public_procurement_detail
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     assert 'data-react-island="campaign-page"' in body
-    for copy in ('Yhdessä näkyväksi', 'Näkyvyyttä eri puolilla Suomea', 'Kampanjan pienkeräys', 'Ilmoittaudu mukaan'):
+    for copy in ('Mielenosoitukset.fi näkyviin kymmeniin kaupunkeihin', 'Näin voit auttaa', 'Mistä on kyse', 'Tietoa keräyksestä', 'Aikataulu', 'Usein kysyttyä'):
         assert copy in body
-    for detail in ('25 000', '1 889,94', '775,81', '740,41', '373,72', 'Pride-banderollit', 'Mahdollisuuksia vaikuttaa'):
+    for detail in ('1 889,94', '775,81', '740,41', '373,72', 'Mahdollisuuksia vaikuttaa'):
         assert detail not in body
     assert 'href="#vapaaehtoiseksi"' in body
     assert 'href="/ker%C3%A4ys"' in body
@@ -50,28 +50,3 @@ def test_confirmation_keeps_token_validation_and_has_readable_nojs_html(client, 
     else:
         assert 'Vahvistuslinkki ei ole voimassa' in body
 
-
-@pytest.mark.e2e
-@pytest.mark.integration
-@pytest.mark.parametrize('outcome', ['http-error', 'invalid-json', 'invalid-shape', 'network'])
-def test_newsletter_error_never_looks_like_success_and_keeps_email(live_server, browser_page, db, outcome):
-    db.campaign_settings.update_one({'_id': 'public_pages'}, {'$set': {'published': True}}, upsert=True)
-    def signup(route):
-        if outcome == 'network':
-            route.abort('failed')
-        elif outcome == 'invalid-json':
-            route.fulfill(status=200, content_type='text/plain', body='not-json')
-        elif outcome == 'invalid-shape':
-            route.fulfill(status=200, content_type='application/json', body=json.dumps({'message': {'invalid': True}}))
-        else:
-            route.fulfill(status=500, content_type='application/json', body=json.dumps({'message': 'No success despite a message'}))
-    browser_page.route('https://mailist.luova.club/signup', signup)
-    browser_page.goto(live_server+'/kampanja/', wait_until='domcontentloaded')
-    browser_page.locator('#email').fill('newsletter@example.test')
-    browser_page.locator('#newsletter-form button').click()
-    feedback = browser_page.locator('#newsletter-msg')
-    feedback.wait_for(state='visible')
-    assert feedback.get_attribute('role') == 'alert'
-    assert 'Uutiskirjeen tilaus onnistui.' not in feedback.inner_text()
-    assert browser_page.locator('#email').input_value() == 'newsletter@example.test'
-    assert not browser_page.locator('#newsletter-form button').is_disabled()

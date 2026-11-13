@@ -106,11 +106,11 @@ def test_header_promotion_is_opt_in_and_campaign_preserves_signup_hooks(client, 
     assert campaign.status_code == 200
     page = campaign.get_data(as_text=True)
     assert 'id="kerays"' in page and 'href="/ker%C3%A4ys"' in page
-    assert 'id="volunteer-form"' in page and 'id="newsletter-form"' in page
+    assert 'id="volunteer-form"' in page and 'id="newsletter-form"' not in page
     assert "Kampanja alkoi 1.3.2026" not in page
-    assert 'id="materiaalitavoitteet"' in page
-    assert "25 000" not in page and "1 889,94" not in page
-    assert 'id="campaign-title"' in page and "Yhdessä näkyväksi" in page
+    assert 'id="aikataulu"' in page and 'id="avajaiset"' in page
+    assert "1 889,94" not in page
+    assert 'id="t"' in page and "Mielenosoitukset.fi näkyviin kymmeniin kaupunkeihin" in page
 
 
 @pytest.mark.parametrize("url", [

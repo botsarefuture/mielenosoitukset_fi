@@ -3,8 +3,7 @@
 {% block title %}{{ _('Kirjaudu ulos') }} | Mielenosoitukset.fi{% endblock %}
 {% block robots %}<meta name="robots" content="noindex, nofollow" />{% endblock %}
 
-{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/public-detail.css', v='20261110-detail-buttons-1') }}">
-<style>.logout-confirm { max-width: 32rem; margin-inline: auto; } .logout-confirm h1 { text-align: start; } .logout-confirm .detail-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }</style>{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/public-detail.css', v='20261110-detail-buttons-1') }}">{% endblock %}
 {% block content %}
 <section class="container-main-content logout-confirm">
   <h1>{{ _('Kirjaudu ulos?') }}</h1>

@@ -3420,3 +3420,19 @@ textarea.user-field__control {
     max-width: none;
   }
 }
+
+/* Sign-out confirmation page. */
+main .logout-confirm {
+  max-width: 32rem;
+  margin-inline: auto;
+}
+
+main .logout-confirm h1 {
+  text-align: start;
+}
+
+main .logout-confirm .detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}

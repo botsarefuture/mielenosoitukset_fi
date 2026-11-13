@@ -214,21 +214,26 @@ func fundraisingReminderHandler(next http.Handler, db *mongo.Database, config su
 			reminderFailure(w, http.StatusServiceUnavailable, "REMINDER_UNAVAILABLE", "Palvelu ei ole juuri nyt käytettävissä.")
 			return
 		}
-		// Signup and link clicks count separately, so a burst of signups cannot
-		// stop someone from confirming or removing an address.
-		scope, minute, hour := "reminder-signup:", int64(5), int64(20)
-		if path != reminderPath {
-			scope, minute, hour = "reminder-link:", 10, 60
-		}
-		allowed, err := windowedRate(ctx, db, scope+submissionClient(r, config.Secret), minute, hour)
-		if err != nil {
-			reminderFailure(w, http.StatusServiceUnavailable, "REMINDER_UNAVAILABLE", "Yritä uudelleen hetken kuluttua.")
-			return
-		}
-		if !allowed {
-			w.Header().Set("Retry-After", "60")
-			reminderFailure(w, http.StatusTooManyRequests, "REMINDER_RATE_LIMITED", "Yrityksiä on liian monta. Odota hetki ja yritä uudelleen.")
-			return
+		// Signup and confirm clicks have their own IP limits, so a burst of
+		// signups cannot stop someone from confirming. Removal has none: a one-click
+		// unsubscribe comes from a mailbox provider's shared servers, and a
+		// removal must never be refused. It is a cheap indexed delete by a
+		// 256-bit token.
+		if path != reminderUnsubscribePath {
+			scope, minute, hour := "reminder-signup:", int64(5), int64(20)
+			if path == reminderConfirmPath {
+				scope, minute, hour = "reminder-confirm:", 10, 60
+			}
+			allowed, err := windowedRate(ctx, db, scope+submissionClient(r, config.Secret), minute, hour)
+			if err != nil {
+				reminderFailure(w, http.StatusServiceUnavailable, "REMINDER_UNAVAILABLE", "Yritä uudelleen hetken kuluttua.")
+				return
+			}
+			if !allowed {
+				w.Header().Set("Retry-After", "60")
+				reminderFailure(w, http.StatusTooManyRequests, "REMINDER_RATE_LIMITED", "Yrityksiä on liian monta. Odota hetki ja yritä uudelleen.")
+				return
+			}
 		}
 		switch path {
 		case reminderPath:

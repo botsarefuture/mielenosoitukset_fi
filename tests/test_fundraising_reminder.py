@@ -146,3 +146,10 @@ def test_jobs_are_registered_and_dates_match_the_permit():
     helsinki = pytest.importorskip("zoneinfo").ZoneInfo("Europe/Helsinki")
     assert fr.SEND_AT.astimezone(helsinki) == datetime(2026, 11, 16, 0, 0, tzinfo=helsinki)
     assert fr.PURGE_AFTER.date().isoformat() == "2027-03-17"
+
+
+def test_dry_run_reports_stuck_or_failed_queue_jobs(db):
+    db.email_queue.insert_one({"_id": "fundraising-reminder:x", "kind": "fundraising_reminder", "status": "failed"})
+    db.email_queue.insert_one({"_id": "other", "kind": "other", "status": "failed"})
+    report = fr.send_reminders(db, now=DAY, dry_run=True)
+    assert report["queue_stuck_or_failed"] == 1 and report["queue_waiting"] == 0

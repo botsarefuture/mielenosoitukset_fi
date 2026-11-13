@@ -34,9 +34,9 @@ address in the existing `demo_submission_tokens` rate buckets, which expire as b
 
 1. **Signup.** Same-origin only (`Sec-Fetch-Site` not `cross-site`, `Origin` equal to the configured site),
    `application/json` up to 2 KiB, unknown fields refused. There is no session, so there is no CSRF token
-   to check; the origin check is the guard. Honeypot field `website`: if filled the answer is the normal 202
+   to check; the origin check is the guard. Honeypot field `hp_trap` (sent as `website` in the JSON): if filled the answer is the normal 202
    and nothing is stored. Email: plain ASCII address up to 254 characters, no display name. Consent is required.
-   Rate limit: per IP 5 per minute and 20 per hour (429); per address 2 per minute and 4 per hour, where
+   Rate limit: per IP 5 per minute and 20 per hour on signup and 10 per minute on confirm (429), none on removal (mailbox providers' shared servers send one-click unsubscribes, and a removal must never be refused); per address 2 per minute and 4 per hour, where
    going over gives the normal 202 and stores nothing. The panic switch answers 503 like the other write routes.
 2. **Idempotent and silent.** A new address gets a pending row; a repeat does not create a duplicate. A pending
    row may get the confirmation again (15 minutes apart, at most three). A confirmed one is left alone. The
@@ -76,6 +76,12 @@ python -m mielenosoitukset_fi.scripts.send_fundraising_reminders --dry-run
 
 It prints `would_send`, `confirmed_total`, `pending`, `already_claimed` and `claimed_never_queued`.
 
+**Limit of "never twice".** The guards above make the queueing exactly-once. Delivery by the shared mail
+drainer (`EmailSender`) is at-least-once: if the SMTP send succeeds and the process dies before the job is
+deleted, the job is retried and the recipient gets a second copy. Before the bulk send, check that the dry run
+shows `queue_stuck_or_failed` 0 and that the queue is otherwise healthy; after it, watch the same counter and
+delete a stuck reminder job instead of letting it retry. The window only controls queueing.
+
 ## Retention
 
 - Unconfirmed signups: deleted 14 days after creation (7-day link plus a week).
@@ -112,6 +118,12 @@ the Flask flags, and delete the data with the purge command or `db.fundraising_r
 `db.fundraising_reminder_sent.drop()`. `git revert` of the PR needs no data migration.
 
 ## Not done / limits
+
+- The send marker is an unsalted SHA-256 of the address and stays after a removal until 17.3.2027. A keyed hash would be better and is a candidate follow-up.
+- The unsubscribe token is in the `List-Unsubscribe` URL query (RFC 8058), so it can appear in access logs; the token is spent by the removal itself.
+- A person can use up another address's per-address limit for an hour (one more signup attempt then gets the normal answer but no new mail). Accepted.
+- Confirmed signups made after the send window are kept, without a reminder, until 17.3.2027.
+- Queue ids of these mails are fixed strings, which sort ahead of other mail in the queue.
 
 - The results message for the optional checkbox is not implemented.
 - The rate limit rides on the existing `demo_submission_tokens` buckets (database), so it works across Go instances.

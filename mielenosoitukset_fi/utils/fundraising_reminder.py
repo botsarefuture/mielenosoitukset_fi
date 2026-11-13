@@ -149,8 +149,9 @@ def send_confirmations(db, now=None, limit=100, environ=None):
                 f"fundraising-confirm:{row['_id']}:{row.get('confirmation_count', 1)}",
                 row["email"], subject, body, unsubscribe_token, environ))
             queued += 1
-        except Exception:
-            logger.exception("Could not queue a fundraising reminder confirmation")
+        except Exception as error:
+            # Name only the error type: a traceback could print the document, which holds the raw token.
+            logger.error("Could not queue a fundraising reminder confirmation (%s)", type(error).__name__)
             rows.update_one({"_id": row["_id"]}, {
                 "$set": {"confirmation_sent_at": None},
                 "$inc": {"confirmation_count": -1},
@@ -172,6 +173,11 @@ def reminder_report(db, now=None):
         "already_claimed": rows.count_documents({"status": "confirmed", "reminder_claimed_at": {"$ne": None}}),
         "claimed_never_queued": rows.count_documents(
             {"reminder_claimed_at": {"$ne": None}, "reminder_queued_at": None}),
+        # The mail drainer is at-least-once: a job that is stuck or has failed may be sent again.
+        # Both must be 0 (and the queue drained) before the bulk send is approved.
+        "queue_stuck_or_failed": db.email_queue.count_documents(
+            {"kind": "fundraising_reminder", "status": {"$in": ["failed", "in_flight"]}}),
+        "queue_waiting": db.email_queue.count_documents({"kind": "fundraising_reminder", "status": "pending"}),
     }
 
 
@@ -217,8 +223,8 @@ def send_reminders(db, now=None, dry_run=False, limit=500, environ=None):
         except DuplicateKeyError:
             skipped += 1
             continue
-        except Exception:
-            logger.exception("Could not queue the fundraising reminder")
+        except Exception as error:
+            logger.error("Could not queue the fundraising reminder (%s)", type(error).__name__)
             sent_markers.delete_one({"_id": marker_id})
             rows.update_one({"_id": row["_id"]}, {"$set": {"reminder_claimed_at": None},
                                                    "$pull": {"unsubscribe_hashes": unsubscribe_hash}})

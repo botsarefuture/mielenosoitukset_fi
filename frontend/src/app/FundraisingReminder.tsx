@@ -15,7 +15,7 @@ export function ReminderSignup({ privacyUrl }: { privacyUrl: string }) {
     setSending(true);
     setOutcome(null);
     const result = await signUpForReminder({
-      email: String(form.get('email') ?? ''), resultsConsent: form.get('results') === 'on', website: String(form.get('website') ?? ''),
+      email: String(form.get('email') ?? ''), resultsConsent: form.get('results') === 'on', website: String(form.get('hp_trap') ?? ''),
     });
     setSending(false);
     if (result.ok) {
@@ -30,8 +30,8 @@ export function ReminderSignup({ privacyUrl }: { privacyUrl: string }) {
     <p>{c.intro}</p>
     <form className="fundraising-reminder__form" onSubmit={submit}>
       <div hidden aria-hidden="true">
-        <label htmlFor="reminder-website">Verkkosivusto</label>
-        <input type="text" id="reminder-website" name="website" tabIndex={-1} autoComplete="off" />
+        <label htmlFor="reminder-hp">Jätä tämä kenttä tyhjäksi</label>
+        <input type="text" id="reminder-hp" name="hp_trap" tabIndex={-1} autoComplete="off" />
       </div>
       <label htmlFor="reminder-email">{c.emailLabel}</label>
       <input type="email" id="reminder-email" name="email" required maxLength={254} autoComplete="email" inputMode="email" />

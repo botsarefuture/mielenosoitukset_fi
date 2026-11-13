@@ -1,5 +1,6 @@
 import data from '../../../mielenosoitukset_fi/utils/data/fundraising.json';
 import type { AppConfig } from './config';
+import { fundraisingCopy } from './fundraising-copy';
 import { useState } from 'react';
 import { fundraisingDetails, fundraisingExtras, fundraisingIcs } from './fundraising';
 import type { FundraisingDetails, FundraisingExtras } from './fundraising';
@@ -40,7 +41,8 @@ export function FundraisingPage({ details, extras, config }: { details: Fundrais
     <section className="campaign-fundraising-intro" aria-labelledby="fundraising-title">
       <div>
         <h1 id="fundraising-title">Jotta mielenosoitukset löytyvät</h1>
-        <p>Haluamme tuoda Mielenosoitukset.fi-palvelun yhä useamman ihmisen tietoon. Pienkeräyksellä rahoitetaan yhteinen markkinointikampanja.</p>
+        <p>Haluamme tuoda Mielenosoitukset.fi-palvelun yhä useamman ihmisen tietoon. </p>
+        <p><strong>{fundraisingCopy.lead}</strong></p>
       </div>
     </section>
 
@@ -54,14 +56,17 @@ export function FundraisingPage({ details, extras, config }: { details: Fundrais
     <div className="public-content__grid">
       <div className="public-content__sections">
         <section className="public-content__card" aria-labelledby="purpose-title">
-          <h2 id="purpose-title">Mihin varat käytetään?</h2>
-          <p>Kerätyt varat käytetään Mielenosoitukset.fi-palvelun tunnettuuden lisäämiseen tähtäävän markkinointikampanjan toteuttamiseen.</p>
-          <ul>
-            <li>Markkinointimateriaalien, kuten tarrojen, julisteiden ja banderollien, suunnittelu, valmistus ja hankinta.</li>
-            <li>Kampanjan toteuttamisesta aiheutuvat muut kulut, kuten matkakulut.</li>
-          </ul>
-          <h3>Jos varoja jää yli</h3>
-          <p>Mikäli varoja jää ensisijaisen käyttötarkoituksen toteuttamisen jälkeen, ne käytetään Mielenosoitukset.fi-palvelun ylläpitoon ja jatkuvuuden turvaamiseen.</p>
+          <h2 id="purpose-title">{fundraisingCopy.purposeTitle}</h2>
+          <p>{fundraisingCopy.purposeIntro}</p>
+          <h3>{fundraisingCopy.primaryTitle}</h3>
+          <ul>{fundraisingCopy.primary.map(item => <li key={item}>{item}</li>)}</ul>
+          <h3>{fundraisingCopy.secondaryTitle}</h3>
+          <p>{fundraisingCopy.secondary}</p>
+          <details className="fundraising-official">
+            <summary>{fundraisingCopy.officialTitle}</summary>
+            <p>{fundraisingCopy.officialPrimary}</p>
+            <p>{fundraisingCopy.officialSecondary}</p>
+          </details>
         </section>
 
         <section className="public-content__card" aria-labelledby="service-title">

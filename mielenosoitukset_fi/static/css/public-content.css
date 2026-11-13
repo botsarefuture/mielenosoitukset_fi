@@ -118,3 +118,6 @@
 .fundraising-copy__status { display: block; margin-top: .4rem; font-size: .9rem; }
 .fundraising-copy__status:empty { margin: 0; }
 .fundraising-iban { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.fundraising-official { margin-top: 1rem; border-top: 1px solid var(--product-border, #d0d7de); padding-top: .75rem; }
+.fundraising-official summary { cursor: pointer; font-weight: 650; }
+.fundraising-official summary:focus-visible { outline: 3px solid var(--product-primary); outline-offset: 3px; }

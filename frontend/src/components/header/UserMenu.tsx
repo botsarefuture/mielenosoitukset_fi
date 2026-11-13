@@ -21,8 +21,8 @@ export function UserMenu({ account, label }: { account: NonNullable<HeaderProps[
     };
   }, []);
   function keydown(event: KeyboardEvent) {
-    const items = Array.from(menu.current?.querySelectorAll('a') ?? []);
-    const index = items.indexOf(document.activeElement as HTMLAnchorElement);
+    const items = Array.from(menu.current?.querySelectorAll<HTMLElement>('a, button') ?? []);
+    const index = items.indexOf(document.activeElement as HTMLElement);
     let next: number | undefined;
     if (event.key === 'Escape') {
       event.preventDefault(); event.stopPropagation(); setOpen(false); manualOpen.current = false; button.current?.focus(); return;
@@ -38,8 +38,7 @@ export function UserMenu({ account, label }: { account: NonNullable<HeaderProps[
   }
   return <li className="user-dropdown" id="user-dropdown" ref={wrap} aria-expanded={open}
     onKeyDown={keydown}
-    onPointerEnter={() => { if (matchMedia('(min-width: 769px) and (hover: hover)').matches) setOpen(true); }}
-    onPointerLeave={() => { if (!manualOpen.current) setOpen(false); }}>
+>
     <button className="user-toggle" id="user-toggle-btn" type="button" ref={button}
       aria-haspopup="menu" aria-expanded={open} aria-controls="user-dropdown-menu"
       aria-label={label} onClick={() => { const next = !manualOpen.current; manualOpen.current = next; setOpen(next); }}>
@@ -47,9 +46,17 @@ export function UserMenu({ account, label }: { account: NonNullable<HeaderProps[
       <span>{account.name}</span><Icon name="fa-chevron-down" />
     </button>
     <div className="dropdown-menu" id="user-dropdown-menu" role="menu" aria-labelledby="user-toggle-btn" ref={menu}>
-      <ul>{account.links.map(link => <li key={link.href} role="none">
-        <a href={link.href} role="menuitem"><Icon name={link.icon} /><span>{link.label}</span></a>
-      </li>)}</ul>
+      <ul>{account.links.map(link => link.post === undefined
+        ? <li key={link.href} role="none">
+          <a href={link.href} role="menuitem"><Icon name={link.icon} /><span>{link.label}</span></a>
+        </li>
+        // Signing out is a POST form so a prefetch, hover or crawler can never end the session.
+        : <li key={link.href} role="none" className="user-menu__signout">
+          <form method="post" action={link.href}>
+            <input type="hidden" name="logout_token" value={link.post} />
+            <button type="submit" role="menuitem"><Icon name={link.icon} /><span>{link.label}</span></button>
+          </form>
+        </li>)}</ul>
     </div>
   </li>;
 }

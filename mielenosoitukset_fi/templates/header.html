@@ -11,7 +11,11 @@
         <span class="user-toggle">{{ header_account.name }}</span>
         <div class="dropdown-menu">
           <ul>{% for link in header_account.links %}
+            {% if link.post is defined %}
+            <li class="user-menu__signout"><form method="post" action="{{ link.href }}"><input type="hidden" name="logout_token" value="{{ link.post }}" /><button type="submit"><i class="fa-solid {{ link.icon }}" aria-hidden="true"></i><span>{{ link.label }}</span></button></form></li>
+            {% else %}
             <li><a href="{{ link.href }}"><i class="fa-solid {{ link.icon }}" aria-hidden="true"></i><span>{{ link.label }}</span></a></li>
+            {% endif %}
           {% endfor %}</ul>
         </div>
       </li>
@@ -42,7 +46,7 @@
   {% if current_user.has_admin_access() %}
     {% set account_links = account_links + [{'href': url_for('admin.admin_dashboard'), 'label': _('Hallintapaneeli'), 'icon': 'fa-gauge'}] %}
   {% endif %}
-  {% set account_links = account_links + [{'href': url_for('users.auth.logout'), 'label': _('Kirjaudu ulos'), 'icon': 'fa-sign-out-alt'}] %}
+  {% set account_links = account_links + [{'href': url_for('users.auth.logout'), 'label': _('Kirjaudu ulos'), 'icon': 'fa-sign-out-alt', 'post': logout_form_token()}] %}
   {% set header_account = {'name': current_user.displayname or current_user.username,
     'picture': current_user.profile_picture or none, 'links': account_links,
     'globalAdmin': true if current_user.global_admin else false} %}

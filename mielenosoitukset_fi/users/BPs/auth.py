@@ -12,6 +12,7 @@ from flask import (
     url_for,
     current_app,
     session,
+    make_response,
 )
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_babel import gettext as _
@@ -61,6 +62,7 @@ from mielenosoitukset_fi.utils.tokens import (
     token_usage_logs_collection,
     tokens_collection,
 )
+from mielenosoitukset_fi.utils.logout_token import is_prefetch_request, make_logout_token, valid_logout_token
 from mielenosoitukset_fi.utils.step_up import clear_elevation, is_elevated, sudo_required
 
 
@@ -1594,10 +1596,36 @@ def mfa_device_rename():
     return jsonify({"status": "error", "message": _("Laitetta ei löytynyt.")}), 404
 
 
-@auth_bp.route("/logout")
-@login_required
+@auth_bp.app_context_processor
+def inject_logout_form_token():
+    """Templates mint the sign-out form token on demand, only for a signed-in visitor."""
+    def logout_form_token():
+        return make_logout_token(current_user.get_id()) if current_user.is_authenticated else ""
+    return {"logout_form_token": logout_form_token}
+
+
+@auth_bp.route("/logout", methods=["GET", "POST"])
 def logout():
-    """ """
+    """Sign out. Only a POST that carries the form token ends the session.
+
+    A GET never signs anyone out: links, bookmarks, prefetchers and crawlers
+    land on a small confirmation page (or get an empty answer when the browser
+    is only prefetching it).
+    """
+    if request.method == "GET":
+        if is_prefetch_request(request.headers):
+            return "", 204, {"Cache-Control": "no-store"}
+        if not current_user.is_authenticated:
+            return redirect(url_for("users.auth.login"))
+        response = make_response(render_template(
+            "users/logout_confirm.html", logout_token=make_logout_token(current_user.get_id())))
+        response.headers["Cache-Control"] = "no-store"
+        return response
+    if not current_user.is_authenticated:
+        return redirect(url_for("users.auth.login"))
+    if not valid_logout_token(request.form.get("logout_token"), current_user.get_id()):
+        # An expired or foreign token never signs anyone out; show the confirmation page with a fresh one.
+        return redirect(url_for("users.auth.logout"))
     logout_user()
     clear_elevation()  # step-up state never outlives the session
     flash_message("Kirjauduit onnistuneesti ulos", "success")

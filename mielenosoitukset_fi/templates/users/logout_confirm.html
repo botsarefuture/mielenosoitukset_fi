@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Kirjaudu ulos') }} | Mielenosoitukset.fi{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, nofollow" />{% endblock %}
+
+{% block content %}
+<section class="container-main-content">
+  <h1>{{ _('Kirjaudu ulos?') }}</h1>
+  <p>{{ _('Uloskirjautuminen päättää tämän selaimen istunnon.') }}</p>
+  <form method="post" action="{{ url_for('users.auth.logout') }}">
+    <input type="hidden" name="logout_token" value="{{ logout_token }}" />
+    <button type="submit" class="detail-button detail-button--primary">{{ _('Kirjaudu ulos') }}</button>
+    <a class="detail-button detail-button--danger" href="{{ url_for('index') }}">{{ _('Peruuta') }}</a>
+  </form>
+</section>
+{% endblock %}

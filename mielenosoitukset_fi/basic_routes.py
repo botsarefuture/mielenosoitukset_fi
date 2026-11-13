@@ -10,6 +10,7 @@ import time
 import uuid
 import hashlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
+from mielenosoitukset_fi.utils.logout_token import make_logout_token
 from mielenosoitukset_fi.utils.demo_seo import _parse_clock
 from mielenosoitukset_fi.utils.fundraising import fundraising_details
 from mielenosoitukset_fi.utils.campaign_publication import campaign_pages_public, campaign_preview_required
@@ -1873,6 +1874,7 @@ def init_routes(app):
                 "global_admin": bool(getattr(current_user, "global_admin", False)),
                 "has_admin_access": bool(current_user.has_admin_access()),
                 "actor_id": str(current_user._id),
+                "logout_token": make_logout_token(current_user.get_id()),
             })
             try:
                 payload["unread"] = sum(

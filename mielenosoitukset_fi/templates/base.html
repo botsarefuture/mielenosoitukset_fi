@@ -636,7 +636,10 @@ body.banner-closed {
         <li><a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
         <li><a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a></li>
         {% else %}
-        <li><a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a></li>
+        <li><form method="post" action="{{ url_for('users.auth.logout') }}" class="footer-logout-form">
+          <input type="hidden" name="logout_token" value="{{ logout_form_token() }}" />
+          <button type="submit" class="footer-logout-button">{{ _('Kirjaudu ulos') }}</button>
+        </form></li>
         {% endif %}
       </ul>
 

@@ -24,7 +24,8 @@ export function headerProps(config: AppConfig, session: SessionSummary, text: Ca
       ...(session.hasAdminAccess
         ? [{ href: config.urls.admin, label: text.account.admin, icon: 'fa-gauge' }]
         : []),
-      { href: config.urls.logout, label: text.account.logout, icon: 'fa-sign-out-alt' },
+      { href: config.urls.logout, label: text.account.logout, icon: 'fa-sign-out-alt',
+        ...(session.logoutToken ? { post: session.logoutToken } : {}) },
     ],
     globalAdmin: session.globalAdmin,
   } : null;

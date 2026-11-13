@@ -1,0 +1,1 @@
+- The repository now lives at https://github.com/mielenosoitukset-fi/mielenosoitukset_fi/; the older `botsarefuture/mielenosoitukset_fi` links and clone URLs keep working through GitHub's redirect.

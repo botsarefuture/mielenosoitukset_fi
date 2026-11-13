@@ -157,3 +157,8 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 - **Analytics beacons (2026-11-11).** `POST /api/analytics/event` is served by Go,
   with `SITE_ANALYTICS_ENABLED=true` matching Flask. Pageviews and vitals stay in
   Flask. Roll back by removing the routing rule.
+- **Hash developer app `client_secret` last (2026-11-13).** Flask and Go both store
+  `client_secret` in plaintext; token secrets are already hashed. The maintainer
+  pre-approved hashing it (a `client_secret_hash` marker, Flask and Go changed together,
+  existing apps rotate) but only after everything else has moved to React and the Flask
+  templates are retired. Needs a backup and an independent reviewer SHIP at that time.

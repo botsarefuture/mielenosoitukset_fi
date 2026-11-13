@@ -20,6 +20,9 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   paths and environment variables are unchanged. The reference audit, the external and
   server-side follow-ups and the post-transfer checks are in
   [github-organization-migration.md](github-organization-migration.md).
+  Merge queue: prepared but off. The intended settings (merge commits, ALLGREEN,
+  batches of 3) and the script that applies them only after explicit approval are
+  in that document.
 - **Changelog notes (2026-11-12).** New user-facing changes use separate files in
   `changelog.d/` to avoid pull requests conflicting in `CHANGELOG.md`. Render the
   notes with the existing history using `scripts/render_changelog.py`; release

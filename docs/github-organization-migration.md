@@ -70,8 +70,59 @@ Deliberately unchanged:
   merge group commit. Do not make it a required check for the queue.
 - `render-changelog.yml` and `production-deploy.yml` are not merge checks.
 
-Enabling the queue, its merge method and the required checks is a repository
-settings change and is not part of this preparation.
+Enabling the queue is a repository settings change. The eligibility finding, the
+intended settings and the prepared script are in the merge queue section below.
+
+## Merge queue enablement (prepared, not enabled)
+
+GitHub offers pull request merge queues for public repositories owned by an
+organization, or for private repositories on GitHub Enterprise Cloud. This repository
+is public and `mielenosoitukset-fi` is on the free plan, so the queue becomes available
+only once the repository is owned by the organization. It cannot be enabled while the
+repository belongs to a user account, which is why the rule is prepared and not
+applied.
+
+Current protections: `main` is protected by the repository ruleset `Protection`
+(id 1440033, active, target `~DEFAULT_BRANCH`), not by classic branch protection. The
+ruleset requires a pull request, resolves review threads, requires the `python-tests`
+check with "branches must be up to date", and allows merge, squash and rebase. The
+required check now also runs on `merge_group`.
+
+Intended queue configuration, conservative because several agents work at once:
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| Merge method | Merge | Matches the merge-commit history |
+| Grouping | ALLGREEN | Every entry must pass its own required checks |
+| Max entries to build | 3 | Bounds concurrent CI cost |
+| Max entries to merge | 3 | Small batches, faster failure isolation |
+| Min entries to merge | 1 | A single pull request merges immediately |
+| Min wait | 0 minutes | No artificial delay |
+| Check timeout | 60 minutes | Above the 30-minute test job limit |
+
+`scripts/enable_merge_queue.py` applies it after the transfer, once approved:
+
+```
+python scripts/enable_merge_queue.py --dry-run   # print the plan, change nothing
+python scripts/enable_merge_queue.py --confirm   # apply
+```
+
+It refuses to run without one of those flags, verifies that the repository is public and
+owned by the organization, that Actions is enabled and that
+`.github/workflows/tests.yml` on `main` still triggers on `merge_group`, then adds the
+`merge_queue` rule to the existing ruleset and sends every other rule, condition and
+bypass actor back unchanged. Re-running reports the current settings instead of
+changing them, and the script never enqueues or merges pull requests and never
+triggers a deployment.
+
+If the API refuses, configure it by hand in Settings → Rules → `Protection` → Edit →
+"Require merge queue" with the table above. A 403 or 404 usually means the transfer
+has not finished, the plan lacks the feature, or the token lacks repository admin.
+
+Queue behaviour worth knowing: the same `python-tests` check name is reported for the
+merge group commit, so the ruleset needs no change; fork pull requests and merge-group
+runs stay on the same runners as before; and a queue run uses its own
+`gh-readonly-queue/...` concurrency ref, so a pull request run cannot cancel it.
 
 ## Deployment
 
@@ -213,7 +264,9 @@ that it depends on them; their current configuration cannot be inspected from he
     verify `git ls-remote origin main` before the next deploy.
 11. Watch the next deploy: the `downloading release assets … from <slug>` line must
     name `mielenosoitukset-fi/mielenosoitukset_fi`.
-12. Remove this document's steps that no longer apply.
+12. Run `python scripts/enable_merge_queue.py --dry-run`, review the plan, then
+    `--confirm` once approved.
+13. Remove this document's steps that no longer apply.
 
 ## Open risks
 

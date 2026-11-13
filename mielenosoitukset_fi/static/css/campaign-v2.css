@@ -101,3 +101,6 @@ html,body,#app{height:auto!important;overflow:visible!important;min-height:0!imp
 .kv-link{color:var(--product-primary);font-weight:700}
 .kv-copy-status{font-size:.9rem;color:var(--product-text-muted);min-height:1.4em}
 .kv-noscript{margin:1rem 0}
+@media(max-width:1100px){.kx-tl{padding-left:4px}}
+@media(max-width:1100px){.kx-tl{grid-template-columns:1fr}.kx-tl li{padding:0 0 1.75rem 2.75rem}.kx-tl li::before{top:0;bottom:0;left:11px;right:auto;width:3px;height:auto}.kx-tl li:last-child::before{display:none}.kx-tl__dot{top:.1rem}.kx-tl__cur .kx-tl__dot{top:0}.kx-here--empty{display:none}}
+.campaign-page .kx-tl .campaign-text-link{display:inline;min-height:0;gap:0}

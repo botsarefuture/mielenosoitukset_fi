@@ -51,9 +51,9 @@ function Timeline({ schedule, milestones, urls, openingForm }: { schedule: Campa
   return <ol className="kx-tl">
     {milestones.map(milestone => {
       const item = items[milestone.key];
-      const className = milestone.state === 'current' ? 'kx-tl__cur' : milestone.state === 'done' ? 'kx-tl__done' : 'kx-tl__next';
+      const className = milestone.state === 'current' || milestone.upNext ? 'kx-tl__cur' : milestone.state === 'done' ? 'kx-tl__done' : 'kx-tl__next';
       const label = milestone.state === 'current' ? 'Tässä ollaan nyt' : milestone.upNext ? 'Seuraavaksi' : '';
-      return <li key={milestone.key} className={className} aria-current={milestone.state === 'current' ? 'step' : undefined}>
+      return <li key={milestone.key} className={className} aria-current={milestone.state === 'current' || milestone.upNext ? 'step' : undefined}>
         <span className="kx-tl__dot">{milestone.state === 'done' && <Icon name="check" />}</span>
         {label
           ? <span className="kx-here"><Icon name="location-dot" />{label}</span>

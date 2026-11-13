@@ -22,7 +22,7 @@ const maxFundraisingFile = 16 * 1024
 // opens donations. An unset path, a missing file or invalid JSON answers 503 and
 // the host falls back to the bundled copy. The file is re-read at most every
 // five seconds, outside the response caches, like the campaign gate.
-func fundraisingDetails(next http.Handler, path string) http.Handler {
+func fundraisingDetails(next http.Handler, path string, reminder *reminderState) http.Handler {
 	var mu sync.Mutex
 	var checked time.Time
 	var body []byte
@@ -47,7 +47,7 @@ func fundraisingDetails(next http.Handler, path string) http.Handler {
 			writeError(w, http.StatusServiceUnavailable, "fundraising details unavailable")
 			return
 		}
-		current = withoutAccountBeforeOpening(current, fundraisingNow())
+		current = withReminderFlag(withoutAccountBeforeOpening(current, fundraisingNow()), reminder.Enabled())
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		if r.Method == http.MethodGet {

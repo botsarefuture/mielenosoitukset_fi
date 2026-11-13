@@ -3,6 +3,7 @@ import type { AppConfig } from './config';
 import { fundraisingCopy } from './fundraising-copy';
 import { useState } from 'react';
 import { fundraisingDetails, fundraisingExtras, fundraisingIcs } from './fundraising';
+import { ReminderLinkPanel, ReminderSignup } from './FundraisingReminder';
 import type { FundraisingDetails, FundraisingExtras } from './fundraising';
 
 const finnishDate = (iso: string) => iso.split('-').reverse().map(part => String(Number(part))).join('.');
@@ -46,11 +47,16 @@ export function FundraisingPage({ details, extras, config }: { details: Fundrais
       </div>
     </section>
 
+    <ReminderLinkPanel />
+
     {pre && opens && <section className="public-content__card fundraising-prelaunch" aria-labelledby="prelaunch-title">
       <h2 id="prelaunch-title">Pienkeräys aukeaa {opensShort}</h2>
       <p>Keräys alkaa {finnishDate(opens)} kello 0.00. Tilinumero ja lahjoitusohjeet julkaistaan tällä sivulla keräyksen alkaessa. Lahjoita vasta, kun keräysaika on alkanut.</p>
       <a className="fundraising-calendar" href={calendarHref} download="pienkerays-aukeaa.ics">Lisää kalenteriin</a>
-      <p className="fundraising-prelaunch__note">Kalenteritiedosto ladataan laitteellesi. Emme kerää yhteystietojasi.</p>
+      <p className="fundraising-prelaunch__note">{extras.reminder_signup
+        ? 'Kalenteritiedosto ladataan laitteellesi eikä se sisällä yhteystietojasi.'
+        : 'Kalenteritiedosto ladataan laitteellesi. Emme kerää yhteystietojasi.'}</p>
+      {extras.reminder_signup && <ReminderSignup privacyUrl={config.urls.privacy} />}
     </section>}
 
     <div className="public-content__grid">

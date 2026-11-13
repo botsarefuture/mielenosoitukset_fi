@@ -22,8 +22,8 @@ a dated snapshot: check their live state before acting.
 
 - [ ] **Safe sign-out (#1154):** POST with an account-bound token, harmless GET confirmation/prefetch handling, and click-open account menus. Coordinator records auth and visual reviews; finish final-head checks/queue, then verify on production that a plain GET does not sign anyone out. This is in progress, not a new account-migration task.
 - [ ] **Campaign redesign v2.2:** approved mockup build is under way. Deliver the page/date-driven states, revised volunteer form (roles/area, no phone; API/privacy update), party-interest UI, then its backend after #1146. Preserve publication/donation gates; use independent visual review and security/privacy review for data/email work. No implementation PR was open at this refresh.
-- [ ] **Pride banner carriers (#1155):** UI-only form is in review, `volunteer_form=false`, submission stubbed. The Go/storage/mail double-opt-in, unsubscribe, retention and privacy work remains a separate second part after #1146, with security/privacy and visual acceptance before activation.
-- [ ] **Fundraising opening reminder (#1146 / FUND-02):** implementation is open and off by default. Finish review and merge, then separately approve/provision the unique index and activation. First real bulk send still needs the maintainer's go; optional results-message delivery remains undecided. See `docs/fundraising-reminder.md` in that PR.
+- [ ] **Pride banner carriers (#1155):** UI-only form is in review, `volunteer_form=false`, submission stubbed. The Go/storage/mail double-opt-in, unsubscribe, retention and privacy work remains a separate second part using the now-merged #1146, with security/privacy and visual acceptance before activation.
+- [ ] **Fundraising opening reminder (#1146 / FUND-02):** implementation is merged and off by default. Confirm final security/privacy and visual acceptance, then separately approve/provision the unique index and activation. First real bulk send still needs the maintainer's go; optional results-message delivery remains undecided. See [docs/fundraising-reminder.md](docs/fundraising-reminder.md).
 
 ## Public site in React (UI-06, due January 2027)
 
@@ -159,7 +159,7 @@ The checked visual follow-ups above record implementation, not a blanket visual 
 - [ ] **ENGAGE-02:** optional email digest of a user's own notifications.
 - [ ] **PRODUCT-01:** broader societal events (#583), following tags (#117), city and tag email subscriptions (#121).
 - [ ] Count visitors who browse without JavaScript (a `<noscript>` pixel; filter bots) to decide how much the no-JS fallback matters.
-- [ ] **FUND-02:** approved reminder signup is being implemented in #1146; see the in-flight checklist above. Do not reopen the old “calendar only or email?” design question. Activation, the first real send and optional results delivery remain separate gates.
+- [ ] **FUND-02:** reminder signup is merged in #1146 and off; see [docs/fundraising-reminder.md](docs/fundraising-reminder.md) and the activation checklist above. Do not reopen the old “calendar only or email?” design question. Activation, the first real send and optional results delivery remain separate gates.
 - [ ] **FUND-01:** confirm complete official/payment details and explicitly activate donations for the valid period. The page/purpose text (#1141/#1142) and optional header bar (#1147) are merged; `details_confirmed`, `show_bar` and `show_header_link` remain false in main. Merging UI does not authorize payments or opening the campaign.
 - [ ] **PREVIEW-02: organizer design templates for preview images.** Let organizations upload their own template for a demo's preview image:
   - Formats: InDesign, Photoshop and Illustrator, or the open-source alternatives the maintainer named ("design craft, photo craft, vector craft"). Decide which formats can be rendered server-side and how much of the file to support, for example named text layers for title, date and place.

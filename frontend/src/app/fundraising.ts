@@ -124,7 +124,7 @@ export function fundraisingExtras(input: unknown, today: string = helsinkiToday(
   return { bic: text(data.bic), area: text(data.area), opens_date: opens, pre_launch: Boolean(opens && today < opens) };
 }
 
-const icsText = (value: string) => value.replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+const icsText = (value: string) => value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
 
 /** An all-day reminder for the opening day. It holds no personal data. */
 export function fundraisingIcs(opensDate: string, pageUrl: string): string {

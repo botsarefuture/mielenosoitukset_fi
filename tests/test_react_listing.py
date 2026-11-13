@@ -1,5 +1,6 @@
 """React listing ownership preserves the existing API/window behavior."""
 import json
+from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
@@ -400,3 +401,13 @@ def test_card_images_fall_back_and_hide_when_every_image_fails(live_server, brow
     expect(cards.nth(0).locator('.demo-card-image img')).to_have_attribute('src', PIXEL)
     expect(cards.nth(1).locator('.demo-card-image')).to_have_count(0)
     expect(cards.nth(2).locator('.demo-card-image img')).to_have_attribute('src', PIXEL)
+
+
+def test_city_page_names_the_national_team_without_recruiting():
+    root = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app"
+    screen = (root / "ListingScreen.tsx").read_text()
+    catalog = (root / "i18n.ts").read_text()
+    assert "status === 'national'" in screen and "NationalTeamNotice" in screen
+    assert "national: 'Valtakunnallinen tiimi'" in catalog
+    # The recruiting link stays limited to the none and single bands.
+    assert "status === 'none' || status === 'single'" in screen

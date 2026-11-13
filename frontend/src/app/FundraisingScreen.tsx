@@ -55,6 +55,18 @@ export function FundraisingPage({ details, extras, config }: { details: Fundrais
 
     <div className="public-content__grid">
       <div className="public-content__sections">
+        <section className="public-content__card" aria-labelledby="plan-title">
+          <h2 id="plan-title">{fundraisingCopy.planTitle}</h2>
+          <p>{fundraisingCopy.planIntro}</p>
+          <h3>{fundraisingCopy.stickersTitle}</h3>
+          <p>{fundraisingCopy.stickersLead}</p>
+          <ul>{fundraisingCopy.stickerTiers.map(tier => <li key={tier.amount}><strong>{tier.amount}:</strong> {tier.places}</li>)}</ul>
+          <h3>{fundraisingCopy.bannersTitle}</h3>
+          <p>{fundraisingCopy.banners}</p>
+          <h3>{fundraisingCopy.upkeepTitle}</h3>
+          <p>{fundraisingCopy.upkeep}</p>
+        </section>
+
         <section className="public-content__card" aria-labelledby="purpose-title">
           <h2 id="purpose-title">{fundraisingCopy.purposeTitle}</h2>
           <p>{fundraisingCopy.purposeIntro}</p>
@@ -86,7 +98,6 @@ export function FundraisingPage({ details, extras, config }: { details: Fundrais
             : 'Vahvistetaan myöhemmin'}</dd></div>
           <div><dt>Keräysalue</dt><dd>{extras.area || 'Vahvistetaan myöhemmin'}</dd></div>
           <div><dt>Keräyksen järjestäjä</dt><dd>{f.organizer || 'Vahvistetaan myöhemmin'}</dd></div>
-          <div><dt>Keräystavoite</dt><dd className="public-content__amount">2 500 €</dd></div>
           <div><dt>Tilanne</dt><dd>{status}</dd></div>
         </dl>
         {pre ? <div className="public-content__notice">

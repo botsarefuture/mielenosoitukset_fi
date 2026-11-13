@@ -1,1 +1,2 @@
 - The fundraising page now explains in plain Finnish where the money goes (campaign materials, running costs, and shared demonstration equipment if funds remain) and shows the official purpose text from the permit in a collapsible section. The old text wrongly listed running costs as the leftover use.
+- The fundraising page now lists the plan in quantities: over 23 000 stickers for more than 70 places, 12 banners and keeping the service running. It no longer shows a euro goal.

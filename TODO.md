@@ -24,6 +24,7 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 - [ ] Account pages: login, register and next steps, settings, password reset, forced password and identity change, MFA verification, public profile `/<username>`. *(approval: authentication flows)*
 - [x] `/api-docs/`: build-time Markdown on the React host; OpenAPI YAML stays in Flask (#1068).
 - [x] `/developer` overview and `/developer/apps/<id>`: read-only React screens on the Go routes `/api/developer/*` (#1130), routing prepared but commented out. `/download_material/<id>` is a download redirect and stays in Flask. See [docs/developer-react-proposal.md](docs/developer-react-proposal.md).
+- [ ] Decision: hash `client_secret` for apps (Flask and Go both store it plaintext today); needs a schema marker and a Flask change. *(approval: schema)*
 - [ ] `/developer` activation: write controls are ported (Go routes behind `DEVELOPER_WRITES`, React controls; scope and access requests stay on Flask for the email, see [docs/developer-react-write-controls.md](docs/developer-react-write-controls.md)). Open: reviewer SHIP, visual QA, then enable the flag and ask for the Apache go. Needs `AUTH_BRIDGE_ENABLED` on and the Go `/api/developer/*` routes routed. *(approval: routing)*
 - [ ] Retire the Flask templates each migrated page leaves behind as rollback, once its React page has been stable for a while.
 - [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).

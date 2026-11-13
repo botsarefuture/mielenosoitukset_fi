@@ -177,9 +177,9 @@ func TestCreateAppShowsSecretOnceAndStoresHash(t *testing.T) {
 	}
 	body := w.Body.String()
 	doc := g.store.appDocs[0]
-	stored := doc["client_secret"].(string)
-	if len(stored) != 64 || strings.Contains(body, stored) {
-		t.Fatal("must store a sha256 hash, not the secret")
+	// Flask stores client_secret as given; the shape must not change.
+	if stored := doc["client_secret"].(string); len(stored) != 32 || extractSecret(body) != stored {
+		t.Fatal("client_secret must be stored as Flask stores it", stored)
 	}
 	if !strings.Contains(body, `"client_secret":"`) || strings.Contains(body, `"owner_id"`) {
 		t.Fatal(body)
@@ -278,7 +278,7 @@ func TestPersonalTokenRules(t *testing.T) {
 func TestRotateAndRevoke(t *testing.T) {
 	g := newWriteRig(t, true)
 	w := g.post("POST", "/api/developer/apps/"+testOrg+"/rotate", `{}`)
-	if w.Code != 200 || len(g.store.rotated) != 1 || strings.Contains(g.store.rotated[0], extractSecret(w.Body.String())) {
+	if w.Code != 200 || len(g.store.rotated) != 1 || !strings.HasSuffix(g.store.rotated[0], ":"+extractSecret(w.Body.String())) {
 		t.Fatal(w.Code, w.Body.String())
 	}
 	if len(g.store.audits) != 1 {
@@ -314,5 +314,18 @@ func TestWritesAreRateLimited(t *testing.T) {
 	g.writes.now = func() time.Time { return time.Now().Add(2 * time.Minute) }
 	if w := g.post("DELETE", developerTokensPrefix+testOrg, ""); w.Code != 200 {
 		t.Fatal("window must reset", w.Code)
+	}
+}
+
+func TestOnlyExactAppActionPathsAreWriteRoutes(t *testing.T) {
+	g := newWriteRig(t, true)
+	for _, p := range []string{"/api/developer/apps/" + testOrg + "/x/rotate", "/api/developer/apps/" + testOrg + "/a/token",
+		"/api/developer/apps/bad/rotate", "/api/developer/apps/" + testOrg + "/rotate/"} {
+		if w := g.post("POST", p, `{"scopes":["read"]}`); w.Code == 200 {
+			t.Errorf("%s must not be served", p)
+		}
+	}
+	if len(g.store.tokenDocs)+len(g.store.rotated) != 0 {
+		t.Fatal("a malformed path wrote")
 	}
 }

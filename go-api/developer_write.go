@@ -5,8 +5,11 @@ package main
 // Off unless DEVELOPER_WRITES_ENABLED=true (and the auth bridge is on). Flask
 // stays the authority for login; these routes only act for the account the
 // bridge resolves, on documents Flask already uses (developer_apps, api_tokens,
-// api_usage), with no schema change. Secrets are shown once in the response and
-// stored as SHA-256 hashes only.
+// api_usage), with no schema change. Token secrets are shown once and stored as
+// SHA-256 hashes, exactly like create_token. client_secret is stored in the same
+// plaintext form Flask uses, because hashing it would be a schema change that
+// needs maintainer approval (docs/developer-react-write-controls.md). Run a single
+// Go instance: the CSRF key and the rate limit live in process memory.
 //
 // Not here on purpose: scope requests and the access request. Flask sends an
 // email for both and Go has no mail sender, so React keeps posting those to the
@@ -63,7 +66,7 @@ type developerWriteStore interface {
 	CountApps(ctx context.Context, owner bson.ObjectID) (int64, error)
 	CountTokens(ctx context.Context, owner bson.ObjectID) (int64, error)
 	CreateApp(ctx context.Context, doc bson.M) (bson.ObjectID, error)
-	RotateApp(ctx context.Context, owner, id bson.ObjectID, clientID, secretHash string) (bool, error)
+	RotateApp(ctx context.Context, owner, id bson.ObjectID, clientID, clientSecret string) (bool, error)
 	InsertToken(ctx context.Context, doc bson.M) error
 	RevokeToken(ctx context.Context, owner, id bson.ObjectID) (bool, error)
 	Audit(ctx context.Context, doc bson.M) error
@@ -148,8 +151,9 @@ func developerWriteRoute(r *http.Request) bool {
 	case strings.HasPrefix(p, developerTokensPrefix):
 		return r.Method == http.MethodDelete
 	case strings.HasPrefix(p, developerAppPrefix):
-		rest := strings.TrimPrefix(p, developerAppPrefix)
-		return r.Method == http.MethodPost && (strings.HasSuffix(rest, "/token") || strings.HasSuffix(rest, "/rotate"))
+		// Exactly "<24 hex>/token" or "<24 hex>/rotate", nothing longer.
+		id, action, found := strings.Cut(strings.TrimPrefix(p, developerAppPrefix), "/")
+		return r.Method == http.MethodPost && found && authObjectID.MatchString(id) && (action == "token" || action == "rotate")
 	}
 	return false
 }
@@ -311,7 +315,7 @@ func (d *developerWrites) createApp(ctx context.Context, w http.ResponseWriter, 
 	}
 	created := d.now().UTC()
 	id, err := d.store.CreateApp(ctx, bson.M{"name": name, "description": description, "owner_id": owner,
-		"client_id": clientID, "client_secret": developerHash(clientSecret),
+		"client_id": clientID, "client_secret": clientSecret,
 		"created_at": bson.NewDateTimeFromTime(created), "allowed_scopes": bson.A{"read"}})
 	if err != nil {
 		return err
@@ -329,7 +333,7 @@ func (d *developerWrites) rotate(ctx context.Context, w http.ResponseWriter, r *
 	if err1 != nil || err2 != nil {
 		return errors.New("random source unavailable")
 	}
-	ok, err := d.store.RotateApp(ctx, owner, appID, clientID, developerHash(clientSecret))
+	ok, err := d.store.RotateApp(ctx, owner, appID, clientID, clientSecret)
 	if err != nil {
 		return err
 	}
@@ -486,9 +490,9 @@ func (s mongoDeveloperStore) CreateApp(ctx context.Context, doc bson.M) (bson.Ob
 	return id, nil
 }
 
-func (s mongoDeveloperStore) RotateApp(ctx context.Context, owner, id bson.ObjectID, clientID, secretHash string) (bool, error) {
+func (s mongoDeveloperStore) RotateApp(ctx context.Context, owner, id bson.ObjectID, clientID, clientSecret string) (bool, error) {
 	res, err := s.db.Collection("developer_apps").UpdateOne(ctx, bson.M{"_id": id, "owner_id": owner},
-		bson.M{"$set": bson.M{"client_id": clientID, "client_secret": secretHash,
+		bson.M{"$set": bson.M{"client_id": clientID, "client_secret": clientSecret,
 			"rotated_at": bson.NewDateTimeFromTime(time.Now().UTC())}})
 	return err == nil && res.MatchedCount == 1, err
 }

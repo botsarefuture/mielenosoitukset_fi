@@ -27,19 +27,20 @@ paths).
 - Same origin: `Sec-Fetch-Site` must be `same-origin`; a present `Origin` must equal `AUTH_BRIDGE_ORIGIN`;
   body must be `application/json` (≤ 4 KiB).
 - CSRF token: the read answers include `csrf`, an HMAC bound to the account id, valid 12 hours, keyed with a
-  random per-process key (a restart only forces the page to read again). Sent back in `X-CSRF-Token`.
+  random per-process key (a restart only forces the page to read again). Run one Go instance: the key and the
+  rate limit are in process memory. Sent back in `X-CSRF-Token`.
 - Rate limit: 20 writes per minute per account (429), at most 50 apps and 150 tokens per account.
-- Secrets: 12/24/32 random bytes (`secrets.token_urlsafe` sizes). Shown once in the response, stored as
-  SHA-256 hex only. Responses are `no-store`.
+- Secrets: 12/24/32 random bytes (`secrets.token_urlsafe` sizes). Shown once in the response; tokens are
+  stored as SHA-256 hex, client secrets as Flask stores them. Responses are `no-store`.
 - Audit: an `api_usage` entry per action (`developer app created`, `developer app secret rotated`,
   `developer token created`, `developer token revoked`) with user id, IP, timestamp, `source: go-api`.
   Flask's own audit is limited to refused privileged requests, which Go also refuses.
 
 ## Differences from Flask (deliberate, stricter)
 
-1. `client_secret` is stored hashed (SHA-256 hex) in the existing `client_secret` field. Flask stores the
-   plaintext for apps created there. Nothing in the code base reads the field back, so no consumer breaks;
-   if a client-secret exchange is ever built it must hash the presented value and accept both formats.
+1. `client_secret` is stored in the same plaintext form as Flask (no schema change). Token secrets are
+   hashed, as in `create_token`. Hashing `client_secret` would be a schema change and needs maintainer
+   approval; recorded as an open decision in `TODO.md`.
 2. `admin` and `mcp.admin` are refused in Go (403) for personal and app tokens. Flask requires a global
    admin plus a recent step-up for personal tokens, which only Flask can check; it does not step up for app
    tokens, but an app allowed those scopes is rare and can use the old page while the old route exists.

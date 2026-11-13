@@ -81,6 +81,8 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   list is hardcoded in `admin_city_bp.py`, `go-api/city_admin_status.go` and
   `frontend/src/app/city-admin-route.ts`. Open: make it a `city_settings` flag if
   another city needs the same treatment.
+  The public React city page shows the "Valtakunnallinen tiimi" note for the `national`
+  band (2026-11-12), with no recruiting link; copy lives in `i18n.ts` `cityAdmin`.
 - **The `/cities` list keeps its rule (2026-11-11).** It shows places that have had
   or will have demonstrations, plus enabled cities. Enabling a city used to be a
   workaround for appointing a city admin. The accounts dashboard can create a city

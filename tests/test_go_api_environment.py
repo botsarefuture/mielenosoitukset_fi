@@ -104,3 +104,20 @@ def test_fundraising_reminder_flag_needs_public_submissions_and_is_off_by_defaul
         module.configure(source, target)
         values = dict(line.split("=", 1) for line in target.read_text().splitlines())
         assert ("FUNDRAISING_REMINDER_ENABLED" in values) is expected
+
+
+def test_fundraising_details_file_is_kept_only_when_it_exists(tmp_path):
+    path = Path(__file__).resolve().parents[1] / "deploy/go-api/configure_environment.py"
+    spec = importlib.util.spec_from_file_location("go_environment", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    details = tmp_path / "fundraising.json"
+    for present, expected in ((False, False), (True, True)):
+        if present:
+            details.write_text("{}")
+        source, target = tmp_path / f"c{present}.yaml", tmp_path / f"e{present}"
+        source.write_text(yaml.safe_dump({"MONGO_URI": "mongodb://127.0.0.1/isolated", "MONGO_DBNAME": "isolated",
+                                          "FUNDRAISING_DETAILS_FILE": str(details)}))
+        module.configure(source, target)
+        values = dict(line.split("=", 1) for line in target.read_text().splitlines())
+        assert ("FUNDRAISING_DETAILS_FILE" in values) is expected

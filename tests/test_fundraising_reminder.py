@@ -153,3 +153,10 @@ def test_dry_run_reports_stuck_or_failed_queue_jobs(db):
     db.email_queue.insert_one({"_id": "other", "kind": "other", "status": "failed"})
     report = fr.send_reminders(db, now=DAY, dry_run=True)
     assert report["queue_stuck_or_failed"] == 1 and report["queue_waiting"] == 0
+
+
+def test_apache_sends_only_reminder_posts_to_go():
+    from pathlib import Path
+    routing = Path("deploy/apache/react-ssr-routing.conf").read_text(encoding="utf-8")
+    rule = '"^/api/fundraising/reminder(/confirm|/unsubscribe)?$" "http://127.0.0.1:8091$0" [P,L]'
+    assert 'RewriteCond %{REQUEST_METHOD} "^POST$"\nRewriteRule ' + rule in routing

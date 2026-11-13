@@ -1,0 +1,2 @@
+- The Go API environment now keeps `FUNDRAISING_DETAILS_FILE` across deploys when the file exists, so the fundraising page and its reminder signup form no longer depend on a hand-edited environment file.
+- The Apache routing now sends POST /api/fundraising/reminder, /confirm and /unsubscribe to the Go API, so the reminder signup form can reach it once the Go switch is on.

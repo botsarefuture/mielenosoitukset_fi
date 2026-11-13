@@ -198,6 +198,10 @@ func developerHandlerWith(next http.Handler, store developerStore, resolver *ses
 		w.Header().Set("Vary", "Cookie")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		if r.Method != http.MethodGet {
+			if isApp && strings.Contains(strings.TrimPrefix(path, developerAppPrefix), "/") {
+				writeError(w, http.StatusNotFound, "not found") // write paths do not exist while the flag is off
+				return
+			}
 			w.Header().Set("Allow", "GET")
 			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return

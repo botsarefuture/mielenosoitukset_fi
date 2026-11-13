@@ -48,6 +48,16 @@ paths).
    like `create_token`.
 4. Eligibility matches `create_token`: no token for suspended, inactive, banned or `god` accounts.
 
+## Behaviours worth knowing
+
+- Audit rows use a UTC BSON date and an extra `source: go-api` field; Flask's `api_usage` rows use a naive local
+  `datetime.now()`. Filter on `source` when comparing; sort by time is correct within each group.
+- The rate limit counts failed attempts too and lives in memory (single Go instance). Flask has none.
+- The token cap counts the rows the page lists for the target (personal, or one app). Count and insert are not
+  atomic, so a burst can pass it by a few rows; the rate limit bounds that.
+- Unknown scopes are a 400 in Go; Flask silently drops them.
+- While the flag is off, the write paths answer 404.
+
 ## Activation (needs the user's go)
 
 1. Backup `config.yaml` and `/etc/mielenosoitukset-api/environment`.

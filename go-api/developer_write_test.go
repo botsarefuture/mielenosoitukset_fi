@@ -26,7 +26,7 @@ func (f *fakeWriteStore) CanReceiveTokens(context.Context, bson.ObjectID) (bool,
 	return !f.ineligible, nil
 }
 func (f *fakeWriteStore) CountApps(context.Context, bson.ObjectID) (int64, error) { return f.apps, nil }
-func (f *fakeWriteStore) CountTokens(context.Context, bson.ObjectID) (int64, error) {
+func (f *fakeWriteStore) CountTokens(context.Context, bson.ObjectID, bson.ObjectID) (int64, error) {
 	return f.toks, nil
 }
 func (f *fakeWriteStore) CreateApp(_ context.Context, doc bson.M) (bson.ObjectID, error) {
@@ -98,6 +98,14 @@ func TestWritesOffByDefault(t *testing.T) {
 		h.ServeHTTP(w, r)
 		if w.Code == 200 || len(store.appDocs) > 0 {
 			t.Fatalf("%v must not write while the flag is off: %d", c, w.Code)
+		}
+	}
+	if r := httptest.NewRequest("POST", "/api/developer/apps/"+testOrg+"/rotate", nil); true {
+		r.Header.Set("Cookie", "session=member")
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		if w.Code != 404 {
+			t.Fatalf("write paths must be 404 while off, got %d", w.Code)
 		}
 	}
 	if w := get(h, developerOverviewPath, "session=member"); strings.Contains(w.Body.String(), "csrf") {

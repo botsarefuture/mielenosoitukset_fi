@@ -64,7 +64,7 @@ type developerWriteStore interface {
 	// CanReceiveTokens mirrors create_token: not suspended, inactive, banned or god.
 	CanReceiveTokens(ctx context.Context, user bson.ObjectID) (bool, error)
 	CountApps(ctx context.Context, owner bson.ObjectID) (int64, error)
-	CountTokens(ctx context.Context, owner bson.ObjectID) (int64, error)
+	CountTokens(ctx context.Context, owner, appID bson.ObjectID) (int64, error)
 	CreateApp(ctx context.Context, doc bson.M) (bson.ObjectID, error)
 	RotateApp(ctx context.Context, owner, id bson.ObjectID, clientID, clientSecret string) (bool, error)
 	InsertToken(ctx context.Context, doc bson.M) error
@@ -407,7 +407,7 @@ func (d *developerWrites) createToken(ctx context.Context, w http.ResponseWriter
 		writeError(w, http.StatusBadRequest, "Tokenia ei voitu luoda annetuilla tiedoilla.")
 		return nil
 	}
-	if n, err := d.store.CountTokens(ctx, owner); err != nil {
+	if n, err := d.store.CountTokens(ctx, owner, appID); err != nil {
 		return err
 	} else if n >= developerMaxTokens {
 		writeError(w, http.StatusConflict, "Tokenien enimmäismäärä on täynnä")
@@ -477,7 +477,7 @@ func (s mongoDeveloperStore) CountApps(ctx context.Context, owner bson.ObjectID)
 	return s.db.Collection("developer_apps").CountDocuments(ctx, bson.M{"owner_id": owner})
 }
 
-func (s mongoDeveloperStore) CountTokens(ctx context.Context, owner bson.ObjectID) (int64, error) {
+func (s mongoDeveloperStore) CountTokens(ctx context.Context, owner, appID bson.ObjectID) (int64, error) {
 	return s.db.Collection("api_tokens").CountDocuments(ctx, bson.M{"user_id": owner})
 }
 

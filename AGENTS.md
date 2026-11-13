@@ -225,6 +225,26 @@ the script that applied them are in
   requests no longer exists. A repeated failure still means stopping and fixing the
   cause, as any failing check does.
 
+### Backlogs of 20–40 pull requests
+
+- Finish independent pull requests and arm auto-merge as each is ready. Do not hold
+  the next pull request until the previous one merges, poll CI in chat, or use an
+  agent as a serial merge coordinator. GitHub handles eligibility, checks and order.
+- The limits are 8 concurrent queue builds and 8 entries per merge, with ALLGREEN,
+  minimum 1, wait 0 and a 60-minute check timeout. Later entries can build while
+  earlier ones run, including the changes ahead of them. Eight entries is a cap,
+  not a promise of eight-entry batches or one CI run per batch.
+- A lone eligible pull request has no batching delay; it still needs the required
+  queue checks. Do not bypass protection or add a five-minute wait for it.
+- Intervene for failed checks, unresolved review threads or actual conflicts. Fix
+  the cause, dequeue before pushing if needed, then re-arm auto-merge. Do not
+  reorder the queue casually: moving an entry ahead can invalidate later builds.
+- Dependent pull requests wait for their parent to merge and must target `main`
+  before they are queued. Retarget manually when kept branches prevent GitHub
+  doing it. Never enqueue a child against its parent's branch.
+- Raising concurrency beyond 8 needs measured throughput and failure evidence:
+  larger groups increase the work invalidated by a failure.
+
 ### While a pull request is in the queue
 
 A queued branch is frozen. GitHub refuses pushes to it and says "Merging is blocked: a

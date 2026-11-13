@@ -12,6 +12,14 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 
 ## Process and approvals
 
+- **GitHub handles the merge backlog (2026-11-13).** For 20–40 independent PRs,
+  agents arm auto-merge as each is ready and continue other work. Do not serialize
+  them by watching each merge. GitHub owns waiting and order; agents intervene for
+  failed checks, conflicts and review feedback. A lone PR keeps minimum 1 and
+  wait 0, with required queue tests intact. Dependent PRs enter only after the
+  parent merges and their base is `main`. This avoids an AI traffic-police role
+  without weakening protections.
+
 - **Size the merge queue for 40 waiting pull requests (2026-11-13).** Raise both
   `max_entries_to_build` and `max_entries_to_merge` from 3 to 8. Keep MERGE,
   ALLGREEN, minimum 1, wait 0 and the 60-minute timeout. At 3, about 14 group

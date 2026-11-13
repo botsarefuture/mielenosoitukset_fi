@@ -47,8 +47,17 @@ The maintainer decides what we build and why. Whoever implements decides how.
 - Every user-facing change has a separate note in `changelog.d/`. Write it for a
   reader of the changelog, not as a diff summary. See `changelog.d/README.md` for
   how to render the combined history.
-- Open the PR as soon as the branch is ready, then move on to independent work. Do not
-  sit waiting for CI.
+- Open the PR as soon as the branch is ready and arm auto-merge with
+  `gh pr merge --auto --merge`, then move on to independent work. Do not sit waiting
+  for CI or wait for one independent PR to merge before arming the next.
+- For backlogs of 20–40 PRs, the queue allows 8 concurrent builds and merges up to
+  8 ready entries. Minimum 1 and wait 0 avoid a batching delay for a lone PR;
+  required queue checks still run. Build concurrency does not guarantee one CI
+  run per eight entries. Agents intervene for failures, conflicts and review
+  feedback, rather than directing each successful merge.
+- A dependent PR must target `main` after its parent merges before being queued.
+  Retained branches prevent automatic retargeting, so verify its base explicitly.
+  Dequeue before pushing fixes to a queued branch, then re-arm auto-merge.
 
 ## Keeping track of open PRs
 

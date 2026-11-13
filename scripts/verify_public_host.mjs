@@ -842,6 +842,7 @@ try {
   }
   assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/developer/?$" "http://127.0.0.1:8090$0" [P,L]'));
   assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/developer/apps/[a-fA-F0-9]{24}$" "http://127.0.0.1:8090$0" [P,L]'));
+  assert(apacheRouting.includes('RewriteRule "^/api/developer/(overview|apps|apps/[a-fA-F0-9]{24}(/(token|rotate))?|tokens|tokens/[A-Za-z0-9_-]{1,128})$" "http://127.0.0.1:8091$0" [P,L]'), 'Developer data and writes reach Go');
   console.log('PASS: developer panel shell, login redirect with next, noindex, unclaimed paths and active routing');
 
   const statusFetch = globalThis.fetch;

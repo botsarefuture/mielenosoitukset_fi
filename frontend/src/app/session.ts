@@ -1,5 +1,7 @@
 import type { AppLocale } from './config';
 import { isLocale } from './config';
+import { disabledBar, normalizeBar } from './fundraising-bar';
+import type { FundraisingBarConfig } from './fundraising-bar';
 
 /**
  * Header state for the public app.
@@ -20,6 +22,7 @@ export type SessionSummary = {
   hasAdminAccess: boolean;
   unread: number;
   fundraising: boolean;
+  fundraisingBar: FundraisingBarConfig;
   siteAnalyticsEnabled: boolean;
   matomoEnabled: boolean;
   submission?: { locales: AppLocale[]; defaultLanguage: AppLocale; canEditDemo: boolean };
@@ -40,7 +43,7 @@ export type SessionSummary = {
 export const anonymousSession: SessionSummary = {
   authenticated: false, locale: 'fi', locales: [{ code: 'fi', name: 'Suomi' }],
   role: 'guest', name: null, picture: null,
-  globalAdmin: false, hasAdminAccess: false, unread: 0, fundraising: false,
+  globalAdmin: false, hasAdminAccess: false, unread: 0, fundraising: false, fundraisingBar: disabledBar,
   siteAnalyticsEnabled: false, matomoEnabled: false,
 };
 
@@ -86,6 +89,7 @@ export function normalizeSession(value: unknown): SessionSummary {
     unread: typeof raw.unread === 'number' && Number.isFinite(raw.unread) && raw.unread > 0
       ? Math.min(Math.floor(raw.unread), 999) : 0,
     fundraising: raw.fundraising === true,
+    fundraisingBar: normalizeBar(raw.fundraising_bar),
     siteAnalyticsEnabled: raw.site_analytics_enabled === true,
     matomoEnabled: raw.matomo_enabled === true,
     submission: {

@@ -41,7 +41,9 @@ import { loadCancelLink, cancelLinkTitle, type CancelLinkState } from './cancel-
 import { loadStatus, statusTitle, type ServiceStatus } from './status';
 import { loadSuggestion, suggestionTitle, suggestionLead, type SuggestionDemo } from './suggest-change';
 import { helsinkiToday, loadFundraisingData } from './fundraising';
+import { BAR_STYLESHEET, barMilestone, dismissScript } from './fundraising-bar';
 export { fundraisingDetails } from './fundraising';
+export { barPhase, barMilestone, isDismissed, normalizeBar, dismissScript, shortDate } from './fundraising-bar';
 import { campaignPath, loadCampaignPublication } from './campaign-route';
 import { routeForPath, routeMeta } from './routes';
 import type { RouteMeta } from './routes';
@@ -740,6 +742,9 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       + (profile.email ? `<p><a href="mailto:${escapeHtml(profile.email)}">${escapeHtml(profile.email)}</a></p>` : '')
       + `<a href="/demonstrations">Kaikki mielenosoitukset</a></article></noscript>`;
   }
+  // The fundraising bar: its stylesheet, plus the pre-paint script that hides it for visitors who dismissed it.
+  const barMilestoneNow = route.name === 'fundraising' ? null : barMilestone(session.fundraisingBar);
+  const barHead = barMilestoneNow ? BAR_STYLESHEET + dismissScript(barMilestoneNow) : '';
   const url = `${config.origin}${input.path === '/' ? '/' : input.path}`;
   const bootstrap = serialize({ config, session, path: input.path, route, ...(today ? { today } : {}),
     ...(fundraisingData ? { fundraising: fundraisingData } : {}),
@@ -757,7 +762,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
 ${headMarkup({
     title: meta.title, description: meta.description, robots: meta.robots,
     canonical: meta.canonical, url, origin: config.origin, locale: config.locale,
-    assets: assets.head, image: meta.image ?? null, jsonLd, extraHead,
+    assets: assets.head, image: meta.image ?? null, jsonLd, extraHead: extraHead + barHead,
     siteAnalyticsEnabled: session.siteAnalyticsEnabled,
   })}
 </head>

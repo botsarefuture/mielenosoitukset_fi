@@ -157,3 +157,7 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 - **Analytics beacons (2026-11-11).** `POST /api/analytics/event` is served by Go,
   with `SITE_ANALYTICS_ENABLED=true` matching Flask. Pageviews and vitals stay in
   Flask. Roll back by removing the routing rule.
+
+## Fundraising bar
+
+- **Slim bar above the header, off by default (2026-11-13).** The maintainer chose the cream look with an orange edge and no pill. It is controlled by `show_bar` in the fundraising configuration, takes its dates from the same configuration (shown dates, so the opening can be announced before confirmation), hides after the end date and on `/keräys`, and replaces the header link. Dismissal lasts 7 days and ends early at a milestone. The bar never says what leftover funds do: the permit's primary use is the marketing campaign and the service's running costs, and leftovers go to shared demonstration equipment.

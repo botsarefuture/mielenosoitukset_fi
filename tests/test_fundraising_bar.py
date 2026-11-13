@@ -31,9 +31,9 @@ def test_bar_is_off_without_dates():
     assert fundraising_bar({"show_bar": True, "start_date": "bad", "end_date": "2027-02-15"})["enabled"] is False
 
 
-def test_session_summary_carries_the_bar_settings_off_by_default(client):
+def test_session_summary_carries_the_bar_settings_from_the_shipped_configuration(client):
     payload = client.get("/api/session").get_json()
-    assert payload["fundraising_bar"]["enabled"] is False
+    assert payload["fundraising_bar"]["enabled"] is True
     assert set(payload["fundraising_bar"]) == {"enabled", "start", "end", "donations_open"}
 
 

@@ -62,3 +62,23 @@ def test_auth_bridge_flag_is_written_from_config_and_off_by_default(tmp_path):
             assert json.loads(values["AUTH_BRIDGE_ENABLED"]) == "true"
             assert json.loads(values["AUTH_BRIDGE_SESSION_SOCKET"]).endswith("mielenosoitus.sock")
             assert json.loads(values["AUTH_BRIDGE_ORIGIN"]).startswith("https://")
+
+
+def test_developer_writes_flag_needs_the_bridge_and_is_off_by_default(tmp_path):
+    path = Path(__file__).resolve().parents[1] / "deploy/go-api/configure_environment.py"
+    spec = importlib.util.spec_from_file_location("go_environment", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    cases = (
+        ({}, False),
+        ({"AUTH_BRIDGE_SCOPES": True}, False),
+        ({"DEVELOPER_WRITES": True}, False),  # no bridge, no writes
+        ({"AUTH_BRIDGE_SCOPES": True, "DEVELOPER_WRITES": False}, False),
+        ({"AUTH_BRIDGE_SCOPES": True, "DEVELOPER_WRITES": True}, True),
+    )
+    for index, (extra, expected) in enumerate(cases):
+        source, target = tmp_path / f"c{index}.yaml", tmp_path / f"e{index}"
+        source.write_text(yaml.safe_dump({"MONGO_URI": "mongodb://127.0.0.1/isolated", "MONGO_DBNAME": "isolated", **extra}))
+        module.configure(source, target)
+        values = dict(line.split("=", 1) for line in target.read_text().splitlines())
+        assert ("DEVELOPER_WRITES_ENABLED" in values) is expected

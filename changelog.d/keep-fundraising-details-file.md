@@ -1,0 +1,1 @@
+- The Go API environment now keeps `FUNDRAISING_DETAILS_FILE` across deploys when the file exists, so the fundraising page and its reminder signup form no longer depend on a hand-edited environment file.

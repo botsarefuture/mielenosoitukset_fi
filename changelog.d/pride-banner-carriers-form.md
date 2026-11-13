@@ -1,0 +1,1 @@
+- Pride näkyväksi page: a call for banner carriers with a signup form (name or nickname, email, optional area, which Pride, optional note, consent). This first part is the screen only. It ships switched off (`mielenosoitukset_fi/utils/data/pride_banner.json`) and the form does not store anything yet; storing and the confirmation email come in a later change.

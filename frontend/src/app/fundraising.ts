@@ -4,7 +4,7 @@
  * are checked against tests/fixtures/fundraising_parity.json.
  */
 export type FundraisingDetails = {
-  organizer: string; collection_number: string; recipient: string; iban: string; reference: string;
+  collection_number: string; recipient: string; iban: string; reference: string;
   payment_url: string;
   mobilepay_links: { label: string; url: string }[];
   start_date: string | null; end_date: string | null;
@@ -12,7 +12,7 @@ export type FundraisingDetails = {
   confirmed: boolean; is_preparation: boolean; show_header_link: boolean; can_donate: boolean;
 };
 
-const TEXT_FIELDS = ['organizer', 'collection_number', 'recipient', 'iban', 'reference', 'payment_url'] as const;
+const TEXT_FIELDS = ['collection_number', 'recipient', 'iban', 'reference', 'payment_url'] as const;
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
@@ -91,7 +91,7 @@ export function fundraisingDetails(input: unknown, today: string = helsinkiToday
   let plannedStart = isoDate(data.planned_start_date);
   let plannedEnd = isoDate(data.planned_end_date);
   if (!plannedStart || !plannedEnd) plannedStart = plannedEnd = null;
-  const complete = Boolean(start && end && start <= end && fields.organizer && fields.collection_number
+  const complete = Boolean(start && end && start <= end && fields.collection_number
     && (fields.payment_url || (fields.recipient && fields.iban) || mobilepay_links.some(link => link.url)));
   const confirmed = data.details_confirmed === true && complete;
   const state = data.publication_state;

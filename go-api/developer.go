@@ -5,8 +5,7 @@ package main
 // The signed-in account comes from the auth bridge (Flask stays the authority),
 // so these routes exist only when AUTH_BRIDGE_ENABLED=true. They return metadata
 // for the caller's own apps and tokens. They never return a client secret, a
-// token or a token hash, and every write (create, rotate, revoke, request scopes)
-// stays in Flask.
+// token or a token hash. Writes live in developer_write.go behind their own flag.
 
 import (
 	"context"
@@ -167,8 +166,29 @@ func (s mongoDeveloperStore) Tokens(ctx context.Context, owner, appID bson.Objec
 
 // developerHandler serves the two read routes and passes everything else on.
 func developerHandler(next http.Handler, store developerStore, resolver *sessionResolver) http.Handler {
+	return developerHandlerWith(next, store, resolver, nil)
+}
+
+// developerHandlerWith also serves the write routes when writes is not nil
+// (DEVELOPER_WRITES_ENABLED); with nil they are unknown paths, as before.
+func developerHandlerWith(next http.Handler, store developerStore, resolver *sessionResolver, writes *developerWrites) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
+		if writes != nil && developerWriteRoute(r) {
+			w.Header().Set("Cache-Control", "no-store")
+			w.Header().Set("Vary", "Cookie")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			resolver.RequireAuthenticated(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				principal, _ := PrincipalFromContext(r.Context())
+				owner, err := bson.ObjectIDFromHex(principal.ActorID)
+				if err != nil {
+					authDenied(w, http.StatusServiceUnavailable, "session unavailable")
+					return
+				}
+				writes.serve(w, r, owner)
+			})).ServeHTTP(w, r)
+			return
+		}
 		isApp := strings.HasPrefix(path, developerAppPrefix)
 		if path != developerOverviewPath && !isApp {
 			next.ServeHTTP(w, r)
@@ -178,6 +198,10 @@ func developerHandler(next http.Handler, store developerStore, resolver *session
 		w.Header().Set("Vary", "Cookie")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		if r.Method != http.MethodGet {
+			if isApp && strings.Contains(strings.TrimPrefix(path, developerAppPrefix), "/") {
+				writeError(w, http.StatusNotFound, "not found") // write paths do not exist while the flag is off
+				return
+			}
 			w.Header().Set("Allow", "GET")
 			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
@@ -205,7 +229,11 @@ func developerHandler(next http.Handler, store developerStore, resolver *session
 			}
 			ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 			defer cancel()
-			if err := serveDeveloper(ctx, w, store, owner, appID); err != nil {
+			csrf := ""
+			if writes != nil {
+				csrf = writes.csrfToken(owner.Hex())
+			}
+			if err := serveDeveloper(ctx, w, store, owner, appID, csrf); err != nil {
 				log.Printf("Developer read failed (%s)", dbErrorKind(err))
 				writeError(w, http.StatusServiceUnavailable, "service unavailable")
 			}
@@ -213,7 +241,7 @@ func developerHandler(next http.Handler, store developerStore, resolver *session
 	})
 }
 
-func serveDeveloper(ctx context.Context, w http.ResponseWriter, store developerStore, owner, appID bson.ObjectID) error {
+func serveDeveloper(ctx context.Context, w http.ResponseWriter, store developerStore, owner, appID bson.ObjectID, csrf string) error {
 	enabled, err := store.AccessEnabled(ctx, owner)
 	if err != nil {
 		return err
@@ -236,7 +264,7 @@ func serveDeveloper(ctx context.Context, w http.ResponseWriter, store developerS
 		if err != nil {
 			return err
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"access": true, "app": app, "tokens": tokens})
+		writeJSON(w, http.StatusOK, developerPayload(map[string]any{"access": true, "app": app, "tokens": tokens}, csrf))
 		return nil
 	}
 	apps, err := store.Apps(ctx, owner)
@@ -247,6 +275,16 @@ func serveDeveloper(ctx context.Context, w http.ResponseWriter, store developerS
 	if err != nil {
 		return err
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"access": true, "apps": apps, "tokens": tokens})
+	writeJSON(w, http.StatusOK, developerPayload(map[string]any{"access": true, "apps": apps, "tokens": tokens}, csrf))
 	return nil
+}
+
+// developerPayload tells the page whether the write controls exist and gives it
+// the token those writes must send back.
+func developerPayload(payload map[string]any, csrf string) map[string]any {
+	if csrf != "" {
+		payload["writes"] = true
+		payload["csrf"] = csrf
+	}
+	return payload
 }

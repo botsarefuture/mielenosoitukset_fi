@@ -1,0 +1,1 @@
+- The developer panel (`/developer`) is served by the previous Flask pages again while a report of being signed out is investigated.

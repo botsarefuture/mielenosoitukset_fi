@@ -24,7 +24,7 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 - [ ] Account pages: login, register and next steps, settings, password reset, forced password and identity change, MFA verification, public profile `/<username>`. *(approval: authentication flows)*
 - [x] `/api-docs/`: build-time Markdown on the React host; OpenAPI YAML stays in Flask (#1068).
 - [x] `/developer` overview and `/developer/apps/<id>`: read-only React screens on the Go routes `/api/developer/*` (#1130), routing prepared but commented out. `/download_material/<id>` is a download redirect and stays in Flask. See [docs/developer-react-proposal.md](docs/developer-react-proposal.md).
-- [ ] `/developer` activation: the React screens are read-only, so routing them would remove the create, rotate, revoke and scope-request buttons. Port those writes (they keep posting to the Flask handlers) or keep Flask for the pages that hold them, then ask for the Apache go. Needs `AUTH_BRIDGE_ENABLED` on and the Go `/api/developer/*` routes routed. *(approval: routing)*
+- [ ] `/developer` activation: draft PR uncomments the two Apache lines; merge only after the write controls (create, rotate, revoke, scope requests) are ported and live. Needs `AUTH_BRIDGE_ENABLED` on and the Go `/api/developer/*` routes routed. *(approval: routing, given 13 November 2026)*
 - [ ] Retire the Flask templates each migrated page leaves behind as rollback, once its React page has been stable for a while.
 - [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).
   - Done (12 November 2026): submit headings without icons, red conflict cancel, one `…` character, no exclamation marks, mielenosoitus instead of tapahtuma in the submit form.

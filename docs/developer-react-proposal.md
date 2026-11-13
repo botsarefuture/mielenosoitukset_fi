@@ -4,7 +4,7 @@ Status: approved through the auth bridge (2026-11-12, see [auth-bridge.md](auth-
 implemented as Go read routes instead of a Flask scope: `GET /api/developer/overview` and
 `GET /api/developer/apps/<id>` (`go-api/developer.go`), served only when `AUTH_BRIDGE_ENABLED=true`,
 returning the signed-in account's own metadata with no secrets. Not routed by Apache yet. React screens
-are implemented (`DeveloperScreen.tsx`, read-only; see below) and routing is prepared but not active. Written 12 November 2026. This follows the TODO item "Secondary tools".
+are implemented (`DeveloperScreen.tsx`, read-only; see below) and routing is active once the PR activating it merges (draft until the write controls are live). Written 12 November 2026. This follows the TODO item "Secondary tools".
 
 ## Verified facts
 
@@ -50,7 +50,7 @@ and nothing needs to change for the React target.
 2. React screens at `/developer`, `/developer/apps` and `/developer/apps/<id>`
    (Finnish catalog copy reusing the template msgids, no icons in headings). The
    POST handlers stay in Flask under the same URLs, with CSRF as today.
-3. Apache routes only those GET paths to the React host, prepared but not active,
+3. Apache routes only those GET paths to the React host, activated by a separate PR after the write controls are live,
    following `docs/react-ssr-app.md`. Rollback is removing the rule.
 4. Visual acceptance with the moso-visual-qa skill and a separate reviewer SHIP.
 

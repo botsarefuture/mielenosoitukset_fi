@@ -158,6 +158,12 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   with `SITE_ANALYTICS_ENABLED=true` matching Flask. Pageviews and vitals stay in
   Flask. Roll back by removing the routing rule.
 
+- **Hash developer app `client_secret` last (2026-11-13).** Flask and Go both store
+  `client_secret` in plaintext; token secrets are already hashed. The maintainer
+  pre-approved hashing it (a `client_secret_hash` marker, Flask and Go changed together,
+  existing apps rotate) but only after everything else has moved to React and the Flask
+  templates are retired. Needs a backup and an independent reviewer SHIP at that time.
+
 ## Fundraising page
 
 - **Pre-launch mode (2026-11-13).** `/keräys` is public without login or campaign publication and is not linked from anywhere (no nav, footer, sitemap or front page; the existing link on `/kampanja/` shows only once the campaign is published). Until Helsinki's date reaches `start_date` it shows "Pienkeräys aukeaa", hides IBAN/BIC and payment links (in the page, the embedded bootstrap and `GET /api/fundraising/details`) and is `noindex, follow`. The opening day is the existing `start_date`, so no extra hardcoded instant. The account block needs `details_confirmed`, `publication_state: active`, organiser and recipient to be filled in; nothing is invented.

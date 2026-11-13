@@ -29,7 +29,8 @@ Already on the React host: home, listings (all, city, tag, today), detail and se
 - [ ] Final page-by-page review of copy and generic UI patterns (#960, #770, #833).
   - Done (12 November 2026): submit headings without icons, red conflict cancel, one `…` character, no exclamation marks, mielenosoitus instead of tapahtuma in the submit form.
   - Retry buttons (12 November 2026): calendar notices now use `detail-button`. Kept as is with reason: the chat widget's compact buttons, Pride's `button-secondary` and the home page's `home-button`, which belong to their own page styles.
-  - Open: the detail page still says tapahtuma in places, but its catalog must match the Flask msgids (`tests/test_public_detail_copy_parity.py`), so changing it needs new msgids and human en/sv translation. Not yet walked in detail: city, organization, fundraising, status, privacy and cancel pages.
+  - Brand name written "Mielenosoitukset.fi" in page texts (#1135). Decision (12 November 2026): the demonstration detail page keeps "tapahtuma" in places, because its catalog must match the Flask msgids (`tests/test_public_detail_copy_parity.py`); changing it needs new msgids and human en/sv translation, to be done when `/demonstration/<id>` leaves Flask.
+  - Open: a detailed visual walk of the city, organization, status, privacy and cancel pages with real data (only grep checks so far); `scripts/submit_visual_capture.py` captures the legacy Flask page, not the React host, so React reviews need `frontend/server.mjs` captures.
 
 ## Move APIs to Go
 

@@ -17,7 +17,7 @@ export function FundraisingPage({ details, config }: { details: FundraisingDetai
     <section className="campaign-fundraising-intro" aria-labelledby="fundraising-title">
       <div>
         <h1 id="fundraising-title">Jotta mielenosoitukset löytyvät</h1>
-        <p>Haluamme tuoda mielenosoitukset.fi-palvelun yhä useamman ihmisen tietoon. {f.is_preparation
+        <p>Haluamme tuoda Mielenosoitukset.fi-palvelun yhä useamman ihmisen tietoon. {f.is_preparation
           ? 'Suunnittelemme pienkeräystä yhteisen markkinointikampanjan toteuttamiseen.'
           : 'Pienkeräyksellä rahoitetaan yhteinen markkinointikampanja.'}</p>
       </div>
@@ -27,13 +27,13 @@ export function FundraisingPage({ details, config }: { details: FundraisingDetai
       <div className="public-content__sections">
         <section className="public-content__card" aria-labelledby="purpose-title">
           <h2 id="purpose-title">Mihin varat käytetään?</h2>
-          <p>Kerätyt varat käytetään mielenosoitukset.fi-palvelun tunnettuuden lisäämiseen tähtäävän markkinointikampanjan toteuttamiseen.</p>
+          <p>Kerätyt varat käytetään Mielenosoitukset.fi-palvelun tunnettuuden lisäämiseen tähtäävän markkinointikampanjan toteuttamiseen.</p>
           <ul>
             <li>Markkinointimateriaalien, kuten tarrojen, julisteiden ja banderollien, suunnittelu, valmistus ja hankinta.</li>
             <li>Kampanjan toteuttamisesta aiheutuvat muut kulut, kuten matkakulut.</li>
           </ul>
           <h3>Jos varoja jää yli</h3>
-          <p>Mikäli varoja jää ensisijaisen käyttötarkoituksen toteuttamisen jälkeen, ne käytetään mielenosoitukset.fi-palvelun ylläpitoon ja jatkuvuuden turvaamiseen.</p>
+          <p>Mikäli varoja jää ensisijaisen käyttötarkoituksen toteuttamisen jälkeen, ne käytetään Mielenosoitukset.fi-palvelun ylläpitoon ja jatkuvuuden turvaamiseen.</p>
         </section>
 
         <section className="public-content__card" aria-labelledby="service-title">

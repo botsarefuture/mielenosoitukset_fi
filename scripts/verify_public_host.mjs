@@ -86,6 +86,10 @@ try {
   await page({ sessionUrl: `${base}/down` });
   await page({ sessionUrl: `${base}/down` });
   assert.equal(reads, 6, 'Failed configuration reads must not be cached');
+  // A cookie whose session read fails is unknown, never a guest; without a cookie it is simply anonymous.
+  assert.equal(bootstrap((await page({ sessionUrl: `${base}/down`, cookie: 'session=alice' })).html).session.unverified, true);
+  assert.equal(bootstrap((await page({ sessionUrl: `${base}/down` })).html).session.unverified, undefined);
+  assert.equal(bootstrap((await page({ cookie: 'session=alice' })).html).session.unverified, undefined);
   console.log('PASS: unknown-route zero reads; eight concurrent anonymous pages one read; warm zero reads; private sessions isolated; TTL and failure handling');
   for (const [path, heading, canonical, anchor] of [
     ['/info', 'Tietoa Mielenosoitukset.fi', '/info'],
@@ -838,6 +842,7 @@ try {
   }
   assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/developer/?$" "http://127.0.0.1:8090$0" [P,L]'));
   assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/developer/apps/[a-fA-F0-9]{24}$" "http://127.0.0.1:8090$0" [P,L]'));
+  assert(apacheRouting.includes('RewriteRule "^/api/developer/(overview|apps|apps/[a-fA-F0-9]{24}(/(token|rotate))?|tokens|tokens/[A-Za-z0-9_-]{1,128})$" "http://127.0.0.1:8091$0" [P,L]'), 'Developer data and writes reach Go');
   console.log('PASS: developer panel shell, login redirect with next, noindex, unclaimed paths and active routing');
 
   const statusFetch = globalThis.fetch;

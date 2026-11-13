@@ -12,6 +12,34 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 
 ## Process and approvals
 
+- **Agents arm auto-merge (2026-11-13).** Auto-merge is enabled on the repository, so
+  a session should run `gh pr merge --auto --merge` on a pull request whose checks are
+  running and end, instead of watching CI and spending tokens on it. It bypasses
+  nothing: the required checks, review threads and the merge queue still decide, and an
+  armed pull request is enqueued when they pass. Do not arm a draft, or a pull request
+  whose conflicts are unresolved.
+- **Stack dependent work with `gh stack` (2026-11-13).** When a pull request depends on
+  another that has not merged, agents build a stack with the installed `github/gh-stack`
+  extension and merge it from the bottom, instead of chaining branches by hand and
+  re-targeting them one by one. Merges still go through the queue.
+- **Merge queue on `main` (2026-11-13).** Enabled after the move to the organization:
+  merge commits, ALLGREEN, at most 3 entries built and merged, minimum 1, no grouping
+  wait, 60-minute check timeout; `python-tests` runs on `merge_group`. Auto-merge stays
+  allowed, so an armed pull request is enqueued instead of merging directly. The
+  green/yellow/red traffic-light routine is retired because the queue serialises merges
+  and rebuilds groups. Settings and rollback are in
+  [github-organization-migration.md](github-organization-migration.md).
+- **Repository ownership moves to the `mielenosoitukset-fi` organization (2026-11-13).**
+  The canonical URL is https://github.com/mielenosoitukset-fi/mielenosoitukset_fi/;
+  the old `botsarefuture/mielenosoitukset_fi` links and remotes keep working through
+  GitHub's redirect. `python-tests` now also runs on `merge_group` so it can stay the
+  required check once the merge queue is switched on. Deployment hosts, credentials,
+  paths and environment variables are unchanged. The reference audit, the external and
+  server-side follow-ups and the post-transfer checks are in
+  [github-organization-migration.md](github-organization-migration.md).
+  Merge queue: prepared but off. The intended settings (merge commits, ALLGREEN,
+  batches of 3) and the script that applies them only after explicit approval are
+  in that document.
 - **Changelog notes (2026-11-12).** New user-facing changes use separate files in
   `changelog.d/` to avoid pull requests conflicting in `CHANGELOG.md`. Render the
   notes with the existing history using `scripts/render_changelog.py`; release
@@ -157,6 +185,12 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 - **Analytics beacons (2026-11-11).** `POST /api/analytics/event` is served by Go,
   with `SITE_ANALYTICS_ENABLED=true` matching Flask. Pageviews and vitals stay in
   Flask. Roll back by removing the routing rule.
+
+- **Hash developer app `client_secret` last (2026-11-13).** Flask and Go both store
+  `client_secret` in plaintext; token secrets are already hashed. The maintainer
+  pre-approved hashing it (a `client_secret_hash` marker, Flask and Go changed together,
+  existing apps rotate) but only after everything else has moved to React and the Flask
+  templates are retired. Needs a backup and an independent reviewer SHIP at that time.
 
 ## Fundraising bar
 

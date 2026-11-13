@@ -105,6 +105,9 @@ The context is guidance, not an approved replacement specification.
 
 ## Working in this checkout
 
+- The canonical repository is
+  <https://github.com/mielenosoitukset-fi/mielenosoitukset_fi/>. Every local clone's
+  `origin` points there; the old `botsarefuture/...` URL only redirects.
 - `main` is checked out in another worktree, so `git checkout main` fails here. Branch from `origin/main` or add a `git worktree`; symlink the existing `node_modules` into it instead of reinstalling.
 - The shared working tree can contain another agent's uncommitted work. Never stage, stash or revert files you did not edit; do your own work in a separate worktree.
 - Run Python tests from a worktree with the main checkout's `.venv/bin/python`; pytest imports the package from the current directory, so no venv copy is needed.
@@ -146,10 +149,21 @@ command output many times over.
   and `journalctl` through `head`, `tail`, `grep` or `jq`, or write to a file. The
   hook in `.claude/hooks/quiet-commands.py` blocks the common cases and says how
   to retry.
-- Wait for CI with a background loop on `gh pr checks`, never by polling in chat.
+- Arm auto-merge (`gh pr merge --auto --merge`) rather than waiting at all; it is
+  enabled on the repository and the queue does the waiting. Use a background loop on
+  `gh pr checks` only when you need to see the result in this session, never a poll in
+  chat.
 - Read only the lines of a file you need.
 - Add user-facing notes under `changelog.d/`, never to `CHANGELOG.md`, so pull
   requests do not conflict and need no repeat CI runs.
+
+## Times and dates
+
+GitHub, CI, the servers and `date -u` report UTC, while the maintainer reads Helsinki
+time. Convert before quoting anything: `TZ=Europe/Helsinki date -jf '%Y-%m-%dT%H:%M:%SZ'
+'2026-11-13T13:05:06Z'` on macOS, or `TZ=Europe/Helsinki date -d '2026-11-13 13:05 UTC'`
+elsewhere. Name the zone (`15:05 EET`, or `16:05 EEST` in summer), and read a bare time
+in a note, report or commit message as Helsinki time.
 
 ## Coordinating sessions
 
@@ -161,9 +175,11 @@ project. The coordinator stays thin so it stays cheap:
   instructions). Small answers and one-line edits stay in the coordinator.
 - It writes the queue and open decisions to the shared notes folder and to
   `docs/decisions.md`, not only to chat, so a new coordinator can take over by reading them.
-- It merges, in order, pull requests whose required checks are green and whose review
-  threads are resolved, merging `main` in first. It stops and asks for anything that
-  changes data, authentication, privileges or sends email.
+- It arms auto-merge (`gh pr merge --auto --merge`) on pull requests whose required
+  checks and review threads pass, instead of watching them, and lets the queue validate
+  each against the current tip. If one needs a change while it is queued, it takes the
+  entry out first. It stops and asks for anything that changes data, authentication,
+  privileges or sends email.
 - Hand over by context size, not turn count. When a turn needs more than about 120k
   tokens of context, or when the queue is empty and a new topic starts, write a
   hand-over note (queue, sessions in flight with their ids, open decisions, what was
@@ -176,20 +192,88 @@ project. The coordinator stays thin so it stays cheap:
   report there. The hand-over note lists those ids so the new coordinator can check
   each one.
 
-### Traffic light for the merge queue
-
-Merging many pull requests can loop: each merge makes the next one conflict or fall
-behind, and each retry costs a CI run and a long context. Use three states:
-
-- **Green:** normal flow, one pull request at a time, merging `main` in first.
-- **Yellow:** the same pull request fails or conflicts twice in a row, or the same
-  failure shows up on two pull requests. Stop retrying. Read the cause once, fix it at
-  the source (for example a shared file, a stale manifest, a flaky test), then continue.
-- **Red:** a third repeat, or any failure whose cause is unclear. Freeze the queue, do not
-  push or merge anything more, write what happened to the notes folder, and ask the
-  maintainer with a suggested answer.
-
 The coordinator also always uses the caveman style in chat, and gives every session the
 cheapest model that can do the job (read-only work on the smallest model, routine work
 on a mid-size one, only hard design or security work on the largest) with a lower
 reasoning effort for mechanical work.
+
+### Merging
+
+Every change reaches `main` through the GitHub merge queue: `gh pr merge`,
+`gh pr merge --merge-queue` and the UI Merge button all enqueue, and nothing is picked up
+on its own, so a green pull request waits until someone queues or arms it. Do not bypass
+the queue with `--admin`.
+
+The queue merges with merge commits, builds and merges at most three entries at once and
+merges a single entry without waiting. It re-runs `python-tests` on the tip the change
+will land on, so a branch that has only fallen behind needs no rebase; a real conflict is
+different, because the queue drops the entry, so resolve it in the branch. Settings and
+the script that applied them are in
+[docs/github-organization-migration.md](docs/github-organization-migration.md).
+
+- Queue a pull request when its required checks are green and its review threads are
+  resolved. The queue then validates it against `main` plus the entries ahead of it.
+- Arm auto-merge instead of watching it: `gh pr merge --auto --merge` merges, or
+  enqueues when the queue is required, as soon as the checks and threads pass. A
+  session can then end. It does not bypass anything, but it does merge without a
+  further look, so do not arm a draft or a pull request whose conflicts you have not
+  resolved.
+- Keep the merge commit. Squash only a single-commit cleanup, and rebase only a branch
+  that is already linear.
+- The green/yellow/red traffic-light routine is retired. The queue serialises merges and
+  rebuilds a group after dropping a failing entry, so the retry loop across pull
+  requests no longer exists. A repeated failure still means stopping and fixing the
+  cause, as any failing check does.
+
+### While a pull request is in the queue
+
+A queued branch is frozen. GitHub refuses pushes to it and says "Merging is blocked: a
+pull request for this branch has been added to a merge queue … cannot be updated". That
+is the queue working, not a failed update:
+
+- Do not merge `main` into a queued branch or press "Update branch". The queue rebuilds
+  the entry on the current tip, so a branch that is only behind needs nothing.
+- If the pull request needs a change while it is queued, take it out first, push, then
+  arm auto-merge again. `gh pr view <n> --json id` gives the node id for
+  `gh api graphql -f query='mutation { dequeuePullRequest(input:{id:"<node id>"}) { pullRequest { number } } }'`,
+  or use "Remove from queue" in the UI.
+- A queue build costs about one test run. If it fails, the entry leaves the queue with
+  the reason in the timeline and the next entry is rebuilt without it.
+- Enqueuing consumes an armed auto-merge request, so a pull request that was dequeued and
+  pushed again has to be armed again.
+
+### Stacked pull requests
+
+When a change depends on another pull request that has not merged, stack it instead of
+basing a branch on another branch by hand. The `gh stack` command (the `github/gh-stack`
+extension) is installed:
+
+- `gh stack init` starts a stack on the default branch, `gh stack add <branch>` puts
+  another layer on top, and `gh stack init b1 b2 b3` adopts branches you already made.
+- `gh stack submit` pushes every layer, opens or updates the pull requests and links
+  them as a stack; `gh stack sync` brings the local stack up to date and `gh stack view`
+  shows it.
+- Merge from the bottom: each layer lands on `main` in turn and the ones above are
+  retargeted, so do not re-base them by hand. `gh stack rebase` replays a stack when its
+  trunk has moved.
+- Link the chain before its bottom layer is queued: `gh stack link 1149 1150` refuses a
+  pull request that is already in the queue ("it is queued for merge"), and
+  `gh stack submit` links only what is not queued yet.
+- A branch based on another pull request's branch by hand is not retargeted here, because
+  the repository keeps merged branches (`delete_branch_on_merge` is off) and GitHub only
+  moves children when the base branch is deleted. Do not queue the child while the parent
+  is open, because its entry would carry the parent's commits; after the parent merges,
+  move it with `gh pr edit <child> --base main`.
+
+### Resolving conflicts in files that usually conflict
+
+- `mielenosoitukset_fi/static/frontend/**` and
+  `mielenosoitukset_fi/templates/kampanja/_*_fallback.html` are build output. Never
+  hand-merge them: take either side, run `npm run build`, and commit the rebuild.
+- `package-lock.json` is regenerated, not merged: take either side and run
+  `npm install` so the lockfile matches `package.json`.
+- `changelog.d/` entries are separate files, so they do not conflict. Never resolve a
+  conflict by editing `CHANGELOG.md`.
+- `docs/decisions.md`, `roadmap.md` and `TODO.md` are append-only in practice: keep both
+  sides' entries instead of choosing one.
+- Anything else is ordinary source: rebase on `main` and resolve by hand.

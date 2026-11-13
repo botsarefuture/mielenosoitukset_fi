@@ -529,7 +529,7 @@ def test_sync_can_open_pr_and_attempt_auto_merge(app, tmp_path, monkeypatch):
     app.config["UI_TRANSLATION_SYNC_REPO_PATH"] = str(workspace_root)
     app.config["UI_TRANSLATION_SYNC_BASE_BRANCH"] = "main"
     app.config["UI_TRANSLATION_SYNC_REMOTE"] = "origin"
-    app.config["UI_TRANSLATION_GITHUB_REPO"] = "botsarefuture/mielenosoitukset_fi"
+    app.config["UI_TRANSLATION_GITHUB_REPO"] = "mielenosoitukset-fi/mielenosoitukset_fi"
     app.config["UI_TRANSLATION_GITHUB_TOKEN"] = "test-token"
     app.config["UI_TRANSLATION_GITHUB_AUTO_MERGE"] = True
 

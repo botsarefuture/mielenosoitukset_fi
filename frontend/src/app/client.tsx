@@ -94,7 +94,7 @@ if (container) {
       }).catch(error => console.error('Could not start the fundraising page', error));
     } else if (route?.name === 'campaign') {
       void import('./CampaignScreen').then(({ default: CampaignScreen }) => {
-        hydrateRoot(container, <Root {...props} serverPage={<CampaignScreen config={props.config} />} />);
+        hydrateRoot(container, <Root {...props} serverPage={<CampaignScreen config={props.config} today={props.today ?? ''} data={props.fundraising} />} />);
       }).catch(error => console.error('Could not start campaign page forms', error));
     } else {
       createRoot(container).render(<Root {...props} />);

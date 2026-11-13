@@ -250,3 +250,4 @@
 .pride-page .pride-volunteer [hidden] { display: none !important; }
 .pride-page .pride-volunteer :focus-visible { outline: 3px solid var(--product-primary); outline-offset: 2px; }
 
+.pride-page .pride-done { overflow-wrap: anywhere; }

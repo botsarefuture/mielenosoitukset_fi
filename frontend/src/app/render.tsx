@@ -687,7 +687,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
       canonical: `${config.origin}${config.urls.pride}`, robots: input.search ? 'noindex, follow' : 'index, follow' };
     extraHead = '<link rel="stylesheet" href="/static/vendor/flatpickr/4.6.13/flatpickr.min.css">'
       + '<link rel="stylesheet" href="/static/leaflet/leaflet.css">'
-      + '<link rel="stylesheet" href="/static/css/pride.css?v=20261113-pride-volunteers-1">'
+      + '<link rel="stylesheet" href="/static/css/pride.css?v=20261113-pride-volunteers-2">'
       + '<script src="/static/leaflet/leaflet.js" defer></script>'
       + (assets.pride ?? '');
     const prideProps = listingProps(prideRoute, config, session);

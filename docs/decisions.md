@@ -12,6 +12,23 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 
 ## Process and approvals
 
+- **Agents arm auto-merge (2026-11-13).** Auto-merge is enabled on the repository, so
+  a session should run `gh pr merge --auto --merge` on a pull request whose checks are
+  running and end, instead of watching CI and spending tokens on it. It bypasses
+  nothing: the required checks, review threads and the merge queue still decide, and an
+  armed pull request is enqueued when they pass. Do not arm a draft, or a pull request
+  whose conflicts are unresolved.
+- **Stack dependent work with `gh stack` (2026-11-13).** When a pull request depends on
+  another that has not merged, agents build a stack with the installed `github/gh-stack`
+  extension and merge it from the bottom, instead of chaining branches by hand and
+  re-targeting them one by one. Merges still go through the queue.
+- **Merge queue on `main` (2026-11-13).** Enabled after the move to the organization:
+  merge commits, ALLGREEN, at most 3 entries built and merged, minimum 1, no grouping
+  wait, 60-minute check timeout; `python-tests` runs on `merge_group`. Auto-merge stays
+  allowed, so an armed pull request is enqueued instead of merging directly. The
+  green/yellow/red traffic-light routine is retired because the queue serialises merges
+  and rebuilds groups. Settings and rollback are in
+  [github-organization-migration.md](github-organization-migration.md).
 - **Repository ownership moves to the `mielenosoitukset-fi` organization (2026-11-13).**
   The canonical URL is https://github.com/mielenosoitukset-fi/mielenosoitukset_fi/;
   the old `botsarefuture/mielenosoitukset_fi` links and remotes keep working through

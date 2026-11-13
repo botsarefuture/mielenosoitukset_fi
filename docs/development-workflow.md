@@ -54,8 +54,13 @@ The maintainer decides what we build and why. Whoever implements decides how.
 
 - At the start of every session and after finishing each PR, list open PRs, check CI and
   read new review comments. Fix what is red or requested before starting new work.
-- Rebase or merge `main` into a branch that has fallen behind; resolve conflicts in the
-  generated frontend assets by rebuilding, not by hand.
+- A branch that has only fallen behind needs no rebase: the merge queue validates it
+  against the current tip. Resolve real conflicts in the branch, and rebuild generated
+  frontend assets instead of hand-merging them.
+- A queued pull request is frozen: take it out of the queue before pushing any change to
+  it, and do not merge `main` in while it waits.
+- When a change depends on an unmerged pull request, build a stack with `gh stack`
+  rather than basing one branch on another by hand.
 - Merging and production activation follow the approval rules below: green required
   tests (plus SHIP for UI) are enough to merge.
 

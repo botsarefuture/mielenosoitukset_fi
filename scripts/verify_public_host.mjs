@@ -86,6 +86,10 @@ try {
   await page({ sessionUrl: `${base}/down` });
   await page({ sessionUrl: `${base}/down` });
   assert.equal(reads, 6, 'Failed configuration reads must not be cached');
+  // A cookie whose session read fails is unknown, never a guest; without a cookie it is simply anonymous.
+  assert.equal(bootstrap((await page({ sessionUrl: `${base}/down`, cookie: 'session=alice' })).html).session.unverified, true);
+  assert.equal(bootstrap((await page({ sessionUrl: `${base}/down` })).html).session.unverified, undefined);
+  assert.equal(bootstrap((await page({ cookie: 'session=alice' })).html).session.unverified, undefined);
   console.log('PASS: unknown-route zero reads; eight concurrent anonymous pages one read; warm zero reads; private sessions isolated; TTL and failure handling');
   for (const [path, heading, canonical, anchor] of [
     ['/info', 'Tietoa Mielenosoitukset.fi', '/info'],
@@ -256,9 +260,10 @@ try {
     const preBody = bodyOf(pre);
     for (const text of ['Pienkeräys aukeaa', 'Lisää kalenteriin', 'data:text/calendar', 'Keräyksen tiedot', 'RA/2026/0000',
       'Koko Suomi Ahvenanmaata lukuun ottamatta', 'Lahjoittaminen ei ole vielä avoinna',
-      'Mitä keräyksellä tehdään?', 'Tarroja yli 70 paikkakunnalle', 'Turku, Jyväskylä', '12 banderollia', 'Ensisijaisesti', 'Jos varoja jää yli', 'Virallinen käyttötarkoitus', 'Tampereen Tapahtuma- ja mediarenessanssi ry', 'äänentoistolaitteita',
+      'Mitä keräyksellä tehdään?', 'Tarroja kymmeniin kaupunkeihin', '12 banderollia', 'Ensisijaisesti', 'Jos varoja jää yli', 'Virallinen käyttötarkoitus', 'Tampereen Tapahtuma- ja mediarenessanssi ry', 'äänentoistolaitteita',
       'palvelin ja ylläpito', '<details class="fundraising-official">']) assert(preBody.includes(text), text);
     assert(!/€|euro/i.test(preBody), 'No euro amounts on the page');
+    assert(!/Turku|Kirkkonummi|Noin 1 000|Noin 500|tarraa:/.test(preBody), 'No per-city sticker quantities');
     for (const text of ['FI00 0000 0000 0000 00', 'TESTFIHH', 'Näin lahjoitat', 'Kopioi tilinumero', 'Tilinumero (IBAN)']) assert(!pre.html.includes(text), `pre-launch leaks ${text}`);
     // Open: first day is today. Account, BIC and copy button appear; indexable.
     fundState = { status: 200, body: { ...closedFund, start_date: dayHelsinki(0) } };
@@ -856,10 +861,10 @@ try {
   for (const path of ['/developer/apps', `/developer/apps/${developerAppId}/`, '/developer/apps/short', '/developer/request_access', '/developer/docs']) {
     assert.equal((await detailPage({ path })).status, 404, `${path} stays on Flask`);
   }
-  assert(apacheRouting.includes('#RewriteRule "^/developer/?$" "http://127.0.0.1:8090$0" [P,L]'));
-  assert(apacheRouting.includes('#RewriteRule "^/developer/apps/[a-fA-F0-9]{24}$" "http://127.0.0.1:8090$0" [P,L]'));
-  assert(!/^RewriteRule "\^\/developer/m.test(apacheRouting), 'Developer routing is prepared, not active');
-  console.log('PASS: developer panel shell, login redirect with next, noindex, unclaimed paths and inactive routing');
+  assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/developer/?$" "http://127.0.0.1:8090$0" [P,L]'));
+  assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/developer/apps/[a-fA-F0-9]{24}$" "http://127.0.0.1:8090$0" [P,L]'));
+  assert(apacheRouting.includes('RewriteRule "^/api/developer/(overview|apps|apps/[a-fA-F0-9]{24}(/(token|rotate))?|tokens|tokens/[A-Za-z0-9_-]{1,128})$" "http://127.0.0.1:8091$0" [P,L]'), 'Developer data and writes reach Go');
+  console.log('PASS: developer panel shell, login redirect with next, noindex, unclaimed paths and active routing');
 
   const statusFetch = globalThis.fetch;
   const healthyStatus = { overall_ok: true, services: [{ name: 'Tietokanta', status: 'ok', message: 'Yhteys kunnossa' }],

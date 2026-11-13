@@ -71,3 +71,28 @@ def fundraising_details(data=None, *, today=None):
         can_donate=bool(confirmed and data.get("publication_state") == "active" and start <= today <= end),
     )
     return details
+
+
+def fundraising_bar(data=None, *, today=None):
+    """Settings for the front-page bar, from the same fundraising configuration.
+
+    The bar is off unless `show_bar` is true. Dates are the shown dates, so the
+    opening can be announced before the details are confirmed. `donations_open`
+    is the date-independent part of `can_donate`: the bar may only say the
+    collection is running when it is confirmed and active.
+    """
+    if data is None:
+        try:
+            data = json.loads((Path(__file__).parent / "data/fundraising.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            data = {}
+    if not isinstance(data, dict):
+        data = {}
+    details = fundraising_details(data, today=today)
+    start, end = details["display_start_date"], details["display_end_date"]
+    return {
+        "enabled": data.get("show_bar") is True and bool(start and end),
+        "start": start.isoformat() if start else None,
+        "end": end.isoformat() if end else None,
+        "donations_open": bool(details["confirmed"] and data.get("publication_state") == "active"),
+    }

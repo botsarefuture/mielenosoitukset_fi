@@ -1,10 +1,13 @@
 name: Tests
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
+  # Required merge check for the GitHub merge queue: the queue runs this
+  # workflow on the temporary merge group commit.
+  merge_group:
+
+permissions:
+  contents: read
 
 concurrency:
   group: tests-${{ github.event.pull_request.number || github.ref }}
@@ -59,6 +62,7 @@ jobs:
           python3 -m pip install "$(sed -n '/^Markdown==/p' requirements.txt)"
           npm run app:build
           node scripts/verify_public_host.mjs
+          node scripts/verify_fundraising_bar.mjs
           node --experimental-strip-types scripts/verify_developer_writes.mjs
 
       - name: Install dependencies

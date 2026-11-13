@@ -33,13 +33,14 @@ log() { printf 'release_public: %s\n' "$*"; }
 deployed_sha() {
   "$production_python" - "$1" <<'PY' 2>/dev/null || true
 import json
+import re
 import sys
 from urllib.request import urlopen
 
 with urlopen(sys.argv[1], timeout=5) as response:
     payload = json.load(response)
 sha = payload.get("build_sha")
-if isinstance(sha, str) and len(sha) == 40:
+if payload.get("status") == "ok" and isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{40}", sha):
     print(sha)
 PY
 }

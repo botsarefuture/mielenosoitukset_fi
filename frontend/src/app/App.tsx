@@ -4,6 +4,7 @@ import type { ServiceStatus } from './status';
 import type { CancelLinkState } from './cancel-link';
 import type { CardProps } from '../components/listings/DemonstrationCard';
 import { SiteHeader } from '../components/header/SiteHeader';
+import { FundraisingBar } from '../components/fundraising/FundraisingBar';
 import { DetailScreen } from '../components/detail/DetailScreen';
 import { HomePage } from '../pages/HomePage';
 import type { HomeData } from '../pages/HomePage';
@@ -11,6 +12,7 @@ import type { AppConfig } from './config';
 import { detailEndpoint, detailMessages, detailUrls } from './detail';
 import type { DetailBootstrap, DetailSeries } from './detail-route';
 import { SiteFooter } from './Footer';
+import { useSession } from './useSession';
 import { headerProps } from './header-props';
 import { catalog } from './i18n';
 import type { AppRoute } from './routes';
@@ -77,8 +79,12 @@ function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<
 /** One public application shell: shared header, routed page content, footer. */
 export function App({ config, session, route, path, detail, series, home, listing, organization, cities, submission, calendar, serverPage }: AppProps) {
   const text = catalog(config.locale);
+  // Only after a failed server session read: ask the bridge once so the shell does not show guest buttons to a signed-in visitor.
+  const shell = useSession(session, { endpoint: config.urls.authMe, refreshOnMount: Boolean(session.unverified) }).session;
   return <>
-    <SiteHeader {...headerProps(config, session, text, path)} hydrating={route.name === 'api-docs' || route.name === 'status' || route.name === 'information' || route.name === 'campaign' || route.name === 'fundraising' || route.name === 'contact' || route.name === 'city-admin' || route.name === 'organization-fill' || route.name === 'suggest-change' || route.name === 'cancel-link' || route.name === 'developer'} />
+    {route.name !== 'fundraising' && session.fundraisingBar.enabled
+      && <FundraisingBar bar={session.fundraisingBar} fundraisingUrl={config.urls.fundraising} text={text.fundraisingBar} />}
+    <SiteHeader {...headerProps(config, shell, text, path)} hydrating={route.name === 'api-docs' || route.name === 'status' || route.name === 'information' || route.name === 'campaign' || route.name === 'fundraising' || route.name === 'contact' || route.name === 'city-admin' || route.name === 'organization-fill' || route.name === 'suggest-change' || route.name === 'cancel-link' || route.name === 'developer'} />
     <main className={`container-main-content ${route.name === 'submit' ? 'submit-workspace' : route.name === 'detail' || route.name === 'series' ? 'public-detail-main' : 'public-layout-wide'}`} id="main-content" tabIndex={-1}>
       {serverPage}
       {route.name === 'god-auth' && <Suspense fallback={<p role="status">Ladataan kirjautumista…</p>}><GodScreen /></Suspense>}
@@ -136,6 +142,6 @@ export function App({ config, session, route, path, detail, series, home, listin
             </a></p>
           </section>)}
     </main>
-    <SiteFooter config={config} session={session} text={text} />
+    <SiteFooter config={config} session={shell} text={text} />
   </>;
 }

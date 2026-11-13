@@ -94,7 +94,7 @@ def test_production_deploy_contract_is_sha_bound():
     assert "id: deploy_origin" in workflow
     assert 'echo "verified_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"' in workflow
     assert '--origin-verified-sha "${{ steps.deploy_origin.outputs.verified_sha }}"' in workflow
-    assert workflow.index('"deploy $GITHUB_SHA"') < workflow.index('echo "verified_sha=')
+    assert workflow.index('"$command $GITHUB_SHA"') < workflow.index('echo "verified_sha=')
     assert "?deploy=" not in workflow
     assert 'restrict,command="' in documentation
     assert "no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty" in documentation
@@ -103,16 +103,20 @@ def test_production_deploy_contract_is_sha_bound():
 def test_routing_activation_follows_successful_deployment():
     import yaml
     workflow = yaml.load(Path('.github/workflows/production-deploy.yml').read_text(), Loader=yaml.BaseLoader)
-    routing = workflow['jobs']['routing']
-    assert routing['needs'] == 'deploy'
-    assert 'always()' not in routing['if']
-    assert "github.event_name == 'push'" in routing['if']
-    assert "github.ref == 'refs/heads/main'" in routing['if']
+    assert 'routing' not in workflow['jobs']
+    deploy = workflow['jobs']['deploy']
+    assert deploy['needs'] == 'release'
+    assert "eligible" in deploy['if']
     assert workflow['on']['workflow_dispatch']['inputs']['routing']['default'] == 'true'
-    deploy_steps = workflow['jobs']['deploy']['steps']
+    deploy_steps = deploy['steps']
+    command = next(step['run'] for step in deploy_steps if step.get('id') == 'deploy_origin')
+    assert 'command=deploy' in command
+    assert 'command=deploy-routing' in command
+    assert command.count('ssh $SSH_OPTIONS') == 1
     assert any('https://api.mielenosoitukset.fi/health' in step.get('run', '') for step in deploy_steps)
     assert any('https://mielenosoitukset.fi/health' in step.get('run', '') for step in deploy_steps)
-    assert any('deploy-routing $GITHUB_SHA' in step.get('run', '') for step in routing['steps'])
+    server = Path('deploy/production_deploy.sh').read_text()
+    assert server.index('deploy/release_public.sh') < server.index('"$repo_dir/deploy/release_routing.sh" "$expected_sha"')
 
 
 @pytest.mark.parametrize("status,body,expected", [

@@ -12,6 +12,65 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 
 ## Process and approvals
 
+- **Verified production revisions, native coalescing (2026-11-13).** The maintainer
+  approved retaining queue 8/8, ALLGREEN, minimum 1 and wait 0 while hardening
+  deployments. One active production run finishes; native single-pending
+  concurrency coalesces bursts without a scheduler. Reuse trusted full Tests
+  evidence for the exact SHA instead of rerunning it on main pushes. Publish
+  immutable artifacts once, and deploy Flask, Go, React and routing in one locked
+  transaction. Preserve health checks, monotonic successful-release identification
+  and visible failures. Normal deployment checks migration readiness; pending
+  data changes require a separately approved migration procedure under the lock.
+  The worker marker prevents parallel startup migrations. No destructive migration
+  or database rollback is authorized by this pipeline change.
+
+- **GitHub handles the merge backlog (2026-11-13).** For 20–40 independent PRs,
+  agents arm auto-merge as each is ready and continue other work. Do not serialize
+  them by watching each merge. GitHub owns waiting and order; agents intervene for
+  failed checks, conflicts and review feedback. A lone PR keeps minimum 1 and
+  wait 0, with required queue tests intact. Dependent PRs enter only after the
+  parent merges and their base is `main`. This avoids an AI traffic-police role
+  without weakening protections.
+
+- **Size the merge queue for 40 waiting pull requests (2026-11-13).** Raise both
+  `max_entries_to_build` and `max_entries_to_merge` from 3 to 8. Keep MERGE,
+  ALLGREEN, minimum 1, wait 0 and the 60-minute timeout. With roughly 13-minute
+  checks, 40 ready PRs need about 14 waves at concurrency 3 (over three hours)
+  versus 5 waves at concurrency 8 (about 65 minutes), assuming full utilization
+  and no failures. These are parallel waves, not five total CI runs: ALLGREEN
+  still checks each entry. Merge size is a separate limit. A failed entry
+  invalidates later groups that include it, so do not go higher without evidence. The script exposes both limits as
+  CLI flags and preserves every other rule, condition and bypass actor. Roll back
+  by setting both flags to 3 after reviewing `--dry-run`.
+
+- **Agents arm auto-merge (2026-11-13).** Auto-merge is enabled on the repository, so
+  a session should run `gh pr merge --auto --merge` on a pull request whose checks are
+  running and end, instead of watching CI and spending tokens on it. It bypasses
+  nothing: the required checks, review threads and the merge queue still decide, and an
+  armed pull request is enqueued when they pass. Do not arm a draft, or a pull request
+  whose conflicts are unresolved.
+- **Stack dependent work with `gh stack` (2026-11-13).** When a pull request depends on
+  another that has not merged, agents build a stack with the installed `github/gh-stack`
+  extension and merge it from the bottom, instead of chaining branches by hand and
+  re-targeting them one by one. Merges still go through the queue.
+- **Merge queue on `main` (2026-11-13).** Enabled after the move to the organization:
+  merge commits, ALLGREEN, at most 3 entries built and merged, minimum 1, no grouping
+  wait, 60-minute check timeout; `python-tests` runs on `merge_group`. Auto-merge stays
+  allowed, so an armed pull request is enqueued instead of merging directly. The
+  green/yellow/red traffic-light routine is retired because the queue serialises merges
+  and rebuilds groups. Settings and rollback are in
+  [github-organization-migration.md](github-organization-migration.md).
+- **Repository ownership moves to the `mielenosoitukset-fi` organization (2026-11-13).**
+  The canonical URL is https://github.com/mielenosoitukset-fi/mielenosoitukset_fi/;
+  the old `botsarefuture/mielenosoitukset_fi` links and remotes keep working through
+  GitHub's redirect. `python-tests` now also runs on `merge_group` so it can stay the
+  required check once the merge queue is switched on. Deployment hosts, credentials,
+  paths and environment variables are unchanged. The reference audit, the external and
+  server-side follow-ups and the post-transfer checks are in
+  [github-organization-migration.md](github-organization-migration.md).
+  Merge queue: prepared but off. The intended settings (merge commits, ALLGREEN,
+  batches of 3) and the script that applies them only after explicit approval are
+  in that document.
 - **Changelog notes (2026-11-12).** New user-facing changes use separate files in
   `changelog.d/` to avoid pull requests conflicting in `CHANGELOG.md`. Render the
   notes with the existing history using `scripts/render_changelog.py`; release
@@ -24,7 +83,7 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   change, take a backup or record the prior state. Report where the backup is and how
   to revert. Anything without a revert path (permanent deletes without an export,
   real emails to real people) still needs an explicit yes.
-- **Review threads block merging.** The `main` ruleset requires every review thread
+- **Review threads block merging (historical; auto-merge policy superseded 2026-11-13).** The `main` ruleset requires every review thread
   to be resolved and the `python-tests` check to pass. Auto-merge is turned off.
   Resolve bot review threads by fixing the issue, or by replying with the reason it
   does not apply.
@@ -158,7 +217,17 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
   with `SITE_ANALYTICS_ENABLED=true` matching Flask. Pageviews and vitals stay in
   Flask. Roll back by removing the routing rule.
 
+- **Hash developer app `client_secret` last (2026-11-13).** Flask and Go both store
+  `client_secret` in plaintext; token secrets are already hashed. The maintainer
+  pre-approved hashing it (a `client_secret_hash` marker, Flask and Go changed together,
+  existing apps rotate) but only after everything else has moved to React and the Flask
+  templates are retired. Needs a backup and an independent reviewer SHIP at that time.
+
 ## Fundraising page
 
 - **Pre-launch mode (2026-11-13).** `/keräys` is public without login or campaign publication and is not linked from anywhere (no nav, footer, sitemap or front page; the existing link on `/kampanja/` shows only once the campaign is published). Until Helsinki's date reaches `start_date` it shows "Pienkeräys aukeaa", hides IBAN/BIC and payment links (in the page, the embedded bootstrap and `GET /api/fundraising/details`) and is `noindex, follow`. The opening day is the existing `start_date`, so no extra hardcoded instant. The account block needs `details_confirmed`, `publication_state: active`, organiser and recipient to be filled in; nothing is invented.
 - **Opening reminder signup (2026-11-13, approved by the maintainer 2026-11-13).** Visitors may give their e-mail address on the pre-launch page to get one reminder when the collection opens (16.11.2026 00:00 Helsinki). Legal basis is consent; purpose is limited to that one reminder (plus one results message if an optional separate box is ticked, which is not implemented). Double opt-in with a 7-day single-use token stored hashed; data is only the address, consent time, consent text version and language. Deleted 30 days after the collection ends (17.3.2027), unconfirmed signups after two weeks, and at once through the link in any mail. Go stores signups, Flask mints tokens and sends through the e-mail queue. The reminder is queued once, only inside the send window and only with a separate approval flag; the first real bulk send needs the maintainer's go. Everything ships off. Details, switches, activation and revert: [fundraising-reminder.md](fundraising-reminder.md). The notice is in `PrivacyContent.tsx` and the form copy in `fundraising-reminder.ts`; change them together.
+
+## Fundraising bar
+
+- **Slim bar above the header, off by default (2026-11-13).** The maintainer chose the cream look with an orange edge and no pill. It is controlled by `show_bar` in the fundraising configuration, takes its dates from the same configuration (shown dates, so the opening can be announced before confirmation), hides after the end date and on `/keräys`, and replaces the header link. Setting `show_bar` is the first public link to `/keräys` (pre-launch mode otherwise links it from nowhere), so it is the launch switch and is not gated by campaign publication. Dismissal lasts 7 days and ends early at a milestone. The bar never says what leftover funds do: the permit's primary use is the marketing campaign and the service's running costs, and leftovers go to shared demonstration equipment.

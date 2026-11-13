@@ -41,7 +41,10 @@ The maintainer decides what we build and why. Whoever implements decides how.
 - Small commits, one idea each, with a message that says why the change was needed.
   Imperative mood, no trailing period, no tool or assistant attribution.
 - A PR covers one reviewable change. Stack PRs when one depends on another and say which
-  base each uses.
+  base each uses. Use the installed `gh stack` extension for dependent work:
+  `gh stack init`, `gh stack add <branch>`, `gh stack submit`, `gh stack sync`
+  and `gh stack view`. Merge from the bottom and verify the next layer targets
+  `main` before arming it. Independent changes need no stack.
 - The description says what changed, why, how it was checked and anything that was not
   checked. Link the roadmap item or issue.
 - Every user-facing change has a separate note in `changelog.d/`. Write it for a

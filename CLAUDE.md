@@ -19,6 +19,10 @@ For user-facing changes, add a uniquely named note in `changelog.d/` as describe
 [its README](changelog.d/README.md); do not edit `CHANGELOG.md` for new entries. Run
 `python scripts/render_changelog.py` to view the notes with the existing history.
 
+Use `gh stack` for useful dependent layers (`init`, `add`, `submit`, `sync`,
+`view`); merge from the bottom and verify the next layer targets `main` before
+arming it. Independent changes target `main` directly and need no stack.
+
 For backlogs of 20–40 independent pull requests, arm each ready PR's auto-merge
 without waiting for the previous merge. GitHub runs up to 8 queue builds
 concurrently and merges up to 8 ready entries together. ALLGREEN, minimum 1,

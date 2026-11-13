@@ -264,6 +264,7 @@ is the queue working, not a failed update:
 
 ### Stacked pull requests
 
+Independent PRs target `main` directly; do not stack unrelated changes.
 When a change depends on another pull request that has not merged, stack it instead of
 basing a branch on another branch by hand. The `gh stack` command (the `github/gh-stack`
 extension) is installed:
@@ -275,7 +276,8 @@ extension) is installed:
   shows it.
 - Merge from the bottom: each layer lands on `main` in turn and the ones above are
   retargeted, so do not re-base them by hand. `gh stack rebase` replays a stack when its
-  trunk has moved.
+  trunk has moved. Verify each next layer targets `main` after its parent merges
+  before arming auto-merge; do not assume a retained parent branch was retargeted.
 - Link the chain before its bottom layer is queued: `gh stack link 1149 1150` refuses a
   pull request that is already in the queue ("it is queued for merge"), and
   `gh stack submit` links only what is not queued yet.

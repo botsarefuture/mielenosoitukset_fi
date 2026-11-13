@@ -81,11 +81,74 @@ settings change and is not part of this preparation.
 - Production Flask config, `PRODUCTION_SSH_*` and `PREVIEW_SSH_*`, hosts, domains,
   `mielenosoitus.sock` and `/opt/mielenosoitukset-*` paths stay as they are.
 - `deploy/production_deploy.sh` resolves `origin/main`; the host's `origin` still
-  points at the old URL and follows GitHub's redirect. Confirm with
-  `git -C <repo> ls-remote origin HEAD` before changing anything.
+  points at the old URL and follows GitHub's redirect. The verified host details and
+  the required follow-up are in the production host audit below.
 - Repository secrets, variables, webhooks and deploy keys stay associated with a
   transferred repository (GitHub documentation). Verify them anyway, because
   organization policy can still block them.
+
+## Production host audit (2026-11-13)
+
+Read-only inspection of `lc-main` (`ssh lc-main-root`), the only active production
+host. `miekkaridev.luova.club` is no longer in use, so it was not inspected and is
+not part of this plan.
+
+What a production deploy actually does:
+
+- The deploy checkout is `/var/www/mielenosoitukset_fi` (HEAD and
+  `.deploy-build-sha` were both `86f42748`). Its `origin` is
+  `https://github.com/botsarefuture/mielenosoitukset_fi.git` for fetch and push, with
+  no credential helper or `insteadOf` rewrite in that repository's config.
+- `production-deploy.yml` SSHes in with the dedicated deploy key, whose forced
+  command is `/usr/local/sbin/moso-github-deploy`, identical to
+  `deploy/production_ssh_entrypoint.sh`. It accepts only `deploy <sha>` and
+  `deploy-routing <sha>`, fetches `origin main` in the checkout, refuses a SHA that is
+  not `origin/main`, and runs `deploy/production_deploy.sh` from the requested commit.
+  It hardcodes no repository URL.
+- `production_deploy.sh` fast-forwards `main`, installs dependencies, reloads
+  Gunicorn and calls `deploy/release_public.sh`.
+- `release_public.sh` derives `owner/name` from `git remote get-url origin` and passes
+  it to `deploy/release_artifacts.py`, which downloads
+  `https://github.com/{owner}/{name}/releases/download/release-<sha>/release.json`
+  plus the verified `api` and `app.tar.gz` assets.
+
+That download is the only production path that reads the old owner after the
+transfer, because the remote still names it. The downloader uses `urlopen`, which
+follows redirects, and GitHub redirects repository URLs, so deploys are expected to
+keep working unchanged. Updating the remote removes the dependency on the redirect.
+
+Everything else on the host is owner-agnostic or already on the new organization:
+
+- Services: `mielenosoitukset_fi.service` (Gunicorn,
+  `WorkingDirectory=/var/www/mielenosoitukset_fi`), `mielenosoitukset-public.service`
+  (`/opt/mielenosoitukset-public/current`), `mielenosoitukset-api.service`
+  (`/opt/mielenosoitukset-api/current`), `mielenosoitukset-telegram-bot.service` and
+  `mastobot.service`, plus the MongoDB backup timers running
+  `deploy/backup/mongodb-backup.sh` and a LuovaSec snapshot timer. No unit file or
+  drop-in contains a GitHub URL or owner reference.
+- No systemd unit, timer, root crontab entry or `/etc/cron.d` file runs `git pull` or
+  `git fetch` for this repository. Deployments happen only through the Actions SSH
+  path, so the host runs no GitHub webhook receiver that would need reconfiguring.
+- `/etc/mielenosoitukset-fi/deploy.env`, `/etc/mielenosoitukset-public/environment`
+  and `/etc/mielenosoitukset-api/environment` define no `GITHUB*` variable.
+- Production `config.yaml` sets `UI_TRANSLATION_GITHUB_REPO:
+  botsarefuture/mielenosoitukset_fi`; only that non-secret value was read.
+- The other checkouts on the host already use the organization:
+  `mielenosoitukset-telegram-bot` and `mastobot` point at `mielenosoitukset-fi/*`.
+  `/var/www/mielenosoitukset_fi_v5` is a stale checkout with the old URL that no unit
+  uses.
+
+Server-side changes needed after the transfer (not performed; they need maintainer
+approval and server access):
+
+1. Point the deploy checkout at the canonical URL:
+   `git -C /var/www/mielenosoitukset_fi remote set-url origin https://github.com/mielenosoitukset-fi/mielenosoitukset_fi.git`,
+   then verify with `git ls-remote origin main` before the next deploy. Rollback is
+   the old URL, which keeps redirecting.
+2. Set `UI_TRANSLATION_GITHUB_REPO` to `mielenosoitukset-fi/mielenosoitukset_fi` in
+   `/var/www/mielenosoitukset_fi/config.yaml`; the next deploy's Gunicorn reload
+   picks it up. No other production setting changes.
+3. Optional cleanup: retire `/var/www/mielenosoitukset_fi_v5`.
 
 ## External integrations to check after the transfer
 
@@ -146,8 +209,11 @@ that it depends on them; their current configuration cannot be inspected from he
 8. Update `UI_TRANSLATION_GITHUB_REPO` on the servers, run one translation sync, and
    check the PR target.
 9. Re-index DeepWiki and fix the README notice.
-10. Update each server's `origin` remote URL when convenient; then remove this
-    document's manual steps that no longer apply.
+10. On the production host, set the checkout's `origin` to the canonical URL and
+    verify `git ls-remote origin main` before the next deploy.
+11. Watch the next deploy: the `downloading release assets … from <slug>` line must
+    name `mielenosoitukset-fi/mielenosoitukset_fi`.
+12. Remove this document's steps that no longer apply.
 
 ## Open risks
 
@@ -160,3 +226,7 @@ that it depends on them; their current configuration cannot be inspected from he
   rulesets is not documented; verify each instead of assuming it moved.
 - Anything outside the repository (bots, webhooks, dashboards) in the list above is
   unverified by this audit.
+- Until the production remote is updated, the release asset download depends on
+  GitHub's repository redirect. If that redirect ever stops working, a deploy would
+  reload Flask and then fail before the public host and Go API, which is the
+  half-deployed state the script otherwise avoids.

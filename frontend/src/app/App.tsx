@@ -78,7 +78,7 @@ function cardProps(config: AppConfig, session: SessionSummary, text: ReturnType<
 export function App({ config, session, route, path, detail, series, home, listing, organization, cities, submission, calendar, serverPage }: AppProps) {
   const text = catalog(config.locale);
   return <>
-    <SiteHeader {...headerProps(config, session, text, path)} hydrating={route.name === 'api-docs' || route.name === 'status' || route.name === 'information' || route.name === 'campaign' || route.name === 'fundraising' || route.name === 'contact' || route.name === 'city-admin' || route.name === 'organization-fill' || route.name === 'suggest-change' || route.name === 'cancel-link'} />
+    <SiteHeader {...headerProps(config, session, text, path)} hydrating={route.name === 'api-docs' || route.name === 'status' || route.name === 'information' || route.name === 'campaign' || route.name === 'fundraising' || route.name === 'contact' || route.name === 'city-admin' || route.name === 'organization-fill' || route.name === 'suggest-change' || route.name === 'cancel-link' || route.name === 'developer'} />
     <main className={`container-main-content ${route.name === 'submit' ? 'submit-workspace' : route.name === 'detail' || route.name === 'series' ? 'public-detail-main' : 'public-layout-wide'}`} id="main-content" tabIndex={-1}>
       {serverPage}
       {route.name === 'god-auth' && <Suspense fallback={<p role="status">Ladataan kirjautumista…</p>}><GodScreen /></Suspense>}

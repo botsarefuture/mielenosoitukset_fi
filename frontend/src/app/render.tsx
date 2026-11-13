@@ -36,6 +36,7 @@ import ApiDocsScreen from './ApiDocsScreen';
 import apiDocs from 'virtual:api-docs';
 import StatusScreen from './StatusScreen';
 import CancelLinkScreen from './CancelLinkScreen';
+import DeveloperScreen from './DeveloperScreen';
 import { loadCancelLink, cancelLinkTitle, type CancelLinkState } from './cancel-link';
 import { loadStatus, statusTitle, type ServiceStatus } from './status';
 import { loadSuggestion, suggestionTitle, suggestionLead, type SuggestionDemo } from './suggest-change';
@@ -77,7 +78,7 @@ export type RenderInput = {
   headOnly?: boolean;
 };
 
-export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; cityAdmin?: string; organizationFill?: string; suggestChange?: string; cancelLink?: string; status?: string; pride?: string; information?: string };
+export type RenderAssets = { head: string; scripts: string; listing?: string; organization?: string; cities?: string; today?: string; submit?: string; calendar?: string; calendarYear?: string; godAuth?: string; campaign?: string; fundraising?: string; contact?: string; cityAdmin?: string; organizationFill?: string; suggestChange?: string; cancelLink?: string; developer?: string; status?: string; pride?: string; information?: string };
 
 export type RenderResult = {
   status: number;
@@ -445,6 +446,16 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     noscript = '';
     appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
       serverPage={<CityAdminApplyScreen session={session} apiBase={config.apiBase} />} />);
+  }
+
+  if (route.name === 'developer') {
+    // Per-account page: never cached or indexed. The data loads in the browser from the Go read routes.
+    headers['Cache-Control'] = 'private, no-store';
+    headers['X-Robots-Tag'] = 'noindex, nofollow';
+    extraHead = (assets.developer ?? '') + `<link rel="stylesheet" href="${DETAIL_STYLESHEET}">`;
+    noscript = '';
+    appMarkup = renderToString(<App config={config} session={session} route={route} path={input.path}
+      serverPage={<DeveloperScreen config={config} session={session} appId={route.appId} />} />);
   }
 
   if (route.name === 'contact') {

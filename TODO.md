@@ -98,6 +98,7 @@ The checked visual follow-ups above are implemented; visual acceptance remains *
 - [ ] **DATA-07:** multi-day demonstrations as their own duration, separate from recurring series.
 - [ ] **CITY-01:** city review dashboard with an authoritative deadline countdown (#967).
 - [ ] **CITY-02:** urgent pending-event alerts to Telegram through a durable outbox (#963).
+- [ ] **Admin notifications and Bark:** notify the appropriate admins in the app's notification panel when new suggestions or other review items arrive. Explore Bark push notifications for urgent items, especially for super admins, so admins can notice them without checking the site. First inventory existing notifications and the CITY-02 alert flow; define event types, recipients, urgency, opt-in settings, privacy and reliable delivery before implementation. *(approval: production configuration and real notifications)*
 - [ ] **CASE-01/02:** let submitters answer case questions and follow progress (#976).
 - [x] Recurring demonstration cancellation breaks: #620 redone on current main with inclusive date ranges, validation and frozen-child protection.
 - [ ] Production performance and hosting review (#859).

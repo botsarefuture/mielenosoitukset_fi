@@ -1,0 +1,1 @@
+- Production releases reuse verified artifacts and avoid a duplicate Flask reload. Deployment checks now stop unapproved pending migrations and prevent older releases from replacing newer successful releases.

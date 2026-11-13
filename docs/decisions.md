@@ -12,6 +12,18 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 
 ## Process and approvals
 
+- **Verified production revisions, native coalescing (2026-11-13).** The maintainer
+  approved retaining queue 8/8, ALLGREEN, minimum 1 and wait 0 while hardening
+  deployments. One active production run finishes; native single-pending
+  concurrency coalesces bursts without a scheduler. Reuse trusted full Tests
+  evidence for the exact SHA instead of rerunning it on main pushes. Publish
+  immutable artifacts once, and deploy Flask, Go, React and routing in one locked
+  transaction. Preserve health checks, monotonic successful-release identification
+  and visible failures. Normal deployment checks migration readiness; pending
+  data changes require a separately approved migration procedure under the lock.
+  The worker marker prevents parallel startup migrations. No destructive migration
+  or database rollback is authorized by this pipeline change.
+
 - **Agents arm auto-merge (2026-11-13).** Auto-merge is enabled on the repository, so
   a session should run `gh pr merge --auto --merge` on a pull request whose checks are
   running and end, instead of watching CI and spending tokens on it. It bypasses

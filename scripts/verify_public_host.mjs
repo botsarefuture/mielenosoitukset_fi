@@ -853,10 +853,9 @@ try {
   for (const path of ['/developer/apps', `/developer/apps/${developerAppId}/`, '/developer/apps/short', '/developer/request_access', '/developer/docs']) {
     assert.equal((await detailPage({ path })).status, 404, `${path} stays on Flask`);
   }
-  assert(apacheRouting.includes('#RewriteRule "^/developer/?$" "http://127.0.0.1:8090$0" [P,L]'));
-  assert(apacheRouting.includes('#RewriteRule "^/developer/apps/[a-fA-F0-9]{24}$" "http://127.0.0.1:8090$0" [P,L]'));
-  assert(!/^RewriteRule "\^\/developer/m.test(apacheRouting), 'Developer routing is prepared, not active');
-  console.log('PASS: developer panel shell, login redirect with next, noindex, unclaimed paths and inactive routing');
+  assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/developer/?$" "http://127.0.0.1:8090$0" [P,L]'));
+  assert(apacheRouting.includes('RewriteCond %{REQUEST_METHOD} "^(GET|HEAD)$"\nRewriteRule "^/developer/apps/[a-fA-F0-9]{24}$" "http://127.0.0.1:8090$0" [P,L]'));
+  console.log('PASS: developer panel shell, login redirect with next, noindex, unclaimed paths and active routing');
 
   const statusFetch = globalThis.fetch;
   const healthyStatus = { overall_ok: true, services: [{ name: 'Tietokanta', status: 'ok', message: 'Yhteys kunnossa' }],

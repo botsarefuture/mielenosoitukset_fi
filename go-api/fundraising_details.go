@@ -47,12 +47,52 @@ func fundraisingDetails(next http.Handler, path string) http.Handler {
 			writeError(w, http.StatusServiceUnavailable, "fundraising details unavailable")
 			return
 		}
+		current = withoutAccountBeforeOpening(current, fundraisingNow())
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		if r.Method == http.MethodGet {
 			_, _ = w.Write(current)
 		}
 	})
+}
+
+// fundraisingNow is the server clock; tests replace it.
+var fundraisingNow = time.Now
+
+// accountKeys are never served before the collection's first day.
+var accountKeys = []string{"iban", "bic", "recipient", "reference", "payment_url", "mobilepay_links"}
+
+// withoutAccountBeforeOpening drops the account and payment fields while the
+// Helsinki date is before start_date (or planned_start_date), so the public
+// endpoint does not publish them early. It switches at 00:00 Europe/Helsinki
+// without a restart. Without a valid date, or if anything fails, the data is
+// returned untouched: the React host also hides the account until opening.
+func withoutAccountBeforeOpening(body []byte, now time.Time) []byte {
+	var object map[string]any
+	if json.Unmarshal(body, &object) != nil {
+		return body
+	}
+	opens := ""
+	for _, key := range []string{"start_date", "planned_start_date"} {
+		if value, ok := object[key].(string); ok {
+			if _, err := time.Parse("2006-01-02", value); err == nil {
+				opens = value
+				break
+			}
+		}
+	}
+	location, err := time.LoadLocation("Europe/Helsinki")
+	if opens == "" || err != nil || now.In(location).Format("2006-01-02") >= opens {
+		return body
+	}
+	for _, key := range accountKeys {
+		delete(object, key)
+	}
+	redacted, err := json.Marshal(object)
+	if err != nil {
+		return body
+	}
+	return append(redacted, '\n')
 }
 
 // readFundraisingFile returns the compacted JSON object, or nil when the file

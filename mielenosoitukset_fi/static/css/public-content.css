@@ -102,3 +102,19 @@
   .public-content__grid { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .public-content__sections { gap: 1rem; }
 }
+
+/* Fundraising pre-launch banner and IBAN copy control */
+.fundraising-prelaunch { border-left: 4px solid var(--product-primary); margin-bottom: 1.5rem; }
+.fundraising-prelaunch h2 { margin-top: 0; }
+.fundraising-prelaunch__note { font-size: .9rem; margin-bottom: 0; }
+.fundraising-calendar, .fundraising-copy {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .55rem 1.1rem;
+  border: 1px solid var(--product-action-bg); border-radius: 8px; cursor: pointer;
+  background: var(--product-action-bg); color: var(--product-on-action, #fff); font: inherit; font-size: .94rem; font-weight: 650; text-decoration: none;
+}
+.fundraising-calendar:hover, .fundraising-copy:hover { background: var(--product-action-hover); border-color: var(--product-action-hover); }
+.fundraising-calendar:focus-visible, .fundraising-copy:focus-visible { outline: 3px solid var(--product-primary); outline-offset: 3px; }
+.fundraising-copy { margin-top: 1rem; }
+.fundraising-copy__status { display: block; margin-top: .4rem; font-size: .9rem; }
+.fundraising-copy__status:empty { margin: 0; }
+.fundraising-iban { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }

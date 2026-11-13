@@ -17,6 +17,7 @@ Edit `mielenosoitukset_fi/utils/data/fundraising.json`:
 | `start_date`, `end_date` | Confirmed dates as `YYYY-MM-DD`; empty by default |
 | `planned_start_date`, `planned_end_date` | Proposed dates for preparation copy only; never enable payments |
 | `recipient`, `iban` | Verified recipient and IBAN; required together for bank transfers |
+| `bic`, `area` | Bank BIC and collection area text; page only, not part of the Flask parity rules |
 | `reference` | Optional bank reference; leave empty if none is provided |
 | `payment_url` | Optional verified HTTPS donation page; can replace bank instructions |
 | `mobilepay_links` | Two ready entries with `label` and empty `url`; fill each with a confirmed, appropriate MobilePay payment link. Add more entries if needed. |

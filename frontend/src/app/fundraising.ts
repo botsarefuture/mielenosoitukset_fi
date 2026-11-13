@@ -108,3 +108,46 @@ export function fundraisingDetails(input: unknown, today: string = helsinkiToday
     can_donate: Boolean(confirmed && state === 'active' && start! <= today && today <= end!),
   };
 }
+
+/**
+ * Page-only extras that are not part of the Flask parity rules: the bank's BIC,
+ * the collection area, and the pre-launch state. The page is in pre-launch mode
+ * while Helsinki's date is before the collection's first day, so it switches at
+ * 00:00 Europe/Helsinki without a deploy. The opening day is the existing
+ * `start_date` (or `planned_start_date`) value, not a second copy.
+ */
+export type FundraisingExtras = { bic: string; area: string; pre_launch: boolean; opens_date: string | null };
+
+export function fundraisingExtras(input: unknown, today: string = helsinkiToday()): FundraisingExtras {
+  const data: Record<string, unknown> = input && typeof input === 'object' && !Array.isArray(input) ? input as Record<string, unknown> : {};
+  const opens = isoDate(data.start_date) ?? isoDate(data.planned_start_date);
+  return { bic: text(data.bic), area: text(data.area), opens_date: opens, pre_launch: Boolean(opens && today < opens) };
+}
+
+const icsText = (value: string) => value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+
+/** An all-day reminder for the opening day. It holds no personal data. */
+export function fundraisingIcs(opensDate: string, pageUrl: string): string {
+  const compact = opensDate.replace(/-/g, '');
+  const [year, month, day] = opensDate.split('-').map(Number);
+  const next = new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10).replace(/-/g, '');
+  return [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mielenosoitukset.fi//Pienkerays//FI', 'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    `UID:pienkerays-${compact}@mielenosoitukset.fi`,
+    `DTSTAMP:${compact}T000000Z`,
+    `DTSTART;VALUE=DATE:${compact}`,
+    `DTEND;VALUE=DATE:${next}`,
+    `SUMMARY:${icsText('Pienkeräys aukeaa')}`,
+    `DESCRIPTION:${icsText('Mielenosoitukset.fi:n pienkeräys alkaa. Tiedot: ' + pageUrl)}`,
+    `URL:${pageUrl}`,
+    'END:VEVENT', 'END:VCALENDAR', '',
+  ].join('\r\n');
+}
+
+/** The configuration without account and payment fields, for pages served before opening. */
+export function withoutAccount(data: Record<string, unknown>): Record<string, unknown> {
+  const copy = { ...data };
+  for (const key of ['iban', 'bic', 'recipient', 'reference', 'payment_url', 'mobilepay_links']) delete copy[key];
+  return copy;
+}

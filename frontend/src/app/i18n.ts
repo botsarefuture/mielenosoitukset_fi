@@ -2,6 +2,7 @@ import type { HeaderMessages } from '../components/header/types';
 import type { CardProps } from '../components/listings/DemonstrationCard';
 import type { HomeProps, QuickText } from '../pages/HomePage';
 import type { AppLocale } from './config';
+import type { FundraisingBarText } from './fundraising-bar';
 
 /**
  * Public application copy.
@@ -48,6 +49,7 @@ export type Catalog = {
     guides: string; developer: string; social: string; account: string;
   };
   fundraising: string;
+  fundraisingBar: FundraisingBarText;
   home: HomeProps['text'];
   /** Finnish only for now; en/sv inherit it until human translators supply copy. */
   homeQuick: QuickText;
@@ -82,6 +84,10 @@ const fi: Catalog = {
     account: 'Käyttäjätili',
   },
   fundraising: 'Tutustu pienkeräykseen',
+  fundraisingBar: {
+    label: 'Pienkeräys', opens: 'Pienkeräys aukeaa {date}', openUntil: 'Pienkeräys on käynnissä {date} asti',
+    openShort: 'Keräys on käynnissä', readMore: 'Lue lisää', donate: 'Lahjoita', close: 'Sulje ilmoitus',
+  },
   home: {
     title: 'Tulevat mielenosoitukset',
     intro: 'Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen.',
@@ -144,6 +150,8 @@ const en: Catalog = {
     social: 'Mielenosoitukset.fi on social media', account: 'User account',
   },
   fundraising: 'Read about the fundraiser',
+  // Finnish until a human translator provides this copy.
+  fundraisingBar: fi.fundraisingBar,
   home: {
     title: 'Upcoming demonstrations',
     intro: 'Mielenosoitukset.fi lists current demonstrations around Finland.',
@@ -196,6 +204,8 @@ const sv: Catalog = {
     developer: 'För utvecklare', social: 'Mielenosoitukset.fi i sociala medier', account: 'Användarkonto',
   },
   fundraising: 'Läs om insamlingen',
+  // Finnish until a human translator provides this copy.
+  fundraisingBar: fi.fundraisingBar,
   home: {
     title: 'Kommande demonstrationer',
     intro: 'Mielenosoitukset.fi samlar aktuella demonstrationer runt om i Finland.',

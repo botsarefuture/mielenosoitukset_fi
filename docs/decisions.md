@@ -12,6 +12,18 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 
 ## Process and approvals
 
+- **Verified production revisions, native coalescing (2026-11-13).** The maintainer
+  approved retaining queue 8/8, ALLGREEN, minimum 1 and wait 0 while hardening
+  deployments. One active production run finishes; native single-pending
+  concurrency coalesces bursts without a scheduler. Reuse trusted full Tests
+  evidence for the exact SHA instead of rerunning it on main pushes. Publish
+  immutable artifacts once, and deploy Flask, Go, React and routing in one locked
+  transaction. Preserve health checks, monotonic successful-release identification
+  and visible failures. Normal deployment checks migration readiness; pending
+  data changes require a separately approved migration procedure under the lock.
+  The worker marker prevents parallel startup migrations. No destructive migration
+  or database rollback is authorized by this pipeline change.
+
 - **GitHub handles the merge backlog (2026-11-13).** For 20–40 independent PRs,
   agents arm auto-merge as each is ready and continue other work. Do not serialize
   them by watching each merge. GitHub owns waiting and order; agents intervene for
@@ -218,3 +230,6 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 ## Banner carriers on the Pride page
 
 - **Call for banner carriers (2026-11-13).** The maintainer approved the mockup and collecting signups in principle. The goal is that every Pride in Finland has a Mielenosoitukset.fi banner, so the page calls for carriers ("Tarvitsemme kantajia jokaiseen Prideen"). Signing up promises nothing binding, can be cancelled, and details are agreed later. The page names no events, dates, banner totals or per-event amounts. The form asks for first name or nickname, email, optional area, optional Pride, optional note and consent; no phone number, no address. Part 1 is the screen behind `pride_banner.json` (`volunteer_form`, off). Part 2 reuses the fundraising reminder system (#1146) as a second list type `banner_volunteer`: double opt-in, one-click removal and deletion after the Pride season unless re-consented. It starts after #1146 is on main and needs a separate security/privacy reviewer SHIP. The visual gate for Part 1 is a separate reviewer SHIP.
+## Fundraising bar
+
+- **Slim bar above the header, off by default (2026-11-13).** The maintainer chose the cream look with an orange edge and no pill. It is controlled by `show_bar` in the fundraising configuration, takes its dates from the same configuration (shown dates, so the opening can be announced before confirmation), hides after the end date and on `/keräys`, and replaces the header link. Setting `show_bar` is the first public link to `/keräys` (pre-launch mode otherwise links it from nowhere), so it is the launch switch and is not gated by campaign publication. Dismissal lasts 7 days and ends early at a milestone. The bar never says what leftover funds do: the permit's primary use is the marketing campaign and the service's running costs, and leftovers go to shared demonstration equipment.

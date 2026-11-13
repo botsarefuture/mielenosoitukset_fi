@@ -1,5 +1,4 @@
 from mielenosoitukset_fi.utils.time_utils import utcnow
-from datetime import datetime
 
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.migrations import (
@@ -58,12 +57,61 @@ MIGRATIONS = [
 ]
 
 
+class PendingMigrationsError(RuntimeError):
+    def __init__(self, pending_ids):
+        self.pending_ids = list(pending_ids)
+        super().__init__("Pending migrations: " + ", ".join(self.pending_ids))
+
+
+class MigrationApprovalError(ValueError):
+    pass
+
+
+def pending_migrations(db) -> list[str]:
+    """Read missing registered IDs without creating indexes or changing data."""
+    return [
+        migration["id"]
+        for migration in MIGRATIONS
+        if not db.schema_migrations.find_one({"id": migration["id"]})
+    ]
+
+
+def assert_migrations_ready(db) -> None:
+    pending = pending_migrations(db)
+    if pending:
+        raise PendingMigrationsError(pending)
+
+
+def run_approved_migrations(db, approved_ids) -> list[str]:
+    """Apply approved pending migrations while the caller holds the deploy lock.
+
+    Validate the entire pending set before any index or data write. Already
+    applied registered IDs may remain approved when retrying a deployment.
+    """
+    approved = set(approved_ids)
+    registered = {migration["id"] for migration in MIGRATIONS}
+    if approved - registered:
+        raise MigrationApprovalError("Approval contains an unregistered migration ID.")
+    pending = pending_migrations(db)
+    unapproved = [migration_id for migration_id in pending if migration_id not in approved]
+    if unapproved:
+        raise PendingMigrationsError(unapproved)
+    if not pending:
+        return []
+    return _run_migrations(db, [migration for migration in MIGRATIONS if migration["id"] in pending])
+
+
 def run_auto_migrations(db) -> None:
-    """Run registered, idempotent migrations once per database."""
+    """Run registered, idempotent migrations once per database (legacy/manual)."""
+    _run_migrations(db, MIGRATIONS)
+
+
+def _run_migrations(db, migrations) -> list[str]:
     applied = db.schema_migrations
     applied.create_index("id", unique=True)
+    completed = []
 
-    for migration in MIGRATIONS:
+    for migration in migrations:
         migration_id = migration["id"]
         if applied.find_one({"id": migration_id}):
             continue
@@ -78,4 +126,6 @@ def run_auto_migrations(db) -> None:
                 "result": result or {},
             }
         )
+        completed.append(migration_id)
         logger.info("Migration %s completed", migration_id)
+    return completed

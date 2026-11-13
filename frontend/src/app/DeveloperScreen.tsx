@@ -4,7 +4,7 @@ import type { SessionSummary } from './session';
 import { useSession } from './useSession';
 import {
   developerAccessRequestPath, developerAppApi, developerAppsApi, developerCopy as copy, developerIssuableScopes,
-  developerOverviewApi, developerPath, developerRequestableScopes, developerScopeRequestPath, developerTokensApi,
+  classifyDeveloperResponse, developerOverviewApi, developerPath, developerStanding, developerRequestableScopes, developerScopeRequestPath, developerTokensApi,
   developerWrite, formatDeveloperDate, readDeveloper,
 } from './developer-route';
 import type { DeveloperRead, DeveloperToken } from './developer-route';
@@ -296,26 +296,31 @@ function AppDetail({ data, writes }: { data: Extract<DeveloperRead, { status: 'a
 }
 
 export default function DeveloperScreen({ config, session: initial, appId }: { config: AppConfig; session: SessionSummary; appId?: string }) {
-  const { session, status } = useSession(initial, { endpoint: config.urls.authMe });
-  const [load, setLoad] = useState<Load>(initial.authenticated ? { state: 'loading' } : { state: 'anonymous' });
+  const { session, status, refresh } = useSession(initial, { endpoint: config.urls.authMe });
+  const [load, setLoad] = useState<Load>(initial.authenticated || initial.unverified ? { state: 'loading' } : { state: 'anonymous' });
   // Bumped after a write so the lists and the CSRF token are read again; the old data stays visible meanwhile.
   const [reloads, setReloads] = useState(0);
   const reload = () => setReloads(count => count + 1);
   const next = appId ? `${developerPath}/apps/${appId}` : developerPath;
   // The bridge answer may say the visitor signed out (or in) since the page was rendered.
-  const signedIn = status === 'ready' ? session.authenticated : initial.authenticated;
+  // A failed bridge call or a failed server read never means "signed out": only a real answer does.
+  const standing = developerStanding(initial, status, session);
+  const bridgeFailed = standing === 'unknown' && status === 'unavailable';
 
   useEffect(() => {
-    if (!signedIn) { setLoad({ state: 'anonymous' }); return; }
+    if (standing === 'signed-out') { setLoad({ state: 'anonymous' }); return; }
+    if (standing === 'unknown') { setLoad(bridgeFailed ? { state: 'unavailable' } : { state: 'loading' }); return; }
     const controller = new AbortController();
     if (!reloads) setLoad({ state: 'loading' });
     (async () => {
       try {
         const response = await fetch(appId ? developerAppApi + appId : developerOverviewApi,
           { credentials: 'same-origin', cache: 'no-store', signal: controller.signal, headers: { Accept: 'application/json' } });
-        if (response.status === 401) { setLoad({ state: 'anonymous' }); return; }
-        if (response.status === 404 && appId) { setLoad({ state: 'not-found' }); return; }
-        if (!response.ok) throw new Error('unavailable');
+        // Only a real 401 is "signed out"; this never touches the session state or leaves the page.
+        const kind = classifyDeveloperResponse(response.status, response.headers.get('content-type'));
+        if (kind === 'signed-out') { setLoad({ state: 'anonymous' }); return; }
+        if (kind === 'not-found' && appId) { setLoad({ state: 'not-found' }); return; }
+        if (kind !== 'ok') throw new Error('unavailable');
         const data = readDeveloper(await response.json(), Boolean(appId));
         setLoad(data ? { state: 'ready', data } : { state: 'unavailable' });
       } catch {
@@ -323,7 +328,7 @@ export default function DeveloperScreen({ config, session: initial, appId }: { c
       }
     })();
     return () => controller.abort();
-  }, [signedIn, appId, reloads]);
+  }, [standing, bridgeFailed, appId, reloads]);
 
   return <article className="public-page-shell information-page suggest-change-page developer-page" aria-labelledby="developer-title">
     <header className="public-page-header"><div className="public-page-header__content">
@@ -336,7 +341,11 @@ export default function DeveloperScreen({ config, session: initial, appId }: { c
       <div className="detail-actions"><a className="detail-button detail-button--primary"
         href={`${config.urls.login}?next=${encodeURIComponent(next)}`}>{copy.login}</a></div>
     </>}
-    {load.state === 'unavailable' && notice('error', copy.unavailable)}
+    {load.state === 'unavailable' && <>
+      {notice('error', copy.unavailable)}
+      <div className="detail-actions"><button type="button" className="detail-button"
+        onClick={() => { if (standing === 'unknown') void refresh(); else reload(); }}>{copy.retry}</button></div>
+    </>}
     {load.state === 'not-found' && <>
       {notice('error', copy.notFound)}
       <div className="detail-actions"><a className="detail-button" href={developerPath}>← {copy.back}</a></div>

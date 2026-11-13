@@ -87,7 +87,12 @@ async function requestSession(endpoint: string, cookie: string | undefined,
 export async function fetchSession(endpoint: string, cookie: string | undefined,
   timeoutMs = 1200, socketPath?: string, publicOrigin = endpoint, clientIp?: string,
   cloudflareIp?: string, onCookies?: (cookies: string[]) => void, privateRead = false): Promise<SessionSummary> {
-  if (cookie || privateRead) return (await requestSession(endpoint, cookie, timeoutMs, socketPath, publicOrigin, clientIp, cloudflareIp, onCookies)) ?? copySession(anonymousSession);
+  if (cookie || privateRead) {
+    const read = await requestSession(endpoint, cookie, timeoutMs, socketPath, publicOrigin, clientIp, cloudflareIp, onCookies);
+    if (read) return read;
+    // A failed read is unknown, not "signed out": a visitor with a cookie must not see a sign-in prompt for it.
+    return cookie ? { ...copySession(anonymousSession), unverified: true } : copySession(anonymousSession);
+  }
   const key = JSON.stringify([socketPath ?? null, endpoint, publicOrigin]);
   if (publicSummary?.key === key && publicSummary.expiresAt > Date.now()) return copySession(publicSummary.value);
   if (publicPending?.key !== key) {

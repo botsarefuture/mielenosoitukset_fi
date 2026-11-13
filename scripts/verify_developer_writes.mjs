@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
 const route = await import(fileURLToPath(new URL('../frontend/src/app/developer-route.ts', import.meta.url)));
-const { readDeveloper, developerWrite, writeFailure, developerCopy, developerIssuableScopes } = route;
+const { readDeveloper, developerWrite, writeFailure, developerCopy, developerIssuableScopes, classifyDeveloperResponse, developerStanding } = route;
 const id = 'a'.repeat(24);
 const csrf = '1999999999.0123456789abcdef01234567.' + 'f'.repeat(64);
 const app = { id, name: 'A', description: '', client_id: 'cid', allowed_scopes: ['read'] };
@@ -46,4 +46,24 @@ result = await developerWrite('POST', '/x', csrf, {}, async () => { throw new Er
 assert(!result.ok && result.message === developerCopy.failed);
 result = await developerWrite('POST', '/x', csrf, {}, async () => ({ ok: true, status: 200, json: async () => { throw new Error('bad json'); } }));
 assert(!result.ok, 'an unreadable success body is a failure, not an empty success');
+
+// Only a real 401 is "signed out"; Flask's 404 page, 5xx and network errors are unavailable.
+assert.equal(classifyDeveloperResponse(401, 'application/json'), 'signed-out');
+assert.equal(classifyDeveloperResponse(404, 'application/json; charset=utf-8'), 'not-found');
+assert.equal(classifyDeveloperResponse(404, 'text/html; charset=utf-8'), 'unavailable');
+assert.equal(classifyDeveloperResponse(404, null), 'unavailable');
+for (const status of [500, 502, 503, 504, 403, 429]) assert.equal(classifyDeveloperResponse(status, 'application/json'), 'unavailable');
+assert.equal(classifyDeveloperResponse(200, 'application/json'), 'ok');
+
+// A failed server read or bridge call never makes a visitor a guest.
+const member = { authenticated: true }, guest = { authenticated: false }, unread = { authenticated: false, unverified: true };
+assert.equal(developerStanding(member, 'unavailable', guest), 'signed-in');
+assert.equal(developerStanding(member, 'loading', guest), 'signed-in');
+assert.equal(developerStanding(guest, 'initial', guest), 'signed-out');
+assert.equal(developerStanding(unread, 'initial', guest), 'unknown');
+assert.equal(developerStanding(unread, 'loading', guest), 'unknown');
+assert.equal(developerStanding(unread, 'unavailable', guest), 'unknown');
+assert.equal(developerStanding(unread, 'ready', member), 'signed-in');
+assert.equal(developerStanding(unread, 'ready', guest), 'signed-out');
+assert.equal(developerStanding(member, 'ready', guest), 'signed-out');
 console.log('PASS: developer write controls');

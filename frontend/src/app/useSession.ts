@@ -46,7 +46,7 @@ export function useSession(initial: SessionSummary, options: Options) {
   useEffect(() => { setSession(initial); }, [initial]);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
-    if (!initial.authBridge) return;
+    if (!initial.authBridge && !initial.unverified) return;
     const url = new URL(options.endpoint, window.location.origin);
     for (const [key, value] of Object.entries(JSON.parse(scopeKey) as Record<string, string>)) url.searchParams.set(key, value);
     setStatus('loading');
@@ -64,12 +64,12 @@ export function useSession(initial: SessionSummary, options: Options) {
   }, [initial, options.endpoint, scopeKey]);
 
   useEffect(() => {
-    if (options.refreshOnMount === false || !initial.authBridge) return;
+    if (options.refreshOnMount === false || (!initial.authBridge && !initial.unverified)) return;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
     void refresh(controller.signal).finally(() => clearTimeout(timer));
     return () => { controller.abort(); clearTimeout(timer); };
-  }, [initial.authBridge, options.refreshOnMount, refresh]);
+  }, [initial.authBridge, initial.unverified, options.refreshOnMount, refresh]);
 
   return { session, status, refresh: () => refresh() };
 }

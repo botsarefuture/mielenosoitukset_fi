@@ -86,6 +86,10 @@ try {
   await page({ sessionUrl: `${base}/down` });
   await page({ sessionUrl: `${base}/down` });
   assert.equal(reads, 6, 'Failed configuration reads must not be cached');
+  // A cookie whose session read fails is unknown, never a guest; without a cookie it is simply anonymous.
+  assert.equal(bootstrap((await page({ sessionUrl: `${base}/down`, cookie: 'session=alice' })).html).session.unverified, true);
+  assert.equal(bootstrap((await page({ sessionUrl: `${base}/down` })).html).session.unverified, undefined);
+  assert.equal(bootstrap((await page({ cookie: 'session=alice' })).html).session.unverified, undefined);
   console.log('PASS: unknown-route zero reads; eight concurrent anonymous pages one read; warm zero reads; private sessions isolated; TTL and failure handling');
   for (const [path, heading, canonical, anchor] of [
     ['/info', 'Tietoa Mielenosoitukset.fi', '/info'],

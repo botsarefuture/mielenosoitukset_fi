@@ -20,6 +20,9 @@ func TestCleanBannerText(t *testing.T) {
 	if got, ok := cleanBannerText("a\r\nb\tc", 500, true); !ok || got != "a\nb c" {
 		t.Fatalf("note whitespace: %q %v", got, ok)
 	}
+	if got, _ := cleanBannerText("A\u202eino\u200b", 60, false); got != "Aino" {
+		t.Fatalf("format characters kept: %q", got)
+	}
 	if got, _ := cleanBannerText("a\nb", 60, false); got != "ab" {
 		t.Fatalf("single-line text kept a line break: %q", got)
 	}

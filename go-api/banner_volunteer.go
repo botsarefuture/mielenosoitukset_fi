@@ -96,7 +96,8 @@ func cleanBannerText(value string, max int, multiline bool) (string, bool) {
 		if r == '\r' && multiline {
 			return -1
 		}
-		if unicode.IsControl(r) || r == ' ' || r == ' ' {
+		// Format characters (right-to-left overrides, zero-width marks) can disguise text.
+		if unicode.IsControl(r) || unicode.Is(unicode.Cf, r) || r == ' ' || r == ' ' {
 			if multiline && r == '\t' {
 				return ' '
 			}

@@ -81,4 +81,5 @@ command or `db.pride_banner_volunteers.drop()`. `git revert` of the PR needs no 
 - A confirmed carrier who signs up again with new answers is not updated; they remove their data and sign up again.
 - The mail text is Finnish only.
 - The routes share the Go API with the public site; mail delivery shares the queue with the other mails.
+- Contacting carriers is manual and the mail has no removal link. The privacy notice says a carrier can also ask for removal by replying, so every manual contact mail must say so ("Voit pyytää tietojesi poistoa vastaamalla tähän viestiin") and the request must be handled by deleting the row.
 - No admin screen: the maintainers read the signups with the export command.

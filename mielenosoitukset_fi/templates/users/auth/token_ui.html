@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('API Tokenit') }}{% endblock %}
+{% block title %}{{ _('API-tokenit') }}{% endblock %}
 
 {% block content %}
 <section class="container py-4 user-workspace-page" aria-labelledby="token-page-title">
@@ -8,7 +8,7 @@
     <div class="user-page-heading__content">
       <span class="user-page-heading__icon" aria-hidden="true"><i class="fas fa-key"></i></span>
       <div>
-        <h1 id="token-page-title">{{ _('API Tokenit') }}</h1>
+        <h1 id="token-page-title">{{ _('API-tokenit') }}</h1>
         <p>{{ _('Täällä voit hallita API-tokeneitasi.') }}</p>
       </div>
     </div>
@@ -36,7 +36,7 @@
   <div class="modal-dialog modal-dialog-centered">
       <form class="modal-content" id="create-token-form">
         <div class="modal-header">
-          <h5 class="modal-title" id="tokenModalLabel">{{ _('Luo lyhytkestoinen API Token') }}</h5>
+          <h5 class="modal-title" id="tokenModalLabel">{{ _('Luo lyhytkestoinen API-token') }}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
         </div>
         <div class="modal-body">
@@ -99,7 +99,7 @@
           </div>
         </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-primary" id="create-token-submit">{{ _('Luo Token') }}</button>
+            <button type="submit" class="btn btn-primary" id="create-token-submit">{{ _('Luo token') }}</button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
           </div>
       </form>
@@ -112,7 +112,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="tokenResultModalLabel">{{ _('Uusi API Token') }}</h5>
+        <h5 class="modal-title" id="tokenResultModalLabel">{{ _('Uusi API-token') }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
       </div>
       <div class="modal-body">

@@ -129,6 +129,14 @@ Related standing rules live in [AGENTS.md](../AGENTS.md),
 
 ## Public site
 
+- **Finnish wording review (2026-11-14).** The maintainer requested an inventory
+  and tracked language review of all public and regular-user UI, followed by
+  user emails; admin is excluded. Changes concern text only, preserving layout,
+  styling and behavior. Track source coverage and proposed replacements in
+  `finnish-copy-inventory.md` and `finnish-copy-audit.md`. Backlog FI-COPY-02
+  records the requested Claude workflow: use `gpt-6.1-sol`, when available,
+  to check Finnish before merging. That workflow is not yet implemented.
+
 - **React plus Go only (1 November 2026).** See AGENTS.md: there is no new Flask
   public surface, and the target is a standalone React app by January 2027.
 - **Copy is Finnish-only.** New strings go in the TypeScript catalog

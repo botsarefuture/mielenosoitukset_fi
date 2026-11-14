@@ -55,7 +55,7 @@
   <!-- Contact Form Card -->
   <section id="contact-form-section" class="section-card form-card">
     <h2>{{ _('Ota yhteyttä lomakkeen kautta') }}</h2>
-    <p>Täytä alla oleva lomake ja lähetä, niin olemme sinuun yhteydessä!</p>
+    <p>Täytä ja lähetä alla oleva lomake, niin olemme sinuun yhteydessä.</p>
 
     <form id="contact-form" action="{{ url_for('contact') }}" method="POST" class="container-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

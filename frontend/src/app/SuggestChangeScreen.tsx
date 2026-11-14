@@ -66,7 +66,7 @@ export default function SuggestChangeScreen({ demo }: { demo: SuggestionDemo }) 
           {input('end_time', 'Päättymisaika', 'Valinnainen, jos tapahtuman loppuaika tiedetään.', '15:30')}
         </div>
       </fieldset>
-      <fieldset><legend>Paikka ja linkit</legend><p>Kerro missä tapahtuma järjestetään ja mistä löytyy lisätietoa.</p>
+      <fieldset><legend>Paikka ja linkit</legend><p>Kerro, missä tapahtuma järjestetään ja mistä löytyy lisätietoa.</p>
         <div className="suggest-change-grid">
           {input('city', 'Kaupunki')}{input('address', 'Osoite', 'Voit kirjoittaa esimerkiksi torin, puiston tai kokoontumispaikan osoitteen.')}
           {input('facebook', 'Facebook-tapahtuman URL', 'Valinnainen linkki tapahtumasivulle tai lisätietoihin.', 'https://facebook.com/events/...')}
@@ -78,7 +78,7 @@ export default function SuggestChangeScreen({ demo }: { demo: SuggestionDemo }) 
         <ListEditor name="tags" label="Aihetunnisteet" initial={demo.fields.tags} placeholder="Kirjoita tagi ja paina Enter"
           help="Kirjoita tagit ilman #-merkkiä. Jos lisäät sen, poistamme sen automaattisesti." />
       </fieldset>
-      <fieldset><legend>Järjestäjät</legend><p>Kerro kuka tai ketkä mielenosoituksen järjestävät.</p>
+      <fieldset><legend>Järjestäjät</legend><p>Kerro, kuka tai ketkä mielenosoituksen järjestävät.</p>
         {demo.organizersCurrent !== undefined && <p className="suggest-change-current"><strong>Nykyiset järjestäjät:</strong> {demo.organizersCurrent}</p>}
         <ListEditor name="organizers" label="Järjestäjät" initial={demo.fields.organizers} placeholder="Kirjoita järjestäjä ja paina Enter"
           help="Kirjoita järjestäjän nimi. Halutessasi lisää sähköposti tai kotisivu sulkuihin: Yhdistys (yhdistys@example.fi, https://yhdistys.fi)." />
@@ -93,7 +93,7 @@ export default function SuggestChangeScreen({ demo }: { demo: SuggestionDemo }) 
             <button className="detail-button" type="button" onClick={() => format('', '', '[linkin teksti](https://example.com)')}>Linkki</button>
           </div>
           <textarea ref={textarea} id="description-markdown" name="description_markdown" rows={10} value={description}
-            placeholder="Kerro esimerkiksi kenelle tapahtuma on tarkoitettu, mikä on teema, mistä kulkue lähtee ja mitä osallistujien kannattaa tietää."
+            placeholder="Kerro esimerkiksi, kenelle tapahtuma on tarkoitettu, mikä on teema, mistä kulkue lähtee ja mitä osallistujien kannattaa tietää."
             onChange={event => setDescription(event.target.value)} aria-describedby="description-help" />
           <p id="description-help" className="suggest-change-help">Voit kirjoittaa pelkkää tavallista tekstiä. Halutessasi voit käyttää myös yksinkertaista muotoilua, kuten **lihavointia**, listoja ja linkkejä.</p>
         </div>
@@ -105,7 +105,7 @@ export default function SuggestChangeScreen({ demo }: { demo: SuggestionDemo }) 
           <p id="comment-help" className="suggest-change-help">Valinnainen, mutta usein hyödyllinen ylläpidolle.</p>
         </div>
       </fieldset>
-      <fieldset><legend>Yhteystiedot</legend><p>Voit jättää sähköpostin, jos haluat että voimme kysyä tarkennuksia.</p>
+      <fieldset><legend>Yhteystiedot</legend><p>Voit jättää sähköpostiosoitteesi, jos haluat, että voimme kysyä tarkennuksia.</p>
         <div className="suggest-change-field"><label htmlFor="reporter_email">Sähköpostiosoitteesi</label>
           <input type="email" id="reporter_email" name="reporter_email" placeholder="email@example.com" aria-describedby="email-help" />
           <p id="email-help" className="suggest-change-help">Valinnainen. Käytämme tätä vain ehdotukseen liittyvään viestintään.</p>

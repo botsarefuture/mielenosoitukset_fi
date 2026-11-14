@@ -27,11 +27,11 @@ export default function CancelLinkScreen({ link, token }: { link: CancelLinkStat
         : <>
           {link.canCancelDirectly
             ? notice('warning', <><strong>Tämä on virallinen järjestäjälinkki.</strong> Koska yhteystieto kuuluu Mielenosoitukset.fi:ssä vahvistetulle organisaatiolle, tällä linkillä tehty peruminen tulee voimaan heti. Vahvista, että haluat perua mielenosoituksen heti.</>)
-            : notice('info', <><strong>Tämä linkki lähettää pyynnön ylläpidolle.</strong> Mielenosoitus ei peruunnu vielä tämän lomakkeen lähettämisellä, vaan vasta jos Mielenosoitukset.fi:n ylläpito hyväksyy pyynnön. Demo näkyy normaalisti siihen asti.</>)}
+            : notice('info', <><strong>Tämä linkki lähettää pyynnön ylläpidolle.</strong> Mielenosoitus ei peruunnu vielä tämän lomakkeen lähettämisellä, vaan vasta jos Mielenosoitukset.fi:n ylläpito hyväksyy pyynnön. Mielenosoitus näkyy sivustolla normaalisti siihen asti.</>)}
           <form method="post" action={`/cancel_demonstration/${token}`} className="public-prose-card suggest-change-form">
             <div className="suggest-change-field">
               <label htmlFor="reason">Perumisen syy (valinnainen)</label>
-              <textarea id="reason" name="reason" rows={3} placeholder="Kerro lyhyesti miksi mielenosoitus perutaan..." />
+              <textarea id="reason" name="reason" rows={3} placeholder="Kerro lyhyesti, miksi mielenosoitus perutaan…" />
             </div>
             <div className="detail-actions">
               <button type="submit" className={`detail-button ${link.canCancelDirectly ? 'detail-button--danger' : 'detail-button--primary'}`}>

@@ -23,13 +23,13 @@ export function CalendarFallback({ calendar, config }: { calendar: CalendarBoots
       {!annual && <> · <a href={monthPath({ ...calendar, month:0 })}>Vuosi {year}</a></>}
     </nav>
     {!data ? <p>Kalenterin lataaminen epäonnistui. Yritä uudelleen.</p> : <>
-      <p>{data.total} mielenosoitusta</p>
+      <p>{data.total} {data.total === 1 ? 'mielenosoitus' : 'mielenosoitusta'}</p>
       {annual ? <ul>{Array.from({ length:12 }, (_, index) => {
         const period = { ...calendar, month:index+1 };
         const total = data.days.filter(row=>Number(row.date.slice(5,7))===period.month).reduce((sum,row)=>sum+row.count,0);
-        return <li key={period.month}><a href={monthPath(period)}>{monthName(period)}</a>: {total} mielenosoitusta</li>;
+        return <li key={period.month}><a href={monthPath(period)}>{monthName(period)}</a>: {total} {total === 1 ? 'mielenosoitus' : 'mielenosoitusta'}</li>;
       })}</ul> : <ul>{data.days.map(row => <li key={row.date}>
-        <a href={`${monthPath(calendar)}?day=${Number(row.date.slice(8))}#calendar-agenda`}>{dayLabel(row.date)}: {row.count} mielenosoitusta</a>
+        <a href={`${monthPath(calendar)}?day=${Number(row.date.slice(8))}#calendar-agenda`}>{dayLabel(row.date)}: {row.count} {row.count === 1 ? 'mielenosoitus' : 'mielenosoitusta'}</a>
       </li>)}</ul>}
       {!annual && events !== undefined && <section id="calendar-agenda"><h2>{dayLabel(dateForDay(calendar,day))}</h2>
         {events === null ? <p>Mielenosoitusten lataaminen epäonnistui. Päivitä sivu ja yritä uudelleen.</p> : <>

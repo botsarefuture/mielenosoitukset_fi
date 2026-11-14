@@ -145,7 +145,7 @@ function EventContent({ event, props }: { event: DetailEvent; props: DetailProps
             <p className="detail-note" role="note"><Icon name="ban" />{text.participationClosed}</p>
           </section>
         : <section className="detail-section"><h2>{text.attend}</h2><Participation event={event} props={props} />
-            {event.likes !== null && <p className="detail-attendees"><Icon name="users" />{event.likes} {text.participants}</p>}
+            {event.likes !== null && <p className="detail-attendees"><Icon name="users" />{event.likes} {event.likes === 1 ? text.participantsSingular ?? text.participants : text.participants}</p>}
             <button type="button" className="detail-button" onClick={() => setDialog('invite')}>{text.invite}</button>
           </section>}
       <section className="detail-section"><h2>{text.share}</h2><ShareActions url={props.canonicalUrl} title={event.title} messages={text} /></section>

@@ -305,7 +305,7 @@ func (d *developerWrites) createApp(ctx context.Context, w http.ResponseWriter, 
 	if n, err := d.store.CountApps(ctx, owner); err != nil {
 		return err
 	} else if n >= developerMaxApps {
-		writeError(w, http.StatusConflict, "Sovellusten enimmäismäärä on täynnä")
+		writeError(w, http.StatusConflict, "Sovellusten enimmäismäärä on saavutettu.")
 		return nil
 	}
 	clientID, err1 := developerSecret(12)
@@ -397,7 +397,7 @@ func (d *developerWrites) createToken(ctx context.Context, w http.ResponseWriter
 		}
 		scopes = kept
 		if len(scopes) == 0 {
-			writeError(w, http.StatusForbidden, "Valitut scopet eivät ole sallittuja tälle sovellukselle.")
+			writeError(w, http.StatusForbidden, "Valitut käyttöoikeudet eivät ole sallittuja tälle sovellukselle.")
 			return nil
 		}
 	}
@@ -410,7 +410,7 @@ func (d *developerWrites) createToken(ctx context.Context, w http.ResponseWriter
 	if n, err := d.store.CountTokens(ctx, owner, appID); err != nil {
 		return err
 	} else if n >= developerMaxTokens {
-		writeError(w, http.StatusConflict, "Tokenien enimmäismäärä on täynnä")
+		writeError(w, http.StatusConflict, "Tokenien enimmäismäärä on saavutettu.")
 		return nil
 	}
 	token, err := developerSecret(32)

@@ -630,7 +630,7 @@ export async function renderPage(input: RenderInput, assets: RenderAssets): Prom
     meta = { title: `${label}: Mielenosoituskalenteri${route.city ? `, ${findCity(route.city)!.name}` : ''} | Mielenosoitukset.fi`,
       description: `Mielenosoitukset ${calendarPlace(route)}, ${label}. Valitse päivä ja katso tapahtumien ajat ja paikat.`,
       canonical: `${config.origin}${monthPath(route)}`, robots: !data || search.size > 0 ? 'noindex, follow' : 'index, follow' };
-    const items = route.month ? (data?.days ?? []).map(row => ({ name: `${dayLabel(row.date)}: ${row.count} mielenosoitusta`,
+    const items = route.month ? (data?.days ?? []).map(row => ({ name: `${dayLabel(row.date)}: ${row.count} ${row.count === 1 ? 'mielenosoitus' : 'mielenosoitusta'}`,
       url: `${config.origin}${monthPath(route)}?day=${Number(row.date.slice(8))}#calendar-agenda` }))
       : Array.from({length:12},(_,index)=>({ name:monthName({...route,month:index+1}), url:`${config.origin}${monthPath({...route,month:index+1})}` }));
     jsonLd = discoveryStructuredData(meta, items);

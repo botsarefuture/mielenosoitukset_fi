@@ -5,7 +5,7 @@ import type { Page } from '../components/listings/types';
 import type { RouteMeta } from './routes';
 
 export function citiesMeta(config: AppConfig, data: CitiesData | null, filtered: boolean): RouteMeta {
-  return { title: 'Kaupungit | Mielenosoitukset.fi', description: 'Selaa mielenosoituksia kaupungeittain ja katso missä järjestetään mielenosoituksia tänään.',
+  return { title: 'Kaupungit | Mielenosoitukset.fi', description: 'Selaa mielenosoituksia kaupungeittain ja katso, missä järjestetään mielenosoituksia tänään.',
     canonical: `${config.origin}/cities`, robots: !data ? 'noindex, follow' : filtered ? 'noindex, follow' : 'index, follow' };
 }
 

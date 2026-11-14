@@ -74,7 +74,7 @@ export default function CalendarScreen({ calendar, config, session }: {
         : failed ? <div role="alert" className="calendar-notice"><p>Mielenosoitusten lataaminen epäonnistui.</p><button type="button" className="detail-button" onClick={() => setAttempt(value => value + 1)}>Yritä uudelleen</button></div>
         : !events ? <p role="status">Ladataan mielenosoituksia…</p>
         : events.page > events.total_pages ? <div className="calendar-notice"><p>Tällä sivulla ei ole mielenosoituksia.</p><a href={href(day)}>Palaa päivän ensimmäiselle sivulle</a></div>
-        : <><p role="status">{events.total === 0 ? 'Päivän mielenosoitukset ovat muuttuneet. Valitse toinen päivä tai päivitä sivu.' : `Näytetään ${events.result_start}–${events.result_end} / ${events.total} mielenosoituksesta`}</p>
+        : <><p role="status">{events.total === 0 ? 'Päivän mielenosoitukset ovat muuttuneet. Valitse toinen päivä tai päivitä sivu.' : `Näytetään mielenosoitukset ${events.result_start}–${events.result_end} (yhteensä ${events.total}).`}</p>
           <div className="demos-grid"><DemonstrationCards events={events.results} props={props} /></div>
           {(events.total_pages > 1) && <nav className="calendar-pagination" aria-label="Päivän mielenosoitusten sivut">
             {page > 1 && <a href={href(day, page - 1)}>← Edellinen sivu</a>}

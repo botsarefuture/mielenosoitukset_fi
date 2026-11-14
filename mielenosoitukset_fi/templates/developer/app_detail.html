@@ -36,7 +36,7 @@
 
   <div class="dev-card">
     <h5 class="mb-2">Tokenit</h5>
-    <p class="meta">Valitse oikeudet ja luo 48h short-token (vaihda 90d longiksi API:n kautta).</p>
+    <p class="meta">Valitse oikeudet ja luo 48 tunnin lyhytikäinen token (vaihda se 90 päivän pitkäikäiseksi tokeniksi API:n kautta).</p>
     <div class="d-flex flex-wrap gap-2 mb-2">
       {% set allowed = current_scopes or ['read'] %}
       <div class="form-check">
@@ -56,7 +56,7 @@
         <label class="form-check-label" for="scope-admin">admin</label>
       </div>
     </div>
-    <button class="btn btn-primary btn-sm" id="create-token-btn"><i class="fa-solid fa-bolt"></i> Luo 48h token</button>
+    <button class="btn btn-primary btn-sm" id="create-token-btn"><i class="fa-solid fa-bolt"></i> Luo 48 tunnin token</button>
     <div id="token-box" class="alert alert-info mt-3 d-none">
       <div class="fw-bold">Token (tallenna heti)</div>
       <code id="token-value"></code>
@@ -82,12 +82,12 @@
 
   <div class="dev-card">
     <h5 class="mb-2">Oikeudet ja pyynnöt</h5>
-    <p class="meta">Tässä osiossa näet nykyiset oikeudet, nykyiset rajat ja pyytät lisää vain tarvittaessa.</p>
+    <p class="meta">Tässä osiossa näet nykyiset oikeudet ja rajat sekä voit pyytää lisää vain tarvittaessa.</p>
     <div id="scope-msg" class="alert d-none"></div>
     <div class="dev-panel-grid">
       <div class="panel-box">
         <div class="panel-heading">Nykyiset oikeudet</div>
-        <p class="panel-copy">Näillä scopella sovellus voi toimia juuri nyt.</p>
+        <p class="panel-copy">Näillä käyttöoikeuksilla sovellus voi toimia juuri nyt.</p>
         <div class="d-flex flex-wrap gap-2">
           {% for s in current_scopes %}
             <span class="pill">{{ s }}</span>
@@ -145,7 +145,7 @@
           </span>
         </label>
       </div>
-      <textarea class="form-control mb-2" id="scope-reason" rows="3" placeholder="Perustele miksi tarvitset lisäoikeudet"></textarea>
+      <textarea class="form-control mb-2" id="scope-reason" rows="3" placeholder="Perustele, miksi tarvitset lisäoikeudet."></textarea>
       <button class="btn btn-outline-primary btn-sm w-100 w-sm-auto" id="scope-request-btn">Lähetä pyyntö</button>
     </div>
   </div>

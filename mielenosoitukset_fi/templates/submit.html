@@ -1010,8 +1010,7 @@
     <div class="submit-intro-content">
       <h1>{{ _('Ilmoita mielenosoituksesta') }}</h1>
       <p class="lead">
-        {{ _('Ilmoittamalla mielenosoituksesta autat muita löytämään tietoa mielenosoituksista. Mitä useampia ja
-        kattavammin alustalla on mielenosoituksista tietoa, sitä useammille siitä on hyötyä.') }}
+        {{ _('Ilmoittamalla mielenosoituksesta autat muita löytämään tietoa mielenosoituksista. Mitä useammasta mielenosoituksesta palvelussa on tietoa ja mitä kattavampaa tieto on, sitä useammille palvelusta on hyötyä.') }}
       </p>
       <a class="hero-help-link" href="{{ url_for('public_guides') }}#submit-help">
         <i class="fa-solid fa-circle-question"></i>
@@ -1104,7 +1103,7 @@
           <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/events/..." />
           <div class="helper-text">
             <i class="fa-brands fa-facebook"></i>
-            {{ _('Linkitä Facebook-tapahtuma jos sellainen on') }}
+            {{ _('Linkitä Facebook-tapahtuma, jos sellainen on') }}
           </div>
         </div>
 
@@ -1396,7 +1395,7 @@
           </select>
           <div class="helper-text">
             <i class="fa-solid fa-language"></i>
-            {{ _('Valitse millä kielellä kirjoitat otsikon, tagit ja kuvauksen. Varsinaiset käännökset voi lisätä myöhemmin.') }}
+            {{ _('Valitse, millä kielellä kirjoitat otsikon, tagit ja kuvauksen. Varsinaiset käännökset voi lisätä myöhemmin.') }}
           </div>
         </div>
 
@@ -1768,7 +1767,7 @@ function inSelection(selection, maxSelection) {
           <input type="time" id="end_time" name="end_time" />
           <div class="helper-text">
             <i class="fa-solid fa-clock"></i>
-            {{ _('Anna arvio tapahtuman kestosta') }}
+            {{ _('Anna arvioitu päättymisaika.') }}
           </div>
         </div>
 
@@ -1790,8 +1789,7 @@ function inSelection(selection, maxSelection) {
               placeholder="{{ _('Kuvaile marssin reitti pilkuilla eroteltuna, esim. Rautatientori, Mannerheimintie, Eduskuntatalo') }}"></textarea>
             <div class="helper-text">
               <i class="fa-solid fa-route"></i>
-              {{ _('Anna osallistujille käsitys marssin kulusta. Erota kadunnimet pilkulla (,) — näin voimme renderöidä
-              ne demo-sivulla.') }}
+              {{ _('Kerro marssin reitti osallistujille. Erota kadunnimet pilkuilla, jotta ne näkyvät mielenosoitussivulla luettelona.') }}
             </div>
           </div>
 
@@ -1803,7 +1801,7 @@ function inSelection(selection, maxSelection) {
             </div>
             <div class="helper-text">
               <i class="fa-solid fa-eye"></i>
-              {{ _('Tarkista että listaus näkyy tässä oikein, näin ne renderöityvät demo-sivulla.') }}
+              {{ _('Tarkista, että reitti näkyy esikatselussa oikein. Se näkyy samalla tavalla mielenosoituksen sivulla.') }}
             </div>
           </div>
 
@@ -1958,7 +1956,7 @@ function inSelection(selection, maxSelection) {
 
         <div class="helper-text" style="margin-bottom: 2rem;">
           <i class="fa-solid fa-shield-halved"></i>
-          {{ _('Yhteystietojasi käytetään vain tarvittaessa yhteydenottoon liittyen ilmoitukseesi') }}
+          {{ _('Yhteystietojasi käytetään vain tarvittaessa ilmoitustasi koskevaan yhteydenottoon.') }}
         </div>
 
         <div class="checkbox-group">
@@ -2025,7 +2023,7 @@ function inSelection(selection, maxSelection) {
         </div>
         <div class="modal-body">
           <p id="submit-conflict-message"></p>
-          <p>{{ _('Tarkista osumat alta. Jos tämä on eri tapahtuma, valitse Lähetä silti. Jos kyse on vahingossa duplikaatista, voit palata korjaamaan tietoja.') }}</p>
+          <p>{{ _('Tarkista osumat alta. Jos tämä on eri tapahtuma, valitse Lähetä silti. Jos olet vahingossa tekemässä samaa ilmoitusta uudelleen, voit palata korjaamaan tietoja.') }}</p>
           <h3 class="h6">{{ _('Mahdolliset osumat') }}</h3>
           <ol id="submit-conflict-matches" class="user-conflict-list"></ol>
         </div>
@@ -2044,7 +2042,7 @@ function inSelection(selection, maxSelection) {
         <i class="fa-solid fa-life-ring"></i>
         {{ _('Tarvitsetko apua?') }}
       </h2>
-      <p>{{ _('Olemme täällä auttamassa sinua! Jos sinulla on kysyttävää tai tarvitset tukea lomakkeen täyttämisessä.')
+      <p>{{ _('Ota yhteyttä, jos sinulla on kysyttävää tai tarvitset apua lomakkeen täyttämisessä.')
         }}</p>
     </div>
     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">

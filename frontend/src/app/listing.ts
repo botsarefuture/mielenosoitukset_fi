@@ -28,7 +28,7 @@ const messages: ListingMessages = {
   dateError: 'Valitse kelvollinen päivämääräväli tulevaisuudesta', year: 'Vuosi', month: 'Kuukausi',
   submitSearch: 'Hae', removeFilter: 'Poista suodatin', loading: 'Ladataan mielenosoituksia…',
   loadMore: 'Näytä lisää', loadingMore: 'Ladataan…', previous: 'Edellinen',
-  summary: 'Näytetään __START__–__END__ / __COUNT__ mielenosoituksesta',
+  summary: 'Näytetään mielenosoitukset __START__–__END__ (yhteensä __COUNT__).',
   loadError: 'Mielenosoitusten lataaminen epäonnistui. Yritä uudelleen.', retry: 'Yritä uudelleen',
   emptyTitle: 'Ei löytynyt mielenosoituksia', empty: 'Tällä hetkellä ei ole mielenosoituksia. Tarkista myöhemmin.',
   filteredEmpty: 'Kokeile poistaa suodattimia tai hakea toisella sanalla.',

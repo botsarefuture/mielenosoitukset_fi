@@ -26,7 +26,7 @@ export const reminderCopy = {
   confirmButton: 'Vahvista tilaus',
   confirmed: 'Tilaus on vahvistettu. Lähetämme sinulle yhden viestin, kun keräys alkaa.',
   removeTitle: 'Poista sähköpostiosoitteesi',
-  removeIntro: 'Painamalla painiketta poistamme osoitteesi ja kaikki siihen liittyvät tiedot. Et saa enää viestejä tästä tilauksesta.',
+  removeIntro: 'Kun painat painiketta, poistamme osoitteesi ja kaikki siihen liittyvät tiedot. Et saa enää viestejä tästä tilauksesta.',
   removeButton: 'Poista osoitteeni',
   removed: 'Osoitteesi on poistettu. Et saa enää viestejä tästä tilauksesta.',
   badLink: 'Linkki ei kelpaa. Avaa se uudelleen sähköpostiviestistä.',

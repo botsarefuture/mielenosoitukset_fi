@@ -586,7 +586,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
       </div>
       <div class="modal-body">
-        <p class="text-muted report-flow-lead">{{ _('Valitse sinulle sopivin tapa korjata tai raportoida virhe. Suosittelemme muokkauslomaketta, jos tiedät tarkalleen mitä kenttää pitäisi päivittää.') }}</p>
+        <p class="text-muted report-flow-lead">{{ _('Valitse sinulle sopivin tapa korjata tai raportoida virhe. Suosittelemme muokkauslomaketta, jos tiedät tarkalleen, mitä kenttää pitäisi päivittää.') }}</p>
 
         <div class="report-option-card report-option-card-primary">
           <div class="report-option-head">
@@ -666,7 +666,7 @@
             <i class="fa-solid fa-flag"></i>
             {{ _('Ilmoita virheestä') }}
           </div>
-          <h5 class="modal-title" id="reportModalLabel">{{ _('Kerro mikä tiedoissa on pielessä') }}</h5>
+          <h5 class="modal-title" id="reportModalLabel">{{ _('Kerro, mikä tiedoissa on pielessä') }}</h5>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
       </div>
@@ -678,8 +678,8 @@
             {{ _('Valitse tämä vaihtoehto etenkin silloin, kun kyse on peruutuksesta, teknisestä ongelmasta tai muusta havainnosta, jota ei tarvitse täyttää kenttäkohtaisena muokkausehdotuksena.') }}
           </div>
           <div class="report-form-note">
-            <strong>{{ _('Mitä tapahtuu jos ilmoitat peruutuksesta?') }}</strong>
-            {{ _('Jos rastitat että mielenosoitus on peruttu, tieto lähtee ylläpidolle tarkistettavaksi. Pelkkä virheilmoitus ei vielä peru tapahtumaa automaattisesti.') }}
+            <strong>{{ _('Mitä tapahtuu, jos ilmoitat peruutuksesta?') }}</strong>
+            {{ _('Jos rastitat, että mielenosoitus on peruttu, tieto lähtee ylläpidolle tarkistettavaksi. Pelkkä virheilmoitus ei vielä peru tapahtumaa automaattisesti.') }}
           </div>
         </div>
         <form id="report-error-form" action="/report" method="POST" autocomplete="off">

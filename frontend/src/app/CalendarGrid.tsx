@@ -25,7 +25,7 @@ export function CalendarGrid({ period, days, selected, overview = false }: {
       </span></td>;
       return <td key={weekday}><a href={`${monthPath(period)}?day=${day}#calendar-agenda`} aria-current={selected === day ? 'date' : undefined}
         className={date === today ? 'is-today' : undefined}
-        aria-label={`${dayLabel(date)}, ${count} mielenosoitusta${date === today ? ', tänään' : ''}`}>
+        aria-label={`${dayLabel(date)}, ${count} ${count === 1 ? 'mielenosoitus' : 'mielenosoitusta'}${date === today ? ', tänään' : ''}`}>
         <span>{day}</span>{count > 0 && <span className="calendar-day-count" aria-hidden="true">{count}</span>}
       </a></td>;
     })}</tr>)}</tbody>

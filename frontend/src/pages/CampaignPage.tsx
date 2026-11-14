@@ -136,7 +136,7 @@ export function CampaignPage({ urls, volunteer, schedule = defaultSchedule, toda
       <h2 id="mita">Mistä on kyse</h2>
       <div className="kv-what">
         <figure className="kx-stickerfig">
-          <img src="/static/kampanja/sticker-2026-fi.png" width={1145} height={1600} loading="lazy"            alt="Vuoden 2026 tarra: QR-koodi ja teksti Kaikki mielenosoitukset kädenulottuvilla" />
+          <img src="/static/kampanja/sticker-2026-fi.png" width={1145} height={1600} loading="lazy"            alt="Vuoden 2026 tarra: QR-koodi ja teksti Kaikki mielenosoitukset käden ulottuvilla" />
           <figcaption>Esimerkki: vuoden 2026 tarra</figcaption>
         </figure>
         <div>

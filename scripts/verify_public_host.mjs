@@ -723,6 +723,9 @@ try {
   const annual = await detailPage({ path:'/calendar/2028/' });
   assert.equal(annual.status,200);
   assert.equal(bootstrap(annual.html).calendar.data.total,3);
+  assert.match(annual.html, /1 mielenosoitus(?=[<\s])/);
+  assert.doesNotMatch(annual.html, /(?<!\d)1 mielenosoitusta/);
+  assert.match(annual.html, /2 mielenosoitusta/);
   assert.equal(bootstrap(annual.html).route.name,'calendar-year');
   assert.match(annual.html,/rel="canonical" href="https:\/\/example.test\/calendar\/2028\/"/);
   const cityAnnual = await detailPage({ path:'/city/helsinki/calendar/2028/' });

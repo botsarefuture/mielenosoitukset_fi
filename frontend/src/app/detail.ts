@@ -35,7 +35,7 @@ const ROUTES = {
 
 const fi: DetailMessages = {
   follow: 'Seuraa', following: 'Seurataan', followSeries: 'Seuraa sarjaa',
-  followDisabled: 'Seuraaminen on teknisten muutosten vuoksi tilapäisesti pois käytöstä tässä näkymässä. Voit siirtyä organisaation sivulle organisaation napista ja seurata sieltä.',
+  followDisabled: 'Seuraaminen on tilapäisesti poissa käytöstä tässä näkymässä. Voit siirtyä organisaation profiiliin ja seurata organisaatiota siellä.',
   loading: 'Ladataan tapahtuman tietoja...', error: 'Tapahtuman tietoja ei voitu ladata.',
   retry: 'Yritä uudelleen', notFound: 'Tapahtumaa ei löydy tai se ei ole julkinen.',
   allEvents: 'Kaikki mielenosoitukset',
@@ -54,7 +54,7 @@ const fi: DetailMessages = {
   reportOnlyTitle: 'Ilmoita ongelmasta ylläpidolle',
   reportOnly: 'Haluan vain ilmoittaa virheen',
   loginRequired: 'Kirjaudu sisään ilmoittaaksesi osallistumisestasi.',
-  participants: 'osallistujaa',
+  participants: 'osallistujaa', participantsSingular: 'osallistuja',
   countdown: 'Aikaa mielenosoituksen alkuun',
   participationClosed: 'Osallistumisilmoituksia ei voi tehdä, koska mielenosoitus on peruttu.',
   share: 'Jaa tapahtuma', copyLink: 'Kopioi linkki', shareCopied: 'Linkki kopioitu',

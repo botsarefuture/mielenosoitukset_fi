@@ -127,7 +127,7 @@
 
   {% block styles %}{% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/product-tokens.css', v='20261110-pride-contrast-1') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20261110-user-workspace-7') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/user-workspace.css', v='20261110-user-workspace-8') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/public-header.css', v='20261027-react-header-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css', v='20260928-campaign-feedback-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/public_hero.css', v='20261015-hero-width-1') }}">
@@ -636,7 +636,10 @@ body.banner-closed {
         <li><a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
         <li><a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a></li>
         {% else %}
-        <li><a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a></li>
+        <li><form method="post" action="{{ url_for('users.auth.logout') }}" class="footer-logout-form">
+          <input type="hidden" name="logout_token" value="{{ logout_form_token() }}" />
+          <button type="submit" class="footer-logout-button">{{ _('Kirjaudu ulos') }}</button>
+        </form></li>
         {% endif %}
       </ul>
 

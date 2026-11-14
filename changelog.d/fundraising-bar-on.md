@@ -1,0 +1,1 @@
+- The slim fundraising bar is now on: before 16.11. it announces that the small-scale collection opens and links to the information page, which shows no account details until the collection starts.

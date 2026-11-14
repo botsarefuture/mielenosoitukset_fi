@@ -1,5 +1,6 @@
 import type { AppConfig } from './config';
 import type { CampaignPageProps } from '../pages/CampaignPage';
+import { campaignSchedule } from './campaign-schedule';
 
 export const campaignPath = '/kampanja/';
 
@@ -9,10 +10,17 @@ export const campaignCopy = {
   image: '/static/kampanja/og-banner.png',
 };
 
-/** Props for the existing campaign page; writes keep their Flask and newsletter endpoints. */
-export function campaignProps(config: AppConfig): CampaignPageProps {
+/**
+ * Props for the campaign page; writes keep their Flask endpoints. `data` is the
+ * shared fundraising configuration and `today` the Helsinki date, both chosen by
+ * the server so the phase cannot differ between server and client.
+ */
+export function campaignProps(config: AppConfig, today: string, data?: unknown): CampaignPageProps {
   return {
-    urls: { home: config.urls.home, fundraising: config.urls.fundraising, privacy: config.urls.privacy },
+    today,
+    schedule: campaignSchedule(data),
+    shareAddress: `${config.origin.replace(/^https?:\/\//, '')}${campaignPath.replace(/\/$/, '')}`,
+    urls: { home: config.urls.home, fundraising: config.urls.fundraising, privacy: config.urls.privacy, pride: config.urls.pride },
     volunteer: {
       endpoint: '/kampanja/api/volunteers',
       messages: {
@@ -24,7 +32,6 @@ export function campaignProps(config: AppConfig): CampaignPageProps {
         sending: 'Lähetetään…',
       },
     },
-    newsletter: { endpoint: 'https://mailist.luova.club/signup', listId: '68d26ca27f8e9dee7c846a22' },
   };
 }
 

@@ -469,7 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (countdownValue <= 0) {
         clearInterval(countdownTimer);
         // Automaattisesti siirrytään logout-linkkiin
-        window.location.href = confirmLogoutBtn.href;
+        document.getElementById("logoutForm").submit();
       }
     }, 1000);
   }
@@ -512,8 +512,11 @@ document.addEventListener("DOMContentLoaded", () => {
         <p id="countdown" class="fw-bold text-center fs-4">5</p>
       </div>
       <div class="modal-footer">
-        <button type="button" id="cancelLogoutBtn" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
-        <a href="{{ url_for('users.auth.logout') }}" id="confirmLogoutBtn" class="btn btn-danger">{{ _('Kirjaudu ulos nyt') }}</a>
+        <button type="button" id="cancelLogoutBtn" class="btn btn-danger" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+        <form method="post" action="{{ url_for('users.auth.logout') }}" id="logoutForm" class="d-inline">
+          <input type="hidden" name="logout_token" value="{{ logout_form_token() }}" />
+        <button type="submit" id="confirmLogoutBtn" class="btn btn-primary">{{ _('Kirjaudu ulos nyt') }}</button>
+        </form>
       </div>
     </div>
   </div>

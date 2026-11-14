@@ -10,10 +10,12 @@ import time
 import uuid
 import hashlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
+from mielenosoitukset_fi.utils.logout_token import make_logout_token
 from mielenosoitukset_fi.utils.demo_seo import _parse_clock
 from mielenosoitukset_fi.utils.fundraising import fundraising_bar, fundraising_details
 from mielenosoitukset_fi.utils.campaign_publication import campaign_pages_public, campaign_preview_required
 from datetime import datetime, date, timedelta, timezone
+from zoneinfo import ZoneInfo
 from urllib.parse import parse_qs, urlencode, urlsplit
 from flask_babel import _, refresh, format_date, get_locale
 from babel.dates import format_date as babel_format_date, get_day_names
@@ -1453,7 +1455,12 @@ def init_routes(app):
             ]
 
             if campaign_pages_public():
-                static_routes.extend([{"loc": "campaign.index"}, {"loc": "fundraising"}])
+                static_routes.append({"loc": "campaign.index"})
+                # The fundraising page is noindex until its first collection day
+                # (Helsinki), so it joins the sitemap only from then on.
+                opens = fundraising_details().get("display_start_date")
+                if not opens or opens <= datetime.now(ZoneInfo("Europe/Helsinki")).date():
+                    static_routes.append({"loc": "fundraising"})
 
             # Helper to add url + optional alternate links
             def _add_url_with_alternates(parent, endpoint, lastmod=None, **values):
@@ -1876,6 +1883,7 @@ def init_routes(app):
                 "global_admin": bool(getattr(current_user, "global_admin", False)),
                 "has_admin_access": bool(current_user.has_admin_access()),
                 "actor_id": str(current_user._id),
+                "logout_token": make_logout_token(current_user.get_id()),
             })
             try:
                 payload["unread"] = sum(

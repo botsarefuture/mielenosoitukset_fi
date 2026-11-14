@@ -36,7 +36,7 @@ export function mergeBridgeSession(initial: SessionSummary, fresh: SessionSummar
   const signedOut = !fresh.authenticated;
   return {
     ...initial,
-    ...(signedOut ? { translationJoin: undefined, submission: initial.submission
+    ...(signedOut ? { translationJoin: undefined, logoutToken: undefined, submission: initial.submission
       ? { ...initial.submission, canEditDemo: false } : undefined } : {}),
     authenticated: fresh.authenticated, role: fresh.role, name: fresh.name, picture: fresh.picture,
     globalAdmin: fresh.globalAdmin, hasAdminAccess: fresh.hasAdminAccess, unread: fresh.unread,

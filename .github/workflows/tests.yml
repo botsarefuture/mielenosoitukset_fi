@@ -63,6 +63,7 @@ jobs:
           npm run app:build
           node scripts/verify_public_host.mjs
           node scripts/verify_fundraising_bar.mjs
+          node --experimental-strip-types scripts/verify_campaign_schedule.mjs
           node --experimental-strip-types scripts/verify_developer_writes.mjs
 
       - name: Install dependencies

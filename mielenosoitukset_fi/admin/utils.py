@@ -289,7 +289,8 @@ class AdminActParser:
             import json
 
             request_data = json.loads(json.dumps({**request}, skipkeys=True, default=str))
-            user_data = user.to_dict() if hasattr(user, "to_dict") else dictify_object(user)
+            # AnonymousUser answers every attribute with None, so hasattr() alone is not enough.
+            user_data = user.to_dict() if callable(getattr(user, "to_dict", None)) else dictify_object(user)
             return {"request": request_data, "user": user_data}
         except Exception as e:
             logger.exception(f"Error parsing request info: {e}")

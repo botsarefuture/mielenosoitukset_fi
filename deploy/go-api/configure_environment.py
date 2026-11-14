@@ -56,6 +56,14 @@ def configure(source, target):
         # separate switch, off by default, and only with the bridge on.
         if config.get("DEVELOPER_WRITES") is True:
             values["DEVELOPER_WRITES_ENABLED"] = "true"
+    # The fundraising details file (docs/go-fundraising-details.md) used to be
+    # added to the environment by hand and was lost at the next deploy. Keep it
+    # whenever the file exists; `FUNDRAISING_DETAILS_FILE` in config.yaml
+    # overrides the default location. Without the file the host uses its
+    # bundled copy and the reminder signup form stays hidden.
+    details_file = config.get("FUNDRAISING_DETAILS_FILE") or "/etc/mielenosoitukset-fundraising/fundraising.json"
+    if isinstance(details_file, str) and Path(details_file).is_file():
+        values["FUNDRAISING_DETAILS_FILE"] = details_file
     for key, value in values.items():
         if not isinstance(value, str) or not value or any(c in value for c in "\n\r\0"):
             raise ValueError(f"Missing or invalid {key}; refusing to guess production settings")

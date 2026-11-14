@@ -19,7 +19,8 @@ const sessionServer = createServer((req, res) => {
   setTimeout(() => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ authenticated, name, locale: 'fi', locales: [{ code: 'fi', name: 'Suomi' }],
-      role: authenticated ? 'user' : 'guest', site_analytics_enabled: true, matomo_enabled: true }));
+      role: authenticated ? 'user' : 'guest', site_analytics_enabled: true, matomo_enabled: true,
+      ...(authenticated ? { logout_token: 'x'.repeat(30) + '.' + 'y'.repeat(20) } : {}) }));
   }, 25);
 });
 await new Promise(resolve => sessionServer.listen(0, '127.0.0.1', resolve));
@@ -56,6 +57,14 @@ try {
   assert.equal(reads, 3, 'Cookie-bearing requests must not share reads');
   assert.equal(bootstrap(alice.html).session.name, 'Alice');
   assert.equal(bootstrap(bob.html).session.name, 'Bob');
+  // Signing out is a POST form in the header menu and footer, never a followable link.
+  const readsBefore = reads;
+  const signedInPage = (await page({ path: '/info', cookie: 'session=alice' })).html;
+  assert(!signedInPage.includes('href="/users/auth/logout"'), 'a signed-in page must not link to a GET sign-out');
+  assert((signedInPage.match(/<form [^>]*action="\/users\/auth\/logout"[^>]*method="post"/g) ?? []).length >= 2, 'header menu and footer post the sign-out form');
+  assert(signedInPage.includes('name="logout_token"'));
+  assert(!(await page({ path: '/info' })).html.includes('name="logout_token"'), 'anonymous pages carry no sign-out token');
+  reads = readsBefore;
   assert.equal(bootstrap((await page()).html).session.name, null);
   const forms = await Promise.all(Array.from({ length: 8 }, () => page({ path: '/submit' })));
   const tokens = forms.map(result => bootstrap(result.html).submission.token);
@@ -235,10 +244,33 @@ try {
     assert.equal(live.headers['Cache-Control'], 'private, no-store');
     assert.equal(live.headers['X-Robots-Tag'], undefined);
     const body = live.html.split('<body>')[1].split('<script type="application/json"')[0];
-    assert(body.includes('Yhdessä näkyväksi') && body.includes('id="vapaaehtoiseksi"') && body.includes('id="newsletter"'));
+    assert(body.includes('Mielenosoitukset.fi näkyviin kymmeniin kaupunkeihin') && body.includes('id="vapaaehtoiseksi"') && !body.includes('id="newsletter"'));
+    for (const id of ['auta', 'mita', 'kerays', 'aikataulu', 'lahde', 'avajaiset', 'pride', 'ukk']) assert(body.includes(`id="${id}"`), `campaign section ${id}`);
+    assert.equal((body.match(/<details>/g) || []).length, 8 + 1, 'eight FAQ items and the share text');
+    assert(body.includes('/pride-nakyvaksi#banderolli') && body.includes('/static/kampanja/sticker-2026-fi.png'));
+    assert(!/!/.test(body.replace(/<[^>]*>/g, '')), 'No exclamation marks in the page text');
+    // The phase follows the Helsinki date from the shared configuration, chosen by the server.
+    const dayOf = offset => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Helsinki' }).format(new Date(Date.now() + offset * 86_400_000));
+    const bodyOfCampaign = r => r.html.split('<body>')[1].split('<script type="application/json"')[0];
+    const order = html => ['id="kerays"', 'id="mita"'].map(marker => html.indexOf(marker));
+    fundState = { status: 200, body: { start_date: dayOf(1), end_date: dayOf(60) } };
+    const before = bodyOfCampaign(await campaign());
+    assert(before.includes('Seuraavaksi') && !before.includes('Tässä ollaan nyt') && before.includes('Tilaa muistutus') && !before.includes('Lahjoita keräykseen'));
+    assert(order(before)[1] < order(before)[0], 'Collection info stays below "Mistä on kyse" before opening');
+    fundState = { status: 200, body: { start_date: dayOf(0), end_date: dayOf(60) } };
+    const opened = bodyOfCampaign(await campaign());
+    assert(opened.includes('Tässä ollaan nyt') && opened.includes('Lahjoita keräykseen') && !opened.includes('Tilaa muistutus'));
+    assert(order(opened)[0] < order(opened)[1], 'Collection info moves above "Mistä on kyse" on the opening day');
+    assert(!opened.includes('account') && !opened.includes('FI46'), 'No payment details on the campaign page');
+    const bootstrapped = (await campaign()).html;
+    assert(!bootstrapped.includes('FI46 5723'), 'The bootstrap carries no account number');
+    fundState = { status: 200, body: { start_date: dayOf(-90), end_date: dayOf(-1) } };
+    const closed = bodyOfCampaign(await campaign());
+    assert(!closed.includes('Lahjoita keräykseen') && !closed.includes('Tilaa muistutus'));
+    fundState = { status: 503, body: {} };
     assert(live.html.includes('rel="canonical" href="https://example.test/kampanja/"'));
     assert(live.html.includes('og:image" content="https://example.test/static/kampanja/og-banner.png"'));
-    assert(live.html.includes('/static/css/campaign.css'));
+    assert(live.html.includes('/static/css/campaign.css') && live.html.includes('/static/css/campaign-v2.css'));
     assert(body.includes('/kampanja/api/volunteers') || live.html.includes('/kampanja/api/volunteers'));
     assert.equal((await page({ path: '/kampanja' })).status, 404, 'Flask keeps the slash redirect');
     assert.equal((await page({ path: '/kampanja/confirm/token' })).status, 404, 'Confirmation stays in Flask');

@@ -1,0 +1,1 @@
+- Signing out now needs a button press: links no longer sign you out by themselves, the account menu opens on click instead of hover, and old sign-out links open a confirmation page.

@@ -1,0 +1,1 @@
+- The campaign page `/kampanja/` has a new layout: campaign facts, ways to help, what the campaign is about, collection details, a timeline that follows the date, the volunteer form, the opening event, the Pride banner call and a FAQ. It stays behind the existing publication gate. The old newsletter sign-up block is no longer on the page.

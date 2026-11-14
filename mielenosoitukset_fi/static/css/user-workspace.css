@@ -667,6 +667,33 @@ h1 {
   background: var(--product-action-hover);
 }
 
+/* Signing out is a POST form, styled like the other account buttons in the footer. */
+.public-site-footer .footer-logout-form {
+  margin: 0;
+}
+
+.public-site-footer .footer-logout-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.85rem;
+  border: 0;
+  border-radius: 0.5rem;
+  font: inherit;
+  cursor: pointer;
+  color: var(--product-on-action);
+  background: var(--product-action-bg);
+}
+
+.public-site-footer .footer-logout-button:hover {
+  background: var(--product-action-hover);
+}
+
+.public-site-footer .footer-logout-button:focus-visible {
+  outline: 3px solid var(--product-primary);
+  outline-offset: 2px;
+}
+
 @media (max-width: 56.25rem) {
   .public-page-header {
     grid-template-columns: minmax(0, 1fr);
@@ -3392,4 +3419,20 @@ textarea.user-field__control {
     width: auto;
     max-width: none;
   }
+}
+
+/* Sign-out confirmation page. */
+main .logout-confirm {
+  max-width: 32rem;
+  margin-inline: auto;
+}
+
+main .logout-confirm h1 {
+  text-align: start;
+}
+
+main .logout-confirm .detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }

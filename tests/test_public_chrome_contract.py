@@ -94,8 +94,9 @@ def test_public_header_uses_shared_scoped_component_css():
         '.public-main-nav .user-dropdown[aria-expanded="true"] .dropdown-menu'
         in css
     )
-    assert ".user-dropdown:hover .dropdown-menu" in css
-    assert ".user-dropdown:focus-within .dropdown-menu" in css
+    # The account menu opens on click or keyboard only; hover must not open it.
+    assert ".user-dropdown:hover .dropdown-menu" not in css
+    assert ".user-dropdown:focus-within .dropdown-menu" not in css
     assert (
         '.user-dropdown[aria-expanded="true"] .public-main-nav .dropdown-menu'
         not in css

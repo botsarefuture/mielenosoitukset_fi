@@ -1,0 +1,1 @@
+- Pride näkyväksi page: the call for banner carriers and its signup form are switched on (`volunteer_form` in `pride_banner.json`). Merge only after the signup backend is live (`docs/pride-banner-volunteers.md`).

@@ -58,21 +58,47 @@ what differs.
 | `volunteer_form` in `mielenosoitukset_fi/utils/data/pride_banner.json` | built into the React app | the call and the form appear on the page |
 | Apache rule in `deploy/apache/react-ssr-routing.conf` | host | sends the three routes to the Go API |
 
-## Activation (needs the maintainer's go; nothing here was done in production)
+## Activation runbook (needs the maintainer's go in the working session; backend first, UI last)
 
-1. Backup of the database (core dump) and `config.yaml`.
-2. Index, with the go for production: `python -m mielenosoitukset_fi.scripts.ensure_pride_banner_indexes`.
-   Revert: `db.pride_banner_volunteers.dropIndex("email_unique")` (the Go routes switch themselves off at the next start).
-3. Flask: set `PRIDE_BANNER_MAILS_ENABLED`, restart the scheduler. Sign up with a test address first and check the mail.
-4. Apache: install the routing rule from `react-ssr-routing.conf` (not during a deploy of other rules) and reload.
-5. Go: `PRIDE_BANNER_SIGNUP: true` in `config.yaml`, deploy, restart the API (not during a backup dump).
-6. React: set `volunteer_form` to `true`, build and deploy. Check as a visitor: signup, mail, confirm, removal, in both themes.
+Run as root on lc-main (`ssh lc-main-root`), after #1157 and the activation PR are merged and deployed. Note times in Helsinki time.
+Do not run it during a database backup dump (a Go API restart then fails its startup check; see backups.md).
 
-## Revert
+1. **Backup and revert copies.** Core dump: `/var/www/mielenosoitukset_fi/deploy/backup/mongodb-backup.sh core`
+   (the archive lands in `/var/backups/mielenosoitukset/`; note its name). Config copies:
+   ```sh
+   d=/root/pride-banner-activation-$(date +%Y%m%dT%H%M%S); install -d -m 0700 $d
+   cp -a /var/www/mielenosoitukset_fi/config.yaml /etc/mielenosoitukset-api/environment /etc/apache2/mielenosoitukset-react-ssr.conf $d/
+   ```
+2. **Index** (needs the go): `python -m mielenosoitukset_fi.scripts.ensure_pride_banner_indexes` in the app virtualenv.
+   Check that it prints `email_unique`. Revert: `db.pride_banner_volunteers.dropIndex("email_unique")`.
+3. **Flask mail flag.** Add `PRIDE_BANNER_MAILS_ENABLED=true` to the scheduler's environment (where the other job flags live)
+   and restart the scheduler. The two jobs exist already (`deliver_pride_banner_confirmations` every 2 minutes,
+   `purge_pride_banner_volunteers` daily).
+4. **Go routes.** Add `PRIDE_BANNER_SIGNUP: true` to `config.yaml` (needs `GO_SUBMIT_ENABLED`), run the Go API deploy
+   (`deploy/go-api/deploy.sh`, see `deploy/go-api/README.md`; it rewrites `/etc/mielenosoitukset-api/environment` from
+   `config.yaml`) and check the health endpoint. The routes answer 404 until this is done.
+5. **Apache.** Make sure `/etc/apache2/mielenosoitukset-react-ssr.conf` holds the `/api/pride-banner/volunteer` rule from
+   `deploy/apache/react-ssr-routing.conf`, then `apachectl configtest && systemctl reload apache2`.
+6. **Verify, with one test address only.** Use an address of the maintainer for the one real mail. Never send anything else.
+   ```sh
+   o=https://mielenosoitukset.fi
+   curl -s -o /dev/null -w '%{http_code}\n' -X POST $o/api/pride-banner/volunteer/unsubscribe -H 'Content-Type: application/json' -d '{"token":"x"}'
+   curl -s -X POST $o/api/pride-banner/volunteer -H "Origin: $o" -H 'Content-Type: application/json' -d '{"name":"Testi","email":"TEST_ADDRESS","consent":true}' | head -c 400
+   ```
+   The first answers 410 (routed to Go, routes on); the second answers 202 with the accepted text. Within two minutes exactly one
+   confirmation mail arrives (`email_queue` holds one `pride_banner_volunteer` job). Open its link, press the button, check that the row
+   is `confirmed`, then use the removal link and check that the row is gone.
+7. **UI.** Merge the activation PR (it sets `volunteer_form` to `true`), deploy the React host and check `/pride-nakyvaksi` as a
+   visitor in both themes: the call, the form, and a signup that ends in "Tarkista sähköpostisi".
+8. **After.** Record the date, the backup path and the revert copies in the decisions log, and remind the maintainer of the retention date.
 
-Set `volunteer_form` back to `false` (the form disappears), remove `PRIDE_BANNER_SIGNUP` from `config.yaml` and
-redeploy (the routes answer 404), unset the Flask flag, remove the Apache rule, and delete the data with the purge
-command or `db.pride_banner_volunteers.drop()`. `git revert` of the PR needs no data migration.
+## Revert (reverse order; each step is independent)
+
+Set `volunteer_form` back to `false` and deploy the React host (the form disappears). Remove `PRIDE_BANNER_SIGNUP` from
+`config.yaml` and redeploy the Go API, or restore `environment` from the copy in the step 1 folder (the routes then answer 404).
+Unset the Flask flag and restart the scheduler. Remove the Apache rule and reload if routing must go too. Delete the data with
+the purge command or `db.pride_banner_volunteers.drop()`; restore from the core dump only if other data was damaged.
+`git revert` of the PR needs no data migration.
 
 ## Limits
 

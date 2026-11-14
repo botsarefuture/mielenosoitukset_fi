@@ -3633,7 +3633,13 @@ def init_routes(app):
             reporter_comment = (request.form.get('reporter_comment') or '').strip() or None
 
             if not suggested_fields and not reporter_comment:
-                flash_message("Muuta vähintään yhden kentän tietoja tai kirjoita kommentti ennen lähettämistä.", "error")
+                # Keep the existing human translations while improving Finnish copy.
+                message = (
+                    "Muuta vähintään yhden kentän tietoja tai kirjoita kommentti ennen lähettämistä."
+                    if _current_demo_language() == "fi"
+                    else "Kirjoita vähintään yksi kenttämuutos tai kommentti ennen lähettämistä."
+                )
+                flash_message(message, "error")
                 return redirect(request.url)
 
             doc = {

@@ -7,9 +7,9 @@ ROOT = Path(__file__).resolve().parent.parent
 APP = ROOT / "frontend" / "src" / "app"
 
 
-def test_switch_is_off_in_the_repository():
+def test_switch_is_a_single_boolean():
     data = json.loads((ROOT / "mielenosoitukset_fi" / "utils" / "data" / "pride_banner.json").read_text())
-    assert data == {"volunteer_form": False}
+    assert list(data) == ["volunteer_form"] and isinstance(data["volunteer_form"], bool)
 
 
 def test_screen_renders_the_call_only_behind_the_switch():

@@ -1,6 +1,9 @@
 import data from '../../../mielenosoitukset_fi/utils/data/pride_banner.json';
 
 /** The call for banner carriers is shown only while this switch in pride_banner.json is on. */
+/** Keep in step with bannerConsentVersion in go-api/banner_volunteer.go. */
+export const carrierConsentVersion = '2026-11-13';
+
 export const prideVolunteerEnabled = (value: unknown = data): boolean =>
   typeof value === 'object' && value !== null && (value as { volunteer_form?: unknown }).volunteer_form === true;
 
@@ -34,6 +37,7 @@ export const prideVolunteerCopy = {
   emailInvalid: 'Tarkista sähköpostiosoite. Siinä pitää olla esimerkiksi nimi@esimerkki.fi.',
   consentMissing: 'Anna lupa tietojen tallentamiseen, jotta voimme ottaa yhteyttä.',
   failed: 'Lähettäminen ei onnistunut. Yritä hetken kuluttua uudelleen.',
+  rateLimited: 'Yrityksiä on liian monta. Odota hetki ja yritä uudelleen.',
   unavailable: 'Ilmoittautuminen ei ole vielä käytössä.',
   doneTitle: 'Tarkista sähköpostisi',
   doneSent: 'Viesti on matkalla osoitteeseen',
@@ -59,10 +63,61 @@ export function validateVolunteer(input: Pick<VolunteerInput, 'name' | 'email' |
   return errors;
 }
 
-/**
- * Part 1 has no server behind the form: every attempt reports that signup is not open.
- * Part 2 replaces this with the Go API call that reuses the reminder signup system.
- */
-export async function signUpBannerCarrier(_input: VolunteerInput): Promise<VolunteerResult> {
-  return { ok: false, message: prideVolunteerCopy.unavailable };
+export const carrierPath = '/api/pride-banner/volunteer';
+
+async function post(path: string, body: Record<string, unknown>): Promise<{ ok: boolean; status: number; message: string }> {
+  try {
+    const response = await fetch(path, {
+      method: 'POST', credentials: 'omit', cache: 'no-store',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({})) as { message?: unknown };
+    return { ok: response.ok, status: response.status, message: typeof data.message === 'string' ? data.message : '' };
+  } catch {
+    return { ok: false, status: 0, message: '' };
+  }
 }
+
+/**
+ * Posts the signup to the Go API (docs/pride-banner-volunteers.md). The answer is the same for a new,
+ * a pending and an already registered address, so the page never says which one it was.
+ */
+export async function signUpBannerCarrier(input: VolunteerInput): Promise<VolunteerResult> {
+  const c = prideVolunteerCopy;
+  const result = await post(carrierPath, {
+    name: input.name, email: input.email, city: input.city, pride: input.pride, unsure: input.unsure,
+    note: input.note, consent: true, locale: 'fi', website: input.website,
+  });
+  if (result.ok) return { ok: true };
+  if (result.status === 404) return { ok: false, message: c.unavailable };
+  if (result.status === 429) return { ok: false, message: c.rateLimited };
+  if (result.status === 400 && result.message) return { ok: false, message: result.message };
+  return { ok: false, message: c.failed };
+}
+
+export type CarrierLinkMode = 'vahvista' | 'peru';
+
+/** The mode and one-time token from `?kantaja=…#t=…`. The token stays in the fragment, so it is never sent to a server or logged. */
+export function readCarrierLink(search: string, hash: string): { mode: CarrierLinkMode; token: string } | null {
+  const mode = new URLSearchParams(search).get('kantaja');
+  if (mode !== 'vahvista' && mode !== 'peru') return null;
+  return { mode, token: new URLSearchParams(hash.replace(/^#/, '')).get('t') ?? '' };
+}
+
+export const confirmCarrier = (token: string) => post(`${carrierPath}/confirm`, { token });
+export const removeCarrier = (token: string) => post(`${carrierPath}/unsubscribe`, { token });
+
+export const carrierLinkCopy = {
+  confirmTitle: 'Vahvista ilmoittautumisesi',
+  confirmIntro: 'Vahvista ilmoittautuminen banderollin kantajaksi painamalla painiketta. Sen jälkeen otamme sinuun yhteyttä myöhemmin ja sovimme tiedot yhdessä kanssasi.',
+  confirmButton: 'Vahvista ilmoittautuminen',
+  confirmed: 'Ilmoittautuminen on vahvistettu. Kiitos. Otamme yhteyttä myöhemmin. Voit perua ilmoittautumisen milloin tahansa viestin linkistä.',
+  removeTitle: 'Poista tietosi',
+  removeIntro: 'Painamalla painiketta poistamme ilmoittautumisesi ja kaikki siihen liittyvät tiedot. Et saa enää viestejä banderollin kantamisesta.',
+  removeButton: 'Poista tietoni',
+  removed: 'Tietosi on poistettu. Et saa enää viestejä banderollin kantamisesta.',
+  badLink: 'Linkki ei kelpaa. Avaa se uudelleen sähköpostiviestistä.',
+  expired: 'Linkki on vanhentunut tai jo käytetty. Jos olet jo vahvistanut ilmoittautumisen, sinun ei tarvitse tehdä mitään. Muuten voit ilmoittautua uudelleen lomakkeella.',
+  error: 'Toiminto ei onnistunut. Yritä uudelleen hetken kuluttua.',
+} as const;

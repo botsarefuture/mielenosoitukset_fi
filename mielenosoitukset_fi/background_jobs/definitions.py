@@ -30,6 +30,8 @@ from mielenosoitukset_fi.scripts.purge_city_admin_applications import main as pu
 from mielenosoitukset_fi.scripts.deliver_fundraising_reminder_confirmations import main as deliver_fundraising_reminder_confirmations
 from mielenosoitukset_fi.scripts.send_fundraising_reminders import main as send_fundraising_reminders
 from mielenosoitukset_fi.scripts.purge_fundraising_reminders import main as purge_fundraising_reminders
+from mielenosoitukset_fi.scripts.deliver_pride_banner_confirmations import main as deliver_pride_banner_confirmations
+from mielenosoitukset_fi.scripts.purge_pride_banner_volunteers import main as purge_pride_banner_volunteers
 from mielenosoitukset_fi.scripts.process_urgent_review_alerts import run as process_urgent_review_alerts
 
 
@@ -206,6 +208,20 @@ JOB_DEFINITIONS: List[JobDefinition] = [
         name="Fundraising reminder retention",
         description="Deletes unconfirmed signups after two weeks and all reminder data 30 days after the collection ends (17.3.2027).",
         func=purge_fundraising_reminders,
+        default_trigger=_interval(days=1),
+    ),
+    JobDefinition(
+        key="deliver_pride_banner_confirmations",
+        name="Pride banner carrier confirmations",
+        description="Queues the confirmation mail for each Pride banner carrier signup. Does nothing unless PRIDE_BANNER_MAILS_ENABLED is set.",
+        func=deliver_pride_banner_confirmations,
+        default_trigger=_interval(minutes=2),
+    ),
+    JobDefinition(
+        key="purge_pride_banner_volunteers",
+        name="Pride banner carrier retention",
+        description="Deletes unconfirmed signups after two weeks and all carrier data from 31.10.2027 unless a later retention date is set.",
+        func=purge_pride_banner_volunteers,
         default_trigger=_interval(days=1),
     ),
 ]

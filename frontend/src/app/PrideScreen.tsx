@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { PrideMap } from '../components/pride/PrideMap';
+import { PrideCarrierLink } from './PrideCarrierLink';
 import { PrideVolunteer } from './PrideVolunteer';
 import { prideVolunteerCopy, prideVolunteerEnabled } from './pride-volunteer';
 import { PublicListingPage } from '../pages/PublicListingPage';
@@ -87,6 +88,8 @@ export default function PrideScreen({ config, session, listing }: {
         {volunteers && <a className="button button-secondary" href="#banderolli">{prideVolunteerCopy.navButton}</a>}
       </div>
     </section>
+
+    <PrideCarrierLink />
 
     <section className="pride-map-section" id="pride-map-section" aria-labelledby="pride-map-title">
       <header className="pride-section-header">

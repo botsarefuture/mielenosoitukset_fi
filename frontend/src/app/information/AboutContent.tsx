@@ -45,7 +45,7 @@ export function AboutContent({ campaign = false }: { campaign?: boolean }) {
             </div>
             <div>
               <h3>Kauanko hyväksyntä kestää?</h3>
-              <p>Hyväksyntä kestää yleensä noin yhdestä tunnista 48 tuntiin. Ethän huolestu, jos hyväksynnässä menee kauemmin. Mikäli ilmoitus tarvitsee käsitellä nopeasti, voit ottaa yhteyttä!</p>
+              <p>Hyväksyntä kestää yleensä noin yhdestä tunnista 48 tuntiin. Ethän huolestu, jos hyväksynnässä menee kauemmin. Jos ilmoitus on käsiteltävä nopeasti, voit ottaa yhteyttä.</p>
             </div>
           </div>
           <div className="detail-actions">
@@ -58,7 +58,7 @@ export function AboutContent({ campaign = false }: { campaign?: boolean }) {
       <aside className="about-side" aria-label="Ylläpito ja yhteystiedot">
         <section className="public-prose-card" aria-labelledby="about-who-title">
           <h2 id="about-who-title">Kuka ylläpitää sivustoa?</h2>
-          <p>Mielenosoitukset.fi ylläpidetään riippumattomana projektina vapaaehtoisten toimesta. Emme ole sidoksissa mihinkään poliittiseen puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan, joka tukee monimuotoista ja vapaata mielipiteenilmaisua kaikille.</p>
+          <p>Vapaaehtoiset ylläpitävät Mielenosoitukset.fi-palvelua riippumattomana projektina. Emme ole sidoksissa mihinkään poliittiseen puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan, joka tukee monimuotoista ja vapaata mielipiteenilmaisua kaikille.</p>
           <h3>Miten alusta rahoitetaan?</h3>
           <p>Mielenosoitukset.fi pyörii voittoa tavoittelemattomana ja riippumattomana projektina. Alustan infrakulut, kuten palvelinvuokrat ja verkkotunnus, rahoitetaan yksityishenkilöiden tuella.</p>
           <h3>Yksityisyys ja evästeet</h3>

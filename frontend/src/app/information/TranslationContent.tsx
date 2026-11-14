@@ -23,7 +23,7 @@ export function TranslationContent({ session }: { session: SessionSummary }) {
     </section>
     <section className="public-prose-card">
       <h2>Mistä käännöshankkeessa on kyse?</h2>
-      <p>Käännöshankkeen tavoitteena on tuoda Mielenosoitukset.fi täysin monikieliseksi sivustoksi. Tällä hetkellä keskitymme kääntämään käyttöliittymän, napit, ohjeet ja muun yleisen sisällön.</p>
+      <p>Käännöshankkeen tavoitteena on tehdä Mielenosoitukset.fi:stä täysin monikielinen sivusto. Tällä hetkellä keskitymme kääntämään käyttöliittymän, napit, ohjeet ja muun yleisen sisällön.</p>
       <p>Kun tämä vaihe on valmis, seuraava askel on rakentaa käännösjärjestelmä mielenosoitusten ja tapahtumien tiedoille. Näin myös ulkomaalaiset ja monikieliset yhteisöt voivat ilmoittaa ja löytää mielenosoituksia omalla kielellään.</p>
     </section>
     <section className="public-prose-card">
@@ -32,7 +32,7 @@ export function TranslationContent({ session }: { session: SessionSummary }) {
       <h3>Tekninen toteutus</h3>
       <p>Sivuston käännösjärjestelmä on jo rakennettu. Kaikki tekstit voidaan näyttää automaattisesti eri kielillä, kun käännökset on lisätty. Seuraavaksi kehitämme tavan, jolla myös käyttäjien ilmoittamat mielenosoitusten tiedot voidaan kääntää turvallisesti ja luotettavasti.</p>
       <h3>Miten voin auttaa?</h3>
-      <p>Voit auttaa osallistumalla käännöstyöhön, tarjoamalla oikolukua, tai auttamalla testauksessa. Myös kehittäjät, kieliaktivistit ja opiskelijat ovat lämpimästi tervetulleita mukaan!</p>
+      <p>Voit auttaa osallistumalla käännöstyöhön, tarjoamalla oikolukua tai auttamalla testauksessa. Myös kehittäjät, kieliaktivistit ja opiskelijat ovat lämpimästi tervetulleita mukaan!</p>
       <p>Ota yhteyttä osoitteessa <a href={`mailto:${email}`}>{email}</a>.</p>
     </section>
   </>;

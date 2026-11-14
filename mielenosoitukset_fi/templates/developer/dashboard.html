@@ -18,7 +18,7 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
       <h1 class="mb-1"><i class="fa-solid fa-screwdriver-wrench"></i> Kehittäjäpaneeli</h1>
-      <p class="text-muted mb-0">Hallinnoi sovelluksia ja henkilökohtaisia avaimia. Lue <a href="{{ url_for('api_docs') }}">API-dokumentaatio</a> tai katso <a href="https://github.com/" target="_blank" rel="noopener">API-client -esimerkit</a>.</p>
+      <p class="text-muted mb-0">Hallinnoi sovelluksia ja henkilökohtaisia avaimia. Lue <a href="{{ url_for('api_docs') }}">API-dokumentaatio</a> tai katso <a href="https://github.com/" target="_blank" rel="noopener">API-asiakasohjelmien esimerkit</a>.</p>
     </div>
     <a class="btn btn-outline-primary" href="{{ url_for('developer.apps_home') }}"><i class="fa-solid fa-laptop-code"></i> Sovellukset</a>
   </div>
@@ -26,7 +26,7 @@
   <div class="dev-grid">
     <div class="dev-card">
       <h4 class="mb-2">Henkilökohtaiset tokenit</h4>
-      <p class="muted">Käytä vain sallittuihin integraatioihin. Admin-oikeudet vaativat ylläpitäjän oikeudet. Long-tokenit syntyvät vaihtamalla short-tokenin.</p>
+      <p class="muted">Käytä vain sallittuihin integraatioihin. Admin-oikeudet vaativat ylläpitäjän oikeudet. Luo pitkäikäinen token vaihtamalla lyhytikäinen token.</p>
       <button class="btn btn-primary btn-sm mb-2" id="create-personal-token"><i class="fa-solid fa-plus"></i> Luo uusi token</button>
       <div id="personal-token-result" class="alert alert-info d-none">
         <div class="fw-bold">Uusi token (tallenna heti)</div>
@@ -77,15 +77,15 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Luo henkilökohtainen token</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sulje"></button>
       </div>
       <div class="modal-body">
         <form id="personal-token-form" class="row gy-3">
           <div class="col-12">
             <label class="form-label">Tyyppi</label>
             <select class="form-select" name="type">
-              <option value="short">48h (short)</option>
-              <option value="long">90d (long) — vaatii short-tokenin vaihtoa</option>
+              <option value="short">48 tuntia (lyhytikäinen)</option>
+              <option value="long">90 päivää (pitkäikäinen), vaatii lyhytikäisen tokenin vaihtamisen</option>
             </select>
           </div>
           <div class="col-12">

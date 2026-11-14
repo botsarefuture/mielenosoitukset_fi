@@ -42,7 +42,7 @@
         {% if can_cancel_directly %}
           <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ _('Vahvista, että haluat perua mielenosoituksen heti.') }}
         {% else %}
-          <i class="fa-solid fa-envelope me-2"></i>{{ _('Tämä lomake lähettää peruutuspyynnön ylläpidolle käsiteltäväksi. Demo näkyy normaalisti siihen asti, että pyyntö hyväksytään.') }}
+          <i class="fa-solid fa-envelope me-2"></i>{{ _('Tämä lomake lähettää peruutuspyynnön ylläpidolle käsiteltäväksi. Mielenosoitus näkyy normaalisti siihen asti, että pyyntö hyväksytään.') }}
         {% endif %}
       </div>
 
@@ -50,7 +50,7 @@
         <div class="card-body">
           <div class="mb-3">
             <label for="reason" class="form-label">{{ _('Perumisen syy (valinnainen)') }}</label>
-            <textarea id="reason" name="reason" class="form-control" rows="3" placeholder="{{ _('Kerro lyhyesti miksi mielenosoitus perutaan...') }}"></textarea>
+            <textarea id="reason" name="reason" class="form-control" rows="3" placeholder="{{ _('Kerro lyhyesti, miksi mielenosoitus perutaan…') }}"></textarea>
           </div>
           <button type="submit" class="btn {{ 'btn-danger' if can_cancel_directly else 'btn-primary' }}">
             {% if can_cancel_directly %}

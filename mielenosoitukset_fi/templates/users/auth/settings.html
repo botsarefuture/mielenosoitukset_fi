@@ -293,7 +293,7 @@
       <section class="user-settings-card d-none" id="token-locked">
         <h3>{{ _('API-avaimet lukittu') }}</h3>
         <p>
-          {{ _('Tietoturvan vuoksi API-avaimet on avattava ylläpitäjän toimesta. Lähetä pyyntö alla.') }}
+          {{ _('Tietoturvan vuoksi ylläpitäjän on hyväksyttävä API-avainten käyttö. Lähetä pyyntö alla.') }}
         </p>
         <button class="btn btn-secondary" id="token-request-btn" type="button">
           <i class="fa-solid fa-unlock"></i> {{ _('Pyydä käyttöoikeutta') }}
@@ -311,7 +311,7 @@
           <div class="user-field">
             <label class="user-field__label" for="token-type">{{ _('Tyyppi') }}</label>
             <select class="user-field__control" id="token-type" name="type">
-              <option value="short">{{ _('Lyhytikäinen (2h)') }}</option>
+              <option value="short">{{ _('Lyhytikäinen (2 h)') }}</option>
               <option value="long">{{ _('Pitkäikäinen (90 päivää)') }}</option>
             </select>
           </div>
@@ -500,12 +500,12 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="mfaModalLabel">{{ _('MFA QR Code') }}</h5>
-        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Close') }}"></button>
+        <h5 class="modal-title" id="mfaModalLabel">{{ _('MFA:n QR-koodi') }}</h5>
+        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Sulje') }}"></button>
       </div>
       <div class="modal-body text-center">
         <p>{{ _('Skannaa tämä QR-koodi MFA-sovelluksellasi ja syötä koodi vahvistaaksesi.') }}</p>
-        <img class="img-fluid rounded mb-3" id="mfa-qr-code" src alt="MFA QR Code">
+        <img class="img-fluid rounded mb-3" id="mfa-qr-code" src alt="MFA:n QR-koodi">
         <input class="form-control" id="mfa-token-input" type="text"
                placeholder="{{ _('Syötä sovelluksen antama koodi') }}">
       </div>
@@ -530,7 +530,7 @@
           <i class="fa-solid fa-shield-halved me-1"></i>
           {{ _('Vahvista henkilöllisyytesi') }}
         </h5>
-        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Close') }}"></button>
+        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Sulje') }}"></button>
       </div>
       <div class="modal-body">
         <p class="text-muted">
@@ -938,7 +938,7 @@
           tokenInput.value = "";
           mfaModal.show();
         } else {
-          showSettingsMessage("{{ _('MFA-initiaatio epäonnistui: ') }}" + (data.message || ""));
+          showSettingsMessage("{{ _('Kaksivaiheisen tunnistautumisen käyttöönotto epäonnistui: ') }}" + (data.message || ""));
         }
       } catch (e) {
         console.error(e);

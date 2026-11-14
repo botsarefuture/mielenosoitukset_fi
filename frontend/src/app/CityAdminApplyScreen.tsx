@@ -178,7 +178,7 @@ export default function CityAdminApplyScreen({ session, apiBase }: { session: Se
         <h2 id="city-admin-role-title">Mitä kaupunkiadmin tekee?</h2>
         <ul>
           <li>Tarkistaa oman paikkakuntansa uudet mielenosoitusilmoitukset ja hyväksyy tai palauttaa ne.</li>
-          <li>Korjaa virheitä ja peruutuksia, ja vastaa ilmoittajien kysymyksiin.</li>
+          <li>Korjaa virheitä ja peruutuksia ja vastaa ilmoittajien kysymyksiin.</li>
           <li>Toimii yhdessä paikkakunnan toisen kaupunkiadminin ja valtakunnallisen ylläpidon kanssa.</li>
         </ul>
         <p>Tavoitteena on vähintään kaksi kaupunkiadminia paikkakuntaa kohden. Otamme hakemuksia myös paikkakunnilta, joilla on jo admineja, sillä tarvitsemme varahenkilöitä ja kierrätämme tehtäviä. Helsingin ilmoitukset käsittelee valtakunnallinen ylläpitotiimi.</p>
@@ -198,7 +198,7 @@ export default function CityAdminApplyScreen({ session, apiBase }: { session: Se
         : <form className="contact-form city-admin-form" onSubmit={submit} noValidate={false}>
           <CityPicker id="city-admin-cities" label="Paikkakunnat, joilla haluat toimia" hint={coverage ? `1–5 paikkakuntaa. ${copy.coverageHint}` : '1–5 paikkakuntaa.'}
             value={cities} onChange={setCities} max={5} allowNational={false} coverage={coverage} />
-          <label htmlFor="city-admin-about">Kerro itsestäsi ja miksi haluat kaupunkiadminiksi</label>
+          <label htmlFor="city-admin-about">Kerro itsestäsi ja siitä, miksi haluat kaupunkiadminiksi</label>
           <textarea id="city-admin-about" name="about" rows={6} required minLength={50} maxLength={3000} />
           <fieldset className="city-admin-fieldset">
             <legend>Aktivismi</legend>

@@ -1686,9 +1686,9 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       <div class="demo-language-panel">
         <div class="demo-language-copy">
           {% if current_demo_language == default_demo_language %}
-            {{ _('Näytät tapahtuman oletuskielellä %(language)s.', language=get_lang_name(current_demo_language) or current_demo_language.upper()) }}
+            {{ _('Tapahtuma näytetään oletuskielellä: %(language)s.', language=get_lang_name(current_demo_language) or current_demo_language.upper()) }}
           {% else %}
-            {{ _('Näytät tapahtuman kielellä %(language)s. Oletuskieli on %(default_language)s.', language=get_lang_name(current_demo_language) or current_demo_language.upper(), default_language=get_lang_name(default_demo_language) or default_demo_language.upper()) }}
+            {{ _('Tapahtuman kieli: %(language)s. Oletuskieli on %(default_language)s.', language=get_lang_name(current_demo_language) or current_demo_language.upper(), default_language=get_lang_name(default_demo_language) or default_demo_language.upper()) }}
           {% endif %}
         </div>
         <div class="demo-language-chips" aria-label="{{ _('Saatavilla olevat kielet') }}">
@@ -2058,7 +2058,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
                   </span>
                 </button>
               {% else %}
-              <div class="text-muted small mt-2">{{ _('Kirjaudu sisään seurataaksesi tätä organisaatiota') }}</div>
+              <div class="text-muted small mt-2">{{ _('Kirjaudu sisään seurataksesi tätä organisaatiota') }}</div>
               {% endif %}
             {% endif %}
           </div>

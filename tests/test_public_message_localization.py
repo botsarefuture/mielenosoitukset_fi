@@ -36,7 +36,7 @@ def test_reminder_api_localizes_required_email(app, client, seeded_data, locale,
 @pytest.mark.parametrize(
     ("locale", "expected"),
     [
-        ("fi", "Kirjoita vähintään yksi kenttämuutos tai kommentti ennen lähettämistä."),
+        ("fi", "Muuta vähintään yhden kentän tietoja tai kirjoita kommentti ennen lähettämistä."),
         ("en", "Enter at least one field change or comment before submitting."),
         ("sv", "Ange minst en fältändring eller kommentar innan du skickar."),
     ],

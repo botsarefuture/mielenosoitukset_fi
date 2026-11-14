@@ -26,7 +26,7 @@ export default function ContactScreen({ session }: { session: SessionSummary }) 
 
       <section className="public-prose-card" aria-labelledby="contact-options-title">
         <h2 id="contact-options-title">Yhteystiedot</h2>
-        <p>Jos sinulla on kysyttävää, ehdotuksia tai haluat ottaa yhteyttä ylläpitäjiin, voit käyttää alla olevia yhteystapoja:</p>
+        <p>Jos sinulla on kysyttävää tai ehdotuksia tai haluat ottaa yhteyttä ylläpitäjiin, voit käyttää alla olevia yhteystapoja:</p>
         <div className="contact-options">
           <a className="contact-option" href={`mailto:${supportEmail}`}>
             <i className="fa-solid fa-envelope" aria-hidden="true" />

@@ -640,10 +640,10 @@ def api_token_status():
 def request_api_token_access():
     user_doc = _fresh_user_doc()
     if user_doc.get("api_tokens_enabled", False):
-        return jsonify({"status": "success", "message": "Access already approved."})
+        return jsonify({"status": "success", "message": _("Käyttöoikeus on jo hyväksytty.")})
 
     if user_doc.get("api_token_request", None):
-        return jsonify({"status": "success", "message": "Request already sent."})
+        return jsonify({"status": "success", "message": _("Pyyntö on jo lähetetty.")})
 
     reason = (request.get_json() or {}).get("reason") or ""
     reason = reason.strip()
@@ -666,11 +666,11 @@ def request_api_token_access():
         )
     except Exception as e:
         current_app.logger.exception("Failed to record API token request")
-        return jsonify({"status": "error", "message": "Request failed"}), 500
+        return jsonify({"status": "error", "message": _("Pyynnön lähettäminen epäonnistui.")}), 500
 
     return jsonify({
         "status": "success",
-        "message": "Request sent. An admin must approve API tokens for your account.",
+        "message": _("Pyyntö lähetetty. Ylläpitäjän täytyy hyväksyä API-avainten käyttö tililläsi."),
         "requested_at": timestamp
     })
 
@@ -1479,10 +1479,10 @@ def mfa_setup_api():
         secret = data.get("secret")  # which secret we are verifying
         device_name = data.get("device_name", "New device")
         if not code or not secret:
-            return jsonify({"status": "error", "message": "Code or secret missing"}), 400
+            return jsonify({"status": "error", "message": _("Vahvistuskoodi tai salainen avain puuttuu.")}), 400
 
         if secret not in PendingMFA.get(user._id, secret):
-            return jsonify({"status": "error", "message": "Invalid or expired MFA setup"}), 400
+            return jsonify({"status": "error", "message": _("Kaksivaiheisen tunnistautumisen käyttöönotto on virheellinen tai vanhentunut.")}), 400
 
         mfa_token = MFAToken(secret)
         if mfa_token.verify(code):

@@ -161,7 +161,7 @@ function appendMessage(msg){
         inviteBtn.onclick = async (e) => {
             const btn = e.target;
             btn.disabled = true;
-            btn.textContent = "Joining...";
+            btn.textContent = "{{ _('Hyväksytään kutsua…') }}";
             const demoId = btn.dataset.demoId;
 
             try {

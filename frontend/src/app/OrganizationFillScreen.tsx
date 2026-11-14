@@ -59,7 +59,7 @@ export default function OrganizationFillScreen({ profile }: { profile: PublicOrg
             <div className="org-fill-grid">
               <label>Järjestön nimi<input type="text" name="name" defaultValue={profile.name} required /></label>
               <label>Verkkosivusto<input type="url" name="website" placeholder="https://esimerkki.fi" defaultValue={profile.website} /></label>
-              <label>Logo URL<input type="url" name="logo" placeholder="https://esimerkki.fi/logo.png" defaultValue={profile.logo ?? ""} /></label>
+              <label>Logon verkko-osoite<input type="url" name="logo" placeholder="https://esimerkki.fi/logo.png" defaultValue={profile.logo ?? ""} /></label>
               <label>Sähköposti<input type="email" name="email" placeholder="info@esimerkki.fi" defaultValue={profile.email} /></label>
               <label className="org-fill-wide">Kuvaus<textarea name="description" rows={5}
                 placeholder="Kuvaile järjestön toimintaa, tavoitteita ja arvoja…" defaultValue={profile.description} /></label>

@@ -1,0 +1,1 @@
+- Korjattu julkisten sivujen ja käyttäjätilin näkymien suomenkielisiä tekstejä, lomakeohjeita ja virheilmoituksia sekä yksikkömuotoisia osallistuja- ja tapahtumamääriä.

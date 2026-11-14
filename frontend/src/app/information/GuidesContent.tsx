@@ -99,7 +99,7 @@ export function GuidesContent() {
               <div>
                 <p className="guide-kicker">Ennen lähetystä</p>
                 <h2>Nopea tarkistuslista</h2>
-                <p>Käy nämä läpi ennen kuin painat lähetä. Näin ilmoitus voidaan käsitellä nopeammin.</p>
+                <p>Käy nämä läpi ennen kuin painat Lähetä-painiketta. Näin ilmoitus voidaan käsitellä nopeammin.</p>
               </div>
             </div>
 
@@ -146,7 +146,7 @@ export function GuidesContent() {
               </article>
               <article>
                 <span>4</span>
-                <div><h3>Tarkista sähköpostisi</h3><p>Katso saapuiko vahvistus ja varmista, ettei sähköpostiosoitteessa ole kirjoitusvirhettä.</p></div>
+                <div><h3>Tarkista sähköpostisi</h3><p>Katso, saapuiko vahvistus, ja varmista, ettei sähköpostiosoitteessa ole kirjoitusvirhettä.</p></div>
               </article>
             </div>
 
@@ -226,7 +226,7 @@ export function GuidesContent() {
                 <ul className="guide-compact-list">
                   <li><i className="fas fa-check" aria-hidden="true" /> organisaation nimi</li>
                   <li><i className="fas fa-check" aria-hidden="true" /> virallinen sähköpostiosoite</li>
-                  <li><i className="fas fa-check" aria-hidden="true" /> verkkosivu ja some-kanavat</li>
+                  <li><i className="fas fa-check" aria-hidden="true" /> verkkosivu ja somekanavat</li>
                   <li><i className="fas fa-check" aria-hidden="true" /> lyhyt kuvaus toiminnasta</li>
                   <li><i className="fas fa-check" aria-hidden="true" /> kutsuttavien henkilöiden nimet ja sähköpostit</li>
                 </ul>

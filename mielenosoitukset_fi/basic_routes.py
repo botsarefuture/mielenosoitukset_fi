@@ -3633,7 +3633,13 @@ def init_routes(app):
             reporter_comment = (request.form.get('reporter_comment') or '').strip() or None
 
             if not suggested_fields and not reporter_comment:
-                flash_message("Kirjoita vähintään yksi kenttämuutos tai kommentti ennen lähettämistä.", "error")
+                # Keep the existing human translations while improving Finnish copy.
+                message = (
+                    "Muuta vähintään yhden kentän tietoja tai kirjoita kommentti ennen lähettämistä."
+                    if _current_demo_language() == "fi"
+                    else "Kirjoita vähintään yksi kenttämuutos tai kommentti ennen lähettämistä."
+                )
+                flash_message(message, "error")
                 return redirect(request.url)
 
             doc = {
@@ -4438,7 +4444,7 @@ def init_routes(app):
         if os.path.exists(local_path):
             return send_file(local_path, as_attachment=True)
 
-        flash_message(_("Esikatselukuva ei löytynyt."), "error")
+        flash_message(_("Esikatselukuvaa ei löytynyt."), "error")
         return redirect(url_for("index"))
 
     @app.before_request
@@ -4515,7 +4521,7 @@ def init_routes(app):
                 demo_id=demo_id,
                 user_agent=user_agent
             )
-            return jsonify({"status": "ERROR", "message": _("Liian monta pyyntöä tunnin sisällä, yritä myöhemmin.")})
+            return jsonify({"status": "ERROR", "message": _("Liian monta pyyntöä tunnin aikana. Yritä myöhemmin uudelleen.")})
 
         # Insert reminder
         reminders_collection.insert_one({

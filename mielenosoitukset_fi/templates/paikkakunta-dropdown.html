@@ -1,13 +1,13 @@
 <div class="form-group">
-  <label for="city" aria-label="{{ _('Paikkakunta selection') }}">{{ _('Paikkakunta') }}<span class="required-asterisk"
+  <label for="city" aria-label="{{ _('Paikkakunnan valinta') }}">{{ _('Paikkakunta') }}<span class="required-asterisk"
       aria-hidden="true">*</span></label>
   <br><br>
   <div id="paikkakunta-drop" class="dropdown">
     <button type="button" class="dropbtn" aria-haspopup="listbox" aria-expanded="false"
-      aria-label="{{ _('Open Paikkakunta dropdown') }}">{{ _('Paikkakunta') }}</button>
+      aria-label="{{ _('Avaa paikkakuntavalikko') }}">{{ _('Paikkakunta') }}</button>
     <div id="dropdown-content" class="dropdown-content" role="listbox" aria-labelledby="city">
       <input type="text" placeholder="{{ _('Hae paikkakunta...') }}" id="searchInput" onkeyup="filterFunction()"
-        aria-label="{{ _('Search cities') }}" />
+        aria-label="{{ _('Hae paikkakuntaa') }}" />
       <!-- List of cities -->
       {% for city in city_list %}
       <a href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;" {% if demo is

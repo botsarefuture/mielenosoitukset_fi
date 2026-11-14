@@ -178,7 +178,7 @@ func readReminderJSON(w http.ResponseWriter, r *http.Request, into any) error {
 
 func readListJSON(w http.ResponseWriter, r *http.Request, into any, limit int64) error {
 	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-		return reminderError{"REMINDER_FORMAT", "Lähetä lomake sivuston lomakkeella."}
+		return reminderError{"REMINDER_FORMAT", "Lähetä tiedot sivuston lomakkeella."}
 	}
 	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, limit))
 	decoder.DisallowUnknownFields()
@@ -234,7 +234,7 @@ func reminderListHandler(next http.Handler, db *mongo.Database, config submissio
 		// session to forge, so no CSRF token exists to check.
 		if path != list.unsubscribePath &&
 			(r.Header.Get("Sec-Fetch-Site") == "cross-site" || !submissionOriginAllowed(r.Header.Get("Origin"), config.Origin)) {
-			reminderFailure(w, http.StatusForbidden, "REMINDER_ORIGIN", "Lähetä lomake sivuston lomakkeella.")
+			reminderFailure(w, http.StatusForbidden, "REMINDER_ORIGIN", "Lähetä tiedot sivuston lomakkeella.")
 			return
 		}
 		ctx, cancel := context.WithTimeout(r.Context(), 8*time.Second)

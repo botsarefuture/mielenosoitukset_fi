@@ -23,7 +23,7 @@ export const cityAdminApplyCopy = {
   choose: 'Valitse paikkakunta',
   groupNone: 'Tarvitsemme adminia',
   groupSingle: 'Tarvitsemme lisää admineja',
-  groupTeam: 'Admintiimi on jo olemassa. Varahenkilöt ovat tervetulleita.',
+  groupTeam: 'Admintiimi on jo, varahenkilöt tervetulleita',
   chipNone: 'tarvitsee adminia',
   chipSingle: 'tarvitsee lisää admineja',
   privacyTitle: 'Miten hakemustasi käsitellään',

@@ -409,6 +409,8 @@ were inspected. Audit the consumer before treating a backend response as UI.
 | User/DB content, configured texts and names | OUTSIDE STATIC PASS | Do not rewrite users’ event titles, descriptions, profiles or messages as site copy. |
 | Email subjects, queue/job-generated body text and recipient ownership | EMAIL TODO | Trace EmailSender, relevant user email call sites and shared macros after UI completion; never send real mail. |
 
+- [ ] R32: optional city-selector group label rewrite is deferred. Original wording is retained because page screenshots cannot capture the native popup. Obtain suitable native-window evidence before changing it.
+
 ## Closing a row
 
 Record reviewer/model, revision, exact scope and linked findings. After applying
